@@ -266,80 +266,127 @@ interface ImageComponent extends BaseComponent {
 }
 ```
 
-### 1.4 Declarative API Design
+### 1.4 React-like Developer API
+
+The framework provides a simple, React-like API where developers write function components and present them directly to players.
+
+#### Core Presentation API
 
 ```typescript
-// React-like JSX syntax (via TypeScript JSX)
-const MyForm = () => (
-  <Panel layout="vertical" padding={[10, 15]} spacing={8}>
-    <Text fontSize={18} color="#ffffff">
-      Advanced UI System Demo
-    </Text>
-    
-    <Button 
-      variant="primary" 
-      icon="textures/items/diamond"
-      onClick={(e) => handleButtonClick(e)}
-    >
-      Execute Action
-    </Button>
-    
-    <Toggle 
-      label="Enable notifications"
-      defaultValue={true}
-      onChange={(value) => setNotifications(value)}
-    />
-    
-    <Slider 
-      label="Volume Level"
-      min={0}
-      max={100}
-      step={5}
-      defaultValue={50}
-      showValue={true}
-      formatter={(v) => `${v}%`}
-    />
-    
-    <Input 
-      label="Player Name"
-      placeholder="Enter your name..."
-      maxLength={20}
-      validation={[
-        { type: 'required', message: 'Name is required' },
-        { type: 'minLength', value: 3, message: 'Name too short' }
-      ]}
-    />
-    
-    <Dropdown 
-      label="Select Gamemode"
-      searchable={true}
-      options={[
-        { label: 'Survival', value: 'survival' },
-        { label: 'Creative', value: 'creative' },
-        { label: 'Adventure', value: 'adventure' }
-      ]}
-    />
-  </Panel>
-);
+import { present } from "@bedrock-core/ui";
 
-// Builder pattern for compatibility
-const form = new UIFormData()
-  .title('My Custom Form')
-  .panel({ layout: 'vertical', padding: [10, 15] })
-    .text('Advanced UI System Demo', { fontSize: 18 })
-    .button('Execute Action', { 
-      variant: 'primary',
-      icon: 'textures/items/diamond',
-      onClick: handleButtonClick 
-    })
-    .toggle('Enable notifications', { defaultValue: true })
-    .slider('Volume Level', { min: 0, max: 100, step: 5 })
-    .input('Player Name', { placeholder: 'Enter your name...' })
-    .dropdown('Select Gamemode', { 
-      options: gamemodeOptions,
-      searchable: true 
-    })
-  .build();
+// Present a React-like component to a player
+present(player, PlayerSettingsInterface);
+```
+
+#### React-like Component Definition
+
+```typescript
+import { Panel, Text, Button, Toggle, Slider, Input, Dropdown } from "@bedrock-core/ui";
+
+// Function-like React component
+function PlayerSettingsInterface() {
+  return (
+    <Panel layout="vertical" padding={15} spacing={8}>
+      <Text fontSize="large" color="#ffffff">
+        Player Configuration
+      </Text>
+      
+      <Input
+        label="Display Name"
+        placeholder="Enter your display name..."
+        maxLength={20}
+      />
+      
+      <Dropdown
+        label="Preferred Gamemode"
+        options={[
+          { label: 'Survival', value: 'survival' },
+          { label: 'Creative', value: 'creative' },
+          { label: 'Adventure', value: 'adventure' }
+        ]}
+      />
+      
+      <Toggle
+        label="Enable PvP"
+        defaultValue={false}
+      />
+      
+      <Slider
+        label="Render Distance"
+        min={4}
+        max={32}
+        step={2}
+        defaultValue={12}
+        showValue={true}
+      />
+      
+      <Button variant="primary">
+        Save Settings
+      </Button>
+    </Panel>
+  );
+}
+```
+
+#### Behind-the-Scenes Flow
+
+When [`present()`](src/index.ts) is called, the framework automatically:
+
+1. **Component Processing**: Renders the React-like component tree
+2. **Data Serialization**: Serializes component data using our compact protocol
+3. **ModalFormData Creation**: Creates a standard [`ModalFormData`](node_modules/@minecraft/server-ui/index.d.ts:589) instance
+4. **Data Embedding**: Embeds serialized data into the title field
+5. **Immediate Presentation**: Shows the form to the player instantly
+6. **JSON UI Activation**: Our base addon's JSON UI configuration system takes over rendering
+
+```typescript
+// Internal framework flow (hidden from developers)
+export async function present(player: Player, ComponentFunction: () => JSX.Element): Promise<void> {
+  // 1. Render component tree
+  const componentTree = ComponentFunction();
+  
+  // 2. Serialize to compact format
+  const serializedData = UISerializer.serialize([componentTree]);
+  
+  // 3. Create and show ModalFormData immediately
+  const modalForm = new ModalFormData()
+    .title(serializedData)
+    .submitButton('OK');
+    
+  // 4. Present immediately (no .then/.catch handling for now)
+  modalForm.show(player);
+}
+```
+
+#### Base Addon Dependency
+
+Developers must add our base addon as a dependency in their `manifest.json`:
+
+```json
+{
+  "format_version": 2,
+  "header": {
+    "name": "My Custom Addon",
+    "description": "Uses @bedrock-core/ui",
+    "uuid": "your-addon-uuid",
+    "version": [1, 0, 0]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "your-data-module-uuid",
+      "version": [1, 0, 0]
+    }
+  ],
+  "dependencies": [
+    {
+      "description": "Bedrock Core UI Base Addon",
+      "uuid": "bedrock-core-ui-base-addon-uuid",
+      "version": [1, 0, 0]
+    }
+  ]
+}
 ```
 
 ## Part 2: Compact Serialization Protocol
