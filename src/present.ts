@@ -1,6 +1,7 @@
 import { Player } from '@minecraft/server';
 import { ModalFormData } from '@minecraft/server-ui';
 import { UISerializer } from './core/serializer';
+import { ComponentProcessor } from './core/component-processor';
 import { RenderError } from './types/serialization';
 import type { Component } from './types/json_ui/components';
 
@@ -36,17 +37,29 @@ import type { Component } from './types/json_ui/components';
  */
 export async function present(player: Player, component: Component): Promise<void> {
   try {
-    // 1. Serialize component data using compact protocol
+    // 1. Validate and flatten component tree
+    const validation = ComponentProcessor.validateComponentTree(component);
+    if (!validation.isValid) {
+      throw new RenderError(`Component validation failed: ${validation.errors.join(', ')}`);
+    }
+
+    const flattenedComponents = ComponentProcessor.flattenComponentTree(component);
+
+    // 2. Serialize component data using compact protocol for JSON UI rendering
     const serializedData = UISerializer.serialize([component]);
 
-    // 2. Create ModalFormData with embedded data in title
+    // 3. Create ModalFormData with embedded data in title
     const modalForm = new ModalFormData()
       .title(serializedData)
       .submitButton('OK');
 
-    // 3. Present the form immediately to the player
+    // 4. Add interactive components to ModalFormData for native form functionality
+    ComponentProcessor.addComponentsToModalForm(modalForm, flattenedComponents);
+
+    // 5. Present the form immediately to the player
     // The companion resource pack's JSON UI system will parse the title
-    // and render the sophisticated UI components
+    // and render the sophisticated UI components, while the native form
+    // provides the interactive functionality
     await modalForm.show(player);
 
   } catch (error) {

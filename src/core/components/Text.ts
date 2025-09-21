@@ -1,4 +1,6 @@
+import { ResizableProps } from '.';
 import type { LabelComponent } from '../../types';
+import type { ActionFormData, ModalFormData } from '@minecraft/server-ui';
 
 export interface TextStyle {
   color?: [number, number, number];
@@ -11,17 +13,13 @@ export interface TextStyle {
   textAlignment?: 'left' | 'center' | 'right';
 }
 
-export interface TextProps {
+export interface TextProps extends ResizableProps {
   value: string;
   textStyle?: TextStyle;
-  width?: number | string;
-  height?: number | string;
-  maxWidth?: number | string;
-  maxHeight?: number | string;
 }
 
-export function Text({ value, textStyle, width, height, maxWidth, maxHeight }: TextProps): LabelComponent {
-  return {
+export function Text({ value, textStyle, width, height, maxWidth, maxHeight }: TextProps): [LabelComponent, () => void] {
+  const component: LabelComponent = {
     type: 'label',
     text: value,
     size: [width || 'default', height || 'default'],
@@ -35,4 +33,11 @@ export function Text({ value, textStyle, width, height, maxWidth, maxHeight }: T
     localize: textStyle?.localize,
     text_alignment: textStyle?.textAlignment,
   };
+
+  const formFunction = (): void => {
+    // client only
+    // we could use labels from the Forms but by making it only client side we have more control and less complexity
+  };
+
+  return [component, formFunction];
 }

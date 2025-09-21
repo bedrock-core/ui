@@ -1,28 +1,25 @@
+import { LabelProps, ResizableProps } from '.';
 import type { SliderComponent } from '../../types';
+import type { ModalFormData } from '@minecraft/server-ui';
 
-export interface SliderProps {
-  label?: string;
+export interface SliderProps extends LabelProps, ResizableProps {
   min: number;
   max: number;
   value?: number;
   step?: number;
-  width?: number | string;
-  height?: number | string;
-  maxWidth?: number | string;
-  maxHeight?: number | string;
-  direction?: 'horizontal' | 'vertical';
 }
 
-// TODO VALUE
-export function Slider({ label, min, max, value, step, width, height, maxWidth, maxHeight, direction }: SliderProps): SliderComponent {
-  const steps = step ? Math.floor((max - min) / step) + 1 : 100;
-
-  return {
+// TODO CONDITIONAL THINGS WITH THE TEXT
+export function Slider({ label, min, max, value, step, width, height, maxWidth, maxHeight }: SliderProps): [SliderComponent, (form: ModalFormData) => void] {
+  const component: SliderComponent = {
     type: 'slider',
     size: [width || 'default', height || 'default'],
     max_size: [maxWidth || 'default', maxHeight || 'default'],
-    slider_name: label,
-    slider_steps: steps,
-    slider_direction: direction,
   };
+
+  const formFunction = (form: ModalFormData): void => {
+    form.slider(label, min, max, { defaultValue: value, valueStep: step });
+  };
+
+  return [component, formFunction];
 }

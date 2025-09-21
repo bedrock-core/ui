@@ -1,6 +1,7 @@
-import type { ImageComponent } from '../../types'
+import { ResizableProps } from '.';
+import type { ImageComponent } from '../../types';
 
-export interface ImageProps {
+export interface ImageProps extends ResizableProps {
   texture?: string;
   uv?: [number, number];
   uvSize?: [number, number];
@@ -8,14 +9,10 @@ export interface ImageProps {
   tiled?: boolean;
   keepRatio?: boolean;
   bilinear?: boolean;
-  width?: number | string;
-  height?: number | string;
-  maxWidth?: number | string;
-  maxHeight?: number | string;
 }
 
-export function Image({ texture, uv, uvSize, ninesliceSize, tiled, keepRatio, bilinear, width, height, maxWidth, maxHeight }: ImageProps): ImageComponent {
-  return {
+export function Image({ texture, uv, uvSize, ninesliceSize, tiled, keepRatio, bilinear, width, height, maxWidth, maxHeight }: ImageProps): [ImageComponent, () => void] {
+  const component: ImageComponent = {
     type: 'image',
     size: [width || 'default', height || 'default'],
     max_size: [maxWidth || 'default', maxHeight || 'default'],
@@ -27,4 +24,10 @@ export function Image({ texture, uv, uvSize, ninesliceSize, tiled, keepRatio, bi
     keep_ratio: keepRatio,
     bilinear,
   };
+
+  const formFunction = (): void => {
+    // client only
+  };
+
+  return [component, formFunction];
 }
