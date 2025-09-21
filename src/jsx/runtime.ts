@@ -1,5 +1,6 @@
-import type { Component } from '../types/json_ui/components.js';
-import type { JSXElement, ComponentFunction } from '../types/jsx/types.js';
+import type { Component } from '../types/json_ui/components';
+import type { JSXElement, ComponentFunction } from '../types/jsx/types';
+import { mapJSXToJSONUI } from './mapper';
 
 /**
  * JSX factory function (replaces React.createElement)
@@ -61,54 +62,25 @@ export function jsxToComponent(element: JSXElement): Component {
       return jsxToComponent(element.children[0]);
     }
     // For multiple children in a fragment, wrap in a panel
-    const component: any = {
+    const fragmentComponent = {
       type: 'panel',
+      ...element.props,
       children: element.children?.map(child => jsxToComponent(child)) || [],
     };
-    return component as Component;
+    return mapJSXToJSONUI(fragmentComponent as any);
   }
 
-  // Map JSX element to component interface
-  const component: any = {
+  // Create JSX component representation
+  const jsxComponent = {
     ...element.props,
-    // Normalize component type name (convert JSX names to JSON UI names)
-    type: normalizeComponentType(element.type as string),
+    type: element.type as string,
   };
 
   // Handle children recursively
   if (element.children && element.children.length > 0) {
-    component.children = element.children.map(child => jsxToComponent(child));
+    (jsxComponent as any).children = element.children.map(child => jsxToComponent(child));
   }
 
-  return component as Component;
-}
-
-/**
- * Normalize JSX component type names to JSON UI element names
- * 
- * This handles the mapping between developer-friendly JSX names
- * and the actual JSON UI element type names.
- * 
- * @param jsxType - JSX component type name
- * @returns Normalized JSON UI element type
- */
-function normalizeComponentType(jsxType: string): string {
-  const typeMap: Record<string, string> = {
-    // Direct mappings
-    'Panel': 'panel',
-    'StackPanel': 'stack_panel',
-    'CollectionPanel': 'collection_panel',
-    'Grid': 'grid',
-    'ScrollView': 'scroll_view',
-    'Button': 'button',
-    'Toggle': 'toggle',
-    'Dropdown': 'dropdown',
-    'Slider': 'slider',
-    'EditBox': 'edit_box',
-    'InputPanel': 'input_panel',
-    'Label': 'label',
-    'Image': 'image',
-  };
-
-  return typeMap[jsxType] || jsxType.toLowerCase();
+  // Map JSX component to JSON UI component
+  return mapJSXToJSONUI(jsxComponent as any);
 }

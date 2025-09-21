@@ -20,27 +20,17 @@ declare global {
     interface Element extends JSXElement { }
 
     interface IntrinsicElements {
-      // Container Components
-      Panel: Partial<import('../json_ui/components.js').PanelComponent>;
-      StackPanel: Partial<import('../json_ui/components.js').StackPanelComponent>;
-      CollectionPanel: Partial<import('../json_ui/components.js').CollectionPanelComponent>;
-      Grid: Partial<import('../json_ui/components.js').GridComponent>;
-      ScrollView: Partial<import('../json_ui/components.js').ScrollViewComponent>;
+      // Unified Components
+      Panel: Partial<import('./components').PanelJSXComponent>;
+      Text: Partial<import('./components').TextJSXComponent>;
+      Input: Partial<import('./components').InputJSXComponent>;
 
-      // Interactive Components
-      Button: Partial<import('../json_ui/components.js').ButtonComponent>;
-      Toggle: Partial<import('../json_ui/components.js').ToggleComponent>;
-      Dropdown: Partial<import('../json_ui/components.js').DropdownComponent>;
-      Slider: Partial<import('../json_ui/components.js').SliderComponent>;
-      EditBox: Partial<import('../json_ui/components.js').EditBoxComponent>;
-      InputPanel: Partial<import('../json_ui/components.js').InputPanelComponent>;
-
-      // Display Components
-      Label: Partial<import('../json_ui/components.js').LabelComponent>;
-      Image: Partial<import('../json_ui/components.js').ImageComponent>;
+      // Direct Mapping Components
+      Button: Partial<import('./components').ButtonJSXComponent>;
+      Toggle: Partial<import('./components').ToggleJSXComponent>;
+      Dropdown: Partial<import('./components').DropdownJSXComponent>;
+      Slider: Partial<import('./components').SliderJSXComponent>;
+      Image: Partial<import('./components').ImageJSXComponent>;
     }
   }
 }
-
-// Re-export Component for convenience
-export type { Component } from '../json_ui/components.js';
