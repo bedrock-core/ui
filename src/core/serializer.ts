@@ -3,8 +3,8 @@ import type {
   CompactComponent,
   UISerializedData,
   ComponentType,
-} from '../types/jsx/serialization.js';
-import { SerializationError, DeserializationError } from '../types/jsx/serialization.js';
+} from '../types/serialization.js';
+import { SerializationError, DeserializationError } from '../types/serialization.js';
 
 /**
  * UI Serialization class for converting components to compact format
