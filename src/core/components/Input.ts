@@ -1,4 +1,4 @@
-import type { EditBoxComponent } from '../../types/json_ui/components';
+import type { EditBoxComponent } from '../../types'
 
 export interface InputProps {
   label: string;

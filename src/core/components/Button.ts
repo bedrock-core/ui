@@ -1,4 +1,4 @@
-import type { ButtonComponent, Component } from '../../types/json_ui/components';
+import type { ButtonComponent } from '../../types';
 
 export interface ButtonProps {
   label?: string;

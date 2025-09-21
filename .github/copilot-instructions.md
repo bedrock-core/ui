@@ -4,11 +4,11 @@
 
 This is a revolutionary Minecraft Bedrock UI framework that exploits **text field data transmission** to bypass native `@minecraft/server-ui` limitations. The key breakthrough: serializing component data into form text fields (`#title_text`, `#form_button_text`, `#custom_text`) that JSON UI can parse via binding expressions for conditional rendering.
 
-### Two-Part Architecture
-1. **TypeScript Component API** - React-like components that compile to serialized data
+### Direct Component Architecture
+1. **Direct TypeScript Component API** - Simple component functions that return JSON UI compatible objects
 2. **JSON UI Configuration System** - Smart resource pack that parses embedded data and renders custom UI
 
-The system works by embedding serialized UI data into `ModalFormData.title()` fields, then using element-scoped JSON UI bindings to extract and render sophisticated components.
+The system works by calling component functions directly (like `Button({ label: 'Click me' })`) that return JSON UI compatible structures, then serializing this data into `ModalFormData.title()` fields for JSON UI parsing.
 
 ## Project Structure & Key Files
 
@@ -36,18 +36,24 @@ yarn clean          # Remove dist/ directory
 ## Unique Conventions & Patterns
 
 ### Component Interface Design
-Components map directly to JSON UI elements but with developer-friendly property renaming:
+Components are direct function calls that return JSON UI compatible objects:
 ```typescript
-// Developer API (friendly names)
-interface ButtonComponent {
-  text: string;           // Maps to button text binding
-  variant: 'primary';     // Custom styling
-  onClick?: () => void;   // Event handler (excluded from serialization)
-}
+// Direct component API (clean and simple)
+const button = Button({
+  label: 'Click me',
+  width: 100,
+  height: 30
+});
 
-// Also includes raw JSON UI properties for advanced use
-interface ButtonComponent {
-  default_control?: string;  // Direct JSON UI access
+const panel = Panel({
+  display: 'flex',
+  orientation: 'vertical',
+  children: [
+    Text({ value: 'Hello World' }),
+    Button({ label: 'Save' })
+  ]
+});
+```
   hover_control?: string;
 }
 ```
@@ -93,11 +99,30 @@ The companion resource pack modifies `server_form.json` with conditional renderi
 
 ### Component Development
 When creating new components:
-1. Define the developer-friendly interface with property renaming
-2. Include raw JSON UI properties for advanced access
-3. Map to appropriate JSON UI element type
+1. Create a clean interface with developer-friendly property names
+2. Use object destructuring in function parameters
+3. Return JSON UI compatible objects with proper type casting
 4. Add to serialization protocol with new enum value
 5. Create corresponding JSON UI configuration
+
+### Current Component Pattern
+All components follow this clean pattern:
+```typescript
+export interface ComponentProps {
+  // Clean, minimal property definitions
+  label?: string;
+  width?: number | string;
+  height?: number | string;
+}
+
+export function Component({ label, width, height }: ComponentProps): JSONUIComponent {
+  return {
+    type: 'json_ui_type',
+    size: [width || 'default', height || 'default'],
+    property_name: label,
+  } as JSONUIComponent;
+}
+```
 
 ## Architecture Deep Dive
 
@@ -107,3 +132,4 @@ Key files to understand the full system:
 - `ARCHITECTURE.md` sections 1-3 for component API design
 - `src/temp/server_form.json` for the JSON UI integration patterns
 - `src/temp/json-ui-documentation.md` for property group mappings
+- `src/core/components/` for direct component implementations

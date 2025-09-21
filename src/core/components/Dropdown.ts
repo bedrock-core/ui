@@ -1,4 +1,4 @@
-import type { DropdownComponent } from '../../types/json_ui/components';
+import type { DropdownComponent } from '../../types'
 
 export interface DropdownProps {
   label?: string;

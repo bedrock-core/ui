@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This document outlines the comprehensive technical architecture for `@bedrock-core/ui`, a revolutionary custom UI system for Minecraft Bedrock that exploits text field data transmission to bypass native `@minecraft/server-ui` limitations. The system uses a two-part architecture: a TypeScript component API and a JSON UI configuration system connected through serialized data transmission.
+This document outlines the comprehensive technical architecture for `@bedrock-core/ui`, a revolutionary custom UI system for Minecraft Bedrock that exploits text field data transmission to bypass native `@minecraft/server-ui` limitations. The system uses a **direct component API** where developers call component functions directly to build UI structures that are serialized and transmitted through JSON UI text fields.
 
 ## Core Innovation: Text Field Data Transmission
 
@@ -266,74 +266,71 @@ interface ImageComponent extends BaseComponent {
 }
 ```
 
-### 1.4 React-like Developer API
+### 1.4 Direct Component API
 
-The framework provides a simple, React-like API where developers write function components and present them directly to players.
+The framework provides a simple, direct component API where developers call component functions directly to build UI structures.
 
 #### Core Presentation API
 
 ```typescript
 import { present } from "@bedrock-core/ui";
 
-// Present a React-like component to a player
-present(player, PlayerSettingsInterface);
+// Present a direct component structure to a player
+present(player, playerSettingsUI);
 ```
 
-#### React-like Component Definition
+#### Direct Component Definition
 
 ```typescript
 import { Panel, Text, Button, Toggle, Slider, Input, Dropdown } from "@bedrock-core/ui";
 
-// Function-like React component
-function PlayerSettingsInterface() {
-  return (
-    <Panel layout="vertical" padding={15} spacing={8}>
-      <Text fontSize="large" color="#ffffff">
-        Player Configuration
-      </Text>
-      
-      <Input
-        label="Display Name"
-        placeholder="Enter your display name..."
-        maxLength={20}
-      />
-      
-      <Dropdown
-        label="Preferred Gamemode"
-        options={[
-          { label: 'Survival', value: 'survival' },
-          { label: 'Creative', value: 'creative' },
-          { label: 'Adventure', value: 'adventure' }
-        ]}
-      />
-      
-      <Toggle
-        label="Enable PvP"
-        defaultValue={false}
-      />
-      
-      <Slider
-        label="Render Distance"
-        min={4}
-        max={32}
-        step={2}
-        defaultValue={12}
-        showValue={true}
-      />
-      
-      <Button variant="primary">
-        Save Settings
-      </Button>
-    </Panel>
-  );
-}
+// Direct component structure - no JSX, just function calls
+const playerSettingsUI = Panel({
+  display: 'flex',
+  orientation: 'vertical',
+  width: 300,
+  height: 400,
+ }, [
+  Text({
+    value: "Player Configuration",
+    textStyle: { fontSize: 'large', color: [255, 255, 255] }
+  }),
+  
+  Input({
+    label: "Display Name",
+    maxLength: 20
+  }),
+  
+  Dropdown({
+    label: "Preferred Gamemode",
+    options: ['Survival', 'Creative', 'Adventure'],
+    selected: 'Survival'
+  }),
+  
+  Toggle({
+    label: "Enable PvP",
+    checked: false
+  }),
+  
+  Slider({
+    label: "Render Distance",
+    min: 4,
+    max: 32,
+    value: 12,
+    step: 2
+  }),
+  
+  Button({
+    label: "Save Settings"
+  })
+]);
 ```
 
 #### Behind-the-Scenes Flow
 
 When [`present()`](src/index.ts) is called, the framework automatically:
 
-1. **Component Processing**: Renders the React-like component tree
+1. **Component Processing**: Processes the direct component structure
 2. **Data Serialization**: Serializes component data using our compact protocol
 3. **ModalFormData Creation**: Creates a standard [`ModalFormData`](node_modules/@minecraft/server-ui/index.d.ts:589) instance
 4. **Data Embedding**: Embeds serialized data into the title field
@@ -342,12 +339,12 @@ When [`present()`](src/index.ts) is called, the framework automatically:
 
 ```typescript
 // Internal framework flow (hidden from developers)
-export async function present(player: Player, ComponentFunction: () => JSX.Element): Promise<void> {
-  // 1. Render component tree
-  const componentTree = ComponentFunction();
+export async function present(player: Player, componentStructure: Component): Promise<void> {
+  // 1. Process component structure
+  const processedComponents = ComponentProcessor.process(componentStructure);
   
   // 2. Serialize to compact format
-  const serializedData = UISerializer.serialize([componentTree]);
+  const serializedData = UISerializer.serialize([processedComponents]);
   
   // 3. Create and show ModalFormData immediately
   const modalForm = new ModalFormData()
@@ -1026,8 +1023,9 @@ Key advantages:
 - **Element-Scoped Embedding**: Multiple text fields with proper scoping for flexible data transmission
 - **Property Group Mapping**: Direct mapping from documented JSON UI elements and property groups
 - **Zero Dependencies**: Pure TypeScript/JavaScript compatible with QuickJS
-- **Developer Experience**: React-like declarative API with full type safety and property renaming
+- **Developer Experience**: Direct component API with full type safety and clean function calls
 - **Extensible**: Plugin architecture for custom components with JSON UI element mapping
 - **Backwards Compatible**: Works alongside existing server-ui elements
+- **Simplified Architecture**: No JSX complexity, just direct component function calls
 
-The configuration-based design ensures maintainability and direct JSON UI compatibility while the element mapping system provides intuitive developer experience with full access to native JSON UI capabilities.
+The configuration-based design ensures maintainability and direct JSON UI compatibility while the direct component API provides intuitive developer experience with full access to native JSON UI capabilities.

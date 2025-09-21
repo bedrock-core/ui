@@ -1,4 +1,4 @@
-import type { LabelComponent } from '../../types/json_ui/components';
+import type { LabelComponent } from '../../types';
 
 export interface TextStyle {
   color?: [number, number, number];

@@ -1,4 +1,4 @@
-import type { Component, SliderComponent } from '../../types/json_ui/components';
+import type { SliderComponent } from '../../types';
 
 export interface SliderProps {
   label?: string;

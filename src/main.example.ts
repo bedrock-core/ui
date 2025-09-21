@@ -1,107 +1,97 @@
 import { Player } from '@minecraft/server';
-import { present, Panel, Text, Button, Input } from './index';
+import { present, Panel, Text, Button, Input, Component } from './index';
 
 /**
  * Simple Player Settings UI Example
  * Demonstrates the new direct component API
  */
-function createPlayerSettingsUI() {
+function createPlayerSettingsUI(): Component {
   return Panel({
     display: 'flex',
     orientation: 'vertical',
-    children: [
-      Text({ value: 'Player Settings' }),
-
-      Input({
-        label: 'Username',
-        multiline: false
-      }),
-
-      Panel({
-        display: 'flex',
-        orientation: 'horizontal',
-        children: [
-          Button({ label: 'Save' }),
-          Button({ label: 'Cancel' })
-        ]
-      })
-    ]
-  });
+  }, [
+    Text({ value: 'Player Settings' }),
+    Input({
+      label: 'Username',
+      multiline: false
+    }),
+    Panel({
+      display: 'flex',
+      orientation: 'horizontal',
+    }, [
+      Button({ label: 'Save' }),
+      Button({ label: 'Cancel' })
+    ])
+  ]);
 }
 
 /**
  * Simple Chat UI Example
  * Shows different panel display modes
  */
-function createChatUI() {
+function createChatUI(): Component {
   return Panel({
     display: 'flex',
     orientation: 'vertical',
-    children: [
-      // Chat messages area
-      Panel({
-        children: [
-          Text({ value: 'Player1: Hello everyone!' }),
-          Text({ value: 'Player2: How are you?' }),
-          Text({ value: 'Player3: Great game today' })
-        ]
+  }, [
+    // Chat messages area
+    Panel({
+    }, [
+      Text({ value: 'Player1: Hello everyone!' }),
+      Text({ value: 'Player2: How are you?' }),
+      Text({ value: 'Player3: Great game today' })
+    ]),
+    // Chat input area  
+    Panel({
+      display: 'flex',
+      orientation: 'horizontal',
+    }, [
+      Input({
+        label: 'Message',
+        multiline: false
       }),
-
-      // Chat input area  
-      Panel({
-        display: 'flex',
-        orientation: 'horizontal',
-        children: [
-          Input({
-            label: 'Message',
-            multiline: false
-          }),
-          Button({ label: 'Send' })
-        ]
-      })
-    ]
-  });
+      Button({ label: 'Send' })
+    ])
+  ]);
 }
 
 /**
  * Simple Menu UI Example
  * Shows basic button list
  */
-function createMenuUI() {
+function createMenuUI(): Component {
   return Panel({
     display: 'flex',
-    orientation: 'vertical',
-    children: [
-      Button({ label: 'Item 1' }),
-      Button({ label: 'Item 2' }),
-      Button({ label: 'Item 3' }),
-      Button({ label: 'Item 4' })
-    ]
-  });
+    orientation: 'vertical'
+  }, [
+    Button({ label: 'Item 1' }),
+    Button({ label: 'Item 2' }),
+    Button({ label: 'Item 3' }),
+    Button({ label: 'Item 4' })
+  ]);
 }
 
 /**
  * Form UI Example
  * Shows different input types
  */
-function createFormUI() {
+function createFormUI(): Component {
   return Panel({
     display: 'flex',
     orientation: 'vertical',
-    children: [
-      Text({ value: 'Single line input:' }),
-      Input({
-        label: 'Name',
-        multiline: false
-      }),
+  }, [
+    Text({ value: 'Single line input:' }),
+    Input({
+      label: 'Name',
+      multiline: false
+    }),
 
-      Text({ value: 'Multi-line input:' }),
-      Input({
-        label: 'Description',
-        multiline: true
-      })
-    ]
-  });
+    Text({ value: 'Multi-line input:' }),
+    Input({
+      label: 'Description',
+      multiline: true
+    })
+  ]);
 }
 
 /**

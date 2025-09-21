@@ -1,4 +1,4 @@
-import type { Component, ToggleComponent } from '../../types/json_ui/components';
+import type { ToggleComponent } from '../../types';
 
 export interface ToggleProps {
   label?: string;
