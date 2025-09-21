@@ -1,6 +1,6 @@
 import type { Component } from '../types/json_ui/components';
 import type { JSXElement, ComponentFunction } from '../types/jsx/types';
-import { mapJSXToJSONUI } from './mapper';
+import { mapJSXToJSONUI } from './mappings';
 
 /**
  * JSX factory function (replaces React.createElement)
