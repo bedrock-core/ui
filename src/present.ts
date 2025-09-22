@@ -1,8 +1,6 @@
 import { Player } from '@minecraft/server';
-import { ModalFormData } from '@minecraft/server-ui';
-import { ComponentProcessor } from './core/component-processor';
-import type { Component } from './types/json_ui/components';
 import type { FormData, Functional } from './types/index';
+import type { Component } from './types/json_ui/components';
 
 /**
  * Present a component to a player using the @bedrock-core/ui system
