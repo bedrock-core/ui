@@ -1,6 +1,5 @@
 import { LabelProps } from '.';
-import type { ToggleComponent } from '../../types';
-import type { ModalFormData } from '@minecraft/server-ui';
+import type { FormData, Functional, ToggleComponent } from '../../types';
 
 export interface ToggleProps extends LabelProps {
   checked?: boolean;
@@ -11,18 +10,17 @@ export interface ToggleProps extends LabelProps {
 }
 
 // TODO CONDITIONAL THINGS WITH THE TEXT
-export function Toggle({ label, checked, width, height, maxWidth, maxHeight }: ToggleProps): [ToggleComponent, (form: ModalFormData) => void] {
-  const component: ToggleComponent = {
+export function Toggle({ label, checked, width, height, maxWidth, maxHeight }: ToggleProps): Functional<ToggleComponent> {
+  return {
     type: 'toggle',
     size: [width || 'default', height || 'default'],
     max_size: [maxWidth || 'default', maxHeight || 'default'],
     toggle_name: label,
     toggle_default_state: checked,
+    serialize: (_form: FormData): string => {
+      // form.toggle(label, { defaultValue: checked });
+      // TODO: Implement toggle serialization logic
+      return '';
+    }
   };
-
-  const formFunction = (form: ModalFormData): void => {
-    form.toggle(label, { defaultValue: checked });
-  };
-
-  return [component, formFunction];
 }

@@ -1,23 +1,20 @@
-import { ActionFormData } from '@minecraft/server-ui';
 import { LabelProps, ResizableProps } from '.';
-import type { ButtonComponent } from '../../types';
+import type { ButtonComponent, FormData, Functional } from '../../types';
 
 export interface ButtonProps extends LabelProps, ResizableProps {
   onClick?: () => void;
 }
 
 // TODO CONDITIONAL THINGS WITH THE TEXT
-export function Button({ label, width, height, maxWidth, maxHeight }: ButtonProps): [ButtonComponent, (form: ActionFormData) => void] {
-  const component: ButtonComponent = {
+export function Button({ label, width, height, maxWidth, maxHeight }: ButtonProps): Functional<ButtonComponent> {
+  return {
     type: 'button',
     size: [width || 'default', height || 'default'],
     max_size: [maxWidth || 'default', maxHeight || 'default'],
-  };
-
-  // Button doesn't add anything to ModalForm (handled by submitButton)
-  const formFunction = (form: ActionFormData): void => {
-    form.button(label);
-  };
-
-  return [component, formFunction];
+    serialize: (_form: FormData): string => {
+      // form.button(label);
+      // TODO: Implement Button serialization logic
+      return '';
+    }
+  }
 }

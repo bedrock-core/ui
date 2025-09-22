@@ -1,40 +1,39 @@
 import { ResizableProps } from '.';
-import type { Component, PanelComponent, StackPanelComponent } from '../../types';
-import type { ModalFormData } from '@minecraft/server-ui';
+import type { Component, Functional, PanelComponent, StackPanelComponent } from '../../types';
 
 export interface PanelProps extends ResizableProps {
   display?: 'flex' | 'block';
   orientation?: 'vertical' | 'horizontal';
 }
 
-export function Panel({ display, orientation, width, height, maxWidth, maxHeight }: PanelProps, children: Component[] = []): [StackPanelComponent | PanelComponent, () => void] {
-  let component: StackPanelComponent | PanelComponent;
-
+export function Panel({ display, orientation, width, height, maxWidth, maxHeight }: PanelProps, children: Component[] = []): Functional<StackPanelComponent | PanelComponent> {
   switch (display) {
     case 'flex':
-      component = {
+      return {
         type: 'stack_panel',
         size: [width || 'default', height || 'default'],
         max_size: [maxWidth || 'default', maxHeight || 'default'],
         orientation: orientation === 'horizontal' ? 'horizontal' : 'vertical',
         controls: children,
+        serialize: (): string => {
+          // TODO: Implement panel serialization logic
+          // Use ComponentProcessor.serializeChildren(children) to serialize child components
+          return '';
+        }
       };
-      break;
     case 'block':
     case undefined:
     default:
-      component = {
+      return {
         type: 'panel',
         size: [width || 'default', height || 'default'],
         max_size: [maxWidth || 'default', maxHeight || 'default'],
         controls: children,
+        serialize: (): string => {
+          // TODO: Implement panel serialization logic
+          // Use ComponentProcessor.serializeChildren(children) to serialize child components
+          return '';
+        }
       };
-      break;
   }
-
-  const formFunction = (): void => {
-    // client only
-  };
-
-  return [component, formFunction];
 }

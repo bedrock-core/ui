@@ -1,5 +1,5 @@
 import { ResizableProps } from '.';
-import type { ImageComponent } from '../../types';
+import type { Functional, ImageComponent } from '../../types';
 
 export interface ImageProps extends ResizableProps {
   texture?: string;
@@ -11,8 +11,8 @@ export interface ImageProps extends ResizableProps {
   bilinear?: boolean;
 }
 
-export function Image({ texture, uv, uvSize, ninesliceSize, tiled, keepRatio, bilinear, width, height, maxWidth, maxHeight }: ImageProps): [ImageComponent, () => void] {
-  const component: ImageComponent = {
+export function Image({ texture, uv, uvSize, ninesliceSize, tiled, keepRatio, bilinear, width, height, maxWidth, maxHeight }: ImageProps): Functional<ImageComponent> {
+  return {
     type: 'image',
     size: [width || 'default', height || 'default'],
     max_size: [maxWidth || 'default', maxHeight || 'default'],
@@ -23,11 +23,9 @@ export function Image({ texture, uv, uvSize, ninesliceSize, tiled, keepRatio, bi
     tiled,
     keep_ratio: keepRatio,
     bilinear,
+    serialize: (): string => {
+      // TODO: Implement image serialization logic
+      return '';
+    }
   };
-
-  const formFunction = (): void => {
-    // client only
-  };
-
-  return [component, formFunction];
 }
