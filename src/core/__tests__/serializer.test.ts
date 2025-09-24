@@ -17,6 +17,13 @@ function sliceFieldWithPlan(payload: string, index: number, plan: readonly TKey[
   return payload.slice(start, start + SLICE_WIDTH[plan[index]]);
 }
 
+function paddedValueOf(payload: string, index: number, plan: readonly TKey[]): string {
+  const field = sliceFieldWithPlan(payload, index, plan);
+  // Remove 2-char type prefix and trailing 1-char marker.
+
+  return field.slice(2, field.length - 1);
+}
+
 describe('core/serializer', () => {
   it('serializes primitives with correct prefix, widths, markers and byte count', () => {
     const [result, bytes] = serialize({
@@ -109,5 +116,77 @@ describe('core/serializer', () => {
   it('throws on unsupported value types', () => {
     expect(() => serialize({ type: 't', ok: true, bad: undefined as unknown as number })).toThrow();
     expect(() => serialize({ type: 't', obj: {} as unknown as number })).toThrow();
+  });
+
+  describe('limits', () => {
+    it('string: exact fit (ASCII) and overflow truncation', () => {
+      const exact = 'x'.repeat(PADDED_WIDTH.s);
+      let res = serialize({ type: 't', s: exact })[0];
+      let plan = ['s', 's'] as const; // type, s
+      expect(paddedValueOf(res, 1, plan)).toBe(exact);
+
+      const over = 'x'.repeat(PADDED_WIDTH.s + 8);
+      res = serialize({ type: 't', s: over })[0];
+      plan = ['s', 's'] as const;
+      expect(paddedValueOf(res, 1, plan)).toBe(exact);
+    });
+
+    it('string: multi-byte safety (2-byte and surrogate pairs 4-byte)', () => {
+      const twoByte = 'é'; // 2 bytes in UTF-8
+      const overTwoByte = twoByte.repeat(PADDED_WIDTH.s / 2 + 1);
+      const expectedTwoByte = twoByte.repeat(PADDED_WIDTH.s / 2);
+      let res = serialize({ type: 't', s: overTwoByte })[0];
+      let plan = ['s', 's'] as const;
+      expect(paddedValueOf(res, 1, plan)).toBe(expectedTwoByte);
+
+      const fourByte = '😀'; // surrogate pair, 4 bytes
+      const overFourByte = fourByte.repeat(PADDED_WIDTH.s / 4 + 1);
+      const expectedFourByte = fourByte.repeat(PADDED_WIDTH.s / 4);
+      res = serialize({ type: 't', s: overFourByte })[0];
+      plan = ['s', 's'] as const;
+      expect(paddedValueOf(res, 1, plan)).toBe(expectedFourByte);
+    });
+
+    it('int: exact 16-char string and overflow truncation; negative support', () => {
+      const exactInt = 1234567890123456; // 16 digits
+      let res = serialize({ type: 't', i: exactInt })[0];
+      let plan = ['s', 'i'] as const; // type, i
+      expect(paddedValueOf(res, 1, plan).startsWith(exactInt.toString())).toBe(true);
+      expect(paddedValueOf(res, 1, plan).length).toBe(PADDED_WIDTH.i);
+
+      const overflowInt = 12345678901234568; // 17 digits
+      res = serialize({ type: 't', i: overflowInt })[0];
+      const expectedStart = overflowInt.toString().slice(0, PADDED_WIDTH.i);
+      plan = ['s', 'i'] as const;
+      expect(paddedValueOf(res, 1, plan).startsWith(expectedStart)).toBe(true);
+
+      res = serialize({ type: 't', i: -1 })[0];
+      plan = ['s', 'i'] as const;
+      expect(paddedValueOf(res, 1, plan).startsWith('-1')).toBe(true);
+    });
+
+    it('float: padded to 24 and truncated from toString()', () => {
+      let res = serialize({ type: 't', f: 1 / 3 })[0];
+      let plan = ['s', 'f'] as const;
+      const val = (1 / 3).toString();
+      expect(paddedValueOf(res, 1, plan).startsWith(val)).toBe(true);
+      expect(paddedValueOf(res, 1, plan).length).toBe(PADDED_WIDTH.f);
+
+      const big = 1e123;
+      res = serialize({ type: 't', f: big })[0];
+      plan = ['s', 'f'] as const;
+      expect(paddedValueOf(res, 1, plan).startsWith(big.toString())).toBe(true);
+    });
+
+    it('bool: exact padding rules (true padded to 5, false exact 5)', () => {
+      const [res] = serialize({ type: 't', t: true, f: false });
+      const plan = PLAN_PRIMITIVES.twoBools; // ['s','b','b']
+      const tPad = paddedValueOf(res, 1, plan);
+      const fPad = paddedValueOf(res, 2, plan);
+      expect(tPad.startsWith('true')).toBe(true);
+      expect(tPad.length).toBe(PADDED_WIDTH.b);
+      expect(fPad.startsWith('false')).toBe(true);
+      expect(fPad.length).toBe(PADDED_WIDTH.b);
+    });
   });
 });

@@ -1,4 +1,5 @@
 import { SerializableComponent, SerializablePrimitive } from '../types/serialization';
+import { Logger } from '../util/Logger';
 
 /**
  * Per-field unique marker characters appended AFTER the fixed-width padded payload.
@@ -60,9 +61,19 @@ function utf8ByteLength(str: string): number {
       bytes += 1;
     } else if (code <= 0x7ff) {
       bytes += 2;
-    } else if (code >= 0xd800 && code <= 0xdfff) {
-      bytes += 4; // surrogate pair (4 bytes)
-      i++; // skip low surrogate
+    } else if (code >= 0xd800 && code <= 0xdbff) {
+      // High surrogate, check for valid low surrogate to form a pair
+      const next = i + 1 < str.length ? str.charCodeAt(i + 1) : 0;
+      if (next >= 0xdc00 && next <= 0xdfff) {
+        bytes += 4; // surrogate pair (4 bytes)
+        i++; // consume low surrogate
+      } else {
+        // Unpaired high surrogate, treat as 3 bytes (WTF-8 style) to avoid crash
+        bytes += 3;
+      }
+    } else if (code >= 0xdc00 && code <= 0xdfff) {
+      // Unpaired low surrogate, treat as 3 bytes
+      bytes += 3;
     } else {
       bytes += 3;
     }
@@ -84,16 +95,32 @@ function utf8Truncate(str: string, maxBytes: number): string {
   for (let i = 0; i < str.length; i++) {
     const code = str.charCodeAt(i);
     let charBytes = 0;
+    let chunk = '';
 
     if (code <= 0x7f) {
       charBytes = 1;
+      chunk = str[i];
     } else if (code <= 0x7ff) {
       charBytes = 2;
-    } else if (code >= 0xd800 && code <= 0xdfff) {
-      charBytes = 4;
-      i++; // skip low surrogate
+      chunk = str[i];
+    } else if (code >= 0xd800 && code <= 0xdbff) {
+      // High surrogate, pair with following low surrogate if valid
+      const next = i + 1 < str.length ? str.charCodeAt(i + 1) : 0;
+      if (next >= 0xdc00 && next <= 0xdfff) {
+        charBytes = 4;
+        chunk = str[i] + str[i + 1];
+      } else {
+        // Unpaired high surrogate, treat as 3-byte replacement
+        charBytes = 3;
+        chunk = str[i];
+      }
+    } else if (code >= 0xdc00 && code <= 0xdfff) {
+      // Unpaired low surrogate, treat as 3 bytes
+      charBytes = 3;
+      chunk = str[i];
     } else {
       charBytes = 3;
+      chunk = str[i];
     }
 
     if (bytes + charBytes > maxBytes) {
@@ -101,10 +128,9 @@ function utf8Truncate(str: string, maxBytes: number): string {
     }
 
     bytes += charBytes;
-    result += str[i];
-
+    result += chunk;
     if (charBytes === 4) {
-      result += str[i]; // add low surrogate
+      i++; // consume the low surrogate as well
     }
   }
 
@@ -150,21 +176,29 @@ export function serialize({ type, ...rest }: SerializableComponent): [string, nu
   const segments = entries.map(([key, value]: [string, SerializablePrimitive], index: number): string => {
     let core: string;
     let widthBytes: number;
+    let typeCode: keyof typeof PADDED_WIDTH;
+    let rawStr: string;
 
     if (typeof value === 'string') {
+      typeCode = 's';
+      rawStr = value;
       core = `${TYPE_PREFIX.s}:${padToByteLength(value, PADDED_WIDTH.s)}`;
       widthBytes = SLICE_WIDTH.s;
     } else if (typeof value === 'boolean') {
-      const val = value ? 'true' : 'false';
-
-      core = `${TYPE_PREFIX.b}:${padToByteLength(val, PADDED_WIDTH.b)}`;
+      typeCode = 'b';
+      rawStr = value ? 'true' : 'false';
+      core = `${TYPE_PREFIX.b}:${padToByteLength(rawStr, PADDED_WIDTH.b)}`;
       widthBytes = SLICE_WIDTH.b;
     } else if (typeof value === 'number') {
       if (Number.isInteger(value)) {
-        core = `${TYPE_PREFIX.i}:${padToByteLength(value.toString(), PADDED_WIDTH.i)}`;
+        typeCode = 'i';
+        rawStr = value.toString();
+        core = `${TYPE_PREFIX.i}:${padToByteLength(rawStr, PADDED_WIDTH.i)}`;
         widthBytes = SLICE_WIDTH.i;
       } else {
-        core = `${TYPE_PREFIX.f}:${padToByteLength(value.toString(), PADDED_WIDTH.f)}`;
+        typeCode = 'f';
+        rawStr = value.toString();
+        core = `${TYPE_PREFIX.f}:${padToByteLength(rawStr, PADDED_WIDTH.f)}`;
         widthBytes = SLICE_WIDTH.f;
       }
     } else {
@@ -173,13 +207,23 @@ export function serialize({ type, ...rest }: SerializableComponent): [string, nu
 
     totalBytes += widthBytes;
 
-    return core + getFieldMarker(index);
+    const marker = getFieldMarker(index);
+    const paddedRegion = core.slice(2); // after type prefix + ':'
+    // Log expected padded values for debugging / inspection
+    Logger.log(
+      `[serialize] field#${index} key="${key}" type=${typeCode} raw="${rawStr}" rawBytes=${utf8ByteLength(rawStr)} ` +
+      `paddedLen=${PADDED_WIDTH[typeCode]} sliceWidth=${SLICE_WIDTH[typeCode]} marker=${marker} padded="${paddedRegion}"`,
+    );
+
+    return core + marker;
   });
 
   // Prefix with identifier and protocol version
   const prefix = PROTOCOL_HEADER;
   const result = prefix + segments.join('');
   const finalBytes = totalBytes + utf8ByteLength(prefix);
+
+  Logger.log(`[serialize] header=${prefix} fields=${entries.length} payloadBytes=${finalBytes}`);
 
   return [result, finalBytes];
 }

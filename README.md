@@ -55,10 +55,10 @@ import { ModalFormData } from '@minecraft/server-ui';
 import { present, Panel, Text, Button } from '@bedrock-core/ui';
 
 const form = new ModalFormData();
-const ui = Panel({ display: 'flex', orientation: 'vertical' }, [
+const ui = Panel({ display: 'flex', orientation: 'vertical', children: [
     Text({ value: 'Player Settings' }),
     Button({ label: 'Save' }),
-]);
+]});
 
 await present(form, player, ui); // player: Player
 ```
@@ -70,9 +70,8 @@ await present(form, player, ui); // player: Player
 Each factory returns a plain object describing JSON UI properties plus a `serialize` method. (Example reflects intended pattern once TODOs are completed.)
 
 ```ts
-export function Toggle({ label, checked }: ToggleProps): Functional<ToggleComponent> {
+export function Toggle({ label, checked }: ToggleProps): Component {
     return {
-        type: 'toggle',
         serialize(form) {
             form.toggle(label, { defaultValue: checked });
             return serialize(label, !!checked); // 32 + 5 bytes
@@ -251,22 +250,57 @@ Place tests under `src/**/__tests__/**` or `*.test.ts` (excluded from build outp
 
 ## 🗺 Roadmap (Indicative)
 
-- Implement all serialization placeholders.
-- Add versioned multiplex payload format.
-- Encode child ordering + layout metadata for nested panels.
-- Investigate lightweight compression (post‑MVP).
+- Beta 0.1.0
+  - Basic single page non interactable Panel
+    - Panel
+    - Image
+    - Text
+- Beta 0.2.0
+  - Navigation
+    - Ability to have multiple non interactable "Screens" and move between them
+      - No params
+      - navigation.exit(): void; (closes all ui's)
+      - navigation.canGoBack(): boolean;
+      - navigation.goBack(): void; (throws)
+      - navigation.navigate(screenName: string);
+    - Buttons
+      - Navigation (render next screen)
+      - Change values of stored (re-render current screen after button press with updated values)
+- Beta 0.3.0
+  - Forms
+    - Special screen type which supports submitting data
+    - Need to think this more
+  - Form components
+    - Input
+    - Slider
+    - Toggle
+- Beta 0.4.0
+  - Theming
+    - Base theming for the components inspired by Ore UI
+    - Possibility to make custom styles by props
+- More possible plans
+  - Register your own custom components
+  - Compound components (components made by primitive componentes (ex: tabbar, made by 1 panel and x buttons and styling))
+    - Standard stuff, dividers, tabs, menus, toast, card, badge, chip, drawers, dialogs...
+  - Animation support
+  - Reactive screens, for the first versions the screens will have static information and only be able to be updated after user input in a button. Need to investigate the possibility to make the information update reactively and if it is worth. It might lag a log, be very complex...
+
+Everything listed here will only be made if it is possible and not extremely complicated
+Order might change if I feel like it
 
 ---
 
 ## 🤝 Contributing
 
-Lightweight PRs welcome. Preserve protocol compatibility; document any extension rationale.
+Let's talk in Discord <https://bedrocktweaks.net/discord>
 
 ---
 
 ## 📄 License
 
 MIT © @DrAv0011
+
+might change, need to look it through
 
 ---
 
@@ -276,6 +310,14 @@ MIT © @DrAv0011
 <https://wiki.bedrock.dev/json-ui/json-ui-intro#string-formatting>
 <https://wiki.bedrock.dev/json-ui/json-ui-documentation>
 <https://wiki.bedrock.dev/json-ui/string-to-number>
+
+---
+
+## What about ore-ui?
+
+When it releases in `Number.MAX_SAFE_INTEGER` years, will deprecate this completely (as JSON-UI will not exist) and look if it is worth to remake it for ore-ui.
+
+---
 
 ## Brain blob
 
