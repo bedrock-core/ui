@@ -1,0 +1,69 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Bedrock-OSS/regolith-schemas/main/config/v1.4.json",
+	"author": "DrAv0011",
+	"name": "@bedrock-core/ui-test",
+	"description": "Test addon and reference implementation for @bedrock-core/ui library",
+	"packs": {
+		"behaviorPack": "./packs/BP",
+		"resourcePack": "./packs/RP"
+	},
+	"regolith": {
+		"dataPath": "./packs/data",
+		"formatVersion": "1.4.0",
+		"filterDefinitions": {
+			"bundler": {
+				"runWith": "nodejs",
+				"script": "./filters/bundler/main.js"
+			}
+		},
+		"profiles": {
+			"build": {
+				"export": {
+					"readOnly": true,
+					"target": "local",
+					"build": "standard"
+				},
+				"filters": [
+					{
+						"filter": "bundler",
+						"settings": {
+							"moduleUUID": "8e46bc37-546c-4314-aab8-a5fb9e985fc9",
+							"modules": [
+								"@minecraft/server@2.1.0",
+								"@minecraft/server-ui@2.0.0",
+								"@minecraft/server-gametest@1.0.0-beta"
+							]
+						}
+					}
+				]
+			},
+			"default": {
+				"export": {
+					"readOnly": false,
+					"target": "development",
+					"build": "standard"
+				},
+				"filters": [
+					{
+						"filter": "bundler",
+						"settings": {
+							"buildOptions": {
+								"minify": false,
+								"sourcemap": true,
+								"sourceRoot": "../../../../packs/BP/scripts"
+							},
+							"moduleUUID": "8e46bc37-546c-4314-aab8-a5fb9e985fc9",
+							"modules": [
+								"@minecraft/server@2.1.0",
+								"@minecraft/server-ui@2.0.0",
+								"@minecraft/server-gametest@1.0.0-beta"
+							],
+							"debugBuild": true,
+							"injectSourceMapping": true
+						}
+					}
+				]
+			}
+		}
+	}
+}

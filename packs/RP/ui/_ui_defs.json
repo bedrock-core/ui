@@ -1,0 +1,9 @@
+{
+	// Pls note the range of bytes the properties controllers use
+	"ui_defs": [
+		"ui/core-ui/properties/control.json", // [x,y] bytes
+		"ui/core-ui/properties/layout.json", // [y+1,z] bytes
+		"ui/server_form.json",
+		"ui/core-ui/components/input.json"
+	]
+}

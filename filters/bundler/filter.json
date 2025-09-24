@@ -1,0 +1,10 @@
+{
+  "description": "Compiles and bundles TypeScript files into pack scripts.",
+  "filters": [
+    {
+      "name": "Compiling TypeScript",
+      "runWith": "nodejs",
+      "script": "./main.js"
+    }
+  ]
+}

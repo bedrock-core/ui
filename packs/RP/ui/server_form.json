@@ -1,0 +1,23 @@
+/**
+ * @bedrock-core/ui entry point
+ * The native elements are converted to their own ones
+ * The rest of elements will be only "client-side" and will convert into a label
+ */
+{
+	"namespace": "server_form",
+	"generated_contents": {
+		"factory": {
+			"name": "buttons",
+			"control_ids": {
+				"label": "@server_form.custom_label",
+				"toggle": "@server_form.custom_toggle",
+				"slider": "@server_form.custom_slider",
+				"step_slider": "@server_form.custom_step_slider",
+				"dropdown": "@server_form.custom_dropdown",
+				"input": "@core-ui_input.core-ui_input",
+				"header": "@server_form.custom_header",
+				"divider": "@settings_common.option_group_section_divider"
+			}
+		}
+	}
+}

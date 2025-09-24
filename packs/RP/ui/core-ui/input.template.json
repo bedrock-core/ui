@@ -1,0 +1,44 @@
+{
+	"namespace": "core-ui_input",
+	"core-ui_input": {
+		"type": "label",
+		"text": "#total",
+		"color": [
+			1,
+			0,
+			0
+		],
+		"bindings": [
+			{
+				"binding_name": "#custom_text",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.{SLICE_LEN}s' * #rem_after_{PREV})",
+				"target_property_name": "#raw_{NAME}"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_{PREV} - #raw_{NAME})",
+				"target_property_name": "#rem_after_{NAME}"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.{PADDED_LEN}s' * #raw_{NAME})",
+				"target_property_name": "#{NAME}_padded"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.2s' * #{NAME}_padded)",
+				"target_property_name": "#{NAME}_prefix"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((#{NAME}_padded - #{NAME}_prefix) - ';')",
+				"target_property_name": "#{NAME}_val"
+			}
+		]
+	}
+}

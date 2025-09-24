@@ -1,0 +1,89 @@
+{
+	"namespace": "core-ui_properties",
+	"control": {
+		"visible": "#visible",
+		"enabled": "#enabled",
+		"layer": "#layer",
+		// "alpha": "#alpha", // Float does not work
+		"bindings": [
+			{
+				"binding_name": "#custom_text",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form"
+			},
+			{
+				"binding_name": "#custom_text",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form"
+			},
+			/* Layer integer field */
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.19s' * #rem_after_string)",
+				"target_property_name": "#raw_layer"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_string - #raw_layer)",
+				"target_property_name": "#rem_after_layer"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.18s' * #raw_layer)",
+				"target_property_name": "#layer_padded"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.2s' * #layer_padded)",
+				"target_property_name": "#layer_prefix"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((#layer_padded - #layer_prefix) - ';')",
+				"target_property_name": "#layer"
+			},
+			/* Visible boolean field */
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.8s' * #rem_after_layer)",
+				"target_property_name": "#raw_visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.7s' * #raw_visible)",
+				"target_property_name": "#visible_padded"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.2s' * #visible_padded)",
+				"target_property_name": "#visible_prefix"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((#visible_padded - #visible_prefix) - ';')",
+				"target_property_name": "#visible"
+			},
+			/* Enabled boolean field */
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.8s' * #rem_after_visible)",
+				"target_property_name": "#raw_enabled"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.7s' * #raw_enabled)",
+				"target_property_name": "#enabled_padded"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.2s' * #enabled_padded)",
+				"target_property_name": "#enabled_prefix"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((#enabled_padded - #enabled_prefix) - ';')",
+				"target_property_name": "#enabled"
+			}
+		]
+	}
+}

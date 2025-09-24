@@ -1,0 +1,168 @@
+{
+	"namespace": "core-ui_properties",
+	"layout": {
+		"size": [
+			"#width",
+			"#height"
+		],
+		"offset": [
+			"#x",
+			"#y"
+		],
+		"inherit_max_sibling_width": "#inherit_max_sibling_width",
+		"inherit_max_sibling_height": "#inherit_max_sibling_height",
+		"bindings": [
+			{
+				"binding_name": "#custom_text",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form"
+			},
+			/* Width integer field */
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.19s' * #rem_after_string)",
+				"target_property_name": "#raw_width"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_string - #raw_width)",
+				"target_property_name": "#rem_after_width"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.18s' * #raw_width)",
+				"target_property_name": "#width_padded"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.2s' * #width_padded)",
+				"target_property_name": "#width_prefix"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((#width_padded - #width_prefix) - ';')",
+				"target_property_name": "#width"
+			},
+			/* Height integer field */
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.19s' * #rem_after_width)",
+				"target_property_name": "#raw_height"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_width - #raw_height)",
+				"target_property_name": "#rem_after_height"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.18s' * #raw_height)",
+				"target_property_name": "#height_padded"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.2s' * #height_padded)",
+				"target_property_name": "#height_prefix"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((#height_padded - #height_prefix) - ';')",
+				"target_property_name": "#height"
+			},
+			/* X integer field */
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.19s' * #rem_after_height)",
+				"target_property_name": "#raw_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_height - #raw_x)",
+				"target_property_name": "#rem_after_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.18s' * #raw_x)",
+				"target_property_name": "#x_padded"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.2s' * #x_padded)",
+				"target_property_name": "#x_prefix"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((#x_padded - #x_prefix) - ';')",
+				"target_property_name": "#x"
+			},
+			/* Y integer field */
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.19s' * #rem_after_x)",
+				"target_property_name": "#raw_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_x - #raw_y)",
+				"target_property_name": "#rem_after_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.18s' * #raw_y)",
+				"target_property_name": "#y_padded"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.2s' * #y_padded)",
+				"target_property_name": "#y_prefix"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((#y_padded - #y_prefix) - ';')",
+				"target_property_name": "#y"
+			},
+			/* inherit_max_sibling_width boolean field */
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.8s' * #rem_after_y)",
+				"target_property_name": "#raw_inherit_max_sibling_width"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.7s' * #raw_inherit_max_sibling_width)",
+				"target_property_name": "#inherit_max_sibling_width_padded"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.2s' * #inherit_max_sibling_width_padded)",
+				"target_property_name": "#inherit_max_sibling_width_prefix"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((#inherit_max_sibling_width_padded - #inherit_max_sibling_width_prefix) - ';')",
+				"target_property_name": "#inherit_max_sibling_width"
+			},
+			/* inherit_max_sibling_height boolean field */
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.8s' * #rem_after_inherit_max_sibling_width)",
+				"target_property_name": "#raw_inherit_max_sibling_height"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.7s' * #raw_inherit_max_sibling_height)",
+				"target_property_name": "#inherit_max_sibling_height_padded"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.2s' * #inherit_max_sibling_height_padded)",
+				"target_property_name": "#inherit_max_sibling_height_prefix"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((#inherit_max_sibling_height_padded - #inherit_max_sibling_height_prefix) - ';')",
+				"target_property_name": "#inherit_max_sibling_height"
+			}
+		]
+	}
+}
