@@ -1,5 +1,5 @@
 import { ResizableProps } from '.';
-import type { Functional, LabelComponent } from '../../types';
+import type { SerializableComponent, LabelComponent } from '../../types';
 
 export interface TextStyle {
   color?: [number, number, number];
@@ -17,23 +17,21 @@ export interface TextProps extends ResizableProps {
   textStyle?: TextStyle;
 }
 
-export function Text({ value, textStyle, width, height, maxWidth, maxHeight }: TextProps): Functional<LabelComponent> {
+export function Text({ value, textStyle, width, height, maxWidth, maxHeight }: TextProps): SerializableComponent {
   return {
-    type: 'label',
-    text: value,
-    size: [width || 'default', height || 'default'],
-    max_size: [maxWidth || 'default', maxHeight || 'default'],
-    color: textStyle?.color,
-    locked_color: textStyle?.lockedColor,
-    shadow: textStyle?.shadow,
-    font_size: textStyle?.fontSize,
-    font_scale_factor: textStyle?.fontScaleFactor,
-    font_type: textStyle?.fontType,
-    localize: textStyle?.localize,
-    text_alignment: textStyle?.textAlignment,
-    serialize: (): string => {
-      // TODO: Implement text serialization logic
-      return '';
-    }
+    serialize: () => ({
+      type: 'label',
+      text: value,
+      size: [width || 'default', height || 'default'],
+      max_size: [maxWidth || 'default', maxHeight || 'default'],
+      color: textStyle?.color,
+      locked_color: textStyle?.lockedColor,
+      shadow: textStyle?.shadow,
+      font_size: textStyle?.fontSize,
+      font_scale_factor: textStyle?.fontScaleFactor,
+      font_type: textStyle?.fontType,
+      localize: textStyle?.localize,
+      text_alignment: textStyle?.textAlignment,
+    }),
   };
 }

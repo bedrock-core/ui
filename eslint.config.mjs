@@ -1,7 +1,11 @@
-import markdown from "@eslint/markdown";
 import stylistic from "@stylistic/eslint-plugin";
 import { defineConfig } from "eslint/config";
+import { dirname } from "path";
 import tseslint from "typescript-eslint";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export default defineConfig([
   {
@@ -10,10 +14,10 @@ export default defineConfig([
       "dist/**",
       "node_modules/**",
       "**/*.*js",
+      "**/*.config.ts",
+      "**/mocks/**"
     ],
   },
-
-  { files: ["**/*.md"], plugins: { markdown }, language: "markdown/gfm", extends: ["markdown/recommended"] },
 
   {
     files: ["**/*.ts"],
@@ -318,7 +322,12 @@ export default defineConfig([
       "@stylistic/semi-spacing": ["warn"],
       "@stylistic/semi-style": ["warn", "last"],
       "@stylistic/space-before-blocks": ["warn"],
-      "@stylistic/space-before-function-paren": ["warn", "never"],
+      "@stylistic/space-before-function-paren": ["warn", {
+        "anonymous": "never",
+        "named": "never",
+        "asyncArrow": "never",
+        "catch": "always"
+      }],
       "@stylistic/space-in-parens": ["warn", "never"],
       "@stylistic/space-infix-ops": "warn",
       "@stylistic/space-unary-ops": "off",

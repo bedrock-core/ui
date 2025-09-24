@@ -7,9 +7,7 @@ export { Dropdown, type DropdownProps } from './Form/Dropdown';
 export { Slider, type SliderProps } from './Form/Slider';
 export { Image, type ImageProps } from './Image';
 
-export interface LabelProps {
-  label: string;
-}
+export interface LabelProps { label: string }
 
 export interface ResizableProps {
   width?: number | string;

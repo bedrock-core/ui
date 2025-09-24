@@ -1,5 +1,5 @@
 import { ResizableProps } from '.';
-import type { Functional, ImageComponent } from '../../types';
+import type { SerializableComponent, ImageComponent } from '../../types';
 
 export interface ImageProps extends ResizableProps {
   texture?: string;
@@ -11,7 +11,7 @@ export interface ImageProps extends ResizableProps {
   bilinear?: boolean;
 }
 
-export function Image({ texture, uv, uvSize, ninesliceSize, tiled, keepRatio, bilinear, width, height, maxWidth, maxHeight }: ImageProps): Functional<ImageComponent> {
+export function Image({ texture, uv, uvSize, ninesliceSize, tiled, keepRatio, bilinear, width, height, maxWidth, maxHeight }: ImageProps): SerializableComponent<ImageComponent> {
   return {
     type: 'image',
     size: [width || 'default', height || 'default'],
@@ -23,9 +23,9 @@ export function Image({ texture, uv, uvSize, ninesliceSize, tiled, keepRatio, bi
     tiled,
     keep_ratio: keepRatio,
     bilinear,
-    serialize: (): string => {
+    serialize: (): string =>
       // TODO: Implement image serialization logic
-      return '';
-    }
+      '',
+
   };
 }

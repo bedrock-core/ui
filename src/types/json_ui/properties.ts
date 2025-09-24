@@ -34,6 +34,8 @@ export interface SoundDefinition {
   min_seconds_between_plays?: number;
 }
 
+// TODO find actual types for any if there is ever need for this
+// @eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface ControlProperties {
   visible?: boolean;
   enabled?: boolean;
@@ -73,9 +75,7 @@ export interface LayoutProperties {
   follows_cursor?: boolean;
 }
 
-export interface DataBindingProperties {
-  bindings?: DataBinding[];
-}
+export interface DataBindingProperties { bindings?: DataBinding[] }
 
 export interface InputProperties {
   button_mappings?: ButtonMapping[];
@@ -160,9 +160,7 @@ export interface TextEditProperties {
   place_holder_control?: string;
 }
 
-export interface StackPanelProperties {
-  orientation?: 'vertical' | 'horizontal';
-}
+export interface StackPanelProperties { orientation?: 'vertical' | 'horizontal' }
 
 export interface CollectionProperties {
   collection_name?: string;

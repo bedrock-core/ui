@@ -1,135 +1,77 @@
-# @bedrock-core/ui - AI Coding Instructions
+## @bedrock-core/ui – AI Coding Instructions
 
-## Core Innovation & Architecture
+Focused guidance for automated coding agents working on this repository. Keep it concise, align with current architecture, do not invent undocumented protocols.
 
-This is a revolutionary Minecraft Bedrock UI framework that exploits **text field data transmission** to bypass native `@minecraft/server-ui` limitations. The key breakthrough: serializing component data into form text fields (`#title_text`, `#form_button_text`, `#custom_text`) that JSON UI can parse via binding expressions for conditional rendering.
+### 1. Purpose & Core Concept
+This library builds richer Minecraft Bedrock UIs by serializing component trees into text slots of `@minecraft/server-ui` forms. A lightweight declarative API (functions like `Panel`, `Text`, `Input`) returns structured component objects plus a `serialize(form)` method used by `present(...)` to inject encoded state into a form title (or other fields later). A companion resource pack (outside this repo) interprets those payloads using JSON UI binding expressions.
 
-### Direct Component Architecture
-1. **Direct TypeScript Component API** - Simple component functions that return JSON UI compatible objects
-2. **JSON UI Configuration System** - Smart resource pack that parses embedded data and renders custom UI
+### 2. Architectural Primitives
+- Component shape: JSON UI spec types in `src/types/json_ui/*.ts` (`components.ts` + `properties.ts`).
+- Runtime wrapper type: `Functional<T>` = underlying component interface + `serialize(form: FormData) => string` (see `types/index.ts`).
+- Presentation entrypoint: `present(form: ModalFormData, player, component)` in `src/present.ts` – calls `component.serialize(form)`, sets `form.title(serialized)`, then `form.show(player)`.
+- Components are pure factory functions returning a `Functional<...>` object; they should NOT mutate external state; they may call `form.*` API methods inside `serialize` to register interactive controls (e.g. `form.dropdown(...)`).
 
-The system works by calling component functions directly (like `Button({ label: 'Click me' })`) that return JSON UI compatible structures, then serializing this data into `ModalFormData.title()` fields for JSON UI parsing.
+### 3. Serialization Protocol (Critical)
+Defined in `core/serializer.ts`.
+- Fixed-width, UTF‑8 byte constrained fields; padded with `;` (PAD_CHAR) – NOT spaces.
+- Widths: String=32, Integer=20, Float=24, Boolean=5 (`true`/`false`).
+- Numbers: choose integer vs float width by `Number.isInteger`. Floats stored as raw `toString()` (do not localize / format). Booleans lowercase.
+- All fields concatenated sequentially; no delimiters beyond fixed padding.
+- Use `utf8Truncate` to avoid splitting surrogate pairs; never introduce new padding semantics without updating README + keeping backward compatibility.
+- When extending protocol: only append new fixed-width segments at the end to preserve legacy decoding offsets.
 
-## Project Structure & Key Files
+### 4. Current Gaps / TODO Areas (safe to implement)
+Many `serialize` placeholders return `''`. Implementations should:
+1. Collect the minimal data required for client JSON UI conditions (label text, option indices, toggle state, layout info if needed).
+2. Produce a single encoded string (or join multiple segments if future multiplexing is added) that fits inside Minecraft form text limits.
+3. Return that string; also register interactive elements via `form.*` BEFORE returning.
+Avoid over-encoding raw large text; respect field widths or introduce a version tag + extended block appended after legacy segment.
 
-- `ARCHITECTURE.md` - **READ FIRST** - Complete technical specification and implementation details
-- `src/temp/` - Contains JSON UI documentation, best practices, and the critical `server_form.json` reference
-- `src/index.ts` - Currently empty, will contain the main `present()` API
-- `package.json` - Note the Minecraft peerDependencies and ES module setup
+### 5. Adding a New Component
+1. Define/extend interface in `types/json_ui/components.ts` if it maps to a JSON UI control; otherwise reuse an existing one.
+2. Create `core/components/<Name>.ts` exporting a factory `Name(props): Functional<NameComponent>`.
+3. Populate structural properties (size, max_size) using `'default'` fallback exactly like existing components for consistency.
+4. Implement `serialize(form)` using `serialize(...)` helper for compact payload segments.
+5. Export via `core/components/index.ts` and re-export from root `src/index.ts`.
 
-## Development Workflow
+### 6. Conventions & Style
+- Size / dimension props: accept `number | string`; pass through unchanged; fallback `'default'` (never `undefined`).
+- Use camelCase for factory prop names; output object keys must match JSON UI spec (snake / lower with underscores) exactly (see existing files as canonical mapping).
+- Do not introduce side effects inside component factories; limit side-effectful operations to `serialize`.
+- Keep public API stable: renaming exported factories or prop interfaces is a breaking change (project still 0.x but aim for forward migration ease).
 
-### Build & Test Commands
-```bash
-yarn build          # TypeScript compilation to dist/
-yarn test           # Vitest test runner
-yarn coverage       # Test coverage reports
-yarn lint           # ESLint with strict TypeScript rules
-yarn clean          # Remove dist/ directory
+### 7. Build / Tooling
+- Build: `yarn build` (pure `tsc`). Tests: `yarn test` (Vitest). Lint: `yarn lint`.
+- `tsconfig.json` excludes `*.test.ts` from build output; place tests under `src/**/__tests__/**` or `*.test.ts` – they won’t emit artifacts.
+- Module type: ESM (`"type": "module"`). Entry: `dist/index.js`.
+
+### 8. External Dependencies
+- Runtime peers: `@minecraft/server` (≥2.1.0), `@minecraft/server-ui` (≥2.0.0). Keep imports shallow; avoid bundling peers.
+
+### 9. Safety / Guardrails for Agents
+- Never change fixed field widths without explicit migration section added to README & instructions.
+- Preserve padding char `;` – changing it would break client parsing logic (resource pack side expects it).
+- Avoid adding heavy dependencies; library intended to stay lightweight (just TypeScript + peers).
+- When unsure about protocol extension, append new fields instead of reordering existing ones.
+ 
+### 10. Example Pattern (future complete state)
 ```
-
-### Key Configuration Files
-- `vitest.config.ts` - Mocks `@minecraft/server` for testing
-- `eslint.config.mjs` - Extremely strict TypeScript/style rules with `@stylistic` plugin
-- `tsconfig.json` - ES2022 target, ESM modules, bundler resolution for Minecraft compatibility
-
-## Unique Conventions & Patterns
-
-### Component Interface Design
-Components are direct function calls that return JSON UI compatible objects:
-```typescript
-// Direct component API (clean and simple)
-const button = Button({
-  label: 'Click me',
-  width: 100,
-  height: 30
-});
-
-const panel = Panel({
-  display: 'flex',
-  orientation: 'vertical',
-  children: [
-    Text({ value: 'Hello World' }),
-    Button({ label: 'Save' })
-  ]
-});
-```
-  hover_control?: string;
+export function Toggle({...}): Functional<ToggleComponent> {
+	return {
+		type: 'toggle',
+		serialize(form) {
+			form.toggle(label, { defaultValue: checked });
+			return serialize(label, checked); // 32 + 5 bytes
+		}
+	};
 }
 ```
 
-### Property Group Inheritance
-All components inherit from shared property group interfaces (`ControlProperties`, `LayoutProperties`, etc.) that map to documented JSON UI property groups. This provides both type safety and direct JSON UI compatibility.
+### 11. Where to Look First
+- Protocol: `core/serializer.ts`
+- Presentation flow: `present.ts`
+- Component patterns: `core/components/*.ts`
+- Type contracts: `types/json_ui/*.ts`
+- Usage examples (commented): `main.example.ts`
 
-### Serialization Protocol
-Ultra-compact format designed for title field limitations:
-- Enum-based component types (0-255)
-- Property arrays instead of objects
-- Optional compression with integrity checksums
-- `bedrock_ui:` prefix for identification
-
-### Element-Scoped Text Embedding
-Different text fields provide different scopes:
-- `#title_text` - Global form scope
-- `#form_button_text` - Per-button scope  
-- `#custom_text` - Per-element scope
-
-## Critical Integration Points
-
-### Minecraft Dependencies
-- Requires `@minecraft/server` >=2.1.0 and `@minecraft/server-ui` >=2.0.0
-- Must work in QuickJS environment (no Node.js APIs)
-- Consumers need base addon dependency in their `manifest.json`
-
-### JSON UI Resource Pack
-The companion resource pack modifies `server_form.json` with conditional rendering based on text field prefixes. Elements are only visible when their identifier is detected in the appropriate text field.
-
-## Development Guidelines
-
-### TypeScript Standards
-- Extremely strict ESLint rules with explicit return types required
-- Private members must have leading underscore
-- Consistent naming conventions enforced
-- No `any` types, prefer specific interfaces
-
-### Testing Setup
-- Vitest with mocked Minecraft APIs
-- Coverage tracking enabled
-- Tests should be in `src/**/*.{test,spec}.ts` or `src/**/__tests__/`
-
-### Component Development
-When creating new components:
-1. Create a clean interface with developer-friendly property names
-2. Use object destructuring in function parameters
-3. Return JSON UI compatible objects with proper type casting
-4. Add to serialization protocol with new enum value
-5. Create corresponding JSON UI configuration
-
-### Current Component Pattern
-All components follow this clean pattern:
-```typescript
-export interface ComponentProps {
-  // Clean, minimal property definitions
-  label?: string;
-  width?: number | string;
-  height?: number | string;
-}
-
-export function Component({ label, width, height }: ComponentProps): JSONUIComponent {
-  return {
-    type: 'json_ui_type',
-    size: [width || 'default', height || 'default'],
-    property_name: label,
-  } as JSONUIComponent;
-}
-```
-
-## Architecture Deep Dive
-
-The system's genius is in the configuration-based approach rather than complex rendering. The JSON UI files are pre-configured with conditional rendering logic that activates based on embedded data patterns. This makes it maintainable and provides direct access to all JSON UI capabilities while offering a superior developer experience.
-
-Key files to understand the full system:
-- `ARCHITECTURE.md` sections 1-3 for component API design
-- `src/temp/server_form.json` for the JSON UI integration patterns
-- `src/temp/json-ui-documentation.md` for property group mappings
-- `src/core/components/` for direct component implementations
+If any of the above seems ambiguous (e.g., how the resource pack decodes offsets), request clarification instead of guessing.

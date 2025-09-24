@@ -1,12 +1,14 @@
 import { ModalFormData } from '@minecraft/server-ui';
-import { Component } from './json_ui/components';
 
 export type * from './json_ui/components';
 export type * from './json_ui/properties';
 
-export type Functional<T extends Component> = T & {
-  serialize: (form: FormData) => string;
+export interface Serialized {
+  type: string;
+  [key: string]: unknown;
 }
+
+export type SerializableComponent = { serialize: (form: FormData) => Serialized };
 
 // TODO TEMPORAL FOR TESTING
 // export type FormData = ActionFormData | ModalFormData | MessageFormData;
