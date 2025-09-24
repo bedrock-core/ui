@@ -1,8 +1,9 @@
 {
-	"namespace": "core-ui_input",
+	"namespace": "core-ui_components",
+	// TODO FILE OUTDATED AF
 	// TODO CURRENT STATUS
 	// FLOAT DOES NOT WORK, REST WORKS, IGNORE FLOATS AND WORK WITH ONLY WHAT IS WORKING FOR NOW
-	"core-ui_input@server_form.custom_input": {
+	"input@server_form.custom_input": {
 		"type": "edit_box",
 		"text": "#total",
 		"color": [

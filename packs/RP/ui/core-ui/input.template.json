@@ -1,13 +1,6 @@
 {
-	"namespace": "core-ui_input",
-	"core-ui_input": {
-		"type": "label",
-		"text": "#total",
-		"color": [
-			1,
-			0,
-			0
-		],
+	"namespace": "core-ui_components",
+	"{NAME}": {
 		"bindings": [
 			{
 				"binding_name": "#custom_text",
@@ -37,7 +30,7 @@
 			{
 				"binding_type": "view",
 				"source_property_name": "((#{NAME}_padded - #{NAME}_prefix) - ';')",
-				"target_property_name": "#{NAME}_val"
+				"target_property_name": "#{NAME}"
 			}
 		]
 	}

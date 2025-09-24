@@ -1,0 +1,12 @@
+{
+	"namespace": "core-ui_components",
+	"panel@core-ui_components.control": {
+		"bindings": [
+			{
+				"binding_name": "#custom_text",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form"
+			}
+		]
+	}
+}

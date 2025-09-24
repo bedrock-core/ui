@@ -9,12 +9,12 @@
 		"factory": {
 			"name": "buttons",
 			"control_ids": {
-				"label": "@server_form.custom_label",
+				"label": "@core-ui_components.panel",
 				"toggle": "@server_form.custom_toggle",
 				"slider": "@server_form.custom_slider",
 				"step_slider": "@server_form.custom_step_slider",
 				"dropdown": "@server_form.custom_dropdown",
-				"input": "@core-ui_input.core-ui_input",
+				"input": "@server_form.custom_input",
 				"header": "@server_form.custom_header",
 				"divider": "@settings_common.option_group_section_divider"
 			}
