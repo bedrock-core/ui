@@ -9,7 +9,7 @@
 		"factory": {
 			"name": "buttons",
 			"control_ids": {
-				"label": "@core-ui_components.panel",
+				"label": "@core-ui_components.text",
 				"toggle": "@server_form.custom_toggle",
 				"slider": "@server_form.custom_slider",
 				"step_slider": "@server_form.custom_step_slider",

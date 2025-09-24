@@ -1,6 +1,6 @@
 {
 	"namespace": "core-ui_components",
-	"panel@core-ui_components.control": {
+	"panel@core-ui_components.controled_layout": {
 		"bindings": [
 			{
 				"binding_name": "#custom_text",

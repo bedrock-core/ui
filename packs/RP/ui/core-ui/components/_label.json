@@ -1,0 +1,5 @@
+{
+	"namespace": "core-ui_components",
+	// Special component for later rework
+	"label@core-ui_properties.controled_layout": {}
+}

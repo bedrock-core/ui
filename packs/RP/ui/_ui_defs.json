@@ -9,12 +9,13 @@
 		// After the initial reserved bytes for the core, which is the shared data between all the components,
 		// rest of bytes after 512 for its own use.
 		// ----------------------------------------------
-		// "ui/core-ui/components/input.json", // [512,] 
+		"ui/core-ui/components/text.json" // [512,] 
+		// "ui/core-ui/components/input.json" // [512,] 
 		// "ui/core-ui/components/slider.json", // [512,] 
 		// "ui/core-ui/components/toggle.json" // [512,] 
 		// ----------------------------------------------
 		// Special type, we use in the TS the label as the base for the "client" only components
 		// as label is the simplest component where we can pass data
-		"ui/core-ui/components/label.json" // [512,] 
+		// "ui/core-ui/components/label.json" // [512,] 
 	]
 }
