@@ -1,7 +1,5 @@
-import { ModalFormData } from '@minecraft/server-ui';
 import { LabelProps } from '..';
-import type { EditBoxComponent, FormData, SerializableComponent } from '../../../types';
-import { serialize } from '../../serializer';
+import type { Component, CoreUIFormData } from '../../../types';
 
 export interface InputProps extends LabelProps {
   value?: string;
@@ -13,28 +11,11 @@ export interface InputProps extends LabelProps {
   height: number;
 }
 
-type Arr = Parameters<ModalFormData['textField']>;
-
-type MyObject = {
-  [K in Exclude<Arr[number], undefined | object>]: unknown;
-};
-
-// TODO CONDITIONAL THINGS WITH THE TEXT
-export function Input({ label, placeholder, value, multiline, maxLength, textType, width, height }: InputProps): SerializableComponent<EditBoxComponent> {
-  const test: MyObject = {
-    label,
-    placeholder,
-    textFieldOptions: { defaultValue: value },
-  };
-
+export function Input({ label, placeholder, value }: InputProps): Component {
   return {
-    type: 'edit_box',
-    serialize: (form: FormData): string => {
-      const serialized = serialize(label, maxLength, textType, multiline, width, height);
-
-      form.textField(serialized, placeholder || '', { defaultValue: value });
-
-      return serialized;
+    serialize: (form: CoreUIFormData): void => {
+      // TODO: Implement serialization logic
+      form.textField(label, placeholder || '', { defaultValue: value });
     },
   };
 }

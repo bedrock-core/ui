@@ -1,7 +1,13 @@
 /**
  * Serialization related types and enums
  */
-export type Serializable = string | number | boolean;
+
+export interface SerializedComponent {
+  type: string;
+  [key: string]: SerializablePrimitive;
+}
+
+export type SerializablePrimitive = string | number | boolean;
 
 // Future ideal support types:
-// | undefined | null | Serializable[] | { [key: string]: Serializable };
+// | undefined | null | SerializedComponent[] | { [key: string]: SerializedComponent };

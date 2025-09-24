@@ -1,43 +1,28 @@
-import { ModalFormData } from '@minecraft/server-ui';
-import { ResizableProps } from '.';
-import type { Component, SerializableComponent, PanelComponent, StackPanelComponent } from '../../types';
 
+import { ResizableProps } from '.';
+import { CoreUIFormData, Component, SerializedComponent } from '../../types';
+import { serialize } from '../serializer';
 export interface PanelProps extends ResizableProps {
-  display?: 'flex' | 'block';
-  orientation?: 'vertical' | 'horizontal';
+  // Future idea
+  // display?: 'flex' | 'block';
+  // orientation?: 'vertical' | 'horizontal';
+  children: Component[];
 }
 
-export function Panel({ display, orientation, width, height, maxWidth, maxHeight }: PanelProps, children: SerializableComponent<Component>[] = []): SerializableComponent<StackPanelComponent | PanelComponent> {
-  switch (display) {
-    case 'flex':
-      return {
-        type: 'stack_panel',
-        size: [width || 'default', height || 'default'],
-        max_size: [maxWidth || 'default', maxHeight || 'default'],
-        orientation: orientation === 'horizontal' ? 'horizontal' : 'vertical',
-        controls: children,
-        serialize: (form: ModalFormData): string => {
-          // TODO: Implement panel serialization logic
-          children.forEach(child => {
-            child.serialize(form);
-          });
-
-          return '';
-        },
-      };
-    case 'block':
-    case undefined:
-    default:
-      return {
+export function Panel({ width, height, children }: PanelProps): Component {
+  return {
+    serialize: (form: CoreUIFormData): void => {
+      const serialized: SerializedComponent = {
+        // Core identity
         type: 'panel',
-        size: [width || 'default', height || 'default'],
-        max_size: [maxWidth || 'default', maxHeight || 'default'],
-        controls: children,
-        serialize: (): string =>
-          // TODO: Implement panel serialization logic
-          // Use ComponentProcessor.serializeChildren(children) to serialize child components
-          '',
-
+        // Sizing
+        width: width ?? 'default',
+        height: height ?? 'default',
       };
-  }
+
+      form.label(serialize(serialized));
+
+      children.forEach((child: Component): void => child.serialize(form));
+    },
+  };
 }

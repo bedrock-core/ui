@@ -1,6 +1,5 @@
-import { LabelProps, ResizableProps } from '..';
-import type { FormData, SerializableComponent, SliderComponent } from '../../../types';
-import type { ModalFormData } from '@minecraft/server-ui';
+import { LabelProps } from '..';
+import type { Component, CoreUIFormData } from '../../../types';
 
 export interface SliderProps extends LabelProps {
   min: number;
@@ -9,15 +8,11 @@ export interface SliderProps extends LabelProps {
   step?: number;
 }
 
-// TODO CONDITIONAL THINGS WITH THE TEXT
-export function Slider({ label, min, max, value, step }: SliderProps): SerializableComponent<SliderComponent> {
+export function Slider({ label, min, max, value, step }: SliderProps): Component {
   return {
-    type: 'slider',
-    serialize: (form: FormData): string => {
+    serialize: (form: CoreUIFormData): void => {
+      // TODO: Implement serialization logic
       form.slider(label, min, max, { defaultValue: value, valueStep: step });
-
-      // TODO: Implement Slider serialization logic
-      return '';
     },
   };
 }

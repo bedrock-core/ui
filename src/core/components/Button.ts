@@ -1,18 +1,15 @@
 import { LabelProps, ResizableProps } from '.';
-import type { ButtonComponent, FormData, SerializableComponent } from '../../types';
+import type { Component, CoreUIFormData } from '../../types';
 
 export interface ButtonProps extends LabelProps, ResizableProps { onClick?: () => void }
 
 // TODO CONDITIONAL THINGS WITH THE TEXT
-export function Button({ label, width, height, maxWidth, maxHeight }: ButtonProps): SerializableComponent<ButtonComponent> {
+export function Button({ }: ButtonProps): Component {
   return {
-    type: 'button',
-    size: [width || 'default', height || 'default'],
-    max_size: [maxWidth || 'default', maxHeight || 'default'],
-    serialize: (_form: FormData): string =>
-      // form.button(label);
-      // TODO: Implement Button serialization logic
-      '',
-
+    serialize: (_form: CoreUIFormData): void => {
+      // TODO: Implement serialization logic
+      // Should not be the submit button, look at possibilities, client only which triggers re-render?
+      // form.submitButton(label, { size: [width, height] });
+    },
   };
 }

@@ -12,6 +12,4 @@ export interface LabelProps { label: string }
 export interface ResizableProps {
   width?: number | string;
   height?: number | string;
-  maxWidth?: number | string;
-  maxHeight?: number | string;
 }

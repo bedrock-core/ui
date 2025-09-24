@@ -1,4 +1,8 @@
-# @bedrock-core/ui
+# @bedrock-core/
+
+## Why?
+
+f*** JSON-UI, and I refuse to release an addon without a custom UI knowing I'm able. So with this I just will need to make each component I need once and forget and not relearn how this f*ing mess of a system.
 
 > ⚠️ Alpha Status: Active alpha. Breaking changes may ship without deprecation until 1.0.0. Pin exact versions for stability.
 
@@ -267,3 +271,11 @@ MIT © @DrAv0011
 ## Brain blob
 
 We're going to make the label, to use the label as the entrance. So we're going to serialize everything that I'm able to see on the label. So, label, serialize the label, everything from the type to the next pattern, to the next, to the next. Then in the JSON, we just extract the type. From that, binding, we redirect to make the next type, and the next pattern, and place it. To a nested control, to a different thing. You know? In the title, with an arroba, binding. And amazing, and that's it. Easy.
+
+Currently will focus on being able to load anything and use an absolute positioning model with position and size mandatory
+Use only ModalFormData
+
+- Use native element if exists
+- Use label for "client" only elements
+
+Note all "optional" props values should have a defined default in the serialized field

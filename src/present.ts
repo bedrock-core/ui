@@ -1,6 +1,6 @@
 import { Player } from '@minecraft/server';
-import type { FormData, SerializableComponent } from './types/index';
-import type { Component } from './types/json_ui/components';
+import type { Component } from './types/component';
+import type { CoreUIFormData } from './types/index';
 
 /**
  * Present a component to a player using the @bedrock-core/ui system
@@ -32,10 +32,8 @@ import type { Component } from './types/json_ui/components';
  * await present(player, ui);
  * ```
  */
-export async function present(form: FormData, player: Player, component: SerializableComponent<Component>): Promise<void> {
-  const serializedData: string = component.serialize(form);
-
-  form.title(serializedData);
+export async function present(form: CoreUIFormData, player: Player, component: Component): Promise<void> {
+  component.serialize(form);
 
   form.show(player).then(() => {
     // TODO STUFF

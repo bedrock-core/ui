@@ -1,5 +1,6 @@
 import { ResizableProps } from '.';
-import type { SerializableComponent, ImageComponent } from '../../types';
+import type { Component, CoreUIFormData, SerializedComponent } from '../../types';
+import { serialize } from '../serializer';
 
 export interface ImageProps extends ResizableProps {
   texture?: string;
@@ -11,21 +12,19 @@ export interface ImageProps extends ResizableProps {
   bilinear?: boolean;
 }
 
-export function Image({ texture, uv, uvSize, ninesliceSize, tiled, keepRatio, bilinear, width, height, maxWidth, maxHeight }: ImageProps): SerializableComponent<ImageComponent> {
+export function Image({ width, height }: ImageProps): Component {
   return {
-    type: 'image',
-    size: [width || 'default', height || 'default'],
-    max_size: [maxWidth || 'default', maxHeight || 'default'],
-    texture,
-    uv,
-    uv_size: uvSize,
-    nineslice_size: ninesliceSize,
-    tiled,
-    keep_ratio: keepRatio,
-    bilinear,
-    serialize: (): string =>
-      // TODO: Implement image serialization logic
-      '',
+    serialize: (form: CoreUIFormData): void => {
+      // TODO: Implement serialization logic
+      const serialized: SerializedComponent = {
+        // Core identity
+        type: 'image',
+        // Sizing
+        width: width ?? 'default',
+        height: height ?? 'default',
+      };
 
+      form.label(serialize(serialized));
+    },
   };
 }

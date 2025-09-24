@@ -1,4 +1,4 @@
-import { Serializable } from '../types/serialization';
+import { SerializedComponent, SerializablePrimitive } from '../types/serialization';
 
 /**
  * Compute UTF-8 byte length
@@ -111,24 +111,26 @@ function padToByteLength(str: string, length: number): string {
  * @param args
  * @returns
  */
-export function serialize(...args: Serializable[]): string {
-  return args.map((arg: Serializable, index: number): string => {
+export function serialize({ type, ...rest }: SerializedComponent): string {
+  console.info('Serializing:', { type, ...rest });
+
+  return Object.entries({ type, ...rest }).map(([key, value]: [string, SerializablePrimitive], index: number): string => {
     let core: string;
 
-    if (typeof arg === 'string') {
-      core = `s:${padToByteLength(arg, 32)}`;
-    } else if (typeof arg === 'boolean') {
-      const val = arg ? 'true' : 'false';
+    if (typeof value === 'string') {
+      core = `s:${padToByteLength(value, 32)}`;
+    } else if (typeof value === 'boolean') {
+      const val = value ? 'true' : 'false';
 
       core = `b:${padToByteLength(val, 5)}`;
-    } else if (typeof arg === 'number') {
-      if (Number.isInteger(arg)) {
-        core = `i:${padToByteLength(arg.toString(), 16)}`;
+    } else if (typeof value === 'number') {
+      if (Number.isInteger(value)) {
+        core = `i:${padToByteLength(value.toString(), 16)}`;
       } else {
-        core = `f:${padToByteLength(arg.toString(), 24)}`;
+        core = `f:${padToByteLength(value.toString(), 24)}`;
       }
     } else {
-      throw new Error('Unsupported type');
+      throw new Error(`serialize(): unsupported type for property "${key}"`);
     }
 
     return core + getFieldMarker(index);

@@ -1,5 +1,3 @@
-import { Player } from '@minecraft/server';
-import { present, Panel, Text, Button, Input, Component } from './index';
 
 /**
  * Simple Player Settings UI Example

@@ -1,17 +1,13 @@
 import { LabelProps } from '..';
-import type { FormData, SerializableComponent, ToggleComponent } from '../../../types';
+import type { Component, CoreUIFormData } from '../../../types';
 
 export interface ToggleProps extends LabelProps { checked?: boolean }
 
-// TODO CONDITIONAL THINGS WITH THE TEXT
-export function Toggle({ label, checked }: ToggleProps): SerializableComponent<ToggleComponent> {
+export function Toggle({ label, checked }: ToggleProps): Component {
   return {
-    type: 'toggle',
-    serialize: (form: FormData): string => {
+    serialize: (form: CoreUIFormData): void => {
+      // TODO: Implement serialization logic
       form.toggle(label, { defaultValue: checked });
-
-      // TODO: Implement toggle serialization logic
-      return '';
     },
   };
 }

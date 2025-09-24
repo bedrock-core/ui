@@ -1,56 +1,54 @@
-import type {
-  ControlProperties,
-  LayoutProperties,
-  DataBindingProperties,
-  InputProperties,
-  FocusProperties,
-  SoundProperties,
-  TextProperties,
-  SpriteProperties,
+import {
   ButtonProperties,
-  ToggleProperties,
-  SliderProperties,
-  TextEditProperties,
-  StackPanelProperties,
-  CollectionProperties,
-  GridProperties,
+  ControlProperties,
   DropdownProperties,
-  ScrollViewProperties
+  GridProperties,
+  InputProperties,
+  LayoutProperties,
+  ScrollViewProperties,
+  SliderProperties,
+  SpriteProperties,
+  StackPanelProperties,
+  TextEditProperties,
+  TextProperties,
+  ToggleProperties
 } from './properties.js';
 
 /**
  * JSON UI Component Interfaces
+ * This is for reference and type safety when building JSON UI structures programmatically.
+ * Should not be used in the codebase directly.
  * Based on documented JSON UI properties from
  * {@link https://wiki.bedrock.dev/json-ui/json-ui-documentation}
  */
 
-export interface PanelComponent extends ControlProperties, LayoutProperties, DataBindingProperties { type: 'panel' }
+interface PanelComponent extends ControlProperties, LayoutProperties { type: 'panel' }
 
-export interface StackPanelComponent extends ControlProperties, LayoutProperties, DataBindingProperties, StackPanelProperties, CollectionProperties { type: 'stack_panel' }
+interface StackPanelComponent extends ControlProperties, LayoutProperties, StackPanelProperties { type: 'stack_panel' }
 
-export interface CollectionPanelComponent extends ControlProperties, LayoutProperties, DataBindingProperties, CollectionProperties { type: 'collection_panel' }
+interface CollectionPanelComponent extends ControlProperties, LayoutProperties { type: 'collection_panel' }
 
-export interface GridComponent extends ControlProperties, LayoutProperties, DataBindingProperties, GridProperties, CollectionProperties { type: 'grid' }
+interface GridComponent extends ControlProperties, LayoutProperties, GridProperties { type: 'grid' }
 
-export interface LabelComponent extends ControlProperties, LayoutProperties, DataBindingProperties, TextProperties { type: 'label' }
+interface LabelComponent extends ControlProperties, LayoutProperties, TextProperties { type: 'label' }
 
-export interface ImageComponent extends ControlProperties, LayoutProperties, DataBindingProperties, SpriteProperties { type: 'image' }
+interface ImageComponent extends ControlProperties, LayoutProperties, SpriteProperties { type: 'image' }
 
-export interface InputPanelComponent extends ControlProperties, LayoutProperties, DataBindingProperties, InputProperties, FocusProperties, SoundProperties { type: 'input_panel' }
+interface InputPanelComponent extends ControlProperties, LayoutProperties, InputProperties { type: 'input_panel' }
 
-export interface ButtonComponent extends ControlProperties, LayoutProperties, DataBindingProperties, ButtonProperties, InputProperties, FocusProperties, SoundProperties { type: 'button' }
+interface ButtonComponent extends ControlProperties, LayoutProperties, ButtonProperties, InputProperties { type: 'button' }
 
-export interface ToggleComponent extends ControlProperties, LayoutProperties, DataBindingProperties, ToggleProperties, InputProperties, FocusProperties, SoundProperties { type: 'toggle' }
+interface ToggleComponent extends ControlProperties, LayoutProperties, ToggleProperties, InputProperties { type: 'toggle' }
 
-export interface DropdownComponent extends ControlProperties, LayoutProperties, DataBindingProperties, DropdownProperties, ToggleProperties, InputProperties, FocusProperties, SoundProperties { type: 'dropdown' }
+interface DropdownComponent extends ControlProperties, LayoutProperties, DropdownProperties, ToggleProperties, InputProperties { type: 'dropdown' }
 
-export interface SliderComponent extends ControlProperties, LayoutProperties, DataBindingProperties, SliderProperties, InputProperties, FocusProperties, SoundProperties { type: 'slider' }
+interface SliderComponent extends ControlProperties, LayoutProperties, SliderProperties, InputProperties { type: 'slider' }
 
-export interface EditBoxComponent extends ControlProperties, LayoutProperties, DataBindingProperties, TextEditProperties, ButtonProperties, InputProperties, FocusProperties { type: 'edit_box' }
+interface EditBoxComponent extends ControlProperties, LayoutProperties, TextEditProperties, ButtonProperties, InputProperties { type: 'edit_box' }
 
-export interface ScrollViewComponent extends ControlProperties, LayoutProperties, DataBindingProperties, ScrollViewProperties, InputProperties { type: 'scroll_view' }
+interface ScrollViewComponent extends ControlProperties, LayoutProperties, ScrollViewProperties, InputProperties { type: 'scroll_view' }
 
-export type Component =
+export type JSONComponent =
   | PanelComponent
   | StackPanelComponent
   | CollectionPanelComponent
@@ -65,7 +63,7 @@ export type Component =
   | EditBoxComponent
   | ScrollViewComponent;
 
-export type ComponentTypeUnion =
+export type JSONComponentTypeUnion =
   | 'panel'
   | 'stack_panel'
   | 'collection_panel'
