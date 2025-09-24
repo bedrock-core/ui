@@ -1,9 +1,9 @@
-import { ResizableProps } from '.';
+import { ControledLayoutProps, withControledLayout } from '.';
 import type { Component, CoreUIFormData, SerializableComponent } from '../../types';
 import { Logger } from '../../util/Logger';
 import { serialize } from '../serializer';
 
-export interface ImageProps extends ResizableProps {
+export interface ImageProps extends ControledLayoutProps {
   texture?: string;
   uv?: [number, number];
   uvSize?: [number, number];
@@ -13,20 +13,17 @@ export interface ImageProps extends ResizableProps {
   bilinear?: boolean;
 }
 
-export function Image({ width, height, x, y, texture, uv, uvSize, ninesliceSize, tiled, keepRatio, bilinear }: ImageProps): Component {
+export function Image(props: ImageProps): Component {
+  const { texture, uv, uvSize, ninesliceSize, tiled, keepRatio, bilinear, ...rest } = withControledLayout(props);
+
   return {
     serialize: (form: CoreUIFormData): void => {
-      const nineSliced = Array.isArray(ninesliceSize) ? ninesliceSize : [ninesliceSize ?? 0, ninesliceSize ?? 0, ninesliceSize ?? 0, ninesliceSize ?? 0];
+      const nineSliced = Array.isArray(ninesliceSize)
+        ? ninesliceSize
+        : [ninesliceSize ?? 0, ninesliceSize ?? 0, ninesliceSize ?? 0, ninesliceSize ?? 0];
 
       const serializable: SerializableComponent = {
-        // Core identity
         type: 'image',
-        // Sizing
-        width: width ?? 'default',
-        height: height ?? 'default',
-        x: x ?? '0',
-        y: y ?? '0',
-        // Properties
         texture: texture ?? '',
         uvX: uv?.[0] ?? 0,
         uvY: uv?.[1] ?? 0,
@@ -39,6 +36,7 @@ export function Image({ width, height, x, y, texture, uv, uvSize, ninesliceSize,
         tiled: tiled ?? false,
         keepRatio: keepRatio ?? false,
         bilinear: bilinear ?? false,
+        ...rest,
       };
 
       const [result, bytes] = serialize(serializable);

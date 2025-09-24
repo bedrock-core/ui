@@ -1,4 +1,4 @@
-import { ResizableProps } from '.';
+import { ControledLayoutProps, withControledLayout } from '.';
 import { CoreUIFormData } from '../../types';
 import type { Component } from '../../types/component';
 import { SerializableComponent } from '../../types/serialization';
@@ -16,23 +16,20 @@ export interface TextStyle {
   textAlignment?: 'left' | 'center' | 'right';
 }
 
-export interface TextProps extends ResizableProps {
+export interface TextProps extends ControledLayoutProps {
   value: string;
   textStyle?: TextStyle;
 }
 
-export function Text({ value, textStyle, width, height, x, y }: TextProps): Component {
+export function Text(props: TextProps): Component {
+  const { value, textStyle, ...rest } = withControledLayout(props);
+
   return {
     serialize: (form: CoreUIFormData): void => {
       const serializable: SerializableComponent = {
         // Core identity
         type: 'label',
         text: value ?? '',
-        // Sizing
-        width: width ?? 'default',
-        height: height ?? 'default',
-        x: x ?? '0',
-        y: y ?? '0',
         // Properties
         colorR: textStyle?.color?.[0] ?? 1,
         colorG: textStyle?.color?.[1] ?? 1,
@@ -46,6 +43,7 @@ export function Text({ value, textStyle, width, height, x, y }: TextProps): Comp
         fontType: textStyle?.fontType ?? 'default',
         localize: textStyle?.localize ?? false,
         textAlignment: textStyle?.textAlignment ?? 'left',
+        ...rest,
       };
 
       const [result, bytes] = serialize(serializable);

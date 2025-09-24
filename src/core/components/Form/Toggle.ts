@@ -1,7 +1,7 @@
-import { LabelProps, ResizableProps } from '..';
+import { ControledLayoutProps, LabelProps } from '..';
 import type { Component, CoreUIFormData } from '../../../types';
 
-export interface ToggleProps extends LabelProps, ResizableProps { checked?: boolean }
+export interface ToggleProps extends LabelProps, ControledLayoutProps { checked?: boolean }
 
 export function Toggle({ label, checked }: ToggleProps): Component {
   return {

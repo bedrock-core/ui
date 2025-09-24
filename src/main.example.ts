@@ -9,24 +9,24 @@ import { Component } from './types';
  */
 function ExampleComponent(): Component {
   return Panel({
-    height: 'auto',
-    width: 'auto',
+    height: '500',
+    width: '2000',
     x: '0',
     y: '0',
     children: [
       Text({
-        height: 'auto',
-        width: 'auto',
-        x: '0',
-        y: '0',
+        height: '40',
+        width: '100',
+        x: '100',
+        y: '40',
         value: 'Player Settings',
       }),
       Text({
-        height: 'auto',
-        width: 'auto',
-        x: '0',
-        y: '0',
-        value: 'Player Settings',
+        height: '40',
+        width: '100',
+        x: '100',
+        y: '90',
+        value: 'Player Settings 2',
       }),
     ],
   });

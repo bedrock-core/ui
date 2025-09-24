@@ -1,7 +1,7 @@
-import { LabelProps, ResizableProps } from '..';
+import { ControledLayoutProps, LabelProps } from '..';
 import type { Component, CoreUIFormData } from '../../../types';
 
-export interface InputProps extends LabelProps, ResizableProps {
+export interface InputProps extends LabelProps, ControledLayoutProps {
   value?: string;
   placeholder?: string;
   multiline?: boolean;

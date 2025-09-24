@@ -1,26 +1,25 @@
 
-import { ResizableProps } from '.';
-import { CoreUIFormData, Component, SerializableComponent as SerializableComponent } from '../../types';
+import { ControledLayoutProps, withControledLayout } from '.';
+import { Component, CoreUIFormData, SerializableComponent } from '../../types';
 import { Logger } from '../../util/Logger';
 import { serialize } from '../serializer';
-export interface PanelProps extends ResizableProps {
+export interface PanelProps extends ControledLayoutProps {
   // Future idea
   // display?: 'flex' | 'block';
   // orientation?: 'vertical' | 'horizontal';
   children: Component[];
 }
 
-export function Panel({ width, height, x, y, children }: PanelProps): Component {
+export function Panel(props: PanelProps): Component {
+  const { children, ...rest } = withControledLayout(props);
+
   return {
     serialize: (form: CoreUIFormData): void => {
+      // 'children' are not primitives; they are serialized separately after emitting
+      // this panel's own primitive payload.
       const serializable: SerializableComponent = {
-        // Core identity
         type: 'panel',
-        // Sizing
-        width: width ?? 'default',
-        height: height ?? 'default',
-        x: x ?? '0',
-        y: y ?? '0',
+        ...rest,
       };
 
       const [result, bytes] = serialize(serializable);

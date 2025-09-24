@@ -2,7 +2,10 @@
 
 ## Why?
 
-f*** JSON-UI, and I refuse to release an addon without a custom UI knowing I'm able. So with this I just will need to make each component I need once and forget and not relearn how this f*ing mess of a system.
+f*** JSON UI, and I refuse to release an addon without a custom UI knowing I'm able. So with this I just will need to make each component I need once and forget and not re-learn how this f*ing mess of a system.
+
+Even if you know how JSON UI works, working around the bindings, variables, formatting and ton of limitiations it has is a pain.
+With this you just make the UI and that is it.
 
 > ⚠️ Alpha Status: Active alpha. Breaking changes may ship without deprecation until 1.0.0. Pin exact versions for stability.
 
@@ -284,6 +287,7 @@ Place tests under `src/**/__tests__/**` or `*.test.ts` (excluded from build outp
     - Standard stuff, dividers, tabs, menus, toast, card, badge, chip, drawers, dialogs...
   - Animation support
   - Reactive screens, for the first versions the screens will have static information and only be able to be updated after user input in a button. Need to investigate the possibility to make the information update reactively and if it is worth. It might lag a log, be very complex...
+  - Preprocesor to be able to use tsx instead of function like components
 
 Everything listed here will only be made if it is possible and not extremely complicated
 Order might change if I feel like it
