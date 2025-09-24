@@ -10,6 +10,10 @@ export { Image, type ImageProps } from './Image';
 export interface LabelProps { label: string }
 
 export interface ResizableProps {
-  width?: number | string;
-  height?: number | string;
+  // In json ui could be number or string, we treat both as string as it has the larger byte length
+  // All mandatory for now as we are going to go with fixed absolute sizing and positioning for now
+  width: string;
+  height: string;
+  x: string;
+  y: string;
 }

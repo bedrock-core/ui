@@ -10,7 +10,7 @@ export interface PanelProps extends ResizableProps {
   children: Component[];
 }
 
-export function Panel({ width, height, children }: PanelProps): Component {
+export function Panel({ width, height, x, y, children }: PanelProps): Component {
   return {
     serialize: (form: CoreUIFormData): void => {
       const serializable: SerializableComponent = {
@@ -19,6 +19,8 @@ export function Panel({ width, height, children }: PanelProps): Component {
         // Sizing
         width: width ?? 'default',
         height: height ?? 'default',
+        x: x ?? '0',
+        y: y ?? '0',
       };
 
       const [result, bytes] = serialize(serializable);

@@ -21,7 +21,7 @@ export interface TextProps extends ResizableProps {
   textStyle?: TextStyle;
 }
 
-export function Text({ value, textStyle, width, height }: TextProps): Component {
+export function Text({ value, textStyle, width, height, x, y }: TextProps): Component {
   return {
     serialize: (form: CoreUIFormData): void => {
       const serializable: SerializableComponent = {
@@ -31,6 +31,8 @@ export function Text({ value, textStyle, width, height }: TextProps): Component 
         // Sizing
         width: width ?? 'default',
         height: height ?? 'default',
+        x: x ?? '0',
+        y: y ?? '0',
         // Properties
         colorR: textStyle?.color?.[0] ?? 1,
         colorG: textStyle?.color?.[1] ?? 1,

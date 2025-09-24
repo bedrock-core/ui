@@ -1,6 +1,51 @@
 import { SerializableComponent, SerializablePrimitive } from '../types/serialization';
 
 /**
+ * Per-field unique marker characters appended AFTER the fixed-width padded payload.
+ * This makes each full field substring unique even when two field values & padding are identical.
+ * JSON UI subtraction removes ALL occurrences, so uniqueness is required to avoid unintentionally
+ * stripping later identical fields. With a unique trailing marker per field, removing the first
+ * field substring cannot match a later one (different marker) even if the padded content matches.
+ *
+ * NOTE: This increases the protocol length by +1 char per field. Decoders using the
+ * progressive subtraction pattern must now slice (width + 1) for the raw field, then use a
+ * secondary slice (original width) to read the actual value ignoring the trailing marker.
+ * (Example for a 32-byte string: raw = ('%.33s' * #payload); value = ('%.32s' * #raw) - ';')
+ */
+export const FIELD_MARKERS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'.split('');
+
+export const PAD_CHAR = ';';
+
+// Protocol version tag (format: 'v' + 4 characters)
+// e.g., 'bcuiv0001'
+// Increment when making backward-incompatible changes to the payload layout.
+export const VERSION = 'v0001';
+export const PROTOCOL_HEADER = `bcui${VERSION}`;
+
+// Public protocol constants (exported for tests and decoders)
+export const PADDED_WIDTH = {
+  s: 32,
+  i: 16,
+  f: 24,
+  b: 5,
+};
+
+export const SLICE_WIDTH = {
+  s: PADDED_WIDTH.s + 3, // 2 prefix + 1 marker
+  i: PADDED_WIDTH.i + 3,
+  f: PADDED_WIDTH.f + 3,
+  b: PADDED_WIDTH.b + 3,
+};
+
+// Type prefix characters used for encoding
+export const TYPE_PREFIX = {
+  s: 's',
+  i: 'i',
+  f: 'f',
+  b: 'b',
+};
+
+/**
  * Compute UTF-8 byte length
  * @param str
  * @returns
@@ -66,22 +111,6 @@ function utf8Truncate(str: string, maxBytes: number): string {
   return result;
 }
 
-const PAD_CHAR = ';';
-
-/**
- * Per-field unique marker characters appended AFTER the fixed-width padded payload.
- * This makes each full field substring unique even when two field values & padding are identical.
- * JSON UI subtraction removes ALL occurrences, so uniqueness is required to avoid unintentionally
- * stripping later identical fields. With a unique trailing marker per field, removing the first
- * field substring cannot match a later one (different marker) even if the padded content matches.
- *
- * NOTE: This increases the protocol length by +1 char per field. Decoders using the
- * progressive subtraction pattern must now slice (width + 1) for the raw field, then use a
- * secondary slice (original width) to read the actual value ignoring the trailing marker.
- * (Example for a 32-byte string: raw = ('%.33s' * #payload); value = ('%.32s' * #raw) - ';')
- */
-const FIELD_MARKERS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'.split('');
-
 function getFieldMarker(index: number): string {
   if (index >= FIELD_MARKERS.length) {
     throw new Error(`serialize(): exceeded supported field marker count (${FIELD_MARKERS.length}).`);
@@ -107,9 +136,11 @@ function padToByteLength(str: string, length: number): string {
 }
 
 /**
- * Serialize component to a string
- * @param the component to serialize
- * @returns [serialized component, byte length]
+ * Serialize component to a string payload.
+ * The returned payload is prefixed with `bcui` + VERSION (e.g., `bcuiv0001`).
+ *
+ * @param component - The component data to serialize (flat object with primitives)
+ * @returns [serialized component string, total byte length]
  */
 export function serialize({ type, ...rest }: SerializableComponent): [string, number] {
   const entries = Object.entries<SerializablePrimitive>({ type, ...rest });
@@ -121,20 +152,20 @@ export function serialize({ type, ...rest }: SerializableComponent): [string, nu
     let widthBytes: number;
 
     if (typeof value === 'string') {
-      core = `s:${padToByteLength(value, 32)}`;
-      widthBytes = 35; // 32 value bytes + 2 prefix + 1 marker
+      core = `${TYPE_PREFIX.s}:${padToByteLength(value, PADDED_WIDTH.s)}`;
+      widthBytes = SLICE_WIDTH.s;
     } else if (typeof value === 'boolean') {
       const val = value ? 'true' : 'false';
 
-      core = `b:${padToByteLength(val, 5)}`;
-      widthBytes = 8; // 5 value bytes + 2 prefix + 1 marker
+      core = `${TYPE_PREFIX.b}:${padToByteLength(val, PADDED_WIDTH.b)}`;
+      widthBytes = SLICE_WIDTH.b;
     } else if (typeof value === 'number') {
       if (Number.isInteger(value)) {
-        core = `i:${padToByteLength(value.toString(), 16)}`;
-        widthBytes = 19; // 16 value bytes + 2 prefix + 1 marker
+        core = `${TYPE_PREFIX.i}:${padToByteLength(value.toString(), PADDED_WIDTH.i)}`;
+        widthBytes = SLICE_WIDTH.i;
       } else {
-        core = `f:${padToByteLength(value.toString(), 24)}`;
-        widthBytes = 27; // 24 value bytes + 2 prefix + 1 marker
+        core = `${TYPE_PREFIX.f}:${padToByteLength(value.toString(), PADDED_WIDTH.f)}`;
+        widthBytes = SLICE_WIDTH.f;
       }
     } else {
       throw new Error(`serialize(): unsupported type for property "${key}"`);
@@ -145,7 +176,10 @@ export function serialize({ type, ...rest }: SerializableComponent): [string, nu
     return core + getFieldMarker(index);
   });
 
-  const result = segments.join('');
+  // Prefix with identifier and protocol version
+  const prefix = PROTOCOL_HEADER;
+  const result = prefix + segments.join('');
+  const finalBytes = totalBytes + utf8ByteLength(prefix);
 
-  return [result, totalBytes];
+  return [result, finalBytes];
 }

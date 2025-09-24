@@ -93,6 +93,8 @@ Conventions:
 
 Defined in `core/serializer.ts`.
 
+Payload always starts with a 9-character header: `bcui` + `vXXXX` (e.g., `bcuiv0001`). Decoders must skip these first 9 chars before field slicing.
+
 Each field is composed of three conceptual parts concatenated in this order:
 
 1. Type prefix (2 bytes) — `s:` | `i:` | `f:` | `b:`
@@ -123,8 +125,14 @@ This is to avoid the 2nd known caveat (below).
 
 ```ts
 import { serialize } from '@bedrock-core/ui/core/serializer';
-const encoded = serialize('hello', 123, 45.67, true);
-// Per-field widths = 35 (string) + 19 (int) + 27 (float) + 8 (bool) = 89 bytes total
+const [encoded, bytes] = serialize({
+    type: 'example',
+    message: 'hello', // string → 35
+    count: 123,       // int → 19
+    ratio: 45.67,     // float → 27
+    ok: true,         // bool → 8
+});
+// Per-field widths = 35 (string) + 19 (int) + 27 (float) + 8 (bool) = 89 bytes (plus 9-byte bcui+version prefix)
 // NOTE: "bytes" here counts ASCII / UTF‑8 single-byte segments; multi-byte runes inside values still respect the padded byte budgets via utf8Truncate.
 ```
 
@@ -163,7 +171,8 @@ Quick constants (copy/paste):
 
 ### Concrete Multi‑Field Example
 
-Excerpt (simplified) of the live decoder (`ui/core-ui/input.json`) for four fields:
+Excerpt (simplified) of the live decoder (`ui/core-ui/input.json`) for four fields.
+Remember to skip the 9-char header first (e.g., start slicing from `('%.9s' * #source)` to obtain header; subtract it to produce `#custom_text`).
 
 ```jsonc
 /* 1. STRING FIELD (32 + 2 + 1 = 35) */

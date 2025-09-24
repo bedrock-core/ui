@@ -1,116 +1,40 @@
+import { Player } from '@minecraft/server';
+import { Panel, Text } from './core/components';
+import { present } from './present';
+import { Component } from './types';
 
 /**
  * Simple Player Settings UI Example
  * Demonstrates the new direct component API
  */
-// function createPlayerSettingsUI(): Component {
-//   return Panel({
-//     display: 'flex',
-//     orientation: 'vertical',
-//   }, [
-//     Text({ value: 'Player Settings' }),
-//     Input({
-//       label: 'Username',
-//       multiline: false
-//     }),
-//     Panel({
-//       display: 'flex',
-//       orientation: 'horizontal',
-//     }, [
-//       Button({ label: 'Save' }),
-//       Button({ label: 'Cancel' })
-//     ])
-//   ]);
-// }
-
-/**
- * Simple Chat UI Example
- * Shows different panel display modes
- */
-// function createChatUI(): Component {
-//   return Panel({
-//     display: 'flex',
-//     orientation: 'vertical',
-//   }, [
-//     // Chat messages area
-//     Panel({
-//     }, [
-//       Text({ value: 'Player1: Hello everyone!' }),
-//       Text({ value: 'Player2: How are you?' }),
-//       Text({ value: 'Player3: Great game today' })
-//     ]),
-//     // Chat input area
-//     Panel({
-//       display: 'flex',
-//       orientation: 'horizontal',
-//     }, [
-//       Input({
-//         label: 'Message',
-//         multiline: false
-//       }),
-//       Button({ label: 'Send' })
-//     ])
-//   ]);
-// }
-
-/**
- * Simple Menu UI Example
- * Shows basic button list
- */
-// function createMenuUI(): Component {
-//   return Panel({
-//     display: 'flex',
-//     orientation: 'vertical',
-//   }, [
-//     Button({ label: 'Item 1' }),
-//     Button({ label: 'Item 2' }),
-//     Button({ label: 'Item 3' }),
-//     Button({ label: 'Item 4' }),
-//   ]);
-// }
-
-/**
- * Form UI Example
- * Shows different input types
- */
-// function createFormUI(): Component {
-//   return Panel({
-//     display: 'flex',
-//     orientation: 'vertical',
-//   }, [
-//     Text({ value: 'Single line input:' }),
-//     Input({
-//       label: 'Name',
-//       multiline: false
-//     }),
-
-//     Text({ value: 'Multi-line input:' }),
-//     Input({
-//       label: 'Description',
-//       multiline: true
-//     })
-//   ]);
-// }
+function ExampleComponent(): Component {
+  return Panel({
+    height: 'auto',
+    width: 'auto',
+    x: '0',
+    y: '0',
+    children: [
+      Text({
+        height: 'auto',
+        width: 'auto',
+        x: '0',
+        y: '0',
+        value: 'Player Settings',
+      }),
+      Text({
+        height: 'auto',
+        width: 'auto',
+        x: '0',
+        y: '0',
+        value: 'Player Settings',
+      }),
+    ],
+  });
+}
 
 /**
  * Example usage showing how to present UIs to players
  */
-// export async function showPlayerSettings(player: Player): Promise<void> {
-//   const ui = createPlayerSettingsUI();
-//   await present(player, ui);
-// }
-
-// export async function showChat(player: Player): Promise<void> {
-//   const ui = createChatUI();
-//   await present(player, ui);
-// }
-
-// export async function showMenu(player: Player): Promise<void> {
-//   const ui = createMenuUI();
-//   await present(player, ui);
-// }
-
-// export async function showForm(player: Player): Promise<void> {
-//   const ui = createFormUI();
-//   await present(player, ui);
-// }
+export async function showExample(player: Player): Promise<void> {
+  await present(player, ExampleComponent());
+}

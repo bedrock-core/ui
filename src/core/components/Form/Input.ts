@@ -1,14 +1,12 @@
-import { LabelProps } from '..';
+import { LabelProps, ResizableProps } from '..';
 import type { Component, CoreUIFormData } from '../../../types';
 
-export interface InputProps extends LabelProps {
+export interface InputProps extends LabelProps, ResizableProps {
   value?: string;
   placeholder?: string;
   multiline?: boolean;
   maxLength?: number;
   textType?: 'ExtendedASCII' | 'IdentifierChars' | 'NumberChars';
-  width: number;
-  height: number;
 }
 
 export function Input({ label, placeholder, value }: InputProps): Component {

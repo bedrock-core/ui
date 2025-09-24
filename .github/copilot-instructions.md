@@ -1,77 +1,61 @@
 ## @bedrock-core/ui – AI Coding Instructions
 
-Focused guidance for automated coding agents working on this repository. Keep it concise, align with current architecture, do not invent undocumented protocols.
+Short, practical guidance for agents working in this repo. Follow current protocol; don’t invent new formats.
 
-### 1. Purpose & Core Concept
-This library builds richer Minecraft Bedrock UIs by serializing component trees into text slots of `@minecraft/server-ui` forms. A lightweight declarative API (functions like `Panel`, `Text`, `Input`) returns structured component objects plus a `serialize(form)` method used by `present(...)` to inject encoded state into a form title (or other fields later). A companion resource pack (outside this repo) interprets those payloads using JSON UI binding expressions.
+### What this library does
+Serialize a declarative component tree into a compact string, inject it into `@minecraft/server-ui` form text (title), and let a JSON UI resource pack decode it to render rich UIs beyond native forms.
 
-### 2. Architectural Primitives
-- Component shape: JSON UI spec types in `src/types/json_ui/*.ts` (`components.ts` + `properties.ts`).
-- Runtime wrapper type: `Functional<T>` = underlying component interface + `serialize(form: FormData) => string` (see `types/index.ts`).
-- Presentation entrypoint: `present(form: ModalFormData, player, component)` in `src/present.ts` – calls `component.serialize(form)`, sets `form.title(serialized)`, then `form.show(player)`.
-- Components are pure factory functions returning a `Functional<...>` object; they should NOT mutate external state; they may call `form.*` API methods inside `serialize` to register interactive controls (e.g. `form.dropdown(...)`).
+Key flow: component factory → `serialize(form)` → `present(form, player, component)` sets `form.title(payload)` → JSON UI decodes by fixed offsets.
 
-### 3. Serialization Protocol (Critical)
-Defined in `core/serializer.ts`.
-- Fixed-width, UTF‑8 byte constrained fields; padded with `;` (PAD_CHAR) – NOT spaces.
-- Widths: String=32, Integer=20, Float=24, Boolean=5 (`true`/`false`).
-- Numbers: choose integer vs float width by `Number.isInteger`. Floats stored as raw `toString()` (do not localize / format). Booleans lowercase.
-- All fields concatenated sequentially; no delimiters beyond fixed padding.
-- Use `utf8Truncate` to avoid splitting surrogate pairs; never introduce new padding semantics without updating README + keeping backward compatibility.
-- When extending protocol: only append new fixed-width segments at the end to preserve legacy decoding offsets.
+### Architecture (files to know)
+- Types: `src/types/json_ui/*.ts` (component contracts) and `src/types/*.ts` (functional wrapper).
+- Serialization: `src/core/serializer.ts` (protocol + helpers).
+- Components: `src/core/components/**/*.ts` (pure factories returning `Functional<T>` with `serialize`).
+- Presentation: `src/present.ts` (calls `component.serialize(form)` then `form.show(player)`).
+- Public API: `src/index.ts` re-exports.
 
-### 4. Current Gaps / TODO Areas (safe to implement)
-Many `serialize` placeholders return `''`. Implementations should:
-1. Collect the minimal data required for client JSON UI conditions (label text, option indices, toggle state, layout info if needed).
-2. Produce a single encoded string (or join multiple segments if future multiplexing is added) that fits inside Minecraft form text limits.
-3. Return that string; also register interactive elements via `form.*` BEFORE returning.
-Avoid over-encoding raw large text; respect field widths or introduce a version tag + extended block appended after legacy segment.
+### Serialization protocol (critical)
+- Prefix: payload starts with `bcui` + VERSION (e.g., `bcuiv0001`). VERSION is declared near the serializer (`const VERSION = 'v0001'`). Decoders must skip these first 9 chars before field slicing.
+- Field encoding per value:
+	- Type prefixes: `s:` | `i:` | `f:` | `b:`
+	- Core padded region uses `;` as the only pad char; UTF‑8 fixed-width; safe truncation via `utf8Truncate`.
+	- Unique trailing 1-char marker per field disambiguates identical padded segments during JSON UI subtraction.
+- Core padded lengths (bytes) and full slice widths (core + 2 prefix + 1 marker):
+	- String: 32 → slice 35
+	- Int: 16 → slice 19
+	- Float: 24 → slice 27
+	- Bool: 5 → slice 8
+- Numbers use `Number.isInteger` to choose `i:` vs `f:`; booleans are lowercase `true`/`false`.
+- Protocol evolution: only append new fields at the end; do not reorder or shrink earlier fields.
 
-### 5. Adding a New Component
-1. Define/extend interface in `types/json_ui/components.ts` if it maps to a JSON UI control; otherwise reuse an existing one.
-2. Create `core/components/<Name>.ts` exporting a factory `Name(props): Functional<NameComponent>`.
-3. Populate structural properties (size, max_size) using `'default'` fallback exactly like existing components for consistency.
-4. Implement `serialize(form)` using `serialize(...)` helper for compact payload segments.
-5. Export via `core/components/index.ts` and re-export from root `src/index.ts`.
+### Component pattern (authoring)
+- Factories are pure; they return structural props matching JSON UI keys plus `serialize(form): string`.
+- Inside `serialize`, call `form.*` to register interactive controls first (e.g., `form.dropdown(...)`), then return the encoded payload built with the serializer helper.
+- Conventions: dimension props accept `number | string`, fallback to `'default'`; factory props are camelCase, emitted keys match JSON UI snake_case.
 
-### 6. Conventions & Style
-- Size / dimension props: accept `number | string`; pass through unchanged; fallback `'default'` (never `undefined`).
-- Use camelCase for factory prop names; output object keys must match JSON UI spec (snake / lower with underscores) exactly (see existing files as canonical mapping).
-- Do not introduce side effects inside component factories; limit side-effectful operations to `serialize`.
-- Keep public API stable: renaming exported factories or prop interfaces is a breaking change (project still 0.x but aim for forward migration ease).
-
-### 7. Build / Tooling
-- Build: `yarn build` (pure `tsc`). Tests: `yarn test` (Vitest). Lint: `yarn lint`.
-- `tsconfig.json` excludes `*.test.ts` from build output; place tests under `src/**/__tests__/**` or `*.test.ts` – they won’t emit artifacts.
-- Module type: ESM (`"type": "module"`). Entry: `dist/index.js`.
-
-### 8. External Dependencies
-- Runtime peers: `@minecraft/server` (≥2.1.0), `@minecraft/server-ui` (≥2.0.0). Keep imports shallow; avoid bundling peers.
-
-### 9. Safety / Guardrails for Agents
-- Never change fixed field widths without explicit migration section added to README & instructions.
-- Preserve padding char `;` – changing it would break client parsing logic (resource pack side expects it).
-- Avoid adding heavy dependencies; library intended to stay lightweight (just TypeScript + peers).
-- When unsure about protocol extension, append new fields instead of reordering existing ones.
- 
-### 10. Example Pattern (future complete state)
-```
-export function Toggle({...}): Functional<ToggleComponent> {
+Example (intended final shape):
+```ts
+export function Toggle({ label, checked }: ToggleProps): Functional<ToggleComponent> {
 	return {
 		type: 'toggle',
 		serialize(form) {
-			form.toggle(label, { defaultValue: checked });
-			return serialize(label, checked); // 32 + 5 bytes
-		}
+			form.toggle(label, { defaultValue: !!checked });
+			return serialize({ type: 'toggle', label, checked: !!checked })[0];
+		},
 	};
 }
 ```
 
-### 11. Where to Look First
-- Protocol: `core/serializer.ts`
-- Presentation flow: `present.ts`
-- Component patterns: `core/components/*.ts`
-- Type contracts: `types/json_ui/*.ts`
-- Usage examples (commented): `main.example.ts`
+### Dev workflow
+- Build: `yarn build` (tsc)
+- Test: `yarn test` (Vitest);
+- Lint: `yarn lint`
+Tests live under `src/**/__tests__/**` or `*.test.ts` (excluded from build output). ESM module, entry `dist/index.js`.
 
-If any of the above seems ambiguous (e.g., how the resource pack decodes offsets), request clarification instead of guessing.
+### Guardrails
+- Do not change fixed widths or pad char `;`.
+- Keep prefix `bcui` + VERSION intact; update VERSION only with documented migrations.
+- Append fields instead of reordering; keep markers stable by position.
+- Avoid heavy deps; peers are `@minecraft/server` and `@minecraft/server-ui`.
+
+Start here: `core/serializer.ts`, `present.ts`, and a nearby component under `core/components/` to mirror patterns.

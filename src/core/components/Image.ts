@@ -13,7 +13,7 @@ export interface ImageProps extends ResizableProps {
   bilinear?: boolean;
 }
 
-export function Image({ width, height, texture, uv, uvSize, ninesliceSize, tiled, keepRatio, bilinear }: ImageProps): Component {
+export function Image({ width, height, x, y, texture, uv, uvSize, ninesliceSize, tiled, keepRatio, bilinear }: ImageProps): Component {
   return {
     serialize: (form: CoreUIFormData): void => {
       const nineSliced = Array.isArray(ninesliceSize) ? ninesliceSize : [ninesliceSize ?? 0, ninesliceSize ?? 0, ninesliceSize ?? 0, ninesliceSize ?? 0];
@@ -24,6 +24,8 @@ export function Image({ width, height, texture, uv, uvSize, ninesliceSize, tiled
         // Sizing
         width: width ?? 'default',
         height: height ?? 'default',
+        x: x ?? '0',
+        y: y ?? '0',
         // Properties
         texture: texture ?? '',
         uvX: uv?.[0] ?? 0,
