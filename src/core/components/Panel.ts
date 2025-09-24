@@ -1,6 +1,7 @@
 
 import { ResizableProps } from '.';
-import { CoreUIFormData, Component, SerializedComponent } from '../../types';
+import { CoreUIFormData, Component, SerializableComponent as SerializableComponent } from '../../types';
+import { Logger } from '../../util/Logger';
 import { serialize } from '../serializer';
 export interface PanelProps extends ResizableProps {
   // Future idea
@@ -12,7 +13,7 @@ export interface PanelProps extends ResizableProps {
 export function Panel({ width, height, children }: PanelProps): Component {
   return {
     serialize: (form: CoreUIFormData): void => {
-      const serialized: SerializedComponent = {
+      const serializable: SerializableComponent = {
         // Core identity
         type: 'panel',
         // Sizing
@@ -20,7 +21,11 @@ export function Panel({ width, height, children }: PanelProps): Component {
         height: height ?? 'default',
       };
 
-      form.label(serialize(serialized));
+      const [result, bytes] = serialize(serializable);
+
+      Logger.info(`Serializing panel: bytes=${bytes}, result=${result}`);
+
+      form.label(result);
 
       children.forEach((child: Component): void => child.serialize(form));
     },

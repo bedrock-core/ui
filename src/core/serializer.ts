@@ -1,4 +1,4 @@
-import { SerializedComponent, SerializablePrimitive } from '../types/serialization';
+import { SerializableComponent, SerializablePrimitive } from '../types/serialization';
 
 /**
  * Compute UTF-8 byte length
@@ -107,32 +107,45 @@ function padToByteLength(str: string, length: number): string {
 }
 
 /**
- * Serialize arguments to a string
- * @param args
- * @returns
+ * Serialize component to a string
+ * @param the component to serialize
+ * @returns [serialized component, byte length]
  */
-export function serialize({ type, ...rest }: SerializedComponent): string {
-  console.info('Serializing:', { type, ...rest });
+export function serialize({ type, ...rest }: SerializableComponent): [string, number] {
+  const entries = Object.entries<SerializablePrimitive>({ type, ...rest });
 
-  return Object.entries({ type, ...rest }).map(([key, value]: [string, SerializablePrimitive], index: number): string => {
+  let totalBytes = 0;
+
+  const segments = entries.map(([key, value]: [string, SerializablePrimitive], index: number): string => {
     let core: string;
+    let widthBytes: number;
 
     if (typeof value === 'string') {
       core = `s:${padToByteLength(value, 32)}`;
+      widthBytes = 35; // 32 value bytes + 2 prefix + 1 marker
     } else if (typeof value === 'boolean') {
       const val = value ? 'true' : 'false';
 
       core = `b:${padToByteLength(val, 5)}`;
+      widthBytes = 8; // 5 value bytes + 2 prefix + 1 marker
     } else if (typeof value === 'number') {
       if (Number.isInteger(value)) {
         core = `i:${padToByteLength(value.toString(), 16)}`;
+        widthBytes = 19; // 16 value bytes + 2 prefix + 1 marker
       } else {
         core = `f:${padToByteLength(value.toString(), 24)}`;
+        widthBytes = 27; // 24 value bytes + 2 prefix + 1 marker
       }
     } else {
       throw new Error(`serialize(): unsupported type for property "${key}"`);
     }
 
+    totalBytes += widthBytes;
+
     return core + getFieldMarker(index);
-  }).join('');
+  });
+
+  const result = segments.join('');
+
+  return [result, totalBytes];
 }

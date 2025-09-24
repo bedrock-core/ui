@@ -2,7 +2,7 @@
  * Serialization related types and enums
  */
 
-export interface SerializedComponent {
+export interface SerializableComponent {
   type: string;
   [key: string]: SerializablePrimitive;
 }

@@ -1,6 +1,7 @@
 import { Player } from '@minecraft/server';
 import type { Component } from './types/component';
 import type { CoreUIFormData } from './types/index';
+import { Logger } from './util/Logger';
 
 /**
  * Present a component to a player using the @bedrock-core/ui system
@@ -39,6 +40,6 @@ export async function present(form: CoreUIFormData, player: Player, component: C
     // TODO STUFF
     // Form shown successfully
   }).catch(error => {
-    console.error('Error showing form:', error);
+    Logger.error(`Error showing form: ${error}`);
   });
 }

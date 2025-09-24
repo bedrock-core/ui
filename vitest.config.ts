@@ -13,9 +13,6 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    deps: {
-      inline: ['@bedrock-core/network'],
-    },
     include: ['src/**/*.{test,spec}.ts', 'src/**/__tests__/**/*.ts'],
   },
 });

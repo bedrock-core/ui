@@ -1,7 +1,8 @@
 import { ResizableProps } from '.';
 import { CoreUIFormData } from '../../types';
 import type { Component } from '../../types/component';
-import { SerializedComponent } from '../../types/serialization';
+import { SerializableComponent } from '../../types/serialization';
+import { Logger } from '../../util/Logger';
 import { serialize } from '../serializer';
 
 export interface TextStyle {
@@ -23,14 +24,14 @@ export interface TextProps extends ResizableProps {
 export function Text({ value, textStyle, width, height }: TextProps): Component {
   return {
     serialize: (form: CoreUIFormData): void => {
-      const serialized: SerializedComponent = {
+      const serializable: SerializableComponent = {
         // Core identity
         type: 'label',
         text: value ?? '',
         // Sizing
         width: width ?? 'default',
         height: height ?? 'default',
-        // Style
+        // Properties
         colorR: textStyle?.color?.[0] ?? 1,
         colorG: textStyle?.color?.[1] ?? 1,
         colorB: textStyle?.color?.[2] ?? 1,
@@ -45,7 +46,11 @@ export function Text({ value, textStyle, width, height }: TextProps): Component 
         textAlignment: textStyle?.textAlignment ?? 'left',
       };
 
-      form.label(serialize(serialized));
+      const [result, bytes] = serialize(serializable);
+
+      Logger.info(`Serializing text: bytes=${bytes}, result=${result}`);
+
+      form.label(result);
     },
   };
 }
