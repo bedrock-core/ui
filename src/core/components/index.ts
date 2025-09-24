@@ -29,29 +29,41 @@ interface ControlProps {
 
 export interface ControledLayoutProps extends LayoutProps, ControlProps { }
 
-function withLayout<T extends LayoutProps>(props: T): Required<LayoutProps> & T {
-  return {
-    inheritMaxSiblingWidth: props.inheritMaxSiblingWidth ?? false,
-    inheritMaxSiblingHeight: props.inheritMaxSiblingHeight ?? false,
-    ...props,
-  };
-}
-
-function withControl<T extends ControlProps>(props: T): Required<ControlProps> & T {
-  return {
-    visible: props.visible ?? true,
-    enabled: props.enabled ?? true,
-    layer: props.layer ?? 0,
-    ...props,
-  };
-}
-
 /**
  * Combines both layout and control props, applying defaults to any missing values.
  * All JSON UI components need at least this values so we use them as a base.
+ * Creates properties in canonical order for stable serialization.
  * @param props
  * @returns
  */
-export function withControledLayout<T extends LayoutProps & ControlProps>(props: T): Required<LayoutProps> & Required<ControlProps> & T {
-  return withControl(withLayout(props));
+export function withControledLayout<T extends ControledLayoutProps>(props: T): Required<T> {
+  const {
+    width,
+    height,
+    x,
+    y,
+    inheritMaxSiblingWidth,
+    inheritMaxSiblingHeight,
+    visible,
+    enabled,
+    layer,
+    // rest of props are the props specific to the component, which will be appended at the end
+    ...rest
+  } = props;
+
+  // Create object with properties in exact canonical order for stable serialization
+  const ordered = {
+    visible: visible ?? true,
+    enabled: enabled ?? true,
+    layer: layer ?? 0,
+    inheritMaxSiblingWidth: inheritMaxSiblingWidth ?? false,
+    inheritMaxSiblingHeight: inheritMaxSiblingHeight ?? false,
+    width,
+    height,
+    x,
+    y,
+  };
+
+  // Append the rest of the props, which are specific to the component and order will be handled by the component itself
+  return { ...ordered, ...rest } as Required<T>;
 }

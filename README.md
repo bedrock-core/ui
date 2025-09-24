@@ -336,3 +336,5 @@ Use only ModalFormData
 - Use label for "client" only elements
 
 Note all "optional" props values should have a defined default in the serialized field
+
+Props order is important, for **ALL OF THE PROPS** of each component even if there are required you should place them in return of the serialize because the order they are in that return will be the order in the JSON UI
