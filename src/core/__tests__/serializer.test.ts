@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { serialize, PROTOCOL_HEADER, SLICE_WIDTH, PADDED_WIDTH, FIELD_MARKERS, TYPE_PREFIX } from '../serializer';
+import { serialize, reserveBytes, PROTOCOL_HEADER, SLICE_WIDTH, PADDED_WIDTH, FIELD_MARKERS, TYPE_PREFIX } from '../serializer';
 
 const HEADER = PROTOCOL_HEADER;
 const HEADER_LEN = HEADER.length; // 9
@@ -257,6 +257,152 @@ describe('core/serializer', () => {
       expect(tPad.length).toBe(PADDED_WIDTH.b);
       expect(fPad.startsWith('false')).toBe(true);
       expect(fPad.length).toBe(PADDED_WIDTH.b);
+    });
+  });
+
+  describe('reserved bytes', () => {
+    it('creates reserved bytes object with correct structure', () => {
+      const reserved = reserveBytes(50);
+      expect(reserved).toEqual({
+        __type: 'reserved',
+        bytes: 50,
+      });
+    });
+
+    it('serializes reserved bytes with correct prefix and padding', () => {
+      const [result, bytes] = serialize({
+        type: 'test',
+        reserved: reserveBytes(20),
+      });
+
+      expect(result.startsWith(PROTOCOL_HEADER)).toBe(true);
+
+      // Calculate expected length: header + type field + reserved field
+      const expectedLen = PROTOCOL_HEADER.length + SLICE_WIDTH.s + (20 + 3); // 20 reserved + 2 prefix + 1 marker
+      expect(result.length).toBe(expectedLen);
+      expect(bytes).toBe(expectedLen);
+
+      // Extract the reserved field (field index 1)
+      const reservedFieldStart = PROTOCOL_HEADER.length + SLICE_WIDTH.s;
+      const reservedField = result.slice(reservedFieldStart, reservedFieldStart + 20 + 3);
+
+      expect(reservedField.startsWith(`${TYPE_PREFIX.r}:`)).toBe(true);
+      expect(reservedField.endsWith(FIELD_MARKERS[1])).toBe(true);
+
+      // Check that the padding is correct (20 pad chars)
+      const padding = reservedField.slice(2, 2 + 20);
+      expect(padding).toBe(';'.repeat(20));
+    });
+
+    it('handles different reserved byte sizes', () => {
+      const testSizes = [1, 50, 100, 255];
+
+      testSizes.forEach(size => {
+        const [result, bytes] = serialize({
+          type: 'test',
+          reserved: reserveBytes(size),
+        });
+
+        const expectedLen = PROTOCOL_HEADER.length + SLICE_WIDTH.s + (size + 3);
+        expect(result.length).toBe(expectedLen);
+        expect(bytes).toBe(expectedLen);
+
+        // Extract reserved field
+        const reservedFieldStart = PROTOCOL_HEADER.length + SLICE_WIDTH.s;
+        const reservedField = result.slice(reservedFieldStart, reservedFieldStart + size + 3);
+
+        expect(reservedField.startsWith(`${TYPE_PREFIX.r}:`)).toBe(true);
+        expect(reservedField.endsWith(FIELD_MARKERS[1])).toBe(true);
+
+        const padding = reservedField.slice(2, 2 + size);
+        expect(padding).toBe(';'.repeat(size));
+      });
+    });
+
+    it('serializes mixed fields with reserved bytes in correct order', () => {
+      const [result] = serialize({
+        type: 'mixed',
+        name: 'test',
+        reserved1: reserveBytes(10),
+        count: 42,
+        reserved2: reserveBytes(5),
+        active: true,
+      });
+
+      expect(result.startsWith(PROTOCOL_HEADER)).toBe(true);
+
+      let offset = PROTOCOL_HEADER.length;
+
+      // Field 0: type (string)
+      const f0 = result.slice(offset, offset + SLICE_WIDTH.s);
+      expect(f0.startsWith(`${TYPE_PREFIX.s}:`)).toBe(true);
+      expect(f0.slice(2, 2 + PADDED_WIDTH.s).startsWith('mixed')).toBe(true);
+      offset += SLICE_WIDTH.s;
+
+      // Field 1: name (string)
+      const f1 = result.slice(offset, offset + SLICE_WIDTH.s);
+      expect(f1.startsWith(`${TYPE_PREFIX.s}:`)).toBe(true);
+      expect(f1.slice(2, 2 + PADDED_WIDTH.s).startsWith('test')).toBe(true);
+      offset += SLICE_WIDTH.s;
+
+      // Field 2: reserved1 (10 bytes)
+      const f2 = result.slice(offset, offset + 10 + 3);
+      expect(f2.startsWith(`${TYPE_PREFIX.r}:`)).toBe(true);
+      expect(f2.slice(2, 2 + 10)).toBe(';'.repeat(10));
+      offset += 10 + 3;
+
+      // Field 3: count (int)
+      const f3 = result.slice(offset, offset + SLICE_WIDTH.i);
+      expect(f3.startsWith(`${TYPE_PREFIX.i}:`)).toBe(true);
+      expect(f3.slice(2, 2 + PADDED_WIDTH.i).startsWith('42')).toBe(true);
+      offset += SLICE_WIDTH.i;
+
+      // Field 4: reserved2 (5 bytes)
+      const f4 = result.slice(offset, offset + 5 + 3);
+      expect(f4.startsWith(`${TYPE_PREFIX.r}:`)).toBe(true);
+      expect(f4.slice(2, 2 + 5)).toBe(';'.repeat(5));
+      offset += 5 + 3;
+
+      // Field 5: active (bool)
+      const f5 = result.slice(offset, offset + SLICE_WIDTH.b);
+      expect(f5.startsWith(`${TYPE_PREFIX.b}:`)).toBe(true);
+      expect(f5.slice(2, 2 + PADDED_WIDTH.b).startsWith('true')).toBe(true);
+    });
+
+    it('maintains unique markers for reserved fields', () => {
+      const [result] = serialize({
+        type: 'test',
+        reserved1: reserveBytes(10),
+        reserved2: reserveBytes(10), // Same size, should have different markers
+        reserved3: reserveBytes(5),
+      });
+
+      let offset = PROTOCOL_HEADER.length + SLICE_WIDTH.s; // Skip type field
+
+      // reserved1 (field index 1)
+      const r1 = result.slice(offset, offset + 10 + 3);
+      expect(r1.endsWith(FIELD_MARKERS[1])).toBe(true);
+      offset += 10 + 3;
+
+      // reserved2 (field index 2)
+      const r2 = result.slice(offset, offset + 10 + 3);
+      expect(r2.endsWith(FIELD_MARKERS[2])).toBe(true);
+      offset += 10 + 3;
+
+      // reserved3 (field index 3)
+      const r3 = result.slice(offset, offset + 5 + 3);
+      expect(r3.endsWith(FIELD_MARKERS[3])).toBe(true);
+
+      // Verify all markers are different even though r1 and r2 have same content
+      expect(r1).not.toBe(r2); // Different due to markers
+      expect(r1.slice(0, -1)).toBe(r2.slice(0, -1)); // Same content except marker
+    });
+
+    it('throws error for invalid reserved bytes input', () => {
+      expect(() => reserveBytes(-1)).toThrow();
+      expect(() => reserveBytes(1.5)).toThrow();
+      expect(() => reserveBytes(NaN)).toThrow();
+      expect(() => reserveBytes(Infinity)).toThrow();
     });
   });
 });

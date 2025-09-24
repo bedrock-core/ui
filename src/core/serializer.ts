@@ -1,5 +1,4 @@
-import { SerializableComponent, SerializablePrimitive } from '../types/serialization';
-import { Logger } from '../util/Logger';
+import { ReservedBytes, SerializableComponent, SerializablePrimitive } from '../types/serialization';
 
 /**
  * Per-field unique marker characters appended AFTER the fixed-width padded payload.
@@ -29,6 +28,7 @@ export const PADDED_WIDTH = {
   i: 16,
   f: 24,
   b: 5,
+  r: 0, // Reserved type - dynamic width
 };
 
 export const SLICE_WIDTH = {
@@ -36,6 +36,7 @@ export const SLICE_WIDTH = {
   i: PADDED_WIDTH.i + 3,
   f: PADDED_WIDTH.f + 3,
   b: PADDED_WIDTH.b + 3,
+  r: PADDED_WIDTH.r + 3,
 };
 
 // Type prefix characters used for encoding
@@ -44,6 +45,7 @@ export const TYPE_PREFIX = {
   i: 'i',
   f: 'f',
   b: 'b',
+  r: 'r',
 };
 
 /**
@@ -162,6 +164,19 @@ function padToByteLength(str: string, length: number): string {
 }
 
 /**
+ * Reserves a specific number of bytes for future use.
+ * @param bytes - number of bytes to reserve
+ * @returns A ReservedBytes object representing the reserved space
+ */
+export function reserveBytes(bytes: number): ReservedBytes {
+  if (!Number.isInteger(bytes) || bytes <= 0) {
+    throw new Error('Reserved bytes must be a positive integer');
+  }
+
+  return { __type: 'reserved', bytes };
+}
+
+/**
  * Serialize component to a string payload.
  * The returned payload is prefixed with `bcui` + VERSION (e.g., `bcuiv0001`).
  *
@@ -176,31 +191,36 @@ export function serialize({ type, ...rest }: SerializableComponent): [string, nu
   const segments = entries.map(([key, value]: [string, SerializablePrimitive], index: number): string => {
     let core: string;
     let widthBytes: number;
-    let typeCode: keyof typeof PADDED_WIDTH;
+    // let typeCode: keyof typeof PADDED_WIDTH;
     let rawStr: string;
 
     if (typeof value === 'string') {
-      typeCode = 's';
+      // typeCode = 's';
       rawStr = value;
       core = `${TYPE_PREFIX.s}:${padToByteLength(value, PADDED_WIDTH.s)}`;
       widthBytes = SLICE_WIDTH.s;
     } else if (typeof value === 'boolean') {
-      typeCode = 'b';
+      // typeCode = 'b';
       rawStr = value ? 'true' : 'false';
       core = `${TYPE_PREFIX.b}:${padToByteLength(rawStr, PADDED_WIDTH.b)}`;
       widthBytes = SLICE_WIDTH.b;
     } else if (typeof value === 'number') {
       if (Number.isInteger(value)) {
-        typeCode = 'i';
+        // typeCode = 'i';
         rawStr = value.toString();
         core = `${TYPE_PREFIX.i}:${padToByteLength(rawStr, PADDED_WIDTH.i)}`;
         widthBytes = SLICE_WIDTH.i;
       } else {
-        typeCode = 'f';
+        // typeCode = 'f';
         rawStr = value.toString();
         core = `${TYPE_PREFIX.f}:${padToByteLength(rawStr, PADDED_WIDTH.f)}`;
         widthBytes = SLICE_WIDTH.f;
       }
+    } else if (typeof value === 'object' && value.__type === 'reserved') {
+      // typeCode = 'r';
+      rawStr = '';
+      core = `${TYPE_PREFIX.r}:${PAD_CHAR.repeat(value.bytes)}`;
+      widthBytes = SLICE_WIDTH.r + value.bytes;
     } else {
       throw new Error(`serialize(): unsupported type for property "${key}"`);
     }
@@ -208,12 +228,12 @@ export function serialize({ type, ...rest }: SerializableComponent): [string, nu
     totalBytes += widthBytes;
 
     const marker = getFieldMarker(index);
-    const paddedRegion = core.slice(2); // after type prefix + ':'
+    // const paddedRegion = core.slice(2); // after type prefix + ':'
     // Log expected padded values for debugging / inspection
-    Logger.log(
-      `[serialize] field#${index} key="${key}" type=${typeCode} raw="${rawStr}" rawBytes=${utf8ByteLength(rawStr)} ` +
-      `paddedLen=${PADDED_WIDTH[typeCode]} sliceWidth=${SLICE_WIDTH[typeCode]} marker=${marker} padded="${paddedRegion}"`,
-    );
+    // Logger.log(
+    //   `[serialize] field#${index} key="${key}" type=${typeCode} raw="${rawStr}" rawBytes=${utf8ByteLength(rawStr)} ` +
+    //   `paddedLen=${PADDED_WIDTH[typeCode]} sliceWidth=${SLICE_WIDTH[typeCode]} marker=${marker} padded="${paddedRegion}"`,
+    // );
 
     return core + marker;
   });
@@ -223,7 +243,7 @@ export function serialize({ type, ...rest }: SerializableComponent): [string, nu
   const result = prefix + segments.join('');
   const finalBytes = totalBytes + utf8ByteLength(prefix);
 
-  Logger.log(`[serialize] header=${prefix} fields=${entries.length} payloadBytes=${finalBytes}`);
+  // Logger.log(`[serialize] header=${prefix} fields=${entries.length} payloadBytes=${finalBytes}`);
 
   return [result, finalBytes];
 }

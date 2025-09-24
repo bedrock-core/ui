@@ -1,3 +1,6 @@
+import { ReservedBytes } from '../../types';
+import { reserveBytes } from '../serializer';
+
 export { Button, type ButtonProps } from './Button';
 export { Panel, type PanelProps } from './Panel';
 export { Text, type TextProps, type TextStyle } from './Text';
@@ -9,6 +12,16 @@ export { Image, type ImageProps } from './Image';
 
 export interface LabelProps { label: string }
 
+interface ControlProps {
+  visible?: boolean;
+  enabled?: boolean;
+  layer?: number;
+  // alpha: number; // float currently does not work in json ui
+
+  /* @internal */
+  __controlReserved?: ReservedBytes;
+}
+
 interface LayoutProps {
   // In json ui could be number or string, we treat both as string as it has the larger byte length
   // All mandatory for now as we are going to go with fixed absolute sizing and positioning for now
@@ -18,16 +31,16 @@ interface LayoutProps {
   y: string;
   inheritMaxSiblingWidth?: boolean;
   inheritMaxSiblingHeight?: boolean;
+
+  /* @internal */
+  __layoutReserved?: ReservedBytes;
 }
 
-interface ControlProps {
-  visible?: boolean;
-  enabled?: boolean;
-  layer?: number;
-  // alpha: number; // float currently does not work in json ui
-}
+export interface ControledLayoutProps extends LayoutProps, ControlProps {
 
-export interface ControledLayoutProps extends LayoutProps, ControlProps { }
+  /* @internal */
+  __coreReserved?: ReservedBytes;
+}
 
 /**
  * Combines both layout and control props, applying defaults to any missing values.
@@ -38,15 +51,15 @@ export interface ControledLayoutProps extends LayoutProps, ControlProps { }
  */
 export function withControledLayout<T extends ControledLayoutProps>(props: T): Required<T> {
   const {
+    visible,
+    enabled,
+    layer,
     width,
     height,
     x,
     y,
     inheritMaxSiblingWidth,
     inheritMaxSiblingHeight,
-    visible,
-    enabled,
-    layer,
     // rest of props are the props specific to the component, which will be appended at the end
     ...rest
   } = props;
@@ -56,12 +69,15 @@ export function withControledLayout<T extends ControledLayoutProps>(props: T): R
     visible: visible ?? true,
     enabled: enabled ?? true,
     layer: layer ?? 0,
+    __controlReserved: reserveBytes(93), // Reserve 93 bytes to reach 128 total for control properties
     inheritMaxSiblingWidth: inheritMaxSiblingWidth ?? false,
     inheritMaxSiblingHeight: inheritMaxSiblingHeight ?? false,
     width,
     height,
     x,
     y,
+    __layoutReserved: reserveBytes(100), // Reserve 100 bytes to reach 256 total for layout properties
+    __coreReserved: reserveBytes(128), // Reserve up to 512 bytes for addition of more core properties without breaking serialization protocol version
   };
 
   // Append the rest of the props, which are specific to the component and order will be handled by the component itself

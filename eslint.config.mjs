@@ -146,6 +146,7 @@ export default defineConfig([
         {
           selector: ["objectLiteralProperty", "typeProperty"],
           format: ["camelCase", "snake_case", "UPPER_CASE"],
+          leadingUnderscore: "allowDouble",
         },
         {
           selector: "typeLike",

@@ -11,4 +11,14 @@ export interface SerializableComponent {
   [key: string]: SerializablePrimitive;
 }
 
-export type SerializablePrimitive = string | number | boolean;
+// New reserved primitive type
+export type ReservedBytes = {
+
+  /* @internal */
+  __type: 'reserved';
+  bytes: number;
+};
+
+// Update primitive union
+export type SerializablePrimitive = string | number | boolean | ReservedBytes;
+

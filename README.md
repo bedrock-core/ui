@@ -290,6 +290,7 @@ Place tests under `src/**/__tests__/**` or `*.test.ts` (excluded from build outp
   - Animation support
   - Reactive screens, for the first versions the screens will have static information and only be able to be updated after user input in a button. Need to investigate the possibility to make the information update reactively and if it is worth. It might lag a log, be very complex...
   - Preprocesor to be able to use tsx instead of function like components
+  - validation for max bytes to serialize, rn no idea how much info we can cram into a string
 
 Everything listed here will only be made if it is possible and not extremely complicated
 Order might change if I feel like it
