@@ -25,6 +25,76 @@ function paddedValueOf(payload: string, index: number, plan: readonly TKey[]): s
 }
 
 describe('core/serializer', () => {
+  describe('payload size helper', () => {
+    function detectType(v: string | number | boolean): keyof typeof SLICE_WIDTH {
+      if (typeof v === 'string') return 's';
+      if (typeof v === 'boolean') return 'b';
+
+      return Number.isInteger(v) ? 'i' : 'f';
+    }
+
+    function expectedLength(plan: readonly (keyof typeof SLICE_WIDTH)[]): number {
+      return PROTOCOL_HEADER.length + plan.reduce((acc, k) => acc + SLICE_WIDTH[k], 0);
+    }
+
+    it('computes expected length for arbitrary object', () => {
+      const obj = {
+        type: 'arb', // s
+        name: 'Zed', // s
+        count: 42, // i
+        ratio: 3.14, // f
+        active: false, // b
+        flag: true, // b
+      } as const;
+
+      const plan = Object.values(obj).map(detectType);
+      const expected = expectedLength(plan);
+      const [result, bytes] = serialize(obj);
+      expect(result.length).toBe(expected);
+      expect(bytes).toBe(expected);
+    });
+
+    it('layout props payload size matches constants', () => {
+      // LayoutProps order (after type): width, height, x, y, inheritMaxSiblingWidth, inheritMaxSiblingHeight
+      const layout = {
+        type: 'panel',
+        width: 'default',
+        height: 'default',
+        x: '0',
+        y: '0',
+        inheritMaxSiblingWidth: false,
+        inheritMaxSiblingHeight: true,
+      } as const;
+      const plan: (keyof typeof SLICE_WIDTH)[] = ['s', 's', 's', 's', 's', 'b', 'b'];
+      const expected = PROTOCOL_HEADER.length + plan.reduce((a, k) => a + SLICE_WIDTH[k], 0);
+      const [result, bytes] = serialize(layout);
+      // Layout alone (including type): 1 type + 4 strings + 2 bools
+      expect(bytes).toBe(expected);
+      expect(result.length).toBe(expected);
+      // Sanity: slice count
+      const fieldCount = plan.length; // includes type at index 0
+      // length minus header should equal sum slice widths
+      expect(result.length - PROTOCOL_HEADER.length).toBe(plan.reduce((a, k) => a + SLICE_WIDTH[k], 0));
+      expect(fieldCount).toBe(7);
+    });
+
+    it('control props payload size matches constants', () => {
+      // ControlProps order (after type): visible, enabled, layer
+      const control = {
+        type: 'panel',
+        visible: true,
+        enabled: false,
+        layer: 0,
+      } as const;
+      const plan: (keyof typeof SLICE_WIDTH)[] = ['s', 'b', 'b', 'i'];
+      const expected = PROTOCOL_HEADER.length + plan.reduce((a, k) => a + SLICE_WIDTH[k], 0);
+      const [result, bytes] = serialize(control);
+      expect(bytes).toBe(expected);
+      expect(result.length).toBe(expected);
+      expect(result.length - PROTOCOL_HEADER.length).toBe(plan.reduce((a, k) => a + SLICE_WIDTH[k], 0));
+    });
+  });
+
   it('serializes primitives with correct prefix, widths, markers and byte count', () => {
     const [result, bytes] = serialize({
       type: 'example',

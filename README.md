@@ -8,6 +8,8 @@ Even if you know how JSON UI works, working around the bindings, variables, form
 With this you just make the UI and that is it.
 
 > ⚠️ Alpha Status: Active alpha. Breaking changes may ship without deprecation until 1.0.0. Pin exact versions for stability.
+---
+> This is not ready for production use in complex packs or Marketplace work.
 
 Custom UI system for Minecraft Bedrock that serializes a virtual component tree into server form text fields. A companion JSON UI resource pack decodes the payload and renders layouts more advanced than native `@minecraft/server-ui` allows.
 

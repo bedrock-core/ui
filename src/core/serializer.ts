@@ -17,7 +17,7 @@ export const FIELD_MARKERS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmn
 
 export const PAD_CHAR = ';';
 
-// Protocol version tag (format: 'v' + 4 characters)
+// Protocol version tag (format: 'v' + 4 hex digits)
 // e.g., 'bcuiv0001'
 // Increment when making backward-incompatible changes to the payload layout.
 export const VERSION = 'v0001';
