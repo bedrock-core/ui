@@ -2,7 +2,7 @@
 	"namespace": "core-ui_components",
 	"text@core-ui_properties.control": {
 		"type": "label",
-		"text": "#width"
+		"text": "#inherit_max_sibling_height"
 		// "shadow": "#shadow",
 		// "font_size": "#font_size",
 		// "font_scale_factor": "#font_scale_factor",

@@ -13,8 +13,8 @@
 		// 	"#x",
 		// 	"#y"
 		// ],
-		// "inherit_max_sibling_width": "#inherit_max_sibling_width",
-		// "inherit_max_sibling_height": "#inherit_max_sibling_height",
+		"inherit_max_sibling_width": "#inherit_max_sibling_width",
+		"inherit_max_sibling_height": "#inherit_max_sibling_height",
 		"bindings": [
 			{
 				"binding_name": "#custom_text",
@@ -34,7 +34,7 @@
 			},
 			// /* --- type (string) - field 0 --- */
 			{
-				"binding_type": "view", // type padded size
+				"binding_type": "view", // full_width
 				"source_property_name": "('%.35s' * #rem_after_header)",
 				"target_property_name": "#raw_type"
 			},
@@ -44,13 +44,13 @@
 				"target_property_name": "#rem_after_type"
 			},
 			{
-				"binding_type": "view", // (type size + prefix size) - prefix (s:) - paddingChar (;)
+				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
 				"source_property_name": "(('%.34s' * #raw_type) - ('%.2s' * #raw_type) - ';')",
 				"target_property_name": "#type"
 			},
 			/* --- visible (bool) - field 1 --- */
 			{
-				"binding_type": "view", // type padded size
+				"binding_type": "view", // full_width
 				"source_property_name": "('%.8s' * #rem_after_type)",
 				"target_property_name": "#raw_visible"
 			},
@@ -60,13 +60,13 @@
 				"target_property_name": "#rem_after_visible"
 			},
 			{
-				"binding_type": "view", // (type size + prefix size) - prefix size (s:) - paddingChar (;)
+				"binding_type": "view", // (full_width - marker_width) - prefix_width (s:) - padding_char (;)
 				"source_property_name": "(('%.7s' * #raw_visible) - ('%.2s' * #raw_visible) - ';')",
 				"target_property_name": "#visible"
 			},
 			/* --- enabled (bool) - field 2 --- */
 			{
-				"binding_type": "view", // type padded size
+				"binding_type": "view", // full_width
 				"source_property_name": "('%.8s' * #rem_after_visible)",
 				"target_property_name": "#raw_enabled"
 			},
@@ -76,13 +76,13 @@
 				"target_property_name": "#rem_after_enabled"
 			},
 			{
-				"binding_type": "view", // (type size + prefix size) - prefix size (s:) - paddingChar (;)
+				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
 				"source_property_name": "(('%.7s' * #raw_enabled) - ('%.2s' * #raw_enabled) - ';')",
 				"target_property_name": "#enabled"
 			},
 			/* --- layer (int) - field 3 --- */
 			{
-				"binding_type": "view", // type padded size
+				"binding_type": "view", // full_width
 				"source_property_name": "('%.19s' * #rem_after_enabled)",
 				"target_property_name": "#raw_layer"
 			},
@@ -92,40 +92,29 @@
 				"target_property_name": "#rem_after_layer"
 			},
 			{
-				"binding_type": "view", // (type size + prefix size) - prefix size (s:) - paddingChar (;)
+				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
 				"source_property_name": "(('%.18s' * #raw_layer) - ('%.2s' * #raw_layer) - ';')",
 				"target_property_name": "#layer"
 			},
-			/* --- skip __controlReserved (reserved) --- */
-			{
-				"binding_type": "view", // reserved size
-				"source_property_name": "('%.96s' * #rem_after_layer)",
-				"target_property_name": "#skip_control_reserved"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_layer - #skip_control_reserved)",
-				"target_property_name": "#rem_after_control_reserved"
-			},
 			/* --- width (string) - field 4 --- */
 			{
-				"binding_type": "view", // type padded size
-				"source_property_name": "('%.35s' * #rem_after_control_reserved)",
+				"binding_type": "view", // full_width
+				"source_property_name": "('%.35s' * #rem_after_layer)",
 				"target_property_name": "#raw_width"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(#rem_after_control_reserved - #raw_width)",
+				"source_property_name": "(#rem_after_layer - #raw_width)",
 				"target_property_name": "#rem_after_width"
 			},
 			{
-				"binding_type": "view", // (type size + prefix size) - prefix (s:) - paddingChar (;)
-				"source_property_name": "('T' + ('%.34s' * #raw_width) - ('%.2s' * #raw_width) - ';' + 'px')",
+				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
+				"source_property_name": "(('%.34s' * #raw_width) - ('%.2s' * #raw_width) - ';')",
 				"target_property_name": "#width"
 			},
 			/* --- height (string) - field 5 --- */
 			{
-				"binding_type": "view", // type padded size
+				"binding_type": "view", // full_width
 				"source_property_name": "('%.35s' * #rem_after_width)",
 				"target_property_name": "#raw_height"
 			},
@@ -135,13 +124,13 @@
 				"target_property_name": "#rem_after_height"
 			},
 			{
-				"binding_type": "view", // (type size + prefix size) - prefix (s:) - paddingChar (;)
-				"source_property_name": "(('%.34s' * #raw_height) - ('%.2s' * #raw_height) - ';' + 'px')",
+				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
+				"source_property_name": "(('%.34s' * #raw_height) - ('%.2s' * #raw_height) - ';')",
 				"target_property_name": "#height"
 			},
 			/* --- x (string) - field 6 --- */
 			{
-				"binding_type": "view", // type padded size
+				"binding_type": "view", // full_width
 				"source_property_name": "('%.35s' * #rem_after_height)",
 				"target_property_name": "#raw_x"
 			},
@@ -151,13 +140,13 @@
 				"target_property_name": "#rem_after_x"
 			},
 			{
-				"binding_type": "view", // (type size + prefix size) - prefix (s:) - paddingChar (;)
+				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
 				"source_property_name": "(('%.34s' * #raw_x) - ('%.2s' * #raw_x) - ';')",
 				"target_property_name": "#x"
 			},
 			/* --- y (string) - field 7 --- */
 			{
-				"binding_type": "view", // type padded size
+				"binding_type": "view", // full_width
 				"source_property_name": "('%.35s' * #rem_after_x)",
 				"target_property_name": "#raw_y"
 			},
@@ -167,13 +156,13 @@
 				"target_property_name": "#rem_after_y"
 			},
 			{
-				"binding_type": "view", // (type size + prefix size) - prefix (s:) - paddingChar (;)
+				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
 				"source_property_name": "(('%.34s' * #raw_y) - ('%.2s' * #raw_y) - ';')",
 				"target_property_name": "#y"
 			},
 			/* --- inherit_max_sibling_width (bool) - field 8 --- */
 			{
-				"binding_type": "view", // type padded size
+				"binding_type": "view", // full_width
 				"source_property_name": "('%.8s' * #rem_after_y)",
 				"target_property_name": "#raw_inherit_max_sibling_width"
 			},
@@ -183,13 +172,13 @@
 				"target_property_name": "#rem_after_inherit_max_sibling_width"
 			},
 			{
-				"binding_type": "view", // (type size + prefix size) - prefix (s:) - paddingChar (;)
+				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
 				"source_property_name": "(('%.7s' * #raw_inherit_max_sibling_width) - ('%.2s' * #raw_inherit_max_sibling_width) - ';')",
 				"target_property_name": "#inherit_max_sibling_width"
 			},
 			/* --- inherit_max_sibling_height (bool) - field 9 --- */
 			{
-				"binding_type": "view", // type padded size
+				"binding_type": "view", // full_width
 				"source_property_name": "('%.8s' * #rem_after_inherit_max_sibling_width)",
 				"target_property_name": "#raw_inherit_max_sibling_height"
 			},
@@ -199,20 +188,20 @@
 				"target_property_name": "#rem_after_inherit_max_sibling_height"
 			},
 			{
-				"binding_type": "view", // (type size + prefix size) - prefix (s:) - paddingChar (;)
+				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
 				"source_property_name": "(('%.7s' * #raw_inherit_max_sibling_height) - ('%.2s' * #raw_inherit_max_sibling_height) - ';')",
 				"target_property_name": "#inherit_max_sibling_height"
 			},
-			/* --- skip __layoutReserved (reserved) --- */
+			/* --- skip __reserved --- */
 			{
-				"binding_type": "view", // reserved size
-				"source_property_name": "('%.110s' * #rem_after_inherit_max_sibling_height)",
-				"target_property_name": "#skip_layout_reserved"
+				"binding_type": "view", // reserved full_width
+				"source_property_name": "('%.277s' * #rem_after_inherit_max_sibling_height)",
+				"target_property_name": "#skip_reserved_control"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(#rem_after_inherit_max_sibling_height - #skip_layout_reserved)",
-				"target_property_name": "#rem_after_layout_reserved"
+				"source_property_name": "(#rem_after_inherit_max_sibling_height - #skip_reserved_control)",
+				"target_property_name": "#serialized_data"
 			}
 		]
 	}
