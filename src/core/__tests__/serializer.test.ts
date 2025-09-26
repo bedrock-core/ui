@@ -1,20 +1,19 @@
-import { describe, it, expect } from 'vitest';
-import { serialize, reserveBytes, PROTOCOL_HEADER, SLICE_WIDTH, PADDED_WIDTH, FIELD_MARKERS, TYPE_PREFIX } from '../serializer';
+import { describe, expect, it } from 'vitest';
+import { FIELD_MARKERS, FULL_WIDTH, PROTOCOL_HEADER, PROTOCOL_HEADER_LENGTH, reserveBytes, serialize, TYPE_PREFIX, TYPE_WIDTH } from '../serializer';
 
-const HEADER = PROTOCOL_HEADER;
-const HEADER_LEN = HEADER.length; // 9
-const PLAN_PRIMITIVES = {
-  basic: ['s', 's', 'i', 'f', 'b'] as const,
-  twoStrings: ['s', 's', 's'] as const,
-  twoInts: ['s', 'i', 'i'] as const,
-  twoBools: ['s', 'b', 'b'] as const,
+const PLAN_PRIMITIVES: Record<string, TKey[]> = {
+  basic: ['s', 's', 'i', 'f', 'b'],
+  twoStrings: ['s', 's', 's'],
+  twoInts: ['s', 'i', 'i'],
+  twoBools: ['s', 'b', 'b'],
 };
 
-type TKey = keyof typeof SLICE_WIDTH; // 's' | 'i' | 'f' | 'b'
-function sliceFieldWithPlan(payload: string, index: number, plan: readonly TKey[]): string {
-  const start = HEADER_LEN + plan.slice(0, index).reduce((acc, k) => acc + SLICE_WIDTH[k], 0);
+type TKey = keyof typeof FULL_WIDTH;
 
-  return payload.slice(start, start + SLICE_WIDTH[plan[index]]);
+function sliceFieldWithPlan(payload: string, index: number, plan: readonly TKey[]): string {
+  const start = PROTOCOL_HEADER_LENGTH + plan.slice(0, index).reduce((acc, k) => acc + FULL_WIDTH[k], 0);
+
+  return payload.slice(start, start + FULL_WIDTH[plan[index]]);
 }
 
 function paddedValueOf(payload: string, index: number, plan: readonly TKey[]): string {
@@ -26,15 +25,15 @@ function paddedValueOf(payload: string, index: number, plan: readonly TKey[]): s
 
 describe('core/serializer', () => {
   describe('payload size helper', () => {
-    function detectType(v: string | number | boolean): keyof typeof SLICE_WIDTH {
+    function detectType(v: string | number | boolean): TKey {
       if (typeof v === 'string') return 's';
       if (typeof v === 'boolean') return 'b';
 
       return Number.isInteger(v) ? 'i' : 'f';
     }
 
-    function expectedLength(plan: readonly (keyof typeof SLICE_WIDTH)[]): number {
-      return PROTOCOL_HEADER.length + plan.reduce((acc, k) => acc + SLICE_WIDTH[k], 0);
+    function expectedLength(plan: readonly (TKey)[]): number {
+      return PROTOCOL_HEADER_LENGTH + plan.reduce((acc, k) => acc + FULL_WIDTH[k], 0);
     }
 
     it('computes expected length for arbitrary object', () => {
@@ -45,7 +44,7 @@ describe('core/serializer', () => {
         ratio: 3.14, // f
         active: false, // b
         flag: true, // b
-      } as const;
+      };
 
       const plan = Object.values(obj).map(detectType);
       const expected = expectedLength(plan);
@@ -64,17 +63,17 @@ describe('core/serializer', () => {
         y: '0',
         inheritMaxSiblingWidth: false,
         inheritMaxSiblingHeight: true,
-      } as const;
-      const plan: (keyof typeof SLICE_WIDTH)[] = ['s', 's', 's', 's', 's', 'b', 'b'];
-      const expected = PROTOCOL_HEADER.length + plan.reduce((a, k) => a + SLICE_WIDTH[k], 0);
+      };
+      const plan: (TKey)[] = ['s', 's', 's', 's', 's', 'b', 'b'];
+      const expected = PROTOCOL_HEADER_LENGTH + plan.reduce((a, k) => a + FULL_WIDTH[k], 0);
       const [result, bytes] = serialize(layout);
       // Layout alone (including type): 1 type + 4 strings + 2 bools
       expect(bytes).toBe(expected);
       expect(result.length).toBe(expected);
       // Sanity: slice count
       const fieldCount = plan.length; // includes type at index 0
-      // length minus header should equal sum slice widths
-      expect(result.length - PROTOCOL_HEADER.length).toBe(plan.reduce((a, k) => a + SLICE_WIDTH[k], 0));
+      // length minus PROTOCOL_HEADER should equal sum slice widths
+      expect(result.length - PROTOCOL_HEADER_LENGTH).toBe(plan.reduce((a, k) => a + FULL_WIDTH[k], 0));
       expect(fieldCount).toBe(7);
     });
 
@@ -85,13 +84,13 @@ describe('core/serializer', () => {
         visible: true,
         enabled: false,
         layer: 0,
-      } as const;
-      const plan: (keyof typeof SLICE_WIDTH)[] = ['s', 'b', 'b', 'i'];
-      const expected = PROTOCOL_HEADER.length + plan.reduce((a, k) => a + SLICE_WIDTH[k], 0);
+      };
+      const plan: (TKey)[] = ['s', 'b', 'b', 'i'];
+      const expected = PROTOCOL_HEADER_LENGTH + plan.reduce((a, k) => a + FULL_WIDTH[k], 0);
       const [result, bytes] = serialize(control);
       expect(bytes).toBe(expected);
       expect(result.length).toBe(expected);
-      expect(result.length - PROTOCOL_HEADER.length).toBe(plan.reduce((a, k) => a + SLICE_WIDTH[k], 0));
+      expect(result.length - PROTOCOL_HEADER_LENGTH).toBe(plan.reduce((a, k) => a + FULL_WIDTH[k], 0));
     });
   });
 
@@ -105,10 +104,10 @@ describe('core/serializer', () => {
     });
 
     // Prefix
-    expect(result.startsWith(HEADER)).toBe(true);
+    expect(result.startsWith(PROTOCOL_HEADER)).toBe(true);
 
     // Expected length from constants
-    const expectedLen = HEADER_LEN + PLAN_PRIMITIVES.basic.reduce((acc, k) => acc + SLICE_WIDTH[k], 0);
+    const expectedLen = PROTOCOL_HEADER_LENGTH + PLAN_PRIMITIVES.basic.reduce((acc, k) => acc + FULL_WIDTH[k], 0);
     expect(result.length).toBe(expectedLen);
     expect(bytes).toBe(expectedLen);
 
@@ -117,35 +116,35 @@ describe('core/serializer', () => {
     const f0 = sliceFieldWithPlan(result, 0, plan);
     expect(f0.startsWith(`${TYPE_PREFIX.s}:`)).toBe(true);
     expect(f0.endsWith(FIELD_MARKERS[0])).toBe(true);
-    const f0Padded = f0.slice(2, 2 + PADDED_WIDTH.s);
+    const f0Padded = f0.slice(2, 2 + TYPE_WIDTH.s);
     expect(f0Padded.startsWith('example')).toBe(true);
 
     // Field 1: name (string)
     const f1 = sliceFieldWithPlan(result, 1, plan);
     expect(f1.startsWith(`${TYPE_PREFIX.s}:`)).toBe(true);
     expect(f1.endsWith(FIELD_MARKERS[1])).toBe(true);
-    const f1Padded = f1.slice(2, 2 + PADDED_WIDTH.s);
+    const f1Padded = f1.slice(2, 2 + TYPE_WIDTH.s);
     expect(f1Padded.startsWith('hello')).toBe(true);
 
     // Field 2: count (int)
     const f2 = sliceFieldWithPlan(result, 2, plan);
     expect(f2.startsWith(`${TYPE_PREFIX.i}:`)).toBe(true);
     expect(f2.endsWith(FIELD_MARKERS[2])).toBe(true);
-    const f2Padded = f2.slice(2, 2 + PADDED_WIDTH.i);
+    const f2Padded = f2.slice(2, 2 + TYPE_WIDTH.i);
     expect(f2Padded.trimEnd().startsWith('123')).toBe(true);
 
     // Field 3: ratio (float)
     const f3 = sliceFieldWithPlan(result, 3, plan);
     expect(f3.startsWith(`${TYPE_PREFIX.f}:`)).toBe(true);
     expect(f3.endsWith(FIELD_MARKERS[3])).toBe(true);
-    const f3Padded = f3.slice(2, 2 + PADDED_WIDTH.f);
+    const f3Padded = f3.slice(2, 2 + TYPE_WIDTH.f);
     expect(f3Padded.startsWith('45.67')).toBe(true);
 
     // Field 4: ok (bool)
     const f4 = sliceFieldWithPlan(result, 4, plan);
     expect(f4.startsWith(`${TYPE_PREFIX.b}:`)).toBe(true);
     expect(f4.endsWith(FIELD_MARKERS[4])).toBe(true);
-    const f4Padded = f4.slice(2, 2 + PADDED_WIDTH.b);
+    const f4Padded = f4.slice(2, 2 + TYPE_WIDTH.b);
     expect(f4Padded.startsWith('true')).toBe(true);
   });
 
@@ -156,7 +155,7 @@ describe('core/serializer', () => {
     const f0 = sliceFieldWithPlan(result, 1, plan);
     const f1 = sliceFieldWithPlan(result, 2, plan);
     // Core padded value regions should be identical
-    expect(f0.slice(2, 2 + PADDED_WIDTH.s)).toBe(f1.slice(2, 2 + PADDED_WIDTH.s));
+    expect(f0.slice(2, 2 + TYPE_WIDTH.s)).toBe(f1.slice(2, 2 + TYPE_WIDTH.s));
     // But full fields must differ thanks to markers
     expect(f0).not.toBe(f1);
     expect(f0.endsWith(FIELD_MARKERS[1])).toBe(true);
@@ -168,7 +167,7 @@ describe('core/serializer', () => {
     const plan = PLAN_PRIMITIVES.twoInts;
     const f0 = sliceFieldWithPlan(result, 1, plan);
     const f1 = sliceFieldWithPlan(result, 2, plan);
-    expect(f0.slice(2, 2 + PADDED_WIDTH.i)).toBe(f1.slice(2, 2 + PADDED_WIDTH.i));
+    expect(f0.slice(2, 2 + TYPE_WIDTH.i)).toBe(f1.slice(2, 2 + TYPE_WIDTH.i));
     expect(f0).not.toBe(f1);
     expect(f0.endsWith(FIELD_MARKERS[1])).toBe(true);
     expect(f1.endsWith(FIELD_MARKERS[2])).toBe(true);
@@ -179,8 +178,8 @@ describe('core/serializer', () => {
     const plan = PLAN_PRIMITIVES.twoBools;
     const f0 = sliceFieldWithPlan(result, 1, plan);
     const f1 = sliceFieldWithPlan(result, 2, plan);
-    expect(f0.slice(2, 2 + PADDED_WIDTH.b).startsWith('true')).toBe(true);
-    expect(f1.slice(2, 2 + PADDED_WIDTH.b).startsWith('false')).toBe(true);
+    expect(f0.slice(2, 2 + TYPE_WIDTH.b).startsWith('true')).toBe(true);
+    expect(f1.slice(2, 2 + TYPE_WIDTH.b).startsWith('false')).toBe(true);
   });
 
   it('throws on unsupported value types', () => {
@@ -190,61 +189,61 @@ describe('core/serializer', () => {
 
   describe('limits', () => {
     it('string: exact fit (ASCII) and overflow truncation', () => {
-      const exact = 'x'.repeat(PADDED_WIDTH.s);
+      const exact = 'x'.repeat(TYPE_WIDTH.s);
       let res = serialize({ type: 't', s: exact })[0];
-      let plan = ['s', 's'] as const; // type, s
+      let plan: (TKey)[] = ['s', 's']; // type, s
       expect(paddedValueOf(res, 1, plan)).toBe(exact);
 
-      const over = 'x'.repeat(PADDED_WIDTH.s + 8);
+      const over = 'x'.repeat(TYPE_WIDTH.s + 8);
       res = serialize({ type: 't', s: over })[0];
-      plan = ['s', 's'] as const;
+      plan = ['s', 's'];
       expect(paddedValueOf(res, 1, plan)).toBe(exact);
     });
 
     it('string: multi-byte safety (2-byte and surrogate pairs 4-byte)', () => {
       const twoByte = 'é'; // 2 bytes in UTF-8
-      const overTwoByte = twoByte.repeat(PADDED_WIDTH.s / 2 + 1);
-      const expectedTwoByte = twoByte.repeat(PADDED_WIDTH.s / 2);
+      const overTwoByte = twoByte.repeat(TYPE_WIDTH.s / 2 + 1);
+      const expectedTwoByte = twoByte.repeat(TYPE_WIDTH.s / 2);
       let res = serialize({ type: 't', s: overTwoByte })[0];
-      let plan = ['s', 's'] as const;
+      let plan: (TKey)[] = ['s', 's'];
       expect(paddedValueOf(res, 1, plan)).toBe(expectedTwoByte);
 
       const fourByte = '😀'; // surrogate pair, 4 bytes
-      const overFourByte = fourByte.repeat(PADDED_WIDTH.s / 4 + 1);
-      const expectedFourByte = fourByte.repeat(PADDED_WIDTH.s / 4);
+      const overFourByte = fourByte.repeat(TYPE_WIDTH.s / 4 + 1);
+      const expectedFourByte = fourByte.repeat(TYPE_WIDTH.s / 4);
       res = serialize({ type: 't', s: overFourByte })[0];
-      plan = ['s', 's'] as const;
+      plan = ['s', 's'];
       expect(paddedValueOf(res, 1, plan)).toBe(expectedFourByte);
     });
 
     it('int: exact 16-char string and overflow truncation; negative support', () => {
       const exactInt = 1234567890123456; // 16 digits
       let res = serialize({ type: 't', i: exactInt })[0];
-      let plan = ['s', 'i'] as const; // type, i
+      let plan: (TKey)[] = ['s', 'i']; // type, i
       expect(paddedValueOf(res, 1, plan).startsWith(exactInt.toString())).toBe(true);
-      expect(paddedValueOf(res, 1, plan).length).toBe(PADDED_WIDTH.i);
+      expect(paddedValueOf(res, 1, plan).length).toBe(TYPE_WIDTH.i);
 
       const overflowInt = 12345678901234568; // 17 digits
       res = serialize({ type: 't', i: overflowInt })[0];
-      const expectedStart = overflowInt.toString().slice(0, PADDED_WIDTH.i);
-      plan = ['s', 'i'] as const;
+      const expectedStart = overflowInt.toString().slice(0, TYPE_WIDTH.i);
+      plan = ['s', 'i'];
       expect(paddedValueOf(res, 1, plan).startsWith(expectedStart)).toBe(true);
 
       res = serialize({ type: 't', i: -1 })[0];
-      plan = ['s', 'i'] as const;
+      plan = ['s', 'i'];
       expect(paddedValueOf(res, 1, plan).startsWith('-1')).toBe(true);
     });
 
     it('float: padded to 24 and truncated from toString()', () => {
       let res = serialize({ type: 't', f: 1 / 3 })[0];
-      let plan = ['s', 'f'] as const;
+      let plan: (TKey)[] = ['s', 'f'];
       const val = (1 / 3).toString();
       expect(paddedValueOf(res, 1, plan).startsWith(val)).toBe(true);
-      expect(paddedValueOf(res, 1, plan).length).toBe(PADDED_WIDTH.f);
+      expect(paddedValueOf(res, 1, plan).length).toBe(TYPE_WIDTH.f);
 
       const big = 1e123;
       res = serialize({ type: 't', f: big })[0];
-      plan = ['s', 'f'] as const;
+      plan = ['s', 'f'];
       expect(paddedValueOf(res, 1, plan).startsWith(big.toString())).toBe(true);
     });
 
@@ -254,9 +253,9 @@ describe('core/serializer', () => {
       const tPad = paddedValueOf(res, 1, plan);
       const fPad = paddedValueOf(res, 2, plan);
       expect(tPad.startsWith('true')).toBe(true);
-      expect(tPad.length).toBe(PADDED_WIDTH.b);
+      expect(tPad.length).toBe(TYPE_WIDTH.b);
       expect(fPad.startsWith('false')).toBe(true);
-      expect(fPad.length).toBe(PADDED_WIDTH.b);
+      expect(fPad.length).toBe(TYPE_WIDTH.b);
     });
   });
 
@@ -277,21 +276,20 @@ describe('core/serializer', () => {
 
       expect(result.startsWith(PROTOCOL_HEADER)).toBe(true);
 
-      // Calculate expected length: header + type field + reserved field
-      const expectedLen = PROTOCOL_HEADER.length + SLICE_WIDTH.s + (20 + 3); // 20 reserved + 2 prefix + 1 marker
+      // Calculate expected length: PROTOCOL_HEADER + type field + reserved field
+      const expectedLen = PROTOCOL_HEADER_LENGTH + FULL_WIDTH.s + 20; // 20 reserved bytes total
       expect(result.length).toBe(expectedLen);
       expect(bytes).toBe(expectedLen);
 
       // Extract the reserved field (field index 1)
-      const reservedFieldStart = PROTOCOL_HEADER.length + SLICE_WIDTH.s;
-      const reservedField = result.slice(reservedFieldStart, reservedFieldStart + 20 + 3);
+      const reservedFieldStart = PROTOCOL_HEADER_LENGTH + FULL_WIDTH.s;
+      const reservedField = result.slice(reservedFieldStart, reservedFieldStart + 20);
 
-      expect(reservedField.startsWith(`${TYPE_PREFIX.r}:`)).toBe(true);
       expect(reservedField.endsWith(FIELD_MARKERS[1])).toBe(true);
 
-      // Check that the padding is correct (20 pad chars)
-      const padding = reservedField.slice(2, 2 + 20);
-      expect(padding).toBe(';'.repeat(20));
+      // Check that the padding is correct (19 pad chars + 1 marker)
+      const padding = reservedField.slice(0, 19);
+      expect(padding).toBe(';'.repeat(19));
     });
 
     it('handles different reserved byte sizes', () => {
@@ -303,19 +301,18 @@ describe('core/serializer', () => {
           reserved: reserveBytes(size),
         });
 
-        const expectedLen = PROTOCOL_HEADER.length + SLICE_WIDTH.s + (size + 3);
+        const expectedLen = PROTOCOL_HEADER_LENGTH + FULL_WIDTH.s + size;
         expect(result.length).toBe(expectedLen);
         expect(bytes).toBe(expectedLen);
 
         // Extract reserved field
-        const reservedFieldStart = PROTOCOL_HEADER.length + SLICE_WIDTH.s;
-        const reservedField = result.slice(reservedFieldStart, reservedFieldStart + size + 3);
+        const reservedFieldStart = PROTOCOL_HEADER_LENGTH + FULL_WIDTH.s;
+        const reservedField = result.slice(reservedFieldStart, reservedFieldStart + size);
 
-        expect(reservedField.startsWith(`${TYPE_PREFIX.r}:`)).toBe(true);
         expect(reservedField.endsWith(FIELD_MARKERS[1])).toBe(true);
 
-        const padding = reservedField.slice(2, 2 + size);
-        expect(padding).toBe(';'.repeat(size));
+        const padding = reservedField.slice(0, size - 1);
+        expect(padding).toBe(';'.repeat(size - 1));
       });
     });
 
@@ -331,42 +328,42 @@ describe('core/serializer', () => {
 
       expect(result.startsWith(PROTOCOL_HEADER)).toBe(true);
 
-      let offset = PROTOCOL_HEADER.length;
+      let offset = PROTOCOL_HEADER_LENGTH;
 
       // Field 0: type (string)
-      const f0 = result.slice(offset, offset + SLICE_WIDTH.s);
+      const f0 = result.slice(offset, offset + FULL_WIDTH.s);
       expect(f0.startsWith(`${TYPE_PREFIX.s}:`)).toBe(true);
-      expect(f0.slice(2, 2 + PADDED_WIDTH.s).startsWith('mixed')).toBe(true);
-      offset += SLICE_WIDTH.s;
+      expect(f0.slice(2, 2 + TYPE_WIDTH.s).startsWith('mixed')).toBe(true);
+      offset += FULL_WIDTH.s;
 
       // Field 1: name (string)
-      const f1 = result.slice(offset, offset + SLICE_WIDTH.s);
+      const f1 = result.slice(offset, offset + FULL_WIDTH.s);
       expect(f1.startsWith(`${TYPE_PREFIX.s}:`)).toBe(true);
-      expect(f1.slice(2, 2 + PADDED_WIDTH.s).startsWith('test')).toBe(true);
-      offset += SLICE_WIDTH.s;
+      expect(f1.slice(2, 2 + TYPE_WIDTH.s).startsWith('test')).toBe(true);
+      offset += FULL_WIDTH.s;
 
       // Field 2: reserved1 (10 bytes)
-      const f2 = result.slice(offset, offset + 10 + 3);
-      expect(f2.startsWith(`${TYPE_PREFIX.r}:`)).toBe(true);
-      expect(f2.slice(2, 2 + 10)).toBe(';'.repeat(10));
-      offset += 10 + 3;
+      const f2 = result.slice(offset, offset + 10);
+      expect(f2.slice(0, 9)).toBe(';'.repeat(9)); // 9 padding + 1 marker
+      expect(f2.endsWith(FIELD_MARKERS[2])).toBe(true);
+      offset += 10;
 
       // Field 3: count (int)
-      const f3 = result.slice(offset, offset + SLICE_WIDTH.i);
+      const f3 = result.slice(offset, offset + FULL_WIDTH.i);
       expect(f3.startsWith(`${TYPE_PREFIX.i}:`)).toBe(true);
-      expect(f3.slice(2, 2 + PADDED_WIDTH.i).startsWith('42')).toBe(true);
-      offset += SLICE_WIDTH.i;
+      expect(f3.slice(2, 2 + TYPE_WIDTH.i).startsWith('42')).toBe(true);
+      offset += FULL_WIDTH.i;
 
       // Field 4: reserved2 (5 bytes)
-      const f4 = result.slice(offset, offset + 5 + 3);
-      expect(f4.startsWith(`${TYPE_PREFIX.r}:`)).toBe(true);
-      expect(f4.slice(2, 2 + 5)).toBe(';'.repeat(5));
-      offset += 5 + 3;
+      const f4 = result.slice(offset, offset + 5);
+      expect(f4.slice(0, 4)).toBe(';'.repeat(4)); // 4 padding + 1 marker
+      expect(f4.endsWith(FIELD_MARKERS[4])).toBe(true);
+      offset += 5;
 
       // Field 5: active (bool)
-      const f5 = result.slice(offset, offset + SLICE_WIDTH.b);
+      const f5 = result.slice(offset, offset + FULL_WIDTH.b);
       expect(f5.startsWith(`${TYPE_PREFIX.b}:`)).toBe(true);
-      expect(f5.slice(2, 2 + PADDED_WIDTH.b).startsWith('true')).toBe(true);
+      expect(f5.slice(2, 2 + TYPE_WIDTH.b).startsWith('true')).toBe(true);
     });
 
     it('maintains unique markers for reserved fields', () => {
@@ -377,20 +374,20 @@ describe('core/serializer', () => {
         reserved3: reserveBytes(5),
       });
 
-      let offset = PROTOCOL_HEADER.length + SLICE_WIDTH.s; // Skip type field
+      let offset = PROTOCOL_HEADER_LENGTH + FULL_WIDTH.s; // Skip type field
 
       // reserved1 (field index 1)
-      const r1 = result.slice(offset, offset + 10 + 3);
+      const r1 = result.slice(offset, offset + 10);
       expect(r1.endsWith(FIELD_MARKERS[1])).toBe(true);
-      offset += 10 + 3;
+      offset += 10;
 
       // reserved2 (field index 2)
-      const r2 = result.slice(offset, offset + 10 + 3);
+      const r2 = result.slice(offset, offset + 10);
       expect(r2.endsWith(FIELD_MARKERS[2])).toBe(true);
-      offset += 10 + 3;
+      offset += 10;
 
       // reserved3 (field index 3)
-      const r3 = result.slice(offset, offset + 5 + 3);
+      const r3 = result.slice(offset, offset + 5);
       expect(r3.endsWith(FIELD_MARKERS[3])).toBe(true);
 
       // Verify all markers are different even though r1 and r2 have same content

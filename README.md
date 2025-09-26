@@ -109,15 +109,15 @@ Padding ALWAYS applies only to the value region (prefix is never full). The mark
 
 ### Field Widths (bytes)
 
-| Type     | Prefix | Prefix size | Type Size | Marker size | Full Size (ps+s+ms) |
-|----------|--------|-------------|-----------|-------------|-----------------------|
-| String   | `s:`   | 2           | 32        | 1           | 35                    |
-| Int      | `i:`   | 2           | 16        | 1           | 19                    |
-| Float*   | `f:`   | 2           | 24        | 1           | 27                    |
-| Bool     | `b:`   | 2           | 5         | 1           | 8                     |
-| Reserved | `r:`   | 2           | variable  | 1           | variable              |
+| Type     | Prefix | Prefix Width | Type Width | Marker Width | Full Width (ps+s+ms) |
+|----------|--------|--------------|------------|--------------|----------------------|
+| String   | `s:`   | 2            | 32         | 1            | 35                   |
+| Int      | `i:`   | 2            | 16         | 1            | 19                   |
+| Float*   | `f:`   | 2            | 24         | 1            | 27                   |
+| Bool     | `b:`   | 2            | 5          | 1            | 8                    |
+| Reserved | `r:`   | 2            | variable   | 0            | variable             |
 
-Reserved type does not have any extra padding, it does have marker
+Reserved type does not have marker or prefix width in the serialized data
 \* Floats currently get truncated to integers in JSON UI for unknown reasons
 
 ### Markers
@@ -152,8 +152,8 @@ Generic template (JSON UI binding entries) — copy & replace placeholders:
 
 ```jsonc
 {
-    "binding_type": "view", // full_size
-    "source_property_name": "('%.{FULL_SIZE}s' * #rem_after_{PREV})",
+    "binding_type": "view", // full_width
+    "source_property_name": "('%.{FULL_WIDTH}s' * #rem_after_{PREV})",
     "target_property_name": "#raw_{FIELD_NAME}"
 },
 {
@@ -162,8 +162,8 @@ Generic template (JSON UI binding entries) — copy & replace placeholders:
     "target_property_name": "#rem_after_{FIELD_NAME}"
 },
 {
-    "binding_type": "view", // (full_size - marker_size) - prefix_size - padding_char (;)
-    "source_property_name": "(('%.{FM_SIZE}s' * #raw_{FIELD_NAME}) - ('%.2s' * #raw_{FIELD_NAME}) - ';')",
+    "binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
+    "source_property_name": "(('%.{FM_WIDTH}s' * #raw_{FIELD_NAME}) - ('%.2s' * #raw_{FIELD_NAME}) - ';')",
     "target_property_name": "#{FIELD_NAME}"
 },
 ```
@@ -172,8 +172,8 @@ Generic template (JSON UI binding entries) — copy & replace placeholders:
 
 ```jsonc
 {
-    "binding_type": "view", // reserved full_size
-    "source_property_name": "('%.{RESERVED_SIZE}s' * #rem_after_{PREV})",
+    "binding_type": "view", // reserved full_width
+    "source_property_name": "('%.{RESERVED_WIDTH}s' * #rem_after_{PREV})",
     "target_property_name": "#skip_{RESERVED_NAME}"
 },
 {
@@ -185,9 +185,9 @@ Generic template (JSON UI binding entries) — copy & replace placeholders:
 
 - `{FIELD_NAME}` unique identifier (e.g. `type`, `visible`, `inherit_max_sibling_height`)
 - `{PREV}` previous remainder token (first field uses `header`, others use previous field name)
-- `{FULL_SIZE}` from table "Full Size" column
-- `{FM_SIZE}` table (full_size - marker_size)
-- `{RESERVED_SIZE}` reserved block size in bytes (e.g., 277)
+- `{FULL_WIDTH}` from table full_width column
+- `{FM_WIDTH}` table (full_width - marker_width)
+- `{RESERVED_WIDTH}` reserved block width in bytes (e.g., 277)
 - `{RESERVED_NAME}` unique identifier
 
 ### Concrete Multi‑Field Example
@@ -201,22 +201,22 @@ Remember to skip the 9-char header first (e.g., `('%.9s' * #custom_text)` to obt
 { "binding_type": "view", "source_property_name": "(#custom_text - #protocol_header)", "target_property_name": "#rem_after_header" },
 
 /* Field 0: type (string, 35 bytes) */
-// full_size
+// full_width
 { "binding_type": "view", "source_property_name": "('%.35s' * #rem_after_header)", "target_property_name": "#raw_type" },
 { "binding_type": "view", "source_property_name": "(#rem_after_header - #raw_type)", "target_property_name": "#rem_after_type" },
-// (full_size - marker_size) - prefix_size - padding_char (;)
+// (full_width - marker_width) - prefix_width - padding_char (;)
 { "binding_type": "view", "source_property_name": "(('%.34s' * #raw_type) - ('%.2s' * #raw_type) - ';')", "target_property_name": "#type" },
 
 /* Field 1: visible (bool, 8 bytes) */
-// full_size
+// full_width
 { "binding_type": "view", "source_property_name": "('%.8s' * #rem_after_type)", "target_property_name": "#raw_visible" },
 { "binding_type": "view", "source_property_name": "(#rem_after_type - #raw_visible)", "target_property_name": "#rem_after_visible" },
-// (full_size - marker_size) - prefix_size - padding_char (;)
+// (full_width - marker_width) - prefix_width - padding_char (;)
 { "binding_type": "view", "source_property_name": "(('%.7s' * #raw_visible) - ('%.2s' * #raw_visible) - ';')", "target_property_name": "#visible" },
 
 /* ... Fields 2-9 follow same pattern ... */
 
-/* Skip reserved block (277 bytes) at the end */
+// reserved full_width
 { "binding_type": "view", "source_property_name": "('%.277s' * #rem_after_inherit_max_sibling_height)", "target_property_name": "#skip_reserved" },
 { "binding_type": "view", "source_property_name": "(#rem_after_inherit_max_sibling_height - #skip_reserved)", "target_property_name": "#serialized_data" },
 
@@ -290,14 +290,14 @@ Place tests under `src/**/__tests__/**` or `*.test.ts` (excluded from build outp
 
 - JSON UI string ops with numbers can behave unpredictably; prefix markers before numeric-derived substrings client-side.
 - Subtraction operator (`-`) removes all occurrences; use distinct prefixes to avoid collisions.
-- Modal form title length limits total payload size — keep it lean.
+- Modal form title length limits total payload width — keep it lean.
 
 ---
 
 ## ➕ Adding a New Component
 
 1. Define (or reuse) interface in `types/json_ui/components.ts`.
-2. Implement factory in `core/components/<Name>.ts` with `'default'` size fallbacks.
+2. Implement factory in `core/components/<Name>.ts` with `'default'` fallbacks.
 3. Use `serialize(...)` helper; append new protocol segments only at the end.
 4. Export via `core/components/index.ts` and `src/index.ts`.
 

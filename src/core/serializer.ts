@@ -1,16 +1,10 @@
 import { ReservedBytes, SerializableComponent, SerializablePrimitive } from '../types/serialization';
 
 /**
- * Per-field unique marker characters appended AFTER the fixed-width padded payload.
  * This makes each full field substring unique even when two field values & padding are identical.
  * JSON UI subtraction removes ALL occurrences, so uniqueness is required to avoid unintentionally
  * stripping later identical fields. With a unique trailing marker per field, removing the first
  * field substring cannot match a later one (different marker) even if the padded content matches.
- *
- * NOTE: This increases the protocol length by +1 char per field. Decoders using the
- * progressive subtraction pattern must now slice (width + 1) for the raw field, then use a
- * secondary slice (original width) to read the actual value ignoring the trailing marker.
- * (Example for a 32-byte string: raw = ('%.33s' * #payload); value = ('%.32s' * #raw) - ';')
  */
 export const FIELD_MARKERS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'.split('');
 
@@ -21,22 +15,33 @@ export const PAD_CHAR = ';';
 // Increment when making backward-incompatible changes to the payload layout.
 export const VERSION = 'v0001';
 export const PROTOCOL_HEADER = `bcui${VERSION}`;
+export const PROTOCOL_HEADER_LENGTH = 9; // bytes, all characters are single-byte ASCII
 
 // Public protocol constants (exported for tests and decoders)
-export const PADDED_WIDTH = {
+export const TYPE_WIDTH = {
   s: 32,
   i: 16,
   f: 24,
   b: 5,
-  r: 0, // Reserved type - dynamic width
+  r: 0, // variable
 };
 
-export const SLICE_WIDTH = {
-  s: PADDED_WIDTH.s + 3, // 2 prefix + 1 marker
-  i: PADDED_WIDTH.i + 3,
-  f: PADDED_WIDTH.f + 3,
-  b: PADDED_WIDTH.b + 3,
-  r: PADDED_WIDTH.r + 0, // Reserved type - dynamic width
+export const PREFIX_WIDTH = {
+  s: 2,
+  i: 2,
+  f: 2,
+  b: 2,
+  r: 0,
+};
+
+export const MARKER_WIDTH = 1; // 1 byte marker per field
+
+export const FULL_WIDTH = {
+  s: TYPE_WIDTH.s + PREFIX_WIDTH.s + MARKER_WIDTH,
+  i: TYPE_WIDTH.i + PREFIX_WIDTH.i + MARKER_WIDTH,
+  f: TYPE_WIDTH.f + PREFIX_WIDTH.f + MARKER_WIDTH,
+  b: TYPE_WIDTH.b + PREFIX_WIDTH.b + MARKER_WIDTH,
+  r: PREFIX_WIDTH.r,
 };
 
 // Type prefix characters used for encoding
@@ -191,36 +196,31 @@ export function serialize({ type, ...rest }: SerializableComponent): [string, nu
   const segments = entries.map(([key, value]: [string, SerializablePrimitive], index: number): string => {
     let core: string;
     let widthBytes: number;
-    // let typeCode: keyof typeof PADDED_WIDTH;
     let rawStr: string;
 
     if (typeof value === 'string') {
-      // typeCode = 's';
       rawStr = value;
-      core = `${TYPE_PREFIX.s}:${padToByteLength(value, PADDED_WIDTH.s)}`;
-      widthBytes = SLICE_WIDTH.s;
+      core = `${TYPE_PREFIX.s}:${padToByteLength(value, TYPE_WIDTH.s)}`;
+      widthBytes = FULL_WIDTH.s;
     } else if (typeof value === 'boolean') {
-      // typeCode = 'b';
       rawStr = value ? 'true' : 'false';
-      core = `${TYPE_PREFIX.b}:${padToByteLength(rawStr, PADDED_WIDTH.b)}`;
-      widthBytes = SLICE_WIDTH.b;
+      core = `${TYPE_PREFIX.b}:${padToByteLength(rawStr, TYPE_WIDTH.b)}`;
+      widthBytes = FULL_WIDTH.b;
     } else if (typeof value === 'number') {
       if (Number.isInteger(value)) {
-        // typeCode = 'i';
         rawStr = value.toString();
-        core = `${TYPE_PREFIX.i}:${padToByteLength(rawStr, PADDED_WIDTH.i)}`;
-        widthBytes = SLICE_WIDTH.i;
+        core = `${TYPE_PREFIX.i}:${padToByteLength(rawStr, TYPE_WIDTH.i)}`;
+        widthBytes = FULL_WIDTH.i;
       } else {
         // typeCode = 'f';
         rawStr = value.toString();
-        core = `${TYPE_PREFIX.f}:${padToByteLength(rawStr, PADDED_WIDTH.f)}`;
-        widthBytes = SLICE_WIDTH.f;
+        core = `${TYPE_PREFIX.f}:${padToByteLength(rawStr, TYPE_WIDTH.f)}`;
+        widthBytes = FULL_WIDTH.f;
       }
     } else if (typeof value === 'object' && value.__type === 'reserved') {
-      // typeCode = 'r';
       rawStr = '';
-      // Do not append prefix as we do not have "padded" for reserved bytes for easier json UI skipping
-      core = `${PAD_CHAR.repeat(value.bytes)}`;
+      // Do not append prefix as we do not have prefix or marker for reserved bytes for easier JSON UI skipping
+      core = `${PAD_CHAR.repeat(value.bytes - 1)}`; // -1 for marker
       widthBytes = value.bytes;
     } else {
       throw new Error(`serialize(): unsupported type for property "${key}"`);
@@ -229,12 +229,6 @@ export function serialize({ type, ...rest }: SerializableComponent): [string, nu
     totalBytes += widthBytes;
 
     const marker = getFieldMarker(index);
-    // const paddedRegion = core.slice(2); // after type prefix + ':'
-    // Log expected padded values for debugging / inspection
-    // Logger.log(
-    //   `[serialize] field#${index} key="${key}" type=${typeCode} raw="${rawStr}" rawBytes=${utf8ByteLength(rawStr)} ` +
-    //   `paddedLen=${PADDED_WIDTH[typeCode]} sliceWidth=${SLICE_WIDTH[typeCode]} marker=${marker} padded="${paddedRegion}"`,
-    // );
 
     return core + marker;
   });
