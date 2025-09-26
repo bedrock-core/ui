@@ -1,7 +1,7 @@
-import { ControledLayoutProps, LabelProps } from '..';
+import { ControlProps, LabelProps } from '..';
 import type { Component, CoreUIFormData } from '../../../types';
 
-export interface DropdownProps extends LabelProps, ControledLayoutProps {
+export interface DropdownProps extends LabelProps, ControlProps {
   options: string[];
   selected?: string;
 }

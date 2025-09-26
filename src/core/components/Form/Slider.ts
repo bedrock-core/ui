@@ -1,7 +1,7 @@
-import { ControledLayoutProps, LabelProps } from '..';
+import { ControlProps, LabelProps } from '..';
 import type { Component, CoreUIFormData } from '../../../types';
 
-export interface SliderProps extends LabelProps, ControledLayoutProps {
+export interface SliderProps extends LabelProps, ControlProps {
   min: number;
   max: number;
   value?: number;

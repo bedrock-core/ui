@@ -1,9 +1,9 @@
-import { ControledLayoutProps, withControledLayout } from '.';
+import { ControlProps, withControl } from '.';
 import type { Component, CoreUIFormData, SerializableComponent } from '../../types';
 import { Logger } from '../../util/Logger';
 import { serialize } from '../serializer';
 
-export interface ImageProps extends ControledLayoutProps {
+export interface ImageProps extends ControlProps {
   texture?: string;
   uv?: [number, number];
   uvSize?: [number, number];
@@ -14,7 +14,7 @@ export interface ImageProps extends ControledLayoutProps {
 }
 
 export function Image(props: ImageProps): Component {
-  const { texture, uv, uvSize, ninesliceSize, tiled, keepRatio, bilinear, ...rest } = withControledLayout(props);
+  const { texture, uv, uvSize, ninesliceSize, tiled, keepRatio, bilinear, ...rest } = withControl(props);
 
   return {
     serialize: (form: CoreUIFormData): void => {
@@ -24,6 +24,7 @@ export function Image(props: ImageProps): Component {
 
       const serializable: SerializableComponent = {
         type: 'image',
+        ...rest,
         texture: texture ?? '',
         uvX: uv?.[0] ?? 0,
         uvY: uv?.[1] ?? 0,
@@ -36,7 +37,6 @@ export function Image(props: ImageProps): Component {
         tiled: tiled ?? false,
         keepRatio: keepRatio ?? false,
         bilinear: bilinear ?? false,
-        ...rest,
       };
 
       const [result, bytes] = serialize(serializable);

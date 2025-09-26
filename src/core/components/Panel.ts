@@ -1,9 +1,9 @@
 
-import { ControledLayoutProps, withControledLayout } from '.';
+import { ControlProps, withControl } from '.';
 import { Component, CoreUIFormData, SerializableComponent } from '../../types';
 import { Logger } from '../../util/Logger';
 import { serialize } from '../serializer';
-export interface PanelProps extends ControledLayoutProps {
+export interface PanelProps extends ControlProps {
   // Future idea
   // display?: 'flex' | 'block';
   // orientation?: 'vertical' | 'horizontal';
@@ -11,7 +11,7 @@ export interface PanelProps extends ControledLayoutProps {
 }
 
 export function Panel(props: PanelProps): Component {
-  const { children, ...rest } = withControledLayout(props);
+  const { children, ...rest } = withControl(props);
 
   return {
     serialize: (form: CoreUIFormData): void => {

@@ -36,7 +36,7 @@ export const SLICE_WIDTH = {
   i: PADDED_WIDTH.i + 3,
   f: PADDED_WIDTH.f + 3,
   b: PADDED_WIDTH.b + 3,
-  r: PADDED_WIDTH.r + 3,
+  r: PADDED_WIDTH.r + 0, // Reserved type - dynamic width
 };
 
 // Type prefix characters used for encoding
@@ -219,8 +219,9 @@ export function serialize({ type, ...rest }: SerializableComponent): [string, nu
     } else if (typeof value === 'object' && value.__type === 'reserved') {
       // typeCode = 'r';
       rawStr = '';
-      core = `${TYPE_PREFIX.r}:${PAD_CHAR.repeat(value.bytes)}`;
-      widthBytes = SLICE_WIDTH.r + value.bytes;
+      // Do not append prefix as we do not have "padded" for reserved bytes for easier json UI skipping
+      core = `${PAD_CHAR.repeat(value.bytes)}`;
+      widthBytes = value.bytes;
     } else {
       throw new Error(`serialize(): unsupported type for property "${key}"`);
     }

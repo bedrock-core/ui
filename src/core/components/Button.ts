@@ -1,7 +1,7 @@
-import { ControledLayoutProps, LabelProps } from '.';
+import { ControlProps, LabelProps } from '.';
 import type { Component, CoreUIFormData } from '../../types';
 
-export interface ButtonProps extends LabelProps, ControledLayoutProps { onClick?: () => void }
+export interface ButtonProps extends LabelProps, ControlProps { onClick?: () => void }
 
 // TODO CONDITIONAL THINGS WITH THE TEXT
 export function Button({ }: ButtonProps): Component {

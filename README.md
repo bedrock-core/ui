@@ -34,7 +34,7 @@ Result: Advanced layouts, conditional logic, and style variants without custom n
 |-------|----------------|-----------|
 | Component Factories | Pure functions returning `Functional<T>` objects | `src/core/components/*.ts` |
 | Type Contracts | JSON UI spec-aligned structural interfaces | `src/types/json_ui/*.ts` |
-| Serialization Protocol | UTF‑8 fixed-width, semicolon padded segments | `src/core/serializer.ts` |
+| Serialization Protocol | UTF‑8 fixed-width, semicolon full segments | `src/core/serializer.ts` |
 | Presentation Adapter | Inject serialized payload + register form controls | `src/present.ts` |
 | Public Entry | Re-exports factories + types | `src/index.ts` |
 
@@ -102,21 +102,23 @@ Payload always starts with a 9-character header: `bcui` + `vXXXX` (e.g., `bcuiv0
 Each field is composed of three conceptual parts concatenated in this order:
 
 1. Type prefix (2 bytes) — `s:` | `i:` | `f:` | `b:`
-2. Core padded value region (fixed UTF‑8 byte length; semicolon `;` padded / truncated)
-3. Unique 1‑byte field marker (disambiguates otherwise identical padded regions during JSON UI subtraction)
+2. Core full value region (fixed UTF‑8 byte length; semicolon `;` full / truncated)
+3. Unique 1‑byte field marker (disambiguates otherwise identical full regions during JSON UI subtraction)
 
-Padding ALWAYS applies only to the value region (prefix is never padded). The marker is never removed until after a field is fully sliced out.
+Padding ALWAYS applies only to the value region (prefix is never full). The marker is never removed until after a field is fully sliced out.
 
 ### Field Widths (bytes)
 
-| Type   | Prefix | Core Padded Length | Marker | Full Field Width (slice length) |
-|--------|--------|-------------------:|-------:|--------------------------------:|
-| String | `s:`   | 32                 | 1      | 35 |
-| Int    | `i:`   | 16                 | 1      | 19 |
-| Float* | `f:`   | 24                 | 1      | 27 |
-| Bool   | `b:`   | 5                  | 1      | 8  |
+| Type     | Prefix | Prefix size | Type Size | Marker size | Full Size (ps+s+ms) |
+|----------|--------|-------------|-----------|-------------|-----------------------|
+| String   | `s:`   | 2           | 32        | 1           | 35                    |
+| Int      | `i:`   | 2           | 16        | 1           | 19                    |
+| Float*   | `f:`   | 2           | 24        | 1           | 27                    |
+| Bool     | `b:`   | 2           | 5         | 1           | 8                     |
+| Reserved | `r:`   | 2           | variable  | 1           | variable              |
 
-\* for some reason currently unknown param floats get truncated to integers in the json UI
+Reserved type does not have any extra padding, it does have marker
+\* Floats currently get truncated to integers in JSON UI for unknown reasons
 
 ### Markers
 
@@ -137,69 +139,117 @@ const [encoded, bytes] = serialize({
     ok: true,         // bool → 8
 });
 // Per-field widths = 35 (string) + 19 (int) + 27 (float) + 8 (bool) = 89 bytes (plus 9-byte bcui+version prefix)
-// NOTE: "bytes" here counts ASCII / UTF‑8 single-byte segments; multi-byte runes inside values still respect the padded byte budgets via utf8Truncate.
+// NOTE: "bytes" here counts ASCII / UTF‑8 single-byte segments; multi-byte runes inside values still respect the full byte budgets via utf8Truncate.
 ```
 
 ### Field Binding Template Pattern (Decoding)
 
-Decoding inside the resource pack uses a progressive "slice → subtract" strategy. Each field follows a 5‑step lifecycle:
+Decoding inside the resource pack uses a progressive "slice → subtract" strategy. Each field follows a 3‑step lifecycle:
 
-`extract_raw → update_remainder → trim_padding → extract_prefix → extract_value`
+`extract_raw → update_remainder → extract_value`
 
 Generic template (JSON UI binding entries) — copy & replace placeholders:
 
 ```jsonc
-{ "binding_type": "view", "source_property_name": "('%.{SLICE_LEN}s' * #rem_after_{PREV})", "target_property_name": "#raw_{NAME}" },
-{ "binding_type": "view", "source_property_name": "(#rem_after_{PREV} - #raw_{NAME})", "target_property_name": "#rem_after_{NAME}" },
-{ "binding_type": "view", "source_property_name": "('%.{PADDED_LEN}s' * #raw_{NAME})", "target_property_name": "#{NAME}_padded" },
-{ "binding_type": "view", "source_property_name": "('%.2s' * #{NAME}_padded)", "target_property_name": "#{NAME}_prefix" },
-{ "binding_type": "view", "source_property_name": "((#{NAME}_padded - #{NAME}_prefix) - ';')", "target_property_name": "#{NAME}_val" },
+{
+    "binding_type": "view", // full_size
+    "source_property_name": "('%.{FULL_SIZE}s' * #rem_after_{PREV})",
+    "target_property_name": "#raw_{FIELD_NAME}"
+},
+{
+    "binding_type": "view",
+    "source_property_name": "(#rem_after_{PREV} - #raw_{FIELD_NAME})",
+    "target_property_name": "#rem_after_{FIELD_NAME}"
+},
+{
+    "binding_type": "view", // (full_size - marker_size) - prefix_size - padding_char (;)
+    "source_property_name": "(('%.{FM_SIZE}s' * #raw_{FIELD_NAME}) - ('%.2s' * #raw_{FIELD_NAME}) - ';')",
+    "target_property_name": "#{FIELD_NAME}"
+},
 ```
 
-Placeholder reference:
+**For reserved blocks (skip pattern):**
 
-- `{NAME}` unique identifier (e.g. `username`, `age`)
-- `{PREV}` previous remainder token (first field uses the source binding where you extract text from)
-- `{PREFIX}` one of `s: i: f: b:`
-- `{PADDED_LEN}` core padded value length (see table above)
-- `{SLICE_LEN}` = `{PADDED_LEN} + 3` (adds 2 prefix chars + 1 marker)
+```jsonc
+{
+    "binding_type": "view", // reserved full_size
+    "source_property_name": "('%.{RESERVED_SIZE}s' * #rem_after_{PREV})",
+    "target_property_name": "#skip_{RESERVED_NAME}"
+},
+{
+    "binding_type": "view",
+    "source_property_name": "(#rem_after_{PREV} - #skip_{RESERVED_NAME})",
+    "target_property_name": "#rem_after_{RESERVED_NAME}"
+},
+```Placeholder reference:
 
-Quick constants (copy/paste):
-
-| Type   | Core Padded | Slice Length |
-|--------|-------------|-------------:|
-| String | 32          | 35 |
-| Int    | 16          | 19 |
-| Float  | 24          | 27 |
-| Bool   | 5           | 8  |
+- `{FIELD_NAME}` unique identifier (e.g. `type`, `visible`, `inherit_max_sibling_height`)
+- `{PREV}` previous remainder token (first field uses `header`, others use previous field name)
+- `{FULL_SIZE}` from table "Full Size" column
+- `{FM_SIZE}` table (full_size - marker_size)
+- `{RESERVED_SIZE}` reserved block size in bytes (e.g., 277)
+- `{RESERVED_NAME}` unique identifier
 
 ### Concrete Multi‑Field Example
 
-Excerpt (simplified) of the live decoder (`ui/core-ui/input.json`) for four fields.
-Remember to skip the 9-char header first (e.g., start slicing from `('%.9s' * #source)` to obtain header; subtract it to produce `#custom_text`).
+Excerpt from the live decoder (`ui/core-ui/control.json`) showing the base control properties pattern.
+Remember to skip the 9-char header first (e.g., `('%.9s' * #custom_text)` to obtain header; subtract it to produce `#rem_after_header`).
 
 ```jsonc
-/* 1. STRING FIELD (32 + 2 + 1 = 35) */
-{ "binding_type": "view", "source_property_name": "('%.35s' * #custom_text)", "target_property_name": "#raw_string" },
-{ "binding_type": "view", "source_property_name": "(#custom_text - #raw_string)", "target_property_name": "#rem_after_string" },
-{ "binding_type": "view", "source_property_name": "('%.32s' * #raw_string)", "target_property_name": "#string_padded" },
-{ "binding_type": "view", "source_property_name": "('%.2s' * #string_padded)", "target_property_name": "#string_prefix" },
-{ "binding_type": "view", "source_property_name": "((#string_padded - #string_prefix) - ';')", "target_property_name": "#string_val" },
-/* 2. INT FIELD (16 + 2 + 1 = 19) */
-{ "binding_type": "view", "source_property_name": "('%.19s' * #rem_after_string)", "target_property_name": "#raw_int" },
-{ "binding_type": "view", "source_property_name": "(#rem_after_string - #raw_int)", "target_property_name": "#rem_after_int" },
-{ "binding_type": "view", "source_property_name": "('%.16s' * #raw_int)", "target_property_name": "#int_padded" },
-{ "binding_type": "view", "source_property_name": "('%.2s' * #int_padded)", "target_property_name": "#int_prefix" },
-{ "binding_type": "view", "source_property_name": "((#int_padded - #int_prefix) - ';')", "target_property_name": "#int_val" },
-/* ... continue for float + bool ... */
+/* Strip protocol header (9 chars) */
+{ "binding_type": "view", "source_property_name": "('%.9s' * #custom_text)", "target_property_name": "#protocol_header" },
+{ "binding_type": "view", "source_property_name": "(#custom_text - #protocol_header)", "target_property_name": "#rem_after_header" },
+
+/* Field 0: type (string, 35 bytes) */
+// full_size
+{ "binding_type": "view", "source_property_name": "('%.35s' * #rem_after_header)", "target_property_name": "#raw_type" },
+{ "binding_type": "view", "source_property_name": "(#rem_after_header - #raw_type)", "target_property_name": "#rem_after_type" },
+// (full_size - marker_size) - prefix_size - padding_char (;)
+{ "binding_type": "view", "source_property_name": "(('%.34s' * #raw_type) - ('%.2s' * #raw_type) - ';')", "target_property_name": "#type" },
+
+/* Field 1: visible (bool, 8 bytes) */
+// full_size
+{ "binding_type": "view", "source_property_name": "('%.8s' * #rem_after_type)", "target_property_name": "#raw_visible" },
+{ "binding_type": "view", "source_property_name": "(#rem_after_type - #raw_visible)", "target_property_name": "#rem_after_visible" },
+// (full_size - marker_size) - prefix_size - padding_char (;)
+{ "binding_type": "view", "source_property_name": "(('%.7s' * #raw_visible) - ('%.2s' * #raw_visible) - ';')", "target_property_name": "#visible" },
+
+/* ... Fields 2-9 follow same pattern ... */
+
+/* Skip reserved block (277 bytes) at the end */
+{ "binding_type": "view", "source_property_name": "('%.277s' * #rem_after_inherit_max_sibling_height)", "target_property_name": "#skip_reserved" },
+{ "binding_type": "view", "source_property_name": "(#rem_after_inherit_max_sibling_height - #skip_reserved)", "target_property_name": "#serialized_data" },
+
+/* Component-specific fields continue from #serialized_data */
 ```
+
+### Base Control Properties Deserialization Order
+
+All components inherit these base control properties, which are deserialized in this exact order after the 9-byte protocol header (`bcuiv0001`):
+
+```text
+Field 0: type (string, 35 bytes)                    - Component type identifier
+Field 1: visible (bool, 8 bytes)                    - Visibility state
+Field 2: enabled (bool, 8 bytes)                    - Interaction enabled state
+Field 3: layer (int, 19 bytes)                      - Z-index layering
+Field 4: width (string, 35 bytes)                   - Element width
+Field 5: height (string, 35 bytes)                  - Element height
+Field 6: x (string, 35 bytes)                       - Horizontal position
+Field 7: y (string, 35 bytes)                       - Vertical position
+Field 8: inheritMaxSiblingWidth (bool, 8 bytes)     - Width inheritance flag
+Field 9: inheritMaxSiblingHeight (bool, 8 bytes)    - Height inheritance flag
+[Reserved bytes for future expansion]               - Single reserved block at end
+```
+
+**Component-specific properties** are appended after the reserved block.
 
 ### Decoding Rules & Tips
 
 - Always slice FULL field (value + prefix + marker) first, then subtract to create the remainder.
-- Strip padding only after isolating the core padded segment (second slice) so you don't accidentally remove semicolons in later fields.
+- Strip padding only after isolating the core full segment (second slice) so you don't accidentally remove semicolons in later fields.
 - Never assume a marker character appears only once globally — its uniqueness is only relative to its position; treat the raw slice atomically.
 - Protocol extension rule: append new fields (new markers) at the end; never reorder or shrink earlier core lengths.
+- Reserved blocks are skipped entirely in deserialization—they create "gaps" in the payload that the JSON UI decoder jumps over.
 
 UTF‑8 Safety: `utf8Truncate` ensures multi‑byte characters are not cut mid sequence when enforcing byte budgets.
 
@@ -339,3 +389,16 @@ Use only ModalFormData
 Note all "optional" props values should have a defined default in the serialized field
 
 Props order is important, for **ALL OF THE PROPS** of each component even if there are required you should place them in return of the serialize because the order they are in that return will be the order in the JSON UI
+
+note for serializable, because we depend on order any primitive components which will become json-ui
+type and rest should always be at the top, below then should be ALL OF YOUR PROPS EXPLICITLY DEFINED with a default value
+as that order will be the order you will have to deserialize in the JSON UI
+
+```ts
+  const { yourProps, ...rest } = withControledLayout(props);
+  const serializable: SerializableComponent = {
+    type: 'label',
+    ...rest,
+    yourProps
+  };
+```

@@ -12,17 +12,17 @@ import { PROTOCOL_HEADER, SLICE_WIDTH, PADDED_WIDTH, TYPE_PREFIX, FIELD_MARKERS 
 // 2: enabled (bool)
 // 3: layer (int)
 // 4: __controlReserved (reserved)
-// 5: inheritMaxSiblingWidth (bool)
-// 6: inheritMaxSiblingHeight (bool)
-// 7: width (string)
-// 8: height (string)
-// 9: x (string)
-// 10: y (string)
+// 5: width (string)
+// 6: height (string)
+// 7: x (string)
+// 8: y (string)
+// 9: inheritMaxSiblingWidth (bool)
+// 10: inheritMaxSiblingHeight (bool)
 // 11: __layoutReserved (reserved)
 // 12: __coreReserved (reserved)
 // Update ONLY by appending new fields at the end per protocol evolution rules.
 
-const FIELD_PLAN: (keyof typeof SLICE_WIDTH)[] = ['s', 'b', 'b', 'i', 'r', 'b', 'b', 's', 's', 's', 's', 'r', 'r'];
+const FIELD_PLAN: (keyof typeof SLICE_WIDTH)[] = ['s', 'b', 'b', 'i', 'r', 's', 's', 's', 's', 'b', 'b', 'r', 'r'];
 
 function slice(payload: string, fieldIndex: number): string {
   let offset = PROTOCOL_HEADER.length;
@@ -111,29 +111,29 @@ describe('Serialization field order', () => {
     const f4 = slice(payload, 4);
     expect(f4.startsWith(`${TYPE_PREFIX.r}:`)).toBe(true);
 
-    // Field 5: inheritMaxSiblingWidth default (false)
+    // Field 5: width = 'W'
     const f5 = slice(payload, 5);
-    expect(corePadded(f5, 'b').startsWith('false')).toBe(true);
+    expect(corePadded(f5, 's').startsWith('W')).toBe(true);
 
-    // Field 6: inheritMaxSiblingHeight default (false)
+    // Field 6: height = 'H'
     const f6 = slice(payload, 6);
-    expect(corePadded(f6, 'b').startsWith('false')).toBe(true);
+    expect(corePadded(f6, 's').startsWith('H')).toBe(true);
 
-    // Field 7: width = 'W'
+    // Field 7: x = 'X'
     const f7 = slice(payload, 7);
-    expect(corePadded(f7, 's').startsWith('W')).toBe(true);
+    expect(corePadded(f7, 's').startsWith('X')).toBe(true);
 
-    // Field 8: height = 'H'
+    // Field 8: y = 'Y'
     const f8 = slice(payload, 8);
-    expect(corePadded(f8, 's').startsWith('H')).toBe(true);
+    expect(corePadded(f8, 's').startsWith('Y')).toBe(true);
 
-    // Field 9: x = 'X'
+    // Field 9: inheritMaxSiblingWidth default (false)
     const f9 = slice(payload, 9);
-    expect(corePadded(f9, 's').startsWith('X')).toBe(true);
+    expect(corePadded(f9, 'b').startsWith('false')).toBe(true);
 
-    // Field 10: y = 'Y'
+    // Field 10: inheritMaxSiblingHeight default (false)
     const f10 = slice(payload, 10);
-    expect(corePadded(f10, 's').startsWith('Y')).toBe(true);
+    expect(corePadded(f10, 'b').startsWith('false')).toBe(true);
 
     // Field 11: __layoutReserved (100 bytes reserved)
     const f11 = slice(payload, 11);
@@ -195,23 +195,23 @@ describe('Serialization field order', () => {
     const f4 = slice(payload, 4); // __controlReserved
     expect(f4.startsWith(`${TYPE_PREFIX.r}:`)).toBe(true);
 
-    const f5 = slice(payload, 5); // inheritMaxSiblingWidth (true)
-    expect(corePadded(f5, 'b').startsWith('true')).toBe(true);
+    const f5 = slice(payload, 5); // width ('WW')
+    expect(corePadded(f5, 's').startsWith('WW')).toBe(true);
 
-    const f6 = slice(payload, 6); // inheritMaxSiblingHeight (true)
-    expect(corePadded(f6, 'b').startsWith('true')).toBe(true);
+    const f6 = slice(payload, 6); // height ('HHH')
+    expect(corePadded(f6, 's').startsWith('HHH')).toBe(true);
 
-    const f7 = slice(payload, 7); // width ('WW')
-    expect(corePadded(f7, 's').startsWith('WW')).toBe(true);
+    const f7 = slice(payload, 7); // x ('12')
+    expect(corePadded(f7, 's').startsWith('12')).toBe(true);
 
-    const f8 = slice(payload, 8); // height ('HHH')
-    expect(corePadded(f8, 's').startsWith('HHH')).toBe(true);
+    const f8 = slice(payload, 8); // y ('99')
+    expect(corePadded(f8, 's').startsWith('99')).toBe(true);
 
-    const f9 = slice(payload, 9); // x ('12')
-    expect(corePadded(f9, 's').startsWith('12')).toBe(true);
+    const f9 = slice(payload, 9); // inheritMaxSiblingWidth (true)
+    expect(corePadded(f9, 'b').startsWith('true')).toBe(true);
 
-    const f10 = slice(payload, 10); // y ('99')
-    expect(corePadded(f10, 's').startsWith('99')).toBe(true);
+    const f10 = slice(payload, 10); // inheritMaxSiblingHeight (true)
+    expect(corePadded(f10, 'b').startsWith('true')).toBe(true);
 
     const f11 = slice(payload, 11); // __layoutReserved
     expect(f11.startsWith(`${TYPE_PREFIX.r}:`)).toBe(true);
@@ -287,23 +287,23 @@ describe('Serialization field order', () => {
     const f4 = slice(payload, 4); // __controlReserved
     expect(f4.startsWith(`${TYPE_PREFIX.r}:`)).toBe(true);
 
-    const f5 = slice(payload, 5); // inheritMaxSiblingWidth (true)
-    expect(corePadded(f5, 'b').startsWith('true')).toBe(true);
+    const f5 = slice(payload, 5); // width ('TestWidth')
+    expect(corePadded(f5, 's').startsWith('TestWidth')).toBe(true);
 
-    const f6 = slice(payload, 6); // inheritMaxSiblingHeight (false)
-    expect(corePadded(f6, 'b').startsWith('false')).toBe(true);
+    const f6 = slice(payload, 6); // height ('TestHeight')
+    expect(corePadded(f6, 's').startsWith('TestHeight')).toBe(true);
 
-    const f7 = slice(payload, 7); // width ('TestWidth')
-    expect(corePadded(f7, 's').startsWith('TestWidth')).toBe(true);
+    const f7 = slice(payload, 7); // x ('TestX')
+    expect(corePadded(f7, 's').startsWith('TestX')).toBe(true);
 
-    const f8 = slice(payload, 8); // height ('TestHeight')
-    expect(corePadded(f8, 's').startsWith('TestHeight')).toBe(true);
+    const f8 = slice(payload, 8); // y ('TestY')
+    expect(corePadded(f8, 's').startsWith('TestY')).toBe(true);
 
-    const f9 = slice(payload, 9); // x ('TestX')
-    expect(corePadded(f9, 's').startsWith('TestX')).toBe(true);
+    const f9 = slice(payload, 9); // inheritMaxSiblingWidth (true)
+    expect(corePadded(f9, 'b').startsWith('true')).toBe(true);
 
-    const f10 = slice(payload, 10); // y ('TestY')
-    expect(corePadded(f10, 's').startsWith('TestY')).toBe(true);
+    const f10 = slice(payload, 10); // inheritMaxSiblingHeight (false)
+    expect(corePadded(f10, 'b').startsWith('false')).toBe(true);
 
     const f11 = slice(payload, 11); // __layoutReserved
     expect(f11.startsWith(`${TYPE_PREFIX.r}:`)).toBe(true);
