@@ -4,6 +4,7 @@
  * The rest of elements will be only "client-side" and will convert into a label
  */
 {
+	// TODO Using the title of the server form decide if use this generated_contents or the vanilla one
 	"namespace": "server_form",
 	"generated_contents": {
 		"factory": {
