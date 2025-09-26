@@ -1,285 +1,285 @@
 {
 	"namespace": "core-ui_components",
-	"text@core-ui_properties.controled_layout": {
+	"text@core-ui_properties.control": {
 		"type": "label",
-		"text": "#text",
-		"shadow": "#shadow",
-		"font_size": "#font_size",
-		"font_scale_factor": "#font_scale_factor",
-		"font_type": "#font_type",
-		"localize": "#localize",
-		"text_alignment": "#text_alignment",
-		"bindings": [
-			{
-				"binding_name": "#custom_text",
-				"binding_type": "collection",
-				"binding_collection_name": "custom_form"
-			},
-			/* --- skip layout fields + text field (469 bytes total) --- */
-			/* header(9) + type(35) + visible(8) + enabled(8) + layer(19) + __controlReserved(96) + inheritMaxSiblingWidth(8) + inheritMaxSiblingHeight(8) + width(35) + height(35) + x(35) + y(35) + __layoutReserved(103) + __coreReserved(131) + text(35) = 469 bytes */
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.469s' * #custom_text)",
-				"target_property_name": "#skip_to_text_fields"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#custom_text - #skip_to_text_fields)",
-				"target_property_name": "#rem_after_text_field"
-			},
-			/* --- text (string) - field 13 - extract separately for text property --- */
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.434s' * #custom_text)",
-				"target_property_name": "#skip_layout_section"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#custom_text - #skip_layout_section)",
-				"target_property_name": "#rem_after_layout_section"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.35s' * #rem_after_layout_section)",
-				"target_property_name": "#raw_text"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.34s' * #raw_text)",
-				"target_property_name": "#raw_text_core"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.32s' * #raw_text_core)",
-				"target_property_name": "#text_padded"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.2s' * #raw_text_core)",
-				"target_property_name": "#text_prefix"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "((#text_padded - #text_prefix) - ';')",
-				"target_property_name": "#text"
-			},
-			/* --- skip color fields (6 * 27 = 162 bytes) --- */
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.162s' * #rem_after_text_field)",
-				"target_property_name": "#skip_color_fields"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_text_field - #skip_color_fields)",
-				"target_property_name": "#rem_after_colors"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.34s' * #raw_text)",
-				"target_property_name": "#raw_text_core"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.32s' * #raw_text_core)",
-				"target_property_name": "#text_padded"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.2s' * #raw_text_core)",
-				"target_property_name": "#text_prefix"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "((#text_padded - #text_prefix) - ';')",
-				"target_property_name": "#text"
-			},
-			/* --- shadow (bool) - field 20 --- */
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.8s' * #rem_after_colors)",
-				"target_property_name": "#raw_shadow"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_colors - #raw_shadow)",
-				"target_property_name": "#rem_after_shadow"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.7s' * #raw_shadow)",
-				"target_property_name": "#raw_shadow_core"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.5s' * #raw_shadow_core)",
-				"target_property_name": "#shadow_padded"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.2s' * #raw_shadow_core)",
-				"target_property_name": "#shadow_prefix"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "((#shadow_padded - #shadow_prefix) - ';')",
-				"target_property_name": "#shadow"
-			},
-			/* --- fontSize (string) - field 21 --- */
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.35s' * #rem_after_shadow)",
-				"target_property_name": "#raw_font_size"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_shadow - #raw_font_size)",
-				"target_property_name": "#rem_after_font_size"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.34s' * #raw_font_size)",
-				"target_property_name": "#raw_font_size_core"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.32s' * #raw_font_size_core)",
-				"target_property_name": "#font_size_padded"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.2s' * #raw_font_size_core)",
-				"target_property_name": "#font_size_prefix"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "((#font_size_padded - #font_size_prefix) - ';')",
-				"target_property_name": "#font_size"
-			},
-			/* --- fontScaleFactor (float) - field 22 --- */
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.27s' * #rem_after_font_size)",
-				"target_property_name": "#raw_font_scale_factor"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_font_size - #raw_font_scale_factor)",
-				"target_property_name": "#rem_after_font_scale_factor"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.26s' * #raw_font_scale_factor)",
-				"target_property_name": "#raw_font_scale_factor_core"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.24s' * #raw_font_scale_factor_core)",
-				"target_property_name": "#font_scale_factor_padded"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.2s' * #raw_font_scale_factor_core)",
-				"target_property_name": "#font_scale_factor_prefix"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "((#font_scale_factor_padded - #font_scale_factor_prefix) - ';')",
-				"target_property_name": "#font_scale_factor"
-			},
-			/* --- fontType (string) - field 23 --- */
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.35s' * #rem_after_font_scale_factor)",
-				"target_property_name": "#raw_font_type"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_font_scale_factor - #raw_font_type)",
-				"target_property_name": "#rem_after_font_type"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.34s' * #raw_font_type)",
-				"target_property_name": "#raw_font_type_core"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.32s' * #raw_font_type_core)",
-				"target_property_name": "#font_type_padded"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.2s' * #raw_font_type_core)",
-				"target_property_name": "#font_type_prefix"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "((#font_type_padded - #font_type_prefix) - ';')",
-				"target_property_name": "#font_type"
-			},
-			/* --- localize (bool) - field 24 --- */
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.8s' * #rem_after_font_type)",
-				"target_property_name": "#raw_localize"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_font_type - #raw_localize)",
-				"target_property_name": "#rem_after_localize"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.7s' * #raw_localize)",
-				"target_property_name": "#raw_localize_core"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.5s' * #raw_localize_core)",
-				"target_property_name": "#localize_padded"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.2s' * #raw_localize_core)",
-				"target_property_name": "#localize_prefix"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "((#localize_padded - #localize_prefix) - ';')",
-				"target_property_name": "#localize"
-			},
-			/* --- textAlignment (string) - field 25 --- */
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.35s' * #rem_after_localize)",
-				"target_property_name": "#raw_text_alignment"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_localize - #raw_text_alignment)",
-				"target_property_name": "#rem_after_text_alignment"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.34s' * #raw_text_alignment)",
-				"target_property_name": "#raw_text_alignment_core"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.32s' * #raw_text_alignment_core)",
-				"target_property_name": "#text_alignment_padded"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.2s' * #raw_text_alignment_core)",
-				"target_property_name": "#text_alignment_prefix"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "((#text_alignment_padded - #text_alignment_prefix) - ';')",
-				"target_property_name": "#text_alignment"
-			}
-		]
+		"text": "#width"
+		// "shadow": "#shadow",
+		// "font_size": "#font_size",
+		// "font_scale_factor": "#font_scale_factor",
+		// "font_type": "#font_type",
+		// "localize": "#localize",
+		// "text_alignment": "#text_alignment",
+		// "bindings": [
+		// 	{
+		// 		"binding_name": "#custom_text",
+		// 		"binding_type": "collection",
+		// 		"binding_collection_name": "custom_form"
+		// 	},
+		// 	/* --- skip layout fields + text field (469 bytes total) --- */
+		// 	/* header(9) + type(35) + visible(8) + enabled(8) + layer(19) + __controlReserved(96) + inheritMaxSiblingWidth(8) + inheritMaxSiblingHeight(8) + width(35) + height(35) + x(35) + y(35) + __layoutReserved(103) + __coreReserved(131) + text(35) = 469 bytes */
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.469s' * #custom_text)",
+		// 		"target_property_name": "#skip_to_text_fields"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "(#custom_text - #skip_to_text_fields)",
+		// 		"target_property_name": "#rem_after_text_field"
+		// 	},
+		// 	/* --- text (string) - field 13 - extract separately for text property --- */
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.434s' * #custom_text)",
+		// 		"target_property_name": "#skip_layout_section"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "(#custom_text - #skip_layout_section)",
+		// 		"target_property_name": "#rem_after_layout_section"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.35s' * #rem_after_layout_section)",
+		// 		"target_property_name": "#raw_text"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.34s' * #raw_text)",
+		// 		"target_property_name": "#raw_text_core"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.32s' * #raw_text_core)",
+		// 		"target_property_name": "#text_padded"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.2s' * #raw_text_core)",
+		// 		"target_property_name": "#text_prefix"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "((#text_padded - #text_prefix) - ';')",
+		// 		"target_property_name": "#text"
+		// 	},
+		// 	/* --- skip color fields (6 * 27 = 162 bytes) --- */
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.162s' * #rem_after_text_field)",
+		// 		"target_property_name": "#skip_color_fields"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "(#rem_after_text_field - #skip_color_fields)",
+		// 		"target_property_name": "#rem_after_colors"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.34s' * #raw_text)",
+		// 		"target_property_name": "#raw_text_core"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.32s' * #raw_text_core)",
+		// 		"target_property_name": "#text_padded"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.2s' * #raw_text_core)",
+		// 		"target_property_name": "#text_prefix"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "((#text_padded - #text_prefix) - ';')",
+		// 		"target_property_name": "#text"
+		// 	},
+		// 	/* --- shadow (bool) - field 20 --- */
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.8s' * #rem_after_colors)",
+		// 		"target_property_name": "#raw_shadow"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "(#rem_after_colors - #raw_shadow)",
+		// 		"target_property_name": "#rem_after_shadow"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.7s' * #raw_shadow)",
+		// 		"target_property_name": "#raw_shadow_core"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.5s' * #raw_shadow_core)",
+		// 		"target_property_name": "#shadow_padded"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.2s' * #raw_shadow_core)",
+		// 		"target_property_name": "#shadow_prefix"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "((#shadow_padded - #shadow_prefix) - ';')",
+		// 		"target_property_name": "#shadow"
+		// 	},
+		// 	/* --- fontSize (string) - field 21 --- */
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.35s' * #rem_after_shadow)",
+		// 		"target_property_name": "#raw_font_size"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "(#rem_after_shadow - #raw_font_size)",
+		// 		"target_property_name": "#rem_after_font_size"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.34s' * #raw_font_size)",
+		// 		"target_property_name": "#raw_font_size_core"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.32s' * #raw_font_size_core)",
+		// 		"target_property_name": "#font_size_padded"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.2s' * #raw_font_size_core)",
+		// 		"target_property_name": "#font_size_prefix"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "((#font_size_padded - #font_size_prefix) - ';')",
+		// 		"target_property_name": "#font_size"
+		// 	},
+		// 	/* --- fontScaleFactor (float) - field 22 --- */
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.27s' * #rem_after_font_size)",
+		// 		"target_property_name": "#raw_font_scale_factor"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "(#rem_after_font_size - #raw_font_scale_factor)",
+		// 		"target_property_name": "#rem_after_font_scale_factor"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.26s' * #raw_font_scale_factor)",
+		// 		"target_property_name": "#raw_font_scale_factor_core"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.24s' * #raw_font_scale_factor_core)",
+		// 		"target_property_name": "#font_scale_factor_padded"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.2s' * #raw_font_scale_factor_core)",
+		// 		"target_property_name": "#font_scale_factor_prefix"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "((#font_scale_factor_padded - #font_scale_factor_prefix) - ';')",
+		// 		"target_property_name": "#font_scale_factor"
+		// 	},
+		// 	/* --- fontType (string) - field 23 --- */
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.35s' * #rem_after_font_scale_factor)",
+		// 		"target_property_name": "#raw_font_type"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "(#rem_after_font_scale_factor - #raw_font_type)",
+		// 		"target_property_name": "#rem_after_font_type"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.34s' * #raw_font_type)",
+		// 		"target_property_name": "#raw_font_type_core"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.32s' * #raw_font_type_core)",
+		// 		"target_property_name": "#font_type_padded"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.2s' * #raw_font_type_core)",
+		// 		"target_property_name": "#font_type_prefix"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "((#font_type_padded - #font_type_prefix) - ';')",
+		// 		"target_property_name": "#font_type"
+		// 	},
+		// 	/* --- localize (bool) - field 24 --- */
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.8s' * #rem_after_font_type)",
+		// 		"target_property_name": "#raw_localize"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "(#rem_after_font_type - #raw_localize)",
+		// 		"target_property_name": "#rem_after_localize"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.7s' * #raw_localize)",
+		// 		"target_property_name": "#raw_localize_core"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.5s' * #raw_localize_core)",
+		// 		"target_property_name": "#localize_padded"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.2s' * #raw_localize_core)",
+		// 		"target_property_name": "#localize_prefix"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "((#localize_padded - #localize_prefix) - ';')",
+		// 		"target_property_name": "#localize"
+		// 	},
+		// 	/* --- textAlignment (string) - field 25 --- */
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.35s' * #rem_after_localize)",
+		// 		"target_property_name": "#raw_text_alignment"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "(#rem_after_localize - #raw_text_alignment)",
+		// 		"target_property_name": "#rem_after_text_alignment"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.34s' * #raw_text_alignment)",
+		// 		"target_property_name": "#raw_text_alignment_core"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.32s' * #raw_text_alignment_core)",
+		// 		"target_property_name": "#text_alignment_padded"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "('%.2s' * #raw_text_alignment_core)",
+		// 		"target_property_name": "#text_alignment_prefix"
+		// 	},
+		// 	{
+		// 		"binding_type": "view",
+		// 		"source_property_name": "((#text_alignment_padded - #text_alignment_prefix) - ';')",
+		// 		"target_property_name": "#text_alignment"
+		// 	}
+		// ]
 	}
 }

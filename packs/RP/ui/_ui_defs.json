@@ -2,11 +2,11 @@
 	// Pls note the range of bytes the properties controllers use
 	"ui_defs": [
 		"ui/server_form.json",
-		"ui/core-ui/properties/control.json", // [0,127] 128 bytes
-		"ui/core-ui/properties/layout.json", // [128,383] 256 bytes
-		// [384,511] 128 bytes (reserved for future core use)
+		// Base control, all components should extend this
+		"ui/core-ui/control.json", // [0,511] 512 bytes
+		// (including space reserved for future core use)
 		// ----------------------------------------------
-		// After the initial reserved bytes for the core, which is the shared data between all the components,
+		// After the initial reserved bytes for the core,
 		// rest of bytes after 512 for its own use.
 		// ----------------------------------------------
 		"ui/core-ui/components/text.json" // [512,] 
