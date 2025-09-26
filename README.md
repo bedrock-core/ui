@@ -35,7 +35,7 @@ Result: Advanced layouts, conditional logic, and style variants without custom n
 | Component Factories | Pure functions returning `Functional<T>` objects | `src/core/components/*.ts` |
 | Type Contracts | JSON UI spec-aligned structural interfaces | `src/types/json_ui/*.ts` |
 | Serialization Protocol | UTF‑8 fixed-width, semicolon full segments | `src/core/serializer.ts` |
-| Presentation Adapter | Inject serialized payload + register form controls | `src/present.ts` |
+| Presentation Adapter | Inject serialized payload + register form controls | `src/index.ts` |
 | Public Entry | Re-exports factories + types | `src/index.ts` |
 
 `Functional<T>` augments a structural component with `serialize(form: FormData): string`.

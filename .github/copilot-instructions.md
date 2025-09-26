@@ -11,10 +11,9 @@ This library serializes declarative component trees into compact strings that ge
 ### Key Files & Responsibilities
 
 - **`src/core/serializer.ts`**: UTF-8 fixed-width protocol implementation with `serialize()` function
-- **`src/present.ts`**: Orchestrates `component.serialize(form)` then `form.show(player)`
 - **`src/core/components/**/*.ts`**: Pure component factories returning objects with `serialize` method
 - **`src/types/component.ts`**: Core `Component` interface with `serialize(form: CoreUIFormData): void`
-- **`src/index.ts`**: Public API re-exports
+- **`src/index.ts`**: Public API re-exports and Orchestrates `component.serialize(form)` then `form.show(player)`
 
 ### Serialization Protocol (Never Break This)
 
