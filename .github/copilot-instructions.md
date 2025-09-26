@@ -1,61 +1,112 @@
 ## @bedrock-core/ui – AI Coding Instructions
 
-Short, practical guidance for agents working in this repo. Follow current protocol; don’t invent new formats.
+Essential knowledge for AI agents working on this Minecraft Bedrock UI serialization library. Follow established patterns; don't invent new formats.
 
-### What this library does
-Serialize a declarative component tree into a compact string, inject it into `@minecraft/server-ui` form text (title), and let a JSON UI resource pack decode it to render rich UIs beyond native forms.
+### Core Architecture
 
-Key flow: component factory → `serialize(form)` → `present(form, player, component)` sets `form.title(payload)` → JSON UI decodes by fixed offsets.
+This library serializes declarative component trees into compact strings that get injected into `@minecraft/server-ui` form titles. A companion JSON UI resource pack decodes these payloads to render rich UIs beyond native form limitations.
 
-### Architecture (files to know)
-- Types: `src/types/json_ui/*.ts` (component contracts) and `src/types/*.ts` (functional wrapper).
-- Serialization: `src/core/serializer.ts` (protocol + helpers).
-- Components: `src/core/components/**/*.ts` (pure factories returning `Functional<T>` with `serialize`).
-- Presentation: `src/present.ts` (calls `component.serialize(form)` then `form.show(player)`).
-- Public API: `src/index.ts` re-exports.
+**Critical flow:** component factory → `serialize(form)` → `present(form, player, component)` → JSON UI decodes by fixed byte offsets.
 
-### Serialization protocol (critical)
-- Prefix: payload starts with `bcui` + VERSION (e.g., `bcuiv0001`). VERSION is declared near the serializer (`const VERSION = 'v0001'`). Decoders must skip these first 9 chars before field slicing.
-- Field encoding per value:
-	- Type prefixes: `s:` | `i:` | `f:` | `b:`
-	- Core padded region uses `;` as the only pad char; UTF‑8 fixed-width; safe truncation via `utf8Truncate`.
-	- Unique trailing 1-char marker per field disambiguates identical padded segments during JSON UI subtraction.
-- Core padded lengths (bytes) and full slice widths (core + 2 prefix + 1 marker):
-	- String: 32 → slice 35
-	- Int: 16 → slice 19
-	- Float: 24 → slice 27
-	- Bool: 5 → slice 8
-- Numbers use `Number.isInteger` to choose `i:` vs `f:`; booleans are lowercase `true`/`false`.
-- Protocol evolution: only append new fields at the end; do not reorder or shrink earlier fields.
+### Key Files & Responsibilities
 
-### Component pattern (authoring)
-- Factories are pure; they return structural props matching JSON UI keys plus `serialize(form): string`.
-- Inside `serialize`, call `form.*` to register interactive controls first (e.g., `form.dropdown(...)`), then return the encoded payload built with the serializer helper.
-- Conventions: dimension props accept `number | string`, fallback to `'default'`; factory props are camelCase, emitted keys match JSON UI snake_case.
+- **`src/core/serializer.ts`**: UTF-8 fixed-width protocol implementation with `serialize()` function
+- **`src/present.ts`**: Orchestrates `component.serialize(form)` then `form.show(player)`
+- **`src/core/components/**/*.ts`**: Pure component factories returning objects with `serialize` method
+- **`src/types/component.ts`**: Core `Component` interface with `serialize(form: CoreUIFormData): void`
+- **`src/index.ts`**: Public API re-exports
 
-Example (intended final shape):
+### Serialization Protocol (Never Break This)
+
+```
+Payload: bcuiv0001 + field1 + field2 + ...
+         ^^^^^^^^^ 9-char header (bcui + VERSION)
+```
+
+**Field Structure:** `[prefix][padded_value][marker]`
+
+- Type prefixes: `s:` (string) | `i:` (int) | `f:` (float) | `b:` (bool) | `r:` (reserved)
+- Padding: only `;` character for UTF-8 safe truncation
+- Markers: unique 1-char from `0-9A-Za-z-_` to prevent JSON UI subtraction conflicts
+
+**Fixed Widths (never change):**
+
+- String: 32 bytes → 35 total (2 prefix + 32 + 1 marker)  
+- Int: 16 bytes → 19 total
+- Float: 24 bytes → 27 total  
+- Bool: 5 bytes → 8 total
+
+**Critical Constants in `serializer.ts`:**
+
 ```ts
-export function Toggle({ label, checked }: ToggleProps): Functional<ToggleComponent> {
-	return {
-		type: 'toggle',
-		serialize(form) {
-			form.toggle(label, { defaultValue: !!checked });
-			return serialize({ type: 'toggle', label, checked: !!checked })[0];
-		},
-	};
+const VERSION = 'v0001';           // Only update with migrations
+const PAD_CHAR = ';';              // Never change
+const TYPE_WIDTH = { s: 32, i: 16, f: 24, b: 5 };
+```
+
+### Component Pattern (Follow Exactly)
+
+Components are pure factories returning objects with a `serialize` method:
+
+```ts
+export function Panel(props: PanelProps): Component {
+  return {
+    serialize: (form: CoreUIFormData): void => {
+      // 1. Build serializable object (primitives only)
+      const serializable = { type: 'panel', ...primitiveProps };
+      
+      // 2. Serialize to string payload  
+      const [result, bytes] = serialize(serializable);
+      
+      // 3. Register with form (triggers JSON UI)
+      form.label(result);
+      
+      // 4. Handle children/nested components
+      children.forEach(child => child.serialize(form));
+    }
+  };
 }
 ```
 
-### Dev workflow
-- Build: `yarn build` (tsc)
-- Test: `yarn test` (Vitest);
-- Lint: `yarn lint`
-Tests live under `src/**/__tests__/**` or `*.test.ts` (excluded from build output). ESM module, entry `dist/index.js`.
+**Key Rules:**
 
-### Guardrails
-- Do not change fixed widths or pad char `;`.
-- Keep prefix `bcui` + VERSION intact; update VERSION only with documented migrations.
-- Append fields instead of reordering; keep markers stable by position.
-- Avoid heavy deps; peers are `@minecraft/server` and `@minecraft/server-ui`.
+- `serialize` method takes `CoreUIFormData`, returns `void`
+- Call `form.label()`, `form.toggle()`, etc. to register UI elements
+- Use `serialize()` helper from `core/serializer.ts` for payload encoding
+- Handle component children by calling their `serialize` methods
 
-Start here: `core/serializer.ts`, `present.ts`, and a nearby component under `core/components/` to mirror patterns.
+### Development Workflow
+
+- **Build**: `yarn build` (TypeScript compilation to `dist/`)
+- **Test**: `yarn test` (Vitest with files in `src/**/__tests__/**`)  
+- **Lint**: `yarn lint` (ESLint)
+- **Entry**: `dist/index.js` (ESM module)
+
+### Testing Patterns
+
+Tests focus on serialization correctness and field ordering:
+
+```ts
+// Check payload structure
+const [result, bytes] = serialize({ type: 'test', value: 'hello' });
+expect(result).toMatch(/^bcuiv0001s:test/); // Header + first field
+
+// Verify field slicing (see serializer.test.ts for helpers)
+function sliceFieldWithPlan(payload: string, index: number, plan: TKey[]): string
+```
+
+### Breaking Change Guards
+
+- **Never** modify `TYPE_WIDTH`, `PAD_CHAR`, or field order in existing components
+- **Never** change the 9-char header format (`bcui` + version)
+- **Always** append new fields to end; use `reserveBytes()` for future space
+- **Always** increment `VERSION` for protocol-breaking changes with migration docs
+
+### Component Conventions  
+
+- Props are camelCase; emitted JSON UI keys are snake_case
+- Dimension props accept `number | string`, fallback to `'default'`
+- Boolean values serialize as lowercase `'true'`/`'false'`
+- Use `Number.isInteger()` to choose `i:` vs `f:` prefixes
+
+Start exploring: `core/serializer.ts` for protocol details, `core/components/Panel.ts` for working patterns.
