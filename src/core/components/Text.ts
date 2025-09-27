@@ -1,4 +1,4 @@
-import { ControlProps, withControl } from '.';
+import { ControlProps } from '.';
 import { CoreUIFormData } from '../../types';
 import type { Component } from '../../types/component';
 import { SerializableComponent } from '../../types/serialization';
@@ -21,15 +21,12 @@ export interface TextProps extends ControlProps {
   textStyle?: TextStyle;
 }
 
-export function Text(props: TextProps): Component {
-  const { value, textStyle, ...rest } = withControl(props);
-
+export function Text({ value, textStyle }: TextProps): Component {
   return {
     serialize: (form: CoreUIFormData): void => {
       const serializable: SerializableComponent = {
         // Core identity
         type: 'label',
-        ...rest,
         text: value ?? '',
         // Properties
         colorR: textStyle?.color?.[0] ?? 1,

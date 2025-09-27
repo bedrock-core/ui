@@ -73,6 +73,7 @@ export function Panel(props: PanelProps): Component {
 - Call `form.label()`, `form.toggle()`, etc. to register UI elements
 - Use `serialize()` helper from `core/serializer.ts` for payload encoding
 - Handle component children by calling their `serialize` methods
+- **Field order is critical**: After type, control fields must be: width, height, x, y, visible, enabled, layer, inheritMaxSiblingWidth, inheritMaxSiblingHeight
 
 ### Development Workflow
 

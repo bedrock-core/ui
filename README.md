@@ -207,12 +207,12 @@ Remember to skip the 9-char header first (e.g., `('%.9s' * #custom_text)` to obt
 // (full_width - marker_width) - prefix_width - padding_char (;)
 { "binding_type": "view", "source_property_name": "(('%.34s' * #raw_type) - ('%.2s' * #raw_type) - ';')", "target_property_name": "#type" },
 
-/* Field 1: visible (bool, 8 bytes) */
+/* Field 1: width (string, 35 bytes) */
 // full_width
-{ "binding_type": "view", "source_property_name": "('%.8s' * #rem_after_type)", "target_property_name": "#raw_visible" },
-{ "binding_type": "view", "source_property_name": "(#rem_after_type - #raw_visible)", "target_property_name": "#rem_after_visible" },
+{ "binding_type": "view", "source_property_name": "('%.35s' * #rem_after_type)", "target_property_name": "#raw_width" },
+{ "binding_type": "view", "source_property_name": "(#rem_after_type - #raw_width)", "target_property_name": "#rem_after_width" },
 // (full_width - marker_width) - prefix_width - padding_char (;)
-{ "binding_type": "view", "source_property_name": "(('%.7s' * #raw_visible) - ('%.2s' * #raw_visible) - ';')", "target_property_name": "#visible" },
+{ "binding_type": "view", "source_property_name": "(('%.34s' * #raw_width) - ('%.2s' * #raw_width) - ';')", "target_property_name": "#width" },
 
 /* ... Fields 2-9 follow same pattern ... */
 
@@ -229,13 +229,13 @@ All components inherit these base control properties, which are deserialized in 
 
 ```text
 Field 0: type (string, 35 bytes)                    - Component type identifier
-Field 1: visible (bool, 8 bytes)                    - Visibility state
-Field 2: enabled (bool, 8 bytes)                    - Interaction enabled state
-Field 3: layer (int, 19 bytes)                      - Z-index layering
-Field 4: width (string, 35 bytes)                   - Element width
-Field 5: height (string, 35 bytes)                  - Element height
-Field 6: x (string, 35 bytes)                       - Horizontal position
-Field 7: y (string, 35 bytes)                       - Vertical position
+Field 1: width (string, 35 bytes)                   - Element width
+Field 2: height (string, 35 bytes)                  - Element height
+Field 3: x (string, 35 bytes)                       - Horizontal position
+Field 4: y (string, 35 bytes)                       - Vertical position
+Field 5: visible (bool, 8 bytes)                    - Visibility state
+Field 6: enabled (bool, 8 bytes)                    - Interaction enabled state
+Field 7: layer (int, 19 bytes)                      - Z-index layering
 Field 8: inheritMaxSiblingWidth (bool, 8 bytes)     - Width inheritance flag
 Field 9: inheritMaxSiblingHeight (bool, 8 bytes)    - Height inheritance flag
 [Reserved bytes for future expansion]               - Single reserved block at end
@@ -402,3 +402,5 @@ as that order will be the order you will have to deserialize in the JSON UI
     yourProps
   };
 ```
+
+This last part was moved inside serializer so there is no need for the user to do it explicitly

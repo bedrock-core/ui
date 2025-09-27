@@ -1,4 +1,4 @@
-import { ControlProps, withControl } from '.';
+import { ControlProps } from '.';
 import type { Component, CoreUIFormData, SerializableComponent } from '../../types';
 import { Logger } from '../../util/Logger';
 import { serialize } from '../serializer';
@@ -13,9 +13,7 @@ export interface ImageProps extends ControlProps {
   bilinear?: boolean;
 }
 
-export function Image(props: ImageProps): Component {
-  const { texture, uv, uvSize, ninesliceSize, tiled, keepRatio, bilinear, ...rest } = withControl(props);
-
+export function Image({ texture, uv, uvSize, ninesliceSize, tiled, keepRatio, bilinear, ...rest }: ImageProps): Component {
   return {
     serialize: (form: CoreUIFormData): void => {
       const nineSliced = Array.isArray(ninesliceSize)

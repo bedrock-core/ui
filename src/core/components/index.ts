@@ -1,4 +1,4 @@
-import { ReservedBytes } from '../../types';
+import { ReservedBytes, SerializableComponent } from '../../types';
 import { reserveBytes } from '../serializer';
 
 export { Button, type ButtonProps } from './Button';
@@ -39,13 +39,13 @@ export interface ControlProps {
  * After protocol header (9 bytes: "bcuiv0001"), fields are deserialized in this exact order:
  *
  * Field 0: type (string, 35 bytes) - component type identifier
- * Field 1: visible (bool, 8 bytes) - visibility state
- * Field 2: enabled (bool, 8 bytes) - interaction enabled state
- * Field 3: layer (int, 19 bytes) - z-index layering
- * Field 4: width (string, 35 bytes) - element width
- * Field 5: height (string, 35 bytes) - element height
- * Field 6: x (string, 35 bytes) - horizontal position
- * Field 7: y (string, 35 bytes) - vertical position
+ * Field 1: width (string, 35 bytes) - element width
+ * Field 2: height (string, 35 bytes) - element height
+ * Field 3: x (string, 35 bytes) - horizontal position
+ * Field 4: y (string, 35 bytes) - vertical position
+ * Field 5: visible (bool, 8 bytes) - visibility state
+ * Field 6: enabled (bool, 8 bytes) - interaction enabled state
+ * Field 7: layer (int, 19 bytes) - z-index layering
  * Field 8: inheritMaxSiblingWidth (bool, 8 bytes) - width inheritance flag
  * Field 9: inheritMaxSiblingHeight (bool, 8 bytes) - height inheritance flag
  * Reserved: 277 bytes (up to 512 bytes total reserved block for future expansion)
@@ -55,15 +55,15 @@ export interface ControlProps {
  * @param props Component properties extending ControlProps
  * @returns Object with all control properties filled with defaults and canonical ordering
  */
-export function withControl<T extends ControlProps>(props: T): Required<ControlProps> & T {
+export function withControl(props: SerializableComponent): Required<SerializableComponent> {
   const {
-    visible,
-    enabled,
-    layer,
     width,
     height,
     x,
     y,
+    visible,
+    enabled,
+    layer,
     inheritMaxSiblingWidth,
     inheritMaxSiblingHeight,
     // rest of props are the props specific to the component, which will be appended at the end
@@ -72,18 +72,18 @@ export function withControl<T extends ControlProps>(props: T): Required<ControlP
 
   // Create object with properties in exact canonical order for stable serialization
   const ordered = {
-    visible: visible ?? true,
-    enabled: enabled ?? true,
-    layer: layer ?? 0,
     width,
     height,
     x,
     y,
+    visible: visible ?? true,
+    enabled: enabled ?? true,
+    layer: layer ?? 0,
     inheritMaxSiblingWidth: inheritMaxSiblingWidth ?? false,
     inheritMaxSiblingHeight: inheritMaxSiblingHeight ?? false,
     __reserved: reserveBytes(277), // Reserve space for future expansion
   };
 
   // Append the rest of the props, which are specific to the component and order will be handled by the component itself
-  return { ...ordered, ...rest } as Required<ControlProps> & T;
+  return { ...ordered, ...rest };
 }

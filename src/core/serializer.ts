@@ -1,4 +1,5 @@
 import { ReservedBytes, SerializableComponent, SerializablePrimitive } from '../types/serialization';
+import { withControl } from './components';
 
 /**
  * This makes each full field substring unique even when two field values & padding are identical.
@@ -188,7 +189,9 @@ export function reserveBytes(bytes: number): ReservedBytes {
  * @param component - The component data to serialize (flat object with primitives)
  * @returns [serialized component string, total byte length]
  */
-export function serialize({ type, ...rest }: SerializableComponent): [string, number] {
+export function serialize(props: SerializableComponent): [string, number] {
+  const { type, ...rest } = withControl(props);
+
   const entries = Object.entries<SerializablePrimitive>({ type, ...rest });
 
   let totalBytes = 0;
@@ -212,7 +215,6 @@ export function serialize({ type, ...rest }: SerializableComponent): [string, nu
         core = `${TYPE_PREFIX.i}:${padToByteLength(rawStr, TYPE_WIDTH.i)}`;
         widthBytes = FULL_WIDTH.i;
       } else {
-        // typeCode = 'f';
         rawStr = value.toString();
         core = `${TYPE_PREFIX.f}:${padToByteLength(rawStr, TYPE_WIDTH.f)}`;
         widthBytes = FULL_WIDTH.f;

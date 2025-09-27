@@ -1,5 +1,5 @@
 
-import { ControlProps, withControl } from '.';
+import { ControlProps } from '.';
 import { Component, CoreUIFormData, SerializableComponent } from '../../types';
 import { Logger } from '../../util/Logger';
 import { serialize } from '../serializer';
@@ -10,9 +10,7 @@ export interface PanelProps extends ControlProps {
   children: Component[];
 }
 
-export function Panel(props: PanelProps): Component {
-  const { children, ...rest } = withControl(props);
-
+export function Panel({ children, ...rest }: PanelProps): Component {
   return {
     serialize: (form: CoreUIFormData): void => {
       // 'children' are not primitives; they are serialized separately after emitting
