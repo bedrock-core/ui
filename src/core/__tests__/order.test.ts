@@ -8,13 +8,13 @@ import { PROTOCOL_HEADER, FULL_WIDTH, TYPE_WIDTH, TYPE_PREFIX, FIELD_MARKERS } f
 
 // Expected field type sequence (after header) for Panel currently:
 // 0: type (string)
-// 1: visible (bool)
-// 2: enabled (bool)
-// 3: layer (int)
-// 4: width (string)
-// 5: height (string)
-// 6: x (string)
-// 7: y (string)
+// 1: width (string)
+// 2: height (string)
+// 3: x (string)
+// 4: y (string)
+// 5: visible (bool)
+// 6: enabled (bool)
+// 7: layer (int)
 // 8: inheritMaxSiblingWidth (bool)
 // 9: inheritMaxSiblingHeight (bool)
 // 10: __reserved (reserved, 277 bytes)
@@ -22,7 +22,7 @@ import { PROTOCOL_HEADER, FULL_WIDTH, TYPE_WIDTH, TYPE_PREFIX, FIELD_MARKERS } f
 
 type TKey = keyof typeof FULL_WIDTH;
 
-const FIELD_PLAN: TKey[] = ['s', 'b', 'b', 'i', 's', 's', 's', 's', 'b', 'b', 'r'];
+const FIELD_PLAN: TKey[] = ['s', 's', 's', 's', 's', 'b', 'b', 'i', 'b', 'b', 'r'];
 
 function slice(payload: string, fieldIndex: number): string {
   let offset = PROTOCOL_HEADER.length;
@@ -92,36 +92,40 @@ describe('Serialization field order', () => {
     expect(f0.endsWith(FIELD_MARKERS[0])).toBe(true);
     expect(corePadded(f0, 's').startsWith('panel')).toBe(true);
 
-    // Field 1: visible default (true)
+    // Field 1: width = 'W'
     const f1 = slice(payload, 1);
-    expect(f1.startsWith(`${TYPE_PREFIX.b}:`)).toBe(true);
-    expect(corePadded(f1, 'b').startsWith('true')).toBe(true);
+    expect(f1.startsWith(`${TYPE_PREFIX.s}:`)).toBe(true);
+    expect(corePadded(f1, 's').startsWith('W')).toBe(true);
 
-    // Field 2: enabled default (true)
+    // Field 2: height = 'H'
     const f2 = slice(payload, 2);
-    expect(f2.startsWith(`${TYPE_PREFIX.b}:`)).toBe(true);
-    expect(corePadded(f2, 'b').startsWith('true')).toBe(true);
+    expect(f2.startsWith(`${TYPE_PREFIX.s}:`)).toBe(true);
+    expect(corePadded(f2, 's').startsWith('H')).toBe(true);
 
-    // Field 3: layer default (int 0)
+    // Field 3: x = 'X'
     const f3 = slice(payload, 3);
-    expect(f3.startsWith(`${TYPE_PREFIX.i}:`)).toBe(true);
-    expect(corePadded(f3, 'i').startsWith('0')).toBe(true);
+    expect(f3.startsWith(`${TYPE_PREFIX.s}:`)).toBe(true);
+    expect(corePadded(f3, 's').startsWith('X')).toBe(true);
 
-    // Field 4: width = 'W'
+    // Field 4: y = 'Y'
     const f4 = slice(payload, 4);
-    expect(corePadded(f4, 's').startsWith('W')).toBe(true);
+    expect(f4.startsWith(`${TYPE_PREFIX.s}:`)).toBe(true);
+    expect(corePadded(f4, 's').startsWith('Y')).toBe(true);
 
-    // Field 5: height = 'H'
+    // Field 5: visible default (true)
     const f5 = slice(payload, 5);
-    expect(corePadded(f5, 's').startsWith('H')).toBe(true);
+    expect(f5.startsWith(`${TYPE_PREFIX.b}:`)).toBe(true);
+    expect(corePadded(f5, 'b').startsWith('true')).toBe(true);
 
-    // Field 6: x = 'X'
+    // Field 6: enabled default (true)
     const f6 = slice(payload, 6);
-    expect(corePadded(f6, 's').startsWith('X')).toBe(true);
+    expect(f6.startsWith(`${TYPE_PREFIX.b}:`)).toBe(true);
+    expect(corePadded(f6, 'b').startsWith('true')).toBe(true);
 
-    // Field 7: y = 'Y'
+    // Field 7: layer default (0)
     const f7 = slice(payload, 7);
-    expect(corePadded(f7, 's').startsWith('Y')).toBe(true);
+    expect(f7.startsWith(`${TYPE_PREFIX.i}:`)).toBe(true);
+    expect(corePadded(f7, 'i').startsWith('0')).toBe(true);
 
     // Field 8: inheritMaxSiblingWidth default (false)
     const f8 = slice(payload, 8);
@@ -178,26 +182,26 @@ describe('Serialization field order', () => {
     const f0 = slice(payload, 0); // type
     expect(corePadded(f0, 's').startsWith('panel')).toBe(true);
 
-    const f1 = slice(payload, 1); // visible (false)
-    expect(corePadded(f1, 'b').startsWith('false')).toBe(true);
+    const f1 = slice(payload, 1); // width ('WW')
+    expect(corePadded(f1, 's').startsWith('WW')).toBe(true);
 
-    const f2 = slice(payload, 2); // enabled (true)
-    expect(corePadded(f2, 'b').startsWith('true')).toBe(true);
+    const f2 = slice(payload, 2); // height ('HHH')
+    expect(corePadded(f2, 's').startsWith('HHH')).toBe(true);
 
-    const f3 = slice(payload, 3); // layer (3)
-    expect(corePadded(f3, 'i').startsWith('3')).toBe(true);
+    const f3 = slice(payload, 3); // x ('12')
+    expect(corePadded(f3, 's').startsWith('12')).toBe(true);
 
-    const f4 = slice(payload, 4); // width ('WW')
-    expect(corePadded(f4, 's').startsWith('WW')).toBe(true);
+    const f4 = slice(payload, 4); // y ('99')
+    expect(corePadded(f4, 's').startsWith('99')).toBe(true);
 
-    const f5 = slice(payload, 5); // height ('HHH')
-    expect(corePadded(f5, 's').startsWith('HHH')).toBe(true);
+    const f5 = slice(payload, 5); // visible (false)
+    expect(corePadded(f5, 'b').startsWith('false')).toBe(true);
 
-    const f6 = slice(payload, 6); // x ('12')
-    expect(corePadded(f6, 's').startsWith('12')).toBe(true);
+    const f6 = slice(payload, 6); // enabled (true)
+    expect(corePadded(f6, 'b').startsWith('true')).toBe(true);
 
-    const f7 = slice(payload, 7); // y ('99')
-    expect(corePadded(f7, 's').startsWith('99')).toBe(true);
+    const f7 = slice(payload, 7); // layer (3)
+    expect(corePadded(f7, 'i').startsWith('3')).toBe(true);
 
     const f8 = slice(payload, 8); // inheritMaxSiblingWidth (true)
     expect(corePadded(f8, 'b').startsWith('true')).toBe(true);
@@ -247,7 +251,7 @@ describe('Serialization field order', () => {
     // However, the canonical fields defined by withControledLayout should still appear first
     // in their stable order, followed by the unknown properties in object insertion order.
 
-    // Expected canonical fields first: type, visible, enabled, layer, width, height, x, y, inheritMaxSiblingWidth, inheritMaxSiblingHeight, __reserved
+    // Expected canonical fields first: type, width, height, x, y, visible, enabled, layer, inheritMaxSiblingWidth, inheritMaxSiblingHeight, __reserved
     // Then unknown fields in their object insertion order: unknownString, unknownNumber, unknownBool, anotherUnknownString, unknownFloat, finalUnknownProp
 
     // Calculate canonical fields size including reserved fields
@@ -266,26 +270,26 @@ describe('Serialization field order', () => {
     const f0 = slice(payload, 0); // type
     expect(corePadded(f0, 's').startsWith('panel')).toBe(true);
 
-    const f1 = slice(payload, 1); // visible (false)
-    expect(corePadded(f1, 'b').startsWith('false')).toBe(true);
+    const f1 = slice(payload, 1); // width ('TestWidth')
+    expect(corePadded(f1, 's').startsWith('TestWidth')).toBe(true);
 
-    const f2 = slice(payload, 2); // enabled (true)
-    expect(corePadded(f2, 'b').startsWith('true')).toBe(true);
+    const f2 = slice(payload, 2); // height ('TestHeight')
+    expect(corePadded(f2, 's').startsWith('TestHeight')).toBe(true);
 
-    const f3 = slice(payload, 3); // layer (5)
-    expect(corePadded(f3, 'i').startsWith('5')).toBe(true);
+    const f3 = slice(payload, 3); // x ('TestX')
+    expect(corePadded(f3, 's').startsWith('TestX')).toBe(true);
 
-    const f4 = slice(payload, 4); // width ('TestWidth')
-    expect(corePadded(f4, 's').startsWith('TestWidth')).toBe(true);
+    const f4 = slice(payload, 4); // y ('TestY')
+    expect(corePadded(f4, 's').startsWith('TestY')).toBe(true);
 
-    const f5 = slice(payload, 5); // height ('TestHeight')
-    expect(corePadded(f5, 's').startsWith('TestHeight')).toBe(true);
+    const f5 = slice(payload, 5); // visible (false)
+    expect(corePadded(f5, 'b').startsWith('false')).toBe(true);
 
-    const f6 = slice(payload, 6); // x ('TestX')
-    expect(corePadded(f6, 's').startsWith('TestX')).toBe(true);
+    const f6 = slice(payload, 6); // enabled (true)
+    expect(corePadded(f6, 'b').startsWith('true')).toBe(true);
 
-    const f7 = slice(payload, 7); // y ('TestY')
-    expect(corePadded(f7, 's').startsWith('TestY')).toBe(true);
+    const f7 = slice(payload, 7); // layer (5)
+    expect(corePadded(f7, 'i').startsWith('5')).toBe(true);
 
     const f8 = slice(payload, 8); // inheritMaxSiblingWidth (true)
     expect(corePadded(f8, 'b').startsWith('true')).toBe(true);
