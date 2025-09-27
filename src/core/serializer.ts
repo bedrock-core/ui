@@ -38,11 +38,11 @@ export const PREFIX_WIDTH = {
 export const MARKER_WIDTH = 1; // 1 byte marker per field
 
 export const FULL_WIDTH = {
-  s: TYPE_WIDTH.s + PREFIX_WIDTH.s + MARKER_WIDTH,
-  i: TYPE_WIDTH.i + PREFIX_WIDTH.i + MARKER_WIDTH,
-  f: TYPE_WIDTH.f + PREFIX_WIDTH.f + MARKER_WIDTH,
-  b: TYPE_WIDTH.b + PREFIX_WIDTH.b + MARKER_WIDTH,
-  r: PREFIX_WIDTH.r,
+  s: PREFIX_WIDTH.s + TYPE_WIDTH.s + MARKER_WIDTH,
+  i: PREFIX_WIDTH.i + TYPE_WIDTH.i + MARKER_WIDTH,
+  f: PREFIX_WIDTH.f + TYPE_WIDTH.f + MARKER_WIDTH,
+  b: PREFIX_WIDTH.b + TYPE_WIDTH.b + MARKER_WIDTH,
+  r: TYPE_WIDTH.r,
 };
 
 // Type prefix characters used for encoding
