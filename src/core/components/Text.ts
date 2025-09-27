@@ -21,7 +21,7 @@ export interface TextProps extends ControlProps {
   textStyle?: TextStyle;
 }
 
-export function Text({ value, textStyle }: TextProps): Component {
+export function Text({ value, textStyle, ...rest }: TextProps): Component {
   return {
     serialize: (form: CoreUIFormData): void => {
       const serializable: SerializableComponent = {
@@ -41,6 +41,7 @@ export function Text({ value, textStyle }: TextProps): Component {
         fontType: textStyle?.fontType ?? 'default',
         localize: textStyle?.localize ?? false,
         textAlignment: textStyle?.textAlignment ?? 'left',
+        ...rest,
       };
 
       const [result, bytes] = serialize(serializable);

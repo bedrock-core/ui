@@ -341,6 +341,8 @@ Place tests under `src/**/__tests__/**` or `*.test.ts` (excluded from build outp
   - Reactive screens, for the first versions the screens will have static information and only be able to be updated after user input in a button. Need to investigate the possibility to make the information update reactively and if it is worth. It might lag a log, be very complex...
   - Preprocesor to be able to use tsx instead of function like components
   - validation for max bytes to serialize, rn no idea how much info we can cram into a string
+  - Resource packs builder: currently while we do the first versions and learn the whole process we make the core resource pack by hand, making it automatic would be better and will help for the next export feature
+  - Export feature: this library only will provide a way to make ui's using custom forms, but a way to export the result json might be useful for making resource packs
 
 Everything listed here will only be made if it is possible and not extremely complicated
 Order might change if I feel like it

@@ -219,13 +219,13 @@ export function serialize(props: SerializableComponent): [string, number] {
         core = `${TYPE_PREFIX.f}:${padToByteLength(rawStr, TYPE_WIDTH.f)}`;
         widthBytes = FULL_WIDTH.f;
       }
-    } else if (typeof value === 'object' && value.__type === 'reserved') {
+    } else if (typeof value === 'object' && value !== null && value.__type === 'reserved') {
       rawStr = '';
       // Do not append prefix as we do not have prefix or marker for reserved bytes for easier JSON UI skipping
       core = `${PAD_CHAR.repeat(value.bytes - 1)}`; // -1 for marker
       widthBytes = value.bytes;
     } else {
-      throw new Error(`serialize(): unsupported type for property "${key}"`);
+      throw new Error(`serialize(): unsupported type for property "${key}": ${typeof value} (value: ${JSON.stringify(value)})`);
     }
 
     totalBytes += widthBytes;

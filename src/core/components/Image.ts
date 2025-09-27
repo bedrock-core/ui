@@ -22,7 +22,6 @@ export function Image({ texture, uv, uvSize, ninesliceSize, tiled, keepRatio, bi
 
       const serializable: SerializableComponent = {
         type: 'image',
-        ...rest,
         texture: texture ?? '',
         uvX: uv?.[0] ?? 0,
         uvY: uv?.[1] ?? 0,
@@ -35,6 +34,7 @@ export function Image({ texture, uv, uvSize, ninesliceSize, tiled, keepRatio, bi
         tiled: tiled ?? false,
         keepRatio: keepRatio ?? false,
         bilinear: bilinear ?? false,
+        ...rest,
       };
 
       const [result, bytes] = serialize(serializable);

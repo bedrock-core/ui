@@ -57,6 +57,7 @@ export interface ControlProps {
  */
 export function withControl(props: SerializableComponent): Required<SerializableComponent> {
   const {
+    type,
     width,
     height,
     x,
@@ -71,7 +72,8 @@ export function withControl(props: SerializableComponent): Required<Serializable
   } = props;
 
   // Create object with properties in exact canonical order for stable serialization
-  const ordered = {
+  return {
+    type,
     width,
     height,
     x,
@@ -82,8 +84,7 @@ export function withControl(props: SerializableComponent): Required<Serializable
     inheritMaxSiblingWidth: inheritMaxSiblingWidth ?? false,
     inheritMaxSiblingHeight: inheritMaxSiblingHeight ?? false,
     __reserved: reserveBytes(277), // Reserve space for future expansion
+    // rest of props are the props specific to the component, which will be appended at the end
+    ...rest,
   };
-
-  // Append the rest of the props, which are specific to the component and order will be handled by the component itself
-  return { ...ordered, ...rest };
 }
