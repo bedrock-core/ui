@@ -7,6 +7,7 @@
 			0,
 			0
 		],
+		"layer": 100,
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
 		"use_anchored_offset": true,
@@ -51,9 +52,9 @@
 				"target_property_name": "#type"
 			},
 			{
-				/* --- width (string) - field 1 --- */
+				/* --- width (float) - field 1 --- */
 				"binding_type": "view", // full_width
-				"source_property_name": "('%.35s' * #rem_after_type)",
+				"source_property_name": "('%.27s' * #rem_after_type)",
 				"target_property_name": "#raw_width"
 			},
 			{
@@ -63,13 +64,13 @@
 			},
 			{
 				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.34s' * #raw_width) - ('%.2s' * #raw_width) - ';')",
+				"source_property_name": "(('%.26s' * #raw_width) - ('%.2s' * #raw_width) - ';')",
 				"target_property_name": "#size_binding_x"
 			},
 			{
-				/* --- height (string) - field 2 --- */
+				/* --- height (float) - field 2 --- */
 				"binding_type": "view", // full_width
-				"source_property_name": "('%.35s' * #rem_after_width)",
+				"source_property_name": "('%.27s' * #rem_after_width)",
 				"target_property_name": "#raw_height"
 			},
 			{
@@ -79,13 +80,13 @@
 			},
 			{
 				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.34s' * #raw_height) - ('%.2s' * #raw_height) - ';')",
+				"source_property_name": "(('%.26s' * #raw_height) - ('%.2s' * #raw_height) - ';')",
 				"target_property_name": "#size_binding_y"
 			},
 			{
-				/* --- x (string) - field 3 --- */
+				/* --- x (float) - field 3 --- */
 				"binding_type": "view", // full_width
-				"source_property_name": "('%.35s' * #rem_after_height)",
+				"source_property_name": "('%.27s' * #rem_after_height)",
 				"target_property_name": "#raw_x"
 			},
 			{
@@ -94,14 +95,14 @@
 				"target_property_name": "#rem_after_x"
 			},
 			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;) 
-				"source_property_name": "((('%.34s' * #raw_x) - ('%.2s' * #raw_x) - ';') * $percent)",
+				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;) * cast to float
+				"source_property_name": "((('%.26s' * #raw_x) - ('%.2s' * #raw_x) - ';') * $percent)",
 				"target_property_name": "#anchored_offset_value_x"
 			},
 			{
-				/* --- y (string) - field 4 --- */
+				/* --- y (float) - field 4 --- */
 				"binding_type": "view", // full_width
-				"source_property_name": "('%.35s' * #rem_after_x)",
+				"source_property_name": "('%.27s' * #rem_after_x)",
 				"target_property_name": "#raw_y"
 			},
 			{
@@ -110,11 +111,11 @@
 				"target_property_name": "#rem_after_y"
 			},
 			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;) 
-				"source_property_name": "((('%.34s' * #raw_y) - ('%.2s' * #raw_y) - ';') * $percent)",
+				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;) * cast to float
+				"source_property_name": "((('%.26s' * #raw_y) - ('%.2s' * #raw_y) - ';') * $percent)",
 				"target_property_name": "#anchored_offset_value_y"
 			}
-			// /* --- visible (bool) - field 5 --- */
+			// /* --- visible (boolean) - field 5 --- */
 			// {
 			// 	"binding_type": "view", // full_width
 			// 	"source_property_name": "('%.8s' * #rem_after_y)",
@@ -130,7 +131,7 @@
 			// 	"source_property_name": "(('%.7s' * #raw_visible) - ('%.2s' * #raw_visible) - ';')",
 			// 	"target_property_name": "#visible"
 			// },
-			// /* --- enabled (bool) - field 6 --- */
+			// /* --- enabled (boolean) - field 6 --- */
 			// {
 			// 	"binding_type": "view", // full_width
 			// 	"source_property_name": "('%.8s' * #rem_after_visible)",
@@ -149,7 +150,7 @@
 			// /* --- layer (int) - field 7 --- */
 			// {
 			// 	"binding_type": "view", // full_width
-			// 	"source_property_name": "('%.19s' * #rem_after_enabled)",
+			// 	"source_property_name": "('%.27s' * #rem_after_enabled)",
 			// 	"target_property_name": "#raw_layer"
 			// },
 			// {
@@ -159,10 +160,26 @@
 			// },
 			// {
 			// 	"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-			// 	"source_property_name": "(('%.18s' * #raw_layer) - ('%.2s' * #raw_layer) - ';')",
+			// 	"source_property_name": "(('%.26s' * #raw_layer) - ('%.2s' * #raw_layer) - ';')",
 			// 	"target_property_name": "#layer"
 			// },
-			// /* --- inherit_max_sibling_width (bool) - field 8 --- */
+			// /* --- alpha (float) - field 8 --- */
+			// {
+			// 	"binding_type": "view", // full_width
+			// 	"source_property_name": "('%.27s' * #rem_after_enabled)",
+			// 	"target_property_name": "#raw_alpha"
+			// },
+			// {
+			// 	"binding_type": "view",
+			// 	"source_property_name": "(#rem_after_enabled - #raw_alpha)",
+			// 	"target_property_name": "#rem_after_alpha"
+			// },
+			// {
+			// 	"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
+			// 	"source_property_name": "(('%.26s' * #raw_alpha) - ('%.2s' * #raw_alpha) - ';')",
+			// 	"target_property_name": "#alpha"
+			// },
+			// /* --- inherit_max_sibling_width (boolean) - field 8 --- */
 			// {
 			// 	"binding_type": "view", // full_width
 			// 	"source_property_name": "('%.8s' * #rem_after_layer)",
@@ -178,7 +195,7 @@
 			// 	"source_property_name": "(('%.7s' * #raw_inherit_max_sibling_width) - ('%.2s' * #raw_inherit_max_sibling_width) - ';')",
 			// 	"target_property_name": "#inherit_max_sibling_width"
 			// },
-			// /* --- inherit_max_sibling_height (bool) - field 9 --- */
+			// /* --- inherit_max_sibling_height (boolean) - field 9 --- */
 			// {
 			// 	"binding_type": "view", // full_width
 			// 	"source_property_name": "('%.8s' * #rem_after_inherit_max_sibling_width)",
@@ -197,7 +214,7 @@
 			// /* --- skip __reserved --- */
 			// {
 			// 	"binding_type": "view", // reserved full_width
-			// 	"source_property_name": "('%.277s' * #rem_after_inherit_max_sibling_height)",
+			// 	"source_property_name": "('%.274s' * #rem_after_inherit_max_sibling_height)",
 			// 	"target_property_name": "#skip_reserved_control"
 			// },
 			// {

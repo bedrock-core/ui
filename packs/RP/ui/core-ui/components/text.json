@@ -1,5 +1,6 @@
 {
 	"namespace": "core-ui_components",
+	// Components must be inside a panel with size 1,1 to be properly scalable
 	"text": {
 		"type": "panel",
 		// Note: from size_binding_x/y seems relative to parent size so making parent 10x10 will be 10 times larger the child
@@ -7,8 +8,7 @@
 			1,
 			1
 		],
-		"anchor_from": "center",
-		"anchor_to": "center",
+		// Components should have a single control that extends @core-ui_properties.control
 		"controls": [
 			{
 				"control@core-ui_properties.control": {}
