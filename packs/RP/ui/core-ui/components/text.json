@@ -15,7 +15,7 @@
 					"texture": "textures/ui/core-ui/text/background",
 					"size": [
 						20,
-						50
+						20
 					],
 					"property_bag": {
 						"#anchored_offset_value_y": 0.0,
@@ -24,12 +24,13 @@
 					},
 					"bindings": [
 						{
-							"binding_name": "#title_text",
-							"binding_type": "global"
+							"binding_name": "#custom_text",
+							"binding_type": "collection",
+							"binding_collection_name": "custom_form"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(#title_text - 'dynamic:')",
+							"source_property_name": "(#custom_text - 'dynamic:')",
 							"target_property_name": "#text"
 						},
 						{
