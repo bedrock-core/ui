@@ -10,7 +10,8 @@
 		"factory": {
 			"name": "buttons",
 			"control_ids": {
-				"label": "@core-ui_components.text",
+				"label": "@core-ui_components.text2",
+				// "label": "@server_form.custom_label",
 				"toggle": "@server_form.custom_toggle",
 				"slider": "@server_form.custom_slider",
 				"step_slider": "@server_form.custom_step_slider",
@@ -20,5 +21,18 @@
 				"divider": "@settings_common.option_group_section_divider"
 			}
 		}
+	},
+	"custom_form_scrolling_content": {
+		"modifications": [
+			{
+				"operation": "insert_front",
+				"array_name": "controls",
+				"value": [
+					{
+						"text@core-ui_components.text": {}
+					}
+				]
+			}
+		]
 	}
 }
