@@ -14,13 +14,12 @@
 		"$protocol_header": "bcuiv0001",
 		"controls": [
 			{
-				"our_custom_made_long_form": {
+				"container": {
 					"type": "image",
-					"texture": "textures/items/apple",
-					"layer": 100,
+					"texture": "textures/ui/core-ui/components/text/background",
 					"size": [
-						32,
-						32
+						"100%",
+						"100%"
 					],
 					"bindings": [
 						{
@@ -28,6 +27,40 @@
 							"source_control_name": "screen_container",
 							"source_property_name": "(not ((#title_text - $protocol_header) = #title_text))",
 							"target_property_name": "#visible"
+						}
+					],
+					"controls": [
+						{
+							"generated_contents": {
+								"type": "stack_panel",
+								"size": [
+									"100%",
+									"100%"
+								],
+								"orientation": "vertical",
+								"anchor_from": "center",
+								"anchor_to": "center",
+								"factory": {
+									"name": "buttons",
+									"control_ids": {
+										"label": "@server_form.custom_label",
+										"toggle": "@server_form.custom_toggle",
+										"slider": "@server_form.custom_slider",
+										"step_slider": "@server_form.custom_step_slider",
+										"dropdown": "@server_form.custom_dropdown",
+										"input": "@server_form.custom_input",
+										"header": "@server_form.custom_header",
+										"divider": "@settings_common.option_group_section_divider"
+									}
+								},
+								"collection_name": "custom_form",
+								"bindings": [
+									{
+										"binding_name": "#custom_form_length",
+										"binding_name_override": "#collection_length"
+									}
+								]
+							}
 						}
 					]
 				}
