@@ -1,4 +1,7 @@
 {
+	// Special type, we use in the TS the label as the base for the
+	// "client" components as label is the simplest component where
+	// we can pass data
 	"namespace": "core-ui_common",
 	// Components must be inside a panel with size 1,1 to be properly scalable
 	"router": {

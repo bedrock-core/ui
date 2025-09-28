@@ -1,0 +1,37 @@
+{
+	"namespace": "core-ui_common",
+	"screen_container": {
+		"type": "panel",
+		"size": [
+			"100%",
+			"100%"
+		],
+		"bindings": [
+			{
+				"binding_name": "#title_text"
+			}
+		],
+		"$protocol_header": "bcuiv0001",
+		"controls": [
+			{
+				"our_custom_made_long_form": {
+					"type": "image",
+					"texture": "textures/items/apple",
+					"layer": 100,
+					"size": [
+						32,
+						32
+					],
+					"bindings": [
+						{
+							"binding_type": "view",
+							"source_control_name": "screen_container",
+							"source_property_name": "(not ((#title_text - $protocol_header) = #title_text))",
+							"target_property_name": "#visible"
+						}
+					]
+				}
+			}
+		]
+	}
+}
