@@ -6,6 +6,7 @@ export function ExampleComponent(): Component {
     height: 50,
     x: 200,
     y: 100,
+    layer: 100,
     value: 'Player Settings',
   });
 
