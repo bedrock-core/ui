@@ -4,8 +4,8 @@ export function ExampleComponent(): Component {
   return Text({
     width: 30,
     height: 50,
-    x: 200,
-    y: 100,
+    x: 20,
+    y: 10,
     layer: 100,
     value: 'Player Settings',
   });

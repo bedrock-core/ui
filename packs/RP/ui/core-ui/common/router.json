@@ -1,0 +1,112 @@
+{
+	"namespace": "core-ui_common",
+	// Components must be inside a panel with size 1,1 to be properly scalable
+	"router": {
+		"type": "panel",
+		// Note: from size_binding_x/y seems relative to parent size so making parent 10x10 will be 10 times larger the child
+		"size": [
+			1,
+			1
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"controls": [
+			{
+				"text_route": {
+					"type": "panel",
+					"size": [
+						30,
+						50
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"visible": "#visible",
+					"bindings": [
+						{
+							"binding_name": "#custom_text",
+							"binding_type": "collection",
+							"binding_collection_name": "custom_form"
+						},
+						{
+							/* --- strip protocol header (9 chars) --- */
+							"binding_type": "view", // protocol header size
+							"source_property_name": "('%.9s' * #custom_text)",
+							"target_property_name": "#protocol_header"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_text - #protocol_header)",
+							"target_property_name": "#rem_after_header"
+						},
+						{
+							/* --- type (string) - field 0 --- */
+							"binding_type": "view", // full_width
+							"source_property_name": "('%.35s' * #rem_after_header)",
+							"target_property_name": "#raw_type"
+						},
+						{
+							"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
+							"source_property_name": "(('%.34s' * #raw_type) - ('%.2s' * #raw_type) - ';')",
+							"target_property_name": "#type"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#type = 'text')",
+							"target_property_name": "#visible"
+						}
+					],
+					"controls": [
+						{
+							"text@core-ui_components.text": {}
+						}
+					]
+				}
+			},
+			{
+				"panel": {
+					"type": "panel",
+					"visible": "#visible",
+					"bindings": [
+						{
+							"binding_name": "#custom_text",
+							"binding_type": "collection",
+							"binding_collection_name": "custom_form"
+						},
+						{
+							/* --- strip protocol header (9 chars) --- */
+							"binding_type": "view", // protocol header size
+							"source_property_name": "('%.9s' * #custom_text)",
+							"target_property_name": "#protocol_header"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_text - #protocol_header)",
+							"target_property_name": "#rem_after_header"
+						},
+						{
+							/* --- type (string) - field 0 --- */
+							"binding_type": "view", // full_width
+							"source_property_name": "('%.35s' * #rem_after_header)",
+							"target_property_name": "#raw_type"
+						},
+						{
+							"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
+							"source_property_name": "(('%.34s' * #raw_type) - ('%.2s' * #raw_type) - ';')",
+							"target_property_name": "#type"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#type = 'panel')",
+							"target_property_name": "#visible"
+						}
+					],
+					"controls": [
+						{
+							"panel@core-ui_components.panel": {}
+						}
+					]
+				}
+			}
+		]
+	}
+}
