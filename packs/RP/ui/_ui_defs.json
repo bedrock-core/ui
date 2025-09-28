@@ -3,12 +3,10 @@
 		"ui/server_form.json",
 		// Base control, all components should extend this
 		"ui/core-ui/common/control.json", // [0,511] 512 bytes
-		// Special type, we use in the TS the label as the base for the
-		// "client" components as label is the simplest component where
-		// we can pass data
+		"ui/core-ui/common/screen_container.json",
 		"ui/core-ui/common/router.json",
 		// -----------------------------------------------
-		// After the initial reserved bytes for the core, rest of bytes 
+		// After the initial reserved bytes for the common, rest of bytes 
 		// after 512 for its own use and 
 		// available in #serialized_data binding
 		// ----------------- Server only -----------------
