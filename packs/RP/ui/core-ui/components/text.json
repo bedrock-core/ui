@@ -18,11 +18,16 @@
 						0,
 						0
 					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"use_anchored_offset": true,
 					"property_bag": {
 						"#size_binding_x": 0.0,
-						"#size_binding_y": 0.0
+						"#size_binding_y": 0.0,
+						"#anchored_offset_value_x": 0.0,
+						"#anchored_offset_value_y": 0.0
 					},
-					// "use_anchored_offset": true,
+					"$percent": 0.1,
 					"bindings": [
 						{
 							"binding_name": "#custom_text",
@@ -87,40 +92,39 @@
 							"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
 							"source_property_name": "(('%.34s' * #raw_height) - ('%.2s' * #raw_height) - ';')",
 							"target_property_name": "#size_binding_y"
+						},
+						{
+							/* --- x (string) - field 3 --- */
+							"binding_type": "view", // full_width
+							"source_property_name": "('%.35s' * #rem_after_height)",
+							"target_property_name": "#raw_x"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#rem_after_height - #raw_x)",
+							"target_property_name": "#rem_after_x"
+						},
+						{
+							"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;) 
+							"source_property_name": "((('%.34s' * #raw_x) - ('%.2s' * #raw_x) - ';') * $percent)",
+							"target_property_name": "#anchored_offset_value_x"
+						},
+						{
+							/* --- y (string) - field 4 --- */
+							"binding_type": "view", // full_width
+							"source_property_name": "('%.35s' * #rem_after_x)",
+							"target_property_name": "#raw_y"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#rem_after_x - #raw_y)",
+							"target_property_name": "#rem_after_y"
+						},
+						{
+							"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;) 
+							"source_property_name": "((('%.34s' * #raw_y) - ('%.2s' * #raw_y) - ';') * $percent)",
+							"target_property_name": "#anchored_offset_value_y"
 						}
-						// {
-						// 	/* --- x (string) - field 3 --- */
-						// 	"binding_type": "view", // full_width
-						// 	"source_property_name": "('%.35s' * #rem_after_height)",
-						// 	"target_property_name": "#raw_x"
-						// },
-						// {
-						// 	"binding_type": "view",
-						// 	"source_property_name": "(#rem_after_height - #raw_x)",
-						// 	"target_property_name": "#rem_after_x"
-						// },
-						// {
-						// 	"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;) / cast to int (float?)
-						// 	"source_property_name": "(('%.34s' * #raw_x) - ('%.2s' * #raw_x) - ';') / 10)",
-						// 	"target_property_name": "#anchored_offset_value_x"
-						// },
-						// {
-						// /* --- y (string) - field 4 --- */
-						// 	"binding_type": "view", // full_width
-						// 	"source_property_name": "('%.35s' * #rem_after_x)",
-						// 	"target_property_name": "#raw_y"
-						// },
-						// {
-						// 	"binding_type": "view",
-						// 	"source_property_name": "(#rem_after_x - #raw_y)",
-						// 	"target_property_name": "#rem_after_y"
-						// },
-						// {
-						// 	"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;) / cast to int (float?)
-						// 	// * document why dividing by 10 gives the correct number, should be mult/div by 1
-						// 	"source_property_name": "(('%.34s' * #raw_y) - ('%.2s' * #raw_y) - ';') / 10)",
-						// 	"target_property_name": "#anchored_offset_value_y"
-						// }
 						// /* --- visible (bool) - field 5 --- */
 						// {
 						// 	"binding_type": "view", // full_width
