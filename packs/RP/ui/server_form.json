@@ -21,18 +21,5 @@
 				"divider": "@settings_common.option_group_section_divider"
 			}
 		}
-	},
-	"custom_form_scrolling_content": {
-		"modifications": [
-			{
-				"operation": "insert_front",
-				"array_name": "controls",
-				"value": [
-					{
-						"text@core-ui_components.text": {}
-					}
-				]
-			}
-		]
 	}
 }

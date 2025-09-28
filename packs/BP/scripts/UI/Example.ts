@@ -2,8 +2,8 @@ import { Component, Text } from '@bedrock-core/ui';
 
 export function ExampleComponent(): Component {
   return Text({
-    width: '300',
-    height: '500',
+    width: '30',
+    height: '50',
     x: '100px',
     y: '400px',
     value: 'Player Settings',
