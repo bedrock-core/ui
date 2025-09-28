@@ -7,7 +7,7 @@
  * This is because serialization is order-dependent and keys are not transmitted.
  */
 export interface SerializableComponent {
-  type: string;
+  type: SerializableString;
   [key: string]: SerializablePrimitive;
 }
 
@@ -19,6 +19,19 @@ export type ReservedBytes = {
   bytes: number;
 };
 
-// Update primitive union
-export type SerializablePrimitive = string | number | boolean | ReservedBytes;
+export type SerializableString = {
 
+  /* @internal */
+  __type: 'serializable_string';
+  value: string;
+  maxBytes?: number;
+};
+
+export type SerializablePrimitive = SerializableString | number | boolean | ReservedBytes;
+
+export class SerializationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'SerializationError';
+  }
+}

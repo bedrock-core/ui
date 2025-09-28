@@ -2,7 +2,7 @@
 import { ControlProps } from '.';
 import { Component, CoreUIFormData, SerializableComponent } from '../../types';
 import { Logger } from '../../util/Logger';
-import { serialize } from '../serializer';
+import { serialize, serializeString } from '../serializer';
 export interface PanelProps extends ControlProps {
   // Future idea
   // display?: 'flex' | 'block';
@@ -16,7 +16,7 @@ export function Panel({ children, ...rest }: PanelProps): Component {
       // 'children' are not primitives; they are serialized separately after emitting
       // this panel's own primitive payload.
       const serializable: SerializableComponent = {
-        type: 'panel',
+        type: serializeString('panel'),
         ...rest,
       };
 

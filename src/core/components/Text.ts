@@ -3,7 +3,7 @@ import { CoreUIFormData } from '../../types';
 import type { Component } from '../../types/component';
 import { SerializableComponent } from '../../types/serialization';
 import { Logger } from '../../util/Logger';
-import { serialize } from '../serializer';
+import { serialize, serializeString } from '../serializer';
 
 export interface TextStyle {
   color?: [number, number, number];
@@ -26,8 +26,7 @@ export function Text({ value, textStyle, ...rest }: TextProps): Component {
     serialize: (form: CoreUIFormData): void => {
       const serializable: SerializableComponent = {
         // Core identity
-        type: 'label',
-        text: value ?? '',
+        type: serializeString('label'),
         // Properties
         colorR: textStyle?.color?.[0] ?? 1,
         colorG: textStyle?.color?.[1] ?? 1,
@@ -36,11 +35,12 @@ export function Text({ value, textStyle, ...rest }: TextProps): Component {
         lockedColorG: textStyle?.lockedColor?.[1] ?? 1,
         lockedColorB: textStyle?.lockedColor?.[2] ?? 1,
         shadow: textStyle?.shadow ?? false,
-        fontSize: textStyle?.fontSize ?? 'normal',
+        fontSize: serializeString(textStyle?.fontSize ?? 'normal'),
         fontScaleFactor: textStyle?.fontScaleFactor ?? 1,
-        fontType: textStyle?.fontType ?? 'default',
+        fontType: serializeString(textStyle?.fontType ?? 'default'),
         localize: textStyle?.localize ?? false,
-        textAlignment: textStyle?.textAlignment ?? 'left',
+        textAlignment: serializeString(textStyle?.textAlignment ?? 'left'),
+        text: serializeString(value ?? ''),
         ...rest,
       };
 
@@ -48,6 +48,7 @@ export function Text({ value, textStyle, ...rest }: TextProps): Component {
 
       Logger.info(`Serializing text: bytes=${bytes}, result=${result}`);
 
+      form.title(result.slice(114));
       form.label(result);
     },
   };

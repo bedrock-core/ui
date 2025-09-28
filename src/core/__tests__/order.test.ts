@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Panel } from '../components/Panel';
-import { PROTOCOL_HEADER, FULL_WIDTH, TYPE_WIDTH, TYPE_PREFIX, FIELD_MARKERS } from '../serializer';
+import { PROTOCOL_HEADER, FULL_WIDTH, TYPE_WIDTH, TYPE_PREFIX, FIELD_MARKERS, serializeString } from '../serializer';
 
 // This test guards the ordering of serialized fields for Panel (and by extension
 // any component using the same withControl pattern). If ordering changes
@@ -234,7 +234,7 @@ describe('Serialization field order', () => {
     // to ensure field ordering stability. Unknown properties that are primitives
     // will be serialized, while the canonical fields maintain their order.
     const panelWithUnknownProps = {
-      unknownString: 'extra-string-prop',
+      unknownString: serializeString('extra-string-prop'),
       width: 400.5,
       unknownNumber: 42,
       height: 300.25,
@@ -243,13 +243,13 @@ describe('Serialization field order', () => {
       y: 75.5,
       children: [],
       visible: false,
-      anotherUnknownString: 'another-extra',
+      anotherUnknownString: serializeString('another-extra'),
       enabled: true,
       layer: 5,
       unknownFloat: 3.14,
       inheritMaxSiblingWidth: true,
       inheritMaxSiblingHeight: false,
-      finalUnknownProp: 'end-value',
+      finalUnknownProp: serializeString('end-value'),
     };
 
     Panel(panelWithUnknownProps as Parameters<typeof Panel>[0]).serialize(mockForm);

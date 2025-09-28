@@ -1,4 +1,4 @@
-import { ReservedBytes, SerializableComponent, SerializablePrimitive } from '../types/serialization';
+import { ReservedBytes, SerializableComponent, SerializablePrimitive, SerializableString, SerializationError } from '../types/serialization';
 import { withControl } from './components';
 
 /**
@@ -141,9 +141,9 @@ function utf8Truncate(str: string, maxBytes: number): string {
   return result;
 }
 
-function getFieldMarker(index: number): string {
+function getFieldMarker(index: number, key: string): string {
   if (index >= FIELD_MARKERS.length) {
-    throw new Error(`serialize(): exceeded supported field marker count (${FIELD_MARKERS.length}).`);
+    throw new SerializationError(`serialize(): exceeded maximum number of 64 props in an element. Key: "${key}" and following do not fit`);
   }
 
   return FIELD_MARKERS[index];
@@ -172,10 +172,20 @@ function padToByteLength(str: string, length: number): string {
  */
 export function reserveBytes(bytes: number): ReservedBytes {
   if (!Number.isInteger(bytes) || bytes <= 0) {
-    throw new Error('Reserved bytes must be a positive integer');
+    throw new SerializationError('Reserved bytes must be a positive integer');
   }
 
   return { __type: 'reserved', bytes };
+}
+
+/**
+ * Serializes a string value.
+ * @param value - string value to serialize
+ * @param maxBytes - maximum byte length for the serialized string
+ * @returns SerializableString object
+ */
+export function serializeString(value: string, maxBytes?: number): SerializableString {
+  return { __type: 'serializable_string', value, maxBytes };
 }
 
 /**
@@ -197,11 +207,7 @@ export function serialize(props: SerializableComponent): [string, number] {
     let widthBytes: number;
     let rawStr: string;
 
-    if (typeof value === 'string') {
-      rawStr = value;
-      core = `${TYPE_PREFIX.s}:${padToByteLength(value, TYPE_WIDTH.s)}`;
-      widthBytes = FULL_WIDTH.s;
-    } else if (typeof value === 'boolean') {
+    if (typeof value === 'boolean') {
       rawStr = value ? 'true' : 'false';
       core = `${TYPE_PREFIX.b}:${padToByteLength(rawStr, TYPE_WIDTH.b)}`;
       widthBytes = FULL_WIDTH.b;
@@ -214,13 +220,19 @@ export function serialize(props: SerializableComponent): [string, number] {
       // Do not append prefix as we do not have prefix or marker for reserved bytes for easier JSON UI skipping
       core = `${PAD_CHAR.repeat(value.bytes - 1)}`; // -1 for marker
       widthBytes = value.bytes;
+    } else if (typeof value === 'object' && value !== null && value.__type === 'serializable_string') {
+      rawStr = value.value;
+      core = `${TYPE_PREFIX.s}:${padToByteLength(value.value, value.maxBytes ?? TYPE_WIDTH.s)}`;
+      widthBytes = FULL_WIDTH.s;
+    } else if (typeof value === 'string') {
+      throw new SerializationError(`serialize(): unsuported native strings use serializeString(value: string, maxBytes?: number) for property "${key}"`);
     } else {
-      throw new Error(`serialize(): unsupported type for property "${key}": ${typeof value} (value: ${JSON.stringify(value)})`);
+      throw new SerializationError(`serialize(): unsupported type for property "${key}": ${typeof value} (value: ${JSON.stringify(value)})`);
     }
 
     totalBytes += widthBytes;
 
-    const marker = getFieldMarker(index);
+    const marker = getFieldMarker(index, key);
 
     return core + marker;
   });
