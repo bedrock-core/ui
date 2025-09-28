@@ -21,16 +21,14 @@ export const PROTOCOL_HEADER_LENGTH = 9; // bytes, all characters are single-byt
 // Public protocol constants (exported for tests and decoders)
 export const TYPE_WIDTH = {
   s: 32,
-  i: 16,
-  f: 24,
+  n: 24,
   b: 5,
   r: 0, // variable
 };
 
 export const PREFIX_WIDTH = {
   s: 2,
-  i: 2,
-  f: 2,
+  n: 2,
   b: 2,
   r: 0,
 };
@@ -39,8 +37,7 @@ export const MARKER_WIDTH = 1; // 1 byte marker per field
 
 export const FULL_WIDTH = {
   s: PREFIX_WIDTH.s + TYPE_WIDTH.s + MARKER_WIDTH,
-  i: PREFIX_WIDTH.i + TYPE_WIDTH.i + MARKER_WIDTH,
-  f: PREFIX_WIDTH.f + TYPE_WIDTH.f + MARKER_WIDTH,
+  n: PREFIX_WIDTH.n + TYPE_WIDTH.n + MARKER_WIDTH,
   b: PREFIX_WIDTH.b + TYPE_WIDTH.b + MARKER_WIDTH,
   r: TYPE_WIDTH.r,
 };
@@ -48,8 +45,7 @@ export const FULL_WIDTH = {
 // Type prefix characters used for encoding
 export const TYPE_PREFIX = {
   s: 's',
-  i: 'i',
-  f: 'f',
+  n: 'n',
   b: 'b',
   r: 'r',
 };
@@ -210,15 +206,9 @@ export function serialize(props: SerializableComponent): [string, number] {
       core = `${TYPE_PREFIX.b}:${padToByteLength(rawStr, TYPE_WIDTH.b)}`;
       widthBytes = FULL_WIDTH.b;
     } else if (typeof value === 'number') {
-      if (Number.isInteger(value)) {
-        rawStr = value.toString();
-        core = `${TYPE_PREFIX.i}:${padToByteLength(rawStr, TYPE_WIDTH.i)}`;
-        widthBytes = FULL_WIDTH.i;
-      } else {
-        rawStr = value.toString();
-        core = `${TYPE_PREFIX.f}:${padToByteLength(rawStr, TYPE_WIDTH.f)}`;
-        widthBytes = FULL_WIDTH.f;
-      }
+      rawStr = value.toString();
+      core = `${TYPE_PREFIX.n}:${padToByteLength(rawStr, TYPE_WIDTH.n)}`;
+      widthBytes = FULL_WIDTH.n;
     } else if (typeof value === 'object' && value !== null && value.__type === 'reserved') {
       rawStr = '';
       // Do not append prefix as we do not have prefix or marker for reserved bytes for easier JSON UI skipping

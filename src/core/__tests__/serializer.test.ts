@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { FIELD_MARKERS, FULL_WIDTH, PROTOCOL_HEADER, PROTOCOL_HEADER_LENGTH, reserveBytes, serialize, TYPE_PREFIX, TYPE_WIDTH } from '../serializer';
 
-const controlTypes: TKey[] = ['s', 's', 's', 's', 'b', 'b', 'i', 'b', 'b', 'r'];
+const controlTypes: TKey[] = ['n', 'n', 'n', 'n', 'b', 'b', 'n', 'n', 'b', 'b', 'r'];
 
 const PLAN_PRIMITIVES: Record<string, TKey[]> = {
-  // Note: all plans now include control props + reserved: type, width, height, x, y, visible, enabled, layer, inheritMaxSiblingWidth, inheritMaxSiblingHeight, __reserved, [custom fields...]
-  basic: ['s', ...controlTypes, 's', 'i', 'f', 'b'], // control + reserved + name, count, ratio, ok
+  // Note: all plans now include control props + reserved: type, width, height, x, y, visible, enabled, layer, alpha, inheritMaxSiblingWidth, inheritMaxSiblingHeight, __reserved, [custom fields...]
+  basic: ['s', ...controlTypes, 's', 'n', 'n', 'b'], // control + reserved + name, count, ratio, ok
   twoStrings: ['s', ...controlTypes, 's', 's'], // control + reserved + first, second
-  twoInts: ['s', ...controlTypes, 'i', 'i'], // control + reserved + a, b
+  twoNumbers: ['s', ...controlTypes, 'n', 'n'], // control + reserved + a, b
   twoBools: ['s', ...controlTypes, 'b', 'b'], // control + reserved + t, f
 };
 
@@ -19,8 +19,8 @@ function sliceFieldWithPlan(payload: string, index: number, plan: readonly TKey[
   // Calculate offset by accounting for reserved fields
   for (let i = 0; i < index; i++) {
     if (plan[i] === 'r') {
-      // Reserved field at index 10 has 277 bytes (from withControl)
-      offset += i === 10 ? 277 : 0;
+      // Reserved field at index 11 has 274 bytes (from withControl)
+      offset += i === 11 ? 274 : 0;
     } else {
       offset += FULL_WIDTH[plan[i]];
     }
@@ -29,7 +29,7 @@ function sliceFieldWithPlan(payload: string, index: number, plan: readonly TKey[
   // Calculate width for the target field
   let fieldWidth: number;
   if (plan[index] === 'r') {
-    fieldWidth = index === 10 ? 277 : 0;
+    fieldWidth = index === 11 ? 274 : 0;
   } else {
     fieldWidth = FULL_WIDTH[plan[index]];
   }
@@ -42,10 +42,10 @@ describe('core/serializer', () => {
     it('computes expected length for arbitrary object', () => {
       const obj = {
         type: 'arb', // s
-        width: '', // s (required)
-        height: '', // s (required)
-        x: '', // s (required)
-        y: '', // s (required)
+        width: 100.0, // f (required)
+        height: 100.0, // f (required)
+        x: 0.0, // f (required)
+        y: 0.0, // f (required)
         name: 'Zed', // s
         count: 42, // i
         ratio: 3.14, // f
@@ -62,10 +62,10 @@ describe('core/serializer', () => {
     it('layout props payload size matches constants', () => {
       const layout = {
         type: 'panel',
-        width: 'default',
-        height: 'default',
-        x: '0',
-        y: '0',
+        width: 100.0,
+        height: 100.0,
+        x: 0.0,
+        y: 0.0,
         inheritMaxSiblingWidth: false,
         inheritMaxSiblingHeight: true,
       };
@@ -81,10 +81,10 @@ describe('core/serializer', () => {
     it('control props payload size matches constants', () => {
       const control = {
         type: 'panel',
-        width: '',
-        height: '',
-        x: '',
-        y: '',
+        width: 100.0,
+        height: 100.0,
+        x: 0.0,
+        y: 0.0,
         visible: true,
         enabled: false,
         layer: 0,
@@ -102,10 +102,10 @@ describe('core/serializer', () => {
   it('serializes primitives with correct prefix, widths, markers and byte count', () => {
     const [result, bytes] = serialize({
       type: 'example',
-      width: '',
-      height: '',
-      x: '',
-      y: '',
+      width: 100.0,
+      height: 100.0,
+      x: 0.0,
+      y: 0.0,
       name: 'hello', // string
       count: 123, // int
       ratio: 45.67, // float
@@ -128,84 +128,84 @@ describe('core/serializer', () => {
     const f0Padded = f0.slice(2, 2 + TYPE_WIDTH.s);
     expect(f0Padded.startsWith('example')).toBe(true);
 
-    // Field 11: name (string) - now at index 11 after control props + reserved
-    const f11 = sliceFieldWithPlan(result, 11, plan);
-    expect(f11.startsWith(`${TYPE_PREFIX.s}:`)).toBe(true);
-    expect(f11.endsWith(FIELD_MARKERS[11])).toBe(true);
-    const f11Padded = f11.slice(2, 2 + TYPE_WIDTH.s);
-    expect(f11Padded.startsWith('hello')).toBe(true);
+    // Field 12: name (string) - now at index 12 after control props + reserved
+    const f12 = sliceFieldWithPlan(result, 12, plan);
+    expect(f12.startsWith(`${TYPE_PREFIX.s}:`)).toBe(true);
+    expect(f12.endsWith(FIELD_MARKERS[12])).toBe(true);
+    const f12Padded = f12.slice(2, 2 + TYPE_WIDTH.s);
+    expect(f12Padded.startsWith('hello')).toBe(true);
 
-    // Field 12: count (int)
-    const f12count = sliceFieldWithPlan(result, 12, plan);
-    expect(f12count.startsWith(`${TYPE_PREFIX.i}:`)).toBe(true);
-    expect(f12count.endsWith(FIELD_MARKERS[12])).toBe(true);
-    const f12countPadded = f12count.slice(2, 2 + TYPE_WIDTH.i);
-    expect(f12countPadded.trimEnd().startsWith('123')).toBe(true);
+    // Field 13: count (number)
+    const f13count = sliceFieldWithPlan(result, 13, plan);
+    expect(f13count.startsWith(`${TYPE_PREFIX.n}:`)).toBe(true);
+    expect(f13count.endsWith(FIELD_MARKERS[13])).toBe(true);
+    const f13countPadded = f13count.slice(2, 2 + TYPE_WIDTH.n);
+    expect(f13countPadded.trimEnd().startsWith('123')).toBe(true);
 
-    // Field 13: ratio (float)
-    const f13ratio = sliceFieldWithPlan(result, 13, plan);
-    expect(f13ratio.startsWith(`${TYPE_PREFIX.f}:`)).toBe(true);
-    expect(f13ratio.endsWith(FIELD_MARKERS[13])).toBe(true);
-    const f13ratioPadded = f13ratio.slice(2, 2 + TYPE_WIDTH.f);
-    expect(f13ratioPadded.startsWith('45.67')).toBe(true);
+    // Field 14: ratio (number)
+    const f14ratio = sliceFieldWithPlan(result, 14, plan);
+    expect(f14ratio.startsWith(`${TYPE_PREFIX.n}:`)).toBe(true);
+    expect(f14ratio.endsWith(FIELD_MARKERS[14])).toBe(true);
+    const f14ratioPadded = f14ratio.slice(2, 2 + TYPE_WIDTH.n);
+    expect(f14ratioPadded.startsWith('45.67')).toBe(true);
 
-    // Field 14: ok (bool)
-    const f14 = sliceFieldWithPlan(result, 14, plan);
-    expect(f14.startsWith(`${TYPE_PREFIX.b}:`)).toBe(true);
-    expect(f14.endsWith(FIELD_MARKERS[14])).toBe(true);
-    const f14Padded = f14.slice(2, 2 + TYPE_WIDTH.b);
-    expect(f14Padded.startsWith('true')).toBe(true);
+    // Field 15: ok (bool)
+    const f15 = sliceFieldWithPlan(result, 15, plan);
+    expect(f15.startsWith(`${TYPE_PREFIX.b}:`)).toBe(true);
+    expect(f15.endsWith(FIELD_MARKERS[15])).toBe(true);
+    const f15Padded = f15.slice(2, 2 + TYPE_WIDTH.b);
+    expect(f15Padded.startsWith('true')).toBe(true);
   });
 
   it('keeps identical values in different fields distinct via unique markers (strings)', () => {
-    const [result] = serialize({ type: 't', width: '', height: '', x: '', y: '', first: 'same', second: 'same' });
+    const [result] = serialize({ type: 't', width: 0, height: 0, x: 0, y: 0, first: 'same', second: 'same' });
     const plan = PLAN_PRIMITIVES.twoStrings;
-    // Compare fields 11 and 12 (first and second after control props + reserved)
-    const f0 = sliceFieldWithPlan(result, 11, plan);
-    const f1 = sliceFieldWithPlan(result, 12, plan);
+    // Compare fields 12 and 13 (first and second after control props + reserved)
+    const f0 = sliceFieldWithPlan(result, 12, plan);
+    const f1 = sliceFieldWithPlan(result, 13, plan);
     // Core padded value regions should be identical
     expect(f0.slice(2, 2 + TYPE_WIDTH.s)).toBe(f1.slice(2, 2 + TYPE_WIDTH.s));
     // But full fields must differ thanks to markers
     expect(f0).not.toBe(f1);
-    expect(f0.endsWith(FIELD_MARKERS[11])).toBe(true);
-    expect(f1.endsWith(FIELD_MARKERS[12])).toBe(true);
+    expect(f0.endsWith(FIELD_MARKERS[12])).toBe(true);
+    expect(f1.endsWith(FIELD_MARKERS[13])).toBe(true);
   });
 
-  it('keeps identical values in different fields distinct via unique markers (ints)', () => {
-    const [result] = serialize({ type: 't', width: '', height: '', x: '', y: '', a: 13, b: 13 });
-    const plan = PLAN_PRIMITIVES.twoInts;
-    const f0 = sliceFieldWithPlan(result, 11, plan);
-    const f1 = sliceFieldWithPlan(result, 12, plan);
-    expect(f0.slice(2, 2 + TYPE_WIDTH.i)).toBe(f1.slice(2, 2 + TYPE_WIDTH.i));
+  it('keeps identical values in different fields distinct via unique markers', () => {
+    const [result] = serialize({ type: 't', width: 0, height: 0, x: 0, y: 0, a: 13, b: 13 });
+    const plan = PLAN_PRIMITIVES.twoNumbers;
+    const f0 = sliceFieldWithPlan(result, 12, plan);
+    const f1 = sliceFieldWithPlan(result, 13, plan);
+    expect(f0.slice(2, 2 + TYPE_WIDTH.n)).toBe(f1.slice(2, 2 + TYPE_WIDTH.n));
     expect(f0).not.toBe(f1);
-    expect(f0.endsWith(FIELD_MARKERS[11])).toBe(true);
-    expect(f1.endsWith(FIELD_MARKERS[12])).toBe(true);
+    expect(f0.endsWith(FIELD_MARKERS[12])).toBe(true);
+    expect(f1.endsWith(FIELD_MARKERS[13])).toBe(true);
   });
 
   it('serializes booleans in lowercase and with correct padded length', () => {
-    const [result] = serialize({ type: 't', width: '', height: '', x: '', y: '', t: true, f: false });
+    const [result] = serialize({ type: 't', width: 0, height: 0, x: 0, y: 0, t: true, f: false });
     const plan = PLAN_PRIMITIVES.twoBools;
-    const f0 = sliceFieldWithPlan(result, 11, plan);
-    const f1 = sliceFieldWithPlan(result, 12, plan);
+    const f0 = sliceFieldWithPlan(result, 12, plan);
+    const f1 = sliceFieldWithPlan(result, 13, plan);
     expect(f0.slice(2, 2 + TYPE_WIDTH.b).startsWith('true')).toBe(true);
     expect(f1.slice(2, 2 + TYPE_WIDTH.b).startsWith('false')).toBe(true);
   });
 
   it('throws on unsupported value types', () => {
-    expect(() => serialize({ type: 't', width: '', height: '', x: '', y: '', ok: true, bad: undefined as unknown as number })).toThrow();
-    expect(() => serialize({ type: 't', width: '', height: '', x: '', y: '', obj: {} as unknown as number })).toThrow();
+    expect(() => serialize({ type: 't', width: 0, height: 0, x: 0, y: 0, ok: true, bad: undefined as unknown as number })).toThrow();
+    expect(() => serialize({ type: 't', width: 0, height: 0, x: 0, y: 0, obj: {} as unknown as number })).toThrow();
   });
 
   describe('limits', () => {
     it('string: exact fit (ASCII) and overflow truncation', () => {
       const exact = 'x'.repeat(TYPE_WIDTH.s);
-      let res = serialize({ type: 't', width: '', height: '', x: '', y: '', s: exact })[0];
+      let res = serialize({ type: 't', width: 0, height: 0, x: 0, y: 0, s: exact })[0];
       // Find the 's' field after all control properties (it will be after type + control props)
       // Just verify the string is truncated properly by checking the result contains our string
       expect(res).toContain(exact);
 
       const over = 'x'.repeat(TYPE_WIDTH.s + 8);
-      res = serialize({ type: 't', width: '', height: '', x: '', y: '', s: over })[0];
+      res = serialize({ type: 't', width: 0, height: 0, x: 0, y: 0, s: over })[0];
       // Verify truncation occurred - should contain exact but not the overflow
       expect(res).toContain(exact);
       expect(res).not.toContain(over);
@@ -215,49 +215,49 @@ describe('core/serializer', () => {
       const twoByte = 'é'; // 2 bytes in UTF-8
       const overTwoByte = twoByte.repeat(TYPE_WIDTH.s / 2 + 1);
       const expectedTwoByte = twoByte.repeat(TYPE_WIDTH.s / 2);
-      let res = serialize({ type: 't', width: '', height: '', x: '', y: '', s: overTwoByte })[0];
+      let res = serialize({ type: 't', width: 0, height: 0, x: 0, y: 0, s: overTwoByte })[0];
       // Verify multi-byte character handling
       expect(res).toContain(expectedTwoByte);
 
       const fourByte = '😀'; // surrogate pair, 4 bytes
       const overFourByte = fourByte.repeat(TYPE_WIDTH.s / 4 + 1);
       const expectedFourByte = fourByte.repeat(TYPE_WIDTH.s / 4);
-      res = serialize({ type: 't', width: '', height: '', x: '', y: '', s: overFourByte })[0];
+      res = serialize({ type: 't', width: 0, height: 0, x: 0, y: 0, s: overFourByte })[0];
       // Verify surrogate pair handling
       expect(res).toContain(expectedFourByte);
     });
 
-    it('int: exact 16-char string and overflow truncation; negative support', () => {
-      const exactInt = 1234567890123456; // 16 digits
-      let res = serialize({ type: 't', width: '', height: '', x: '', y: '', i: exactInt })[0];
-      // Verify int serialization
-      expect(res).toContain(exactInt.toString());
+    it('number: exact 24-char string and overflow truncation; negative support', () => {
+      const exactNum = 1234567890123456; // 16 digits
+      let res = serialize({ type: 't', width: 0, height: 0, x: 0, y: 0, num: exactNum })[0];
+      // Verify number serialization
+      expect(res).toContain(exactNum.toString());
 
-      const overflowInt = 12345678901234568; // 17 digits
-      res = serialize({ type: 't', width: '', height: '', x: '', y: '', i: overflowInt })[0];
-      const expectedStart = overflowInt.toString().slice(0, TYPE_WIDTH.i);
-      // Verify int truncation
+      const overflowNum = 12345678901234568; // 17 digits
+      res = serialize({ type: 't', width: 0, height: 0, x: 0, y: 0, num: overflowNum })[0];
+      const expectedStart = overflowNum.toString().slice(0, TYPE_WIDTH.n);
+      // Verify number truncation
       expect(res).toContain(expectedStart);
 
-      res = serialize({ type: 't', width: '', height: '', x: '', y: '', i: -1 })[0];
-      // Verify negative int support
+      res = serialize({ type: 't', width: 0, height: 0, x: 0, y: 0, num: -1 })[0];
+      // Verify negative number support
       expect(res).toContain('-1');
     });
 
-    it('float: padded to 24 and truncated from toString()', () => {
-      let res = serialize({ type: 't', width: '', height: '', x: '', y: '', f: 1 / 3 })[0];
+    it('number: padded to 24 and truncated from toString()', () => {
+      let res = serialize({ type: 't', width: 0, height: 0, x: 0, y: 0, num: 1 / 3 })[0];
       const val = (1 / 3).toString();
-      // Verify float serialization
+      // Verify number serialization
       expect(res).toContain(val);
 
       const big = 1e123;
-      res = serialize({ type: 't', width: '', height: '', x: '', y: '', f: big })[0];
-      // Verify big float serialization
+      res = serialize({ type: 't', width: 0, height: 0, x: 0, y: 0, num: big })[0];
+      // Verify big number serialization
       expect(res).toContain(big.toString());
     });
 
     it('bool: exact padding rules (true padded to 5, false exact 5)', () => {
-      const [res] = serialize({ type: 't', width: '', height: '', x: '', y: '', t: true, f: false });
+      const [res] = serialize({ type: 't', width: 0, height: 0, x: 0, y: 0, t: true, f: false });
       // Verify boolean serialization
       expect(res).toContain('true');
       expect(res).toContain('false');
@@ -276,14 +276,15 @@ describe('core/serializer', () => {
     it('serializes reserved bytes with correct prefix and padding', () => {
       const [result, bytes] = serialize({
         type: 'test',
-        width: '',
-        height: '',
-        x: '',
-        y: '',
+        width: 0,
+        height: 0,
+        x: 0,
+        y: 0,
         reserved: reserveBytes(20),
       });
 
       expect(result.startsWith(PROTOCOL_HEADER)).toBe(true);
+      console.log({ result, bytes });
 
       // Note: withControl adds all control fields, so we just verify the total length is correct
       // by checking that the result length equals the returned bytes
@@ -300,10 +301,10 @@ describe('core/serializer', () => {
       testSizes.forEach(size => {
         const [result, bytes] = serialize({
           type: 'test',
-          width: '',
-          height: '',
-          x: '',
-          y: '',
+          width: 0,
+          height: 0,
+          x: 0,
+          y: 0,
           reserved: reserveBytes(size),
         });
 
@@ -320,10 +321,10 @@ describe('core/serializer', () => {
     it('serializes mixed fields with reserved bytes in correct order', () => {
       const [result, bytes] = serialize({
         type: 'mixed',
-        width: '',
-        height: '',
-        x: '',
-        y: '',
+        width: 0,
+        height: 0,
+        x: 0,
+        y: 0,
         name: 'test',
         reserved1: reserveBytes(10),
         count: 42,
@@ -351,10 +352,10 @@ describe('core/serializer', () => {
     it('maintains unique markers for reserved fields', () => {
       const [result, bytes] = serialize({
         type: 'test',
-        width: '',
-        height: '',
-        x: '',
-        y: '',
+        width: 0,
+        height: 0,
+        x: 0,
+        y: 0,
         reserved1: reserveBytes(10),
         reserved2: reserveBytes(10), // Same size, should have different markers
         reserved3: reserveBytes(5),

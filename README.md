@@ -111,14 +111,13 @@ Padding ALWAYS applies only to the value region (prefix is never full). The mark
 
 | Type     | Prefix | Prefix Width | Type Width | Marker Width | Full Width (ps+s+ms) |
 |----------|--------|--------------|------------|--------------|----------------------|
-| String   | `s:`   | 2            | 32         | 1            | 35                   |
-| Int      | `i:`   | 2            | 16         | 1            | 19                   |
-| Float*   | `f:`   | 2            | 24         | 1            | 27                   |
-| Bool     | `b:`   | 2            | 5          | 1            | 8                    |
-| Reserved | `r:`   | 2            | variable   | 0            | variable             |
+| string   | `s:`   | 2            | 32         | 1            | 35                   |
+| number   | `f:`   | 2            | 24         | 1            | 27                   |
+| boolean  | `b:`   | 2            | 5          | 1            | 8                    |
+| reserved | `r:`   | 2            | variable   | 0            | variable             |
 
-Reserved type does not have marker or prefix width in the serialized data
-\* Floats currently get truncated to integers in JSON UI for unknown reasons
+reserved type does not have marker or prefix width in the serialized data
+Numbers are not being differentiated between integers and floats, if the property to use must be an integer in json ui, floor or ceil before sending to serializer
 
 ### Markers
 
@@ -134,11 +133,11 @@ import { serialize } from '@bedrock-core/ui/core/serializer';
 const [encoded, bytes] = serialize({
     type: 'example',
     message: 'hello', // string → 35
-    count: 123,       // int → 19
-    ratio: 45.67,     // float → 27
+    count: 123,       // number → 27
+    ratio: 45.67,     // number → 27
     ok: true,         // bool → 8
 });
-// Per-field widths = 35 (string) + 19 (int) + 27 (float) + 8 (bool) = 89 bytes (plus 9-byte bcui+version prefix)
+// Per-field widths = 35 (string) + 27 (number) + 27 (number) + 8 (bool) = 89 bytes (plus 9-byte bcui+version prefix)
 // NOTE: "bytes" here counts ASCII / UTF‑8 single-byte segments; multi-byte runes inside values still respect the full byte budgets via utf8Truncate.
 ```
 
@@ -228,17 +227,20 @@ Remember to skip the 9-char header first (e.g., `('%.9s' * #custom_text)` to obt
 All components inherit these base control properties, which are deserialized in this exact order after the 9-byte protocol header (`bcuiv0001`):
 
 ```text
-Field 0: type (string, 35 bytes)                    - Component type identifier
-Field 1: width (string, 35 bytes)                   - Element width
-Field 2: height (string, 35 bytes)                  - Element height
-Field 3: x (string, 35 bytes)                       - Horizontal position
-Field 4: y (string, 35 bytes)                       - Vertical position
-Field 5: visible (bool, 8 bytes)                    - Visibility state
-Field 6: enabled (bool, 8 bytes)                    - Interaction enabled state
-Field 7: layer (int, 19 bytes)                      - Z-index layering
-Field 8: inheritMaxSiblingWidth (bool, 8 bytes)     - Width inheritance flag
-Field 9: inheritMaxSiblingHeight (bool, 8 bytes)    - Height inheritance flag
-[Reserved bytes for future expansion]               - Single reserved block at end
+Field 0: type (string, 35 bytes)                  - component type identifier
+Field 1: width (number, 27 bytes)                 - element width
+Field 2: height (number, 27 bytes)                - element height
+Field 3: x (number, 27 bytes)                     - horizontal position
+Field 4: y (number, 27 bytes)                     - vertical position
+Field 5: visible (bool, 8 bytes)                  - visibility state
+Field 6: enabled (bool, 8 bytes)                  - interaction enabled state
+Field 7: layer (number, 19 bytes)                 - z-index layering
+Field 8: alpha (number, 27 bytes)                 - element transparency
+Field 9: inheritMaxSiblingWidth (bool, 8 bytes)   - width inheritance flag
+Field 10: inheritMaxSiblingHeight (bool, 8 bytes) - height inheritance flag
+
+Reserved: 512 - (protocol header width + all fields width bytes) = 274
+(up to 512 bytes total reserved block for future expansion)
 ```
 
 **Component-specific properties** are appended after the reserved block.
@@ -406,3 +408,5 @@ as that order will be the order you will have to deserialize in the JSON UI
 ```
 
 This last part was moved inside serializer so there is no need for the user to do it explicitly
+
+Important note: size_binding_x/y seems relative to parent size so making parent 10x10 will be 10 times larger the child
