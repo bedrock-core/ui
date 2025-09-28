@@ -4,7 +4,7 @@
 		// Base control, all components should extend this
 		"ui/core-ui/common/control.json", // [0,511] 512 bytes
 		"ui/core-ui/common/screen_container.json",
-		"ui/core-ui/common/router.json",
+		"ui/core-ui/common/component_router.json",
 		// -----------------------------------------------
 		// After the initial reserved bytes for the common, rest of bytes 
 		// after 512 for its own use and 

@@ -15,8 +15,7 @@
 		"controls": [
 			{
 				"container": {
-					"type": "image",
-					"texture": "textures/ui/core-ui/components/text/background",
+					"type": "panel",
 					"size": [
 						"100%",
 						"100%"
@@ -43,7 +42,7 @@
 								"factory": {
 									"name": "buttons",
 									"control_ids": {
-										"label": "@server_form.custom_label",
+										"label": "@core-ui_common.component_router",
 										"toggle": "@server_form.custom_toggle",
 										"slider": "@server_form.custom_slider",
 										"step_slider": "@server_form.custom_step_slider",

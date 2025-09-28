@@ -4,7 +4,7 @@
 	// we can pass data
 	"namespace": "core-ui_common",
 	// Components must be inside a panel with size 1,1 to be properly scalable
-	"router": {
+	"component_router": {
 		"type": "panel",
 		// Note: from size_binding_x/y seems relative to parent size so making parent 10x10 will be 10 times larger the child
 		"size": [
