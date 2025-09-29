@@ -13,19 +13,20 @@ export { Image, type ImageProps } from './Image';
 export interface LabelProps { label: string }
 
 export interface ControlProps {
-  visible?: boolean;
-  enabled?: boolean;
-  layer?: number;
-  alpha?: number;
-
   // All positioning and sizing values are numbers, will not support string types like "100px", "100%", "100%c"... too much issues in json ui
   // All mandatory as we are going to go with fixed absolute sizing and positioning
   width: number;
   height: number;
   x: number;
   y: number;
-  inheritMaxSiblingWidth?: boolean;
-  inheritMaxSiblingHeight?: boolean;
+  visible?: boolean;
+  enabled?: boolean;
+  // Not working currently
+  // layer?: number;
+  // alpha?: number;
+  // Makes no sense until we have flexbox or similar layouting
+  // inheritMaxSiblingWidth?: boolean;
+  // inheritMaxSiblingHeight?: boolean;
 
   /* @internal */
   __reserved?: ReservedBytes;

@@ -331,6 +331,7 @@ Place tests under `src/**/__tests__/**` or `*.test.ts` (excluded from build outp
     - Base theming for the components inspired by Ore UI
     - Possibility to make custom styles by props
     - Automatic layering following DOM tree order
+    - Text styles, convert to props the color codes and symbols (bold, underline...)
 - More possible plans
   - Register your own custom components
   - Compound components (components made by primitive componentes (ex: tabbar, made by 1 panel and x buttons and styling))
@@ -406,4 +407,7 @@ as that order will be the order you will have to deserialize in the JSON UI
 This last part was moved inside serializer so there is no need for the user to do it explicitly
 
 Important note: size_binding_x/y seems relative to parent size so making parent 10x10 will be 10 times larger the child
+
 for strings use serializeString the default maxBytes is 32
+Simplify back SerializableString into normal string with a maxLength of 32 validation we will not add support for larger strings
+prefer the use of translations
