@@ -1,35 +1,12 @@
-import { Component, Text } from '@bedrock-core/ui';
+import { Component, Panel } from '@bedrock-core/ui';
 
 export function ExampleComponent(): Component {
-  return Text({
-    width: 30,
-    height: 50,
-    x: 20,
+  return Panel({
+    width: 100,
+    height: 250,
+    x: 10,
     y: 10,
     layer: 100,
-    value: 'Player Settings',
+    children: [],
   });
-
-  // return Panel({
-  //   height: '500',
-  //   width: '2000',
-  //   x: '0',
-  //   y: '0',
-  //   children: [
-  //     Text({
-  //       height: '40',
-  //       width: '100',
-  //       x: '100',
-  //       y: '40',
-  //       value: 'Player Settings',
-  //     }),
-  //     Text({
-  //       height: '40',
-  //       width: '100',
-  //       x: '100',
-  //       y: '90',
-  //       value: 'Player Settings 2',
-  //     }),
-  //   ],
-  // });
 }

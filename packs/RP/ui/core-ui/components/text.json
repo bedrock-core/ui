@@ -1,8 +1,26 @@
 {
 	"namespace": "core-ui_components",
 	// Components must be inside a panel with size 1,1 to be properly scalable
-	"text@core-ui_properties.control": {
-		"type": "image",
-		"texture": "textures/ui/core-ui/components/text/background"
+	"text": {
+		"type": "label",
+		"text": "#local_text",
+		"layer": 110,
+		"size": [
+			100,
+			20
+		],
+		"color": [
+			1,
+			1,
+			1
+		],
+		"bindings": [
+			{
+				"binding_type": "view",
+				"source_control_name": "component_router",
+				"source_property_name": "#custom_text",
+				"target_property_name": "#local_text"
+			}
+		]
 	}
 }
