@@ -101,23 +101,18 @@ Payload always starts with a 9-character header: `bcui` + `vXXXX` (e.g., `bcuiv0
 
 Each field is composed of three conceptual parts concatenated in this order:
 
-1. Type prefix (2 bytes) — `s:` | `i:` | `f:` | `b:`
-2. Core full value region (fixed UTF‑8 byte length; semicolon `;` full / truncated)
+1. Type prefix (2 bytes)
+2. Value (padded with semicolons `;` until defined byte length)
 3. Unique 1‑byte field marker (disambiguates otherwise identical full regions during JSON UI subtraction)
-
-Padding ALWAYS applies only to the value region (prefix is never full). The marker is never removed until after a field is fully sliced out.
 
 ### Field Widths (bytes)
 
-| Type     | Prefix | Prefix Width | Type Width | Marker Width | Full Width (ps+s+ms) |
-|----------|--------|--------------|------------|--------------|----------------------|
-| string   | `s:`   | 2            | 32         | 1            | 35                   |
-| number   | `f:`   | 2            | 24         | 1            | 27                   |
-| boolean  | `b:`   | 2            | 5          | 1            | 8                    |
-| reserved | `r:`   | 2            | variable   | 0            | variable             |
-
-reserved type does not have marker or prefix width in the serialized data
-Numbers are not being differentiated between integers and floats, if the property to use must be an integer in json ui, floor or ceil before sending to serializer
+| Type     | Prefix | Prefix Width | Type Width | Marker Width | Full Width (ps+s+ms) | Notes |
+|----------|--------|--------------|------------|--------------|----------------------|-------|
+| number   | `f:`   | 2            | 24         | 1            | 27                   | Numbers are not being differentiated between integers and floats, if the property to use must be an integer in json ui, floor or ceil before sending to serializer |
+| boolean  | `b:`   | 2            | 5          | 1            | 8                    | |
+| String   | `s:`   | 2            | maxBytes   | 1            | maxBytes             | Use serializeString(value:string, maxBytes?: number) Default maxBytes value is 32 |
+| Reserved | `r:`   | 0            | variable   | 0            | variable             | Reserved type does not have marker or prefix width in the serialized data |
 
 ### Markers
 
@@ -315,7 +310,7 @@ Place tests under `src/**/__tests__/**` or `*.test.ts` (excluded from build outp
 - Beta 0.2.0
   - Navigation
     - Ability to have multiple non interactable "Screens" and move between them
-      - No params
+      - Params (?)
       - navigation.exit(): void; (closes all ui's)
       - navigation.canGoBack(): boolean;
       - navigation.goBack(): void; (throws)
@@ -335,6 +330,7 @@ Place tests under `src/**/__tests__/**` or `*.test.ts` (excluded from build outp
   - Theming
     - Base theming for the components inspired by Ore UI
     - Possibility to make custom styles by props
+    - Automatic layering following DOM tree order
 - More possible plans
   - Register your own custom components
   - Compound components (components made by primitive componentes (ex: tabbar, made by 1 panel and x buttons and styling))
@@ -410,3 +406,4 @@ as that order will be the order you will have to deserialize in the JSON UI
 This last part was moved inside serializer so there is no need for the user to do it explicitly
 
 Important note: size_binding_x/y seems relative to parent size so making parent 10x10 will be 10 times larger the child
+for strings use serializeString the default maxBytes is 32

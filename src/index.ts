@@ -5,6 +5,7 @@ export type * from './types';
 import type { Component } from './types/component';
 import { Player } from '@minecraft/server';
 import { FormRejectError, ModalFormData } from '@minecraft/server-ui';
+import { PROTOCOL_HEADER } from './core/serializer';
 
 /**
  * Present a component to a player using the @bedrock-core/ui system.
@@ -23,6 +24,8 @@ import { FormRejectError, ModalFormData } from '@minecraft/server-ui';
  */
 export async function present(player: Player, component: Component): Promise<void> {
   const form = new ModalFormData();
+
+  form.title(PROTOCOL_HEADER);
 
   component.serialize(form);
 

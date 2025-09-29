@@ -7,6 +7,8 @@
  * This is because serialization is order-dependent and keys are not transmitted.
  */
 export interface SerializableComponent {
+
+  /** Not the JSON UI type, but our identifier for the component type */
   type: SerializableString;
   [key: string]: SerializablePrimitive;
 }

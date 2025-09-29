@@ -26,7 +26,7 @@ export function Text({ value, textStyle, ...rest }: TextProps): Component {
     serialize: (form: CoreUIFormData): void => {
       const serializable: SerializableComponent = {
         // Core identity
-        type: serializeString('label'),
+        type: serializeString('text'),
         // Properties
         colorR: textStyle?.color?.[0] ?? 1,
         colorG: textStyle?.color?.[1] ?? 1,
@@ -48,7 +48,6 @@ export function Text({ value, textStyle, ...rest }: TextProps): Component {
 
       Logger.info(`Serializing text: bytes=${bytes}, result=${result}`);
 
-      form.title(result.slice(114));
       form.label(result);
     },
   };
