@@ -284,7 +284,6 @@ describe('core/serializer', () => {
       });
 
       expect(result.startsWith(PROTOCOL_HEADER)).toBe(true);
-      console.log({ result, bytes });
 
       // Note: withControl adds all control fields, so we just verify the total length is correct
       // by checking that the result length equals the returned bytes

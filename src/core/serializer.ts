@@ -26,6 +26,7 @@ export const TYPE_WIDTH = {
   r: 0, // variable
 };
 
+// TYPE_PREFIX + ':'
 export const PREFIX_WIDTH = {
   s: 2,
   n: 2,
@@ -190,9 +191,8 @@ export function serializeString(value: string, maxBytes?: number): SerializableS
 
 /**
  * Serialize component to a string payload.
- * The returned payload is prefixed with `bcui` + VERSION (e.g., `bcuiv0001`).
  *
- * @param component - The component data to serialize (flat object with primitives)
+ * @param component - The component data to serialize
  * @returns [serialized component string, total byte length]
  */
 export function serialize(props: SerializableComponent): [string, number] {

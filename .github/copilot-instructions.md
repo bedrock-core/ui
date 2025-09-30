@@ -6,14 +6,15 @@ Essential knowledge for AI agents working on this Minecraft Bedrock UI serializa
 
 This library serializes declarative component trees into compact strings that get injected into `@minecraft/server-ui` form titles. A companion JSON UI resource pack decodes these payloads to render rich UIs beyond native form limitations.
 
-**Critical flow:** component factory → `serialize(form)` → `present(form, player, component)` → JSON UI decodes by fixed byte offsets.
+**Critical flow:** component factory → `serialize(form)` → `present(player, component)` → JSON UI decodes by fixed byte offsets.
 
 ### Key Files & Responsibilities
 
 - **`src/core/serializer.ts`**: UTF-8 fixed-width protocol implementation with `serialize()` function
 - **`src/core/components/**/*.ts`**: Pure component factories returning objects with `serialize` method
 - **`src/types/component.ts`**: Core `Component` interface with `serialize(form: CoreUIFormData): void`
-- **`src/index.ts`**: Public API re-exports and Orchestrates `component.serialize(form)` then `form.show(player)`
+- **`src/index.ts`**: Public API re-exports and `present(player, component)` orchestration
+- **`src/core/components/index.ts`**: `withControl()` function enforcing canonical field ordering
 
 ### Serialization Protocol (Never Break This)
 
@@ -24,23 +25,23 @@ Payload: bcuiv0001 + field1 + field2 + ...
 
 **Field Structure:** `[prefix][padded_value][marker]`
 
-- Type prefixes: `s:` (string) | `i:` (int) | `f:` (float) | `b:` (bool) | `r:` (reserved)
+- Type prefixes: `s:` (string) | `n:` (number) | `b:` (bool) | `r:` (reserved)
 - Padding: only `;` character for UTF-8 safe truncation
 - Markers: unique 1-char from `0-9A-Za-z-_` to prevent JSON UI subtraction conflicts
 
 **Fixed Widths (never change):**
 
 - String: 32 bytes → 35 total (2 prefix + 32 + 1 marker)  
-- Int: 16 bytes → 19 total
-- Float: 24 bytes → 27 total  
+- Number: 24 bytes → 27 total
 - Bool: 5 bytes → 8 total
+- Reserved: Variable bytes (no prefix/marker for easier JSON UI skipping)
 
 **Critical Constants in `serializer.ts`:**
 
 ```ts
 const VERSION = 'v0001';           // Only update with migrations
 const PAD_CHAR = ';';              // Never change
-const TYPE_WIDTH = { s: 32, i: 16, f: 24, b: 5 };
+const TYPE_WIDTH = { s: 32, n: 24, b: 5, r: 0 };
 ```
 
 ### Component Pattern (Follow Exactly)
@@ -48,11 +49,14 @@ const TYPE_WIDTH = { s: 32, i: 16, f: 24, b: 5 };
 Components are pure factories returning objects with a `serialize` method:
 
 ```ts
-export function Panel(props: PanelProps): Component {
+export function Panel({ children, ...rest }: PanelProps): Component {
   return {
     serialize: (form: CoreUIFormData): void => {
       // 1. Build serializable object (primitives only)
-      const serializable = { type: 'panel', ...primitiveProps };
+      const serializable: SerializableComponent = {
+        type: serializeString('panel'),
+        ...rest,
+      };
       
       // 2. Serialize to string payload  
       const [result, bytes] = serialize(serializable);
@@ -73,7 +77,8 @@ export function Panel(props: PanelProps): Component {
 - Call `form.label()`, `form.toggle()`, etc. to register UI elements
 - Use `serialize()` helper from `core/serializer.ts` for payload encoding
 - Handle component children by calling their `serialize` methods
-- **Field order is critical**: After type, control fields must be: width, height, x, y, visible, enabled, layer, inheritMaxSiblingWidth, inheritMaxSiblingHeight
+- **Field order is critical**: After type, control fields must be: width, height, x, y, visible, enabled, layer, alpha, inheritMaxSiblingWidth, inheritMaxSiblingHeight, __reserved
+- **String values must use `serializeString()`** - native strings throw errors
 
 ### Development Workflow
 
@@ -105,8 +110,13 @@ function sliceFieldWithPlan(payload: string, index: number, plan: TKey[]): strin
 ### Component Conventions  
 
 - Props are camelCase; emitted JSON UI keys are snake_case
-- Dimension props accept `number | string`, fallback to `'default'`
+- Dimension props accept `number` only (no strings like "100px" or "100%")
 - Boolean values serialize as lowercase `'true'`/`'false'`
-- Use `Number.isInteger()` to choose `i:` vs `f:` prefixes
+- All components extend `ControlProps` requiring width, height, x, y positioning
+- Use `reserveBytes(n)` for future protocol expansion space
+
+### Critical `withControl()` Function
+
+The `withControl()` function in `src/core/components/index.ts` enforces canonical field ordering and applies defaults. It reserves 274 bytes for future expansion and ensures all components have exactly 512 total bytes. **Never modify this ordering without updating the protocol version.**
 
 Start exploring: `core/serializer.ts` for protocol details, `core/components/Panel.ts` for working patterns.

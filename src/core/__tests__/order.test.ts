@@ -125,7 +125,6 @@ describe('Serialization field order', () => {
 
     // Field 7: layer default (0)
     const f7 = slice(payload, 7);
-    console.log({ f7 });
     expect(f7.startsWith(`${TYPE_PREFIX.n}:`)).toBe(true);
     expect(corePadded(f7, 'n').startsWith('0')).toBe(true);
 
@@ -158,6 +157,7 @@ describe('Serialization field order', () => {
     // serialization ordering logic (from helper composition) dominates.
     Panel({
       children: [],
+      // @ts-expect-error temporal disabled, still in the props
       layer: 3,
       y: 99.75,
       width: 300.25,

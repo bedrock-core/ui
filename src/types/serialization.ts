@@ -13,7 +13,6 @@ export interface SerializableComponent {
   [key: string]: SerializablePrimitive;
 }
 
-// New reserved primitive type
 export type ReservedBytes = {
 
   /* @internal */

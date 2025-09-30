@@ -14,9 +14,9 @@ import { PROTOCOL_HEADER } from './core/serializer';
  * 1) Creates a ModalFormData instance.
  * 2) Invokes component.serialize(form). The component is responsible for:
  *    - registering interactive controls via form.* APIs, and
- *    - setting the component title/label with the encoded payload (prefix `bcui` + VERSION).
+ *    - setting the component label with the encoded payload
  * 3) Shows the form to the player.
- * 4) The JSON UI resource pack decodes the payload and renders the UI.º
+ * 4) The JSON UI resource pack decodes the payload and renders the UI.
  *
  * @param player - The player to show the UI to
  * @param component - Component to present
