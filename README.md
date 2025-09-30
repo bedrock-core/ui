@@ -6,8 +6,6 @@
 >
 > This is not ready for production use.
 
-TODO TAGS
-
 Custom UI system for Minecraft Bedrock that serializes declarative component trees into compact strings. A companion JSON UI resource pack decodes these payloads to render rich UIs beyond native `@minecraft/server-ui` limitations.
 
 ![Logo](./assets/preview.png)
