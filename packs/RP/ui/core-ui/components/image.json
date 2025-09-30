@@ -1,6 +1,9 @@
 {
-	"namespace": "core-ui_common",
-	"control": {
+	"namespace": "core-ui_components",
+	// idk how to make it work "extending" control.json, so copy/paste it here for now
+	"image": {
+		"type": "image",
+		"texture": "#texture",
 		"size": [
 			0,
 			0
@@ -129,6 +132,11 @@
 			{
 				"binding_type": "view", // (full_width - marker_width) - prefix_width (s:) - padding_char (;)
 				"source_property_name": "(('%.7s' * #raw_visible) - ('%.2s' * #raw_visible) - ';')",
+				"target_property_name": "#pre_visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#pre_visible and (#type = 'image'))",
 				"target_property_name": "#visible"
 			},
 			{
@@ -147,81 +155,32 @@
 				"source_property_name": "(('%.7s' * #raw_enabled) - ('%.2s' * #raw_enabled) - ';')",
 				"target_property_name": "#enabled"
 			},
-			// TODO Find out why these do not work
-			// {
-			// 	/* --- layer (int) - field 7 --- */
-			// 	"binding_type": "view", // full_width
-			// 	"source_property_name": "('%.27s' * #rem_after_enabled)",
-			// 	"target_property_name": "#raw_layer"
-			// },
-			// {
-			// 	"binding_type": "view",
-			// 	"source_property_name": "(#rem_after_enabled - #raw_layer)",
-			// 	"target_property_name": "#rem_after_layer"
-			// },
-			// {
-			// 	"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-			// 	"source_property_name": "((('%.26s' * #raw_layer) - ('%.2s' * #raw_layer) - ';') * $normalize)",
-			// 	"target_property_name": "#layer"
-			// },
-			// {
-			// 	/* --- alpha (float) - field 8 --- */
-			// 	"binding_type": "view", // full_width
-			// 	"source_property_name": "('%.27s' * #rem_after_layer)",
-			// 	"target_property_name": "#raw_alpha"
-			// },
-			// {
-			// 	"binding_type": "view",
-			// 	"source_property_name": "(#rem_after_layer - #raw_alpha)",
-			// 	"target_property_name": "#rem_after_alpha"
-			// },
-			// {
-			// 	"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-			// 	"source_property_name": "((('%.26s' * #raw_alpha) - ('%.2s' * #raw_alpha) - ';') * $normalize)",
-			// 	"target_property_name": "#alpha"
-			// }
-			// {
-			// 	/* --- inherit_max_sibling_width (boolean) - field 8 --- */
-			// 	"binding_type": "view", // full_width
-			// 	"source_property_name": "('%.8s' * #rem_after_layer)",
-			// 	"target_property_name": "#raw_inherit_max_sibling_width"
-			// },
-			// {
-			// 	"binding_type": "view",
-			// 	"source_property_name": "(#rem_after_layer - #raw_inherit_max_sibling_width)",
-			// 	"target_property_name": "#rem_after_inherit_max_sibling_width"
-			// },
-			// {
-			// 	"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-			// 	"source_property_name": "(('%.7s' * #raw_inherit_max_sibling_width) - ('%.2s' * #raw_inherit_max_sibling_width) - ';')",
-			// 	"target_property_name": "#inherit_max_sibling_width"
-			// },
-			// {
-			// 	/* --- inherit_max_sibling_height (boolean) - field 9 --- */
-			// 	"binding_type": "view", // full_width
-			// 	"source_property_name": "('%.8s' * #rem_after_inherit_max_sibling_width)",
-			// 	"target_property_name": "#raw_inherit_max_sibling_height"
-			// },
-			// {
-			// 	"binding_type": "view",
-			// 	"source_property_name": "(#rem_after_inherit_max_sibling_width - #raw_inherit_max_sibling_height)",
-			// 	"target_property_name": "#rem_after_inherit_max_sibling_height"
-			// },
-			// {
-			// 	"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-			// 	"source_property_name": "(('%.7s' * #raw_inherit_max_sibling_height) - ('%.2s' * #raw_inherit_max_sibling_height) - ';')",
-			// 	"target_property_name": "#inherit_max_sibling_height"
-			// },
 			{
 				/* --- skip __reserved (274) + commented (70) --- */
 				"binding_type": "view", // reserved full_width
-				"source_property_name": "('%.344' * #rem_after_inherit_max_sibling_height)",
+				"source_property_name": "('%.344s' * #rem_after_enabled)",
 				"target_property_name": "#skip_reserved_control"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(#rem_after_inherit_max_sibling_height - #skip_reserved_control)",
+				"source_property_name": "(#rem_after_enabled - #skip_reserved_control)",
 				"target_property_name": "#serialized_data"
+			},
+			{
+				/* --- texture (string) --- */
+				"binding_type": "view", // full_width
+				"source_property_name": "('%.67s' * #serialized_data)",
+				"target_property_name": "#raw_texture"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#serialized_data - #raw_texture)",
+				"target_property_name": "#rem_after_texture"
+			},
+			{
+				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
+				"source_property_name": "(('%.66s' * #raw_texture) - ('%.2s' * #raw_texture) - ';')",
+				"target_property_name": "#texture"
 			}
 		]
 	}

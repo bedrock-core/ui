@@ -8,7 +8,6 @@
 			0,
 			0
 		],
-		"layer": 100,
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
 		"use_anchored_offset": true,
@@ -20,7 +19,7 @@
 		},
 		"visible": "#visible",
 		"enabled": "#enabled", // TODO needs testing
-		// normalizes the position values scale to be the same as size
+		"localize": true,
 		"$normalize": 1.0,
 		"bindings": [
 			{
@@ -156,72 +155,6 @@
 				"source_property_name": "(('%.7s' * #raw_enabled) - ('%.2s' * #raw_enabled) - ';')",
 				"target_property_name": "#enabled"
 			},
-			// TODO Find out why these do not work
-			// {
-			// 	/* --- layer (int) - field 7 --- */
-			// 	"binding_type": "view", // full_width
-			// 	"source_property_name": "('%.27s' * #rem_after_enabled)",
-			// 	"target_property_name": "#raw_layer"
-			// },
-			// {
-			// 	"binding_type": "view",
-			// 	"source_property_name": "(#rem_after_enabled - #raw_layer)",
-			// 	"target_property_name": "#rem_after_layer"
-			// },
-			// {
-			// 	"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-			// 	"source_property_name": "((('%.26s' * #raw_layer) - ('%.2s' * #raw_layer) - ';') / 1)",
-			// 	"target_property_name": "#layer"
-			// }
-			// // {
-			// 	/* --- alpha (float) - field 8 --- */
-			// 	"binding_type": "view", // full_width
-			// 	"source_property_name": "('%.27s' * #rem_after_layer)",
-			// 	"target_property_name": "#raw_alpha"
-			// },
-			// {
-			// 	"binding_type": "view",
-			// 	"source_property_name": "(#rem_after_layer - #raw_alpha)",
-			// 	"target_property_name": "#rem_after_alpha"
-			// },
-			// {
-			// 	"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-			// 	"source_property_name": "((('%.26s' * #raw_alpha) - ('%.2s' * #raw_alpha) - ';') / 1)",
-			// 	"target_property_name": "#alpha"
-			// }
-			// /* --- inherit_max_sibling_width (boolean) - field 8 --- */
-			// {
-			// 	"binding_type": "view", // full_width
-			// 	"source_property_name": "('%.8s' * #rem_after_layer)",
-			// 	"target_property_name": "#raw_inherit_max_sibling_width"
-			// },
-			// {
-			// 	"binding_type": "view",
-			// 	"source_property_name": "(#rem_after_layer - #raw_inherit_max_sibling_width)",
-			// 	"target_property_name": "#rem_after_inherit_max_sibling_width"
-			// },
-			// {
-			// 	"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-			// 	"source_property_name": "(('%.7s' * #raw_inherit_max_sibling_width) - ('%.2s' * #raw_inherit_max_sibling_width) - ';')",
-			// 	"target_property_name": "#inherit_max_sibling_width"
-			// },
-			// /* --- inherit_max_sibling_height (boolean) - field 9 --- */
-			// {
-			// 	"binding_type": "view", // full_width
-			// 	"source_property_name": "('%.8s' * #rem_after_inherit_max_sibling_width)",
-			// 	"target_property_name": "#raw_inherit_max_sibling_height"
-			// },
-			// {
-			// 	"binding_type": "view",
-			// 	"source_property_name": "(#rem_after_inherit_max_sibling_width - #raw_inherit_max_sibling_height)",
-			// 	"target_property_name": "#rem_after_inherit_max_sibling_height"
-			// },
-			// {
-			// 	"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-			// 	"source_property_name": "(('%.7s' * #raw_inherit_max_sibling_height) - ('%.2s' * #raw_inherit_max_sibling_height) - ';')",
-			// 	"target_property_name": "#inherit_max_sibling_height"
-			// },
-			// TODO when fix top change rem in skip
 			{
 				/* --- skip __reserved (274) + commented (70) --- */
 				"binding_type": "view", // reserved full_width
@@ -234,206 +167,14 @@
 				"target_property_name": "#serialized_data"
 			},
 			{
-				/* --- colorR (number) - text field 0 --- */
+				/* --- text (string) --- */
 				"binding_type": "view", // full_width
-				"source_property_name": "('%.27s' * #serialized_data)",
-				"target_property_name": "#raw_colorR"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#serialized_data - #raw_colorR)",
-				"target_property_name": "#rem_after_colorR"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.26s' * #raw_colorR) - ('%.2s' * #raw_colorR) - ';')",
-				"target_property_name": "#colorR"
-			},
-			{
-				/* --- colorG (number) - text field 1 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.27s' * #rem_after_colorR)",
-				"target_property_name": "#raw_colorG"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_colorR - #raw_colorG)",
-				"target_property_name": "#rem_after_colorG"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.26s' * #raw_colorG) - ('%.2s' * #raw_colorG) - ';')",
-				"target_property_name": "#colorG"
-			},
-			{
-				/* --- colorB (number) - text field 2 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.27s' * #rem_after_colorG)",
-				"target_property_name": "#raw_colorB"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_colorG - #raw_colorB)",
-				"target_property_name": "#rem_after_colorB"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.26s' * #raw_colorB) - ('%.2s' * #raw_colorB) - ';')",
-				"target_property_name": "#colorB"
-			},
-			{
-				/* --- lockedColorR (number) - text field 3 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.27s' * #rem_after_colorB)",
-				"target_property_name": "#raw_lockedColorR"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_colorB - #raw_lockedColorR)",
-				"target_property_name": "#rem_after_lockedColorR"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.26s' * #raw_lockedColorR) - ('%.2s' * #raw_lockedColorR) - ';')",
-				"target_property_name": "#lockedColorR"
-			},
-			{
-				/* --- lockedColorG (number) - text field 4 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.27s' * #rem_after_lockedColorR)",
-				"target_property_name": "#raw_lockedColorG"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_lockedColorR - #raw_lockedColorG)",
-				"target_property_name": "#rem_after_lockedColorG"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.26s' * #raw_lockedColorG) - ('%.2s' * #raw_lockedColorG) - ';')",
-				"target_property_name": "#lockedColorG"
-			},
-			{
-				/* --- lockedColorB (number) - text field 5 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.27s' * #rem_after_lockedColorG)",
-				"target_property_name": "#raw_lockedColorB"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_lockedColorG - #raw_lockedColorB)",
-				"target_property_name": "#rem_after_lockedColorB"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.26s' * #raw_lockedColorB) - ('%.2s' * #raw_lockedColorB) - ';')",
-				"target_property_name": "#lockedColorB"
-			},
-			{
-				/* --- shadow (boolean) - text field 6 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.8s' * #rem_after_lockedColorB)",
-				"target_property_name": "#raw_shadow"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_lockedColorB - #raw_shadow)",
-				"target_property_name": "#rem_after_shadow"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.7s' * #raw_shadow) - ('%.2s' * #raw_shadow) - ';')",
-				"target_property_name": "#shadow"
-			},
-			{
-				/* --- fontSize (string) - text field 7 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.35s' * #rem_after_shadow)",
-				"target_property_name": "#raw_fontSize"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_shadow - #raw_fontSize)",
-				"target_property_name": "#rem_after_fontSize"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.34s' * #raw_fontSize) - ('%.2s' * #raw_fontSize) - ';')",
-				"target_property_name": "#fontSize"
-			},
-			{
-				/* --- fontScaleFactor (number) - text field 8 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.27s' * #rem_after_fontSize)",
-				"target_property_name": "#raw_fontScaleFactor"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_fontSize - #raw_fontScaleFactor)",
-				"target_property_name": "#rem_after_fontScaleFactor"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.26s' * #raw_fontScaleFactor) - ('%.2s' * #raw_fontScaleFactor) - ';')",
-				"target_property_name": "#fontScaleFactor"
-			},
-			{
-				/* --- fontType (string) - text field 9 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.35s' * #rem_after_fontScaleFactor)",
-				"target_property_name": "#raw_fontType"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_fontScaleFactor - #raw_fontType)",
-				"target_property_name": "#rem_after_fontType"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.34s' * #raw_fontType) - ('%.2s' * #raw_fontType) - ';')",
-				"target_property_name": "#fontType"
-			},
-			{
-				/* --- localize (boolean) - text field 10 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.8s' * #rem_after_fontType)",
-				"target_property_name": "#raw_localize"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_fontType - #raw_localize)",
-				"target_property_name": "#rem_after_localize"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.7s' * #raw_localize) - ('%.2s' * #raw_localize) - ';')",
-				"target_property_name": "#localize"
-			},
-			{
-				/* --- textAlignment (string) - text field 11 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.35s' * #rem_after_localize)",
-				"target_property_name": "#raw_textAlignment"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_localize - #raw_textAlignment)",
-				"target_property_name": "#rem_after_textAlignment"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.34s' * #raw_textAlignment) - ('%.2s' * #raw_textAlignment) - ';')",
-				"target_property_name": "#textAlignment"
-			},
-			{
-				/* --- text (string) - text field 12 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.35s' * #rem_after_textAlignment)",
+				"source_property_name": "('%.35s' * #serialized_data)",
 				"target_property_name": "#raw_text"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(#rem_after_textAlignment - #raw_text)",
+				"source_property_name": "(#serialized_data - #raw_text)",
 				"target_property_name": "#rem_after_text"
 			},
 			{

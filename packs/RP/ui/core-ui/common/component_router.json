@@ -17,6 +17,9 @@
 			},
 			{
 				"text@core-ui_components.text": {}
+			},
+			{
+				"image@core-ui_components.image": {}
 			}
 		]
 	}
