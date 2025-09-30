@@ -11,39 +11,20 @@ export interface ImageProps extends ControlProps {
    * Max 64 characters
    */
   texture?: string;
-  uv?: [number, number];
-  uvSize?: [number, number];
-  ninesliceSize?: number | [number, number, number, number];
-  tiled?: boolean;
-  keepRatio?: boolean;
-  bilinear?: boolean;
+  disabled?: boolean;
 }
 
-export function Image({ texture, uv, uvSize, ninesliceSize, tiled, keepRatio, bilinear, ...rest }: ImageProps): Component {
+export function Image({ texture, disabled, ...rest }: ImageProps): Component {
   return {
     serialize: (form: CoreUIFormData): void => {
       if (texture?.length && texture.length > 64) {
         throw new SerializationError(`Image texture path exceeds 64 characters. Length: ${texture.length}. Path: "${texture}"`);
       }
 
-      const nineSliced = Array.isArray(ninesliceSize)
-        ? ninesliceSize
-        : [ninesliceSize ?? 0, ninesliceSize ?? 0, ninesliceSize ?? 0, ninesliceSize ?? 0];
-
       const serializable: SerializableComponent = {
         type: serializeString('image'),
         texture: serializeString(texture ?? '', 64),
-        uvX: uv?.[0] ?? 0,
-        uvY: uv?.[1] ?? 0,
-        uvSizeX: uvSize?.[0] ?? 1,
-        uvSizeY: uvSize?.[1] ?? 1,
-        ninesliceSize0: nineSliced[0],
-        ninesliceSize1: nineSliced[1],
-        ninesliceSize2: nineSliced[2],
-        ninesliceSize3: nineSliced[3],
-        tiled: tiled ?? false,
-        keepRatio: keepRatio ?? false,
-        bilinear: bilinear ?? false,
+        grayscale: disabled ?? false,
         ...rest,
       };
 

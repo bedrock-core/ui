@@ -111,7 +111,7 @@ Each field is composed of three conceptual parts concatenated in this order:
 |----------|--------|--------------|------------|--------------|----------------------|-------|
 | number   | `f:`   | 2            | 24         | 1            | 27                   | Numbers are not being differentiated between integers and floats, if the property to use must be an integer in json ui, floor or ceil before sending to serializer |
 | boolean  | `b:`   | 2            | 5          | 1            | 8                    | |
-| String   | `s:`   | 2            | maxBytes   | 1            | maxBytes             | Use serializeString(value:string, maxBytes?: number) Default maxBytes value is 32 |
+| String   | `s:`   | 2            | maxBytes   | 1            | maxBytes + 3         | Use serializeString(value:string, maxBytes?: number) Default maxBytes value is 32 |
 | Reserved | `r:`   | 0            | variable   | 0            | variable             | Reserved type does not have marker or prefix width in the serialized data |
 
 ### Markers

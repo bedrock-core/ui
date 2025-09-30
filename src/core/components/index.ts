@@ -85,6 +85,7 @@ export function withControl(props: SerializableComponent): Required<Serializable
     y,
     visible: visible ?? true,
     enabled: enabled ?? true,
+    // even if not working we keep them for filling the byte space
     layer: layer ? Math.floor(layer as number) : 0,
     alpha: alpha ?? 1.0,
     inheritMaxSiblingWidth: inheritMaxSiblingWidth ?? false,
