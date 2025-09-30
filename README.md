@@ -1,85 +1,138 @@
-# @bedrock-core/
+# @bedrock-core/ui
+
+![Logo](./assets/logo.svg)
+
+> ⚠️ Beta Status: Active development. Breaking changes may occur until 1.0.0. Pin exact versions for stability.
+>
+> This is not ready for production use.
+
+TODO TAGS
+
+Custom UI system for Minecraft Bedrock that serializes declarative component trees into compact strings. A companion JSON UI resource pack decodes these payloads to render rich UIs beyond native `@minecraft/server-ui` limitations.
+
+![Logo](./assets/preview.png)
+
+---
 
 ## Why?
 
-f*** JSON UI, and I refuse to release an addon without a custom UI knowing I'm able. So with this I just will need to make each component I need once and forget and not re-learn how this f*ing mess of a system.
+Working directly with JSON UI involves complex bindings, variables, and formatting challenges. This library abstracts away those complexities, letting you focus on building UIs declaratively.
 
-Even if you know how JSON UI works, working around the bindings, variables, formatting and ton of limitiations it has is a pain.
-With this you just make the UI and that is it.
-
-> ⚠️ Alpha Status: Active alpha. Breaking changes may ship without deprecation until 1.0.0. Pin exact versions for stability.
----
-> This is not ready for production use in complex packs or Marketplace work.
-
-Custom UI system for Minecraft Bedrock that serializes a virtual component tree into server form text fields. A companion JSON UI resource pack decodes the payload and renders layouts more advanced than native `@minecraft/server-ui` allows.
-
----
-
-## ✨ Core Idea (Executive Summary)
+## ✨ Core Idea
 
 Native forms expose only a handful of text slots (`title_text`, `form_button_text`, `custom_text`, etc.). These strings can be read via JSON UI binding expressions. We exploit this by:
 
-1. Building a declarative component tree (`Panel`, `Text`, `Button`, etc.)
+1. Building a declarative component tree (`Panel`, `Text`, `Image`, etc.)
 2. Serializing compact fixed-width field segments into a single string
-3. Injecting that payload into a form title via `present(...)`
+3. Injecting that payload into a each form component
 4. Having the resource pack parse segments by byte offset to drive conditional rendering
 
 Result: Advanced layouts, conditional logic, and style variants without custom networking.
-
----
 
 ## 🧱 Architecture Overview
 
 | Layer | Responsibility | Key Files |
 |-------|----------------|-----------|
-| Component Factories | Pure functions returning `Functional<T>` objects | `src/core/components/*.ts` |
-| Type Contracts | JSON UI spec-aligned structural interfaces | `src/types/json_ui/*.ts` |
-| Serialization Protocol | UTF‑8 fixed-width, semicolon full segments | `src/core/serializer.ts` |
+| Component Factories | Pure functions returning `Component` objects | `src/core/components/*.ts` |
+| Type Contracts | Component interfaces and serialization types | `src/types/*.ts` |
+| Serialization Protocol | UTF‑8 fixed-width, semicolon-padded segments | `src/core/serializer.ts` |
 | Presentation Adapter | Inject serialized payload + register form controls | `src/index.ts` |
-| Public Entry | Re-exports factories + types | `src/index.ts` |
+| Resource Pack | JSON UI decoders that parse the serialized data | `assets/RP/` |
 
-`Functional<T>` augments a structural component with `serialize(form: FormData): string`.
+### 🔄 Component Routing System
 
----
+The system uses a routing architecture to handle different component types:
+
+**For Client-Only Components** (`Panel`, `Text`, `Image`):
+
+1. All serialized data gets injected via `form.label()` calls
+2. The `screen_container.json` factory maps `"label"` entries to `@core-ui_common.component_router`
+3. The `component_router` acts as a dispatcher containing all possible component types
+4. Each component JSON file (e.g., `panel.json`) uses conditional bindings: `(#type = 'panel') and #visible` to determine if it should render
+5. Only the matching component type renders, others remain invisible
+
+**For Native Form Components** (`Input`, `Toggle`, `Slider`, `Dropdown`):
+
+- These bypass the router and use their dedicated factory control IDs
+- `"toggle": "@server_form.custom_toggle"`, `"input": "@server_form.custom_input"`, etc.
+- They still use the same serialization protocol for consistency
+
+This "label-as-entry-point" system allows unlimited custom components while leveraging Minecraft's native form factory system for interactive elements.
 
 ## 📦 Installation
 
 ```bash
 yarn add @bedrock-core/ui
-# Requires a resource pack implementing the decoding logic (not part of this repo)
 ```
 
-Peer deps expected in the host environment: `@minecraft/server` ≥ 2.1.0, `@minecraft/server-ui` ≥ 2.0.0.
+**Requirements:** `@minecraft/server` ≥ 2.1.0, `@minecraft/server-ui` ≥ 2.0.0
 
----
+Add the companion resource pack as a dependency of your addon and include it in your .mcaddon
+
+```json
+{
+  "dependencies": [
+    {
+        "uuid": "761ecd37-ad1c-4a64-862a-d6cc38767426",
+        "version": [
+            0,
+            1,
+            0
+        ]
+    }
+  ]
+}
+```
+
+```txt
+pack.mcaddon
+├── RP/
+├── BP/
+└── core-ui.mcpack
+```
 
 ## 🚀 Quick Start
 
 ```ts
-import { ModalFormData } from '@minecraft/server-ui';
-import { present, Panel, Text, Button } from '@bedrock-core/ui';
+import { Player } from '@minecraft/server';
+import { present, Panel, Text } from '@bedrock-core/ui';
 
-const form = new ModalFormData();
-const ui = Panel({ display: 'flex', orientation: 'vertical', children: [
-    Text({ value: 'Player Settings' }),
-    Button({ label: 'Save' }),
-]});
+const ui = Panel({
+    width: 300,
+    height: 200,
+    x: 50,
+    y: 50,
+    children: [
+        Text({ 
+            width: 250,
+            height: 30,
+            x: 25,
+            y: 25,
+            value: 'Player Settings' 
+        })
+    ]
+});
 
-await present(form, player, ui); // player: Player
+await present(player, ui);
 ```
-
----
 
 ## 🧩 Component Pattern
 
-Each factory returns a plain object describing JSON UI properties plus a `serialize` method. (Example reflects intended pattern once TODOs are completed.)
+Each factory returns a plain object describing JSON UI properties plus a `serialize` method:
 
 ```ts
-export function Toggle({ label, checked }: ToggleProps): Component {
+export function Panel({ children, ...rest }: PanelProps): Component {
     return {
-        serialize(form) {
-            form.toggle(label, { defaultValue: checked });
-            return serialize(label, !!checked); // 32 + 5 bytes
+        serialize: (form: CoreUIFormData): void => {
+            const serializable: SerializableComponent = {
+                type: serializeString('panel'),
+                ...rest,
+            };
+            
+            const [result, bytes] = serialize(serializable);
+            form.label(result);
+            
+            children.forEach(child => child.serialize(form));
         },
     };
 }
@@ -87,11 +140,11 @@ export function Toggle({ label, checked }: ToggleProps): Component {
 
 Conventions:
 
-- Dimension props fallback to `'default'` (never `undefined`).
-- Factory prop names are camelCase; emitted JSON UI keys follow spec snake_case.
-- No side-effects inside factory body; all form API calls occur in `serialize`.
-
----
+- All components require `width`, `height`, `x`, `y` as we are currently using absolute positioning (no defaults)
+- Factory prop names are camelCase; emitted JSON UI keys follow snake_case
+- Use `serializeString()` for all string values - native strings throw errors
+- **All "optional" props must have defined defaults in the serialized component** - no undefined/null values allowed
+- No side-effects in factory body; all form API calls occur in `serialize`
 
 ## 🔐 Serialization Protocol
 
@@ -107,12 +160,12 @@ Each field is composed of three conceptual parts concatenated in this order:
 
 ### Field Widths (bytes)
 
-| Type     | Prefix | Prefix Width | Type Width | Marker Width | Full Width (ps+s+ms) | Notes |
-|----------|--------|--------------|------------|--------------|----------------------|-------|
-| number   | `f:`   | 2            | 24         | 1            | 27                   | Numbers are not being differentiated between integers and floats, if the property to use must be an integer in json ui, floor or ceil before sending to serializer |
-| boolean  | `b:`   | 2            | 5          | 1            | 8                    | |
-| String   | `s:`   | 2            | maxBytes   | 1            | maxBytes + 3         | Use serializeString(value:string, maxBytes?: number) Default maxBytes value is 32 |
-| Reserved | `r:`   | 0            | variable   | 0            | variable             | Reserved type does not have marker or prefix width in the serialized data |
+| Type     | Prefix | Prefix Width | Type Width | Marker Width | Full Width | Notes |
+|----------|--------|--------------|------------|--------------|------------|-------|
+| String   | `s:`   | 2            | 32         | 1            | 35         | Use `serializeString(value, maxBytes?)`. Default maxBytes = 32 |
+| Number   | `n:`   | 2            | 24         | 1            | 27         | All numbers use same format (no int/float distinction) Treat in JSON UI accordingly |
+| Boolean  | `b:`   | 2            | 5          | 1            | 8          | Serialized as `'true'` or `'false'` |
+| Reserved | `r:`   | 0            | variable   | 0            | variable   | No prefix/marker for easier JSON UI skipping |
 
 ### Markers
 
@@ -124,22 +177,22 @@ This is to avoid the 2nd known caveat (below).
 ### Encoding Example
 
 ```ts
-import { serialize } from '@bedrock-core/ui/core/serializer';
+import { serialize, serializeString } from '@bedrock-core/ui';
 const [encoded, bytes] = serialize({
-    type: 'example',
-    message: 'hello', // string → 35
-    count: 123,       // number → 27
-    ratio: 45.67,     // number → 27
-    ok: true,         // bool → 8
+    type: serializeString('example'), // string → 35
+    message: serializeString('hello'), // string → 35
+    count: 123,                        // number → 27
+    ratio: 45.67,                      // number → 27
+    ok: true,                          // bool → 8
 });
-// Per-field widths = 35 (string) + 27 (number) + 27 (number) + 8 (bool) = 89 bytes (plus 9-byte bcui+version prefix)
-// NOTE: "bytes" here counts ASCII / UTF‑8 single-byte segments; multi-byte runes inside values still respect the full byte budgets via utf8Truncate.
+// Per-field widths = 35 + 35 + 27 + 27 + 8 = 132 bytes (plus 9-byte header)
+// All strings MUST use serializeString() - native strings throw errors
 ```
 
 ### Field Binding Template Pattern (Decoding)
 
 Decoding inside the resource pack uses a progressive "slice → subtract" strategy. Each field follows a 3‑step lifecycle:
-
+components
 `extract_raw → update_remainder → extract_value`
 
 Generic template (JSON UI binding entries) — copy & replace placeholders:
@@ -164,58 +217,14 @@ Generic template (JSON UI binding entries) — copy & replace placeholders:
 
 **For reserved blocks (skip pattern):**
 
-```jsonc
-{
-    "binding_type": "view", // reserved full_width
-    "source_property_name": "('%.{RESERVED_WIDTH}s' * #rem_after_{PREV})",
-    "target_property_name": "#skip_{RESERVED_NAME}"
-},
-{
-    "binding_type": "view",
-    "source_property_name": "(#rem_after_{PREV} - #skip_{RESERVED_NAME})",
-    "target_property_name": "#rem_after_{RESERVED_NAME}"
-},
-```Placeholder reference:
+Placeholder reference:
 
-- `{FIELD_NAME}` unique identifier (e.g. `type`, `visible`, `inherit_max_sibling_height`)
+- `{FIELD_NAME}` unique identifier (e.g. `type`, `visible`)
 - `{PREV}` previous remainder token (first field uses `header`, others use previous field name)
 - `{FULL_WIDTH}` from table full_width column
 - `{FM_WIDTH}` table (full_width - marker_width)
 - `{RESERVED_WIDTH}` reserved block width in bytes (e.g., 277)
 - `{RESERVED_NAME}` unique identifier
-
-### Concrete Multi‑Field Example
-
-Excerpt from the live decoder (`ui/core-ui/control.json`) showing the base control properties pattern.
-Remember to skip the 9-char header first (e.g., `('%.9s' * #custom_text)` to obtain header; subtract it to produce `#rem_after_header`).
-
-```jsonc
-/* Strip protocol header (9 chars) */
-{ "binding_type": "view", "source_property_name": "('%.9s' * #custom_text)", "target_property_name": "#protocol_header" },
-{ "binding_type": "view", "source_property_name": "(#custom_text - #protocol_header)", "target_property_name": "#rem_after_header" },
-
-/* Field 0: type (string, 35 bytes) */
-// full_width
-{ "binding_type": "view", "source_property_name": "('%.35s' * #rem_after_header)", "target_property_name": "#raw_type" },
-{ "binding_type": "view", "source_property_name": "(#rem_after_header - #raw_type)", "target_property_name": "#rem_after_type" },
-// (full_width - marker_width) - prefix_width - padding_char (;)
-{ "binding_type": "view", "source_property_name": "(('%.34s' * #raw_type) - ('%.2s' * #raw_type) - ';')", "target_property_name": "#type" },
-
-/* Field 1: width (string, 35 bytes) */
-// full_width
-{ "binding_type": "view", "source_property_name": "('%.35s' * #rem_after_type)", "target_property_name": "#raw_width" },
-{ "binding_type": "view", "source_property_name": "(#rem_after_type - #raw_width)", "target_property_name": "#rem_after_width" },
-// (full_width - marker_width) - prefix_width - padding_char (;)
-{ "binding_type": "view", "source_property_name": "(('%.34s' * #raw_width) - ('%.2s' * #raw_width) - ';')", "target_property_name": "#width" },
-
-/* ... Fields 2-9 follow same pattern ... */
-
-// reserved full_width
-{ "binding_type": "view", "source_property_name": "('%.277s' * #rem_after_inherit_max_sibling_height)", "target_property_name": "#skip_reserved" },
-{ "binding_type": "view", "source_property_name": "(#rem_after_inherit_max_sibling_height - #skip_reserved)", "target_property_name": "#serialized_data" },
-
-/* Component-specific fields continue from #serialized_data */
-```
 
 ### Base Control Properties Deserialization Order
 
@@ -227,15 +236,15 @@ Field 1: width (number, 27 bytes)                 - element width
 Field 2: height (number, 27 bytes)                - element height
 Field 3: x (number, 27 bytes)                     - horizontal position
 Field 4: y (number, 27 bytes)                     - vertical position
-Field 5: visible (bool, 8 bytes)                  - visibility state
-Field 6: enabled (bool, 8 bytes)                  - interaction enabled state
-Field 7: layer (number, 19 bytes)                 - z-index layering
-Field 8: alpha (number, 27 bytes)                 - element transparency
-Field 9: inheritMaxSiblingWidth (bool, 8 bytes)   - width inheritance flag
-Field 10: inheritMaxSiblingHeight (bool, 8 bytes) - height inheritance flag
+Field 5: visible (bool, 8 bytes)                  - visibility state (default: true)
+Field 6: enabled (bool, 8 bytes)                  - interaction enabled (default: true)
+Field 7: layer (number, 27 bytes)                 - z-index layering (default: 0)
+Field 8: alpha (number, 27 bytes)                 - transparency (default: 1.0)
+Field 9: inheritMaxSiblingWidth (bool, 8 bytes)   - width inheritance (default: false)
+Field 10: inheritMaxSiblingHeight (bool, 8 bytes) - height inheritance (default: false)
+Field 11: __reserved (274 bytes)                  - reserved for future expansion
 
-Reserved: 512 - (protocol header width + all fields width bytes) = 274
-(up to 512 bytes total reserved block for future expansion)
+Total: 512 bytes per component (fixed allocation)
 ```
 
 **Component-specific properties** are appended after the reserved block.
@@ -254,160 +263,65 @@ UTF‑8 Safety: `utf8Truncate` ensures multi‑byte characters are not cut mid s
 
 `utf8Truncate` prevents cutting surrogate pairs; always rely on helper functions.
 
----
-
-## 🛠 Filling the TODOs
-
-Current `serialize` gaps: `Button`, `Image`, `Panel`, `Text`, `Dropdown`, `Slider`, `Toggle`.
-
-Implementation guidance:
-
-1. Register interactive control first (`form.toggle(...)`, `form.slider(...)`, etc.).
-2. Encode only necessary state (labels, indices, booleans, layout flags).
-3. Return a single compact string. Nested structures may concatenate child payloads in order.
-
-Extension strategy: reserve a trailing block for future versioning instead of changing earlier offsets.
-
----
-
-## 🧪 Development Workflow
-
-| Action | Command |
-|--------|---------|
-| Build | `yarn build` |
-| Lint | `yarn lint` |
-| Tests | `yarn test` |
-| Coverage | `yarn coverage` |
-
-Place tests under `src/**/__tests__/**` or `*.test.ts` (excluded from build output).
-
----
-
-## ⚠️ Known Caveats / Notes
+## ⚠️ Known Caveats
 
 - JSON UI string ops with numbers can behave unpredictably; prefix markers before numeric-derived substrings client-side.
 - Subtraction operator (`-`) removes all occurrences; use distinct prefixes to avoid collisions.
-- Modal form title length limits total payload width — keep it lean.
 
----
+## 🗺 Development Roadmap
 
-## ➕ Adding a New Component
+### ✅ Beta 0.1.0 - Core Foundation
 
-1. Define (or reuse) interface in `types/json_ui/components.ts`.
-2. Implement factory in `core/components/<Name>.ts` with `'default'` fallbacks.
-3. Use `serialize(...)` helper; append new protocol segments only at the end.
-4. Export via `core/components/index.ts` and `src/index.ts`.
+- ✓ Serialization protocol with UTF-8 safety
+- ✓ Base component system (`Panel`, `Text`, `Image`)
+- ✓ JSON UI resource pack decoder
+- ✓ TypeScript library with proper exports
 
----
+### 📋 Beta 0.2.0 - Navigation & State (?)
 
-## 🗺 Roadmap (Indicative)
+- Components: `Button`
+- Event handling system for button clicks
+- Multi-screen navigation system
+- Screen parameters and state management (?)
+- Navigation hooks: `goBack()`, `navigate()`, `exit()`
 
-- Beta 0.1.0
-  - Basic single page non interactable Panel
-    - Panel
-    - Image
-    - Text
-- Beta 0.2.0
-  - Navigation
-    - Ability to have multiple non interactable "Screens" and move between them
-      - Params (?)
-      - navigation.exit(): void; (closes all ui's)
-      - navigation.canGoBack(): boolean;
-      - navigation.goBack(): void; (throws)
-      - navigation.navigate(screenName: string);
-    - Buttons
-      - Navigation (render next screen)
-      - Change values of stored (re-render current screen after button press with updated values)
-- Beta 0.3.0
-  - Forms
-    - Special screen type which supports submitting data
-    - Need to think this more
-  - Form components
-    - Input
-    - Slider
-    - Toggle
-- Beta 0.4.0
-  - Theming
-    - Base theming for the components inspired by Ore UI
-    - Possibility to make custom styles by props
-    - Automatic layering following DOM tree order
-    - Text styles, convert to props the color codes and symbols (bold, underline...)
-- More possible plans
-  - Register your own custom components
-  - Compound components (components made by primitive componentes (ex: tabbar, made by 1 panel and x buttons and styling))
-    - Standard stuff, dividers, tabs, menus, toast, card, badge, chip, drawers, dialogs...
-  - Animation support
-  - Reactive screens, for the first versions the screens will have static information and only be able to be updated after user input in a button. Need to investigate the possibility to make the information update reactively and if it is worth. It might lag a log, be very complex...
-  - Preprocesor to be able to use tsx instead of function like components
-  - validation for max bytes to serialize, rn no idea how much info we can cram into a string
-  - Resource packs builder: currently while we do the first versions and learn the whole process we make the core resource pack by hand, making it automatic would be better and will help for the next export feature
-  - Export feature: this library only will provide a way to make ui's using custom forms, but a way to export the result json might be useful for making resource packs
+### 🚧 Beta 0.3.0 - Interactive Components
 
-Everything listed here will only be made if it is possible and not extremely complicated
-Order might change if I feel like it
+- Form components: `Button`, `Input`, `Toggle`, `Slider`, `Dropdown`
+- Form submission and validation
 
----
+### 🎨 Beta 0.4.0 - Theming & Styling
+
+- Component theming system
+- Style variants (light/dark themes)
+- Text formatting (colors, bold, underline)
+- Automatic z-index layering
+
+### 🚀 Future Considerations
+
+- Custom component registration
+- Compound components (tabs, menus, dialogs)
+- Animation support
+- Resource pack builder automation
+- TSX preprocessor support
+- Reactive data binding (if feasible)
+- Export feature for "non-form" JSON UI
 
 ## 🤝 Contributing
 
 Let's talk in Discord <https://bedrocktweaks.net/discord>
 
----
+## 🔗 Reference Documentation
 
-## 📄 License
-
-MIT © @DrAv0011
-
-might change, need to look it through
-
----
-
-## 🔗 Reference Docs
-
-<https://wiki.bedrock.dev/json-ui/json-ui-intro#using-operators>
-<https://wiki.bedrock.dev/json-ui/json-ui-intro#string-formatting>
-<https://wiki.bedrock.dev/json-ui/json-ui-documentation>
-<https://wiki.bedrock.dev/json-ui/string-to-number>
-
----
+- [Bedrock Wiki - JSON UI Introduction](https://wiki.bedrock.dev/json-ui/json-ui-intro)
+- [JSON UI String Operations](https://wiki.bedrock.dev/json-ui/json-ui-intro#using-operators)
+- [String Formatting & Number Conversion](https://wiki.bedrock.dev/json-ui/string-to-number)
+- [JSON UI Documentation](https://wiki.bedrock.dev/json-ui/json-ui-documentation)
 
 ## What about ore-ui?
 
 When it releases in `Number.MAX_SAFE_INTEGER` years, will deprecate this completely (as JSON-UI will not exist) and look if it is worth to remake it for ore-ui.
 
----
+## Notes
 
-## Brain blob
-
-We're going to make the label, to use the label as the entrance. So we're going to serialize everything that I'm able to see on the label. So, label, serialize the label, everything from the type to the next pattern, to the next, to the next. Then in the JSON, we just extract the type. From that, binding, we redirect to make the next type, and the next pattern, and place it. To a nested control, to a different thing. You know? In the title, with an arroba, binding. And amazing, and that's it. Easy.
-
-Currently will focus on being able to load anything and use an absolute positioning model with position and size mandatory
-Use only ModalFormData
-
-- Use native element if exists
-- Use label for "client" only elements
-
-Note all "optional" props values should have a defined default in the serialized field
-
-Props order is important, for **ALL OF THE PROPS** of each component even if there are required you should place them in return of the serialize because the order they are in that return will be the order in the JSON UI
-
-note for serializable, because we depend on order any primitive components which will become json-ui
-type and rest should always be at the top, below then should be ALL OF YOUR PROPS EXPLICITLY DEFINED with a default value
-as that order will be the order you will have to deserialize in the JSON UI
-
-```ts
-  const { yourProps, ...rest } = withControledLayout(props);
-  const serializable: SerializableComponent = {
-    type: 'label',
-    ...rest,
-    yourProps
-  };
-```
-
-This last part was moved inside serializer so there is no need for the user to do it explicitly
-
-Important note: size_binding_x/y seems relative to parent size so making parent 10x10 will be 10 times larger the child
-
-for strings use serializeString the default maxBytes is 32
-Simplify back SerializableString into normal string with a maxLength of 32 validation we will not add support for larger strings
-prefer the use of translations
+Support for translations (key:string, with: string[]) in SerializableString

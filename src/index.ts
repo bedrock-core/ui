@@ -1,4 +1,27 @@
-export { Button, Dropdown, Image, Input, Panel, Slider, Text, Toggle, type ButtonProps, type DropdownProps, type ImageProps, type InputProps, type PanelProps, type SliderProps, type TextProps, type ToggleProps } from './core/components';
+export {
+  Button,
+  Dropdown,
+  Image,
+  Input,
+  Panel,
+  Slider,
+  Text,
+  Toggle,
+  Fragment
+} from './core/components';
+
+export type {
+  FragmentProps,
+  ButtonProps,
+  DropdownProps,
+  ImageProps,
+  InputProps,
+  PanelProps,
+  SliderProps,
+  TextProps,
+  ToggleProps
+} from './core/components';
+
 export { reserveBytes, serializeString } from './core/serializer';
 export type * from './types';
 

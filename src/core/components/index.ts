@@ -1,9 +1,10 @@
 import { ReservedBytes, SerializableComponent } from '../../types';
 import { reserveBytes } from '../serializer';
 
+export { Fragment, type FragmentProps } from './Fragment';
 export { Button, type ButtonProps } from './Button';
 export { Panel, type PanelProps } from './Panel';
-export { Text, type TextProps, type TextStyle } from './Text';
+export { Text, type TextProps } from './Text';
 export { Input, type InputProps } from './Form/Input';
 export { Toggle, type ToggleProps } from './Form/Toggle';
 export { Dropdown, type DropdownProps } from './Form/Dropdown';

@@ -1,37 +1,37 @@
 {
-  "format_version": 2,
-  "header": {
-    "name": "pack.name",
-    "description": "pack.description",
-    "uuid": "761ecd37-ad1c-4a64-862a-d6cc38767426",
-    "pack_scope": "world",
-    "version": [
-      1,
-      0,
-      0
-    ],
-    "min_engine_version": [
-      1,
-      21,
-      100
-    ]
-  },
-  "modules": [
-    {
-      "type": "resources",
-      "uuid": "5e76366d-ea19-47f1-8b10-9170ea0736e3",
-      "version": [
-        1,
-        0,
-        0
-      ]
-    }
-  ],
-  "metadata": {
-    "authors": [
-      "DrAv0011"
-    ],
-    "license": "MIT",
-    "url": "https://github.com/bedrock-core/ui"
-  }
+	"format_version": 2,
+	"header": {
+		"name": "pack.name",
+		"description": "pack.description",
+		"uuid": "761ecd37-ad1c-4a64-862a-d6cc38767426",
+		"pack_scope": "world",
+		"version": [
+			0,
+			1,
+			0
+		],
+		"min_engine_version": [
+			1,
+			21,
+			100
+		]
+	},
+	"modules": [
+		{
+			"type": "resources",
+			"uuid": "5e76366d-ea19-47f1-8b10-9170ea0736e3",
+			"version": [
+				1,
+				0,
+				0
+			]
+		}
+	],
+	"metadata": {
+		"authors": [
+			"DrAv0011"
+		],
+		"license": "MIT",
+		"url": "https://github.com/bedrock-core/ui"
+	}
 }

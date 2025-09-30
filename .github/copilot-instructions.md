@@ -4,9 +4,15 @@ Essential knowledge for AI agents working on this Minecraft Bedrock UI serializa
 
 ### Core Architecture
 
-This library serializes declarative component trees into compact strings that get injected into `@minecraft/server-ui` form titles. A companion JSON UI resource pack decodes these payloads to render rich UIs beyond native form limitations.
+This library serializes declarative component trees into compact strings that get injected into `@minecraft/server-ui` form controls. A companion JSON UI resource pack decodes these payloads to render rich UIs beyond native form limitations.
 
 **Critical flow:** component factory → `serialize(form)` → `present(player, component)` → JSON UI decodes by fixed byte offsets.
+
+### Component Routing System ("Label-as-Entry-Point")
+
+**Client-Only Components** (`Panel`, `Text`, `Image`): Use `form.label()` calls → `screen_container.json` factory maps to `@core-ui_common.component_router` → Each component JSON uses conditional bindings `(#type = 'panel') and #visible` to selectively render.
+
+**Native Form Components** (`Input`, `Toggle`, `Slider`, `Dropdown`): Bypass router, use dedicated factory control IDs like `"toggle": "@server_form.custom_toggle"` while sharing the same serialization protocol.
 
 ### Key Files & Responsibilities
 
@@ -15,6 +21,8 @@ This library serializes declarative component trees into compact strings that ge
 - **`src/types/component.ts`**: Core `Component` interface with `serialize(form: CoreUIFormData): void`
 - **`src/index.ts`**: Public API re-exports and `present(player, component)` orchestration
 - **`src/core/components/index.ts`**: `withControl()` function enforcing canonical field ordering
+- **`assets/RP/ui/core-ui/common/component_router.json`**: Dispatcher for client-only components
+- **`assets/RP/ui/core-ui/components/*.json`**: Individual component decoders with conditional rendering
 
 ### Serialization Protocol (Never Break This)
 
@@ -113,6 +121,7 @@ function sliceFieldWithPlan(payload: string, index: number, plan: TKey[]): strin
 - Dimension props accept `number` only (no strings like "100px" or "100%")
 - Boolean values serialize as lowercase `'true'`/`'false'`
 - All components extend `ControlProps` requiring width, height, x, y positioning
+- **All "optional" props must have defined defaults in serialized field** - no undefined values allowed
 - Use `reserveBytes(n)` for future protocol expansion space
 
 ### Critical `withControl()` Function
