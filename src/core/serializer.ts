@@ -1,5 +1,6 @@
-import { JSX } from '@bedrock-core/ui/jsx/jsx-runtime';
-import { ReservedBytes, SerializableString, SerializationError } from '../types/serialization';
+import { Logger } from 'src/util';
+import { JSX } from '../jsx';
+import { CoreUIFormData, ReservedBytes, SerializationError } from './types';
 
 /**
  * This makes each full field substring unique even when two field values & padding are identical.
@@ -160,7 +161,7 @@ function padToByteLength(str: string, length: number): string {
   const currentLength = utf8ByteLength(str);
 
   if (currentLength > length) {
-    return utf8Truncate(str, length);
+    throw new SerializationError(`serialize(): string ${str} exceeds maximum byte length of ${length} bytes, actual ${currentLength} bytes. Prefer to use translate keys for long texts.`);
   }
 
   return str + PAD_CHAR.repeat(length - currentLength);
@@ -180,22 +181,50 @@ export function reserveBytes(bytes: number): ReservedBytes {
 }
 
 /**
- * Serializes a string value.
- * @param value - string value to serialize
- * @param maxBytes - maximum byte length for the serialized string
- * @returns SerializableString object
+ * Serialize a JSX element and its children into the provided form.
+ * @param element - JSX element to serialize
+ * @param form - Form data to populate
  */
-export function serializeString(value: string, maxBytes?: number): SerializableString {
-  return { __type: 'serializable_string', value, maxBytes };
+export function serialize({ type, props, children }: JSX.Element, form: CoreUIFormData): void {
+  const [payload, bytes] = serializeProps({ type, ...props });
+
+  Logger.log(`[serialize] type=${type} payloadBytes=${bytes} payload=${payload} `);
+
+  // Client-only components (use label routing)
+  if (['panel', 'text', 'image', 'fragment'].includes(type)) {
+    form.label(payload);
+  }
+  // Native form components
+  // else if (type === 'toggle') {
+  //   form.toggle(payload, props.label ?? '', props.defaultValue ?? false);
+  // }
+  // else if (type === 'slider') {
+  //   form.slider(payload, props.label ?? '', props.min, props.max, props.step, props.defaultValue);
+  // }
+  // else if (type === 'dropdown') {
+  //   form.dropdown(payload, props.label ?? '', props.options, props.defaultIndex ?? 0);
+  // }
+  // else if (type === 'input') {
+  //   form.textField(payload, props.label ?? '', props.placeholder ?? '', props.defaultValue ?? '');
+  // }
+  else {
+    throw new SerializationError(`Unknown component type: ${type}`);
+  }
+
+  // Recursively handle children
+  if (children) {
+    const childArray = Array.isArray(children) ? children : [children];
+    childArray.forEach(child => serialize(child, form));
+  }
 }
 
 /**
- * Serialize component to a string payload.
+ * Serialize component type and props to a string payload.
  *
- * @param component - The component data to serialize
+ * @param component - Component type and props
  * @returns [serialized component string, total byte length]
  */
-export function serialize({ type, props, children }: JSX.Element): [string, number] {
+function serializeProps({ type, ...props }: JSX.Props & { type: string }): [string, number] {
   let totalBytes = 0;
 
   const segments = Object.entries({ type, ...props }).map(([key, value]: [string, unknown], index: number): string => {
@@ -220,8 +249,6 @@ export function serialize({ type, props, children }: JSX.Element): [string, numb
       rawStr = value;
       core = `${TYPE_PREFIX.s}:${padToByteLength(rawStr, TYPE_WIDTH.s)}`;
       widthBytes = FULL_WIDTH.s;
-    } else if (typeof value === 'string') {
-      throw new SerializationError(`serialize(): unsuported native strings use serializeString(value: string, maxBytes?: number) for property "${key}"`);
     } else {
       throw new SerializationError(`serialize(): unsupported type for property "${key}": ${typeof value} (value: ${JSON.stringify(value)})`);
     }
@@ -237,22 +264,6 @@ export function serialize({ type, props, children }: JSX.Element): [string, numb
   const prefix = PROTOCOL_HEADER;
   const result = prefix + segments.join('');
   const finalBytes = totalBytes + utf8ByteLength(prefix);
-
-  // Logger.log(`[serialize] header=${prefix} fields=${entries.length} payloadBytes=${finalBytes}`);
-
-  if (Array.isArray(children)) {
-    children.forEach(child => {
-      if (child) {
-        const [childStr, childBytes] = serialize(child);
-        totalBytes += childBytes;
-        // result += childStr;
-      }
-    });
-  } else if (children) {
-    const [childStr, childBytes] = serialize(children);
-    totalBytes += childBytes;
-    // result += childStr;
-  }
 
   return [result, finalBytes];
 }

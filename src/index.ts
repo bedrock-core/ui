@@ -1,77 +1,41 @@
-// Exports
 export {
+  // Components
   Fragment,
   Image,
   Panel,
-  Text
-} from './core/components';
+  Text,
+  // Serialization utilities
+  reserveBytes,
+  // Rendering
+  render,
+  // Protocol constants
+  PROTOCOL_HEADER,
+  VERSION,
+  PAD_CHAR,
+  TYPE_WIDTH,
+  PREFIX_WIDTH,
+  MARKER_WIDTH,
+  FULL_WIDTH,
+  TYPE_PREFIX,
+  FIELD_MARKERS,
+  PROTOCOL_HEADER_LENGTH,
+} from './core';
 
-export { reserveBytes, serializeString } from './core/serializer';
-export { useContext } from './jsx';
-export type { Context } from './jsx';
-
+// Component types
 export type {
   FragmentProps,
   ImageProps,
   PanelProps,
-  TextProps
-} from './core/components';
+  TextProps,
+  ControlProps,
+} from './core';
 
-export type * from './types';
-export * from './jsx';
+// JSX Runtime
+export {
+  renderJSX,
+} from './jsx';
 
-// Code
-
-import { Player } from '@minecraft/server';
-import { FormRejectError, ModalFormData } from '@minecraft/server-ui';
-import { PROTOCOL_HEADER } from './core/serializer';
-import { setContext } from './jsx/context';
-import { JSX } from './jsx/jsx-runtime';
-
-/**
- * Present a component to a player using the @bedrock-core/ui system.
- *
- * Flow:
- * 1) Creates a ModalFormData instance.
- * 2) Invokes component.serialize(form). The component is responsible for:
- *    - registering interactive controls via form.* APIs, and
- *    - setting the component label with the encoded payload
- * 3) Shows the form to the player.
- * 4) The JSON UI resource pack decodes the payload and renders the UI.
- *
- * @param player - The player to show the UI to
- * @param component - Component to present
- * @throws Error if form.show fails
- */
-
-/**
- * Present a JSX component to a player using the @bedrock-core/ui system.
- *
- * @param player - The player to show the UI to
- * @param component - JSX component function or element
- */
-export async function render(player: Player, component: JSX.Element): Promise<void> {
-  const form = new ModalFormData();
-  setContext({ form, player });
-
-  form.title(PROTOCOL_HEADER);
-
-
-  // TODO HERE
-  console.log(JSON.stringify(component));
-
-  // serialize(component, form);
-
-  form.show(player).then((): void => {
-    // Form shown successfully
-    // TODO logic for buttons
-    // TODO form logics
-    // TODO NAVIGATION
-
-    setContext({ form: undefined, player: undefined });
-  }).catch((error: FormRejectError): never => {
-    setContext({ form: undefined, player: undefined });
-
-    throw error;
-  });
-}
+export type {
+  FunctionComponent,
+  JSX,
+} from './jsx';

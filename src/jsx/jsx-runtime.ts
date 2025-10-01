@@ -1,4 +1,4 @@
-import { FragmentProps, ImageProps, PanelProps, TextProps } from '../core/components';
+import { FragmentProps, ImageProps, PanelProps, TextProps } from '../core';
 
 interface NativeNode<P extends JSX.Props = JSX.Props> {
   type: string;

@@ -1,4 +1,4 @@
-import { ControlProps, withControl } from '.';
+import { ControlProps, withControl } from './control';
 import { FunctionComponent, JSX } from '../../jsx';
 
 export interface TextStyle {

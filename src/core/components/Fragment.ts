@@ -1,5 +1,5 @@
-import { withControl } from '.';
-import { FunctionComponent, JSX } from '../../jsx/jsx-runtime';
+import { withControl } from './control';
+import { FunctionComponent, JSX } from '../../jsx';
 
 export interface FragmentProps extends JSX.Props { }
 
