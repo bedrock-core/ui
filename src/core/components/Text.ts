@@ -1,4 +1,5 @@
 import { ControlProps } from '.';
+import { registerIntrinsicComponent } from '../../jsx/intrinsics';
 import { CoreUIFormData } from '../../types';
 import type { SerializableElement } from '../../types/component';
 import { SerializableComponent } from '../../types/serialization';
@@ -41,3 +42,5 @@ export function Text({ value, children: _children, ...rest }: TextProps): Serial
     },
   };
 }
+
+registerIntrinsicComponent('text', Text);

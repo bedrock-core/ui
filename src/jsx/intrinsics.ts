@@ -1,21 +1,17 @@
-import { IntrinsicElementFunction } from '../types/component';
+import { IntrinsicElementFunction, JSXProps } from '../types/component';
 
 /**
  * Intrinsic element registry - maps string names to native element functions
  * This will be populated with actual native components (Panel, Text, Image, etc.)
  */
-const intrinsicElements = new Map<string, IntrinsicElementFunction>();
+const intrinsicElements = new Map<string, IntrinsicElementFunction<JSXProps>>();
 
-/**
- * Get an intrinsic element by name
- */
-export function getIntrinsicComponent(name: string): IntrinsicElementFunction | undefined {
-  return intrinsicElements.get(name.toLowerCase());
+export function getIntrinsicComponent<T extends JSXProps>(
+  name: string,
+): IntrinsicElementFunction<T> | undefined {
+  return intrinsicElements.get(name.toLowerCase()) as IntrinsicElementFunction<T> | undefined;
 }
 
-/**
- * Register an intrinsic element (native component)
- */
-export function registerIntrinsicComponent(name: string, component: IntrinsicElementFunction): void {
-  intrinsicElements.set(name.toLowerCase(), component);
+export function registerIntrinsicComponent<T extends JSXProps>(name: string, component: IntrinsicElementFunction<T>): void {
+  intrinsicElements.set(name.toLowerCase(), component as IntrinsicElementFunction<JSXProps>);
 }

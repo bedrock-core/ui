@@ -9,7 +9,7 @@ export interface SerializableElement {
   serialize: (form: CoreUIFormData) => void;
 }
 
-export type IntrinsicElementFunction = (props: Record<string, unknown> & { children?: SerializableElement[] }) => SerializableElement;
+export type IntrinsicElementFunction<T extends JSXProps = JSXProps> = (props: T) => SerializableElement;
 
 export interface JSXProps {
   children?: SerializableElement[];

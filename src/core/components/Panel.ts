@@ -1,5 +1,6 @@
 
 import { ControlProps } from '.';
+import { registerIntrinsicComponent } from '../../jsx/intrinsics';
 import { CoreUIFormData, SerializableComponent, SerializableElement } from '../../types';
 import { Logger } from '../../util/Logger';
 import { serialize, serializeString } from '../serializer';
@@ -30,3 +31,5 @@ export function Panel({ children, ...rest }: PanelProps): SerializableElement {
     },
   };
 }
+
+registerIntrinsicComponent('panel', Panel);

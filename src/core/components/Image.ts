@@ -1,4 +1,5 @@
 import { ControlProps } from '.';
+import { registerIntrinsicComponent } from '../../jsx/intrinsics';
 import { SerializableElement, SerializationError, type CoreUIFormData, type SerializableComponent } from '../../types';
 import { Logger } from '../../util/Logger';
 import { serialize, serializeString } from '../serializer';
@@ -36,3 +37,5 @@ export function Image({ texture, disabled, children: _children, ...rest }: Image
     },
   };
 }
+
+registerIntrinsicComponent('image', Image);
