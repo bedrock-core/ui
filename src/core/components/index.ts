@@ -1,4 +1,5 @@
-import { JSXProps, ReservedBytes, SerializableComponent } from '../../types';
+import { JSXProps } from '../../jsx/jsx-runtime';
+import { ReservedBytes, SerializableComponent } from '../../types';
 import { reserveBytes } from '../serializer';
 
 export { Fragment, type FragmentProps } from './Fragment';

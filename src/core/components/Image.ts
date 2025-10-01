@@ -1,8 +1,5 @@
 import { ControlProps } from '.';
-import { registerIntrinsicComponent } from '../../jsx/intrinsics';
-import { SerializableElement, SerializationError, type CoreUIFormData, type SerializableComponent } from '../../types';
-import { Logger } from '../../util/Logger';
-import { serialize, serializeString } from '../serializer';
+import { FunctionComponent, JSX } from '../../jsx';
 
 export interface ImageProps extends ControlProps {
 
@@ -15,27 +12,11 @@ export interface ImageProps extends ControlProps {
   disabled?: boolean;
 }
 
-export function Image({ texture, disabled, children: _children, ...rest }: ImageProps): SerializableElement {
-  return {
-    serialize: (form: CoreUIFormData): void => {
-      if (texture?.length && texture.length > 64) {
-        throw new SerializationError(`Image texture path exceeds 64 characters. Length: ${texture.length}. Path: "${texture}"`);
-      }
+export const Image: FunctionComponent<ImageProps> = ({ texture, disabled }: ImageProps): JSX.Element => ({
+  type: 'image',
+  props: {
+    texture: texture ?? '',
+    disabled: disabled ?? false,
+  },
+});
 
-      const serializable: SerializableComponent = {
-        type: serializeString('image'),
-        texture: serializeString(texture ?? '', 64),
-        grayscale: disabled ?? false,
-        ...rest,
-      };
-
-      const [result, bytes] = serialize(serializable);
-
-      Logger.info(`Serializing image: bytes=${bytes}, result=${result}`);
-
-      form.label(result);
-    },
-  };
-}
-
-registerIntrinsicComponent('image', Image);

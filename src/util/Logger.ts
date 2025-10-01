@@ -4,7 +4,7 @@
  * Simplified to string because Minecraft Bedrock Edition console does not support complex objects.
  */
 
-export const LOGS_ENABLED = false;
+export const LOGS_ENABLED = true;
 
 export const Logger = {
   log(args: string): void {

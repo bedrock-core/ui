@@ -10,12 +10,20 @@
     "stripInternal": true,
     "strict": true,
     "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@bedrock-core/ui/jsx": [
+        "src/jsx/index.ts"
+      ],
+      "@bedrock-core/ui/jsx/*": [
+        "src/jsx/*"
+      ]
+    },
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "jsx": "preserve",
-    "jsxFactory": "createElement",
-    "jsxFragmentFactory": "createFragment"
+    "jsx": "react-jsx",
+    "jsxImportSource": "@bedrock-core/ui/jsx"
   },
   "include": [
     "src/**/*"
