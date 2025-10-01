@@ -13,8 +13,9 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "jsx": "react",
-    "jsxFactory": "jsx"
+    "jsx": "preserve",
+    "jsxFactory": "createElement",
+    "jsxFragmentFactory": "createFragment"
   },
   "include": [
     "src/**/*"

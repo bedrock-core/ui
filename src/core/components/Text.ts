@@ -1,6 +1,6 @@
 import { ControlProps } from '.';
 import { CoreUIFormData } from '../../types';
-import type { Component } from '../../types/component';
+import type { SerializableElement } from '../../types/component';
 import { SerializableComponent } from '../../types/serialization';
 import { Logger } from '../../util/Logger';
 import { serialize, serializeString } from '../serializer';
@@ -19,7 +19,7 @@ export interface TextProps extends ControlProps {
   // textStyle?: TextStyle;
 }
 
-export function Text({ value, ...rest }: TextProps): Component {
+export function Text({ value, children: _children, ...rest }: TextProps): SerializableElement {
   return {
     serialize: (form: CoreUIFormData): void => {
       const serializable: SerializableComponent = {

@@ -1,12 +1,11 @@
-
-import { ControlProps } from '.';
-import { Component, CoreUIFormData, SerializableComponent } from '../../types';
+import { registerIntrinsicComponent } from '../../jsx/intrinsics';
+import { CoreUIFormData, JSXProps, SerializableComponent, SerializableElement } from '../../types';
 import { Logger } from '../../util/Logger';
 import { serialize, serializeString } from '../serializer';
 
-export interface FragmentProps extends ControlProps { children: Component[] }
+export interface FragmentProps extends JSXProps { }
 
-export function Fragment({ children, ...rest }: FragmentProps): Component {
+export function Fragment({ children, ...rest }: FragmentProps): SerializableElement {
   return {
     serialize: (form: CoreUIFormData): void => {
       // 'children' are not primitives; they are serialized separately after emitting
@@ -14,6 +13,10 @@ export function Fragment({ children, ...rest }: FragmentProps): Component {
       const serializable: SerializableComponent = {
         type: serializeString('fragment'),
         ...rest,
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
       };
 
       const [result, bytes] = serialize(serializable);
@@ -22,7 +25,9 @@ export function Fragment({ children, ...rest }: FragmentProps): Component {
 
       form.label(result);
 
-      children.forEach((child: Component): void => child.serialize(form));
+      children?.forEach((child: SerializableElement): void => child.serialize(form));
     },
   };
 }
+
+registerIntrinsicComponent('fragment', Fragment);

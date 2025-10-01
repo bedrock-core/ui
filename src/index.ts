@@ -1,34 +1,24 @@
 export {
-  Button,
-  Dropdown,
+  Fragment,
   Image,
-  Input,
   Panel,
-  Slider,
-  Text,
-  Toggle,
-  Fragment
+  Text
 } from './core/components';
 
 export type {
   FragmentProps,
-  ButtonProps,
-  DropdownProps,
   ImageProps,
-  InputProps,
   PanelProps,
-  SliderProps,
-  TextProps,
-  ToggleProps
+  TextProps
 } from './core/components';
 
 export { reserveBytes, serializeString } from './core/serializer';
 export type * from './types';
 
-import type { Component } from './types/component';
 import { Player } from '@minecraft/server';
 import { FormRejectError, ModalFormData } from '@minecraft/server-ui';
 import { PROTOCOL_HEADER } from './core/serializer';
+import { SerializableElement } from './types';
 
 /**
  * Present a component to a player using the @bedrock-core/ui system.
@@ -45,7 +35,7 @@ import { PROTOCOL_HEADER } from './core/serializer';
  * @param component - Component to present
  * @throws Error if form.show fails
  */
-export async function present(player: Player, component: Component): Promise<void> {
+export async function present(player: Player, component: SerializableElement): Promise<void> {
   const form = new ModalFormData();
 
   form.title(PROTOCOL_HEADER);

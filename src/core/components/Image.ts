@@ -1,5 +1,5 @@
 import { ControlProps } from '.';
-import { SerializationError, type Component, type CoreUIFormData, type SerializableComponent } from '../../types';
+import { SerializableElement, SerializationError, type CoreUIFormData, type SerializableComponent } from '../../types';
 import { Logger } from '../../util/Logger';
 import { serialize, serializeString } from '../serializer';
 
@@ -14,7 +14,7 @@ export interface ImageProps extends ControlProps {
   disabled?: boolean;
 }
 
-export function Image({ texture, disabled, ...rest }: ImageProps): Component {
+export function Image({ texture, disabled, children: _children, ...rest }: ImageProps): SerializableElement {
   return {
     serialize: (form: CoreUIFormData): void => {
       if (texture?.length && texture.length > 64) {

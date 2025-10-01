@@ -1,16 +1,16 @@
 
 import { ControlProps } from '.';
-import { Component, CoreUIFormData, SerializableComponent } from '../../types';
+import { CoreUIFormData, SerializableComponent, SerializableElement } from '../../types';
 import { Logger } from '../../util/Logger';
 import { serialize, serializeString } from '../serializer';
+
 export interface PanelProps extends ControlProps {
   // Future idea
   // display?: 'flex' | 'block';
   // orientation?: 'vertical' | 'horizontal';
-  children: Component[];
 }
 
-export function Panel({ children, ...rest }: PanelProps): Component {
+export function Panel({ children, ...rest }: PanelProps): SerializableElement {
   return {
     serialize: (form: CoreUIFormData): void => {
       // 'children' are not primitives; they are serialized separately after emitting
@@ -26,7 +26,7 @@ export function Panel({ children, ...rest }: PanelProps): Component {
 
       form.label(result);
 
-      children.forEach((child: Component): void => child.serialize(form));
+      children?.forEach((child: SerializableElement): void => child.serialize(form));
     },
   };
 }
