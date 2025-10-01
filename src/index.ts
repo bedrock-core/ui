@@ -18,6 +18,7 @@ export type {
 } from './core/components';
 
 export type * from './types';
+export * from './jsx';
 
 // Code
 
@@ -25,7 +26,7 @@ import { Player } from '@minecraft/server';
 import { FormRejectError, ModalFormData } from '@minecraft/server-ui';
 import { PROTOCOL_HEADER } from './core/serializer';
 import { setContext } from './jsx/context';
-import { JSXNode } from './jsx/jsx-runtime';
+import { JSX } from './jsx/jsx-runtime';
 
 /**
  * Present a component to a player using the @bedrock-core/ui system.
@@ -49,12 +50,14 @@ import { JSXNode } from './jsx/jsx-runtime';
  * @param player - The player to show the UI to
  * @param component - JSX component function or element
  */
-export async function render(player: Player, component: JSXNode): Promise<void> {
+export async function render(player: Player, component: JSX.Element): Promise<void> {
   const form = new ModalFormData();
   setContext({ form, player });
 
   form.title(PROTOCOL_HEADER);
 
+
+  // TODO HERE
   console.log(JSON.stringify(component));
 
   // serialize(component, form);
@@ -71,8 +74,4 @@ export async function render(player: Player, component: JSXNode): Promise<void> 
 
     throw error;
   });
-}
-
-export function renderDev(component: JSXNode): void {
-  console.log(JSON.stringify(component));
 }

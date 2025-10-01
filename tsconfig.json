@@ -23,13 +23,12 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "jsx": "react-jsx",
-    "jsxImportSource": "@bedrock-core/ui/jsx"
+    "jsxImportSource": "@bedrock-core/ui"
   },
   "include": [
     "src/**/*"
   ],
   "exclude": [
-    "src/**/*.test.ts",
-    "src/**/__tests__/**"
+    "src/**/*.test.ts"
   ]
 }

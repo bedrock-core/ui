@@ -1,7 +1,7 @@
 import { withControl } from '.';
-import { FunctionComponent, JSX, JSXProps } from '../../jsx/jsx-runtime';
+import { FunctionComponent, JSX } from '../../jsx/jsx-runtime';
 
-export interface FragmentProps extends JSXProps { }
+export interface FragmentProps extends JSX.Props { }
 
 export const Fragment: FunctionComponent<FragmentProps> = ({ children, ...rest }: FragmentProps): JSX.Element => ({
   type: 'fragment',

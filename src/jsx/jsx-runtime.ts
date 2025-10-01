@@ -1,13 +1,23 @@
 import { FragmentProps, ImageProps, PanelProps, TextProps } from '../core/components';
 
-export interface Node<P extends JSXProps = JSXProps> {
+interface NativeNode<P extends JSX.Props = JSX.Props> {
   type: string;
   props: P;
-  children?: JSXNode[];
+  children?: JSX.Node;
 }
 
-export declare namespace JSX {
-  export type Element = Node;
+export namespace JSX {
+  export type Element = NativeNode;
+
+  export type Node = Element | Element[] | null | undefined;
+  export type Props = Record<string, unknown> & { children?: Node };
+
+  interface ElementAttributesProperty {
+    props: Props;
+  }
+  interface ElementChildrenAttribute {
+    children: Node;
+  }
 
   export type IntrinsicElements = {
     Fragment: FragmentProps;
@@ -17,18 +27,16 @@ export declare namespace JSX {
   };
 }
 
-export type JSXNode = JSX.Element | JSX.Element[] | null | undefined;
 // TODO SERIALIZABLE PROPS
-export type JSXProps = Record<string, unknown> & { children?: JSXNode };
 
-export type FunctionComponent<P extends JSXProps = JSXProps> = (props: P) => JSX.Element;
+export type FunctionComponent<P extends JSX.Props = JSX.Props> = (props: P) => JSX.Element;
 
 /**
  * JSX runtime function for production mode (jsx/jsxs)
  */
 export function renderJSX(
   tag: FunctionComponent,
-  props: JSXProps | null,
+  props: JSX.Props,
 ): JSX.Element {
   return tag(props || {});
 }

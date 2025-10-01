@@ -1,4 +1,4 @@
-import { JSXProps } from '../../jsx/jsx-runtime';
+import { JSX } from '../../jsx/jsx-runtime';
 import { ReservedBytes } from '../../types';
 import { reserveBytes } from '../serializer';
 
@@ -7,7 +7,7 @@ export { Image, type ImageProps } from './Image';
 export { Panel, type PanelProps } from './Panel';
 export { Text, type TextProps } from './Text';
 
-export interface ControlProps extends JSXProps {
+export interface ControlProps extends JSX.Props {
   // All positioning and sizing values are numbers, will not support string types like "100px", "100%", "100%c"... too much issues in json ui
   // All mandatory as we are going to go with fixed absolute sizing and positioning
   width: number;
@@ -32,9 +32,8 @@ export interface ControlProps extends JSXProps {
  * All JSON UI components need at least these values as they define the base control properties.
  *
  * SERIALIZATION ORDER (must match control.json deserialization):
- * After protocol header (9 bytes: "bcuiv0001"), fields are deserialized in this exact order:
+ * After protocol header (9 bytes: "bcuiv0001") and type (string, 35 bytes), fields are serialized in this exact order:
  *
- * Field 0: type (string, 35 bytes) - component type identifier
  * Field 1: width (number, 27 bytes) - element width
  * Field 2: height (number, 27 bytes) - element height
  * Field 3: x (number, 27 bytes) - horizontal position
@@ -54,7 +53,7 @@ export interface ControlProps extends JSXProps {
  * @param props Component properties extending ControlProps
  * @returns Object with all control properties filled with defaults and canonical ordering
  */
-export function withControl(props: JSXProps): JSXProps {
+export function withControl(props: JSX.Props): JSX.Props {
   const {
     width,
     height,
