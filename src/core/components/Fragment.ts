@@ -5,6 +5,8 @@ export interface FragmentProps extends JSX.Props { }
 
 export const Fragment: FunctionComponent<FragmentProps> = ({ children, ...rest }: FragmentProps): JSX.Element => ({
   type: 'fragment',
-  props: { ...withControl(rest) },
-  children,
+  props: {
+    ...withControl(rest),
+    children
+  },
 });

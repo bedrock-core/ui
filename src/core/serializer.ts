@@ -1,6 +1,6 @@
-import { Logger } from 'src/util';
+import { Logger } from '../util';
 import { JSX } from '../jsx';
-import { CoreUIFormData, ReservedBytes, SerializationError } from './types';
+import { CoreUIFormData, ReservedBytes, SerializablePrimitive, SerializableProps, SerializationError } from './types';
 
 /**
  * This makes each full field substring unique even when two field values & padding are identical.
@@ -181,12 +181,49 @@ export function reserveBytes(bytes: number): ReservedBytes {
 }
 
 /**
+ * Type guard to check if a value is a SerializablePrimitive
+ */
+function isSerializablePrimitive(value: unknown): value is SerializablePrimitive {
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return true;
+  }
+
+  // Check for ReservedBytes object
+  if (typeof value === 'object' && value !== null && value !== undefined && '__type' in value) {
+    return (value as ReservedBytes).__type === 'reserved';
+  }
+
+  return false;
+}
+
+/**
  * Serialize a JSX element and its children into the provided form.
  * @param element - JSX element to serialize
  * @param form - Form data to populate
  */
-export function serialize({ type, props, children }: JSX.Element, form: CoreUIFormData): void {
-  const [payload, bytes] = serializeProps({ type, ...props });
+export function serialize({ type, props: { children, ...rest } }: JSX.Element, form: CoreUIFormData): void {
+  // Validate and filter props - ensure all props (except children) are serializable
+  const serializableProps: SerializableProps = {};
+  const invalidProps: string[] = [];
+
+  for (const [key, value] of Object.entries(rest)) {
+    if (isSerializablePrimitive(value)) {
+      serializableProps[key] = value;
+    } else {
+      invalidProps.push(`${key} (type: ${typeof value}, value: ${JSON.stringify(value)})`);
+    }
+  }
+
+  // Throw error if any non-serializable props were found
+  if (invalidProps.length > 0) {
+    throw new SerializationError(
+      `Component "${type}" has non-serializable props. All props must be primitives (string, number, boolean) or ReservedBytes. ` +
+      `Invalid props: ${invalidProps.join(', ')}. ` +
+      `Ensure all optional props have default values in the component definition.`
+    );
+  }
+
+  const [payload, bytes] = serializeProps({ type, ...serializableProps });
 
   Logger.log(`[serialize] type=${type} payloadBytes=${bytes} payload=${payload} `);
 
@@ -224,10 +261,10 @@ export function serialize({ type, props, children }: JSX.Element, form: CoreUIFo
  * @param component - Component type and props
  * @returns [serialized component string, total byte length]
  */
-function serializeProps({ type, ...props }: JSX.Props & { type: string }): [string, number] {
+function serializeProps({ type, ...props }: SerializableProps & { type: string }): [string, number] {
   let totalBytes = 0;
 
-  const segments = Object.entries({ type, ...props }).map(([key, value]: [string, unknown], index: number): string => {
+  const segments = Object.entries({ type, ...props }).map(([key, value]: [string, SerializablePrimitive], index: number): string => {
     let core: string;
     let widthBytes: number;
     let rawStr: string;
@@ -240,11 +277,11 @@ function serializeProps({ type, ...props }: JSX.Props & { type: string }): [stri
       rawStr = value.toString();
       core = `${TYPE_PREFIX.n}:${padToByteLength(rawStr, TYPE_WIDTH.n)}`;
       widthBytes = FULL_WIDTH.n;
-      // } else if (typeof value === 'object' && value !== null && value.__type === 'reserved') {
-      //   rawStr = '';
-      //   // Do not append prefix as we do not have prefix or marker for reserved bytes for easier JSON UI skipping
-      //   core = `${PAD_CHAR.repeat(value.bytes - 1)}`; // -1 for marker
-      //   widthBytes = value.bytes;
+    } else if (typeof value === 'object' && value.__type === 'reserved') {
+      rawStr = '';
+      // Do not append prefix as we do not have prefix or marker for reserved bytes for easier JSON UI skipping
+      core = `${PAD_CHAR.repeat(value.bytes - 1)}`; // -1 for marker
+      widthBytes = value.bytes;
     } else if (typeof value === 'string') {
       rawStr = value;
       core = `${TYPE_PREFIX.s}:${padToByteLength(rawStr, TYPE_WIDTH.s)}`;

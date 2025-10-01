@@ -29,3 +29,12 @@ export {
 
 // Rendering
 export { render } from './render';
+
+// Types
+export type {
+  CoreUIFormData,
+  ReservedBytes,
+  SerializablePrimitive,
+  SerializableProps,
+  SerializationError,
+} from './types';

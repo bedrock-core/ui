@@ -21,13 +21,19 @@ export {
   PROTOCOL_HEADER_LENGTH,
 } from './core';
 
-// Component types
 export type {
+  // Component types
   FragmentProps,
   ImageProps,
   PanelProps,
   TextProps,
   ControlProps,
+  // Types
+  CoreUIFormData,
+  ReservedBytes,
+  SerializablePrimitive,
+  SerializableProps,
+  SerializationError,
 } from './core';
 
 // JSX Runtime

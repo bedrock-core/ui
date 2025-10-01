@@ -1,33 +1,15 @@
-import { FragmentProps, ImageProps, PanelProps, TextProps } from '../core';
+import { SerializablePrimitive } from '../core';
 
 interface NativeNode<P extends JSX.Props = JSX.Props> {
   type: string;
   props: P;
-  children?: JSX.Node;
 }
 
 export namespace JSX {
   export type Element = NativeNode;
-
   export type Node = Element | Element[] | null | undefined;
-  export type Props = Record<string, unknown> & { children?: Node };
-
-  interface ElementAttributesProperty {
-    props: Props;
-  }
-  interface ElementChildrenAttribute {
-    children: Node;
-  }
-
-  export type IntrinsicElements = {
-    Fragment: FragmentProps;
-    Panel: PanelProps;
-    Text: TextProps;
-    Image: ImageProps;
-  };
+  export type Props = { [key: string]: SerializablePrimitive | Node | undefined } & { children?: Node };
 }
-
-// TODO SERIALIZABLE PROPS
 
 export type FunctionComponent<P extends JSX.Props = JSX.Props> = (props: P) => JSX.Element;
 

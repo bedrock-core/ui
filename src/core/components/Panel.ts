@@ -9,6 +9,8 @@ export interface PanelProps extends ControlProps {
 
 export const Panel: FunctionComponent<PanelProps> = ({ children, ...rest }: PanelProps): JSX.Element => ({
   type: 'panel',
-  props: { ...withControl(rest) },
-  children,
+  props: {
+    ...withControl(rest),
+    children
+  },
 });

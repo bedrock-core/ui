@@ -17,5 +17,8 @@ export interface TextProps extends ControlProps {
 
 export const Text: FunctionComponent<TextProps> = ({ value, ...rest }: TextProps): JSX.Element => ({
   type: 'text',
-  props: { ...withControl(rest), value: value ?? '' },
+  props: {
+    ...withControl(rest),
+    value: value ?? ''
+  },
 });

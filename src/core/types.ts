@@ -4,7 +4,6 @@ import { ModalFormData } from '@minecraft/server-ui';
 // we might add support for other form types
 export type CoreUIFormData = ModalFormData;
 
-
 export type ReservedBytes = {
 
   /* @internal */
@@ -13,6 +12,8 @@ export type ReservedBytes = {
 };
 
 export type SerializablePrimitive = string | number | boolean | ReservedBytes;
+
+export type SerializableProps = Record<string, SerializablePrimitive>;
 
 export class SerializationError extends Error {
   constructor(message: string) {
