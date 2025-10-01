@@ -55,9 +55,9 @@ export async function render(player: Player, component: JSXNode): Promise<void> 
 
   form.title(PROTOCOL_HEADER);
 
-  // TODO Serialize the component and append values to form
-  // the serialization should be enough
-  // const result = serialize(component);
+  console.log(JSON.stringify(component));
+
+  // serialize(component, form);
 
   form.show(player).then((): void => {
     // Form shown successfully
@@ -71,4 +71,8 @@ export async function render(player: Player, component: JSXNode): Promise<void> 
 
     throw error;
   });
+}
+
+export function renderDev(component: JSXNode): void {
+  console.log(JSON.stringify(component));
 }

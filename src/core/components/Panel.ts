@@ -1,6 +1,6 @@
 
-import { ControlProps } from '.';
-import { FunctionComponent, JSX, JSXNode } from '../../jsx';
+import { ControlProps, withControl } from '.';
+import { FunctionComponent, JSX } from '../../jsx';
 
 export interface PanelProps extends ControlProps {
   // Future idea
@@ -8,8 +8,8 @@ export interface PanelProps extends ControlProps {
   // orientation?: 'vertical' | 'horizontal';
 }
 
-export const Panel: FunctionComponent<PanelProps> = (props: PanelProps, children: JSXNode[]): JSX.Element => ({
+export const Panel: FunctionComponent<PanelProps> = ({ children, ...rest }: PanelProps): JSX.Element => ({
   type: 'panel',
-  props,
+  props: { ...withControl(rest) },
   children,
 });

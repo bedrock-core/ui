@@ -19,21 +19,18 @@ export declare namespace JSX {
 
 export type JSXNode = JSX.Element | JSX.Element[] | null | undefined;
 // TODO SERIALIZABLE PROPS
-export type JSXProps = Record<string, unknown>;
+export type JSXProps = Record<string, unknown> & { children?: JSXNode };
 
-export type FunctionComponent<P extends JSXProps = JSXProps> = (
-  props: P,
-  children: JSXNode[]
-) => JSX.Element;
+export type FunctionComponent<P extends JSXProps = JSXProps> = (props: P) => JSX.Element;
 
+/**
+ * JSX runtime function for production mode (jsx/jsxs)
+ */
 export function renderJSX(
   tag: FunctionComponent,
-  props: JSXProps,
-  ...children: JSXNode[]
+  props: JSXProps | null,
 ): JSX.Element {
-  const flattenedChildren = ([] as JSXNode[]).concat(...children).filter(c => c != null && c !== undefined);
-
-  return tag(props, flattenedChildren);
+  return tag(props || {});
 }
 
 // Export factories

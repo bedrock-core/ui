@@ -1,11 +1,11 @@
 import { JSXProps } from '../../jsx/jsx-runtime';
-import { ReservedBytes, SerializableComponent } from '../../types';
+import { ReservedBytes } from '../../types';
 import { reserveBytes } from '../serializer';
 
 export { Fragment, type FragmentProps } from './Fragment';
+export { Image, type ImageProps } from './Image';
 export { Panel, type PanelProps } from './Panel';
 export { Text, type TextProps } from './Text';
-export { Image, type ImageProps } from './Image';
 
 export interface ControlProps extends JSXProps {
   // All positioning and sizing values are numbers, will not support string types like "100px", "100%", "100%c"... too much issues in json ui
@@ -54,9 +54,8 @@ export interface ControlProps extends JSXProps {
  * @param props Component properties extending ControlProps
  * @returns Object with all control properties filled with defaults and canonical ordering
  */
-export function withControl(props: SerializableComponent): Required<SerializableComponent> {
+export function withControl(props: JSXProps): JSXProps {
   const {
-    type,
     width,
     height,
     x,
@@ -67,13 +66,10 @@ export function withControl(props: SerializableComponent): Required<Serializable
     alpha,
     inheritMaxSiblingWidth,
     inheritMaxSiblingHeight,
-    // rest of props are the props specific to the component, which will be appended at the end
-    ...rest
   } = props;
 
   // Create object with properties in exact canonical order for stable serialization
   return {
-    type,
     width,
     height,
     x,
@@ -86,7 +82,5 @@ export function withControl(props: SerializableComponent): Required<Serializable
     inheritMaxSiblingWidth: inheritMaxSiblingWidth ?? false,
     inheritMaxSiblingHeight: inheritMaxSiblingHeight ?? false,
     __reserved: reserveBytes(274), // Reserve space for future expansion
-    // rest of props are the props specific to the component, which will be appended at the end
-    ...rest,
   };
 }

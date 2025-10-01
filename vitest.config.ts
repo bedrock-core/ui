@@ -9,5 +9,9 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.{test,spec}.ts', 'src/**/__tests__/**/*.ts'],
+    alias: {
+      '@minecraft/server': new URL('./src/__mocks__/@minecraft/server.ts', import.meta.url).pathname,
+      '@minecraft/server-ui': new URL('./src/__mocks__/@minecraft/server-ui.ts', import.meta.url).pathname,
+    },
   },
 });

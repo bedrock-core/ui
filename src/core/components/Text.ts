@@ -1,4 +1,4 @@
-import { ControlProps } from '.';
+import { ControlProps, withControl } from '.';
 import { FunctionComponent, JSX } from '../../jsx';
 
 export interface TextStyle {
@@ -15,7 +15,7 @@ export interface TextProps extends ControlProps {
   // textStyle?: TextStyle;
 }
 
-export const Text: FunctionComponent<TextProps> = ({ value }: TextProps): JSX.Element => ({
+export const Text: FunctionComponent<TextProps> = ({ value, ...rest }: TextProps): JSX.Element => ({
   type: 'text',
-  props: { value: value ?? '' },
+  props: { ...withControl(rest), value: value ?? '' },
 });

@@ -1,5 +1,5 @@
-import { ReservedBytes, SerializableComponent, SerializablePrimitive, SerializableString, SerializationError } from '../types/serialization';
-import { withControl } from './components';
+import { JSX } from '@bedrock-core/ui/jsx/jsx-runtime';
+import { ReservedBytes, SerializableString, SerializationError } from '../types/serialization';
 
 /**
  * This makes each full field substring unique even when two field values & padding are identical.
@@ -195,14 +195,10 @@ export function serializeString(value: string, maxBytes?: number): SerializableS
  * @param component - The component data to serialize
  * @returns [serialized component string, total byte length]
  */
-export function serialize(props: SerializableComponent): [string, number] {
-  const { type, ...rest } = withControl(props);
-
-  const entries = Object.entries<SerializablePrimitive>({ type, ...rest });
-
+export function serialize({ type, props, children }: JSX.Element): [string, number] {
   let totalBytes = 0;
 
-  const segments = entries.map(([key, value]: [string, SerializablePrimitive], index: number): string => {
+  const segments = Object.entries({ type, ...props }).map(([key, value]: [string, unknown], index: number): string => {
     let core: string;
     let widthBytes: number;
     let rawStr: string;
@@ -215,14 +211,14 @@ export function serialize(props: SerializableComponent): [string, number] {
       rawStr = value.toString();
       core = `${TYPE_PREFIX.n}:${padToByteLength(rawStr, TYPE_WIDTH.n)}`;
       widthBytes = FULL_WIDTH.n;
-    } else if (typeof value === 'object' && value !== null && value.__type === 'reserved') {
-      rawStr = '';
-      // Do not append prefix as we do not have prefix or marker for reserved bytes for easier JSON UI skipping
-      core = `${PAD_CHAR.repeat(value.bytes - 1)}`; // -1 for marker
-      widthBytes = value.bytes;
-    } else if (typeof value === 'object' && value !== null && value.__type === 'serializable_string') {
-      rawStr = value.value;
-      core = `${TYPE_PREFIX.s}:${padToByteLength(value.value, value.maxBytes ?? TYPE_WIDTH.s)}`;
+      // } else if (typeof value === 'object' && value !== null && value.__type === 'reserved') {
+      //   rawStr = '';
+      //   // Do not append prefix as we do not have prefix or marker for reserved bytes for easier JSON UI skipping
+      //   core = `${PAD_CHAR.repeat(value.bytes - 1)}`; // -1 for marker
+      //   widthBytes = value.bytes;
+    } else if (typeof value === 'string') {
+      rawStr = value;
+      core = `${TYPE_PREFIX.s}:${padToByteLength(rawStr, TYPE_WIDTH.s)}`;
       widthBytes = FULL_WIDTH.s;
     } else if (typeof value === 'string') {
       throw new SerializationError(`serialize(): unsuported native strings use serializeString(value: string, maxBytes?: number) for property "${key}"`);
@@ -243,6 +239,20 @@ export function serialize(props: SerializableComponent): [string, number] {
   const finalBytes = totalBytes + utf8ByteLength(prefix);
 
   // Logger.log(`[serialize] header=${prefix} fields=${entries.length} payloadBytes=${finalBytes}`);
+
+  if (Array.isArray(children)) {
+    children.forEach(child => {
+      if (child) {
+        const [childStr, childBytes] = serialize(child);
+        totalBytes += childBytes;
+        // result += childStr;
+      }
+    });
+  } else if (children) {
+    const [childStr, childBytes] = serialize(children);
+    totalBytes += childBytes;
+    // result += childStr;
+  }
 
   return [result, finalBytes];
 }
