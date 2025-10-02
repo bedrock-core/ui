@@ -206,7 +206,7 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
  * @param component - Component type and props
  * @returns [serialized component string, total byte length]
  */
-function serializeProps({ type, ...props }: SerializableProps & { type: string }): [string, number] {
+export function serializeProps({ type, ...props }: SerializableProps & { type: string }): [string, number] {
   let totalBytes = 0;
 
   const segments = Object.entries({ type, ...props }).map(([key, value]: [string, SerializablePrimitive], index: number): string => {

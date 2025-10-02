@@ -1,31 +1,32 @@
-/**
- * Tiny toggleable console wrapper.
- * Flip LOGS_ENABLED to silence or allow logs.
- * Simplified to string because Minecraft Bedrock Edition console does not support complex objects.
- */
+export class Logger {
+  static enabled: boolean = false;
 
-export const LOGS_ENABLED = true;
+  static configure(enabled: boolean): void {
+    Logger.enabled = enabled;
+  }
 
-export const Logger = {
-  log(args: string): void {
-    if (!LOGS_ENABLED) return;
+  static log(args: string): void {
+    if (!Logger.enabled) return;
     console.log(args);
-  },
-  info(args: string): void {
-    if (!LOGS_ENABLED) return;
-    console.info(args);
-  },
-  warn(args: string): void {
-    if (!LOGS_ENABLED) return;
-    console.warn(args);
-  },
-  error(args: string): void {
-    if (!LOGS_ENABLED) return;
-    console.error(args);
-  },
-  debug(args: string): void {
-    if (!LOGS_ENABLED) return;
-    console.debug(args);
-  },
-};
+  }
 
+  static info(args: string): void {
+    if (!Logger.enabled) return;
+    console.info(args);
+  }
+
+  static warn(args: string): void {
+    if (!Logger.enabled) return;
+    console.warn(args);
+  }
+
+  static error(args: string): void {
+    if (!Logger.enabled) return;
+    console.error(args);
+  }
+
+  static debug(args: string): void {
+    if (!Logger.enabled) return;
+    console.debug(args);
+  }
+}

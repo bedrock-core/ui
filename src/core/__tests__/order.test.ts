@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Panel } from '../components/Panel';
-import { PROTOCOL_HEADER, FULL_WIDTH, TYPE_WIDTH, TYPE_PREFIX, FIELD_MARKERS, serializeString } from '../serializer';
+import { PROTOCOL_HEADER, FULL_WIDTH, TYPE_WIDTH, TYPE_PREFIX, FIELD_MARKERS, serialize } from '../serializer';
 
 // This test guards the ordering of serialized fields for Panel (and by extension
 // any component using the same withControl pattern). If ordering changes
@@ -62,13 +62,15 @@ describe('Serialization field order', () => {
     const captured: string[] = [];
     const mockForm = { label: (t: string) => captured.push(t) } as unknown as import('@minecraft/server-ui').ModalFormData;
 
-    Panel({
+    const element = Panel({
       width: 250.5,
       height: 150.75,
       x: 10.25,
       y: 20.5,
       children: [],
-    }).serialize(mockForm);
+    });
+
+    serialize(element, mockForm);
 
     expect(captured.length).toBe(1);
     const payload = captured[0];
@@ -155,9 +157,8 @@ describe('Serialization field order', () => {
 
     // Deliberately shuffled property order in the object literal to ensure
     // serialization ordering logic (from helper composition) dominates.
-    Panel({
+    const element = Panel({
       children: [],
-      // @ts-expect-error temporal disabled, still in the props
       layer: 3,
       y: 99.75,
       width: 300.25,
@@ -167,7 +168,9 @@ describe('Serialization field order', () => {
       enabled: true,
       height: 200.5,
       inheritMaxSiblingWidth: true,
-    }).serialize(mockForm);
+    });
+
+    serialize(element, mockForm);
 
     expect(captured.length).toBe(1);
     const payload = captured[0];
@@ -226,15 +229,15 @@ describe('Serialization field order', () => {
     expect(f11.slice(0, -1)).toBe(';'.repeat(274 - 1));
   });
 
-  it('emits fields in stable order when unknown properties are mixed in', () => {
+  it('emits fields in stable order - unknown properties are filtered out by withControl', () => {
     const captured: string[] = [];
     const mockForm = { label: (t: string) => captured.push(t) } as unknown as import('@minecraft/server-ui').ModalFormData;
 
-    // Test with unknown/non-existent properties mixed between valid ones
-    // to ensure field ordering stability. Unknown properties that are primitives
-    // will be serialized, while the canonical fields maintain their order.
+    // Test with unknown/non-existent properties mixed between valid ones.
+    // WithControl() only extracts canonical control fields, so unknown properties
+    // will be filtered out, ensuring stable serialization with only known fields.
     const panelWithUnknownProps = {
-      unknownString: serializeString('extra-string-prop'),
+      unknownString: 'extra-string-prop',
       width: 400.5,
       unknownNumber: 42,
       height: 300.25,
@@ -243,27 +246,21 @@ describe('Serialization field order', () => {
       y: 75.5,
       children: [],
       visible: false,
-      anotherUnknownString: serializeString('another-extra'),
+      anotherUnknownString: 'another-extra',
       enabled: true,
       layer: 5,
       unknownFloat: 3.14,
       inheritMaxSiblingWidth: true,
       inheritMaxSiblingHeight: false,
-      finalUnknownProp: serializeString('end-value'),
+      finalUnknownProp: 'end-value',
     };
 
-    Panel(panelWithUnknownProps as Parameters<typeof Panel>[0]).serialize(mockForm);
+    const element = Panel(panelWithUnknownProps as Parameters<typeof Panel>[0]);
+    serialize(element, mockForm);
 
     expect(captured.length).toBe(1);
     const payload = captured[0];
     expect(payload.startsWith(PROTOCOL_HEADER)).toBe(true);
-
-    // Unknown properties ARE actually serialized by withControledLayout (they get spread in ...rest)
-    // However, the canonical fields defined by withControledLayout should still appear first
-    // in their stable order, followed by the unknown properties in object insertion order.
-
-    // Expected canonical fields first: type, width, height, x, y, visible, enabled, layer, inheritMaxSiblingWidth, inheritMaxSiblingHeight, __reserved
-    // Then unknown fields in their object insertion order: unknownString, unknownNumber, unknownBool, anotherUnknownString, unknownFloat, finalUnknownProp
 
     // Calculate canonical fields size including reserved fields
     let canonicalSize = PROTOCOL_HEADER.length;
@@ -275,9 +272,12 @@ describe('Serialization field order', () => {
         canonicalSize += FULL_WIDTH[FIELD_PLAN[i]];
       }
     }
-    expect(payload.length).toBeGreaterThan(canonicalSize);
 
-    // The first 11 fields should be the canonical ones in stable order (including 1 reserved field)
+    // WithControl filters out unknown properties, so payload should be exactly canonical size
+    expect(payload.length).toBe(canonicalSize);
+    expect(payload.length).toBe(512); // Standard allocation with control fields only
+
+    // Verify all canonical fields are present in stable order
     const f0 = slice(payload, 0); // type
     expect(corePadded(f0, 's').startsWith('panel')).toBe(true);
 
@@ -316,56 +316,5 @@ describe('Serialization field order', () => {
     expect(f11.endsWith(FIELD_MARKERS[11])).toBe(true);
     // Should be 274-1 padding chars (1 for marker)
     expect(f11.slice(0, -1)).toBe(';'.repeat(274 - 1));
-
-    // Now verify that unknown properties appear in their insertion order after canonical fields
-    // Expected insertion order from the panelWithUnknownProps object:
-    // unknownString, unknownNumber, unknownBool, anotherUnknownString, unknownFloat, finalUnknownProp
-
-    // Calculate offset after canonical fields (including reserved fields) to slice the unknown properties
-    let unknownOffset = canonicalSize; // Use the canonicalSize calculated above
-
-    // Field 11: unknownString ('extra-string-prop') - first unknown property
-    const u0 = payload.slice(unknownOffset, unknownOffset + FULL_WIDTH.s);
-    expect(u0.startsWith(`${TYPE_PREFIX.s}:`)).toBe(true);
-    expect(corePadded(u0, 's').startsWith('extra-string-prop')).toBe(true);
-    unknownOffset += FULL_WIDTH.s;
-
-    // Field 12: unknownNumber (42) - second unknown property
-    const u1 = payload.slice(unknownOffset, unknownOffset + FULL_WIDTH.n);
-    expect(u1.startsWith(`${TYPE_PREFIX.n}:`)).toBe(true);
-    expect(corePadded(u1, 'n').startsWith('42')).toBe(true);
-    unknownOffset += FULL_WIDTH.n;
-
-    // Field 13: unknownBool (true) - third unknown property
-    const u2 = payload.slice(unknownOffset, unknownOffset + FULL_WIDTH.b);
-    expect(u2.startsWith(`${TYPE_PREFIX.b}:`)).toBe(true);
-    expect(corePadded(u2, 'b').startsWith('true')).toBe(true);
-    unknownOffset += FULL_WIDTH.b;
-
-    // Field 14: anotherUnknownString ('another-extra') - fourth unknown property
-    const u3 = payload.slice(unknownOffset, unknownOffset + FULL_WIDTH.s);
-    expect(u3.startsWith(`${TYPE_PREFIX.s}:`)).toBe(true);
-    expect(corePadded(u3, 's').startsWith('another-extra')).toBe(true);
-    unknownOffset += FULL_WIDTH.s;
-
-    // Field 15: unknownFloat (3.14) - fifth unknown property
-    const u4 = payload.slice(unknownOffset, unknownOffset + FULL_WIDTH.n);
-    expect(u4.startsWith(`${TYPE_PREFIX.n}:`)).toBe(true);
-    expect(corePadded(u4, 'n').startsWith('3.14')).toBe(true);
-    unknownOffset += FULL_WIDTH.n;
-
-    // Field 16: finalUnknownProp ('end-value') - sixth unknown property
-    const u5 = payload.slice(unknownOffset, unknownOffset + FULL_WIDTH.s);
-    expect(u5.startsWith(`${TYPE_PREFIX.s}:`)).toBe(true);
-    expect(corePadded(u5, 's').startsWith('end-value')).toBe(true);
-    unknownOffset += FULL_WIDTH.s;
-
-    // Verify that we've consumed the entire payload
-    expect(unknownOffset).toBe(payload.length);
-
-    // The key insight: despite unknown properties being mixed in the input object,
-    // the withControl function ensures the canonical fields maintain their
-    // stable order at the beginning of the serialized payload, followed by unknown
-    // properties in their object insertion order.
   });
 });
