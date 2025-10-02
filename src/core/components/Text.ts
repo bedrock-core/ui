@@ -1,9 +1,5 @@
-import { ControlProps } from '.';
-import { CoreUIFormData } from '../../types';
-import type { Component } from '../../types/component';
-import { SerializableComponent } from '../../types/serialization';
-import { Logger } from '../../util/Logger';
-import { serialize, serializeString } from '../serializer';
+import { ControlProps, withControl } from './control';
+import { FunctionComponent, JSX } from '../../jsx';
 
 export interface TextStyle {
   // Not working currently
@@ -19,25 +15,10 @@ export interface TextProps extends ControlProps {
   // textStyle?: TextStyle;
 }
 
-export function Text({ value, ...rest }: TextProps): Component {
-  return {
-    serialize: (form: CoreUIFormData): void => {
-      const serializable: SerializableComponent = {
-        // Core identity
-        type: serializeString('text'),
-        // Properties
-        // shadow: textStyle?.shadow ?? false,
-        // fontSize: serializeString(textStyle?.fontSize ?? 'normal'),
-        // fontType: serializeString(textStyle?.fontType ?? 'default'),
-        text: serializeString(value ?? ''),
-        ...rest,
-      };
-
-      const [result, bytes] = serialize(serializable);
-
-      Logger.info(`Serializing text: bytes=${bytes}, result=${result}`);
-
-      form.label(result);
-    },
-  };
-}
+export const Text: FunctionComponent<TextProps> = ({ value, ...rest }: TextProps): JSX.Element => ({
+  type: 'text',
+  props: {
+    ...withControl(rest),
+    value: value ?? '',
+  },
+});

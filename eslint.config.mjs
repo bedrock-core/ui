@@ -21,6 +21,7 @@ export default defineConfig([
 
   {
     files: ["**/*.ts"],
+    ignores: ["**/*.d.ts"],
     plugins: { "@stylistic": stylistic, "@typescript-eslint": tseslint.plugin },
 
     languageOptions: {
@@ -145,7 +146,7 @@ export default defineConfig([
         },
         {
           selector: ["objectLiteralProperty", "typeProperty"],
-          format: ["camelCase", "snake_case", "UPPER_CASE"],
+          format: ["camelCase", "snake_case", "UPPER_CASE", "PascalCase"],
           leadingUnderscore: "allowDouble",
         },
         {

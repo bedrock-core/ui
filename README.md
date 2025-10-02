@@ -6,23 +6,23 @@
 >
 > This is not ready for production use.
 
-Custom UI system for Minecraft Bedrock that serializes declarative component trees into compact strings. A companion JSON UI resource pack decodes these payloads to render rich UIs beyond native `@minecraft/server-ui` limitations.
+Custom UI system for Minecraft Bedrock that uses JSX to build declarative component trees. Components serialize into compact strings that a companion JSON UI resource pack decodes to render rich UIs beyond native `@minecraft/server-ui` limitations.
 
-![Logo](./assets/preview.png)
+![Preview](./assets/preview.png)
 
 ---
 
 ## Why?
 
-Working directly with JSON UI involves complex bindings, variables, and formatting challenges. This library abstracts away those complexities, letting you focus on building UIs declaratively.
+Working directly with JSON UI involves complex bindings, variables, and formatting challenges. This library abstracts away those complexities with a familiar JSX-based component model.
 
 ## ✨ Core Idea
 
 Native forms expose only a handful of text slots (`title_text`, `form_button_text`, `custom_text`, etc.). These strings can be read via JSON UI binding expressions. We exploit this by:
 
-1. Building a declarative component tree (`Panel`, `Text`, `Image`, etc.)
-2. Serializing compact fixed-width field segments into a single string
-3. Injecting that payload into a each form component
+1. Building declarative component trees using JSX (`<Panel>`, `<Text>`, `<Image>`, etc.)
+2. Serializing compact fixed-width field segments into a single string per component
+3. Injecting that payload into form controls via `form.label()` calls
 4. Having the resource pack parse segments by byte offset to drive conditional rendering
 
 Result: Advanced layouts, conditional logic, and style variants without custom networking.
@@ -31,17 +31,17 @@ Result: Advanced layouts, conditional logic, and style variants without custom n
 
 | Layer | Responsibility | Key Files |
 |-------|----------------|-----------|
-| Component Factories | Pure functions returning `Component` objects | `src/core/components/*.ts` |
-| Type Contracts | Component interfaces and serialization types | `src/types/*.ts` |
+| JSX Runtime | Transforms JSX to `{ type, props }` elements | `src/jsx/jsx-runtime.ts` |
+| Component Functions | Pure functions returning `JSX.Element` objects | `src/core/components/*.ts` |
 | Serialization Protocol | UTF‑8 fixed-width, semicolon-padded segments | `src/core/serializer.ts` |
-| Presentation Adapter | Inject serialized payload + register form controls | `src/index.ts` |
+| Rendering Adapter | Injects serialized payload + registers form controls | `src/core/render.ts` |
 | Resource Pack | JSON UI decoders that parse the serialized data | `assets/RP/` |
 
 ### 🔄 Component Routing System
 
 The system uses a routing architecture to handle different component types:
 
-**For Client-Only Components** (`Panel`, `Text`, `Image`):
+**For Client-Only Components** (`Panel`, `Text`, `Image`, `Fragment`):
 
 1. All serialized data gets injected via `form.label()` calls
 2. The `screen_container.json` factory maps `"label"` entries to `@core-ui_common.component_router`
@@ -49,13 +49,13 @@ The system uses a routing architecture to handle different component types:
 4. Each component JSON file (e.g., `panel.json`) uses conditional bindings: `(#type = 'panel') and #visible` to determine if it should render
 5. Only the matching component type renders, others remain invisible
 
-**For Native Form Components** (`Input`, `Toggle`, `Slider`, `Dropdown`):
+**For Native Form Components** (not yet implemented):
 
-- These bypass the router and use their dedicated factory control IDs
+- These will bypass the router and use their dedicated factory control IDs
 - `"toggle": "@server_form.custom_toggle"`, `"input": "@server_form.custom_input"`, etc.
-- They still use the same serialization protocol for consistency
+- They will still use the same serialization protocol for consistency
 
-This "label-as-entry-point" system allows unlimited custom components while leveraging Minecraft's native form factory system for interactive elements.
+This "label-as-entry-point" system allows unlimited custom components while leveraging Minecraft's native form factory system for future interactive elements.
 
 ## 📦 Installation
 
@@ -65,84 +65,93 @@ yarn add @bedrock-core/ui
 
 **Requirements:** `@minecraft/server` ≥ 2.1.0, `@minecraft/server-ui` ≥ 2.0.0
 
-Add the companion resource pack as a dependency of your addon and include it in your .mcaddon
+Download the companion resource pack from the [releases page](https://github.com/bedrock-core/ui/releases) and add it as a dependency in your behavior pack's `manifest.json`:
 
 ```json
 {
   "dependencies": [
     {
         "uuid": "761ecd37-ad1c-4a64-862a-d6cc38767426",
-        "version": [
-            0,
-            1,
-            0
-        ]
+        "version": [0, 1, 0]
     }
   ]
 }
 ```
 
+Include the resource pack in your `.mcaddon`:
+
 ```txt
 pack.mcaddon
-├── RP/
-├── BP/
-└── core-ui.mcpack
+├── RP/                     (your addon's resource pack)
+├── BP/                     (your addon's behavior pack)
+└── core-ui-v0.1.0.mcpack   (companion resource pack from releases)
 ```
 
 ## 🚀 Quick Start
 
-```ts
+Configure your `tsconfig.json` for JSX support:
+
+```jsonc
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "@bedrock-core/ui"
+  }
+}
+```
+
+Then use JSX to build your UI:
+
+```tsx
 import { Player } from '@minecraft/server';
-import { present, Panel, Text } from '@bedrock-core/ui';
+import { render, Panel, Text } from '@bedrock-core/ui';
 
-const ui = Panel({
-    width: 300,
-    height: 200,
-    x: 50,
-    y: 50,
-    children: [
-        Text({ 
-            width: 250,
-            height: 30,
-            x: 25,
-            y: 25,
-            value: 'Player Settings' 
-        })
-    ]
-});
+const ui = (
+  <Panel width={300} height={200} x={50} y={50}>
+    <Text 
+      width={250}
+      height={30}
+      x={25}
+      y={25}
+      value="Player Settings"
+    />
+  </Panel>
+);
 
-await present(player, ui);
+await render(player, ui);
 ```
 
 ## 🧩 Component Pattern
 
-Each factory returns a plain object describing JSON UI properties plus a `serialize` method:
+Components are pure functions that return `JSX.Element` objects (using the custom JSX runtime):
 
-```ts
-export function Panel({ children, ...rest }: PanelProps): Component {
-    return {
-        serialize: (form: CoreUIFormData): void => {
-            const serializable: SerializableComponent = {
-                type: serializeString('panel'),
-                ...rest,
-            };
-            
-            const [result, bytes] = serialize(serializable);
-            form.label(result);
-            
-            children.forEach(child => child.serialize(form));
-        },
-    };
+```tsx
+import { FunctionComponent, JSX } from '@bedrock-core/ui';
+import { ControlProps, withControl } from './control';
+
+export interface PanelProps extends ControlProps {
+  // Component-specific props go here
 }
+
+export const Panel: FunctionComponent<PanelProps> = ({ children, ...rest }: PanelProps): JSX.Element => ({
+  type: 'panel',
+  props: {
+    ...withControl(rest),  // Must be first - applies control props in canonical order
+    // Component-specific props with defaults go here after withControl
+    children,              // Children always last
+  },
+});
 ```
 
-Conventions:
+**Conventions:**
 
-- All components require `width`, `height`, `x`, `y` as we are currently using absolute positioning (no defaults)
-- Factory prop names are camelCase; emitted JSON UI keys follow snake_case
-- Use `serializeString()` for all string values - native strings throw errors
-- **All "optional" props must have defined defaults in the serialized component** - no undefined/null values allowed
-- No side-effects in factory body; all form API calls occur in `serialize`
+- All components require `width`, `height`, `x`, `y` (absolute positioning, no defaults)
+- **Props order is critical**: `withControl(rest)` must always be first in the props object, followed by component-specific props with default values, then `children` last
+- Component prop names are camelCase; JSON UI bindings use snake_case
+- Use the custom JSX runtime - no need to import React
+- **All "optional" props must have defined defaults** - no undefined/null values in serialized output
+- The `serialize()` function in `core/serializer.ts` handles the encoding automatically
+- The `withControl()` helper applies standard control properties in canonical order
 
 ## 🔐 Serialization Protocol
 
@@ -160,37 +169,35 @@ Each field is composed of three conceptual parts concatenated in this order:
 
 | Type     | Prefix | Prefix Width | Type Width | Marker Width | Full Width | Notes |
 |----------|--------|--------------|------------|--------------|------------|-------|
-| String   | `s:`   | 2            | 32         | 1            | 35         | Use `serializeString(value, maxBytes?)`. Default maxBytes = 32 |
+| String   | `s:`   | 2            | 32         | 1            | 35         | Prefer to use translation keys when text larger than 32 characters is needed |
 | Number   | `n:`   | 2            | 24         | 1            | 27         | All numbers use same format (no int/float distinction) Treat in JSON UI accordingly |
 | Boolean  | `b:`   | 2            | 5          | 1            | 8          | Serialized as `'true'` or `'false'` |
 | Reserved | `r:`   | 0            | variable   | 0            | variable   | No prefix/marker for easier JSON UI skipping |
 
 ### Markers
 
-Markers come from a stable ordered alphabet (`0-9A-Za-z`) plus `-` and `_`.
-This limits the max number of props a component might have to 64. There is no single JSON component which
-Index position = field order. If you append new fields, they receive the next marker; never reorder existing markers (backward decode offsets rely on stable sequence).
-This is to avoid the 2nd known caveat (below).
+Markers come from a stable ordered alphabet (`0-9A-Za-z-_`), limiting components to 64 props max.
+Index position = field order. Never reorder existing markers (backward decode offsets rely on stable sequence).
 
 ### Encoding Example
 
 ```ts
-import { serialize, serializeString } from '@bedrock-core/ui';
-const [encoded, bytes] = serialize({
-    type: serializeString('example'), // string → 35
-    message: serializeString('hello'), // string → 35
-    count: 123,                        // number → 27
-    ratio: 45.67,                      // number → 27
-    ok: true,                          // bool → 8
+import { serializeProps } from '@bedrock-core/ui';
+
+const [encoded, bytes] = serializeProps({
+  type: 'example',      // string → 35 bytes
+  message: 'hello',     // string → 35 bytes
+  count: 123,           // number → 27 bytes
+  ratio: 45.67,         // number → 27 bytes
+  ok: true,             // bool → 8 bytes
 });
-// Per-field widths = 35 + 35 + 27 + 27 + 8 = 132 bytes (plus 9-byte header)
-// All strings MUST use serializeString() - native strings throw errors
+// Total: 35 + 35 + 27 + 27 + 8 = 132 bytes (plus 9-byte header = 141 bytes)
 ```
 
 ### Field Binding Template Pattern (Decoding)
 
 Decoding inside the resource pack uses a progressive "slice → subtract" strategy. Each field follows a 3‑step lifecycle:
-components
+
 `extract_raw → update_remainder → extract_value`
 
 Generic template (JSON UI binding entries) — copy & replace placeholders:
@@ -210,19 +217,17 @@ Generic template (JSON UI binding entries) — copy & replace placeholders:
     "binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
     "source_property_name": "(('%.{FM_WIDTH}s' * #raw_{FIELD_NAME}) - ('%.2s' * #raw_{FIELD_NAME}) - ';')",
     "target_property_name": "#{FIELD_NAME}"
-},
+}
 ```
 
-**For reserved blocks (skip pattern):**
+**Placeholder reference:**
 
-Placeholder reference:
+- `{FIELD_NAME}` - unique identifier (e.g. `type`, `visible`)
+- `{PREV}` - previous remainder token (first field uses `header`, others use previous field name)
+- `{FULL_WIDTH}` - from table full_width column
+- `{FM_WIDTH}` - table (full_width - marker_width)
 
-- `{FIELD_NAME}` unique identifier (e.g. `type`, `visible`)
-- `{PREV}` previous remainder token (first field uses `header`, others use previous field name)
-- `{FULL_WIDTH}` from table full_width column
-- `{FM_WIDTH}` table (full_width - marker_width)
-- `{RESERVED_WIDTH}` reserved block width in bytes (e.g., 277)
-- `{RESERVED_NAME}` unique identifier
+**For reserved blocks:** Simply skip by subtracting the fixed byte count from remainder, no extraction needed.
 
 ### Base Control Properties Deserialization Order
 
@@ -249,46 +254,40 @@ Total: 512 bytes per component (fixed allocation)
 
 ### Decoding Rules & Tips
 
-- Always slice FULL field (value + prefix + marker) first, then subtract to create the remainder.
-- Strip padding only after isolating the core full segment (second slice) so you don't accidentally remove semicolons in later fields.
-- Never assume a marker character appears only once globally — its uniqueness is only relative to its position; treat the raw slice atomically.
-- Protocol extension rule: append new fields (new markers) at the end; never reorder or shrink earlier core lengths.
-- Reserved blocks are skipped entirely in deserialization—they create "gaps" in the payload that the JSON UI decoder jumps over.
-
-UTF‑8 Safety: `utf8Truncate` ensures multi‑byte characters are not cut mid sequence when enforcing byte budgets.
-
-### UTF‑8 Safety
-
-`utf8Truncate` prevents cutting surrogate pairs; always rely on helper functions.
+- Always slice FULL field (value + prefix + marker) first, then subtract to create the remainder
+- Strip padding only after isolating the core full segment (second slice) so you don't accidentally remove semicolons in later fields
+- Never assume a marker character appears only once globally—its uniqueness is only relative to its position
+- Protocol extension rule: append new fields (new markers) at the end; never reorder or shrink earlier core lengths
+- Reserved blocks are skipped entirely in deserialization—they create "gaps" in the payload that the JSON UI decoder jumps over
 
 ## ⚠️ Known Caveats
 
-- JSON UI string ops with numbers can behave unpredictably; prefix markers before numeric-derived substrings client-side.
-- Subtraction operator (`-`) removes all occurrences; use distinct prefixes to avoid collisions.
+- JSON UI string operations with numbers can behave unpredictably; use distinct prefixes/markers for safety
+- Subtraction operator (`-`) removes all occurrences; field markers prevent collisions
 
 ## 🗺 Development Roadmap
 
 ### ✅ Beta 0.1.0 - Core Foundation
 
-- ✓ Serialization protocol with UTF-8 safety
-- ✓ Base component system (`Panel`, `Text`, `Image`)
-- ✓ JSON UI resource pack decoder
-- ✓ TypeScript library with proper exports
+- ✅ Serialization protocol with UTF-8 safety
+- ✅ JSX runtime with custom component system
+- ✅ Base components (`Panel`, `Text`, `Image`, `Fragment`)
+- ✅ JSON UI resource pack decoder
+- ✅ TypeScript library with proper exports
 
-### 📋 Beta 0.2.0 - Navigation & State (?)
+### 📋 Beta 0.2.0 - Navigation & State (Planned)
 
-- Components: `Button`
-- Event handling system for button clicks
+- Component: `Button` with click events
 - Multi-screen navigation system
-- Screen parameters and state management (?)
+- Screen parameters and state management
 - Navigation hooks: `goBack()`, `navigate()`, `exit()`
 
-### 🚧 Beta 0.3.0 - Interactive Components
+### 🚧 Beta 0.3.0 - Interactive Components (Planned)
 
 - Form components: `Button`, `Input`, `Toggle`, `Slider`, `Dropdown`
 - Form submission and validation
 
-### 🎨 Beta 0.4.0 - Theming & Styling
+### 🎨 Beta 0.4.0 - Theming & Styling (Planned)
 
 - Component theming system
 - Style variants (light/dark themes)
@@ -297,11 +296,10 @@ UTF‑8 Safety: `utf8Truncate` ensures multi‑byte characters are not cut mid s
 
 ### 🚀 Future Considerations
 
-- Custom component registration
+- Custom component registration API
 - Compound components (tabs, menus, dialogs)
 - Animation support
 - Resource pack builder automation
-- TSX preprocessor support
 - Reactive data binding (if feasible)
 - Export feature for "non-form" JSON UI
 

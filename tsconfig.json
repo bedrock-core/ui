@@ -10,17 +10,25 @@
     "stripInternal": true,
     "strict": true,
     "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@bedrock-core/ui/jsx": [
+        "src/jsx/index.ts"
+      ],
+      "@bedrock-core/ui/jsx/*": [
+        "src/jsx/*"
+      ]
+    },
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "jsx": "react",
-    "jsxFactory": "jsx"
+    "jsx": "react-jsx",
+    "jsxImportSource": "@bedrock-core/ui"
   },
   "include": [
     "src/**/*"
   ],
   "exclude": [
-    "src/**/*.test.ts",
-    "src/**/__tests__/**"
+    "src/**/*.test.ts"
   ]
 }

@@ -1,5 +1,6 @@
-import { ReservedBytes, SerializableComponent, SerializablePrimitive, SerializableString, SerializationError } from '../types/serialization';
-import { withControl } from './components';
+import { Logger } from '../util';
+import { JSX } from '../jsx';
+import { CoreUIFormData, ReservedBytes, SerializablePrimitive, SerializableProps, SerializationError } from './types';
 
 /**
  * This makes each full field substring unique even when two field values & padding are identical.
@@ -87,61 +88,6 @@ function utf8ByteLength(str: string): number {
   return bytes;
 }
 
-/**
- * Truncate string to N bytes safely
- * @param str
- * @param maxBytes
- * @returns
- */
-function utf8Truncate(str: string, maxBytes: number): string {
-  let bytes = 0;
-  let result = '';
-
-  for (let i = 0; i < str.length; i++) {
-    const code = str.charCodeAt(i);
-    let charBytes = 0;
-    let chunk = '';
-
-    if (code <= 0x7f) {
-      charBytes = 1;
-      chunk = str[i];
-    } else if (code <= 0x7ff) {
-      charBytes = 2;
-      chunk = str[i];
-    } else if (code >= 0xd800 && code <= 0xdbff) {
-      // High surrogate, pair with following low surrogate if valid
-      const next = i + 1 < str.length ? str.charCodeAt(i + 1) : 0;
-      if (next >= 0xdc00 && next <= 0xdfff) {
-        charBytes = 4;
-        chunk = str[i] + str[i + 1];
-      } else {
-        // Unpaired high surrogate, treat as 3-byte replacement
-        charBytes = 3;
-        chunk = str[i];
-      }
-    } else if (code >= 0xdc00 && code <= 0xdfff) {
-      // Unpaired low surrogate, treat as 3 bytes
-      charBytes = 3;
-      chunk = str[i];
-    } else {
-      charBytes = 3;
-      chunk = str[i];
-    }
-
-    if (bytes + charBytes > maxBytes) {
-      break;
-    }
-
-    bytes += charBytes;
-    result += chunk;
-    if (charBytes === 4) {
-      i++; // consume the low surrogate as well
-    }
-  }
-
-  return result;
-}
-
 function getFieldMarker(index: number, key: string): string {
   if (index >= FIELD_MARKERS.length) {
     throw new SerializationError(`serialize(): exceeded maximum number of 64 props in an element. Key: "${key}" and following do not fit`);
@@ -160,7 +106,7 @@ function padToByteLength(str: string, length: number): string {
   const currentLength = utf8ByteLength(str);
 
   if (currentLength > length) {
-    return utf8Truncate(str, length);
+    throw new SerializationError(`serialize(): string ${str} exceeds maximum byte length of ${length} bytes, actual ${currentLength} bytes. Prefer to use translate keys for long texts.`);
   }
 
   return str + PAD_CHAR.repeat(length - currentLength);
@@ -180,29 +126,90 @@ export function reserveBytes(bytes: number): ReservedBytes {
 }
 
 /**
- * Serializes a string value.
- * @param value - string value to serialize
- * @param maxBytes - maximum byte length for the serialized string
- * @returns SerializableString object
+ * Type guard to check if a value is a SerializablePrimitive
  */
-export function serializeString(value: string, maxBytes?: number): SerializableString {
-  return { __type: 'serializable_string', value, maxBytes };
+function isSerializablePrimitive(value: unknown): value is SerializablePrimitive {
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return true;
+  }
+
+  // Check for ReservedBytes object
+  if (typeof value === 'object' && value !== null && value !== undefined && '__type' in value) {
+    return (value as ReservedBytes).__type === 'reserved';
+  }
+
+  return false;
 }
 
 /**
- * Serialize component to a string payload.
+ * Serialize a JSX element and its children into the provided form.
+ * @param element - JSX element to serialize
+ * @param form - Form data to populate
+ */
+export function serialize({ type, props: { children, ...rest } }: JSX.Element, form: CoreUIFormData): void {
+  // Validate and filter props - ensure all props (except children) are serializable
+  const serializableProps: SerializableProps = {};
+  const invalidProps: string[] = [];
+
+  for (const [key, value] of Object.entries(rest)) {
+    if (isSerializablePrimitive(value)) {
+      serializableProps[key] = value;
+    } else {
+      invalidProps.push(`${key} (type: ${typeof value}, value: ${JSON.stringify(value)})`);
+    }
+  }
+
+  // Throw error if any non-serializable props were found
+  if (invalidProps.length > 0) {
+    throw new SerializationError(
+      `Component "${type}" has non-serializable props. All props must be primitives (string, number, boolean) or ReservedBytes. ` +
+      `Invalid props: ${invalidProps.join(', ')}. ` +
+      `Ensure all optional props have default values in the component definition.`,
+    );
+  }
+
+  const [payload, bytes] = serializeProps({ type, ...serializableProps });
+
+  Logger.log(`[serialize] type=${type} payloadBytes=${bytes} payload=${payload} `);
+
+  // Client-only components (use label routing)
+  if (['panel', 'text', 'image', 'fragment'].includes(type)) {
+    form.label(payload);
+  }
+  // Native form components
+  // else if (type === 'toggle') {
+  //   form.toggle(payload, props.label ?? '', props.defaultValue ?? false);
+  // }
+  // else if (type === 'slider') {
+  //   form.slider(payload, props.label ?? '', props.min, props.max, props.step, props.defaultValue);
+  // }
+  // else if (type === 'dropdown') {
+  //   form.dropdown(payload, props.label ?? '', props.options, props.defaultIndex ?? 0);
+  // }
+  // else if (type === 'input') {
+  //   form.textField(payload, props.label ?? '', props.placeholder ?? '', props.defaultValue ?? '');
+  // }
+  else {
+    throw new SerializationError(`Unknown component type: ${type}`);
+  }
+
+  // Recursively handle children
+  if (children) {
+    const childArray = Array.isArray(children) ? children : [children];
+    childArray.forEach(child => serialize(child, form));
+  }
+}
+
+/**
+ * Serialize component type and props to a string payload.
  *
- * @param component - The component data to serialize
+ * @param component - Component type and props
  * @returns [serialized component string, total byte length]
  */
-export function serialize(props: SerializableComponent): [string, number] {
-  const { type, ...rest } = withControl(props);
-
-  const entries = Object.entries<SerializablePrimitive>({ type, ...rest });
-
+export function serializeProps({ type, ...props }: SerializableProps & { type: string }): [string, number] {
   let totalBytes = 0;
 
-  const segments = entries.map(([key, value]: [string, SerializablePrimitive], index: number): string => {
+  const segments = Object.entries({ type, ...props }).map(([key, value]: [string, SerializablePrimitive], index: number): string => {
     let core: string;
     let widthBytes: number;
     let rawStr: string;
@@ -215,17 +222,15 @@ export function serialize(props: SerializableComponent): [string, number] {
       rawStr = value.toString();
       core = `${TYPE_PREFIX.n}:${padToByteLength(rawStr, TYPE_WIDTH.n)}`;
       widthBytes = FULL_WIDTH.n;
-    } else if (typeof value === 'object' && value !== null && value.__type === 'reserved') {
+    } else if (typeof value === 'object' && value.__type === 'reserved') {
       rawStr = '';
       // Do not append prefix as we do not have prefix or marker for reserved bytes for easier JSON UI skipping
       core = `${PAD_CHAR.repeat(value.bytes - 1)}`; // -1 for marker
       widthBytes = value.bytes;
-    } else if (typeof value === 'object' && value !== null && value.__type === 'serializable_string') {
-      rawStr = value.value;
-      core = `${TYPE_PREFIX.s}:${padToByteLength(value.value, value.maxBytes ?? TYPE_WIDTH.s)}`;
-      widthBytes = FULL_WIDTH.s;
     } else if (typeof value === 'string') {
-      throw new SerializationError(`serialize(): unsuported native strings use serializeString(value: string, maxBytes?: number) for property "${key}"`);
+      rawStr = value;
+      core = `${TYPE_PREFIX.s}:${padToByteLength(rawStr, TYPE_WIDTH.s)}`;
+      widthBytes = FULL_WIDTH.s;
     } else {
       throw new SerializationError(`serialize(): unsupported type for property "${key}": ${typeof value} (value: ${JSON.stringify(value)})`);
     }
@@ -241,8 +246,6 @@ export function serialize(props: SerializableComponent): [string, number] {
   const prefix = PROTOCOL_HEADER;
   const result = prefix + segments.join('');
   const finalBytes = totalBytes + utf8ByteLength(prefix);
-
-  // Logger.log(`[serialize] header=${prefix} fields=${entries.length} payloadBytes=${finalBytes}`);
 
   return [result, finalBytes];
 }
