@@ -4,24 +4,28 @@ Essential knowledge for AI agents working on this Minecraft Bedrock UI serializa
 
 ### Core Architecture
 
-This library serializes declarative component trees into compact strings that get injected into `@minecraft/server-ui` form controls. A companion JSON UI resource pack decodes these payloads to render rich UIs beyond native form limitations.
+This library serializes declarative JSX/component trees into compact strings that get injected into `@minecraft/server-ui` form controls. A companion JSON UI resource pack decodes these payloads to render rich UIs beyond native form limitations.
 
-**Critical flow:** component factory → `serialize(form)` → `present(player, component)` → JSON UI decodes by fixed byte offsets.
+**Critical flow:** JSX element → `serialize(element, form)` → `render(player, element)` → JSON UI decodes by fixed byte offsets.
+
+**JSX Support:** The library now uses a custom JSX runtime (`@bedrock-core/ui/jsx-runtime`) that transforms JSX into `JSX.Element` objects (format: `{ type: string, props: {...} }`). Components are pure functions returning these elements.
 
 ### Component Routing System ("Label-as-Entry-Point")
 
-**Client-Only Components** (`Panel`, `Text`, `Image`): Use `form.label()` calls → `screen_container.json` factory maps to `@core-ui_common.component_router` → Each component JSON uses conditional bindings `(#type = 'panel') and #visible` to selectively render.
+**Client-Only Components** (`Panel`, `Text`, `Image`, `Fragment`): Use `form.label()` calls → `screen_container.json` factory maps to `@core-ui_common.component_router` → Each component JSON uses conditional bindings `(#type = 'panel') and #visible` to selectively render.
 
-**Native Form Components** (`Input`, `Toggle`, `Slider`, `Dropdown`): Bypass router, use dedicated factory control IDs like `"toggle": "@server_form.custom_toggle"` while sharing the same serialization protocol.
+**Native Form Components** (not yet implemented): Will bypass router, use dedicated factory control IDs like `"toggle": "@server_form.custom_toggle"` while sharing the same serialization protocol.
 
 ### Key Files & Responsibilities
 
-- **`src/core/serializer.ts`**: UTF-8 fixed-width protocol implementation with `serialize()` function
-- **`src/core/components/**/*.ts`**: Pure component factories returning objects with `serialize` method
-- **`src/types/component.ts`**: Core `Component` interface with `serialize(form: CoreUIFormData): void`
-- **`src/index.ts`**: Public API re-exports and `present(player, component)` orchestration
-- **`src/core/components/index.ts`**: `withControl()` function enforcing canonical field ordering
+- **`src/core/serializer.ts`**: UTF-8 fixed-width protocol implementation with `serialize()` and `serializeProps()` functions
+- **`src/core/components/**/*.ts`**: Pure component functions returning `JSX.Element` objects
+- **`src/core/components/control.ts`**: `withControl()` function enforcing canonical field ordering for all components
+- **`src/jsx/jsx-runtime.ts`**: Custom JSX runtime that transforms JSX to `{ type, props }` elements
+- **`src/core/render.ts`**: `render()` function that presents components to players via `@minecraft/server-ui`
+- **`src/index.ts`**: Public API re-exports
 - **`assets/RP/ui/core-ui/common/component_router.json`**: Dispatcher for client-only components
+- **`assets/RP/ui/core-ui/common/control.json`**: Base control bindings template with protocol decoder
 - **`assets/RP/ui/core-ui/components/*.json`**: Individual component decoders with conditional rendering
 
 ### Serialization Protocol (Never Break This)
@@ -54,39 +58,27 @@ const TYPE_WIDTH = { s: 32, n: 24, b: 5, r: 0 };
 
 ### Component Pattern (Follow Exactly)
 
-Components are pure factories returning objects with a `serialize` method:
+Components are pure functions returning `JSX.Element` objects:
 
 ```ts
-export function Panel({ children, ...rest }: PanelProps): Component {
-  return {
-    serialize: (form: CoreUIFormData): void => {
-      // 1. Build serializable object (primitives only)
-      const serializable: SerializableComponent = {
-        type: serializeString('panel'),
-        ...rest,
-      };
-      
-      // 2. Serialize to string payload  
-      const [result, bytes] = serialize(serializable);
-      
-      // 3. Register with form (triggers JSON UI)
-      form.label(result);
-      
-      // 4. Handle children/nested components
-      children.forEach(child => child.serialize(form));
-    }
-  };
-}
+export const Panel: FunctionComponent<PanelProps> = ({ children, ...rest }: PanelProps): JSX.Element => ({
+  type: 'panel',
+  props: {
+    ...withControl(rest),
+    children,
+  },
+});
 ```
 
 **Key Rules:**
 
-- `serialize` method takes `CoreUIFormData`, returns `void`
-- Call `form.label()`, `form.toggle()`, etc. to register UI elements
-- Use `serialize()` helper from `core/serializer.ts` for payload encoding
-- Handle component children by calling their `serialize` methods
+- Components are `FunctionComponent<T>` returning `JSX.Element` with `{ type, props }` structure
+- Use `withControl(rest)` to apply standard control props (width, height, x, y, visible, enabled, layer, alpha, etc.)
+- `withControl()` returns props in **canonical order** - this is critical for serialization
 - **Field order is critical**: After type, control fields must be: width, height, x, y, visible, enabled, layer, alpha, inheritMaxSiblingWidth, inheritMaxSiblingHeight, __reserved
-- **String values must use `serializeString()`** - native strings throw errors
+- **All "optional" props must have defined defaults** - no undefined/null values allowed in serialized output
+- The `serialize()` function (in `serializer.ts`) handles JSX element serialization and `form.label()` calls
+- String values in props are passed as-is; `serializeProps()` handles encoding internally
 
 ### Development Workflow
 
@@ -100,13 +92,18 @@ export function Panel({ children, ...rest }: PanelProps): Component {
 Tests focus on serialization correctness and field ordering:
 
 ```ts
-// Check payload structure
-const [result, bytes] = serialize({ type: 'test', value: 'hello' });
+// Check payload structure using serializeProps
+const [result, bytes] = serializeProps({ type: 'test', value: 'hello' });
 expect(result).toMatch(/^bcuiv0001s:test/); // Header + first field
 
 // Verify field slicing (see serializer.test.ts for helpers)
 function sliceFieldWithPlan(payload: string, index: number, plan: TKey[]): string
 ```
+
+**Test Setup:**
+- Vitest runs tests from `src/**/__tests__/**/*.ts` 
+- Mocks for `@minecraft/server` and `@minecraft/server-ui` in `src/__mocks__/`
+- Use `withControlForTest()` helper to exclude children from control props during tests
 
 ### Breaking Change Guards
 
