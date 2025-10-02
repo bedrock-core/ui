@@ -169,7 +169,7 @@
 			{
 				/* --- texture (string) --- */
 				"binding_type": "view", // full_width
-				"source_property_name": "('%.67s' * #serialized_data)",
+				"source_property_name": "('%.35s' * #serialized_data)",
 				"target_property_name": "#raw_texture"
 			},
 			{
@@ -179,7 +179,7 @@
 			},
 			{
 				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.66s' * #raw_texture) - ('%.2s' * #raw_texture) - ';')",
+				"source_property_name": "(('%.34s' * #raw_texture) - ('%.2s' * #raw_texture) - ';')",
 				"target_property_name": "#texture"
 			}
 		]

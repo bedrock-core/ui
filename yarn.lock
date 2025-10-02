@@ -9,7 +9,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bedrock-core/ui-test-addon@workspace:."
   dependencies:
-    "@bedrock-core/ui": "npm:0.0.1"
+    "@bedrock-core/ui": "link:C:/Users/drav0/Desktop/Minecraft/Proyectos/@bedrock-core/ui"
     "@eslint/js": "npm:^9.34.0"
     "@eslint/json": "npm:^0.13.1"
     "@minecraft/common": "npm:1.2.0"
@@ -29,15 +29,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@bedrock-core/ui@npm:0.0.1":
-  version: 0.0.1
-  resolution: "@bedrock-core/ui@npm:0.0.1"
-  peerDependencies:
-    "@minecraft/server": ">=2.1.0"
-    "@minecraft/server-ui": ">=2.0.0"
-  checksum: 10c0/642ddcb04352b063d2e779ba4601eafdcc3d4f1f3e46364081a54dd6f2b25e52521feb087fa9c9ce05a46896b352521836428e5c2615ca2dc2a359c4896a33ca
+"@bedrock-core/ui@link:C:/Users/drav0/Desktop/Minecraft/Proyectos/@bedrock-core/ui::locator=%40bedrock-core%2Fui-test-addon%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@bedrock-core/ui@link:/C:/Users/drav0/Desktop/Minecraft/Proyectos/@bedrock-core/ui::locator=%40bedrock-core%2Fui-test-addon%40workspace%3A."
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "@eslint-community/eslint-utils@npm:^4.2.0, @eslint-community/eslint-utils@npm:^4.4.0, @eslint-community/eslint-utils@npm:^4.7.0, @eslint-community/eslint-utils@npm:^4.8.0, @eslint-community/eslint-utils@npm:^4.9.0":
   version: 4.9.0

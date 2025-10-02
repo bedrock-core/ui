@@ -21,9 +21,11 @@
 		"noImplicitReturns": true,
 		"allowJs": true,
 		"resolveJsonModule": true,
+		"jsx": "react-jsx",
+		"jsxImportSource": "@bedrock-core/ui"
 	},
 	"include": [
-		"packs/BP/scripts/**/*"
+		"packs/BP/scripts/**/*",
 	],
 	"exclude": [
 		"node_modules",
