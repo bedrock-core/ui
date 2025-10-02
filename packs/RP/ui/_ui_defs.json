@@ -9,11 +9,12 @@
 		// After the initial reserved bytes for the common, rest of bytes 
 		// after 512 for its own use and 
 		// available in #serialized_data binding
-		// ----------------- Server only -----------------
+		// ------------------- Server --------------------
+		"ui/core-ui/components/button.json",
 		// "ui/core-ui/components/input.json"
 		// "ui/core-ui/components/slider.json", 
 		// "ui/core-ui/components/toggle.json" 
-		// --------------- Client + Server ---------------
+		// ------------------- Client --------------------
 		"ui/core-ui/components/fragment.json",
 		"ui/core-ui/components/panel.json",
 		"ui/core-ui/components/text.json",

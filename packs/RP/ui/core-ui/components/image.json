@@ -23,19 +23,19 @@
 		"$normalize": 1.0,
 		"bindings": [
 			{
-				"binding_name": "#custom_text",
+				"binding_name": "#form_button_text",
 				"binding_type": "collection",
-				"binding_collection_name": "custom_form"
+				"binding_collection_name": "form_buttons"
 			},
 			{
 				/* --- strip protocol header (9 chars) --- */
 				"binding_type": "view", // protocol header size
-				"source_property_name": "('%.9s' * #custom_text)",
+				"source_property_name": "('%.9s' * #form_button_text)",
 				"target_property_name": "#protocol_header"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(#custom_text - #protocol_header)",
+				"source_property_name": "(#form_button_text - #protocol_header)",
 				"target_property_name": "#rem_after_header"
 			},
 			{
