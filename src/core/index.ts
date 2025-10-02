@@ -1,9 +1,11 @@
 // Components
 export {
+  Button,
   Fragment,
   Image,
   Panel,
   Text,
+  type ButtonProps,
   type FragmentProps,
   type ImageProps,
   type PanelProps,
@@ -36,5 +38,6 @@ export type {
   ReservedBytes,
   SerializablePrimitive,
   SerializableProps,
+  SerializationContext,
   SerializationError
 } from './types';

@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { ActionFormData } from '@minecraft/server-ui';
+import { describe, expect, it } from 'vitest';
 import { Panel } from '../components/Panel';
-import { PROTOCOL_HEADER, FULL_WIDTH, TYPE_WIDTH, TYPE_PREFIX, FIELD_MARKERS, serialize } from '../serializer';
+import { FIELD_MARKERS, FULL_WIDTH, PROTOCOL_HEADER, serialize, TYPE_PREFIX, TYPE_WIDTH } from '../serializer';
 
 // This test guards the ordering of serialized fields for Panel (and by extension
 // any component using the same withControl pattern). If ordering changes
@@ -60,7 +61,12 @@ function corePadded(fieldSlice: string, typeCode: TKey): string {
 describe('Serialization field order', () => {
   it('emits fields in stable, documented order with default values', () => {
     const captured: string[] = [];
-    const mockForm = { label: (t: string) => captured.push(t) } as unknown as import('@minecraft/server-ui').ModalFormData;
+    const mockForm = new ActionFormData();
+    mockForm.label = (t: string) => {
+      captured.push(t);
+
+      return mockForm;
+    };
 
     const element = Panel({
       width: 250.5,
@@ -153,7 +159,12 @@ describe('Serialization field order', () => {
 
   it('emits fields in the same order with custom values and shuffled prop insertion', () => {
     const captured: string[] = [];
-    const mockForm = { label: (t: string) => captured.push(t) } as unknown as import('@minecraft/server-ui').ModalFormData;
+    const mockForm = new ActionFormData();
+    mockForm.label = (t: string) => {
+      captured.push(t);
+
+      return mockForm;
+    };
 
     // Deliberately shuffled property order in the object literal to ensure
     // serialization ordering logic (from helper composition) dominates.
@@ -231,7 +242,12 @@ describe('Serialization field order', () => {
 
   it('emits fields in stable order - unknown properties are filtered out by withControl', () => {
     const captured: string[] = [];
-    const mockForm = { label: (t: string) => captured.push(t) } as unknown as import('@minecraft/server-ui').ModalFormData;
+    const mockForm = new ActionFormData();
+    mockForm.label = (t: string) => {
+      captured.push(t);
+
+      return mockForm;
+    };
 
     // Test with unknown/non-existent properties mixed between valid ones.
     // WithControl() only extracts canonical control fields, so unknown properties

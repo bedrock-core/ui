@@ -1,8 +1,7 @@
-import { ModalFormData } from '@minecraft/server-ui';
+import { ActionFormData } from '@minecraft/server-ui';
 
-// For now we will only be supporting ModalFormData, in future depending on requirements
-// we might add support for other form types
-export type CoreUIFormData = ModalFormData;
+// For now we will only be supporting ActionFormData, in future will add support for ModalFormData for "Forms"
+export type CoreUIFormData = ActionFormData;
 
 export type ReservedBytes = {
 
@@ -14,6 +13,15 @@ export type ReservedBytes = {
 export type SerializablePrimitive = string | number | boolean | ReservedBytes;
 
 export type SerializableProps = Record<string, SerializablePrimitive>;
+
+export interface SerializationContext {
+
+  /** Maps button index to their onPress callbacks */
+  buttonCallbacks: Map<number, () => void>;
+
+  /** Current button index counter */
+  buttonIndex: number;
+}
 
 export class SerializationError extends Error {
   constructor(message: string) {

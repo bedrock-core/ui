@@ -1,6 +1,6 @@
 import { Logger } from '../util';
 import { JSX } from '../jsx';
-import { CoreUIFormData, ReservedBytes, SerializablePrimitive, SerializableProps, SerializationError } from './types';
+import { CoreUIFormData, ReservedBytes, SerializablePrimitive, SerializableProps, SerializationContext, SerializationError } from './types';
 
 /**
  * This makes each full field substring unique even when two field values & padding are identical.
@@ -145,15 +145,20 @@ function isSerializablePrimitive(value: unknown): value is SerializablePrimitive
  * Serialize a JSX element and its children into the provided form.
  * @param element - JSX element to serialize
  * @param form - Form data to populate
+ * @param context - Optional serialization context for collecting button callbacks
  */
-export function serialize({ type, props: { children, ...rest } }: JSX.Element, form: CoreUIFormData): void {
+export function serialize({ type, props: { children, ...rest } }: JSX.Element, form: CoreUIFormData, context?: SerializationContext): void {
   // Validate and filter props - ensure all props (except children) are serializable
   const serializableProps: SerializableProps = {};
   const invalidProps: string[] = [];
+  const callbacks: Record<string, () => void> = {};
 
   for (const [key, value] of Object.entries(rest)) {
     if (isSerializablePrimitive(value)) {
       serializableProps[key] = value;
+    } else if (typeof value === 'function') {
+      // Store function props as callbacks - they're not serializable but valid for event handlers
+      callbacks[key] = value as (() => void);
     } else {
       invalidProps.push(`${key} (type: ${typeof value}, value: ${JSON.stringify(value)})`);
     }
@@ -175,11 +180,19 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
   // Client-only components (use label routing)
   if (['panel', 'text', 'image', 'fragment'].includes(type)) {
     form.label(payload);
+  } else if (type === 'button') {
+    // Register button callback if provided and context exists
+    if (context) {
+      if (callbacks.onPress) {
+        context.buttonCallbacks.set(context.buttonIndex, callbacks.onPress);
+      }
+
+      context.buttonIndex++;
+    }
+
+    form.button(payload);
   }
   // Native form components
-  // else if (type === 'toggle') {
-  //   form.toggle(payload, props.label ?? '', props.defaultValue ?? false);
-  // }
   // else if (type === 'slider') {
   //   form.slider(payload, props.label ?? '', props.min, props.max, props.step, props.defaultValue);
   // }
@@ -196,7 +209,7 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
   // Recursively handle children
   if (children) {
     const childArray = Array.isArray(children) ? children : [children];
-    childArray.forEach(child => serialize(child, form));
+    childArray.forEach((child: JSX.Element): void => serialize(child, form, context));
   }
 }
 

@@ -5,6 +5,25 @@
 
 import { vi } from 'vitest';
 
+export class ActionFormData {
+  show = vi.fn().mockResolvedValue({
+    canceled: false,
+    selection: undefined,
+  });
+
+  title(_text: string): this {
+    return this;
+  }
+
+  label(_text: string): this {
+    return this;
+  }
+
+  button(_text: string, _iconPath?: string): this {
+    return this;
+  }
+}
+
 export class ModalFormData {
   show = vi.fn().mockResolvedValue({
     canceled: false,
