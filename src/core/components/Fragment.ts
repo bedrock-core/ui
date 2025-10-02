@@ -7,6 +7,6 @@ export const Fragment: FunctionComponent<FragmentProps> = ({ children, ...rest }
   type: 'fragment',
   props: {
     ...withControl(rest),
-    children
+    children,
   },
 });

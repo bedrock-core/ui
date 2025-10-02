@@ -8,7 +8,7 @@ export {
   type ImageProps,
   type PanelProps,
   type TextProps,
-  type ControlProps,
+  type ControlProps
 } from './components';
 
 // Serialization
@@ -24,7 +24,7 @@ export {
   FULL_WIDTH,
   TYPE_PREFIX,
   FIELD_MARKERS,
-  PROTOCOL_HEADER_LENGTH,
+  PROTOCOL_HEADER_LENGTH
 } from './serializer';
 
 // Rendering
@@ -36,5 +36,5 @@ export type {
   ReservedBytes,
   SerializablePrimitive,
   SerializableProps,
-  SerializationError,
+  SerializationError
 } from './types';

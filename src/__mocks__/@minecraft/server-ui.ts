@@ -6,6 +6,11 @@
 import { vi } from 'vitest';
 
 export class ModalFormData {
+  show = vi.fn().mockResolvedValue({
+    canceled: false,
+    formValues: [],
+  });
+
   title(_text: string): this {
     return this;
   }
@@ -33,11 +38,6 @@ export class ModalFormData {
   dropdown(_label: string, _options: string[], _defaultValue?: number): this {
     return this;
   }
-
-  show = vi.fn().mockResolvedValue({
-    canceled: false,
-    formValues: [],
-  });
 }
 
 export class FormRejectError extends Error {

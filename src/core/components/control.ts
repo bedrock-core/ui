@@ -1,5 +1,4 @@
 import { JSX } from '../../jsx/jsx-runtime';
-import { ReservedBytes } from '../types';
 import { reserveBytes } from '../serializer';
 
 export interface ControlProps extends JSX.Props {
@@ -17,9 +16,6 @@ export interface ControlProps extends JSX.Props {
   // Makes no sense until we have flexbox or similar layouting
   // inheritMaxSiblingWidth?: boolean;
   // inheritMaxSiblingHeight?: boolean;
-
-  /* @internal */
-  __reserved?: ReservedBytes;
 }
 
 /**

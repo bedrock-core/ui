@@ -18,7 +18,7 @@ export {
   FULL_WIDTH,
   TYPE_PREFIX,
   FIELD_MARKERS,
-  PROTOCOL_HEADER_LENGTH,
+  PROTOCOL_HEADER_LENGTH
 } from './core';
 
 export type {
@@ -33,15 +33,13 @@ export type {
   ReservedBytes,
   SerializablePrimitive,
   SerializableProps,
-  SerializationError,
+  SerializationError
 } from './core';
 
 // JSX Runtime
-export {
-  renderJSX,
-} from './jsx';
+export { renderJSX } from './jsx';
 
 export type {
   FunctionComponent,
-  JSX,
+  JSX
 } from './jsx';

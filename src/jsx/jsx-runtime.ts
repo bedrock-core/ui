@@ -13,9 +13,6 @@ export namespace JSX {
 
 export type FunctionComponent<P extends JSX.Props = JSX.Props> = (props: P) => JSX.Element;
 
-/**
- * JSX runtime function for production mode (jsx/jsxs)
- */
 export function renderJSX(
   tag: FunctionComponent,
   props: JSX.Props,

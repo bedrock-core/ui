@@ -19,6 +19,6 @@ export const Text: FunctionComponent<TextProps> = ({ value, ...rest }: TextProps
   type: 'text',
   props: {
     ...withControl(rest),
-    value: value ?? ''
+    value: value ?? '',
   },
 });

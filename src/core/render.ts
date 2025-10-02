@@ -3,7 +3,6 @@ import { FormRejectError, ModalFormData } from '@minecraft/server-ui';
 import { JSX } from '../jsx';
 import { PROTOCOL_HEADER, serialize } from './serializer';
 
-
 /**
  * Present a JSX component to a player using the @bedrock-core/ui system.
  *

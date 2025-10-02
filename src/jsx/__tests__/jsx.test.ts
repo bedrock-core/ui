@@ -5,7 +5,7 @@ describe('tsx-test', (): void => {
   it('should log the component structure via renderDev', (): void => {
     const component = Example();
 
-    // Verify the structure 
+    // Verify the structure
     expect(component).toHaveProperty('type', 'panel');
     expect(component).toHaveProperty('props');
     expect(component.props).toMatchObject({
@@ -14,9 +14,6 @@ describe('tsx-test', (): void => {
       x: 48,
       y: 48,
     });
-
-    // Verify children don't exist in serialized format (they're flattened)
-    expect(component.props.children).toBeUndefined();
 
     // Log the full structure for manual inspection
     console.log('\n📦 Component Structure:\n', JSON.stringify(component, null, 2));

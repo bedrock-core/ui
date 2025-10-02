@@ -88,61 +88,6 @@ function utf8ByteLength(str: string): number {
   return bytes;
 }
 
-/**
- * Truncate string to N bytes safely
- * @param str
- * @param maxBytes
- * @returns
- */
-function utf8Truncate(str: string, maxBytes: number): string {
-  let bytes = 0;
-  let result = '';
-
-  for (let i = 0; i < str.length; i++) {
-    const code = str.charCodeAt(i);
-    let charBytes = 0;
-    let chunk = '';
-
-    if (code <= 0x7f) {
-      charBytes = 1;
-      chunk = str[i];
-    } else if (code <= 0x7ff) {
-      charBytes = 2;
-      chunk = str[i];
-    } else if (code >= 0xd800 && code <= 0xdbff) {
-      // High surrogate, pair with following low surrogate if valid
-      const next = i + 1 < str.length ? str.charCodeAt(i + 1) : 0;
-      if (next >= 0xdc00 && next <= 0xdfff) {
-        charBytes = 4;
-        chunk = str[i] + str[i + 1];
-      } else {
-        // Unpaired high surrogate, treat as 3-byte replacement
-        charBytes = 3;
-        chunk = str[i];
-      }
-    } else if (code >= 0xdc00 && code <= 0xdfff) {
-      // Unpaired low surrogate, treat as 3 bytes
-      charBytes = 3;
-      chunk = str[i];
-    } else {
-      charBytes = 3;
-      chunk = str[i];
-    }
-
-    if (bytes + charBytes > maxBytes) {
-      break;
-    }
-
-    bytes += charBytes;
-    result += chunk;
-    if (charBytes === 4) {
-      i++; // consume the low surrogate as well
-    }
-  }
-
-  return result;
-}
-
 function getFieldMarker(index: number, key: string): string {
   if (index >= FIELD_MARKERS.length) {
     throw new SerializationError(`serialize(): exceeded maximum number of 64 props in an element. Key: "${key}" and following do not fit`);
@@ -219,7 +164,7 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
     throw new SerializationError(
       `Component "${type}" has non-serializable props. All props must be primitives (string, number, boolean) or ReservedBytes. ` +
       `Invalid props: ${invalidProps.join(', ')}. ` +
-      `Ensure all optional props have default values in the component definition.`
+      `Ensure all optional props have default values in the component definition.`,
     );
   }
 
