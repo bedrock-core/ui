@@ -1,7 +1,7 @@
-import { withControl } from './control';
+import { ControlProps, withControl } from './control';
 import { FunctionComponent, JSX } from '../../jsx';
 
-export interface FragmentProps extends JSX.Props { }
+export interface FragmentProps extends ControlProps { }
 
 export const Fragment: FunctionComponent<FragmentProps> = ({ children, ...rest }: FragmentProps): JSX.Element => ({
   type: 'fragment',
