@@ -9,12 +9,12 @@
 		],
 		"controls": [
 			{
-				"button@server_form.dynamic_button": {}
+				"button@controlled_button": {}
 			}
 		]
 	},
 	// idk how to make it work "extending" control.json, so copy/paste it here for now
-	"controlled_button@core-ui_components.light_text_button": {
+	"controlled_button@common.button": {
 		"$pressed_button_name": "button.form_button_click",
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
@@ -22,21 +22,20 @@
 			64,
 			32
 		],
-		"$button_text": "#form_button_text",
-		"$button_text_binding_type": "collection",
-		"$button_text_grid_collection_name": "form_buttons",
 		"$button_text_max_size": [
 			"100%",
 			20
 		],
-		"bindings": [
-			{
-				"binding_type": "collection_details",
-				"binding_collection_name": "form_buttons"
-			}
-		]
-	},
-	"light_text_button@light_button_assets": {
+		"$default_button_texture|default": "textures/ui/core-ui/components/button/primary/background",
+		"$default_content_alpha|default": 1,
+		"$hover_content_alpha|default": 1,
+		"$hover_button_texture|default": "textures/ui/core-ui/components/button/primary/background_hover",
+		"$pressed_button_texture|default": "textures/ui/core-ui/components/button/primary/background_pressed",
+		"$locked_button_texture|default": "textures/ui/core-ui/components/button/disabled/background",
+		"locked_control": "locked",
+		"$default_font|default": "default",
+		"$font_type": "$default_font",
+		"$locked_alpha": 1,
 		"$button_offset|default": [
 			0,
 			0
@@ -45,7 +44,7 @@
 			0,
 			1
 		],
-		"$button_text|default": "",
+		"$button_text|default": "#form_button_text",
 		"$button_font_size|default": "normal",
 		"$button_font_scale_factor|default": 1.0,
 		"$pressed_alpha|default": 1,
@@ -61,9 +60,9 @@
 		"$pressed_text_color|default": "$light_button_pressed_text_color",
 		"$locked_text_color|default": "$light_button_locked_text_color",
 		// For text bindings
-		"$button_text_binding_type|default": "none",
+		"$button_text_binding_type|default": "collection",
 		"$button_binding_condition|default": "none",
-		"$button_text_grid_collection_name|default": "",
+		"$button_text_grid_collection_name|default": "form_buttons",
 		"$button_type_panel": "common_buttons.new_ui_binding_button_label",
 		"$button_state_panel|default": "common_buttons.new_ui_button_panel",
 		// These states are for passing the button state to the button content - do not set these in a parent!
@@ -71,6 +70,12 @@
 		"$hover_state|default": false,
 		"$pressed_state|default": false,
 		"$locked_state|default": false,
+		"bindings": [
+			{
+				"binding_type": "collection_details",
+				"binding_collection_name": "form_buttons"
+			}
+		],
 		"controls": [
 			{
 				"default@$button_state_panel": {
@@ -78,7 +83,7 @@
 					"$text_color": "$default_text_color",
 					"$secondary_text_color": "$light_button_secondary_default_text_color",
 					"$content_alpha": "$default_content_alpha",
-					"$border_color": "$light_border_default_color",
+					// "$border_color": "$light_border_default_color",
 					"$border_layer": 2,
 					"$default_state": true,
 					"$button_alpha": "$default_button_alpha",
@@ -91,7 +96,7 @@
 					"$text_color": "$hover_text_color",
 					"$secondary_text_color": "$light_button_secondary_hover_text_color",
 					"$content_alpha": 1,
-					"$border_color": "$light_border_hover_color",
+					// "$border_color": "$light_border_hover_color",
 					"$border_layer": 4,
 					"$hover_state": true,
 					"$button_alpha": "$default_hover_alpha",
@@ -105,7 +110,7 @@
 					"$secondary_text_color": "$light_button_secondary_pressed_text_color",
 					"$button_offset|default": "$button_pressed_offset",
 					"$content_alpha": "$pressed_alpha",
-					"$border_color": "$light_border_pressed_color",
+					// "$border_color": "$light_border_pressed_color",
 					"$border_layer": 5,
 					"$pressed_state": true,
 					"$button_alpha": "$default_pressed_alpha",
@@ -118,7 +123,7 @@
 					"$text_color": "$locked_text_color",
 					"$secondary_text_color": "$light_button_secondary_locked_text_color",
 					"$content_alpha": "$locked_alpha",
-					"$border_color": "$light_border_locked_color",
+					// "$border_color": "$light_border_locked_color",
 					"$button_image": "common_buttons.locked_button_image",
 					"$border_layer": 1,
 					"$locked_state": true,
