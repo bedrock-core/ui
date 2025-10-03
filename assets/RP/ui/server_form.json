@@ -1,6 +1,6 @@
 {
 	"namespace": "server_form",
-	"custom_form": {
+	"long_form": {
 		"$protocol_header": "bcuiv0001",
 		"modifications": [
 			{
@@ -39,7 +39,7 @@
 							"factory": {
 								"name": "server_form_factory",
 								"control_ids": {
-									"custom_form": "@core-ui_common.screen_container"
+									"long_form": "@core-ui_common.screen_container"
 								}
 							}
 						}

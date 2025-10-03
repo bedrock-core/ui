@@ -1,4 +1,5 @@
 import { SerializablePrimitive } from '../core';
+import { Fragment as FragmentComponent } from '../core/components/Fragment';
 
 interface NativeNode<P extends JSX.Props = JSX.Props> {
   type: string;
@@ -24,3 +25,6 @@ export function renderJSX(
 export const jsx = renderJSX;
 export const jsxs = renderJSX;
 export const jsxDEV = renderJSX;
+
+// Export Fragment for JSX fragment syntax (<>...</>)
+export const Fragment = FragmentComponent;
