@@ -1,0 +1,130 @@
+{
+	"namespace": "core-ui_components",
+	"button": {
+		"type": "panel",
+		// Note: from size_binding_x/y seems relative to parent size so making parent 10x10 will be 10 times larger the child
+		"size": [
+			1,
+			1
+		],
+		"controls": [
+			{
+				"button@server_form.dynamic_button": {}
+			}
+		]
+	},
+	// idk how to make it work "extending" control.json, so copy/paste it here for now
+	"controlled_button@core-ui_components.light_text_button": {
+		"$pressed_button_name": "button.form_button_click",
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"size": [
+			64,
+			32
+		],
+		"$button_text": "#form_button_text",
+		"$button_text_binding_type": "collection",
+		"$button_text_grid_collection_name": "form_buttons",
+		"$button_text_max_size": [
+			"100%",
+			20
+		],
+		"bindings": [
+			{
+				"binding_type": "collection_details",
+				"binding_collection_name": "form_buttons"
+			}
+		]
+	},
+	"light_text_button@light_button_assets": {
+		"$button_offset|default": [
+			0,
+			0
+		],
+		"$button_pressed_offset|default": [
+			0,
+			1
+		],
+		"$button_text|default": "",
+		"$button_font_size|default": "normal",
+		"$button_font_scale_factor|default": 1.0,
+		"$pressed_alpha|default": 1,
+		"$default_button_alpha|default": 1,
+		"$default_hover_alpha|default": 1,
+		"$default_pressed_alpha|default": 1,
+		"$default_button_pressed_offset|default": [
+			0,
+			1
+		],
+		"$default_text_color|default": "$light_button_default_text_color",
+		"$hover_text_color|default": "$light_button_hover_text_color",
+		"$pressed_text_color|default": "$light_button_pressed_text_color",
+		"$locked_text_color|default": "$light_button_locked_text_color",
+		// For text bindings
+		"$button_text_binding_type|default": "none",
+		"$button_binding_condition|default": "none",
+		"$button_text_grid_collection_name|default": "",
+		"$button_type_panel": "common_buttons.new_ui_binding_button_label",
+		"$button_state_panel|default": "common_buttons.new_ui_button_panel",
+		// These states are for passing the button state to the button content - do not set these in a parent!
+		"$default_state|default": false,
+		"$hover_state|default": false,
+		"$pressed_state|default": false,
+		"$locked_state|default": false,
+		"controls": [
+			{
+				"default@$button_state_panel": {
+					"$new_ui_button_texture": "$default_button_texture",
+					"$text_color": "$default_text_color",
+					"$secondary_text_color": "$light_button_secondary_default_text_color",
+					"$content_alpha": "$default_content_alpha",
+					"$border_color": "$light_border_default_color",
+					"$border_layer": 2,
+					"$default_state": true,
+					"$button_alpha": "$default_button_alpha",
+					"layer": 1
+				}
+			},
+			{
+				"hover@$button_state_panel": {
+					"$new_ui_button_texture": "$hover_button_texture",
+					"$text_color": "$hover_text_color",
+					"$secondary_text_color": "$light_button_secondary_hover_text_color",
+					"$content_alpha": 1,
+					"$border_color": "$light_border_hover_color",
+					"$border_layer": 4,
+					"$hover_state": true,
+					"$button_alpha": "$default_hover_alpha",
+					"layer": 4 // This is several layers higher than default in case two buttons share a border and that shared border needs to turn with with either button hover/press state
+				}
+			},
+			{
+				"pressed@$button_state_panel": {
+					"$new_ui_button_texture": "$pressed_button_texture",
+					"$text_color": "$pressed_text_color",
+					"$secondary_text_color": "$light_button_secondary_pressed_text_color",
+					"$button_offset|default": "$button_pressed_offset",
+					"$content_alpha": "$pressed_alpha",
+					"$border_color": "$light_border_pressed_color",
+					"$border_layer": 5,
+					"$pressed_state": true,
+					"$button_alpha": "$default_pressed_alpha",
+					"layer": 5
+				}
+			},
+			{
+				"locked@$button_state_panel": {
+					"$new_ui_button_texture": "$locked_button_texture",
+					"$text_color": "$locked_text_color",
+					"$secondary_text_color": "$light_button_secondary_locked_text_color",
+					"$content_alpha": "$locked_alpha",
+					"$border_color": "$light_border_locked_color",
+					"$button_image": "common_buttons.locked_button_image",
+					"$border_layer": 1,
+					"$locked_state": true,
+					"layer": 1
+				}
+			}
+		]
+	}
+}

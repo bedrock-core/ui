@@ -1,11 +1,14 @@
-import { Fragment, Image, JSX, Panel, Text } from '@bedrock-core/ui';
+import { Button, Fragment, Image, JSX, Panel, Text } from '@bedrock-core/ui';
 
 export function Example(): JSX.Element {
   return (
-    <Fragment width={854} height={480} x={0} y={0}>
+    <>
       {/* Center panel with logo */}
       <Panel width={200} height={36} x={327} y={222}>
-        <Image width={200} height={36} x={327} y={222} texture="textures/ui/core-ui/logo" />
+        <>
+          <Image width={200} height={36} x={327} y={222} texture="textures/ui/core-ui/logo" />
+        </>
+        <Button width={100} height={36} x={427} y={250} label="Click Me" onPress={(): void => { console.log("test") }} />
       </Panel>
 
       {/* Right panel with text */}
@@ -19,6 +22,6 @@ export function Example(): JSX.Element {
 
       {/* Text in bottom right corner */}
       <Text width={150} height={20} x={694} y={450} value="§l§gCustom text!" />
-    </Fragment>
+    </>
   );
 }
