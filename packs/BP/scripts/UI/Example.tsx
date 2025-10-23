@@ -8,7 +8,7 @@ export function Example(): JSX.Element {
         <>
           <Image width={200} height={36} x={327} y={222} texture="textures/ui/core-ui/logo" />
         </>
-        <Button width={100} height={36} x={427} y={250} label="Click Me" onPress={(): void => { console.log("test") }} />
+        <Button width={200} height={36} x={327} y={260} label="Click Me" onPress={(): void => { console.log("test") }} />
       </Panel>
 
       {/* Right panel with text */}
