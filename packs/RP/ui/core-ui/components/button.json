@@ -58,10 +58,7 @@
 			}
 		],
 		// === Visual assets and states (light_button_assets + light_text_button) ===
-		"$font_type": "default",
-		"$locked_alpha": 1,
 		"$button_text|default": "",
-		"$button_state_panel|default": "common_buttons.new_ui_button_panel",
 		"$default_state|default": false,
 		"$hover_state|default": false,
 		"$pressed_state|default": false,
@@ -74,12 +71,6 @@
 			32
 		],
 		"$button_text": "#form_button_text",
-		"$button_text_binding_type": "collection",
-		"$button_text_grid_collection_name": "form_buttons",
-		"$button_text_max_size": [
-			"100%",
-			20
-		],
 		// === Controls (inlined new_ui_button_panel) ===
 		"controls": [
 			{
@@ -90,7 +81,6 @@
 						"100%",
 						"100%"
 					],
-					"$button_image_visible|default": true,
 					"anchor_to": "center",
 					"anchor_from": "center",
 					"controls": [
@@ -114,7 +104,7 @@
 							}
 						}
 					],
-					"$new_ui_button_texture": "textures/ui/button_borderless_light",
+					"$button_texture": "textures/ui/core-ui/components/button/primary/background",
 					"$default_state": true
 				}
 			},
@@ -126,7 +116,6 @@
 						"100%",
 						"100%"
 					],
-					"$button_image_visible|default": true,
 					"anchor_to": "center",
 					"anchor_from": "center",
 					"controls": [
@@ -150,7 +139,7 @@
 							}
 						}
 					],
-					"$new_ui_button_texture": "textures/ui/button_borderless_lighthover",
+					"$button_texture": "textures/ui/core-ui/components/button/primary/background_hover",
 					"$hover_state": true
 				}
 			},
@@ -162,7 +151,6 @@
 						"100%",
 						"100%"
 					],
-					"$button_image_visible|default": true,
 					"anchor_to": "center",
 					"anchor_from": "center",
 					"controls": [
@@ -186,7 +174,7 @@
 							}
 						}
 					],
-					"$new_ui_button_texture": "textures/ui/button_borderless_lightpressed",
+					"$button_texture": "textures/ui/core-ui/components/button/primary/background_pressed",
 					"$pressed_state": true,
 					"$button_offset|default": [
 						0,
@@ -202,7 +190,6 @@
 						"100%",
 						"100%"
 					],
-					"$button_image_visible|default": true,
 					"anchor_to": "center",
 					"anchor_from": "center",
 					"controls": [
@@ -226,7 +213,7 @@
 							}
 						}
 					],
-					"$new_ui_button_texture": "textures/ui/disabledButtonNoBorder",
+					"$button_texture": "textures/ui/core-ui/components/button/primary/background_disabled",
 					"$locked_state": true
 				}
 			}
@@ -238,43 +225,28 @@
 		"text": "$button_text",
 		"color": "$light_button_default_text_color",
 		"font_type": "default",
-		"font_size": "$button_font_size",
+		"font_size": "normal",
 		"font_scale_factor": 1.0,
-		"$button_font_size|default": "normal",
-		"$button_offset|default": [
+		"offset": [
 			0,
 			0
 		],
-		"offset": "$button_offset",
-		"$anchor|default": "center",
-		"anchor_from": "$anchor",
-		"anchor_to": "$anchor",
+		"anchor_from": "center",
+		"anchor_to": "center",
 		"shadow": false,
-		"$button_text_size|default": [
-			"default",
-			"default"
-		],
-		"size": "$button_text_size",
-		"$button_text_max_size|default": [
+		"max_size": [
 			"100%",
 			10
 		], // Per design buttons are single line text only
-		"max_size": "$button_text_max_size",
-		"$text_alignment|default": "center",
-		"text_alignment": "$text_alignment",
-		"$tts_section_header|default": "",
-		"tts_section_header": "$tts_section_header",
-		"$button_text_collection_details|default": "none",
-		"$button_text_collection_prefix|default": "",
+		"text_alignment": "center",
 		"bindings": [
 			{
-				"binding_type": "$button_text_collection_details",
-				"binding_collection_name": "$button_text_grid_collection_name",
-				"binding_collection_prefix": "$button_text_collection_prefix"
+				"binding_type": "none",
+				"binding_collection_name": "form_buttons"
 			},
 			{
-				"binding_type": "$button_text_binding_type",
-				"binding_collection_name": "$button_text_grid_collection_name",
+				"binding_type": "collection",
+				"binding_collection_name": "form_buttons",
 				"binding_name": "$button_text",
 				"binding_name_override": "$button_text"
 			}
@@ -282,8 +254,8 @@
 	},
 	"button_image": {
 		"type": "image",
-		"$button_image_visible|default": true,
-		"ignored": "(not $button_image_visible)",
+		// TODO reminder for myself to know this is possible
+		// "ignored": "(not $button_image_visible)",
 		"size": [
 			"100% - 2px",
 			"100% - 2px"
@@ -301,7 +273,7 @@
 		],
 		"anchor_to": "center",
 		"anchor_from": "center",
-		"texture": "$new_ui_button_texture",
+		"texture": "$button_texture",
 		"alpha": 1
 	}
 }
