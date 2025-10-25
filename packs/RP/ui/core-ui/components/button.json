@@ -16,41 +16,23 @@
 	// Simple vanilla-style button - working foundation before adding protocol layer
 	"controlled_button": {
 		"type": "button",
-		// === Base button functionality (from vanilla_button) ===
-		"$focus_id|default": "",
-		"$focus_override_down|default": "",
-		"$focus_override_up|default": "",
-		"$focus_override_left|default": "",
-		"$focus_override_right|default": "",
-		"focus_identifier": "$focus_id",
-		"focus_change_down": "$focus_override_down",
-		"focus_change_up": "$focus_override_up",
-		"focus_change_left": "$focus_override_left",
-		"focus_change_right": "$focus_override_right",
-		"focus_enabled": true,
-		"focus_magnet_enabled": true,
-		"focus_wrap_enabled": true,
-		"default_focus_precedence": 0,
-		"layer": 1,
-		"sound_name": "random.click",
-		"sound_volume": 1.0,
-		"sound_pitch": 1.0,
-		"locked_control": "locked",
-		"default_control": "default",
-		"hover_control": "hover",
-		"pressed_control": "pressed",
-		"button_mappings": [
-			{
-				"from_button_id": "button.menu_select",
-				"to_button_id": "button.form_button_click",
-				"mapping_type": "pressed"
-			},
-			{
-				"from_button_id": "button.menu_ok",
-				"to_button_id": "button.form_button_click",
-				"mapping_type": "focused"
-			}
+		"size": [
+			0,
+			0
 		],
+		"layer": 100,
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"use_anchored_offset": true,
+		"property_bag": {
+			"#size_binding_x": 0.0,
+			"#size_binding_y": 0.0,
+			"#anchored_offset_value_x": 0.0,
+			"#anchored_offset_value_y": 0.0
+		},
+		"visible": "#visible",
+		"enabled": "#enabled", // TODO needs testing
+		"$normalize": 1.0,
 		"bindings": [
 			{
 				"binding_type": "collection_details",
@@ -190,73 +172,9 @@
 				"target_property_name": "#enabled"
 			},
 			{
-				/* --- layer (number) - field 7 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.27s' * #rem_after_enabled)",
-				"target_property_name": "#raw_layer"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_enabled - #raw_layer)",
-				"target_property_name": "#rem_after_layer"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.26s' * #raw_layer) - ('%.2s' * #raw_layer) - ';')",
-				"target_property_name": "#layer"
-			},
-			{
-				/* --- alpha (number) - field 8 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.27s' * #rem_after_layer)",
-				"target_property_name": "#raw_alpha"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_layer - #raw_alpha)",
-				"target_property_name": "#rem_after_alpha"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.26s' * #raw_alpha) - ('%.2s' * #raw_alpha) - ';')",
-				"target_property_name": "#alpha"
-			},
-			{
-				/* --- inheritMaxSiblingWidth (boolean) - field 9 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.8s' * #rem_after_alpha)",
-				"target_property_name": "#raw_inherit_max_sibling_width"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_alpha - #raw_inherit_max_sibling_width)",
-				"target_property_name": "#rem_after_inherit_max_sibling_width"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.7s' * #raw_inherit_max_sibling_width) - ('%.2s' * #raw_inherit_max_sibling_width) - ';')",
-				"target_property_name": "#inherit_max_sibling_width"
-			},
-			{
-				/* --- inheritMaxSiblingHeight (boolean) - field 10 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.8s' * #rem_after_inherit_max_sibling_width)",
-				"target_property_name": "#raw_inherit_max_sibling_height"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_inherit_max_sibling_width - #raw_inherit_max_sibling_height)",
-				"target_property_name": "#rem_after_inherit_max_sibling_height"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.7s' * #raw_inherit_max_sibling_height) - ('%.2s' * #raw_inherit_max_sibling_height) - ';')",
-				"target_property_name": "#inherit_max_sibling_height"
-			},
-			{
-				/* --- skip __reserved (274 bytes) --- */
+				/* --- skip __reserved (274) + commented (70) --- */
 				"binding_type": "view", // reserved full_width
-				"source_property_name": "('%.274s' * #rem_after_inherit_max_sibling_height)",
+				"source_property_name": "('%.344s' * #rem_after_enabled)",
 				"target_property_name": "#skip_reserved_control"
 			},
 			{
@@ -265,31 +183,44 @@
 				"target_property_name": "#serialized_data"
 			}
 		],
-		// === Visual assets and states (light_button_assets + light_text_button) ===
-		"$button_text|default": "",
-		"$button_text": "#form_button_text",
+		// === Base button functionality (from vanilla_button) ===
+		"$focus_id|default": "",
+		"$focus_override_down|default": "",
+		"$focus_override_up|default": "",
+		"$focus_override_left|default": "",
+		"$focus_override_right|default": "",
+		"focus_identifier": "$focus_id",
+		"focus_change_down": "$focus_override_down",
+		"focus_change_up": "$focus_override_up",
+		"focus_change_left": "$focus_override_left",
+		"focus_change_right": "$focus_override_right",
+		"focus_enabled": true,
+		"focus_magnet_enabled": true,
+		"focus_wrap_enabled": true,
+		"default_focus_precedence": 0,
+		"sound_name": "random.click",
+		"sound_volume": 1.0,
+		"sound_pitch": 1.0,
+		"locked_control": "locked",
+		"default_control": "default",
+		"hover_control": "hover",
+		"pressed_control": "pressed",
 		"$default_state|default": false,
 		"$hover_state|default": false,
 		"$pressed_state|default": false,
 		"$locked_state|default": false,
-		// === form_button overrides ===
-		"anchor_from": "top_left",
-		"anchor_to": "top_left",
-		"use_anchored_offset": true,
-		"size": [
-			0,
-			0
+		"button_mappings": [
+			{
+				"from_button_id": "button.menu_select",
+				"to_button_id": "button.form_button_click",
+				"mapping_type": "pressed"
+			},
+			{
+				"from_button_id": "button.menu_ok",
+				"to_button_id": "button.form_button_click",
+				"mapping_type": "focused"
+			}
 		],
-		"property_bag": {
-			"#size_binding_x": 0.0,
-			"#size_binding_y": 0.0,
-			"#anchored_offset_value_x": 0.0,
-			"#anchored_offset_value_y": 0.0
-		},
-		"visible": "#visible",
-		"enabled": "#enabled",
-		"$normalize": 1.0,
-		// === Controls (inlined new_ui_button_panel) ===
 		"controls": [
 			{
 				"default": {
@@ -304,22 +235,6 @@
 					"controls": [
 						{
 							"button_image@button_image": {}
-						},
-						{
-							"button_content": {
-								"type": "panel",
-								"size": [
-									"100% - 6px",
-									"100% - 6px"
-								],
-								"controls": [
-									{
-										"panel@custom_ui_binding_button_label": {
-											"layer": 3
-										}
-									}
-								]
-							}
 						}
 					],
 					"$button_texture": "textures/ui/core-ui/components/button/primary/background",
@@ -339,22 +254,6 @@
 					"controls": [
 						{
 							"button_image@button_image": {}
-						},
-						{
-							"button_content": {
-								"type": "panel",
-								"size": [
-									"100% - 6px",
-									"100% - 6px"
-								],
-								"controls": [
-									{
-										"panel@custom_ui_binding_button_label": {
-											"layer": 3
-										}
-									}
-								]
-							}
 						}
 					],
 					"$button_texture": "textures/ui/core-ui/components/button/primary/background_hover",
@@ -374,22 +273,6 @@
 					"controls": [
 						{
 							"button_image@button_image": {}
-						},
-						{
-							"button_content": {
-								"type": "panel",
-								"size": [
-									"100% - 6px",
-									"100% - 6px"
-								],
-								"controls": [
-									{
-										"panel@custom_ui_binding_button_label": {
-											"layer": 3
-										}
-									}
-								]
-							}
 						}
 					],
 					"$button_texture": "textures/ui/core-ui/components/button/primary/background_pressed",
@@ -413,56 +296,11 @@
 					"controls": [
 						{
 							"button_image@button_image": {}
-						},
-						{
-							"button_content": {
-								"type": "panel",
-								"size": [
-									"100% - 6px",
-									"100% - 6px"
-								],
-								"controls": [
-									{
-										"panel@custom_ui_binding_button_label": {
-											"layer": 3
-										}
-									}
-								]
-							}
 						}
 					],
 					"$button_texture": "textures/ui/core-ui/components/button/primary/background_disabled",
 					"$locked_state": true
 				}
-			}
-		]
-	},
-	"custom_ui_binding_button_label": {
-		"type": "label",
-		"layer": 2,
-		"text": "$button_text",
-		"color": "$light_button_default_text_color",
-		"font_type": "default",
-		"font_size": "normal",
-		"font_scale_factor": 1.0,
-		"offset": [
-			0,
-			0
-		],
-		"anchor_from": "center",
-		"anchor_to": "center",
-		"shadow": false,
-		"max_size": [
-			"100%",
-			10
-		], // Per design buttons are single line text only
-		"text_alignment": "center",
-		"bindings": [
-			{
-				"binding_type": "collection",
-				"binding_collection_name": "form_buttons",
-				"binding_name": "$button_text",
-				"binding_name_override": "$button_text"
 			}
 		]
 	},
