@@ -2,6 +2,16 @@
 
 Essential knowledge for AI agents working on this Minecraft Bedrock UI serialization library. Follow established patterns; don't invent new formats.
 
+### Research Guidelines
+
+**For any questions related to Minecraft add-ons or Minecraft development:** Always consult these authoritative sources before suggesting answers:
+
+1. **Microsoft Learn Minecraft Creator Documentation** (https://learn.microsoft.com/en-us/minecraft/creator/) - Use Microsoft Docs MCP to search for official documentation, API references, scripting guides, and best practices for Minecraft Bedrock development.
+
+2. **Bedrock-OSS/bedrock-wiki** - Use GitHub's MCP server to search this community-maintained wiki for additional tutorials, examples, and community knowledge about JSON UI, entities, blocks, items, and more.
+
+**Search Strategy:** Query **both sources simultaneously** when researching Minecraft-related questions. The community wiki often contains practical examples, workarounds, and techniques not documented officially, while Microsoft Learn provides authoritative API specifications. Combine information from both sources and use the most complete, accurate, and relevant details found across either documentation set. If information conflicts, prefer Microsoft Learn for API contracts and the wiki for implementation patterns.
+
 ### Core Architecture
 
 This library serializes declarative JSX/component trees into compact strings that get injected into `@minecraft/server-ui` form controls. A companion JSON UI resource pack decodes these payloads to render rich UIs beyond native form limitations.

@@ -262,8 +262,8 @@ Total: 512 bytes per component (fixed allocation)
 
 ## ⚠️ Known Caveats
 
-- JSON UI string operations with numbers can behave unpredictably; use distinct prefixes/markers for safety
-- Subtraction operator (`-`) removes all occurrences; field markers prevent collisions
+1. JSON UI string operations with numbers can behave unpredictably; use distinct prefixes/markers for safety
+2. Subtraction operator (`-`) removes all occurrences in JSON UI; field markers prevent collisions
 
 ## 🗺 Development Roadmap
 
@@ -293,15 +293,19 @@ Total: 512 bytes per component (fixed allocation)
 - Style variants (light/dark themes)
 - Text formatting (colors, bold, underline)
 - Automatic z-index layering
+- Token based styling*
+
+\* By using token based styling we might be able to avoid known caveats 1, thus have support for {number}(%, %c, %cm, %sm, %x, %y, px).
 
 ### 🚀 Future Considerations
 
-- Custom component registration API
+- Custom component registration API (create your own native JSON UI components compatible with @bedrock-core/ui)
 - Compound components (tabs, menus, dialogs)
 - Animation support
 - Resource pack builder automation
 - Reactive data binding (if feasible)
 - Export feature for "non-form" JSON UI
+- Support for translations params (key:string, with: string[]) in SerializableString
 
 ## 🤝 Contributing
 
@@ -317,7 +321,3 @@ Let's talk in Discord <https://bedrocktweaks.net/discord>
 ## What about ore-ui?
 
 When it releases in `Number.MAX_SAFE_INTEGER` years, will deprecate this completely (as JSON-UI will not exist) and look if it is worth to remake it for ore-ui.
-
-## Notes
-
-Support for translations (key:string, with: string[]) in SerializableString
