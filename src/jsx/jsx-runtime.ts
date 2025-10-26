@@ -9,10 +9,12 @@ interface NativeNode<P extends JSX.Props = JSX.Props> {
 export namespace JSX {
   export type Element = NativeNode;
   export type Node = Element | Element[] | null | undefined;
-  export type Props = { [key: string]: SerializablePrimitive | Node | undefined | (() => void) } & { children?: Node };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  export type PropValue = SerializablePrimitive | Node | undefined | ((...args: any[]) => void);
+  export type Props = { [key: string]: PropValue } & { children?: Node };
 }
 
-export type FunctionComponent<P extends JSX.Props = JSX.Props> = (props: P) => JSX.Element;
+export type FunctionComponent<P = JSX.Props> = (props: P) => JSX.Element;
 
 export function renderJSX(
   tag: FunctionComponent,

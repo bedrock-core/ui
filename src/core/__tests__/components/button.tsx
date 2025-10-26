@@ -8,7 +8,7 @@ export function ButtonExample(): JSX.Element {
         height={24}
         x={32}
         y={24}
-        value="Click a button below:"
+        value={"Click a button below:"}
       />
 
       <Button

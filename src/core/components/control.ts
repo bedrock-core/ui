@@ -1,7 +1,7 @@
 import { JSX } from '../../jsx/jsx-runtime';
 import { reserveBytes } from '../serializer';
 
-export interface ControlProps extends JSX.Props {
+export interface ControlProps {
   // All positioning and sizing values are numbers, will not support string types like "100px", "100%", "100%c"... too much issues in json ui
   // All mandatory as we are going to go with fixed absolute sizing and positioning
   width: number;
