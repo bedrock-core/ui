@@ -1,4 +1,3 @@
-import { Logger } from '../util';
 import { JSX } from '../jsx';
 import { CoreUIFormData, ReservedBytes, SerializablePrimitive, SerializableProps, SerializationContext, SerializationError } from './types';
 
@@ -151,14 +150,15 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
   // Validate and filter props - ensure all props (except children) are serializable
   const serializableProps: SerializableProps = {};
   const invalidProps: string[] = [];
-  const callbacks: Record<string, () => void> = {};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const callbacks: Record<string, (...args: any[]) => void> = {};
 
   for (const [key, value] of Object.entries(rest)) {
     if (isSerializablePrimitive(value)) {
       serializableProps[key] = value;
     } else if (typeof value === 'function') {
       // Store function props as callbacks - they're not serializable but valid for event handlers
-      callbacks[key] = value as (() => void);
+      callbacks[key] = value;
     } else {
       invalidProps.push(`${key} (type: ${typeof value}, value: ${JSON.stringify(value)})`);
     }
@@ -173,9 +173,9 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
     );
   }
 
-  const [payload, bytes] = serializeProps({ type, ...serializableProps });
+  const [payload] = serializeProps({ type, ...serializableProps });
 
-  Logger.log(`[serialize] type=${type} payloadBytes=${bytes} payload=${payload} `);
+  // Logger.log(`[serialize] type=${type} payloadBytes=${bytes} payload=${payload} `);
 
   // Client-only components (use label routing)
   if (['panel', 'text', 'image', 'fragment'].includes(type)) {
@@ -191,18 +191,7 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
     }
 
     form.button(payload);
-  }
-  // Native form components
-  // else if (type === 'slider') {
-  //   form.slider(payload, props.label ?? '', props.min, props.max, props.step, props.defaultValue);
-  // }
-  // else if (type === 'dropdown') {
-  //   form.dropdown(payload, props.label ?? '', props.options, props.defaultIndex ?? 0);
-  // }
-  // else if (type === 'input') {
-  //   form.textField(payload, props.label ?? '', props.placeholder ?? '', props.defaultValue ?? '');
-  // }
-  else {
+  } else {
     throw new SerializationError(`Unknown component type: ${type}`);
   }
 

@@ -32,6 +32,18 @@ export {
 // Rendering
 export { render } from './render';
 
+// Hooks
+export { useState, useEffect, executeEffects } from './hooks';
+
+export type {
+  StateHook,
+  EffectHook,
+  Hook,
+  HookCall,
+  ComponentInstance,
+  HookContext
+} from './hooks';
+
 // Types
 export type {
   CoreUIFormData,

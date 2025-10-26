@@ -19,29 +19,28 @@
   ],
   "repository": "github:bedrock-core/ui",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
     },
     "./jsx-runtime": {
-      "types": "./dist/jsx/jsx-runtime.d.ts",
-      "import": "./dist/jsx/jsx-runtime.js"
+      "types": "./src/jsx/jsx-runtime.ts",
+      "import": "./src/jsx/jsx-runtime.ts"
     },
     "./jsx-dev-runtime": {
-      "types": "./dist/jsx/jsx-dev-runtime.d.ts",
-      "import": "./dist/jsx/jsx-dev-runtime.js"
+      "types": "./src/jsx/jsx-dev-runtime.ts",
+      "import": "./src/jsx/jsx-dev-runtime.ts"
     }
   },
   "files": [
-    "dist"
+    "src"
   ],
   "sideEffects": false,
   "scripts": {
-    "build": "rimraf dist && tsc -p tsconfig.json",
-    "clean": "rimraf dist",
+    "build": "tsc -p tsconfig.json",
     "lint": "eslint .",
     "test": "vitest run",
     "coverage": "vitest run --coverage"
@@ -58,10 +57,6 @@
     "@types/node": "^24.3.0",
     "@vitest/coverage-v8": "^3.2.4",
     "eslint": "^9.34.0",
-    "globals": "^16.3.0",
-    "jiti": "^2.5.1",
-    "rimraf": "^5.0.5",
-    "strip-json-comments": "^5.0.3",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.40.0",
     "vitest": "^3.2.4"

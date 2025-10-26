@@ -2,12 +2,8 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "esnext",
-    "declaration": true,
-    "declarationMap": false,
-    "sourceMap": false,
-    "outDir": "dist",
+    "noEmit": true,
     "rootDir": "src",
-    "stripInternal": true,
     "strict": true,
     "moduleResolution": "bundler",
     "baseUrl": ".",
@@ -29,6 +25,11 @@
     "src/**/*"
   ],
   "exclude": [
-    "src/**/*.test.ts"
+    "node_modules",
+    "src/**/__tests__/**",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.spec.ts",
+    "src/**/*.spec.tsx"
   ]
 }

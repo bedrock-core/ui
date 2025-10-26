@@ -68,7 +68,7 @@ describe('Button callbacks', () => {
 
     const form = new ActionFormData();
 
-    // Button without callback
+    // Button without callback (will have default empty function)
     const button1 = Button({
       width: 100,
       height: 40,
@@ -85,7 +85,7 @@ describe('Button callbacks', () => {
       onPress: callback,
     });
 
-    // Button without callback
+    // Button without callback (will have default empty function)
     const button3 = Button({
       width: 100,
       height: 40,
@@ -97,8 +97,8 @@ describe('Button callbacks', () => {
     serialize(button2, form, context);
     serialize(button3, form, context);
 
-    // Only button2 should have a callback
-    expect(context.buttonCallbacks.size).toBe(1);
+    // All buttons have callbacks (buttons 1 and 3 have default empty functions)
+    expect(context.buttonCallbacks.size).toBe(3);
     expect(context.buttonCallbacks.get(1)).toBe(callback);
     expect(context.buttonIndex).toBe(3);
   });

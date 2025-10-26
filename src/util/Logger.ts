@@ -1,5 +1,5 @@
 export class Logger {
-  static enabled: boolean = false;
+  static enabled: boolean = true;
 
   static configure(enabled: boolean): void {
     Logger.enabled = enabled;
