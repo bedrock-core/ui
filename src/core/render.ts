@@ -6,6 +6,7 @@ import { fiberRegistry } from './fiber';
 import { executeEffects } from './hooks';
 import { PROTOCOL_HEADER, serialize } from './serializer';
 import { SerializationContext } from './types';
+import { RenderOptions } from './hooks/types';
 
 /**
  * Input lock system - tracks which players have locked input and their previous permissions
@@ -54,15 +55,6 @@ function stopInputLock(player: Player): void {
   player.inputPermissions.setPermissionCategory(InputPermissionCategory.Movement, previousPermissions.movement);
 
   inputLocks.delete(playerId);
-}
-
-interface RenderOptions {
-
-  /**
-   * Unique key for component instance persistence.
-   * If not provided, defaults to component function name or 'anonymous'
-   */
-  key?: string;
 }
 
 /**

@@ -40,8 +40,7 @@ export type {
   EffectHook,
   Hook,
   HookCall,
-  ComponentInstance,
-  HookContext
+  ComponentInstance
 } from './hooks';
 
 // Types

@@ -59,13 +59,3 @@ export interface ComponentInstance {
  * Render options for component rendering
  */
 export interface RenderOptions { key?: string }
-
-/**
- * Hook execution context - provides access to current component fiber
- */
-export interface HookContext {
-  currentInstance: ComponentInstance | null;
-  pushInstance(instance: ComponentInstance): void;
-  popInstance(): ComponentInstance | null;
-  getInstance(): ComponentInstance | null;
-}
