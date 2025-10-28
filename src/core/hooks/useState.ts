@@ -1,4 +1,3 @@
-import { Logger } from '../../util';
 import { StateHook, Hook, ComponentInstance } from './types';
 import { fiberRegistry } from '../fiber';
 
@@ -62,12 +61,7 @@ export function useState<T>(initialValue: T | (() => T)): [T, (nextValue: T | ((
         stateHook.value = newValue;
         instance.dirty = true;
 
-        // Schedule debounced render using the instance's callback
-        if (instance.scheduleRerender) {
-          instance.scheduleRerender();
-        } else {
-          Logger.error(`[useState] No scheduleRerender callback for ${instance.id}`);
-        }
+        // Note: Forms only re-render on button press, so state changes alone don't trigger updates
       },
     };
 

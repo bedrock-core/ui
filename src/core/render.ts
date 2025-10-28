@@ -189,25 +189,22 @@ export async function render(
     componentId = `${playerId}:${key}`;
 
     // Get or create component instance
-    const instance = fiberRegistry.getOrCreateInstance(componentId, component, {});
+    const instance = fiberRegistry.getOrCreateInstance(componentId, player, component, {});
 
     // Start input lock on first render
     if (!instance.mounted) {
       startInputLock(player);
     }
 
-    // Store render context for re-renders
-    instance.renderContext = {
-      player,
-      options,
-    };
+    // Reset transient close semantics at the beginning of each render
+    // so only the current interaction (ESC/useExit/Suspense) influences handling
+    // - undefined: default (e.g., ESC or user-closed form) → cleanup, no re-render
+    // - false: programmatic close that should trigger re-render (e.g., Suspense)
+    // - true: programmatic close that should NOT re-render (e.g., useExit)
+    instance.isProgrammaticClose = undefined;
 
-    // Store a callback for potential re-renders (currently no-op)
-    // DISABLED: Debounce re-rendering removed - forms only update on button press
-    // Keeping this for hook compatibility but it does nothing
-    instance.scheduleRerender = (): void => {
-      // No-op: Let game process form close naturally, only re-render on button press
-    };
+    // Store options for potential re-renders
+    instance.options = options;
 
     // Push instance onto fiber stack (makes it available to hooks)
     fiberRegistry.pushInstance(instance);
@@ -246,9 +243,37 @@ export async function render(
   serialize(element, form, context);
 
   form.show(player).then((response: ActionFormResponse): void => {
+    console.log(`player: ${player.name}, sel: ${response.selection}, cancel: ${response.canceled}, cr: ${response.cancelationReason}`);
     if (response.canceled) {
-      // ESC key pressed - cleanup, don't re-render
-      if (isStateful && componentId && response.selection === undefined) {
+      // Form was closed (either by ESC or programmatically)
+      if (isStateful && componentId) {
+        const instance = fiberRegistry.getInstance(componentId);
+
+        if (instance?.mounted) {
+          // isProgrammaticClose === false: Suspense close → re-render
+          // isProgrammaticClose === true: useExit close → cleanup
+          // isProgrammaticClose === undefined: ESC key or other close → cleanup
+
+          if (instance.isProgrammaticClose === false) {
+            // Suspense-triggered close: re-render
+            system.run((): void => {
+              render(player, component, options);
+            });
+
+            return;
+          } else if (instance.isProgrammaticClose === true) {
+            // useExit-triggered close: cleanup
+            stopInputLock(player);
+            executeEffects(instance, true); // Run cleanup functions
+            fiberRegistry.deleteInstance(componentId);
+
+            return;
+          }
+        }
+      }
+
+      // Normal ESC key press or other close - cleanup, don't re-render
+      if (isStateful && componentId) {
         const instance = fiberRegistry.getInstance(componentId);
         if (instance?.mounted) {
           // Stop input lock
@@ -287,8 +312,25 @@ export async function render(
      * Button press closes the form automatically, so we just re-render on next tick
      */
     function handlePostCallbackRender(): void {
-      // Render immediately on next tick (form is already closed by game)
-      system.run(() => {
+      // Check if this is a programmatic close (like useExit) - if so, don't re-render
+      if (isStateful && componentId) {
+        const instance = fiberRegistry.getInstance(componentId);
+
+        if (instance?.isProgrammaticClose) {
+          // Clean up the instance
+          if (instance.mounted) {
+            stopInputLock(player);
+            executeEffects(instance, true); // Run cleanup functions
+
+            fiberRegistry.deleteInstance(componentId);
+          }
+
+          return;
+        }
+      }
+
+      // Normal re-render on next tick (form is already closed by game)
+      system.run((): void => {
         render(player, component, options);
       });
     }

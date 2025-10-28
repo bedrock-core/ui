@@ -5,6 +5,7 @@ export {
   Image,
   Panel,
   Text,
+  Suspense,
   // Serialization utilities
   reserveBytes,
   // Rendering
@@ -17,6 +18,11 @@ export {
   useRef,
   useContext,
   useReducer,
+  usePlayer,
+  useEvent,
+  useExit,
+  useRefresh,
+  useSuspendedState,
   // Protocol constants
   PROTOCOL_HEADER,
   VERSION,
@@ -38,6 +44,7 @@ export type {
   PanelProps,
   TextProps,
   ControlProps,
+  SuspenseProps,
   // Context types
   Context,
   ProviderProps,
@@ -48,6 +55,9 @@ export type {
   ContextHook,
   ReducerHook,
   ComponentInstance,
+  EventSignal,
+  RefreshFunctions,
+  SuspendedStateMarker,
   // Types
   CoreUIFormData,
   ReservedBytes,

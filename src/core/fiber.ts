@@ -1,21 +1,15 @@
 import { FunctionComponent, JSX } from '@bedrock-core/ui/jsx-runtime';
-import { system } from '@minecraft/server';
-import { ComponentInstance } from './hooks/types';
-import { Context } from './context';
+import { Player } from '@minecraft/server';
 import { Logger } from 'src/util';
+import { Context } from './context';
+import { ComponentInstance } from './hooks/types';
 
 /**
  * Global fiber registry that manages component instances and their state
  */
 class FiberRegistry {
   private _instances: Map<string, ComponentInstance> = new Map();
-
   private _instanceStack: ComponentInstance[] = [];
-
-  private _playerRenderTimeouts: Map<string, number> = new Map();
-
-  private _renderCallbacks: Map<string, () => void> = new Map();
-
   private _contextStack: Map<Context<unknown>, unknown[]> = new Map();
 
   /**
@@ -23,6 +17,7 @@ class FiberRegistry {
    */
   getOrCreateInstance(
     id: string,
+    player: Player,
     componentFn: FunctionComponent,
     props: JSX.Props,
   ): ComponentInstance {
@@ -31,6 +26,7 @@ class FiberRegistry {
     if (!instance) {
       instance = {
         id,
+        player,
         componentType: componentFn,
         props,
         hooks: [],
@@ -113,48 +109,6 @@ class FiberRegistry {
     for (const id of this._instances.keys()) {
       this.deleteInstance(id);
     }
-  }
-
-  /**
-   * Schedule a deferred render for a player (debounced, batches state changes)
-   * Delay is in ticks (1 tick = one system.runTimeout call with delay 0)
-   * @param playerId Player identifier
-   * @param callback Function to call when timer fires
-   * @param delayTicks Number of ticks to wait before rendering (default: 5)
-   */
-  scheduleRender(playerId: string, callback: () => void, delayTicks: number = 5): void {
-    // If already scheduled for this player, don't schedule again (batch state changes)
-    if (this._playerRenderTimeouts.has(playerId)) {
-      return;
-    }
-
-    const timeoutId = system.runTimeout((): void => {
-      this._playerRenderTimeouts.delete(playerId);
-      this._renderCallbacks.delete(playerId);
-      callback();
-    }, delayTicks);
-
-    this._playerRenderTimeouts.set(playerId, timeoutId);
-    this._renderCallbacks.set(playerId, callback);
-  }
-
-  /**
-   * Cancel any pending render for a player
-   */
-  cancelRender(playerId: string): void {
-    const timeoutId = this._playerRenderTimeouts.get(playerId);
-    if (timeoutId !== undefined) {
-      system.clearRun(timeoutId);
-      this._playerRenderTimeouts.delete(playerId);
-      this._renderCallbacks.delete(playerId);
-    }
-  }
-
-  /**
-   * Check if a render is scheduled for a player
-   */
-  hasScheduledRender(playerId: string): boolean {
-    return this._playerRenderTimeouts.has(playerId);
   }
 
   /**

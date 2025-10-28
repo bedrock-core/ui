@@ -68,18 +68,21 @@ export interface HookCall {
  */
 export interface ComponentInstance {
   id: string;
+  player: Player;
   componentType: FunctionComponent;
   props: JSX.Props;
   hooks: Hook[];
   hookIndex: number;
   mounted: boolean;
   dirty: boolean;
-  renderContext?: {
-    player: Player;
-    options?: RenderOptions;
-  };
-  scheduleRerender?: () => void;
+  options?: RenderOptions;
   isProgrammaticClose?: boolean;
+  hasSuspendedState?: boolean;
+  onSuspendedStateInitialize?: () => void;
+  suspensionState?: { isSuspended: boolean; hasChecked: boolean };
+
+  /** Track which useSuspendedState hooks have already fired their callback (by hook index) */
+  suspendedStateCallbacksFired?: Set<number>;
 }
 
 /**

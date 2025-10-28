@@ -1,4 +1,3 @@
-import { Logger } from '../../util';
 import { ReducerHook, Hook, ComponentInstance } from './types';
 import { fiberRegistry } from '../fiber';
 
@@ -81,12 +80,7 @@ export function useReducer<S, A, I = S>(
         reducerHook.state = newState;
         instance.dirty = true;
 
-        // Schedule debounced render using the instance's callback
-        if (instance.scheduleRerender) {
-          instance.scheduleRerender();
-        } else {
-          Logger.error(`[useReducer] No scheduleRerender callback for ${instance.id}`);
-        }
+        // Note: Forms only re-render on button press, so state changes alone don't trigger updates
       }
     };
 

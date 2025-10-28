@@ -5,12 +5,14 @@ export {
   Image,
   Panel,
   Text,
+  Suspense,
   type ButtonProps,
   type FragmentProps,
   type ImageProps,
   type PanelProps,
   type TextProps,
-  type ControlProps
+  type ControlProps,
+  type SuspenseProps
 } from './components';
 
 // Serialization
@@ -37,7 +39,19 @@ export { createContext } from './context';
 export type { Context, ProviderProps } from './context';
 
 // Hooks
-export { useState, useEffect, executeEffects, useRef, useContext, useReducer } from './hooks';
+export {
+  useState,
+  useEffect,
+  executeEffects,
+  useRef,
+  useContext,
+  useReducer,
+  usePlayer,
+  useEvent,
+  useExit,
+  useRefresh,
+  useSuspendedState
+} from './hooks';
 
 export type {
   StateHook,
@@ -47,7 +61,10 @@ export type {
   ReducerHook,
   Hook,
   HookCall,
-  ComponentInstance
+  ComponentInstance,
+  EventSignal,
+  RefreshFunctions,
+  SuspendedStateMarker
 } from './hooks';
 
 // Types

@@ -110,7 +110,9 @@ export function useEffect(create: () => void | (() => void), deps?: unknown[]): 
  * @internal
  */
 export function executeEffects(instance: ComponentInstance, cleanupOnly = false): void {
-  const wasDirtyBefore: boolean = !!instance.dirty;
+  if (!instance) {
+    throw new Error('executeEffects called with undefined instance');
+  }
 
   for (let i = 0; i < instance.hooks.length; i++) {
     const hook: Hook | undefined = instance.hooks[i];
@@ -162,13 +164,6 @@ export function executeEffects(instance: ComponentInstance, cleanupOnly = false)
 
   instance.mounted = true;
 
-  // After all effects complete, check if component is dirty and schedule render if needed
-  // Only schedule if effects caused new dirtiness (avoid double-renders)
-  if (!wasDirtyBefore && instance.dirty) {
-    if (instance.scheduleRerender) {
-      instance.scheduleRerender();
-    } else {
-      Logger.error(`[useEffect] No scheduleRerender callback for ${instance.id}`);
-    }
-  }
+  // Note: Forms only re-render on button press, so effect-triggered state changes
+  // alone don't trigger updates. The next button press will cause a full re-render.
 }
