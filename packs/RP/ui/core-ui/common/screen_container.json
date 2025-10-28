@@ -19,6 +19,10 @@
 						"100%",
 						"100%"
 					],
+					"offset": [
+						"-50%",
+						"-50%"
+					],
 					"$protocol_header": "bcuiv0001",
 					"bindings": [
 						{
@@ -31,14 +35,13 @@
 					"controls": [
 						{
 							"generated_contents": {
-								"type": "stack_panel",
+								"type": "collection_panel",
 								"size": [
 									"100%",
 									"100%"
 								],
-								"orientation": "vertical",
-								"anchor_from": "center",
-								"anchor_to": "center",
+								"anchor_from": "top_left",
+								"anchor_to": "top_left",
 								"factory": {
 									"name": "buttons",
 									"control_ids": {

@@ -58,44 +58,44 @@ export const TodoList: FunctionComponent = (): JSX.Element => {
   const completedCount = todos.filter(t => t.completed).length;
 
   return (
-    <Panel width={220} height={140} x={470} y={10}>
-      <Text width={220} height={20} x={480} y={20} value={'§l§bTodo List'} />
-      <Text width={220} height={15} x={480} y={45} value={`Total: §e${todoCount}`} />
-      <Text width={220} height={15} x={480} y={63} value={`Done: §a${completedCount}`} />
+    <Panel width={192} height={140} x={414} y={10}>
+      <Text width={192} height={20} x={424} y={20} value={'§l§bTodo List'} />
+      <Text width={192} height={15} x={424} y={45} value={`Total: §e${todoCount}`} />
+      <Text width={192} height={15} x={424} y={63} value={`Done: §a${completedCount}`} />
 
       <Button
-        width={100}
+        width={81}
         height={20}
-        x={480}
+        x={424}
         y={85}
         onPress={(): void => {
           addTodo();
         }}>
-        <Text width={100} height={20} x={530} y={89} value={'§a+ Add'} />
+        <Text width={81} height={20} x={429} y={90} value={'§a+ Add'} />
       </Button>
 
       <Button
-        width={100}
+        width={81}
         height={20}
-        x={585}
+        x={515}
         y={85}
         onPress={(): void => {
           clearCompleted();
         }}>
-        <Text width={100} height={20} x={635} y={89} value={'§cClear'} />
+        <Text width={81} height={20} x={520} y={90} value={'§cClear'} />
       </Button>
 
       <Button
-        width={205}
+        width={172}
         height={20}
-        x={480}
+        x={424}
         y={110}
         onPress={(): void => {
           if (todos.length > 0) {
             dispatch({ type: 'toggle', id: todos[0].id });
           }
         }}>
-        <Text width={205} height={20} x={582} y={114} value={'§9Toggle First'} />
+        <Text width={172} height={20} x={429} y={115} value={'§9Toggle First'} />
       </Button>
     </Panel>
   );

@@ -71,8 +71,8 @@ import { ThemeContext, SettingsContext, type Theme, type Settings } from './cont
  *
  * Grid Layout:
  * - 3 rows × 4 columns
- * - 220×140 cells with 10px gaps
- * - Total dimensions: 920×460
+ * - 192×140 cells with 10px gaps
+ * - Total dimensions: 818×460
  *
  * State Management:
  * - Theme state (shared via ThemeContext)

@@ -7,22 +7,22 @@ import { uiManager } from '@minecraft/server-ui';
  * Grid Position: Row 3, Column 4
  */
 export const ExitPanel: FunctionComponent = (): JSX.Element => (
-  <Panel width={220} height={140} x={700} y={310}>
-    <Text width={220} height={20} x={710} y={320} value={'§l§cExit Panel'} />
-    <Text width={220} height={15} x={710} y={350} value={'§7Close the UI'} />
+  <Panel width={192} height={140} x={616} y={310}>
+    <Text width={192} height={20} x={626} y={320} value={'§l§cExit Panel'} />
+    <Text width={192} height={15} x={626} y={350} value={'§7Close the UI'} />
     <Button
-      width={200}
+      width={172}
       height={30}
-      x={710}
+      x={626}
       y={375}
       onPress={(): void => {
         const player = world.getAllPlayers()[0];
         // @ts-expect-error import nested issue
         uiManager.closeAllForms(player);
       }}>
-      <Text width={200} height={30} x={810} y={379} value={'§l§cEXIT'} />
+      <Text width={172} height={30} x={631} y={385} value={'§l§cEXIT'} />
     </Button>
-    <Text width={220} height={12} x={710} y={420} value={'§7Thanks for testing!'} />
+    <Text width={192} height={12} x={626} y={420} value={'§7Thanks for testing!'} />
   </Panel>
 );
 

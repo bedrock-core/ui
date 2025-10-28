@@ -55,43 +55,43 @@ export const RefTimer: FunctionComponent = (): JSX.Element => {
   }, []);
 
   return (
-    <Panel width={220} height={140} x={700} y={10}>
-      <Text width={220} height={20} x={710} y={20} value={'§l§dRef Timer'} />
-      <Text width={220} height={15} x={710} y={45} value={`Count: §e${count}`} />
-      <Text width={220} height={15} x={710} y={63} value={`Renders: §6${renderCount}`} />
+    <Panel width={192} height={140} x={616} y={10}>
+      <Text width={192} height={20} x={626} y={20} value={'§l§dRef Timer'} />
+      <Text width={192} height={15} x={626} y={45} value={`Count: §e${count}`} />
+      <Text width={192} height={15} x={626} y={63} value={`Renders: §6${renderCount}`} />
 
       <Button
-        width={100}
+        width={81}
         height={20}
-        x={710}
+        x={626}
         y={85}
         onPress={(): void => {
           startTimer();
         }}>
-        <Text width={100} height={20} x={760} y={89} value={'§aStart'} />
+        <Text width={81} height={20} x={631} y={90} value={'§aStart'} />
       </Button>
 
       <Button
-        width={100}
+        width={81}
         height={20}
-        x={815}
+        x={717}
         y={85}
         onPress={(): void => {
           stopTimer();
         }}>
-        <Text width={100} height={20} x={865} y={89} value={'§cStop'} />
+        <Text width={81} height={20} x={722} y={90} value={'§cStop'} />
       </Button>
 
       <Button
-        width={205}
+        width={172}
         height={20}
-        x={710}
+        x={626}
         y={110}
         onPress={(): void => {
           stopTimer();
           setCount(0);
         }}>
-        <Text width={205} height={20} x={812} y={114} value={'§6Reset'} />
+        <Text width={172} height={20} x={631} y={115} value={'§6Reset'} />
       </Button>
     </Panel>
   );

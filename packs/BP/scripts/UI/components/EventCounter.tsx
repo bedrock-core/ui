@@ -32,13 +32,13 @@ export const EventCounter: FunctionComponent = (): JSX.Element => {
   }, []);
 
   return (
-    <Panel width={220} height={140} x={10} y={160}>
-      <Text width={220} height={20} x={20} y={170} value={'§l§bScript Events'} />
-      <Text width={220} height={15} x={20} y={195} value={`Events: §l${eventCount}`} />
-      <Text width={220} height={15} x={20} y={213} value={`ID: §7${lastEventId}`} />
-      <Text width={220} height={15} x={20} y={231} value={`Msg: §7${lastMessage}`} />
-      <Text width={220} height={12} x={20} y={255} value={'§6/scriptevent test'} />
-      <Text width={220} height={12} x={20} y={273} value={'§6Auto cleanup'} />
+    <Panel width={192} height={140} x={10} y={160}>
+      <Text width={192} height={20} x={20} y={170} value={'§l§bScript Events'} />
+      <Text width={192} height={15} x={20} y={195} value={`Events: §l${eventCount}`} />
+      <Text width={192} height={15} x={20} y={213} value={`ID: §7${lastEventId}`} />
+      <Text width={192} height={15} x={20} y={231} value={`Msg: §7${lastMessage}`} />
+      <Text width={192} height={12} x={20} y={255} value={'§6/scriptevent test'} />
+      <Text width={192} height={12} x={20} y={273} value={'§6Auto cleanup'} />
     </Panel>
   );
 };

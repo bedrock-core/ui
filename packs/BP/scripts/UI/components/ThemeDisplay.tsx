@@ -15,12 +15,12 @@ export const ThemeDisplay: FunctionComponent = (): JSX.Element => {
   };
 
   return (
-    <Panel width={220} height={140} x={10} y={10}>
-      <Text width={220} height={20} x={20} y={20} value={'§l§eTheme Display'} />
-      <Text width={220} height={15} x={20} y={45} value={'§lCurrent Theme:'} />
-      <Text width={220} height={20} x={20} y={65} value={`${themeColors[theme]}§l${theme.toUpperCase()}`} />
-      <Text width={220} height={15} x={20} y={100} value={'§7Uses useContext'} />
-      <Text width={220} height={15} x={20} y={120} value={'§7to read theme'} />
+    <Panel width={192} height={140} x={10} y={10}>
+      <Text width={192} height={20} x={20} y={20} value={'§l§eTheme Display'} />
+      <Text width={192} height={15} x={20} y={45} value={'§lCurrent Theme:'} />
+      <Text width={192} height={20} x={20} y={65} value={`${themeColors[theme]}§l${theme.toUpperCase()}`} />
+      <Text width={192} height={15} x={20} y={100} value={'§7Uses useContext'} />
+      <Text width={192} height={15} x={20} y={120} value={'§7to read theme'} />
     </Panel>
   );
 };
