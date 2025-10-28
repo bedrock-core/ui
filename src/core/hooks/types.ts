@@ -80,9 +80,6 @@ export interface ComponentInstance {
   };
   scheduleRerender?: () => void;
   isProgrammaticClose?: boolean;
-  // Store context providers discovered during tree building
-  // Used to make context available on subsequent re-renders
-  contextProviders?: Map<unknown, unknown>;
 }
 
 /**

@@ -147,6 +147,15 @@ function isSerializablePrimitive(value: unknown): value is SerializablePrimitive
  * @param context - Optional serialization context for collecting button callbacks
  */
 export function serialize({ type, props: { children, ...rest } }: JSX.Element, form: CoreUIFormData, context?: SerializationContext): void {
+  // Function components should have been resolved by buildTree()
+  // If we see one here, it's a bug
+  if (typeof type === 'function') {
+    throw new SerializationError(
+      `serialize(): Encountered unresolved function component "${type.name || 'anonymous'}". ` +
+      `This is a bug - buildTree() should have called all function components before serialization.`,
+    );
+  }
+
   // Validate and filter props - ensure all props (except children) are serializable
   const serializableProps: SerializableProps = {};
   const invalidProps: string[] = [];

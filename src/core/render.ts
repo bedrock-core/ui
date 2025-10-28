@@ -1,13 +1,12 @@
 import { InputPermissionCategory, Player, system } from '@minecraft/server';
 import { ActionFormData, ActionFormResponse, FormRejectError } from '@minecraft/server-ui';
 import { FunctionComponent, JSX } from '../jsx';
-import { Logger } from '../util';
+import { Context } from './context';
 import { fiberRegistry } from './fiber';
 import { executeEffects } from './hooks';
+import { RenderOptions } from './hooks/types';
 import { PROTOCOL_HEADER, serialize } from './serializer';
 import { SerializationContext } from './types';
-import { RenderOptions } from './hooks/types';
-import { Context } from './context';
 
 /**
  * Input lock system - tracks which players have locked input and their previous permissions
@@ -64,25 +63,26 @@ function stopInputLock(player: Player): void {
  * processing children, ensuring context values are available when child
  * components call useContext().
  *
+ * With lazy JSX, function components are stored as references and called here
+ * at the appropriate time (after their parent context providers have been set up).
+ *
  * @param element - JSX element to build
- * @param contextProviders - Map to collect discovered context providers
  * @returns Fully processed JSX element tree with context resolved
  */
-function buildTree(element: JSX.Element | JSX.Node, contextProviders?: Map<Context<unknown>, unknown>): JSX.Element | JSX.Node {
+function buildTree(element: JSX.Element | JSX.Node): JSX.Element | JSX.Node {
   // Handle non-element children (strings, numbers, etc.)
   if (!element || typeof element !== 'object' || !('type' in element)) {
     return element;
   }
 
   // Handle function components - call them NOW (after context is set up)
-  // The JSX runtime stores the function itself as the type
+  // With lazy JSX, the type is the function itself, not a string
   if (typeof element.type === 'function') {
-    const componentFn = element.type as unknown as FunctionComponent;
-    Logger.log(`[buildTree] Calling function component: ${componentFn.name || 'anonymous'}`);
+    const componentFn = element.type;
     const renderedElement = componentFn(element.props);
 
     // Recursively build the rendered result
-    return buildTree(renderedElement, contextProviders);
+    return buildTree(renderedElement);
   }
 
   // Handle context provider - push context BEFORE processing children
@@ -97,19 +97,12 @@ function buildTree(element: JSX.Element | JSX.Node, contextProviders?: Map<Conte
     const contextValue = providerProps.value;
     const contextChildren = providerProps.children;
 
-    // Save context provider for future renders
-    if (contextProviders) {
-      Logger.log(`[buildTree] Saving context provider with value: ${JSON.stringify(contextValue)}`);
-      contextProviders.set(contextObj, contextValue);
-    }
-
     // Push context value onto the stack
-    Logger.log(`[buildTree] Pushing context provider with value: ${JSON.stringify(contextValue)}`);
     fiberRegistry.pushContext(contextObj, contextValue);
 
     try {
       // Process children recursively - they can now read context via useContext()
-      const processedChildren = buildTreeChildren(contextChildren, contextProviders);
+      const processedChildren = buildTreeChildren(contextChildren);
 
       // Return children directly (context provider itself doesn't render)
       if (Array.isArray(processedChildren)) {
@@ -130,14 +123,13 @@ function buildTree(element: JSX.Element | JSX.Node, contextProviders?: Map<Conte
       }
     } finally {
       // Always pop context after processing children
-      Logger.log(`[buildTree] Popping context provider`);
       fiberRegistry.popContext(contextObj);
     }
   }
 
   // For regular elements, recursively build children
   if (element.props.children) {
-    const processedChildren = buildTreeChildren(element.props.children, contextProviders);
+    const processedChildren = buildTreeChildren(element.props.children);
 
     return {
       type: element.type,
@@ -154,15 +146,14 @@ function buildTree(element: JSX.Element | JSX.Node, contextProviders?: Map<Conte
 /**
  * Process children nodes during tree building
  * @param children - Child nodes to process
- * @param contextProviders - Map to collect discovered context providers
  * @returns Processed children
  */
-function buildTreeChildren(children: JSX.Node, contextProviders?: Map<Context<unknown>, unknown>): JSX.Node {
+function buildTreeChildren(children: JSX.Node): JSX.Node {
   if (Array.isArray(children)) {
-    return children.map(child => buildTree(child, contextProviders)) as JSX.Node;
+    return children.map(child => buildTree(child)) as JSX.Node;
   }
 
-  return buildTree(children, contextProviders);
+  return buildTree(children);
 }
 
 /**
@@ -202,10 +193,7 @@ export async function render(
 
     // Start input lock on first render
     if (!instance.mounted) {
-      Logger.log(`[render] First render of component ${componentId}, starting input lock`);
       startInputLock(player);
-    } else {
-      Logger.log(`[render] Re-rendering component ${componentId}`);
     }
 
     // Store render context for re-renders
@@ -225,34 +213,13 @@ export async function render(
     fiberRegistry.pushInstance(instance);
 
     try {
-      // Push saved context providers from previous render onto the stack
-      // This makes them available when component function executes
-      if (instance.contextProviders) {
-        Logger.log(`[render] Pushing ${instance.contextProviders.size} saved context providers`);
-        for (const [contextObj, contextValue] of instance.contextProviders) {
-          fiberRegistry.pushContext(contextObj as Context<unknown>, contextValue);
-        }
-      }
-
       // Call component function to get JSX tree
+      // With lazy JSX, child components are NOT called yet - just stored as references
       element = component(instance.props);
 
-      // Pop saved contexts (will be replaced with new ones)
-      if (instance.contextProviders) {
-        for (const [contextObj] of instance.contextProviders) {
-          fiberRegistry.popContext(contextObj as Context<unknown>);
-        }
-      }
-
-      // Create map to collect context providers during tree building
-      const discoveredContexts = new Map<Context<unknown>, unknown>();
-
-      // Build complete tree and discover new context providers (Phase 1)
-      element = buildTree(element, discoveredContexts) as JSX.Element;
-
-      // Save discovered contexts for next render
-      instance.contextProviders = discoveredContexts;
-      Logger.log(`[render] Saved ${discoveredContexts.size} context providers for next render`);
+      // Build complete tree with context resolution (Phase 1)
+      // buildTree() will call child components at the right time (after context is set up)
+      element = buildTree(element) as JSX.Element;
 
       // After tree is built, execute effects (Phase 2)
       executeEffects(instance);
@@ -284,8 +251,6 @@ export async function render(
       if (isStateful && componentId && response.selection === undefined) {
         const instance = fiberRegistry.getInstance(componentId);
         if (instance?.mounted) {
-          Logger.log(`[render] Player pressed ESC for ${componentId}, cleaning up`);
-
           // Stop input lock
           stopInputLock(player);
 
@@ -302,18 +267,15 @@ export async function render(
       const callback = context.buttonCallbacks.get(response.selection);
 
       if (callback) {
-        Logger.log(`[render] Button ${response.selection} pressed, executing callback`);
         // AWAIT the callback completion (may be async or sync)
         // Wrap in Promise.resolve() to handle both sync and async callbacks uniformly
         Promise.resolve(callback())
           .then((): void => {
             // Callback completed; now re-render with all accumulated state changes
-            Logger.log(`[render] Button callback completed, scheduling re-render`);
             handlePostCallbackRender();
           })
           .catch((_error: unknown): void => {
             // Still trigger re-render even on error
-            Logger.log(`[render] Button callback error, still re-rendering`);
             handlePostCallbackRender();
           });
       }

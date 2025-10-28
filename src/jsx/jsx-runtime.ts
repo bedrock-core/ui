@@ -2,7 +2,7 @@ import { SerializablePrimitive } from '../core';
 import { Fragment as FragmentComponent } from '../core/components/Fragment';
 
 interface NativeNode<P extends JSX.Props = JSX.Props> {
-  type: string;
+  type: string | FunctionComponent<P>;
   props: P;
 }
 
@@ -16,11 +16,20 @@ export namespace JSX {
 
 export type FunctionComponent<P = JSX.Props> = (props: P) => JSX.Element;
 
+/**
+ * Lazy JSX runtime - stores function references instead of calling them immediately.
+ * Functions are called later during tree building when context is properly set up.
+ */
 export function renderJSX(
-  tag: FunctionComponent,
+  tag: string | FunctionComponent,
   props: JSX.Props,
 ): JSX.Element {
-  return tag(props || {});
+  // Store the tag (string or function) without calling it
+  // buildTree() will call function components at the appropriate time
+  return {
+    type: tag,
+    props: props || {},
+  };
 }
 
 // Export factories

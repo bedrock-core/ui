@@ -165,8 +165,6 @@ class FiberRegistry {
     const stack = this._contextStack.get(context as Context<unknown>) || [];
     stack.push(value as unknown);
     this._contextStack.set(context as Context<unknown>, stack);
-
-    Logger.log(`[FiberRegistry] Pushed context value: ${JSON.stringify(value)} (stack depth: ${stack.length})`);
   }
 
   /**
@@ -176,11 +174,9 @@ class FiberRegistry {
   popContext<T>(context: Context<T>): void {
     const stack = this._contextStack.get(context as Context<unknown>);
     if (stack && stack.length > 0) {
-      const popped = stack.pop();
       if (stack.length === 0) {
         this._contextStack.delete(context as Context<unknown>);
       }
-      Logger.log(`[FiberRegistry] Popped context value: ${JSON.stringify(popped)} (stack depth: ${stack.length})`);
     }
   }
 
@@ -192,12 +188,9 @@ class FiberRegistry {
     const stack = this._contextStack.get(context as Context<unknown>);
     if (stack && stack.length > 0) {
       const value = stack[stack.length - 1] as T;
-      Logger.log(`[FiberRegistry] Read context value from stack: ${JSON.stringify(value)}`);
 
       return value;
     }
-
-    Logger.log(`[FiberRegistry] Context not in stack, returning default: ${JSON.stringify(context.defaultValue)}`);
 
     return context.defaultValue;
   }
