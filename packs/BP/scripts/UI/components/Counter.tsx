@@ -37,50 +37,50 @@ export const Counter: FunctionComponent = (): JSX.Element => {
   }, [isAutoIncrement]);
 
   return (
-    <Panel width={192} height={140} x={212} y={160}>
+    <Panel width={192} height={140} x={616} y={160}>
       {/* Title */}
-      <Text width={192} height={20} x={222} y={170} value={'§l§aCounter'} />
+      <Text width={192} height={20} x={626} y={170} value={'§l§aCounter'} />
 
       {/* Display current count */}
-      <Text width={192} height={20} x={222} y={195} value={`Count: §l${count}`} />
+      <Text width={192} height={20} x={626} y={195} value={`Count: §l${count}`} />
 
       {/* Auto-increment status */}
-      <Text width={192} height={15} x={222} y={218} value={`Auto: ${isAutoIncrement ? '§aON' : '§cOFF'}`} />
+      <Text width={192} height={15} x={626} y={218} value={`Auto: ${isAutoIncrement ? '§aON' : '§cOFF'}`} />
 
       {/* Increment button */}
       <Button
         width={81}
         height={20}
-        x={222}
+        x={626}
         y={240}
         onPress={(): void => {
           setCount(prev => prev + 1);
         }}>
-        <Text width={81} height={20} x={227} y={245} value={'§l+1'} />
+        <Text width={81} height={20} x={631} y={245} value={'§l+1'} />
       </Button>
 
       {/* Decrement button */}
       <Button
         width={81}
         height={20}
-        x={313}
+        x={717}
         y={240}
         onPress={(): void => {
           setCount(prev => prev - 1);
         }}>
-        <Text width={81} height={20} x={318} y={245} value={'§l-1'} />
+        <Text width={81} height={20} x={722} y={245} value={'§l-1'} />
       </Button>
 
       {/* Toggle auto-increment */}
       <Button
         width={172}
         height={20}
-        x={222}
+        x={626}
         y={265}
         onPress={(): void => {
           setIsAutoIncrement(!isAutoIncrement);
         }}>
-        <Text width={172} height={20} x={227} y={270} value={`§9${isAutoIncrement ? 'Stop' : 'Start'} Auto`} />
+        <Text width={172} height={20} x={631} y={270} value={`§9${isAutoIncrement ? 'Stop' : 'Start'} Auto`} />
       </Button>
     </Panel>
   );

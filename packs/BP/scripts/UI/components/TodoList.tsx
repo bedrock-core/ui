@@ -39,13 +39,10 @@ function todoReducer(state: Todo[], action: TodoAction): Todo[] {
  */
 export const TodoList: FunctionComponent = (): JSX.Element => {
   const [todos, dispatch] = useReducer(todoReducer, []);
-  const [todoCount, setTodoCount] = useState(0);
 
-  // Track todo count
-  useEffect(() => {
-    setTodoCount(todos.length);
-    console.log(`[TodoList] Updated: ${todos.length} todos`);
-  }, [todos]);
+  // Derived state - computed directly, no useState/useEffect needed!
+  const todoCount = todos.length;
+  const completedCount = todos.filter(t => t.completed).length;
 
   const addTodo = (): void => {
     dispatch({ type: 'add', text: `Task ${todos.length + 1}` });
@@ -54,8 +51,6 @@ export const TodoList: FunctionComponent = (): JSX.Element => {
   const clearCompleted = (): void => {
     dispatch({ type: 'clear_completed' });
   };
-
-  const completedCount = todos.filter(t => t.completed).length;
 
   return (
     <Panel width={192} height={140} x={414} y={10}>

@@ -8,43 +8,43 @@ interface ThemeControllerProps { onThemeChange: (theme: Theme) => void }
  * Grid Position: Row 2, Column 3
  */
 export const ThemeController: FunctionComponent<ThemeControllerProps> = ({ onThemeChange }): JSX.Element => (
-  <Panel width={192} height={140} x={414} y={160}>
-    <Text width={192} height={20} x={424} y={170} value={'§l§eTheme Control'} />
+  <Panel width={192} height={140} x={10} y={160}>
+    <Text width={192} height={20} x={20} y={170} value={'§l§eTheme Control'} />
 
     <Button
       width={172}
       height={20}
-      x={424}
+      x={20}
       y={195}
       onPress={(): void => {
         onThemeChange('light');
       }}>
-      <Text width={172} height={20} x={429} y={200} value={'§f■ Light'} />
+      <Text width={172} height={20} x={25} y={200} value={'§f■ Light'} />
     </Button>
 
     <Button
       width={172}
       height={20}
-      x={424}
+      x={20}
       y={220}
       onPress={(): void => {
         onThemeChange('dark');
       }}>
-      <Text width={172} height={20} x={429} y={225} value={'§8■ Dark'} />
+      <Text width={172} height={20} x={25} y={225} value={'§8■ Dark'} />
     </Button>
 
     <Button
       width={172}
       height={20}
-      x={424}
+      x={20}
       y={245}
       onPress={(): void => {
         onThemeChange('neon');
       }}>
-      <Text width={172} height={20} x={429} y={250} value={'§d■ Neon'} />
+      <Text width={172} height={20} x={25} y={250} value={'§d■ Neon'} />
     </Button>
 
-    <Text width={192} height={12} x={424} y={275} value={'§7useContext provider'} />
+    <Text width={192} height={12} x={20} y={275} value={'§7useContext provider'} />
   </Panel>
 );
 
