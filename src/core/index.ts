@@ -32,12 +32,19 @@ export {
 // Rendering
 export { render } from './render';
 
+// Context
+export { createContext } from './context';
+export type { Context, ProviderProps } from './context';
+
 // Hooks
-export { useState, useEffect, executeEffects } from './hooks';
+export { useState, useEffect, executeEffects, useRef, useContext, useReducer } from './hooks';
 
 export type {
   StateHook,
   EffectHook,
+  RefHook,
+  ContextHook,
+  ReducerHook,
   Hook,
   HookCall,
   ComponentInstance

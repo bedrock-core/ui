@@ -23,9 +23,36 @@ export interface EffectHook {
 }
 
 /**
- * Represents a single hook call (useState, useEffect, etc)
+ * Ref hook storage for a single useRef call
  */
-export type Hook = StateHook | EffectHook;
+export interface RefHook<T = unknown> {
+  readonly type: 'ref';
+  value: { current: T };
+}
+
+/**
+ * Context hook storage for a single useContext call
+ */
+export interface ContextHook<T = unknown> {
+  readonly type: 'context';
+  context: unknown; // Context<T> from context.ts - using unknown to avoid circular dependency
+  value: T;
+}
+
+/**
+ * Reducer hook storage for a single useReducer call
+ */
+export interface ReducerHook<S = unknown, A = unknown> {
+  readonly type: 'reducer';
+  state: S;
+  dispatch: (action: A) => void;
+  reducer: (state: S, action: A) => S;
+}
+
+/**
+ * Represents a single hook call (useState, useEffect, useRef, useContext, useReducer, etc)
+ */
+export type Hook = StateHook | EffectHook | RefHook | ContextHook | ReducerHook;
 
 /**
  * Represents a single hook call (useState, useEffect, etc)

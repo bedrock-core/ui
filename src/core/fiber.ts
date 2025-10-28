@@ -1,7 +1,8 @@
 import { FunctionComponent, JSX } from '@bedrock-core/ui/jsx-runtime';
 import { system } from '@minecraft/server';
-import { Logger } from '../util';
 import { ComponentInstance } from './hooks/types';
+import { Context } from './context';
+import { Logger } from 'src/util';
 
 /**
  * Global fiber registry that manages component instances and their state
@@ -14,6 +15,8 @@ class FiberRegistry {
   private _playerRenderTimeouts: Map<string, number> = new Map();
 
   private _renderCallbacks: Map<string, () => void> = new Map();
+
+  private _contextStack: Map<Context<unknown>, unknown[]> = new Map();
 
   /**
    * Create or get a component instance
@@ -37,8 +40,6 @@ class FiberRegistry {
       };
 
       this._instances.set(id, instance);
-
-      Logger.log(`[FiberRegistry] Created instance: ${id}`);
     } else {
       // Update props if component was re-rendered with different props
       instance.props = props;
@@ -73,8 +74,6 @@ class FiberRegistry {
       }
 
       this._instances.delete(id);
-
-      Logger.log(`[FiberRegistry] Deleted instance: ${id}`);
     }
   }
 
@@ -126,15 +125,10 @@ class FiberRegistry {
   scheduleRender(playerId: string, callback: () => void, delayTicks: number = 5): void {
     // If already scheduled for this player, don't schedule again (batch state changes)
     if (this._playerRenderTimeouts.has(playerId)) {
-      Logger.log(`[FiberRegistry] Render already scheduled for ${playerId}, ignoring duplicate`);
-
       return;
     }
 
-    Logger.log(`[FiberRegistry] Scheduling render for ${playerId} in ${delayTicks} ticks`);
-
     const timeoutId = system.runTimeout((): void => {
-      Logger.log(`[FiberRegistry] Render timer fired for ${playerId}`);
       this._playerRenderTimeouts.delete(playerId);
       this._renderCallbacks.delete(playerId);
       callback();
@@ -150,7 +144,6 @@ class FiberRegistry {
   cancelRender(playerId: string): void {
     const timeoutId = this._playerRenderTimeouts.get(playerId);
     if (timeoutId !== undefined) {
-      Logger.log(`[FiberRegistry] Cancelling pending render for ${playerId}`);
       system.clearRun(timeoutId);
       this._playerRenderTimeouts.delete(playerId);
       this._renderCallbacks.delete(playerId);
@@ -162,6 +155,51 @@ class FiberRegistry {
    */
   hasScheduledRender(playerId: string): boolean {
     return this._playerRenderTimeouts.has(playerId);
+  }
+
+  /**
+   * Push a context value onto the context stack
+   * Called when entering a Context.Provider
+   */
+  pushContext<T>(context: Context<T>, value: T): void {
+    const stack = this._contextStack.get(context as Context<unknown>) || [];
+    stack.push(value as unknown);
+    this._contextStack.set(context as Context<unknown>, stack);
+
+    Logger.log(`[FiberRegistry] Pushed context value: ${JSON.stringify(value)} (stack depth: ${stack.length})`);
+  }
+
+  /**
+   * Pop a context value from the context stack
+   * Called when exiting a Context.Provider
+   */
+  popContext<T>(context: Context<T>): void {
+    const stack = this._contextStack.get(context as Context<unknown>);
+    if (stack && stack.length > 0) {
+      const popped = stack.pop();
+      if (stack.length === 0) {
+        this._contextStack.delete(context as Context<unknown>);
+      }
+      Logger.log(`[FiberRegistry] Popped context value: ${JSON.stringify(popped)} (stack depth: ${stack.length})`);
+    }
+  }
+
+  /**
+   * Read the current value of a context from the context stack
+   * Returns the most recently pushed value, or the default value if no Provider exists
+   */
+  readContext<T>(context: Context<T>): T {
+    const stack = this._contextStack.get(context as Context<unknown>);
+    if (stack && stack.length > 0) {
+      const value = stack[stack.length - 1] as T;
+      Logger.log(`[FiberRegistry] Read context value from stack: ${JSON.stringify(value)}`);
+
+      return value;
+    }
+
+    Logger.log(`[FiberRegistry] Context not in stack, returning default: ${JSON.stringify(context.defaultValue)}`);
+
+    return context.defaultValue;
   }
 }
 

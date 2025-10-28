@@ -7,6 +7,7 @@ import { executeEffects } from './hooks';
 import { PROTOCOL_HEADER, serialize } from './serializer';
 import { SerializationContext } from './types';
 import { RenderOptions } from './hooks/types';
+import { Context } from './context';
 
 /**
  * Input lock system - tracks which players have locked input and their previous permissions
@@ -65,6 +66,89 @@ function renderComponentElement(component: FunctionComponent, props: JSX.Props):
 }
 
 /**
+ * Process an element and handle special cases like context providers
+ * Returns the processed element ready for serialization
+ */
+function processElement(element: JSX.Element): JSX.Element {
+  // Handle context provider - push context, render children, pop context
+  if (element.type === 'context-provider') {
+    const providerProps = element.props as unknown as {
+      __context: Context<unknown>;
+      value: unknown;
+      children: JSX.Node;
+    };
+    const contextObj = providerProps.__context;
+    const contextValue = providerProps.value;
+    const contextChildren = providerProps.children;
+
+    // Push context value onto the stack
+    Logger.log(`[processElement] Pushing context provider with value: ${JSON.stringify(contextValue)}`);
+    fiberRegistry.pushContext(contextObj, contextValue);
+
+    try {
+      // Process children recursively (they might have more providers)
+      const processedChildren = processChildren(contextChildren);
+
+      // Render children (which may be an array or single element)
+      if (Array.isArray(processedChildren)) {
+        // Multiple children - wrap in Fragment
+        return {
+          type: 'fragment',
+          props: { children: processedChildren },
+        };
+      } else if (processedChildren && typeof processedChildren === 'object' && 'type' in processedChildren) {
+        // Single child element - return it directly
+        return processedChildren;
+      } else {
+        // No valid children - return empty fragment
+        return {
+          type: 'fragment',
+          props: { children: [] },
+        };
+      }
+    } finally {
+      // Always pop context after processing children
+      Logger.log(`[processElement] Popping context provider`);
+      fiberRegistry.popContext(contextObj);
+    }
+  }
+
+  // For non-provider elements, recursively process children
+  if (element.props.children) {
+    const processedChildren = processChildren(element.props.children);
+
+    return {
+      type: element.type,
+      props: {
+        ...element.props,
+        children: processedChildren,
+      },
+    };
+  }
+
+  return element;
+}
+
+/**
+ * Process children, handling context providers recursively
+ */
+function processChildren(children: JSX.Node): JSX.Node {
+  if (Array.isArray(children)) {
+    return children.map(child => {
+      if (child && typeof child === 'object' && 'type' in child) {
+        return processElement(child);
+      }
+
+      return child;
+    });
+  } else if (children && typeof children === 'object' && 'type' in children) {
+    return processElement(children);
+  }
+
+  return children;
+}
+
+/**
  * Present a JSX component to a player using the @bedrock-core/ui system.
  * Manages component instances, state, and effects.
  *
@@ -101,7 +185,10 @@ export async function render(
 
     // Start input lock on first render
     if (!instance.mounted) {
+      Logger.log(`[render] First render of component ${componentId}, starting input lock`);
       startInputLock(player);
+    } else {
+      Logger.log(`[render] Re-rendering component ${componentId}`);
     }
 
     // Store render context for re-renders
@@ -124,7 +211,11 @@ export async function render(
       // Render component element
       element = renderComponentElement(component, instance.props);
 
-      // After rendering, execute effects
+      // Process element to handle context providers BEFORE executing effects
+      // This ensures context is set up before any child components read it
+      element = processElement(element);
+
+      // After processing, execute effects
       executeEffects(instance);
     } finally {
       // Pop instance from stack
@@ -145,7 +236,8 @@ export async function render(
 
   form.title(PROTOCOL_HEADER);
 
-  // Pass context to serialize
+  // Element has already been processed to handle context providers
+  // Just pass it to serialize
   serialize(element, form, context);
 
   form.show(player).then((response: ActionFormResponse): void => {
@@ -172,17 +264,19 @@ export async function render(
       const callback = context.buttonCallbacks.get(response.selection);
 
       if (callback) {
+        Logger.log(`[render] Button ${response.selection} pressed, executing callback`);
         // AWAIT the callback completion (may be async or sync)
         // Wrap in Promise.resolve() to handle both sync and async callbacks uniformly
         Promise.resolve(callback())
           .then((): void => {
             // Callback completed; now re-render with all accumulated state changes
-            handlePostCallbackRender(isStateful, componentId);
+            Logger.log(`[render] Button callback completed, scheduling re-render`);
+            handlePostCallbackRender();
           })
-          .catch((error: unknown): void => {
-            Logger.error(`[render] Button callback rejected: ${error}`);
+          .catch((_error: unknown): void => {
             // Still trigger re-render even on error
-            handlePostCallbackRender(isStateful, componentId);
+            Logger.log(`[render] Button callback error, still re-rendering`);
+            handlePostCallbackRender();
           });
       }
     }
@@ -192,9 +286,8 @@ export async function render(
      *
      * Button press closes the form automatically, so we just re-render on next tick
      */
-    function handlePostCallbackRender(isStateful: boolean, componentId: string | null): void {
+    function handlePostCallbackRender(): void {
       // Render immediately on next tick (form is already closed by game)
-      Logger.log(`[render] Re-rendering after button press for ${componentId}`);
       system.run(() => {
         render(player, component, options);
       });

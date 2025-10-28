@@ -83,8 +83,6 @@ export function useEffect(create: () => void | (() => void), deps?: unknown[]): 
     };
 
     instance.hooks[hookIndex] = effectHook;
-
-    Logger.log(`[useEffect] Registered effect at index ${hookIndex} for instance ${instance.id}`);
   }
 
   // Get the stored hook after potential initialization
@@ -112,7 +110,6 @@ export function useEffect(create: () => void | (() => void), deps?: unknown[]): 
  * @internal
  */
 export function executeEffects(instance: ComponentInstance, cleanupOnly = false): void {
-  Logger.log(`[useEffect] Executing effects for instance ${instance.id}${cleanupOnly ? ' (cleanup only)' : ''}`);
   const wasDirtyBefore: boolean = !!instance.dirty;
 
   for (let i = 0; i < instance.hooks.length; i++) {
@@ -128,7 +125,7 @@ export function executeEffects(instance: ComponentInstance, cleanupOnly = false)
         try {
           hook.cleanup();
         } catch (error) {
-          Logger.log(`[useEffect] Error running cleanup: ${error}`);
+          Logger.error(`[useEffect] Error running cleanup: ${error}`);
         }
       }
 
@@ -136,17 +133,14 @@ export function executeEffects(instance: ComponentInstance, cleanupOnly = false)
     }
 
     const shouldRun: boolean = depsChanged(hook.prevDeps, hook.deps);
-    Logger.log(`[useEffect] Effect at index ${i}: shouldRun=${shouldRun}, prevDeps=${JSON.stringify(hook.prevDeps)}, nextDeps=${JSON.stringify(hook.deps)}`);
 
     if (shouldRun || !instance.mounted) {
-      Logger.log(`[useEffect] Running effect at index ${i} (shouldRun=${shouldRun}, mounted=${instance.mounted})`);
-
       // Run cleanup if it exists
       if (hook.cleanup) {
         try {
           hook.cleanup();
         } catch (error) {
-          Logger.log(`[useEffect] Error running cleanup: ${error}`);
+          Logger.error(`[useEffect] Error running cleanup: ${error}`);
         }
       }
 
@@ -157,7 +151,7 @@ export function executeEffects(instance: ComponentInstance, cleanupOnly = false)
         // Store cleanup function if setup returned one
         hook.cleanup = typeof result === 'function' ? result : undefined;
       } catch (error) {
-        Logger.log(`[useEffect] Error running setup: ${error}`);
+        Logger.error(`[useEffect] Error running setup: ${error}`);
       }
 
       // Update deps tracking
@@ -171,8 +165,6 @@ export function executeEffects(instance: ComponentInstance, cleanupOnly = false)
   // After all effects complete, check if component is dirty and schedule render if needed
   // Only schedule if effects caused new dirtiness (avoid double-renders)
   if (!wasDirtyBefore && instance.dirty) {
-    Logger.log(`[useEffect] Effect dirtied state for ${instance.id}, scheduling render`);
-
     if (instance.scheduleRerender) {
       instance.scheduleRerender();
     } else {

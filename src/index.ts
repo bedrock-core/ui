@@ -9,9 +9,14 @@ export {
   reserveBytes,
   // Rendering
   render,
+  // Context
+  createContext,
   // Hooks
   useState,
   useEffect,
+  useRef,
+  useContext,
+  useReducer,
   // Protocol constants
   PROTOCOL_HEADER,
   VERSION,
@@ -33,9 +38,15 @@ export type {
   PanelProps,
   TextProps,
   ControlProps,
+  // Context types
+  Context,
+  ProviderProps,
   // Hook types
   StateHook,
   EffectHook,
+  RefHook,
+  ContextHook,
+  ReducerHook,
   ComponentInstance,
   // Types
   CoreUIFormData,

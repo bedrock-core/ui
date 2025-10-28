@@ -62,8 +62,6 @@ export function useState<T>(initialValue: T | (() => T)): [T, (nextValue: T | ((
         stateHook.value = newValue;
         instance.dirty = true;
 
-        Logger.log(`[useState] State updated for instance ${instance.id}`);
-
         // Schedule debounced render using the instance's callback
         if (instance.scheduleRerender) {
           instance.scheduleRerender();
