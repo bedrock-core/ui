@@ -59,18 +59,34 @@ function stopInputLock(player: Player): void {
 }
 
 /**
- * Internal function to render a component element to JSX
+ * Build the complete JSX element tree, handling context providers depth-first.
+ * This follows React's reconciliation pattern where context is pushed BEFORE
+ * processing children, ensuring context values are available when child
+ * components call useContext().
+ *
+ * @param element - JSX element to build
+ * @param contextProviders - Map to collect discovered context providers
+ * @returns Fully processed JSX element tree with context resolved
  */
-function renderComponentElement(component: FunctionComponent, props: JSX.Props): JSX.Element {
-  return component(props);
-}
+function buildTree(element: JSX.Element | JSX.Node, contextProviders?: Map<Context<unknown>, unknown>): JSX.Element | JSX.Node {
+  // Handle non-element children (strings, numbers, etc.)
+  if (!element || typeof element !== 'object' || !('type' in element)) {
+    return element;
+  }
 
-/**
- * Process an element and handle special cases like context providers
- * Returns the processed element ready for serialization
- */
-function processElement(element: JSX.Element): JSX.Element {
-  // Handle context provider - push context, render children, pop context
+  // Handle function components - call them NOW (after context is set up)
+  // The JSX runtime stores the function itself as the type
+  if (typeof element.type === 'function') {
+    const componentFn = element.type as unknown as FunctionComponent;
+    Logger.log(`[buildTree] Calling function component: ${componentFn.name || 'anonymous'}`);
+    const renderedElement = componentFn(element.props);
+
+    // Recursively build the rendered result
+    return buildTree(renderedElement, contextProviders);
+  }
+
+  // Handle context provider - push context BEFORE processing children
+  // This ensures children can read the context when their component functions execute
   if (element.type === 'context-provider') {
     const providerProps = element.props as unknown as {
       __context: Context<unknown>;
@@ -81,15 +97,21 @@ function processElement(element: JSX.Element): JSX.Element {
     const contextValue = providerProps.value;
     const contextChildren = providerProps.children;
 
+    // Save context provider for future renders
+    if (contextProviders) {
+      Logger.log(`[buildTree] Saving context provider with value: ${JSON.stringify(contextValue)}`);
+      contextProviders.set(contextObj, contextValue);
+    }
+
     // Push context value onto the stack
-    Logger.log(`[processElement] Pushing context provider with value: ${JSON.stringify(contextValue)}`);
+    Logger.log(`[buildTree] Pushing context provider with value: ${JSON.stringify(contextValue)}`);
     fiberRegistry.pushContext(contextObj, contextValue);
 
     try {
-      // Process children recursively (they might have more providers)
-      const processedChildren = processChildren(contextChildren);
+      // Process children recursively - they can now read context via useContext()
+      const processedChildren = buildTreeChildren(contextChildren, contextProviders);
 
-      // Render children (which may be an array or single element)
+      // Return children directly (context provider itself doesn't render)
       if (Array.isArray(processedChildren)) {
         // Multiple children - wrap in Fragment
         return {
@@ -108,14 +130,14 @@ function processElement(element: JSX.Element): JSX.Element {
       }
     } finally {
       // Always pop context after processing children
-      Logger.log(`[processElement] Popping context provider`);
+      Logger.log(`[buildTree] Popping context provider`);
       fiberRegistry.popContext(contextObj);
     }
   }
 
-  // For non-provider elements, recursively process children
+  // For regular elements, recursively build children
   if (element.props.children) {
-    const processedChildren = processChildren(element.props.children);
+    const processedChildren = buildTreeChildren(element.props.children, contextProviders);
 
     return {
       type: element.type,
@@ -130,22 +152,17 @@ function processElement(element: JSX.Element): JSX.Element {
 }
 
 /**
- * Process children, handling context providers recursively
+ * Process children nodes during tree building
+ * @param children - Child nodes to process
+ * @param contextProviders - Map to collect discovered context providers
+ * @returns Processed children
  */
-function processChildren(children: JSX.Node): JSX.Node {
+function buildTreeChildren(children: JSX.Node, contextProviders?: Map<Context<unknown>, unknown>): JSX.Node {
   if (Array.isArray(children)) {
-    return children.map(child => {
-      if (child && typeof child === 'object' && 'type' in child) {
-        return processElement(child);
-      }
-
-      return child;
-    });
-  } else if (children && typeof children === 'object' && 'type' in children) {
-    return processElement(children);
+    return children.map(child => buildTree(child, contextProviders)) as JSX.Node;
   }
 
-  return children;
+  return buildTree(children, contextProviders);
 }
 
 /**
@@ -208,22 +225,44 @@ export async function render(
     fiberRegistry.pushInstance(instance);
 
     try {
-      // Render component element
-      element = renderComponentElement(component, instance.props);
+      // Push saved context providers from previous render onto the stack
+      // This makes them available when component function executes
+      if (instance.contextProviders) {
+        Logger.log(`[render] Pushing ${instance.contextProviders.size} saved context providers`);
+        for (const [contextObj, contextValue] of instance.contextProviders) {
+          fiberRegistry.pushContext(contextObj as Context<unknown>, contextValue);
+        }
+      }
 
-      // Process element to handle context providers BEFORE executing effects
-      // This ensures context is set up before any child components read it
-      element = processElement(element);
+      // Call component function to get JSX tree
+      element = component(instance.props);
 
-      // After processing, execute effects
+      // Pop saved contexts (will be replaced with new ones)
+      if (instance.contextProviders) {
+        for (const [contextObj] of instance.contextProviders) {
+          fiberRegistry.popContext(contextObj as Context<unknown>);
+        }
+      }
+
+      // Create map to collect context providers during tree building
+      const discoveredContexts = new Map<Context<unknown>, unknown>();
+
+      // Build complete tree and discover new context providers (Phase 1)
+      element = buildTree(element, discoveredContexts) as JSX.Element;
+
+      // Save discovered contexts for next render
+      instance.contextProviders = discoveredContexts;
+      Logger.log(`[render] Saved ${discoveredContexts.size} context providers for next render`);
+
+      // After tree is built, execute effects (Phase 2)
       executeEffects(instance);
     } finally {
       // Pop instance from stack
       fiberRegistry.popInstance();
     }
   } else {
-    // It's a direct JSX element - no instance management needed
-    element = component;
+    // It's a direct JSX element - build the tree to handle any context providers
+    element = buildTree(component) as JSX.Element;
   }
 
   const form = new ActionFormData();
@@ -236,8 +275,7 @@ export async function render(
 
   form.title(PROTOCOL_HEADER);
 
-  // Element has already been processed to handle context providers
-  // Just pass it to serialize
+  // Tree has been built with context resolved, now serialize to form
   serialize(element, form, context);
 
   form.show(player).then((response: ActionFormResponse): void => {
