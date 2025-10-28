@@ -8,6 +8,7 @@
 			0,
 			0
 		],
+		"layer": 100,
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
 		"use_anchored_offset": true,

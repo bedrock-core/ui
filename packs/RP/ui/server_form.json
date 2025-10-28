@@ -1,5 +1,11 @@
 {
 	"namespace": "server_form",
+	"third_party_server_screen": {
+		"$screen_animations": [
+			"@core-ui_animations.screen_enter_animation",
+			"@core-ui_animations.screen_exit_animation"
+		]
+	},
 	"long_form": {
 		"$protocol_header": "bcuiv0001",
 		"modifications": [

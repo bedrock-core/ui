@@ -1,5 +1,5 @@
 import { render } from '@bedrock-core/ui';
-import { ButtonPushAfterEvent, Player, ScriptEventCommandMessageAfterEvent, system, world } from '@minecraft/server';
+import { ButtonPushAfterEvent, Player, world } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
 import { MinecraftBlockTypes, MinecraftEntityTypes } from '@minecraft/vanilla-data';
 import { Example } from './UI/Example';
@@ -8,7 +8,7 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
   if (source.typeId === MinecraftEntityTypes.Player) {
     if (block.typeId === MinecraftBlockTypes.StoneButton) {
       // @ts-expect-error link issues
-      render(source as Player, Example());
+      render(source as Player, Example, { key: 'example-ui' });
     }
     if (block.typeId === MinecraftBlockTypes.AcaciaButton) {
       const form = new ActionFormData();
@@ -19,9 +19,4 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
       form.show(source as Player);
     }
   }
-});
-
-system.afterEvents.scriptEventReceive.subscribe(({ sourceEntity }: ScriptEventCommandMessageAfterEvent) => {
-  // @ts-expect-error link issues
-  render(sourceEntity as Player, Example());
 });

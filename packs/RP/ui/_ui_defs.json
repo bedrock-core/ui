@@ -1,6 +1,8 @@
 {
 	"ui_defs": [
 		"ui/server_form.json",
+		// Animations
+		"ui/core-ui/animations/screen_events.json",
 		// Base control, all components should extend this
 		"ui/core-ui/common/control.json", // [0,511] 512 bytes
 		"ui/core-ui/common/screen_container.json",

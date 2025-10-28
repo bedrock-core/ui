@@ -44,8 +44,8 @@
 									"control_ids": {
 										"button": "@core-ui_components.button",
 										"label": "@core-ui_common.component_router",
-										"header": "@server_form.dynamic_header",
-										"divider": "@settings_common.option_group_section_divider"
+										"header": "@core-ui_common.unused",
+										"divider": "@core-ui_common.unused"
 									}
 								},
 								"collection_name": "form_buttons",
@@ -60,6 +60,13 @@
 					]
 				}
 			}
+		]
+	},
+	"unused": {
+		"type": "panel",
+		"size": [
+			0,
+			0
 		]
 	}
 }

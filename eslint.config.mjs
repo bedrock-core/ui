@@ -46,7 +46,7 @@ export default defineConfig([
   },
 
   {
-    files: ["packs/BP/scripts/**/*.ts"],
+    files: ["packs/BP/scripts/**/*.ts", "packs/BP/scripts/**/*.tsx"],
     plugins: {
       "@stylistic": stylistic,
       "@typescript-eslint": tseslint.plugin,
@@ -148,10 +148,6 @@ export default defineConfig([
           format: ["camelCase"],
         },
         {
-          selector: ["parameter"],
-          format: ["camelCase", "snake_case"],
-        },
-        {
           selector: "variable",
           modifiers: ["const"],
           format: ["camelCase", "UPPER_CASE", "PascalCase"],
@@ -163,7 +159,7 @@ export default defineConfig([
         {
           selector: ["property", "parameterProperty", "accessor"],
           modifiers: ["private"],
-          format: ["camelCase", "snake_case"],
+          format: ["camelCase"],
           leadingUnderscore: "require",
         },
         {
@@ -179,7 +175,8 @@ export default defineConfig([
         },
         {
           selector: ["objectLiteralProperty", "typeProperty"],
-          format: ["camelCase", "snake_case", "UPPER_CASE"],
+          format: ["camelCase", "snake_case", "UPPER_CASE", "PascalCase"],
+          leadingUnderscore: "allowDouble",
         },
         {
           selector: "typeLike",
@@ -260,6 +257,7 @@ export default defineConfig([
       "@stylistic/computed-property-spacing": ["warn"],
       "@stylistic/dot-location": ["warn", "property"],
       "@stylistic/eol-last": ["warn"],
+      // "@stylistic/func-call-spacing": ["warn", "never"],
       "@stylistic/function-call-argument-newline": ["warn", "consistent"],
       "@stylistic/function-paren-newline": ["warn", "consistent"],
       "@stylistic/generator-star-spacing": "off",
@@ -303,7 +301,7 @@ export default defineConfig([
       "@stylistic/new-parens": ["warn"],
       "@stylistic/newline-per-chained-call": "off",
       "@stylistic/no-confusing-arrow": "off",
-      "@stylistic/no-extra-parens": ["warn"],
+      "@stylistic/no-extra-parens": ["warn", "all", { ignoreJSX: "all" }],
       "@stylistic/no-extra-semi": ["warn"],
       "@stylistic/no-floating-decimal": ["warn"],
       "@stylistic/no-mixed-operators": "off",
@@ -373,25 +371,26 @@ export default defineConfig([
       "@stylistic/yield-star-spacing": "off",
       "@stylistic/member-delimiter-style": ["warn"],
       "@stylistic/type-annotation-spacing": "warn",
-      "@stylistic/jsx-child-element-spacing": "off",
-      "@stylistic/jsx-closing-bracket-location": "off",
-      "@stylistic/jsx-closing-tag-location": "off",
-      "@stylistic/jsx-curly-brace-presence": "off",
-      "@stylistic/jsx-curly-newline": "off",
+
+      "@stylistic/jsx-child-element-spacing": "error",
+      "@stylistic/jsx-closing-bracket-location": ["error", "after-props"],
+      "@stylistic/jsx-closing-tag-location": ["error", "line-aligned"],
+      "@stylistic/jsx-curly-brace-presence": ["error", { props: "always", children: "never", propElementValues: "always" }],
+      "@stylistic/jsx-curly-newline": "error",
       "@stylistic/jsx-curly-spacing": "off",
-      "@stylistic/jsx-equals-spacing": "off",
-      "@stylistic/jsx-first-prop-new-line": "off",
+      "@stylistic/jsx-equals-spacing": ["error", "never"],
+      "@stylistic/jsx-first-prop-new-line": ["error", "multiline-multiprop"],
       "@stylistic/jsx-indent": "off",
-      "@stylistic/jsx-indent-props": "off",
-      "@stylistic/jsx-max-props-per-line": "off",
+      "@stylistic/jsx-indent-props": ["warn", 2],
+      "@stylistic/jsx-max-props-per-line": ["error", { "when": "multiline" }],
       "@stylistic/jsx-newline": "off",
-      "@stylistic/jsx-one-expression-per-line": "off",
-      "@stylistic/jsx-props-no-multi-spaces": "off",
-      "@stylistic/jsx-self-closing-comp": "off",
+      "@stylistic/jsx-one-expression-per-line": ["error", { allow: "single-child" }],
+      "@stylistic/jsx-self-closing-comp": "error",
       "@stylistic/jsx-sort-props": "off",
-      "@stylistic/jsx-tag-spacing": "off",
-      "@stylistic/jsx-wrap-multilines": "off",
-      "@minecraft/avoid-unnecessary-command": "error",
+      "@stylistic/jsx-tag-spacing": ["error", { "beforeSelfClosing": "always" }],
+      "@stylistic/jsx-wrap-multilines": "error",
+      "@stylistic/jsx-function-call-newline": ["error", "multiline"],
+      "@stylistic/jsx-pascal-case": ["error", { "allowNamespace": true }]
     },
   }
 ]);
