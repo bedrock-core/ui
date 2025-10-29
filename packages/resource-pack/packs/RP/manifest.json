@@ -3,11 +3,11 @@
 	"header": {
 		"name": "pack.name",
 		"description": "pack.description",
-		"uuid": "7cdea8f6-f9bb-4189-8a61-89d123431cac",
+		"uuid": "761ecd37-ad1c-4a64-862a-d6cc38767426",
 		"pack_scope": "world",
 		"version": [
 			1,
-			0,
+			1,
 			0
 		],
 		"min_engine_version": [
@@ -38,6 +38,10 @@
 		}
 	],
 	"metadata": {
-		"product_type": "addon"
+		"authors": [
+			"DrAv0011"
+		],
+		"license": "MIT",
+		"url": "https://github.com/bedrock-core/ui"
 	}
 }

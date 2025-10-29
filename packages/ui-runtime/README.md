@@ -1,6 +1,6 @@
 # @bedrock-core/ui-runtime
 
-![Logo](./assets/logo.svg)
+![Logo](../../assets/logo.svg)
 
 > ⚠️ Beta Status: Active development. Breaking changes may occur until 1.0.0. Pin exact versions for stability.
 >

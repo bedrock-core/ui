@@ -40,7 +40,7 @@
 	],
 	"dependencies": [
 		{
-			"uuid": "7cdea8f6-f9bb-4189-8a61-89d123431cac",
+			"uuid": "761ecd37-ad1c-4a64-862a-d6cc38767426",
 			"version": [
 				1,
 				0,
@@ -61,6 +61,11 @@
 		}
 	],
 	"metadata": {
-		"product_type": "addon"
+		"product_type": "addon",
+		"authors": [
+			"DrAv0011"
+		],
+		"license": "MIT",
+		"url": "https://github.com/bedrock-core/ui"
 	}
 }

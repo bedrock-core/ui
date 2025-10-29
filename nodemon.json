@@ -1,0 +1,5 @@
+{
+  "watch": ["packages/ui-runtime/src"],  
+  "ext": "ts,js,json",
+  "exec": "node nodemon-execution.js"
+}
