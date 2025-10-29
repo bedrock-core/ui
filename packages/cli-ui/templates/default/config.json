@@ -1,0 +1,52 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Bedrock-OSS/regolith-schemas/main/config/v1.4.json",
+	"author": "{{AUTHOR}}",
+	"description": "{{DESCRIPTION}}",
+	"name": "{{PROJECT_NAME}}",
+	"packs": {
+		"behaviorPack": "./packs/BP",
+		"resourcePack": "./packs/RP"
+	},
+	"regolith": {
+		"dataPath": "./packs/data",
+		"filterDefinitions": {
+			"bundler": {
+				"url": "github.com/bedrock-core/regolith-filters",
+				"version": "1.0.1"
+			}
+		},
+		"formatVersion": "1.4.0",
+		"profiles": {
+			"build": {
+				"export": {
+					"build": "standard",
+					"readOnly": true,
+					"target": "local"
+				},
+				"filters": [
+					{
+						"filter": "bundler",
+						"settings": {
+							"debug": false
+						}
+					}
+				]
+			},
+			"default": {
+				"export": {
+					"build": "standard",
+					"readOnly": false,
+					"target": "development"
+				},
+				"filters": [
+					{
+						"filter": "bundler",
+						"settings": {
+							"debug": true
+						}
+					}
+				]
+			}
+		}
+	}
+}

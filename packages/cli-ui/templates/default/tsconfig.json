@@ -1,0 +1,36 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "esnext",
+		"declaration": false,
+		"declarationMap": false,
+		"sourceMap": true,
+		"stripInternal": true,
+		"strict": true,
+		"moduleResolution": "bundler",
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"skipLibCheck": true,
+		"allowSyntheticDefaultImports": true,
+		"noImplicitAny": true,
+		"removeComments": true,
+		"preserveConstEnums": true,
+		"noImplicitReturns": true,
+		"allowJs": true,
+		"resolveJsonModule": true,
+		"rootDir": "packs/BP/scripts",
+		"jsx": "react-jsx",
+		"jsxImportSource": "@bedrock-core/ui"
+	},
+	"files": [
+		"packs/BP/scripts/main.ts"
+	],
+	"include": [
+		"packs/BP/scripts/**/*"
+	],
+	"exclude": [
+		"node_modules",
+		"**/__tests__/*",
+		"eslint.config.mjs"
+	]
+}

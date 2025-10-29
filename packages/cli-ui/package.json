@@ -1,0 +1,52 @@
+{
+  "name": "@bedrock-core/cli-ui",
+  "version": "0.1.0",
+  "description": "CLI tool to scaffold Minecraft Bedrock addon projects with @bedrock-core/ui",
+  "keywords": [
+    "cli",
+    "scaffold",
+    "ui",
+    "minecraft",
+    "bedrock",
+    "addon",
+    "generator"
+  ],
+  "license": "MIT",
+  "author": "DrAv0011",
+  "contributors": [
+    {
+      "name": "DrAv0011",
+      "email": "contact@drav.dev",
+      "url": "https://drav.dev"
+    }
+  ],
+  "repository": "github:bedrock-core/ui",
+  "type": "module",
+  "bin": {
+    "create-bedrock-ui": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "templates"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "fs-extra": "^11.2.0",
+    "ora": "^8.1.0",
+    "prompts": "^2.4.2",
+    "validate-npm-package-name": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^22.5.0",
+    "@types/prompts": "^2.4.9",
+    "@types/validate-npm-package-name": "^4.0.2",
+    "typescript": "^5.9.2"
+  },
+  "packageManager": "yarn@4.9.3"
+}

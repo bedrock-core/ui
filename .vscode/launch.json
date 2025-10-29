@@ -1,0 +1,32 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "minecraft-js",
+			"request": "attach",
+			"sourceMapRoot": "${env:APPDATA}/Minecraft Bedrock/Users/Shared/games/com.mojang/development_behavior_packs/@bedrock-core/ui-resource-pack_bp/scripts/",
+			"generatedSourceRoot": "${env:APPDATA}/Minecraft Bedrock/Users/Shared/games/com.mojang/development_behavior_packs/@bedrock-core/ui-resource-pack_bp/scripts/",
+			"localRoot": "${workspaceFolder}/packages/resource-pack/packs/BP/scripts/",
+			"name": "Debug with Minecraft",
+			"mode": "listen",
+			"port": 19144,
+			"targetModuleUuid": "8e46bc37-546c-4314-aab8-a5fb9e985fc9"
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Debug Vitest",
+			"autoAttachChildProcesses": true,
+			"skipFiles": [
+				"<node_internals>/**",
+				"node_modules/**"
+			],
+			"program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
+			"args": [
+				"run"
+			],
+			"smartStep": true,
+			"console": "integratedTerminal"
+		}
+	]
+}

@@ -38,7 +38,8 @@
 	"packageManager": "yarn@4.9.3",
 	"workspaces": [
 		"packages/ui-runtime",
-		"packages/resource-pack"
+		"packages/resource-pack",
+		"packages/cli-ui"
 	],
 	"scripts": {
 		"regolith-install": "yarn workspaces foreach -i -A --topological --jobs=1 run regolith-install",

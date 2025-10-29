@@ -1,3 +1,4 @@
+import minecraftLinting from "eslint-plugin-minecraft-linting";
 import json from "@eslint/json";
 import { defineConfig } from "eslint/config";
 import { dirname } from "path";
@@ -21,6 +22,16 @@ export default defineConfig([
         tsconfigRootDir: __dirname,
       },
     },
+
+    plugins: {
+      ...commonTsConfig.plugins,
+      "@minecraft": minecraftLinting
+    },
+
+    rules: {
+      ...commonTsConfig.rules,
+      "minecraft-linting/avoid-unnecessary-command": "error",
+    }
   },
   
   {
