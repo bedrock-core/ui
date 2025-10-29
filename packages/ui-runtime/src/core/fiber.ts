@@ -117,7 +117,9 @@ class FiberRegistry {
    */
   pushContext<T>(context: Context<T>, value: T): void {
     const stack = this._contextStack.get(context as Context<unknown>) || [];
+
     stack.push(value as unknown);
+
     this._contextStack.set(context as Context<unknown>, stack);
   }
 
@@ -127,6 +129,7 @@ class FiberRegistry {
    */
   popContext<T>(context: Context<T>): void {
     const stack = this._contextStack.get(context as Context<unknown>);
+
     if (stack && stack.length > 0) {
       if (stack.length === 0) {
         this._contextStack.delete(context as Context<unknown>);
@@ -140,6 +143,7 @@ class FiberRegistry {
    */
   readContext<T>(context: Context<T>): T {
     const stack = this._contextStack.get(context as Context<unknown>);
+
     if (stack && stack.length > 0) {
       const value = stack[stack.length - 1] as T;
 

@@ -67,13 +67,11 @@ export const Suspense: FunctionComponent<SuspenseProps> = ({ children, fallback 
 
   // Track which component initialized its suspended state
   const onChildInitialize = (): void => {
-    console.log(`[Suspense] Child suspended state initialized for ${instance?.id}`);
     suspensionState.isSuspended = false;
-    console.log(`[Suspense] Set isSuspended to false in memory`);
 
     // Close all forms and ensure re-render happens (not skipped by isProgrammaticClose)
-    console.log(`[Suspense] Closing all forms to trigger re-render`);
     instance.isProgrammaticClose = false;
+
     system.run(() => {
       uiManager.closeAllForms(instance.player);
     });
@@ -83,30 +81,21 @@ export const Suspense: FunctionComponent<SuspenseProps> = ({ children, fallback 
   useEffect(() => {
     if (!instance) return;
 
-    console.log(`[Suspense] Effect running for ${instance.id}`);
-
     // Register callback for when child suspends
     instance.onSuspendedStateInitialize = onChildInitialize;
-
-    console.log(`[Suspense] Registered onSuspendedStateInitialize callback`);
-
     suspensionState.hasChecked = true;
 
     return () => {
-      console.log(`[Suspense] Cleanup: removing onSuspendedStateInitialize callback`);
       instance.onSuspendedStateInitialize = undefined;
     };
   }, []); // Empty dependency - run only once on mount
 
   // Show fallback while suspended
   if (suspensionState.isSuspended && suspensionState.hasChecked) {
-    console.log(`[Suspense] Rendering fallback for ${instance?.id}`);
-
     return fallback;
   }
 
   // Show children
-  console.log(`[Suspense] Rendering children for ${instance?.id}`);
 
   return Fragment({ children });
 };

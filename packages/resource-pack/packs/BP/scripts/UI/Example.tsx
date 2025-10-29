@@ -1,23 +1,23 @@
-import { JSX, useState, useRefresh, Button } from '@bedrock-core/ui';
+import { JSX, useState } from '@bedrock-core/ui';
 
 // Import all grid components
 import {
-  ThemeDisplay,
-  SettingsDisplay,
-  TodoList,
-  RefTimer,
-  EventCounter,
   Counter,
-  ThemeController,
-  SettingsController,
-  InfoPanel,
-  ResourcesPanel,
+  EventCounter,
+  ExitPanel,
   GridLayoutPanel,
-  ExitPanel
+  InfoPanel,
+  RefTimer,
+  ResourcesPanel,
+  SettingsController,
+  SettingsDisplay,
+  ThemeController,
+  ThemeDisplay,
+  TodoList
 } from './components';
 
 // Import contexts
-import { ThemeContext, SettingsContext, type Theme, type Settings } from './contexts';
+import { SettingsContext, ThemeContext, type Settings, type Theme } from './contexts';
 
 /**
  * ============================================================================
@@ -88,15 +88,9 @@ export function Example(): JSX.Element {
     showNotifications: true,
   });
 
-  // Floating refresh button
-  const { forceRefresh } = useRefresh();
-
   return (
     <ThemeContext.Provider value={theme}>
       <SettingsContext.Provider value={settings}>
-        {/* Floating Refresh Button - Top Left */}
-        <Button width={40} height={40} x={0} y={0} onPress={forceRefresh} />
-
         {/* Row 1: Context and State Demonstrations */}
         <ThemeDisplay />
         <SettingsDisplay />

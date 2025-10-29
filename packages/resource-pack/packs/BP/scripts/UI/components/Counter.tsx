@@ -10,28 +10,27 @@ export const Counter: FunctionComponent = (): JSX.Element => {
   const [count, setCount] = useState(0);
   const [isAutoIncrement, setIsAutoIncrement] = useState(false);
 
-  // Log count changes to console (no setState here)
-  useEffect(() => {
-    console.log(`[Counter Effect] Count changed to: ${count}`);
-  }, [count]);
-
   // Auto-increment every second when enabled using system.runInterval
   // This demonstrates proper cleanup with system.clearRun()
   useEffect(() => {
     if (!isAutoIncrement) {
-      console.log('[Counter Effect] Auto-increment disabled');
-
       return;
     }
 
-    console.log('[Counter Effect] Starting auto-increment interval');
     const intervalId = system.runInterval(() => {
-      setCount(prev => prev + 1);
+      setCount((prev: number): number => {
+        if (prev + 1 === 5) {
+          setIsAutoIncrement(false); 
+        }
+
+        console.log(`[Counter Effect] isAutoIncrement changed to: ${isAutoIncrement}`);
+        console.log(`[Counter Effect] Count changed to: ${prev + 1}`);
+        return prev + 1;
+      });
     }, 20); // 20 ticks = 1 second
 
     // Cleanup: clear interval when effect re-runs or component unmounts
     return () => {
-      console.log('[Counter Effect] Clearing auto-increment interval');
       system.clearRun(intervalId);
     };
   }, [isAutoIncrement]);

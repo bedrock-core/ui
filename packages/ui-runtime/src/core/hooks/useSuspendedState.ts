@@ -100,7 +100,6 @@ export function useSuspendedState<T>(defaultValue: T): [T, (value: T) => void] {
     if (hasChanged && !hasAlreadyFired && instance.onSuspendedStateInitialize) {
       instance.suspendedStateCallbacksFired?.add(hookIndexBeforeState);
       instance.onSuspendedStateInitialize();
-      console.log('fuck you');
     }
   };
 

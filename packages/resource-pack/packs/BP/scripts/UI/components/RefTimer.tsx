@@ -26,13 +26,11 @@ export const RefTimer: FunctionComponent = (): JSX.Element => {
   // Store previous count value
   useEffect(() => {
     previousCountRef.current = count;
-    console.log(`[RefTimer] Previous: ${previousCountRef.current}, Current: ${count}`);
   }, [count]);
 
   const startTimer = (): void => {
     if (intervalRef.current !== null) return;
 
-    console.log('[RefTimer] Starting timer (stored in ref)');
     intervalRef.current = system.runInterval(() => {
       setCount(prev => prev + 1);
     }, 20); // Every second
@@ -41,7 +39,6 @@ export const RefTimer: FunctionComponent = (): JSX.Element => {
   const stopTimer = (): void => {
     if (intervalRef.current === null) return;
 
-    console.log('[RefTimer] Stopping timer (from ref)');
     system.clearRun(intervalRef.current);
     intervalRef.current = null;
   };
@@ -49,7 +46,6 @@ export const RefTimer: FunctionComponent = (): JSX.Element => {
   // Cleanup on unmount
   useEffect(() => () => {
     if (intervalRef.current !== null) {
-      console.log('[RefTimer] Cleaning up timer on unmount');
       system.clearRun(intervalRef.current);
     }
   }, []);

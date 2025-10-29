@@ -3,7 +3,7 @@ import { FunctionComponent, JSX } from '../jsx';
 /**
  * Context symbol for identifying context objects
  */
-const CONTEXT_SYMBOL = Symbol.for('bedrock.context');
+const CONTEXT_SYMBOL = Symbol.for('core-ui.context');
 
 /**
  * Props for Context.Provider component

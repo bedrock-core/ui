@@ -75,7 +75,6 @@ export interface ComponentInstance {
   hookIndex: number;
   mounted: boolean;
   dirty: boolean;
-  options?: RenderOptions;
   isProgrammaticClose?: boolean;
   hasSuspendedState?: boolean;
   onSuspendedStateInitialize?: () => void;
@@ -84,8 +83,3 @@ export interface ComponentInstance {
   /** Track which useSuspendedState hooks have already fired their callback (by hook index) */
   suspendedStateCallbacksFired?: Set<number>;
 }
-
-/**
- * Render options for component rendering
- */
-export interface RenderOptions { key?: string }

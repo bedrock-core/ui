@@ -49,7 +49,6 @@ export {
   usePlayer,
   useEvent,
   useExit,
-  useRefresh,
   useSuspendedState
 } from './hooks';
 
@@ -63,7 +62,6 @@ export type {
   HookCall,
   ComponentInstance,
   EventSignal,
-  RefreshFunctions,
   SuspendedStateMarker
 } from './hooks';
 

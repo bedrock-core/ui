@@ -17,11 +17,8 @@ export const InfoPanel: FunctionComponent = (): JSX.Element => {
   const player = usePlayer();
   const [info, setInfo] = useSuspendedState<PlayerInfo | null>(null);
 
-  console.log(`[InfoPanel] Rendering - info is:`, info);
-
   // Update player info periodically using Minecraft's system.runInterval
   useEffect(() => {
-    console.log(`[InfoPanel] useEffect running`);
 
     const updatePlayerInfo = (): void => {
       try {
@@ -35,10 +32,9 @@ export const InfoPanel: FunctionComponent = (): JSX.Element => {
           level: player.level,
         };
 
-        console.log(`[InfoPanel] updatePlayerInfo - calling setInfo with:`, newInfo);
         setInfo(newInfo);
       } catch (error) {
-        console.warn('[InfoPanel] Error getting player info:', error);
+        console.error('[InfoPanel] Error getting player info:', error);
       }
     };
 

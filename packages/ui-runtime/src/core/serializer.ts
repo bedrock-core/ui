@@ -187,6 +187,7 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
   // Logger.log(`[serialize] type=${type} payloadBytes=${bytes} payload=${payload} `);
 
   // Client-only components (use label routing)
+  // TODO Better way to mark client-only components?
   if (['panel', 'text', 'image', 'fragment'].includes(type)) {
     form.label(payload);
   } else if (type === 'button') {
@@ -207,6 +208,7 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
   // Recursively handle children
   if (children) {
     const childArray = Array.isArray(children) ? children : [children];
+
     childArray.forEach((child: JSX.Element): void => serialize(child, form, context));
   }
 }
