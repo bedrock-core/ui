@@ -2,33 +2,21 @@
 
 This addon serves as a **test implementation** and **reference example** for the [`@bedrock-core/ui`](https://github.com/bedrock-core/ui) framework.
 
-## Quick Start
+And it also is the companion resource pack needed for the framework to work.
 
-### Prerequisites
+## What's Included
 
-Install the required tools:
+- **Behavior Pack** - TypeScript example UI components using `@bedrock-core/ui`
+- **Resource Pack** - JSON UI decoders that parse serialized component data
+- **Regolith Configuration** - Build system with TypeScript bundler
 
-- [Regolith](https://bedrock-oss.github.io/regolith/) - For build and pack management
-- [Node.js](https://nodejs.org/en) - For dependencies and TypeScript compilation
+## Development
 
-### Installation
+This package is part of the monorepo. All development commands should be run from the **root workspace**:
 
-1. Install dependencies:
-
-   ```bash
-   regolith install-all
-   ```
-
-2. For development with auto-rebuild and hot-reload:
-
-   ```bash
-   regolith watch
-   ```
-
-3. For manual build:
-
-   ```bash
-   regolith run build
-   ```
-
-## License
+```bash
+# From repository root
+yarn install          # Install all workspace dependencies
+yarn build            # Build all packages (including this addon)
+yarn watch            # Watches changes and rebuilds and deploys addon to com.mojang
+```

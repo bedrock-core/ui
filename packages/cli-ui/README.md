@@ -22,38 +22,12 @@ And generate a complete addon structure with:
 - ✅ TypeScript, ESLint configs
 - ✅ Simple working example
 
-## What's Generated
-
-```ts
-your-addon/
-├── packs/
-│   ├── BP/              # Behavior Pack
-│   │   ├── manifest.json
-│   │   ├── scripts/
-│   │   │   ├── main.ts
-│   │   │   └── UI/
-│   │   │       └── Example.tsx
-│   │   └── texts/
-│   └── RP/              # Resource Pack
-│       ├── manifest.json
-│       ├── ui/          # JSON UI decoders
-│       └── texts/
-├── config.json          # Regolith config
-├── package.json
-├── tsconfig.json
-├── eslint.config.mjs
-└── .mcignore
-```
-
 ## After Generation
 
 ```bash
 cd your-addon
 yarn install          # or npm install
-regolith install-all  # Install Regolith filters
-regolith run build    # Build the addon
+yarn regolith-install # Install Regolith filters
+yarn build            # Build the addon
+yarn watch            # Watch for changes and redeploy
 ```
-
-## License
-
-MIT © DrAv0011
