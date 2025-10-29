@@ -1,12 +1,14 @@
 {
-  "name": "@bedrock-core/ui",
-  "version": "0.1.1",
-  "description": "Customizable UI system for Minecraft Bedrock Server server forms cross-addon compatible.",
+  "name": "@bedrock-core/ui-runtime",
+  "version": "0.2.0",
+  "description": "@bedrock-core/ui runtime",
   "keywords": [
     "ui",
     "api",
     "minecraft",
-    "bedrock"
+    "bedrock",
+    "typescript",
+    "framework"
   ],
   "license": "MIT",
   "author": "DrAv0011",
@@ -41,24 +43,15 @@
   "sideEffects": false,
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "lint": "eslint .",
     "test": "vitest run",
     "coverage": "vitest run --coverage"
   },
   "packageManager": "yarn@4.9.3",
   "devDependencies": {
-    "@eslint/css": "^0.10.0",
-    "@eslint/js": "^9.34.0",
-    "@eslint/json": "^0.13.1",
-    "@eslint/markdown": "^7.2.0",
     "@minecraft/server": ">=2.1.0",
     "@minecraft/server-ui": ">=2.0.0",
-    "@stylistic/eslint-plugin": "^5.5.0",
-    "@types/node": "^24.3.0",
     "@vitest/coverage-v8": "^3.2.4",
-    "eslint": "^9.34.0",
     "typescript": "^5.9.2",
-    "typescript-eslint": "^8.40.0",
     "vitest": "^3.2.4"
   },
   "peerDependencies": {

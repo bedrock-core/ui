@@ -1,11 +1,9 @@
+
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "esnext",
     "noEmit": true,
-    "rootDir": "src",
-    "strict": true,
-    "moduleResolution": "bundler",
+    "rootDir": "./src",
     "baseUrl": ".",
     "paths": {
       "@bedrock-core/ui/jsx": [
@@ -15,9 +13,6 @@
         "src/jsx/*"
       ]
     },
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
     "jsx": "react-jsx",
     "jsxImportSource": "@bedrock-core/ui"
   },
@@ -25,7 +20,6 @@
     "src/**/*"
   ],
   "exclude": [
-    "node_modules",
     "src/**/__tests__/**",
     "src/**/*.test.ts",
     "src/**/*.test.tsx",
