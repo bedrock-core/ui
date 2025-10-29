@@ -1,0 +1,43 @@
+{
+	"format_version": 2,
+	"header": {
+		"name": "pack.name",
+		"description": "pack.description",
+		"uuid": "6c4a78bf-e298-4c9b-bcd7-a517eebccc92",
+		"pack_scope": "world",
+		"version": [
+			1,
+			0,
+			0
+		],
+		"min_engine_version": [
+			1,
+			21,
+			100
+		]
+	},
+	"modules": [
+		{
+			"type": "data",
+			"uuid": "129c1a5a-bd1d-443d-8f53-26fe97b7403d",
+			"version": [
+				1,
+				0,
+				0
+			]
+		}
+	],
+	"dependencies": [
+		{
+			"uuid": "7cdea8f6-f9bb-4189-8a61-89d123431cac",
+			"version": [
+				1,
+				0,
+				0
+			]
+		}
+	],
+	"metadata": {
+		"product_type": "addon"
+	}
+}

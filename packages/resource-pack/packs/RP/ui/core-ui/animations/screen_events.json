@@ -1,0 +1,20 @@
+{
+	"namespace": "core-ui_animations",
+	// Screen transition animations to avoid "flash" effect
+	"screen_enter_animation": {
+		"anim_type": "wait",
+		"easing": "in_quint",
+		"duration": "$transition_time_pop",
+		// "play_event": "screen.entrance_push",
+		"play_event": "screen.entrance_pop",
+		"end_event": "screen.entrance_end"
+	},
+	"screen_exit_animation": {
+		"anim_type": "wait",
+		"easing": "in_quint",
+		"duration": "$transition_time_pop",
+		// "play_event": "screen.exit_push",
+		"play_event": "screen.exit_pop",
+		"end_event": "screen.exit_end"
+	}
+}

@@ -1,0 +1,77 @@
+{
+	"namespace": "server_form",
+	"third_party_server_screen": {
+		"$screen_animations": [
+			"@core-ui_animations.screen_enter_animation",
+			"@core-ui_animations.screen_exit_animation"
+		]
+	},
+	"long_form": {
+		"$protocol_header": "bcuiv0001",
+		"modifications": [
+			{
+				"array_name": "bindings",
+				"operation": "insert_back",
+				"value": [
+					{
+						"binding_name": "#title_text"
+					},
+					{
+						"binding_type": "view",
+						"source_property_name": "((#title_text - $protocol_header) = #title_text)",
+						"target_property_name": "#visible"
+					}
+				]
+			}
+		]
+	},
+	"main_screen_content": {
+		"$protocol_header": "bcuiv0001",
+		"size": [
+			"0px",
+			"0px"
+		],
+		"property_bag": {
+			"#size_binding_x": "0px",
+			"#size_binding_y": "0px"
+		},
+		"modifications": [
+			{
+				"array_name": "controls",
+				"operation": "insert_back",
+				"value": [
+					{
+						"core-ui_server_form_factory": {
+							"type": "panel",
+							"factory": {
+								"name": "server_form_factory",
+								"control_ids": {
+									"long_form": "@core-ui_common.screen_container"
+								}
+							}
+						}
+					}
+				]
+			},
+			{
+				"array_name": "bindings",
+				"operation": "insert_back",
+				"value": [
+					{
+						"binding_name": "#title_text"
+					},
+					{
+						"binding_type": "view",
+						"source_property_name": "((((#title_text - $protocol_header) = #title_text) and '0px') or '100%')",
+						"target_property_name": "#size_binding_x"
+					},
+					{
+						"binding_type": "view",
+						"source_property_name": "((((#title_text - $protocol_header) = #title_text) and '0px') or '100%')",
+						"target_property_name": "#size_binding_y"
+					}
+				]
+			}
+		]
+	}
+}

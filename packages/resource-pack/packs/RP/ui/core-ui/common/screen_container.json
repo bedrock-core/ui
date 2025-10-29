@@ -1,0 +1,75 @@
+{
+	"namespace": "core-ui_common",
+	"screen_container": {
+		"type": "panel",
+		"size": [
+			"100%",
+			"100%"
+		],
+		"bindings": [
+			{
+				"binding_name": "#title_text"
+			}
+		],
+		"controls": [
+			{
+				"container": {
+					"type": "panel",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"offset": [
+						"-50%",
+						"-50%"
+					],
+					"$protocol_header": "bcuiv0001",
+					"bindings": [
+						{
+							"binding_type": "view",
+							"source_control_name": "screen_container",
+							"source_property_name": "(not ((#title_text - $protocol_header) = #title_text))",
+							"target_property_name": "#visible"
+						}
+					],
+					"controls": [
+						{
+							"generated_contents": {
+								"type": "collection_panel",
+								"size": [
+									"100%",
+									"100%"
+								],
+								"anchor_from": "top_left",
+								"anchor_to": "top_left",
+								"factory": {
+									"name": "buttons",
+									"control_ids": {
+										"button": "@core-ui_components.button",
+										"label": "@core-ui_common.component_router",
+										"header": "@core-ui_common.unused",
+										"divider": "@core-ui_common.unused"
+									}
+								},
+								"collection_name": "form_buttons",
+								"bindings": [
+									{
+										"binding_name": "#form_button_contents",
+										"binding_name_override": "#collection_length"
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		]
+	},
+	"unused": {
+		"type": "panel",
+		"size": [
+			0,
+			0
+		]
+	}
+}

@@ -1,0 +1,34 @@
+{
+	"name": "@bedrock-core/ui-test-addon",
+	"version": "1.0.0",
+	"description": "Test addon and reference implementation for @bedrock-core/ui library",
+	"main": "main.js",
+	"scripts": {
+		"lint": "eslint .",
+		"loopback": "CheckNetIsolation.exe LoopbackExempt -a -p=S-1-15-2-1958404141-86561845-1752920682-3514627264-368642714-62675701-733520436",
+		"loopback:preview": "CheckNetIsolation.exe LoopbackExempt -a -p=S-1-15-2-424268864-5579737-879501358-346833251-474568803-887069379-4040235476"
+	},
+	"dependencies": {
+		"@bedrock-core/ui": "link:C:/Users/drav0/Desktop/Minecraft/Proyectos/@bedrock-core/ui",
+		"@minecraft/common": "1.2.0",
+		"@minecraft/math": "2.2.8",
+		"@minecraft/server": "2.1.0",
+		"@minecraft/server-gametest": "1.0.0-beta.1.21.100-stable",
+		"@minecraft/server-ui": "2.0.0",
+		"@minecraft/vanilla-data": "1.21.100",
+		"typescript": "^5.4.5",
+		"uuid": "^10.0.0"
+	},
+	"devDependencies": {
+		"@eslint/js": "^9.34.0",
+		"@eslint/json": "^0.13.1",
+		"@stylistic/eslint-plugin": "^5.5.0",
+		"@types/uuid": "^10.0.0",
+		"eslint": "^9.34.0",
+		"eslint-plugin-minecraft-linting": "^1.2.6",
+		"globals": "^15.8.0",
+		"typescript": "^5.9.2",
+		"typescript-eslint": "^8.40.0"
+	},
+	"packageManager": "yarn@4.9.4"
+}
