@@ -1,27 +1,44 @@
 {
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "ES2022",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "allowJs": false,
-    "checkJs": false,
-    "noEmit": true,
-    "rootDir": "./packages",
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true
-  },
-  "exclude": [
-    "node_modules",
-    "**/node_modules"
-  ]
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "ES2022",
+		"moduleResolution": "bundler",
+		"baseUrl": ".",
+		"resolveJsonModule": true,
+		"allowJs": false,
+		"checkJs": false,
+		"noEmit": true,
+		"rootDir": "./packages",
+		"declaration": true,
+		"declarationMap": true,
+		"sourceMap": true,
+		"strict": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		"skipLibCheck": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"jsx": "react-jsx",
+		"jsxImportSource": "@bedrock-core/ui",
+		"paths": {
+			"@bedrock-core/ui": [
+				"packages/ui-runtime/src/index.ts"
+			],
+			"@bedrock-core/ui/*": [
+				"packages/ui-runtime/src/*"
+			],
+			"@bedrock-core/ui/jsx-runtime": [
+				"packages/ui-runtime/src/jsx/jsx-runtime.ts"
+			],
+			"@bedrock-core/ui/jsx-dev-runtime": [
+				"packages/ui-runtime/src/jsx/jsx-dev-runtime.ts"
+			]
+		},
+	},
+	"exclude": [
+		"node_modules",
+		"**/node_modules"
+	]
 }

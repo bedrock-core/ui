@@ -1,6 +1,6 @@
 import { FunctionComponent, JSX } from '@bedrock-core/ui/jsx-runtime';
 import { Player } from '@minecraft/server';
-import { Logger } from 'src/util';
+import { Logger } from '../util';
 import { Context } from './context';
 import { ComponentInstance } from './hooks/types';
 

@@ -48,14 +48,14 @@
   },
   "packageManager": "yarn@4.9.3",
   "devDependencies": {
-    "@minecraft/server": ">=2.1.0",
+    "@minecraft/server": ">=2.3.0",
     "@minecraft/server-ui": ">=2.0.0",
     "@vitest/coverage-v8": "^3.2.4",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   },
   "peerDependencies": {
-    "@minecraft/server": ">=2.1.0",
+    "@minecraft/server": ">=2.3.0",
     "@minecraft/server-ui": ">=2.0.0"
   }
 }

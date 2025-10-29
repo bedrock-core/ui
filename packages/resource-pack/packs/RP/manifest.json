@@ -13,7 +13,7 @@
 		"min_engine_version": [
 			1,
 			21,
-			100
+			120
 		]
 	},
 	"modules": [

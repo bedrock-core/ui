@@ -21,13 +21,29 @@
 	],
 	"repository": "github:bedrock-core/ui",
 	"type": "module",
+	"exports": {
+		".": {
+			"types": "./packages/ui-runtime/src/index.ts",
+			"import": "./packages/ui-runtime/src/index.ts"
+		},
+		"./jsx-runtime": {
+			"types": "./packages/ui-runtime/src/jsx/jsx-runtime.ts",
+			"import": "./packages/ui-runtime/src/jsx/jsx-runtime.ts"
+		},
+		"./jsx-dev-runtime": {
+			"types": "./packages/ui-runtime/src/jsx/jsx-dev-runtime.ts",
+			"import": "./packages/ui-runtime/src/jsx/jsx-dev-runtime.ts"
+		}
+	},
 	"packageManager": "yarn@4.9.3",
 	"workspaces": [
-		"packages/ui-runtime"
+		"packages/ui-runtime",
+		"packages/resource-pack"
 	],
 	"scripts": {
+		"regolith-install": "yarn workspaces foreach -i -A --topological --jobs=1 run regolith-install",
 		"build": "yarn workspaces foreach -ptA run build",
-		"lint": "eslint .",
+		"lint": "yarn workspaces foreach -ptA run lint",
 		"test": "yarn workspaces foreach -ptA run test",
 		"coverage": "yarn workspaces foreach -ptA run coverage"
 	},

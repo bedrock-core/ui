@@ -4,6 +4,7 @@ import { useEffect, executeEffects } from '../useEffect';
 import { fiberRegistry } from '../../fiber';
 import { ComponentInstance, StateHook, EffectHook } from '../types';
 import { Fragment } from '../../components/Fragment';
+import { world } from '@minecraft/server';
 
 describe('useState Hook', () => {
   let instance: ComponentInstance;
@@ -11,6 +12,7 @@ describe('useState Hook', () => {
   beforeEach(() => {
     instance = {
       id: 'test-component',
+      player: world.getAllPlayers()[0],
       componentType: Fragment,
       props: {},
       hooks: [],
@@ -127,6 +129,7 @@ describe('useEffect Hook', () => {
   beforeEach(() => {
     instance = {
       id: 'test-component',
+      player: world.getAllPlayers()[0],
       componentType: Fragment,
       props: {},
       hooks: [],
@@ -347,6 +350,7 @@ describe('Dependency Tracking', () => {
   beforeEach(() => {
     instance = {
       id: 'test-component',
+      player: world.getAllPlayers()[0],
       componentType: Fragment,
       props: {},
       hooks: [],

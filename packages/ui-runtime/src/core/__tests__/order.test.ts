@@ -170,15 +170,12 @@ describe('Serialization field order', () => {
     // serialization ordering logic (from helper composition) dominates.
     const element = Panel({
       children: [],
-      layer: 3,
       y: 99.75,
       width: 300.25,
-      inheritMaxSiblingHeight: true,
       visible: false,
       x: 12.5,
       enabled: true,
       height: 200.5,
-      inheritMaxSiblingWidth: true,
     });
 
     serialize(element, mockForm);

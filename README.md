@@ -63,7 +63,7 @@ This "label-as-entry-point" system allows unlimited custom components while leve
 yarn add @bedrock-core/ui
 ```
 
-**Requirements:** `@minecraft/server` ≥ 2.1.0, `@minecraft/server-ui` ≥ 2.0.0
+**Requirements:** `@minecraft/server` ≥ 2.3.0, `@minecraft/server-ui` ≥ 2.0.0
 
 Download the companion resource pack from the [releases page](https://github.com/bedrock-core/ui/releases) and add it as a dependency in your behavior pack's `manifest.json`:
 

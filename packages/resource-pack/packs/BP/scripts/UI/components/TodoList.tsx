@@ -1,4 +1,4 @@
-import { JSX, Panel, Text, Button, FunctionComponent, useReducer, useState, useEffect } from '@bedrock-core/ui';
+import { Button, FunctionComponent, JSX, Panel, Text, useReducer } from '@bedrock-core/ui';
 
 /**
  * ============================================================================
