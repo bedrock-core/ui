@@ -3,8 +3,8 @@ import { FunctionComponent, JSX } from '../jsx';
 import { stopInputLock } from '../util';
 import { isContext } from './context';
 import { fiberRegistry } from './fiber';
-import { executeEffects } from './hooks';
-import { ComponentInstance } from './hooks/types';
+import { executeEffects } from '../hooks';
+import { ComponentInstance } from '../hooks/types';
 
 /**
  * Context passed through tree traversal during rendering phase.

@@ -1,5 +1,5 @@
-import { JSX } from '../../jsx/jsx-runtime';
-import { reserveBytes } from '../serializer';
+import { JSX } from '../jsx/jsx-runtime';
+import { reserveBytes } from '../core/serializer';
 
 export interface ControlProps {
   // All positioning and sizing values are numbers, will not support string types like "100px", "100%", "100%c"... too much issues in json ui

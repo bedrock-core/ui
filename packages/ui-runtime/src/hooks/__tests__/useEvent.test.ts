@@ -1,11 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { useEvent } from '../useEvent';
 import { executeEffects } from '../useEffect';
-import { fiberRegistry } from '../../fiber';
-import { ComponentInstance } from '../types';
+import { fiberRegistry } from '../../core/fiber';
+import { ComponentInstance, EventSignal } from '../types';
 import { Fragment } from '../../components/Fragment';
 import { world } from '@minecraft/server';
-import { EventSignal } from '../useEvent';
 
 describe('useEvent Hook', () => {
   let instance: ComponentInstance;
@@ -45,8 +44,8 @@ describe('useEvent Hook', () => {
       expect(instance.hooks[0]).toHaveProperty('type', 'effect');
     });
 
-    it('should unsubscribe on unmount', async () => {
-      const subscribeFn = vi.fn((cb) => cb);
+    it('should unsubscribe on unmount', async() => {
+      const subscribeFn = vi.fn(cb => cb);
       const unsubscribeFn = vi.fn();
       const mockSignal: EventSignal<string> = {
         subscribe: subscribeFn,
@@ -71,12 +70,13 @@ describe('useEvent Hook', () => {
       expect(unsubscribeFn).toHaveBeenCalled();
     });
 
-    it('should fire callback when event triggered', async () => {
+    it('should fire callback when event triggered', async() => {
       let registeredCallback: ((event: string) => void) | null = null;
 
       const mockSignal: EventSignal<string> = {
-        subscribe: (cb) => {
+        subscribe: cb => {
           registeredCallback = cb;
+
           return cb;
         },
         unsubscribe: vi.fn(),
@@ -97,8 +97,8 @@ describe('useEvent Hook', () => {
       expect(callback).toHaveBeenCalledWith('test-event');
     });
 
-    it('should pass options to subscribe', async () => {
-      const subscribeFn = vi.fn((cb) => cb);
+    it('should pass options to subscribe', async() => {
+      const subscribeFn = vi.fn(cb => cb);
       const mockSignal: EventSignal<string, { blockTypes: string[] }> = {
         subscribe: subscribeFn,
         unsubscribe: vi.fn(),
@@ -117,15 +117,15 @@ describe('useEvent Hook', () => {
   });
 
   describe('Resubscription Logic', () => {
-    it('should resubscribe when signal changes', async () => {
-      const subscribe1 = vi.fn((cb) => cb);
+    it('should resubscribe when signal changes', async() => {
+      const subscribe1 = vi.fn(cb => cb);
       const unsubscribe1 = vi.fn();
       const mockSignal1: EventSignal<string> = {
         subscribe: subscribe1,
         unsubscribe: unsubscribe1,
       };
 
-      const subscribe2 = vi.fn((cb) => cb);
+      const subscribe2 = vi.fn(cb => cb);
       const unsubscribe2 = vi.fn();
       const mockSignal2: EventSignal<string> = {
         subscribe: subscribe2,
@@ -133,7 +133,7 @@ describe('useEvent Hook', () => {
       };
 
       const callback = vi.fn();
-      
+
       // First render with signal1
       useEvent(mockSignal1, callback);
       executeEffects(instance);
@@ -149,8 +149,8 @@ describe('useEvent Hook', () => {
       expect(subscribe2).toHaveBeenCalledTimes(1); // New signal subscribed
     });
 
-    it('should resubscribe when callback changes', async () => {
-      const subscribeFn = vi.fn((cb) => cb);
+    it('should resubscribe when callback changes', async() => {
+      const subscribeFn = vi.fn(cb => cb);
       const unsubscribeFn = vi.fn();
       const mockSignal: EventSignal<string> = {
         subscribe: subscribeFn,
@@ -159,7 +159,7 @@ describe('useEvent Hook', () => {
 
       const callback1 = vi.fn();
       const callback2 = vi.fn();
-      
+
       // First render with callback1
       useEvent(mockSignal, callback1);
       executeEffects(instance);
@@ -175,8 +175,8 @@ describe('useEvent Hook', () => {
       expect(subscribeFn).toHaveBeenCalledTimes(2); // Resubscribed with new callback
     });
 
-    it('should resubscribe when options change', async () => {
-      const subscribeFn = vi.fn((cb) => cb);
+    it('should resubscribe when options change', async() => {
+      const subscribeFn = vi.fn(cb => cb);
       const unsubscribeFn = vi.fn();
       const mockSignal: EventSignal<string, { filter: string }> = {
         subscribe: subscribeFn,
@@ -184,7 +184,7 @@ describe('useEvent Hook', () => {
       };
 
       const callback = vi.fn();
-      
+
       // First render with options1
       const options1 = { filter: 'type1' };
       useEvent(mockSignal, callback, options1);
@@ -204,8 +204,8 @@ describe('useEvent Hook', () => {
       expect(subscribeFn).toHaveBeenLastCalledWith(expect.any(Function), options2);
     });
 
-    it('should use custom deps if provided', async () => {
-      const subscribeFn = vi.fn((cb) => cb);
+    it('should use custom deps if provided', async() => {
+      const subscribeFn = vi.fn(cb => cb);
       const unsubscribeFn = vi.fn();
       const mockSignal: EventSignal<string> = {
         subscribe: subscribeFn,
@@ -213,7 +213,7 @@ describe('useEvent Hook', () => {
       };
 
       const callback = vi.fn();
-      
+
       // First render with custom deps [1]
       useEvent(mockSignal, callback, undefined, [1]);
       executeEffects(instance);
@@ -237,8 +237,8 @@ describe('useEvent Hook', () => {
   });
 
   describe('Cleanup', () => {
-    it('should unsubscribe when component unmounts', async () => {
-      const subscribeFn = vi.fn((cb) => cb);
+    it('should unsubscribe when component unmounts', async() => {
+      const subscribeFn = vi.fn(cb => cb);
       const unsubscribeFn = vi.fn();
       const mockSignal: EventSignal<string> = {
         subscribe: subscribeFn,
@@ -246,7 +246,7 @@ describe('useEvent Hook', () => {
       };
 
       const callback = vi.fn();
-      
+
       useEvent(mockSignal, callback);
       executeEffects(instance);
 
@@ -261,15 +261,15 @@ describe('useEvent Hook', () => {
       expect(unsubscribeFn).toHaveBeenCalledTimes(1);
     });
 
-    it('should handle multiple useEvent calls independently', async () => {
-      const subscribe1 = vi.fn((cb) => cb);
+    it('should handle multiple useEvent calls independently', async() => {
+      const subscribe1 = vi.fn(cb => cb);
       const unsubscribe1 = vi.fn();
       const mockSignal1: EventSignal<string> = {
         subscribe: subscribe1,
         unsubscribe: unsubscribe1,
       };
 
-      const subscribe2 = vi.fn((cb) => cb);
+      const subscribe2 = vi.fn(cb => cb);
       const unsubscribe2 = vi.fn();
       const mockSignal2: EventSignal<number> = {
         subscribe: subscribe2,
@@ -278,7 +278,7 @@ describe('useEvent Hook', () => {
 
       const callback1 = vi.fn();
       const callback2 = vi.fn();
-      
+
       // Subscribe to both events
       useEvent(mockSignal1, callback1);
       useEvent(mockSignal2, callback2);

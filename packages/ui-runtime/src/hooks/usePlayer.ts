@@ -1,5 +1,5 @@
 import { Player } from '@minecraft/server';
-import { fiberRegistry } from '../fiber';
+import { fiberRegistry } from '../core/fiber';
 
 /**
  * Returns the Player who opened/rendered this form.

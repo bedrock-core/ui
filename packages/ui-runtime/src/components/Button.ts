@@ -1,4 +1,4 @@
-import { FunctionComponent, JSX } from '../../jsx';
+import { FunctionComponent, JSX } from '../jsx';
 import { ControlProps, withControl } from './control';
 
 export interface ButtonProps extends ControlProps {

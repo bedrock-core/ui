@@ -1,19 +1,24 @@
 export {
-  // Components
   Button,
   Fragment,
   Image,
   Panel,
-  Text,
-  // Serialization utilities
-  reserveBytes,
-  // Rendering
-  render,
-  // Context
-  createContext,
-  // Hooks
+  Text
+} from './components';
+
+export type {
+  ButtonProps,
+  FragmentProps,
+  ImageProps,
+  PanelProps,
+  TextProps,
+  ControlProps
+} from './components';
+
+export {
   useState,
   useEffect,
+  executeEffects,
   useRef,
   useContext,
   useReducer,
@@ -21,7 +26,28 @@ export {
   useEvent,
   useExit,
   useTriggerRender,
-  useRenderCondition,
+  useRenderCondition
+} from './hooks';
+
+export type {
+  StateHook,
+  EffectHook,
+  RefHook,
+  ContextHook,
+  ReducerHook,
+  Hook,
+  HookCall,
+  ComponentInstance,
+  EventSignal
+} from './hooks';
+
+export {
+  // Serialization utilities
+  reserveBytes,
+  // Rendering
+  render,
+  // Context
+  createContext,
   // Protocol constants
   PROTOCOL_HEADER,
   VERSION,
@@ -36,24 +62,9 @@ export {
 } from './core';
 
 export type {
-  // Component types
-  ButtonProps,
-  FragmentProps,
-  ImageProps,
-  PanelProps,
-  TextProps,
-  ControlProps,
   // Context types
   Context,
   ProviderProps,
-  // Hook types
-  StateHook,
-  EffectHook,
-  RefHook,
-  ContextHook,
-  ReducerHook,
-  ComponentInstance,
-  EventSignal,
   // Types
   CoreUIFormData,
   ReservedBytes,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { withControl } from '../components/control';
+import { withControl } from '../../components/control';
 import { FIELD_MARKERS, FULL_WIDTH, PROTOCOL_HEADER, PROTOCOL_HEADER_LENGTH, reserveBytes, serializeProps, TYPE_PREFIX, TYPE_WIDTH } from '../serializer';
 
 const controlTypes: TKey[] = ['n', 'n', 'n', 'n', 'b', 'b', 'n', 'n', 'b', 'b', 'r'];

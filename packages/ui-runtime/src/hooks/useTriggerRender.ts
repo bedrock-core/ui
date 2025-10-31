@@ -1,6 +1,6 @@
-import { fiberRegistry } from '../../core/fiber';
-import { getRuntimeForPlayer } from '../../core/runtimeStore';
-import type { TriggerRender } from '../../core/types';
+import { fiberRegistry } from '../core/fiber';
+import { getRuntimeForPlayer } from '../core/runtimeStore';
+import type { TriggerRender } from '../core/types';
 
 /**
  * Hook that returns an imperative function to request a new render.

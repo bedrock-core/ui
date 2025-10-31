@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { world } from '@minecraft/server';
 import { Runtime } from '../runtime';
 import type { Scheduler } from '../types';
-import { Fragment } from '../components/Fragment';
+import { Fragment } from '../../components/Fragment';
 
 class TestScheduler implements Scheduler {
   private _cb: (() => void) | undefined;

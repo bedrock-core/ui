@@ -1,6 +1,6 @@
 import { ActionFormData } from '@minecraft/server-ui';
 import { describe, expect, it } from 'vitest';
-import { Panel } from '../components/Panel';
+import { Panel } from '../../components/Panel';
 import { FIELD_MARKERS, FULL_WIDTH, PROTOCOL_HEADER, serialize, TYPE_PREFIX, TYPE_WIDTH } from '../serializer';
 
 // This test guards the ordering of serialized fields for Panel (and by extension

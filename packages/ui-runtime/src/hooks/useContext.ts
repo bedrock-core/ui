@@ -1,5 +1,5 @@
-import { Context } from '../context';
-import { fiberRegistry } from '../fiber';
+import { Context } from '../core/context';
+import { fiberRegistry } from '../core/fiber';
 
 /**
  * useContext hook - reads the current value of a context

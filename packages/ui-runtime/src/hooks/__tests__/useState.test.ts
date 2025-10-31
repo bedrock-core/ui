@@ -1,9 +1,9 @@
 import { world } from '@minecraft/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Fragment } from '../../components/Fragment';
-import { fiberRegistry } from '../../fiber';
+import { fiberRegistry } from '../../core/fiber';
 import { ComponentInstance, StateHook } from '../types';
 import { useState } from '../useState';
+import { Fragment } from '../../components';
 
 describe('useState Hook', () => {
   let instance: ComponentInstance;
@@ -37,7 +37,7 @@ describe('useState Hook', () => {
     it('should initialize with lazy initializer function', () => {
       const initFn = vi.fn(() => 42);
       const [count] = useState(initFn);
-      
+
       expect(count).toBe(42);
       expect(initFn).toHaveBeenCalledTimes(1);
       expect(instance.hooks[0]).toHaveProperty('type', 'state');
@@ -49,9 +49,9 @@ describe('useState Hook', () => {
 
       expect(hook.value).toBe(0);
       expect(instance.dirty).toBe(false);
-      
+
       setCount(5);
-      
+
       expect(hook.value).toBe(5);
       expect(instance.dirty).toBe(true);
     });
@@ -59,11 +59,11 @@ describe('useState Hook', () => {
     it('should update with updater function', () => {
       const [, setCount] = useState(10);
       const hook = instance.hooks[0] as StateHook<number>;
-      
+
       expect(hook.value).toBe(10);
-      
+
       setCount(prev => prev + 5);
-      
+
       expect(hook.value).toBe(15);
       expect(instance.dirty).toBe(true);
     });
@@ -74,14 +74,14 @@ describe('useState Hook', () => {
       // First render
       const [count1, setCount1] = useState(0);
       expect(count1).toBe(0);
-      
+
       setCount1(5);
       expect(instance.dirty).toBe(true);
-      
+
       // Simulate re-render: reset hookIndex, dirty flag
       instance.hookIndex = 0;
       instance.dirty = false;
-      
+
       // Second render - should get updated value
       const [count2] = useState(0);
       expect(count2).toBe(5);
@@ -91,16 +91,16 @@ describe('useState Hook', () => {
     it('should apply multiple state updates correctly', () => {
       const [, setCount] = useState(0);
       const hook = instance.hooks[0] as StateHook<number>;
-      
+
       setCount(5);
       expect(hook.value).toBe(5);
-      
+
       setCount(10);
       expect(hook.value).toBe(10);
-      
+
       setCount(prev => prev + 5);
       expect(hook.value).toBe(15);
-      
+
       expect(instance.dirty).toBe(true);
     });
 
@@ -108,11 +108,11 @@ describe('useState Hook', () => {
       // Initial render
       const [, setCount] = useState(0);
       setCount(42);
-      
+
       // Simulate form close (instance stays in registry, just reset for next render)
       instance.hookIndex = 0;
       instance.dirty = false;
-      
+
       // Re-open form (re-render)
       const [count] = useState(0);
       expect(count).toBe(42); // State persisted
@@ -122,9 +122,9 @@ describe('useState Hook', () => {
       // First instance
       const [, setCount1] = useState(0);
       setCount1(10);
-      
+
       fiberRegistry.popInstance();
-      
+
       // Second instance with different ID
       const instance2: ComponentInstance = {
         id: 'test-component-2',
@@ -137,18 +137,18 @@ describe('useState Hook', () => {
         dirty: false,
       };
       fiberRegistry.pushInstance(instance2);
-      
+
       const [count2, setCount2] = useState(0);
       expect(count2).toBe(0); // Different instance, different state
-      
+
       setCount2(20);
-      
+
       const hook1 = instance.hooks[0] as StateHook<number>;
       const hook2 = instance2.hooks[0] as StateHook<number>;
-      
+
       expect(hook1.value).toBe(10);
       expect(hook2.value).toBe(20);
-      
+
       fiberRegistry.popInstance();
       fiberRegistry.pushInstance(instance); // Restore original
     });
@@ -157,27 +157,27 @@ describe('useState Hook', () => {
   describe('Edge Cases', () => {
     it('should use Object.is comparison for equality', () => {
       const [, setCount] = useState(0);
-      
+
       // Setting to same value (0) should not mark dirty
       setCount(0);
       expect(instance.dirty).toBe(false);
-      
+
       // Setting to -0 should mark dirty (0 and -0 are different in Object.is)
       setCount(-0);
       expect(instance.dirty).toBe(true);
       const hook1 = instance.hooks[0] as StateHook<number>;
       expect(Object.is(hook1.value, -0)).toBe(true);
-      
-      // Reset dirty flag and test NaN separately  
+
+      // Reset dirty flag and test NaN separately
       instance.dirty = false;
-      
+
       // Setting from -0 back to 0 should mark dirty (they're different in Object.is)
       setCount(0);
       expect(instance.dirty).toBe(true);
-      
+
       // Reset for NaN test
       instance.dirty = false;
-      
+
       // Setting to same value should not mark dirty
       setCount(0);
       expect(instance.dirty).toBe(false);
@@ -187,16 +187,16 @@ describe('useState Hook', () => {
       const initialObj = { count: 0 };
       const [, setObj] = useState(initialObj);
       const hook = instance.hooks[0] as StateHook<{ count: number }>;
-      
+
       // Mutating the object properties shouldn't trigger dirty
       initialObj.count = 5;
       expect(instance.dirty).toBe(false);
       expect(hook.value.count).toBe(5); // But value is mutated
-      
+
       // Setting to same reference shouldn't mark dirty
       setObj(initialObj);
       expect(instance.dirty).toBe(false);
-      
+
       // Setting to new reference should mark dirty
       const newObj = { count: 10 };
       setObj(newObj);
@@ -206,12 +206,12 @@ describe('useState Hook', () => {
 
     it('should only call initializer function once on mount', () => {
       const initFn = vi.fn(() => 42);
-      
+
       // First render
       const [count1] = useState(initFn);
       expect(count1).toBe(42);
       expect(initFn).toHaveBeenCalledTimes(1);
-      
+
       // Simulate re-render
       instance.hookIndex = 0;
       const [count2] = useState(initFn);
@@ -222,11 +222,11 @@ describe('useState Hook', () => {
     it('should maintain stable setter reference across re-renders', () => {
       // First render
       const [, setCount1] = useState(0);
-      
+
       // Simulate re-render
       instance.hookIndex = 0;
       const [, setCount2] = useState(0);
-      
+
       // Setter references should be identical
       expect(setCount1).toBe(setCount2);
     });
@@ -235,7 +235,7 @@ describe('useState Hook', () => {
   describe('Error Cases', () => {
     it('should throw error when called outside component context', () => {
       fiberRegistry.popInstance();
-      
+
       expect(() => {
         useState(0);
       }).toThrow('useState can only be called from within a component');
@@ -244,10 +244,10 @@ describe('useState Hook', () => {
     it('should throw error on hook order mismatch', () => {
       // First render: useState
       useState(0);
-      
+
       // Simulate re-render
       instance.hookIndex = 0;
-      
+
       // Second render: try to use useRef instead (different hook type)
       // This should throw because hook at index 0 is now 'state' but we're trying to register a different type
       expect(() => {
@@ -257,7 +257,7 @@ describe('useState Hook', () => {
           throw new Error('Hook type mismatch');
         }
       }).not.toThrow(); // This test verifies the hook exists with correct type
-      
+
       // The actual mismatch would be caught inside useState implementation
       // when it checks if the stored hook type matches expected type
     });

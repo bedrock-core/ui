@@ -1,6 +1,6 @@
-import { fiberRegistry } from '../../core/fiber';
-import { getRuntimeForPlayer } from '../../core/runtimeStore';
-import type { UseRenderCondition, RenderCondition } from '../../core/types';
+import { fiberRegistry } from '../core/fiber';
+import { getRuntimeForPlayer } from '../core/runtimeStore';
+import type { UseRenderCondition, RenderCondition } from '../core/types';
 import { useEffect } from './useEffect';
 
 /**

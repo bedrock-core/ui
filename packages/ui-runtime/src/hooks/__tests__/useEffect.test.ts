@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { useEffect, executeEffects } from '../useEffect';
-import { fiberRegistry } from '../../fiber';
+import { fiberRegistry } from '../../core/fiber';
 import { ComponentInstance, EffectHook } from '../types';
 import { Fragment } from '../../components/Fragment';
 import { world } from '@minecraft/server';

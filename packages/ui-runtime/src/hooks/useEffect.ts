@@ -1,4 +1,4 @@
-import { fiberRegistry } from '../fiber';
+import { fiberRegistry } from '../core/fiber';
 import { ComponentInstance, EffectHook, Hook } from './types';
 
 /**

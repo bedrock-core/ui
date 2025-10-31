@@ -1,5 +1,5 @@
 import { SerializablePrimitive } from '../core';
-import { Fragment as FragmentComponent } from '../core/components/Fragment';
+import { Fragment as FragmentComponent } from '../components/Fragment';
 
 interface NativeNode<P extends JSX.Props = JSX.Props> {
   type: string | FunctionComponent<P>;

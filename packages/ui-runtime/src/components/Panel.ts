@@ -1,5 +1,5 @@
 import { ControlProps, withControl } from './control';
-import { FunctionComponent, JSX } from '../../jsx';
+import { FunctionComponent, JSX } from '../jsx';
 
 export interface PanelProps extends ControlProps { children: JSX.Node }
 

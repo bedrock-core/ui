@@ -1,5 +1,5 @@
 import { RefHook, Hook, ComponentInstance } from './types';
-import { fiberRegistry } from '../fiber';
+import { fiberRegistry } from '../core/fiber';
 
 /**
  * Type guard to check if a hook is a RefHook

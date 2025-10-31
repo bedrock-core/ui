@@ -1,4 +1,4 @@
-import { fiberRegistry } from '../fiber';
+import { fiberRegistry } from '../core/fiber';
 
 /**
  * Hook that provides a function to properly exit/close the current UI without triggering re-renders.

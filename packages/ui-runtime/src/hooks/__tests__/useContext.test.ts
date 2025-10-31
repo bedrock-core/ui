@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { useContext } from '../useContext';
-import { createContext } from '../../context';
-import { fiberRegistry } from '../../fiber';
+import { createContext } from '../../core/context';
+import { fiberRegistry } from '../../core/fiber';
 import { ComponentInstance } from '../types';
 import { Fragment } from '../../components/Fragment';
 import { world } from '@minecraft/server';

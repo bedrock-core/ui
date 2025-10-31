@@ -1,8 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { serialize } from '../../serializer';
-import { SerializationContext } from '../../types';
-import { Button } from '../../components/Button';
+import { Button } from '../../Button';
 import { ActionFormData } from '@minecraft/server-ui';
+import { SerializationContext, serialize } from '../../../core';
 
 describe('Button callbacks', () => {
   it('should register button callbacks in context', () => {

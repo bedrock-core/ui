@@ -1,4 +1,4 @@
-import { FunctionComponent, JSX } from '../../jsx';
+import { FunctionComponent, JSX } from '../jsx';
 import { withControl } from './control';
 
 export interface FragmentProps extends JSX.Props { }
