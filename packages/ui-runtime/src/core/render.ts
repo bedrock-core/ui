@@ -1,13 +1,13 @@
 import { Player, system } from '@minecraft/server';
-import { ActionFormData, ActionFormResponse, FormRejectError } from '@minecraft/server-ui';
+import { ActionFormData, ActionFormResponse, FormRejectError, uiManager } from '@minecraft/server-ui';
 import { FunctionComponent, JSX } from '../jsx';
 import { startInputLock, stopInputLock } from '../util';
 import { isContext } from './context';
 import { fiberRegistry } from './fiber';
 import { executeEffects } from './hooks';
-import { ComponentInstance } from './hooks/types';
+import { ComponentInstance, StateHook } from './hooks/types';
 import { PROTOCOL_HEADER, serialize } from './serializer';
-import { SerializationContext } from './types';
+import { RenderOptions, SerializationContext } from './types';
 
 /**
  * Context passed through tree traversal during rendering phase.
@@ -519,6 +519,164 @@ function handleButtonCallback(
 }
 
 /**
+ * Wait for all useState values in the component tree to differ from their initial values.
+ *
+ * This function monitors all StateHook instances in the createdInstances set and resolves
+ * when either:
+ * 1. All state values have changed from their initialValue (success)
+ * 2. The timeout period has elapsed (timeout)
+ *
+ * @param instanceIds - Set of all instance IDs in the component tree
+ * @param timeoutMs - Maximum time to wait in milliseconds
+ * @returns Promise that resolves with true if all states resolved, false if timeout
+ */
+async function waitForStateResolution(
+  instanceIds: Set<string>,
+  timeoutMs: number,
+): Promise<boolean> {
+  return new Promise<boolean>(resolve => {
+    const startTime = Date.now();
+
+    // Check if all states are resolved
+    const checkStates = (): boolean => {
+      let allResolved = true;
+
+      for (const id of instanceIds) {
+        const instance = fiberRegistry.getInstance(id);
+        if (!instance) continue;
+
+        // Check all state hooks in this instance
+        for (const hook of instance.hooks) {
+          if (hook.type === 'state') {
+            const stateHook = hook as StateHook;
+
+            // Compare using Object.is (same as React)
+            if (Object.is(stateHook.value, stateHook.initialValue)) {
+              allResolved = false;
+              break;
+            }
+          }
+        }
+
+        if (!allResolved) break;
+      }
+
+      return allResolved;
+    };
+
+    // Check immediately
+    if (checkStates()) {
+      console.log('[Suspension] All states resolved immediately');
+      resolve(true);
+
+      return;
+    }
+
+    console.log('[Suspension] Waiting for state resolution...');
+
+    // Poll every tick until resolved or timeout
+    const intervalId = system.runInterval(() => {
+      const elapsed = Date.now() - startTime;
+
+      if (elapsed >= timeoutMs) {
+        console.log('[Suspension] Timeout reached, proceeding anyway');
+        system.clearRun(intervalId);
+        resolve(false);
+
+        return;
+      }
+
+      if (checkStates()) {
+        console.log('[Suspension] All states resolved');
+        system.clearRun(intervalId);
+        resolve(true);
+      }
+    }, 1); // Check every tick
+  });
+}
+
+/**
+ * Handle suspension logic: show fallback UI while waiting for state resolution.
+ *
+ * This function:
+ * 1. Builds and renders the fallback component tree
+ * 2. Starts effect loops for the main component tree
+ * 3. Waits for all states in the main tree to resolve
+ * 4. Closes the fallback form when ready
+ *
+ * @param player - The player to show the fallback to
+ * @param fallbackComponent - The fallback component to render
+ * @param mainInstanceIds - Set of instance IDs from the main component tree
+ * @param timeout - Maximum time to wait for state resolution
+ * @returns Promise that resolves when fallback is complete
+ */
+async function handleSuspension(
+  player: Player,
+  fallbackComponent: JSX.Element | FunctionComponent,
+  mainInstanceIds: Set<string>,
+  timeout: number,
+): Promise<void> {
+  // Convert function component to JSX element if needed
+  let fallbackElement: JSX.Element;
+
+  if (typeof fallbackComponent === 'function') {
+    fallbackElement = { type: fallbackComponent, props: {} };
+  } else {
+    fallbackElement = fallbackComponent;
+  }
+
+  // Build fallback tree (creates instances for fallback components)
+  const { tree: fallbackTree, instances: fallbackInstances } = buildTree(fallbackElement, player);
+
+  // Show fallback UI
+  const fallbackContext: SerializationContext = {
+    buttonCallbacks: new Map(),
+    buttonIndex: 0,
+  };
+  const fallbackForm = new ActionFormData();
+  fallbackForm.title(PROTOCOL_HEADER);
+  serialize(fallbackTree, fallbackForm, fallbackContext);
+
+  console.log('[Suspension] Showing fallback UI');
+
+  // Start effect loop for the main component tree while fallback is displayed
+  startEffectLoopForTree(mainInstanceIds);
+
+  // Show fallback (don't await - let it display while we wait)
+  void fallbackForm.show(player);
+
+  // Wait for state resolution (race between resolution and timeout)
+  const resolved = await waitForStateResolution(mainInstanceIds, timeout);
+
+  if (resolved) {
+    console.log('[Suspension] States resolved, closing fallback and showing main UI');
+  } else {
+    console.log('[Suspension] Timeout reached, showing main UI anyway');
+  }
+
+  // Force close the fallback form using UIManager
+  // UIManager.closeAllForms() closes all open forms for the player
+  console.log('[Suspension] Force-closing fallback form');
+  uiManager.closeAllForms(player);
+
+  // Wait a tick for form to close
+  await new Promise<void>(resolve => system.run(resolve));
+
+  // Clean up fallback component instances
+  console.log('[Suspension] Cleaning up fallback instances');
+  for (const id of fallbackInstances) {
+    const instance = fiberRegistry.getInstance(id);
+    if (instance) {
+      executeEffects(instance, true); // Run cleanup functions
+      fiberRegistry.deleteInstance(id);
+    }
+  }
+
+  // Wait a tick for everything to settle before showing main UI
+  await new Promise<void>(resolve => system.run(resolve));
+}
+
+/**
  * Render a JSX component to a player using the @bedrock-core/ui system.
  *
  * This is the ENTRY POINT for the framework. When called:
@@ -528,15 +686,24 @@ function handleButtonCallback(
  *
  * @param player - The player to show the UI to
  * @param component - JSX component function or element
+ * @param options - Optional render options for suspension behavior
  *
  * @examples
  * render(player, Example);           // Component function
  * render(player, <Example />);       // JSX element (equivalent)
  * render(player, <Panel>...</Panel>); // Direct JSX
+ *
+ * // With suspension
+ * render(player, <App />, {
+ *   awaitStateResolution: true,
+ *   awaitTimeout: 5000,
+ *   fallback: <Panel><Text text="Loading..." /></Panel>
+ * });
  */
 export async function render(
   player: Player,
   component: JSX.Element | FunctionComponent,
+  options?: RenderOptions,
 ): Promise<void> {
   // Convert function component to JSX element if needed
   let rootElement: JSX.Element;
@@ -554,6 +721,12 @@ export async function render(
   // RENDERING PHASE: Build complete tree, create all instances
   const { tree: element, instances: createdInstances } = buildTree(rootElement, player);
 
+  // SUSPENSION LOGIC: If awaitStateResolution is enabled, show fallback first
+  if (options?.awaitStateResolution && options?.fallback) {
+    const timeout = options.awaitTimeout ?? 10000; // Default 10 seconds
+    await handleSuspension(player, options.fallback, createdInstances, timeout);
+  }
+
   // Create serialization context for button callbacks
   const serializationContext: SerializationContext = {
     buttonCallbacks: new Map(),
@@ -569,7 +742,10 @@ export async function render(
 
   // LOGIC PHASE: Start background effect loop for all components
   // This allows effects to respond to state changes while form is displayed
-  startEffectLoopForTree(createdInstances);
+  // (Only start if not already started by suspension logic)
+  if (!options?.awaitStateResolution) {
+    startEffectLoopForTree(createdInstances);
+  }
 
   // Display form and wait for user interaction
   form.show(player).then((response: ActionFormResponse): void => {

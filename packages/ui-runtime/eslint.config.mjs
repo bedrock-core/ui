@@ -1,6 +1,7 @@
 import { defineConfig } from "eslint/config";
 import { dirname } from "path";
 import tseslint from "typescript-eslint";
+import stylistic from "@stylistic/eslint-plugin";
 import { fileURLToPath } from "url";
 import { commonTsRules } from "../../eslint.config.mjs";
 

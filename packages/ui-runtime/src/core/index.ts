@@ -5,14 +5,12 @@ export {
   Image,
   Panel,
   Text,
-  Suspense,
   type ButtonProps,
   type FragmentProps,
   type ImageProps,
   type PanelProps,
   type TextProps,
-  type ControlProps,
-  type SuspenseProps
+  type ControlProps
 } from './components';
 
 // Serialization
@@ -70,5 +68,6 @@ export type {
   SerializablePrimitive,
   SerializableProps,
   SerializationContext,
-  SerializationError
+  SerializationError,
+  RenderOptions
 } from './types';

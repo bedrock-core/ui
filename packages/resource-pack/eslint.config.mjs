@@ -1,4 +1,5 @@
 import minecraftLinting from "eslint-plugin-minecraft-linting";
+import stylistic from "@stylistic/eslint-plugin";
 import json from "@eslint/json";
 import { defineConfig } from "eslint/config";
 import { dirname } from "path";

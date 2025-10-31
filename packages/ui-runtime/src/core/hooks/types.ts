@@ -77,17 +77,6 @@ export interface ComponentInstance {
   mounted: boolean;
   dirty: boolean;
   isProgrammaticClose?: boolean;
-  
-  /** Callback for when any state changes - used by Suspense to monitor state resolution */
-  onStateChange?: () => void;
-  
-  /** Suspense state tracking */
-  suspensionState?: {
-    isSuspended: boolean;
-    hasResolved: boolean;
-    trackedHookIndices: number[];
-    timeoutId?: number;
-  };
 
   /** System interval ID for background effect loop - runs effects when state changes */
   effectLoopId?: number;

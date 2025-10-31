@@ -1,3 +1,4 @@
+import stylistic from "@stylistic/eslint-plugin";
 import { defineConfig } from "eslint/config";
 import { dirname } from "path";
 import tseslint from "typescript-eslint";

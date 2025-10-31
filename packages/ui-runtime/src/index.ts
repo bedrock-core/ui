@@ -5,7 +5,6 @@ export {
   Image,
   Panel,
   Text,
-  Suspense,
   // Serialization utilities
   reserveBytes,
   // Rendering
@@ -42,7 +41,6 @@ export type {
   PanelProps,
   TextProps,
   ControlProps,
-  SuspenseProps,
   // Context types
   Context,
   ProviderProps,
@@ -60,7 +58,8 @@ export type {
   SerializablePrimitive,
   SerializableProps,
   SerializationContext,
-  SerializationError
+  SerializationError,
+  RenderOptions
 } from './core';
 
 // JSX Runtime
