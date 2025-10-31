@@ -132,7 +132,7 @@ class FiberRegistry {
 
     if (stack && stack.length > 0) {
       stack.pop();
-      
+
       if (stack.length === 0) {
         this._contextStack.delete(context as Context<unknown>);
       }

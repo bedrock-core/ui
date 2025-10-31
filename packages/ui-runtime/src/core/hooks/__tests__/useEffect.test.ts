@@ -39,15 +39,15 @@ describe('useEffect Hook', () => {
 
     it('should run effect on mount with empty deps', () => {
       let ran = false;
-      
+
       useEffect(() => {
         ran = true;
       }, []);
 
       expect(ran).toBe(false);
-      
+
       executeEffects(instance);
-      
+
       expect(ran).toBe(true);
     });
 
@@ -233,6 +233,7 @@ describe('useEffect Hook', () => {
       // First render
       useEffect(() => {
         setupRuns++;
+
         return () => {
           cleanupRuns++;
         };
@@ -246,6 +247,7 @@ describe('useEffect Hook', () => {
       instance.hookIndex = 0;
       useEffect(() => {
         setupRuns++;
+
         return () => {
           cleanupRuns++;
         };
@@ -259,10 +261,8 @@ describe('useEffect Hook', () => {
     it('should run cleanup on unmount', () => {
       let cleanupRan = false;
 
-      useEffect(() => {
-        return () => {
-          cleanupRan = true;
-        };
+      useEffect(() => () => {
+        cleanupRan = true;
       }, []);
 
       executeEffects(instance);
@@ -274,7 +274,7 @@ describe('useEffect Hook', () => {
       if (hook.cleanup) {
         hook.cleanup();
       }
-      
+
       expect(cleanupRan).toBe(true);
     });
 
@@ -292,9 +292,10 @@ describe('useEffect Hook', () => {
       // Effect returning void explicitly
       instance.hookIndex = 0;
       instance.hooks = [];
-      
+
       useEffect(() => {
         ran = true;
+
         return undefined;
       }, []);
 
@@ -304,33 +305,21 @@ describe('useEffect Hook', () => {
     it('should handle multiple effects with cleanups in same component', () => {
       const cleanupOrder: string[] = [];
 
-      useEffect(() => {
-        return () => cleanupOrder.push('effect1');
-      }, [1]);
+      useEffect(() => () => cleanupOrder.push('effect1'), [1]);
 
-      useEffect(() => {
-        return () => cleanupOrder.push('effect2');
-      }, [1]);
+      useEffect(() => () => cleanupOrder.push('effect2'), [1]);
 
-      useEffect(() => {
-        return () => cleanupOrder.push('effect3');
-      }, [1]);
+      useEffect(() => () => cleanupOrder.push('effect3'), [1]);
 
       executeEffects(instance);
 
       // Change deps to trigger cleanup
       instance.hookIndex = 0;
-      useEffect(() => {
-        return () => cleanupOrder.push('effect1');
-      }, [2]);
+      useEffect(() => () => cleanupOrder.push('effect1'), [2]);
 
-      useEffect(() => {
-        return () => cleanupOrder.push('effect2');
-      }, [2]);
+      useEffect(() => () => cleanupOrder.push('effect2'), [2]);
 
-      useEffect(() => {
-        return () => cleanupOrder.push('effect3');
-      }, [2]);
+      useEffect(() => () => cleanupOrder.push('effect3'), [2]);
 
       executeEffects(instance);
 
@@ -416,7 +405,7 @@ describe('useEffect Hook', () => {
       expect(hook).toHaveProperty('type', 'effect');
     });
 
-    it('should not break subsequent effects when one effect throws', () => {
+    it('should throw when an effect setup throws (React-like behavior)', () => {
       const effect1Ran = vi.fn();
       const effect2Ran = vi.fn();
       const effect3Ran = vi.fn();
@@ -427,32 +416,27 @@ describe('useEffect Hook', () => {
         throw new Error('Effect 1 error');
       }, []);
 
-      // Second effect should still work
+      // Additional effects (no guarantees they run when an earlier one throws)
       useEffect(() => {
         effect2Ran();
       }, []);
-
-      // Third effect should still work
       useEffect(() => {
         effect3Ran();
       }, []);
 
-      // Execute effects - errors should be caught
-      executeEffects(instance);
+      // Execute effects - should throw
+      expect(() => executeEffects(instance)).toThrow('Effect 1 error');
 
-      // First effect ran (but threw)
+      // First effect ran (then threw)
       expect(effect1Ran).toHaveBeenCalled();
-      
-      // Other effects should still run
-      expect(effect2Ran).toHaveBeenCalled();
-      expect(effect3Ran).toHaveBeenCalled();
     });
 
-    it('should log but not throw when cleanup errors', () => {
+    it('should throw when cleanup throws (React-like behavior)', () => {
       const effectRan = vi.fn();
 
       useEffect(() => {
         effectRan();
+
         return () => {
           throw new Error('Cleanup error');
         };
@@ -461,18 +445,17 @@ describe('useEffect Hook', () => {
       executeEffects(instance);
       expect(effectRan).toHaveBeenCalledTimes(1);
 
-      // Change deps to trigger cleanup
+      // Change deps to trigger cleanup (which will throw)
       instance.hookIndex = 0;
       useEffect(() => {
         effectRan();
+
         return () => {
           throw new Error('Cleanup error');
         };
       }, [2]);
 
-      // Should not throw, error should be caught
-      expect(() => executeEffects(instance)).not.toThrow();
-      expect(effectRan).toHaveBeenCalledTimes(2); // New effect still ran
+      expect(() => executeEffects(instance)).toThrow('Cleanup error');
     });
   });
 });

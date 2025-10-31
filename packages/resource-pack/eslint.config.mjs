@@ -32,7 +32,7 @@ export default defineConfig([
 
     rules: {
       ...commonTsRules,
-      "minecraft-linting/avoid-unnecessary-command": "error",
+      "@minecraft/avoid-unnecessary-command": "error",
     }
   },
 

@@ -29,7 +29,8 @@ yarn add @bedrock-core/ui-runtime
 | JSX Runtime | Transforms JSX to `{ type, props }` elements | `src/jsx/jsx-runtime.ts` |
 | Component Functions | Pure functions returning `JSX.Element` objects | `src/core/components/*.ts` |
 | Serialization Protocol | UTF‑8 fixed-width, semicolon-padded segments | `src/core/serializer.ts` |
-| Rendering Adapter | Injects serialized payload + registers form controls | `src/core/render.ts` |
+| Runtime (Entry) | Orchestrates build → snapshot → show → response; owns effect loop | `src/core/runtime.ts` |
+| Renderer Adapter | Serializes UI tree to a form snapshot | `src/core/rendererAdapter.ts` |
 | Fiber Registry | Manages component instances and hook state | `src/core/fiber.ts` |
 | Context System | React-like context providers and consumers | `src/core/context.ts` |
 | Hooks System | State management and side effects | `src/core/hooks/*.ts` |

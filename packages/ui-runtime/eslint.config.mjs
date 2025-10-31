@@ -11,7 +11,7 @@ const __dirname = dirname(__filename);
 export default defineConfig([
   {
     files: ["**/*.ts", "**/*.tsx"],
-    ignores: ["**/*.d.ts"],
+    ignores: ["**/*.d.ts", "vitest.config.ts"],
     plugins: { "@stylistic": stylistic, "@typescript-eslint": tseslint.plugin },
 
     languageOptions: {

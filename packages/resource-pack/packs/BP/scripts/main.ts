@@ -11,7 +11,7 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
       render(source as Player, Example, {
         awaitStateResolution: true,
         awaitTimeout: 5000,
-        fallback: Fallback
+        fallback: Fallback,
       });
     }
 

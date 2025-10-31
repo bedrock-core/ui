@@ -1,5 +1,4 @@
-import { FunctionComponent, JSX, Panel, Text, useEffect, usePlayer, useState, useRef } from '@bedrock-core/ui';
-import { system } from '@minecraft/server';
+import { FunctionComponent, JSX, Panel, Text, useEffect, usePlayer, useState } from '@bedrock-core/ui';
 
 interface PlayerInfo {
   health: string;
@@ -16,40 +15,24 @@ interface PlayerInfo {
 export const InfoPanel: FunctionComponent = (): JSX.Element => {
   const player = usePlayer();
   const [info, setInfo] = useState<PlayerInfo | null>(null);
-  const intervalIdRef = useRef<number | undefined>(undefined);
 
   // Update player info periodically using Minecraft's system.runInterval
   useEffect(() => {
+    try {
+      const healthComp = player.getComponent('minecraft:health');
+      const dimensionId = player.dimension.id.split(':')[1] || player.dimension.id;
 
-    const updatePlayerInfo = (): void => {
-      try {
-        const healthComp = player.getComponent('minecraft:health');
-        const dimensionId = player.dimension.id.split(':')[1] || player.dimension.id;
+      const newInfo = {
+        health: healthComp ? `${Math.floor(healthComp.currentValue)}/${healthComp.effectiveMax}` : '?',
+        gamemode: player.getGameMode(),
+        dimension: dimensionId,
+        level: player.level,
+      };
 
-        const newInfo = {
-          health: healthComp ? `${Math.floor(healthComp.currentValue)}/${healthComp.effectiveMax}` : '?',
-          gamemode: player.getGameMode(),
-          dimension: dimensionId,
-          level: player.level,
-        };
-
-        setInfo(newInfo);
-      } catch (error) {
-        console.error('[InfoPanel] Error getting player info:', error);
-      }
-    };
-
-    // Initial update
-    updatePlayerInfo();
-
-    // Update every 40 ticks (2 seconds at 20 TPS)
-    intervalIdRef.current = system.runInterval(updatePlayerInfo, 40);
-
-    return () => {
-      if (intervalIdRef.current !== undefined) {
-        system.clearRun(intervalIdRef.current);
-      }
-    };
+      setInfo(newInfo);
+    } catch (error) {
+      console.error('[InfoPanel] Error getting player info:', error);
+    }
   }, [player]);
 
 

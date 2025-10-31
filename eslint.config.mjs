@@ -343,8 +343,6 @@ export default defineConfig([
       ".yarn/**",
       "dist/**",
       "node_modules/**",
-      "**/*.config.ts",
-      "**/mocks/**"
     ],
   },
   {

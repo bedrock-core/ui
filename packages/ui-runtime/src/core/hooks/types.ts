@@ -77,7 +77,4 @@ export interface ComponentInstance {
   mounted: boolean;
   dirty: boolean;
   isProgrammaticClose?: boolean;
-
-  /** System interval ID for background effect loop - runs effects when state changes */
-  effectLoopId?: number;
 }

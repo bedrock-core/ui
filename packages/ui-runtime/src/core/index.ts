@@ -30,7 +30,8 @@ export {
 } from './serializer';
 
 // Rendering
-export { render } from './render';
+export { render } from './runtime';
+export { DefaultScheduler } from './scheduler';
 
 // Context
 export { createContext } from './context';
@@ -46,7 +47,9 @@ export {
   useReducer,
   usePlayer,
   useEvent,
-  useExit
+  useExit,
+  useTriggerRender,
+  useRenderCondition
 } from './hooks';
 
 export type {
@@ -69,5 +72,16 @@ export type {
   SerializableProps,
   SerializationContext,
   SerializationError,
-  RenderOptions
+  RenderOptions,
+  // Runtime/renderer contracts
+  VirtualNode,
+  InstanceId,
+  RuntimeHandle,
+  RuntimeOptions,
+  Scheduler,
+  Renderer,
+  RenderCondition,
+  TriggerRender,
+  UseRenderCondition,
+  UseTriggerRender
 } from './types';

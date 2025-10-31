@@ -20,6 +20,8 @@ export {
   usePlayer,
   useEvent,
   useExit,
+  useTriggerRender,
+  useRenderCondition,
   // Protocol constants
   PROTOCOL_HEADER,
   VERSION,
@@ -59,7 +61,18 @@ export type {
   SerializableProps,
   SerializationContext,
   SerializationError,
-  RenderOptions
+  RenderOptions,
+  // Runtime/renderer contracts
+  VirtualNode,
+  InstanceId,
+  RuntimeHandle,
+  RuntimeOptions,
+  Scheduler,
+  Renderer,
+  RenderCondition,
+  TriggerRender,
+  UseRenderCondition,
+  UseTriggerRender
 } from './core';
 
 // JSX Runtime

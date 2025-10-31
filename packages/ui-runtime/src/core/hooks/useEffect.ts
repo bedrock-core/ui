@@ -1,4 +1,3 @@
-import { Logger } from '../../util';
 import { fiberRegistry } from '../fiber';
 import { ComponentInstance, EffectHook, Hook } from './types';
 
@@ -123,13 +122,7 @@ export function executeEffects(instance: ComponentInstance, cleanupOnly = false)
 
     // If cleanup only, just run cleanup and skip
     if (cleanupOnly) {
-      if (hook.cleanup) {
-        try {
-          hook.cleanup();
-        } catch (error) {
-          Logger.error(`[useEffect] Error running cleanup: ${error}`);
-        }
-      }
+      hook.cleanup?.();
 
       continue;
     }
@@ -138,23 +131,13 @@ export function executeEffects(instance: ComponentInstance, cleanupOnly = false)
 
     if (shouldRun || !instance.mounted) {
       // Run cleanup if it exists
-      if (hook.cleanup) {
-        try {
-          hook.cleanup();
-        } catch (error) {
-          Logger.error(`[useEffect] Error running cleanup: ${error}`);
-        }
-      }
+      hook.cleanup?.();
 
       // Run setup
-      try {
-        const result = hook.create();
+      const result = hook.create();
 
-        // Store cleanup function if setup returned one
-        hook.cleanup = typeof result === 'function' ? result : undefined;
-      } catch (error) {
-        Logger.error(`[useEffect] Error running setup: ${error}`);
-      }
+      // Store cleanup function if setup returned one
+      hook.cleanup = typeof result === 'function' ? result : undefined;
 
       // Update deps tracking
       hook.prevDeps = hook.deps ? [...hook.deps] : undefined;
@@ -163,7 +146,4 @@ export function executeEffects(instance: ComponentInstance, cleanupOnly = false)
   }
 
   instance.mounted = true;
-
-  // Note: Forms only re-render on button press, so effect-triggered state changes
-  // alone don't trigger updates. The next button press will cause a full re-render.
 }
