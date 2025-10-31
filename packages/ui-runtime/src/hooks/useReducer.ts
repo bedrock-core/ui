@@ -1,4 +1,5 @@
-import { ReducerHook, Hook, ComponentInstance } from './types';
+import { ReducerHook, Hook } from './types';
+import { ComponentInstance } from '../core/types';
 import { fiberRegistry } from '../core/fiber';
 
 /**

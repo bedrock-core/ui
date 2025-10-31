@@ -1,6 +1,3 @@
-import { Player } from '@minecraft/server';
-import { FunctionComponent, JSX } from '../jsx';
-
 /**
  * State hook storage for a single useState call
  */
@@ -62,21 +59,6 @@ export interface HookCall {
   type: 'state' | 'effect';
   index: number;
   hook: Hook;
-}
-
-/**
- * Component fiber instance - tracks state, effects, and render information for a component
- */
-export interface ComponentInstance {
-  id: string;
-  player: Player;
-  componentType: FunctionComponent;
-  props: JSX.Props;
-  hooks: Hook[];
-  hookIndex: number;
-  mounted: boolean;
-  dirty: boolean;
-  isProgrammaticClose?: boolean;
 }
 
 /**

@@ -1,18 +1,15 @@
 import { render } from '@bedrock-core/ui';
-import { ButtonPushAfterEvent, Player, world } from '@minecraft/server';
+import { ButtonPushAfterEvent, Entity, Player, world } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
 import { MinecraftBlockTypes, MinecraftEntityTypes } from '@minecraft/vanilla-data';
 import { Example } from './UI/Example';
-import { Fallback } from './UI/Fallback';
+
+const isPlayer = (source: Entity): source is Player => source.typeId === MinecraftEntityTypes.Player;
 
 world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent): void => {
-  if (source.typeId === MinecraftEntityTypes.Player) {
+  if (isPlayer(source)) {
     if (block.typeId === MinecraftBlockTypes.StoneButton) {
-      render(source as Player, Example, {
-        awaitStateResolution: true,
-        awaitTimeout: 5000,
-        fallback: Fallback,
-      });
+      render(source, Example);
     }
 
     if (block.typeId === MinecraftBlockTypes.AcaciaButton) {
@@ -20,7 +17,7 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
 
       form.title('test');
       form.label('test');
-      form.show(source as Player);
+      form.show(source);
     }
   }
 });

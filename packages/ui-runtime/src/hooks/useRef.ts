@@ -1,4 +1,5 @@
-import { RefHook, Hook, ComponentInstance } from './types';
+import { RefHook, Hook } from './types';
+import { ComponentInstance } from '../core/types';
 import { fiberRegistry } from '../core/fiber';
 
 /**

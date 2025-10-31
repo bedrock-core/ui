@@ -18,15 +18,7 @@ export const Counter: FunctionComponent = (): JSX.Element => {
     }
 
     const intervalId = system.runInterval(() => {
-      setCount((prev: number): number => {
-        if (prev + 1 === 5) {
-          setIsAutoIncrement(false); 
-        }
-
-        console.log(`[Counter Effect] isAutoIncrement changed to: ${isAutoIncrement}`);
-        console.log(`[Counter Effect] Count changed to: ${prev + 1}`);
-        return prev + 1;
-      });
+      setCount((prev: number): number => prev + 1);
     }, 20); // 20 ticks = 1 second
 
     // Cleanup: clear interval when effect re-runs or component unmounts
@@ -43,19 +35,19 @@ export const Counter: FunctionComponent = (): JSX.Element => {
       {/* Display current count */}
       <Text width={192} height={20} x={626} y={195} value={`Count: §l${count}`} />
 
-      {/* Auto-increment status */}
-      <Text width={192} height={15} x={626} y={218} value={`Auto: ${isAutoIncrement ? '§aON' : '§cOFF'}`} />
+      {/* Auto-increment status (to the right of count) */}
+      <Text width={80} height={15} x={740} y={195} value={`Auto: ${isAutoIncrement ? '§aON' : '§cOFF'}`} />
 
       {/* Increment button */}
       <Button
         width={81}
         height={20}
         x={626}
-        y={240}
+        y={215}
         onPress={(): void => {
           setCount(prev => prev + 1);
         }}>
-        <Text width={81} height={20} x={631} y={245} value={'§l+1'} />
+        <Text width={81} height={20} x={631} y={220} value={'§l+1'} />
       </Button>
 
       {/* Decrement button */}
@@ -63,11 +55,11 @@ export const Counter: FunctionComponent = (): JSX.Element => {
         width={81}
         height={20}
         x={717}
-        y={240}
+        y={215}
         onPress={(): void => {
           setCount(prev => prev - 1);
         }}>
-        <Text width={81} height={20} x={722} y={245} value={'§l-1'} />
+        <Text width={81} height={20} x={722} y={220} value={'§l-1'} />
       </Button>
 
       {/* Toggle auto-increment */}
@@ -75,11 +67,24 @@ export const Counter: FunctionComponent = (): JSX.Element => {
         width={172}
         height={20}
         x={626}
-        y={265}
+        y={240}
         onPress={(): void => {
           setIsAutoIncrement(!isAutoIncrement);
         }}>
-        <Text width={172} height={20} x={631} y={270} value={`§9${isAutoIncrement ? 'Stop' : 'Start'} Auto`} />
+        <Text width={172} height={20} x={631} y={245} value={`§9${isAutoIncrement ? 'Stop' : 'Start'} Auto`} />
+      </Button>
+
+      {/* Reset button */}
+      <Button
+        width={172}
+        height={20}
+        x={626}
+        y={265}
+        onPress={(): void => {
+          setIsAutoIncrement(false);
+          setCount(0);
+        }}>
+        <Text width={172} height={20} x={631} y={270} value={'§6Reset'} />
       </Button>
     </Panel>
   );

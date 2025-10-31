@@ -1,7 +1,8 @@
 import { world } from '@minecraft/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fiberRegistry } from '../../core/fiber';
-import { ComponentInstance, StateHook } from '../types';
+import { StateHook } from '../types';
+import { ComponentInstance } from '@bedrock-core/ui/core/types';
 import { useState } from '../useState';
 import { Fragment } from '../../components';
 

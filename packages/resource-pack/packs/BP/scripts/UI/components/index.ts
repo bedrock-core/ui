@@ -7,7 +7,7 @@
 export { ThemeDisplay } from './ThemeDisplay';
 export { SettingsDisplay } from './SettingsDisplay';
 export { TodoList } from './TodoList';
-export { RefTimer } from './RefTimer';
+export { MetadataDisplay } from './MetadataDisplay';
 
 // Row 2 components
 export { EventCounter } from './EventCounter';

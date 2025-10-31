@@ -1,10 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { useEvent } from '../useEvent';
-import { executeEffects } from '../useEffect';
-import { fiberRegistry } from '../../core/fiber';
-import { ComponentInstance, EventSignal } from '../types';
-import { Fragment } from '../../components/Fragment';
 import { world } from '@minecraft/server';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { Fragment } from '../../components/Fragment';
+import { fiberRegistry } from '../../core/fiber';
+import { EffectHook, EventSignal } from '../types';
+import { ComponentInstance } from '@bedrock-core/ui/core/types';
+import { executeEffects } from '../useEffect';
+import { useEvent } from '../useEvent';
 
 describe('useEvent Hook', () => {
   let instance: ComponentInstance;
@@ -62,7 +63,7 @@ describe('useEvent Hook', () => {
       expect(subscribeFn).toHaveBeenCalled();
 
       // Get the cleanup function and call it (simulating unmount)
-      const hook = instance.hooks[0] as any;
+      const hook = instance.hooks[0] as EffectHook;
       if (hook.cleanup) {
         hook.cleanup();
       }
@@ -253,7 +254,7 @@ describe('useEvent Hook', () => {
       expect(subscribeFn).toHaveBeenCalledTimes(1);
 
       // Simulate unmount by calling cleanup
-      const hook = instance.hooks[0] as any;
+      const hook = instance.hooks[0] as EffectHook;
       if (hook.cleanup) {
         hook.cleanup();
       }
@@ -288,8 +289,8 @@ describe('useEvent Hook', () => {
       expect(subscribe2).toHaveBeenCalledTimes(1);
 
       // Cleanup both
-      const hook1 = instance.hooks[0] as any;
-      const hook2 = instance.hooks[1] as any;
+      const hook1 = instance.hooks[0] as EffectHook;
+      const hook2 = instance.hooks[1] as EffectHook;
 
       if (hook1.cleanup) hook1.cleanup();
       if (hook2.cleanup) hook2.cleanup();

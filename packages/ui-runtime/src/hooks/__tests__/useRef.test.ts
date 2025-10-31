@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { useRef } from '../useRef';
 import { fiberRegistry } from '../../core/fiber';
-import { ComponentInstance, RefHook } from '../types';
+import { RefHook } from '../types';
+import { ComponentInstance } from '@bedrock-core/ui/core/types';
 import { Fragment } from '../../components/Fragment';
 import { world } from '@minecraft/server';
 
@@ -116,7 +117,7 @@ describe('useRef Hook', () => {
       instance.hookIndex++;
 
       // Function
-      const fn = () => 'hello';
+      const fn = (): string => 'hello';
       const fnRef = useRef(fn);
       expect(fnRef.current).toBe(fn);
       expect(fnRef.current()).toBe('hello');

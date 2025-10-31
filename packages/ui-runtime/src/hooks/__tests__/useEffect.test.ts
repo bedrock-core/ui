@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { useEffect, executeEffects } from '../useEffect';
 import { fiberRegistry } from '../../core/fiber';
-import { ComponentInstance, EffectHook } from '../types';
+import { EffectHook } from '../types';
+import { ComponentInstance } from '@bedrock-core/ui/core/types';
 import { Fragment } from '../../components/Fragment';
 import { world } from '@minecraft/server';
 

@@ -1,4 +1,6 @@
+import { Player } from '@minecraft/server';
 import { ActionFormData, ActionFormResponse } from '@minecraft/server-ui';
+import { Hook } from '../hooks/types';
 import { FunctionComponent, JSX } from '../jsx';
 
 // For now we will only be supporting ActionFormData, in future will add support for ModalFormData for "Forms"
@@ -142,7 +144,7 @@ export interface Renderer {
   snapshot(tree: JSX.Element, ctx: SerializationContext): ActionFormData;
 
   /** Show the form and resolve with the raw response. */
-  show(player: import('@minecraft/server').Player, form: ActionFormData): Promise<ActionFormResponse>;
+  show(player: Player, form: ActionFormData): Promise<ActionFormResponse>;
 }
 
 /**
@@ -155,4 +157,19 @@ export type TriggerRender = (reason?: string) => void;
 export type UseRenderCondition = (predicate: RenderCondition, deps?: unknown[]) => void;
 
 /** Get an imperative triggerRender function bound to the current runtime. */
-export type UseTriggerRender = () => TriggerRender;
+export type UseTriggerRender = () => TriggerRender;/**
+ * Component fiber instance - tracks state, effects, and render information for a component
+ */
+
+export interface ComponentInstance {
+  id: string;
+  player: Player;
+  componentType: FunctionComponent;
+  props: JSX.Props;
+  hooks: Hook[];
+  hookIndex: number;
+  mounted: boolean;
+  dirty: boolean;
+  shouldClose?: boolean;
+}
+

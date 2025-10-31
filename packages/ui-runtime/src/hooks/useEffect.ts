@@ -1,5 +1,6 @@
 import { fiberRegistry } from '../core/fiber';
-import { ComponentInstance, EffectHook, Hook } from './types';
+import { EffectHook, Hook } from './types';
+import { ComponentInstance } from '../core/types';
 
 /**
  * Type guard to check if a hook is an EffectHook

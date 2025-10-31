@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { useReducer } from '../useReducer';
 import { fiberRegistry } from '../../core/fiber';
-import { ComponentInstance, ReducerHook } from '../types';
+import { ReducerHook } from '../types';
+import { ComponentInstance } from '@bedrock-core/ui/core/types';
 import { Fragment } from '../../components/Fragment';
 import { world } from '@minecraft/server';
 
@@ -29,7 +30,7 @@ describe('useReducer Hook', () => {
   describe('Core Functionality', () => {
     it('should initialize with initial state', () => {
       type Action = { type: 'increment' } | { type: 'decrement' };
-      const reducer = (state: number, action: Action) => {
+      const reducer = (state: number, action: Action): number => {
         switch (action.type) {
           case 'increment': return state + 1;
           case 'decrement': return state - 1;
@@ -46,7 +47,7 @@ describe('useReducer Hook', () => {
 
     it('should initialize with lazy init function', () => {
       type Action = { type: 'increment' };
-      const reducer = (state: number, _action: Action) => state + 1;
+      const reducer = (state: number, _action: Action): number => state + 1;
       const init = vi.fn((initialCount: number) => initialCount * 2);
 
       const [state] = useReducer(reducer, 5, init);
@@ -79,7 +80,7 @@ describe('useReducer Hook', () => {
 
     it('should update state when reducer returns new value', () => {
       type Action = { type: 'increment' } | { type: 'set'; value: number };
-      const reducer = (state: number, action: Action) => {
+      const reducer = (state: number, action: Action): number => {
         switch (action.type) {
           case 'increment': return state + 1;
           case 'set': return action.value;
@@ -110,7 +111,7 @@ describe('useReducer Hook', () => {
   describe('State Management', () => {
     it('should persist state across re-renders', () => {
       type Action = { type: 'increment' };
-      const reducer = (state: number, _action: Action) => state + 1;
+      const reducer = (state: number, _action: Action): number => state + 1;
 
       // First render
       const [state1, dispatch1] = useReducer(reducer, 0);
@@ -132,7 +133,7 @@ describe('useReducer Hook', () => {
     it('should not update if state unchanged (Object.is)', () => {
       type Action = { type: 'noop' } | { type: 'change' };
       const sameObj = { value: 42 };
-      const reducer = (state: typeof sameObj, action: Action) => {
+      const reducer = (state: typeof sameObj, action: Action): { value: number } => {
         if (action.type === 'noop') {
           return state; // Return same reference
         }
@@ -157,7 +158,7 @@ describe('useReducer Hook', () => {
 
     it('should handle multiple dispatches before re-render', () => {
       type Action = { type: 'add'; value: number };
-      const reducer = (state: number, action: Action) => state + action.value;
+      const reducer = (state: number, action: Action): number => state + action.value;
 
       const [, dispatch] = useReducer(reducer, 0);
       const hook = instance.hooks[0] as ReducerHook<number, Action>;
@@ -176,7 +177,7 @@ describe('useReducer Hook', () => {
 
     it('should maintain stable dispatch function reference', () => {
       type Action = { type: 'increment' };
-      const reducer = (state: number, _action: Action) => state + 1;
+      const reducer = (state: number, _action: Action): number => state + 1;
 
       // First render
       const [, dispatch1] = useReducer(reducer, 0);
@@ -246,7 +247,7 @@ describe('useReducer Hook', () => {
         };
       }
 
-      const reducer = (state: string[], action: Action) => [...state, `${action.payload.id}:${action.payload.data}`];
+      const reducer = (state: string[], action: Action): string[] => [...state, `${action.payload.id}:${action.payload.data}`];
 
       const [, dispatch] = useReducer(reducer, []);
       const hook = instance.hooks[0] as ReducerHook<string[], Action>;
@@ -275,7 +276,7 @@ describe('useReducer Hook', () => {
 
     it('should handle multiple reducer hooks in same component', () => {
       type CounterAction = { type: 'increment' } | { type: 'decrement' };
-      const counterReducer = (state: number, action: CounterAction) => {
+      const counterReducer = (state: number, action: CounterAction): number => {
         switch (action.type) {
           case 'increment': return state + 1;
           case 'decrement': return state - 1;
@@ -284,7 +285,7 @@ describe('useReducer Hook', () => {
       };
 
       type ToggleAction = { type: 'toggle' };
-      const toggleReducer = (state: boolean, _action: ToggleAction) => !state;
+      const toggleReducer = (state: boolean, _action: ToggleAction): boolean => !state;
 
       // First reducer
       const [count, dispatchCount] = useReducer(counterReducer, 0);
@@ -311,7 +312,7 @@ describe('useReducer Hook', () => {
   describe('State Persistence', () => {
     it('should survive form close and re-open', () => {
       type Action = { type: 'increment' };
-      const reducer = (state: number, _action: Action) => state + 1;
+      const reducer = (state: number, _action: Action): number => state + 1;
 
       // Initial render
       const [, dispatch] = useReducer(reducer, 0);
@@ -329,7 +330,7 @@ describe('useReducer Hook', () => {
 
     it('should maintain independent state for different instances', () => {
       type Action = { type: 'add'; value: number };
-      const reducer = (state: number, action: Action) => state + action.value;
+      const reducer = (state: number, action: Action): number => state + action.value;
 
       // First instance
       const [, dispatch1] = useReducer(reducer, 0);
@@ -370,7 +371,7 @@ describe('useReducer Hook', () => {
       fiberRegistry.popInstance();
 
       type Action = { type: 'increment' };
-      const reducer = (state: number, _action: Action) => state + 1;
+      const reducer = (state: number, _action: Action): number => state + 1;
 
       expect(() => {
         useReducer(reducer, 0);
@@ -379,7 +380,7 @@ describe('useReducer Hook', () => {
 
     it('should throw error on hook type mismatch', () => {
       type Action = { type: 'increment' };
-      const reducer = (state: number, _action: Action) => state + 1;
+      const reducer = (state: number, _action: Action): number => state + 1;
 
       // First render: useReducer
       useReducer(reducer, 0);
@@ -398,7 +399,7 @@ describe('useReducer Hook', () => {
 
     it('should only call lazy init once on mount', () => {
       type Action = { type: 'increment' };
-      const reducer = (state: number, _action: Action) => state + 1;
+      const reducer = (state: number, _action: Action): number => state + 1;
       const init = vi.fn((value: number) => value * 2);
 
       // First render

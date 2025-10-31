@@ -1,4 +1,5 @@
-import { StateHook, Hook, ComponentInstance } from './types';
+import { StateHook, Hook } from './types';
+import { ComponentInstance } from '../core/types';
 import { fiberRegistry } from '../core/fiber';
 
 /**
@@ -61,8 +62,6 @@ export function useState<T>(initialValue: T | (() => T)): [T, (nextValue: T | ((
 
         stateHook.value = newValue;
         instance.dirty = true;
-
-        // Note: Forms only re-render on button press, so state changes alone don't trigger updates
       },
     }; // Controlled cast
     instance.hooks[hookIndex] = stateHook as Hook;

@@ -1,22 +1,19 @@
 import type { Player } from '@minecraft/server';
-import type { FunctionComponent, JSX } from '../jsx';
-import { ActionFormData } from '@minecraft/server-ui';
-import { buildTree, cleanupComponentTree } from './render';
-import type { RenderOptions, SerializationContext } from './types';
-import { startInputLock } from '../util';
 import { system } from '@minecraft/server';
-import { fiberRegistry } from './fiber';
+import { ActionFormData, uiManager } from '@minecraft/server-ui';
 import { executeEffects } from '../hooks';
 import type { StateHook } from '../hooks/types';
-import { uiManager } from '@minecraft/server-ui';
-import { serialize, PROTOCOL_HEADER } from './serializer';
+import type { FunctionComponent, JSX } from '../jsx';
+import { startInputLock } from '../util';
+import { fiberRegistry } from './fiber';
+import { buildTree, cleanupComponentTree } from './render';
+import { clearRuntimeForPlayer, getRuntimeForPlayer, setRuntimeForPlayer } from './runtimeStore';
 import { DefaultScheduler } from './scheduler';
-import { setRuntimeForPlayer, clearRuntimeForPlayer, getRuntimeForPlayer } from './runtimeStore';
+import { PROTOCOL_HEADER, serialize } from './serializer';
 import type {
-  RuntimeHandle,
+  RenderCondition, RenderOptions, RuntimeHandle,
   RuntimeOptions,
-  Scheduler,
-  RenderCondition
+  Scheduler, SerializationContext
 } from './types';
 
 /**
@@ -147,7 +144,7 @@ export class Runtime implements RuntimeHandle {
 export async function render(
   player: Player,
   root: JSX.Element | FunctionComponent,
-  options?: RenderOptions,
+  options: RenderOptions = { awaitStateResolution: false },
 ): Promise<void> {
   // Convert function component to JSX element if needed
   const rootElement: JSX.Element = typeof root === 'function' ? { type: root, props: {} } : root;
@@ -156,23 +153,97 @@ export async function render(
   startInputLock(player);
 
   // Build complete tree (instances created, hooks initialized)
-  const { tree: element, instances: createdInstances } = buildTree(rootElement, player);
+  let { tree: element, instances: createdInstances } = buildTree(rootElement, player);
 
   // Suspension (fallback) if requested
-  if (options?.awaitStateResolution && options?.fallback) {
-    const timeout = options.awaitTimeout ?? 10000;
-    await handleSuspensionInternal(player, options.fallback, createdInstances, timeout);
+  if (options.awaitStateResolution) {
+    await handleSuspensionInternal(player, options.fallback, createdInstances, options.awaitTimeout ?? 1000);
+
+    // Rebuild the main tree AFTER suspension completes to capture any state updated by effects
+    // during the wait period. Instances will be reused via fiberRegistry and defaults re-applied.
+    ({ tree: element, instances: createdInstances } = buildTree(rootElement, player));
+  } else {
+    ({ tree: element, instances: createdInstances } = buildTree(rootElement, player));
   }
 
+  await presentCycle(
+    player,
+    element,
+    createdInstances,
+    rootElement,
+    options,
+    // After initial render, any further updates should go through rerender()
+    (p, r, o) => rerender(p, r, o),
+    {
+      // Initial render: consider suspense-triggered close as a reason to re-render
+      shouldRerenderOnCancel(instances) {
+        for (const id of instances) {
+          const inst = fiberRegistry.getInstance(id);
+          if (inst?.shouldClose === false) return true;
+        }
+
+        return false;
+      },
+    },
+  );
+}
+
+/**
+ * Re-render function that reuses existing component instances and skips suspense/fallback.
+ * This is called after the initial render() when the UI needs to update.
+ */
+async function rerender(
+  player: Player,
+  root: JSX.Element | FunctionComponent,
+  options?: RenderOptions,
+): Promise<void> {
+  const rootElement: JSX.Element = typeof root === 'function' ? { type: root, props: {} } : root;
+
+  // IMPORTANT: Do NOT start input lock again and do NOT run suspension/fallback here.
+
+  // Build the tree again; instances are reused via fiberRegistry.getOrCreateInstance
+  const { tree: element, instances: createdInstances } = buildTree(rootElement, player);
+
+  await presentCycle(
+    player,
+    element,
+    createdInstances,
+    rootElement,
+    options,
+    (p, r, o) => rerender(p, r, o),
+    {
+      // Rerender: do not force re-render on cancel unless runtime conditions request it
+      shouldRerenderOnCancel() { return false; },
+    },
+  );
+}
+
+type ReinvokeFn = (player: Player, root: JSX.Element | FunctionComponent, options?: RenderOptions) => Promise<void>;
+
+interface CancelStrategy { shouldRerenderOnCancel: (instances: Set<string>) => boolean }
+
+/**
+ * Shared present cycle: serialize tree, start effect loop, show form, handle response.
+ * Parameterized by cancel strategy and reinvoke function for subsequent updates.
+ */
+async function presentCycle(
+  player: Player,
+  element: JSX.Element,
+  createdInstances: Set<string>,
+  rootElement: JSX.Element,
+  options: RenderOptions | undefined,
+  reinvoke: ReinvokeFn,
+  strategy: CancelStrategy,
+): Promise<void> {
   // Prepare serialization context for button callbacks
   const serializationContext: SerializationContext = { buttonCallbacks: new Map(), buttonIndex: 0 };
 
-  // Snapshot and show (inline renderer)
+  // Snapshot and show
   const form = new ActionFormData();
   form.title(PROTOCOL_HEADER);
   serialize(element, form, serializationContext);
 
-  // Start background effect loop
+  // Background effects loop for dirty instances
   const intervalId = system.runInterval(() => {
     for (const id of createdInstances) {
       const instance = fiberRegistry.getInstance(id);
@@ -183,24 +254,14 @@ export async function render(
     }
   }, 1);
 
-  // Display form and handle response
   await form.show(player).then(response => {
-    // Stop background effects
     system.clearRun(intervalId);
-    // Instances no longer track effect loop ids; runtime controls scheduling centrally
 
     if (response.canceled) {
-      // 1) Suspense-triggered close should re-render
-      let shouldRerender = false;
-      for (const id of createdInstances) {
-        const instance = fiberRegistry.getInstance(id);
-        if (instance?.isProgrammaticClose === false) {
-          shouldRerender = true;
-          break;
-        }
-      }
+      // Strategy-specific check (e.g., initial render may force re-render after suspense close)
+      let shouldRerender = strategy.shouldRerenderOnCancel(createdInstances);
 
-      // 2) Consult runtime conditions/pending triggers
+      // Consult runtime conditions/pending triggers
       if (!shouldRerender) {
         const runtime = getRuntimeForPlayer(player.name);
         const runtimeWantsRender = Boolean(runtime?.consumePending?.() || runtime?.evaluateConditionsNow?.());
@@ -208,9 +269,7 @@ export async function render(
       }
 
       if (shouldRerender) {
-        system.run(() => {
-          void render(player, rootElement, options);
-        });
+        system.run(() => { void reinvoke(player, rootElement, options); });
       } else {
         cleanupComponentTree(player, createdInstances);
       }
@@ -218,17 +277,15 @@ export async function render(
       return;
     }
 
-    // Button pressed
     if (response.selection !== undefined) {
       const callback = serializationContext.buttonCallbacks.get(response.selection);
       if (callback) {
         Promise.resolve(callback())
           .then(() => {
-            // If programmatic close was requested, cleanup; else re-render
             let shouldCleanup = false;
             for (const id of createdInstances) {
               const instance = fiberRegistry.getInstance(id);
-              if (instance?.isProgrammaticClose === true) {
+              if (instance?.shouldClose === true) {
                 shouldCleanup = true;
                 break;
               }
@@ -237,16 +294,11 @@ export async function render(
             if (shouldCleanup) {
               cleanupComponentTree(player, createdInstances);
             } else {
-              system.run(() => {
-                void render(player, rootElement, options);
-              });
+              system.run(() => { void reinvoke(player, rootElement, options); });
             }
           })
           .catch(() => {
-            // On error, still re-render to keep flow moving
-            system.run(() => {
-              void render(player, rootElement, options);
-            });
+            system.run(() => { void reinvoke(player, rootElement, options); });
           });
       }
     }
@@ -316,24 +368,29 @@ async function waitForStateResolutionInternal(
  */
 async function handleSuspensionInternal(
   player: Player,
-  fallbackComponent: JSX.Element | FunctionComponent,
+  fallbackComponent: JSX.Element | FunctionComponent | undefined,
   mainInstanceIds: Set<string>,
   timeout: number,
 ): Promise<void> {
   // Normalize fallback to JSX element
-  const fallbackElement: JSX.Element = typeof fallbackComponent === 'function'
+  const fallbackElement: JSX.Element | undefined = typeof fallbackComponent === 'function'
     ? { type: fallbackComponent, props: {} }
     : fallbackComponent;
 
-  // Build fallback tree
-  const { tree: fallbackTree, instances: fallbackInstances } = buildTree(fallbackElement, player);
+  let builtTree: { tree: JSX.Element; instances: Set<string> } | undefined;
 
-  // Show fallback UI
-  const ctx: SerializationContext = { buttonCallbacks: new Map(), buttonIndex: 0 };
-  const fallbackForm = new ActionFormData();
-  fallbackForm.title(PROTOCOL_HEADER);
-  serialize(fallbackTree, fallbackForm, ctx);
-  void fallbackForm.show(player);
+  if (fallbackElement) {
+    // Build fallback tree
+    builtTree = buildTree(fallbackElement, player);
+
+    // Show fallback UI
+    const ctx: SerializationContext = { buttonCallbacks: new Map(), buttonIndex: 0 };
+    const fallbackForm = new ActionFormData();
+    fallbackForm.title(PROTOCOL_HEADER);
+    serialize(builtTree.tree, fallbackForm, ctx);
+
+    void fallbackForm.show(player);
+  }
 
   // Execute main component effects immediately
   for (const id of mainInstanceIds) {
@@ -362,20 +419,15 @@ async function handleSuspensionInternal(
   system.clearRun(mainIntervalId);
   uiManager.closeAllForms(player);
 
-  // Wait a tick for form to close
-  await new Promise<void>(resolve => system.run(resolve));
+  if (fallbackElement && builtTree) {
+    // Cleanup fallback instances
+    for (const id of builtTree.instances) {
+      const instance = fiberRegistry.getInstance(id);
 
-  // Cleanup fallback instances
-  for (const id of fallbackInstances) {
-    const instance = fiberRegistry.getInstance(id);
-    if (instance) {
-      executeEffects(instance, true);
-      fiberRegistry.deleteInstance(id);
+      if (instance) {
+        executeEffects(instance, true);
+        fiberRegistry.deleteInstance(id);
+      }
     }
   }
-
-  // Wait a tick before showing main UI
-  await new Promise<void>(resolve => system.run(resolve));
 }
-
-export type { RuntimeOptions } from './types';

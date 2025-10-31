@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { useExit } from '../useExit';
 import { fiberRegistry } from '../../core/fiber';
-import { ComponentInstance } from '../types';
+import { ComponentInstance } from '@bedrock-core/ui/core/types';
 import { Fragment } from '../../components/Fragment';
 import { world } from '@minecraft/server';
 
@@ -37,11 +37,11 @@ describe('useExit Hook', () => {
     it('should mark instance as closing on exit', () => {
       const exit = useExit();
 
-      expect(instance.isProgrammaticClose).toBeUndefined();
+      expect(instance.shouldClose).toBeUndefined();
 
       exit();
 
-      expect(instance.isProgrammaticClose).toBe(true);
+      expect(instance.shouldClose).toBe(true);
     });
 
     it('should prevent re-renders when closing', () => {
@@ -54,7 +54,7 @@ describe('useExit Hook', () => {
       exit();
 
       // isProgrammaticClose is set, which should prevent re-renders in render logic
-      expect(instance.isProgrammaticClose).toBe(true);
+      expect(instance.shouldClose).toBe(true);
       expect(instance.dirty).toBe(true); // Still dirty, but won't re-render
     });
 
@@ -75,7 +75,7 @@ describe('useExit Hook', () => {
 
       // The current implementation just sets isProgrammaticClose
       // Cleanup would be handled by the render system when it detects this flag
-      expect(instance.isProgrammaticClose).toBe(true);
+      expect(instance.shouldClose).toBe(true);
     });
 
     it('should delete instance from registry on exit', () => {
@@ -84,11 +84,11 @@ describe('useExit Hook', () => {
       // The current implementation sets isProgrammaticClose
       // The actual deletion would be handled by the render system
       // when it detects this flag on the next render cycle
-      expect(instance.isProgrammaticClose).toBeUndefined();
+      expect(instance.shouldClose).toBeUndefined();
 
       exit();
 
-      expect(instance.isProgrammaticClose).toBe(true);
+      expect(instance.shouldClose).toBe(true);
       // Instance deletion would happen in the render system's cleanup phase
     });
   });
@@ -114,7 +114,7 @@ describe('useExit Hook', () => {
 
       // All should work correctly
       exit1();
-      expect(instance.isProgrammaticClose).toBe(true);
+      expect(instance.shouldClose).toBe(true);
     });
 
     it('should handle multiple exit calls safely', () => {
@@ -122,24 +122,24 @@ describe('useExit Hook', () => {
 
       // First call
       exit();
-      expect(instance.isProgrammaticClose).toBe(true);
+      expect(instance.shouldClose).toBe(true);
 
       // Second call should be idempotent (no error)
       expect(() => exit()).not.toThrow();
-      expect(instance.isProgrammaticClose).toBe(true);
+      expect(instance.shouldClose).toBe(true);
     });
 
     it('should work when bound to button onClick', () => {
       const exit = useExit();
 
       // Simulate binding to button handler
-      const handleClick = () => {
+      const handleClick = (): void => {
         exit();
       };
 
       // Should work without errors
       expect(() => handleClick()).not.toThrow();
-      expect(instance.isProgrammaticClose).toBe(true);
+      expect(instance.shouldClose).toBe(true);
     });
   });
 
@@ -169,7 +169,7 @@ describe('useExit Hook', () => {
 
       // Current implementation sets isProgrammaticClose
       // Cleanup order would be enforced by the render system
-      expect(instance.isProgrammaticClose).toBe(true);
+      expect(instance.shouldClose).toBe(true);
     });
 
     it('should run all registered effect cleanups', () => {
@@ -207,7 +207,7 @@ describe('useExit Hook', () => {
 
       // Current implementation marks for close
       // Actual cleanup execution would be handled by the render system
-      expect(instance.isProgrammaticClose).toBe(true);
+      expect(instance.shouldClose).toBe(true);
     });
   });
 

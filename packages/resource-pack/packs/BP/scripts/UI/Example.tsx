@@ -7,7 +7,7 @@ import {
   ExitPanel,
   GridLayoutPanel,
   InfoPanel,
-  RefTimer,
+  MetadataDisplay,
   ResourcesPanel,
   SettingsController,
   SettingsDisplay,
@@ -95,7 +95,7 @@ export function Example(): JSX.Element {
         <ThemeDisplay />
         <SettingsDisplay />
         <TodoList />
-        <RefTimer />
+        <MetadataDisplay />
 
         {/* Row 2: Effects and Controllers */}
         <ThemeController onThemeChange={setTheme} />

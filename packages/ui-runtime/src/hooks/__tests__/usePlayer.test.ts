@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { usePlayer } from '../usePlayer';
 import { fiberRegistry } from '../../core/fiber';
-import { ComponentInstance } from '../types';
+import { ComponentInstance } from '@bedrock-core/ui/core/types';
 import { Fragment } from '../../components/Fragment';
 import { world } from '@minecraft/server';
 
