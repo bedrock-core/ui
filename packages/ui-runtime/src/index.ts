@@ -21,7 +21,6 @@ export {
   usePlayer,
   useEvent,
   useExit,
-  useSuspendedState,
   // Protocol constants
   PROTOCOL_HEADER,
   VERSION,
@@ -55,7 +54,6 @@ export type {
   ReducerHook,
   ComponentInstance,
   EventSignal,
-  SuspendedStateMarker,
   // Types
   CoreUIFormData,
   ReservedBytes,

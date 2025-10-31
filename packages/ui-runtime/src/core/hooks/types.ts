@@ -7,6 +7,7 @@ import { FunctionComponent, JSX } from '../../jsx';
 export interface StateHook<T = unknown> {
   readonly type: 'state';
   value: T;
+  initialValue: T;
   setValue: (nextValue: T | ((prevValue: T) => T)) => void;
 }
 
@@ -76,10 +77,18 @@ export interface ComponentInstance {
   mounted: boolean;
   dirty: boolean;
   isProgrammaticClose?: boolean;
-  hasSuspendedState?: boolean;
-  onSuspendedStateInitialize?: () => void;
-  suspensionState?: { isSuspended: boolean; hasChecked: boolean };
+  
+  /** Callback for when any state changes - used by Suspense to monitor state resolution */
+  onStateChange?: () => void;
+  
+  /** Suspense state tracking */
+  suspensionState?: {
+    isSuspended: boolean;
+    hasResolved: boolean;
+    trackedHookIndices: number[];
+    timeoutId?: number;
+  };
 
-  /** Track which useSuspendedState hooks have already fired their callback (by hook index) */
-  suspendedStateCallbacksFired?: Set<number>;
+  /** System interval ID for background effect loop - runs effects when state changes */
+  effectLoopId?: number;
 }

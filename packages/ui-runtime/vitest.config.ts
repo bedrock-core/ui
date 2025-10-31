@@ -1,9 +1,5 @@
+import path from 'path';
 import { defineConfig } from 'vitest/config';
-import { fileURLToPath } from 'url';
-import { resolve, dirname } from 'path';
-
-const rootDir = dirname(fileURLToPath(new URL('./package.json', import.meta.url)));
-const r = (p: string) => resolve(rootDir, p);
 
 export default defineConfig({
   test: {
@@ -12,6 +8,8 @@ export default defineConfig({
     alias: {
       '@minecraft/server': new URL('./src/__mocks__/@minecraft/server.ts', import.meta.url).pathname,
       '@minecraft/server-ui': new URL('./src/__mocks__/@minecraft/server-ui.ts', import.meta.url).pathname,
+      '@bedrock-core/ui/jsx-runtime': path.resolve(__dirname, './src/jsx/jsx-runtime.ts'),
+      '@bedrock-core/ui/jsx-dev-runtime': path.resolve(__dirname, './src/jsx/jsx-dev-runtime.ts'),
     },
   },
 });

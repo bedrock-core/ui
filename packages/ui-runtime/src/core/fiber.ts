@@ -131,6 +131,8 @@ class FiberRegistry {
     const stack = this._contextStack.get(context as Context<unknown>);
 
     if (stack && stack.length > 0) {
+      stack.pop();
+      
       if (stack.length === 0) {
         this._contextStack.delete(context as Context<unknown>);
       }

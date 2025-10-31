@@ -5,29 +5,141 @@ import { startInputLock, stopInputLock } from '../util';
 import { isContext } from './context';
 import { fiberRegistry } from './fiber';
 import { executeEffects } from './hooks';
+import { ComponentInstance } from './hooks/types';
 import { PROTOCOL_HEADER, serialize } from './serializer';
 import { SerializationContext } from './types';
 
 /**
- * Phase 1: Expand function components and resolve context providers in depth-first order
- * This ensures context is available when function components that use useContext() are called
+ * Context passed through tree traversal during rendering phase.
+ *
+ * This is part of the TWO-PHASE ARCHITECTURE:
+ * Phase 1 (Rendering): Build complete tree, create all instances, initialize hooks
+ * Phase 2 (Logic): Background effects run while form is displayed
+ */
+interface TraversalContext {
+  player: Player;
+  parentPath: string[]; // Component path from root: ['Example', 'Counter']
+  createdInstances: Set<string>; // Track all instances created during this render
+}
+
+/**
+ * Generate unique hierarchical ID for component instance.
+ *
+ * IDs follow the format: "playerName:path/to/Component" or "playerName:path/to/Component:key"
+ * This ensures each component node in the tree has a unique, stable instance.
+ *
+ * @param player - Player rendering the component
+ * @param component - Component function
+ * @param key - Optional key prop from JSX (for list items)
+ * @param parentPath - Path from root to parent component
+ * @returns Unique component ID
+ *
+ * @example
+ * generateComponentId(player, Example, undefined, [])
+ *   → "Steve:Example"
+ *
+ * generateComponentId(player, Counter, undefined, ['Example'])
+ *   → "Steve:Example/Counter"
+ *
+ * generateComponentId(player, TodoItem, 'todo-1', ['Example', 'TodoList'])
+ *   → "Steve:Example/TodoList/TodoItem:todo-1"
+ */
+function generateComponentId(
+  player: Player,
+  component: FunctionComponent,
+  key: string | undefined,
+  parentPath: string[],
+): string {
+  const componentName = component.name || 'anonymous';
+  const pathSegment = key ? `${componentName}:${key}` : componentName;
+  const fullPath = [...parentPath, pathSegment].join('/');
+
+  return `${player.name}:${fullPath}`;
+}
+
+/**
+ * Start background effect loop for a component instance.
+ *
+ * The loop polls the dirty flag and re-runs effects when state changes occur.
+ * This allows effects to respond to state changes (e.g., cleanup intervals)
+ * even though the form UI is a snapshot and doesn't update.
+ *
+ * Architecture Note: Forms are immutable snapshots. When state changes in
+ * background effects, the visible UI does not update until the next render
+ * (button press). This means users may see stale UI (e.g., "Auto: ON" after
+ * an interval stops). This is an accepted limitation for now.
+ *
+ * @param componentId - Component instance ID to start loop for (null-safe)
+ */
+/**
+ * Phase 1: Expand function components and resolve context providers in depth-first order.
+ * This ensures context is available when function components that use useContext() are called.
+ *
+ * CRITICAL: Each function component now gets its own instance, hooks, and lifecycle.
+ * This is the core fix for per-component instance management.
  *
  * Order of operations:
- * 1. If function component → call it, recursively process result
+ * 1. If function component → CREATE INSTANCE, push to stack, call it, pop from stack
  * 2. If context provider → push context, process children, pop context
  * 3. For regular elements → recursively process children
  *
  * @param element - Element that may have function components or context providers
+ * @param context - Traversal context with player, parent path, and instance tracking
  * @returns Element with all function components expanded and contexts resolved
  */
-function expandAndResolveContexts(element: JSX.Element): JSX.Element {
-  // Step 1: If type is a function component, call it first
+function expandAndResolveContexts(element: JSX.Element, context: TraversalContext): JSX.Element {
+  // Step 1: Handle function components - CREATE INSTANCE FOR EACH
   if (typeof element.type === 'function') {
     const componentFn = element.type;
-    const renderedElement = componentFn(element.props);
 
-    // Recursively process the rendered result
-    return expandAndResolveContexts(renderedElement);
+    // Generate unique ID for this component node
+    const key = typeof element.props.key === 'string' ? element.props.key : undefined;
+    const componentId = generateComponentId(
+      context.player,
+      componentFn,
+      key,
+      context.parentPath,
+    );
+
+    // Get or create instance for this component
+    const instance = fiberRegistry.getOrCreateInstance(
+      componentId,
+      context.player,
+      componentFn,
+      element.props,
+    );
+
+    // Track instance for cleanup
+    context.createdInstances.add(componentId);
+
+    // Push instance onto fiber stack (makes it available to hooks)
+    fiberRegistry.pushInstance(instance);
+
+    try {
+      // Call component function (hooks can now access correct instance)
+      const renderedElement = componentFn(element.props);
+
+      // Execute effects after component mounts/updates
+      executeEffects(instance);
+
+      // Mark as mounted after first render
+      if (!instance.mounted) {
+        instance.mounted = true;
+      }
+
+      // Create child context with updated path
+      const componentName = componentFn.name || 'anonymous';
+      const childContext: TraversalContext = {
+        ...context,
+        parentPath: [...context.parentPath, componentName],
+      };
+
+      // Recursively process the rendered result with child context
+      return expandAndResolveContexts(renderedElement, childContext);
+    } finally {
+      // Always pop instance when done
+      fiberRegistry.popInstance();
+    }
   }
 
   // Step 2: Handle context provider - push context BEFORE processing children
@@ -57,7 +169,7 @@ function expandAndResolveContexts(element: JSX.Element): JSX.Element {
               return null;
             }
 
-            return expandAndResolveContexts(child);
+            return expandAndResolveContexts(child, context);
           })
           .filter((child): child is JSX.Element => child !== null);
 
@@ -66,7 +178,7 @@ function expandAndResolveContexts(element: JSX.Element): JSX.Element {
           props: { children: resolvedChildren },
         };
       } else if (contextChildren && typeof contextChildren === 'object' && 'type' in contextChildren) {
-        processedChildren = expandAndResolveContexts(contextChildren);
+        processedChildren = expandAndResolveContexts(contextChildren, context);
       } else {
         // No valid children - return empty fragment
         processedChildren = {
@@ -95,7 +207,7 @@ function expandAndResolveContexts(element: JSX.Element): JSX.Element {
             return null;
           }
 
-          return expandAndResolveContexts(child);
+          return expandAndResolveContexts(child, context);
         })
         .filter((child): child is JSX.Element => child !== null);
 
@@ -114,7 +226,7 @@ function expandAndResolveContexts(element: JSX.Element): JSX.Element {
         type: element.type,
         props: {
           ...element.props,
-          children: expandAndResolveContexts(children),
+          children: expandAndResolveContexts(children, context),
         },
       };
     }
@@ -128,9 +240,10 @@ function expandAndResolveContexts(element: JSX.Element): JSX.Element {
  * Handles arrays, nulls, and ensures all children are proper Elements
  *
  * @param element - Element with possibly messy children (arrays, nulls, mixed types)
+ * @param context - Traversal context (not used here but kept for consistency)
  * @returns Element with clean children structure
  */
-function normalizeChildren(element: JSX.Element): JSX.Element {
+function normalizeChildren(element: JSX.Element, context: TraversalContext): JSX.Element {
   if (!element.props.children) {
     return element;
   }
@@ -147,7 +260,7 @@ function normalizeChildren(element: JSX.Element): JSX.Element {
         }
 
         // Recursively normalize child's children
-        return normalizeChildren(child);
+        return normalizeChildren(child, context);
       })
       .filter((child): child is JSX.Element => child !== null);
 
@@ -166,7 +279,7 @@ function normalizeChildren(element: JSX.Element): JSX.Element {
       type: element.type,
       props: {
         ...element.props,
-        children: normalizeChildren(children),
+        children: normalizeChildren(children, context),
       },
     };
   }
@@ -187,249 +300,295 @@ function normalizeChildren(element: JSX.Element): JSX.Element {
 
 /**
  * Build the complete JSX element tree by running all transformation phases.
- * This follows a pipeline pattern where each phase transforms the tree:
+ * This is the entry point for the RENDERING PHASE where all components are
+ * called, instances created, and hooks initialized.
  *
- * Phase 1: expandAndResolveContexts - Call function components AND resolve context providers in depth-first order
- *          This ensures context is available when function components use useContext()
- * Phase 2: normalizeChildren - Clean up children structure (arrays, nulls)
+ * TWO-PHASE ARCHITECTURE:
+ * Phase 1 (Rendering - this function): Build tree, create instances, initialize hooks
+ * Phase 2 (Logic - background): Effects run while form is displayed
  *
- * @param element - JSX element to build
- * @returns Fully processed JSX element tree ready for serialization
+ * @param element - Root JSX element to build
+ * @param player - Player rendering the component
+ * @returns Fully processed JSX element tree and list of created instances
  */
-function buildTree(element: JSX.Element): JSX.Element {
-  // Phase 1: Expand function components and resolve contexts in correct order
-  let result = expandAndResolveContexts(element);
+function buildTree(
+  element: JSX.Element,
+  player: Player,
+): { tree: JSX.Element; instances: Set<string> } {
+  // Initialize traversal context
+  const context: TraversalContext = {
+    player,
+    parentPath: [],
+    createdInstances: new Set(),
+  };
+
+  // Phase 1: Expand function components and resolve contexts
+  // This creates instances for ALL components in the tree
+  let result = expandAndResolveContexts(element, context);
 
   // Phase 2: Normalize children structure
-  result = normalizeChildren(result);
+  result = normalizeChildren(result, context);
 
-  return result;
+  return {
+    tree: result,
+    instances: context.createdInstances,
+  };
 }
 
 /**
- * Render a stateful component (function component with hooks support)
+ * Clean up entire component tree (stop effects, delete instances).
  *
- * @param player - The player to show the UI to
- * @param component - Function component to render
- * @returns Processed element tree and component ID
+ * @param player - Player whose components are being cleaned up
+ * @param instanceIds - Set of all instance IDs to clean up
  */
-function renderStatefulComponent(
-  player: Player,
-  component: FunctionComponent,
-): { element: JSX.Element; componentId: string } {
-  const key = component.name || 'anonymous';
-  const playerId = player.name;
-  const componentId = `${playerId}:${key}`;
+function cleanupComponentTree(player: Player, instanceIds: Set<string>): void {
+  // Get all instances and sort by depth (deepest first for proper cleanup order)
+  const instances = Array.from(instanceIds)
+    .map(id => fiberRegistry.getInstance(id))
+    .filter((inst): inst is ComponentInstance => inst !== undefined)
+    .sort((a, b) => {
+      // Sort by path depth (more slashes = deeper)
+      const depthA = (a.id.match(/\//g) || []).length;
+      const depthB = (b.id.match(/\//g) || []).length;
 
-  // Get or create component instance
-  const instance = fiberRegistry.getOrCreateInstance(componentId, player, component, {});
+      return depthB - depthA; // Deepest first
+    });
 
-  // Start input lock on first render
-  if (!instance.mounted) {
-    startInputLock(player);
+  // Clean up each instance (children first, then parents)
+  for (const instance of instances) {
+    executeEffects(instance, true); // Run cleanup functions
+    fiberRegistry.deleteInstance(instance.id);
   }
 
-  // Reset transient close semantics at the beginning of each render
-  // so only the current interaction (ESC/useExit/Suspense) influences handling
-  // - undefined: default (e.g., ESC or user-closed form) → cleanup, no re-render
-  // - false: programmatic close that should trigger re-render (e.g., Suspense)
-  // - true: programmatic close that should NOT re-render (e.g., useExit)
-  instance.isProgrammaticClose = undefined;
+  stopInputLock(player);
+}
 
-  // Push instance onto fiber stack (makes it available to hooks)
-  fiberRegistry.pushInstance(instance);
+/**
+ * Start background effect loop for entire component tree.
+ * Checks all instances every tick for dirty flag and re-runs effects.
+ *
+ * This is part of the LOGIC PHASE that runs while form is displayed.
+ *
+ * @param instanceIds - Set of all instance IDs to monitor
+ */
+function startEffectLoopForTree(instanceIds: Set<string>): void {
+  // Use a single interval to check all instances
+  const intervalId = system.runInterval(() => {
+    for (const id of instanceIds) {
+      const instance = fiberRegistry.getInstance(id);
 
-  try {
-    // Call component function to get JSX tree
-    // With lazy JSX, child components are NOT called yet - just stored as references
-    const element = component(instance.props);
+      if (instance?.dirty) {
+        console.log(`[Effect Loop] Instance ${instance.id} is dirty, re-running effects`);
+        instance.dirty = false;
+        executeEffects(instance);
+      }
+    }
+  }, 1); // Check every tick
 
-    // Build complete tree with context resolution
-    // buildTree() will call child components at the right time (after context is set up)
-    const builtTree = buildTree(element);
+  // Store interval ID for cleanup (attach to first instance)
+  for (const id of instanceIds) {
+    const instance = fiberRegistry.getInstance(id);
 
-    // After tree is built, execute effects
-    executeEffects(instance);
+    if (instance) {
+      instance.effectLoopId = intervalId;
 
-    return { element: builtTree, componentId };
-  } finally {
-    // Pop instance from stack
-    fiberRegistry.popInstance();
+      break; // Only need to store once
+    }
   }
 }
 
 /**
- * Handle form cancellation (ESC key or programmatic close)
+ * Stop background effect loop for component tree.
+ *
+ * @param instanceIds - Set of all instance IDs
+ */
+function stopEffectLoopForTree(instanceIds: Set<string>): void {
+  // Find the stored interval ID
+  let intervalId: number | undefined;
+
+  for (const id of instanceIds) {
+    const instance = fiberRegistry.getInstance(id);
+
+    if (instance?.effectLoopId !== undefined) {
+      intervalId = instance.effectLoopId;
+
+      break;
+    }
+  }
+
+  if (intervalId !== undefined) {
+    console.log(`[Effect Loop] Stopping loop for tree`);
+    system.clearRun(intervalId);
+
+    // Clear interval ID from all instances
+    for (const id of instanceIds) {
+      const instance = fiberRegistry.getInstance(id);
+
+      if (instance) {
+        instance.effectLoopId = undefined;
+      }
+    }
+  }
+}
+
+/**
+ * Handle form cancellation (ESC key or programmatic close).
  *
  * @param player - The player who closed the form
  * @param component - The component being rendered
- * @param componentId - The component instance ID
+ * @param instanceIds - Set of all instance IDs in the tree
  */
 function handleFormCancellation(
   player: Player,
   component: JSX.Element | FunctionComponent,
-  componentId: string,
+  instanceIds: Set<string>,
 ): void {
-  const instance = fiberRegistry.getInstance(componentId);
+  // Check if any instance has Suspense close flag
+  let shouldRerender = false;
 
-  if (instance?.mounted) {
-    // isProgrammaticClose === false: Suspense close → re-render
-    // isProgrammaticClose === true: useExit close → cleanup
-    // isProgrammaticClose === undefined: ESC key or other close → cleanup
+  for (const id of instanceIds) {
+    const instance = fiberRegistry.getInstance(id);
 
-    if (instance.isProgrammaticClose === false) {
+    if (instance?.isProgrammaticClose === false) {
       // Suspense-triggered close: re-render
-      system.run((): void => {
-        render(player, component);
-      });
+      shouldRerender = true;
 
-      return;
-    } else if (instance.isProgrammaticClose === true) {
-      // useExit-triggered close: cleanup
-      cleanupComponent(player, componentId);
-
-      return;
+      break;
     }
   }
 
-  // Normal ESC key press or other close - cleanup, don't re-render
-  cleanupComponent(player, componentId);
-}
+  if (shouldRerender) {
+    system.run((): void => {
+      render(player, component);
+    });
 
-/**
- * Clean up a component instance (stop input lock, run cleanup effects, delete instance)
- *
- * @param player - The player whose component is being cleaned up
- * @param componentId - The component instance ID
- */
-function cleanupComponent(player: Player, componentId: string): void {
-  const instance = fiberRegistry.getInstance(componentId);
-
-  if (instance?.mounted) {
-    stopInputLock(player);
-    executeEffects(instance, true); // Run cleanup functions
-    fiberRegistry.deleteInstance(componentId);
+    return;
   }
+
+  // Normal ESC key press or useExit close - cleanup
+  cleanupComponentTree(player, instanceIds);
 }
 
 /**
- * Handle button press callback execution and re-rendering
+ * Handle button press callback execution and re-rendering.
  *
  * @param player - The player who pressed the button
  * @param component - The component being rendered
- * @param componentId - The component instance ID (null for stateless)
+ * @param instanceIds - Set of all instance IDs in the tree
  * @param callback - The button callback to execute
  */
 function handleButtonCallback(
   player: Player,
   component: JSX.Element | FunctionComponent,
-  componentId: string | null,
+  instanceIds: Set<string>,
   callback: () => void | Promise<void>,
 ): void {
-  // AWAIT the callback completion (may be async or sync)
-  // Wrap in Promise.resolve() to handle both sync and async callbacks uniformly
+  // Execute callback (may update state)
   Promise.resolve(callback())
     .then((): void => {
-      // Callback completed; now re-render with all accumulated state changes
-      reRenderAfterCallback(player, component, componentId);
+      // Check if programmatic close (like useExit) was triggered
+      let shouldCleanup = false;
+
+      for (const id of instanceIds) {
+        const instance = fiberRegistry.getInstance(id);
+
+        if (instance?.isProgrammaticClose === true) {
+          shouldCleanup = true;
+
+          break;
+        }
+      }
+
+      if (shouldCleanup) {
+        cleanupComponentTree(player, instanceIds);
+
+        return;
+      }
+
+      // Normal re-render after button press
+      system.run((): void => {
+        render(player, component);
+      });
     })
     .catch((_error: unknown): void => {
       // Still trigger re-render even on error
-      reRenderAfterCallback(player, component, componentId);
+      system.run((): void => {
+        render(player, component);
+      });
     });
 }
 
 /**
- * Re-render after button callback completes
- * Button press closes the form automatically, so we just re-render on next<in tick
+ * Render a JSX component to a player using the @bedrock-core/ui system.
  *
- * @param player - The player to re-render for
- * @param component - The component being rendered
- * @param componentId - The component instance ID (null for stateless)
- */
-function reRenderAfterCallback(
-  player: Player,
-  component: JSX.Element | FunctionComponent,
-  componentId: string | null,
-): void {
-  // Check if this is a programmatic close (like useExit) - if so, don't re-render
-  if (componentId) {
-    const instance = fiberRegistry.getInstance(componentId);
-
-    if (instance?.isProgrammaticClose) {
-      // Clean up the instance
-      cleanupComponent(player, componentId);
-
-      return;
-    }
-  }
-
-  // Normal re-render on next tick (form is already closed by game)
-  system.run((): void => {
-    render(player, component);
-  });
-}
-
-/**
- * Present a JSX component to a player using the @bedrock-core/ui system.
- * Manages component instances, state, and effects.
+ * This is the ENTRY POINT for the framework. When called:
+ * 1. RENDERING PHASE (synchronous): Build complete component tree, create all instances
+ * 2. Display static form snapshot to player
+ * 3. LOGIC PHASE (background): Keep hooks running until next re-render
  *
  * @param player - The player to show the UI to
  * @param component - JSX component function or element
  *
  * @examples
- * render(player, <Panel>...</Panel>);
- * render(player, <MyStatefulComponent />);
+ * render(player, Example);           // Component function
+ * render(player, <Example />);       // JSX element (equivalent)
+ * render(player, <Panel>...</Panel>); // Direct JSX
  */
 export async function render(
   player: Player,
   component: JSX.Element | FunctionComponent,
 ): Promise<void> {
-  // Determine if component is an element or a function
-  let element: JSX.Element;
-  let isStateful = false;
-  let componentId: string | null = null;
+  // Convert function component to JSX element if needed
+  let rootElement: JSX.Element;
 
   if (typeof component === 'function') {
-    // It's a component function - needs instance management
-    isStateful = true;
-    const result = renderStatefulComponent(player, component);
-    element = result.element;
-    componentId = result.componentId;
+    // Wrap function in JSX element so it gets processed like any other component
+    rootElement = { type: component, props: {} };
   } else {
-    // It's a direct JSX element - build the tree to handle any context providers
-    element = buildTree(component);
+    rootElement = component;
   }
 
-  const form = new ActionFormData();
+  // Start input lock to prevent multiple forms
+  startInputLock(player);
 
-  // Create serialization context to collect button callbacks
-  const context: SerializationContext = {
+  // RENDERING PHASE: Build complete tree, create all instances
+  const { tree: element, instances: createdInstances } = buildTree(rootElement, player);
+
+  // Create serialization context for button callbacks
+  const serializationContext: SerializationContext = {
     buttonCallbacks: new Map(),
     buttonIndex: 0,
   };
 
+  const form = new ActionFormData();
+
   form.title(PROTOCOL_HEADER);
 
-  // Tree has been built with context resolved, now serialize to form
-  serialize(element, form, context);
+  // Serialize tree to form (snapshot creation)
+  serialize(element, form, serializationContext);
 
+  // LOGIC PHASE: Start background effect loop for all components
+  // This allows effects to respond to state changes while form is displayed
+  startEffectLoopForTree(createdInstances);
+
+  // Display form and wait for user interaction
   form.show(player).then((response: ActionFormResponse): void => {
+    // Stop effect loops when form closes
+    stopEffectLoopForTree(createdInstances);
+
     if (response.canceled) {
-      // Form was closed (either by ESC or programmatically)
-      if (isStateful && componentId) {
-        handleFormCancellation(player, component, componentId);
-      }
+      // Form was closed (ESC or programmatically)
+      handleFormCancellation(player, component, createdInstances);
 
       return;
     }
 
     // Button pressed - execute callback and re-render
     if (response.selection !== undefined) {
-      const callback = context.buttonCallbacks.get(response.selection);
+      const callback = serializationContext.buttonCallbacks.get(response.selection);
 
       if (callback) {
-        handleButtonCallback(player, component, componentId, callback);
+        handleButtonCallback(player, component, createdInstances, callback);
       }
     }
   }).catch((error: FormRejectError): never => {

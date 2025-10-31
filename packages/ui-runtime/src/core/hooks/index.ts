@@ -7,8 +7,6 @@ export { useReducer } from './useReducer';
 export { usePlayer } from './usePlayer';
 export { useEvent } from './useEvent';
 export { useExit } from './useExit';
-export { useSuspendedState } from './useSuspendedState';
-export type { SuspendedStateMarker } from './useSuspendedState';
 
 export type {
   StateHook,
@@ -18,6 +16,6 @@ export type {
   ReducerHook,
   Hook,
   HookCall,
-  ComponentInstance
+  ComponentInstance,
 } from './types';
 export type { EventSignal } from './useEvent';

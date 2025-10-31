@@ -3,7 +3,7 @@ import json from "@eslint/json";
 import { defineConfig } from "eslint/config";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
-import { commonTsConfig } from "../../eslint.config.mjs";
+import { commonTsRules } from "../../eslint.config.mjs";
 import tseslint from "typescript-eslint";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -11,7 +11,13 @@ const __dirname = dirname(__filename);
 
 export default defineConfig([
   {
-    ...commonTsConfig,
+    files: ["**/*.ts", "**/*.tsx"],
+    ignores: ["**/*.d.ts"],
+    plugins: { 
+      "@stylistic": stylistic,
+      "@typescript-eslint": tseslint.plugin,
+      "@minecraft": minecraftLinting
+    },
 
     languageOptions: {
       parser: tseslint.parser,
@@ -23,17 +29,12 @@ export default defineConfig([
       },
     },
 
-    plugins: {
-      ...commonTsConfig.plugins,
-      "@minecraft": minecraftLinting
-    },
-
     rules: {
-      ...commonTsConfig.rules,
+      ...commonTsRules,
       "minecraft-linting/avoid-unnecessary-command": "error",
     }
   },
-  
+
   {
     ignores: [
       ".*/**",           // Any directory starting with dot (.yarn, .vscode, .regolith, etc.)

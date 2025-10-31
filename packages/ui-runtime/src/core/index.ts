@@ -48,8 +48,7 @@ export {
   useReducer,
   usePlayer,
   useEvent,
-  useExit,
-  useSuspendedState
+  useExit
 } from './hooks';
 
 export type {
@@ -61,8 +60,7 @@ export type {
   Hook,
   HookCall,
   ComponentInstance,
-  EventSignal,
-  SuspendedStateMarker
+  EventSignal
 } from './hooks';
 
 // Types

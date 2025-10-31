@@ -7,22 +7,7 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-export const commonTsConfig = {
-  files: ["**/*.ts", "**/*.tsx"],
-  ignores: ["**/*.d.ts"],
-  plugins: { "@stylistic": stylistic, "@typescript-eslint": tseslint.plugin },
-
-  languageOptions: {
-    parser: tseslint.parser,
-    ecmaVersion: "latest",
-    sourceType: "module",
-    parserOptions: {
-        project: ["tsconfig.json"],
-      tsconfigRootDir: __dirname,
-    },
-  },
-
-  rules: {
+export const commonTsRules = {
     "no-unused-expressions": "off",
     "@typescript-eslint/no-unused-expressions": "off",
     "@typescript-eslint/explicit-member-accessibility": ["error",
@@ -350,8 +335,7 @@ export const commonTsConfig = {
     "@stylistic/jsx-wrap-multilines": "error",
     "@stylistic/jsx-function-call-newline": ["error", "multiline"],
     "@stylistic/jsx-pascal-case": ["error", { "allowNamespace": true }]
-  },
-};
+  };
 
 export default defineConfig([
   {
@@ -363,5 +347,23 @@ export default defineConfig([
       "**/mocks/**"
     ],
   },
-  commonTsConfig,
+  {
+    files: ["**/*.ts", "**/*.tsx"],
+    ignores: ["**/*.d.ts"],
+    plugins: { "@stylistic": stylistic, "@typescript-eslint": tseslint.plugin },
+
+    languageOptions: {
+      parser: tseslint.parser,
+      ecmaVersion: "latest",
+      sourceType: "module",
+      parserOptions: {
+        project: ["tsconfig.json"],
+        tsconfigRootDir: __dirname,
+      },
+    },
+
+    rules: {
+      ...commonTsRules,
+    }
+  }
 ]);

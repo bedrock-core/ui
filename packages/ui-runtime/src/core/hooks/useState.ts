@@ -48,6 +48,7 @@ export function useState<T>(initialValue: T | (() => T)): [T, (nextValue: T | ((
     const stateHook: StateHook<T> = {
       type: 'state',
       value: initialValueResolved,
+      initialValue: initialValueResolved,
       setValue: (nextValue: T | ((prevValue: T) => T)): void => {
         const newValue: T = isNextValueFunction(nextValue)
           ? nextValue(stateHook.value)
@@ -60,6 +61,11 @@ export function useState<T>(initialValue: T | (() => T)): [T, (nextValue: T | ((
 
         stateHook.value = newValue;
         instance.dirty = true;
+
+        // Notify Suspense if callback is registered
+        if (instance.onStateChange) {
+          instance.onStateChange();
+        }
 
         // Note: Forms only re-render on button press, so state changes alone don't trigger updates
       },
