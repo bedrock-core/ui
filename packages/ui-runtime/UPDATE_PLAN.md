@@ -1,241 +1,257 @@
-# Custom Async JSX Runtime Design
+# 🧠 Fiber Dispatcher Design Plan
 
-This document describes how to design a **custom JSX runtime** that supports:
-- Multiple independent fiber trees (e.g., one per player or UI root)
-- Async execution and event handling
-- React-like hooks (`useState`, `useEffect`, `useEvent`)
-- Context-safe updates without relying on Node’s `AsyncLocalStorage`
+## Overview
 
----
-
-## 1. Core Concepts
-
-Your runtime needs to maintain **per-component state** even when asynchronous events fire at any time.  
-Each rendered UI (for example, one per player) will have its own **fiber tree**, and each component in that tree stores its own hook state.
-
-When async events occur, the runtime ensures that callbacks execute **inside the correct fiber context** — so each player's UI updates independently.
+This document describes an abstract architecture for a **hook and context management system** similar to React’s internals.  
+It explains how multiple fibers (units of work) can each have independent dispatchers and hook registries, all managed asynchronously from a global map — **without requiring explicit context passing** by the user.
 
 ---
 
-## 2. Context Management
+## 1. Core Concept
 
-We maintain a manually propagated execution context to emulate something like `AsyncLocalStorage`.
+The system provides **implicit context** to hook calls by maintaining a dynamically scoped reference to the **currently active fiber** and its **dispatcher**.
 
-<pre><code class="language-ts">
-interface RenderContext {
-  fiber: Fiber;
-}
+When executing a function (e.g., a component or task):
+- The system sets the “current fiber” globally.
+- All hook calls made during this time automatically attach to that fiber.
+- Once execution ends, the global state is restored.
 
-let currentContext: RenderContext | null = null;
-
-export function runWithContext&lt;T&gt;(ctx: RenderContext, fn: () =&gt; T): T {
-  const prev = currentContext;
-  currentContext = ctx;
-  try {
-    return fn();
-  } finally {
-    currentContext = prev;
-  }
-}
-
-export function getCurrentContext(): RenderContext {
-  if (!currentContext) throw new Error("No active render context");
-  return currentContext;
-}
-</code></pre>
-
-Every time you render a component or invoke a user callback, wrap it inside `runWithContext`.
+This enables hook functions to operate without explicit arguments while still accessing the correct state and context.
 
 ---
 
-## 3. The Fiber Structure
+## 2. Core Entities
 
-A **fiber** represents one instance of a component in the tree.
+### 🧩 Fiber
+A **fiber** represents one unit of work — a task, component, or async operation.
 
-<pre><code class="language-ts">
-interface Fiber {
-  id: string;
-  type: Function;       // component function
-  props: any;
-  hooks: any[];
-  hookIndex: number;
-  root: FiberRoot;      // backreference to owning root
-}
+Each fiber maintains:
+- A unique **identifier**
+- A list of **hook states** (values and metadata)
+- A **hook index** (tracking hook order)
+- A **dispatcher** defining the behavior of hooks
 
-interface FiberRoot {
-  id: string;           // e.g. player id
-  rootFiber: Fiber;
-}
-</code></pre>
+Fibers are self-contained and independent.
 
 ---
 
-## 4. Rendering
+### ⚙️ Dispatcher
+A **dispatcher** defines what each hook (e.g., `useState`, `useEffect`) *does* when called.
 
-Each UI root (per player) starts with its own fiber tree.
+Each dispatcher:
+- Is associated with exactly one fiber at a time
+- Knows how to access and manipulate that fiber’s hook state
+- Provides implementations like:
+  - `useState`
+  - `useContext`
+  - `useEffect`
+- Can vary by phase (initial mount, update, resume, etc.)
 
-<pre><code class="language-ts">
-const roots = new Map&lt;string, FiberRoot&gt;();
-
-export function render(element: any, playerId: string) {
-  const fiberRoot: FiberRoot = {
-    id: playerId,
-    rootFiber: createFiber(element),
-  };
-  roots.set(playerId, fiberRoot);
-  scheduleRender(fiberRoot);
-}
-
-function createFiber(element: any): Fiber {
-  return {
-    id: crypto.randomUUID(),
-    type: element.type,
-    props: element.props,
-    hooks: [],
-    hookIndex: 0,
-    root: null as any, // assigned later
-  };
-}
-
-async function scheduleRender(root: FiberRoot) {
-  await runWithContext({ fiber: root.rootFiber }, async () =&gt; {
-    root.rootFiber.hookIndex = 0;
-    await root.rootFiber.type(root.rootFiber.props);
-  });
-}
-</code></pre>
+Different fibers can have different dispatchers active concurrently.
 
 ---
 
-## 5. Hooks Implementation
+### 🌐 Global Context
+A pair of global pointers define the *active execution context*:
 
-### `useState`
+- `CurrentFiber` — which fiber is currently running  
+- `CurrentDispatcher` — the dispatcher to delegate hook calls to
 
-<pre><code class="language-ts">
-export function useState&lt;T&gt;(initial: T): [T, (v: T | ((p: T) =&gt; T)) =&gt; void] {
-  const { fiber } = getCurrentContext();
-  const i = fiber.hookIndex++;
-  if (!(i in fiber.hooks)) fiber.hooks[i] = initial;
+During execution, these are set before running a fiber’s function and reset afterward.
 
-  const setState = (value: T | ((prev: T) =&gt; T)) =&gt; {
-    fiber.hooks[i] = typeof value === "function"
-      ? (value as any)(fiber.hooks[i])
-      : value;
-    scheduleRender(fiber.root);
-  };
-
-  return [fiber.hooks[i], setState];
-}
-</code></pre>
+All hook functions reference these globals to determine their operational context.
 
 ---
 
-### `useEffect`
+## 3. Global Registry
 
-<pre><code class="language-ts">
-export function useEffect(effect: () =&gt; void | (() =&gt; void), deps: any[]) {
-  const { fiber } = getCurrentContext();
-  const i = fiber.hookIndex++;
-  const prevDeps = fiber.hooks[i]?.deps;
+A **global fiber registry** (e.g., a map keyed by fiber ID) tracks all active fibers.  
+Each entry includes the fiber’s state, dispatcher, and metadata.
 
-  const changed = !prevDeps || deps.some((d, j) =&gt; d !== prevDeps[j]);
-  if (changed) {
-    if (fiber.hooks[i]?.cleanup) fiber.hooks[i].cleanup();
-    const cleanup = effect();
-    fiber.hooks[i] = { deps, cleanup };
-  }
-}
-</code></pre>
+This registry enables:
+- Independent async execution
+- Resuming suspended fibers
+- Consistent lookup for debugging or introspection
 
 ---
 
-### `useEvent`
+## 4. Execution Model
 
-`useEvent` subscribes to an external async event source.  
-Each subscription is wrapped in the **fiber’s context**, ensuring isolated updates.
+### Step 1: Activation
+Before running a fiber’s function:
+1. Save the previous global context.
+2. Set `CurrentFiber` to the target fiber.
+3. Set `CurrentDispatcher` to the fiber’s dispatcher.
+4. Reset the fiber’s `hookIndex` to zero.
 
-<pre><code class="language-ts">
-export function useEvent&lt;T&gt;(
-  eventSource: { subscribe: (fn: (e: T) =&gt; void) =&gt; void; unsubscribe: (fn: (e: T) =&gt; void) =&gt; void },
-  handler: (event: T) =&gt; void
-) {
-  const { fiber } = getCurrentContext();
+### Step 2: Execution
+The user’s function runs inside this context.  
+Each hook call:
+- Reads the current dispatcher from global scope.
+- The dispatcher reads or initializes state from the fiber’s hook registry.
+- The fiber’s hook index increments to preserve deterministic ordering.
 
-  useEffect(() =&gt; {
-    const wrapped = (e: T) =&gt; runWithContext({ fiber }, () =&gt; handler(e));
-    eventSource.subscribe(wrapped);
-    return () =&gt; eventSource.unsubscribe(wrapped);
-  }, [eventSource, handler]);
-}
-</code></pre>
-
----
-
-## 6. Example: EventCounter Component
-
-<pre><code class="language-ts">
-export const EventCounter = () =&gt; {
-  const [eventCount, setEventCount] = useState(0);
-  const [lastEventId, setLastEventId] = useState("None");
-  const [lastMessage, setLastMessage] = useState("-");
-
-  useEvent(system.afterEvents.scriptEventReceive, event =&gt; {
-    setEventCount(prev =&gt; prev + 1);
-    setLastEventId(event.id);
-    setLastMessage(event.message);
-  });
-
-  useEffect(() =&gt; {
-    system.sendScriptEvent("bc-ui:test", "EventCounter mounted");
-  }, []);
-
-  return (
-    &lt;Panel width={192} height={140} x={414} y={160}&gt;
-      &lt;Text value={`Events: ${eventCount}`} /&gt;
-      &lt;Text value={`ID: ${lastEventId}`} /&gt;
-      &lt;Text value={`Msg: ${lastMessage}`} /&gt;
-    &lt;/Panel&gt;
-  );
-};
-</code></pre>
+### Step 3: Restoration
+After execution:
+1. The global context is restored to its previous state.
+2. The fiber’s updated hook state is retained in the registry.
+3. The system is ready to activate another fiber.
 
 ---
 
-## 7. How it Works with Multiple Players
+## 5. Hook Resolution Model
 
-1. Each player’s call to `render(&lt;EventCounter /&gt;, playerId)` creates a new **fiber root**.  
-2. The fiber tree stores its own hook data (`useState`, `useEffect`, etc.).  
-3. When the global `system.afterEvents.scriptEventReceive` emits:
-   - Every `useEvent` callback runs wrapped in its **own fiber context**.
-   - `getCurrentContext()` returns that player’s fiber.
-   - State updates and re-renders are isolated to that player’s tree.
+Each hook (e.g., `useState`, `useEffect`) is an interface that delegates to the **current dispatcher**, not a global implementation.
 
-This architecture allows truly concurrent async rendering without shared mutable globals.
+Example conceptually:
 
----
+```
+useState(initial) → CurrentDispatcher.useState(CurrentFiber, initial)
+```
 
-## 8. Optional Debug Hook
-
-Expose the current fiber for advanced inspection:
-
-<pre><code class="language-ts">
-export function useFiber(): Fiber {
-  return getCurrentContext().fiber;
-}
-</code></pre>
+The dispatcher determines how to:
+- Initialize new state (on first render)
+- Retrieve existing state (on update)
+- Queue updates or side effects
+- Subscribe to contexts or signals
 
 ---
 
-## 9. Summary
+## 6. Context Propagation
 
-| Concern | Solution |
-|----------|-----------|
-| Multiple async entry points | Each root has its own `FiberRoot` |
-| Context propagation | Manual `runWithContext()` wrapper |
-| Hook state storage | On `fiber.hooks[]` indexed by call order |
-| Async callbacks losing context | Wrap callbacks using `runWithContext()` |
-| Concurrent renders | Independent fiber trees for each player |
+### Context Registry
+A global registry stores all context providers and their current values.
+
+### Fiber Context Dependencies
+Each fiber maintains a list of contexts it depends on.  
+When a `useContext(Context)` call occurs:
+1. The dispatcher reads the context’s current value from the global registry.
+2. The fiber registers this dependency for revalidation when contexts change.
+
+This allows fibers to react to external context changes without explicit data passing.
 
 ---
 
-This design pattern gives you React-like semantics without depending on Node internals or a global render stack, fully async-safe and suitable for distributed runtime environments.
+## 7. Concurrency & Async Handling
+
+Each fiber can be **activated asynchronously**.  
+To support this safely:
+- The `CurrentFiber` and `CurrentDispatcher` pointers must be **scoped to an async execution frame**.
+- Before running async tasks, the system binds the correct fiber context.
+- On completion or suspension, the global state is restored.
+
+This design allows multiple fibers to coexist, each executing in isolation, without shared-state conflicts.
+
+---
+
+## 8. Dispatcher Variants
+
+Different dispatchers can be used depending on phase:
+
+| Phase | Purpose |
+|-------|----------|
+| **Mount Dispatcher** | Handles first-time initialization of hooks |
+| **Update Dispatcher** | Reuses existing hook state during re-renders |
+| **Resume Dispatcher** | Restores state after an async pause |
+| **Snapshot Dispatcher** | Used for concurrent or time-sliced updates |
+
+Each dispatcher variant defines the same API surface (`useState`, `useEffect`, etc.) but with phase-specific behavior.
+
+---
+
+## 9. Lifecycle Summary
+
+1. **Fiber Creation**  
+   A fiber is instantiated and added to the global registry.
+
+2. **Fiber Activation**  
+   The global current pointers are set, and hook execution begins.
+
+3. **Hook Evaluation**  
+   Each hook call delegates to the current dispatcher for that fiber.
+
+4. **Completion / Suspension**  
+   Fiber state is saved, and the global pointers are reset.
+
+5. **Reactivation**  
+   The fiber resumes with its previous state intact.
+
+---
+
+## 10. Design Principles
+
+| Principle | Description |
+|------------|-------------|
+| **Dynamic Scope** | Implicitly provides the current fiber/dispatcher to hooks |
+| **Fiber-local State** | Each fiber maintains its own isolated hook registry |
+| **Dispatcher Indirection** | Hook semantics determined per fiber or phase |
+| **Deterministic Order** | Hook order defines state slot consistency |
+| **Global Registry** | Enables fiber lookup and lifecycle control |
+| **Async-safe Contexts** | Scoped global context per execution frame |
+
+---
+
+## 11. Summary
+
+This architecture enables:
+- Multiple concurrent or asynchronous “fiber” contexts
+- Implicit context propagation for hooks
+- Independent, phase-specific dispatchers
+- Stable and deterministic state restoration
+- A foundation for advanced scheduling and concurrency (like React’s Fiber system)
+
+The design decouples **what hooks do** (dispatcher behavior) from **which fiber they belong to** (execution context), providing a flexible model for building composable, async-safe hook runtimes.
+
+---
+## 12. Fiber-Dispatcher Control Flow Diagram
+
+```text
+                ┌──────────────────────────┐
+                │      Global Registry      │
+                │  FiberID → Fiber Object   │
+                └─────────────┬────────────┘
+                              │
+                              ▼
+                   ┌─────────────────────┐
+                   │   CurrentFiber      │◄───────────┐
+                   │   CurrentDispatcher │            │
+                   └─────────┬───────────┘            │
+                             │                        │
+                             ▼                        │
+                   ┌─────────────────────┐            │
+                   │      Fiber A        │            │
+                   │  hookStates: [...]  │            │
+                   │  hookIndex: 0       │            │
+                   │  dispatcher: D_A    │            │
+                   └─────────┬───────────┘            │
+                             │                        │
+     Hook call (useState) ───┘                        │
+                             ▼                        │
+                   ┌──────────────────────┐           │
+                   │   Dispatcher D_A     │           │
+                   │ useState(initial)    │           │
+                   │ Reads/Writes state   │           │
+                   │ in Fiber A hookStates│           │
+                   └──────────────────────┘           │
+                                                      │
+                   ┌─────────────────────┐            │
+                   │      Fiber B        │            │
+                   │  hookStates: [...]  │            │
+                   │  hookIndex: 0       │            │
+                   │  dispatcher: D_B    │            │
+                   └─────────┬───────────┘            │
+                             │                        │
+     Hook call (useState) ───┘                        │
+                             ▼                        │
+                   ┌──────────────────────┐           │
+                   │   Dispatcher D_B     │           │
+                   │ useState(initial)    │           │
+                   │ Reads/Writes state   │           │
+                   │ in Fiber B hookStates│           │
+                   └──────────────────────┘           │
+
+Notes:
+- CurrentFiber / CurrentDispatcher are dynamically set before executing each fiber.
+- Hook calls delegate to the dispatcher which manipulates fiber-local state.
+- Multiple fibers can exist in the registry and execute asynchronously.
+- Fiber state persists in the registry between activations.

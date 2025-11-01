@@ -1,4 +1,5 @@
 import { FunctionComponent, JSX } from '../jsx';
+import { createContext as f2CreateContext } from './fiber';
 
 /**
  * Context symbol for identifying context objects
@@ -17,17 +18,14 @@ export interface ProviderProps<T> {
  * Context object created by createContext
  */
 export interface Context<T> {
-
-  /** Symbol identifying this as a context object */
-  $$typeof: symbol;
-
-  /** Current value of the context (used when no Provider is found) */
-  currentValue: T;
-
-  /** Default value provided at creation time */
+  // Fiber2 identity fields
+  id: symbol;
   defaultValue: T;
 
-  /** Provider component for setting context value */
+  // Legacy marker for isContext checks
+  $$typeof: symbol;
+
+  // Provider component for setting context value
   Provider: FunctionComponent<ProviderProps<T>>;
 }
 
@@ -56,22 +54,14 @@ export interface Context<T> {
  * }
  */
 export function createContext<T>(defaultValue: T): Context<T> {
-  const context: Context<T> = {
-    $$typeof: CONTEXT_SYMBOL,
-    currentValue: defaultValue,
-    defaultValue,
-    // Provider will be assigned below
-    Provider: null as unknown as FunctionComponent<ProviderProps<T>>,
-  };
+  const f2Ctx = f2CreateContext<T>(defaultValue) as unknown as Context<T>;
+  (f2Ctx as unknown as { $$typeof: symbol }).$$typeof = CONTEXT_SYMBOL;
 
-  // Create Provider component
   const Provider: FunctionComponent<ProviderProps<T>> = (
     props: ProviderProps<T>,
   ): JSX.Element => {
-    // Store context and value in a way that bypasses type checking
-    // since we're using this internally and the serializer won't touch these props
     const providerProps = {
-      __context: context,
+      __context: f2Ctx,
       value: props.value,
       children: props.children,
     } as unknown as JSX.Props;
@@ -82,9 +72,9 @@ export function createContext<T>(defaultValue: T): Context<T> {
     };
   };
 
-  context.Provider = Provider;
+  f2Ctx.Provider = Provider;
 
-  return context;
+  return f2Ctx;
 }
 
 /**

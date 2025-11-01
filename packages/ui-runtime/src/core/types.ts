@@ -1,7 +1,4 @@
-import { Player } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
-import { Hook } from '../hooks/types';
-import { FunctionComponent, JSX } from '../jsx';
 
 // For now we will only be supporting ActionFormData, in future will add support for ModalFormData for "Forms"
 export type CoreUIFormData = ActionFormData;
@@ -37,15 +34,3 @@ export class SerializationError extends Error {
     this.name = 'SerializationError';
   }
 }
-
-export interface ComponentInstance {
-  id: string;
-  player: Player;
-  componentType: FunctionComponent;
-  props: JSX.Props;
-  hooks: Hook[];
-  hookIndex: number;
-  mounted: boolean;
-  shouldRender: boolean;
-}
-

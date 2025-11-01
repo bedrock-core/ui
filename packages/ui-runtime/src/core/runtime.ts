@@ -3,20 +3,33 @@ import { system } from '@minecraft/server';
 import { ActionFormData, uiManager } from '@minecraft/server-ui';
 import type { SuspenseBoundary } from '../components/Suspense';
 import { suspenseBoundaryRegistry } from '../components/Suspense';
-import { executeEffects } from '../hooks';
 import type { FunctionComponent, JSX } from '../jsx';
 import { startInputLock } from '../util';
-import { FiberRegistry } from './fiber';
 import { buildTree, cleanupComponentTree } from './render';
 import { PROTOCOL_HEADER, serialize } from './serializer';
 import { handleSuspensionForBoundary } from './suspension';
+import { getFiber } from './fiber';
 import type {
   RenderOptions,
   SerializationContext
 } from './types';
 
-/** Session registry store: one registry per player per UI session */
-export const sessionRegistries = new Map<string, FiberRegistry>();
+/** Session instance store: one set of instance IDs per player per UI session */
+export const sessionInstances = new Map<string, Set<string>>();
+
+/**
+ * Check if any fiber in the session has shouldRender === false (from useExit).
+ */
+function shouldExitSession(instanceIds: Set<string>): boolean {
+  for (const id of instanceIds) {
+    const fiber = getFiber(id);
+    if (fiber?.shouldRender === false) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 /** Entry point that constructs a Runtime and starts the loop. */
 export async function render(
@@ -27,22 +40,19 @@ export async function render(
   // Convert function component to JSX element if needed
   const rootElement: JSX.Element = typeof root === 'function' ? { type: root, props: {} } : root;
 
-  let currentRegistry: FiberRegistry;
-
-  // Begin: input lock and create/retrieve session registry
+  // Begin: input lock and ensure session instance set
   if (options.isFirstRender) {
     startInputLock(player);
-    // Create new session registry for this player
-    currentRegistry = new FiberRegistry(player);
-    sessionRegistries.set(player.id, currentRegistry);
+    sessionInstances.set(player.id, new Set());
     options.isFirstRender = false;
-  } else {
-    // Retrieve existing session registry for this player
-    currentRegistry = sessionRegistries.get(player.id) ?? new FiberRegistry(player);
   }
 
   // Build complete tree (instances created, hooks initialized)
-  const builtTree = buildTree(rootElement, player);
+  const builtTree = await buildTree(rootElement, player);
+
+  // Merge this render's instances into the session set (used for cleanup)
+  const set = sessionInstances.get(player.id)!;
+  for (const id of builtTree.instances) set.add(id);
 
   // TODO CHANGE TO BE INSIDE FIBERS
   // Populate boundary instance sets using the instanceToBoundary map from buildTree
@@ -70,7 +80,7 @@ export async function render(
 }
 
 /**
- * Shared present cycle: serialize tree, start effect loop, show form, handle response.
+ * Shared present cycle: serialize tree, show form, handle response.
  * Parameterized by cancel strategy and reinvoke function for subsequent updates.
  */
 async function presentCycle(
@@ -117,35 +127,16 @@ async function presentCycle(
     }
   }
 
-  // Background effects loop
-  const intervalId = system.runInterval(() => {
-    for (const id of createdInstances) {
-      const currentRegistry = sessionRegistries.get(player.id);
-      const instance = currentRegistry?.getInstance(id);
-
-      if (instance) {
-        executeEffects(instance);
-      }
-    }
-  }, 1);
-
   await form.show(player).then(response => {
-    system.clearRun(intervalId);
-
     // When player pressed escape key or equivalent, and when we use uiManager.closeAllForms()
     if (response.canceled) {
-      const currentRegistry = sessionRegistries.get(player.id);
-      if (!currentRegistry) return;
+      const shouldRerender = areAllBoundariesResolved() && !shouldExitSession(createdInstances);
 
-      const shouldRender = currentRegistry?.getCurrentInstance()?.shouldRender;
-
-      console.error(`RC: ${response.canceled}, SR: ${shouldRender}, BR: ${areAllBoundariesResolved()}`);
-
-      // Player pressed ESC → re-render if boundaries unresolved and should render
-      if (areAllBoundariesResolved() && shouldRender) {
+      // Player pressed ESC → re-render if all boundaries resolved and no fiber flagged exit
+      if (shouldRerender) {
         system.run(() => { render(player, rootElement, options); });
       } else {
-        cleanupComponentTree(player, createdInstances, currentRegistry);
+        cleanupComponentTree(player, createdInstances);
       }
 
       return;
@@ -156,20 +147,10 @@ async function presentCycle(
       const callback = serializationContext.buttonCallbacks.get(response.selection);
 
       if (callback) {
-        // Execute button callback
+        // Execute button callback then rerender (unless useExit was called)
         Promise.resolve(callback())
           .then(() => {
-            const currentRegistry = sessionRegistries.get(player.id);
-
-            if (!currentRegistry) return;
-
-            const shouldRender = currentRegistry.getCurrentInstance()?.shouldRender;
-
-            if (shouldRender) {
-              system.run(() => { render(player, rootElement, options); });
-            } else {
-              cleanupComponentTree(player, createdInstances, currentRegistry);
-            }
+            system.run(() => { render(player, rootElement, options); });
           });
       }
     }

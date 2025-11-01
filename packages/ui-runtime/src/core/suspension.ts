@@ -1,7 +1,5 @@
 import { system } from '@minecraft/server';
-import { executeEffects } from '../hooks';
-import { isStateHook } from '../hooks/useState';
-import { getCurrentActiveRegistry } from './fiber';
+import { getFiber } from './fiber';
 
 /**
  * Executes effects for all components within a suspense boundary, repeatedly re-running them
@@ -16,60 +14,55 @@ export async function handleSuspensionForBoundary(
   boundaryInstanceIds: Set<string>,
   timeout: number,
 ): Promise<boolean> {
-  // Start loop for subsequent state changes on boundary instances
-  // During suspension, we always execute effects (including those with no deps)
-  // so they can call setState and update the component state
-  const mainIntervalId = system.runInterval(() => {
-    const registry = getCurrentActiveRegistry();
+  // Take a baseline snapshot of all state slots for each fiber
+  const baseline: Map<string, unknown[]> = new Map();
 
-    for (const id of boundaryInstanceIds) {
-      const instance = registry.getInstance(id);
-
-      if (instance) {
-        // Always run executeEffects during suspension
-        // This ensures effects with no dependency array can execute on each tick
-        // and potentially call setState to resolve the suspension.
-        executeEffects(instance);
-
-        // Any instances within the boundary should be marked to render again once form closes
-        instance.shouldRender = true;
+  for (const id of boundaryInstanceIds) {
+    const fiber = getFiber(id);
+    if (!fiber) continue;
+    const initialStates: unknown[] = [];
+    for (const slot of fiber.hookStates) {
+      if (slot?.tag === 'state') {
+        initialStates.push(slot.value);
       }
     }
-  }, 1);
+    baseline.set(id, initialStates);
+  }
 
-  // Wait for resolution of this boundary
-  const resolved = await waitForStateResolution(boundaryInstanceIds, timeout);
+  // If nothing to wait on, resolve immediately
+  if (baseline.size === 0) return true;
 
-  // Stop loop
-  system.clearRun(mainIntervalId);
-
-  return resolved;
-}
-
-/**
- * Wait for all useState values in the given instances to differ from their initial values,
- * or until timeout.
- *
- * @internal
- */
-async function waitForStateResolution(
-  instanceIds: Set<string>,
-  timeoutMs: number,
-): Promise<boolean> {
   return new Promise<boolean>(resolve => {
     const startTime = Date.now();
-    const registry = getCurrentActiveRegistry();
 
-    const instances = Array.from(instanceIds)
-      .map(id => registry.getInstance(id))
-      .filter(instance => instance !== undefined);
+    const allStatesResolved = (): boolean => {
+      for (const [id, initialValues] of baseline) {
+        const fiber = getFiber(id);
+        if (!fiber) continue;
 
-    // If no instance, no hooks, or all states already resolved, resolve immediately
-    const allStatesResolved: () => boolean = () => instances
-      .every(instance => instance?.hooks
-        .filter(isStateHook)
-        .every(hook => !Object.is(hook.value, hook.initialValue))
-        ?? true);
+        // Collect current state slot values in order
+        const currentValues: unknown[] = [];
+        for (const slot of fiber.hookStates) {
+          if (slot?.tag === 'state') {
+            currentValues.push(slot.value);
+          }
+        }
+
+        // If counts differ, treat as not resolved yet (new state slots may appear)
+        if (currentValues.length !== initialValues.length) {
+          return false;
+        }
+
+        // All state slots must differ from their baseline (Object.is !==)
+        for (let i = 0; i < currentValues.length; i++) {
+          if (Object.is(currentValues[i], initialValues[i])) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    };
 
     if (allStatesResolved()) {
       resolve(true);
@@ -79,11 +72,8 @@ async function waitForStateResolution(
 
     const intervalId = system.runInterval(() => {
       const elapsed = Date.now() - startTime;
-
-      if (elapsed >= timeoutMs) {
-        console.warn(`[Suspense] Timeout of ${timeoutMs}ms while waiting for state resolution of instances.`);
+      if (elapsed >= timeout) {
         system.clearRun(intervalId);
-
         resolve(false);
 
         return;
@@ -91,9 +81,16 @@ async function waitForStateResolution(
 
       if (allStatesResolved()) {
         system.clearRun(intervalId);
-
         resolve(true);
       }
     }, 1);
   });
 }
+
+/**
+ * Wait for all useState values in the given instances to differ from their initial values,
+ * or until timeout.
+ *
+ * @internal
+ */
+// Legacy helper removed: state resolution is handled inline in handleSuspensionForBoundary

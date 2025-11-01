@@ -1,5 +1,5 @@
 import { Player } from '@minecraft/server';
-import { getCurrentActiveRegistry } from '../core/fiber';
+import { getCurrentFiber } from '../core/fiber';
 
 /**
  * Returns the Player who opened/rendered this form.
@@ -37,14 +37,14 @@ import { getCurrentActiveRegistry } from '../core/fiber';
  * }
  */
 export function usePlayer(): Player {
-  const instance = getCurrentActiveRegistry().getCurrentInstance();
+  const fiber = getCurrentFiber();
 
-  if (!instance) {
+  if (!fiber) {
     throw new Error(
       'usePlayer can only be called from within a component. ' +
       'Make sure you are calling it at the top level of your component function.',
     );
   }
 
-  return instance.player;
+  return fiber.player;
 }

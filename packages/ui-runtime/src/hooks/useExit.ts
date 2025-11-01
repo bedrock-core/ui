@@ -1,12 +1,12 @@
-import { getCurrentActiveRegistry } from '../core/fiber';
+import { getCurrentFiber } from '../core/fiber';
 
 /**
  * Hook that provides a function to properly exit/close the current UI without triggering re-renders.
  *
  * This hook returns a function that when called will:
- * 1. Mark the component instance as closing to prevent re-renders
+ * 1. Mark the fiber as not renderable to prevent re-renders
  * 2. Clean up effects and unmount the component
- * 3. Remove the instance from the fiber registry
+ * 3. Remove the fiber from the registry
  *
  * This is essential for exit/close buttons that should terminate the UI session
  * rather than trigger another render cycle.
@@ -43,10 +43,9 @@ import { getCurrentActiveRegistry } from '../core/fiber';
  * }
  */
 export function useExit(): () => void {
-  const registry = getCurrentActiveRegistry();
-  const instance = registry.getCurrentInstance();
+  const fiber = getCurrentFiber();
 
-  if (!instance) {
+  if (!fiber) {
     throw new Error(
       'useExit can only be called from within a component. ' +
       'Make sure you are calling it at the top level of your component function.',
@@ -54,7 +53,7 @@ export function useExit(): () => void {
   }
 
   return (): void => {
-    // Mark instance as not renderable to trigger close
-    instance.shouldRender = false;
+    // Mark fiber as not renderable to trigger close
+    fiber.shouldRender = false;
   };
 }

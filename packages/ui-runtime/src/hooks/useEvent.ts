@@ -1,5 +1,5 @@
 import { EventSignal } from './types';
-import { useEffect } from './useEffect';
+import { useEffect } from '.';
 
 /**
  * Automatically subscribes to a Minecraft event signal and handles cleanup on unmount.
