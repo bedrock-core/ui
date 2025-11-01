@@ -6,4 +6,5 @@ export { Button, type ButtonProps } from './Button';
 export { Fragment, type FragmentProps } from './Fragment';
 export { Image, type ImageProps } from './Image';
 export { Panel, type PanelProps } from './Panel';
+export { Suspense, type SuspenseProps } from './Suspense';
 export { Text, type TextProps } from './Text';

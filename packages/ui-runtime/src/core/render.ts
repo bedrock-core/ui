@@ -1,10 +1,11 @@
 import { Player } from '@minecraft/server';
+import { executeEffects } from '../hooks';
 import { FunctionComponent, JSX } from '../jsx';
 import { stopInputLock } from '../util';
 import { isContext } from './context';
 import { fiberRegistry } from './fiber';
-import { executeEffects } from '../hooks';
 import { ComponentInstance } from './types';
+import type { Hook, StateHook } from '../hooks/types';
 
 /**
  * Context passed through tree traversal during rendering phase.
@@ -17,6 +18,8 @@ export interface TraversalContext {
   player: Player;
   parentPath: string[]; // Component path from root: ['Example', 'Counter']
   createdInstances: Set<string>; // Track all instances created during this render
+  currentSuspenseBoundary?: string; // Track which Suspense boundary we're currently in
+  instanceToBoundary?: Map<string, string>; // Map instance ID → boundary ID
 }
 
 /**
@@ -73,7 +76,7 @@ function generateComponentId(
 function expandAndResolveContexts(element: JSX.Element, context: TraversalContext): JSX.Element {
   // Step 1: Handle function components - CREATE INSTANCE FOR EACH
   if (typeof element.type === 'function') {
-    const componentFn = element.type;
+    const componentFn = element.type as FunctionComponent;
 
     // Generate unique ID for this component node
     const key = typeof element.props.key === 'string' ? element.props.key : undefined;
@@ -94,6 +97,11 @@ function expandAndResolveContexts(element: JSX.Element, context: TraversalContex
 
     // Track instance for cleanup
     context.createdInstances.add(componentId);
+
+    // If we're in a Suspense boundary, record the mapping
+    if (context.currentSuspenseBoundary && context.instanceToBoundary) {
+      context.instanceToBoundary.set(componentId, context.currentSuspenseBoundary);
+    }
 
     // Push instance onto fiber stack (makes it available to hooks)
     fiberRegistry.pushInstance(instance);
@@ -117,7 +125,54 @@ function expandAndResolveContexts(element: JSX.Element, context: TraversalContex
         parentPath: [...context.parentPath, componentName],
       };
 
-      // Recursively process the rendered result with child context
+      // If this is a Suspense component and it's currently unresolved,
+      // we still need to pre-build its children (for effects/state) WITHOUT
+      // including them in the returned visual tree. This lets effects inside
+      // the boundary run during fallback.
+      const isSuspenseComponent = (componentFn as unknown as { __isSuspense?: boolean })?.__isSuspense === true;
+      if (isSuspenseComponent) {
+        // Find the boundary object stored in a state hook on this instance
+        const boundaryHook = instance.hooks.find((h: Hook) => {
+          if (h?.type !== 'state') return false;
+          const v: unknown = h.value;
+
+          return typeof v === 'object' && v !== null && 'id' in (v as Record<string, unknown>) && 'instanceIds' in (v as Record<string, unknown>);
+        }) as StateHook<{ id: string; isResolved: boolean }> | undefined;
+
+        const boundary = boundaryHook?.value;
+
+        // Pre-build children under the boundary context when unresolved
+        if (boundary && !boundary.isResolved) {
+          const suspenseChildren = element.props?.children;
+          if (suspenseChildren) {
+            // IMPORTANT: simulate the Provider path segment during prebuild so
+            // instance IDs of children match the IDs they will have once the
+            // Suspense boundary resolves (where a Provider function component
+            // is actually present in the tree).
+            // Without this, children would be created under ".../Suspense/..."
+            // during prebuild, but under ".../Suspense/Provider/..." after
+            // resolution, causing new instances with default state.
+            const prebuildCtx: TraversalContext = {
+              ...childContext,
+              parentPath: [...childContext.parentPath, 'Provider'],
+              currentSuspenseBoundary: boundary.id,
+            };
+
+            // Process original children purely for side-effects (instances/effects)
+            if (Array.isArray(suspenseChildren)) {
+              for (const ch of suspenseChildren) {
+                if (!ch || typeof ch !== 'object' || !('type' in ch)) continue;
+                // Discard returned tree; we only need instances/effects
+                void expandAndResolveContexts(ch, prebuildCtx);
+              }
+            } else if (typeof suspenseChildren === 'object' && 'type' in suspenseChildren) {
+              void expandAndResolveContexts(suspenseChildren, prebuildCtx);
+            }
+          }
+        }
+      }
+
+      // Recursively process the rendered result with child context (visual tree)
       return expandAndResolveContexts(renderedElement, childContext);
     } finally {
       // Always pop instance when done
@@ -142,6 +197,13 @@ function expandAndResolveContexts(element: JSX.Element, context: TraversalContex
     fiberRegistry.pushContext(contextObj, contextValue);
 
     try {
+      // If this provider is the SuspenseContext, propagate the boundary id
+      // into the traversal context so instances rendered under this provider
+      // are automatically associated with the boundary.
+      const isSuspenseProvider = (contextObj as unknown) === (require('../components/Suspense').SuspenseContext as unknown);
+      const maybeBoundary = isSuspenseProvider && contextValue ? (contextValue as unknown as { id?: string }).id : undefined;
+      const providerChildContext: TraversalContext = maybeBoundary ? { ...context, currentSuspenseBoundary: maybeBoundary } : context;
+
       // Process children recursively (they can now read context via useContext)
       let processedChildren: JSX.Element;
 
@@ -152,7 +214,7 @@ function expandAndResolveContexts(element: JSX.Element, context: TraversalContex
               return null;
             }
 
-            return expandAndResolveContexts(child, context);
+            return expandAndResolveContexts(child, providerChildContext);
           })
           .filter((child): child is JSX.Element => child !== null);
 
@@ -161,7 +223,7 @@ function expandAndResolveContexts(element: JSX.Element, context: TraversalContex
           props: { children: resolvedChildren },
         };
       } else if (contextChildren && typeof contextChildren === 'object' && 'type' in contextChildren) {
-        processedChildren = expandAndResolveContexts(contextChildren, context);
+        processedChildren = expandAndResolveContexts(contextChildren, providerChildContext);
       } else {
         // No valid children - return empty fragment
         processedChildren = {
@@ -297,12 +359,15 @@ function normalizeChildren(element: JSX.Element, context: TraversalContext): JSX
 export function buildTree(
   element: JSX.Element,
   player: Player,
-): { tree: JSX.Element; instances: Set<string> } {
+): { tree: JSX.Element; instances: Set<string>; instanceToBoundary: Map<string, string> } {
   // Initialize traversal context
+  const instanceToBoundary = new Map<string, string>();
   const context: TraversalContext = {
     player,
     parentPath: [],
     createdInstances: new Set(),
+    currentSuspenseBoundary: undefined,
+    instanceToBoundary,
   };
 
   // Phase 1: Expand function components and resolve contexts
@@ -315,6 +380,7 @@ export function buildTree(
   return {
     tree: result,
     instances: context.createdInstances,
+    instanceToBoundary,
   };
 }
 

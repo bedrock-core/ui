@@ -1,4 +1,4 @@
-import { JSX, Panel, Text, FunctionComponent, useState, useEvent } from '@bedrock-core/ui';
+import { FunctionComponent, JSX, Panel, Text, useEffect, useEvent, useState } from '@bedrock-core/ui';
 import { system } from '@minecraft/server';
 
 /**
@@ -18,6 +18,10 @@ export const EventCounter: FunctionComponent = (): JSX.Element => {
     setLastEventId(event.id);
     setLastMessage(event.message);
   });
+
+  useEffect(() => {
+    system.sendScriptEvent('bc-ui:test', 'EventCounter mounted');
+  }, []);
 
   return (
     <Panel width={192} height={140} x={414} y={160}>

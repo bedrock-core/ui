@@ -3,6 +3,7 @@ export {
   Fragment,
   Image,
   Panel,
+  Suspense,
   Text
 } from './components';
 
@@ -11,6 +12,7 @@ export type {
   FragmentProps,
   ImageProps,
   PanelProps,
+  SuspenseProps,
   TextProps,
   ControlProps
 } from './components';
@@ -37,7 +39,6 @@ export type {
   ReducerHook,
   Hook,
   HookCall,
-  ComponentInstance,
   EventSignal
 } from './hooks';
 

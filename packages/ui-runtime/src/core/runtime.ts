@@ -2,14 +2,16 @@ import type { Player } from '@minecraft/server';
 import { system } from '@minecraft/server';
 import { ActionFormData, uiManager } from '@minecraft/server-ui';
 import { executeEffects } from '../hooks';
-import type { StateHook } from '../hooks/types';
 import type { FunctionComponent, JSX } from '../jsx';
+import { suspenseBoundaryRegistry } from '../components/Suspense';
 import { startInputLock } from '../util';
 import { fiberRegistry } from './fiber';
 import { buildTree, cleanupComponentTree } from './render';
 import { clearRuntimeForPlayer, getRuntimeForPlayer, setRuntimeForPlayer } from './runtimeStore';
 import { DefaultScheduler } from './scheduler';
 import { PROTOCOL_HEADER, serialize } from './serializer';
+import { handleSuspensionForBoundary } from './suspensionHelper';
+import type { SuspenseBoundary } from '../components/Suspense';
 import type {
   RenderCondition, RenderOptions, RuntimeHandle,
   RuntimeOptions,
@@ -144,7 +146,7 @@ export class Runtime implements RuntimeHandle {
 export async function render(
   player: Player,
   root: JSX.Element | FunctionComponent,
-  options: RenderOptions = { awaitStateResolution: false },
+  options: RenderOptions = { },
 ): Promise<void> {
   // Convert function component to JSX element if needed
   const rootElement: JSX.Element = typeof root === 'function' ? { type: root, props: {} } : root;
@@ -153,17 +155,14 @@ export async function render(
   startInputLock(player);
 
   // Build complete tree (instances created, hooks initialized)
-  let builtTree = buildTree(rootElement, player);
+  const builtTree = buildTree(rootElement, player);
 
-  // Suspension (fallback) if requested
-  if (options.awaitStateResolution) {
-    await handleSuspensionInternal(player, options.fallback, builtTree.instances, options.awaitTimeout ?? 1000);
-
-    // Rebuild the main tree AFTER suspension completes to capture any state updated by effects
-    // during the wait period. Instances will be reused via fiberRegistry and defaults re-applied.
-    builtTree = buildTree(rootElement, player);
-  } else {
-    builtTree = buildTree(rootElement, player);
+  // Populate boundary instance sets using the instanceToBoundary map from buildTree
+  for (const [instanceId, boundaryId] of builtTree.instanceToBoundary) {
+    const boundary = suspenseBoundaryRegistry.get(boundaryId);
+    if (boundary) {
+      boundary.instanceIds.add(instanceId);
+    }
   }
 
   await presentCycle(
@@ -185,6 +184,7 @@ export async function render(
         return false;
       },
     },
+    Array.from(suspenseBoundaryRegistry.values()),
   );
 }
 
@@ -204,6 +204,14 @@ async function present(
   // Build the tree again; instances are reused via fiberRegistry.getOrCreateInstance
   const builtTree = buildTree(rootElement, player);
 
+  // Populate boundary instance sets using the instanceToBoundary map from buildTree
+  for (const [instanceId, boundaryId] of builtTree.instanceToBoundary) {
+    const boundary = suspenseBoundaryRegistry.get(boundaryId);
+    if (boundary) {
+      boundary.instanceIds.add(instanceId);
+    }
+  }
+
   await presentCycle(
     player,
     builtTree.tree,
@@ -215,6 +223,7 @@ async function present(
       // Rerender: do not force re-render on cancel unless runtime conditions request it
       shouldRerenderOnCancel() { return false; },
     },
+    Array.from(suspenseBoundaryRegistry.values()),
   );
 }
 
@@ -234,6 +243,7 @@ async function presentCycle(
   options: RenderOptions | undefined,
   reinvoke: ReinvokeFn,
   strategy: CancelStrategy,
+  suspenseBoundaries?: SuspenseBoundary[],
 ): Promise<void> {
   // Prepare serialization context for button callbacks
   const serializationContext: SerializationContext = { buttonCallbacks: new Map(), buttonIndex: 0 };
@@ -243,7 +253,30 @@ async function presentCycle(
   form.title(PROTOCOL_HEADER);
   serialize(element, form, serializationContext);
 
-  // Background effects loop for dirty instances
+  // Track which boundaries have been resolved
+  const resolvedBoundaries = new Set<string>();
+  let shouldRerenderForSuspense = false;
+  let formClosedForSuspense = false;
+
+  // Kick off suspension helpers to run effects continuously during fallback
+  const startedBoundaries = new Set<string>();
+  if (suspenseBoundaries) {
+    for (const boundary of suspenseBoundaries) {
+      if (boundary.isResolved || startedBoundaries.has(boundary.id)) continue;
+      startedBoundaries.add(boundary.id);
+      // Fire-and-forget: when resolved or timeout, mark and request rerender
+      void handleSuspensionForBoundary(player, boundary.fallback, boundary.instanceIds, boundary.timeout)
+        .then(() => {
+          boundary.isResolved = true;
+          resolvedBoundaries.add(boundary.id);
+          shouldRerenderForSuspense = true;
+          // Close the form so form.show() returns and we can reinvoke
+          uiManager.closeAllForms(player);
+        });
+    }
+  }
+
+  // Background effects loop for dirty instances and suspension checking
   const intervalId = system.runInterval(() => {
     for (const id of createdInstances) {
       const instance = fiberRegistry.getInstance(id);
@@ -252,12 +285,30 @@ async function presentCycle(
         executeEffects(instance);
       }
     }
+
+    // Resolution handled by suspension helper; nothing to poll here
+
+    // If any boundary resolved, close form to trigger reinvoke
+    if (shouldRerenderForSuspense) {
+      shouldRerenderForSuspense = false;
+      formClosedForSuspense = true;
+      // Close the form so form.show() returns and we can reinvoke
+      uiManager.closeAllForms(player);
+    }
   }, 1);
 
   await form.show(player).then(response => {
     system.clearRun(intervalId);
 
     if (response.canceled) {
+      // If form was closed due to suspension resolution, always reinvoke
+      if (formClosedForSuspense) {
+        formClosedForSuspense = false;
+        system.run(() => { void reinvoke(player, rootElement, options); });
+
+        return;
+      }
+
       // Strategy-specific check (e.g., initial render may force re-render after suspense close)
       let shouldRerender = strategy.shouldRerenderOnCancel(createdInstances);
 
@@ -303,150 +354,4 @@ async function presentCycle(
       }
     }
   });
-}
-
-/**
- * Internal: Wait for all useState values in the tree to differ from their initial values,
- * or until timeout.
- */
-async function waitForStateResolution(
-  instanceIds: Set<string>,
-  timeoutMs: number,
-): Promise<boolean> {
-  console.log(`[waitForStateResolution] Starting state resolution wait (timeout: ${timeoutMs}ms, instances: ${instanceIds.size})`);
-
-  return new Promise<boolean>(resolve => {
-    const startTime = Date.now();
-
-    const checkStates = (): boolean => {
-      let allResolved = true;
-
-      for (const id of instanceIds) {
-        const instance = fiberRegistry.getInstance(id);
-        if (!instance) {
-          console.warn(`[waitForStateResolution] Instance not found: ${id}`);
-          continue;
-        }
-
-        const stateHooks = instance.hooks.filter(h => h?.type === 'state');
-        if (stateHooks.length === 0) {
-          continue;
-        }
-
-        for (const hook of stateHooks) {
-          if (hook.type === 'state') {
-            const stateHook = hook as StateHook;
-            if (Object.is(stateHook.value, stateHook.initialValue)) {
-              console.log(`[waitForStateResolution] Instance ${id} state still matches initial value (value: ${stateHook.value})`);
-              allResolved = false;
-              // Don't break - check ALL instances before returning false
-            } else {
-              console.log(`[waitForStateResolution] Instance ${id} state CHANGED! (initial: ${stateHook.initialValue}, current: ${stateHook.value})`);
-            }
-          }
-        }
-      }
-
-      return allResolved;
-    };
-
-    if (checkStates()) {
-      console.log(`[waitForStateResolution] All states resolved immediately`);
-      resolve(true);
-
-      return;
-    }
-
-    console.log(`[waitForStateResolution] States not resolved yet, starting interval loop`);
-    const intervalId = system.runInterval(() => {
-      const elapsed = Date.now() - startTime;
-      if (elapsed >= timeoutMs) {
-        console.warn(`[waitForStateResolution] Timeout reached (${elapsed}ms), resolving with false`);
-        system.clearRun(intervalId);
-        resolve(false);
-
-        return;
-      }
-
-      if (checkStates()) {
-        console.log(`[waitForStateResolution] All states resolved after ${elapsed}ms`);
-        system.clearRun(intervalId);
-        resolve(true);
-      }
-    }, 1);
-  });
-}
-
-/**
- * Internal: Show fallback UI while running main effects, wait for state resolution,
- * then close fallback and proceed.
- */
-async function handleSuspensionInternal(
-  player: Player,
-  fallbackComponent: JSX.Element | FunctionComponent | undefined,
-  mainInstanceIds: Set<string>,
-  timeout: number,
-): Promise<void> {
-  // Normalize fallback to JSX element
-  const fallbackElement: JSX.Element | undefined = typeof fallbackComponent === 'function'
-    ? { type: fallbackComponent, props: {} }
-    : fallbackComponent;
-
-  let builtTree: { tree: JSX.Element; instances: Set<string> } | undefined;
-
-  if (fallbackElement) {
-    // Build fallback tree
-    builtTree = buildTree(fallbackElement, player);
-
-    // Show fallback UI
-    const ctx: SerializationContext = { buttonCallbacks: new Map(), buttonIndex: 0 };
-    const fallbackForm = new ActionFormData();
-    fallbackForm.title(PROTOCOL_HEADER);
-    serialize(builtTree.tree, fallbackForm, ctx);
-
-    void fallbackForm.show(player);
-  }
-
-  // Execute main component effects immediately
-  for (const id of mainInstanceIds) {
-    const instance = fiberRegistry.getInstance(id);
-    if (instance) {
-      executeEffects(instance);
-      if (!instance.mounted) instance.mounted = true;
-    }
-  }
-
-  // Start loop for subsequent state changes on main tree
-  // During suspension, we always execute effects (including those with no deps)
-  // so they can call setState and update the component state
-  const mainIntervalId = system.runInterval(() => {
-    for (const id of mainInstanceIds) {
-      const instance = fiberRegistry.getInstance(id);
-      if (instance) {
-        // Always run executeEffects during suspension, not just for dirty instances.
-        // This ensures effects with no dependency array can execute on each tick
-        // and potentially call setState to resolve the suspension.
-        executeEffects(instance);
-      }
-    }
-  }, 1);
-
-  // Wait for resolution
-  await waitForStateResolution(mainInstanceIds, timeout);
-
-  // Stop loop and close fallback
-  system.clearRun(mainIntervalId);
-  uiManager.closeAllForms(player);
-
-  if (fallbackElement && builtTree) {
-    // Cleanup fallback instances
-    for (const id of builtTree.instances) {
-      const instance = fiberRegistry.getInstance(id);
-
-      if (instance) {
-        executeEffects(instance, true);
-        fiberRegistry.deleteInstance(id);
-      }
-    }
-  }
 }

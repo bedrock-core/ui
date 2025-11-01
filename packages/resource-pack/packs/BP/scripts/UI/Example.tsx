@@ -1,4 +1,4 @@
-import { JSX, useState } from '@bedrock-core/ui';
+import { JSX, Suspense, useState } from '@bedrock-core/ui';
 import {
   Counter,
   EventCounter,
@@ -14,6 +14,7 @@ import {
   TodoList
 } from './components';
 import { SettingsContext, ThemeContext, type Settings, type Theme } from './contexts';
+import { Fallback } from './Fallback';
 
 export function Example(): JSX.Element {
   // Theme state (shared via context)
@@ -37,7 +38,9 @@ export function Example(): JSX.Element {
         {/* Row 2: Effects and Controllers */}
         <ThemeController onThemeChange={setTheme} />
         <SettingsController onSettingsChange={setSettings} />
-        <EventCounter />
+        <Suspense fallback={<Fallback />} awaitTimeout={5000}>
+          <EventCounter />
+        </Suspense>
         <Counter />
 
         {/* Row 3: Information and Exit */}
