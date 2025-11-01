@@ -15,6 +15,5 @@ export type {
   ContextHook,
   ReducerHook,
   Hook,
-  HookCall,
   EventSignal
 } from './types';

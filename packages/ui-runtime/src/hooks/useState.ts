@@ -1,6 +1,6 @@
 import { StateHook, Hook } from './types';
 import { ComponentInstance } from '../core/types';
-import { fiberRegistry } from '../core/fiber';
+import { getCurrentActiveRegistry } from '../core/fiber';
 
 /**
  * Type guard to check if a hook is a StateHook
@@ -28,7 +28,7 @@ function isNextValueFunction<T>(value: T | ((prevValue: T) => T)): value is (pre
  * setCount(c => c + 1);  // Updater function
  */
 export function useState<T>(initialValue: T | (() => T)): [T, (nextValue: T | ((prevValue: T) => T)) => void] {
-  const instance: ComponentInstance | undefined = fiberRegistry.getCurrentInstance();
+  const instance: ComponentInstance | undefined = getCurrentActiveRegistry().getCurrentInstance();
 
   if (!instance) {
     throw new Error(

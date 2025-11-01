@@ -3,7 +3,7 @@ import { executeEffects } from '../hooks';
 import { FunctionComponent, JSX } from '../jsx';
 import { stopInputLock } from '../util';
 import { isContext } from './context';
-import { fiberRegistry } from './fiber';
+import { FiberRegistry, runWithContext, RenderContext } from './fiber';
 import { ComponentInstance } from './types';
 
 /**
@@ -14,6 +14,7 @@ import { ComponentInstance } from './types';
  * Phase 2 (Logic): Background effects run while form is displayed
  */
 export interface TraversalContext {
+  registry: FiberRegistry; // Session-specific fiber registry for this render
   player: Player;
   parentPath: string[]; // Component path from root: ['Example', 'Counter']
   createdInstances: Set<string>; // Track all instances created during this render
@@ -98,7 +99,7 @@ function expandAndResolveContexts(element: JSX.Element, context: TraversalContex
     );
 
     // Get or create instance for this component
-    const instance = fiberRegistry.getOrCreateInstance(
+    const instance = context.registry.getOrCreateInstance(
       componentId,
       context.player,
       componentFn,
@@ -114,11 +115,17 @@ function expandAndResolveContexts(element: JSX.Element, context: TraversalContex
     }
 
     // Push instance onto fiber stack (makes it available to hooks)
-    fiberRegistry.pushInstance(instance);
+    context.registry.pushInstance(instance);
 
     try {
-      // Call component function (hooks can now access correct instance)
-      const renderedElement = componentFn(element.props);
+      // Set render context for this component so hooks can access it
+      const renderContext: RenderContext = {
+        registry: context.registry,
+        instance,
+      };
+
+      // Call component function within render context (hooks can now access it)
+      const renderedElement = runWithContext(renderContext, () => componentFn(element.props));
 
       // Execute effects after component mounts/updates
       executeEffects(instance);
@@ -142,7 +149,7 @@ function expandAndResolveContexts(element: JSX.Element, context: TraversalContex
       return expandAndResolveContexts(renderedElement, childContext);
     } finally {
       // Always pop instance when done
-      fiberRegistry.popInstance();
+      context.registry.popInstance();
     }
   }
 
@@ -160,7 +167,7 @@ function expandAndResolveContexts(element: JSX.Element, context: TraversalContex
     const contextChildren = providerProps.children;
 
     // Push context value onto the stack
-    fiberRegistry.pushContext(contextObj, contextValue);
+    context.registry.pushContext(contextObj, contextValue);
 
     try {
       // If this provider is the SuspenseContext, propagate the boundary id
@@ -201,7 +208,7 @@ function expandAndResolveContexts(element: JSX.Element, context: TraversalContex
       return processedChildren;
     } finally {
       // Always pop context after processing children
-      fiberRegistry.popContext(contextObj);
+      context.registry.popContext(contextObj);
     }
   }
 
@@ -320,15 +327,18 @@ function normalizeChildren(element: JSX.Element, context: TraversalContext): JSX
  *
  * @param element - Root JSX element to build
  * @param player - Player rendering the component
+ * @param registry - Session-specific fiber registry for this render
  * @returns Fully processed JSX element tree and list of created instances
  */
 export function buildTree(
   element: JSX.Element,
   player: Player,
+  registry: FiberRegistry,
 ): { tree: JSX.Element; instances: Set<string>; instanceToBoundary: Map<string, string> } {
   // Initialize traversal context
   const instanceToBoundary = new Map<string, string>();
   const context: TraversalContext = {
+    registry,
     player,
     parentPath: [],
     createdInstances: new Set(),
@@ -356,11 +366,19 @@ export function buildTree(
  *
  * @param player - Player whose components are being cleaned up
  * @param instanceIds - Set of all instance IDs to clean up
+ * @param registry - Session-specific fiber registry for this render
  */
-export function cleanupComponentTree(player: Player, instanceIds: Set<string>): void {
+export function cleanupComponentTree(
+  player: Player,
+  instanceIds: Set<string>,
+  registry?: FiberRegistry,
+): void {
+  // Use provided registry or create a temporary one for cleanup
+  const effectRegistry = registry || new FiberRegistry();
+
   // Get all instances and sort by depth (deepest first for proper cleanup order)
   const instances = Array.from(instanceIds)
-    .map(id => fiberRegistry.getInstance(id))
+    .map(id => effectRegistry.getInstance(id))
     .filter((inst): inst is ComponentInstance => inst !== undefined)
     .sort((a, b) => {
       // Sort by path depth (more slashes = deeper)
@@ -373,7 +391,7 @@ export function cleanupComponentTree(player: Player, instanceIds: Set<string>): 
   // Clean up each instance (children first, then parents)
   for (const instance of instances) {
     executeEffects(instance, true); // Run cleanup functions
-    fiberRegistry.deleteInstance(instance.id);
+    effectRegistry.deleteInstance(instance.id);
   }
 
   stopInputLock(player);

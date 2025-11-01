@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { useEffect, executeEffects } from '../useEffect';
-import { fiberRegistry } from '../../core/fiber';
+import { FiberRegistry, setCurrentActiveRegistry, RenderContext } from '../../core/fiber';
 import { EffectHook } from '../types';
 import { ComponentInstance } from '@bedrock-core/ui/core/types';
 import { Fragment } from '../../components/Fragment';
@@ -8,8 +8,11 @@ import { world } from '@minecraft/server';
 
 describe('useEffect Hook', () => {
   let instance: ComponentInstance;
+  let registry: FiberRegistry;
+  let renderContext: RenderContext;
 
   beforeEach(() => {
+    registry = new FiberRegistry();
     instance = {
       id: 'test-component',
       player: world.getAllPlayers()[0],
@@ -18,12 +21,17 @@ describe('useEffect Hook', () => {
       hooks: [],
       hookIndex: 0,
       mounted: false,
+      shouldRender: true,
+      registry,
     };
-    fiberRegistry.pushInstance(instance);
+    registry.pushInstance(instance);
+    renderContext = { registry, instance };
+    setCurrentActiveRegistry(renderContext);
   });
 
   afterEach(() => {
-    fiberRegistry.popInstance();
+    registry.popInstance();
+    setCurrentActiveRegistry(null);
   });
 
   describe('Lifecycle & Execution', () => {
@@ -380,7 +388,7 @@ describe('useEffect Hook', () => {
 
   describe('Error Cases', () => {
     it('should throw error when called outside component context', () => {
-      fiberRegistry.popInstance();
+      registry.popInstance();
 
       expect(() => {
         useEffect(() => {});

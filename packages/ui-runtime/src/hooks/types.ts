@@ -53,15 +53,6 @@ export interface ReducerHook<S = unknown, A = unknown> {
 export type Hook = StateHook | EffectHook | RefHook | ContextHook | ReducerHook;
 
 /**
- * Represents a single hook call (useState, useEffect, etc)
- */
-export interface HookCall {
-  type: 'state' | 'effect';
-  index: number;
-  hook: Hook;
-}
-
-/**
  * Type representing a Minecraft event signal that can be subscribed to.
  * Compatible with Minecraft's event signal pattern (world.afterEvents.*, world.beforeEvents.*, etc.)
  *

@@ -1,6 +1,6 @@
 import { RefHook, Hook } from './types';
 import { ComponentInstance } from '../core/types';
-import { fiberRegistry } from '../core/fiber';
+import { getCurrentActiveRegistry } from '../core/fiber';
 
 /**
  * Type guard to check if a hook is a RefHook
@@ -23,7 +23,7 @@ function isRefHook(hook: Hook): hook is RefHook {
  * // Use for DOM references or any mutable value
  */
 export function useRef<T>(initialValue: T): { current: T } {
-  const instance: ComponentInstance | undefined = fiberRegistry.getCurrentInstance();
+  const instance: ComponentInstance | undefined = getCurrentActiveRegistry().getCurrentInstance();
 
   if (!instance) {
     throw new Error(

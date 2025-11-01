@@ -1,6 +1,6 @@
 import { world } from '@minecraft/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fiberRegistry } from '../../core/fiber';
+import { FiberRegistry, setCurrentActiveRegistry, RenderContext } from '../../core/fiber';
 import { StateHook } from '../types';
 import { ComponentInstance } from '@bedrock-core/ui/core/types';
 import { useState } from '../useState';
@@ -8,8 +8,11 @@ import { Fragment } from '../../components';
 
 describe('useState Hook', () => {
   let instance: ComponentInstance;
+  let registry: FiberRegistry;
+  let renderContext: RenderContext;
 
   beforeEach(() => {
+    registry = new FiberRegistry();
     instance = {
       id: 'test-component',
       player: world.getAllPlayers()[0],
@@ -18,12 +21,17 @@ describe('useState Hook', () => {
       hooks: [],
       hookIndex: 0,
       mounted: false,
+      shouldRender: true,
+      registry,
     };
-    fiberRegistry.pushInstance(instance);
+    registry.pushInstance(instance);
+    renderContext = { registry, instance };
+    setCurrentActiveRegistry(renderContext);
   });
 
   afterEach(() => {
-    fiberRegistry.popInstance();
+    registry.popInstance();
+    setCurrentActiveRegistry(null);
   });
 
   describe('Core Functionality', () => {
@@ -115,7 +123,7 @@ describe('useState Hook', () => {
       const [, setCount1] = useState(0);
       setCount1(10);
 
-      fiberRegistry.popInstance();
+      registry.popInstance();
 
       // Second instance with different ID
       const instance2: ComponentInstance = {
@@ -126,8 +134,10 @@ describe('useState Hook', () => {
         hooks: [],
         hookIndex: 0,
         mounted: false,
+        shouldRender: true,
+        registry,
       };
-      fiberRegistry.pushInstance(instance2);
+      registry.pushInstance(instance2);
 
       const [count2, setCount2] = useState(0);
       expect(count2).toBe(0); // Different instance, different state
@@ -140,8 +150,8 @@ describe('useState Hook', () => {
       expect(hook1.value).toBe(10);
       expect(hook2.value).toBe(20);
 
-      fiberRegistry.popInstance();
-      fiberRegistry.pushInstance(instance); // Restore original
+      registry.popInstance();
+      registry.pushInstance(instance); // Restore original
     });
   });
 
@@ -214,7 +224,7 @@ describe('useState Hook', () => {
 
   describe('Error Cases', () => {
     it('should throw error when called outside component context', () => {
-      fiberRegistry.popInstance();
+      registry.popInstance();
 
       expect(() => {
         useState(0);

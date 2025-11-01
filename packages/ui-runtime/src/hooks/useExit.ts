@@ -1,4 +1,4 @@
-import { fiberRegistry } from '../core/fiber';
+import { getCurrentActiveRegistry } from '../core/fiber';
 
 /**
  * Hook that provides a function to properly exit/close the current UI without triggering re-renders.
@@ -43,7 +43,8 @@ import { fiberRegistry } from '../core/fiber';
  * }
  */
 export function useExit(): () => void {
-  const instance = fiberRegistry.getCurrentInstance();
+  const registry = getCurrentActiveRegistry();
+  const instance = registry.getCurrentInstance();
 
   if (!instance) {
     throw new Error(

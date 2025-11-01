@@ -1,5 +1,5 @@
 import { Context } from '../core/context';
-import { fiberRegistry } from '../core/fiber';
+import { getCurrentActiveRegistry } from '../core/fiber';
 import { SuspenseContext, type SuspenseBoundary } from '../components/Suspense';
 
 /**
@@ -25,7 +25,7 @@ import { SuspenseContext, type SuspenseBoundary } from '../components/Suspense';
 export function useContext<T>(context: Context<T>): T {
   // Read current context value from the context stack
   // This works even if there's no current instance (child components)
-  const value: T = fiberRegistry.readContext(context);
+  const value: T = getCurrentActiveRegistry().readContext(context);
 
   // Special handling for SuspenseContext: automatically register this component with the boundary
   // Check if the context is SuspenseContext by comparing objects (since Context<T> is a class)
@@ -34,7 +34,7 @@ export function useContext<T>(context: Context<T>): T {
     const suspenseBoundary = value as unknown as SuspenseBoundary;
     if (suspenseBoundary?.id) {
       // Get the current instance from the fiber stack
-      const currentInstance = fiberRegistry.getCurrentInstance();
+      const currentInstance = getCurrentActiveRegistry().getCurrentInstance();
       if (currentInstance) {
         suspenseBoundary.instanceIds.add(currentInstance.id);
       }

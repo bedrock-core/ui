@@ -1,15 +1,18 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { useContext } from '../useContext';
 import { createContext } from '../../core/context';
-import { fiberRegistry } from '../../core/fiber';
+import { FiberRegistry, setCurrentActiveRegistry, RenderContext } from '../../core/fiber';
 import { ComponentInstance } from '@bedrock-core/ui/core/types';
 import { Fragment } from '../../components/Fragment';
 import { world } from '@minecraft/server';
 
 describe('useContext Hook', () => {
   let instance: ComponentInstance;
+  let registry: FiberRegistry;
+  let renderContext: RenderContext;
 
   beforeEach(() => {
+    registry = new FiberRegistry();
     instance = {
       id: 'test-component',
       player: world.getAllPlayers()[0],
@@ -18,12 +21,17 @@ describe('useContext Hook', () => {
       hooks: [],
       hookIndex: 0,
       mounted: false,
+      shouldRender: true,
+      registry,
     };
-    fiberRegistry.pushInstance(instance);
+    registry.pushInstance(instance);
+    renderContext = { registry, instance };
+    setCurrentActiveRegistry(renderContext);
   });
 
   afterEach(() => {
-    fiberRegistry.popInstance();
+    registry.popInstance();
+    setCurrentActiveRegistry(null);
   });
 
   describe('Core Functionality', () => {
@@ -39,33 +47,33 @@ describe('useContext Hook', () => {
       const TestContext = createContext('default');
 
       // Push a provider value onto the context stack
-      fiberRegistry.pushContext(TestContext, 'provider-value');
+      registry.pushContext(TestContext, 'provider-value');
 
       const value = useContext(TestContext);
 
       expect(value).toBe('provider-value');
 
       // Clean up
-      fiberRegistry.popContext(TestContext);
+      registry.popContext(TestContext);
     });
 
     it('should handle nested providers correctly', () => {
       const TestContext = createContext('default');
 
       // Outer provider
-      fiberRegistry.pushContext(TestContext, 'outer');
+      registry.pushContext(TestContext, 'outer');
       expect(useContext(TestContext)).toBe('outer');
 
       // Inner provider (overrides outer)
-      fiberRegistry.pushContext(TestContext, 'inner');
+      registry.pushContext(TestContext, 'inner');
       expect(useContext(TestContext)).toBe('inner');
 
       // Pop inner - should return to outer
-      fiberRegistry.popContext(TestContext);
+      registry.popContext(TestContext);
       expect(useContext(TestContext)).toBe('outer');
 
       // Pop outer - should return to default
-      fiberRegistry.popContext(TestContext);
+      registry.popContext(TestContext);
       expect(useContext(TestContext)).toBe('default');
     });
 
@@ -74,16 +82,16 @@ describe('useContext Hook', () => {
       const UserContext = createContext<string>('guest');
 
       // Push values for both contexts
-      fiberRegistry.pushContext(ThemeContext, 'dark');
-      fiberRegistry.pushContext(UserContext, 'admin');
+      registry.pushContext(ThemeContext, 'dark');
+      registry.pushContext(UserContext, 'admin');
 
       // Should read correct values independently
       expect(useContext(ThemeContext)).toBe('dark');
       expect(useContext(UserContext)).toBe('admin');
 
       // Clean up
-      fiberRegistry.popContext(UserContext);
-      fiberRegistry.popContext(ThemeContext);
+      registry.popContext(UserContext);
+      registry.popContext(ThemeContext);
     });
   });
 
@@ -92,49 +100,49 @@ describe('useContext Hook', () => {
       const TestContext = createContext(0);
 
       // First render with value 1
-      fiberRegistry.pushContext(TestContext, 1);
+      registry.pushContext(TestContext, 1);
       expect(useContext(TestContext)).toBe(1);
 
       // Simulate re-render by popping and pushing new value
-      fiberRegistry.popContext(TestContext);
-      fiberRegistry.pushContext(TestContext, 2);
+      registry.popContext(TestContext);
+      registry.pushContext(TestContext, 2);
       expect(useContext(TestContext)).toBe(2);
 
       // Clean up
-      fiberRegistry.popContext(TestContext);
+      registry.popContext(TestContext);
     });
 
     it('should work without component instance', () => {
       const TestContext = createContext('default');
 
       // Pop the instance (simulating reading from a child without its own instance)
-      fiberRegistry.popInstance();
+      registry.popInstance();
 
       // Push provider value
-      fiberRegistry.pushContext(TestContext, 'no-instance-value');
+      registry.pushContext(TestContext, 'no-instance-value');
 
       // Should still be able to read context
       const value = useContext(TestContext);
       expect(value).toBe('no-instance-value');
 
       // Clean up
-      fiberRegistry.popContext(TestContext);
+      registry.popContext(TestContext);
 
       // Restore instance for afterEach
-      fiberRegistry.pushInstance(instance);
+      registry.pushInstance(instance);
     });
 
     it('should maintain context stack during tree traversal', () => {
       const TestContext = createContext('root');
 
       // Simulate tree traversal with multiple levels
-      fiberRegistry.pushContext(TestContext, 'level-1');
+      registry.pushContext(TestContext, 'level-1');
       const value1 = useContext(TestContext);
 
-      fiberRegistry.pushContext(TestContext, 'level-2');
+      registry.pushContext(TestContext, 'level-2');
       const value2 = useContext(TestContext);
 
-      fiberRegistry.pushContext(TestContext, 'level-3');
+      registry.pushContext(TestContext, 'level-3');
       const value3 = useContext(TestContext);
 
       expect(value1).toBe('level-1');
@@ -142,13 +150,13 @@ describe('useContext Hook', () => {
       expect(value3).toBe('level-3');
 
       // Pop in reverse order (LIFO)
-      fiberRegistry.popContext(TestContext);
+      registry.popContext(TestContext);
       expect(useContext(TestContext)).toBe('level-2');
 
-      fiberRegistry.popContext(TestContext);
+      registry.popContext(TestContext);
       expect(useContext(TestContext)).toBe('level-1');
 
-      fiberRegistry.popContext(TestContext);
+      registry.popContext(TestContext);
       expect(useContext(TestContext)).toBe('root');
     });
   });
@@ -163,7 +171,7 @@ describe('useContext Hook', () => {
       const UserContext = createContext<User>({ name: 'guest', role: 'viewer' });
 
       const user1 = { name: 'Alice', role: 'admin' };
-      fiberRegistry.pushContext(UserContext, user1);
+      registry.pushContext(UserContext, user1);
 
       const value1 = useContext(UserContext);
       expect(value1).toEqual({ name: 'Alice', role: 'admin' });
@@ -171,34 +179,34 @@ describe('useContext Hook', () => {
 
       // Change to different object
       const user2 = { name: 'Bob', role: 'editor' };
-      fiberRegistry.popContext(UserContext);
-      fiberRegistry.pushContext(UserContext, user2);
+      registry.popContext(UserContext);
+      registry.pushContext(UserContext, user2);
 
       const value2 = useContext(UserContext);
       expect(value2).toEqual({ name: 'Bob', role: 'editor' });
       expect(value2).toBe(user2);
 
       // Clean up
-      fiberRegistry.popContext(UserContext);
+      registry.popContext(UserContext);
     });
 
     it('should handle undefined as valid context value', () => {
       const TestContext = createContext<string | undefined>('default');
 
       // undefined is a valid context value (not null fallback)
-      fiberRegistry.pushContext(TestContext, undefined);
+      registry.pushContext(TestContext, undefined);
 
       const value = useContext(TestContext);
       expect(value).toBeUndefined();
 
       // Clean up
-      fiberRegistry.popContext(TestContext);
+      registry.popContext(TestContext);
     });
 
     it('should return consistent value when reading same context multiple times', () => {
       const TestContext = createContext('default');
 
-      fiberRegistry.pushContext(TestContext, 'consistent');
+      registry.pushContext(TestContext, 'consistent');
 
       const value1 = useContext(TestContext);
       const value2 = useContext(TestContext);
@@ -211,7 +219,7 @@ describe('useContext Hook', () => {
       expect(value2).toBe(value3);
 
       // Clean up
-      fiberRegistry.popContext(TestContext);
+      registry.popContext(TestContext);
     });
   });
 
@@ -220,7 +228,7 @@ describe('useContext Hook', () => {
       const TestContext = createContext('default');
 
       // Pop instance to simulate being outside component
-      fiberRegistry.popInstance();
+      registry.popInstance();
 
       // Should not throw - reads from context stack directly
       expect(() => {
@@ -229,7 +237,7 @@ describe('useContext Hook', () => {
       }).not.toThrow();
 
       // Restore instance for afterEach
-      fiberRegistry.pushInstance(instance);
+      registry.pushInstance(instance);
     });
   });
 });

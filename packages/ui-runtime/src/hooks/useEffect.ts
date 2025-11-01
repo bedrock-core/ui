@@ -1,6 +1,6 @@
-import { fiberRegistry } from '../core/fiber';
 import { EffectHook, Hook } from './types';
 import { ComponentInstance } from '../core/types';
+import { getCurrentActiveRegistry } from '../core/fiber';
 
 /**
  * Type guard to check if a hook is an EffectHook
@@ -59,7 +59,7 @@ function depsChanged(prevDeps: unknown[] | undefined, nextDeps: unknown[] | unde
  * });
  */
 export function useEffect(create: () => void | (() => void), deps?: unknown[]): void {
-  const instance: ComponentInstance | undefined = fiberRegistry.getCurrentInstance();
+  const instance: ComponentInstance | undefined = getCurrentActiveRegistry().getCurrentInstance();
 
   if (!instance) {
     throw new Error(

@@ -1,14 +1,17 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { useExit } from '../useExit';
-import { fiberRegistry } from '../../core/fiber';
+import { FiberRegistry, setCurrentActiveRegistry } from '../../core/fiber';
 import { ComponentInstance } from '@bedrock-core/ui/core/types';
 import { Fragment } from '../../components/Fragment';
 import { world } from '@minecraft/server';
 
 describe('useExit Hook', () => {
   let instance: ComponentInstance;
+  let registry: FiberRegistry;
 
   beforeEach(() => {
+    registry = new FiberRegistry();
+    setCurrentActiveRegistry(registry);
     instance = {
       id: 'test-component',
       player: world.getAllPlayers()[0],
@@ -17,12 +20,15 @@ describe('useExit Hook', () => {
       hooks: [],
       hookIndex: 0,
       mounted: false,
+      shouldRender: true,
+      registry,
     };
-    fiberRegistry.pushInstance(instance);
+    registry.pushInstance(instance);
   });
 
   afterEach(() => {
-    fiberRegistry.popInstance();
+    registry.popInstance();
+    setCurrentActiveRegistry(null);
   });
 
   describe('Core Functionality', () => {
@@ -36,7 +42,7 @@ describe('useExit Hook', () => {
     it('should mark instance as not rendering on exit', () => {
       const exit = useExit();
 
-      expect(instance.shouldRender).toBeUndefined();
+      expect(instance.shouldRender).toBe(true);
 
       exit();
 
@@ -79,7 +85,7 @@ describe('useExit Hook', () => {
       // The current implementation sets shouldRender to false
       // The actual deletion would be handled by the render system
       // when it detects this flag on the next render cycle
-      expect(instance.shouldRender).toBeUndefined();
+      expect(instance.shouldRender).toBe(true);
 
       exit();
 
@@ -208,7 +214,7 @@ describe('useExit Hook', () => {
 
   describe('Error Cases', () => {
     it('should throw error when called outside component context', () => {
-      fiberRegistry.popInstance();
+      registry.popInstance();
 
       expect(() => {
         useExit();

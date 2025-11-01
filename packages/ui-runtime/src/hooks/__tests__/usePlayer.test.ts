@@ -1,14 +1,17 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { usePlayer } from '../usePlayer';
-import { fiberRegistry } from '../../core/fiber';
+import { FiberRegistry, setCurrentActiveRegistry } from '../../core/fiber';
 import { ComponentInstance } from '@bedrock-core/ui/core/types';
 import { Fragment } from '../../components/Fragment';
 import { world } from '@minecraft/server';
 
 describe('usePlayer Hook', () => {
   let instance: ComponentInstance;
+  let registry: FiberRegistry;
 
   beforeEach(() => {
+    registry = new FiberRegistry();
+    setCurrentActiveRegistry(registry);
     instance = {
       id: 'test-component',
       player: world.getAllPlayers()[0],
@@ -17,12 +20,15 @@ describe('usePlayer Hook', () => {
       hooks: [],
       hookIndex: 0,
       mounted: false,
+      shouldRender: true,
+      registry,
     };
-    fiberRegistry.pushInstance(instance);
+    registry.pushInstance(instance);
   });
 
   afterEach(() => {
-    fiberRegistry.popInstance();
+    registry.popInstance();
+    setCurrentActiveRegistry(null);
   });
 
   describe('Core Functionality', () => {
@@ -70,7 +76,7 @@ describe('usePlayer Hook', () => {
       const player1 = usePlayer();
       expect(player1).toBe(instance.player);
 
-      fiberRegistry.popInstance();
+      registry.popInstance();
 
       // Create second player (mock)
       const allPlayers = world.getAllPlayers();
@@ -85,8 +91,10 @@ describe('usePlayer Hook', () => {
         hooks: [],
         hookIndex: 0,
         mounted: false,
+        shouldRender: true,
+        registry,
       };
-      fiberRegistry.pushInstance(instance2);
+      registry.pushInstance(instance2);
 
       const player2 = usePlayer();
       expect(player2).toBe(instance2.player);
@@ -96,14 +104,14 @@ describe('usePlayer Hook', () => {
       expect(player1).toBe(instance.player);
       expect(player2).toBe(instance2.player);
 
-      fiberRegistry.popInstance();
-      fiberRegistry.pushInstance(instance); // Restore original
+      registry.popInstance();
+      registry.pushInstance(instance); // Restore original
     });
   });
 
   describe('Error Cases', () => {
     it('should throw error when called outside component context', () => {
-      fiberRegistry.popInstance();
+      registry.popInstance();
 
       expect(() => {
         usePlayer();

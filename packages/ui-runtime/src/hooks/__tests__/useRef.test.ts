@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { useRef } from '../useRef';
-import { fiberRegistry } from '../../core/fiber';
+import { FiberRegistry, setCurrentActiveRegistry, RenderContext } from '../../core/fiber';
 import { RefHook } from '../types';
 import { ComponentInstance } from '@bedrock-core/ui/core/types';
 import { Fragment } from '../../components/Fragment';
@@ -8,8 +8,11 @@ import { world } from '@minecraft/server';
 
 describe('useRef Hook', () => {
   let instance: ComponentInstance;
+  let registry: FiberRegistry;
+  let renderContext: RenderContext;
 
   beforeEach(() => {
+    registry = new FiberRegistry();
     instance = {
       id: 'test-component',
       player: world.getAllPlayers()[0],
@@ -18,12 +21,17 @@ describe('useRef Hook', () => {
       hooks: [],
       hookIndex: 0,
       mounted: false,
+      shouldRender: true,
+      registry,
     };
-    fiberRegistry.pushInstance(instance);
+    registry.pushInstance(instance);
+    renderContext = { registry, instance };
+    setCurrentActiveRegistry(renderContext);
   });
 
   afterEach(() => {
-    fiberRegistry.popInstance();
+    registry.popInstance();
+    setCurrentActiveRegistry(null);
   });
 
   describe('Core Functionality', () => {
@@ -151,7 +159,7 @@ describe('useRef Hook', () => {
       const ref1 = useRef({ value: 10 });
       ref1.current.value = 100;
 
-      fiberRegistry.popInstance();
+      registry.popInstance();
 
       // Second instance with different ID
       const instance2: ComponentInstance = {
@@ -162,8 +170,10 @@ describe('useRef Hook', () => {
         hooks: [],
         hookIndex: 0,
         mounted: false,
+        shouldRender: true,
+        registry,
       };
-      fiberRegistry.pushInstance(instance2);
+      registry.pushInstance(instance2);
 
       const ref2 = useRef({ value: 20 });
       ref2.current.value = 200;
@@ -179,14 +189,14 @@ describe('useRef Hook', () => {
       expect(hook1.value.current.value).toBe(100);
       expect(hook2.value.current.value).toBe(200);
 
-      fiberRegistry.popInstance();
-      fiberRegistry.pushInstance(instance); // Restore original
+      registry.popInstance();
+      registry.pushInstance(instance); // Restore original
     });
   });
 
   describe('Error Cases', () => {
     it('should throw error when called outside component context', () => {
-      fiberRegistry.popInstance();
+      registry.popInstance();
 
       expect(() => {
         useRef(0);

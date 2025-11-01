@@ -1,5 +1,5 @@
 import { Player } from '@minecraft/server';
-import { fiberRegistry } from '../core/fiber';
+import { getCurrentActiveRegistry } from '../core/fiber';
 
 /**
  * Returns the Player who opened/rendered this form.
@@ -37,7 +37,7 @@ import { fiberRegistry } from '../core/fiber';
  * }
  */
 export function usePlayer(): Player {
-  const instance = fiberRegistry.getCurrentInstance();
+  const instance = getCurrentActiveRegistry().getCurrentInstance();
 
   if (!instance) {
     throw new Error(

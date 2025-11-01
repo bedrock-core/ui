@@ -1,7 +1,7 @@
 import { system } from '@minecraft/server';
 import { executeEffects } from '../hooks';
 import { isStateHook } from '../hooks/useState';
-import { fiberRegistry } from './fiber';
+import { getCurrentActiveRegistry } from './fiber';
 
 /**
  * Executes effects for all components within a suspense boundary, repeatedly re-running them
@@ -20,8 +20,10 @@ export async function handleSuspensionForBoundary(
   // During suspension, we always execute effects (including those with no deps)
   // so they can call setState and update the component state
   const mainIntervalId = system.runInterval(() => {
+    const registry = getCurrentActiveRegistry();
+
     for (const id of boundaryInstanceIds) {
-      const instance = fiberRegistry.getInstance(id);
+      const instance = registry.getInstance(id);
 
       if (instance) {
         // Always run executeEffects during suspension
@@ -56,9 +58,10 @@ async function waitForStateResolution(
 ): Promise<boolean> {
   return new Promise<boolean>(resolve => {
     const startTime = Date.now();
+    const registry = getCurrentActiveRegistry();
 
     const instances = Array.from(instanceIds)
-      .map(id => fiberRegistry.getInstance(id))
+      .map(id => registry.getInstance(id))
       .filter(instance => instance !== undefined);
 
     // If no instance, no hooks, or all states already resolved, resolve immediately

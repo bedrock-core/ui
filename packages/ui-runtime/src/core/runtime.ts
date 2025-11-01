@@ -6,7 +6,7 @@ import { suspenseBoundaryRegistry } from '../components/Suspense';
 import { executeEffects } from '../hooks';
 import type { FunctionComponent, JSX } from '../jsx';
 import { startInputLock } from '../util';
-import { fiberRegistry } from './fiber';
+import { FiberRegistry } from './fiber';
 import { buildTree, cleanupComponentTree } from './render';
 import { PROTOCOL_HEADER, serialize } from './serializer';
 import { handleSuspensionForBoundary } from './suspension';
@@ -14,6 +14,9 @@ import type {
   RenderOptions,
   SerializationContext
 } from './types';
+
+/** Session registry store: one registry per player per UI session */
+const sessionRegistries = new Map<string, FiberRegistry>();
 
 /** Entry point that constructs a Runtime and starts the loop. */
 export async function render(
@@ -24,13 +27,25 @@ export async function render(
   // Convert function component to JSX element if needed
   const rootElement: JSX.Element = typeof root === 'function' ? { type: root, props: {} } : root;
 
-  // Begin: input lock
+  let currentRegistry: FiberRegistry;
+
+  // Begin: input lock and create/retrieve session registry
   if (options.isFirstRender) {
     startInputLock(player);
+    // Create new session registry for this player
+    currentRegistry = new FiberRegistry();
+    sessionRegistries.set(player.id, currentRegistry);
     options.isFirstRender = false;
+  } else {
+    // Retrieve existing session registry for this player
+    currentRegistry = options.registry ?? sessionRegistries.get(player.id) ?? new FiberRegistry();
   }
+
+  // Store registry in options for re-renders
+  options.registry = currentRegistry;
+
   // Build complete tree (instances created, hooks initialized)
-  const builtTree = buildTree(rootElement, player);
+  const builtTree = buildTree(rootElement, player, currentRegistry);
 
   // Populate boundary instance sets using the instanceToBoundary map from buildTree
   // Reset current boundary instance sets to avoid leaking instances across renders
@@ -51,7 +66,10 @@ export async function render(
     builtTree.tree,
     builtTree.instances,
     rootElement,
-    options,
+    {
+      isFirstRender: options.isFirstRender ?? false,
+      registry: currentRegistry,
+    },
     Array.from(suspenseBoundaryRegistry.values()),
   );
 }
@@ -65,7 +83,7 @@ async function presentCycle(
   element: JSX.Element,
   createdInstances: Set<string>,
   rootElement: JSX.Element,
-  options: RenderOptions | undefined,
+  options: Required<RenderOptions>,
   suspenseBoundaries?: SuspenseBoundary[],
 ): Promise<void> {
   // Prepare serialization context for button callbacks
@@ -107,8 +125,7 @@ async function presentCycle(
   // Background effects loop
   const intervalId = system.runInterval(() => {
     for (const id of createdInstances) {
-      const instance = fiberRegistry.getInstance(id);
-
+      const instance = options.registry.getInstance(id);
       if (instance) {
         executeEffects(instance);
       }
@@ -120,7 +137,7 @@ async function presentCycle(
 
     // When player pressed escape key or equivalent, and when we use uiManager.closeAllForms()
     if (response.canceled) {
-      const shouldRender = fiberRegistry.getCurrentInstance()?.shouldRender;
+      const shouldRender = options.registry.getCurrentInstance()?.shouldRender;
 
       console.error(`RC: ${response.canceled}, SR: ${shouldRender}, BR: ${areAllBoundariesResolved()}`);
 
@@ -128,7 +145,7 @@ async function presentCycle(
       if (areAllBoundariesResolved() && shouldRender) {
         system.run(() => { render(player, rootElement, options); });
       } else {
-        cleanupComponentTree(player, createdInstances);
+        cleanupComponentTree(player, createdInstances, options.registry);
       }
 
       return;
@@ -142,12 +159,12 @@ async function presentCycle(
         // Execute button callback
         Promise.resolve(callback())
           .then(() => {
-            const shouldRender = fiberRegistry.getCurrentInstance()?.shouldRender;
+            const shouldRender = options.registry.getCurrentInstance()?.shouldRender;
 
             if (shouldRender) {
               system.run(() => { render(player, rootElement, options); });
             } else {
-              cleanupComponentTree(player, createdInstances);
+              cleanupComponentTree(player, createdInstances, options.registry);
             }
           });
       }

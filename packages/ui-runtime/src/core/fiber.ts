@@ -5,9 +5,92 @@ import { Context } from './context';
 import { ComponentInstance } from './types';
 
 /**
+ * Render context passed to async event handlers and component effects.
+ * Enables manual context propagation for async operations without AsyncLocalStorage.
+ */
+export interface RenderContext {
+  registry: FiberRegistry;
+  instance: ComponentInstance;
+}
+
+/**
+ * Current render context (thread-local equivalent using manual propagation).
+ * Used by hooks to access the active instance and registry.
+ */
+let currentRenderContext: RenderContext | null = null;
+
+/**
+ * Get the currently active render context.
+ * Used by hooks to access registry and current component instance.
+ *
+ * @throws Error if no render context is active
+ */
+export function getCurrentActiveRegistry(): FiberRegistry {
+  if (!currentRenderContext) {
+    throw new Error(
+      'No active render context. Hooks must be called from within a component render or effect.',
+    );
+  }
+
+  return currentRenderContext.registry;
+}
+
+/**
+ * Get the current render context directly (for advanced use cases).
+ *
+ * @throws Error if no render context is active
+ */
+export function getCurrentRenderContext(): RenderContext {
+  if (!currentRenderContext) {
+    throw new Error(
+      'No active render context. Hooks must be called from within a component render or effect.',
+    );
+  }
+
+  return currentRenderContext;
+}
+
+/**
+ * Execute a function within a specific render context.
+ * Ensures async callbacks (e.g., event handlers) execute with correct fiber context.
+ *
+ * @param context - The render context to activate
+ * @param fn - Function to execute
+ * @returns Result of the function
+ *
+ * @example
+ * // Wrap async event handler to maintain fiber context
+ * const wrapped = (event: T) => runWithContext({ registry, instance }, () => handler(event));
+ * world.afterEvents.playerJoin.subscribe(wrapped);
+ */
+export function runWithContext<T>(context: RenderContext, fn: () => T): T {
+  const prevContext = currentRenderContext;
+
+  currentRenderContext = context;
+
+  try {
+    return fn();
+  } finally {
+    currentRenderContext = prevContext;
+  }
+}
+
+/**
+ * Set the current render context globally (for testing and advanced scenarios).
+ * Used by tests to establish fiber context before invoking hooks.
+ *
+ * @param context - The context to set, or null to clear
+ *
+ * @internal
+ */
+export function setCurrentActiveRegistry(context: RenderContext | null): void {
+  currentRenderContext = context;
+}
+
+/**
  * Global fiber registry that manages component instances and their state
  */
-class FiberRegistry {
+export class FiberRegistry {
   private _instances: Map<string, ComponentInstance> = new Map();
   private _instanceStack: ComponentInstance[] = [];
   private _contextStack: Map<Context<unknown>, unknown[]> = new Map();
@@ -33,6 +116,7 @@ class FiberRegistry {
         hookIndex: 0,
         mounted: false,
         shouldRender: true,
+        registry: this,
       };
 
       this._instances.set(id, instance);
@@ -155,5 +239,3 @@ class FiberRegistry {
     return context.defaultValue;
   }
 }
-
-export const fiberRegistry = new FiberRegistry();

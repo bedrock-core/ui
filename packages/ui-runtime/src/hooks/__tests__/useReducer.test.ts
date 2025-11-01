@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { useReducer } from '../useReducer';
-import { fiberRegistry } from '../../core/fiber';
+import { FiberRegistry, setCurrentActiveRegistry, RenderContext } from '../../core/fiber';
 import { ReducerHook } from '../types';
 import { ComponentInstance } from '@bedrock-core/ui/core/types';
 import { Fragment } from '../../components/Fragment';
@@ -8,8 +8,11 @@ import { world } from '@minecraft/server';
 
 describe('useReducer Hook', () => {
   let instance: ComponentInstance;
+  let registry: FiberRegistry;
+  let renderContext: RenderContext;
 
   beforeEach(() => {
+    registry = new FiberRegistry();
     instance = {
       id: 'test-component',
       player: world.getAllPlayers()[0],
@@ -18,12 +21,17 @@ describe('useReducer Hook', () => {
       hooks: [],
       hookIndex: 0,
       mounted: false,
+      shouldRender: true,
+      registry,
     };
-    fiberRegistry.pushInstance(instance);
+    registry.pushInstance(instance);
+    renderContext = { registry, instance };
+    setCurrentActiveRegistry(renderContext);
   });
 
   afterEach(() => {
-    fiberRegistry.popInstance();
+    registry.popInstance();
+    setCurrentActiveRegistry(null);
   });
 
   describe('Core Functionality', () => {
@@ -319,7 +327,7 @@ describe('useReducer Hook', () => {
       const [, dispatch1] = useReducer(reducer, 0);
       dispatch1({ type: 'add', value: 10 });
 
-      fiberRegistry.popInstance();
+      registry.popInstance();
 
       // Second instance with different ID
       const instance2: ComponentInstance = {
@@ -330,8 +338,10 @@ describe('useReducer Hook', () => {
         hooks: [],
         hookIndex: 0,
         mounted: false,
+        shouldRender: true,
+        registry,
       };
-      fiberRegistry.pushInstance(instance2);
+      registry.pushInstance(instance2);
 
       const [, dispatch2] = useReducer(reducer, 0);
       dispatch2({ type: 'add', value: 20 });
@@ -343,14 +353,14 @@ describe('useReducer Hook', () => {
       expect(hook1.state).toBe(10);
       expect(hook2.state).toBe(20);
 
-      fiberRegistry.popInstance();
-      fiberRegistry.pushInstance(instance); // Restore original
+      registry.popInstance();
+      registry.pushInstance(instance); // Restore original
     });
   });
 
   describe('Error Cases', () => {
     it('should throw error when called outside component context', () => {
-      fiberRegistry.popInstance();
+      registry.popInstance();
 
       type Action = { type: 'increment' };
       const reducer = (state: number, _action: Action): number => state + 1;

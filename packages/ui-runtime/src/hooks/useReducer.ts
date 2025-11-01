@@ -1,6 +1,6 @@
 import { ReducerHook, Hook } from './types';
 import { ComponentInstance } from '../core/types';
-import { fiberRegistry } from '../core/fiber';
+import { getCurrentActiveRegistry } from '../core/fiber';
 
 /**
  * Type guard to check if a hook is a ReducerHook
@@ -53,7 +53,7 @@ export function useReducer<S, A, I = S>(
   initialArg: I,
   init?: (initialArg: I) => S,
 ): [S, (action: A) => void] {
-  const instance: ComponentInstance | undefined = fiberRegistry.getCurrentInstance();
+  const instance: ComponentInstance | undefined = getCurrentActiveRegistry().getCurrentInstance();
 
   if (!instance) {
     throw new Error(
