@@ -16,7 +16,7 @@ import type {
 } from './types';
 
 /** Session registry store: one registry per player per UI session */
-const sessionRegistries = new Map<string, FiberRegistry>();
+export const sessionRegistries = new Map<string, FiberRegistry>();
 
 /** Entry point that constructs a Runtime and starts the loop. */
 export async function render(
@@ -33,20 +33,18 @@ export async function render(
   if (options.isFirstRender) {
     startInputLock(player);
     // Create new session registry for this player
-    currentRegistry = new FiberRegistry();
+    currentRegistry = new FiberRegistry(player);
     sessionRegistries.set(player.id, currentRegistry);
     options.isFirstRender = false;
   } else {
     // Retrieve existing session registry for this player
-    currentRegistry = options.registry ?? sessionRegistries.get(player.id) ?? new FiberRegistry();
+    currentRegistry = sessionRegistries.get(player.id) ?? new FiberRegistry(player);
   }
 
-  // Store registry in options for re-renders
-  options.registry = currentRegistry;
-
   // Build complete tree (instances created, hooks initialized)
-  const builtTree = buildTree(rootElement, player, currentRegistry);
+  const builtTree = buildTree(rootElement, player);
 
+  // TODO CHANGE TO BE INSIDE FIBERS
   // Populate boundary instance sets using the instanceToBoundary map from buildTree
   // Reset current boundary instance sets to avoid leaking instances across renders
   for (const boundary of suspenseBoundaryRegistry.values()) {
@@ -66,10 +64,7 @@ export async function render(
     builtTree.tree,
     builtTree.instances,
     rootElement,
-    {
-      isFirstRender: options.isFirstRender ?? false,
-      registry: currentRegistry,
-    },
+    options,
     Array.from(suspenseBoundaryRegistry.values()),
   );
 }
@@ -83,7 +78,7 @@ async function presentCycle(
   element: JSX.Element,
   createdInstances: Set<string>,
   rootElement: JSX.Element,
-  options: Required<RenderOptions>,
+  options: RenderOptions,
   suspenseBoundaries?: SuspenseBoundary[],
 ): Promise<void> {
   // Prepare serialization context for button callbacks
@@ -125,7 +120,9 @@ async function presentCycle(
   // Background effects loop
   const intervalId = system.runInterval(() => {
     for (const id of createdInstances) {
-      const instance = options.registry.getInstance(id);
+      const currentRegistry = sessionRegistries.get(player.id);
+      const instance = currentRegistry?.getInstance(id);
+
       if (instance) {
         executeEffects(instance);
       }
@@ -137,7 +134,10 @@ async function presentCycle(
 
     // When player pressed escape key or equivalent, and when we use uiManager.closeAllForms()
     if (response.canceled) {
-      const shouldRender = options.registry.getCurrentInstance()?.shouldRender;
+      const currentRegistry = sessionRegistries.get(player.id);
+      if (!currentRegistry) return;
+
+      const shouldRender = currentRegistry?.getCurrentInstance()?.shouldRender;
 
       console.error(`RC: ${response.canceled}, SR: ${shouldRender}, BR: ${areAllBoundariesResolved()}`);
 
@@ -145,7 +145,7 @@ async function presentCycle(
       if (areAllBoundariesResolved() && shouldRender) {
         system.run(() => { render(player, rootElement, options); });
       } else {
-        cleanupComponentTree(player, createdInstances, options.registry);
+        cleanupComponentTree(player, createdInstances, currentRegistry);
       }
 
       return;
@@ -159,12 +159,16 @@ async function presentCycle(
         // Execute button callback
         Promise.resolve(callback())
           .then(() => {
-            const shouldRender = options.registry.getCurrentInstance()?.shouldRender;
+            const currentRegistry = sessionRegistries.get(player.id);
+
+            if (!currentRegistry) return;
+
+            const shouldRender = currentRegistry.getCurrentInstance()?.shouldRender;
 
             if (shouldRender) {
               system.run(() => { render(player, rootElement, options); });
             } else {
-              cleanupComponentTree(player, createdInstances, options.registry);
+              cleanupComponentTree(player, createdInstances, currentRegistry);
             }
           });
       }

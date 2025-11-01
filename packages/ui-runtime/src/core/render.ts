@@ -3,8 +3,9 @@ import { executeEffects } from '../hooks';
 import { FunctionComponent, JSX } from '../jsx';
 import { stopInputLock } from '../util';
 import { isContext } from './context';
-import { FiberRegistry, runWithContext, RenderContext } from './fiber';
+import { FiberRegistry } from './fiber';
 import { ComponentInstance } from './types';
+import { sessionRegistries } from './runtime';
 
 /**
  * Context passed through tree traversal during rendering phase.
@@ -14,8 +15,6 @@ import { ComponentInstance } from './types';
  * Phase 2 (Logic): Background effects run while form is displayed
  */
 export interface TraversalContext {
-  registry: FiberRegistry; // Session-specific fiber registry for this render
-  player: Player;
   parentPath: string[]; // Component path from root: ['Example', 'Counter']
   createdInstances: Set<string>; // Track all instances created during this render
   currentSuspenseBoundary?: string; // Track which Suspense boundary we're currently in
@@ -74,7 +73,13 @@ function generateComponentId(
  * @param context - Traversal context with player, parent path, and instance tracking
  * @returns Element with all function components expanded and contexts resolved
  */
-function expandAndResolveContexts(element: JSX.Element, context: TraversalContext): JSX.Element {
+function expandAndResolveContexts(element: JSX.Element, context: TraversalContext, player: Player): JSX.Element {
+  const currentRegistry = sessionRegistries.get(player.id);
+
+  if (!currentRegistry) {
+    throw new Error('No FiberRegistry found for player: ' + player.name);
+  }
+
   // Step 1: Handle function components - CREATE INSTANCE FOR EACH
   if (typeof element.type === 'function') {
     const componentFn = element.type as FunctionComponent;
@@ -91,17 +96,17 @@ function expandAndResolveContexts(element: JSX.Element, context: TraversalContex
       effectiveKey = `__auto_${count}`;
       context.idCounters.set(pathKey, count + 1);
     }
+
     const componentId = generateComponentId(
-      context.player,
+      player,
       componentFn,
       effectiveKey,
       context.parentPath,
     );
 
     // Get or create instance for this component
-    const instance = context.registry.getOrCreateInstance(
+    const instance = currentRegistry.getOrCreateInstance(
       componentId,
-      context.player,
       componentFn,
       element.props,
     );
@@ -115,17 +120,11 @@ function expandAndResolveContexts(element: JSX.Element, context: TraversalContex
     }
 
     // Push instance onto fiber stack (makes it available to hooks)
-    context.registry.pushInstance(instance);
+    currentRegistry.pushInstance(instance);
 
     try {
-      // Set render context for this component so hooks can access it
-      const renderContext: RenderContext = {
-        registry: context.registry,
-        instance,
-      };
-
       // Call component function within render context (hooks can now access it)
-      const renderedElement = runWithContext(renderContext, () => componentFn(element.props));
+      const renderedElement = componentFn(element.props);
 
       // Execute effects after component mounts/updates
       executeEffects(instance);
@@ -146,10 +145,10 @@ function expandAndResolveContexts(element: JSX.Element, context: TraversalContex
       // returned tree under the Provider, so effects can run while fallback shows.
 
       // Recursively process the rendered result with child context (visual tree)
-      return expandAndResolveContexts(renderedElement, childContext);
+      return expandAndResolveContexts(renderedElement, childContext, player);
     } finally {
       // Always pop instance when done
-      context.registry.popInstance();
+      currentRegistry.popInstance();
     }
   }
 
@@ -167,7 +166,7 @@ function expandAndResolveContexts(element: JSX.Element, context: TraversalContex
     const contextChildren = providerProps.children;
 
     // Push context value onto the stack
-    context.registry.pushContext(contextObj, contextValue);
+    currentRegistry.pushContext(contextObj, contextValue);
 
     try {
       // If this provider is the SuspenseContext, propagate the boundary id
@@ -187,7 +186,7 @@ function expandAndResolveContexts(element: JSX.Element, context: TraversalContex
               return null;
             }
 
-            return expandAndResolveContexts(child, providerChildContext);
+            return expandAndResolveContexts(child, providerChildContext, player);
           })
           .filter((child): child is JSX.Element => child !== null);
 
@@ -196,7 +195,7 @@ function expandAndResolveContexts(element: JSX.Element, context: TraversalContex
           props: { children: resolvedChildren },
         };
       } else if (contextChildren && typeof contextChildren === 'object' && 'type' in contextChildren) {
-        processedChildren = expandAndResolveContexts(contextChildren, providerChildContext);
+        processedChildren = expandAndResolveContexts(contextChildren, providerChildContext, player);
       } else {
         // No valid children - return empty fragment
         processedChildren = {
@@ -208,7 +207,7 @@ function expandAndResolveContexts(element: JSX.Element, context: TraversalContex
       return processedChildren;
     } finally {
       // Always pop context after processing children
-      context.registry.popContext(contextObj);
+      currentRegistry.popContext(contextObj);
     }
   }
 
@@ -225,7 +224,7 @@ function expandAndResolveContexts(element: JSX.Element, context: TraversalContex
             return null;
           }
 
-          return expandAndResolveContexts(child, context);
+          return expandAndResolveContexts(child, context, player);
         })
         .filter((child): child is JSX.Element => child !== null);
 
@@ -244,7 +243,7 @@ function expandAndResolveContexts(element: JSX.Element, context: TraversalContex
         type: element.type,
         props: {
           ...element.props,
-          children: expandAndResolveContexts(children, context),
+          children: expandAndResolveContexts(children, context, player),
         },
       };
     }
@@ -333,13 +332,10 @@ function normalizeChildren(element: JSX.Element, context: TraversalContext): JSX
 export function buildTree(
   element: JSX.Element,
   player: Player,
-  registry: FiberRegistry,
 ): { tree: JSX.Element; instances: Set<string>; instanceToBoundary: Map<string, string> } {
   // Initialize traversal context
   const instanceToBoundary = new Map<string, string>();
   const context: TraversalContext = {
-    registry,
-    player,
     parentPath: [],
     createdInstances: new Set(),
     currentSuspenseBoundary: undefined,
@@ -349,7 +345,7 @@ export function buildTree(
 
   // Phase 1: Expand function components and resolve contexts
   // This creates instances for ALL components in the tree
-  let result = expandAndResolveContexts(element, context);
+  let result = expandAndResolveContexts(element, context, player);
 
   // Phase 2: Normalize children structure
   result = normalizeChildren(result, context);
@@ -371,14 +367,11 @@ export function buildTree(
 export function cleanupComponentTree(
   player: Player,
   instanceIds: Set<string>,
-  registry?: FiberRegistry,
+  registry: FiberRegistry,
 ): void {
-  // Use provided registry or create a temporary one for cleanup
-  const effectRegistry = registry || new FiberRegistry();
-
   // Get all instances and sort by depth (deepest first for proper cleanup order)
   const instances = Array.from(instanceIds)
-    .map(id => effectRegistry.getInstance(id))
+    .map(id => registry.getInstance(id))
     .filter((inst): inst is ComponentInstance => inst !== undefined)
     .sort((a, b) => {
       // Sort by path depth (more slashes = deeper)
@@ -391,7 +384,7 @@ export function cleanupComponentTree(
   // Clean up each instance (children first, then parents)
   for (const instance of instances) {
     executeEffects(instance, true); // Run cleanup functions
-    effectRegistry.deleteInstance(instance.id);
+    registry.deleteInstance(instance.id);
   }
 
   stopInputLock(player);

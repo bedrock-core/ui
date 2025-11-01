@@ -2,7 +2,6 @@ import { Player } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
 import { Hook } from '../hooks/types';
 import { FunctionComponent, JSX } from '../jsx';
-import type { FiberRegistry } from './fiber';
 
 // For now we will only be supporting ActionFormData, in future will add support for ModalFormData for "Forms"
 export type CoreUIFormData = ActionFormData;
@@ -30,10 +29,7 @@ export interface SerializationContext {
 /**
  * Options for render() function.
  */
-export interface RenderOptions {
-  isFirstRender?: boolean;
-  registry?: FiberRegistry;
-}
+export interface RenderOptions { isFirstRender: boolean }
 
 export class SerializationError extends Error {
   constructor(message: string) {
@@ -51,6 +47,5 @@ export interface ComponentInstance {
   hookIndex: number;
   mounted: boolean;
   shouldRender: boolean;
-  registry: FiberRegistry;
 }
 

@@ -3,104 +3,26 @@ import { Player } from '@minecraft/server';
 import { Logger } from '../util';
 import { Context } from './context';
 import { ComponentInstance } from './types';
-
-/**
- * Render context passed to async event handlers and component effects.
- * Enables manual context propagation for async operations without AsyncLocalStorage.
- */
-export interface RenderContext {
-  registry: FiberRegistry;
-  instance: ComponentInstance;
-}
-
-/**
- * Current render context (thread-local equivalent using manual propagation).
- * Used by hooks to access the active instance and registry.
- */
-let currentRenderContext: RenderContext | null = null;
-
-/**
- * Get the currently active render context.
- * Used by hooks to access registry and current component instance.
- *
- * @throws Error if no render context is active
- */
-export function getCurrentActiveRegistry(): FiberRegistry {
-  if (!currentRenderContext) {
-    throw new Error(
-      'No active render context. Hooks must be called from within a component render or effect.',
-    );
-  }
-
-  return currentRenderContext.registry;
-}
-
-/**
- * Get the current render context directly (for advanced use cases).
- *
- * @throws Error if no render context is active
- */
-export function getCurrentRenderContext(): RenderContext {
-  if (!currentRenderContext) {
-    throw new Error(
-      'No active render context. Hooks must be called from within a component render or effect.',
-    );
-  }
-
-  return currentRenderContext;
-}
-
-/**
- * Execute a function within a specific render context.
- * Ensures async callbacks (e.g., event handlers) execute with correct fiber context.
- *
- * @param context - The render context to activate
- * @param fn - Function to execute
- * @returns Result of the function
- *
- * @example
- * // Wrap async event handler to maintain fiber context
- * const wrapped = (event: T) => runWithContext({ registry, instance }, () => handler(event));
- * world.afterEvents.playerJoin.subscribe(wrapped);
- */
-export function runWithContext<T>(context: RenderContext, fn: () => T): T {
-  const prevContext = currentRenderContext;
-
-  currentRenderContext = context;
-
-  try {
-    return fn();
-  } finally {
-    currentRenderContext = prevContext;
-  }
-}
-
-/**
- * Set the current render context globally (for testing and advanced scenarios).
- * Used by tests to establish fiber context before invoking hooks.
- *
- * @param context - The context to set, or null to clear
- *
- * @internal
- */
-export function setCurrentActiveRegistry(context: RenderContext | null): void {
-  currentRenderContext = context;
-}
+import { isEffectHook } from '../hooks/useEffect';
 
 /**
  * Global fiber registry that manages component instances and their state
  */
 export class FiberRegistry {
+  private _player: Player;
   private _instances: Map<string, ComponentInstance> = new Map();
   private _instanceStack: ComponentInstance[] = [];
   private _contextStack: Map<Context<unknown>, unknown[]> = new Map();
+
+  constructor(player: Player) {
+    this._player = player;
+  }
 
   /**
    * Create or get a component instance
    */
   getOrCreateInstance(
     id: string,
-    player: Player,
     componentFn: FunctionComponent,
     props: JSX.Props,
   ): ComponentInstance {
@@ -109,14 +31,13 @@ export class FiberRegistry {
     if (!instance) {
       instance = {
         id,
-        player,
+        player: this._player,
         componentType: componentFn,
         props,
         hooks: [],
         hookIndex: 0,
         mounted: false,
         shouldRender: true,
-        registry: this,
       };
 
       this._instances.set(id, instance);
@@ -143,13 +64,11 @@ export class FiberRegistry {
 
     if (instance) {
       // Run cleanup for all effects
-      for (const hook of instance.hooks) {
-        if (hook && 'cleanup' in hook && hook.cleanup) {
-          try {
-            hook.cleanup();
-          } catch (error) {
-            Logger.error(`[FiberRegistry] Error running effect cleanup: ${error}`);
-          }
+      for (const hook of instance.hooks.filter(isEffectHook)) {
+        try {
+          hook.cleanup?.();
+        } catch (error) {
+          Logger.error(`[FiberRegistry] Error running ${instance.id} effect cleanup: ${error}`);
         }
       }
 
@@ -202,7 +121,7 @@ export class FiberRegistry {
   pushContext<T>(context: Context<T>, value: T): void {
     const stack = this._contextStack.get(context as Context<unknown>) || [];
 
-    stack.push(value as unknown);
+    stack.push(value);
 
     this._contextStack.set(context as Context<unknown>, stack);
   }

@@ -1,11 +1,11 @@
 import { EffectHook, Hook } from './types';
 import { ComponentInstance } from '../core/types';
-import { getCurrentActiveRegistry } from '../core/fiber';
+import { sessionRegistries } from '../core/runtime';
 
 /**
  * Type guard to check if a hook is an EffectHook
  */
-function isEffectHook(hook: Hook): hook is EffectHook {
+export function isEffectHook(hook: Hook): hook is EffectHook {
   return hook.type === 'effect';
 }
 
@@ -59,7 +59,8 @@ function depsChanged(prevDeps: unknown[] | undefined, nextDeps: unknown[] | unde
  * });
  */
 export function useEffect(create: () => void | (() => void), deps?: unknown[]): void {
-  const instance: ComponentInstance | undefined = getCurrentActiveRegistry().getCurrentInstance();
+  const currentRegistry = sessionRegistries.get(player.id);
+  const instance: ComponentInstance | undefined = currentRegistry?.getCurrentInstance();
 
   if (!instance) {
     throw new Error(
