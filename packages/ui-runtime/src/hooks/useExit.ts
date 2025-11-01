@@ -53,7 +53,7 @@ export function useExit(): () => void {
   }
 
   return (): void => {
-    // Mark instance as programmatic close to prevent re-renders
-    instance.shouldClose = true;
+    // Mark instance as not renderable to trigger close
+    instance.shouldRender = false;
   };
 }

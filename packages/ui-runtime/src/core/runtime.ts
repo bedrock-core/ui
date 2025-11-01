@@ -96,11 +96,8 @@ async function presentCycle(
           // Mark this boundary as resolved
           boundaries.set(boundary.id, true);
 
-          console.log(`[Suspense] Boundary ${boundary.id} resolved.`);
-
           // Only close the form when ALL started boundaries have resolved
           if (areAllBoundariesResolved()) {
-            console.log('[Suspense] All boundaries resolved, re-rendering UI.');
             uiManager.closeAllForms(player);
           }
         });
@@ -121,9 +118,14 @@ async function presentCycle(
   await form.show(player).then(response => {
     system.clearRun(intervalId);
 
-    // When player pressed escape key or equivalent and when we use uiManager.closeAllForms()
+    // When player pressed escape key or equivalent, and when we use uiManager.closeAllForms()
     if (response.canceled) {
-      if (areAllBoundariesResolved()) {
+      const shouldRender = fiberRegistry.getCurrentInstance()?.shouldRender;
+
+      console.error(`RC: ${response.canceled}, SR: ${shouldRender}, BR: ${areAllBoundariesResolved()}`);
+
+      // Player pressed ESC → re-render if boundaries unresolved and should render
+      if (areAllBoundariesResolved() && shouldRender) {
         system.run(() => { render(player, rootElement, options); });
       } else {
         cleanupComponentTree(player, createdInstances);
@@ -140,12 +142,12 @@ async function presentCycle(
         // Execute button callback
         Promise.resolve(callback())
           .then(() => {
-            let shouldClose = Array.from(createdInstances).some(id => fiberRegistry.getInstance(id)?.shouldClose);
+            const shouldRender = fiberRegistry.getCurrentInstance()?.shouldRender;
 
-            if (shouldClose) {
-              cleanupComponentTree(player, createdInstances);
-            } else {
+            if (shouldRender) {
               system.run(() => { render(player, rootElement, options); });
+            } else {
+              cleanupComponentTree(player, createdInstances);
             }
           });
       }

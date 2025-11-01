@@ -3,6 +3,7 @@ import { ButtonPushAfterEvent, Entity, Player, world } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
 import { MinecraftBlockTypes, MinecraftEntityTypes } from '@minecraft/vanilla-data';
 import { Example } from './UI/Example';
+import { fiberRegistry } from '@bedrock-core/ui/core/fiber';
 
 const isPlayer = (source: Entity): source is Player => source.typeId === MinecraftEntityTypes.Player;
 
@@ -18,6 +19,13 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
       form.title('test');
       form.label('test');
       form.show(source);
+    }
+
+    if (block.typeId === MinecraftBlockTypes.BirchButton) {
+      console.log(`Fiber Registry length: ${fiberRegistry.getAllInstances().length}`);
+      fiberRegistry.getAllInstances().forEach(instance => {
+        console.log(JSON.stringify(instance, null, 2));
+      });
     }
   }
 });

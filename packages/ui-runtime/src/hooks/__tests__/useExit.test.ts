@@ -33,24 +33,24 @@ describe('useExit Hook', () => {
       expect(typeof exit).toBe('function');
     });
 
-    it('should mark instance as closing on exit', () => {
+    it('should mark instance as not rendering on exit', () => {
       const exit = useExit();
 
-      expect(instance.shouldClose).toBeUndefined();
+      expect(instance.shouldRender).toBeUndefined();
 
       exit();
 
-      expect(instance.shouldClose).toBe(true);
+      expect(instance.shouldRender).toBe(false);
     });
 
-    it('should prevent re-renders when closing', () => {
+    it('should prevent re-renders when exiting', () => {
       const exit = useExit();
 
       // Call exit
       exit();
 
-      // isProgrammaticClose is set, which should prevent re-renders in render logic
-      expect(instance.shouldClose).toBe(true);
+      // shouldRender is set to false, which should prevent re-renders in render logic
+      expect(instance.shouldRender).toBe(false);
     });
 
     it('should run cleanup effects on exit', () => {
@@ -68,22 +68,22 @@ describe('useExit Hook', () => {
       const exit = useExit();
       exit();
 
-      // The current implementation just sets isProgrammaticClose
+      // The current implementation sets shouldRender to false
       // Cleanup would be handled by the render system when it detects this flag
-      expect(instance.shouldClose).toBe(true);
+      expect(instance.shouldRender).toBe(false);
     });
 
     it('should delete instance from registry on exit', () => {
       const exit = useExit();
 
-      // The current implementation sets isProgrammaticClose
+      // The current implementation sets shouldRender to false
       // The actual deletion would be handled by the render system
       // when it detects this flag on the next render cycle
-      expect(instance.shouldClose).toBeUndefined();
+      expect(instance.shouldRender).toBeUndefined();
 
       exit();
 
-      expect(instance.shouldClose).toBe(true);
+      expect(instance.shouldRender).toBe(false);
       // Instance deletion would happen in the render system's cleanup phase
     });
   });
@@ -109,7 +109,7 @@ describe('useExit Hook', () => {
 
       // All should work correctly
       exit1();
-      expect(instance.shouldClose).toBe(true);
+      expect(instance.shouldRender).toBe(false);
     });
 
     it('should handle multiple exit calls safely', () => {
@@ -117,11 +117,11 @@ describe('useExit Hook', () => {
 
       // First call
       exit();
-      expect(instance.shouldClose).toBe(true);
+      expect(instance.shouldRender).toBe(false);
 
       // Second call should be idempotent (no error)
       expect(() => exit()).not.toThrow();
-      expect(instance.shouldClose).toBe(true);
+      expect(instance.shouldRender).toBe(false);
     });
 
     it('should work when bound to button onClick', () => {
@@ -134,7 +134,7 @@ describe('useExit Hook', () => {
 
       // Should work without errors
       expect(() => handleClick()).not.toThrow();
-      expect(instance.shouldClose).toBe(true);
+      expect(instance.shouldRender).toBe(false);
     });
   });
 
@@ -162,9 +162,9 @@ describe('useExit Hook', () => {
       const exit = useExit();
       exit();
 
-      // Current implementation sets isProgrammaticClose
+      // Current implementation sets shouldRender to false
       // Cleanup order would be enforced by the render system
-      expect(instance.shouldClose).toBe(true);
+      expect(instance.shouldRender).toBe(false);
     });
 
     it('should run all registered effect cleanups', () => {
@@ -200,9 +200,9 @@ describe('useExit Hook', () => {
       const exit = useExit();
       exit();
 
-      // Current implementation marks for close
+      // Current implementation marks for exit (shouldRender = false)
       // Actual cleanup execution would be handled by the render system
-      expect(instance.shouldClose).toBe(true);
+      expect(instance.shouldRender).toBe(false);
     });
   });
 

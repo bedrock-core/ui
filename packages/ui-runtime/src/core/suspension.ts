@@ -15,20 +15,7 @@ import { fiberRegistry } from './fiber';
 export async function handleSuspensionForBoundary(
   boundaryInstanceIds: Set<string>,
   timeout: number,
-): Promise<void> {
-  // Execute main component effects immediately
-  for (const id of boundaryInstanceIds) {
-    const instance = fiberRegistry.getInstance(id);
-
-    if (instance) {
-      executeEffects(instance);
-
-      if (!instance.mounted) {
-        instance.mounted = true;
-      }
-    }
-  }
-
+): Promise<boolean> {
   // Start loop for subsequent state changes on boundary instances
   // During suspension, we always execute effects (including those with no deps)
   // so they can call setState and update the component state
@@ -41,15 +28,20 @@ export async function handleSuspensionForBoundary(
         // This ensures effects with no dependency array can execute on each tick
         // and potentially call setState to resolve the suspension.
         executeEffects(instance);
+
+        // Any instances within the boundary should be marked to render again once form closes
+        instance.shouldRender = true;
       }
     }
   }, 1);
 
   // Wait for resolution of this boundary
-  await waitForStateResolution(boundaryInstanceIds, timeout);
+  const resolved = await waitForStateResolution(boundaryInstanceIds, timeout);
 
   // Stop loop
   system.clearRun(mainIntervalId);
+
+  return resolved;
 }
 
 /**
@@ -65,10 +57,13 @@ async function waitForStateResolution(
   return new Promise<boolean>(resolve => {
     const startTime = Date.now();
 
+    const instances = Array.from(instanceIds)
+      .map(id => fiberRegistry.getInstance(id))
+      .filter(instance => instance !== undefined);
+
     // If no instance, no hooks, or all states already resolved, resolve immediately
-    const allStatesResolved: () => boolean = () => Array.from(instanceIds)
-      .every(id => fiberRegistry
-        .getInstance(id)?.hooks
+    const allStatesResolved: () => boolean = () => instances
+      .every(instance => instance?.hooks
         .filter(isStateHook)
         .every(hook => !Object.is(hook.value, hook.initialValue))
         ?? true);
@@ -83,7 +78,7 @@ async function waitForStateResolution(
       const elapsed = Date.now() - startTime;
 
       if (elapsed >= timeoutMs) {
-        console.warn(`[Suspense] Timeout of ${timeoutMs}ms while waiting for state resolution of instances: ${Array.from(instanceIds).join('\n')}`);
+        console.warn(`[Suspense] Timeout of ${timeoutMs}ms while waiting for state resolution of instances.`);
         system.clearRun(intervalId);
 
         resolve(false);

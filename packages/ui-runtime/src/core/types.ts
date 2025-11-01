@@ -45,6 +45,6 @@ export interface ComponentInstance {
   hooks: Hook[];
   hookIndex: number;
   mounted: boolean;
-  shouldClose?: boolean;
+  shouldRender: boolean;
 }
 
