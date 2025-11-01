@@ -1,4 +1,4 @@
-import { JSX, Panel, Text, Button, FunctionComponent, useState, useEffect } from '@bedrock-core/ui';
+import { JSX, Panel, Text, Button, FunctionComponent, useState, useEffect, useRef } from '@bedrock-core/ui';
 import { system } from '@minecraft/server';
 
 /**
@@ -9,6 +9,7 @@ import { system } from '@minecraft/server';
 export const Counter: FunctionComponent = (): JSX.Element => {
   const [count, setCount] = useState(0);
   const [isAutoIncrement, setIsAutoIncrement] = useState(false);
+  const counterRef = useRef<number | undefined>(undefined);
 
   // Auto-increment every second when enabled using system.runInterval
   // This demonstrates proper cleanup with system.clearRun()
@@ -17,13 +18,18 @@ export const Counter: FunctionComponent = (): JSX.Element => {
       return;
     }
 
-    const intervalId = system.runInterval(() => {
-      setCount((prev: number): number => prev + 1);
-    }, 20); // 20 ticks = 1 second
+    if (!counterRef.current) {
+      counterRef.current = system.runInterval(() => {
+        setCount((prev: number): number => prev + 1);
+      }, 20); // 20 ticks = 1 second
+    }
 
     // Cleanup: clear interval when effect re-runs or component unmounts
     return () => {
-      system.clearRun(intervalId);
+      if (counterRef.current) {
+        system.clearRun(counterRef.current);
+        counterRef.current = undefined;
+      }
     };
   }, [isAutoIncrement]);
 

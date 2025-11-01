@@ -309,10 +309,12 @@ async function presentCycle(
  * Internal: Wait for all useState values in the tree to differ from their initial values,
  * or until timeout.
  */
-async function waitForStateResolutionInternal(
+async function waitForStateResolution(
   instanceIds: Set<string>,
   timeoutMs: number,
 ): Promise<boolean> {
+  console.log(`[waitForStateResolution] Starting state resolution wait (timeout: ${timeoutMs}ms, instances: ${instanceIds.size})`);
+
   return new Promise<boolean>(resolve => {
     const startTime = Date.now();
 
@@ -321,33 +323,45 @@ async function waitForStateResolutionInternal(
 
       for (const id of instanceIds) {
         const instance = fiberRegistry.getInstance(id);
-        if (!instance) continue;
+        if (!instance) {
+          console.warn(`[waitForStateResolution] Instance not found: ${id}`);
+          continue;
+        }
 
-        for (const hook of instance.hooks) {
+        const stateHooks = instance.hooks.filter(h => h?.type === 'state');
+        if (stateHooks.length === 0) {
+          continue;
+        }
+
+        for (const hook of stateHooks) {
           if (hook.type === 'state') {
             const stateHook = hook as StateHook;
             if (Object.is(stateHook.value, stateHook.initialValue)) {
+              console.log(`[waitForStateResolution] Instance ${id} state still matches initial value (value: ${stateHook.value})`);
               allResolved = false;
-              break;
+              // Don't break - check ALL instances before returning false
+            } else {
+              console.log(`[waitForStateResolution] Instance ${id} state CHANGED! (initial: ${stateHook.initialValue}, current: ${stateHook.value})`);
             }
           }
         }
-
-        if (!allResolved) break;
       }
 
       return allResolved;
     };
 
     if (checkStates()) {
+      console.log(`[waitForStateResolution] All states resolved immediately`);
       resolve(true);
 
       return;
     }
 
+    console.log(`[waitForStateResolution] States not resolved yet, starting interval loop`);
     const intervalId = system.runInterval(() => {
       const elapsed = Date.now() - startTime;
       if (elapsed >= timeoutMs) {
+        console.warn(`[waitForStateResolution] Timeout reached (${elapsed}ms), resolving with false`);
         system.clearRun(intervalId);
         resolve(false);
 
@@ -355,6 +369,7 @@ async function waitForStateResolutionInternal(
       }
 
       if (checkStates()) {
+        console.log(`[waitForStateResolution] All states resolved after ${elapsed}ms`);
         system.clearRun(intervalId);
         resolve(true);
       }
@@ -402,18 +417,22 @@ async function handleSuspensionInternal(
   }
 
   // Start loop for subsequent state changes on main tree
+  // During suspension, we always execute effects (including those with no deps)
+  // so they can call setState and update the component state
   const mainIntervalId = system.runInterval(() => {
     for (const id of mainInstanceIds) {
       const instance = fiberRegistry.getInstance(id);
-      if (instance?.dirty) {
-        instance.dirty = false;
+      if (instance) {
+        // Always run executeEffects during suspension, not just for dirty instances.
+        // This ensures effects with no dependency array can execute on each tick
+        // and potentially call setState to resolve the suspension.
         executeEffects(instance);
       }
     }
   }, 1);
 
   // Wait for resolution
-  await waitForStateResolutionInternal(mainInstanceIds, timeout);
+  await waitForStateResolution(mainInstanceIds, timeout);
 
   // Stop loop and close fallback
   system.clearRun(mainIntervalId);
