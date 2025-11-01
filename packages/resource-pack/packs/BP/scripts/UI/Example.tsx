@@ -41,7 +41,7 @@ export function Example(): JSX.Element {
         <Suspense fallback={<Fallback width={192} height={140} x={414} y={160} />} awaitTimeout={5_000}>
           <EventCounter />
         </Suspense>
-        <Suspense fallback={<Fallback width={192} height={140} x={616} y={160} />} awaitTimeout={10_000}>
+        <Suspense fallback={<Fallback width={192} height={140} x={616} y={160} />} awaitTimeout={2_000}>
           <Counter />
         </Suspense>
 

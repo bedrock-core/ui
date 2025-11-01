@@ -33,6 +33,11 @@ export async function render(
   const builtTree = buildTree(rootElement, player);
 
   // Populate boundary instance sets using the instanceToBoundary map from buildTree
+  // Reset current boundary instance sets to avoid leaking instances across renders
+  for (const boundary of suspenseBoundaryRegistry.values()) {
+    boundary.instanceIds.clear();
+  }
+
   for (const [instanceId, boundaryId] of builtTree.instanceToBoundary) {
     const boundary = suspenseBoundaryRegistry.get(boundaryId);
 
@@ -77,7 +82,7 @@ async function presentCycle(
 
   if (suspenseBoundaries) {
     for (const boundary of suspenseBoundaries) {
-      if (boundary.isResolved || boundaries.has(boundary.id)) {
+      if (boundary.isResolved || boundaries.has(boundary.id) || boundary.instanceIds.size === 0) {
         continue;
       }
 
@@ -91,8 +96,11 @@ async function presentCycle(
           // Mark this boundary as resolved
           boundaries.set(boundary.id, true);
 
+          console.log(`[Suspense] Boundary ${boundary.id} resolved.`);
+
           // Only close the form when ALL started boundaries have resolved
           if (areAllBoundariesResolved()) {
+            console.log('[Suspense] All boundaries resolved, re-rendering UI.');
             uiManager.closeAllForms(player);
           }
         });

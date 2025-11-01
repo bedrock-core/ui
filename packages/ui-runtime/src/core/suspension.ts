@@ -46,7 +46,7 @@ export async function handleSuspensionForBoundary(
   }, 1);
 
   // Wait for resolution of this boundary
-  waitForStateResolution(boundaryInstanceIds, timeout);
+  await waitForStateResolution(boundaryInstanceIds, timeout);
 
   // Stop loop
   system.clearRun(mainIntervalId);

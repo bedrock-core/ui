@@ -5,7 +5,6 @@ import { stopInputLock } from '../util';
 import { isContext } from './context';
 import { fiberRegistry } from './fiber';
 import { ComponentInstance } from './types';
-import type { Hook, StateHook } from '../hooks/types';
 
 /**
  * Context passed through tree traversal during rendering phase.
@@ -20,6 +19,7 @@ export interface TraversalContext {
   createdInstances: Set<string>; // Track all instances created during this render
   currentSuspenseBoundary?: string; // Track which Suspense boundary we're currently in
   instanceToBoundary?: Map<string, string>; // Map instance ID → boundary ID
+  idCounters: Map<string, number>; // Per-parent-path counters for auto-keys
 }
 
 /**
@@ -79,11 +79,21 @@ function expandAndResolveContexts(element: JSX.Element, context: TraversalContex
     const componentFn = element.type as FunctionComponent;
 
     // Generate unique ID for this component node
-    const key = typeof element.props.key === 'string' ? element.props.key : undefined;
+    const componentName = componentFn.name || 'anonymous';
+    const keyProp = typeof element.props.key === 'string' ? element.props.key : undefined;
+    // Auto-generate a stable key per parent path + component name to avoid
+    // sibling collisions when keys are not provided.
+    let effectiveKey = keyProp;
+    if (!effectiveKey) {
+      const pathKey = [...context.parentPath, componentName].join('/');
+      const count = context.idCounters.get(pathKey) ?? 0;
+      effectiveKey = `__auto_${count}`;
+      context.idCounters.set(pathKey, count + 1);
+    }
     const componentId = generateComponentId(
       context.player,
       componentFn,
-      key,
+      effectiveKey,
       context.parentPath,
     );
 
@@ -119,58 +129,14 @@ function expandAndResolveContexts(element: JSX.Element, context: TraversalContex
       }
 
       // Create child context with updated path
-      const componentName = componentFn.name || 'anonymous';
       const childContext: TraversalContext = {
         ...context,
         parentPath: [...context.parentPath, componentName],
       };
 
-      // If this is a Suspense component and it's currently unresolved,
-      // we still need to pre-build its children (for effects/state) WITHOUT
-      // including them in the returned visual tree. This lets effects inside
-      // the boundary run during fallback.
-      const isSuspenseComponent = (componentFn as unknown as { __isSuspense?: boolean })?.__isSuspense === true;
-      if (isSuspenseComponent) {
-        // Find the boundary object stored in a state hook on this instance
-        const boundaryHook = instance.hooks.find((h: Hook) => {
-          if (h?.type !== 'state') return false;
-          const v: unknown = h.value;
-
-          return typeof v === 'object' && v !== null && 'id' in (v as Record<string, unknown>) && 'instanceIds' in (v as Record<string, unknown>);
-        }) as StateHook<{ id: string; isResolved: boolean }> | undefined;
-
-        const boundary = boundaryHook?.value;
-
-        // Pre-build children under the boundary context when unresolved
-        if (boundary && !boundary.isResolved) {
-          const suspenseChildren = element.props?.children;
-          if (suspenseChildren) {
-            // IMPORTANT: simulate the Provider path segment during prebuild so
-            // instance IDs of children match the IDs they will have once the
-            // Suspense boundary resolves (where a Provider function component
-            // is actually present in the tree).
-            // Without this, children would be created under ".../Suspense/..."
-            // during prebuild, but under ".../Suspense/Provider/..." after
-            // resolution, causing new instances with default state.
-            const prebuildCtx: TraversalContext = {
-              ...childContext,
-              parentPath: [...childContext.parentPath, 'Provider'],
-              currentSuspenseBoundary: boundary.id,
-            };
-
-            // Process original children purely for side-effects (instances/effects)
-            if (Array.isArray(suspenseChildren)) {
-              for (const ch of suspenseChildren) {
-                if (!ch || typeof ch !== 'object' || !('type' in ch)) continue;
-                // Discard returned tree; we only need instances/effects
-                void expandAndResolveContexts(ch, prebuildCtx);
-              }
-            } else if (typeof suspenseChildren === 'object' && 'type' in suspenseChildren) {
-              void expandAndResolveContexts(suspenseChildren, prebuildCtx);
-            }
-          }
-        }
-      }
+      // Suspense prebuild logic is no longer needed because Suspense always
+      // renders both branches and gates visibility. Children are built in the
+      // returned tree under the Provider, so effects can run while fallback shows.
 
       // Recursively process the rendered result with child context (visual tree)
       return expandAndResolveContexts(renderedElement, childContext);
@@ -368,6 +334,7 @@ export function buildTree(
     createdInstances: new Set(),
     currentSuspenseBoundary: undefined,
     instanceToBoundary,
+    idCounters: new Map(),
   };
 
   // Phase 1: Expand function components and resolve contexts

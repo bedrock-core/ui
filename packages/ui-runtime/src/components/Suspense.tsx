@@ -1,6 +1,7 @@
 import { createContext } from '../core';
 import { useState } from '../hooks';
 import type { FunctionComponent, JSX } from '../jsx';
+import { Fragment } from './Fragment';
 
 /**
  * Props for the Suspense component
@@ -13,7 +14,7 @@ export interface SuspenseProps extends JSX.Props {
    *
    * @default <Panel><Text text="Loading..." /></Panel>
    */
-  fallback?: JSX.Element | FunctionComponent;
+  fallback?: JSX.Element;
 
   /**
    * Maximum time in milliseconds to wait for child state resolution.
@@ -33,7 +34,7 @@ export interface SuspenseProps extends JSX.Props {
 export interface SuspenseBoundary {
   id: string;
   instanceIds: Set<string>;
-  fallback?: JSX.Element | FunctionComponent;
+  fallback?: JSX.Element;
   timeout: number;
   isResolved: boolean; // Flag: set to true once suspension resolves
 }
@@ -86,17 +87,14 @@ export const Suspense: FunctionComponent<SuspenseProps> = ({ children, fallback,
     return boundary;
   });
 
-  // If resolved, render children WITH context provider so they're tracked
+  // Always build both branches so child effects can run while suspended.
+  // Show/hide via control.visible using Fragment as a neutral container.
   return (
-    boundaryState.isResolved ?
-      <SuspenseContext.Provider value={boundaryState}>{children}</SuspenseContext.Provider>
-      : <>{boundaryState.fallback}</>
+    <>
+      <Fragment visible={boundaryState.isResolved}>
+        <SuspenseContext.Provider value={boundaryState}>{children}</SuspenseContext.Provider>
+      </Fragment>
+      {boundaryState.fallback && <Fragment visible={!boundaryState.isResolved}>{boundaryState.fallback}</Fragment>}
+    </>
   );
 };
-
-// Mark component with metadata for runtime detection
-Object.defineProperty(Suspense, '__isSuspense', {
-  value: true,
-  enumerable: false,
-  configurable: false,
-});
