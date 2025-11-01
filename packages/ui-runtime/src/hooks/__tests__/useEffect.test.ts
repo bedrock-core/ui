@@ -18,7 +18,6 @@ describe('useEffect Hook', () => {
       hooks: [],
       hookIndex: 0,
       mounted: false,
-      dirty: false,
     };
     fiberRegistry.pushInstance(instance);
   });
@@ -343,7 +342,6 @@ describe('useEffect Hook', () => {
 
       // Simulate form close (instance stays in registry)
       instance.hookIndex = 0;
-      instance.dirty = false;
 
       // Re-open with same deps
       useEffect(() => {

@@ -38,10 +38,12 @@ export function Example(): JSX.Element {
         {/* Row 2: Effects and Controllers */}
         <ThemeController onThemeChange={setTheme} />
         <SettingsController onSettingsChange={setSettings} />
-        <Suspense fallback={<Fallback />} awaitTimeout={5000}>
+        <Suspense fallback={<Fallback width={192} height={140} x={414} y={160} />} awaitTimeout={5_000}>
           <EventCounter />
         </Suspense>
-        <Counter />
+        <Suspense fallback={<Fallback width={192} height={140} x={616} y={160} />} awaitTimeout={10_000}>
+          <Counter />
+        </Suspense>
 
         {/* Row 3: Information and Exit */}
         <InfoPanel />

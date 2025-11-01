@@ -18,7 +18,6 @@ describe('useRef Hook', () => {
       hooks: [],
       hookIndex: 0,
       mounted: false,
-      dirty: false,
     };
     fiberRegistry.pushInstance(instance);
   });
@@ -51,11 +50,8 @@ describe('useRef Hook', () => {
     it('should not trigger re-render on ref mutation', () => {
       const ref = useRef(0);
 
-      expect(instance.dirty).toBe(false);
-
       ref.current = 42;
 
-      expect(instance.dirty).toBe(false); // Still not dirty
       expect(ref.current).toBe(42);
     });
 
@@ -143,7 +139,6 @@ describe('useRef Hook', () => {
 
       // Simulate form close (instance stays in registry, just reset for next render)
       instance.hookIndex = 0;
-      instance.dirty = false;
 
       // Re-open form (re-render)
       const ref2 = useRef({ count: 0 });
@@ -167,7 +162,6 @@ describe('useRef Hook', () => {
         hooks: [],
         hookIndex: 0,
         mounted: false,
-        dirty: false,
       };
       fiberRegistry.pushInstance(instance2);
 

@@ -32,7 +32,6 @@ class FiberRegistry {
         hooks: [],
         hookIndex: 0,
         mounted: false,
-        dirty: false,
       };
 
       this._instances.set(id, instance);

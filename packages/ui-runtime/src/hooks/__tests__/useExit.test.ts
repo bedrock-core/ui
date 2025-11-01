@@ -17,7 +17,6 @@ describe('useExit Hook', () => {
       hooks: [],
       hookIndex: 0,
       mounted: false,
-      dirty: false,
     };
     fiberRegistry.pushInstance(instance);
   });
@@ -47,15 +46,11 @@ describe('useExit Hook', () => {
     it('should prevent re-renders when closing', () => {
       const exit = useExit();
 
-      // Mark as dirty
-      instance.dirty = true;
-
       // Call exit
       exit();
 
       // isProgrammaticClose is set, which should prevent re-renders in render logic
       expect(instance.shouldClose).toBe(true);
-      expect(instance.dirty).toBe(true); // Still dirty, but won't re-render
     });
 
     it('should run cleanup effects on exit', () => {

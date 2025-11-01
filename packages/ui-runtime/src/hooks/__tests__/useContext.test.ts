@@ -18,7 +18,6 @@ describe('useContext Hook', () => {
       hooks: [],
       hookIndex: 0,
       mounted: false,
-      dirty: false,
     };
     fiberRegistry.pushInstance(instance);
   });

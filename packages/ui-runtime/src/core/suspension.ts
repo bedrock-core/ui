@@ -37,7 +37,7 @@ export async function handleSuspensionForBoundary(
       const instance = fiberRegistry.getInstance(id);
 
       if (instance) {
-        // Always run executeEffects during suspension, not just for dirty instances.
+        // Always run executeEffects during suspension
         // This ensures effects with no dependency array can execute on each tick
         // and potentially call setState to resolve the suspension.
         executeEffects(instance);
@@ -46,7 +46,7 @@ export async function handleSuspensionForBoundary(
   }, 1);
 
   // Wait for resolution of this boundary
-  await waitForStateResolution(boundaryInstanceIds, timeout);
+  waitForStateResolution(boundaryInstanceIds, timeout);
 
   // Stop loop
   system.clearRun(mainIntervalId);
@@ -65,30 +65,13 @@ async function waitForStateResolution(
   return new Promise<boolean>(resolve => {
     const startTime = Date.now();
 
-    const allStatesResolved: () => boolean = () => Array.from(instanceIds).every(id => {
-      const instance = fiberRegistry.getInstance(id);
-
-      if (!instance) {
-        // Instance not found, skip
-        return true;
-      }
-
-      const stateHooks = instance.hooks.filter(isStateHook);
-
-      if (stateHooks.length === 0) {
-        // No state hooks, skip
-        return true;
-      }
-
-      for (const hook of stateHooks) {
-        if (Object.is(hook.value, hook.initialValue)) {
-          // At least one state hook is still at its initial value
-          return false;
-        }
-      }
-
-      return true;
-    });
+    // If no instance, no hooks, or all states already resolved, resolve immediately
+    const allStatesResolved: () => boolean = () => Array.from(instanceIds)
+      .every(id => fiberRegistry
+        .getInstance(id)?.hooks
+        .filter(isStateHook)
+        .every(hook => !Object.is(hook.value, hook.initialValue))
+        ?? true);
 
     if (allStatesResolved()) {
       resolve(true);
@@ -98,7 +81,9 @@ async function waitForStateResolution(
 
     const intervalId = system.runInterval(() => {
       const elapsed = Date.now() - startTime;
+
       if (elapsed >= timeoutMs) {
+        console.warn(`[Suspense] Timeout of ${timeoutMs}ms while waiting for state resolution of instances: ${Array.from(instanceIds).join('\n')}`);
         system.clearRun(intervalId);
 
         resolve(false);

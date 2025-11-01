@@ -47,26 +47,9 @@ export async function render(
     builtTree.instances,
     rootElement,
     options,
-    {
-      shouldRerenderOnCancel(instances) {
-        if (options.isFirstRender) {
-          for (const id of instances) {
-            const inst = fiberRegistry.getInstance(id);
-
-            if (inst?.shouldClose === false) {
-              return true;
-            }
-          }
-        }
-
-        return false;
-      },
-    },
     Array.from(suspenseBoundaryRegistry.values()),
   );
 }
-
-interface CancelStrategy { shouldRerenderOnCancel: (instances: Set<string>) => boolean }
 
 /**
  * Shared present cycle: serialize tree, start effect loop, show form, handle response.
@@ -78,7 +61,6 @@ async function presentCycle(
   createdInstances: Set<string>,
   rootElement: JSX.Element,
   options: RenderOptions | undefined,
-  strategy: CancelStrategy,
   suspenseBoundaries?: SuspenseBoundary[],
 ): Promise<void> {
   // Prepare serialization context for button callbacks
@@ -89,60 +71,51 @@ async function presentCycle(
   form.title(PROTOCOL_HEADER);
   serialize(element, form, serializationContext);
 
-  // Track if the current form was programmatically closed due to suspense resolution
-  let formClosedForSuspense = false;
+  // Track started boundaries and their resolution status
+  const boundaries = new Map<string, boolean>();
+  const areAllBoundariesResolved = (): boolean => Array.from(boundaries.entries()).every(([, value]) => value);
 
-  // Kick off suspension helpers to run effects continuously during fallback
-  const startedBoundaries = new Set<string>();
   if (suspenseBoundaries) {
     for (const boundary of suspenseBoundaries) {
-      if (boundary.isResolved || startedBoundaries.has(boundary.id)) {
+      if (boundary.isResolved || boundaries.has(boundary.id)) {
         continue;
       }
 
-      startedBoundaries.add(boundary.id);
+      // Mark boundary as started and unresolved
+      boundaries.set(boundary.id, false);
 
       // Fire-and-forget: when resolved or timeout, mark and request rerender
       handleSuspensionForBoundary(boundary.instanceIds, boundary.timeout)
         .then(() => {
           boundary.isResolved = true;
-          // Mark that we are closing due to suspense so the cancel handler rerenders
-          formClosedForSuspense = true;
-          // Close the form so form.show() returns and we can render
-          uiManager.closeAllForms(player);
+          // Mark this boundary as resolved
+          boundaries.set(boundary.id, true);
+
+          // Only close the form when ALL started boundaries have resolved
+          if (areAllBoundariesResolved()) {
+            uiManager.closeAllForms(player);
+          }
         });
     }
   }
 
-  // Background effects loop for dirty instances and suspension checking
+  // Background effects loop
   const intervalId = system.runInterval(() => {
     for (const id of createdInstances) {
       const instance = fiberRegistry.getInstance(id);
-      if (instance?.dirty) {
-        instance.dirty = false;
+
+      if (instance) {
         executeEffects(instance);
       }
     }
-
-    // Resolution handled by suspension helper; nothing to poll here
   }, 1);
 
   await form.show(player).then(response => {
     system.clearRun(intervalId);
 
+    // When player pressed escape key or equivalent and when we use uiManager.closeAllForms()
     if (response.canceled) {
-      // If form was closed due to suspension resolution, always render
-      if (formClosedForSuspense) {
-        formClosedForSuspense = false;
-        system.run(() => { void render(player, rootElement, options); });
-
-        return;
-      }
-
-      // Strategy-specific check (e.g., initial render may force re-render after suspense close)
-      let shouldRerender = strategy.shouldRerenderOnCancel(createdInstances);
-
-      if (shouldRerender) {
+      if (areAllBoundariesResolved()) {
         system.run(() => { render(player, rootElement, options); });
       } else {
         cleanupComponentTree(player, createdInstances);
@@ -151,28 +124,21 @@ async function presentCycle(
       return;
     }
 
+    // Button press
     if (response.selection !== undefined) {
       const callback = serializationContext.buttonCallbacks.get(response.selection);
+
       if (callback) {
+        // Execute button callback
         Promise.resolve(callback())
           .then(() => {
-            let shouldCleanup = false;
-            for (const id of createdInstances) {
-              const instance = fiberRegistry.getInstance(id);
-              if (instance?.shouldClose === true) {
-                shouldCleanup = true;
-                break;
-              }
-            }
+            let shouldClose = Array.from(createdInstances).some(id => fiberRegistry.getInstance(id)?.shouldClose);
 
-            if (shouldCleanup) {
+            if (shouldClose) {
               cleanupComponentTree(player, createdInstances);
             } else {
-              system.run(() => { void render(player, rootElement, options); });
+              system.run(() => { render(player, rootElement, options); });
             }
-          })
-          .catch(() => {
-            system.run(() => { void render(player, rootElement, options); });
           });
       }
     }

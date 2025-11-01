@@ -61,7 +61,6 @@ export function useState<T>(initialValue: T | (() => T)): [T, (nextValue: T | ((
         }
 
         stateHook.value = newValue;
-        instance.dirty = true;
       },
     }; // Controlled cast
     instance.hooks[hookIndex] = stateHook as Hook;

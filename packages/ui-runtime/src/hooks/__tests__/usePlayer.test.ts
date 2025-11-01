@@ -17,7 +17,6 @@ describe('usePlayer Hook', () => {
       hooks: [],
       hookIndex: 0,
       mounted: false,
-      dirty: false,
     };
     fiberRegistry.pushInstance(instance);
   });
@@ -57,7 +56,6 @@ describe('usePlayer Hook', () => {
 
       // Simulate form close (instance stays in registry, just reset for next render)
       instance.hookIndex = 0;
-      instance.dirty = false;
 
       // Re-open form (re-render)
       const player2 = usePlayer();
@@ -87,7 +85,6 @@ describe('usePlayer Hook', () => {
         hooks: [],
         hookIndex: 0,
         mounted: false,
-        dirty: false,
       };
       fiberRegistry.pushInstance(instance2);
 

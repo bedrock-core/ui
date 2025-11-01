@@ -79,9 +79,6 @@ export function useReducer<S, A, I = S>(
       // Only update if state actually changed (using Object.is for reference equality)
       if (!Object.is(currentState, newState)) {
         reducerHook.state = newState;
-        instance.dirty = true;
-
-        // Note: Forms only re-render on button press, so state changes alone don't trigger updates
       }
     };
 

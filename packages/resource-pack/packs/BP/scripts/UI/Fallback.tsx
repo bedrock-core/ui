@@ -1,10 +1,16 @@
 import { JSX, Panel, Text } from '@bedrock-core/ui';
 
-export function Fallback(): JSX.Element {
+interface FallbackProps {
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+}
+
+export function Fallback({ width, height, x, y }: FallbackProps): JSX.Element {
   return (
-    <Panel width={192} height={140} x={414} y={160}>
-      <Text width={192} height={20} x={424} y={170} value={'§l§bScript Events'} />
-      <Text width={192} height={15} x={424} y={195} value={'§7Loading events...'} />
+    <Panel width={width} height={height} x={x} y={y}>
+      <Text width={width} height={20} x={x + 10} y={y + 10} value={'§7Loading...'} />
     </Panel>
   );
 }

@@ -18,7 +18,6 @@ describe('useReducer Hook', () => {
       hooks: [],
       hookIndex: 0,
       mounted: false,
-      dirty: false,
     };
     fiberRegistry.pushInstance(instance);
   });
@@ -92,19 +91,14 @@ describe('useReducer Hook', () => {
       const hook = instance.hooks[0] as ReducerHook<number, Action>;
 
       expect(hook.state).toBe(0);
-      expect(instance.dirty).toBe(false);
 
       dispatch({ type: 'increment' });
 
       expect(hook.state).toBe(1);
-      expect(instance.dirty).toBe(true);
-
-      instance.dirty = false;
 
       dispatch({ type: 'set', value: 42 });
 
       expect(hook.state).toBe(42);
-      expect(instance.dirty).toBe(true);
     });
   });
 
@@ -118,11 +112,9 @@ describe('useReducer Hook', () => {
       expect(state1).toBe(0);
 
       dispatch1({ type: 'increment' });
-      expect(instance.dirty).toBe(true);
 
       // Simulate re-render
       instance.hookIndex = 0;
-      instance.dirty = false;
 
       // Second render - should get updated state
       const [state2] = useReducer(reducer, 0);
@@ -143,17 +135,11 @@ describe('useReducer Hook', () => {
 
       const [, dispatch] = useReducer(reducer, sameObj);
 
-      expect(instance.dirty).toBe(false);
-
       // Dispatch action that returns same reference
       dispatch({ type: 'noop' });
 
-      expect(instance.dirty).toBe(false); // Should not mark dirty
-
       // Dispatch action that returns new reference
       dispatch({ type: 'change' });
-
-      expect(instance.dirty).toBe(true); // Should mark dirty
     });
 
     it('should handle multiple dispatches before re-render', () => {
@@ -171,8 +157,6 @@ describe('useReducer Hook', () => {
 
       dispatch({ type: 'add', value: 7 });
       expect(hook.state).toBe(22);
-
-      expect(instance.dirty).toBe(true);
     });
 
     it('should maintain stable dispatch function reference', () => {
@@ -321,7 +305,6 @@ describe('useReducer Hook', () => {
 
       // Simulate form close (instance stays in registry, just reset for next render)
       instance.hookIndex = 0;
-      instance.dirty = false;
 
       // Re-open form (re-render)
       const [state] = useReducer(reducer, 0);
@@ -347,7 +330,6 @@ describe('useReducer Hook', () => {
         hooks: [],
         hookIndex: 0,
         mounted: false,
-        dirty: false,
       };
       fiberRegistry.pushInstance(instance2);
 
