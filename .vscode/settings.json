@@ -1,6 +1,7 @@
 {
 	"editor.formatOnSave": false,
 	"editor.codeActionsOnSave": {
+		"source.fixAll": "explicit",
 		"source.fixAll.eslint": "explicit"
 	},
 	"editor.detectIndentation": false,
@@ -11,7 +12,17 @@
 		"editor.insertSpaces": true,
 		"editor.tabSize": 2
 	},
+	"[typescriptreact]": {
+		"editor.defaultFormatter": "dbaeumer.vscode-eslint",
+		"editor.insertSpaces": true,
+		"editor.tabSize": 2
+	},
 	"[javascript]": {
+		"editor.defaultFormatter": "dbaeumer.vscode-eslint",
+		"editor.insertSpaces": true,
+		"editor.tabSize": 2
+	},
+	"[javascriptreact]": {
 		"editor.defaultFormatter": "dbaeumer.vscode-eslint",
 		"editor.insertSpaces": true,
 		"editor.tabSize": 2
@@ -28,20 +39,23 @@
 	},
 	"typescript.tsdk": "node_modules/typescript/lib",
 	"typescript.enablePromptUseWorkspaceTsdk": true,
-	"eslint.validate": [
-		"javascript",
-		"typescript",
-		"json",
-		"jsonc"
-	],
 	"files.associations": {
 		"*.json": "jsonc"
 	},
+	"eslint.validate": [
+		"javascript",
+		"typescript",
+		"javascriptreact",
+		"typescriptreact",
+		"json",
+		"jsonc",
+	],
+	"eslint.run": "onSave",
 	"eslint.enable": true,
 	"eslint.format.enable": true,
 	"eslint.workingDirectories": [
-		{
-			"mode": "auto"
-		}
-	],
+		"./packages/cli-ui",
+		"./packages/ui-runtime",
+		"./packages/resource-pack",
+	]
 }

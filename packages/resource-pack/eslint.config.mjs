@@ -1,11 +1,10 @@
-import minecraftLinting from "eslint-plugin-minecraft-linting";
 import stylistic from "@stylistic/eslint-plugin";
-import json from "@eslint/json";
+import minecraftLinting from "eslint-plugin-minecraft-linting";
 import { defineConfig } from "eslint/config";
 import { dirname } from "path";
+import tseslint from "typescript-eslint";
 import { fileURLToPath } from "url";
 import { commonTsRules } from "../../eslint.config.mjs";
-import tseslint from "typescript-eslint";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -49,25 +48,5 @@ export default defineConfig([
       "*.mjs",           // Root level mjs files (like this config)
       "*.js",            // Root level js files
     ],
-  },
-
-  {
-    plugins: {
-      json,
-    },
-  },
-
-  // lint JSON files
-  {
-    files: ["**/*.json"],
-    language: "json/jsonc",
-    rules: {
-      "json/no-duplicate-keys": "error",
-      "json/no-empty-keys": "off",
-      "json/no-unnormalized-keys": "error",
-      "json/no-unsafe-values": "error",
-      "json/sort-keys": "off",
-      "json/top-level-interop": "off",
-    }
   }
 ]);

@@ -18,6 +18,5 @@ export type {
   ReducerHook,
   Hook,
   HookCall,
-  ComponentInstance,
   EventSignal
 } from './types';

@@ -153,27 +153,27 @@ export async function render(
   startInputLock(player);
 
   // Build complete tree (instances created, hooks initialized)
-  let { tree: element, instances: createdInstances } = buildTree(rootElement, player);
+  let builtTree = buildTree(rootElement, player);
 
   // Suspension (fallback) if requested
   if (options.awaitStateResolution) {
-    await handleSuspensionInternal(player, options.fallback, createdInstances, options.awaitTimeout ?? 1000);
+    await handleSuspensionInternal(player, options.fallback, builtTree.instances, options.awaitTimeout ?? 1000);
 
     // Rebuild the main tree AFTER suspension completes to capture any state updated by effects
     // during the wait period. Instances will be reused via fiberRegistry and defaults re-applied.
-    ({ tree: element, instances: createdInstances } = buildTree(rootElement, player));
+    builtTree = buildTree(rootElement, player);
   } else {
-    ({ tree: element, instances: createdInstances } = buildTree(rootElement, player));
+    builtTree = buildTree(rootElement, player);
   }
 
   await presentCycle(
     player,
-    element,
-    createdInstances,
+    builtTree.tree,
+    builtTree.instances,
     rootElement,
     options,
     // After initial render, any further updates should go through rerender()
-    (p, r, o) => rerender(p, r, o),
+    (p, r, o) => present(p, r, o),
     {
       // Initial render: consider suspense-triggered close as a reason to re-render
       shouldRerenderOnCancel(instances) {
@@ -192,7 +192,7 @@ export async function render(
  * Re-render function that reuses existing component instances and skips suspense/fallback.
  * This is called after the initial render() when the UI needs to update.
  */
-async function rerender(
+async function present(
   player: Player,
   root: JSX.Element | FunctionComponent,
   options?: RenderOptions,
@@ -202,15 +202,15 @@ async function rerender(
   // IMPORTANT: Do NOT start input lock again and do NOT run suspension/fallback here.
 
   // Build the tree again; instances are reused via fiberRegistry.getOrCreateInstance
-  const { tree: element, instances: createdInstances } = buildTree(rootElement, player);
+  const builtTree = buildTree(rootElement, player);
 
   await presentCycle(
     player,
-    element,
-    createdInstances,
+    builtTree.tree,
+    builtTree.instances,
     rootElement,
     options,
-    (p, r, o) => rerender(p, r, o),
+    (p, r, o) => present(p, r, o),
     {
       // Rerender: do not force re-render on cancel unless runtime conditions request it
       shouldRerenderOnCancel() { return false; },
