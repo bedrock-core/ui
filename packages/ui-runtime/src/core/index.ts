@@ -16,7 +16,6 @@ export {
 
 // Rendering
 export { render } from './runtime';
-export { DefaultScheduler } from './scheduler';
 
 // Context
 export { createContext } from './context';
@@ -30,16 +29,5 @@ export type {
   SerializableProps,
   SerializationContext,
   SerializationError,
-  RenderOptions,
-  // Runtime/renderer contracts
-  VirtualNode,
-  InstanceId,
-  RuntimeHandle,
-  RuntimeOptions,
-  Scheduler,
-  Renderer,
-  RenderCondition,
-  TriggerRender,
-  UseRenderCondition,
-  UseTriggerRender
+  RenderOptions
 } from './types';

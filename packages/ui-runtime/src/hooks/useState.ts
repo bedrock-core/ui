@@ -5,7 +5,7 @@ import { fiberRegistry } from '../core/fiber';
 /**
  * Type guard to check if a hook is a StateHook
  */
-function isStateHook(hook: Hook): hook is StateHook {
+export function isStateHook(hook: Hook): hook is StateHook {
   return hook.type === 'state';
 }
 

@@ -7,8 +7,6 @@ export { useReducer } from './useReducer';
 export { usePlayer } from './usePlayer';
 export { useEvent } from './useEvent';
 export { useExit } from './useExit';
-export { useTriggerRender } from './useTriggerRender';
-export { useRenderCondition } from './useRenderCondition';
 
 export type {
   StateHook,

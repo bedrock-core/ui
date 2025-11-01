@@ -26,9 +26,7 @@ export {
   useReducer,
   usePlayer,
   useEvent,
-  useExit,
-  useTriggerRender,
-  useRenderCondition
+  useExit
 } from './hooks';
 
 export type {
@@ -73,18 +71,7 @@ export type {
   SerializableProps,
   SerializationContext,
   SerializationError,
-  RenderOptions,
-  // Runtime/renderer contracts
-  VirtualNode,
-  InstanceId,
-  RuntimeHandle,
-  RuntimeOptions,
-  Scheduler,
-  Renderer,
-  RenderCondition,
-  TriggerRender,
-  UseRenderCondition,
-  UseTriggerRender
+  RenderOptions
 } from './core';
 
 // JSX Runtime
