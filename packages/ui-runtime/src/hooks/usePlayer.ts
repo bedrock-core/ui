@@ -10,7 +10,7 @@ import { getCurrentFiber, invariant } from '../core';
 export function usePlayer(): Player {
   const [, d] = getCurrentFiber();
 
-  invariant(d, 'usePlayer called outside of an active fiber');
+  invariant(d, 'usePlayer');
 
   return d.usePlayer();
 }

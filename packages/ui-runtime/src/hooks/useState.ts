@@ -11,7 +11,7 @@ import { getCurrentFiber, invariant } from '../core';
 export function useState<T>(initial: T | (() => T)): [T, (v: T | ((prev: T) => T)) => void] {
   const [, d] = getCurrentFiber();
 
-  invariant(d, 'useState called outside of an active fiber');
+  invariant(d, 'useState');
 
   return d.useState<T>(initial);
 }

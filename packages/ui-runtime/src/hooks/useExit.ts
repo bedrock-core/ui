@@ -9,7 +9,7 @@ import { getCurrentFiber, invariant } from '../core';
 export function useExit(): () => void {
   const [, d] = getCurrentFiber();
 
-  invariant(d, 'useExit called outside of an active fiber');
+  invariant(d, 'useExit');
 
   return d.useExit();
 }

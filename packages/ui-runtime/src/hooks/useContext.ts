@@ -11,7 +11,7 @@ import { Context, getCurrentFiber, invariant } from '../core';
 export function useContext<T>(ctx: Context<T>): T {
   const [, d] = getCurrentFiber();
 
-  invariant(d, 'useContext called outside of an active fiber');
+  invariant(d, 'useContext');
 
   return d.useContext<T>(ctx);
 }

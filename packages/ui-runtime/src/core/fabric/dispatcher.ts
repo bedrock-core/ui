@@ -1,17 +1,22 @@
-import { getFiberContextValue, getCurrentFiber } from './registry';
-import { Dispatcher, FiberContext } from './types';
+import { getCurrentFiber } from './registry';
+import { Dispatcher, Context, HookSlot } from './types';
 import { invariant, nextHookSlot } from './utils';
+
+const isFunction = <T>(value: unknown): value is (...args: unknown[]) => T => typeof value === 'function';
 
 export const MountDispatcher: Dispatcher = {
   useState<T>(initial: T | (() => T)) {
     const [fiber] = getCurrentFiber();
+    invariant(fiber, 'useState');
 
-    invariant(fiber, 'useState called without an active fiber');
-    const slot = nextHookSlot(fiber, 'state');
-    const value = typeof initial === 'function' ? (initial as () => T)() : initial;
+    const slot: HookSlot = nextHookSlot(fiber, 'state');
+    const value: T = isFunction(initial) ? initial() : initial;
+
     slot.value = value;
+
     const setter = (v: T | ((prev: T) => T)): void => {
-      const nextVal = typeof v === 'function' ? (v as (prev: T) => T)(slot.value as T) : v;
+      const nextVal = isFunction(v) ? v(slot.value) : v;
+
       slot.value = nextVal;
     };
 
@@ -20,31 +25,36 @@ export const MountDispatcher: Dispatcher = {
 
   useEffect(effect: () => (() => void) | void | undefined, deps?: readonly unknown[]) {
     const [fiber] = getCurrentFiber();
+    invariant(fiber, 'useEffect');
 
-    invariant(fiber, 'useEffect called without an active fiber');
     const slotIndex = fiber.hookIndex;
     const slot = nextHookSlot(fiber, 'effect');
+
     slot.deps = deps;
+
     fiber.pendingEffects.push({ slotIndex, effect, deps });
   },
 
   useRef<T>(initial: T) {
     const [fiber] = getCurrentFiber();
+    invariant(fiber, 'useRef');
 
-    invariant(fiber, 'useRef called without an active fiber');
     const slot = nextHookSlot(fiber, 'ref');
-    if (!slot.value) slot.value = { current: initial } as unknown as { current: T };
+
+    if (!slot.value) {
+      slot.value = { current: initial };
+    }
 
     return slot.value as { current: T };
   },
 
-  useContext<T>(ctx: FiberContext<T>) {
+  useContext<T>(ctx: Context<T>) {
     const [fiber] = getCurrentFiber();
+    invariant(fiber, 'useContext');
 
-    invariant(fiber, 'useContext called without an active fiber');
     const slot = nextHookSlot(fiber, 'context');
-    fiber.contextDeps.add(ctx.id);
-    const value = getFiberContextValue(ctx);
+    const value = (fiber.contextSnapshot && fiber.contextSnapshot.get(ctx.$$typeof) as T) ?? ctx.defaultValue;
+
     slot.value = value;
 
     return value;
@@ -52,13 +62,14 @@ export const MountDispatcher: Dispatcher = {
 
   useReducer<S, A>(reducer: (s: S, a: A) => S, initial: S) {
     const [fiber] = getCurrentFiber();
+    invariant(fiber, 'useReducer');
 
-    invariant(fiber, 'useReducer called without an active fiber');
     const slot = nextHookSlot(fiber, 'reducer');
+
     slot.value = initial;
+
     const dispatch = (action: A): void => {
       slot.value = reducer(slot.value as S, action);
-      // In a full system, we would enqueue a re-render for this fiber here
     };
 
     return [slot.value as S, dispatch];
@@ -66,14 +77,14 @@ export const MountDispatcher: Dispatcher = {
 
   usePlayer() {
     const [fiber] = getCurrentFiber();
-    invariant(fiber, 'usePlayer called without an active fiber');
+    invariant(fiber, 'usePlayer');
 
     return fiber.player;
   },
 
   useExit() {
     const [fiber] = getCurrentFiber();
-    invariant(fiber, 'useExit called without an active fiber');
+    invariant(fiber, 'useExit');
 
     return (): void => {
       fiber.shouldRender = false;
@@ -101,16 +112,18 @@ export const MountDispatcher: Dispatcher = {
 export const UpdateDispatcher: Dispatcher = {
   useState<T>(initial: T | (() => T)) {
     const [fiber] = getCurrentFiber();
+    invariant(fiber, 'useState');
 
-    invariant(fiber, 'useState called without an active fiber');
     const slot = nextHookSlot(fiber, 'state');
+
     // On update, slot.value must exist; if not, hook order changed
-    if (typeof slot.value === 'undefined') {
+    if (slot.value === undefined) {
       // initialize if genuinely first run on this position (edge case)
-      slot.value = typeof initial === 'function' ? (initial as () => T)() : initial;
+      slot.value = isFunction(initial) ? initial() : initial;
     }
     const setter = (v: T | ((prev: T) => T)): void => {
-      const nextVal = typeof v === 'function' ? (v as (prev: T) => T)(slot.value as T) : v;
+      const nextVal = isFunction(v) ? v(slot.value as T) : v;
+
       slot.value = nextVal;
     };
 
@@ -119,36 +132,42 @@ export const UpdateDispatcher: Dispatcher = {
 
   useEffect(effect: () => (() => void) | void | undefined, deps?: readonly unknown[]) {
     const [fiber] = getCurrentFiber();
+    invariant(fiber, 'useEffect');
 
-    invariant(fiber, 'useEffect called without an active fiber');
     const slotIndex = fiber.hookIndex;
     const slot = nextHookSlot(fiber, 'effect');
+
     // No deps = run every render; otherwise check if deps changed
     const hasNoDeps = deps === undefined;
     const hasChanged = hasNoDeps || !Object.is(slot.deps, deps);
+
     if (hasChanged) {
       slot.deps = deps;
+
       fiber.pendingEffects.push({ slotIndex, effect, deps });
     }
   },
 
   useRef<T>(initial: T) {
     const [fiber] = getCurrentFiber();
+    invariant(fiber, 'useRef');
 
-    invariant(fiber, 'useRef called without an active fiber');
     const slot = nextHookSlot(fiber, 'ref');
-    if (!slot.value) slot.value = { current: initial } as unknown as { current: T };
+
+    if (!slot.value) {
+      slot.value = { current: initial };
+    }
 
     return slot.value as { current: T };
   },
 
-  useContext<T>(ctx: FiberContext<T>) {
+  useContext<T>(ctx: Context<T>) {
     const [fiber] = getCurrentFiber();
+    invariant(fiber, 'useContext');
 
-    invariant(fiber, 'useContext called without an active fiber');
     const slot = nextHookSlot(fiber, 'context');
-    fiber.contextDeps.add(ctx.id);
-    const value = getFiberContextValue(ctx);
+    const value = (fiber.contextSnapshot && fiber.contextSnapshot.get(ctx.$$typeof) as T) ?? ctx.defaultValue;
+
     slot.value = value;
 
     return value;
@@ -156,10 +175,14 @@ export const UpdateDispatcher: Dispatcher = {
 
   useReducer<S, A>(reducer: (s: S, a: A) => S, initial: S) {
     const [fiber] = getCurrentFiber();
+    invariant(fiber, 'useReducer');
 
-    invariant(fiber, 'useReducer called without an active fiber');
     const slot = nextHookSlot(fiber, 'reducer');
-    if (typeof slot.value === 'undefined') slot.value = initial;
+
+    if (slot.value === undefined) {
+      slot.value = initial;
+    }
+
     const dispatch = (action: A): void => {
       slot.value = reducer(slot.value as S, action);
     };
@@ -169,14 +192,14 @@ export const UpdateDispatcher: Dispatcher = {
 
   usePlayer() {
     const [fiber] = getCurrentFiber();
-    invariant(fiber, 'usePlayer called without an active fiber');
+    invariant(fiber, 'usePlayer');
 
     return fiber.player;
   },
 
   useExit() {
     const [fiber] = getCurrentFiber();
-    invariant(fiber, 'useExit called without an active fiber');
+    invariant(fiber, 'useExit');
 
     return (): void => {
       fiber.shouldRender = false;

@@ -10,7 +10,6 @@ export function createFiber(id: string, player: Player): Fiber {
     hookIndex: 0,
     dispatcher: MountDispatcher,
     player,
-    contextDeps: new Set(),
     pendingEffects: [],
     shouldRender: true,
   };

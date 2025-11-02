@@ -1,7 +1,6 @@
 import { Player } from '@minecraft/server';
 import { FunctionComponent, JSX } from '../jsx';
 import { stopInputLock } from '../util';
-import { isContext } from './context';
 import {
   activateFiber,
   createFiber,
@@ -9,7 +8,6 @@ import {
   getFiber,
   getFibersForPlayer
 } from './fabric/fiber';
-import { getFiberContextValue, setFiberContextValue } from './fabric/registry';
 
 /**
  * Encapsulates parent state for inheritance calculations.
@@ -38,6 +36,7 @@ export interface TraversalContext {
   instanceToBoundary?: Map<string, string>; // Map instance ID → boundary ID
   idCounters: Map<string, number>; // Per-parent-path counters for auto-keys
   parentState?: ParentState; // Parent state for inheritance (used in Phase 4)
+  currentContext: Map<symbol, unknown>; // Fiber context snapshot being propagated
 }
 
 /**
@@ -128,6 +127,8 @@ async function expandAndResolveContexts(element: JSX.Element, context: Traversal
       context.instanceToBoundary.set(componentId, context.currentSuspenseBoundary);
     }
 
+    // Attach current context snapshot so hooks can read during evaluation
+    fiber.contextSnapshot = context.currentContext;
     // Activate the fiber and run the component; effects flush after this call
     const renderedElement = await activateFiber(fiber, () => componentFn(element.props));
 
@@ -146,65 +147,54 @@ async function expandAndResolveContexts(element: JSX.Element, context: Traversal
     const providerProps = element.props;
     const contextObj = providerProps.__context;
 
-    // Type-guard: verify __context is a Context object
-    if (!isContext(contextObj)) {
-      throw new Error('Invalid context provider: __context must be a Context object');
-    }
-
     const contextValue = providerProps.value;
     const contextChildren = providerProps.children;
 
-    // Save previous value and set new one in fiber2 global context
-    const prev = getFiberContextValue(contextObj as unknown as { id: symbol; defaultValue: unknown });
-    setFiberContextValue(
-      contextObj as unknown as { id: symbol; defaultValue: unknown },
-      contextValue,
-    );
+    // Derive a child context snapshot from the parent snapshot
+    const nextContext = new Map(context.currentContext);
+    nextContext.set((contextObj as { $$typeof: symbol }).$$typeof, contextValue);
 
-    try {
-      // If this provider is the SuspenseContext, propagate the boundary id
-      // into the traversal context so instances rendered under this provider
-      // are automatically associated with the boundary.
-      const isSuspenseProvider = (contextObj as unknown) === (require('../components/Suspense').SuspenseContext as unknown);
-      const maybeBoundary = isSuspenseProvider && contextValue ? (contextValue as unknown as { id?: string }).id : undefined;
-      const providerChildContext: TraversalContext = maybeBoundary ? { ...context, currentSuspenseBoundary: maybeBoundary } : context;
+    // If this provider is the SuspenseContext, propagate the boundary id
+    // into the traversal context so instances rendered under this provider
+    // are automatically associated with the boundary.
+    const isSuspenseProvider = contextObj === (require('../components/Suspense').SuspenseContext as unknown);
+    const maybeBoundary = isSuspenseProvider && contextValue ? (contextValue as unknown as { id?: string }).id : undefined;
+    const providerChildContext: TraversalContext = maybeBoundary
+      ? { ...context, currentSuspenseBoundary: maybeBoundary, currentContext: nextContext }
+      : { ...context, currentContext: nextContext };
 
-      // Process children recursively (they can now read context via useContext)
-      let processedChildren: JSX.Element;
+    // Process children recursively (they can now read context via useContext)
+    let processedChildren: JSX.Element;
 
-      if (Array.isArray(contextChildren)) {
-        const resolvedChildren = await Promise.all(
-          contextChildren
-            .map((child: JSX.Node): Promise<JSX.Element | null> => {
-              if (!child || typeof child !== 'object' || !('type' in child)) {
-                return Promise.resolve(null);
-              }
+    if (Array.isArray(contextChildren)) {
+      const resolvedChildren = await Promise.all(
+        contextChildren
+          .map((child: JSX.Node): Promise<JSX.Element | null> => {
+            if (!child || typeof child !== 'object' || !('type' in child)) {
+              return Promise.resolve(null);
+            }
 
-              return expandAndResolveContexts(child, providerChildContext, player);
-            }),
-        );
+            return expandAndResolveContexts(child, providerChildContext, player);
+          }),
+      );
 
-        const filtered = resolvedChildren.filter((child): child is JSX.Element => child !== null);
+      const filtered = resolvedChildren.filter((child): child is JSX.Element => child !== null);
 
-        processedChildren = {
-          type: 'fragment',
-          props: { children: filtered },
-        };
-      } else if (contextChildren && typeof contextChildren === 'object' && 'type' in contextChildren) {
-        processedChildren = await expandAndResolveContexts(contextChildren, providerChildContext, player);
-      } else {
-        // No valid children - return empty fragment
-        processedChildren = {
-          type: 'fragment',
-          props: { children: [] },
-        };
-      }
-
-      return processedChildren;
-    } finally {
-      // Restore previous context value
-      setFiberContextValue(contextObj as unknown as { id: symbol; defaultValue: unknown }, prev);
+      processedChildren = {
+        type: 'fragment',
+        props: { children: filtered },
+      };
+    } else if (contextChildren && typeof contextChildren === 'object' && 'type' in contextChildren) {
+      processedChildren = await expandAndResolveContexts(contextChildren, providerChildContext, player);
+    } else {
+      // No valid children - return empty fragment
+      processedChildren = {
+        type: 'fragment',
+        props: { children: [] },
+      };
     }
+
+    return processedChildren;
   }
 
   // Step 3: For regular elements, recursively process children
@@ -438,6 +428,7 @@ export async function buildTree(
     currentSuspenseBoundary: undefined,
     instanceToBoundary,
     idCounters: new Map(),
+    currentContext: new Map<symbol, unknown>(),
   };
 
   // Phase 1: Expand function components and resolve contexts

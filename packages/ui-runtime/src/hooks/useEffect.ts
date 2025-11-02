@@ -10,7 +10,7 @@ import { getCurrentFiber, invariant } from '../core';
 export function useEffect(effect: () => (() => void) | void | undefined, deps?: readonly unknown[]): void {
   const [, d] = getCurrentFiber();
 
-  invariant(d, 'useEffect called outside of an active fiber');
+  invariant(d, 'useEffect');
 
   return d.useEffect(effect, deps);
 }

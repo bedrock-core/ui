@@ -1,10 +1,4 @@
-import { FunctionComponent, JSX } from '../jsx';
-import { createFiberContext } from './fabric';
-
-/**
- * Context symbol for identifying context objects
- */
-const CONTEXT_SYMBOL = Symbol.for('core-ui.context');
+import { FunctionComponent, JSX } from '../../jsx';
 
 /**
  * Props for Context.Provider component
@@ -17,17 +11,10 @@ export interface ProviderProps<T> {
 /**
  * Context object created by createContext
  */
-export interface Context<T> {
-  // Fiber2 identity fields
-  id: symbol;
-  defaultValue: T;
-
-  // Legacy marker for isContext checks
+export type Context<T> = FunctionComponent<ProviderProps<T>> & {
   $$typeof: symbol;
-
-  // Provider component for setting context value
-  Provider: FunctionComponent<ProviderProps<T>>;
-}
+  defaultValue: T;
+};
 
 /**
  * Creates a Context object that components can use to share values down the component tree
@@ -54,14 +41,13 @@ export interface Context<T> {
  * }
  */
 export function createContext<T>(defaultValue: T): Context<T> {
-  const f2Ctx = createFiberContext<T>(defaultValue) as unknown as Context<T>;
-  (f2Ctx as unknown as { $$typeof: symbol }).$$typeof = CONTEXT_SYMBOL;
+  const identity = { $$typeof: Symbol('ctx'), defaultValue };
 
   const Provider: FunctionComponent<ProviderProps<T>> = (
     props: ProviderProps<T>,
   ): JSX.Element => {
     const providerProps = {
-      __context: f2Ctx,
+      __context: identity,
       value: props.value,
       children: props.children,
     } as unknown as JSX.Props;
@@ -72,18 +58,11 @@ export function createContext<T>(defaultValue: T): Context<T> {
     };
   };
 
-  f2Ctx.Provider = Provider;
+  // Make the context object itself callable as a Provider
+  const ContextComponent = Object.assign(Provider, {
+    $$typeof: identity.$$typeof,
+    defaultValue: identity.defaultValue,
+  });
 
-  return f2Ctx;
-}
-
-/**
- * Type guard to check if a value is a Context object
- */
-export function isContext<T>(value: unknown): value is Context<T> {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    (value as Context<T>).$$typeof === CONTEXT_SYMBOL
-  );
+  return ContextComponent;
 }

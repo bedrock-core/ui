@@ -17,10 +17,6 @@ export {
 // Rendering
 export { render } from './runtime';
 
-// Context
-export { createContext } from './context';
-export type { Context, ProviderProps } from './context';
-
 // Types
 export type {
   CoreUIFormData,
@@ -34,5 +30,11 @@ export type {
 
 export {
   getCurrentFiber,
-  invariant
+  invariant,
+  createContext
+} from './fabric';
+
+export type {
+  Context,
+  ProviderProps
 } from './fabric';

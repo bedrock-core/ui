@@ -1,8 +1,5 @@
 
-export {
-  getCurrentFiber,
-  createFiberContext
-} from './registry';
+export { getCurrentFiber } from './registry';
 
 export {
   activateFiber,
@@ -15,3 +12,5 @@ export {
 
 export { invariant } from './utils';
 
+export { createContext } from './context';
+export type { Context, ProviderProps } from './context';

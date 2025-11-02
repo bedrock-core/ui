@@ -11,7 +11,7 @@ import { getCurrentFiber, invariant } from '../core';
 export function useRef<T>(initial: T): { current: T } {
   const [, d] = getCurrentFiber();
 
-  invariant(d, 'useRef called outside of an active fiber');
+  invariant(d, 'useRef');
 
   return d.useRef<T>(initial);
 }

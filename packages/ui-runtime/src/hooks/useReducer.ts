@@ -12,7 +12,7 @@ import { getCurrentFiber, invariant } from '../core';
 export function useReducer<S, A>(reducer: (s: S, a: A) => S, initial: S): [S, (a: A) => void] {
   const [, d] = getCurrentFiber();
 
-  invariant(d, 'useReducer called outside of an active fiber');
+  invariant(d, 'useReducer');
 
   return d.useReducer<S, A>(reducer, initial);
 }

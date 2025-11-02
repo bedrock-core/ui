@@ -11,6 +11,7 @@ function createContext(parentState: ParentState): TraversalContext {
     createdInstances: new Set(),
     idCounters: new Map(),
     parentState,
+    currentContext: new Map(),
   };
 }
 

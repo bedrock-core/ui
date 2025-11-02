@@ -2,7 +2,7 @@ import { Fiber, HookSlot } from './types';
 
 export function invariant(condition: unknown, message: string): asserts condition {
   if (!condition) {
-    throw new Error(`[fiber2] ${message}`);
+    throw new Error(`[fiber] ${message} called outside an active fiber`);
   }
 }
 

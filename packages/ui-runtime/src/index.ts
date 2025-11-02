@@ -38,3 +38,8 @@ export type {
   ProviderProps,
   SerializationError
 } from './core';
+
+export type {
+  FunctionComponent,
+  JSX
+} from './jsx';

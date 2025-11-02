@@ -27,8 +27,8 @@ export function Example(): JSX.Element {
   });
 
   return (
-    <ThemeContext.Provider value={theme}>
-      <SettingsContext.Provider value={settings}>
+    <ThemeContext value={theme}>
+      <SettingsContext value={settings}>
         {/* Row 1: Context and State Demonstrations */}
         <ThemeDisplay />
         <SettingsDisplay />
@@ -50,8 +50,8 @@ export function Example(): JSX.Element {
         <ResourcesPanel />
         <GridLayoutPanel />
         <ExitPanel />
-      </SettingsContext.Provider>
-    </ThemeContext.Provider>
+      </SettingsContext>
+    </ThemeContext>
   );
 }
 

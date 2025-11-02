@@ -9,16 +9,20 @@ export interface HookSlot<T = unknown> {
   tag?: 'state' | 'effect' | 'ref' | 'reducer' | 'context';
 }
 
-export interface FiberContext<T> {
-  id: symbol;
+export interface Context<T> {
+
+  /* @internal */
+  $$typeof: symbol;
   defaultValue: T;
 }
+
+export type ContextSnapshot = ReadonlyMap<symbol, unknown>;
 
 export interface Dispatcher {
   useState<T>(initial: T | (() => T)): [T, (v: T | ((prev: T) => T)) => void];
   useEffect(effect: () => (() => void) | void | undefined, deps?: readonly unknown[]): void;
   useRef<T>(initial: T): { current: T };
-  useContext<T>(ctx: FiberContext<T>): T;
+  useContext<T>(ctx: Context<T>): T;
   useReducer<S, A>(reducer: (s: S, a: A) => S, initial: S): [S, (a: A) => void];
 
   usePlayer(): Player;
@@ -36,8 +40,8 @@ export interface Fiber {
   hookStates: HookSlot[];
   hookIndex: number;
   dispatcher: Dispatcher; // phase-specific
-  // Track which contexts this fiber depends on
-  contextDeps: Set<symbol>;
+  // Snapshot of context values visible during last evaluation
+  contextSnapshot?: ContextSnapshot;
   // Effects scheduled during the last evaluation
   pendingEffects: { slotIndex: number; effect: () => (() => void) | void | undefined; deps?: readonly unknown[] | undefined }[];
   // Session metadata

@@ -40,7 +40,7 @@ export function useEvent<T, O = Record<string, unknown>>(
 ): void {
   const [, d] = getCurrentFiber();
 
-  invariant(d, 'useEvent called outside of an active fiber');
+  invariant(d, 'useEvent');
 
   d.useEvent<T, O>(signal, callback, options, deps);
 }
