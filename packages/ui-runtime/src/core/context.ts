@@ -1,5 +1,5 @@
 import { FunctionComponent, JSX } from '../jsx';
-import { createContext as f2CreateContext } from './fiber';
+import { createFiberContext } from './fabric';
 
 /**
  * Context symbol for identifying context objects
@@ -54,7 +54,7 @@ export interface Context<T> {
  * }
  */
 export function createContext<T>(defaultValue: T): Context<T> {
-  const f2Ctx = f2CreateContext<T>(defaultValue) as unknown as Context<T>;
+  const f2Ctx = createFiberContext<T>(defaultValue) as unknown as Context<T>;
   (f2Ctx as unknown as { $$typeof: symbol }).$$typeof = CONTEXT_SYMBOL;
 
   const Provider: FunctionComponent<ProviderProps<T>> = (

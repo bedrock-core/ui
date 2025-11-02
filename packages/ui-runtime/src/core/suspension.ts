@@ -1,5 +1,5 @@
 import { system } from '@minecraft/server';
-import { getFiber } from './fiber';
+import { getFiber } from './fabric/fiber';
 import { Logger } from '../util';
 
 /**

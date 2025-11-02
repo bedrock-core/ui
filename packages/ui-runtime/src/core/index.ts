@@ -31,3 +31,8 @@ export type {
   SerializationError,
   RenderOptions
 } from './types';
+
+export {
+  getCurrentFiber,
+  invariant
+} from './fabric';

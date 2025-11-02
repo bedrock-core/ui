@@ -1,59 +1,15 @@
-import { getCurrentFiber } from '../core/fiber';
+import { getCurrentFiber, invariant } from '../core';
 
 /**
- * Hook that provides a function to properly exit/close the current UI without triggering re-renders.
+ * Hook that returns a function to request the current UI to close.
+ * Useful for programmatically dismissing the active form from within a component.
  *
- * This hook returns a function that when called will:
- * 1. Mark the fiber as not renderable to prevent re-renders
- * 2. Clean up effects and unmount the component
- * 3. Remove the fiber from the registry
- *
- * This is essential for exit/close buttons that should terminate the UI session
- * rather than trigger another render cycle.
- *
- * @returns Function to call when you want to exit the UI
- *
- * @example
- * function ExitButton() {
- *   const exit = useExit();
- *
- *   return (
- *     <Button onPress={exit}>
- *       <Text>Exit</Text>
- *     </Button>
- *   );
- * }
- *
- * @example
- * // Exit with custom logic
- * function SaveAndExitButton() {
- *   const exit = useExit();
- *   const player = usePlayer();
- *
- *   const handleSaveAndExit = () => {
- *     player.sendMessage('Settings saved!');
- *     exit();
- *   };
- *
- *   return (
- *     <Button onPress={handleSaveAndExit}>
- *       <Text>Save & Exit</Text>
- *     </Button>
- *   );
- * }
+ * @returns A function that, when invoked, signals the runtime to exit the current form.
  */
 export function useExit(): () => void {
-  const fiber = getCurrentFiber();
+  const [, d] = getCurrentFiber();
 
-  if (!fiber) {
-    throw new Error(
-      'useExit can only be called from within a component. ' +
-      'Make sure you are calling it at the top level of your component function.',
-    );
-  }
+  invariant(d, 'useExit called outside of an active fiber');
 
-  return (): void => {
-    // Mark fiber as not renderable to trigger close
-    fiber.shouldRender = false;
-  };
+  return d.useExit();
 }

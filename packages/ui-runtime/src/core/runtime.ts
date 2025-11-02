@@ -12,7 +12,7 @@ import type {
   RenderOptions,
   SerializationContext
 } from './types';
-import { getFiber, getFibersForPlayer } from './fiber';
+import { getFiber, getFibersForPlayer } from './fabric/fiber';
 
 /** Entry point that constructs a Runtime and starts the loop. */
 export async function render(

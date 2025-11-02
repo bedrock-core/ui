@@ -7,10 +7,9 @@ import {
   createFiber,
   deleteFiber,
   getFiber,
-  getFibersForPlayer,
-  getContextValue,
-  setContextValue
-} from './fiber';
+  getFibersForPlayer
+} from './fabric/fiber';
+import { getFiberContextValue, setFiberContextValue } from './fabric/registry';
 
 /**
  * Encapsulates parent state for inheritance calculations.
@@ -156,10 +155,10 @@ async function expandAndResolveContexts(element: JSX.Element, context: Traversal
     const contextChildren = providerProps.children;
 
     // Save previous value and set new one in fiber2 global context
-    const prev = getContextValue(contextObj as unknown as { id: symbol; defaultValue: unknown });
-    setContextValue(
+    const prev = getFiberContextValue(contextObj as unknown as { id: symbol; defaultValue: unknown });
+    setFiberContextValue(
       contextObj as unknown as { id: symbol; defaultValue: unknown },
-      contextValue as unknown,
+      contextValue,
     );
 
     try {
@@ -204,7 +203,7 @@ async function expandAndResolveContexts(element: JSX.Element, context: Traversal
       return processedChildren;
     } finally {
       // Restore previous context value
-      setContextValue(contextObj as unknown as { id: symbol; defaultValue: unknown }, prev);
+      setFiberContextValue(contextObj as unknown as { id: symbol; defaultValue: unknown }, prev);
     }
   }
 

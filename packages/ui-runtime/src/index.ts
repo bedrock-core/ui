@@ -20,7 +20,6 @@ export type {
 export {
   useState,
   useEffect,
-  executeEffects,
   useRef,
   useContext,
   useReducer,
@@ -29,54 +28,13 @@ export {
   useExit
 } from './hooks';
 
-export type {
-  StateHook,
-  EffectHook,
-  RefHook,
-  ContextHook,
-  ReducerHook,
-  Hook,
-  EventSignal
-} from './hooks';
-
 export {
-  // Serialization utilities
-  reserveBytes,
-  // Rendering
   render,
-  // Context
-  createContext,
-  // Protocol constants
-  PROTOCOL_HEADER,
-  VERSION,
-  PAD_CHAR,
-  TYPE_WIDTH,
-  PREFIX_WIDTH,
-  MARKER_WIDTH,
-  FULL_WIDTH,
-  TYPE_PREFIX,
-  FIELD_MARKERS,
-  PROTOCOL_HEADER_LENGTH
+  createContext
 } from './core';
 
 export type {
-  // Context types
   Context,
   ProviderProps,
-  // Types
-  CoreUIFormData,
-  ReservedBytes,
-  SerializablePrimitive,
-  SerializableProps,
-  SerializationContext,
-  SerializationError,
-  RenderOptions
+  SerializationError
 } from './core';
-
-// JSX Runtime
-export { renderJSX } from './jsx';
-
-export type {
-  FunctionComponent,
-  JSX
-} from './jsx';
