@@ -134,7 +134,7 @@
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(#pre_visible and (#type = 'panel'))",
+				"source_property_name": "(#pre_visible and (#type = 'fragment'))",
 				"target_property_name": "#visible"
 			},
 			{

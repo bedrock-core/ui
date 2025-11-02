@@ -7,6 +7,7 @@ import {
   createFiber,
   deleteFiber,
   getFiber,
+  getFibersForPlayer,
   getContextValue,
   setContextValue
 } from './fiber';
@@ -339,23 +340,19 @@ export async function buildTree(
 }
 
 /**
- * Clean up entire component tree (stop effects, delete instances).
+ * Clean up all fibers for a player (stop effects, delete instances).
  *
  * @param player - Player whose components are being cleaned up
- * @param instanceIds - Set of all instance IDs to clean up
- * @param registry - Session-specific fiber registry for this render
  */
-export function cleanupComponentTree(
-  player: Player,
-  instanceIds: Set<string>,
-): void {
-  const ids = Array.from(instanceIds)
-    .sort((a, b) => {
-      const depthA = (a.match(/\//g) || []).length;
-      const depthB = (b.match(/\//g) || []).length;
+export function cleanupComponentTree(player: Player): void {
+  const fiberIds = getFibersForPlayer(player);
+  // Sort by depth (deepest first) to clean up children before parents
+  const ids = fiberIds.sort((a, b) => {
+    const depthA = (a.match(/\//g) || []).length;
+    const depthB = (b.match(/\//g) || []).length;
 
-      return depthB - depthA; // Deepest first
-    });
+    return depthB - depthA;
+  });
 
   for (const id of ids) {
     deleteFiber(id);

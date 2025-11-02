@@ -8,28 +8,11 @@ import { startInputLock } from '../util';
 import { buildTree, cleanupComponentTree } from './render';
 import { PROTOCOL_HEADER, serialize } from './serializer';
 import { handleSuspensionForBoundary } from './suspension';
-import { getFiber } from './fiber';
 import type {
   RenderOptions,
   SerializationContext
 } from './types';
-
-/** Session instance store: one set of instance IDs per player per UI session */
-export const sessionInstances = new Map<string, Set<string>>();
-
-/**
- * Check if any fiber in the session has shouldRender === false (from useExit).
- */
-function shouldExitSession(instanceIds: Set<string>): boolean {
-  for (const id of instanceIds) {
-    const fiber = getFiber(id);
-    if (fiber?.shouldRender === false) {
-      return true;
-    }
-  }
-
-  return false;
-}
+import { getFiber, getFibersForPlayer } from './fiber';
 
 /** Entry point that constructs a Runtime and starts the loop. */
 export async function render(
@@ -40,19 +23,14 @@ export async function render(
   // Convert function component to JSX element if needed
   const rootElement: JSX.Element = typeof root === 'function' ? { type: root, props: {} } : root;
 
-  // Begin: input lock and ensure session instance set
+  // Begin: input lock on first render
   if (options.isFirstRender) {
     startInputLock(player);
-    sessionInstances.set(player.id, new Set());
     options.isFirstRender = false;
   }
 
   // Build complete tree (instances created, hooks initialized)
   const builtTree = await buildTree(rootElement, player);
-
-  // Merge this render's instances into the session set (used for cleanup)
-  const set = sessionInstances.get(player.id)!;
-  for (const id of builtTree.instances) set.add(id);
 
   // TODO CHANGE TO BE INSIDE FIBERS
   // Populate boundary instance sets using the instanceToBoundary map from buildTree
@@ -72,7 +50,6 @@ export async function render(
   await presentCycle(
     player,
     builtTree.tree,
-    builtTree.instances,
     rootElement,
     options,
     Array.from(suspenseBoundaryRegistry.values()),
@@ -86,7 +63,6 @@ export async function render(
 async function presentCycle(
   player: Player,
   element: JSX.Element,
-  createdInstances: Set<string>,
   rootElement: JSX.Element,
   options: RenderOptions,
   suspenseBoundaries?: SuspenseBoundary[],
@@ -102,8 +78,11 @@ async function presentCycle(
   // Track started boundaries and their resolution status
   const boundaries = new Map<string, boolean>();
   const areAllBoundariesResolved = (): boolean => Array.from(boundaries.entries()).every(([, value]) => value);
+  let shouldRerender = true;
 
   if (suspenseBoundaries) {
+    shouldRerender = false;
+
     for (const boundary of suspenseBoundaries) {
       if (boundary.isResolved || boundaries.has(boundary.id) || boundary.instanceIds.size === 0) {
         continue;
@@ -121,6 +100,7 @@ async function presentCycle(
 
           // Only close the form when ALL started boundaries have resolved
           if (areAllBoundariesResolved()) {
+            shouldRerender = true;
             uiManager.closeAllForms(player);
           }
         });
@@ -130,13 +110,11 @@ async function presentCycle(
   await form.show(player).then(response => {
     // When player pressed escape key or equivalent, and when we use uiManager.closeAllForms()
     if (response.canceled) {
-      const shouldRerender = areAllBoundariesResolved() && !shouldExitSession(createdInstances);
-
       // Player pressed ESC → re-render if all boundaries resolved and no fiber flagged exit
       if (shouldRerender) {
         system.run(() => { render(player, rootElement, options); });
       } else {
-        cleanupComponentTree(player, createdInstances);
+        cleanupComponentTree(player);
       }
 
       return;
@@ -150,7 +128,15 @@ async function presentCycle(
         // Execute button callback then rerender (unless useExit was called)
         Promise.resolve(callback())
           .then(() => {
-            system.run(() => { render(player, rootElement, options); });
+            const shouldClose = getFibersForPlayer(player)
+              .map(id => getFiber(id))
+              .some(fiber => fiber?.shouldRender === false);
+
+            if (!shouldClose) {
+              system.run(() => { render(player, rootElement, options); });
+            } else {
+              cleanupComponentTree(player);
+            }
           });
       }
     }

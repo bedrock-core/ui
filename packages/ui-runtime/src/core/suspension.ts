@@ -1,5 +1,6 @@
 import { system } from '@minecraft/server';
 import { getFiber } from './fiber';
+import { Logger } from '../util';
 
 /**
  * Executes effects for all components within a suspense boundary, repeatedly re-running them
@@ -9,7 +10,6 @@ import { getFiber } from './fiber';
  *
  * @internal
  */
-
 export async function handleSuspensionForBoundary(
   boundaryInstanceIds: Set<string>,
   timeout: number,
@@ -74,6 +74,9 @@ export async function handleSuspensionForBoundary(
       const elapsed = Date.now() - startTime;
       if (elapsed >= timeout) {
         system.clearRun(intervalId);
+
+        Logger.error(`Suspense boundary timed out after ${timeout}ms`);
+
         resolve(false);
 
         return;
@@ -86,11 +89,3 @@ export async function handleSuspensionForBoundary(
     }, 1);
   });
 }
-
-/**
- * Wait for all useState values in the given instances to differ from their initial values,
- * or until timeout.
- *
- * @internal
- */
-// Legacy helper removed: state resolution is handled inline in handleSuspensionForBoundary

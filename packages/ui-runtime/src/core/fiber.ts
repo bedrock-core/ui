@@ -54,7 +54,7 @@ export interface Fiber {
   pendingEffects: { slotIndex: number; effect: () => HookCleanup; deps?: readonly unknown[] | undefined }[];
   // Session metadata
   player: Player; // Player instance for this fiber
-  shouldRender?: boolean; // Flag for useExit to signal form should close
+  shouldRender: boolean; // Flag for useExit to signal form should close
 }
 
 // =============== Global Registry & Dynamic Scope ===============
@@ -251,6 +251,7 @@ export function createFiber(id: string, player: Player): Fiber {
     player,
     contextDeps: new Set(),
     pendingEffects: [],
+    shouldRender: true,
   };
   FiberRegistry.set(id, fiber);
 
@@ -273,6 +274,22 @@ export function deleteFiber(id: string): void {
     }
   }
   FiberRegistry.delete(id);
+}
+
+/**
+ * Get all fibers for a specific player.
+ * @param player - Player instance to filter fibers by
+ * @returns Array of fiber IDs belonging to this player
+ */
+export function getFibersForPlayer(player: Player): string[] {
+  const fibers: string[] = [];
+  for (const [id, fiber] of FiberRegistry) {
+    if (fiber.player === player) {
+      fibers.push(id);
+    }
+  }
+
+  return fibers;
 }
 
 /**
