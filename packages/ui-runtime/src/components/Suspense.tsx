@@ -1,12 +1,11 @@
 import { createContext } from '../core';
 import { useState } from '../hooks';
 import type { FunctionComponent, JSX } from '../jsx';
-import { Fragment } from './Fragment';
 
 /**
  * Props for the Suspense component
  */
-export interface SuspenseProps extends JSX.Props {
+export interface SuspenseProps {
 
   /**
    * Fallback UI to show while waiting for children to resolve their state.
@@ -23,6 +22,11 @@ export interface SuspenseProps extends JSX.Props {
    * @default 1000
    */
   awaitTimeout?: number;
+
+  /**
+   * Child nodes to be wrapped by the Suspense boundary.
+   */
+  children: JSX.Node;
 }
 
 /**
@@ -55,9 +59,8 @@ export const suspenseBoundaryRegistry = new Map<string, SuspenseBoundary>();
  * Wraps children and waits for their useState values to differ from initial values
  * before rendering them to the UI. Shows fallback UI during the wait period.
  *
- * Unlike global suspension at the render() level, each Suspense component
- * independently waits for its own children, allowing multiple suspense boundaries
- * to resolve in parallel.
+ * Each Suspense component independently waits for its own children, allowing
+ * multiple suspense boundaries to resolve in parallel.
  *
  * @example
  * ```tsx
@@ -67,7 +70,6 @@ export const suspenseBoundaryRegistry = new Map<string, SuspenseBoundary>();
  * </Suspense>
  * ```
  *
- * @internal Implementation is handled by the runtime during tree building and rendering.
  */
 export const Suspense: FunctionComponent<SuspenseProps> = ({ children, fallback, awaitTimeout }: SuspenseProps): JSX.Element => {
   // Generate unique boundary ID for this Suspense instance
@@ -91,10 +93,8 @@ export const Suspense: FunctionComponent<SuspenseProps> = ({ children, fallback,
   // Show/hide via control.visible using Fragment as a neutral container.
   return (
     <>
-      <Fragment visible={boundaryState.isResolved}>
-        <SuspenseContext.Provider value={boundaryState}>{children}</SuspenseContext.Provider>
-      </Fragment>
-      {boundaryState.fallback && <Fragment visible={!boundaryState.isResolved}>{boundaryState.fallback}</Fragment>}
+      <SuspenseContext.Provider value={boundaryState}>{children}</SuspenseContext.Provider>
+      {boundaryState.fallback && <>{boundaryState.fallback}</>}
     </>
   );
 };

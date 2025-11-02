@@ -19,7 +19,7 @@ import { FIELD_MARKERS, FULL_WIDTH, PROTOCOL_HEADER, serialize, TYPE_PREFIX, TYP
 // 8: alpha (number)
 // 9: inheritMaxSiblingWidth (boolean)
 // 10: inheritMaxSiblingHeight (boolean)
-// 11: __reserved (reserved, 274 bytes)
+// 11: $reserved (reserved, 274 bytes)
 // Update ONLY by appending new fields at the end per protocol evolution rules.
 
 type TKey = keyof typeof FULL_WIDTH;
@@ -33,7 +33,7 @@ function slice(payload: string, fieldIndex: number): string {
   for (let i = 0; i < fieldIndex; i++) {
     if (FIELD_PLAN[i] === 'r') {
       // For reserved fields, full allocation is the requested bytes
-      // Field 11: __reserved (274 bytes total)
+      // Field 11: $reserved (274 bytes total)
       const reservedBytes = i === 11 ? 274 : 0;
       offset += reservedBytes; // full reserved allocation
     } else {
@@ -149,7 +149,7 @@ describe('Serialization field order', () => {
     const f10 = slice(payload, 10);
     expect(corePadded(f10, 'b').startsWith('false')).toBe(true);
 
-    // Field 11: __reserved (274 bytes reserved)
+    // Field 11: $reserved (274 bytes reserved)
     const f11 = slice(payload, 11);
     expect(f11.length).toBe(274); // full reserved allocation
     expect(f11.endsWith(FIELD_MARKERS[11])).toBe(true);
@@ -230,7 +230,7 @@ describe('Serialization field order', () => {
     // const f10 = slice(payload, 10); // inheritMaxSiblingHeight (true)
     // expect(corePadded(f10, 'b').startsWith('true')).toBe(true);
 
-    const f11 = slice(payload, 11); // __reserved
+    const f11 = slice(payload, 11); // $reserved
     expect(f11.length).toBe(274); // full reserved allocation
     expect(f11.endsWith(FIELD_MARKERS[11])).toBe(true);
     // Should be 274-1 padding chars (1 for marker)
@@ -324,7 +324,7 @@ describe('Serialization field order', () => {
     const f10 = slice(payload, 10); // inheritMaxSiblingHeight (false)
     expect(corePadded(f10, 'b').startsWith('false')).toBe(true);
 
-    const f11 = slice(payload, 11); // __reserved
+    const f11 = slice(payload, 11); // $reserved
     expect(f11.length).toBe(274); // full reserved allocation
     expect(f11.endsWith(FIELD_MARKERS[11])).toBe(true);
     // Should be 274-1 padding chars (1 for marker)

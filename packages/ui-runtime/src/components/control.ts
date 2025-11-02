@@ -75,7 +75,7 @@ export function withControl(props: JSX.Props): JSX.Props {
     alpha: alpha ?? 1.0,
     inheritMaxSiblingWidth: inheritMaxSiblingWidth ?? false,
     inheritMaxSiblingHeight: inheritMaxSiblingHeight ?? false,
+    $reserved: reserveBytes(274), // Reserve space for future expansion
     __position: position ?? 'relative', // Internal only: not serialized (__ prefix excludes it)
-    __reserved: reserveBytes(239), // Reserve space for future expansion
   };
 }

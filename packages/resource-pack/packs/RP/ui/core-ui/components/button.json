@@ -171,7 +171,7 @@
 				"target_property_name": "#enabled"
 			},
 			{
-				/* --- skip __reserved (274) + commented (70) --- */
+				/* --- skip $reserved (274) + commented (70) --- */
 				"binding_type": "view", // reserved full_width
 				"source_property_name": "('%.344s' * #rem_after_enabled)",
 				"target_property_name": "#skip_reserved_control"

@@ -213,7 +213,7 @@
 			// 	"target_property_name": "#inherit_max_sibling_height"
 			// },
 			{
-				/* --- skip __reserved (274) + commented (70) --- */
+				/* --- skip $reserved (274) + commented (70) --- */
 				"binding_type": "view", // reserved full_width
 				"source_property_name": "('%.344' * #rem_after_inherit_max_sibling_height)",
 				"target_property_name": "#skip_reserved_control"

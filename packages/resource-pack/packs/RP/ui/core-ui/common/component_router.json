@@ -13,9 +13,6 @@
 		],
 		"controls": [
 			{
-				"fragment@core-ui_components.fragment": {}
-			},
-			{
 				"panel@core-ui_components.panel": {}
 			},
 			{

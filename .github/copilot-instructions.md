@@ -129,7 +129,7 @@ const VERSION = 'v0001';               // Only update with migrations
 Enforces canonical field ordering and applies defaults to all components. Key points:
 
 - Returns props in **exact canonical order** (critical for serialization)
-- Order: width, height, x, y, visible, enabled, layer, alpha, inheritMaxSiblingWidth, inheritMaxSiblingHeight, __reserved
+- Order: width, height, x, y, visible, enabled, layer, alpha, inheritMaxSiblingWidth, inheritMaxSiblingHeight, $reserved
 - Applies defaults to optional props (visible=true, enabled=true, etc.)
 - Reserves 274 bytes for future expansion (total 512 bytes)
 - All numeric dimensions accept `number` only (no "100px" or "100%" strings)

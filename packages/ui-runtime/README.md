@@ -179,7 +179,7 @@ Field 7: layer (number, 27 bytes)                 - z-index layering (default: 0
 Field 8: alpha (number, 27 bytes)                 - transparency (default: 1.0)
 Field 9: inheritMaxSiblingWidth (bool, 8 bytes)   - width inheritance (default: false)
 Field 10: inheritMaxSiblingHeight (bool, 8 bytes) - height inheritance (default: false)
-Field 11: __reserved (274 bytes)                  - reserved for future expansion
+Field 11: $reserved (274 bytes)                  - reserved for future expansion
 
 Total: 512 bytes per component (fixed allocation)
 ```

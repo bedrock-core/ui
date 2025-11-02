@@ -1,5 +1,4 @@
 import { Fragment as FragmentComponent } from '../components/Fragment';
-import { SerializablePrimitive } from '../core';
 
 interface NativeNode<P extends JSX.Props = JSX.Props> {
   type: string | FunctionComponent<P>;
@@ -9,9 +8,7 @@ interface NativeNode<P extends JSX.Props = JSX.Props> {
 export namespace JSX {
   export type Element = NativeNode;
   export type Node = Element | Element[] | null | undefined;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  export type PropValue = SerializablePrimitive | Node | undefined | ((...args: any[]) => void);
-  export type Props = { [key: string]: PropValue } & { children?: Node };
+  export type Props = { [key: string]: unknown } & { children?: Node };
 }
 
 export type FunctionComponent<P = JSX.Props> = (props: P) => JSX.Element;

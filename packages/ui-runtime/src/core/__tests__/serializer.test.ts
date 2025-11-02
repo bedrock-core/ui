@@ -8,14 +8,14 @@ const controlTypes: TKey[] = ['n', 'n', 'n', 'n', 'b', 'b', 'n', 'n', 'b', 'b', 
  * Helper to exclude children property from withControl output for testing serializeProps
  */
 function withControlForTest(props: Parameters<typeof withControl>[0]): Omit<ReturnType<typeof withControl>, 'children'> {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { children, ...rest } = withControl(props);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/naming-convention
+  const { children, __position, ...rest } = withControl(props);
 
   return rest;
 }
 
 const PLAN_PRIMITIVES: Record<string, TKey[]> = {
-  // Note: all plans now include control props + reserved: type, width, height, x, y, visible, enabled, layer, alpha, inheritMaxSiblingWidth, inheritMaxSiblingHeight, __reserved, [custom fields...]
+  // Note: all plans now include control props + reserved: type, width, height, x, y, visible, enabled, layer, alpha, inheritMaxSiblingWidth, inheritMaxSiblingHeight, $reserved, [custom fields...]
   basic: ['s', ...controlTypes, 's', 'n', 'n', 'b'], // control + reserved + name, count, ratio, ok
   twoStrings: ['s', ...controlTypes, 's', 's'], // control + reserved + first, second
   twoNumbers: ['s', ...controlTypes, 'n', 'n'], // control + reserved + a, b
@@ -80,8 +80,6 @@ describe('core/serializer', () => {
           height: 100.0,
           x: 0.0,
           y: 0.0,
-          inheritMaxSiblingWidth: false,
-          inheritMaxSiblingHeight: true,
         }),
       };
 

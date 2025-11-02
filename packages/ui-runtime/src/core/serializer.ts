@@ -1,5 +1,6 @@
 import { JSX } from '../jsx';
 import { CoreUIFormData, ReservedBytes, SerializablePrimitive, SerializableProps, SerializationContext, SerializationError } from './types';
+import { TRANSPARENT_TYPES, WRITERS } from './writers';
 
 /**
  * This makes each full field substring unique even when two field values & padding are identical.
@@ -156,16 +157,30 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
     );
   }
 
+  // Transparent components: do not emit payload, serialize children only
+  if (TRANSPARENT_TYPES.has(type)) {
+    if (children) {
+      const childArray = Array.isArray(children) ? children : [children];
+      childArray.forEach((child: JSX.Element): void => serialize(child, form, context));
+    }
+
+    return;
+  }
+
   // Validate and filter props - ensure all props (except children) are serializable
   const serializableProps: SerializableProps = {};
   const invalidProps: string[] = [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const callbacks: Record<string, (...args: any[]) => void> = {};
+  const callbacks: Record<string, (...args: unknown[]) => void> = {};
 
   for (const [key, value] of Object.entries(rest)) {
+    // Skip internal/runtime-only props
+    if (key.startsWith('__')) {
+      continue;
+    }
+
     if (isSerializablePrimitive(value)) {
       serializableProps[key] = value;
-    } else if (typeof value === 'function') {
+    } else if (isFunction(value)) {
       // Store function props as callbacks - they're not serializable but valid for event handlers
       callbacks[key] = value;
     } else {
@@ -186,24 +201,14 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
 
   // Logger.log(`[serialize] type=${type} payloadBytes=${bytes} payload=${payload} `);
 
-  // Client-only components (use label routing)
-  // TODO Better way to mark client-only components?
-  if (['panel', 'text', 'image', 'fragment'].includes(type)) {
-    form.label(payload);
-  } else if (type === 'button') {
-    // Register button callback if provided and context exists
-    if (context) {
-      if (callbacks.onPress) {
-        context.buttonCallbacks.set(context.buttonIndex, callbacks.onPress);
-      }
+  const writer = WRITERS[type];
 
-      context.buttonIndex++;
-    }
-
-    form.button(payload);
-  } else {
-    throw new SerializationError(`Unknown component type: ${type}`);
+  if (!writer) {
+    const known = Object.keys(WRITERS).sort().join(', ');
+    throw new SerializationError(`Unknown native component type: ${type}. Known types: ${known}`);
   }
+
+  writer(payload, form, context, callbacks);
 
   // Recursively handle children
   if (children) {
@@ -261,4 +266,8 @@ export function serializeProps({ type, ...props }: SerializableProps & { type: s
   const finalBytes = totalBytes + utf8ByteLength(prefix);
 
   return [result, finalBytes];
+}
+
+function isFunction(value: unknown): value is (...args: unknown[]) => void {
+  return typeof value === 'function';
 }
