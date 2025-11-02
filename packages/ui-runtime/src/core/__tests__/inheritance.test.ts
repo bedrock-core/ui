@@ -8,7 +8,6 @@ import { ParentState, TraversalContext, applyInheritance } from '../render';
 function createContext(parentState: ParentState): TraversalContext {
   return {
     parentPath: [],
-    createdInstances: new Set(),
     idCounters: new Map(),
     parentState,
     currentContext: new Map(),

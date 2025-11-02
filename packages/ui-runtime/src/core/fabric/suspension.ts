@@ -27,10 +27,11 @@ export async function handleSuspensionForBoundary(
     const initialStates: unknown[] = [];
 
     for (const slot of fiber.hookStates) {
-      if (slot?.tag === 'state') {
+      if (slot.tag === 'state') {
         initialStates.push(slot.value);
       }
     }
+
     baseline.set(id, initialStates);
   }
 
@@ -54,7 +55,7 @@ export async function handleSuspensionForBoundary(
         const currentValues: unknown[] = [];
 
         for (const slot of fiber.hookStates) {
-          if (slot?.tag === 'state') {
+          if (slot.tag === 'state') {
             currentValues.push(slot.value);
           }
         }

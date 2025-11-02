@@ -2,35 +2,29 @@ import type { Player } from '@minecraft/server';
 import { system } from '@minecraft/server';
 import { ActionFormData, uiManager } from '@minecraft/server-ui';
 import type { FunctionComponent, JSX } from '../jsx';
-import { startInputLock } from '../util';
+import { startInputLock, stopInputLock } from '../util';
 import { getFiber, getFibersForPlayer, handleSuspensionForBoundary } from './fabric';
 import { buildTree, cleanupComponentTree } from './render';
 import { PROTOCOL_HEADER, serialize } from './serializer';
-import type { RenderOptions, SerializationContext } from './types';
+import type { SerializationContext } from './types';
 
 /** Entry point that constructs a Runtime and starts the loop. */
 export async function render(
   player: Player,
   root: JSX.Element | FunctionComponent,
-  options: RenderOptions = { isFirstRender: true },
 ): Promise<void> {
+  startInputLock(player);
+
   // Convert function component to JSX element if needed
   const rootElement: JSX.Element = typeof root === 'function' ? { type: root, props: {} } : root;
 
-  // Begin: input lock on first render
-  if (options.isFirstRender) {
-    startInputLock(player);
-    options.isFirstRender = false;
-  }
-
   // Build complete tree (instances created, hooks initialized)
-  const builtTree = await buildTree(rootElement, player);
+  const tree = await buildTree(rootElement, player);
 
   await presentCycle(
     player,
-    builtTree.tree,
+    tree,
     rootElement,
-    options,
   );
 }
 
@@ -42,7 +36,6 @@ async function presentCycle(
   player: Player,
   element: JSX.Element,
   rootElement: JSX.Element,
-  options: RenderOptions,
 ): Promise<void> {
   // Prepare serialization context for button callbacks
   const serializationContext: SerializationContext = { buttonCallbacks: new Map(), buttonIndex: 0 };
@@ -101,8 +94,9 @@ async function presentCycle(
     if (response.canceled) {
       // Player pressed ESC → re-render if all boundaries resolved and no fiber flagged exit
       if (shouldRerender) {
-        system.run(() => { render(player, rootElement, options); });
+        system.run(() => { render(player, rootElement); });
       } else {
+        stopInputLock(player);
         cleanupComponentTree(player);
       }
 
@@ -122,8 +116,9 @@ async function presentCycle(
               .some(fiber => fiber?.shouldRender === false);
 
             if (!shouldClose) {
-              system.run(() => { render(player, rootElement, options); });
+              system.run(() => { render(player, rootElement); });
             } else {
+              stopInputLock(player);
               cleanupComponentTree(player);
             }
           });

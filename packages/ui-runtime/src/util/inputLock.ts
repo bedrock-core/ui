@@ -10,10 +10,8 @@ const inputLocks = new Map<string, { camera: boolean; movement: boolean }>();
  * Start locking camera and movement input for a player
  */
 export function startInputLock(player: Player): void {
-  const playerId = player.name;
-
   // Already locked, don't create duplicate
-  if (inputLocks.has(playerId)) {
+  if (inputLocks.has(player.id)) {
     return;
   }
 
@@ -21,7 +19,7 @@ export function startInputLock(player: Player): void {
   const previousCameraPermission = player.inputPermissions.isPermissionCategoryEnabled(InputPermissionCategory.Camera);
   const previousMovementPermission = player.inputPermissions.isPermissionCategoryEnabled(InputPermissionCategory.Movement);
 
-  inputLocks.set(playerId, {
+  inputLocks.set(player.id, {
     camera: previousCameraPermission,
     movement: previousMovementPermission,
   });
@@ -35,8 +33,7 @@ export function startInputLock(player: Player): void {
  * Stop locking camera and movement input for a player, restoring previous permissions
  */
 export function stopInputLock(player: Player): void {
-  const playerId = player.name;
-  const previousPermissions = inputLocks.get(playerId);
+  const previousPermissions = inputLocks.get(player.id);
 
   if (!previousPermissions) {
     return;
@@ -46,5 +43,5 @@ export function stopInputLock(player: Player): void {
   player.inputPermissions.setPermissionCategory(InputPermissionCategory.Camera, previousPermissions.camera);
   player.inputPermissions.setPermissionCategory(InputPermissionCategory.Movement, previousPermissions.movement);
 
-  inputLocks.delete(playerId);
+  inputLocks.delete(player.id);
 }

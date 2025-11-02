@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { withControl } from '../../components/control';
-import { FIELD_MARKERS, FULL_WIDTH, PROTOCOL_HEADER, PROTOCOL_HEADER_LENGTH, reserveBytes, serializeProps, TYPE_PREFIX, TYPE_WIDTH } from '../serializer';
+import { FIELD_MARKERS, FULL_WIDTH, PROTOCOL_HEADER, PROTOCOL_HEADER_LENGTH, serializeProps, TYPE_PREFIX, TYPE_WIDTH } from '../serializer';
 
 const controlTypes: TKey[] = ['n', 'n', 'n', 'n', 'b', 'b', 'n', 'n', 'b', 'b', 'r'];
 
@@ -285,14 +285,6 @@ describe('core/serializer', () => {
   });
 
   describe('reserved bytes', () => {
-    it('creates reserved bytes object with correct structure', () => {
-      const reserved = reserveBytes(50);
-      expect(reserved).toEqual({
-        __type: 'reserved',
-        bytes: 50,
-      });
-    });
-
     it('serializes reserved bytes with correct prefix and padding', () => {
       const [result, bytes] = serializeProps({
         type: 'test',
@@ -302,7 +294,7 @@ describe('core/serializer', () => {
           x: 0,
           y: 0,
         }),
-        reserved: reserveBytes(20),
+        reserved: { bytes: 20 },
       });
 
       expect(result.startsWith(PROTOCOL_HEADER)).toBe(true);
@@ -328,7 +320,7 @@ describe('core/serializer', () => {
             x: 0,
             y: 0,
           }),
-          reserved: reserveBytes(size),
+          reserved: { bytes: size },
         });
 
         // Verify consistent length calculation
@@ -351,9 +343,9 @@ describe('core/serializer', () => {
           y: 0,
         }),
         name: 'test',
-        reserved1: reserveBytes(10),
+        reserved1: { bytes: 10 },
         count: 42,
-        reserved2: reserveBytes(5),
+        reserved2: { bytes: 5 },
         active: true,
       });
 
@@ -383,9 +375,9 @@ describe('core/serializer', () => {
           x: 0,
           y: 0,
         }),
-        reserved1: reserveBytes(10),
-        reserved2: reserveBytes(10), // Same size, should have different markers
-        reserved3: reserveBytes(5),
+        reserved1: { bytes: 10 },
+        reserved2: { bytes: 10 }, // Same size, should have different markers
+        reserved3: { bytes: 5 },
       });
 
       // Note: withControl adds all control fields first, so reserved fields come after
@@ -404,13 +396,6 @@ describe('core/serializer', () => {
       const occurrences4 = (result.match(new RegExp(padding4, 'g')) || []).length;
       expect(occurrences9).toBeGreaterThanOrEqual(2); // at least 2 occurrences of 9-char padding
       expect(occurrences4).toBeGreaterThanOrEqual(1); // at least 1 occurrence of 4-char padding
-    });
-
-    it('throws error for invalid reserved bytes input', () => {
-      expect(() => reserveBytes(-1)).toThrow();
-      expect(() => reserveBytes(1.5)).toThrow();
-      expect(() => reserveBytes(NaN)).toThrow();
-      expect(() => reserveBytes(Infinity)).toThrow();
     });
   });
 });

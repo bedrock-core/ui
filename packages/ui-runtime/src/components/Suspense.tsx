@@ -1,5 +1,6 @@
 import { createContext, getCurrentFiber } from '../core';
 import type { FunctionComponent, JSX } from '../jsx';
+import { Panel } from './Panel';
 
 /**
  * Props for the Suspense component
@@ -82,9 +83,9 @@ export const Suspense: FunctionComponent<SuspenseProps> = ({ children, fallback,
   return (
     <>
       <SuspenseContext value={{ id: boundaryId }}>
-        {children}
+        <Panel width={0} height={0} x={0} y={0} visible={fiber.suspense.isResolved}>{children}</Panel>
       </SuspenseContext>
-      {fallback && <>{fallback}</>}
+      {fallback && !fiber.suspense.isResolved && <>{fallback}</>}
     </>
   );
 };

@@ -5,8 +5,7 @@ export interface HookSlot<T = unknown> {
   value: T;
   deps?: readonly unknown[] | undefined;
   cleanup?: (() => void) | undefined;
-  // Debug/inspection
-  tag?: 'state' | 'effect' | 'ref' | 'reducer' | 'context';
+  tag: 'state' | 'effect' | 'ref' | 'reducer' | 'context';
 }
 
 export interface Context<T> {

@@ -1,6 +1,5 @@
 // Serialization
 export {
-  reserveBytes,
   serialize,
   PROTOCOL_HEADER,
   VERSION,
@@ -24,8 +23,7 @@ export type {
   SerializablePrimitive,
   SerializableProps,
   SerializationContext,
-  SerializationError,
-  RenderOptions
+  SerializationError
 } from './types';
 
 export {

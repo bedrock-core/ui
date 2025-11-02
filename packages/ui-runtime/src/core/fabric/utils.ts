@@ -6,14 +6,14 @@ export function invariant(condition: unknown, message: string): asserts conditio
   }
 }
 
-export function nextHookSlot(fiber: Fiber, tag?: HookSlot['tag']): HookSlot {
+export function nextHookSlot(fiber: Fiber, tag: HookSlot['tag']): HookSlot {
   const idx: number = fiber.hookIndex++;
   let slot: HookSlot = fiber.hookStates[idx];
 
   if (!slot) {
     slot = { value: undefined, tag };
     fiber.hookStates[idx] = slot;
-  } else if (tag && slot.tag && slot.tag !== tag) {
+  } else if (slot.tag !== tag) {
     // Soft guard to aid debugging when hook order shifts across types
     slot.tag = tag;
   }

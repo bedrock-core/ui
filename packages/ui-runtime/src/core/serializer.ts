@@ -1,5 +1,5 @@
 import { JSX } from '../jsx';
-import { CoreUIFormData, ReservedBytes, SerializablePrimitive, SerializableProps, SerializationContext, SerializationError } from './types';
+import { CoreUIFormData, SerializablePrimitive, SerializableProps, SerializationContext, SerializationError } from './types';
 import { TRANSPARENT_TYPES, WRITERS } from './writers';
 
 /**
@@ -113,19 +113,6 @@ function padToByteLength(str: string, length: number): string {
 }
 
 /**
- * Reserves a specific number of bytes for future use.
- * @param bytes - number of bytes to reserve
- * @returns A ReservedBytes object representing the reserved space
- */
-export function reserveBytes(bytes: number): ReservedBytes {
-  if (!Number.isInteger(bytes) || bytes <= 0) {
-    throw new SerializationError('Reserved bytes must be a positive integer');
-  }
-
-  return { __type: 'reserved', bytes };
-}
-
-/**
  * Type guard to check if a value is a SerializablePrimitive
  */
 function isSerializablePrimitive(value: unknown): value is SerializablePrimitive {
@@ -134,8 +121,8 @@ function isSerializablePrimitive(value: unknown): value is SerializablePrimitive
   }
 
   // Check for ReservedBytes object
-  if (typeof value === 'object' && value !== null && value !== undefined && '__type' in value) {
-    return (value as ReservedBytes).__type === 'reserved';
+  if (typeof value === 'object' && value !== null && value !== undefined && 'bytes' in value) {
+    return true;
   }
 
   return false;
@@ -161,6 +148,7 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
   if (TRANSPARENT_TYPES.has(type)) {
     if (children) {
       const childArray = Array.isArray(children) ? children : [children];
+
       childArray.forEach((child: JSX.Element): void => serialize(child, form, context));
     }
 
@@ -240,7 +228,7 @@ export function serializeProps({ type, ...props }: SerializableProps & { type: s
       rawStr = value.toString();
       core = `${TYPE_PREFIX.n}:${padToByteLength(rawStr, TYPE_WIDTH.n)}`;
       widthBytes = FULL_WIDTH.n;
-    } else if (typeof value === 'object' && value.__type === 'reserved') {
+    } else if (typeof value === 'object' && value.bytes !== undefined) {
       rawStr = '';
       // Do not append prefix as we do not have prefix or marker for reserved bytes for easier JSON UI skipping
       core = `${PAD_CHAR.repeat(value.bytes - 1)}`; // -1 for marker

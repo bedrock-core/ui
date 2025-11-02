@@ -19,7 +19,6 @@
 			"#anchored_offset_value_y": 0.0
 		},
 		"visible": "#visible",
-		"enabled": "#enabled", // TODO needs testing
 		"localize": true,
 		"$normalize": 1.0,
 		"bindings": [

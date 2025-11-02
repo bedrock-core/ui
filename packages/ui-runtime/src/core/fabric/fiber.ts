@@ -24,12 +24,18 @@ export function getFiber(id: string): Fiber | undefined {
 
 export function deleteFiber(id: string): void {
   const fiber = FiberRegistry.get(id);
-  if (!fiber) return;
+
+  if (!fiber) {
+    return;
+  }
+
   // Run any remaining cleanups
   for (let i = 0; i < fiber.hookStates.length; i++) {
     const slot = fiber.hookStates[i];
+
     if (slot?.cleanup) {
       try { slot.cleanup(); } catch { /* noop */ }
+
       slot.cleanup = undefined;
     }
   }
@@ -43,6 +49,7 @@ export function deleteFiber(id: string): void {
  */
 export function getFibersForPlayer(player: Player): string[] {
   const fibers: string[] = [];
+
   for (const [id, fiber] of FiberRegistry) {
     if (fiber.player === player) {
       fibers.push(id);
@@ -64,13 +71,14 @@ export async function activateFiber<T>(
   const [prevFiber, prevDispatcher] = getCurrentFiber();
 
   fiber.hookIndex = 0;
-  fiber.pendingEffects.length = 0;
+  fiber.pendingEffects = [];
 
   setCurrentFiber(fiber, fiber.dispatcher);
 
   try {
     const result = fn();
     const awaited = await result;
+
     // After successful evaluation, move to Update phase for next runs
     fiber.dispatcher = UpdateDispatcher;
     // Flush effects after execution
@@ -101,19 +109,27 @@ export function runInFiber<R>(fiber: Fiber, cb: () => R): R {
 
 function flushPendingEffects(fiber: Fiber): void {
   const pending = fiber.pendingEffects.splice(0, fiber.pendingEffects.length);
+
   for (const { slotIndex, effect } of pending) {
     const slot = fiber.hookStates[slotIndex];
+
     // Run previous cleanup before next effect
     if (slot?.cleanup) {
       try { slot.cleanup(); } catch { /* noop */ }
+
       slot.cleanup = undefined;
     }
+
     let cleanup = undefined;
+
     try {
       cleanup = effect();
     } catch {
       cleanup = undefined;
     }
-    if (typeof cleanup === 'function') slot.cleanup = cleanup as () => void;
+
+    if (typeof cleanup === 'function') {
+      slot.cleanup = cleanup;
+    }
   }
 }

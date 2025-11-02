@@ -1,5 +1,4 @@
 import { JSX } from '../jsx/jsx-runtime';
-import { reserveBytes } from '../core/serializer';
 
 export interface ControlProps {
   // All positioning and sizing values are numbers, will not support string types like "100px", "100%", "100%c"... too much issues in json ui
@@ -75,7 +74,7 @@ export function withControl(props: JSX.Props): JSX.Props {
     alpha: alpha ?? 1.0,
     inheritMaxSiblingWidth: inheritMaxSiblingWidth ?? false,
     inheritMaxSiblingHeight: inheritMaxSiblingHeight ?? false,
-    $reserved: reserveBytes(274), // Reserve space for future expansion
+    $reserved: { bytes: 274 }, // Reserve space for future expansion
     __position: position ?? 'relative', // Internal only: not serialized (__ prefix excludes it)
   };
 }

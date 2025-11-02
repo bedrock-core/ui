@@ -1,6 +1,5 @@
 import { Player } from '@minecraft/server';
 import { FunctionComponent, JSX } from '../jsx';
-import { stopInputLock } from '../util';
 import {
   activateFiber,
   createFiber,
@@ -31,7 +30,6 @@ export interface ParentState {
  */
 export interface TraversalContext {
   parentPath: string[]; // Component path from root: ['Example', 'Counter']
-  createdInstances: Set<string>; // Track all instances created during this render
   currentSuspenseBoundary?: string; // Track which Suspense boundary we're currently in
   idCounters: Map<string, number>; // Per-parent-path counters for auto-keys
   parentState?: ParentState; // Parent state for inheritance (used in Phase 4)
@@ -117,9 +115,6 @@ async function expandAndResolveContexts(element: JSX.Element, context: Traversal
     // Get or create instance for this component
     // Create or get the fiber for this component instance
     const fiber = getFiber(componentId) ?? createFiber(componentId, player);
-
-    // Track instance for cleanup
-    context.createdInstances.add(componentId);
 
     // If we're in a Suspense boundary, stamp this fiber with nearest boundary id
     if (context.currentSuspenseBoundary) {
@@ -421,11 +416,10 @@ export function applyInheritance(element: JSX.Element, context: TraversalContext
 export async function buildTree(
   element: JSX.Element,
   player: Player,
-): Promise<{ tree: JSX.Element; instances: Set<string> }> {
+): Promise<JSX.Element> {
   // Initialize traversal context
   const context: TraversalContext = {
     parentPath: [],
-    createdInstances: new Set(),
     currentSuspenseBoundary: undefined,
     idCounters: new Map(),
     currentContext: new Map<symbol, unknown>(),
@@ -452,10 +446,7 @@ export async function buildTree(
   };
   result = applyInheritance(result, rootContext);
 
-  return {
-    tree: result,
-    instances: context.createdInstances,
-  };
+  return result;
 }
 
 /**
@@ -476,6 +467,4 @@ export function cleanupComponentTree(player: Player): void {
   for (const id of ids) {
     deleteFiber(id);
   }
-
-  stopInputLock(player);
 }
