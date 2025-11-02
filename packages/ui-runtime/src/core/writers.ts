@@ -1,12 +1,4 @@
-import { CoreUIFormData } from './types';
-import type { SerializationContext } from './types';
-
-export type Writer = (
-  payload: string,
-  form: CoreUIFormData,
-  ctx: SerializationContext | undefined,
-  callbacks: Record<string, (...args: unknown[]) => void>,
-) => void;
+import type { Writer } from './types';
 
 /**
  * Transparent component types: do not emit payload, serialize children only.

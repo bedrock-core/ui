@@ -1,6 +1,6 @@
 import { system } from '@minecraft/server';
-import { getFiber } from './fabric/fiber';
-import { Logger } from '../util';
+import { getFiber } from './fiber';
+import { Logger } from '../../util';
 
 /**
  * Executes effects for all components within a suspense boundary, repeatedly re-running them
@@ -19,8 +19,13 @@ export async function handleSuspensionForBoundary(
 
   for (const id of boundaryInstanceIds) {
     const fiber = getFiber(id);
-    if (!fiber) continue;
+
+    if (!fiber) {
+      continue;
+    }
+
     const initialStates: unknown[] = [];
+
     for (const slot of fiber.hookStates) {
       if (slot?.tag === 'state') {
         initialStates.push(slot.value);
@@ -30,7 +35,9 @@ export async function handleSuspensionForBoundary(
   }
 
   // If nothing to wait on, resolve immediately
-  if (baseline.size === 0) return true;
+  if (baseline.size === 0) {
+    return true;
+  }
 
   return new Promise<boolean>(resolve => {
     const startTime = Date.now();
@@ -38,10 +45,14 @@ export async function handleSuspensionForBoundary(
     const allStatesResolved = (): boolean => {
       for (const [id, initialValues] of baseline) {
         const fiber = getFiber(id);
-        if (!fiber) continue;
+
+        if (!fiber) {
+          continue;
+        }
 
         // Collect current state slot values in order
         const currentValues: unknown[] = [];
+
         for (const slot of fiber.hookStates) {
           if (slot?.tag === 'state') {
             currentValues.push(slot.value);
@@ -72,6 +83,7 @@ export async function handleSuspensionForBoundary(
 
     const intervalId = system.runInterval(() => {
       const elapsed = Date.now() - startTime;
+
       if (elapsed >= timeout) {
         system.clearRun(intervalId);
 

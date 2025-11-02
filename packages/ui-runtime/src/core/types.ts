@@ -34,3 +34,10 @@ export class SerializationError extends Error {
     this.name = 'SerializationError';
   }
 }
+
+export type Writer = (
+  payload: string,
+  form: CoreUIFormData,
+  ctx: SerializationContext | undefined,
+  callbacks: Record<string, (...args: unknown[]) => void>,
+) => void;

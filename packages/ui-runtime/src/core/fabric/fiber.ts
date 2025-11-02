@@ -70,7 +70,7 @@ export async function activateFiber<T>(
 
   try {
     const result = fn();
-    const awaited = result instanceof Promise ? await result : result;
+    const awaited = await result;
     // After successful evaluation, move to Update phase for next runs
     fiber.dispatcher = UpdateDispatcher;
     // Flush effects after execution

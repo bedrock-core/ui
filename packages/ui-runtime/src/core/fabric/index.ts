@@ -14,3 +14,5 @@ export { invariant } from './utils';
 
 export { createContext } from './context';
 export type { Context, ProviderProps } from './context';
+
+export { handleSuspensionForBoundary } from './suspension';
