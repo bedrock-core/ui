@@ -7,7 +7,7 @@ import {
   deleteFiber,
   getFiber,
   getFibersForPlayer
-} from './fabric/fiber';
+} from './fabric';
 
 /**
  * Encapsulates parent state for inheritance calculations.
@@ -33,7 +33,6 @@ export interface TraversalContext {
   parentPath: string[]; // Component path from root: ['Example', 'Counter']
   createdInstances: Set<string>; // Track all instances created during this render
   currentSuspenseBoundary?: string; // Track which Suspense boundary we're currently in
-  instanceToBoundary?: Map<string, string>; // Map instance ID → boundary ID
   idCounters: Map<string, number>; // Per-parent-path counters for auto-keys
   parentState?: ParentState; // Parent state for inheritance (used in Phase 4)
   currentContext: Map<symbol, unknown>; // Fiber context snapshot being propagated
@@ -122,9 +121,11 @@ async function expandAndResolveContexts(element: JSX.Element, context: Traversal
     // Track instance for cleanup
     context.createdInstances.add(componentId);
 
-    // If we're in a Suspense boundary, record the mapping
-    if (context.currentSuspenseBoundary && context.instanceToBoundary) {
-      context.instanceToBoundary.set(componentId, context.currentSuspenseBoundary);
+    // If we're in a Suspense boundary, stamp this fiber with nearest boundary id
+    if (context.currentSuspenseBoundary) {
+      fiber.nearestBoundaryId = context.currentSuspenseBoundary;
+    } else {
+      fiber.nearestBoundaryId = undefined;
     }
 
     // Attach current context snapshot so hooks can read during evaluation
@@ -154,11 +155,12 @@ async function expandAndResolveContexts(element: JSX.Element, context: Traversal
     const nextContext = new Map(context.currentContext);
     nextContext.set((contextObj as { $$typeof: symbol }).$$typeof, contextValue);
 
-    // If this provider is the SuspenseContext, propagate the boundary id
-    // into the traversal context so instances rendered under this provider
-    // are automatically associated with the boundary.
-    const isSuspenseProvider = contextObj === (require('../components/Suspense').SuspenseContext as unknown);
-    const maybeBoundary = isSuspenseProvider && contextValue ? (contextValue as unknown as { id?: string }).id : undefined;
+    // Modern format: detect Suspense boundary by duck-typing the provider value
+    // If value is an object with a string 'id', treat it as a Suspense boundary id.
+    const cv: unknown = contextValue;
+    const maybeBoundary = cv && typeof cv === 'object' && typeof (cv as { id?: unknown }).id === 'string'
+      ? (cv as { id: string }).id
+      : undefined;
     const providerChildContext: TraversalContext = maybeBoundary
       ? { ...context, currentSuspenseBoundary: maybeBoundary, currentContext: nextContext }
       : { ...context, currentContext: nextContext };
@@ -419,14 +421,12 @@ export function applyInheritance(element: JSX.Element, context: TraversalContext
 export async function buildTree(
   element: JSX.Element,
   player: Player,
-): Promise<{ tree: JSX.Element; instances: Set<string>; instanceToBoundary: Map<string, string> }> {
+): Promise<{ tree: JSX.Element; instances: Set<string> }> {
   // Initialize traversal context
-  const instanceToBoundary = new Map<string, string>();
   const context: TraversalContext = {
     parentPath: [],
     createdInstances: new Set(),
     currentSuspenseBoundary: undefined,
-    instanceToBoundary,
     idCounters: new Map(),
     currentContext: new Map<symbol, unknown>(),
   };
@@ -455,7 +455,6 @@ export async function buildTree(
   return {
     tree: result,
     instances: context.createdInstances,
-    instanceToBoundary,
   };
 }
 

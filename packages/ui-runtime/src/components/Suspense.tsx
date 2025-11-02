@@ -1,5 +1,4 @@
-import { createContext } from '../core';
-import { useState } from '../hooks';
+import { createContext, getCurrentFiber } from '../core';
 import type { FunctionComponent, JSX } from '../jsx';
 
 /**
@@ -11,7 +10,7 @@ export interface SuspenseProps {
    * Fallback UI to show while waiting for children to resolve their state.
    * Only applies when children have effects that need to complete.
    *
-   * @default <Panel><Text text="Loading..." /></Panel>
+   * @default <Panel><Text value="Loading..." /></Panel>
    */
   fallback?: JSX.Element;
 
@@ -35,23 +34,9 @@ export interface SuspenseProps {
  *
  * @internal
  */
-export interface SuspenseBoundary {
-  id: string;
-  instanceIds: Set<string>;
-  fallback?: JSX.Element;
-  timeout: number;
-  isResolved: boolean; // Flag: set to true once suspension resolves
-}
+export interface SuspenseBoundaryContextValue { id: string }
 
-export const SuspenseContext = createContext<SuspenseBoundary | undefined>(undefined);
-
-/**
- * Global map to track which Suspense boundaries exist and their child instances.
- * Populated during tree building when Suspense components are rendered.
- *
- * @internal
- */
-export const suspenseBoundaryRegistry = new Map<string, SuspenseBoundary>();
+export const SuspenseContext = createContext<SuspenseBoundaryContextValue | undefined>(undefined);
 
 /**
  * Suspense component - creates a boundary for local state resolution.
@@ -72,29 +57,34 @@ export const suspenseBoundaryRegistry = new Map<string, SuspenseBoundary>();
  *
  */
 export const Suspense: FunctionComponent<SuspenseProps> = ({ children, fallback, awaitTimeout }: SuspenseProps): JSX.Element => {
-  // Generate unique boundary ID for this Suspense instance
-  const [boundaryState] = useState<SuspenseBoundary>(() => {
-    const boundaryId = `suspense-${Math.random().toString(36).substring(2, 9)}`;
-    const boundary: SuspenseBoundary = {
-      id: boundaryId,
-      instanceIds: new Set(),
-      fallback,
+  const [fiber] = getCurrentFiber();
+
+  if (!fiber) {
+    // Invariant: Suspense must run under an active fiber
+    throw new Error('[Suspense] Missing current fiber context');
+  }
+
+  // Initialize or refresh boundary metadata on this fiber
+  if (!fiber.suspense) {
+    fiber.suspense = {
+      id: `suspense-${Math.random().toString(36).substring(2, 9)}`,
       timeout: awaitTimeout ?? 1000,
       isResolved: false,
     };
+  } else {
+    // Update timeout if prop changes between renders
+    fiber.suspense.timeout = awaitTimeout ?? fiber.suspense.timeout;
+  }
 
-    // Register globally so runtime can find it
-    suspenseBoundaryRegistry.set(boundaryId, boundary);
+  const boundaryId = fiber.suspense.id;
+  // const isResolved = fiber.suspense.isResolved;
 
-    return boundary;
-  });
-
-  // Always build both branches so child effects can run while suspended.
-  // Show/hide via control.visible using Fragment as a neutral container.
   return (
     <>
-      <SuspenseContext.Provider value={boundaryState}>{children}</SuspenseContext.Provider>
-      {boundaryState.fallback && <>{boundaryState.fallback}</>}
+      <SuspenseContext value={{ id: boundaryId }}>
+        {children}
+      </SuspenseContext>
+      {fallback && <>{fallback}</>}
     </>
   );
 };

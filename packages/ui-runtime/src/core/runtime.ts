@@ -1,8 +1,6 @@
 import type { Player } from '@minecraft/server';
 import { system } from '@minecraft/server';
 import { ActionFormData, uiManager } from '@minecraft/server-ui';
-import type { SuspenseBoundary } from '../components/Suspense';
-import { suspenseBoundaryRegistry } from '../components/Suspense';
 import type { FunctionComponent, JSX } from '../jsx';
 import { startInputLock } from '../util';
 import { buildTree, cleanupComponentTree } from './render';
@@ -32,27 +30,11 @@ export async function render(
   // Build complete tree (instances created, hooks initialized)
   const builtTree = await buildTree(rootElement, player);
 
-  // TODO CHANGE TO BE INSIDE FIBERS
-  // Populate boundary instance sets using the instanceToBoundary map from buildTree
-  // Reset current boundary instance sets to avoid leaking instances across renders
-  for (const boundary of suspenseBoundaryRegistry.values()) {
-    boundary.instanceIds.clear();
-  }
-
-  for (const [instanceId, boundaryId] of builtTree.instanceToBoundary) {
-    const boundary = suspenseBoundaryRegistry.get(boundaryId);
-
-    if (boundary) {
-      boundary.instanceIds.add(instanceId);
-    }
-  }
-
   await presentCycle(
     player,
     builtTree.tree,
     rootElement,
     options,
-    Array.from(suspenseBoundaryRegistry.values()),
   );
 }
 
@@ -65,7 +47,6 @@ async function presentCycle(
   element: JSX.Element,
   rootElement: JSX.Element,
   options: RenderOptions,
-  suspenseBoundaries?: SuspenseBoundary[],
 ): Promise<void> {
   // Prepare serialization context for button callbacks
   const serializationContext: SerializationContext = { buttonCallbacks: new Map(), buttonIndex: 0 };
@@ -80,25 +61,37 @@ async function presentCycle(
   const areAllBoundariesResolved = (): boolean => Array.from(boundaries.entries()).every(([, value]) => value);
   let shouldRerender = true;
 
-  if (suspenseBoundaries) {
+  // Fiber-native suspense discovery: scan fibers for player
+  // Identify boundary fibers and start polling for each unresolved boundary
+  const playerFiberIds = getFibersForPlayer(player);
+  const boundaryFibers = playerFiberIds
+    .map(id => getFiber(id))
+    .filter((f): f is NonNullable<ReturnType<typeof getFiber>> => !!f && !!f.suspense);
+
+  if (boundaryFibers.length > 0) {
     shouldRerender = false;
 
-    for (const boundary of suspenseBoundaries) {
-      if (boundary.isResolved || boundaries.has(boundary.id) || boundary.instanceIds.size === 0) {
-        continue;
+    for (const boundaryFiber of boundaryFibers) {
+      const { id: boundaryId, isResolved, timeout } = boundaryFiber.suspense!;
+      if (isResolved || boundaries.has(boundaryId)) continue;
+
+      // Compute current instance set under this boundary by scanning fibers
+      const instanceIds = new Set<string>();
+      for (const id of playerFiberIds) {
+        const f = getFiber(id);
+        if (f?.nearestBoundaryId === boundaryId) instanceIds.add(id);
       }
 
-      // Mark boundary as started and unresolved
-      boundaries.set(boundary.id, false);
+      if (instanceIds.size === 0) continue;
 
-      // Fire-and-forget: when resolved or timeout, mark and request rerender
-      handleSuspensionForBoundary(boundary.instanceIds, boundary.timeout)
+      boundaries.set(boundaryId, false);
+
+      handleSuspensionForBoundary(instanceIds, timeout)
         .then(() => {
-          boundary.isResolved = true;
-          // Mark this boundary as resolved
-          boundaries.set(boundary.id, true);
+          const bf = getFiber(boundaryFiber.id);
+          if (bf?.suspense) bf.suspense.isResolved = true;
+          boundaries.set(boundaryId, true);
 
-          // Only close the form when ALL started boundaries have resolved
           if (areAllBoundariesResolved()) {
             shouldRerender = true;
             uiManager.closeAllForms(player);
