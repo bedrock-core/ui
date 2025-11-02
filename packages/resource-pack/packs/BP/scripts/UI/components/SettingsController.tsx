@@ -9,51 +9,51 @@ interface SettingsControllerProps { onSettingsChange: (updater: (prev: Settings)
  */
 export const SettingsController: FunctionComponent<SettingsControllerProps> = ({ onSettingsChange }): JSX.Element => (
   <Panel width={192} height={140} x={212} y={160}>
-    <Text width={192} height={20} x={222} y={170} value={'§l§bSettings Control'} />
+    <Text width={192} height={20} x={10} y={10} value={'§l§bSettings Control'} />
 
     <Button
       width={172}
       height={20}
-      x={222}
-      y={195}
+      x={10}
+      y={35}
       onPress={(): void => {
         onSettingsChange(prev => ({
           ...prev,
           volume: Math.min(100, prev.volume + 10),
         }));
       }}>
-      <Text width={172} height={20} x={227} y={200} value={'§aVolume +'} />
+      <Text width={172} height={20} x={5} y={5} value={'§aVolume +'} />
     </Button>
 
     <Button
       width={172}
       height={20}
-      x={222}
-      y={220}
+      x={10}
+      y={60}
       onPress={(): void => {
         onSettingsChange(prev => ({
           ...prev,
           volume: Math.max(0, prev.volume - 10),
         }));
       }}>
-      <Text width={172} height={20} x={227} y={225} value={'§cVolume -'} />
+      <Text width={172} height={20} x={5} y={5} value={'§cVolume -'} />
     </Button>
 
     <Button
       width={172}
       height={20}
-      x={222}
-      y={245}
+      x={10}
+      y={85}
       onPress={(): void => {
         onSettingsChange(prev => ({
           ...prev,
           showNotifications: !prev.showNotifications,
         }));
       }}>
-      <Text width={172} height={20} x={227} y={250} value={'§9Toggle Notify'} />
+      <Text width={172} height={20} x={5} y={5} value={'§9Toggle Notify'} />
     </Button>
 
-    <Text width={192} height={12} x={222} y={275} value={'§7State management'} />
+    <Text width={192} height={12} x={10} y={115} value={'§7State management'} />
   </Panel>
 );
 

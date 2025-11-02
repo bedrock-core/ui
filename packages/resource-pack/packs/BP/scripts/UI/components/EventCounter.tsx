@@ -25,12 +25,12 @@ export const EventCounter: FunctionComponent = (): JSX.Element => {
 
   return (
     <Panel width={192} height={140} x={414} y={160}>
-      <Text width={192} height={20} x={424} y={170} value={'§l§bScript Events'} />
-      <Text width={192} height={15} x={424} y={195} value={`Events: §l${eventCount}`} />
-      <Text width={192} height={15} x={424} y={213} value={`ID: §7${lastEventId}`} />
-      <Text width={192} height={15} x={424} y={231} value={`Msg: §7${lastMessage}`} />
-      <Text width={192} height={12} x={424} y={255} value={'§6/scriptevent test'} />
-      <Text width={192} height={12} x={424} y={273} value={'§6useEvent hook'} />
+      <Text width={192} height={20} x={10} y={10} value={'§l§bScript Events'} />
+      <Text width={192} height={15} x={10} y={35} value={`Events: §l${eventCount}`} />
+      <Text width={192} height={15} x={10} y={53} value={`ID: §7${lastEventId}`} />
+      <Text width={192} height={15} x={10} y={71} value={`Msg: §7${lastMessage}`} />
+      <Text width={192} height={12} x={10} y={95} value={'§6/scriptevent test'} />
+      <Text width={192} height={12} x={10} y={113} value={'§6useEvent hook'} />
     </Panel>
   );
 };

@@ -245,7 +245,7 @@ export const commonTsRules = {
     "@stylistic/new-parens": ["warn"],
     "@stylistic/newline-per-chained-call": "off",
     "@stylistic/no-confusing-arrow": "off",
-    "@stylistic/no-extra-parens": ["warn"],
+    "@stylistic/no-extra-parens": ["warn", "all", { ignoreJSX: "all" }],
     "@stylistic/no-extra-semi": ["warn"],
     "@stylistic/no-floating-decimal": ["warn"],
     "@stylistic/no-mixed-operators": "off",

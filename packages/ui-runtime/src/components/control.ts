@@ -3,13 +3,13 @@ import { reserveBytes } from '../core/serializer';
 
 export interface ControlProps {
   // All positioning and sizing values are numbers, will not support string types like "100px", "100%", "100%c"... too much issues in json ui
-  // All mandatory as we are going to go with fixed absolute sizing and positioning
   width: number;
   height: number;
   x: number;
   y: number;
   visible?: boolean;
   enabled?: boolean;
+  position?: 'absolute' | 'relative';
   // Not working currently
   // layer?: number;
   // alpha?: number;
@@ -41,6 +41,9 @@ export interface ControlProps {
  *
  * Component-specific properties are appended after the reserved block.
  *
+ * NOTE: The 'position' property is used during tree traversal for relative positioning calculations,
+ * but is NOT serialized to the payload (stored as __position with __ prefix to exclude from serialization).
+ *
  * @param props Component properties extending ControlProps
  * @returns Object with all control properties filled with defaults and canonical ordering
  */
@@ -56,6 +59,7 @@ export function withControl(props: JSX.Props): JSX.Props {
     alpha,
     inheritMaxSiblingWidth,
     inheritMaxSiblingHeight,
+    position,
   } = props;
 
   // Create object with properties in exact canonical order for stable serialization
@@ -71,6 +75,7 @@ export function withControl(props: JSX.Props): JSX.Props {
     alpha: alpha ?? 1.0,
     inheritMaxSiblingWidth: inheritMaxSiblingWidth ?? false,
     inheritMaxSiblingHeight: inheritMaxSiblingHeight ?? false,
-    __reserved: reserveBytes(274), // Reserve space for future expansion
+    __position: position ?? 'relative', // Internal only: not serialized (__ prefix excludes it)
+    __reserved: reserveBytes(239), // Reserve space for future expansion
   };
 }

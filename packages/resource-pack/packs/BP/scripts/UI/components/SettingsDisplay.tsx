@@ -10,11 +10,11 @@ export const SettingsDisplay: FunctionComponent = (): JSX.Element => {
 
   return (
     <Panel width={192} height={140} x={212} y={10}>
-      <Text width={192} height={20} x={222} y={20} value={'§l§bSettings Display'} />
-      <Text width={192} height={15} x={222} y={50} value={`Volume: §e${settings.volume}%`} />
-      <Text width={192} height={15} x={222} y={70} value={`Notify: ${settings.showNotifications ? '§aON' : '§cOFF'}`} />
-      <Text width={192} height={15} x={222} y={100} value={'§7Multiple contexts'} />
-      <Text width={192} height={15} x={222} y={120} value={'§7in one component'} />
+      <Text width={192} height={20} x={10} y={10} value={'§l§bSettings Display'} />
+      <Text width={192} height={15} x={10} y={40} value={`Volume: §e${settings.volume}%`} />
+      <Text width={192} height={15} x={10} y={60} value={`Notify: ${settings.showNotifications ? '§aON' : '§cOFF'}`} />
+      <Text width={192} height={15} x={10} y={90} value={'§7Multiple contexts'} />
+      <Text width={192} height={15} x={10} y={110} value={'§7in one component'} />
     </Panel>
   );
 };

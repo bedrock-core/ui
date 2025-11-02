@@ -54,43 +54,43 @@ export const TodoList: FunctionComponent = (): JSX.Element => {
 
   return (
     <Panel width={192} height={140} x={414} y={10}>
-      <Text width={192} height={20} x={424} y={20} value={'§l§bTodo List'} />
-      <Text width={192} height={15} x={424} y={45} value={`Total: §e${todoCount}`} />
-      <Text width={192} height={15} x={424} y={63} value={`Done: §a${completedCount}`} />
+      <Text width={192} height={20} x={10} y={10} value={'§l§bTodo List'} />
+      <Text width={192} height={15} x={10} y={35} value={`Total: §e${todoCount}`} />
+      <Text width={192} height={15} x={10} y={53} value={`Done: §a${completedCount}`} />
 
       <Button
         width={81}
         height={20}
-        x={424}
-        y={85}
+        x={10}
+        y={75}
         onPress={(): void => {
           addTodo();
         }}>
-        <Text width={81} height={20} x={429} y={90} value={'§a+ Add'} />
+        <Text width={81} height={20} x={5} y={5} value={'§a+ Add'} />
       </Button>
 
       <Button
         width={81}
         height={20}
-        x={515}
-        y={85}
+        x={101}
+        y={75}
         onPress={(): void => {
           clearCompleted();
         }}>
-        <Text width={81} height={20} x={520} y={90} value={'§cClear'} />
+        <Text width={81} height={20} x={5} y={5} value={'§cClear'} />
       </Button>
 
       <Button
         width={172}
         height={20}
-        x={424}
-        y={110}
+        x={10}
+        y={100}
         onPress={(): void => {
           if (todos.length > 0) {
             dispatch({ type: 'toggle', id: todos[0].id });
           }
         }}>
-        <Text width={172} height={20} x={429} y={115} value={'§9Toggle First'} />
+        <Text width={172} height={20} x={5} y={5} value={'§9Toggle First'} />
       </Button>
     </Panel>
   );
