@@ -13,6 +13,10 @@ export function createFiber(id: string, player: Player): Fiber {
     pendingEffects: [],
     shouldRender: true,
     isSuspenseBoundary: false,
+    parent: undefined,
+    child: undefined,
+    sibling: undefined,
+    index: -1,
   };
 
   FiberRegistry.set(id, fiber);
@@ -30,6 +34,28 @@ export function deleteFiber(id: string): void {
   if (!fiber) {
     return;
   }
+
+  // Detach from parent/sibling chain defensively
+  const parent = fiber.parent;
+
+  if (parent) {
+    if (parent.child === fiber) {
+      parent.child = fiber.sibling;
+    } else {
+      let prev = parent.child;
+
+      while (prev?.sibling && prev.sibling !== fiber) {
+        prev = prev.sibling;
+      }
+
+      if (prev?.sibling === fiber) {
+        prev.sibling = fiber.sibling;
+      }
+    }
+  }
+
+  fiber.parent = undefined;
+  fiber.sibling = undefined;
 
   // Run any remaining cleanups
   for (let i = 0; i < fiber.hookStates.length; i++) {

@@ -1,6 +1,7 @@
 import type { Player } from '@minecraft/server';
 import type { FunctionComponent } from '../../jsx';
 import { Context } from '../fabric';
+import type { Fiber } from '../fabric/types';
 
 /**
  * Encapsulates parent state for inheritance calculations.
@@ -28,6 +29,7 @@ export interface TraversalContext {
   idCounters: Map<string, number>; // Per-parent-path counters for auto-keys
   parentState?: ParentState; // Parent state for inheritance (used in Phase 4)
   currentContext: Map<Context<unknown>, unknown>; // Fiber context snapshot being propagated (keyed by context object)
+  parentFiber?: Fiber; // Current parent function-component fiber (used for building fiber relations)
 }
 
 /**
@@ -75,6 +77,7 @@ export function createInitialContext(): TraversalContext {
     currentSuspenseBoundary: undefined,
     idCounters: new Map(),
     currentContext: new Map<Context<unknown>, unknown>(),
+    parentFiber: undefined,
   };
 }
 

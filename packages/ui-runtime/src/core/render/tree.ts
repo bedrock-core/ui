@@ -1,6 +1,7 @@
 import { system, type Player } from '@minecraft/server';
 import type { JSX } from '../../jsx';
 import { deleteFiber, getFibersForPlayer, isSuspenseBoundary } from '../fabric';
+import { type Fiber } from '../fabric/types';
 import { applyInheritance, expandAndResolveContexts } from './phases';
 import { createInitialContext, createRootContext } from './traversal';
 
@@ -24,6 +25,16 @@ import { createInitialContext, createRootContext } from './traversal';
 export function buildTree(element: JSX.Element, player: Player): [JSX.Element, boolean] {
   // Initialize traversal context
   const context = createInitialContext();
+
+  // Reset tree relations for this player's existing fibers before rebuilding
+  const existing = getFibersForPlayer(player);
+
+  for (const f of existing) {
+    f.parent = undefined;
+    f.child = undefined;
+    f.sibling = undefined;
+    f.index = -1;
+  }
 
   // Phase 1: Expand function components and resolve contexts
   // This creates instances for ALL components in the tree
@@ -55,28 +66,13 @@ export function buildTree(element: JSX.Element, player: Player): [JSX.Element, b
     let newResolvedCount: number = 0;
 
     unresolvedBoundaries.forEach(bf => {
-      // const hooksReady = playerFibers
-      //   .filter(f => f.suspense?.boundaryId === bf.id)
-      //   .every(f => {
-      //     console.error(`[Suspense] Boundary ${JSON.stringify(f.hookStates)}`);
-
-      //     return f.hookStates.every((slot: HookSlot) => {
-      //       console.error(`[Suspense] Checking hook slot: tag=${slot.tag} resolved=${slot.resolved} value=${slot.value}`);
-      //       if (slot.tag === 'state' || slot.tag === 'reducer') {
-      //         return slot.resolved;
-      //       }
-
-      //       return true;
-      //     });
-      //   });
-
-      // console.error(`[Suspense] Boundary ${bf.id} checking resolution: hooksReady=${JSON.stringify(hooksReady)}`);
+      const hooksReady = isBoundarySubtreeReady(bf);
 
       const startTick = bf.suspense.startTick;
       const timeoutTicks = bf.suspense.awaitTimeout;
       const endTick = startTick + timeoutTicks;
 
-      if (nowTick >= endTick) {
+      if (hooksReady || nowTick >= endTick) {
         bf.suspense.isResolved = true;
         newResolvedCount++;
       }
@@ -88,6 +84,32 @@ export function buildTree(element: JSX.Element, player: Player): [JSX.Element, b
   }
 
   return [result, shouldPresentOnClose];
+}
+
+function isBoundarySubtreeReady(root: Fiber): boolean {
+  const stack: Fiber[] = [root];
+
+  while (stack.length > 0) {
+    // safe to assert non-undefined due to loop condition
+    const node = stack.pop() as Fiber;
+
+    for (const slot of node.hookStates) {
+      if ((slot.tag === 'state' || slot.tag === 'reducer') && slot.resolved === false) {
+        return false;
+      }
+    }
+
+    // Push children and siblings; but avoid traversing the boundary root's sibling chain
+    if (node.child) {
+      stack.push(node.child);
+    }
+
+    if (node !== root && node.sibling) {
+      stack.push(node.sibling);
+    }
+  }
+
+  return true;
 }
 
 /**

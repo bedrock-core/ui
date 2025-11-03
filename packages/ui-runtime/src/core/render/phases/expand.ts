@@ -53,6 +53,32 @@ export function expandAndResolveContexts(
     // Create or get the fiber for this component instance
     const fiber = getFiber(componentId) ?? createFiber(componentId, player);
 
+    // Link fiber into parent/child/sibling chain using traversal context
+    const parentFiber = context.parentFiber;
+
+    if (parentFiber) {
+      fiber.parent = parentFiber;
+
+      if (!parentFiber.child) {
+        parentFiber.child = fiber;
+        fiber.index = 0;
+      } else {
+        // Append to end of siblings
+        let tail = parentFiber.child;
+
+        while (tail.sibling) {
+          tail = tail.sibling;
+        }
+
+        tail.sibling = fiber;
+        fiber.index = (tail.index ?? -1) + 1;
+      }
+    } else {
+      // Root-level fiber (no parent)
+      fiber.parent = undefined;
+      fiber.index = 0; // Position among root siblings isn't tracked globally; 0 is a sane default
+    }
+
     // Attach current context snapshot so hooks can read during evaluation
     fiber.contextSnapshot = context.currentContext;
     // Activate the fiber and run the component; effects flush after this call
@@ -62,6 +88,7 @@ export function expandAndResolveContexts(
     const childContext: TraversalContext = {
       ...context,
       parentPath: [...context.parentPath, componentName],
+      parentFiber: fiber,
     };
 
     // Recursively process the rendered result (visual tree)

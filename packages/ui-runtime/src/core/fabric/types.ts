@@ -57,4 +57,10 @@ export interface Fiber {
     startTick: number;
     awaitTimeout: number;
   };
+
+  // Tree relations
+  parent?: Fiber; // The parent Fiber
+  child?: Fiber; // The first child Fiber
+  sibling?: Fiber; // The next sibling Fiber
+  index: number; // The position among siblings (0-based), -1 if unlinked
 }
