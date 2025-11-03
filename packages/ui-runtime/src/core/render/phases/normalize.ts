@@ -9,7 +9,7 @@ import type { TraversalContext } from '../traversal';
  * It ensures all elements have properly normalized children arrays.
  *
  * @param element - Element with possibly messy children (arrays, nulls, mixed types)
- * @param context - Traversal context (not used here but kept for consistency)
+ * @param context - Traversal context
  * @returns Element with clean children structure
  */
 export function normalizeChildren(element: JSX.Element, context: TraversalContext): JSX.Element {

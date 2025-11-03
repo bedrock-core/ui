@@ -12,6 +12,7 @@ export function createFiber(id: string, player: Player): Fiber {
     player,
     pendingEffects: [],
     shouldRender: true,
+    isSuspenseBoundary: false,
   };
   FiberRegistry.set(id, fiber);
 
@@ -65,10 +66,10 @@ export function getFibersForPlayer(player: Player): Fiber[] {
  * Resets hookIndex and schedules effects; effects are flushed after `fn`.
  * Optionally binds player metadata to the fiber.
  */
-export async function activateFiber<T>(
+export function activateFiber<T>(
   fiber: Fiber,
-  fn: () => T | Promise<T>,
-): Promise<T> {
+  fn: () => T,
+): T {
   const [prevFiber, prevDispatcher] = getCurrentFiber();
 
   fiber.hookIndex = 0;
@@ -78,14 +79,13 @@ export async function activateFiber<T>(
 
   try {
     const result = fn();
-    const awaited = await result;
 
     // After successful evaluation, move to Update phase for next runs
     fiber.dispatcher = UpdateDispatcher;
     // Flush effects after execution
     flushPendingEffects(fiber);
 
-    return awaited;
+    return result;
   } finally {
     setCurrentFiber(prevFiber, prevDispatcher);
   }

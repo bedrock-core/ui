@@ -1,5 +1,5 @@
 import type { Player } from '@minecraft/server';
-import type { FunctionComponent, JSX } from '../../../jsx';
+import type { JSX } from '../../../jsx';
 import { activateFiber, createFiber, getFiber } from '../../fabric';
 import { generateComponentId, type TraversalContext } from '../traversal';
 
@@ -20,14 +20,14 @@ import { generateComponentId, type TraversalContext } from '../traversal';
  * @param player - Player rendering the component
  * @returns Element with all function components expanded and contexts resolved
  */
-export async function expandAndResolveContexts(
+export function expandAndResolveContexts(
   element: JSX.Element,
   context: TraversalContext,
   player: Player,
-): Promise<JSX.Element> {
+): JSX.Element {
   // Step 1: Handle function components - CREATE INSTANCE FOR EACH
   if (typeof element.type === 'function') {
-    const componentFn = element.type as FunctionComponent;
+    const componentFn = element.type;
 
     // Generate unique ID for this component node
     const componentName = componentFn.name || 'anonymous';
@@ -53,17 +53,10 @@ export async function expandAndResolveContexts(
     // Create or get the fiber for this component instance
     const fiber = getFiber(componentId) ?? createFiber(componentId, player);
 
-    // If we're in a Suspense boundary, stamp this fiber with nearest boundary id
-    if (context.currentSuspenseBoundary) {
-      fiber.nearestBoundaryId = context.currentSuspenseBoundary;
-    } else {
-      fiber.nearestBoundaryId = undefined;
-    }
-
     // Attach current context snapshot so hooks can read during evaluation
     fiber.contextSnapshot = context.currentContext;
     // Activate the fiber and run the component; effects flush after this call
-    const renderedElement = await activateFiber(fiber, () => componentFn(element.props));
+    const renderedElement = activateFiber(fiber, () => componentFn(element.props));
 
     // Create child context with updated path
     const childContext: TraversalContext = {
@@ -101,25 +94,14 @@ export async function expandAndResolveContexts(
     let processedChildren: JSX.Element;
 
     if (Array.isArray(contextChildren)) {
-      const resolvedChildren = await Promise.all(
-        contextChildren
-          .map((child: JSX.Node): Promise<JSX.Element | null> => {
-            if (!child || typeof child !== 'object' || !('type' in child)) {
-              return Promise.resolve(null);
-            }
-
-            return expandAndResolveContexts(child, providerChildContext, player);
-          }),
-      );
-
-      const filtered = resolvedChildren.filter((child: JSX.Element | null): child is JSX.Element => child !== null);
+      const resolvedChildren = processChildren(contextChildren, providerChildContext, player);
 
       processedChildren = {
         type: 'fragment',
-        props: { children: filtered },
+        props: { children: resolvedChildren },
       };
     } else if (contextChildren && typeof contextChildren === 'object' && 'type' in contextChildren) {
-      processedChildren = await expandAndResolveContexts(contextChildren, providerChildContext, player);
+      processedChildren = expandAndResolveContexts(contextChildren, providerChildContext, player);
     } else {
       // No valid children - return empty fragment
       processedChildren = {
@@ -137,15 +119,7 @@ export async function expandAndResolveContexts(
 
     // Handle array of children
     if (Array.isArray(children)) {
-      const processedChildren = (await Promise.all(
-        children.map((child: JSX.Node): Promise<JSX.Element | null> => {
-          if (!child || typeof child !== 'object' || !('type' in child)) {
-            return Promise.resolve(null);
-          }
-
-          return expandAndResolveContexts(child, context, player);
-        }),
-      )).filter((child: JSX.Element | null): child is JSX.Element => child !== null);
+      const processedChildren = processChildren(children, context, player);
 
       return {
         type: element.type,
@@ -162,11 +136,21 @@ export async function expandAndResolveContexts(
         type: element.type,
         props: {
           ...element.props,
-          children: await expandAndResolveContexts(children, context, player),
+          children: expandAndResolveContexts(children, context, player),
         },
       };
     }
   }
 
   return element;
+}
+
+function processChildren(children: JSX.Element[], context: TraversalContext, player: Player): JSX.Element[] {
+  return children.map((child: JSX.Node): JSX.Element | undefined => {
+    if (!child || typeof child !== 'object' || !('type' in child)) {
+      return undefined;
+    }
+
+    return expandAndResolveContexts(child, context, player);
+  }).filter((child: JSX.Element | undefined): child is JSX.Element => child !== undefined);
 }

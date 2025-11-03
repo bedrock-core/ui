@@ -1,4 +1,6 @@
+import { system } from '@minecraft/server';
 import { createContext, getCurrentFiber } from '../core';
+import { Fiber } from '../core/fabric/types';
 import type { FunctionComponent, JSX } from '../jsx';
 import { Panel } from './Panel';
 
@@ -10,16 +12,14 @@ export interface SuspenseProps {
   /**
    * Fallback UI to show while waiting for children to resolve their state.
    * Only applies when children have effects that need to complete.
-   *
-   * @default <Panel><Text value="Loading..." /></Panel>
    */
   fallback?: JSX.Element;
 
   /**
-   * Maximum time in milliseconds to wait for child state resolution.
+   * Maximum time in ticks to wait for child state resolution.
    * After timeout, shows main UI regardless of state resolution status.
    *
-   * @default 1000
+   * @default 20
    */
   awaitTimeout?: number;
 
@@ -35,9 +35,8 @@ export interface SuspenseProps {
  *
  * @internal
  */
-export interface SuspenseBoundaryContextValue { id: string }
-
-export const SuspenseContext = createContext<SuspenseBoundaryContextValue | undefined>(undefined);
+interface SuspenseContextValue { boundary: Fiber }
+export const SuspenseContext = createContext<SuspenseContextValue | undefined>(undefined);
 
 /**
  * Suspense component - creates a boundary for local state resolution.
@@ -65,27 +64,23 @@ export const Suspense: FunctionComponent<SuspenseProps> = ({ children, fallback,
     throw new Error('[Suspense] Missing current fiber context');
   }
 
-  // Initialize or refresh boundary metadata on this fiber
-  if (!fiber.suspense) {
-    fiber.suspense = {
-      id: `suspense-${Math.random().toString(36).substring(2, 9)}`,
-      timeout: awaitTimeout ?? 1000,
-      isResolved: false,
-    };
-  } else {
-    // Update timeout if prop changes between renders
-    fiber.suspense.timeout = awaitTimeout ?? fiber.suspense.timeout;
-  }
+  // Initialize boundary metadata on this fiber
+  if (!fiber.isSuspenseBoundary) {
+    fiber.isSuspenseBoundary = true;
 
-  const boundaryId = fiber.suspense.id;
-  // const isResolved = fiber.suspense.isResolved;
+    fiber.suspense = {
+      isResolved: false,
+      startTick: system.currentTick,
+      awaitTimeout: awaitTimeout ?? 20,
+    };
+  }
 
   return (
     <>
-      <SuspenseContext value={{ id: boundaryId }}>
-        <Panel width={0} height={0} x={0} y={0} visible={fiber.suspense.isResolved}>{children}</Panel>
+      <SuspenseContext value={{ boundary: fiber }}>
+        <Panel width={0} height={0} x={0} y={0} visible={fiber.suspense?.isResolved}>{children}</Panel>
       </SuspenseContext>
-      {fallback && !fiber.suspense.isResolved && <>{fallback}</>}
+      {fallback && !fiber.suspense?.isResolved && <>{fallback}</>}
     </>
   );
 };

@@ -61,7 +61,7 @@ export function generateComponentId(
   const pathSegment = key ? `${componentName}:${key}` : componentName;
   const fullPath = [...parentPath, pathSegment].join('/');
 
-  return `${player.name}:${fullPath}`;
+  return `${player.id}:${fullPath}`;
 }
 
 /**
@@ -81,7 +81,7 @@ export function createInitialContext(): TraversalContext {
  * Create root context with initial parent state.
  * Used as the entry point for Phase 4 (inheritance).
  */
-export function createRootContext(initialContext: TraversalContext): TraversalContext {
+export function createRootContext(initialContext: TraversalContext): TraversalContext & { parentState: ParentState } {
   return {
     ...initialContext,
     parentState: {

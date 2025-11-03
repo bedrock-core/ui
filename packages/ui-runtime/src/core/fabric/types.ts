@@ -47,10 +47,11 @@ export interface Fiber {
   player: Player; // Player instance for this fiber
   shouldRender: boolean; // Flag for useExit to signal form should close
 
-  // Suspense boundary metadata for this component (if this fiber is a Suspense boundary)
-  suspense?: { id: string; timeout: number; isResolved: boolean };
-  // Boundary association for descendant components: nearest Suspense boundary id
-  nearestBoundaryId?: string;
+  // Suspense metadata
+  isSuspenseBoundary: boolean;
+  suspense?: {
+    isResolved: boolean;
+    startTick: number;
+    awaitTimeout: number;
+  };
 }
-
-export type SuspendedFiber<T extends Fiber = Fiber> = Omit<T, 'suspense'> & { suspense: NonNullable<T['suspense']> };

@@ -1,6 +1,7 @@
-import type { Player } from '@minecraft/server';
+import { system, type Player } from '@minecraft/server';
 import type { JSX } from '../../jsx';
 import { deleteFiber, getFibersForPlayer } from '../fabric';
+import { Fiber } from '../fabric/types';
 import { applyInheritance, expandAndResolveContexts, normalizeChildren } from './phases';
 import { createInitialContext, createRootContext } from './traversal';
 
@@ -22,16 +23,13 @@ import { createInitialContext, createRootContext } from './traversal';
  * @param player - Player rendering the component
  * @returns Fully processed JSX element tree and list of created instances
  */
-export async function buildTree(
-  element: JSX.Element,
-  player: Player,
-): Promise<JSX.Element> {
+export function buildTree(element: JSX.Element, player: Player): [JSX.Element, boolean] {
   // Initialize traversal context
   const context = createInitialContext();
 
   // Phase 1: Expand function components and resolve contexts
   // This creates instances for ALL components in the tree
-  let result = await expandAndResolveContexts(element, context, player);
+  let result = expandAndResolveContexts(element, context, player);
 
   // Phase 2: Normalize children structure
   result = normalizeChildren(result, context);
@@ -45,12 +43,41 @@ export async function buildTree(
 
   if (hasUnresolvedSuspense) {
     // Disable all interactive controls while a boundary is pending
-    rootContext.parentState!.enabled = false;
+    rootContext.parentState.enabled = false;
   }
 
   result = applyInheritance(result, rootContext);
 
-  return result;
+  let shouldPresentOnClose: boolean = false;
+
+  // Fiber-native suspense discovery: scan fibers for player ONCE (optimization)
+  // Identify boundary fibers and start polling for each unresolved boundary
+  const playerFibers = getFibersForPlayer(player);
+  const boundaryFibers = playerFibers.filter(isSuspenseBoundary);
+
+  if (boundaryFibers.length > 0) {
+    const nowTick = system.currentTick;
+    const unresolvedBoundaries = boundaryFibers.filter(bf => !bf.suspense.isResolved);
+
+    let newResolvedCount: number = 0;
+
+    unresolvedBoundaries.forEach(bf => {
+      const startTick = bf.suspense.startTick;
+      const timeoutTicks = bf.suspense.awaitTimeout;
+      const endTick = startTick + timeoutTicks;
+
+      if (nowTick >= endTick) {
+        bf.suspense.isResolved = true;
+        newResolvedCount++;
+      }
+    });
+
+    if (unresolvedBoundaries.length > 0 && unresolvedBoundaries.length === newResolvedCount) {
+      shouldPresentOnClose = true;
+    }
+  }
+
+  return [result, shouldPresentOnClose];
 }
 
 /**
@@ -60,6 +87,7 @@ export async function buildTree(
  */
 export function cleanupComponentTree(player: Player): void {
   const fiberIds = getFibersForPlayer(player);
+
   // Sort by depth (deepest first) to clean up children before parents
   const sortedFibers = fiberIds.sort((a, b) => {
     const depthA = (a.id.match(/\//g) || []).length;
@@ -71,4 +99,8 @@ export function cleanupComponentTree(player: Player): void {
   for (const fiber of sortedFibers) {
     deleteFiber(fiber.id);
   }
+}
+
+export function isSuspenseBoundary(fiber: Fiber): fiber is Fiber & { suspense: NonNullable<Fiber['suspense']> } {
+  return fiber.isSuspenseBoundary && !!fiber.suspense;
 }

@@ -1,4 +1,5 @@
 import { Button, FunctionComponent, JSX, Panel, Text, useReducer } from '@bedrock-core/ui';
+import { system } from '@minecraft/server';
 
 /**
  * ============================================================================
@@ -21,7 +22,7 @@ type TodoAction =
 function todoReducer(state: Todo[], action: TodoAction): Todo[] {
   switch (action.type) {
     case 'add':
-      return [...state, { id: Date.now(), text: action.text, completed: false }];
+      return [...state, { id: system.currentTick, text: action.text, completed: false }];
     case 'toggle':
       return state.map(todo => todo.id === action.id ? { ...todo, completed: !todo.completed } : todo);
     case 'remove':

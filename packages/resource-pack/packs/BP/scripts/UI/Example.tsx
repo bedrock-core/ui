@@ -38,10 +38,10 @@ export function Example(): JSX.Element {
         {/* Row 2: Effects and Controllers */}
         <ThemeController onThemeChange={setTheme} />
         <SettingsController onSettingsChange={setSettings} />
-        <Suspense fallback={<Fallback width={192} height={140} x={414} y={160} />} awaitTimeout={5_000}>
+        <Suspense fallback={<Fallback width={192} height={140} x={414} y={160} />} awaitTimeout={40}>
           <EventCounter />
         </Suspense>
-        <Suspense fallback={<Fallback width={192} height={140} x={616} y={160} />} awaitTimeout={2_000}>
+        <Suspense fallback={<Fallback width={192} height={140} x={616} y={160} />} awaitTimeout={20}>
           <Counter />
         </Suspense>
 
