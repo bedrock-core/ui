@@ -20,7 +20,7 @@ export const EventCounter: FunctionComponent = (): JSX.Element => {
   });
 
   return (
-    <Panel width={192} height={140} x={414} y={160}>
+    <Panel width={192} height={140} x={414} y={310}>
       <Text width={192} height={20} x={10} y={10} value={'§l§bScript Events'} />
       <Text width={192} height={15} x={10} y={35} value={`Events: §l${eventCount}`} />
       <Text width={192} height={15} x={10} y={53} value={`ID: §7${lastEventId}`} />

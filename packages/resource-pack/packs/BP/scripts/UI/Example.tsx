@@ -3,7 +3,6 @@ import {
   Counter,
   EventCounter,
   ExitPanel,
-  GridLayoutPanel,
   InfoPanel,
   MetadataDisplay,
   ResourcesPanel,
@@ -38,7 +37,7 @@ export function Example(): JSX.Element {
         {/* Row 2: Effects and Controllers */}
         <ThemeController onThemeChange={setTheme} />
         <SettingsController onSettingsChange={setSettings} />
-        <Suspense fallback={<Fallback width={192} height={140} x={414} y={160} />} awaitTimeout={100}>
+        <Suspense fallback={<Fallback width={192} height={140} x={414} y={310} />} awaitTimeout={100}>
           <EventCounter />
         </Suspense>
         <Counter />
@@ -46,7 +45,6 @@ export function Example(): JSX.Element {
         {/* Row 3: Information and Exit */}
         <InfoPanel />
         <ResourcesPanel />
-        <GridLayoutPanel />
         <ExitPanel />
       </SettingsContext>
     </ThemeContext>

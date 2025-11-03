@@ -18,5 +18,4 @@ export { SettingsController } from './SettingsController';
 // Row 3 components
 export { InfoPanel } from './InfoPanel';
 export { ResourcesPanel } from './ResourcesPanel';
-export { GridLayoutPanel } from './GridLayoutPanel';
 export { ExitPanel } from './ExitPanel';
