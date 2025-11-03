@@ -1,9 +1,9 @@
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 import { createContext } from '../../core';
-import { buildTree, cleanupComponentTree } from '../../core/render';
 import type { Player } from '@minecraft/server';
 import type { FunctionComponent, JSX } from '../../jsx';
 import { useContext } from '../../hooks/useContext';
+import { buildTree, cleanupComponentTree } from '../render/tree';
 
 describe('fiber-scoped context', () => {
   let player: Player;

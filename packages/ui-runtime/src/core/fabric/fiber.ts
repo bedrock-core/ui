@@ -39,6 +39,7 @@ export function deleteFiber(id: string): void {
       slot.cleanup = undefined;
     }
   }
+
   FiberRegistry.delete(id);
 }
 
@@ -47,14 +48,14 @@ export function deleteFiber(id: string): void {
  * @param player - Player instance to filter fibers by
  * @returns Array of fiber IDs belonging to this player
  */
-export function getFibersForPlayer(player: Player): string[] {
-  const fibers: string[] = [];
+export function getFibersForPlayer(player: Player): Fiber[] {
+  const fibers: Fiber[] = [];
 
-  for (const [id, fiber] of FiberRegistry) {
-    if (fiber.player === player) {
-      fibers.push(id);
+  FiberRegistry.forEach(element => {
+    if (element.player.id === player.id) {
+      fibers.push(element);
     }
-  }
+  });
 
   return fibers;
 }

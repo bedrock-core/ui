@@ -14,7 +14,7 @@ export {
 } from './serializer';
 
 // Rendering
-export { render } from './runtime';
+export { render } from './render';
 
 // Types
 export type {

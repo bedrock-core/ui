@@ -1,0 +1,2 @@
+export { render } from './lifecycle';
+

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { JSX } from '../../jsx';
-import { ParentState, TraversalContext, applyInheritance } from '../render';
+import { ParentState, TraversalContext } from '../render/traversal';
+import { applyInheritance } from '../render/phases';
 
 /**
  * Helper to create a TraversalContext with a given parent state

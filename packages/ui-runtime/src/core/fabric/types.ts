@@ -52,3 +52,5 @@ export interface Fiber {
   // Boundary association for descendant components: nearest Suspense boundary id
   nearestBoundaryId?: string;
 }
+
+export type SuspendedFiber<T extends Fiber = Fiber> = Omit<T, 'suspense'> & { suspense: NonNullable<T['suspense']> };
