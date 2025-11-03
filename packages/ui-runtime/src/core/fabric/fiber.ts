@@ -1,7 +1,7 @@
 import { Player } from '@minecraft/server';
 import { MountDispatcher, UpdateDispatcher } from './dispatcher';
 import { FiberRegistry, getCurrentFiber, setCurrentFiber } from './registry';
-import { Fiber } from './types';
+import { Fiber, HookSlot } from './types';
 
 export function createFiber(id: string, player: Player): Fiber {
   const fiber: Fiber = {
@@ -14,6 +14,7 @@ export function createFiber(id: string, player: Player): Fiber {
     shouldRender: true,
     isSuspenseBoundary: false,
   };
+
   FiberRegistry.set(id, fiber);
 
   return fiber;
@@ -24,7 +25,7 @@ export function getFiber(id: string): Fiber | undefined {
 }
 
 export function deleteFiber(id: string): void {
-  const fiber = FiberRegistry.get(id);
+  const fiber: Fiber | undefined = FiberRegistry.get(id);
 
   if (!fiber) {
     return;
@@ -32,9 +33,9 @@ export function deleteFiber(id: string): void {
 
   // Run any remaining cleanups
   for (let i = 0; i < fiber.hookStates.length; i++) {
-    const slot = fiber.hookStates[i];
+    const slot: HookSlot = fiber.hookStates[i];
 
-    if (slot?.cleanup) {
+    if (slot.cleanup) {
       try { slot.cleanup(); } catch { /* noop */ }
 
       slot.cleanup = undefined;
@@ -64,7 +65,6 @@ export function getFibersForPlayer(player: Player): Fiber[] {
 /**
  * Activate a fiber and evaluate `fn` within its dynamic scope.
  * Resets hookIndex and schedules effects; effects are flushed after `fn`.
- * Optionally binds player metadata to the fiber.
  */
 export function activateFiber<T>(
   fiber: Fiber,
@@ -78,7 +78,7 @@ export function activateFiber<T>(
   setCurrentFiber(fiber, fiber.dispatcher);
 
   try {
-    const result = fn();
+    const result: T = fn();
 
     // After successful evaluation, move to Update phase for next runs
     fiber.dispatcher = UpdateDispatcher;
@@ -112,10 +112,10 @@ function flushPendingEffects(fiber: Fiber): void {
   const pending = fiber.pendingEffects.splice(0, fiber.pendingEffects.length);
 
   for (const { slotIndex, effect } of pending) {
-    const slot = fiber.hookStates[slotIndex];
+    const slot: HookSlot = fiber.hookStates[slotIndex];
 
     // Run previous cleanup before next effect
-    if (slot?.cleanup) {
+    if (slot.cleanup) {
       try { slot.cleanup(); } catch { /* noop */ }
 
       slot.cleanup = undefined;

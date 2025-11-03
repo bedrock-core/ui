@@ -1,8 +1,7 @@
+import { isFunction } from '../';
 import { getCurrentFiber } from './registry';
 import { Dispatcher, Context, HookSlot } from './types';
 import { invariant, nextHookSlot } from './utils';
-
-const isFunction = <T>(value: unknown): value is (...args: unknown[]) => T => typeof value === 'function';
 
 export const MountDispatcher: Dispatcher = {
   useState<T>(initial: T | (() => T)) {
@@ -53,7 +52,7 @@ export const MountDispatcher: Dispatcher = {
     invariant(fiber, 'useContext');
 
     const slot = nextHookSlot(fiber, 'context');
-    const value = (fiber.contextSnapshot && fiber.contextSnapshot.get(ctx.$$typeof) as T) ?? ctx.defaultValue;
+    const value = (fiber.contextSnapshot?.get(ctx as Context<unknown>) as T) ?? ctx.defaultValue;
 
     slot.value = value;
 
@@ -166,7 +165,7 @@ export const UpdateDispatcher: Dispatcher = {
     invariant(fiber, 'useContext');
 
     const slot = nextHookSlot(fiber, 'context');
-    const value = (fiber.contextSnapshot && fiber.contextSnapshot.get(ctx.$$typeof) as T) ?? ctx.defaultValue;
+    const value = (fiber.contextSnapshot?.get(ctx as Context<unknown>) as T) ?? ctx.defaultValue;
 
     slot.value = value;
 

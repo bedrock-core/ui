@@ -18,13 +18,14 @@ export { render } from './render';
 
 // Types
 export type {
-  CoreUIFormData,
   ReservedBytes,
   SerializablePrimitive,
   SerializableProps,
   SerializationContext,
   SerializationError
 } from './types';
+
+export { isFunction } from './guards';
 
 export {
   getCurrentFiber,
@@ -34,5 +35,5 @@ export {
 
 export type {
   Context,
-  ProviderProps
+  ContextProps
 } from './fabric';

@@ -4,8 +4,8 @@ export interface ControlProps {
   // All positioning and sizing values are numbers, will not support string types like "100px", "100%", "100%c"... too much issues in json ui
   width: number;
   height: number;
-  x: number;
-  y: number;
+  x?: number;
+  y?: number;
   visible?: boolean;
   enabled?: boolean;
   position?: 'absolute' | 'relative';
@@ -65,8 +65,8 @@ export function withControl(props: JSX.Props): JSX.Props {
   return {
     width,
     height,
-    x,
-    y,
+    x: x ?? 0,
+    y: y ?? 0,
     visible: visible ?? true,
     enabled: enabled ?? true,
     // even if not working we keep them for filling the byte space

@@ -1,5 +1,6 @@
 import type { Player } from '@minecraft/server';
 import type { FunctionComponent } from '../../jsx';
+import { Context } from '../fabric';
 
 /**
  * Encapsulates parent state for inheritance calculations.
@@ -26,7 +27,7 @@ export interface TraversalContext {
   currentSuspenseBoundary?: string; // Track which Suspense boundary we're currently in
   idCounters: Map<string, number>; // Per-parent-path counters for auto-keys
   parentState?: ParentState; // Parent state for inheritance (used in Phase 4)
-  currentContext: Map<symbol, unknown>; // Fiber context snapshot being propagated
+  currentContext: Map<Context<unknown>, unknown>; // Fiber context snapshot being propagated (keyed by context object)
 }
 
 /**
@@ -73,7 +74,7 @@ export function createInitialContext(): TraversalContext {
     parentPath: [],
     currentSuspenseBoundary: undefined,
     idCounters: new Map(),
-    currentContext: new Map<symbol, unknown>(),
+    currentContext: new Map<Context<unknown>, unknown>(),
   };
 }
 

@@ -13,4 +13,7 @@ export {
 export { invariant } from './utils';
 
 export { createContext } from './context';
-export type { Context, ProviderProps } from './context';
+
+export type { Context, ContextProps } from './types';
+
+export { isContextProvider, isSuspenseBoundary } from './guards';

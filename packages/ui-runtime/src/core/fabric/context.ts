@@ -1,20 +1,5 @@
-import { FunctionComponent, JSX } from '../../jsx';
-
-/**
- * Props for Context.Provider component
- */
-export interface ProviderProps<T> {
-  value: T;
-  children?: unknown;
-}
-
-/**
- * Context object created by createContext
- */
-export type Context<T> = FunctionComponent<ProviderProps<T>> & {
-  $$typeof: symbol;
-  defaultValue: T;
-};
+import { JSX } from '../../jsx';
+import { Context, ContextProps } from './types';
 
 /**
  * Creates a Context object that components can use to share values down the component tree
@@ -41,28 +26,17 @@ export type Context<T> = FunctionComponent<ProviderProps<T>> & {
  * }
  */
 export function createContext<T>(defaultValue: T): Context<T> {
-  const identity = { $$typeof: Symbol('ctx'), defaultValue };
-
-  const Provider: FunctionComponent<ProviderProps<T>> = (
-    props: ProviderProps<T>,
-  ): JSX.Element => {
-    const providerProps = {
-      __context: identity,
+  // We use the provider function itself as the unique identity for this context.
+  const Ctx = (props: ContextProps<T>): JSX.Element => ({
+    type: 'context-provider',
+    props: {
+      __context: Ctx,
       value: props.value,
       children: props.children,
-    } as unknown as JSX.Props;
-
-    return {
-      type: 'context-provider',
-      props: providerProps,
-    };
-  };
-
-  // Make the context object itself callable as a Provider
-  const ContextComponent = Object.assign(Provider, {
-    $$typeof: identity.$$typeof,
-    defaultValue: identity.defaultValue,
+    },
   });
 
-  return ContextComponent;
+  Ctx.defaultValue = defaultValue;
+
+  return Ctx;
 }

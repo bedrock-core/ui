@@ -1,7 +1,6 @@
 import { system, type Player } from '@minecraft/server';
 import type { JSX } from '../../jsx';
-import { deleteFiber, getFibersForPlayer } from '../fabric';
-import { Fiber } from '../fabric/types';
+import { deleteFiber, getFibersForPlayer, isSuspenseBoundary } from '../fabric';
 import { applyInheritance, expandAndResolveContexts, normalizeChildren } from './phases';
 import { createInitialContext, createRootContext } from './traversal';
 
@@ -99,8 +98,4 @@ export function cleanupComponentTree(player: Player): void {
   for (const fiber of sortedFibers) {
     deleteFiber(fiber.id);
   }
-}
-
-export function isSuspenseBoundary(fiber: Fiber): fiber is Fiber & { suspense: NonNullable<Fiber['suspense']> } {
-  return fiber.isSuspenseBoundary && !!fiber.suspense;
 }

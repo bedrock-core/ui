@@ -1,6 +1,6 @@
 import type { Player } from '@minecraft/server';
 import type { JSX } from '../../../jsx';
-import { activateFiber, createFiber, getFiber } from '../../fabric';
+import { activateFiber, createFiber, getFiber, isContextProvider } from '../../fabric';
 import { generateComponentId, type TraversalContext } from '../traversal';
 
 /**
@@ -69,7 +69,7 @@ export function expandAndResolveContexts(
   }
 
   // Step 2: Handle context provider - push context BEFORE processing children
-  if (element.type === 'context-provider') {
+  if (isContextProvider(element)) {
     const providerProps = element.props;
     const contextObj = providerProps.__context;
 
@@ -78,7 +78,7 @@ export function expandAndResolveContexts(
 
     // Derive a child context snapshot from the parent snapshot
     const nextContext = new Map(context.currentContext);
-    nextContext.set((contextObj as { $$typeof: symbol }).$$typeof, contextValue);
+    nextContext.set(contextObj, contextValue);
 
     // Modern format: detect Suspense boundary by duck-typing the provider value
     // If value is an object with a string 'id', treat it as a Suspense boundary id.

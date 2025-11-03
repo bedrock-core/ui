@@ -1,6 +1,5 @@
 import { system } from '@minecraft/server';
-import { createContext, getCurrentFiber } from '../core';
-import { Fiber } from '../core/fabric/types';
+import { getCurrentFiber } from '../core';
 import type { FunctionComponent, JSX } from '../jsx';
 import { Panel } from './Panel';
 
@@ -28,15 +27,6 @@ export interface SuspenseProps {
    */
   children: JSX.Node;
 }
-
-/**
- * Suspense boundary context - marks component instances as belonging to a specific Suspense boundary.
- * Used internally to track which instances should be waited on during suspension.
- *
- * @internal
- */
-interface SuspenseContextValue { boundary: Fiber }
-export const SuspenseContext = createContext<SuspenseContextValue | undefined>(undefined);
 
 /**
  * Suspense component - creates a boundary for local state resolution.
@@ -77,9 +67,7 @@ export const Suspense: FunctionComponent<SuspenseProps> = ({ children, fallback,
 
   return (
     <>
-      <SuspenseContext value={{ boundary: fiber }}>
-        <Panel width={0} height={0} x={0} y={0} visible={fiber.suspense?.isResolved}>{children}</Panel>
-      </SuspenseContext>
+      <Panel width={0} height={0} visible={fiber.suspense?.isResolved}>{children}</Panel>
       {fallback && !fiber.suspense?.isResolved && <>{fallback}</>}
     </>
   );

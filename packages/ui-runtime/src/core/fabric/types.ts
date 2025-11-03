@@ -1,3 +1,4 @@
+import { FunctionComponent, JSX } from '@bedrock-core/ui/jsx-runtime';
 import { EventSignal } from '../../hooks';
 import { Player } from '@minecraft/server';
 
@@ -8,14 +9,14 @@ export interface HookSlot<T = unknown> {
   tag: 'state' | 'effect' | 'ref' | 'reducer' | 'context';
 }
 
-export interface Context<T> {
-
-  /* @internal */
-  $$typeof: symbol;
-  defaultValue: T;
+export interface ContextProps<T> {
+  value: T;
+  children?: JSX.Node;
 }
 
-export type ContextSnapshot = ReadonlyMap<symbol, unknown>;
+export type Context<T> = FunctionComponent<ContextProps<T>> & { defaultValue: T };
+
+export type ContextSnapshot = ReadonlyMap<Context<unknown>, unknown>;
 
 export interface Dispatcher {
   useState<T>(initial: T | (() => T)): [T, (v: T | ((prev: T) => T)) => void];

@@ -1,5 +1,7 @@
+import { ActionFormData } from '@minecraft/server-ui';
 import { JSX } from '../jsx';
-import { CoreUIFormData, SerializablePrimitive, SerializableProps, SerializationContext, SerializationError } from './types';
+import { isFunction, isSerializablePrimitive } from './guards';
+import { SerializablePrimitive, SerializableProps, SerializationContext, SerializationError } from './types';
 import { TRANSPARENT_TYPES, WRITERS } from './writers';
 
 /**
@@ -113,28 +115,12 @@ function padToByteLength(str: string, length: number): string {
 }
 
 /**
- * Type guard to check if a value is a SerializablePrimitive
- */
-function isSerializablePrimitive(value: unknown): value is SerializablePrimitive {
-  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-    return true;
-  }
-
-  // Check for ReservedBytes object
-  if (typeof value === 'object' && value !== null && value !== undefined && 'bytes' in value) {
-    return true;
-  }
-
-  return false;
-}
-
-/**
  * Serialize a JSX element and its children into the provided form.
  * @param element - JSX element to serialize
  * @param form - Form data to populate
- * @param context - Optional serialization context for collecting button callbacks
+ * @param context - Serialization context for collecting button callbacks
  */
-export function serialize({ type, props: { children, ...rest } }: JSX.Element, form: CoreUIFormData, context?: SerializationContext): void {
+export function serialize({ type, props: { children, ...rest } }: JSX.Element, form: ActionFormData, context: SerializationContext): void {
   // Function components should have been resolved by buildTree()
   // If we see one here, it's a bug
   if (typeof type === 'function') {
@@ -254,8 +240,4 @@ export function serializeProps({ type, ...props }: SerializableProps & { type: s
   const finalBytes = totalBytes + utf8ByteLength(prefix);
 
   return [result, finalBytes];
-}
-
-function isFunction(value: unknown): value is (...args: unknown[]) => void {
-  return typeof value === 'function';
 }
