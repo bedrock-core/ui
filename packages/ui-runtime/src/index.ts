@@ -35,7 +35,7 @@ export {
 
 export type {
   Context,
-  ProviderProps,
+  ContextProps,
   SerializationError
 } from './core';
 

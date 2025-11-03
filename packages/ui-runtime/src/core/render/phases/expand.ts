@@ -91,58 +91,67 @@ export function expandAndResolveContexts(
       : { ...context, currentContext: nextContext };
 
     // Process children recursively (they can now read context via useContext)
-    let processedChildren: JSX.Element;
-
+    // Always return a fragment with children as an array
     if (Array.isArray(contextChildren)) {
       const resolvedChildren = processChildren(contextChildren, providerChildContext, player);
 
-      processedChildren = {
+      return {
         type: 'fragment',
         props: { children: resolvedChildren },
       };
     } else if (contextChildren && typeof contextChildren === 'object' && 'type' in contextChildren) {
-      processedChildren = expandAndResolveContexts(contextChildren, providerChildContext, player);
+      const child = expandAndResolveContexts(contextChildren, providerChildContext, player);
+
+      return {
+        type: 'fragment',
+        props: { children: [child] },
+      };
     } else {
       // No valid children - return empty fragment
-      processedChildren = {
+      return {
         type: 'fragment',
         props: { children: [] },
       };
     }
-
-    return processedChildren;
   }
 
   // Step 3: For regular elements, recursively process children
-  if (element.props.children) {
-    const children = element.props.children;
+  const children = element.props.children;
 
-    // Handle array of children
-    if (Array.isArray(children)) {
-      const processedChildren = processChildren(children, context, player);
+  // Handle array of children
+  if (Array.isArray(children)) {
+    const processedChildren = processChildren(children, context, player);
 
-      return {
-        type: element.type,
-        props: {
-          ...element.props,
-          children: processedChildren,
-        },
-      };
-    }
-
-    // Handle single child element
-    if (children && typeof children === 'object' && 'type' in children) {
-      return {
-        type: element.type,
-        props: {
-          ...element.props,
-          children: expandAndResolveContexts(children, context, player),
-        },
-      };
-    }
+    return {
+      type: element.type,
+      props: {
+        ...element.props,
+        children: processedChildren,
+      },
+    };
   }
 
-  return element;
+  // Handle single child element
+  if (children && typeof children === 'object' && 'type' in children) {
+    const processed = expandAndResolveContexts(children, context, player);
+
+    return {
+      type: element.type,
+      props: {
+        ...element.props,
+        children: [processed], // normalize to array
+      },
+    };
+  }
+
+  // Normalize null/undefined or non-element children to empty array
+  return {
+    type: element.type,
+    props: {
+      ...element.props,
+      children: [],
+    },
+  };
 }
 
 function processChildren(children: JSX.Element[], context: TraversalContext, player: Player): JSX.Element[] {

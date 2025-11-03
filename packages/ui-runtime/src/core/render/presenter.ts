@@ -8,7 +8,7 @@ import type { SerializationContext } from '../types';
 export async function present(
   player: Player,
   tree: JSX.Element,
-  session: { closeGen: number }, // <-- session token, not global
+  session: { closeGen: number },
 ): Promise<'present' | 'cleanup' | 'none'> {
   // Prepare serialization context for button callbacks
   const serializationContext: SerializationContext = { buttonCallbacks: new Map(), buttonIndex: 0 };

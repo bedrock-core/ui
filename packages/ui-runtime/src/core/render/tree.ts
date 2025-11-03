@@ -1,7 +1,7 @@
 import { system, type Player } from '@minecraft/server';
 import type { JSX } from '../../jsx';
 import { deleteFiber, getFibersForPlayer, isSuspenseBoundary } from '../fabric';
-import { applyInheritance, expandAndResolveContexts, normalizeChildren } from './phases';
+import { applyInheritance, expandAndResolveContexts } from './phases';
 import { createInitialContext, createRootContext } from './traversal';
 
 /**
@@ -13,10 +13,9 @@ import { createInitialContext, createRootContext } from './traversal';
  * Phase 1 (Rendering - this function): Build tree, create instances, initialize hooks
  * Phase 2 (Logic - background): Effects run while form is displayed
  *
- * Four-phase tree building:
+ * Three-phase tree building:
  * Phase 1: Expand function components and resolve contexts
- * Phase 2: Normalize children structure
- * Phase 3: Apply parent-child inheritance rules (visibility, enabled, relative positioning)
+ * Phase 2: Apply parent-child inheritance rules (visibility, enabled, relative positioning)
  *
  * @param element - Root JSX element to build
  * @param player - Player rendering the component
@@ -30,10 +29,7 @@ export function buildTree(element: JSX.Element, player: Player): [JSX.Element, b
   // This creates instances for ALL components in the tree
   let result = expandAndResolveContexts(element, context, player);
 
-  // Phase 2: Normalize children structure
-  result = normalizeChildren(result, context);
-
-  // Phase 3: Apply parent-child inheritance rules (visibility, enabled, relative positioning)
+  // Phase 2: Apply parent-child inheritance rules (visibility, enabled, relative positioning)
   // Initialize with root parent state
   const rootContext = createRootContext(context);
 
@@ -49,8 +45,6 @@ export function buildTree(element: JSX.Element, player: Player): [JSX.Element, b
 
   let shouldPresentOnClose: boolean = false;
 
-  // Fiber-native suspense discovery: scan fibers for player ONCE (optimization)
-  // Identify boundary fibers and start polling for each unresolved boundary
   const playerFibers = getFibersForPlayer(player);
   const boundaryFibers = playerFibers.filter(isSuspenseBoundary);
 
@@ -61,6 +55,23 @@ export function buildTree(element: JSX.Element, player: Player): [JSX.Element, b
     let newResolvedCount: number = 0;
 
     unresolvedBoundaries.forEach(bf => {
+      // const hooksReady = playerFibers
+      //   .filter(f => f.suspense?.boundaryId === bf.id)
+      //   .every(f => {
+      //     console.error(`[Suspense] Boundary ${JSON.stringify(f.hookStates)}`);
+
+      //     return f.hookStates.every((slot: HookSlot) => {
+      //       console.error(`[Suspense] Checking hook slot: tag=${slot.tag} resolved=${slot.resolved} value=${slot.value}`);
+      //       if (slot.tag === 'state' || slot.tag === 'reducer') {
+      //         return slot.resolved;
+      //       }
+
+      //       return true;
+      //     });
+      //   });
+
+      // console.error(`[Suspense] Boundary ${bf.id} checking resolution: hooksReady=${JSON.stringify(hooksReady)}`);
+
       const startTick = bf.suspense.startTick;
       const timeoutTicks = bf.suspense.awaitTimeout;
       const endTick = startTick + timeoutTicks;

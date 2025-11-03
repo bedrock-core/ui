@@ -2,6 +2,7 @@ import { ActionFormData } from '@minecraft/server-ui';
 import { describe, expect, it } from 'vitest';
 import { Panel } from '../../components/Panel';
 import { FIELD_MARKERS, FULL_WIDTH, PROTOCOL_HEADER, serialize, TYPE_PREFIX, TYPE_WIDTH } from '../serializer';
+import { SerializationContext } from '../types';
 
 // This test guards the ordering of serialized fields for Panel (and by extension
 // any component using the same withControl pattern). If ordering changes
@@ -76,7 +77,9 @@ describe('Serialization field order', () => {
       children: [],
     });
 
-    serialize(element, mockForm);
+    const serializationContext: SerializationContext = { buttonCallbacks: new Map(), buttonIndex: 0 };
+
+    serialize(element, mockForm, serializationContext);
 
     expect(captured.length).toBe(1);
     const payload = captured[0];
@@ -178,7 +181,9 @@ describe('Serialization field order', () => {
       height: 200.5,
     });
 
-    serialize(element, mockForm);
+    const serializationContext: SerializationContext = { buttonCallbacks: new Map(), buttonIndex: 0 };
+
+    serialize(element, mockForm, serializationContext);
 
     expect(captured.length).toBe(1);
     const payload = captured[0];
@@ -247,7 +252,7 @@ describe('Serialization field order', () => {
     };
 
     // Test with unknown/non-existent properties mixed between valid ones.
-    // WithControl() only extracts canonical control fields, so unknown properties
+    // withControl() only extracts canonical control fields, so unknown properties
     // will be filtered out, ensuring stable serialization with only known fields.
     const panelWithUnknownProps = {
       unknownString: 'extra-string-prop',
@@ -268,8 +273,11 @@ describe('Serialization field order', () => {
       finalUnknownProp: 'end-value',
     };
 
-    const element = Panel(panelWithUnknownProps as Parameters<typeof Panel>[0]);
-    serialize(element, mockForm);
+    const element = Panel(panelWithUnknownProps);
+
+    const serializationContext: SerializationContext = { buttonCallbacks: new Map(), buttonIndex: 0 };
+
+    serialize(element, mockForm, serializationContext);
 
     expect(captured.length).toBe(1);
     const payload = captured[0];

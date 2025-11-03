@@ -4,9 +4,11 @@ import { Player } from '@minecraft/server';
 
 export interface HookSlot<T = unknown> {
   value: T;
+  initial?: T;
   deps?: readonly unknown[] | undefined;
   cleanup?: (() => void) | undefined;
   tag: 'state' | 'effect' | 'ref' | 'reducer' | 'context';
+  resolved?: boolean;
 }
 
 export interface ContextProps<T> {

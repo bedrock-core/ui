@@ -12,11 +12,17 @@ export const MountDispatcher: Dispatcher = {
     const value: T = isFunction(initial) ? initial() : initial;
 
     slot.value = value;
+    slot.initial = value;
+    slot.resolved = false;
 
     const setter = (v: T | ((prev: T) => T)): void => {
       const nextVal = isFunction(v) ? v(slot.value) : v;
 
       slot.value = nextVal;
+
+      if (!slot.resolved && !Object.is(nextVal, slot.initial)) {
+        slot.resolved = true;
+      }
     };
 
     return [slot.value as T, setter];
@@ -66,9 +72,16 @@ export const MountDispatcher: Dispatcher = {
     const slot = nextHookSlot(fiber, 'reducer');
 
     slot.value = initial;
+    slot.initial = initial;
+    slot.resolved = false;
 
     const dispatch = (action: A): void => {
-      slot.value = reducer(slot.value as S, action);
+      const nextVal = reducer(slot.value as S, action);
+      slot.value = nextVal;
+
+      if (!slot.resolved && !Object.is(nextVal, slot.initial)) {
+        slot.resolved = true;
+      }
     };
 
     return [slot.value as S, dispatch];
@@ -119,11 +132,21 @@ export const UpdateDispatcher: Dispatcher = {
     if (slot.value === undefined) {
       // initialize if genuinely first run on this position (edge case)
       slot.value = isFunction(initial) ? initial() : initial;
+
+      if (slot.initial === undefined) {
+        slot.initial = slot.value;
+        slot.resolved = false;
+      }
     }
+
     const setter = (v: T | ((prev: T) => T)): void => {
       const nextVal = isFunction(v) ? v(slot.value as T) : v;
 
       slot.value = nextVal;
+
+      if (!slot.resolved && !Object.is(nextVal, slot.initial)) {
+        slot.resolved = true;
+      }
     };
 
     return [slot.value as T, setter];
@@ -180,10 +203,20 @@ export const UpdateDispatcher: Dispatcher = {
 
     if (slot.value === undefined) {
       slot.value = initial;
+
+      if (slot.initial === undefined) {
+        slot.initial = slot.value;
+        slot.resolved = false;
+      }
     }
 
     const dispatch = (action: A): void => {
-      slot.value = reducer(slot.value as S, action);
+      const nextVal = reducer(slot.value as S, action);
+      slot.value = nextVal;
+
+      if (!slot.resolved && !Object.is(nextVal, slot.initial)) {
+        slot.resolved = true;
+      }
     };
 
     return [slot.value as S, dispatch];
