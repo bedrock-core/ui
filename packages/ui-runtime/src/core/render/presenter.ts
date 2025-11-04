@@ -14,18 +14,18 @@ export async function present(
   const serializationContext: SerializationContext = { buttonCallbacks: new Map(), buttonIndex: 0 };
 
   // Snapshot and show
-  const form = new ActionFormData();
+  const form: ActionFormData = new ActionFormData();
   form.title(PROTOCOL_HEADER);
 
   serialize(tree, form, serializationContext);
 
   // Capture generation BEFORE showing
-  const genBefore = session.closeGen;
+  const genBefore: number = session.closeGen;
 
   return form.show(player).then(response => {
     // Compare AFTER resolution
-    const genAfter = session.closeGen;
-    const programmaticCanceled = response.canceled && genAfter !== genBefore;
+    const genAfter: number = session.closeGen;
+    const programmaticCanceled: boolean = response.canceled && genAfter !== genBefore;
 
     if (programmaticCanceled) {
       // We canceled because the runtime closed forms (e.g., suspense resolution)
@@ -40,11 +40,12 @@ export async function present(
     // Button press
     if (response.selection !== undefined) {
       const callback = serializationContext.buttonCallbacks.get(response.selection);
+
       if (callback) {
         // Execute button callback then present again (unless useExit was called)
         return Promise.resolve(callback())
           .then(() => {
-            const shouldClose = getFibersForPlayer(player).some(fiber => !fiber.shouldRender);
+            const shouldClose: boolean = getFibersForPlayer(player).some(fiber => !fiber.shouldRender);
 
             return shouldClose ? 'cleanup' : 'present';
           });

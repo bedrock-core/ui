@@ -38,14 +38,14 @@ export function buildTree(element: JSX.Element, player: Player): [JSX.Element, b
 
   // Phase 1: Expand function components and resolve contexts
   // This creates instances for ALL components in the tree
-  let result = expandAndResolveContexts(element, context, player);
+  let result: JSX.Element = expandAndResolveContexts(element, context, player);
 
   // Phase 2: Apply parent-child inheritance rules (visibility, enabled, relative positioning)
   // Initialize with root parent state
   const rootContext = createRootContext(context);
 
   // If player has any fibers with unresolved Suspense, disable interactions at root
-  const hasUnresolvedSuspense = getFibersForPlayer(player).some(fiber => !!fiber?.suspense && !fiber.suspense.isResolved);
+  const hasUnresolvedSuspense: boolean = getFibersForPlayer(player).some(fiber => !!fiber?.suspense && !fiber.suspense.isResolved);
 
   if (hasUnresolvedSuspense) {
     // Disable all interactive controls while a boundary is pending
@@ -56,21 +56,21 @@ export function buildTree(element: JSX.Element, player: Player): [JSX.Element, b
 
   let shouldPresentOnClose: boolean = false;
 
-  const playerFibers = getFibersForPlayer(player);
+  const playerFibers: Fiber[] = getFibersForPlayer(player);
   const boundaryFibers = playerFibers.filter(isSuspenseBoundary);
 
   if (boundaryFibers.length > 0) {
-    const nowTick = system.currentTick;
+    const nowTick: number = system.currentTick;
     const unresolvedBoundaries = boundaryFibers.filter(bf => !bf.suspense.isResolved);
 
     let newResolvedCount: number = 0;
 
     unresolvedBoundaries.forEach(bf => {
-      const hooksReady = isBoundarySubtreeReady(bf);
+      const hooksReady: boolean = isBoundarySubtreeReady(bf);
 
-      const startTick = bf.suspense.startTick;
-      const timeoutTicks = bf.suspense.awaitTimeout;
-      const endTick = startTick + timeoutTicks;
+      const startTick: number = bf.suspense.startTick;
+      const timeoutTicks: number = bf.suspense.awaitTimeout;
+      const endTick: number = startTick + timeoutTicks;
 
       if (hooksReady || nowTick >= endTick) {
         bf.suspense.isResolved = true;

@@ -97,49 +97,32 @@ export function expandAndResolveContexts(
 
   // Step 2: Handle context provider - push context BEFORE processing children
   if (isContextProvider(element)) {
-    const providerProps = element.props;
-    const contextObj = providerProps.__context;
-
-    const contextValue = providerProps.value;
-    const contextChildren = providerProps.children;
+    const { __context: ctxObj, value, children } = element.props;
 
     // Derive a child context snapshot from the parent snapshot
     const nextContext = new Map(context.currentContext);
-    nextContext.set(contextObj, contextValue);
+    nextContext.set(ctxObj, value);
 
-    // Modern format: detect Suspense boundary by duck-typing the provider value
-    // If value is an object with a string 'id', treat it as a Suspense boundary id.
-    const cv: unknown = contextValue;
-    const maybeBoundary = cv && typeof cv === 'object' && typeof (cv as { id?: unknown }).id === 'string'
-      ? (cv as { id: string }).id
-      : undefined;
-    const providerChildContext: TraversalContext = maybeBoundary
-      ? { ...context, currentSuspenseBoundary: maybeBoundary, currentContext: nextContext }
-      : { ...context, currentContext: nextContext };
+    // Detect Suspense boundary id (duck-typed: object with string 'id')
+    const boundaryId = getBoundaryId(value);
+
+    // Child traversal context, optionally tagging the current Suspense boundary
+    const childContext: TraversalContext = {
+      ...context,
+      currentContext: nextContext,
+      ...boundaryId ? { currentSuspenseBoundary: boundaryId } : {},
+    };
 
     // Process children recursively (they can now read context via useContext)
-    // Always return a fragment with children as an array
-    if (Array.isArray(contextChildren)) {
-      const resolvedChildren = processChildren(contextChildren, providerChildContext, player);
+    const childrenArray = toChildrenArray(children);
+    const resolvedChildren = childrenArray.length
+      ? processChildren(childrenArray, childContext, player)
+      : [];
 
-      return {
-        type: 'fragment',
-        props: { children: resolvedChildren },
-      };
-    } else if (contextChildren && typeof contextChildren === 'object' && 'type' in contextChildren) {
-      const child = expandAndResolveContexts(contextChildren, providerChildContext, player);
-
-      return {
-        type: 'fragment',
-        props: { children: [child] },
-      };
-    } else {
-      // No valid children - return empty fragment
-      return {
-        type: 'fragment',
-        props: { children: [] },
-      };
-    }
+    return {
+      type: 'fragment',
+      props: { children: resolvedChildren },
+    };
   }
 
   // Step 3: For regular elements, recursively process children
@@ -189,4 +172,26 @@ function processChildren(children: JSX.Element[], context: TraversalContext, pla
 
     return expandAndResolveContexts(child, context, player);
   }).filter((child: JSX.Element | undefined): child is JSX.Element => child !== undefined);
+}
+
+// Keep this helper small and local: returns 'id' iff it's a non-empty string on an object.
+function getBoundaryId(value: unknown): string | undefined {
+  if (value && typeof value === 'object') {
+    const id = (value as { id?: unknown }).id;
+    if (typeof id === 'string' && id.length > 0) return id;
+  }
+
+  return undefined;
+}
+
+// Normalizes any valid JSX child(ren) into an array of elements.
+function toChildrenArray(children: unknown): JSX.Element[] {
+  if (Array.isArray(children)) {
+    return children as JSX.Element[];
+  }
+  if (children && typeof children === 'object' && 'type' in (children as Record<string, unknown>)) {
+    return [children as JSX.Element];
+  }
+
+  return [];
 }

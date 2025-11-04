@@ -62,21 +62,22 @@ export function applyInheritance(element: JSX.Element, context: TraversalContext
   }
 
   // Rule 3: Handle relative positioning
-  const position = (newProps.__position as string | undefined) ?? 'relative';
+  const position = newProps.__position ?? 'relative';
+
   if (position === 'relative') {
-    const x = (newProps.x as number | undefined) ?? 0;
-    const y = (newProps.y as number | undefined) ?? 0;
+    const x = newProps.x as number ?? 0;
+    const y = newProps.y as number ?? 0;
     newProps.x = x + parentState.x;
     newProps.y = y + parentState.y;
   }
 
   // Create new parent state for children using THIS element's resolved properties
   const childParentState: ParentState = {
-    visible: (newProps.visible as boolean) ?? true,
-    enabled: (newProps.enabled as boolean) ?? true,
-    x: (newProps.x as number) ?? 0,
-    y: (newProps.y as number) ?? 0,
-    position: (position as 'absolute' | 'relative') ?? 'relative',
+    visible: newProps.visible as boolean ?? true,
+    enabled: newProps.enabled as boolean ?? true,
+    x: newProps.x as number ?? 0,
+    y: newProps.y as number ?? 0,
+    position: position as 'relative' | 'absolute' ?? 'relative',
   };
 
   const childContext: TraversalContext = {
