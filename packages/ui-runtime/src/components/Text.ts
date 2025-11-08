@@ -10,12 +10,19 @@ export interface TextStyle {
   textAlignment?: 'left' | 'center' | 'right';
 }
 
-export interface TextProps extends ControlProps { value: string }
+export interface TextProps extends ControlProps {
 
-export const Text: FunctionComponent<TextProps> = ({ value, ...rest }: TextProps): JSX.Element => ({
+  /**
+   * Text content to display
+   * Max 80 characters
+   */
+  children: string;
+}
+
+export const Text: FunctionComponent<TextProps> = ({ children, ...rest }: TextProps): JSX.Element => ({
   type: 'text',
   props: {
     ...withControl(rest),
-    value: value ?? '',
+    value: children ?? '',
   },
 });

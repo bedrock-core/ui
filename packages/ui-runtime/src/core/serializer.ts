@@ -135,7 +135,7 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
     if (children) {
       const childArray = Array.isArray(children) ? children : [children];
 
-      childArray.forEach((child: JSX.Element): void => serialize(child, form, context));
+      childArray.forEach((child: JSX.Element | string): void => { typeof child !== 'string' && serialize(child, form, context); });
     }
 
     return;
@@ -188,7 +188,7 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
   if (children) {
     const childArray = Array.isArray(children) ? children : [children];
 
-    childArray.forEach((child: JSX.Element): void => serialize(child, form, context));
+    childArray.forEach((child: JSX.Element | string): void => { typeof child !== 'string' && serialize(child, form, context); });
   }
 }
 

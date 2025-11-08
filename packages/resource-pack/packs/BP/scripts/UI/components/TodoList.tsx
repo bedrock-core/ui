@@ -61,9 +61,15 @@ export const TodoList: FunctionComponent = (): JSX.Element => {
 
   return (
     <Panel width={192} height={290} x={414} y={10}>
-      <Text width={192} height={20} x={10} y={10} value={'§l§bTodo List'} />
-      <Text width={192} height={15} x={10} y={35} value={`Total: §e${todoCount}`} />
-      <Text width={192} height={15} x={10} y={53} value={`Done: §a${completedCount}`} />
+      <Text width={192} height={20} x={10} y={10}>
+        §l§bTodo List
+      </Text>
+      <Text width={192} height={15} x={10} y={35}>
+        {`Total: §e${todoCount}`}
+      </Text>
+      <Text width={192} height={15} x={10} y={53}>
+        {`Done: §a${completedCount}`}
+      </Text>
 
       <Button
         width={81}
@@ -73,7 +79,9 @@ export const TodoList: FunctionComponent = (): JSX.Element => {
         onPress={(): void => {
           addTodo();
         }}>
-        <Text width={81} height={20} x={5} y={5} value={'§a+ Add'} />
+        <Text width={81} height={20} x={5} y={5}>
+          §a+ Add
+        </Text>
       </Button>
 
       <Button
@@ -85,7 +93,9 @@ export const TodoList: FunctionComponent = (): JSX.Element => {
         onPress={(): void => {
           clearCompleted();
         }}>
-        <Text width={81} height={20} x={5} y={5} value={'§cClear'} />
+        <Text width={81} height={20} x={5} y={5}>
+          §cClear
+        </Text>
       </Button>
 
       <Button
@@ -95,12 +105,16 @@ export const TodoList: FunctionComponent = (): JSX.Element => {
         y={100}
         enabled={hasIncomplete}
         onPress={() => completeTodo()}>
-        <Text width={172} height={20} x={5} y={5} value={'§9Complete next'} />
+        <Text width={172} height={20} x={5} y={5}>
+          §9Complete next
+        </Text>
       </Button>
 
       <Panel width={172} height={150} x={10} y={130}>
         {todos.map((todo, index) => (
-          <Text width={100} height={20} x={10} y={5 + index * 20} value={todo.completed ? `§7§m${todo.text}` : `§f${todo.text}`} />
+          <Text width={100} height={20} x={10} y={5 + index * 20}>
+            {todo.completed ? `§7§m${todo.text}` : `§f${todo.text}`}
+          </Text>
         ))}
       </Panel>
     </Panel>
