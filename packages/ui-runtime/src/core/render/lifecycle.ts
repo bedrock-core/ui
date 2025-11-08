@@ -19,10 +19,10 @@ import { uiManager } from '@minecraft/server-ui';
  * Phase 1 (Rendering): Build tree, create instances, initialize hooks
  * Phase 2 (Logic): Background effects run while form is displayed
  */
-export async function render(
+export function render(
   root: JSX.Element | FunctionComponent,
   player: Player,
-): Promise<void> {
+): void {
   startInputLock(player);
 
   // Convert function component to JSX element if needed

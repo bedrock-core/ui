@@ -7,7 +7,7 @@ import { getCurrentFiber, invariant } from '../core';
  * @param effect - Function invoked after commit; may return a cleanup function.
  * @param deps - Optional dependency list to control re-execution. Omit to run after every render.
  */
-export function useEffect(effect: () => (() => void) | void | undefined, deps?: readonly unknown[]): void {
+export function useEffect(effect: () => (() => void) | void, deps?: readonly unknown[]): void {
   const [, d] = getCurrentFiber();
 
   invariant(d, 'useEffect');

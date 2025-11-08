@@ -28,7 +28,7 @@ export const MountDispatcher: Dispatcher = {
     return [slot.value as T, setter];
   },
 
-  useEffect(effect: () => (() => void) | void | undefined, deps?: readonly unknown[]) {
+  useEffect(effect: () => (() => void) | void, deps?: readonly unknown[]) {
     const [fiber] = getCurrentFiber();
     invariant(fiber, 'useEffect');
 
@@ -103,7 +103,7 @@ export const MountDispatcher: Dispatcher = {
     };
   },
 
-  useEvent<T, O = Record<string, unknown>>(
+  useEvent<T, O>(
     signal: { subscribe(cb: (e: T) => void, options?: O): (e: T) => void; unsubscribe(cb: (e: T) => void): void },
     callback: (event: T) => void,
     options?: O,
@@ -152,7 +152,7 @@ export const UpdateDispatcher: Dispatcher = {
     return [slot.value as T, setter];
   },
 
-  useEffect(effect: () => (() => void) | void | undefined, deps?: readonly unknown[]) {
+  useEffect(effect: () => (() => void) | void, deps?: readonly unknown[]) {
     const [fiber] = getCurrentFiber();
     invariant(fiber, 'useEffect');
 
@@ -238,7 +238,7 @@ export const UpdateDispatcher: Dispatcher = {
     };
   },
 
-  useEvent<T, O = Record<string, unknown>>(
+  useEvent<T, O>(
     signal: { subscribe(cb: (e: T) => void, options?: O): (e: T) => void; unsubscribe(cb: (e: T) => void): void },
     callback: (event: T) => void,
     options?: O,
