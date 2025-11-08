@@ -22,7 +22,7 @@ export interface ControlProps {
  * All JSON UI components need at least these values as they define the base control properties.
  *
  * SERIALIZATION ORDER (must match control.json deserialization):
- * After protocol header (9 bytes: "bcuiv0001") and type (string, 35 bytes), fields are serialized in this exact order:
+ * After protocol header (9 bytes: "bcuiv0002") and type (string, 83 bytes), fields are serialized in this exact order:
  *
  * Field 1: width (number, 27 bytes) - element width
  * Field 2: height (number, 27 bytes) - element height
@@ -35,8 +35,8 @@ export interface ControlProps {
  * Field 9: inheritMaxSiblingWidth (bool, 8 bytes) - width inheritance flag
  * Field 10: inheritMaxSiblingHeight (bool, 8 bytes) - height inheritance flag
  *
- * Reserved: 512 - (protocol header width + all fields width bytes) = 274
- * (up to 512 bytes total reserved block for future expansion)
+ * Reserved: 1024 - (protocol header width + type width + all fields width bytes) = 739
+ * (up to 1024 bytes total reserved block for future expansion)
  *
  * Component-specific properties are appended after the reserved block.
  *
@@ -74,7 +74,7 @@ export function withControl(props: JSX.Props): JSX.Props {
     alpha: alpha ?? 1.0,
     inheritMaxSiblingWidth: inheritMaxSiblingWidth ?? false,
     inheritMaxSiblingHeight: inheritMaxSiblingHeight ?? false,
-    $reserved: { bytes: 274 }, // Reserve space for future expansion
+    $reserved: { bytes: 739 }, // Reserve space for future expansion
     __position: position ?? 'relative', // Internal only: not serialized (__ prefix excludes it)
   };
 }

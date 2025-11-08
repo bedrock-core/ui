@@ -9,7 +9,7 @@ const isPlayer = (source: Entity): source is Player => source.typeId === Minecra
 world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent): void => {
   if (isPlayer(source)) {
     if (block.typeId === MinecraftBlockTypes.StoneButton) {
-      render(<Example />, source);
+      render(Example, source);
     }
 
     if (block.typeId === MinecraftBlockTypes.AcaciaButton) {

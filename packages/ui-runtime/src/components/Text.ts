@@ -10,10 +10,7 @@ export interface TextStyle {
   textAlignment?: 'left' | 'center' | 'right';
 }
 
-export interface TextProps extends ControlProps {
-  value: string;
-  // textStyle?: TextStyle;
-}
+export interface TextProps extends ControlProps { value: string }
 
 export const Text: FunctionComponent<TextProps> = ({ value, ...rest }: TextProps): JSX.Element => ({
   type: 'text',

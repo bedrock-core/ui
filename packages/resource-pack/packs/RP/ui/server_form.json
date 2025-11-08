@@ -7,7 +7,7 @@
 		]
 	},
 	"long_form": {
-		"$protocol_header": "bcuiv0001",
+		"$protocol_header": "bcuiv0002",
 		"modifications": [
 			{
 				"array_name": "bindings",
@@ -26,7 +26,7 @@
 		]
 	},
 	"main_screen_content": {
-		"$protocol_header": "bcuiv0001",
+		"$protocol_header": "bcuiv0002",
 		"size": [
 			"0px",
 			"0px"
