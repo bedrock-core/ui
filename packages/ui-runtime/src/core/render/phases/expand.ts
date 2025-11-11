@@ -81,6 +81,7 @@ export function expandAndResolveContexts(
 
     // Attach current context snapshot so hooks can read during evaluation
     fiber.contextSnapshot = context.currentContext;
+
     // Activate the fiber and run the component; effects flush after this call
     const renderedElement = activateFiber(fiber, () => componentFn(element.props));
 
@@ -103,14 +104,10 @@ export function expandAndResolveContexts(
     const nextContext = new Map(context.currentContext);
     nextContext.set(ctxObj, value);
 
-    // Detect Suspense boundary id (duck-typed: object with string 'id')
-    const boundaryId = getBoundaryId(value);
-
-    // Child traversal context, optionally tagging the current Suspense boundary
+    // Child traversal context
     const childContext: TraversalContext = {
       ...context,
       currentContext: nextContext,
-      ...boundaryId ? { currentSuspenseBoundary: boundaryId } : {},
     };
 
     // Process children recursively (they can now read context via useContext)
@@ -172,16 +169,6 @@ function processChildren(children: JSX.Element[], context: TraversalContext, pla
 
     return expandAndResolveContexts(child, context, player);
   }).filter((child: JSX.Element | undefined): child is JSX.Element => child !== undefined);
-}
-
-// Keep this helper small and local: returns 'id' iff it's a non-empty string on an object.
-function getBoundaryId(value: unknown): string | undefined {
-  if (value && typeof value === 'object') {
-    const id = (value as { id?: unknown }).id;
-    if (typeof id === 'string' && id.length > 0) return id;
-  }
-
-  return undefined;
 }
 
 // Normalizes any valid JSX child(ren) into an array of elements.

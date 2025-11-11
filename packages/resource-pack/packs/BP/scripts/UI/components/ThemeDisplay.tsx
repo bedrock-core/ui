@@ -16,11 +16,21 @@ export const ThemeDisplay: FunctionComponent = (): JSX.Element => {
 
   return (
     <Panel width={192} height={140} x={10} y={10}>
-      <Text width={192} height={20} x={10} y={10} value={'§l§eTheme Display'} />
-      <Text width={192} height={15} x={10} y={35} value={'§lCurrent Theme:'} />
-      <Text width={192} height={20} x={10} y={55} value={`${themeColors[theme]}§l${theme.toUpperCase()}`} />
-      <Text width={192} height={15} x={10} y={90} value={'§7Uses useContext'} />
-      <Text width={192} height={15} x={10} y={110} value={'§7to read theme'} />
+      <Text width={192} height={20} x={10} y={10}>
+        §l§eTheme Display
+      </Text>
+      <Text width={192} height={15} x={10} y={35}>
+        §lCurrent Theme:
+      </Text>
+      <Text width={192} height={20} x={10} y={55}>
+        {`${themeColors[theme]}§l${theme.toUpperCase()}`}
+      </Text>
+      <Text width={192} height={15} x={10} y={90}>
+        §7Uses useContext
+      </Text>
+      <Text width={192} height={15} x={10} y={110}>
+        §7to read theme
+      </Text>
     </Panel>
   );
 };

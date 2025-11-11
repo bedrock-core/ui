@@ -12,7 +12,6 @@ export function createFiber(id: string, player: Player): Fiber {
     player,
     pendingEffects: [],
     shouldRender: true,
-    isSuspenseBoundary: false,
     parent: undefined,
     child: undefined,
     sibling: undefined,

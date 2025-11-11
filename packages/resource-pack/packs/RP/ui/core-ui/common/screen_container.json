@@ -23,7 +23,7 @@
 						"-50%",
 						"-50%"
 					],
-					"$protocol_header": "bcuiv0001",
+					"$protocol_header": "bcuiv0002",
 					"bindings": [
 						{
 							"binding_type": "view",

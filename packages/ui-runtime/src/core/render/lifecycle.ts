@@ -1,10 +1,9 @@
 import type { Player } from '@minecraft/server';
-import { system } from '@minecraft/server';
 import type { FunctionComponent, JSX } from '../../jsx';
 import { startInputLock, stopInputLock } from '../../util';
 import { present } from './presenter';
 import { buildTree, cleanupComponentTree } from './tree';
-import { uiManager } from '@minecraft/server-ui';
+import { clearPlayerRoot, setBuildRunner, setPlayerRoot } from './session';
 
 /**
  * Main entry point for rendering a component or JSX element.
@@ -19,61 +18,45 @@ import { uiManager } from '@minecraft/server-ui';
  * Phase 1 (Rendering): Build tree, create instances, initialize hooks
  * Phase 2 (Logic): Background effects run while form is displayed
  */
-export async function render(
+export function render(
   root: JSX.Element | FunctionComponent,
   player: Player,
-): Promise<void> {
+): void {
   startInputLock(player);
 
   // Convert function component to JSX element if needed
   const rootElement: JSX.Element = typeof root === 'function' ? { type: root, props: {} } : root;
 
-  // Background logic loop: continuously build tree; present only when requested
-  let latestTree: JSX.Element = rootElement;
-  let pendingPresent: boolean = true; // present once initially
-  let isPresented: boolean = false;
+  // Register this player's session root and a background build runner
+  setPlayerRoot(player, rootElement);
+  setBuildRunner(player, () => {
+    // Build-only pass to flush effects without presenting
+    buildTree(rootElement, player);
+  });
 
-  // Per-session state (closure, not global)
-  const session = { closeGen: 0 };
+  // Helper to build and present once
+  const presentOnce = (): void => {
+    // Build with traversal context carrying session bump function
+    const tree = buildTree(rootElement, player);
 
-  const intervalId = system.runInterval(() => {
-    // Keep logic running: build tree and run effects
-    const [tree, shouldPresentOnClose] = buildTree(rootElement, player);
-    latestTree = tree;
+    present(player, tree)
+      .then(result => {
+        if (result === 'present') {
+          // Another snapshot requested (programmatic close); rebuild and present again immediately
+          presentOnce();
+        } else if (result === 'cleanup') {
+          stopInputLock(player);
+          cleanupComponentTree(player);
+          clearPlayerRoot(player);
+        } else {
+          // none: do nothing; user dismissed without callbacks
+        }
+      })
+      .catch(() => {
+        // swallow to keep runtime stable; no interval loop to clear
+      });
+  };
 
-    // If suspense resolved this tick, mark and close programmatically
-    if (shouldPresentOnClose) {
-      session.closeGen++; // mark a programmatic close event for this session
-      uiManager.closeAllForms(player); // will cause the in-flight show() to resolve canceled=true
-    }
-
-    // Only present when requested and not already presenting
-    if (pendingPresent && !isPresented) {
-      pendingPresent = false; // consume the request now
-      isPresented = true;
-
-      present(player, latestTree, session)
-        .then(result => {
-          // Decide only from the actual result of the resolved show()
-          if (result === 'present') {
-            // Queue another present on next tick
-            pendingPresent = true;
-          } else if (result === 'cleanup') {
-            pendingPresent = false;
-            stopInputLock(player);
-            cleanupComponentTree(player);
-            system.clearRun(intervalId);
-          } else {
-            result === 'none';
-            pendingPresent = false;
-          }
-        })
-        .catch(() => {
-          isPresented = false;
-        })
-        .finally(() => {
-          isPresented = false;
-        });
-    }
-  }, 1);
+  // Kick off initial present
+  presentOnce();
 }

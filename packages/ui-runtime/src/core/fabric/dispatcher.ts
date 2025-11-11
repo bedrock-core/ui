@@ -1,4 +1,5 @@
 import { isFunction } from '../';
+import { scheduleLogicPass } from '../render/session';
 import { getCurrentFiber } from './registry';
 import { Dispatcher, Context, HookSlot } from './types';
 import { invariant, nextHookSlot } from './utils';
@@ -16,19 +17,24 @@ export const MountDispatcher: Dispatcher = {
     slot.resolved = false;
 
     const setter = (v: T | ((prev: T) => T)): void => {
-      const nextVal = isFunction(v) ? v(slot.value) : v;
+      const prevVal = slot.value as T;
+      const nextVal = isFunction(v) ? v(prevVal) : v;
 
-      slot.value = nextVal;
+      if (!Object.is(nextVal, prevVal)) {
+        slot.value = nextVal;
 
-      if (!slot.resolved && !Object.is(nextVal, slot.initial)) {
-        slot.resolved = true;
+        if (!slot.resolved && !Object.is(nextVal, slot.initial)) {
+          slot.resolved = true;
+        }
+
+        scheduleLogicPass(fiber.player);
       }
     };
 
     return [slot.value as T, setter];
   },
 
-  useEffect(effect: () => (() => void) | void | undefined, deps?: readonly unknown[]) {
+  useEffect(effect: () => (() => void) | void, deps?: readonly unknown[]) {
     const [fiber] = getCurrentFiber();
     invariant(fiber, 'useEffect');
 
@@ -76,11 +82,17 @@ export const MountDispatcher: Dispatcher = {
     slot.resolved = false;
 
     const dispatch = (action: A): void => {
-      const nextVal = reducer(slot.value as S, action);
-      slot.value = nextVal;
+      const prevVal = slot.value as S;
+      const nextVal = reducer(prevVal, action);
 
-      if (!slot.resolved && !Object.is(nextVal, slot.initial)) {
-        slot.resolved = true;
+      if (!Object.is(nextVal, prevVal)) {
+        slot.value = nextVal;
+
+        if (!slot.resolved && !Object.is(nextVal, slot.initial)) {
+          slot.resolved = true;
+        }
+
+        scheduleLogicPass(fiber.player);
       }
     };
 
@@ -103,7 +115,7 @@ export const MountDispatcher: Dispatcher = {
     };
   },
 
-  useEvent<T, O = Record<string, unknown>>(
+  useEvent<T, O>(
     signal: { subscribe(cb: (e: T) => void, options?: O): (e: T) => void; unsubscribe(cb: (e: T) => void): void },
     callback: (event: T) => void,
     options?: O,
@@ -140,30 +152,59 @@ export const UpdateDispatcher: Dispatcher = {
     }
 
     const setter = (v: T | ((prev: T) => T)): void => {
-      const nextVal = isFunction(v) ? v(slot.value as T) : v;
+      const prevVal = slot.value as T;
+      const nextVal = isFunction(v) ? v(prevVal) : v;
 
-      slot.value = nextVal;
+      if (!Object.is(nextVal, prevVal)) {
+        slot.value = nextVal;
 
-      if (!slot.resolved && !Object.is(nextVal, slot.initial)) {
-        slot.resolved = true;
+        if (!slot.resolved && !Object.is(nextVal, slot.initial)) {
+          slot.resolved = true;
+        }
+
+        scheduleLogicPass(fiber.player);
       }
     };
 
     return [slot.value as T, setter];
   },
 
-  useEffect(effect: () => (() => void) | void | undefined, deps?: readonly unknown[]) {
+  useEffect(effect: () => (() => void) | void, deps?: readonly unknown[]) {
     const [fiber] = getCurrentFiber();
     invariant(fiber, 'useEffect');
 
     const slotIndex = fiber.hookIndex;
     const slot = nextHookSlot(fiber, 'effect');
 
-    // No deps = run every render; otherwise check if deps changed
-    const hasNoDeps = deps === undefined;
-    const hasChanged = hasNoDeps || !Object.is(slot.deps, deps);
+    // No deps = run every render; otherwise use shallow comparison of array items
+    if (deps === undefined) {
+      // Always schedule when no dependency list is provided
+      slot.deps = undefined;
+      fiber.pendingEffects.push({ slotIndex, effect, deps });
 
-    if (hasChanged) {
+      return;
+    }
+
+    // If we have a dependency array, schedule only when changed
+    const prevDeps = slot.deps;
+
+    let changed = false;
+
+    if (!prevDeps) {
+      // First run after mount in update phase, or previously uninitialized
+      changed = true;
+    } else if (prevDeps.length !== deps.length) {
+      changed = true;
+    } else {
+      for (let i = 0; i < deps.length; i++) {
+        if (!Object.is(prevDeps[i], deps[i])) {
+          changed = true;
+          break;
+        }
+      }
+    }
+
+    if (changed) {
       slot.deps = deps;
 
       fiber.pendingEffects.push({ slotIndex, effect, deps });
@@ -211,11 +252,17 @@ export const UpdateDispatcher: Dispatcher = {
     }
 
     const dispatch = (action: A): void => {
-      const nextVal = reducer(slot.value as S, action);
-      slot.value = nextVal;
+      const prevVal = slot.value as S;
+      const nextVal = reducer(prevVal, action);
 
-      if (!slot.resolved && !Object.is(nextVal, slot.initial)) {
-        slot.resolved = true;
+      if (!Object.is(nextVal, prevVal)) {
+        slot.value = nextVal;
+
+        if (!slot.resolved && !Object.is(nextVal, slot.initial)) {
+          slot.resolved = true;
+        }
+
+        scheduleLogicPass(fiber.player);
       }
     };
 
@@ -238,7 +285,7 @@ export const UpdateDispatcher: Dispatcher = {
     };
   },
 
-  useEvent<T, O = Record<string, unknown>>(
+  useEvent<T, O>(
     signal: { subscribe(cb: (e: T) => void, options?: O): (e: T) => void; unsubscribe(cb: (e: T) => void): void },
     callback: (event: T) => void,
     options?: O,

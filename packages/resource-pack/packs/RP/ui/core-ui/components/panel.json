@@ -1,6 +1,5 @@
 {
 	"namespace": "core-ui_components",
-	// idk how to make it work "extending" control.json, so copy/paste it here for now
 	"panel": {
 		"type": "image",
 		"texture": "textures/ui/core-ui/components/panel/light/background",
@@ -39,7 +38,7 @@
 			{
 				/* --- type (string) - field 0 --- */
 				"binding_type": "view", // full_width
-				"source_property_name": "('%.35s' * #rem_after_header)",
+				"source_property_name": "('%.83s' * #rem_after_header)",
 				"target_property_name": "#raw_type"
 			},
 			{
@@ -49,7 +48,7 @@
 			},
 			{
 				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.34s' * #raw_type) - ('%.2s' * #raw_type) - ';')",
+				"source_property_name": "(('%.82s' * #raw_type) - ('%.2s' * #raw_type) - ';')",
 				"target_property_name": "#type"
 			},
 			{

@@ -4,7 +4,7 @@ import { getCurrentFiber, invariant } from '../core';
 /**
  * Type representing a Minecraft event signal that can be subscribed to.
  */
-export interface EventSignal<T, O = Record<string, unknown>> {
+export interface EventSignal<T, O> {
 
   /**
    * Subscribe to the event signal with a callback
@@ -32,7 +32,7 @@ export interface EventSignal<T, O = Record<string, unknown>> {
  * @param options - Optional options forwarded to `subscribe`.
  * @param deps - Optional dependency list to resubscribe when values change. Omit for stable subscription.
  */
-export function useEvent<T, O = Record<string, unknown>>(
+export function useEvent<T, O>(
   signal: EventSignal<T, O>,
   callback: (event: T) => void,
   options?: O,

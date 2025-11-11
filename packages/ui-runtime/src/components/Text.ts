@@ -11,14 +11,18 @@ export interface TextStyle {
 }
 
 export interface TextProps extends ControlProps {
-  value: string;
-  // textStyle?: TextStyle;
+
+  /**
+   * Text content to display
+   * Max 80 characters
+   */
+  children: string;
 }
 
-export const Text: FunctionComponent<TextProps> = ({ value, ...rest }: TextProps): JSX.Element => ({
+export const Text: FunctionComponent<TextProps> = ({ children, ...rest }: TextProps): JSX.Element => ({
   type: 'text',
   props: {
     ...withControl(rest),
-    value: value ?? '',
+    value: children ?? '',
   },
 });

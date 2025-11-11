@@ -91,7 +91,7 @@ export const Panel: FunctionComponent<PanelProps> = ({ children, ...rest }: Pane
 
 Defined in `src/core/serializer.ts`.
 
-Payload always starts with a 9-character header: `bcui` + `vXXXX` (e.g., `bcuiv0001`). Decoders must skip these first 9 chars before field slicing.
+Payload always starts with a 9-character header: `bcui` + `vXXXX` (e.g., `bcuiv0002`). Decoders must skip these first 9 chars before field slicing.
 
 Each field is composed of three conceptual parts concatenated in this order:
 
@@ -103,7 +103,7 @@ Each field is composed of three conceptual parts concatenated in this order:
 
 | Type     | Prefix | Prefix Width | Type Width | Marker Width | Full Width | Notes |
 |----------|--------|--------------|------------|--------------|------------|-------|
-| String   | `s:`   | 2            | 32         | 1            | 35         | Prefer to use translation keys when text larger than 32 characters is needed |
+| String   | `s:`   | 2            | 80         | 1            | 83         | Prefer to use translation keys when text larger than 32 characters is needed |
 | Number   | `n:`   | 2            | 24         | 1            | 27         | All numbers use same format (no int/float distinction) Treat in JSON UI accordingly |
 | Boolean  | `b:`   | 2            | 5          | 1            | 8          | Serialized as `'true'` or `'false'` |
 | Reserved | `r:`   | 0            | variable   | 0            | variable   | No prefix/marker for easier JSON UI skipping |
@@ -119,13 +119,13 @@ Index position = field order. Never reorder existing markers (backward decode of
 import { serializeProps } from '@bedrock-core/ui-runtime';
 
 const [encoded, bytes] = serializeProps({
-  type: 'example',      // string → 35 bytes
-  message: 'hello',     // string → 35 bytes
+  type: 'example',      // string → 83 bytes
+  message: 'hello',     // string → 83 bytes
   count: 123,           // number → 27 bytes
   ratio: 45.67,         // number → 27 bytes
   ok: true,             // bool → 8 bytes
 });
-// Total: 35 + 35 + 27 + 27 + 8 = 132 bytes (plus 9-byte header = 141 bytes)
+// Total: 83 + 83 + 27 + 27 + 8 = 132 bytes (plus 9-byte header = 141 bytes)
 ```
 
 ### Field Binding Template Pattern (Decoding)
@@ -165,10 +165,10 @@ Generic template (JSON UI binding entries) — copy & replace placeholders:
 
 ### Base Control Properties Deserialization Order
 
-All components inherit these base control properties, which are deserialized in this exact order after the 9-byte protocol header (`bcuiv0001`):
+All components inherit these base control properties, which are deserialized in this exact order after the 9-byte protocol header (`bcuiv0002`):
 
 ```text
-Field 0: type (string, 35 bytes)                  - component type identifier
+Field 0: type (string, 83 bytes)                  - component type identifier
 Field 1: width (number, 27 bytes)                 - element width
 Field 2: height (number, 27 bytes)                - element height
 Field 3: x (number, 27 bytes)                     - horizontal position

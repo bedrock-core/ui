@@ -8,12 +8,12 @@ export const InfoPanel: FunctionComponent = (): JSX.Element => {
 
   return (
     <Panel width={192} height={140} x={10} y={310}>
-      <Text width={192} height={20} x={10} y={10} value={'§l§6Player Info'} />
-      <Text width={192} height={15} x={10} y={35} value={`§eName: §f${player.name}`} />
-      <Text width={192} height={15} x={10} y={52} value={`§cHealth: §f${health}`} />
-      <Text width={192} height={15} x={10} y={69} value={`§bMode: §f${player.getGameMode()}`} />
-      <Text width={192} height={15} x={10} y={86} value={`§dDim: §f${player.dimension.id}`} />
-      <Text width={192} height={15} x={10} y={103} value={`§aLevel: §f${player.level}`} />
+      <Text width={192} height={20} x={10} y={10}>§l§6Player Info</Text>
+      <Text width={192} height={15} x={10} y={35}>{`§eName: §f${player.name}`}</Text>
+      <Text width={192} height={15} x={10} y={52}>{`§cHealth: §f${health}`}</Text>
+      <Text width={192} height={15} x={10} y={69}>{`§bMode: §f${player.getGameMode()}`}</Text>
+      <Text width={192} height={15} x={10} y={86}>{`§dDim: §f${player.dimension.id}`}</Text>
+      <Text width={192} height={15} x={10} y={103}>{`§aLevel: §f${player.level}`}</Text>
     </Panel>
   );
 };

@@ -21,15 +21,15 @@ export type Context<T> = FunctionComponent<ContextProps<T>> & { defaultValue: T 
 export type ContextSnapshot = ReadonlyMap<Context<unknown>, unknown>;
 
 export interface Dispatcher {
-  useState<T>(initial: T | (() => T)): [T, (v: T | ((prev: T) => T)) => void];
-  useEffect(effect: () => (() => void) | void | undefined, deps?: readonly unknown[]): void;
+  useState<T>(initial: T | (() => T)): [T, (value: T | ((prev: T) => T)) => void];
+  useEffect(effect: () => (() => void) | void, deps?: readonly unknown[]): void;
   useRef<T>(initial: T): { current: T };
   useContext<T>(ctx: Context<T>): T;
-  useReducer<S, A>(reducer: (s: S, a: A) => S, initial: S): [S, (a: A) => void];
+  useReducer<S, A>(reducer: (state: S, action: A) => S, initial: S): [S, (action: A) => void];
 
   usePlayer(): Player;
   useExit(): () => void;
-  useEvent<T, O = Record<string, unknown>>(
+  useEvent<T, O>(
     signal: EventSignal<T, O>,
     callback: (event: T) => void,
     options?: O,
@@ -45,18 +45,10 @@ export interface Fiber {
   // Snapshot of context values visible during last evaluation
   contextSnapshot?: ContextSnapshot;
   // Effects scheduled during the last evaluation
-  pendingEffects: { slotIndex: number; effect: () => (() => void) | void | undefined; deps?: readonly unknown[] | undefined }[];
+  pendingEffects: { slotIndex: number; effect: () => (() => void) | void; deps?: readonly unknown[] | undefined }[];
   // Session metadata
   player: Player; // Player instance for this fiber
   shouldRender: boolean; // Flag for useExit to signal form should close
-
-  // Suspense metadata
-  isSuspenseBoundary: boolean;
-  suspense?: {
-    isResolved: boolean;
-    startTick: number;
-    awaitTimeout: number;
-  };
 
   // Tree relations
   parent?: Fiber; // The parent Fiber

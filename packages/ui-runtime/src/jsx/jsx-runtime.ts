@@ -7,7 +7,7 @@ interface NativeNode<P extends JSX.Props = JSX.Props> {
 
 export namespace JSX {
   export type Element = NativeNode;
-  export type Node = Element | Element[] | null | undefined;
+  export type Node = Element | Element[] | string | null | undefined;
   export type Props = { [key: string]: unknown } & { children?: Node };
 }
 

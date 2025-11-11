@@ -30,8 +30,8 @@ function sliceFieldWithPlan(payload: string, index: number, plan: readonly TKey[
   // Calculate offset by accounting for reserved fields
   for (let i = 0; i < index; i++) {
     if (plan[i] === 'r') {
-      // Reserved field at index 11 has 274 bytes (from withControl)
-      offset += i === 11 ? 274 : 0;
+      // Reserved field at index 11 has 739 bytes (from withControl)
+      offset += i === 11 ? 739 : 0;
     } else {
       offset += FULL_WIDTH[plan[i]];
     }
@@ -40,7 +40,7 @@ function sliceFieldWithPlan(payload: string, index: number, plan: readonly TKey[
   // Calculate width for the target field
   let fieldWidth: number;
   if (plan[index] === 'r') {
-    fieldWidth = index === 11 ? 274 : 0;
+    fieldWidth = index === 11 ? 739 : 0;
   } else {
     fieldWidth = FULL_WIDTH[plan[index]];
   }
@@ -87,8 +87,8 @@ describe('core/serializer', () => {
       // Just verify the serialization works and returns consistent length
       expect(result.length).toBe(bytes);
       expect(result.startsWith(PROTOCOL_HEADER)).toBe(true);
-      // withControl adds all required fields + reserved bytes, so length will be 512 (standard allocation)
-      expect(bytes).toBe(512);
+      // withControl adds all required fields + reserved bytes, so length will be 1024 (standard allocation)
+      expect(bytes).toBe(1024);
     });
 
     it('control props payload size matches constants', () => {
@@ -109,8 +109,8 @@ describe('core/serializer', () => {
       // Just verify the serialization works and returns consistent length
       expect(result.length).toBe(bytes);
       expect(result.startsWith(PROTOCOL_HEADER)).toBe(true);
-      // withControl adds all required fields + reserved bytes, so length will be 512 (standard allocation)
-      expect(bytes).toBe(512);
+      // withControl adds all required fields + reserved bytes, so length will be 1024 (standard allocation)
+      expect(bytes).toBe(1024);
     });
   });
 
@@ -135,7 +135,7 @@ describe('core/serializer', () => {
     // withControl adds all fields + reserved bytes, so just verify consistency
     expect(result.length).toBe(bytes);
     // Standard allocation with control fields + reserved bytes + additional fields
-    expect(bytes).toBeGreaterThan(512); // More than base due to additional name/count/ratio/ok fields
+    expect(bytes).toBeGreaterThan(1024); // More than base due to additional name/count/ratio/ok fields
 
     const plan = PLAN_PRIMITIVES.basic;
     // Field 0: type (string)

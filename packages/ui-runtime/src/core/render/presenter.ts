@@ -2,13 +2,13 @@ import type { Player } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
 import type { JSX } from '../../jsx';
 import { getFibersForPlayer } from '../fabric';
+import { beginInteractiveTransaction, endInteractiveTransaction } from './session';
 import { PROTOCOL_HEADER, serialize } from '../serializer';
 import type { SerializationContext } from '../types';
 
 export async function present(
   player: Player,
   tree: JSX.Element,
-  session: { closeGen: number },
 ): Promise<'present' | 'cleanup' | 'none'> {
   // Prepare serialization context for button callbacks
   const serializationContext: SerializationContext = { buttonCallbacks: new Map(), buttonIndex: 0 };
@@ -19,19 +19,7 @@ export async function present(
 
   serialize(tree, form, serializationContext);
 
-  // Capture generation BEFORE showing
-  const genBefore: number = session.closeGen;
-
   return form.show(player).then(response => {
-    // Compare AFTER resolution
-    const genAfter: number = session.closeGen;
-    const programmaticCanceled: boolean = response.canceled && genAfter !== genBefore;
-
-    if (programmaticCanceled) {
-      // We canceled because the runtime closed forms (e.g., suspense resolution)
-      return 'present';
-    }
-
     if (response.canceled) {
       // User ESC
       return 'cleanup';
@@ -42,8 +30,14 @@ export async function present(
       const callback = serializationContext.buttonCallbacks.get(response.selection);
 
       if (callback) {
-        // Execute button callback then present again (unless useExit was called)
-        return Promise.resolve(callback())
+        // Execute button callback inside an interactive transaction to suppress background logic passes
+        beginInteractiveTransaction(player);
+
+        return Promise.resolve()
+          .then(() => callback())
+          .finally(() => {
+            endInteractiveTransaction(player);
+          })
           .then(() => {
             const shouldClose: boolean = getFibersForPlayer(player).some(fiber => !fiber.shouldRender);
 
