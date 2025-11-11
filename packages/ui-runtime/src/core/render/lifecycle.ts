@@ -3,6 +3,7 @@ import type { FunctionComponent, JSX } from '../../jsx';
 import { startInputLock, stopInputLock } from '../../util';
 import { present } from './presenter';
 import { buildTree, cleanupComponentTree } from './tree';
+import { clearPlayerRoot, setBuildRunner, setPlayerRoot } from './session';
 
 /**
  * Main entry point for rendering a component or JSX element.
@@ -26,6 +27,13 @@ export function render(
   // Convert function component to JSX element if needed
   const rootElement: JSX.Element = typeof root === 'function' ? { type: root, props: {} } : root;
 
+  // Register this player's session root and a background build runner
+  setPlayerRoot(player, rootElement);
+  setBuildRunner(player, () => {
+    // Build-only pass to flush effects without presenting
+    buildTree(rootElement, player);
+  });
+
   // Helper to build and present once
   const presentOnce = (): void => {
     // Build with traversal context carrying session bump function
@@ -39,6 +47,7 @@ export function render(
         } else if (result === 'cleanup') {
           stopInputLock(player);
           cleanupComponentTree(player);
+          clearPlayerRoot(player);
         } else {
           // none: do nothing; user dismissed without callbacks
         }

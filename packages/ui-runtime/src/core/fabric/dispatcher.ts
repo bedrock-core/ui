@@ -1,4 +1,5 @@
 import { isFunction } from '../';
+import { scheduleLogicPass } from '../render/session';
 import { getCurrentFiber } from './registry';
 import { Dispatcher, Context, HookSlot } from './types';
 import { invariant, nextHookSlot } from './utils';
@@ -16,12 +17,17 @@ export const MountDispatcher: Dispatcher = {
     slot.resolved = false;
 
     const setter = (v: T | ((prev: T) => T)): void => {
-      const nextVal = isFunction(v) ? v(slot.value) : v;
+      const prevVal = slot.value as T;
+      const nextVal = isFunction(v) ? v(prevVal) : v;
 
-      slot.value = nextVal;
+      if (!Object.is(nextVal, prevVal)) {
+        slot.value = nextVal;
 
-      if (!slot.resolved && !Object.is(nextVal, slot.initial)) {
-        slot.resolved = true;
+        if (!slot.resolved && !Object.is(nextVal, slot.initial)) {
+          slot.resolved = true;
+        }
+
+        scheduleLogicPass(fiber.player);
       }
     };
 
@@ -76,11 +82,17 @@ export const MountDispatcher: Dispatcher = {
     slot.resolved = false;
 
     const dispatch = (action: A): void => {
-      const nextVal = reducer(slot.value as S, action);
-      slot.value = nextVal;
+      const prevVal = slot.value as S;
+      const nextVal = reducer(prevVal, action);
 
-      if (!slot.resolved && !Object.is(nextVal, slot.initial)) {
-        slot.resolved = true;
+      if (!Object.is(nextVal, prevVal)) {
+        slot.value = nextVal;
+
+        if (!slot.resolved && !Object.is(nextVal, slot.initial)) {
+          slot.resolved = true;
+        }
+
+        scheduleLogicPass(fiber.player);
       }
     };
 
@@ -140,12 +152,17 @@ export const UpdateDispatcher: Dispatcher = {
     }
 
     const setter = (v: T | ((prev: T) => T)): void => {
-      const nextVal = isFunction(v) ? v(slot.value as T) : v;
+      const prevVal = slot.value as T;
+      const nextVal = isFunction(v) ? v(prevVal) : v;
 
-      slot.value = nextVal;
+      if (!Object.is(nextVal, prevVal)) {
+        slot.value = nextVal;
 
-      if (!slot.resolved && !Object.is(nextVal, slot.initial)) {
-        slot.resolved = true;
+        if (!slot.resolved && !Object.is(nextVal, slot.initial)) {
+          slot.resolved = true;
+        }
+
+        scheduleLogicPass(fiber.player);
       }
     };
 
@@ -235,11 +252,17 @@ export const UpdateDispatcher: Dispatcher = {
     }
 
     const dispatch = (action: A): void => {
-      const nextVal = reducer(slot.value as S, action);
-      slot.value = nextVal;
+      const prevVal = slot.value as S;
+      const nextVal = reducer(prevVal, action);
 
-      if (!slot.resolved && !Object.is(nextVal, slot.initial)) {
-        slot.resolved = true;
+      if (!Object.is(nextVal, prevVal)) {
+        slot.value = nextVal;
+
+        if (!slot.resolved && !Object.is(nextVal, slot.initial)) {
+          slot.resolved = true;
+        }
+
+        scheduleLogicPass(fiber.player);
       }
     };
 

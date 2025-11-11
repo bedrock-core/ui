@@ -2,6 +2,7 @@ import type { Player } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
 import type { JSX } from '../../jsx';
 import { getFibersForPlayer } from '../fabric';
+import { beginInteractiveTransaction, endInteractiveTransaction } from './session';
 import { PROTOCOL_HEADER, serialize } from '../serializer';
 import type { SerializationContext } from '../types';
 
@@ -29,8 +30,14 @@ export async function present(
       const callback = serializationContext.buttonCallbacks.get(response.selection);
 
       if (callback) {
-        // Execute button callback then present again (unless useExit was called)
-        return Promise.resolve(callback())
+        // Execute button callback inside an interactive transaction to suppress background logic passes
+        beginInteractiveTransaction(player);
+
+        return Promise.resolve()
+          .then(() => callback())
+          .finally(() => {
+            endInteractiveTransaction(player);
+          })
           .then(() => {
             const shouldClose: boolean = getFibersForPlayer(player).some(fiber => !fiber.shouldRender);
 

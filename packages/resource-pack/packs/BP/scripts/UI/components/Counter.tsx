@@ -34,7 +34,7 @@ export const Counter: FunctionComponent = (): JSX.Element => {
   }, [isAutoIncrement]);
 
   useEffect(() => {
-    console.error('Each render');
+    console.error('Each execution');
   });
 
   useEffect(() => {
