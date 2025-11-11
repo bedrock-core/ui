@@ -12,11 +12,10 @@
 		"loopback:preview": "CheckNetIsolation.exe LoopbackExempt -a -p=S-1-15-2-424268864-5579737-879501358-346833251-474568803-887069379-4040235476"
 	},
 	"dependencies": {
-		"@bedrock-core/ui": "^0.1.1",
+		"@bedrock-core/ui": "^0.2.0",
 		"@minecraft/server": "2.3.0",
 		"@minecraft/server-ui": "2.0.0",
-		"@minecraft/vanilla-data": "1.21.100",
-		"typescript": "^5.4.5"
+		"@minecraft/vanilla-data": "1.21.100"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.34.0",

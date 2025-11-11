@@ -22,16 +22,15 @@
   ],
   "repository": "github:bedrock-core/ui",
   "type": "module",
-  "bin": {
-    "create-bedrock-ui": "./dist/index.js"
-  },
+  "bin": "./dist/index.js",
   "files": [
     "dist",
     "templates"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "prepack": "npm run build"
   },
   "dependencies": {
     "chalk": "^5.3.0",

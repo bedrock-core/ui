@@ -1,6 +1,6 @@
 {
 	"name": "@bedrock-core/ui",
-	"version": "0.1.1",
+	"version": "0.2.0",
 	"description": "Customizable UI system for Minecraft Bedrock Server server forms cross-addon compatible.",
 	"keywords": [
 		"ui",
@@ -21,6 +21,7 @@
 	],
 	"repository": "github:bedrock-core/ui",
 	"type": "module",
+	"bin": "./packages/cli/dist/index.js",
 	"exports": {
 		".": {
 			"types": "./packages/ui-runtime/src/index.ts",
@@ -35,6 +36,13 @@
 			"import": "./packages/ui-runtime/src/jsx/jsx-dev-runtime.ts"
 		}
 	},
+	"files": [
+		"packages/ui-runtime/src",
+		"packages/cli/dist",
+		"packages/cli/templates",
+		"README.md",
+		"LICENSE"
+	],
 	"packageManager": "yarn@4.9.3",
 	"workspaces": [
 		"packages/ui-runtime",
@@ -44,13 +52,19 @@
 	"scripts": {
 		"regolith-install": "yarn workspaces foreach -i -A --topological --jobs=1 run regolith-install",
 		"build": "yarn workspaces foreach -ptA run build",
+		"prepack": "yarn workspace @bedrock-core/cli build",
 		"watch": "concurrently \"nodemon\"",
 		"lint": "yarn workspaces foreach -ptA run lint",
 		"test": "yarn workspaces foreach -ptA run test",
 		"coverage": "yarn workspaces foreach -ptA run coverage"
 	},
 	"dependencies": {
-		"@bedrock-core/ui-runtime": "workspace:*"
+		"chalk": "^5.3.0",
+		"commander": "^12.1.0",
+		"fs-extra": "^11.2.0",
+		"ora": "^8.1.0",
+		"prompts": "^2.4.2",
+		"validate-npm-package-name": "^5.0.1"
 	},
 	"devDependencies": {
 		"@eslint/css": "^0.10.0",
