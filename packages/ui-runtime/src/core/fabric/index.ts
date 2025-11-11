@@ -16,4 +16,4 @@ export { createContext } from './context';
 
 export type { Context, ContextProps } from './types';
 
-export { isContextProvider, isSuspenseBoundary } from './guards';
+export { isContextProvider } from './guards';

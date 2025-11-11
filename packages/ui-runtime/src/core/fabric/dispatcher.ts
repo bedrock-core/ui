@@ -159,11 +159,35 @@ export const UpdateDispatcher: Dispatcher = {
     const slotIndex = fiber.hookIndex;
     const slot = nextHookSlot(fiber, 'effect');
 
-    // No deps = run every render; otherwise check if deps changed
-    const hasNoDeps = deps === undefined;
-    const hasChanged = hasNoDeps || !Object.is(slot.deps, deps);
+    // No deps = run every render; otherwise use shallow comparison of array items
+    if (deps === undefined) {
+      // Always schedule when no dependency list is provided
+      slot.deps = undefined;
+      fiber.pendingEffects.push({ slotIndex, effect, deps });
 
-    if (hasChanged) {
+      return;
+    }
+
+    // If we have a dependency array, schedule only when changed
+    const prevDeps = slot.deps;
+
+    let changed = false;
+
+    if (!prevDeps) {
+      // First run after mount in update phase, or previously uninitialized
+      changed = true;
+    } else if (prevDeps.length !== deps.length) {
+      changed = true;
+    } else {
+      for (let i = 0; i < deps.length; i++) {
+        if (!Object.is(prevDeps[i], deps[i])) {
+          changed = true;
+          break;
+        }
+      }
+    }
+
+    if (changed) {
       slot.deps = deps;
 
       fiber.pendingEffects.push({ slotIndex, effect, deps });

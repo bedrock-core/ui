@@ -198,7 +198,7 @@ export const Panel: FunctionComponent<PanelProps> = ({ children, ...rest }: Pane
 - **`src/core/render.ts`** – `render(player, element)` function: presents via `@minecraft/server-ui`, manages input locks
 - **`src/core/fiber.ts`** – FiberRegistry: component instance management, hook state storage
 - **`src/core/context.ts`** – `createContext()`, `Context<T>`, Provider implementation
-- **`src/core/components/*.ts`** – Component functions (Panel, Text, Image, Button, Fragment, Suspense)
+- **`src/core/components/*.ts`** – Component functions (Panel, Text, Image, Button, Fragment)
 - **`src/core/components/control.ts`** – `withControl()` function (canonical ordering, defaults)
 - **`src/jsx/jsx-runtime.ts`** – Custom JSX runtime: `jsx`, `jsxs`, `jsxDEV`, `Fragment`
 - **`src/jsx/jsx-dev-runtime.ts`** – Development JSX runtime (error checking)

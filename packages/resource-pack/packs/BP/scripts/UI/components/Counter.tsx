@@ -33,6 +33,20 @@ export const Counter: FunctionComponent = (): JSX.Element => {
     };
   }, [isAutoIncrement]);
 
+  useEffect(() => {
+    console.error('Each render');
+  });
+
+  useEffect(() => {
+    console.error('Mounted');
+
+    return () => console.error('Unmounted');
+  }, []);
+
+  useEffect(() => {
+    console.error(`Count changed: ${count}`);
+  }, [count]);
+
   return (
     <Panel width={192} height={140} x={616} y={160}>
       {/* Title */}

@@ -50,14 +50,6 @@ export interface Fiber {
   player: Player; // Player instance for this fiber
   shouldRender: boolean; // Flag for useExit to signal form should close
 
-  // Suspense metadata
-  isSuspenseBoundary: boolean;
-  suspense?: {
-    isResolved: boolean;
-    startTick: number;
-    awaitTimeout: number;
-  };
-
   // Tree relations
   parent?: Fiber; // The parent Fiber
   child?: Fiber; // The first child Fiber

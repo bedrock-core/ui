@@ -8,7 +8,6 @@ import type { SerializationContext } from '../types';
 export async function present(
   player: Player,
   tree: JSX.Element,
-  session: { closeGen: number },
 ): Promise<'present' | 'cleanup' | 'none'> {
   // Prepare serialization context for button callbacks
   const serializationContext: SerializationContext = { buttonCallbacks: new Map(), buttonIndex: 0 };
@@ -19,19 +18,7 @@ export async function present(
 
   serialize(tree, form, serializationContext);
 
-  // Capture generation BEFORE showing
-  const genBefore: number = session.closeGen;
-
   return form.show(player).then(response => {
-    // Compare AFTER resolution
-    const genAfter: number = session.closeGen;
-    const programmaticCanceled: boolean = response.canceled && genAfter !== genBefore;
-
-    if (programmaticCanceled) {
-      // We canceled because the runtime closed forms (e.g., suspense resolution)
-      return 'present';
-    }
-
     if (response.canceled) {
       // User ESC
       return 'cleanup';
