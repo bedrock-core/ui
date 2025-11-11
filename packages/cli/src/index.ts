@@ -6,7 +6,7 @@ import chalk from 'chalk';
 const program = new Command();
 
 program
-  .name('@bedrock-core/cli-ui')
+  .name('@bedrock-core/cli')
   .description('CLI to scaffold Minecraft Bedrock addon projects with @bedrock-core/ui')
   .version('0.1.0')
   .argument('[project-name]', 'Name of the project directory')

@@ -75,7 +75,7 @@ For technical documentation and implementation details, see:
 
 - [UI Runtime Package](./packages/ui-runtime/README.md) - Core framework internals
 - [Resource Pack](./packages/resource-pack/README.md) - Test addon and reference
-- [CLI Tool](./packages/cli-ui/README.md) - Project scaffolding
+- [CLI Tool](./packages/cli/README.md) - Project scaffolding
 
 ## 📖 Resources
 

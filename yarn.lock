@@ -57,9 +57,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@bedrock-core/cli-ui@workspace:packages/cli-ui":
+"@bedrock-core/cli-ui@workspace:packages/cli":
   version: 0.0.0-use.local
-  resolution: "@bedrock-core/cli-ui@workspace:packages/cli-ui"
+  resolution: "@bedrock-core/cli-ui@workspace:packages/cli"
   dependencies:
     "@types/fs-extra": "npm:^11.0.4"
     "@types/node": "npm:^22.5.0"

@@ -54,7 +54,7 @@
 	"eslint.enable": true,
 	"eslint.format.enable": true,
 	"eslint.workingDirectories": [
-		"./packages/cli-ui",
+		"./packages/cli",
 		"./packages/ui-runtime",
 		"./packages/resource-pack",
 	]
