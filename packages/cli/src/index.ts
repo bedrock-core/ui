@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 
 import { Command } from 'commander';
 import { createProject } from './generator.js';
@@ -8,7 +9,7 @@ const program = new Command();
 program
   .name('@bedrock-core/cli')
   .description('CLI to scaffold Minecraft Bedrock addon projects with @bedrock-core/ui')
-  .version('0.1.0')
+  .version('0.1.1')
   .argument('[project-name]', 'Name of the project directory')
   .action(async(projectName?: string) => {
     try {
