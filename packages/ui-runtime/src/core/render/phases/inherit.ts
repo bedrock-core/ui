@@ -37,8 +37,10 @@ export function applyInheritance(element: JSX.Element, context: TraversalContext
     if (props.children) {
       if (Array.isArray(props.children)) {
         newProps.children = props.children.map((child: JSX.Element) => applyInheritance(child, childContext));
-      } else {
+      } else if (typeof props.children === 'object' && props.children !== null) {
         newProps.children = applyInheritance(props.children, childContext);
+      } else {
+        newProps.children = props.children;
       }
     }
 
@@ -89,7 +91,7 @@ export function applyInheritance(element: JSX.Element, context: TraversalContext
   if (newProps.children) {
     if (Array.isArray(newProps.children)) {
       newProps.children = newProps.children.map((child: JSX.Element) => applyInheritance(child, childContext));
-    } else {
+    } else if (typeof newProps.children === 'object' && newProps.children !== null) {
       newProps.children = applyInheritance(newProps.children, childContext);
     }
   }
