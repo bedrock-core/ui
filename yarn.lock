@@ -73,7 +73,7 @@ __metadata:
     typescript: "npm:^5.9.2"
     validate-npm-package-name: "npm:^5.0.1"
   bin:
-    create-bedrock-ui: ./dist/index.js
+    cli: ./dist/index.js
   languageName: unknown
   linkType: soft
 
@@ -98,7 +98,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@bedrock-core/ui-runtime@workspace:*, @bedrock-core/ui-runtime@workspace:packages/ui-runtime":
+"@bedrock-core/ui-runtime@workspace:packages/ui-runtime":
   version: 0.0.0-use.local
   resolution: "@bedrock-core/ui-runtime@workspace:packages/ui-runtime"
   dependencies:
@@ -117,7 +117,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bedrock-core/ui@workspace:."
   dependencies:
-    "@bedrock-core/ui-runtime": "workspace:*"
     "@eslint/css": "npm:^0.10.0"
     "@eslint/js": "npm:^9.34.0"
     "@eslint/json": "npm:^0.13.1"
@@ -126,15 +125,23 @@ __metadata:
     "@minecraft/server-ui": "npm:>=2.0.0"
     "@stylistic/eslint-plugin": "npm:^5.5.0"
     "@vitest/coverage-v8": "npm:^3.2.4"
+    chalk: "npm:^5.3.0"
+    commander: "npm:^12.1.0"
     concurrently: "npm:^9.2.1"
     eslint: "npm:^9.34.0"
+    fs-extra: "npm:^11.2.0"
     nodemon: "npm:^3.1.10"
+    ora: "npm:^8.1.0"
+    prompts: "npm:^2.4.2"
     typescript: "npm:^5.9.2"
     typescript-eslint: "npm:^8.40.0"
+    validate-npm-package-name: "npm:^5.0.1"
     vitest: "npm:^3.2.4"
   peerDependencies:
     "@minecraft/server": ">=2.3.0"
     "@minecraft/server-ui": ">=2.0.0"
+  bin:
+    ui: ./packages/cli/dist/index.js
   languageName: unknown
   linkType: soft
 

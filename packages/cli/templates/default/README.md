@@ -20,7 +20,13 @@
    yarn regolith-install
    ```
 
-3. **Build the addon:**
+3. **Install companion resource pack:**
+
+   ```txt
+   Open the core-ui-v*.mcpack to add it to your game
+   ```
+
+4. **Build the addon:**
 
    ```bash
    npm run build
@@ -28,7 +34,7 @@
    yarn build
    ```
 
-4. **Watch mode (auto-rebuild on changes):**
+5. **Watch mode (auto-rebuild on changes):**
 
    ```bash
    npm run watch
@@ -54,44 +60,13 @@
 ├── config.json          # Regolith configuration
 ├── package.json
 ├── tsconfig.json
-└── eslint.config.mjs
-```
-
-## Usage
-
-The example UI will be displayed when a player pushes a **stone button** in-game.
-
-You can modify `packs/BP/scripts/UI/Example.tsx` to customize the UI, or create new UI components.
-
-## Development
-
-### Creating UI Components
-
-```tsx
-import { JSX, Panel, Text, Button } from '@bedrock-core/ui';
-
-export const MyUI = (): JSX.Element => {
-  return (
-    <Panel width={300} height={200}>
-      <Text text="Hello World!" width={280} height={30} x={10} y={10} />
-    </Panel>
-  );
-};
-```
-
-### Rendering UI
-
-```typescript
-import { render } from '@bedrock-core/ui';
-import { Player } from '@minecraft/server';
-import { MyUI } from './UI/MyUI';
-
-render(player, MyUI, { key: 'my-ui' });
+├── eslint.config.mjs
+└── core-ui-v*.mcpack
 ```
 
 ## Documentation
 
-For full documentation, visit: <https://github.com/bedrock-core/ui>
+For full documentation, visit: <https://bedrock-core.drav.dev/>
 
 ## License
 
