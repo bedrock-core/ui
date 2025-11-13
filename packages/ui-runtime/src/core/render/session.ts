@@ -1,6 +1,9 @@
 import type { Player } from '@minecraft/server';
 import type { JSX } from '../../jsx';
 import { getFibersForPlayer } from '../fabric';
+import { stopInputLock } from '../../util';
+import { cleanupComponentTree } from './tree';
+import { uiManager } from '@minecraft/server-ui';
 
 /**
  * Lightweight per-player render session state for background logic passes.
@@ -123,4 +126,20 @@ export function beginInteractiveTransaction(player: Player): void {
 export function endInteractiveTransaction(player: Player): void {
   const session = getOrCreate(player);
   session.suppress = false;
+}
+
+export function isInInteractiveTransaction(player: Player): boolean {
+  const session = sessions.get(player.id);
+
+  return session?.suppress ?? false;
+}
+
+export function triggerCleanup(player: Player, shouldClose: boolean = false): void {
+  stopInputLock(player);
+  cleanupComponentTree(player);
+  clearPlayerRoot(player);
+
+  if (shouldClose) {
+    uiManager.closeAllForms(player);
+  }
 }

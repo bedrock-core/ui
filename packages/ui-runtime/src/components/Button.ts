@@ -3,7 +3,7 @@ import { ControlProps, withControl } from './control';
 
 export interface ButtonProps extends ControlProps {
   children?: JSX.Node;
-  onPress?: () => void | Promise<void>;
+  onPress?: () => unknown | Promise<unknown>;
 }
 
 export const Button: FunctionComponent<ButtonProps> = ({ onPress, children, ...rest }: ButtonProps): JSX.Element => ({

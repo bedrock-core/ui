@@ -1,4 +1,4 @@
-import { JSX, Panel, Text, Button, FunctionComponent, useState, useEffect, useRef } from '@bedrock-core/ui';
+import { JSX, Panel, Text, Button, FunctionComponent, useState, useEffect, useRef, useExit } from '@bedrock-core/ui';
 import { system } from '@minecraft/server';
 
 /**
@@ -7,6 +7,8 @@ import { system } from '@minecraft/server';
  * Grid Position: Row 2, Column 2
  */
 export const Counter: FunctionComponent = (): JSX.Element => {
+  const exit = useExit();
+
   const [count, setCount] = useState(0);
   const [isAutoIncrement, setIsAutoIncrement] = useState(false);
   const counterRef = useRef<number | undefined>(undefined);
@@ -45,6 +47,10 @@ export const Counter: FunctionComponent = (): JSX.Element => {
 
   useEffect(() => {
     console.error(`Count changed: ${count}`);
+
+    if (count >= 4) {
+      exit();
+    }
   }, [count]);
 
   return (
