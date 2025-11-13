@@ -4,7 +4,7 @@ Essential knowledge for AI agents working on this Minecraft Bedrock UI serializa
 
 ## Monorepo Structure
 
-This is a **monorepo with two independent packages** (using Yarn workspaces):
+This is a **monorepo with three independent packages** (using Yarn workspaces):
 
 - **`packages/ui-runtime`** – Core framework library (`@bedrock-core/ui-runtime`)
   - Pure TypeScript serialization, components, hooks, and rendering logic
@@ -19,6 +19,12 @@ This is a **monorepo with two independent packages** (using Yarn workspaces):
   - JSON UI decoders (Resource Pack) that deserialize protocol data
   - Built with Regolith for TypeScript bundling
   - Demonstrates complete integration from framework → addon
+
+- **`packages/cli`** – Project scaffolding tool (`@bedrock-core/cli`)
+  - CLI to generate pre-configured addon projects with the framework
+  - Template system with variable replacement ({{PROJECT_NAME}}, etc.)
+  - Downloads companion resource pack automatically during generation
+  - Entry: `src/index.ts` → `dist/index.js` (executable via `npx @bedrock-core/cli`)
 
 ## Research Guidelines
 
@@ -43,17 +49,39 @@ JSX element tree → serialize to compact fixed-width fields → inject into for
 ```
 JSX Component Tree (TypeScript)
     ↓
-FiberRegistry (manages component instances & hooks state)
+Fiber System (manages component instances & hooks state)
+    ↓
+buildTree(element, player) → two-phase tree building
     ↓
 serialize(element, form) → encodes each field with fixed widths
     ↓
-render(player, element) → presents via ActionFormData
+present(player, tree) → displays via ActionFormData
     ↓
 form.label() → injected payload
     ↓
 JSON UI (Resource Pack) → decodes by fixed byte slicing
     ↓
 Screen renders with conditional bindings
+```
+
+### Two-Phase Rendering Architecture
+
+**Phase 1 - Rendering Phase** (`buildTree()`):
+- Expands function components and resolves contexts
+- Creates fiber instances for ALL components in tree
+- Initializes hooks (useState, useEffect, etc.)
+- Applies parent-child inheritance (visibility, positioning)
+- Returns fully processed JSX element tree
+
+**Phase 2 - Logic Phase** (background):
+- Effects run while form is displayed to user
+- State changes trigger `scheduleLogicPass()` → background rebuild
+- Interactive transactions suppress background passes during callbacks
+- Cleanup on form dismissal or programmatic close
+
+**Key Pattern:**
+```ts
+render(element, player) → buildTree() → present() → [user sees form] → effects run → state changes → scheduleLogicPass() → rebuild
 ```
 
 ### JSX & Component Runtime
@@ -64,17 +92,20 @@ Screen renders with conditional bindings
   - Fragment: `<>...</>` syntax supported via `Fragment` export
   - Runtime does NOT call function components – that happens during tree building
 
-- **Component Functions** (`src/core/components/*.ts`): Pure functions returning `JSX.Element`
+- **Component Functions** (`src/components/*.ts`): Pure functions returning `JSX.Element`
   - Components are `FunctionComponent<T>` with signature: `(props: T): JSX.Element`
   - Must use `withControl(rest)` to apply standard control props
   - Children passed via props, not rest parameters
   - Pattern: `export const Panel = ({ children, ...rest }): JSX.Element => ({ type: 'panel', props: { ...withControl(rest), children } })`
 
-- **Fiber Registry** (`src/core/fiber.ts`): Manages component instances and hook state
-  - One instance per unique component ID per player
-  - Tracks hooks, mount state, dirty flag for re-renders
-  - Context stack maintains provider values during traversal
-  - Used to look up hooks during re-render cycles
+- **Fiber System** (`src/core/fabric/`): Manages component instances and hook state
+  - **Registry** (`registry.ts`): Global Map<string, Fiber> tracking all instances
+  - **Fiber** (`fiber.ts`): Per-component instance with hookStates, parent/child/sibling links
+  - **Dispatcher** (`dispatcher.ts`): MountDispatcher vs UpdateDispatcher for hook behavior
+  - **Context** (`context.ts`): Provider/Consumer pattern with contextSnapshot per fiber
+  - One fiber instance per unique component ID per player
+  - Tracks hooks, mount state, dirty flag (`shouldRender`) for re-renders
+  - Used during `activateFiber()` to execute hooks in component's dynamic scope
 
 ### Serialization Protocol (Never Break This)
 
@@ -124,7 +155,7 @@ const VERSION = 'v0002';               // Only update with migrations
 
 ### withControl() Function
 
-**Location:** `src/core/components/control.ts`
+**Location:** `src/components/control.ts`
 
 Enforces canonical field ordering and applies defaults to all components. Key points:
 
@@ -134,6 +165,7 @@ Enforces canonical field ordering and applies defaults to all components. Key po
 - Reserves 739 bytes for future expansion (total 1024 bytes)
 - All numeric dimensions accept `number` only (no "100px" or "100%" strings)
 - All "optional" props must have defined defaults – no undefined/null values
+- `position` prop stored as `__position` (__ prefix excludes from serialization, used for traversal only)
 
 ```ts
 // Usage in component:
@@ -164,7 +196,7 @@ export const Panel = ({ children, ...rest }: PanelProps): JSX.Element => ({
 
 ```ts
 import { FunctionComponent, JSX } from '@bedrock-core/ui/jsx-runtime';
-import { withControl } from '../control';
+import { withControl } from './control';
 
 export interface PanelProps extends ControlProps {
   backgroundColor?: string;  // Component-specific prop
@@ -195,14 +227,19 @@ export const Panel: FunctionComponent<PanelProps> = ({ children, ...rest }: Pane
 
 - **`src/index.ts`** – Public API exports (all public components, hooks, utilities)
 - **`src/core/serializer.ts`** – UTF-8 fixed-width protocol: `serialize()`, `serializeProps()`, protocol constants
-- **`src/core/render.ts`** – `render(player, element)` function: presents via `@minecraft/server-ui`, manages input locks
-- **`src/core/fiber.ts`** – FiberRegistry: component instance management, hook state storage
-- **`src/core/context.ts`** – `createContext()`, `Context<T>`, Provider implementation
-- **`src/core/components/*.ts`** – Component functions (Panel, Text, Image, Button, Fragment)
-- **`src/core/components/control.ts`** – `withControl()` function (canonical ordering, defaults)
+- **`src/core/render/lifecycle.ts`** – `render(player, element)` function: presents via `@minecraft/server-ui`, manages input locks
+- **`src/core/render/tree.ts`** – `buildTree()`: two-phase tree building (expand components, apply inheritance)
+- **`src/core/render/presenter.ts`** – `present()`: serializes tree, shows form, handles button callbacks
+- **`src/core/render/session.ts`** – Session management: player roots, background logic passes, interactive transactions
+- **`src/core/fabric/fiber.ts`** – Fiber operations: `createFiber()`, `deleteFiber()`, `activateFiber()`
+- **`src/core/fabric/registry.ts`** – FiberRegistry: global Map, currentFiber tracking
+- **`src/core/fabric/dispatcher.ts`** – MountDispatcher & UpdateDispatcher: hook implementations
+- **`src/core/fabric/context.ts`** – `createContext()`, `Context<T>`, Provider implementation
+- **`src/components/*.ts`** – Component functions (Panel, Text, Image, Button, Fragment)
+- **`src/components/control.ts`** – `withControl()` function (canonical ordering, defaults)
 - **`src/jsx/jsx-runtime.ts`** – Custom JSX runtime: `jsx`, `jsxs`, `jsxDEV`, `Fragment`
 - **`src/jsx/jsx-dev-runtime.ts`** – Development JSX runtime (error checking)
-- **`src/core/hooks/*.ts`** – React-like hooks (useState, useEffect, useRef, useContext, useReducer, etc.)
+- **`src/hooks/*.ts`** – React-like hooks (useState, useEffect, useRef, useContext, useReducer, etc.)
 
 ### Resource-Pack (Test Addon)
 
@@ -313,7 +350,7 @@ Hooks follow React-like patterns but adapted for Minecraft server environment:
 ## Start Exploring
 
 1. **Protocol details:** `packages/ui-runtime/src/core/serializer.ts`
-2. **Working component example:** `packages/ui-runtime/src/core/components/Panel.ts`
+2. **Working component example:** `packages/ui-runtime/src/components/Panel.ts`
 3. **Test patterns:** `packages/ui-runtime/src/core/__tests__/serializer.test.ts`
 4. **Addon integration:** `packages/resource-pack/packs/BP/scripts/UI/Example.tsx`
 5. **JSON UI decoder:** `packages/resource-pack/packs/RP/ui/core-ui/components/text.json`

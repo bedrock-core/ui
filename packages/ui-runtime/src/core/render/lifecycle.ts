@@ -1,23 +1,10 @@
 import type { Player } from '@minecraft/server';
 import type { FunctionComponent, JSX } from '../../jsx';
-import { startInputLock, stopInputLock } from '../../util';
+import { startInputLock } from '../../util';
 import { present } from './presenter';
-import { buildTree, cleanupComponentTree } from './tree';
-import { clearPlayerRoot, setBuildRunner, setPlayerRoot } from './session';
+import { buildTree } from './tree';
+import { setBuildRunner, setPlayerRoot, triggerCleanup } from './session';
 
-/**
- * Main entry point for rendering a component or JSX element.
- *
- * This is the public API that initiates the rendering process:
- * 1. Acquires input lock for the player
- * 2. Normalizes root element (function component or JSX element)
- * 3. Builds complete element tree with all phases
- * 4. Starts presentation cycle (form display and interaction handling)
- *
- * TWO-PHASE ARCHITECTURE:
- * Phase 1 (Rendering): Build tree, create instances, initialize hooks
- * Phase 2 (Logic): Background effects run while form is displayed
- */
 export function render(
   root: JSX.Element | FunctionComponent,
   player: Player,
@@ -45,9 +32,7 @@ export function render(
           // Another snapshot requested (programmatic close); rebuild and present again immediately
           presentOnce();
         } else if (result === 'cleanup') {
-          stopInputLock(player);
-          cleanupComponentTree(player);
-          clearPlayerRoot(player);
+          triggerCleanup(player);
         } else {
           // none: do nothing; user dismissed without callbacks
         }

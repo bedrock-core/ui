@@ -1,7 +1,7 @@
 import { isFunction } from '../';
-import { scheduleLogicPass } from '../render/session';
+import { isInInteractiveTransaction, scheduleLogicPass, triggerCleanup } from '../render/session';
 import { getCurrentFiber } from './registry';
-import { Dispatcher, Context, HookSlot } from './types';
+import { Context, Dispatcher, HookSlot } from './types';
 import { invariant, nextHookSlot } from './utils';
 
 export const MountDispatcher: Dispatcher = {
@@ -112,6 +112,11 @@ export const MountDispatcher: Dispatcher = {
 
     return (): void => {
       fiber.shouldRender = false;
+
+      // If not in an interactive transaction (e.g., called from useEffect),
+      if (!isInInteractiveTransaction(fiber.player)) {
+        triggerCleanup(fiber.player, true);
+      }
     };
   },
 
@@ -282,6 +287,11 @@ export const UpdateDispatcher: Dispatcher = {
 
     return (): void => {
       fiber.shouldRender = false;
+
+      // If not in an interactive transaction (e.g., called from useEffect),
+      if (!isInInteractiveTransaction(fiber.player)) {
+        triggerCleanup(fiber.player, true);
+      }
     };
   },
 
