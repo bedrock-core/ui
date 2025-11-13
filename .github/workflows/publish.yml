@@ -47,14 +47,17 @@ jobs:
       - name: Lint
         run: yarn lint
 
-      - name: Automated Version Bump
-        id: bump
+      - name: Compute next version (local only)
+        id: bump_dry
         uses: phips28/gh-action-bump-version@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           version-type: ${{ inputs.bump }}
           commit-message: 'chore: release {{version}}'
+          skip-commit: 'true'
+          skip-tag: 'true'
+          skip-push: 'true'
 
       - name: Build dist
         run: yarn build
@@ -62,7 +65,7 @@ jobs:
       - name: Package Resource Pack (.mcpack)
         # Create a Bedrock .mcpack (zip) from the built resource pack contents
         env:
-          TAG: ${{ steps.bump.outputs.newTag }}
+          TAG: ${{ steps.bump_dry.outputs.newTag }}
         working-directory: packages/resource-pack/build/@bedrock-core/ui-resource-pack_rp
         run: |
           zip -r "$GITHUB_WORKSPACE/core-ui-${TAG}.mcpack" .
@@ -72,6 +75,15 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: yarn npm publish --access public
 
+      - name: Automated Version Bump (commit & tag)
+        id: bump
+        uses: phips28/gh-action-bump-version@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          version-type: ${{ inputs.bump }}
+          commit-message: 'chore: release {{version}}'
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -80,6 +92,6 @@ jobs:
           body: ${{ inputs.notes || format('Automated release {0}', steps.bump.outputs.newTag) }}
           generate_release_notes: true
           files: |
-            core-ui-${{ steps.bump.outputs.newTag }}.mcpack
+            core-ui-${{ steps.bump_dry.outputs.newTag }}.mcpack
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
