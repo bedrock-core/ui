@@ -1,6 +1,6 @@
 {
 	"name": "@bedrock-core/ui",
-	"version": "0.2.5",
+	"version": "0.2.6",
 	"description": "Customizable UI system for Minecraft Bedrock Server server forms cross-addon compatible.",
 	"keywords": [
 		"ui",
