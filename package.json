@@ -52,7 +52,7 @@
 	"scripts": {
 		"regolith-install": "yarn workspaces foreach -i -A --topological --jobs=1 run regolith-install",
 		"build": "yarn workspaces foreach -ptA run build",
-		"prepack": "yarn workspace @bedrock-core/cli build",
+		"prepack": "yarn build",
 		"watch": "concurrently \"nodemon\"",
 		"lint": "yarn workspaces foreach -ptA run lint",
 		"test": "yarn workspaces foreach -ptA run test",
