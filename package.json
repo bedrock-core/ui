@@ -43,7 +43,7 @@
     "README.md",
     "LICENSE"
   ],
-  "packageManager": "yarn@4.9.3",
+  "packageManager": "yarn@4.11.0",
   "workspaces": [
     "packages/ui-runtime",
     "packages/resource-pack",

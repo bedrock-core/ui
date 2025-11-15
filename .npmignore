@@ -1,20 +1,25 @@
 # Only include what's in package.json "files" field
 # Explicitly allow dist directories to be published even though .gitignore excludes them
 
-# Everything is ignored by default
+# Block everything by default
 *
-*/
 
-# Allowlist specific paths and their contents
-!packages/
-!packages/cli/
+# Then allowlist ONLY what we need
+# Note: Order matters - more specific rules after general ones
+
+# Root files
+!package.json
+!README.md
+!LICENSE
+
+# Packages directory structure
+!packages
+!packages/cli
 !packages/cli/dist
 !packages/cli/dist/**
 !packages/cli/templates
 !packages/cli/templates/**
-!packages/ui-runtime/
+
+!packages/ui-runtime
 !packages/ui-runtime/src
 !packages/ui-runtime/src/**
-!README.md
-!LICENSE
-!package.json
