@@ -224,6 +224,12 @@ yarn coverage          # Generate coverage report
 
 Mocks are located in `src/__mocks__/@minecraft/`.
 
+## ⚠️ Known Caveats
+
+- JSON UI string ops with numbers can behave unpredictably; prefix markers before numeric-derived substrings client-side.
+- Subtraction operator (`-`) removes all occurrences; use distinct prefixes to avoid collisions.
+
+
 ## ⚠️ Breaking Change Guards
 
 - **Never** modify `TYPE_WIDTH`, `PAD_CHAR`, or canonical field order

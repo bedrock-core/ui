@@ -14,20 +14,20 @@
 	"dependencies": {
 		"@bedrock-core/ui": "workspace:*",
 		"@minecraft/common": "1.2.0",
-		"@minecraft/math": "2.2.8",
-		"@minecraft/server": "2.3.0",
+		"@minecraft/math": "2.3.1",
+		"@minecraft/server": "2.4.0",
 		"@minecraft/server-gametest": "1.0.0-beta.1.21.100-stable",
 		"@minecraft/server-ui": "2.0.0",
-		"@minecraft/vanilla-data": "1.21.100"
+		"@minecraft/vanilla-data": "1.21.131"
 	},
 	"devDependencies": {
-		"@eslint/js": "^9.34.0",
-		"@eslint/json": "^0.13.1",
-		"@stylistic/eslint-plugin": "^5.5.0",
-		"eslint": "^9.34.0",
-		"eslint-plugin-minecraft-linting": "^1.2.6",
-		"typescript": "^5.9.2",
-		"typescript-eslint": "^8.40.0"
+		"@eslint/js": "^9.39.2",
+		"@eslint/json": "^1.0.0",
+		"@stylistic/eslint-plugin": "^5.7.1",
+		"eslint": "^9.39.2",
+		"eslint-plugin-minecraft-linting": "^2.0.12",
+		"typescript": "^5.9.3",
+		"typescript-eslint": "^8.54.0"
 	},
 	"packageManager": "yarn@4.9.4"
 }
