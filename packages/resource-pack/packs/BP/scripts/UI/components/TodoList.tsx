@@ -68,7 +68,7 @@ export const TodoList: FunctionComponent = (): JSX.Element => {
   return (
     <Panel width={192} height={290} x={414} y={10}>
       <Text width={192} height={20} x={10} y={10}>
-        {'§l§bTodo List\r'}
+        {'§l§bTodo List'}
       </Text>
       <Text width={192} height={15} x={10} y={35}>
         {`Total: §e${todoCount}`}
@@ -87,7 +87,7 @@ export const TodoList: FunctionComponent = (): JSX.Element => {
         }}
       >
         <Text width={81} height={20} x={5} y={5}>
-          {'§a+ Add\r'}
+          {'§a+ Add'}
         </Text>
       </Button>
 
@@ -102,7 +102,7 @@ export const TodoList: FunctionComponent = (): JSX.Element => {
         }}
       >
         <Text width={81} height={20} x={5} y={5}>
-          {'§cClear\r'}
+          {'§cClear'}
         </Text>
       </Button>
 
@@ -115,7 +115,7 @@ export const TodoList: FunctionComponent = (): JSX.Element => {
         onPress={() => completeTodo()}
       >
         <Text width={172} height={20} x={5} y={5}>
-          {'§9Complete next\r'}
+          {'§9Complete next'}
         </Text>
       </Button>
 

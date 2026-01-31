@@ -87,7 +87,6 @@ __metadata:
     "@minecraft/common": "npm:1.2.0"
     "@minecraft/math": "npm:2.3.1"
     "@minecraft/server": "npm:2.4.0"
-    "@minecraft/server-gametest": "npm:1.0.0-beta.1.21.100-stable"
     "@minecraft/server-ui": "npm:2.0.0"
     "@minecraft/vanilla-data": "npm:1.21.131"
     "@stylistic/eslint-plugin": "npm:^5.7.1"
@@ -108,8 +107,8 @@ __metadata:
     typescript: "npm:^5.9.3"
     vitest: "npm:^4.0.18"
   peerDependencies:
-    "@minecraft/server": ">=2.4.0"
-    "@minecraft/server-ui": ">=2.0.0"
+    "@minecraft/server": "*"
+    "@minecraft/server-ui": "*"
   languageName: unknown
   linkType: soft
 
@@ -138,8 +137,8 @@ __metadata:
     validate-npm-package-name: "npm:^7.0.2"
     vitest: "npm:^4.0.18"
   peerDependencies:
-    "@minecraft/server": ">=2.4.0"
-    "@minecraft/server-ui": ">=2.0.0"
+    "@minecraft/server": "*"
+    "@minecraft/server-ui": "*"
   bin:
     ui: ./packages/cli/dist/index.js
   languageName: unknown
@@ -593,16 +592,6 @@ __metadata:
   peerDependencies:
     "@minecraft/server": ^1.15.0 || ^2.0.0
   checksum: 10c0/6a907ab14c027e014f12e658a0d71a0081619109563c935aba0d50afd7da38eaeb108194e2da949dd05f493a4f30bdc3f9d0233612ce8254f878fad1fe3de69f
-  languageName: node
-  linkType: hard
-
-"@minecraft/server-gametest@npm:1.0.0-beta.1.21.100-stable":
-  version: 1.0.0-beta.1.21.100-stable
-  resolution: "@minecraft/server-gametest@npm:1.0.0-beta.1.21.100-stable"
-  dependencies:
-    "@minecraft/common": "npm:^1.0.0"
-    "@minecraft/server": "npm:^1.17.0 || ^2.0.0"
-  checksum: 10c0/b605473dd7ced33c398ce594ca92d49ba599c81a1dc68dce644fb9445b7f656a21f387aa997fccca0c05adb03e77418d4c6a41af44f6a9ac0835a7a6d51cb12d
   languageName: node
   linkType: hard
 

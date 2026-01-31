@@ -2,7 +2,7 @@
 	"$schema": "https://raw.githubusercontent.com/Bedrock-OSS/regolith-schemas/main/config/v1.4.json",
 	"author": "DrAv0011",
 	"description": "Test addon and reference implementation for @bedrock-core/ui library",
-	"name": "@bedrock-core/ui-resource-pack",
+	"name": "@bedrock-core_ui-resource-pack",
 	"packs": {
 		"behaviorPack": "./packs/BP",
 		"resourcePack": "./packs/RP"

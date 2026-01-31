@@ -72,6 +72,7 @@ function utf8ByteLength(str: string): number {
     } else if (code >= 0xd800 && code <= 0xdbff) {
       // High surrogate, check for valid low surrogate to form a pair
       const next = i + 1 < str.length ? str.charCodeAt(i + 1) : 0;
+
       if (next >= 0xdc00 && next <= 0xdfff) {
         bytes += 4; // surrogate pair (4 bytes)
         i++; // consume low surrogate
@@ -125,8 +126,8 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
   // If we see one here, it's a bug
   if (typeof type === 'function') {
     throw new SerializationError(
-      `serialize(): Encountered unresolved function component "${type.name || 'anonymous'}". ` +
-      `This is a bug - buildTree() should have called all function components before serialization.`,
+      `serialize(): Encountered unresolved function component "${type.name || 'anonymous'}". `
+      + `This is a bug - buildTree() should have called all function components before serialization.`,
     );
   }
 
@@ -135,7 +136,11 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
     if (children) {
       const childArray = Array.isArray(children) ? children : [children];
 
-      childArray.forEach((child: JSX.Element | string): void => { typeof child !== 'string' && serialize(child, form, context); });
+      childArray.forEach((child: JSX.Element | string): void => {
+        if (typeof child !== 'string') {
+          serialize(child, form, context);
+        }
+      });
     }
 
     return;
@@ -165,9 +170,9 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
   // Throw error if any non-serializable props were found
   if (invalidProps.length > 0) {
     throw new SerializationError(
-      `Component "${type}" has non-serializable props. All props must be primitives (string, number, boolean) or ReservedBytes. ` +
-      `Invalid props: ${invalidProps.join(', ')}. ` +
-      `Ensure all optional props have default values in the component definition.`,
+      `Component "${type}" has non-serializable props. All props must be primitives (string, number, boolean) or ReservedBytes. `
+      + `Invalid props: ${invalidProps.join(', ')}. `
+      + `Ensure all optional props have default values in the component definition.`,
     );
   }
 
@@ -179,6 +184,7 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
 
   if (!writer) {
     const known = Object.keys(WRITERS).sort().join(', ');
+
     throw new SerializationError(`Unknown native component type: ${type}. Known types: ${known}`);
   }
 
@@ -188,7 +194,11 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
   if (children) {
     const childArray = Array.isArray(children) ? children : [children];
 
-    childArray.forEach((child: JSX.Element | string): void => { typeof child !== 'string' && serialize(child, form, context); });
+    childArray.forEach((child: JSX.Element | string): void => {
+      if (typeof child !== 'string') {
+        serialize(child, form, context);
+      }
+    });
   }
 }
 

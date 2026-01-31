@@ -10,7 +10,7 @@ interface ThemeControllerProps { onThemeChange: (theme: Theme) => void }
 export const ThemeController: FunctionComponent<ThemeControllerProps> = ({ onThemeChange }): JSX.Element => (
   <Panel width={192} height={140} x={10} y={160}>
     <Text width={192} height={20} x={10} y={10}>
-      {'§l§eTheme Control\r'}
+      {'§l§eTheme Control'}
     </Text>
 
     <Button
@@ -23,7 +23,7 @@ export const ThemeController: FunctionComponent<ThemeControllerProps> = ({ onThe
       }}
     >
       <Text width={172} height={20} x={5} y={5}>
-        {'§f■ Light\r'}
+        {'§f■ Light'}
       </Text>
     </Button>
 
@@ -37,7 +37,7 @@ export const ThemeController: FunctionComponent<ThemeControllerProps> = ({ onThe
       }}
     >
       <Text width={172} height={20} x={5} y={5}>
-        {'§8■ Dark\r'}
+        {'§8■ Dark'}
       </Text>
     </Button>
 
@@ -51,12 +51,12 @@ export const ThemeController: FunctionComponent<ThemeControllerProps> = ({ onThe
       }}
     >
       <Text width={172} height={20} x={5} y={5}>
-        {'§d■ Neon\r'}
+        {'§d■ Neon'}
       </Text>
     </Button>
 
     <Text width={192} height={12} x={10} y={115}>
-      {'§7useContext provider\r'}
+      {'§7useContext provider'}
     </Text>
   </Panel>
 );

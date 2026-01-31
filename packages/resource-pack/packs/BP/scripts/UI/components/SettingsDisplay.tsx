@@ -11,7 +11,7 @@ export const SettingsDisplay: FunctionComponent = (): JSX.Element => {
   return (
     <Panel width={192} height={140} x={212} y={10}>
       <Text width={192} height={20} x={10} y={10}>
-        {'§l§bSettings Display\r'}
+        {'§l§bSettings Display'}
       </Text>
       <Text width={192} height={15} x={10} y={40}>
         {`Volume: §e${settings.volume}%`}
@@ -20,10 +20,10 @@ export const SettingsDisplay: FunctionComponent = (): JSX.Element => {
         {`Notify: ${settings.showNotifications ? '§aON' : '§cOFF'}`}
       </Text>
       <Text width={192} height={15} x={10} y={90}>
-        {'§7Multiple contexts\r'}
+        {'§7Multiple contexts'}
       </Text>
       <Text width={192} height={15} x={10} y={110}>
-        {'§7in one component\r'}
+        {'§7in one component'}
       </Text>
     </Panel>
   );
