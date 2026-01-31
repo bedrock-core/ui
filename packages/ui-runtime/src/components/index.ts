@@ -1,5 +1,5 @@
 // Component utilities
-export { withControl, type ControlProps } from './control';
+export { withControl, type ControlProps, type Percent } from './control';
 
 // Components
 export { Button, type ButtonProps } from './Button';

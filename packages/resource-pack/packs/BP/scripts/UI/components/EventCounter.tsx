@@ -20,13 +20,13 @@ export const EventCounter: FunctionComponent = (): JSX.Element => {
   });
 
   return (
-    <Panel width={24} height={31} x={51} y={67}>
-      <Text width={100} height={14} x={5} y={7}>{'§l§bScript Events'}</Text>
-      <Text width={100} height={11} x={5} y={25}>{`Events: §l${eventCount}`}</Text>
-      <Text width={100} height={11} x={5} y={38}>{`ID: §7${lastEventId}`}</Text>
-      <Text width={100} height={11} x={5} y={51}>{`Msg: §7${lastMessage}`}</Text>
-      <Text width={100} height={9} x={5} y={68}>{'§6/scriptevent test'}</Text>
-      <Text width={100} height={9} x={5} y={81}>{'§6useEvent hook'}</Text>
+    <Panel width={'24%'} height={'31%'} x={'51%'} y={'67%'}>
+      <Text width={'100%'} height={'14%'} x={'5%'} y={'7%'}>{'§l§bScript Events'}</Text>
+      <Text width={'100%'} height={'11%'} x={'5%'} y={'25%'}>{`Events: §l${eventCount}`}</Text>
+      <Text width={'100%'} height={'11%'} x={'5%'} y={'38%'}>{`ID: §7${lastEventId}`}</Text>
+      <Text width={'100%'} height={'11%'} x={'5%'} y={'51%'}>{`Msg: §7${lastMessage}`}</Text>
+      <Text width={'100%'} height={'9%'} x={'5%'} y={'68%'}>{'§6/scriptevent test'}</Text>
+      <Text width={'100%'} height={'9%'} x={'5%'} y={'81%'}>{'§6useEvent hook'}</Text>
     </Panel>
   );
 };

@@ -28,20 +28,20 @@ export function Example(): JSX.Element {
     <ThemeContext value={theme}>
       <SettingsContext value={settings}>
         {/* Row 1: Context and State Demonstrations */}
-        <ThemeDisplay />
+        {/* <ThemeDisplay />
         <SettingsDisplay />
         <TodoList />
-        <MetadataDisplay />
+        <MetadataDisplay /> */}
 
         {/* Row 2: Effects and Controllers */}
-        <ThemeController onThemeChange={setTheme} />
+        {/* <ThemeController onThemeChange={setTheme} />
         <SettingsController onSettingsChange={setSettings} />
-        <Counter />
+        <Counter /> */}
 
         {/* Row 3: Information and Exit */}
-        <InfoPanel />
+        {/* <InfoPanel />
         <ResourcesPanel />
-        <EventCounter />
+        <EventCounter /> */}
         <ExitPanel />
       </SettingsContext>
     </ThemeContext>

@@ -40,9 +40,7 @@ Custom JSX-driven UI system for Minecraft Bedrock. Components serialize into com
 - Style variants (light/dark themes)
 - ~~Text formatting (colors, bold, underline)~~ Use [Formatting Codes](https://minecraft.wiki/w/Formatting_codes)
 - Automatic z-index layering
-- Token based styling*
-
-\* By using token based styling we might be able to avoid known caveats 1, thus have support for {number}(%, %c, %cm, %sm, %x, %y, px).
+- Flex, margins, paddings, spacing...
 
 ### 🧭 Beta 0.X.0 - Navigation (Planned)
 

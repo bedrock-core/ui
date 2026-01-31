@@ -13,6 +13,7 @@ export type {
   PanelProps,
   TextProps,
   ControlProps,
+  Percent,
 } from './components';
 
 export {
@@ -30,6 +31,12 @@ export {
   render,
   createContext,
 } from './core';
+
+export {
+  toNumber,
+  toPercent,
+  scaleForSerialization,
+} from './util/percent';
 
 export type {
   Context,

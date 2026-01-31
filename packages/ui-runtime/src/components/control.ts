@@ -1,11 +1,19 @@
 import { JSX } from '../jsx/jsx-runtime';
 
+/**
+ * Percentage type: string in format "${number}%" (e.g., "50.25%", "100%")
+ * Values are floored to 2 decimal places.
+ * Before serialization, decimals are removed by multiplying by 100.
+ */
+export type Percent = `${number}%`;
+
 export interface ControlProps {
-  // All positioning and sizing values are numbers, will not support string types like "100px", "100%", "100%c"... too much issues in json ui
-  width: number | string;
-  height: number | string;
-  x?: number | string;
-  y?: number | string;
+  // Positioning and sizing values use percentage format (e.g., "50.25%")
+  // Internally converted to numbers and scaled 100x before serialization to avoid decimal issues in JSON UI
+  width: Percent;
+  height: Percent;
+  x?: Percent;
+  y?: Percent;
   visible?: boolean;
   enabled?: boolean;
   position?: 'absolute' | 'relative';
@@ -66,8 +74,8 @@ export function withControl(props: JSX.Props): JSX.Props {
   return {
     width,
     height,
-    x: x ?? 0,
-    y: y ?? 0,
+    x: x ?? '0%',
+    y: y ?? '0%',
     visible: visible ?? true,
     enabled: enabled ?? true,
     // even if not working we keep them for filling the byte space

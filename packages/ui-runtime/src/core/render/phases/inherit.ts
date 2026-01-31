@@ -1,5 +1,7 @@
 import type { JSX } from '../../../jsx';
 import { type ParentState, type TraversalContext } from '../traversal';
+import { toNumber, toPercent, scaleForSerialization } from '../../../util/percent';
+import type { Percent } from '../../../components/control';
 
 /**
  * Phase 3: Apply parent-child inheritance rules
@@ -76,30 +78,47 @@ export function applyInheritance(element: JSX.Element, context: TraversalContext
   const position = newProps.__position ?? 'relative';
 
   if (position === 'relative') {
-    // Position: compound relative percentage with parent's absolute position and dimensions
-    const relativeX = newProps.x as number ?? 0;
-    const relativeY = newProps.y as number ?? 0;
+    // Convert percentage strings to numbers for calculations
+    // At this point, these should already be Percent strings from withControl()
+    const relativeX = toNumber((newProps.x ?? '0%') as Percent);
+    const relativeY = toNumber((newProps.y ?? '0%') as Percent);
+    const relativeWidth = toNumber((newProps.width ?? '100%') as Percent);
+    const relativeHeight = toNumber((newProps.height ?? '100%') as Percent);
 
-    newProps.x = parentState.x + ((relativeX / 100) * parentState.width);
-    newProps.y = parentState.y + ((relativeY / 100) * parentState.height);
+    // Position: compound relative percentage with parent's absolute position and dimensions
+    const absoluteX = parentState.x + ((relativeX / 100) * parentState.width);
+    const absoluteY = parentState.y + ((relativeY / 100) * parentState.height);
 
     // Size: compound relative percentage with parent's absolute dimensions
-    const relativeWidth = newProps.width as number ?? 100;
-    const relativeHeight = newProps.height as number ?? 100;
+    const absoluteWidth = (relativeWidth / 100) * parentState.width;
+    const absoluteHeight = (relativeHeight / 100) * parentState.height;
 
-    newProps.width = (relativeWidth / 100) * parentState.width;
-    newProps.height = (relativeHeight / 100) * parentState.height;
+    // Scale by 100x for serialization (removes decimals: 50.25 → 5025)
+    // This is required because JSON UI ignores numbers with decimal points
+    newProps.x = scaleForSerialization(toPercent(absoluteX));
+    newProps.y = scaleForSerialization(toPercent(absoluteY));
+    newProps.width = scaleForSerialization(toPercent(absoluteWidth));
+    newProps.height = scaleForSerialization(toPercent(absoluteHeight));
+  } else {
+    // Absolute positioning: still scale for serialization but don't compound
+    newProps.x = scaleForSerialization((newProps.x ?? '0%') as Percent);
+    newProps.y = scaleForSerialization((newProps.y ?? '0%') as Percent);
+    newProps.width = scaleForSerialization((newProps.width ?? '100%') as Percent);
+    newProps.height = scaleForSerialization((newProps.height ?? '100%') as Percent);
   }
 
   // Create new parent state for children using THIS element's resolved absolute properties
+  // NOTE: Store unscaled values in parent state for correct inheritance calculations
+  // Children will scale their own values during their inheritance phase
   const childParentState: ParentState = {
-    visible: newProps.visible as boolean ?? true,
-    enabled: newProps.enabled as boolean ?? true,
-    x: newProps.x as number ?? 0,
-    y: newProps.y as number ?? 0,
-    width: newProps.width as number ?? 100,
-    height: newProps.height as number ?? 100,
-    position: position as 'relative' | 'absolute' ?? 'relative',
+    visible: (newProps.visible ?? true) as boolean,
+    enabled: (newProps.enabled ?? true) as boolean,
+    // Convert scaled values back to original scale for parent state
+    x: (newProps.x as number) / 100,
+    y: (newProps.y as number) / 100,
+    width: (newProps.width as number) / 100,
+    height: (newProps.height as number) / 100,
+    position: (position ?? 'relative') as 'relative' | 'absolute',
   };
 
   const childContext: TraversalContext = {
