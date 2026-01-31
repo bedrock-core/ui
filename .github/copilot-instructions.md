@@ -111,7 +111,7 @@ render(element, player) → buildTree() → present() → [user sees form] → e
 
 **Payload Structure:**
 ```
-bcuiv0002 + [type field] + [control fields] + [reserved] + [component-specific fields]
+bcuiv0003 + [type field] + [control fields] + [reserved] + [component-specific fields]
  └─ 9 chars (header)
 ```
 
@@ -124,33 +124,33 @@ bcuiv0002 + [type field] + [control fields] + [reserved] + [component-specific f
 **Critical Fixed Widths** (in `serializer.ts`):
 ```
 String:   83 bytes total (s: + 80 content + 1 marker)
-Number:   27 bytes total (n: + 24 content + 1 marker)
+Number:   83 bytes total (n: + 80 content + 1 marker)  [v0003: expanded to match strings]
 Bool:      8 bytes total (b: + 5 content + 1 marker)
 Reserved:  Variable (no prefix/marker for easier JSON UI skipping)
 ```
 
 **Constants (never change):**
 ```ts
-const PROTOCOL_HEADER = 'bcuiv0002';    // 9 chars
+const PROTOCOL_HEADER = 'bcuiv0003';    // 9 chars
 const PAD_CHAR = ';';                  // Only padding char
 const FIELD_MARKERS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_';
-const VERSION = 'v0002';               // Only update with migrations
+const VERSION = 'v0003';               // Only update with migrations
 ```
 
 **Byte Allocation Map (1024-byte control block):**
-- [0, 8]: Protocol header (9 bytes)
-- [9, 91]: Type field (83 bytes)
-- [92, 118]: Width (27 bytes)
-- [119, 145]: Height (27 bytes)
-- [146, 172]: X position (27 bytes)
-- [173, 199]: Y position (27 bytes)
-- [200, 207]: Visible (8 bytes)
-- [208, 215]: Enabled (8 bytes)
-- [216, 242]: Layer (27 bytes)
-- [243, 269]: Alpha (27 bytes)
-- [270, 277]: InheritMaxSiblingWidth (8 bytes)
-- [278, 285]: InheritMaxSiblingHeight (8 bytes)
-- [286, 1023]: Reserved for future (738 bytes)
+- [0-8]: Protocol header (9 bytes: "bcuiv0003")
+- [9-91]: Type field (string, 83 bytes)
+- [92-174]: Width (number, 83 bytes)
+- [175-257]: Height (number, 83 bytes)
+- [258-340]: X position (number, 83 bytes)
+- [341-423]: Y position (number, 83 bytes)
+- [424-431]: Visible (bool, 8 bytes)
+- [432-439]: Enabled (bool, 8 bytes)
+- [440-522]: Layer (number, 83 bytes)
+- [523-605]: Alpha (number, 83 bytes)
+- [606-613]: InheritMaxSiblingWidth (bool, 8 bytes)
+- [614-621]: InheritMaxSiblingHeight (bool, 8 bytes)
+- [622-1023]: Reserved for future (402 bytes)
 - [1024+]: Component-specific data per type
 
 ### withControl() Function
@@ -162,7 +162,7 @@ Enforces canonical field ordering and applies defaults to all components. Key po
 - Returns props in **exact canonical order** (critical for serialization)
 - Order: width, height, x, y, visible, enabled, layer, alpha, inheritMaxSiblingWidth, inheritMaxSiblingHeight, $reserved
 - Applies defaults to optional props (visible=true, enabled=true, etc.)
-- Reserves 739 bytes for future expansion (total 1024 bytes)
+- Reserves 402 bytes for future expansion (total 1024 bytes control block)
 - All numeric dimensions accept `number` only (no "100px" or "100%" strings)
 - All "optional" props must have defined defaults – no undefined/null values
 - `position` prop stored as `__position` (__ prefix excludes from serialization, used for traversal only)
@@ -285,7 +285,7 @@ test('panel serialization', () => {
     width: 100,
     height: 50,
   });
-  expect(payload).toMatch(/^bcuiv0002s:panel/);  // Header + type
+  expect(payload).toMatch(/^bcuiv0003s:panel/);  // Header + type
   expect(payload.length).toBeGreaterThanOrEqual(92);  // At least header + type
 });
 ```

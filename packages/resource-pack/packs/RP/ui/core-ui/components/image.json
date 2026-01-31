@@ -55,7 +55,7 @@
 			{
 				/* --- width (int) - field 1 --- */
 				"binding_type": "view", // full_width
-				"source_property_name": "('%.27s' * #rem_after_type)",
+				"source_property_name": "('%.83s' * #rem_after_type)",
 				"target_property_name": "#raw_width"
 			},
 			{
@@ -65,13 +65,13 @@
 			},
 			{
 				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.26s' * #raw_width) - ('%.2s' * #raw_width) - ';')",
+				"source_property_name": "(('%.82s' * #raw_width) - ('%.2s' * #raw_width) - ';')",
 				"target_property_name": "#size_binding_x"
 			},
 			{
 				/* --- height (int) - field 2 --- */
 				"binding_type": "view", // full_width
-				"source_property_name": "('%.27s' * #rem_after_width)",
+				"source_property_name": "('%.83s' * #rem_after_width)",
 				"target_property_name": "#raw_height"
 			},
 			{
@@ -81,13 +81,13 @@
 			},
 			{
 				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.26s' * #raw_height) - ('%.2s' * #raw_height) - ';')",
+				"source_property_name": "(('%.82s' * #raw_height) - ('%.2s' * #raw_height) - ';')",
 				"target_property_name": "#size_binding_y"
 			},
 			{
 				/* --- x (int) - field 3 --- */
 				"binding_type": "view", // full_width
-				"source_property_name": "('%.27s' * #rem_after_height)",
+				"source_property_name": "('%.83s' * #rem_after_height)",
 				"target_property_name": "#raw_x"
 			},
 			{
@@ -97,13 +97,13 @@
 			},
 			{
 				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "((('%.26s' * #raw_x) - ('%.2s' * #raw_x) - ';') * $normalize)",
+				"source_property_name": "((('%.82s' * #raw_x) - ('%.2s' * #raw_x) - ';') * $normalize)",
 				"target_property_name": "#anchored_offset_value_x"
 			},
 			{
 				/* --- y (float) - field 4 --- */
 				"binding_type": "view", // full_width
-				"source_property_name": "('%.27s' * #rem_after_x)",
+				"source_property_name": "('%.83s' * #rem_after_x)",
 				"target_property_name": "#raw_y"
 			},
 			{
@@ -113,7 +113,7 @@
 			},
 			{
 				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "((('%.26s' * #raw_y) - ('%.2s' * #raw_y) - ';') * $normalize)",
+				"source_property_name": "((('%.82s' * #raw_y) - ('%.2s' * #raw_y) - ';') * $normalize)",
 				"target_property_name": "#anchored_offset_value_y"
 			},
 			{
@@ -154,9 +154,9 @@
 				"target_property_name": "#enabled"
 			},
 			{
-				/* --- skip $reserved (739) + commented (70) --- */
+				/* --- skip layer(83) + alpha(83) + inheritMaxSiblingWidth(8) + inheritMaxSiblingHeight(8) + $reserved(402) --- */
 				"binding_type": "view", // reserved full_width
-				"source_property_name": "('%.809s' * #rem_after_enabled)",
+				"source_property_name": "('%.584s' * #rem_after_enabled)",
 				"target_property_name": "#skip_reserved_control"
 			},
 			{

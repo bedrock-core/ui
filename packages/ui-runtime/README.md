@@ -91,7 +91,7 @@ export const Panel: FunctionComponent<PanelProps> = ({ children, ...rest }: Pane
 
 Defined in `src/core/serializer.ts`.
 
-Payload always starts with a 9-character header: `bcui` + `vXXXX` (e.g., `bcuiv0002`). Decoders must skip these first 9 chars before field slicing.
+Payload always starts with a 9-character header: `bcui` + `vXXXX` (e.g., `bcuiv0003`). Decoders must skip these first 9 chars before field slicing.
 
 Each field is composed of three conceptual parts concatenated in this order:
 
@@ -104,7 +104,7 @@ Each field is composed of three conceptual parts concatenated in this order:
 | Type     | Prefix | Prefix Width | Type Width | Marker Width | Full Width | Notes |
 |----------|--------|--------------|------------|--------------|------------|-------|
 | String   | `s:`   | 2            | 80         | 1            | 83         | Prefer to use translation keys when text larger than 32 characters is needed |
-| Number   | `n:`   | 2            | 24         | 1            | 27         | All numbers use same format (no int/float distinction) Treat in JSON UI accordingly |
+| Number   | `n:`   | 2            | 80         | 1            | 83         | Expanded to match string width in v0003 for unified field sizing |
 | Boolean  | `b:`   | 2            | 5          | 1            | 8          | Serialized as `'true'` or `'false'` |
 | Reserved | `r:`   | 0            | variable   | 0            | variable   | No prefix/marker for easier JSON UI skipping |
 
@@ -121,11 +121,11 @@ import { serializeProps } from '@bedrock-core/ui-runtime';
 const [encoded, bytes] = serializeProps({
   type: 'example',      // string → 83 bytes
   message: 'hello',     // string → 83 bytes
-  count: 123,           // number → 27 bytes
-  ratio: 45.67,         // number → 27 bytes
+  count: 123,           // number → 83 bytes
+  ratio: 45.67,         // number → 83 bytes
   ok: true,             // bool → 8 bytes
 });
-// Total: 83 + 83 + 27 + 27 + 8 = 132 bytes (plus 9-byte header = 141 bytes)
+// Total: 83 + 83 + 83 + 83 + 8 = 340 bytes (plus 9-byte header = 349 bytes)
 ```
 
 ### Field Binding Template Pattern (Decoding)
@@ -165,23 +165,23 @@ Generic template (JSON UI binding entries) — copy & replace placeholders:
 
 ### Base Control Properties Deserialization Order
 
-All components inherit these base control properties, which are deserialized in this exact order after the 9-byte protocol header (`bcuiv0002`):
+All components inherit these base control properties, which are deserialized in this exact order after the 9-byte protocol header (`bcuiv0003`):
 
 ```text
 Field 0: type (string, 83 bytes)                  - component type identifier
-Field 1: width (number, 27 bytes)                 - element width
-Field 2: height (number, 27 bytes)                - element height
-Field 3: x (number, 27 bytes)                     - horizontal position
-Field 4: y (number, 27 bytes)                     - vertical position
+Field 1: width (number, 83 bytes)                 - element width
+Field 2: height (number, 83 bytes)                - element height
+Field 3: x (number, 83 bytes)                     - horizontal position
+Field 4: y (number, 83 bytes)                     - vertical position
 Field 5: visible (bool, 8 bytes)                  - visibility state (default: true)
 Field 6: enabled (bool, 8 bytes)                  - interaction enabled (default: true)
-Field 7: layer (number, 27 bytes)                 - z-index layering (default: 0)
-Field 8: alpha (number, 27 bytes)                 - transparency (default: 1.0)
+Field 7: layer (number, 83 bytes)                 - z-index layering (default: 0)
+Field 8: alpha (number, 83 bytes)                 - transparency (default: 1.0)
 Field 9: inheritMaxSiblingWidth (bool, 8 bytes)   - width inheritance (default: false)
 Field 10: inheritMaxSiblingHeight (bool, 8 bytes) - height inheritance (default: false)
-Field 11: $reserved (274 bytes)                  - reserved for future expansion
+Field 11: $reserved (402 bytes)                   - reserved for future expansion
 
-Total: 512 bytes per component (fixed allocation)
+Total control block: 1024 bytes (9 + 83 + 498 + 16 + 16 + 402)
 ```
 
 **Component-specific properties** are appended after the reserved block.
