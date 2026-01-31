@@ -19,9 +19,11 @@
 						"100%",
 						"100%"
 					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
 					"offset": [
-						"-50%",
-						"-50%"
+						"-49.5%",
+						"-49.5%"
 					],
 					"$protocol_header": "bcuiv0003",
 					"bindings": [

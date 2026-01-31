@@ -227,6 +227,10 @@ Mocks are located in `src/__mocks__/@minecraft/`.
 ## ⚠️ Known Caveats
 
 - JSON UI string ops with numbers can behave unpredictably; prefix markers before numeric-derived substrings client-side.
+- Currently when passing a value which starts with a number into a json property which accepts numbers, for example #size_binding_x, the characters after the digits are ignored 
+  E.g. x value here for json ui is the same as "100"
+    <Image x={'100%%daasdasdasdx'} />
+- **Container Scaling Requirement:** `size_binding_x/y` in JSON UI is relative (0-1 as percentages). To work with 0-100 percentages in TypeScript, the component deserialization container must be scaled to 1% size. This requires a `-49.5%` offset (−50% + 0.5%) to properly center the container. This offset is implemented in [screen_container.json](../resource-pack/packs/RP/ui/core-ui/common/screen_container.json).
 - Subtraction operator (`-`) removes all occurrences; use distinct prefixes to avoid collisions.
 
 

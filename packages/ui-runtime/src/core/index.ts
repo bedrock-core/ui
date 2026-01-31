@@ -10,7 +10,7 @@ export {
   FULL_WIDTH,
   TYPE_PREFIX,
   FIELD_MARKERS,
-  PROTOCOL_HEADER_LENGTH
+  PROTOCOL_HEADER_LENGTH,
 } from './serializer';
 
 // Rendering
@@ -22,7 +22,7 @@ export type {
   SerializablePrimitive,
   SerializableProps,
   SerializationContext,
-  SerializationError
+  SerializationError,
 } from './types';
 
 export { isFunction } from './guards';
@@ -30,10 +30,10 @@ export { isFunction } from './guards';
 export {
   getCurrentFiber,
   invariant,
-  createContext
+  createContext,
 } from './fabric';
 
 export type {
   Context,
-  ContextProps
+  ContextProps,
 } from './fabric';

@@ -36,17 +36,17 @@ export const Counter: FunctionComponent = (): JSX.Element => {
   }, [isAutoIncrement]);
 
   useEffect(() => {
-    console.error('Each execution');
+    // console.error('Each execution');
   });
 
-  useEffect(() => {
-    console.error('Mounted');
+  // useEffect(() => {
+  //   console.error('Mounted');
 
-    return (): void => console.error('Unmounted');
-  }, []);
+  //   return (): void => console.error('Unmounted');
+  // }, []);
 
   useEffect(() => {
-    console.error(`Count changed: ${count}`);
+    // console.error(`Count changed: ${count}`);
 
     if (count >= 4) {
       exit();

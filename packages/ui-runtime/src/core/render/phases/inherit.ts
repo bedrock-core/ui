@@ -69,6 +69,7 @@ export function applyInheritance(element: JSX.Element, context: TraversalContext
   if (position === 'relative') {
     const x = newProps.x as number ?? 0;
     const y = newProps.y as number ?? 0;
+
     newProps.x = x + parentState.x;
     newProps.y = y + parentState.y;
   }
