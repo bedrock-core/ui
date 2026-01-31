@@ -54,67 +54,67 @@ export const Counter: FunctionComponent = (): JSX.Element => {
   }, [count]);
 
   return (
-    <Panel width={192} height={140} x={616} y={160}>
+    <Panel width={24} height={31} x={75} y={36}>
       {/* Title */}
-      <Text width={192} height={20} x={10} y={10}>{'§l§aCounter'}</Text>
+      <Text width={100} height={14} x={5} y={7}>{'§l§aCounter'}</Text>
 
       {/* Display current count */}
-      <Text width={192} height={20} x={10} y={35}>{`Count: §l${count}`}</Text>
+      <Text width={100} height={14} x={5} y={25}>{`Count: §l${count}`}</Text>
 
       {/* Auto-increment status (to the right of count) */}
-      <Text width={80} height={15} x={124} y={35}>{`Auto: ${isAutoIncrement ? '§aON' : '§cOFF'}`}</Text>
+      <Text width={42} height={11} x={65} y={25}>{`Auto: ${isAutoIncrement ? '§aON' : '§cOFF'}`}</Text>
 
       {/* Increment button */}
       <Button
-        width={81}
-        height={20}
-        x={10}
-        y={55}
+        width={42}
+        height={14}
+        x={5}
+        y={39}
         onPress={(): void => {
           setCount(prev => prev + 1);
         }}
       >
-        <Text width={81} height={20} x={5} y={5}>{'§l+1'}</Text>
+        <Text width={100} height={100} x={6} y={25}>{'§l+1'}</Text>
       </Button>
 
       {/* Decrement button */}
       <Button
-        width={81}
-        height={20}
-        x={101}
-        y={55}
+        width={42}
+        height={14}
+        x={53}
+        y={39}
         onPress={(): void => {
           setCount(prev => prev - 1);
         }}
       >
-        <Text width={81} height={20} x={5} y={5}>{'§l-1'}</Text>
+        <Text width={100} height={100} x={6} y={25}>{'§l-1'}</Text>
       </Button>
 
       {/* Toggle auto-increment */}
       <Button
-        width={172}
-        height={20}
-        x={10}
-        y={80}
+        width={90}
+        height={14}
+        x={5}
+        y={57}
         onPress={(): void => {
           setIsAutoIncrement(!isAutoIncrement);
         }}
       >
-        <Text width={172} height={20} x={5} y={5}>{`§9${isAutoIncrement ? 'Stop' : 'Start'} Auto`}</Text>
+        <Text width={100} height={100} x={3} y={25}>{`§9${isAutoIncrement ? 'Stop' : 'Start'} Auto`}</Text>
       </Button>
 
       {/* Reset button */}
       <Button
-        width={172}
-        height={20}
-        x={10}
-        y={105}
+        width={90}
+        height={14}
+        x={5}
+        y={75}
         onPress={(): void => {
           setIsAutoIncrement(false);
           setCount(0);
         }}
       >
-        <Text width={172} height={20} x={5} y={5}>{'§6Reset'}</Text>
+        <Text width={100} height={100} x={3} y={25}>{'§6Reset'}</Text>
       </Button>
     </Panel>
   );

@@ -11,8 +11,10 @@ import type { Fiber } from '../fabric/types';
 export interface ParentState {
   visible: boolean; // Parent's resolved visibility (default: true)
   enabled: boolean; // Parent's resolved enabled state (default: true)
-  x: number; // Parent's X coordinate (default: 0)
-  y: number; // Parent's Y coordinate (default: 0)
+  x: number; // Parent's absolute X coordinate in percentage (0-100)
+  y: number; // Parent's absolute Y coordinate in percentage (0-100)
+  width: number; // Parent's absolute width in percentage (0-100)
+  height: number; // Parent's absolute height in percentage (0-100)
   position: 'absolute' | 'relative'; // Parent's position mode (default: 'relative')
 }
 
@@ -91,6 +93,8 @@ export function createRootContext(initialContext: TraversalContext): TraversalCo
       enabled: true,
       x: 0,
       y: 0,
+      width: 100,
+      height: 100,
       position: 'relative',
     },
   };

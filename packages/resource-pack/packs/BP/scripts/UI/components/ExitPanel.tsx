@@ -14,19 +14,19 @@ export const ExitPanel: FunctionComponent = (): JSX.Element => {
   };
 
   return (
-    <Panel width={192} height={140} x={616} y={310}>
-      <Text width={192} height={20} x={10} y={10}>{'§l§cExit Panel'}</Text>
-      <Text width={192} height={15} x={10} y={40}>{'§7Close the UI'}</Text>
+    <Panel width={24} height={31} x={75} y={67}>
+      <Text width={100} height={14} x={5} y={7}>{'§l§cExit Panel'}</Text>
+      <Text width={100} height={11} x={5} y={29}>{'§7Close the UI'}</Text>
       <Button
-        width={172}
-        height={30}
-        x={10}
-        y={65}
+        width={90}
+        height={21}
+        x={5}
+        y={46}
         onPress={handleExit}
       >
-        <Text width={172} height={30} x={5} y={10}>{'§l§cEXIT'}</Text>
+        <Text width={100} height={100} x={3} y={33}>{'§l§cEXIT'}</Text>
       </Button>
-      <Text width={192} height={12} x={10} y={110}>{'§7Thanks for testing!'}</Text>
+      <Text width={100} height={9} x={5} y={79}>{'§7Thanks for testing!'}</Text>
     </Panel>
   );
 };

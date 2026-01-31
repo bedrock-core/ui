@@ -17,7 +17,6 @@
 			"#anchored_offset_value_y": 0.0
 		},
 		"visible": "#visible",
-		"$normalize": 1.0,
 		"bindings": [
 			{
 				"binding_name": "#form_button_text",
@@ -96,7 +95,7 @@
 			},
 			{
 				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "((('%.82s' * #raw_x) - ('%.2s' * #raw_x) - ';') * $normalize)",
+				"source_property_name": "(('%.82s' * #raw_x) - ('%.2s' * #raw_x) - ';')",
 				"target_property_name": "#anchored_offset_value_x"
 			},
 			{
@@ -112,7 +111,7 @@
 			},
 			{
 				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "((('%.82s' * #raw_y) - ('%.2s' * #raw_y) - ';') * $normalize)",
+				"source_property_name": "(('%.82s' * #raw_y) - ('%.2s' * #raw_y) - ';')",
 				"target_property_name": "#anchored_offset_value_y"
 			},
 			{

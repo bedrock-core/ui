@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-namespace */
 import { Fragment as FragmentComponent } from '../components/Fragment';
 
 interface NativeNode<P extends JSX.Props = JSX.Props> {

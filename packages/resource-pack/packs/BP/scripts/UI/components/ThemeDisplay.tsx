@@ -15,20 +15,20 @@ export const ThemeDisplay: FunctionComponent = (): JSX.Element => {
   };
 
   return (
-    <Panel width={192} height={140} x={10} y={10}>
-      <Text width={192} height={20} x={10} y={10}>
+    <Panel width={24} height={31} x={1} y={2}>
+      <Text width={100} height={14} x={5} y={7}>
         {'§l§eTheme Display'}
       </Text>
-      <Text width={192} height={15} x={10} y={35}>
+      <Text width={100} height={11} x={5} y={25}>
         {'§lCurrent Theme:'}
       </Text>
-      <Text width={192} height={20} x={10} y={55}>
+      <Text width={100} height={14} x={5} y={39}>
         {`${themeColors[theme]}§l${theme.toUpperCase()}`}
       </Text>
-      <Text width={192} height={15} x={10} y={90}>
+      <Text width={100} height={11} x={5} y={64}>
         {'§7Uses useContext'}
       </Text>
-      <Text width={192} height={15} x={10} y={110}>
+      <Text width={100} height={11} x={5} y={79}>
         {'§7to read theme'}
       </Text>
     </Panel>

@@ -5,7 +5,14 @@ import { type ParentState, type TraversalContext } from '../traversal';
  * Phase 3: Apply parent-child inheritance rules
  * - visible: child AND parent (if parent invisible, child is invisible)
  * - enabled: child AND parent (if parent disabled, child is disabled)
- * - x/y: adjust for relative positioning mode (add parent coordinates if relative)
+ * - x/y: convert relative percentages (0-100) to absolute screen percentages via compounding
+ * - width/height: convert relative percentages (0-100) to absolute screen percentages via compounding
+ *
+ * Percentage compounding for relative positioning (0-100 scale):
+ * - absolute_x = parent_x + (child_relative_x / 100 * parent_width)
+ * - absolute_y = parent_y + (child_relative_y / 100 * parent_height)
+ * - absolute_width = (child_relative_width / 100) * parent_width
+ * - absolute_height = (child_relative_height / 100) * parent_height
  *
  * This must run AFTER tree expansion and normalization so all properties are set.
  *
@@ -19,6 +26,8 @@ export function applyInheritance(element: JSX.Element, context: TraversalContext
     enabled: true,
     x: 0,
     y: 0,
+    width: 100,
+    height: 100,
     position: 'relative',
   };
 
@@ -63,23 +72,33 @@ export function applyInheritance(element: JSX.Element, context: TraversalContext
     newProps.enabled = false; // Force disabled if parent is disabled
   }
 
-  // Rule 3: Handle relative positioning
+  // Rule 3: Convert relative percentages to absolute screen percentages via compounding
   const position = newProps.__position ?? 'relative';
 
   if (position === 'relative') {
-    const x = newProps.x as number ?? 0;
-    const y = newProps.y as number ?? 0;
+    // Position: compound relative percentage with parent's absolute position and dimensions
+    const relativeX = newProps.x as number ?? 0;
+    const relativeY = newProps.y as number ?? 0;
 
-    newProps.x = x + parentState.x;
-    newProps.y = y + parentState.y;
+    newProps.x = parentState.x + ((relativeX / 100) * parentState.width);
+    newProps.y = parentState.y + ((relativeY / 100) * parentState.height);
+
+    // Size: compound relative percentage with parent's absolute dimensions
+    const relativeWidth = newProps.width as number ?? 100;
+    const relativeHeight = newProps.height as number ?? 100;
+
+    newProps.width = (relativeWidth / 100) * parentState.width;
+    newProps.height = (relativeHeight / 100) * parentState.height;
   }
 
-  // Create new parent state for children using THIS element's resolved properties
+  // Create new parent state for children using THIS element's resolved absolute properties
   const childParentState: ParentState = {
     visible: newProps.visible as boolean ?? true,
     enabled: newProps.enabled as boolean ?? true,
     x: newProps.x as number ?? 0,
     y: newProps.y as number ?? 0,
+    width: newProps.width as number ?? 100,
+    height: newProps.height as number ?? 100,
     position: position as 'relative' | 'absolute' ?? 'relative',
   };
 

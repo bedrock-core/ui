@@ -66,62 +66,62 @@ export const TodoList: FunctionComponent = (): JSX.Element => {
   // console.error(`Rendering TodoList with todos: ${JSON.stringify(todos)}`);
 
   return (
-    <Panel width={192} height={290} x={414} y={10}>
-      <Text width={192} height={20} x={10} y={10}>
+    <Panel width={24} height={64} x={51} y={2}>
+      <Text width={100} height={7} x={5} y={3}>
         {'§l§bTodo List'}
       </Text>
-      <Text width={192} height={15} x={10} y={35}>
+      <Text width={100} height={5} x={5} y={12}>
         {`Total: §e${todoCount}`}
       </Text>
-      <Text width={192} height={15} x={10} y={53}>
+      <Text width={100} height={5} x={5} y={18}>
         {`Done: §a${completedCount}`}
       </Text>
 
       <Button
-        width={81}
-        height={20}
-        x={10}
-        y={75}
+        width={42}
+        height={7}
+        x={5}
+        y={26}
         onPress={(): void => {
           addTodo();
         }}
       >
-        <Text width={81} height={20} x={5} y={5}>
+        <Text width={100} height={100} x={6} y={25}>
           {'§a+ Add'}
         </Text>
       </Button>
 
       <Button
-        width={81}
-        height={20}
-        x={101}
-        y={75}
+        width={42}
+        height={7}
+        x={53}
+        y={26}
         enabled={completedCount > 0}
         onPress={(): void => {
           clearCompleted();
         }}
       >
-        <Text width={81} height={20} x={5} y={5}>
+        <Text width={100} height={100} x={6} y={25}>
           {'§cClear'}
         </Text>
       </Button>
 
       <Button
-        width={172}
-        height={20}
-        x={10}
-        y={100}
+        width={90}
+        height={7}
+        x={5}
+        y={34}
         enabled={hasIncomplete}
         onPress={() => completeTodo()}
       >
-        <Text width={172} height={20} x={5} y={5}>
+        <Text width={100} height={100} x={3} y={25}>
           {'§9Complete next'}
         </Text>
       </Button>
 
-      <Panel width={172} height={150} x={10} y={130}>
+      <Panel width={90} height={52} x={5} y={45}>
         {todos.map((todo, index) => (
-          <Text width={100} height={20} x={10} y={5 + index * 20}>
+          <Text width={100} height={13} x={6} y={3 + index * 13}>
             {todo.completed ? `§7§m${todo.text}` : `§f${todo.text}`}
           </Text>
         ))}

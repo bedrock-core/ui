@@ -6,11 +6,11 @@ export const MetadataDisplay: FunctionComponent = (): JSX.Element => {
   executionCount.current += 1;
 
   return (
-    <Panel width={192} height={140} x={616} y={10}>
-      <Text width={192} height={20} x={10} y={10}>
+    <Panel width={24} height={31} x={75} y={2}>
+      <Text width={100} height={14} x={5} y={7}>
         {'§l§dMetadata display'}
       </Text>
-      <Text width={192} height={15} x={10} y={35}>
+      <Text width={100} height={11} x={5} y={25}>
         {`Execution count: §6${executionCount.current}`}
       </Text>
     </Panel>

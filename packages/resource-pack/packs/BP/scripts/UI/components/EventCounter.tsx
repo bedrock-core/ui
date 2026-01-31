@@ -4,7 +4,7 @@ import { system } from '@minecraft/server';
 /**
  * Event counter - listens to script events and updates count using useEvent hook
  * Test with: /scriptevent demo:test hello
- * Grid Position: Row 2, Column 1
+ * Grid Position: Row 3, Column 3
  */
 export const EventCounter: FunctionComponent = (): JSX.Element => {
   const [eventCount, setEventCount] = useState(0);
@@ -20,13 +20,13 @@ export const EventCounter: FunctionComponent = (): JSX.Element => {
   });
 
   return (
-    <Panel width={192} height={140} x={414} y={310}>
-      <Text width={192} height={20} x={10} y={10}>{'§l§bScript Events'}</Text>
-      <Text width={192} height={15} x={10} y={35}>{`Events: §l${eventCount}`}</Text>
-      <Text width={192} height={15} x={10} y={53}>{`ID: §7${lastEventId}`}</Text>
-      <Text width={192} height={15} x={10} y={71}>{`Msg: §7${lastMessage}`}</Text>
-      <Text width={192} height={12} x={10} y={95}>{'§6/scriptevent test'}</Text>
-      <Text width={192} height={12} x={10} y={113}>{'§6useEvent hook'}</Text>
+    <Panel width={24} height={31} x={51} y={67}>
+      <Text width={100} height={14} x={5} y={7}>{'§l§bScript Events'}</Text>
+      <Text width={100} height={11} x={5} y={25}>{`Events: §l${eventCount}`}</Text>
+      <Text width={100} height={11} x={5} y={38}>{`ID: §7${lastEventId}`}</Text>
+      <Text width={100} height={11} x={5} y={51}>{`Msg: §7${lastMessage}`}</Text>
+      <Text width={100} height={9} x={5} y={68}>{'§6/scriptevent test'}</Text>
+      <Text width={100} height={9} x={5} y={81}>{'§6useEvent hook'}</Text>
     </Panel>
   );
 };
