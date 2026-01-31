@@ -3,7 +3,7 @@ export {
   Fragment,
   Image,
   Panel,
-  Text
+  Text,
 } from './components';
 
 export type {
@@ -12,7 +12,7 @@ export type {
   ImageProps,
   PanelProps,
   TextProps,
-  ControlProps
+  ControlProps,
 } from './components';
 
 export {
@@ -23,21 +23,21 @@ export {
   useReducer,
   usePlayer,
   useEvent,
-  useExit
+  useExit,
 } from './hooks';
 
 export {
   render,
-  createContext
+  createContext,
 } from './core';
 
 export type {
   Context,
   ContextProps,
-  SerializationError
+  SerializationError,
 } from './core';
 
 export type {
   FunctionComponent,
-  JSX
+  JSX,
 } from './jsx';

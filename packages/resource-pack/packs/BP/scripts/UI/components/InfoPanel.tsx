@@ -8,7 +8,7 @@ export const InfoPanel: FunctionComponent = (): JSX.Element => {
 
   return (
     <Panel width={192} height={140} x={10} y={310}>
-      <Text width={192} height={20} x={10} y={10}>§l§6Player Info</Text>
+      <Text width={192} height={20} x={10} y={10}>{'§l§6Player Info'}</Text>
       <Text width={192} height={15} x={10} y={35}>{`§eName: §f${player.name}`}</Text>
       <Text width={192} height={15} x={10} y={52}>{`§cHealth: §f${health}`}</Text>
       <Text width={192} height={15} x={10} y={69}>{`§bMode: §f${player.getGameMode()}`}</Text>
@@ -17,4 +17,3 @@ export const InfoPanel: FunctionComponent = (): JSX.Element => {
     </Panel>
   );
 };
-

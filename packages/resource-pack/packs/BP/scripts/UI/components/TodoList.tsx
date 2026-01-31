@@ -7,11 +7,11 @@ interface Todo {
   completed: boolean;
 }
 
-type TodoAction =
-  | { type: 'add'; text: string }
-  | { type: 'remove'; id: number }
-  | { type: 'clear_completed' }
-  | { type: 'complete_next' };
+type TodoAction
+  = | { type: 'add'; text: string }
+    | { type: 'remove'; id: number }
+    | { type: 'clear_completed' }
+    | { type: 'complete_next' };
 
 function todoReducer(state: Todo[], action: TodoAction): Todo[] {
   switch (action.type) {
@@ -21,13 +21,19 @@ function todoReducer(state: Todo[], action: TodoAction): Todo[] {
       return state.filter(todo => todo.id !== action.id);
     case 'clear_completed':
       return state.filter(todo => !todo.completed);
+
     case 'complete_next': {
       const idx = state.findIndex(t => !t.completed);
-      if (idx === -1) return state;
+
+      if (idx === -1) {
+        return state;
+      }
+
       const next = { ...state[idx], completed: true };
 
       return [...state.slice(0, idx), next, ...state.slice(idx + 1)];
     }
+
     default:
       return state;
   }
@@ -62,7 +68,7 @@ export const TodoList: FunctionComponent = (): JSX.Element => {
   return (
     <Panel width={192} height={290} x={414} y={10}>
       <Text width={192} height={20} x={10} y={10}>
-        §l§bTodo List
+        {'§l§bTodo List\r'}
       </Text>
       <Text width={192} height={15} x={10} y={35}>
         {`Total: §e${todoCount}`}
@@ -78,9 +84,10 @@ export const TodoList: FunctionComponent = (): JSX.Element => {
         y={75}
         onPress={(): void => {
           addTodo();
-        }}>
+        }}
+      >
         <Text width={81} height={20} x={5} y={5}>
-          §a+ Add
+          {'§a+ Add\r'}
         </Text>
       </Button>
 
@@ -92,9 +99,10 @@ export const TodoList: FunctionComponent = (): JSX.Element => {
         enabled={completedCount > 0}
         onPress={(): void => {
           clearCompleted();
-        }}>
+        }}
+      >
         <Text width={81} height={20} x={5} y={5}>
-          §cClear
+          {'§cClear\r'}
         </Text>
       </Button>
 
@@ -104,9 +112,10 @@ export const TodoList: FunctionComponent = (): JSX.Element => {
         x={10}
         y={100}
         enabled={hasIncomplete}
-        onPress={() => completeTodo()}>
+        onPress={() => completeTodo()}
+      >
         <Text width={172} height={20} x={5} y={5}>
-          §9Complete next
+          {'§9Complete next\r'}
         </Text>
       </Button>
 

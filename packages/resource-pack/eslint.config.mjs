@@ -25,10 +25,6 @@ export default defineConfig([
       parser: tseslint.parser,
       ecmaVersion: "latest",
       sourceType: "module",
-      parserOptions: {
-        project: ["tsconfig.json"],
-        tsconfigRootDir: __dirname,
-      },
     },
 
     rules: {

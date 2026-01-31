@@ -54,10 +54,6 @@ export function withControl(props: JSX.Props): JSX.Props {
     y,
     visible,
     enabled,
-    layer,
-    alpha,
-    inheritMaxSiblingWidth,
-    inheritMaxSiblingHeight,
     position,
   } = props;
 
@@ -70,10 +66,10 @@ export function withControl(props: JSX.Props): JSX.Props {
     visible: visible ?? true,
     enabled: enabled ?? true,
     // even if not working we keep them for filling the byte space
-    layer: layer ? Math.floor(layer as number) : 0,
-    alpha: alpha ?? 1.0,
-    inheritMaxSiblingWidth: inheritMaxSiblingWidth ?? false,
-    inheritMaxSiblingHeight: inheritMaxSiblingHeight ?? false,
+    layer: 0,
+    alpha: 1.0,
+    inheritMaxSiblingWidth: false,
+    inheritMaxSiblingHeight: false,
     $reserved: { bytes: 739 }, // Reserve space for future expansion
     __position: position ?? 'relative', // Internal only: not serialized (__ prefix excludes it)
   };

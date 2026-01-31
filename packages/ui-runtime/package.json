@@ -55,7 +55,7 @@
     "vitest": "^4.0.18"
   },
   "peerDependencies": {
-    "@minecraft/server": ">=2.3.0",
-    "@minecraft/server-ui": ">=2.0.0"
+    "@minecraft/server": "*",
+    "@minecraft/server-ui": "*"
   }
 }

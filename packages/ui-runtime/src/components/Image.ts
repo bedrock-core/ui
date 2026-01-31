@@ -18,4 +18,3 @@ export const Image: FunctionComponent<ImageProps> = ({ texture, ...rest }: Image
     texture: texture ?? '',
   },
 });
-

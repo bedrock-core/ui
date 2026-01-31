@@ -10,7 +10,7 @@ import {
   SettingsDisplay,
   ThemeController,
   ThemeDisplay,
-  TodoList
+  TodoList,
 } from './components';
 import { SettingsContext, ThemeContext, type Settings, type Theme } from './contexts';
 
@@ -47,4 +47,3 @@ export function Example(): JSX.Element {
     </ThemeContext>
   );
 }
-
