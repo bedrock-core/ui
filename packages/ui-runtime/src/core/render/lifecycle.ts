@@ -27,7 +27,7 @@ export function render(
     const tree = buildTree(rootElement, player);
 
     present(player, tree)
-      .then(result => {
+      .then((result) => {
         if (result === 'present') {
           // Another snapshot requested (programmatic close); rebuild and present again immediately
           presentOnce();

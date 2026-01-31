@@ -12,6 +12,14 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
       render(Example, source);
     }
 
+    // if (block.typeId === MinecraftBlockTypes.BambooButton) {
+    //   render(LayoutTest, source);
+    // }
+
+    // if (block.typeId === MinecraftBlockTypes.BirchButton) {
+    //   render(FlexTest, source);
+    // }
+
     if (block.typeId === MinecraftBlockTypes.AcaciaButton) {
       const form = new ActionFormData();
 
