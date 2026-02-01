@@ -5,7 +5,6 @@ export function FlexTest(): JSX.Element {
     <Panel
       display={'flex'}
       flexDirection={'column'}
-      padding={'5%'}
       gap={'5%'}
       width={'100%'}
       height={'100%'}

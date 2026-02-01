@@ -1,6 +1,6 @@
 import { isControlled } from '../../../components/control';
 import type { JSX } from '../../../jsx';
-import { scaleForSerialization, toPercent } from '../../../util/percent';
+import { scaleForSerialization } from '../../../util/percent';
 import { type ParentState, type TraversalContext } from '../traversal';
 
 /**
@@ -78,47 +78,28 @@ export function applyInheritance(element: JSX.Element, context: TraversalContext
       newProps.enabled = false; // Force disabled if parent is disabled
     }
 
-    // Rule 3: Convert relative percentages to absolute screen percentages via compounding
-    // Phase 2 outputs parent-relative coordinates as Percent strings
+    // Rule 3: Layout phase has already computed absolute coordinates
+    // Just scale them for serialization (removes decimals: 50.25 → 5025)
+    // This is required because JSON UI ignores numbers with decimal points
+    const xValue = props.jsonUIx ?? 0;
+    const yValue = props.jsonUIy ?? 0;
+    const widthValue = props.jsonUIWidth ?? 100;
+    const heightValue = props.jsonUIHeight ?? 100;
 
-    const position = 'relative';
+    newProps.jsonUIx = scaleForSerialization(xValue);
+    newProps.jsonUIy = scaleForSerialization(yValue);
+    newProps.jsonUIWidth = scaleForSerialization(widthValue);
+    newProps.jsonUIHeight = scaleForSerialization(heightValue);
 
-    if (position === 'relative') {
-    // Extract numeric values from Percent strings ("50%" → 50)
-      const xValue = props.jsonUIx ?? 0;
-      const yValue = props.jsonUIy ?? 0;
-      const widthValue = props.jsonUIWidth ?? 100;
-      const heightValue = props.jsonUIHeight ?? 100;
-
-      // Position: compound relative percentage with parent's absolute position and dimensions
-      const absoluteX = parentState.x + ((xValue / 100) * parentState.width);
-      const absoluteY = parentState.y + ((yValue / 100) * parentState.height);
-
-      // Size: compound relative percentage with parent's absolute dimensions
-      const absoluteWidth = (widthValue / 100) * parentState.width;
-      const absoluteHeight = (heightValue / 100) * parentState.height;
-
-      // Scale by 100x for serialization (removes decimals: 50.25 → 5025)
-      // This is required because JSON UI ignores numbers with decimal points
-      // Store in regular properties for serialization
-      newProps.jsonUIx = scaleForSerialization(toPercent(absoluteX));
-      newProps.jsonUIy = scaleForSerialization(toPercent(absoluteY));
-      newProps.jsonUIWidth = scaleForSerialization(toPercent(absoluteWidth));
-      newProps.jsonUIHeight = scaleForSerialization(toPercent(absoluteHeight));
-    }
-
-    // Create new parent state for children using THIS element's resolved absolute properties
-    // NOTE: Store unscaled values in parent state for correct inheritance calculations
-    // Children will scale their own values during their inheritance phase
+    // Create parent state for children using THIS element's absolute properties
+    // Store unscaled values in parent state for visibility/enabled inheritance
     const childParentState: ParentState = {
       visible: newProps.visible ?? true,
       enabled: newProps.enabled ?? true,
-      // Convert scaled values back to original scale for parent state
-      // newProps.x/y/width/height are now numbers after scaleForSerialization
-      x: newProps.jsonUIx / 100,
-      y: newProps.jsonUIy / 100,
-      width: newProps.jsonUIWidth / 100,
-      height: newProps.jsonUIHeight / 100,
+      x: xValue,
+      y: yValue,
+      width: widthValue,
+      height: heightValue,
       position: 'relative',
     };
 

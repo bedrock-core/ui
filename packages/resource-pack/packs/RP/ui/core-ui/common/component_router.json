@@ -7,8 +7,8 @@
 	"component_router": {
 		"type": "panel",
 		"size": [
-			"0.01%",
-			"0.01%"
+			"1%",
+			"1%"
 		],
 		"controls": [
 			{

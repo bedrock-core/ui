@@ -53,36 +53,14 @@ export function toPercent(value: number): Percent {
  * JSON UI ignores numbers with non-digit characters (like decimal points),
  * so we convert 50.25 → 5025.
  *
- * @param value - Percentage string (e.g., "50.25%")
+ * @param value - Number value (e.g., 50.25)
  * @returns Scaled integer value (e.g., 5025)
  *
  * @example
- * scaleForSerialization("50.25%") // 5025
- * scaleForSerialization("100%")   // 10000
- * scaleForSerialization("0%")     // 0
+ * scaleForSerialization(50.25) // 5025
+ * scaleForSerialization(100)   // 10000
+ * scaleForSerialization(0)     // 0
  */
-export function scaleForSerialization(value: Percent): number {
-  return Math.floor(toNumber(value) * 100);
-}
-
-/**
- * Converts a Percent value to pixels based on parent size.
- * Used during layout computation to resolve percentage values to absolute pixels.
- *
- * @param value - The Percent value to resolve (number or percentage string)
- * @param parentSize - The parent's size in pixels for percentage calculation
- * @returns The resolved value in pixels
- *
- * @example
- * resolvePercent(100, 200) // 100 pixels
- * resolvePercent("50%", 200) // 100 pixels (50% of 200)
- * resolvePercent("25%", 400) // 100 pixels (25% of 400)
- * resolvePercent(undefined, 200) // 0 (undefined = auto-size)
- */
-export function resolvePercent(value: Percent | undefined, parentSize: number): number {
-  if (value === undefined) {
-    return 0;
-  }
-
-  return (toNumber(value) / 100) * parentSize;
+export function scaleForSerialization(value: number): number {
+  return Math.floor(value * 100);
 }

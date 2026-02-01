@@ -2,23 +2,19 @@ import { FlexTarget } from 'flexbox.js';
 import type { LayoutProps } from '../../../components/layout';
 import type { JSX } from '../../../jsx';
 import type { Percent } from '../../../util';
-import { resolvePercent } from '../../../util';
+import { Logger, toNumber } from '../../../util';
 
 /**
  * Resolves individual padding/margin properties, with fallback to shorthand.
  * Priority: specific side (paddingTop) > shorthand (padding) > 0
  */
-function resolveSide(
-  specific: Percent | undefined,
-  shorthand: Percent | undefined,
-  parentSize: number,
-): number {
+function resolveSide(specific: Percent | undefined, shorthand: Percent | undefined): number {
   if (specific !== undefined) {
-    return resolvePercent(specific, parentSize);
+    return toNumber(specific);
   }
 
   if (shorthand !== undefined) {
-    return resolvePercent(shorthand, parentSize);
+    return toNumber(shorthand);
   }
 
   return 0;
@@ -51,10 +47,10 @@ function buildFlexTree(
     node.flex.wrap = layout.wrap ?? false;
 
     // Apply padding (individual properties take priority over shorthand)
-    node.flex.paddingTop = resolveSide(layout.paddingTop, layout.padding, parentWidth);
-    node.flex.paddingRight = resolveSide(layout.paddingRight, layout.padding, parentWidth);
-    node.flex.paddingBottom = resolveSide(layout.paddingBottom, layout.padding, parentWidth);
-    node.flex.paddingLeft = resolveSide(layout.paddingLeft, layout.padding, parentWidth);
+    node.flex.paddingTop = resolveSide(layout.paddingTop, layout.padding);
+    node.flex.paddingRight = resolveSide(layout.paddingRight, layout.padding);
+    node.flex.paddingBottom = resolveSide(layout.paddingBottom, layout.padding);
+    node.flex.paddingLeft = resolveSide(layout.paddingLeft, layout.padding);
   }
 
   // Apply flex item props (if parent is flex)
@@ -67,36 +63,36 @@ function buildFlexTree(
     }
 
     // Apply margin (individual properties take priority over shorthand)
-    node.flexItem.marginTop = resolveSide(layout.marginTop, layout.margin, parentWidth);
-    node.flexItem.marginRight = resolveSide(layout.marginRight, layout.margin, parentWidth);
-    node.flexItem.marginBottom = resolveSide(layout.marginBottom, layout.margin, parentWidth);
-    node.flexItem.marginLeft = resolveSide(layout.marginLeft, layout.margin, parentWidth);
+    node.flexItem.marginTop = resolveSide(layout.marginTop, layout.margin);
+    node.flexItem.marginRight = resolveSide(layout.marginRight, layout.margin);
+    node.flexItem.marginBottom = resolveSide(layout.marginBottom, layout.margin);
+    node.flexItem.marginLeft = resolveSide(layout.marginLeft, layout.margin);
 
     // Min/max constraints
     if (layout.minWidth !== undefined) {
-      node.flexItem.minWidth = resolvePercent(layout.minWidth, parentWidth);
+      node.flexItem.minWidth = toNumber(layout.minWidth);
     }
 
     if (layout.minHeight !== undefined) {
-      node.flexItem.minHeight = resolvePercent(layout.minHeight, parentHeight);
+      node.flexItem.minHeight = toNumber(layout.minHeight);
     }
 
     if (layout.maxWidth !== undefined) {
-      node.flexItem.maxWidth = resolvePercent(layout.maxWidth, parentWidth);
+      node.flexItem.maxWidth = toNumber(layout.maxWidth);
     }
 
     if (layout.maxHeight !== undefined) {
-      node.flexItem.maxHeight = resolvePercent(layout.maxHeight, parentHeight);
+      node.flexItem.maxHeight = toNumber(layout.maxHeight);
     }
   }
 
   // Apply base dimensions (convert Percent to number, 0 = fit-to-contents)
-  node.w = resolvePercent(props.width, parentWidth);
-  node.h = resolvePercent(props.height, parentHeight);
+  node.w = toNumber(props.width || `${parentWidth}%`);
+  node.h = toNumber(props.height || `${parentHeight}%`);
 
   // Calculate node dimensions for children percentage resolution
-  const nodeWidth = node.w || parentWidth;
-  const nodeHeight = node.h || parentHeight;
+  const nodeWidth = node.w;
+  const nodeHeight = node.h;
 
   // Process children recursively
   if (Array.isArray(element.props.children)) {
@@ -111,22 +107,46 @@ function buildFlexTree(
 }
 
 /**
- * Applies computed layout values back to element tree
+ * Applies computed layout values back to element tree.
+ * Converts relative (parent-based) coordinates from flexbox to absolute (screen-origin) coordinates
+ * by accumulating parent offsets.
+ *
+ * @param element - JSX element to apply layout to
+ * @param flexNode - Computed flexbox node
+ * @param parentAbsX - Parent's absolute X position (default: 0)
+ * @param parentAbsY - Parent's absolute Y position (default: 0)
  */
-function applyLayoutToElements(element: JSX.Element, flexNode: FlexTarget): void {
-  // Set computed layout as percentage strings (0-100 scale)
-  // These will be serialized to the fixed-width protocol
-  element.props.x = `${flexNode.getLayoutX()}%`;
-  element.props.y = `${flexNode.getLayoutY()}%`;
-  element.props.width = `${flexNode.getLayoutW()}%`;
-  element.props.height = `${flexNode.getLayoutH()}%`;
+function applyLayoutToElements(
+  element: JSX.Element,
+  flexNode: FlexTarget,
+  parentAbsX: number = 0,
+  parentAbsY: number = 0,
+): void {
+  Logger.error(`Flex Node: ${flexNode.toString()}`);
 
-  // Process children
+  // Get relative position from flexbox (relative to parent, 0-100 scale)
+  const relativeX = flexNode.getLayoutX();
+  const relativeY = flexNode.getLayoutY();
+  const width = flexNode.getLayoutW();
+  const height = flexNode.getLayoutH();
+
+  // Convert to absolute position (relative to screen origin)
+  // Child's absolute position = parent's absolute position + (child's relative position as fraction of parent size)
+  const absoluteX = parentAbsX + (relativeX / 100) * width;
+  const absoluteY = parentAbsY + (relativeY / 100) * height;
+
+  // Store absolute coordinates (0-100 scale) for serialization
+  element.props.jsonUIx = absoluteX;
+  element.props.jsonUIy = absoluteY;
+  element.props.jsonUIWidth = width;
+  element.props.jsonUIHeight = height;
+
+  // Process children - pass this element's absolute position as parent offset
   if (Array.isArray(element.props.children)) {
     const children = flexNode.getChildren();
 
     element.props.children.forEach((child, index) => {
-      applyLayoutToElements(child, children[index]);
+      applyLayoutToElements(child, children[index], absoluteX, absoluteY);
     });
   }
 }
