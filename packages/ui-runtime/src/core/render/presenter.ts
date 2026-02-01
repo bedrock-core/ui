@@ -15,11 +15,12 @@ export async function present(
 
   // Snapshot and show
   const form: ActionFormData = new ActionFormData();
+
   form.title(PROTOCOL_HEADER);
 
   serialize(tree, form, serializationContext);
 
-  return form.show(player).then(response => {
+  return form.show(player).then((response) => {
     if (response.canceled) {
       // User ESC
       return 'cleanup';

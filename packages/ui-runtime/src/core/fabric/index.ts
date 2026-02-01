@@ -1,4 +1,3 @@
-
 export { getCurrentFiber } from './registry';
 
 export {
@@ -7,7 +6,7 @@ export {
   deleteFiber,
   getFiber,
   getFibersForPlayer,
-  runInFiber
+  runInFiber,
 } from './fiber';
 
 export { invariant } from './utils';

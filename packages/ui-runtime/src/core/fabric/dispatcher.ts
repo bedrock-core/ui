@@ -7,6 +7,7 @@ import { invariant, nextHookSlot } from './utils';
 export const MountDispatcher: Dispatcher = {
   useState<T>(initial: T | (() => T)) {
     const [fiber] = getCurrentFiber();
+
     invariant(fiber, 'useState');
 
     const slot: HookSlot = nextHookSlot(fiber, 'state');
@@ -17,7 +18,7 @@ export const MountDispatcher: Dispatcher = {
     slot.resolved = false;
 
     const setter = (v: T | ((prev: T) => T)): void => {
-      const prevVal = slot.value as T;
+      const prevVal = slot.value;
       const nextVal = isFunction(v) ? v(prevVal) : v;
 
       if (!Object.is(nextVal, prevVal)) {
@@ -31,11 +32,12 @@ export const MountDispatcher: Dispatcher = {
       }
     };
 
-    return [slot.value as T, setter];
+    return [slot.value, setter];
   },
 
   useEffect(effect: () => (() => void) | void, deps?: readonly unknown[]) {
     const [fiber] = getCurrentFiber();
+
     invariant(fiber, 'useEffect');
 
     const slotIndex = fiber.hookIndex;
@@ -48,6 +50,7 @@ export const MountDispatcher: Dispatcher = {
 
   useRef<T>(initial: T) {
     const [fiber] = getCurrentFiber();
+
     invariant(fiber, 'useRef');
 
     const slot = nextHookSlot(fiber, 'ref');
@@ -56,15 +59,16 @@ export const MountDispatcher: Dispatcher = {
       slot.value = { current: initial };
     }
 
-    return slot.value as { current: T };
+    return slot.value;
   },
 
   useContext<T>(ctx: Context<T>) {
     const [fiber] = getCurrentFiber();
+
     invariant(fiber, 'useContext');
 
     const slot = nextHookSlot(fiber, 'context');
-    const value = (fiber.contextSnapshot?.get(ctx as Context<unknown>) as T) ?? ctx.defaultValue;
+    const value = (fiber.contextSnapshot?.get(ctx as Context<unknown>)) ?? ctx.defaultValue;
 
     slot.value = value;
 
@@ -73,6 +77,7 @@ export const MountDispatcher: Dispatcher = {
 
   useReducer<S, A>(reducer: (s: S, a: A) => S, initial: S) {
     const [fiber] = getCurrentFiber();
+
     invariant(fiber, 'useReducer');
 
     const slot = nextHookSlot(fiber, 'reducer');
@@ -82,7 +87,7 @@ export const MountDispatcher: Dispatcher = {
     slot.resolved = false;
 
     const dispatch = (action: A): void => {
-      const prevVal = slot.value as S;
+      const prevVal = slot.value;
       const nextVal = reducer(prevVal, action);
 
       if (!Object.is(nextVal, prevVal)) {
@@ -96,11 +101,12 @@ export const MountDispatcher: Dispatcher = {
       }
     };
 
-    return [slot.value as S, dispatch];
+    return [slot.value, dispatch];
   },
 
   usePlayer() {
     const [fiber] = getCurrentFiber();
+
     invariant(fiber, 'usePlayer');
 
     return fiber.player;
@@ -108,6 +114,7 @@ export const MountDispatcher: Dispatcher = {
 
   useExit() {
     const [fiber] = getCurrentFiber();
+
     invariant(fiber, 'useExit');
 
     return (): void => {
@@ -141,6 +148,7 @@ export const MountDispatcher: Dispatcher = {
 export const UpdateDispatcher: Dispatcher = {
   useState<T>(initial: T | (() => T)) {
     const [fiber] = getCurrentFiber();
+
     invariant(fiber, 'useState');
 
     const slot = nextHookSlot(fiber, 'state');
@@ -157,7 +165,7 @@ export const UpdateDispatcher: Dispatcher = {
     }
 
     const setter = (v: T | ((prev: T) => T)): void => {
-      const prevVal = slot.value as T;
+      const prevVal = slot.value;
       const nextVal = isFunction(v) ? v(prevVal) : v;
 
       if (!Object.is(nextVal, prevVal)) {
@@ -171,11 +179,12 @@ export const UpdateDispatcher: Dispatcher = {
       }
     };
 
-    return [slot.value as T, setter];
+    return [slot.value, setter];
   },
 
   useEffect(effect: () => (() => void) | void, deps?: readonly unknown[]) {
     const [fiber] = getCurrentFiber();
+
     invariant(fiber, 'useEffect');
 
     const slotIndex = fiber.hookIndex;
@@ -218,6 +227,7 @@ export const UpdateDispatcher: Dispatcher = {
 
   useRef<T>(initial: T) {
     const [fiber] = getCurrentFiber();
+
     invariant(fiber, 'useRef');
 
     const slot = nextHookSlot(fiber, 'ref');
@@ -226,15 +236,16 @@ export const UpdateDispatcher: Dispatcher = {
       slot.value = { current: initial };
     }
 
-    return slot.value as { current: T };
+    return slot.value;
   },
 
   useContext<T>(ctx: Context<T>) {
     const [fiber] = getCurrentFiber();
+
     invariant(fiber, 'useContext');
 
     const slot = nextHookSlot(fiber, 'context');
-    const value = (fiber.contextSnapshot?.get(ctx as Context<unknown>) as T) ?? ctx.defaultValue;
+    const value = (fiber.contextSnapshot?.get(ctx as Context<unknown>)) ?? ctx.defaultValue;
 
     slot.value = value;
 
@@ -243,6 +254,7 @@ export const UpdateDispatcher: Dispatcher = {
 
   useReducer<S, A>(reducer: (s: S, a: A) => S, initial: S) {
     const [fiber] = getCurrentFiber();
+
     invariant(fiber, 'useReducer');
 
     const slot = nextHookSlot(fiber, 'reducer');
@@ -257,7 +269,7 @@ export const UpdateDispatcher: Dispatcher = {
     }
 
     const dispatch = (action: A): void => {
-      const prevVal = slot.value as S;
+      const prevVal = slot.value;
       const nextVal = reducer(prevVal, action);
 
       if (!Object.is(nextVal, prevVal)) {
@@ -271,11 +283,12 @@ export const UpdateDispatcher: Dispatcher = {
       }
     };
 
-    return [slot.value as S, dispatch];
+    return [slot.value, dispatch];
   },
 
   usePlayer() {
     const [fiber] = getCurrentFiber();
+
     invariant(fiber, 'usePlayer');
 
     return fiber.player;
@@ -283,6 +296,7 @@ export const UpdateDispatcher: Dispatcher = {
 
   useExit() {
     const [fiber] = getCurrentFiber();
+
     invariant(fiber, 'useExit');
 
     return (): void => {
