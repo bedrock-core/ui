@@ -21,14 +21,11 @@ function resolveSide(specific: Percent | undefined, shorthand: Percent | undefin
 }
 
 /**
- * Converts JSX element tree to FlexTarget tree for layout calculation
+ * Converts JSX element tree to FlexTarget tree for layout calculation.
+ * Uses funcW/funcH for percentage-based sizing relative to parent.
+ * Root is always 100x100 (100% of screen), children default to fit-to-contents (0).
  */
-function buildFlexTree(
-  element: JSX.Element,
-  parent?: FlexTarget,
-  parentWidth: number = 100,
-  parentHeight: number = 100,
-): FlexTarget {
+function buildFlexTree(element: JSX.Element, parent?: FlexTarget): FlexTarget {
   const node = new FlexTarget();
   const props = element.props;
   const layout = (props.__layout || {}) as Partial<LayoutProps>;
@@ -68,7 +65,7 @@ function buildFlexTree(
     node.flexItem.marginBottom = resolveSide(layout.marginBottom, layout.margin);
     node.flexItem.marginLeft = resolveSide(layout.marginLeft, layout.margin);
 
-    // Min/max constraints
+    // Min/max constraints (use funcW/funcH for percentage-based constraints)
     if (layout.minWidth !== undefined) {
       node.flexItem.minWidth = toNumber(layout.minWidth);
     }
@@ -86,18 +83,39 @@ function buildFlexTree(
     }
   }
 
-  // Apply base dimensions (convert Percent to number, 0 = fit-to-contents)
-  node.w = toNumber(props.width || `${parentWidth}%`);
-  node.h = toNumber(props.height || `${parentHeight}%`);
+  // Apply dimensions using funcW/funcH for percentage-based sizing
+  // Root: always 100x100 (100% of screen)
+  // Children: default to 100% of parent (fit-to-contents doesn't work in percentage-based systems)
+  if (!parent) {
+    // Root node: fill entire container (100x100 = 100% of screen)
+    node.w = 100;
+    node.h = 100;
+  } else {
+    // Child nodes: use relative functions for percentage-based sizing
+    // Default to 100% of parent if not specified (fit-to-contents doesn't work without intrinsic sizes)
+    if (props.width !== undefined) {
+      const widthPercent = toNumber(props.width) / 100; // "50%" → 0.5
 
-  // Calculate node dimensions for children percentage resolution
-  const nodeWidth = node.w;
-  const nodeHeight = node.h;
+      node.funcW = (parentW: number): number => parentW * widthPercent;
+    } else {
+      // Default: 100% of parent width
+      node.funcW = (parentW: number): number => parentW;
+    }
+
+    if (props.height !== undefined) {
+      const heightPercent = toNumber(props.height) / 100; // "50%" → 0.5
+
+      node.funcH = (_parentW: number, parentH: number): number => parentH * heightPercent;
+    } else {
+      // Default: 100% of parent height
+      node.funcH = (_parentW: number, parentH: number): number => parentH;
+    }
+  }
 
   // Process children recursively
   if (Array.isArray(element.props.children)) {
     element.props.children.forEach((child) => {
-      const childNode = buildFlexTree(child, node, nodeWidth, nodeHeight);
+      const childNode = buildFlexTree(child, node);
 
       node.addChild(childNode);
     });
@@ -108,11 +126,11 @@ function buildFlexTree(
 
 /**
  * Applies computed layout values back to element tree.
- * Converts relative (parent-based) coordinates from flexbox to absolute (screen-origin) coordinates
- * by accumulating parent offsets.
+ * flexbox.js returns positions relative to parent, so we accumulate
+ * parent offsets to get absolute screen positions.
  *
  * @param element - JSX element to apply layout to
- * @param flexNode - Computed flexbox node
+ * @param flexNode - Computed flexbox node with layout results
  * @param parentAbsX - Parent's absolute X position (default: 0)
  * @param parentAbsY - Parent's absolute Y position (default: 0)
  */
@@ -123,19 +141,18 @@ function applyLayoutToElements(
   parentAbsY: number = 0,
 ): void {
   Logger.error(`Flex Node: ${flexNode.toString()}`);
-
-  // Get relative position from flexbox (relative to parent, 0-100 scale)
+  // Get position relative to parent from flexbox
   const relativeX = flexNode.getLayoutX();
   const relativeY = flexNode.getLayoutY();
   const width = flexNode.getLayoutW();
   const height = flexNode.getLayoutH();
 
-  // Convert to absolute position (relative to screen origin)
-  // Child's absolute position = parent's absolute position + (child's relative position as fraction of parent size)
-  const absoluteX = parentAbsX + (relativeX / 100) * width;
-  const absoluteY = parentAbsY + (relativeY / 100) * height;
+  // Convert to absolute position (screen coordinates)
+  // Simply add parent's absolute position since we're in the same 0-100 scale
+  const absoluteX = parentAbsX + relativeX;
+  const absoluteY = parentAbsY + relativeY;
 
-  // Store absolute coordinates (0-100 scale) for serialization
+  // Store absolute coordinates for serialization
   element.props.jsonUIx = absoluteX;
   element.props.jsonUIy = absoluteY;
   element.props.jsonUIWidth = width;
@@ -153,25 +170,20 @@ function applyLayoutToElements(
 
 /**
  * Computes layout for element tree using flexbox algorithm.
- * Converts Percent values to numbers on 0-100 scale and calculates final positions.
+ * Root is always 100x100 (100% of screen), children default to fit-to-contents.
+ * Uses funcW/funcH for percentage-based sizing relative to parent.
  *
  * @param element - Root JSX element to compute layout for
- * @param containerWidth - Container width as percentage (default: 100 for 100%)
- * @param containerHeight - Container height as percentage (default: 100 for 100%)
- * @returns Element tree with computed x, y, width, height as percentage values (0-100)
+ * @returns Element tree with computed jsonUIx, jsonUIy, jsonUIWidth, jsonUIHeight (0-100 scale)
  */
-export function computeLayout(
-  element: JSX.Element,
-  containerWidth: number = 100,
-  containerHeight: number = 100,
-): JSX.Element {
-  // Build FlexTarget tree
-  const flexRoot = buildFlexTree(element, undefined, containerWidth, containerHeight);
+export function computeLayout(element: JSX.Element): JSX.Element {
+  // Build FlexTarget tree (root is always 100x100)
+  const flexRoot = buildFlexTree(element);
 
   // Calculate layout
   flexRoot.update();
 
-  // Apply computed positions back to elements (as numbers now)
+  // Apply computed positions back to elements
   applyLayoutToElements(element, flexRoot);
 
   return element;

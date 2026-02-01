@@ -6,27 +6,35 @@ export class Logger {
   }
 
   static log(args: string): void {
-    if (!Logger.enabled) return;
+    if (!Logger.enabled) {
+      return;
+    }
+
+    // eslint-disable-next-line no-console
     console.log(args);
   }
 
   static info(args: string): void {
-    if (!Logger.enabled) return;
+    if (!Logger.enabled) {
+      return;
+    }
+
     console.info(args);
   }
 
   static warn(args: string): void {
-    if (!Logger.enabled) return;
+    if (!Logger.enabled) {
+      return;
+    }
+
     console.warn(args);
   }
 
   static error(args: string): void {
-    if (!Logger.enabled) return;
-    console.error(args);
-  }
+    if (!Logger.enabled) {
+      return;
+    }
 
-  static debug(args: string): void {
-    if (!Logger.enabled) return;
-    console.debug(args);
+    console.error(args);
   }
 }

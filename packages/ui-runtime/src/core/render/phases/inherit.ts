@@ -61,12 +61,11 @@ export function applyInheritance(element: JSX.Element, context: TraversalContext
     };
   }
 
-  const newProps = { ...props };
+  let newProps = { ...props };
 
   if (isControlled(props)) {
     // Apply inheritance rules to this element
-    // Reassign to infer type
-    const newProps = { ...props };
+    newProps = { ...props };
 
     // Rule 1: visible = child_visible AND parent_visible
     if (!parentState.visible) {

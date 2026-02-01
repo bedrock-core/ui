@@ -23,7 +23,7 @@ export function FlexTest(): JSX.Element {
       </Panel>
 
       {/* Row 2: Different flex grow values */}
-      <Panel display={'flex'} flexDirection={'row'} gap={'5%'} flexGrow={1}>
+      {/* <Panel display={'flex'} flexDirection={'row'} gap={'5%'} flexGrow={1}>
         <Panel flexGrow={1}>
           <Text>{'Grow 1'}</Text>
         </Panel>
@@ -33,10 +33,10 @@ export function FlexTest(): JSX.Element {
         <Panel flexGrow={1}>
           <Text>{'Grow 1'}</Text>
         </Panel>
-      </Panel>
+      </Panel> */}
 
       {/* Row 3: Column layout with different alignments */}
-      <Panel display={'flex'} flexDirection={'row'} gap={'5%'} flexGrow={1}>
+      {/* <Panel display={'flex'} flexDirection={'row'} gap={'5%'} flexGrow={1}>
         <Panel display={'flex'} flexDirection={'column'} gap={'3%'} flexGrow={1} justifyContent={'flex-start'}>
           <Text>{'Start'}</Text>
           <Text>{'Aligned'}</Text>
@@ -49,10 +49,10 @@ export function FlexTest(): JSX.Element {
           <Text>{'End'}</Text>
           <Text>{'Aligned'}</Text>
         </Panel>
-      </Panel>
+      </Panel> */}
 
       {/* Row 4: Mixed sizes with padding */}
-      <Panel display={'flex'} flexDirection={'row'} gap={'5%'} flexGrow={1}>
+      {/* <Panel display={'flex'} flexDirection={'row'} gap={'5%'} flexGrow={1}>
         <Panel padding={'5%'} flexGrow={1}>
           <Text>{'Padded'}</Text>
         </Panel>
@@ -62,7 +62,7 @@ export function FlexTest(): JSX.Element {
         <Panel padding={'5%'} flexGrow={1}>
           <Text>{'Padded'}</Text>
         </Panel>
-      </Panel>
+      </Panel> */}
     </Panel>
   );
 }
