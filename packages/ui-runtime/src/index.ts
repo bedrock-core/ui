@@ -13,8 +13,16 @@ export type {
   PanelProps,
   TextProps,
   ControlProps,
-  Percent,
+  FlexDirection,
+  JustifyContent,
+  AlignItems,
+  AlignContent,
+  AlignSelf,
+  Display,
+  Spacing,
 } from './components';
+
+export type { Percent } from './util';
 
 export {
   useState,

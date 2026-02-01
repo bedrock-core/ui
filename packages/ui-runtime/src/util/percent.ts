@@ -7,7 +7,12 @@
  * - Parent containers scaled to 100% to accommodate 100x values
  */
 
-import type { Percent } from '../components/control';
+/**
+ * Percentage type: string in format "${number}%" (e.g., "50.25%", "100%")
+ * Values are floored to 2 decimal places.
+ * Before serialization, decimals are removed by multiplying by 100.
+ */
+export type Percent = `${number}%`;
 
 /**
  * Convert percentage string to number (functional, pure).
@@ -49,15 +54,39 @@ export function toPercent(value: number): Percent {
  * so we convert 50.25 → 5025.
  *
  * @param value - Percentage string (e.g., "50.25%")
- * @returns Scaled integer (e.g., 5025)
+ * @returns Scaled integer value (e.g., 5025)
  *
  * @example
  * scaleForSerialization("50.25%") // 5025
  * scaleForSerialization("100%")   // 10000
- * scaleForSerialization("0.12%")  // 12
+ * scaleForSerialization("0%")     // 0
  */
 export function scaleForSerialization(value: Percent): number {
-  const num = toNumber(value);
+  return Math.floor(toNumber(value) * 100);
+}
 
-  return Math.floor(num * 100); // Multiply by 100 and ensure integer
+/**
+ * Converts a Percent value to pixels based on parent size.
+ * Used during layout computation to resolve percentage values to absolute pixels.
+ *
+ * @param value - The Percent value to resolve (number or percentage string)
+ * @param parentSize - The parent's size in pixels for percentage calculation
+ * @returns The resolved value in pixels
+ *
+ * @example
+ * resolvePercent(100, 200) // 100 pixels
+ * resolvePercent("50%", 200) // 100 pixels (50% of 200)
+ * resolvePercent("25%", 400) // 100 pixels (25% of 400)
+ * resolvePercent(undefined, 200) // 0 (undefined = auto-size)
+ */
+export function resolvePercent(value: Percent | number | undefined, parentSize: number): number {
+  if (value === undefined) {
+    return 0;
+  }
+
+  if (typeof value === 'string' && value.endsWith('%')) {
+    return (toNumber(value) / 100) * parentSize;
+  }
+
+  return value as number;
 }

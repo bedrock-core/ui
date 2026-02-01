@@ -1,7 +1,6 @@
 import type { JSX } from '../../../jsx';
 import { type ParentState, type TraversalContext } from '../traversal';
-import { toNumber, toPercent, scaleForSerialization } from '../../../util/percent';
-import type { Percent } from '../../../components/control';
+import { toNumber, toPercent, scaleForSerialization, type Percent } from '../../../util/percent';
 
 /**
  * Phase 3: Apply parent-child inheritance rules

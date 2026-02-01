@@ -104,6 +104,7 @@ __metadata:
     "@minecraft/server": "npm:^2.4.0"
     "@minecraft/server-ui": "npm:^2.0.0"
     "@vitest/coverage-v8": "npm:^4.0.18"
+    flexbox.js: "patch:flexbox.js@npm%3A1.0.17#~/.yarn/patches/flexbox.js-npm-1.0.17-a7cbd69a00.patch"
     typescript: "npm:^5.9.3"
     vitest: "npm:^4.0.18"
   peerDependencies:
@@ -1968,6 +1969,20 @@ __metadata:
   version: 3.3.3
   resolution: "flatted@npm:3.3.3"
   checksum: 10c0/e957a1c6b0254aa15b8cce8533e24165abd98fadc98575db082b786b5da1b7d72062b81bfdcd1da2f4d46b6ed93bec2434e62333e9b4261d79ef2e75a10dd538
+  languageName: node
+  linkType: hard
+
+"flexbox.js@npm:1.0.17":
+  version: 1.0.17
+  resolution: "flexbox.js@npm:1.0.17"
+  checksum: 10c0/e91e76f42587b32d379ed34788ca8590ff5de919ae4b78b6f7d6fc5fb3121414b97a2835dd06b6ac7bf2063fb4a48a9966a50fc93fb4903ccf9f23de2459cd65
+  languageName: node
+  linkType: hard
+
+"flexbox.js@patch:flexbox.js@npm%3A1.0.17#~/.yarn/patches/flexbox.js-npm-1.0.17-a7cbd69a00.patch":
+  version: 1.0.17
+  resolution: "flexbox.js@patch:flexbox.js@npm%3A1.0.17#~/.yarn/patches/flexbox.js-npm-1.0.17-a7cbd69a00.patch::version=1.0.17&hash=891c23"
+  checksum: 10c0/464136aeb8fe41c09708fb401f536448460d8a2c6fe16c80460eb6217d15f8af791951a349ec384b0aa5d55313575c532533f807209f53dff5d27f01b5cc56fd
   languageName: node
   linkType: hard
 

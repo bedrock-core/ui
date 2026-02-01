@@ -1,0 +1,16 @@
+diff --git a/package.json b/package.json
+index 68235baedcf533d5a679cee677d069b9ff7b8a70..544008a47258d1cc39da1bb0ff64b50dd63f1f34 100644
+--- a/package.json
++++ b/package.json
+@@ -32,6 +32,11 @@
+     "license": "apache",
+     "main": "cjs/index.js",
+     "module": "esm/index.js",
++    "exports": {
++        ".": {
++            "default": "./esm/index.js"
++        }
++    },
+     "jsdelivr": "dist/flexbox.js.js",
+     "unpkg": "dist/flexbox.js.js",
+     "repository": "github:Planning-nl/flexbox.js",

@@ -1,7 +1,7 @@
 import { type Player } from '@minecraft/server';
 import type { JSX } from '../../jsx';
 import { deleteFiber, getFibersForPlayer } from '../fabric';
-import { applyInheritance, expandAndResolveContexts } from './phases';
+import { applyInheritance, expandAndResolveContexts, computeLayout } from './phases';
 import { createInitialContext, createRootContext, type TraversalContext } from './traversal';
 
 /**
@@ -13,9 +13,10 @@ import { createInitialContext, createRootContext, type TraversalContext } from '
  * Phase 1 (Rendering - this function): Build tree, create instances, initialize hooks
  * Phase 2 (Logic - background): Effects run while form is displayed
  *
- * Three-phase tree building:
+ * Four-phase tree building:
  * Phase 1: Expand function components and resolve contexts
- * Phase 2: Apply parent-child inheritance rules (visibility, enabled, relative positioning)
+ * Phase 2: Compute layout using flexbox algorithm (Percent → pixels, positions calculated)
+ * Phase 3: Apply parent-child inheritance rules (visibility, enabled)
  *
  * @param element - Root JSX element to build
  * @param player - Player rendering the component
@@ -39,7 +40,12 @@ export function buildTree(element: JSX.Element, player: Player): JSX.Element {
   // This creates instances for ALL components in the tree
   let result: JSX.Element = expandAndResolveContexts(element, context, player);
 
-  // Phase 2: Apply parent-child inheritance rules (visibility, enabled, relative positioning)
+  // Phase 2: Compute layout using flexbox algorithm
+  // Converts Percent values to pixels and calculates x/y positions
+  // Default container is 512x512 (Minecraft form size)
+  result = computeLayout(result);
+
+  // Phase 3: Apply parent-child inheritance rules (visibility, enabled)
   // Initialize with root parent state
   const rootContext = createRootContext(context);
 

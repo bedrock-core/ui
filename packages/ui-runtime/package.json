@@ -57,5 +57,8 @@
   "peerDependencies": {
     "@minecraft/server": "*",
     "@minecraft/server-ui": "*"
+  },
+  "dependencies": {
+    "flexbox.js": "patch:flexbox.js@npm%3A1.0.17#~/.yarn/patches/flexbox.js-npm-1.0.17-a7cbd69a00.patch"
   }
 }

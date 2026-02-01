@@ -1,5 +1,15 @@
 // Component utilities
-export { withControl, type ControlProps, type Percent } from './control';
+export {
+  withControl,
+  type ControlProps,
+  type FlexDirection,
+  type JustifyContent,
+  type AlignItems,
+  type AlignContent,
+  type AlignSelf,
+  type Display,
+  type Spacing,
+} from './control';
 
 // Components
 export { Button, type ButtonProps } from './Button';

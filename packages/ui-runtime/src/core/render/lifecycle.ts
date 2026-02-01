@@ -2,8 +2,8 @@ import type { Player } from '@minecraft/server';
 import type { FunctionComponent, JSX } from '../../jsx';
 import { startInputLock } from '../../util';
 import { present } from './presenter';
-import { buildTree } from './tree';
 import { setBuildRunner, setPlayerRoot, triggerCleanup } from './session';
+import { buildTree } from './tree';
 
 export function render(
   root: JSX.Element | FunctionComponent,
