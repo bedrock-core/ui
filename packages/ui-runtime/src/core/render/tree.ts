@@ -38,11 +38,13 @@ export function buildTree(element: JSX.Element, player: Player): JSX.Element {
 
   // Phase 1: Expand function components and resolve contexts
   // This creates instances for ALL components in the tree
+  // Returns "LayoutProps"
   let result: JSX.Element = expandAndResolveContexts(element, context, player);
 
   // Phase 2: Compute layout using flexbox algorithm
   // Converts Percent values to 0-100 scale and calculates x/y positions
   // Default container is 100% (0-100 scale)
+  // Returns "NormalizedControlProps"
   result = computeLayout(result);
 
   // Phase 3: Apply parent-child inheritance rules (visibility, enabled)

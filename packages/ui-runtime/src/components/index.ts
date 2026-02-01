@@ -9,7 +9,6 @@ export {
   type AlignContent,
   type AlignSelf,
   type Display,
-  type Spacing,
 } from './layout';
 
 // Components

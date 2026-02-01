@@ -3,6 +3,7 @@ import { ButtonPushAfterEvent, Entity, Player, world } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
 import { MinecraftBlockTypes, MinecraftEntityTypes } from '@minecraft/vanilla-data';
 import { Example } from './UI/Example';
+import { FlexTest } from './UI/FlexTest';
 
 const isPlayer = (source: Entity): source is Player => source.typeId === MinecraftEntityTypes.Player;
 
@@ -16,9 +17,9 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
     //   render(LayoutTest, source);
     // }
 
-    // if (block.typeId === MinecraftBlockTypes.BirchButton) {
-    //   render(FlexTest, source);
-    // }
+    if (block.typeId === MinecraftBlockTypes.BirchButton) {
+      render(FlexTest, source);
+    }
 
     if (block.typeId === MinecraftBlockTypes.AcaciaButton) {
       const form = new ActionFormData();

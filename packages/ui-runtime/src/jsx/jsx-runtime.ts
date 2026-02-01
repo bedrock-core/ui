@@ -2,7 +2,7 @@
 import { ControlProps } from '../components';
 import { Fragment as FragmentComponent } from '../components/Fragment';
 
-interface NativeNode<P extends JSX.Props = JSX.Props> {
+export interface NativeNode<P extends JSX.Props = JSX.Props> {
   type: string | FunctionComponent<P>;
   props: P;
 }
@@ -10,7 +10,7 @@ interface NativeNode<P extends JSX.Props = JSX.Props> {
 export namespace JSX {
   export type Element = NativeNode;
   export type Node = Element | Element[] | string | null | undefined;
-  export type Props = { [key: string]: unknown } & { children?: Node } & ControlProps;
+  export type Props = ControlProps & { [key: string]: unknown } & { children?: Node };
 }
 
 export type FunctionComponent<P = JSX.Props> = (props: P) => JSX.Element;

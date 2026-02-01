@@ -78,10 +78,10 @@ export function withControl(props: JSX.Props): JSX.Props {
   // x, y will be set by layout phase (computeLayout)
   return {
     // Defaults, computed by layout phase
-    width: '100%',
-    height: '100%',
-    x: '0%',
-    y: '0%',
+    jsonUIWidth: 100,
+    jsonUIHeight: 100,
+    jsonUIx: 0,
+    jsonUIy: 0,
 
     // Control props
     visible: visible ?? true,
@@ -125,4 +125,20 @@ export function withControl(props: JSX.Props): JSX.Props {
       maxHeight,
     },
   };
+}
+
+interface JSONUILayoutProps extends JSX.Props {
+  jsonUIx: number;
+  jsonUIy: number;
+  jsonUIWidth: number;
+  jsonUIHeight: number;
+}
+
+export function isControlled(props: JSX.Props): props is JSONUILayoutProps {
+  return (
+    typeof props.jsonUIx === 'number'
+    && typeof props.jsonUIy === 'number'
+    && typeof props.jsonUIWidth === 'number'
+    && typeof props.jsonUIHeight === 'number'
+  );
 }

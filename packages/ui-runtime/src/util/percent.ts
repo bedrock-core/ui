@@ -79,14 +79,10 @@ export function scaleForSerialization(value: Percent): number {
  * resolvePercent("25%", 400) // 100 pixels (25% of 400)
  * resolvePercent(undefined, 200) // 0 (undefined = auto-size)
  */
-export function resolvePercent(value: Percent | number | undefined, parentSize: number): number {
+export function resolvePercent(value: Percent | undefined, parentSize: number): number {
   if (value === undefined) {
     return 0;
   }
 
-  if (typeof value === 'string' && value.endsWith('%')) {
-    return (toNumber(value) / 100) * parentSize;
-  }
-
-  return value as number;
+  return (toNumber(value) / 100) * parentSize;
 }

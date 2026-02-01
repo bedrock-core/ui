@@ -30,7 +30,9 @@ JSX Element Tree
     ↓
 buildTree() (expand components, resolve contexts)
     ↓
-🆕 computeLayout() (flexbox.js calculates positions/sizes)
+🆕 computeLayout() (flexbox.js calculates PARENT-RELATIVE positions/sizes on 0-100 scale)
+    ↓
+✅ applyInheritance() (STILL NEEDED: compounds parent-relative → absolute screen coords)
     ↓
 serialize() (encode computed layout to fixed-width fields)
     ↓
@@ -38,6 +40,8 @@ present() (inject into form.label())
     ↓
 JSON UI decodes & renders
 ```
+
+**Key Understanding:** Layout outputs parent-relative coordinates (each element positioned relative to its parent container), so inheritance MUST still compound these into absolute screen coordinates for serialization.
 
 ### 3. Component Changes
 
@@ -263,14 +267,30 @@ export function buildTree(element: JSX.Element, player: Player): JSX.Element {
   const expanded = expandAndResolveContexts(element, context, player);
   
   // 🆕 Phase 2: Compute layout (NEW!)
+  // Outputs PARENT-RELATIVE positions on 0-100 percentage scale
   const layouted = computeLayout(expanded);
   
-  // Phase 3: Apply inheritance
+  // ✅ Phase 3: Apply inheritance (STILL CRITICAL!)
+  // Compounds parent-relative coords → absolute screen coords
+  // Propagates visible/enabled state
+  // Scales for serialization (×100 to remove decimals)
   const final = applyInheritance(layouted);
   
   return final;
 }
 ```
+
+**Inheritance Responsibilities Remain:**
+
+Both before and after layout system:
+- ✅ visible/enabled propagation (child AND parent)
+- ✅ Position compounding (parent-relative % → absolute screen %)
+- ✅ Serialization scaling (×100 to remove decimals)
+- ✅ Parent state tracking (for compounding child positions)
+
+**What Changed:**
+- **Input source:** Manual JSX props → Layout-computed parent-relative values
+- **Compounding math:** Same formula, different input values
 
 ### 6. Component Usage Example
 
@@ -332,6 +352,141 @@ export function buildTree(element: JSX.Element, player: Player): JSX.Element {
 - Responsive breakpoints
 - Animation/transition support for layout changes
 
+## Inheritance Phase with Layout System
+
+### Problem Statement
+Layout system (flexbox.js) outputs **parent-relative coordinates** (0-100 scale):
+- Each element's x/y is relative to its parent container's top-left corner
+- Each element's width/height is relative to its parent container's dimensions
+
+Example:
+```
+Container (x: "0%", y: "0%", w: "100%", h: "100%")
+  └─ Child (x: "10%", y: "20%", w: "50%", h: "30%")
+     └─ Grandchild (x: "5%", y: "10%", w: "80%", h: "50%")
+```
+
+**Inheritance must compound these parent-relative values into absolute screen coordinates** for JSON UI rendering.
+
+### Compounding Formula (Unchanged)
+
+Layout changes the INPUT values but the compounding math remains identical:
+
+```typescript
+// Position: compound relative with parent's absolute position and dimensions
+absoluteX = parentAbsoluteX + (childRelativeX / 100 * parentAbsoluteWidth)
+absoluteY = parentAbsoluteY + (childRelativeY / 100 * parentAbsoluteHeight)
+
+// Size: compound relative with parent's absolute dimensions  
+absoluteWidth = (childRelativeWidth / 100) * parentAbsoluteWidth
+absoluteHeight = (childRelativeHeight / 100) * parentAbsoluteHeight
+```
+
+**Example:**
+```
+Parent absolute: x=0, y=0, w=100, h=100
+Child relative:  x="10%", y="20%", w="50%", h="30%"
+    ↓
+Child absolute:  x=10, y=20, w=50, h=30
+
+Grandchild relative: x="5%", y="10%", w="80%", h="50%"
+    ↓ (compound with child's absolute: x=10, y=20, w=50, h=30)
+Grandchild absolute: x=12.5, y=23, w=40, h=15
+```
+
+### Inheritance Keeps ALL Responsibilities
+
+**File:** `src/core/render/phases/inherit.ts` (existing logic works correctly)
+
+```typescript
+/**
+ * Phase 3: Apply parent-child inheritance rules AFTER layout computation
+ * 
+ * Layout outputs parent-relative coords (0-100 scale), inheritance compounds to absolute:
+ * - visible: child AND parent (if parent invisible, child is invisible)
+ * - enabled: child AND parent (if parent disabled, child is disabled)
+ * - Position compounding: parent-relative % → absolute screen % via parent state
+ * - Serialization scaling: ×100 to remove decimals (50.25 → 5025)
+ *
+ * @param element - Element with layout-computed parent-relative positions ("N%" strings)
+ * @param context - Traversal context with parentState (absolute coords from parent)
+ * @returns Element with absolute screen coords and inherited visibility/enabled
+ */
+export function applyInheritance(element: JSX.Element, context: TraversalContext): JSX.Element {
+  const parentState = context.parentState ?? {
+    visible: true,
+    enabled: true,
+    x: 0,      // Absolute screen coords
+    y: 0,
+    width: 100,
+    height: 100,
+    position: 'relative',
+  };
+
+  // ... existing logic for visible/enabled propagation ...
+
+  // Compound layout's parent-relative values into absolute screen coords
+  const relativeX = toNumber((newProps.x ?? '0%') as Percent);
+  const relativeY = toNumber((newProps.y ?? '0%') as Percent);
+  const relativeWidth = toNumber((newProps.width ?? '100%') as Percent);
+  const relativeHeight = toNumber((newProps.height ?? '100%') as Percent);
+
+  // Same compounding formula as before
+  const absoluteX = parentState.x + ((relativeX / 100) * parentState.width);
+  const absoluteY = parentState.y + ((relativeY / 100) * parentState.height);
+  const absoluteWidth = (relativeWidth / 100) * parentState.width;
+  const absoluteHeight = (relativeHeight / 100) * parentState.height;
+
+  // Scale by 100x for serialization (50.25 → 5025)
+  newProps.x = scaleForSerialization(toPercent(absoluteX));
+  newProps.y = scaleForSerialization(toPercent(absoluteY));
+  newProps.width = scaleForSerialization(toPercent(absoluteWidth));
+  newProps.height = scaleForSerialization(toPercent(absoluteHeight));
+
+  // Create child parent state using THIS element's absolute coords
+  const childParentState: ParentState = {
+    visible: (newProps.visible ?? true) as boolean,
+    enabled: (newProps.enabled ?? true) as boolean,
+    // Store unscaled absolute values for children to compound against
+    x: absoluteX,
+    y: absoluteY,
+    width: absoluteWidth,
+    height: absoluteHeight,
+    position: 'relative',
+  };
+
+  // ... process children with childParentState ...
+}
+```
+
+### ParentState Type (Unchanged)
+
+**File:** `src/core/render/traversal.ts` (no changes needed)
+
+```typescript
+export interface ParentState {
+  visible: boolean;
+  enabled: boolean;
+  x: number;        // ✅ NEEDED - absolute screen coord for compounding
+  y: number;        // ✅ NEEDED - absolute screen coord for compounding
+  width: number;    // ✅ NEEDED - absolute dimension for compounding
+  height: number;   // ✅ NEEDED - absolute dimension for compounding
+  position: 'relative' | 'absolute';
+}
+```
+
+### What Actually Changed
+
+**Before layout system:**
+- Input: Manual JSX props (user-specified percentages)
+- Inheritance: Compounds manual values → absolute coords
+
+**After layout system:**
+- Input: Layout-computed parent-relative percentages (flexbox output)
+- Inheritance: Compounds layout values → absolute coords (same math!)
+
+**The inheritance logic is identical** - only the source of relative values changed from manual JSX to computed layout.
+
 ## Questions for Validation
 
 1. ~~Should layout computation happen on every render or cache results?~~ → Every render (forms are ephemeral)
@@ -340,3 +495,15 @@ export function buildTree(element: JSX.Element, player: Player): JSX.Element {
 4. Performance impact of layout calculation per-frame? → Monitor, optimize if needed
 5. Should we support `display="block"`? → Start with flex only, add block later if needed
 6. Default container size for root element? → Use Minecraft form dimensions (512x512 or configurable)
+7. ~~Should inheritance still track parent dimensions?~~ → **YES - layout outputs parent-relative coords, inheritance MUST compound to absolute**
+8. How to handle position="absolute" in layout? → Layout system should handle this (future feature)
+
+## Implementation Checklist
+
+- [x] Understand layout outputs parent-relative coordinates (not absolute)
+- [x] Keep existing inheritance compounding logic (works correctly)
+- [ ] Update `computeLayout()` to ensure it outputs parent-relative 0-100 scale percentages
+- [ ] Ensure `applyInheritance()` receives layout output and compounds correctly
+- [ ] Test complete flow: buildTree → computeLayout → applyInheritance → serialize
+- [ ] Verify position compounding produces correct absolute screen coordinates
+- [ ] Update tests to reflect layout input values (instead of manual JSX props)
