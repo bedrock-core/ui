@@ -1,4 +1,4 @@
-import { JSX, useState } from '@bedrock-core/ui';
+import { JSX, Panel, useState } from '@bedrock-core/ui';
 import {
   Counter,
   EventCounter,
@@ -27,22 +27,38 @@ export function Example(): JSX.Element {
   return (
     <ThemeContext value={theme}>
       <SettingsContext value={settings}>
-        {/* Row 1: Context and State Demonstrations */}
-        <ThemeDisplay />
-        <SettingsDisplay />
-        <TodoList />
-        <MetadataDisplay />
+        {/* Main flex container - column layout */}
+        <Panel
+          display={'flex'}
+          flexDirection={'column'}
+          padding={'10%'}
+          gap={'10%'}
+          width={'100%'}
+          height={'100%'}
+        >
+          {/* Row 1: Context and State Demonstrations */}
+          <Panel display={'flex'} flexDirection={'row'} gap={'10%'} flexGrow={1}>
+            <ThemeDisplay />
+            <SettingsDisplay />
+            <TodoList />
+            <MetadataDisplay />
+          </Panel>
 
-        {/* Row 2: Effects and Controllers */}
-        <ThemeController onThemeChange={setTheme} />
-        <SettingsController onSettingsChange={setSettings} />
-        <Counter />
+          {/* Row 2: Effects and Controllers */}
+          <Panel display={'flex'} flexDirection={'row'} gap={'10%'} flexGrow={1}>
+            <ThemeController onThemeChange={setTheme} />
+            <SettingsController onSettingsChange={setSettings} />
+            <Counter />
+          </Panel>
 
-        {/* Row 3: Information and Exit */}
-        <InfoPanel />
-        <ResourcesPanel />
-        <EventCounter />
-        <ExitPanel />
+          {/* Row 3: Information and Exit */}
+          <Panel display={'flex'} flexDirection={'row'} gap={'10%'} flexGrow={1}>
+            <InfoPanel />
+            <ResourcesPanel />
+            <EventCounter />
+            <ExitPanel />
+          </Panel>
+        </Panel>
       </SettingsContext>
     </ThemeContext>
   );

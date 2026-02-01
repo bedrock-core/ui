@@ -1,31 +1,27 @@
 import { FlexTarget } from 'flexbox.js';
+import type { LayoutProps } from '../../../components/layout';
 import type { JSX } from '../../../jsx';
+import type { Percent } from '../../../util';
 import { resolvePercent } from '../../../util';
-import type { Spacing } from '../../../components/control';
 
 /**
- * Resolves spacing value (can be single value or object with sides)
+ * Resolves individual padding/margin properties, with fallback to shorthand.
+ * Priority: specific side (paddingTop) > shorthand (padding) > 0
  */
-function resolveSpacing(
-  value: Spacing | undefined,
+function resolveSide(
+  specific: Percent | undefined,
+  shorthand: Percent | undefined,
   parentSize: number,
-): number | { top: number; right: number; bottom: number; left: number } {
-  if (value === undefined) {
-    return 0;
+): number {
+  if (specific !== undefined) {
+    return resolvePercent(specific, parentSize);
   }
 
-  if (typeof value === 'object' && 'top' in value) {
-    // Object with sides
-    return {
-      top: resolvePercent(value.top, parentSize),
-      right: resolvePercent(value.right, parentSize),
-      bottom: resolvePercent(value.bottom, parentSize),
-      left: resolvePercent(value.left, parentSize),
-    };
+  if (shorthand !== undefined) {
+    return resolvePercent(shorthand, parentSize);
   }
 
-  // Single value (number or percentage string) - TypeScript knows it's not an object at this point
-  return resolvePercent(value as number | `${number}%`, parentSize);
+  return 0;
 }
 
 /**
@@ -34,74 +30,63 @@ function resolveSpacing(
 function buildFlexTree(
   element: JSX.Element,
   parent?: FlexTarget,
-  parentWidth: number = 0,
-  parentHeight: number = 0,
+  parentWidth: number = 100,
+  parentHeight: number = 100,
 ): FlexTarget {
   const node = new FlexTarget();
-  const props = element.props as any; // Type cast for __ prefixed internal props
+  const props = element.props;
+  const layout = (props.__layout || {}) as Partial<LayoutProps>;
 
   // Apply display mode
-  if (props.__display === 'flex') {
+  if (layout.display === 'flex') {
     node.flex.enabled = true;
-    node.flex.direction = props.__flexDirection ?? 'row';
-    node.flex.justifyContent = props.__justifyContent ?? 'flex-start';
-    node.flex.alignItems = props.__alignItems ?? 'stretch';
+    node.flex.direction = layout.flexDirection ?? 'row';
+    node.flex.justifyContent = layout.justifyContent ?? 'flex-start';
+    node.flex.alignItems = layout.alignItems ?? 'stretch';
 
-    if (props.__alignContent) {
-      node.flex.alignContent = props.__alignContent;
+    if (layout.alignContent) {
+      node.flex.alignContent = layout.alignContent;
     }
 
-    node.flex.wrap = props.__wrap ?? false;
+    node.flex.wrap = layout.wrap ?? false;
 
-    // Apply padding (convert Percent to number)
-    const padding = resolveSpacing(props.__padding, parentWidth);
-
-    if (typeof padding === 'number') {
-      node.flex.padding = padding;
-    } else {
-      node.flex.paddingTop = padding.top;
-      node.flex.paddingRight = padding.right;
-      node.flex.paddingBottom = padding.bottom;
-      node.flex.paddingLeft = padding.left;
-    }
+    // Apply padding (individual properties take priority over shorthand)
+    node.flex.paddingTop = resolveSide(layout.paddingTop, layout.padding, parentWidth);
+    node.flex.paddingRight = resolveSide(layout.paddingRight, layout.padding, parentWidth);
+    node.flex.paddingBottom = resolveSide(layout.paddingBottom, layout.padding, parentWidth);
+    node.flex.paddingLeft = resolveSide(layout.paddingLeft, layout.padding, parentWidth);
   }
 
   // Apply flex item props (if parent is flex)
   if (parent?.flex.enabled) {
-    node.flexItem.grow = props.__flexGrow ?? 0;
-    node.flexItem.shrink = props.__flexShrink ?? 0;
+    node.flexItem.grow = layout.flexGrow ?? 0;
+    node.flexItem.shrink = layout.flexShrink ?? 0;
 
-    if (props.__alignSelf) {
-      node.flexItem.alignSelf = props.__alignSelf;
+    if (layout.alignSelf && layout.alignSelf !== 'auto') {
+      node.flexItem.alignSelf = layout.alignSelf;
     }
 
-    // Apply margin (convert Percent to number)
-    const margin = resolveSpacing(props.__margin, parentWidth);
-
-    if (typeof margin === 'number') {
-      node.flexItem.margin = margin;
-    } else {
-      node.flexItem.marginTop = margin.top;
-      node.flexItem.marginRight = margin.right;
-      node.flexItem.marginBottom = margin.bottom;
-      node.flexItem.marginLeft = margin.left;
-    }
+    // Apply margin (individual properties take priority over shorthand)
+    node.flexItem.marginTop = resolveSide(layout.marginTop, layout.margin, parentWidth);
+    node.flexItem.marginRight = resolveSide(layout.marginRight, layout.margin, parentWidth);
+    node.flexItem.marginBottom = resolveSide(layout.marginBottom, layout.margin, parentWidth);
+    node.flexItem.marginLeft = resolveSide(layout.marginLeft, layout.margin, parentWidth);
 
     // Min/max constraints
-    if (props.__minWidth !== undefined) {
-      node.flexItem.minWidth = resolvePercent(props.__minWidth, parentWidth);
+    if (layout.minWidth !== undefined) {
+      node.flexItem.minWidth = resolvePercent(layout.minWidth, parentWidth);
     }
 
-    if (props.__minHeight !== undefined) {
-      node.flexItem.minHeight = resolvePercent(props.__minHeight, parentHeight);
+    if (layout.minHeight !== undefined) {
+      node.flexItem.minHeight = resolvePercent(layout.minHeight, parentHeight);
     }
 
-    if (props.__maxWidth !== undefined) {
-      node.flexItem.maxWidth = resolvePercent(props.__maxWidth, parentWidth);
+    if (layout.maxWidth !== undefined) {
+      node.flexItem.maxWidth = resolvePercent(layout.maxWidth, parentWidth);
     }
 
-    if (props.__maxHeight !== undefined) {
-      node.flexItem.maxHeight = resolvePercent(props.__maxHeight, parentHeight);
+    if (layout.maxHeight !== undefined) {
+      node.flexItem.maxHeight = resolvePercent(layout.maxHeight, parentHeight);
     }
   }
 
@@ -116,11 +101,9 @@ function buildFlexTree(
   // Process children recursively
   if (Array.isArray(element.props.children)) {
     element.props.children.forEach((child) => {
-      if (child && typeof child === 'object' && 'type' in child) {
-        const childNode = buildFlexTree(child, node, nodeWidth, nodeHeight);
+      const childNode = buildFlexTree(child, node, nodeWidth, nodeHeight);
 
-        node.addChild(childNode);
-      }
+      node.addChild(childNode);
     });
   }
 
@@ -131,38 +114,36 @@ function buildFlexTree(
  * Applies computed layout values back to element tree
  */
 function applyLayoutToElements(element: JSX.Element, flexNode: FlexTarget): void {
-  // Set computed layout as number values (pixels)
+  // Set computed layout as percentage strings (0-100 scale)
   // These will be serialized to the fixed-width protocol
-  element.props.x = flexNode.getLayoutX();
-  element.props.y = flexNode.getLayoutY();
-  element.props.width = flexNode.getLayoutW();
-  element.props.height = flexNode.getLayoutH();
+  element.props.x = `${flexNode.getLayoutX()}%`;
+  element.props.y = `${flexNode.getLayoutY()}%`;
+  element.props.width = `${flexNode.getLayoutW()}%`;
+  element.props.height = `${flexNode.getLayoutH()}%`;
 
   // Process children
   if (Array.isArray(element.props.children)) {
     const children = flexNode.getChildren();
 
     element.props.children.forEach((child, index) => {
-      if (child && typeof child === 'object' && 'type' in child) {
-        applyLayoutToElements(child, children[index]);
-      }
+      applyLayoutToElements(child, children[index]);
     });
   }
 }
 
 /**
  * Computes layout for element tree using flexbox algorithm.
- * Converts Percent values to pixels and calculates final positions.
+ * Converts Percent values to numbers on 0-100 scale and calculates final positions.
  *
  * @param element - Root JSX element to compute layout for
- * @param containerWidth - Container width in pixels (default: 512 for Minecraft forms)
- * @param containerHeight - Container height in pixels (default: 512 for Minecraft forms)
- * @returns Element tree with computed x, y, width, height as numbers
+ * @param containerWidth - Container width as percentage (default: 100 for 100%)
+ * @param containerHeight - Container height as percentage (default: 100 for 100%)
+ * @returns Element tree with computed x, y, width, height as percentage values (0-100)
  */
 export function computeLayout(
   element: JSX.Element,
-  containerWidth: number = 512,
-  containerHeight: number = 512,
+  containerWidth: number = 100,
+  containerHeight: number = 100,
 ): JSX.Element {
   // Build FlexTarget tree
   const flexRoot = buildFlexTree(element, undefined, containerWidth, containerHeight);

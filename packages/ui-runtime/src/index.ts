@@ -13,6 +13,7 @@ export type {
   PanelProps,
   TextProps,
   ControlProps,
+  LayoutProps,
   FlexDirection,
   JustifyContent,
   AlignItems,

@@ -1,49 +1,9 @@
 import { JSX } from '../jsx/jsx-runtime';
-import type { Percent } from '../util';
+import type { LayoutProps } from './layout';
 
-export type FlexDirection = 'row' | 'row-reverse' | 'column' | 'column-reverse';
-export type JustifyContent = 'flex-start' | 'flex-end' | 'center' | 'space-between' | 'space-around' | 'space-evenly';
-export type AlignItems = 'flex-start' | 'flex-end' | 'center' | 'stretch' | 'baseline';
-export type AlignContent = 'flex-start' | 'flex-end' | 'center' | 'space-between' | 'space-around' | 'stretch';
-export type AlignSelf = 'auto' | 'flex-start' | 'flex-end' | 'center' | 'stretch' | 'baseline';
-export type Display = 'block' | 'flex';
-
-export type Spacing = Percent | number | {
-  top?: Percent | number;
-  right?: Percent | number;
-  bottom?: Percent | number;
-  left?: Percent | number;
-};
-
-export interface ControlProps {
-  // Display and sizing - all use Percent type (number or "50%" string)
-  display?: Display;
-  width?: Percent | number;
-  height?: Percent | number;
+export interface ControlProps extends LayoutProps {
   visible?: boolean;
   enabled?: boolean;
-
-  // Flex container properties
-  flexDirection?: FlexDirection;
-  justifyContent?: JustifyContent;
-  alignItems?: AlignItems;
-  alignContent?: AlignContent;
-  wrap?: boolean;
-  gap?: Percent | number;
-  padding?: Spacing;
-
-  // Flex item properties
-  flexGrow?: number;
-  flexShrink?: number;
-  flexBasis?: Percent | number;
-  alignSelf?: AlignSelf;
-  margin?: Spacing;
-
-  // Size constraints
-  minWidth?: Percent | number;
-  minHeight?: Percent | number;
-  maxWidth?: Percent | number;
-  maxHeight?: Percent | number;
 }
 
 /**
@@ -82,10 +42,11 @@ export interface ControlProps {
  */
 export function withControl(props: JSX.Props): JSX.Props {
   const {
-    width,
-    height,
     visible,
     enabled,
+    // Layout props
+    width,
+    height,
     display,
     flexDirection,
     justifyContent,
@@ -94,11 +55,19 @@ export function withControl(props: JSX.Props): JSX.Props {
     wrap,
     gap,
     padding,
+    paddingTop,
+    paddingRight,
+    paddingBottom,
+    paddingLeft,
     flexGrow,
     flexShrink,
     flexBasis,
     alignSelf,
     margin,
+    marginTop,
+    marginRight,
+    marginBottom,
+    marginLeft,
     minWidth,
     minHeight,
     maxWidth,
@@ -108,11 +77,11 @@ export function withControl(props: JSX.Props): JSX.Props {
   // Create object with properties in exact canonical order for stable serialization
   // x, y will be set by layout phase (computeLayout)
   return {
-    // Computed by layout (defaults for serialization)
-    width: width ?? 0,
-    height: height ?? 0,
-    x: 0, // Computed by layout phase
-    y: 0, // Computed by layout phase
+    // Defaults, computed by layout phase
+    width: '100%',
+    height: '100%',
+    x: '0%',
+    y: '0%',
 
     // Control props
     visible: visible ?? true,
@@ -125,23 +94,35 @@ export function withControl(props: JSX.Props): JSX.Props {
     inheritMaxSiblingHeight: false,
     $reserved: { bytes: 402 }, // Reserve space for future expansion (v0003: 402 bytes)
 
-    // Flex layout props (not serialized, used by layout phase)
-    __display: display ?? 'block',
-    __flexDirection: flexDirection,
-    __justifyContent: justifyContent,
-    __alignItems: alignItems,
-    __alignContent: alignContent,
-    __wrap: wrap,
-    __gap: gap,
-    __padding: padding,
-    __flexGrow: flexGrow,
-    __flexShrink: flexShrink,
-    __flexBasis: flexBasis,
-    __alignSelf: alignSelf,
-    __margin: margin,
-    __minWidth: minWidth,
-    __minHeight: minHeight,
-    __maxWidth: maxWidth,
-    __maxHeight: maxHeight,
+    // Layout props (not serialized, used by layout phase) - stored with __ prefix
+    __layout: {
+      display,
+      width,
+      height,
+      flexDirection,
+      justifyContent,
+      alignItems,
+      alignContent,
+      wrap,
+      gap,
+      padding,
+      paddingTop,
+      paddingRight,
+      paddingBottom,
+      paddingLeft,
+      flexGrow,
+      flexShrink,
+      flexBasis,
+      alignSelf,
+      margin,
+      marginTop,
+      marginRight,
+      marginBottom,
+      marginLeft,
+      minWidth,
+      minHeight,
+      maxWidth,
+      maxHeight,
+    },
   };
 }

@@ -175,13 +175,13 @@ function processChildren(children: JSX.Element[], context: TraversalContext, pla
 }
 
 // Normalizes any valid JSX child(ren) into an array of elements.
-function toChildrenArray(children: unknown): JSX.Element[] {
+function toChildrenArray(children: JSX.Node): JSX.Element[] {
   if (Array.isArray(children)) {
-    return children as JSX.Element[];
+    return children;
   }
 
-  if (children && typeof children === 'object' && 'type' in (children as Record<string, unknown>)) {
-    return [children as JSX.Element];
+  if (children && typeof children === 'object' && 'type' in children) {
+    return [children];
   }
 
   return [];

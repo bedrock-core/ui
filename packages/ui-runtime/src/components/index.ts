@@ -1,15 +1,16 @@
 // Component utilities
+export { withControl, type ControlProps } from './control';
+
 export {
-  withControl,
-  type ControlProps,
+  type LayoutProps,
   type FlexDirection,
-  type JustifyContent,
   type AlignItems,
+  type JustifyContent,
   type AlignContent,
   type AlignSelf,
   type Display,
   type Spacing,
-} from './control';
+} from './layout';
 
 // Components
 export { Button, type ButtonProps } from './Button';
