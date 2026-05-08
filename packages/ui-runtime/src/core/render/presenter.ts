@@ -2,7 +2,7 @@ import type { Player } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
 import type { JSX } from '../../jsx';
 import { getFibersForPlayer } from '../fabric';
-import { PROTOCOL_HEADER, serialize } from '../serializer';
+import { serialize, serializeTitleMetadata } from '../serializer';
 import type { SerializationContext } from '../types';
 import { beginInteractiveTransaction, endInteractiveTransaction } from './session';
 
@@ -16,7 +16,10 @@ export async function present(
   // Snapshot and show
   const form: ActionFormData = new ActionFormData();
 
-  form.title(PROTOCOL_HEADER);
+  // Encode title with protocol header and root content_height metadata
+  const contentHeight = typeof tree.props.jsonUIHeight === 'number' ? tree.props.jsonUIHeight : 0;
+
+  form.title(serializeTitleMetadata(contentHeight));
 
   serialize(tree, form, serializationContext);
 

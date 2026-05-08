@@ -248,3 +248,20 @@ export function serializeProps({ type, ...props }: SerializableProps & { type: s
 
   return [result, finalBytes];
 }
+
+/**
+ * Serialize the form title metadata containing the root content height.
+ * Encodes as: PROTOCOL_HEADER + number field (83 bytes).
+ * The RP reads this from #title_text to size the scrollable content panel.
+ *
+ * @param contentHeight - Root panel computed height in pixels
+ * @returns Full title string for form.title()
+ */
+export function serializeTitleMetadata(contentHeight: number): string {
+  const rawStr = Math.round(contentHeight).toString();
+  // number field: 'n:' prefix (2) + value padded to TYPE_WIDTH.n (80) + marker (1) = 83 bytes
+  const padded = rawStr + PAD_CHAR.repeat(TYPE_WIDTH.n - rawStr.length);
+  const field = `${TYPE_PREFIX.n}:${padded}${FIELD_MARKERS[0]}`;
+
+  return PROTOCOL_HEADER + field;
+}

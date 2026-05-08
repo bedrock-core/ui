@@ -12,7 +12,7 @@ export interface ControlProps extends LayoutProps {
  *
  * SERIALIZATION ORDER (must match control.json deserialization):
  * Protocol v0003 - Layout computed values: x, y, width, height calculated by flex engine
- * After protocol header (9 bytes: "bcuiv0003") and type (string, 83 bytes), fields are serialized in this exact order:
+ * After protocol header (9 bytes: "bcuiv****") and type (string, 83 bytes), fields are serialized in this exact order:
  *
  * Byte Allocation Map (1024-byte control block):
  * [0-8]:     Protocol header (9 bytes)
@@ -100,7 +100,7 @@ export function withControl(props: JSX.Props): JSX.Props {
     alpha: 1.0,
     inheritMaxSiblingWidth: false,
     inheritMaxSiblingHeight: false,
-    $reserved: { bytes: 402 }, // Reserve space for future expansion (v0003: 402 bytes)
+    $reserved: { bytes: 402 }, // Reserve space for future expansion (since v0003: 402 bytes)
 
     // Layout props (not serialized, used by layout phase) - stored with __ prefix
     __layout: {

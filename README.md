@@ -84,9 +84,10 @@ For technical documentation and implementation details, see:
 - [Bedrock Wiki - JSON UI Introduction](https://wiki.bedrock.dev/json-ui/json-ui-intro)
 - [JSON UI Documentation](https://wiki.bedrock.dev/json-ui/json-ui-documentation)
 
-## What about ore-ui?
+## What about ore-ui/DDUI?
 
-When it releases in `Number.MAX_SAFE_INTEGER` years, will consider if it is worth to port for ore-ui.
+**ore-ui**: When it releases in `Number.MAX_SAFE_INTEGER` years, will consider if it is worth to port for ore-ui.
+**DDUI**: It cannot be made compatible, DDUI does not use JSON UI so we cannot use the same methods.
 
 ## Notes
 Common web behaviour is one web has a single or multiple theme but all controlled by the same team/person.
