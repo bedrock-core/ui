@@ -3,7 +3,6 @@ import { JSX } from '../jsx';
 import { isFunction, isSerializablePrimitive } from './guards';
 import { SerializablePrimitive, SerializableProps, SerializationContext, SerializationError } from './types';
 import { TRANSPARENT_TYPES, WRITERS } from './writers';
-import { Logger } from '../util';
 
 /**
  * This makes each full field substring unique even when two field values & padding are identical.
@@ -177,9 +176,7 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
     );
   }
 
-  const [payload, bytes] = serializeProps({ type, ...serializableProps });
-
-  Logger.error(`[serialize] type=${type} payloadBytes=${bytes} payload=${payload} `);
+  const [payload] = serializeProps({ type, ...serializableProps });
 
   const writer = WRITERS[type];
 
