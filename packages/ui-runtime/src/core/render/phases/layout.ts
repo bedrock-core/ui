@@ -1,6 +1,8 @@
-import { computeLayout as flexComputeLayout, createNode } from '@bedrock-core/flexbox';
 import type { FlexStyle, LayoutNode } from '@bedrock-core/flexbox';
+import { createNode, computeLayout as flexComputeLayout } from '@bedrock-core/flexbox';
+import { TextFont } from '@bedrock-core/ui/components/Text';
 import type { JSX } from '../../../jsx';
+import { measureText } from '../../../util/textMetrics';
 
 // ─── Transparent element types that don't participate in layout ────────────────
 
@@ -40,12 +42,82 @@ function collectConcrete(element: JSX.Element): JSX.Element[] {
   return [element];
 }
 
+interface TextMetricsData {
+  text: string;
+  font?: TextFont;
+}
+
+function extractTextMetrics(props: JSX.Props): TextMetricsData {
+  const text = typeof props.value === 'string' ? props.value : '';
+  const metrics = props.__textMetrics;
+  const isMetricsObject = metrics && typeof metrics === 'object' && !Array.isArray(metrics);
+  const font = isMetricsObject ? Reflect.get(metrics, 'font') : undefined;
+
+  return {
+    text,
+    font: font === 'mojangles' || font === 'minecraft-ten'
+      ? font
+      : undefined,
+  };
+}
+
+// Default padding added around button text labels when no explicit size is given.
+const BUTTON_PAD_H = 8; // left + right each side
+const BUTTON_PAD_V = 4; // top + bottom each side
+
+function withIntrinsicSize(element: JSX.Element, style: FlexStyle): FlexStyle {
+  if (style.width !== undefined && style.height !== undefined) {
+    return style;
+  }
+
+  if (element.type === 'text') {
+    const textData = extractTextMetrics(element.props);
+    const dims = measureText({
+      text: textData.text,
+      font: textData.font,
+    });
+    const next: FlexStyle = { ...style };
+
+    if (next.width === undefined) {
+      next.width = dims.width;
+    }
+
+    if (next.height === undefined) {
+      next.height = dims.height;
+    }
+
+    return next;
+  }
+
+  if (element.type === 'button') {
+    const label = element.props.children;
+
+    if (typeof label === 'string' && label.length > 0) {
+      const dims = measureText({ text: label });
+      const next: FlexStyle = { ...style };
+
+      if (next.width === undefined) {
+        next.width = dims.width + BUTTON_PAD_H * 2;
+      }
+
+      if (next.height === undefined) {
+        next.height = dims.height + BUTTON_PAD_V * 2;
+      }
+
+      return next;
+    }
+  }
+
+  return style;
+}
+
 /**
  * Recursively build a LayoutNode tree that mirrors the (fragment-flattened) JSX tree.
  * Only concrete elements (those with `__layout` props) create LayoutNodes.
  */
 function buildNode(element: JSX.Element): LayoutNode {
-  const style = (element.props.__layout ?? {}) as FlexStyle;
+  const baseStyle = (element.props.__layout ?? {}) as FlexStyle;
+  const style = withIntrinsicSize(element, baseStyle);
 
   const rawChildren = element.props.children;
   let childElements: JSX.Element[] = [];
