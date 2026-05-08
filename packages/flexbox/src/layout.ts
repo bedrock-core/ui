@@ -195,10 +195,14 @@ export function computeLayout(
   refHeight = CANONICAL_SCREEN.height,
 ): void {
   // ── Root initialisation ─────────────────────────────────────────────────────
+  const explicitRootWidth = resolveSize(root.style.width, refWidth);
+  const explicitRootHeight = resolveSize(root.style.height, refHeight);
+  const hasVisibleRootChildren = root.children.some(visible);
+
   root.layout.x = 0;
   root.layout.y = 0;
-  root.layout.width = resolveSize(root.style.width, refWidth) ?? refWidth;
-  root.layout.height = resolveSize(root.style.height, refHeight) ?? refHeight;
+  root.layout.width = explicitRootWidth ?? refWidth;
+  root.layout.height = explicitRootHeight ?? (hasVisibleRootChildren ? 0 : refHeight);
   root.layout.zIndex = root.style.zIndex ?? 0;
   clamp(root, refWidth, refHeight);
 
@@ -250,6 +254,15 @@ export function computeLayout(
     }
 
     clamp(node, pW, pH);
+  }
+
+  // Derive root height from content when no explicit height is provided.
+  // This allows document-like vertical growth for scrollable layouts.
+  if (root.style.height === undefined) {
+    const derivedRootHeight = deriveSize(root, 'height');
+
+    root.layout.height = derivedRootHeight > 0 ? derivedRootHeight : refHeight;
+    clamp(root, refWidth, refHeight);
   }
 
   // ── Pass 3: Top-down — resolve %, distribute flex, position children ───────

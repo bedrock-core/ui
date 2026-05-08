@@ -44,6 +44,16 @@ describe('root defaults', () => {
     expect(root.layout.width).toBe(160); // 320 * 0.5
     expect(root.layout.height).toBe(105); // 210 * 0.5
   });
+
+  it('derives root height from children when root height is omitted', () => {
+    const root = lay(createNode({ width: 320, flexDirection: 'column' }, [
+      createNode({ height: 40 }),
+      createNode({ height: 60 }),
+    ]));
+
+    expect(root.layout.width).toBe(320);
+    expect(root.layout.height).toBe(100);
+  });
 });
 
 // ─── Row layout ───────────────────────────────────────────────────────────────
