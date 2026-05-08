@@ -1,7 +1,10 @@
 import { isControlled } from '../../../components/control';
 import type { JSX } from '../../../jsx';
-import { scaleForSerialization } from '../../../util/percent';
 import { type ParentState, type TraversalContext } from '../traversal';
+
+function toPocketUnit(value: number): number {
+  return Math.round(value);
+}
 
 /**
  * Phase 3: Apply parent-child inheritance rules
@@ -77,18 +80,17 @@ export function applyInheritance(element: JSX.Element, context: TraversalContext
       newProps.enabled = false; // Force disabled if parent is disabled
     }
 
-    // Rule 3: Layout phase has already computed absolute coordinates
-    // Just scale them for serialization (removes decimals: 50.25 → 5025)
-    // This is required because JSON UI ignores numbers with decimal points
+    // Rule 3: Layout phase has already computed absolute Pocket-space coordinates.
+    // Quantize to integer texels for stable JSON UI behavior.
     const xValue = props.jsonUIx ?? 0;
     const yValue = props.jsonUIy ?? 0;
     const widthValue = props.jsonUIWidth ?? 100;
     const heightValue = props.jsonUIHeight ?? 100;
 
-    newProps.jsonUIx = scaleForSerialization(xValue);
-    newProps.jsonUIy = scaleForSerialization(yValue);
-    newProps.jsonUIWidth = scaleForSerialization(widthValue);
-    newProps.jsonUIHeight = scaleForSerialization(heightValue);
+    newProps.jsonUIx = toPocketUnit(xValue);
+    newProps.jsonUIy = toPocketUnit(yValue);
+    newProps.jsonUIWidth = toPocketUnit(widthValue);
+    newProps.jsonUIHeight = toPocketUnit(heightValue);
 
     // Create parent state for children using THIS element's absolute properties
     // Store unscaled values in parent state for visibility/enabled inheritance

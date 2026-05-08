@@ -223,7 +223,6 @@ export function serializeProps({ type, ...props }: SerializableProps & { type: s
       core = `${TYPE_PREFIX.n}:${padToByteLength(rawStr, TYPE_WIDTH.n)}`;
       widthBytes = FULL_WIDTH.n;
     } else if (typeof value === 'object' && value.bytes !== undefined) {
-      rawStr = '';
       // Do not append prefix as we do not have prefix or marker for reserved bytes for easier JSON UI skipping
       core = `${PAD_CHAR.repeat(value.bytes - 1)}`; // -1 for marker
       widthBytes = value.bytes;

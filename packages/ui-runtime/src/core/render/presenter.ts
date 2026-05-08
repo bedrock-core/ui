@@ -2,9 +2,9 @@ import type { Player } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
 import type { JSX } from '../../jsx';
 import { getFibersForPlayer } from '../fabric';
-import { beginInteractiveTransaction, endInteractiveTransaction } from './session';
 import { PROTOCOL_HEADER, serialize } from '../serializer';
 import type { SerializationContext } from '../types';
+import { beginInteractiveTransaction, endInteractiveTransaction } from './session';
 
 export async function present(
   player: Player,

@@ -1,4 +1,4 @@
-import { CANONICAL_SCREEN, computeLayout as flexComputeLayout, createNode } from '@bedrock-core/flexbox';
+import { computeLayout as flexComputeLayout, createNode } from '@bedrock-core/flexbox';
 import type { FlexStyle, LayoutNode } from '@bedrock-core/flexbox';
 import type { JSX } from '../../../jsx';
 
@@ -63,17 +63,11 @@ function buildNode(element: JSX.Element): LayoutNode {
 
 /**
  * Walk the JSX tree in sync with the LayoutNode tree (fragments are transparent),
- * writing absolute screen-percentage values into jsonUIx/y/Width/Height.
+ * writing absolute Pocket-space texel values into jsonUIx/y/Width/Height.
  *
  * The layout engine outputs ABSOLUTE TEXELS from the screen origin.
- * We convert to 0-100 screen percentages so `scaleForSerialization` in inherit.ts
- * produces the integer-encoded percentage consumed by the JSON UI resource pack.
- *
- * Conversion:
- *   jsonUIWidth  = (layout.width  / CANONICAL_SCREEN.width)  * 100
- *   jsonUIHeight = (layout.height / CANONICAL_SCREEN.height) * 100
- *   jsonUIx      = (layout.x      / CANONICAL_SCREEN.width)  * 100
- *   jsonUIy      = (layout.y      / CANONICAL_SCREEN.height) * 100
+ * We keep those texel values directly for serialization so the RP decoders
+ * receive raw Pocket units (0..320 on X/width, 0..210 on Y/height).
  */
 function applyToTree(
   element: JSX.Element,
@@ -99,11 +93,11 @@ function applyToTree(
     return;
   }
 
-  // Convert absolute texels → 0-100 screen-relative percentages
-  element.props.jsonUIx = (node.layout.x / CANONICAL_SCREEN.width) * 100;
-  element.props.jsonUIy = (node.layout.y / CANONICAL_SCREEN.height) * 100;
-  element.props.jsonUIWidth = (node.layout.width / CANONICAL_SCREEN.width) * 100;
-  element.props.jsonUIHeight = (node.layout.height / CANONICAL_SCREEN.height) * 100;
+  // Keep absolute texel coordinates/sizes for direct RP consumption.
+  element.props.jsonUIx = node.layout.x;
+  element.props.jsonUIy = node.layout.y;
+  element.props.jsonUIWidth = node.layout.width;
+  element.props.jsonUIHeight = node.layout.height;
 
   // Recurse into this element's own children
   const ch = element.props.children;
@@ -123,7 +117,7 @@ function applyToTree(
  *
  * 1. Builds a LayoutNode tree from the JSX props (`__layout` fields).
  * 2. Runs the 3-pass flexbox engine (`@bedrock-core/flexbox`).
- * 3. Writes resolved texel positions back as 0-100 screen percentages into
+ * 3. Writes resolved texel positions back as absolute Pocket-space values into
  *    `jsonUIx`, `jsonUIy`, `jsonUIWidth`, `jsonUIHeight` on each element.
  *
  * @param tree Root JSX element after Phase 1 (function components expanded).
@@ -137,10 +131,10 @@ export function computeLayout(tree: JSX.Element): JSX.Element {
   flexComputeLayout(root);
 
   // Write root's own layout results
-  tree.props.jsonUIx = (root.layout.x / CANONICAL_SCREEN.width) * 100;
-  tree.props.jsonUIy = (root.layout.y / CANONICAL_SCREEN.height) * 100;
-  tree.props.jsonUIWidth = (root.layout.width / CANONICAL_SCREEN.width) * 100;
-  tree.props.jsonUIHeight = (root.layout.height / CANONICAL_SCREEN.height) * 100;
+  tree.props.jsonUIx = root.layout.x;
+  tree.props.jsonUIy = root.layout.y;
+  tree.props.jsonUIWidth = root.layout.width;
+  tree.props.jsonUIHeight = root.layout.height;
 
   // Write children's layout results
   const ch = tree.props.children;
