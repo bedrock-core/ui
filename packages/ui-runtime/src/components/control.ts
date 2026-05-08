@@ -62,6 +62,7 @@ export function withControl(props: JSX.Props): JSX.Props {
     flexGrow,
     flexShrink,
     flexBasis,
+    flex,
     alignSelf,
     margin,
     marginTop,
@@ -72,6 +73,13 @@ export function withControl(props: JSX.Props): JSX.Props {
     minHeight,
     maxWidth,
     maxHeight,
+    // Positioning
+    position,
+    top,
+    right,
+    bottom,
+    left,
+    zIndex,
   } = props;
 
   // Create object with properties in exact canonical order for stable serialization
@@ -110,6 +118,7 @@ export function withControl(props: JSX.Props): JSX.Props {
       paddingRight,
       paddingBottom,
       paddingLeft,
+      flex,
       flexGrow,
       flexShrink,
       flexBasis,
@@ -123,6 +132,12 @@ export function withControl(props: JSX.Props): JSX.Props {
       minHeight,
       maxWidth,
       maxHeight,
+      position,
+      top,
+      right,
+      bottom,
+      left,
+      zIndex,
     },
   };
 }

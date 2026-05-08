@@ -1,190 +1,156 @@
-import { FlexTarget } from 'flexbox.js';
-import type { LayoutProps } from '../../../components/layout';
+import { CANONICAL_SCREEN, computeLayout as flexComputeLayout, createNode } from '@bedrock-core/flexbox';
+import type { FlexStyle, LayoutNode } from '@bedrock-core/flexbox';
 import type { JSX } from '../../../jsx';
-import type { Percent } from '../../../util';
-import { Logger, toNumber } from '../../../util';
+
+// ─── Transparent element types that don't participate in layout ────────────────
+
+const TRANSPARENT = new Set(['fragment', 'context-provider']);
+
+/** Returns true when an element is transparent (fragment / context-provider). */
+function isTransparent(el: JSX.Element): boolean {
+  return typeof el.type === 'string' && TRANSPARENT.has(el.type);
+}
+
+// ─── Build LayoutNode tree from JSX element tree ────────────────────────────────
 
 /**
- * Resolves individual padding/margin properties, with fallback to shorthand.
- * Priority: specific side (paddingTop) > shorthand (padding) > 0
+ * Collect the concrete (non-transparent) JSX descendants of an element.
+ * Fragments and context providers are flattened — their children are returned
+ * as if they were direct siblings of the fragment.
  */
-function resolveSide(specific: Percent | undefined, shorthand: Percent | undefined): number {
-  if (specific !== undefined) {
-    return toNumber(specific);
+function collectConcrete(element: JSX.Element): JSX.Element[] {
+  if (isTransparent(element)) {
+    const ch = element.props.children;
+
+    if (!ch) {
+      return [];
+    }
+
+    if (Array.isArray(ch)) {
+      return ch.flatMap(collectConcrete);
+    }
+
+    if (typeof ch === 'string') {
+      return [];
+    }
+
+    return collectConcrete(ch);
   }
 
-  if (shorthand !== undefined) {
-    return toNumber(shorthand);
-  }
-
-  return 0;
+  return [element];
 }
 
 /**
- * Converts JSX element tree to FlexTarget tree for layout calculation.
- * Uses funcW/funcH for percentage-based sizing relative to parent.
- * Root is always 100x100 (100% of screen), children default to fit-to-contents (0).
+ * Recursively build a LayoutNode tree that mirrors the (fragment-flattened) JSX tree.
+ * Only concrete elements (those with `__layout` props) create LayoutNodes.
  */
-function buildFlexTree(element: JSX.Element, parent?: FlexTarget): FlexTarget {
-  const node = new FlexTarget();
-  const props = element.props;
-  const layout = (props.__layout || {}) as Partial<LayoutProps>;
+function buildNode(element: JSX.Element): LayoutNode {
+  const style = (element.props.__layout ?? {}) as FlexStyle;
 
-  // Apply display mode
-  if (layout.display === 'flex') {
-    node.flex.enabled = true;
-    node.flex.direction = layout.flexDirection ?? 'row';
-    node.flex.justifyContent = layout.justifyContent ?? 'flex-start';
-    node.flex.alignItems = layout.alignItems ?? 'stretch';
+  const rawChildren = element.props.children;
+  let childElements: JSX.Element[] = [];
 
-    if (layout.alignContent) {
-      node.flex.alignContent = layout.alignContent;
-    }
-
-    node.flex.wrap = layout.wrap ?? false;
-
-    // Apply padding (individual properties take priority over shorthand)
-    node.flex.paddingTop = resolveSide(layout.paddingTop, layout.padding);
-    node.flex.paddingRight = resolveSide(layout.paddingRight, layout.padding);
-    node.flex.paddingBottom = resolveSide(layout.paddingBottom, layout.padding);
-    node.flex.paddingLeft = resolveSide(layout.paddingLeft, layout.padding);
+  if (Array.isArray(rawChildren)) {
+    childElements = rawChildren.flatMap(collectConcrete);
+  } else if (rawChildren && typeof rawChildren === 'object') {
+    childElements = collectConcrete(rawChildren);
   }
 
-  // Apply flex item props (if parent is flex)
-  if (parent?.flex.enabled) {
-    node.flexItem.grow = layout.flexGrow ?? 0;
-    node.flexItem.shrink = layout.flexShrink ?? 0;
-
-    if (layout.alignSelf && layout.alignSelf !== 'auto') {
-      node.flexItem.alignSelf = layout.alignSelf;
-    }
-
-    // Apply margin (individual properties take priority over shorthand)
-    node.flexItem.marginTop = resolveSide(layout.marginTop, layout.margin);
-    node.flexItem.marginRight = resolveSide(layout.marginRight, layout.margin);
-    node.flexItem.marginBottom = resolveSide(layout.marginBottom, layout.margin);
-    node.flexItem.marginLeft = resolveSide(layout.marginLeft, layout.margin);
-
-    // Min/max constraints (use funcW/funcH for percentage-based constraints)
-    if (layout.minWidth !== undefined) {
-      node.flexItem.minWidth = toNumber(layout.minWidth);
-    }
-
-    if (layout.minHeight !== undefined) {
-      node.flexItem.minHeight = toNumber(layout.minHeight);
-    }
-
-    if (layout.maxWidth !== undefined) {
-      node.flexItem.maxWidth = toNumber(layout.maxWidth);
-    }
-
-    if (layout.maxHeight !== undefined) {
-      node.flexItem.maxHeight = toNumber(layout.maxHeight);
-    }
-  }
-
-  // Apply dimensions using funcW/funcH for percentage-based sizing
-  // Root: always 100x100 (100% of screen)
-  // Children: default to 100% of parent (fit-to-contents doesn't work in percentage-based systems)
-  if (!parent) {
-    // Root node: fill entire container (100x100 = 100% of screen)
-    node.w = 100;
-    node.h = 100;
-  } else {
-    // Child nodes: use relative functions for percentage-based sizing
-    // Default to 100% of parent if not specified (fit-to-contents doesn't work without intrinsic sizes)
-    if (props.width !== undefined) {
-      const widthPercent = toNumber(props.width) / 100; // "50%" → 0.5
-
-      node.funcW = (parentW: number): number => parentW * widthPercent;
-    } else {
-      // Default: 100% of parent width
-      node.funcW = (parentW: number): number => parentW;
-    }
-
-    if (props.height !== undefined) {
-      const heightPercent = toNumber(props.height) / 100; // "50%" → 0.5
-
-      node.funcH = (_parentW: number, parentH: number): number => parentH * heightPercent;
-    } else {
-      // Default: 100% of parent height
-      node.funcH = (_parentW: number, parentH: number): number => parentH;
-    }
-  }
-
-  // Process children recursively
-  if (Array.isArray(element.props.children)) {
-    element.props.children.forEach((child) => {
-      const childNode = buildFlexTree(child, node);
-
-      node.addChild(childNode);
-    });
-  }
-
-  return node;
+  return createNode(style, childElements.map(buildNode));
 }
 
+// ─── Apply LayoutNode results back to JSX element tree ─────────────────────────
+
 /**
- * Applies computed layout values back to element tree.
- * flexbox.js returns positions relative to parent, so we accumulate
- * parent offsets to get absolute screen positions.
+ * Walk the JSX tree in sync with the LayoutNode tree (fragments are transparent),
+ * writing absolute screen-percentage values into jsonUIx/y/Width/Height.
  *
- * @param element - JSX element to apply layout to
- * @param flexNode - Computed flexbox node with layout results
- * @param parentAbsX - Parent's absolute X position (default: 0)
- * @param parentAbsY - Parent's absolute Y position (default: 0)
+ * The layout engine outputs ABSOLUTE TEXELS from the screen origin.
+ * We convert to 0-100 screen percentages so `scaleForSerialization` in inherit.ts
+ * produces the integer-encoded percentage consumed by the JSON UI resource pack.
+ *
+ * Conversion:
+ *   jsonUIWidth  = (layout.width  / CANONICAL_SCREEN.width)  * 100
+ *   jsonUIHeight = (layout.height / CANONICAL_SCREEN.height) * 100
+ *   jsonUIx      = (layout.x      / CANONICAL_SCREEN.width)  * 100
+ *   jsonUIy      = (layout.y      / CANONICAL_SCREEN.height) * 100
  */
-function applyLayoutToElements(
+function applyToTree(
   element: JSX.Element,
-  flexNode: FlexTarget,
-  parentAbsX: number = 0,
-  parentAbsY: number = 0,
+  parentNode: LayoutNode,
+  cursor: { index: number },
 ): void {
-  Logger.error(`Flex Node: ${flexNode.toString()}`);
-  // Get position relative to parent from flexbox
-  const relativeX = flexNode.getLayoutX();
-  const relativeY = flexNode.getLayoutY();
-  const width = flexNode.getLayoutW();
-  const height = flexNode.getLayoutH();
+  if (isTransparent(element)) {
+    // Transparent: descend without consuming a LayoutNode slot
+    const ch = element.props.children;
 
-  // Convert to absolute position (screen coordinates)
-  // Simply add parent's absolute position since we're in the same 0-100 scale
-  const absoluteX = parentAbsX + relativeX;
-  const absoluteY = parentAbsY + relativeY;
+    if (Array.isArray(ch)) {
+      ch.forEach(c => applyToTree(c, parentNode, cursor));
+    } else if (ch && typeof ch === 'object') {
+      applyToTree(ch, parentNode, cursor);
+    }
 
-  // Store absolute coordinates for serialization
-  element.props.jsonUIx = absoluteX;
-  element.props.jsonUIy = absoluteY;
-  element.props.jsonUIWidth = width;
-  element.props.jsonUIHeight = height;
+    return;
+  }
 
-  // Process children - pass this element's absolute position as parent offset
-  if (Array.isArray(element.props.children)) {
-    const children = flexNode.getChildren();
+  const node = parentNode.children[cursor.index++];
 
-    element.props.children.forEach((child, index) => {
-      applyLayoutToElements(child, children[index], absoluteX, absoluteY);
-    });
+  if (!node) {
+    return;
+  }
+
+  // Convert absolute texels → 0-100 screen-relative percentages
+  element.props.jsonUIx = (node.layout.x / CANONICAL_SCREEN.width) * 100;
+  element.props.jsonUIy = (node.layout.y / CANONICAL_SCREEN.height) * 100;
+  element.props.jsonUIWidth = (node.layout.width / CANONICAL_SCREEN.width) * 100;
+  element.props.jsonUIHeight = (node.layout.height / CANONICAL_SCREEN.height) * 100;
+
+  // Recurse into this element's own children
+  const ch = element.props.children;
+  const childCursor = { index: 0 };
+
+  if (Array.isArray(ch)) {
+    ch.forEach(c => applyToTree(c, node, childCursor));
+  } else if (ch && typeof ch === 'object') {
+    applyToTree(ch, node, childCursor);
   }
 }
 
+// ─── Phase 2 entry point ────────────────────────────────────────────────────────
+
 /**
- * Computes layout for element tree using flexbox algorithm.
- * Root is always 100x100 (100% of screen), children default to fit-to-contents.
- * Uses funcW/funcH for percentage-based sizing relative to parent.
+ * Phase 2 of the render pipeline: compute layout for the full JSX element tree.
  *
- * @param element - Root JSX element to compute layout for
- * @returns Element tree with computed jsonUIx, jsonUIy, jsonUIWidth, jsonUIHeight (0-100 scale)
+ * 1. Builds a LayoutNode tree from the JSX props (`__layout` fields).
+ * 2. Runs the 3-pass flexbox engine (`@bedrock-core/flexbox`).
+ * 3. Writes resolved texel positions back as 0-100 screen percentages into
+ *    `jsonUIx`, `jsonUIy`, `jsonUIWidth`, `jsonUIHeight` on each element.
+ *
+ * @param tree Root JSX element after Phase 1 (function components expanded).
+ * @returns The same element tree, mutated in-place with layout values.
  */
-export function computeLayout(element: JSX.Element): JSX.Element {
-  // Build FlexTarget tree (root is always 100x100)
-  const flexRoot = buildFlexTree(element);
+export function computeLayout(tree: JSX.Element): JSX.Element {
+  // Build the layout tree (root element is always concrete)
+  const root = buildNode(tree);
 
-  // Calculate layout
-  flexRoot.update();
+  // Run the flexbox engine (outputs absolute texel positions)
+  flexComputeLayout(root);
 
-  // Apply computed positions back to elements
-  applyLayoutToElements(element, flexRoot);
+  // Write root's own layout results
+  tree.props.jsonUIx = (root.layout.x / CANONICAL_SCREEN.width) * 100;
+  tree.props.jsonUIy = (root.layout.y / CANONICAL_SCREEN.height) * 100;
+  tree.props.jsonUIWidth = (root.layout.width / CANONICAL_SCREEN.width) * 100;
+  tree.props.jsonUIHeight = (root.layout.height / CANONICAL_SCREEN.height) * 100;
 
-  return element;
+  // Write children's layout results
+  const ch = tree.props.children;
+  const cursor = { index: 0 };
+
+  if (Array.isArray(ch)) {
+    ch.forEach(c => applyToTree(c, root, cursor));
+  } else if (ch && typeof ch === 'object') {
+    applyToTree(ch, root, cursor);
+  }
+
+  return tree;
 }

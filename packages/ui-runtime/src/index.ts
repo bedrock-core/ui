@@ -15,11 +15,14 @@ export type {
   ControlProps,
   LayoutProps,
   FlexDirection,
+  FlexSize,
+  FlexWrap,
   JustifyContent,
   AlignItems,
   AlignContent,
   AlignSelf,
   Display,
+  Position,
   Spacing,
 } from './components';
 

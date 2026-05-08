@@ -3,7 +3,6 @@
 		"target": "esnext",
 		"module": "esnext",
 		"moduleResolution": "bundler",
-		"baseUrl": ".",
 		"resolveJsonModule": true,
 		"allowJs": false,
 		"checkJs": false,
@@ -24,18 +23,18 @@
 		"jsxImportSource": "@bedrock-core/ui",
 		"paths": {
 			"@bedrock-core/ui": [
-				"packages/ui-runtime/src/index.ts"
+				"./packages/ui-runtime/src/index.ts"
 			],
 			"@bedrock-core/ui/*": [
-				"packages/ui-runtime/src/*"
+				"./packages/ui-runtime/src/*"
 			],
 			"@bedrock-core/ui/jsx-runtime": [
-				"packages/ui-runtime/src/jsx/jsx-runtime.ts"
+				"./packages/ui-runtime/src/jsx/jsx-runtime.ts"
 			],
 			"@bedrock-core/ui/jsx-dev-runtime": [
-				"packages/ui-runtime/src/jsx/jsx-dev-runtime.ts"
+				"./packages/ui-runtime/src/jsx/jsx-dev-runtime.ts"
 			]
-		},
+		}
 	},
 	"exclude": [
 		"node_modules",

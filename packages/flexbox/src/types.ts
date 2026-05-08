@@ -1,16 +1,14 @@
-// ============================================
-// Flex Direction
-// ============================================
+/** Percentage string, e.g. "50%", "100%", "33.5%" */
+export type Percent = `${number}%`;
+
+/** Size value: absolute texels or a percentage of the parent container. */
+export type FlexSize = number | Percent;
+
+/** Spacing value: always absolute texels (padding, margin, gap). */
+export type Spacing = number;
+
 export type FlexDirection = 'row' | 'row-reverse' | 'column' | 'column-reverse';
-
-// ============================================
-// Flex Wrap
-// ============================================
 export type FlexWrap = 'nowrap' | 'wrap' | 'wrap-reverse';
-
-// ============================================
-// Justify Content (main axis)
-// ============================================
 export type JustifyContent
   = | 'flex-start'
     | 'flex-end'
@@ -18,24 +16,7 @@ export type JustifyContent
     | 'space-between'
     | 'space-around'
     | 'space-evenly';
-
-// ============================================
-// Align Items (cross axis)
-// ============================================
-export type AlignItems
-  = | 'flex-start'
-    | 'flex-end'
-    | 'center'
-    | 'stretch';
-
-// ============================================
-// Align Self (item override)
-// ============================================
-export type AlignSelf = 'auto' | AlignItems;
-
-// ============================================
-// Align Content (multi-line cross axis)
-// ============================================
+export type AlignItems = 'flex-start' | 'flex-end' | 'center' | 'stretch';
 export type AlignContent
   = | 'flex-start'
     | 'flex-end'
@@ -43,105 +24,78 @@ export type AlignContent
     | 'stretch'
     | 'space-between'
     | 'space-around';
+export type AlignSelf = 'auto' | 'flex-start' | 'flex-end' | 'center' | 'stretch';
+export type Display = 'flex' | 'none';
+export type Position = 'relative' | 'absolute';
 
-// ============================================
-// Flex Style (input configuration)
-// ============================================
 export interface FlexStyle {
-  // Container properties
+  // ── Display & positioning ──────────────────────────────────────────────────
+  display?: Display;
+  position?: Position;
+
+  // ── Sizing (texels or percent of parent) ──────────────────────────────────
+  width?: FlexSize;
+  height?: FlexSize;
+  minWidth?: FlexSize;
+  maxWidth?: FlexSize;
+  minHeight?: FlexSize;
+  maxHeight?: FlexSize;
+
+  // ── Flex container ─────────────────────────────────────────────────────────
   flexDirection?: FlexDirection;
-  flexWrap?: FlexWrap;
+  /** Alias for flexWrap */
+  wrap?: FlexWrap;
   justifyContent?: JustifyContent;
   alignItems?: AlignItems;
   alignContent?: AlignContent;
-  gap?: number;
-  rowGap?: number;
-  columnGap?: number;
+  gap?: Spacing;
+  rowGap?: Spacing;
+  columnGap?: Spacing;
 
-  // Item properties
+  // ── Flex item ──────────────────────────────────────────────────────────────
+  /** Shorthand: sets flexGrow when flexGrow is not explicitly set. */
+  flex?: number;
   flexGrow?: number;
   flexShrink?: number;
-  flexBasis?: number | 'auto';
+  flexBasis?: FlexSize | 'auto';
   alignSelf?: AlignSelf;
-  order?: number;
 
-  // Sizing (all in %)
-  width?: number | 'auto';
-  height?: number | 'auto';
-  minWidth?: number;
-  maxWidth?: number;
-  minHeight?: number;
-  maxHeight?: number;
+  // ── Padding (texels) ───────────────────────────────────────────────────────
+  padding?: Spacing;
+  paddingTop?: Spacing;
+  paddingRight?: Spacing;
+  paddingBottom?: Spacing;
+  paddingLeft?: Spacing;
 
-  // Padding (all in %)
-  padding?: number;
-  paddingTop?: number;
-  paddingRight?: number;
-  paddingBottom?: number;
-  paddingLeft?: number;
+  // ── Margin (texels) ────────────────────────────────────────────────────────
+  margin?: Spacing;
+  marginTop?: Spacing;
+  marginRight?: Spacing;
+  marginBottom?: Spacing;
+  marginLeft?: Spacing;
 
-  // Margin (all in %)
-  margin?: number;
-  marginTop?: number;
-  marginRight?: number;
-  marginBottom?: number;
-  marginLeft?: number;
+  // ── Absolute positioning offsets (texels, relative to parent) ─────────────
+  top?: number;
+  right?: number;
+  bottom?: number;
+  left?: number;
+
+  // ── Z-order ────────────────────────────────────────────────────────────────
+  zIndex?: number;
 }
 
-// ============================================
-// Computed Layout (output)
-// ============================================
+/** Resolved absolute layout output (in texels). All values are rounded integers. */
 export interface ComputedLayout {
-  x: number; // % from parent left
-  y: number; // % from parent top
-  width: number; // % of parent width
-  height: number; // % of parent height
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  zIndex: number;
 }
 
-// ============================================
-// Default Style Values
-// ============================================
-export const DEFAULT_STYLE: Required<Omit<FlexStyle, 'width' | 'height' | 'flexBasis'>> & {
-  width: number | 'auto';
-  height: number | 'auto';
-  flexBasis: number | 'auto';
-} = {
-  // Container
-  flexDirection: 'row',
-  flexWrap: 'nowrap',
-  justifyContent: 'flex-start',
-  alignItems: 'stretch',
-  alignContent: 'stretch',
-  gap: 0,
-  rowGap: 0,
-  columnGap: 0,
-
-  // Item
-  flexGrow: 0,
-  flexShrink: 1,
-  flexBasis: 'auto',
-  alignSelf: 'auto',
-  order: 0,
-
-  // Sizing
-  width: 'auto',
-  height: 'auto',
-  minWidth: 0,
-  maxWidth: 100,
-  minHeight: 0,
-  maxHeight: 100,
-
-  // Padding
-  padding: 0,
-  paddingTop: 0,
-  paddingRight: 0,
-  paddingBottom: 0,
-  paddingLeft: 0,
-
-  // Margin
-  margin: 0,
-  marginTop: 0,
-  marginRight: 0,
-  marginBottom: 0,
-  marginLeft: 0,
-};
+/** A node in the layout tree, mirrors the component hierarchy. */
+export interface LayoutNode {
+  style: FlexStyle;
+  children: LayoutNode[];
+  layout: ComputedLayout;
+}

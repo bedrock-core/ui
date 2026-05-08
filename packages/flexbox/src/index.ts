@@ -1,19 +1,25 @@
-// Types
+// ── Public API ────────────────────────────────────────────────────────────────
+
 export type {
-  FlexDirection,
-  FlexWrap,
-  JustifyContent,
+  AlignContent,
   AlignItems,
   AlignSelf,
-  AlignContent,
-  FlexStyle,
   ComputedLayout,
-} from './types.js';
+  Display,
+  FlexDirection,
+  FlexSize,
+  FlexStyle,
+  FlexWrap,
+  JustifyContent,
+  LayoutNode,
+  Percent,
+  Position,
+  Spacing,
+} from './types';
 
-export { DEFAULT_STYLE } from './types.js';
+export { computeLayout } from './layout';
+export { createNode } from './node';
+export { CANONICAL_SCREEN, SCREEN } from './constants';
 
-// Node
-export { FlexNode, createNode } from './node.js';
-
-// Layout
-export { computeLayout } from './layout.js';
+// Utilities are exported for consumers that need them (e.g. the ui-runtime bridge)
+export { isPercent, resolveSize } from './utils';

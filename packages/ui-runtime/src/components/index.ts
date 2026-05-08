@@ -9,6 +9,10 @@ export {
   type AlignContent,
   type AlignSelf,
   type Display,
+  type FlexSize,
+  type FlexWrap,
+  type Position,
+  type Spacing,
 } from './layout';
 
 // Components

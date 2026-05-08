@@ -38,7 +38,7 @@ export function render(
         }
       })
       .catch(() => {
-        // swallow to keep runtime stable; no interval loop to clear
+        // Swallow to keep runtime stable; no interval loop to clear
       });
   };
 

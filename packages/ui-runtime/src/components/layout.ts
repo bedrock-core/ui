@@ -1,61 +1,30 @@
-import type { Percent } from '../util';
-import type {
-  FlexDirection,
-  AlignItemsMode,
-  JustifyContentMode,
-  AlignContentMode,
-} from 'flexbox.js';
-
-// Re-export flexbox.js types
+/**
+ * Layout properties derived from the flexbox engine.
+ *
+ * These props are consumed by `withControl()`, stored in `__layout`, and
+ * passed to `computeLayout()` during Phase 2 of the render pipeline.
+ * They are NOT serialized into the protocol payload — only the resolved
+ * `jsonUIx/y/Width/Height` values produced by the layout engine are.
+ */
 export type {
+  AlignContent,
+  AlignItems,
+  AlignSelf,
+  Display,
   FlexDirection,
-  AlignItemsMode as AlignItems,
-  JustifyContentMode as JustifyContent,
-  AlignContentMode as AlignContent,
-};
+  FlexSize,
+  FlexStyle,
+  FlexWrap,
+  JustifyContent,
+  Percent,
+  Position,
+  Spacing,
+} from '@bedrock-core/flexbox';
 
-export type AlignSelf = 'auto' | AlignItemsMode;
-export type Display = 'block' | 'flex';
+import type { FlexStyle } from '@bedrock-core/flexbox';
 
-export interface LayoutProps {
-  // Display mode
-  display?: Display;
-
-  // Core sizing
-  width?: Percent;
-  height?: Percent;
-
-  // Flex container properties
-  flexDirection?: FlexDirection;
-  justifyContent?: JustifyContentMode;
-  alignItems?: AlignItemsMode;
-  alignContent?: AlignContentMode;
-  wrap?: boolean;
-  gap?: Percent;
-
-  // Padding
-  padding?: Percent;
-  paddingTop?: Percent;
-  paddingRight?: Percent;
-  paddingBottom?: Percent;
-  paddingLeft?: Percent;
-
-  // Flex item properties
-  flexGrow?: number;
-  flexShrink?: number;
-  flexBasis?: Percent;
-  alignSelf?: AlignSelf;
-
-  // Margin
-  margin?: Percent;
-  marginTop?: Percent;
-  marginRight?: Percent;
-  marginBottom?: Percent;
-  marginLeft?: Percent;
-
-  // Size constraints
-  minWidth?: Percent;
-  minHeight?: Percent;
-  maxWidth?: Percent;
-  maxHeight?: Percent;
-}
+/**
+ * Layout props exposed to component authors.
+ * Extends FlexStyle so all flex container + item properties are available.
+ */
+export interface LayoutProps extends FlexStyle {}
