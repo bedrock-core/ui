@@ -181,6 +181,7 @@ function applyCrossAlign(
 
 /**
  * Compute absolute texel positions and sizes for all nodes in the tree.
+ * https://tchayen.com/how-to-write-a-flexbox-layout-engine
  *
  * Uses a 3-pass algorithm:
  *  Pass 1 (BFS top-down)  — build level-order list and parent map.

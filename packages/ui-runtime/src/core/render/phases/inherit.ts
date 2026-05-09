@@ -1,3 +1,4 @@
+import { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
 import { isControlled } from '../../../components/control';
 import type { JSX } from '../../../jsx';
 import { type ParentState, type TraversalContext } from '../traversal';
@@ -10,16 +11,10 @@ function toPocketUnit(value: number): number {
  * Phase 3: Apply parent-child inheritance rules
  * - visible: child AND parent (if parent invisible, child is invisible)
  * - enabled: child AND parent (if parent disabled, child is disabled)
- * - x/y: convert relative percentages (0-100) to absolute screen percentages via compounding
- * - width/height: convert relative percentages (0-100) to absolute screen percentages via compounding
+ * - x/y/width/height: already resolved to absolute Pocket-space texels by the layout phase;
+ *   this phase only quantizes them to integers for stable JSON UI behavior.
  *
- * Percentage compounding for relative positioning (0-100 scale):
- * - absolute_x = parent_x + (child_relative_x / 100 * parent_width)
- * - absolute_y = parent_y + (child_relative_y / 100 * parent_height)
- * - absolute_width = (child_relative_width / 100) * parent_width
- * - absolute_height = (child_relative_height / 100) * parent_height
- *
- * This must run AFTER tree expansion and normalization so all properties are set.
+ * This must run AFTER tree expansion and layout so all properties are set.
  *
  * @param element - Element to apply inheritance to
  * @param context - Traversal context with parentState
@@ -31,8 +26,8 @@ export function applyInheritance(element: JSX.Element, context: TraversalContext
     enabled: true,
     x: 0,
     y: 0,
-    width: 100,
-    height: 100,
+    width: CANONICAL_SCREEN.width,
+    height: CANONICAL_SCREEN.height,
     position: 'relative',
   };
 

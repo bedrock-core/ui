@@ -1,4 +1,5 @@
 import type { Player } from '@minecraft/server';
+import { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
 import type { FunctionComponent } from '../../jsx';
 import { Context } from '../fabric';
 import type { Fiber } from '../fabric/types';
@@ -11,10 +12,10 @@ import type { Fiber } from '../fabric/types';
 export interface ParentState {
   visible: boolean; // Parent's resolved visibility (default: true)
   enabled: boolean; // Parent's resolved enabled state (default: true)
-  x: number; // Parent's absolute X coordinate in percentage (0-100)
-  y: number; // Parent's absolute Y coordinate in percentage (0-100)
-  width: number; // Parent's absolute width in percentage (0-100)
-  height: number; // Parent's absolute height in percentage (0-100)
+  x: number; // Parent's absolute X coordinate in texels
+  y: number; // Parent's absolute Y coordinate in texels
+  width: number; // Parent's absolute width in texels
+  height: number; // Parent's absolute height in texels
   position: 'absolute' | 'relative'; // Parent's position mode (default: 'relative')
 }
 
@@ -93,8 +94,8 @@ export function createRootContext(initialContext: TraversalContext): TraversalCo
       enabled: true,
       x: 0,
       y: 0,
-      width: 100,
-      height: 100,
+      width: CANONICAL_SCREEN.width,
+      height: CANONICAL_SCREEN.height,
       position: 'relative',
     },
   };

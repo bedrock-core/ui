@@ -79,7 +79,7 @@ export const Panel: FunctionComponent<PanelProps> = ({ children, ...rest }: Pane
 
 **Conventions:**
 
-- All dimension and position props use percentage format: `width`, `height`, `x`, `y` as `"${number}%"` (e.g., `"50.25%"`, `"100%"`)
+- Dimension and position props use flexbox style values (texels or percent strings like `"50%"`); the layout engine resolves these to absolute Pocket-space texels before serialization
 - **Props order is critical**: `withControl(rest)` must always be first in the props object, followed by component-specific props with default values, then `children` last
 - Component prop names are camelCase; JSON UI bindings use snake_case
 - Use the custom JSX runtime - no need to import React
@@ -227,10 +227,7 @@ Mocks are located in `src/__mocks__/@minecraft/`.
 ## ⚠️ Known Caveats
 
 - JSON UI string ops with numbers can behave unpredictably; prefix markers before numeric-derived substrings client-side.
-- **Percentage Format & Serialization Scaling:** All dimension and position props (width, height, x, y) use percentage strings in format `"${number}%"` (e.g., `"50.25%"`). JSON UI ignores numbers with decimal points, so before serialization, values are multiplied by 100 to remove decimals: `50.25% → 5025`. This requires:
-  - **Component containers** (`button.json`, `component_router.json`) scaled to `0.01%` size (1% ÷ 100) to accommodate the 100x scale
-  - **Screen container offset** of `-50%` to properly center the coordinate system (see [screen_container.json](../resource-pack/packs/RP/ui/core-ui/common/screen_container.json))
-  - Values are floored to 2 decimal places for consistency
+- **Texel values & JSON UI:** Dimension and position values are serialized as raw integer texels (Pocket-space). JSON UI ignores numbers with decimal points, so the layout engine rounds all values to integers before serialization.
 - Subtraction operator (`-`) removes all occurrences; use distinct prefixes to avoid collisions.
 
 

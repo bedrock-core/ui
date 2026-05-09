@@ -13,7 +13,6 @@ export const TRANSPARENT_TYPES = new Set<string>([
  */
 export const WRITERS: Record<string, Writer> = {
   panel: (p, f) => { f.label(p); },
-  view: (p, f) => { f.label(p); },
   text: (p, f) => { f.label(p); },
   image: (p, f) => { f.label(p); },
   button: (p, f, ctx, cbs) => {

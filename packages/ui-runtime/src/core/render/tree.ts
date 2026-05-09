@@ -15,7 +15,7 @@ import { createInitialContext, createRootContext, type TraversalContext } from '
  *
  * Four-phase tree building:
  * Phase 1: Expand function components and resolve contexts
- * Phase 2: Compute layout using flexbox algorithm (Percent → 0-100 numbers, positions calculated)
+ * Phase 2: Compute layout using flexbox algorithm (resolves sizes and positions to absolute Pocket-space texels)
  * Phase 3: Apply parent-child inheritance rules (visibility, enabled)
  *
  * @param element - Root JSX element to build
@@ -42,8 +42,7 @@ export function buildTree(element: JSX.Element, player: Player): JSX.Element {
   let result: JSX.Element = expandAndResolveContexts(element, context, player);
 
   // Phase 2: Compute layout using flexbox algorithm
-  // Converts Percent values to 0-100 scale and calculates x/y positions
-  // Default container is 100% (0-100 scale)
+  // Resolves sizes and x/y positions to absolute Pocket-space texels
   // Returns "NormalizedControlProps"
   result = computeLayout(result);
 

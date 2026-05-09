@@ -26,8 +26,6 @@ export type {
   Spacing,
 } from './components';
 
-export type { Percent } from './util';
-
 export {
   useState,
   useEffect,
@@ -43,12 +41,6 @@ export {
   render,
   createContext,
 } from './core';
-
-export {
-  toNumber,
-  toPercent,
-  scaleForSerialization,
-} from './util/percent';
 
 export type {
   Context,
