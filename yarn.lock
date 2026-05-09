@@ -509,13 +509,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@minecraft/server@npm:2.4.0":
-  version: 2.4.0
-  resolution: "@minecraft/server@npm:2.4.0"
+"@minecraft/server@npm:2.7.0":
+  version: 2.7.0
+  resolution: "@minecraft/server@npm:2.7.0"
   peerDependencies:
     "@minecraft/common": ^1.2.0
     "@minecraft/vanilla-data": ">=1.20.70"
-  checksum: 10c0/b01dea169633cb2c29d16eb15fc9fad25c205ff0a6a0b92a9b51ee59ee3544743ddc24bd28cac4cb0bcd33b1a6edffcfbad399f82acfe5492221451602a49157
+  checksum: 10c0/a7153aaa6f4200f24d8616921a5d1f778d8330d47a29eba4899d857a4d7e227b4f71ed25e146c596c071c571e83da390753dd8f263b90b2c24b480593de3b496
   languageName: node
   linkType: hard
 
