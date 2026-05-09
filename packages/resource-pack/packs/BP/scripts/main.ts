@@ -5,21 +5,25 @@ import { MinecraftBlockTypes, MinecraftEntityTypes } from '@minecraft/vanilla-da
 import { Example } from './UI/Example';
 import { FlexTest } from './UI/FlexTest';
 
+const isPlayer = (source: ButtonPushAfterEvent['source']): source is Player => source.typeId === MinecraftEntityTypes.Player;
+
 world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent): void => {
-  if (source.typeId === MinecraftEntityTypes.Player) {
+  if (isPlayer(source)) {
     if (block.typeId === MinecraftBlockTypes.StoneButton) {
-      render(Example, source as Player);
+      render(Example, source);
     }
+
     if (block.typeId === MinecraftBlockTypes.AcaciaButton) {
       const form = new ActionFormData();
 
       form.title('test');
       form.label('test');
-      form.show(source as Player);
+      form.show(source);
     }
+
     if (block.typeId === MinecraftBlockTypes.BirchButton) {
       // Birch button → flex test fixture (visual flex behavior verification).
-      render(FlexTest, source as Player);
+      render(FlexTest, source);
     }
   }
 });
