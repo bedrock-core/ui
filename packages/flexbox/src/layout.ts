@@ -234,33 +234,43 @@ export function computeLayout(
   }
 
   // ── Pass 2: Bottom-up — resolve content-driven sizes ──────────────────────
-  // Iterate from deepest nodes back to root (skip root at index 0)
-  for (let i = levelOrder.length - 1; i >= 1; i--) {
-    const node = levelOrder[i];
-    const parent = parentOf.get(node)!;
-    const pW = parent.layout.width;
-    const pH = parent.layout.height;
-    const s = node.style;
+  //
+  // We run two iterations:
+  //   - 1st pass: parent widths may be 0 if not yet computed when this node ran;
+  //     percent padding/margin will collapse to 0 at that point.
+  //   - 2nd pass: parent widths from 1st pass are now populated, so percent
+  //     spacing on inner nodes resolves correctly and content-derived heights
+  //     properly include their padding contribution.
+  // This converges in 2 passes for typical trees because percent padding only
+  // depends on a single ancestor level.
+  for (let iteration = 0; iteration < 2; iteration++) {
+    for (let i = levelOrder.length - 1; i >= 1; i--) {
+      const node = levelOrder[i];
+      const parent = parentOf.get(node)!;
+      const pW = parent.layout.width;
+      const pH = parent.layout.height;
+      const s = node.style;
 
-    // Width
-    if (typeof s.width === 'number') {
-      node.layout.width = s.width;
-    } else if (isPercent(s.width)) {
-      node.layout.width = 0; // deferred to pass 3
-    } else {
-      node.layout.width = deriveSize(node, 'width', pW);
+      // Width
+      if (typeof s.width === 'number') {
+        node.layout.width = s.width;
+      } else if (isPercent(s.width)) {
+        node.layout.width = 0; // deferred to pass 3
+      } else {
+        node.layout.width = deriveSize(node, 'width', pW);
+      }
+
+      // Height
+      if (typeof s.height === 'number') {
+        node.layout.height = s.height;
+      } else if (isPercent(s.height)) {
+        node.layout.height = 0; // deferred to pass 3
+      } else {
+        node.layout.height = deriveSize(node, 'height', pW);
+      }
+
+      clamp(node, pW, pH);
     }
-
-    // Height
-    if (typeof s.height === 'number') {
-      node.layout.height = s.height;
-    } else if (isPercent(s.height)) {
-      node.layout.height = 0; // deferred to pass 3
-    } else {
-      node.layout.height = deriveSize(node, 'height', pW);
-    }
-
-    clamp(node, pW, pH);
   }
 
   // Derive root height from content when no explicit height is provided.
@@ -304,6 +314,7 @@ export function computeLayout(
 
     // Padding on this node: percent resolves against parent width (CSS rule).
     const pad = resolvePadding(s, pW);
+
     const dir = mainAxis(s);
     // Gap percent resolves against this container's own content-box dimension
     // on the relevant axis.

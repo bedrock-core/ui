@@ -57,3 +57,4 @@ lerna-debug.log*
 **.regolith/
 
 TODO
+.claude

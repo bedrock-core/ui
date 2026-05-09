@@ -564,6 +564,31 @@ describe('percent spacing', () => {
     expect(root.children[1].layout.x).toBe(74);
   });
 
+  it('percent padding contributes to content-derived parent height', () => {
+    // Regression: when a parent has percent padding and no explicit height,
+    // its derived height must include the padding contribution. Pass 2's
+    // first reverse iteration sees parent.layout.width=0 so percent padding
+    // collapses to 0; the second iteration must fix it once parent widths
+    // are known.
+    const root = createNode({ width: 300, flexDirection: 'column' }, [
+      createNode({ flexDirection: 'row', padding: '10%' }, [
+        createNode({ width: 50, height: 14 }),
+      ]),
+    ]);
+
+    computeLayout(root);
+
+    const inner = root.children[0];
+
+    // padding 10% of root width 300 = 30 each side (top+bottom = 60)
+    // inner height should be max child height (14) + 60 = 74
+    expect(inner.layout.height).toBeGreaterThanOrEqual(73);
+    expect(inner.layout.height).toBeLessThanOrEqual(75);
+    // The single child should be inset 30 from top
+    expect(root.children[0].children[0].layout.y).toBeGreaterThanOrEqual(29);
+    expect(root.children[0].children[0].layout.y).toBeLessThanOrEqual(31);
+  });
+
   it('percent gap, padding, and margin all together produce no NaN', () => {
     // Mirror the FlexTest fixture shape: column root, 5% gap, three flex:1 row children.
     const root = createNode(
