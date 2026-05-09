@@ -35,9 +35,11 @@ export function expandAndResolveContexts(
     // Auto-generate a stable key per parent path + component name to avoid
     // sibling collisions when keys are not provided.
     let effectiveKey = keyProp;
+
     if (!effectiveKey) {
       const pathKey = [...context.parentPath, componentName].join('/');
       const count = context.idCounters.get(pathKey) ?? 0;
+
       effectiveKey = `__auto_${count}`;
       context.idCounters.set(pathKey, count + 1);
     }
@@ -102,6 +104,7 @@ export function expandAndResolveContexts(
 
     // Derive a child context snapshot from the parent snapshot
     const nextContext = new Map(context.currentContext);
+
     nextContext.set(ctxObj, value);
 
     // Child traversal context
@@ -172,12 +175,13 @@ function processChildren(children: JSX.Element[], context: TraversalContext, pla
 }
 
 // Normalizes any valid JSX child(ren) into an array of elements.
-function toChildrenArray(children: unknown): JSX.Element[] {
+function toChildrenArray(children: JSX.Node): JSX.Element[] {
   if (Array.isArray(children)) {
-    return children as JSX.Element[];
+    return children;
   }
-  if (children && typeof children === 'object' && 'type' in (children as Record<string, unknown>)) {
-    return [children as JSX.Element];
+
+  if (children && typeof children === 'object' && 'type' in children) {
+    return [children];
   }
 
   return [];

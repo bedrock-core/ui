@@ -1,10 +1,11 @@
+import { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
 import type { Player } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
 import type { JSX } from '../../jsx';
 import { getFibersForPlayer } from '../fabric';
-import { beginInteractiveTransaction, endInteractiveTransaction } from './session';
-import { PROTOCOL_HEADER, serialize } from '../serializer';
+import { serialize, serializeTitleMetadata } from '../serializer';
 import type { SerializationContext } from '../types';
+import { beginInteractiveTransaction, endInteractiveTransaction } from './session';
 
 export async function present(
   player: Player,
@@ -15,11 +16,21 @@ export async function present(
 
   // Snapshot and show
   const form: ActionFormData = new ActionFormData();
-  form.title(PROTOCOL_HEADER);
+
+  // Encode title with protocol header and root content_height metadata.
+  // Use the layout-computed root height; fall back to the canonical viewport
+  // height if the value is missing, non-finite, or non-positive so the RP
+  // always receives a usable scroll container height.
+  const rawHeight = tree.props.jsonUIHeight;
+  const contentHeight = (typeof rawHeight === 'number' && Number.isFinite(rawHeight) && rawHeight > 0)
+    ? rawHeight
+    : CANONICAL_SCREEN.height;
+
+  form.title(serializeTitleMetadata(contentHeight));
 
   serialize(tree, form, serializationContext);
 
-  return form.show(player).then(response => {
+  return form.show(player).then((response) => {
     if (response.canceled) {
       // User ESC
       return 'cleanup';

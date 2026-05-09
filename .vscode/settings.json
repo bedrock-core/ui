@@ -48,7 +48,7 @@
 		"javascriptreact",
 		"typescriptreact",
 		"json",
-		"jsonc",
+		"jsonc"
 	],
 	"eslint.run": "onSave",
 	"eslint.enable": true,
@@ -56,6 +56,11 @@
 	"eslint.workingDirectories": [
 		"./packages/cli",
 		"./packages/ui-runtime",
-		"./packages/resource-pack",
+		"./packages/resource-pack"
+	],
+	"github.copilot.chat.commitMessageGeneration.instructions": [
+		{
+			"file": ".github/copilot-commit-instructions.md"
+		}
 	]
 }

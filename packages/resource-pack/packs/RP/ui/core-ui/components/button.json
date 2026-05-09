@@ -2,17 +2,15 @@
 	"namespace": "core-ui_components",
 	"button": {
 		"type": "panel",
-		// Note: from size_binding_x/y seems relative to parent size so making parent 10x10 will be 10 times larger the child
+		// Components must be inside a panel with size [1,1] so size_binding values map 1:1 to pixels.
 		"size": [
 			1,
 			1
 		],
+		"layer": 80,
 		"controls": [
 			{
 				"button@controlled_button": {}
-			},
-			{
-				"disabled_button@disabled_button": {}
 			}
 		]
 	},
@@ -73,7 +71,7 @@
 			{
 				/* --- width (int) - field 1 --- */
 				"binding_type": "view", // full_width
-				"source_property_name": "('%.27s' * #rem_after_type)",
+				"source_property_name": "('%.83s' * #rem_after_type)",
 				"target_property_name": "#raw_width"
 			},
 			{
@@ -83,13 +81,13 @@
 			},
 			{
 				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.26s' * #raw_width) - ('%.2s' * #raw_width) - ';')",
+				"source_property_name": "(('%.82s' * #raw_width) - ('%.2s' * #raw_width) - ';')",
 				"target_property_name": "#size_binding_x"
 			},
 			{
 				/* --- height (int) - field 2 --- */
 				"binding_type": "view", // full_width
-				"source_property_name": "('%.27s' * #rem_after_width)",
+				"source_property_name": "('%.83s' * #rem_after_width)",
 				"target_property_name": "#raw_height"
 			},
 			{
@@ -99,13 +97,13 @@
 			},
 			{
 				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.26s' * #raw_height) - ('%.2s' * #raw_height) - ';')",
+				"source_property_name": "(('%.82s' * #raw_height) - ('%.2s' * #raw_height) - ';')",
 				"target_property_name": "#size_binding_y"
 			},
 			{
 				/* --- x (int) - field 3 --- */
 				"binding_type": "view", // full_width
-				"source_property_name": "('%.27s' * #rem_after_height)",
+				"source_property_name": "('%.83s' * #rem_after_height)",
 				"target_property_name": "#raw_x"
 			},
 			{
@@ -115,13 +113,13 @@
 			},
 			{
 				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "((('%.26s' * #raw_x) - ('%.2s' * #raw_x) - ';') * $normalize)",
+				"source_property_name": "((('%.82s' * #raw_x) - ('%.2s' * #raw_x) - ';') * $normalize)",
 				"target_property_name": "#anchored_offset_value_x"
 			},
 			{
 				/* --- y (float) - field 4 --- */
 				"binding_type": "view", // full_width
-				"source_property_name": "('%.27s' * #rem_after_x)",
+				"source_property_name": "('%.83s' * #rem_after_x)",
 				"target_property_name": "#raw_y"
 			},
 			{
@@ -131,7 +129,7 @@
 			},
 			{
 				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "((('%.26s' * #raw_y) - ('%.2s' * #raw_y) - ';') * $normalize)",
+				"source_property_name": "((('%.82s' * #raw_y) - ('%.2s' * #raw_y) - ';') * $normalize)",
 				"target_property_name": "#anchored_offset_value_y"
 			},
 			{
@@ -214,7 +212,6 @@
 			{
 				"default": {
 					"type": "panel",
-					"layer": 1,
 					"size": [
 						"100%",
 						"100%"
@@ -233,7 +230,6 @@
 			{
 				"hover": {
 					"type": "panel",
-					"layer": 4,
 					"size": [
 						"100%",
 						"100%"
@@ -252,7 +248,6 @@
 			{
 				"pressed": {
 					"type": "panel",
-					"layer": 5,
 					"size": [
 						"100%",
 						"100%"
@@ -271,170 +266,10 @@
 						1
 					]
 				}
-			}
-		]
-	},
-	"disabled_button": {
-		"type": "panel",
-		"size": [
-			0,
-			0
-		],
-		"anchor_from": "top_left",
-		"anchor_to": "top_left",
-		"use_anchored_offset": true,
-		"property_bag": {
-			"#size_binding_x": 0.0,
-			"#size_binding_y": 0.0,
-			"#anchored_offset_value_x": 0.0,
-			"#anchored_offset_value_y": 0.0
-		},
-		"visible": "#visible",
-		"$normalize": 1.0,
-		"bindings": [
-			{
-				"binding_type": "collection_details",
-				"binding_collection_name": "form_buttons"
 			},
-			{
-				"binding_name": "#form_button_text",
-				"binding_type": "collection",
-				"binding_collection_name": "form_buttons"
-			},
-			{
-				/* --- strip protocol header (9 chars) --- */
-				"binding_type": "view", // protocol header size
-				"source_property_name": "('%.9s' * #form_button_text)",
-				"target_property_name": "#protocol_header"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#form_button_text - #protocol_header)",
-				"target_property_name": "#rem_after_header"
-			},
-			{
-				/* --- type (string) - field 0 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.83s' * #rem_after_header)",
-				"target_property_name": "#raw_type"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_header - #raw_type)",
-				"target_property_name": "#rem_after_type"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.82s' * #raw_type) - ('%.2s' * #raw_type) - ';')",
-				"target_property_name": "#type"
-			},
-			{
-				/* --- width (int) - field 1 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.27s' * #rem_after_type)",
-				"target_property_name": "#raw_width"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_type - #raw_width)",
-				"target_property_name": "#rem_after_width"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.26s' * #raw_width) - ('%.2s' * #raw_width) - ';')",
-				"target_property_name": "#size_binding_x"
-			},
-			{
-				/* --- height (int) - field 2 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.27s' * #rem_after_width)",
-				"target_property_name": "#raw_height"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_width - #raw_height)",
-				"target_property_name": "#rem_after_height"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.26s' * #raw_height) - ('%.2s' * #raw_height) - ';')",
-				"target_property_name": "#size_binding_y"
-			},
-			{
-				/* --- x (int) - field 3 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.27s' * #rem_after_height)",
-				"target_property_name": "#raw_x"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_height - #raw_x)",
-				"target_property_name": "#rem_after_x"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "((('%.26s' * #raw_x) - ('%.2s' * #raw_x) - ';') * $normalize)",
-				"target_property_name": "#anchored_offset_value_x"
-			},
-			{
-				/* --- y (float) - field 4 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.27s' * #rem_after_x)",
-				"target_property_name": "#raw_y"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_x - #raw_y)",
-				"target_property_name": "#rem_after_y"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "((('%.26s' * #raw_y) - ('%.2s' * #raw_y) - ';') * $normalize)",
-				"target_property_name": "#anchored_offset_value_y"
-			},
-			{
-				/* --- visible (boolean) - field 5 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.8s' * #rem_after_y)",
-				"target_property_name": "#raw_visible"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_y - #raw_visible)",
-				"target_property_name": "#rem_after_visible"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width (s:) - padding_char (;)
-				"source_property_name": "(('%.7s' * #raw_visible) - ('%.2s' * #raw_visible) - ';')",
-				"target_property_name": "#pre_visible"
-			},
-			{
-				/* --- enabled (boolean) - field 6 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.8s' * #rem_after_visible)",
-				"target_property_name": "#raw_enabled"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_visible - #raw_enabled)",
-				"target_property_name": "#rem_after_enabled"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.7s' * #raw_enabled) - ('%.2s' * #raw_enabled) - ';')",
-				"target_property_name": "#enabled"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#pre_visible and (#type = 'button') and (not #enabled))",
-				"target_property_name": "#visible"
-			}
-		],
-		"controls": [
 			{
 				"locked": {
 					"type": "panel",
-					"layer": 1,
 					"size": [
 						"100%",
 						"100%"
@@ -463,7 +298,6 @@
 			0,
 			0
 		],
-		"layer": 1,
 		"fill": false,
 		"color": [
 			1.0,

@@ -13,7 +13,7 @@
 		"min_engine_version": [
 			1,
 			21,
-			120
+			132
 		]
 	},
 	"modules": [
@@ -43,21 +43,17 @@
 			"uuid": "761ecd37-ad1c-4a64-862a-d6cc38767426",
 			"version": [
 				1,
-				0,
+				1,
 				0
 			]
 		},
 		{
 			"module_name": "@minecraft/server",
-			"version": "2.3.0"
+			"version": "2.7.0"
 		},
 		{
 			"module_name": "@minecraft/server-ui",
 			"version": "2.0.0"
-		},
-		{
-			"module_name": "@minecraft/server-gametest",
-			"version": "1.0.0-beta"
 		}
 	],
 	"metadata": {

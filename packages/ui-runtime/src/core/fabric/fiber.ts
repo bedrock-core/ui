@@ -61,7 +61,11 @@ export function deleteFiber(id: string): void {
     const slot: HookSlot = fiber.hookStates[i];
 
     if (slot.cleanup) {
-      try { slot.cleanup(); } catch { /* noop */ }
+      try {
+        slot.cleanup();
+      } catch {
+        /* noop */
+      }
 
       slot.cleanup = undefined;
     }
@@ -78,7 +82,7 @@ export function deleteFiber(id: string): void {
 export function getFibersForPlayer(player: Player): Fiber[] {
   const fibers: Fiber[] = [];
 
-  FiberRegistry.forEach(element => {
+  FiberRegistry.forEach((element) => {
     if (element.player.id === player.id) {
       fibers.push(element);
     }
@@ -141,7 +145,11 @@ function flushPendingEffects(fiber: Fiber): void {
 
     // Run previous cleanup before next effect
     if (slot.cleanup) {
-      try { slot.cleanup(); } catch { /* noop */ }
+      try {
+        slot.cleanup();
+      } catch {
+        /* noop */
+      }
 
       slot.cleanup = undefined;
     }

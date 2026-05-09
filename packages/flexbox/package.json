@@ -1,0 +1,45 @@
+{
+  "name": "@bedrock-core/flexbox",
+  "version": "0.1.0",
+  "description": "@bedrock-core/ui flexbox layout engine",
+  "keywords": [
+    "ui",
+    "flexbox",
+    "layout",
+    "minecraft",
+    "bedrock",
+    "typescript"
+  ],
+  "license": "MIT",
+  "author": "DrAv0011",
+  "contributors": [
+    {
+      "name": "DrAv0011",
+      "email": "contact@drav.dev",
+      "url": "https://drav.dev"
+    }
+  ],
+  "repository": "github:bedrock-core/ui",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    }
+  },
+  "files": [
+    "src"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "coverage": "vitest run --coverage"
+  },
+  "packageManager": "yarn@4.9.3",
+  "devDependencies": {
+    "vitest": "^4.1.5"
+  }
+}

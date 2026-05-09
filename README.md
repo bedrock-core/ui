@@ -30,15 +30,18 @@ Custom JSX-driven UI system for Minecraft Bedrock. Components serialize into com
 - ✅ State management hooks
 - ✅ Event system
 
-### 🎨 Beta 0.3.0 - Theming & Styling (Planned)
+### ✅ Beta 0.3.0
+
+- No features, just fixes to workflows and automated releases.
+
+### 🎨 Beta 0.4.0 - Theming & Styling (Planned)
 
 - Component theming system
 - Style variants (light/dark themes)
-- Text formatting (colors, bold, underline)
-- Automatic z-index layering
-- Token based styling*
-
-\* By using token based styling we might be able to avoid known caveats 1, thus have support for {number}(%, %c, %cm, %sm, %x, %y, px).
+- ~~Text formatting (colors, bold, underline)~~ Use [Formatting Codes](https://minecraft.wiki/w/Formatting_codes)
+  - Known issue, using §l for bold formatting breaks layout calculation
+- ✅ Automatic z-index layering
+- ✅ Flex, margins, paddings, spacing...
 
 ### 🧭 Beta 0.X.0 - Navigation (Planned)
 
@@ -69,7 +72,7 @@ Custom JSX-driven UI system for Minecraft Bedrock. Components serialize into com
 
 ## 🤝 Contributing
 
-Let's talk in Discord <https://bedrocktweaks.net/discord>
+Let's talk in Discord <https://bedrock-core.drav.dev/discord>
 
 For technical documentation and implementation details, see:
 
@@ -82,6 +85,12 @@ For technical documentation and implementation details, see:
 - [Bedrock Wiki - JSON UI Introduction](https://wiki.bedrock.dev/json-ui/json-ui-intro)
 - [JSON UI Documentation](https://wiki.bedrock.dev/json-ui/json-ui-documentation)
 
-## What about ore-ui?
+## What about ore-ui/DDUI?
 
-When it releases in `Number.MAX_SAFE_INTEGER` years, will consider if it is worth to port for ore-ui.
+**ore-ui**: When it releases in `Number.MAX_SAFE_INTEGER` years, will consider if it is worth to port for ore-ui.
+**DDUI**: It cannot be made compatible, DDUI does not use JSON UI so we cannot use the same methods.
+
+## Notes
+Common web behaviour is one web has a single or multiple theme but all controlled by the same team/person.
+
+Here in Minecraft we may have multiple addons each with their own UI, styling...

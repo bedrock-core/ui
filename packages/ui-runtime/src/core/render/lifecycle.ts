@@ -2,8 +2,8 @@ import type { Player } from '@minecraft/server';
 import type { FunctionComponent, JSX } from '../../jsx';
 import { startInputLock } from '../../util';
 import { present } from './presenter';
-import { buildTree } from './tree';
 import { setBuildRunner, setPlayerRoot, triggerCleanup } from './session';
+import { buildTree } from './tree';
 
 export function render(
   root: JSX.Element | FunctionComponent,
@@ -27,7 +27,7 @@ export function render(
     const tree = buildTree(rootElement, player);
 
     present(player, tree)
-      .then(result => {
+      .then((result) => {
         if (result === 'present') {
           // Another snapshot requested (programmatic close); rebuild and present again immediately
           presentOnce();
@@ -38,7 +38,7 @@ export function render(
         }
       })
       .catch(() => {
-        // swallow to keep runtime stable; no interval loop to clear
+        // Swallow to keep runtime stable; no interval loop to clear
       });
   };
 

@@ -20,6 +20,7 @@ export const WRITERS: Record<string, Writer> = {
       ctx.buttonCallbacks.set(ctx.buttonIndex, cbs.onPress);
       ctx.buttonIndex++;
     }
+
     f.button(p);
   },
 };

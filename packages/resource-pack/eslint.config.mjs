@@ -4,12 +4,14 @@ import { defineConfig } from "eslint/config";
 import { dirname } from "path";
 import tseslint from "typescript-eslint";
 import { fileURLToPath } from "url";
-import { commonTsRules } from "../../eslint.config.mjs";
+import baseConfig from '../../eslint.config.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export default defineConfig([
+  ...baseConfig,
+
   {
     files: ["**/*.ts", "**/*.tsx"],
     ignores: ["**/*.d.ts"],
@@ -23,14 +25,10 @@ export default defineConfig([
       parser: tseslint.parser,
       ecmaVersion: "latest",
       sourceType: "module",
-      parserOptions: {
-        project: ["tsconfig.json"],
-        tsconfigRootDir: __dirname,
-      },
     },
 
     rules: {
-      ...commonTsRules,
+      ...baseConfig.rules,
       "@minecraft/avoid-unnecessary-command": "error",
     }
   },

@@ -1,5 +1,10 @@
-import { Button, FunctionComponent, JSX, Panel, Text, useReducer } from '@bedrock-core/ui';
-import { system } from '@minecraft/server';
+import { JSX, Panel, Text, Button, FunctionComponent, useReducer } from '@bedrock-core/ui';
+
+/**
+ * ============================================================================
+ * useReducer EXAMPLE - Todo List with Complex State
+ * ============================================================================
+ */
 
 interface Todo {
   id: number;
@@ -7,27 +12,22 @@ interface Todo {
   completed: boolean;
 }
 
-type TodoAction =
-  | { type: 'add'; text: string }
-  | { type: 'remove'; id: number }
-  | { type: 'clear_completed' }
-  | { type: 'complete_next' };
+type TodoAction
+  = | { type: 'add'; text: string }
+    | { type: 'toggle'; id: number }
+    | { type: 'remove'; id: number }
+    | { type: 'clear_completed' };
 
 function todoReducer(state: Todo[], action: TodoAction): Todo[] {
   switch (action.type) {
     case 'add':
-      return [...state, { id: system.currentTick, text: action.text, completed: false }];
+      return [...state, { id: Date.now(), text: action.text, completed: false }];
+    case 'toggle':
+      return state.map(todo => todo.id === action.id ? { ...todo, completed: !todo.completed } : todo);
     case 'remove':
       return state.filter(todo => todo.id !== action.id);
     case 'clear_completed':
       return state.filter(todo => !todo.completed);
-    case 'complete_next': {
-      const idx = state.findIndex(t => !t.completed);
-      if (idx === -1) return state;
-      const next = { ...state[idx], completed: true };
-
-      return [...state.slice(0, idx), next, ...state.slice(idx + 1)];
-    }
     default:
       return state;
   }
@@ -43,7 +43,6 @@ export const TodoList: FunctionComponent = (): JSX.Element => {
   // Derived state - computed directly, no useState/useEffect needed!
   const todoCount = todos.length;
   const completedCount = todos.filter(t => t.completed).length;
-  const hasIncomplete = todoCount > completedCount;
 
   const addTodo = (): void => {
     dispatch({ type: 'add', text: `Task ${todos.length + 1}` });
@@ -53,70 +52,39 @@ export const TodoList: FunctionComponent = (): JSX.Element => {
     dispatch({ type: 'clear_completed' });
   };
 
-  const completeTodo = (): void => {
-    dispatch({ type: 'complete_next' });
-  };
-
-  // console.error(`Rendering TodoList with todos: ${JSON.stringify(todos)}`);
-
   return (
-    <Panel width={192} height={290} x={414} y={10}>
-      <Text width={192} height={20} x={10} y={10}>
-        §l§bTodo List
-      </Text>
-      <Text width={192} height={15} x={10} y={35}>
-        {`Total: §e${todoCount}`}
-      </Text>
-      <Text width={192} height={15} x={10} y={53}>
-        {`Done: §a${completedCount}`}
-      </Text>
+    <Panel flexDirection={'column'} padding={6} gap={4}>
+      <Text>{'§bTodo List'}</Text>
+      <Text>{`Total: §e${todoCount}`}</Text>
+      <Text>{`Done: §a${completedCount}`}</Text>
 
-      <Button
-        width={81}
-        height={20}
-        x={10}
-        y={75}
-        onPress={(): void => {
-          addTodo();
-        }}>
-        <Text width={81} height={20} x={5} y={5}>
-          §a+ Add
-        </Text>
-      </Button>
+      <Panel flexDirection={'row'} gap={6}>
+        <Button
+          onPress={(): void => {
+            addTodo();
+          }}
+        >
+          <Text>{'§a+ Add'}</Text>
+        </Button>
 
-      <Button
-        width={81}
-        height={20}
-        x={101}
-        y={75}
-        enabled={completedCount > 0}
-        onPress={(): void => {
-          clearCompleted();
-        }}>
-        <Text width={81} height={20} x={5} y={5}>
-          §cClear
-        </Text>
-      </Button>
-
-      <Button
-        width={172}
-        height={20}
-        x={10}
-        y={100}
-        enabled={hasIncomplete}
-        onPress={() => completeTodo()}>
-        <Text width={172} height={20} x={5} y={5}>
-          §9Complete next
-        </Text>
-      </Button>
-
-      <Panel width={172} height={150} x={10} y={130}>
-        {todos.map((todo, index) => (
-          <Text width={100} height={20} x={10} y={5 + index * 20}>
-            {todo.completed ? `§7§m${todo.text}` : `§f${todo.text}`}
-          </Text>
-        ))}
+        <Button
+          onPress={(): void => {
+            clearCompleted();
+          }}
+        >
+          <Text>{'§cClear'}</Text>
+        </Button>
       </Panel>
+
+      <Button
+        onPress={(): void => {
+          if (todos.length > 0) {
+            dispatch({ type: 'toggle', id: todos[0].id });
+          }
+        }}
+      >
+        <Text>{'§9Toggle First'}</Text>
+      </Button>
     </Panel>
   );
 };

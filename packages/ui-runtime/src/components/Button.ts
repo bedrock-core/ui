@@ -10,7 +10,7 @@ export const Button: FunctionComponent<ButtonProps> = ({ onPress, children, ...r
   type: 'button',
   props: {
     ...withControl(rest),
-    onPress: onPress ?? (() => {}),
+    onPress: onPress ?? ((): void => {}),
     children,
   },
 });

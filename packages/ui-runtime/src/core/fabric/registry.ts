@@ -13,4 +13,3 @@ export function setCurrentFiber(fiber: Fiber | undefined, dispatcher: Dispatcher
 export function getCurrentFiber(): [Fiber | undefined, Dispatcher | undefined] {
   return [currentFiber, currentDispatcher];
 }
-

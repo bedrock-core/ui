@@ -83,6 +83,7 @@ export function scheduleLogicPass(player: Player): void {
 
   // Skip if exit requested
   const exiting = getFibersForPlayer(player).some(f => !f.shouldRender);
+
   if (exiting) {
     return;
   }
@@ -105,6 +106,7 @@ export function scheduleLogicPass(player: Player): void {
     }
 
     const exitingNow = getFibersForPlayer(player).some(f => !f.shouldRender);
+
     if (exitingNow) {
       return;
     }
@@ -119,12 +121,14 @@ export function scheduleLogicPass(player: Player): void {
 
 export function beginInteractiveTransaction(player: Player): void {
   const session = getOrCreate(player);
+
   session.suppress = true;
   session.pending = false; // cancel pending microtask; flush path also checks suppress
 }
 
 export function endInteractiveTransaction(player: Player): void {
   const session = getOrCreate(player);
+
   session.suppress = false;
 }
 

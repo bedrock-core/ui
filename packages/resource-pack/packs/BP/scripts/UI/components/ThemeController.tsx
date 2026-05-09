@@ -8,53 +8,34 @@ interface ThemeControllerProps { onThemeChange: (theme: Theme) => void }
  * Grid Position: Row 2, Column 3
  */
 export const ThemeController: FunctionComponent<ThemeControllerProps> = ({ onThemeChange }): JSX.Element => (
-  <Panel width={192} height={140} x={10} y={160}>
-    <Text width={192} height={20} x={10} y={10}>
-      §l§eTheme Control
-    </Text>
+  <Panel flexDirection={'column'} padding={6} gap={4}>
+    <Text>{'§eTheme Control'}</Text>
 
     <Button
-      width={172}
-      height={20}
-      x={10}
-      y={35}
       onPress={(): void => {
         onThemeChange('light');
-      }}>
-      <Text width={172} height={20} x={5} y={5}>
-        §f■ Light
-      </Text>
+      }}
+    >
+      <Text>{'§f■ Light'}</Text>
     </Button>
 
     <Button
-      width={172}
-      height={20}
-      x={10}
-      y={60}
       onPress={(): void => {
         onThemeChange('dark');
-      }}>
-      <Text width={172} height={20} x={5} y={5}>
-        §8■ Dark
-      </Text>
+      }}
+    >
+      <Text>{'§8■ Dark'}</Text>
     </Button>
 
     <Button
-      width={172}
-      height={20}
-      x={10}
-      y={85}
       onPress={(): void => {
         onThemeChange('neon');
-      }}>
-      <Text width={172} height={20} x={5} y={5}>
-        §d■ Neon
-      </Text>
+      }}
+    >
+      <Text>{'§d■ Neon'}</Text>
     </Button>
 
-    <Text width={192} height={12} x={10} y={115}>
-      §7useContext provider
-    </Text>
+    <Text flex={1}> </Text>
+    <Text>{'§7useContext provider'}</Text>
   </Panel>
 );
-

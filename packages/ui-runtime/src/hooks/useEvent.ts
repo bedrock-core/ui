@@ -1,4 +1,3 @@
-
 import { getCurrentFiber, invariant } from '../core';
 
 /**

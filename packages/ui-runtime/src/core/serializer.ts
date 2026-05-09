@@ -15,16 +15,16 @@ export const FIELD_MARKERS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmn
 export const PAD_CHAR = ';';
 
 // Protocol version tag (format: 'v' + 4 hex digits)
-// e.g., 'bcuiv0002'
+// e.g., 'bcuiv0003'
 // Increment when making backward-incompatible changes to the payload layout.
-export const VERSION = 'v0002';
+export const VERSION = 'v0003';
 export const PROTOCOL_HEADER = `bcui${VERSION}`;
 export const PROTOCOL_HEADER_LENGTH = 9; // bytes, all characters are single-byte ASCII
 
 // Public protocol constants (exported for tests and decoders)
 export const TYPE_WIDTH = {
   s: 80,
-  n: 24,
+  n: 80, // Expanded from 24 to match string width
   b: 5,
   r: 0, // variable
 };
@@ -72,6 +72,7 @@ function utf8ByteLength(str: string): number {
     } else if (code >= 0xd800 && code <= 0xdbff) {
       // High surrogate, check for valid low surrogate to form a pair
       const next = i + 1 < str.length ? str.charCodeAt(i + 1) : 0;
+
       if (next >= 0xdc00 && next <= 0xdfff) {
         bytes += 4; // surrogate pair (4 bytes)
         i++; // consume low surrogate
@@ -125,8 +126,8 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
   // If we see one here, it's a bug
   if (typeof type === 'function') {
     throw new SerializationError(
-      `serialize(): Encountered unresolved function component "${type.name || 'anonymous'}". ` +
-      `This is a bug - buildTree() should have called all function components before serialization.`,
+      `serialize(): Encountered unresolved function component "${type.name || 'anonymous'}". `
+      + `This is a bug - buildTree() should have called all function components before serialization.`,
     );
   }
 
@@ -135,7 +136,11 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
     if (children) {
       const childArray = Array.isArray(children) ? children : [children];
 
-      childArray.forEach((child: JSX.Element | string): void => { typeof child !== 'string' && serialize(child, form, context); });
+      childArray.forEach((child: JSX.Element | string): void => {
+        if (typeof child !== 'string') {
+          serialize(child, form, context);
+        }
+      });
     }
 
     return;
@@ -165,20 +170,19 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
   // Throw error if any non-serializable props were found
   if (invalidProps.length > 0) {
     throw new SerializationError(
-      `Component "${type}" has non-serializable props. All props must be primitives (string, number, boolean) or ReservedBytes. ` +
-      `Invalid props: ${invalidProps.join(', ')}. ` +
-      `Ensure all optional props have default values in the component definition.`,
+      `Component "${type}" has non-serializable props. All props must be primitives (string, number, boolean) or ReservedBytes. `
+      + `Invalid props: ${invalidProps.join(', ')}. `
+      + `Ensure all optional props have default values in the component definition.`,
     );
   }
 
   const [payload] = serializeProps({ type, ...serializableProps });
 
-  // Logger.log(`[serialize] type=${type} payloadBytes=${bytes} payload=${payload} `);
-
   const writer = WRITERS[type];
 
   if (!writer) {
     const known = Object.keys(WRITERS).sort().join(', ');
+
     throw new SerializationError(`Unknown native component type: ${type}. Known types: ${known}`);
   }
 
@@ -188,7 +192,11 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
   if (children) {
     const childArray = Array.isArray(children) ? children : [children];
 
-    childArray.forEach((child: JSX.Element | string): void => { typeof child !== 'string' && serialize(child, form, context); });
+    childArray.forEach((child: JSX.Element | string): void => {
+      if (typeof child !== 'string') {
+        serialize(child, form, context);
+      }
+    });
   }
 }
 
@@ -215,7 +223,6 @@ export function serializeProps({ type, ...props }: SerializableProps & { type: s
       core = `${TYPE_PREFIX.n}:${padToByteLength(rawStr, TYPE_WIDTH.n)}`;
       widthBytes = FULL_WIDTH.n;
     } else if (typeof value === 'object' && value.bytes !== undefined) {
-      rawStr = '';
       // Do not append prefix as we do not have prefix or marker for reserved bytes for easier JSON UI skipping
       core = `${PAD_CHAR.repeat(value.bytes - 1)}`; // -1 for marker
       widthBytes = value.bytes;
@@ -240,4 +247,21 @@ export function serializeProps({ type, ...props }: SerializableProps & { type: s
   const finalBytes = totalBytes + utf8ByteLength(prefix);
 
   return [result, finalBytes];
+}
+
+/**
+ * Serialize the form title metadata containing the root content height.
+ * Encodes as: PROTOCOL_HEADER + number field (83 bytes).
+ * The RP reads this from #title_text to size the scrollable content panel.
+ *
+ * @param contentHeight - Root panel computed height in pixels
+ * @returns Full title string for form.title()
+ */
+export function serializeTitleMetadata(contentHeight: number): string {
+  const rawStr = Math.round(contentHeight).toString();
+  // number field: 'n:' prefix (2) + value padded to TYPE_WIDTH.n (80) + marker (1) = 83 bytes
+  const padded = rawStr + PAD_CHAR.repeat(TYPE_WIDTH.n - rawStr.length);
+  const field = `${TYPE_PREFIX.n}:${padded}${FIELD_MARKERS[0]}`;
+
+  return PROTOCOL_HEADER + field;
 }

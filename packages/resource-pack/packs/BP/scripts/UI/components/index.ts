@@ -7,7 +7,7 @@
 export { ThemeDisplay } from './ThemeDisplay';
 export { SettingsDisplay } from './SettingsDisplay';
 export { TodoList } from './TodoList';
-export { MetadataDisplay } from './MetadataDisplay';
+export { RefTimer } from './RefTimer';
 
 // Row 2 components
 export { EventCounter } from './EventCounter';
@@ -18,4 +18,5 @@ export { SettingsController } from './SettingsController';
 // Row 3 components
 export { InfoPanel } from './InfoPanel';
 export { ResourcesPanel } from './ResourcesPanel';
+export { GridLayoutPanel } from './GridLayoutPanel';
 export { ExitPanel } from './ExitPanel';
