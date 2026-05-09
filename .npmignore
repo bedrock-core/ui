@@ -20,6 +20,10 @@
 !packages/cli/templates
 !packages/cli/templates/**
 
+!packages/flexbox
+!packages/flexbox/src
+!packages/flexbox/src/**
+
 !packages/ui-runtime
 !packages/ui-runtime/src
 !packages/ui-runtime/src/**

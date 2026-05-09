@@ -154,6 +154,7 @@ function flushPendingEffects(fiber: Fiber): void {
       slot.cleanup = undefined;
     }
 
+    /* eslint-disable-next-line no-useless-assignment */
     let cleanup = undefined;
 
     try {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-type-assertion */
 import { isFunction } from '../';
 import { isInInteractiveTransaction, scheduleLogicPass, triggerCleanup } from '../render/session';
 import { getCurrentFiber } from './registry';
@@ -32,7 +33,7 @@ export const MountDispatcher: Dispatcher = {
       }
     };
 
-    return [slot.value, setter];
+    return [slot.value as T, setter];
   },
 
   useEffect(effect: () => (() => void) | void, deps?: readonly unknown[]) {
@@ -59,7 +60,7 @@ export const MountDispatcher: Dispatcher = {
       slot.value = { current: initial };
     }
 
-    return slot.value;
+    return slot.value as { current: T };
   },
 
   useContext<T>(ctx: Context<T>) {
@@ -72,7 +73,7 @@ export const MountDispatcher: Dispatcher = {
 
     slot.value = value;
 
-    return value;
+    return value as T;
   },
 
   useReducer<S, A>(reducer: (s: S, a: A) => S, initial: S) {
@@ -87,7 +88,7 @@ export const MountDispatcher: Dispatcher = {
     slot.resolved = false;
 
     const dispatch = (action: A): void => {
-      const prevVal = slot.value;
+      const prevVal = slot.value as S;
       const nextVal = reducer(prevVal, action);
 
       if (!Object.is(nextVal, prevVal)) {
@@ -101,7 +102,7 @@ export const MountDispatcher: Dispatcher = {
       }
     };
 
-    return [slot.value, dispatch];
+    return [slot.value as S, dispatch];
   },
 
   usePlayer() {
@@ -179,7 +180,7 @@ export const UpdateDispatcher: Dispatcher = {
       }
     };
 
-    return [slot.value, setter];
+    return [slot.value as T, setter];
   },
 
   useEffect(effect: () => (() => void) | void, deps?: readonly unknown[]) {
@@ -236,7 +237,7 @@ export const UpdateDispatcher: Dispatcher = {
       slot.value = { current: initial };
     }
 
-    return slot.value;
+    return slot.value as { current: T };
   },
 
   useContext<T>(ctx: Context<T>) {
@@ -249,7 +250,7 @@ export const UpdateDispatcher: Dispatcher = {
 
     slot.value = value;
 
-    return value;
+    return value as T;
   },
 
   useReducer<S, A>(reducer: (s: S, a: A) => S, initial: S) {
@@ -269,7 +270,7 @@ export const UpdateDispatcher: Dispatcher = {
     }
 
     const dispatch = (action: A): void => {
-      const prevVal = slot.value;
+      const prevVal = slot.value as S;
       const nextVal = reducer(prevVal, action);
 
       if (!Object.is(nextVal, prevVal)) {
@@ -283,7 +284,7 @@ export const UpdateDispatcher: Dispatcher = {
       }
     };
 
-    return [slot.value, dispatch];
+    return [slot.value as S, dispatch];
   },
 
   usePlayer() {
