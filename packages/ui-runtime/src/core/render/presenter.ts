@@ -1,5 +1,6 @@
 import type { Player } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
+import { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
 import type { JSX } from '../../jsx';
 import { getFibersForPlayer } from '../fabric';
 import { serialize, serializeTitleMetadata } from '../serializer';
@@ -16,8 +17,14 @@ export async function present(
   // Snapshot and show
   const form: ActionFormData = new ActionFormData();
 
-  // Encode title with protocol header and root content_height metadata
-  const contentHeight = typeof tree.props.jsonUIHeight === 'number' ? tree.props.jsonUIHeight : 0;
+  // Encode title with protocol header and root content_height metadata.
+  // Use the layout-computed root height; fall back to the canonical viewport
+  // height if the value is missing, non-finite, or non-positive so the RP
+  // always receives a usable scroll container height.
+  const rawHeight = tree.props.jsonUIHeight;
+  const contentHeight = (typeof rawHeight === 'number' && Number.isFinite(rawHeight) && rawHeight > 0)
+    ? rawHeight
+    : CANONICAL_SCREEN.height;
 
   form.title(serializeTitleMetadata(contentHeight));
 

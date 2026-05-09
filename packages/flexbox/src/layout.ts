@@ -257,11 +257,13 @@ export function computeLayout(
   }
 
   // Derive root height from content when no explicit height is provided.
-  // This allows document-like vertical growth for scrollable layouts.
+  // Behaves like HTML document auto-height: grows to fit content but never
+  // shrinks below the canonical viewport (refHeight), so tiny/empty trees
+  // never produce an unusably small scroll container.
   if (root.style.height === undefined) {
     const derivedRootHeight = deriveSize(root, 'height');
 
-    root.layout.height = derivedRootHeight > 0 ? derivedRootHeight : refHeight;
+    root.layout.height = Math.max(derivedRootHeight, refHeight);
     clamp(root, refWidth, refHeight);
   }
 

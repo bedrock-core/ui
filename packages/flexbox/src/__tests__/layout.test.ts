@@ -45,14 +45,34 @@ describe('root defaults', () => {
     expect(root.layout.height).toBe(105); // 210 * 0.5
   });
 
-  it('derives root height from children when root height is omitted', () => {
+  it('derives root height from children when root height is omitted but floors to canonical viewport', () => {
+    // 40 + 60 = 100 px of content, but canonical viewport height (210) is the minimum floor.
     const root = lay(createNode({ width: 320, flexDirection: 'column' }, [
       createNode({ height: 40 }),
       createNode({ height: 60 }),
     ]));
 
     expect(root.layout.width).toBe(320);
-    expect(root.layout.height).toBe(100);
+    expect(root.layout.height).toBe(CANONICAL_SCREEN.height); // floor: 210
+  });
+
+  it('grows beyond canonical viewport when content is taller', () => {
+    // 150 + 150 = 300 px > canonical height (210): content-driven growth wins.
+    const root = lay(createNode({ width: 320, flexDirection: 'column' }, [
+      createNode({ height: 150 }),
+      createNode({ height: 150 }),
+    ]));
+
+    expect(root.layout.height).toBe(300);
+  });
+
+  it('tiny content still floors to canonical viewport height', () => {
+    // A single text-like node with small intrinsic height should not collapse the root.
+    const root = lay(createNode({ width: 320, flexDirection: 'column' }, [
+      createNode({ width: 26, height: 10 }),
+    ]));
+
+    expect(root.layout.height).toBe(CANONICAL_SCREEN.height); // floor: 210
   });
 });
 
