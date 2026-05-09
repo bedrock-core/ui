@@ -7,7 +7,7 @@ import { ThemeContext, Theme } from '../contexts';
  * Grid Position: Row 1, Column 1
  */
 export const ThemeDisplay: FunctionComponent = (): JSX.Element => {
-  const theme = useContext(ThemeContext);
+  const theme = useContext<Theme>(ThemeContext);
   const themeColors: Record<Theme, string> = {
     light: '§f',
     dark: '§8',
@@ -15,22 +15,13 @@ export const ThemeDisplay: FunctionComponent = (): JSX.Element => {
   };
 
   return (
-    <Panel width={'24%'} height={'31%'} x={'1%'} y={'2%'}>
-      <Text width={'100%'} height={'14%'} x={'5%'} y={'7%'}>
-        {'§l§eTheme Display'}
-      </Text>
-      <Text width={'100%'} height={'11%'} x={'5%'} y={'25%'}>
-        {'§lCurrent Theme:'}
-      </Text>
-      <Text width={'100%'} height={'14%'} x={'5%'} y={'39%'}>
-        {`${themeColors[theme]}§l${theme.toUpperCase()}`}
-      </Text>
-      <Text width={'100%'} height={'11%'} x={'5%'} y={'64%'}>
-        {'§7Uses useContext'}
-      </Text>
-      <Text width={'100%'} height={'11%'} x={'5%'} y={'79%'}>
-        {'§7to read theme'}
-      </Text>
+    <Panel flexDirection={'column'} padding={6} gap={4}>
+      <Text>{'§eTheme Display'}</Text>
+      <Text>{'Current Theme:'}</Text>
+      <Text>{`${themeColors[theme]}${theme.toUpperCase()}`}</Text>
+      <Text flex={1}> </Text>
+      <Text>{'§7Uses useContext'}</Text>
+      <Text>{'§7to read theme'}</Text>
     </Panel>
   );
 };

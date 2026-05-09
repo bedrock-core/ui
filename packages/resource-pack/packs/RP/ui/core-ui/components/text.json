@@ -1,5 +1,6 @@
 {
 	"namespace": "core-ui_components",
+	// idk how to make it work "extending" control.json, so copy/paste it here for now
 	"text": {
 		"type": "label",
 		"text": "#text",
@@ -18,7 +19,9 @@
 			"#anchored_offset_value_y": 0.0
 		},
 		"visible": "#visible",
+		"enabled": "#enabled", // TODO needs testing
 		"localize": true,
+		"$normalize": 1.0,
 		"bindings": [
 			{
 				"binding_name": "#form_button_text",
@@ -97,7 +100,7 @@
 			},
 			{
 				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.82s' * #raw_x) - ('%.2s' * #raw_x) - ';')",
+				"source_property_name": "((('%.82s' * #raw_x) - ('%.2s' * #raw_x) - ';') * $normalize)",
 				"target_property_name": "#anchored_offset_value_x"
 			},
 			{
@@ -113,7 +116,7 @@
 			},
 			{
 				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.82s' * #raw_y) - ('%.2s' * #raw_y) - ';')",
+				"source_property_name": "((('%.82s' * #raw_y) - ('%.2s' * #raw_y) - ';') * $normalize)",
 				"target_property_name": "#anchored_offset_value_y"
 			},
 			{
@@ -154,7 +157,7 @@
 				"target_property_name": "#enabled"
 			},
 			{
-				/* --- skip layer(83) + alpha(83) + inheritMaxSiblingWidth(8) + inheritMaxSiblingHeight(8) + $reserved(402) --- */
+				/* --- skip __reserved (274) + commented (70) --- */
 				"binding_type": "view", // reserved full_width
 				"source_property_name": "('%.584s' * #rem_after_enabled)",
 				"target_property_name": "#skip_reserved_control"

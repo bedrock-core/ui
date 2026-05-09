@@ -1,10 +1,10 @@
-import { FunctionComponent, JSX, Panel, Text, useEvent, useState } from '@bedrock-core/ui';
+import { JSX, Panel, Text, FunctionComponent, useState, useEvent } from '@bedrock-core/ui';
 import { system } from '@minecraft/server';
 
 /**
  * Event counter - listens to script events and updates count using useEvent hook
  * Test with: /scriptevent demo:test hello
- * Grid Position: Row 3, Column 3
+ * Grid Position: Row 2, Column 1
  */
 export const EventCounter: FunctionComponent = (): JSX.Element => {
   const [eventCount, setEventCount] = useState(0);
@@ -20,13 +20,13 @@ export const EventCounter: FunctionComponent = (): JSX.Element => {
   });
 
   return (
-    <Panel width={'24%'} height={'31%'} x={'51%'} y={'67%'}>
-      <Text width={'100%'} height={'14%'} x={'5%'} y={'7%'}>{'§l§bScript Events'}</Text>
-      <Text width={'100%'} height={'11%'} x={'5%'} y={'25%'}>{`Events: §l${eventCount}`}</Text>
-      <Text width={'100%'} height={'11%'} x={'5%'} y={'38%'}>{`ID: §7${lastEventId}`}</Text>
-      <Text width={'100%'} height={'11%'} x={'5%'} y={'51%'}>{`Msg: §7${lastMessage}`}</Text>
-      <Text width={'100%'} height={'9%'} x={'5%'} y={'68%'}>{'§6/scriptevent test'}</Text>
-      <Text width={'100%'} height={'9%'} x={'5%'} y={'81%'}>{'§6useEvent hook'}</Text>
+    <Panel flexDirection={'column'} padding={6} gap={4}>
+      <Text>{'§bScript Events'}</Text>
+      <Text>{`Events: ${eventCount}`}</Text>
+      <Text>{`ID: §7${lastEventId}`}</Text>
+      <Text>{`Msg: §7${lastMessage}`}</Text>
+      <Text>{'§6/scriptevent test'}</Text>
+      <Text>{'§6useEvent hook'}</Text>
     </Panel>
   );
 };

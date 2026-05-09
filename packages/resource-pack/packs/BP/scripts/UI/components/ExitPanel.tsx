@@ -14,19 +14,13 @@ export const ExitPanel: FunctionComponent = (): JSX.Element => {
   };
 
   return (
-    <Panel width={'24%'} height={'31%'} x={'75%'} y={'67%'}>
-      <Text width={'100%'} height={'14%'} x={'5%'} y={'7%'}>{'§l§cExit Panel'}</Text>
-      <Text width={'100%'} height={'11%'} x={'5%'} y={'29%'}>{'§7Close the UI'}</Text>
-      <Button
-        width={'90%'}
-        height={'21%'}
-        x={'5%'}
-        y={'46%'}
-        onPress={handleExit}
-      >
-        <Text width={'100%'} height={'100%'} x={'3%'} y={'33%'}>{'§l§cEXIT'}</Text>
+    <Panel flexDirection={'column'} padding={6} gap={4}>
+      <Text>{'§cExit Panel'}</Text>
+      <Text>{'§7Close the UI'}</Text>
+      <Button onPress={handleExit}>
+        <Text>{'§cEXIT'}</Text>
       </Button>
-      <Text width={'100%'} height={'9%'} x={'5%'} y={'79%'}>{'§7Thanks for testing!'}</Text>
+      <Text>{'§7Thanks for testing!'}</Text>
     </Panel>
   );
 };

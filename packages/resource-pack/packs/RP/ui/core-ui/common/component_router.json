@@ -6,11 +6,15 @@
 	// Components must be inside a panel with size 1,1 to be properly scalable
 	"component_router": {
 		"type": "panel",
+		// Components must be inside a panel with size [1,1] so size_binding values map 1:1 to pixels.
 		"size": [
-			"0.01%",
-			"0.01%"
+			1,
+			1
 		],
 		"controls": [
+			{
+				"fragment@core-ui_components.fragment": {}
+			},
 			{
 				"panel@core-ui_components.panel": {}
 			},
