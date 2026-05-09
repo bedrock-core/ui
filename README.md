@@ -30,7 +30,7 @@ Custom JSX-driven UI system for Minecraft Bedrock. Components serialize into com
 - ✅ State management hooks
 - ✅ Event system
 
-### ⚠️ Beta 0.3.0
+### ✅ Beta 0.3.0
 
 - No features, just fixes to workflows and automated releases.
 
@@ -39,8 +39,9 @@ Custom JSX-driven UI system for Minecraft Bedrock. Components serialize into com
 - Component theming system
 - Style variants (light/dark themes)
 - ~~Text formatting (colors, bold, underline)~~ Use [Formatting Codes](https://minecraft.wiki/w/Formatting_codes)
-- Automatic z-index layering
-- Flex, margins, paddings, spacing...
+  - Known issue, using §l for bold formatting breaks layout calculation
+- ✅ Automatic z-index layering
+- ✅ Flex, margins, paddings, spacing...
 
 ### 🧭 Beta 0.X.0 - Navigation (Planned)
 
