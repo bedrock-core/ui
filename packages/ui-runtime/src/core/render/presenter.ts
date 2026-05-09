@@ -1,11 +1,10 @@
+import { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
 import type { Player } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
-import { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
 import type { JSX } from '../../jsx';
 import { getFibersForPlayer } from '../fabric';
 import { serialize, serializeTitleMetadata } from '../serializer';
 import type { SerializationContext } from '../types';
-import { dumpLayout } from './phases/layout';
 import { beginInteractiveTransaction, endInteractiveTransaction } from './session';
 
 export async function present(
@@ -28,9 +27,6 @@ export async function present(
     : CANONICAL_SCREEN.height;
 
   form.title(serializeTitleMetadata(contentHeight));
-
-  // Debug: dump computed layout tree so it can be compared against the in-game render.
-  console.warn(`[bedrock-core/ui] layout dump:\n${dumpLayout(tree)}`);
 
   serialize(tree, form, serializationContext);
 
