@@ -5,6 +5,7 @@ import {
   resolveAlignSelf,
   resolveColumnGap,
   resolveFlexGrow,
+  resolveFlexShrink,
   resolveMargin,
   resolvePadding,
   resolveRowGap,
@@ -65,15 +66,22 @@ function clamp(node: LayoutNode, parentW: number, parentH: number): void {
  * Only children with FIXED sizes (number, already resolved in pass 2) that are
  * relative-positioned and visible contribute to the parent's size. Flex children
  * and percentage-sized children are excluded (their size depends on the parent).
+ *
+ * `parentWidth` is the parent's resolved width, used as the base for percent
+ * padding/margin resolution. Percent gaps would create a circular dependency
+ * here (gap % depends on the size we're trying to derive), so they collapse
+ * to 0 in this pass — Pass 3 applies the real gap once the size is final.
  */
-function deriveSize(node: LayoutNode, axis: 'width' | 'height'): number {
+function deriveSize(node: LayoutNode, axis: 'width' | 'height', parentWidth: number): number {
   const s = node.style;
   const dir = mainAxis(s);
   const isMainAxis = (axis === 'width') === (dir === 'row');
 
-  const pad = resolvePadding(s);
+  const pad = resolvePadding(s, parentWidth);
   const paddingMain = axis === 'width' ? pad.left + pad.right : pad.top + pad.bottom;
-  const gap = axis === 'width' ? resolveRowGap(s) : resolveColumnGap(s);
+  // Percent gaps collapse to 0 here (would be circular). Pure-numeric gaps
+  // still contribute by passing 0 as the percent base.
+  const gap = axis === 'width' ? resolveRowGap(s, 0) : resolveColumnGap(s, 0);
 
   const kids = node.children.filter(c => visible(c) && relative(c));
 
@@ -82,19 +90,18 @@ function deriveSize(node: LayoutNode, axis: 'width' | 'height'): number {
     let count = 0;
 
     for (const child of kids) {
-      // Skip flex children and percent-sized children — they need parent size first
-      if (resolveFlexGrow(child.style) > 0) {
-        continue;
-      }
-
       const styleSize = axis === 'width' ? child.style.width : child.style.height;
 
+      // Percent-sized children are excluded (their size depends on the parent).
       if (isPercent(styleSize)) {
         continue;
       }
 
+      // Flex children contribute their intrinsic basis (already in node.layout
+      // from Pass 2). This matches CSS where flex-grow doesn't erase basis;
+      // basis is the floor that the parent must accommodate.
       const childSize = axis === 'width' ? child.layout.width : child.layout.height;
-      const cm = resolveMargin(child.style);
+      const cm = resolveMargin(child.style, parentWidth);
       const childMargin = axis === 'width' ? cm.left + cm.right : cm.top + cm.bottom;
 
       total += childSize + childMargin;
@@ -118,7 +125,7 @@ function deriveSize(node: LayoutNode, axis: 'width' | 'height'): number {
       }
 
       const childSize = axis === 'width' ? child.layout.width : child.layout.height;
-      const cm = resolveMargin(child.style);
+      const cm = resolveMargin(child.style, parentWidth);
       const childMargin = axis === 'width' ? cm.left + cm.right : cm.top + cm.bottom;
 
       max = Math.max(max, childSize + childMargin);
@@ -141,7 +148,7 @@ function applyCrossAlign(
   dir: 'row' | 'column',
   effectiveAlign: string,
 ): void {
-  const cm = resolveMargin(child.style);
+  const cm = resolveMargin(child.style, parent.layout.width);
 
   if (dir === 'row') {
     // Cross axis is vertical (y)
@@ -241,7 +248,7 @@ export function computeLayout(
     } else if (isPercent(s.width)) {
       node.layout.width = 0; // deferred to pass 3
     } else {
-      node.layout.width = deriveSize(node, 'width');
+      node.layout.width = deriveSize(node, 'width', pW);
     }
 
     // Height
@@ -250,7 +257,7 @@ export function computeLayout(
     } else if (isPercent(s.height)) {
       node.layout.height = 0; // deferred to pass 3
     } else {
-      node.layout.height = deriveSize(node, 'height');
+      node.layout.height = deriveSize(node, 'height', pW);
     }
 
     clamp(node, pW, pH);
@@ -261,7 +268,7 @@ export function computeLayout(
   // shrinks below the canonical viewport (refHeight), so tiny/empty trees
   // never produce an unusably small scroll container.
   if (root.style.height === undefined) {
-    const derivedRootHeight = deriveSize(root, 'height');
+    const derivedRootHeight = deriveSize(root, 'height', refWidth);
 
     root.layout.height = Math.max(derivedRootHeight, refHeight);
     clamp(root, refWidth, refHeight);
@@ -272,8 +279,11 @@ export function computeLayout(
     const parent = parentOf.get(node);
     const pW = parent?.layout.width ?? refWidth;
     const pH = parent?.layout.height ?? refHeight;
-    // % sizes resolve against parent *content* box (outer minus padding)
-    const parentPad = parent ? resolvePadding(parent.style) : null;
+    // % sizes resolve against parent *content* box (outer minus padding).
+    // Parent's padding % itself uses the grandparent width — but at this depth
+    // we already resolved the parent in a previous iteration, so its padding
+    // can be resolved against the parent's own width as the safe base.
+    const parentPad = parent ? resolvePadding(parent.style, pW) : null;
     const contentPW = parentPad ? Math.max(0, pW - parentPad.left - parentPad.right) : pW;
     const contentPH = parentPad ? Math.max(0, pH - parentPad.top - parentPad.bottom) : pH;
     const s = node.style;
@@ -292,9 +302,16 @@ export function computeLayout(
     // Inherit zIndex from parent
     node.layout.zIndex = s.zIndex ?? (parent?.layout.zIndex ?? 0);
 
-    const pad = resolvePadding(s);
+    // Padding on this node: percent resolves against parent width (CSS rule).
+    const pad = resolvePadding(s, pW);
     const dir = mainAxis(s);
-    const mainGap = dir === 'row' ? resolveRowGap(s) : resolveColumnGap(s);
+    // Gap percent resolves against this container's own content-box dimension
+    // on the relevant axis.
+    const ownContentW = Math.max(0, node.layout.width - pad.left - pad.right);
+    const ownContentH = Math.max(0, node.layout.height - pad.top - pad.bottom);
+    const mainGap = dir === 'row'
+      ? resolveRowGap(s, ownContentW)
+      : resolveColumnGap(s, ownContentH);
     const alignItems = s.alignItems ?? 'stretch';
     const jc = s.justifyContent ?? 'flex-start';
     const isSpaced = jc === 'space-between' || jc === 'space-around' || jc === 'space-evenly';
@@ -332,7 +349,7 @@ export function computeLayout(
 
       for (const child of relKids) {
         const eff = resolveAlignSelf(child.style, alignItems);
-        const cm = resolveMargin(child.style);
+        const cm = resolveMargin(child.style, node.layout.width);
 
         if (eff === 'stretch') {
           if (dir === 'row' && child.style.height === undefined) {
@@ -344,50 +361,109 @@ export function computeLayout(
       }
 
       // ── Calculate available main-axis space ───────────────────────────────
-      let mainAvail = dir === 'row'
+      // Free space = container content - sum(child basis + margins) - gaps.
+      // Positive → grow flex children; negative → shrink shrinkable children.
+      const containerMain = dir === 'row'
         ? node.layout.width - pad.left - pad.right
         : node.layout.height - pad.top - pad.bottom;
 
       let totalFlex = 0;
+      let totalShrinkWeight = 0; // Σ(flex-shrink × basis) for negative-space distribution
+      let usedMain = 0;
       let flowCount = 0;
 
       for (const child of relKids) {
-        const cm = resolveMargin(child.style);
+        const cm = resolveMargin(child.style, node.layout.width);
         const flex = resolveFlexGrow(child.style);
+        const shrink = resolveFlexShrink(child.style);
         const childMargin = dir === 'row' ? cm.left + cm.right : cm.top + cm.bottom;
+        const childBasis = dir === 'row' ? child.layout.width : child.layout.height;
 
         flowCount++;
+        usedMain += childBasis + childMargin;
 
         if (flex > 0) {
           totalFlex += flex;
-          mainAvail -= childMargin;
-        } else {
-          const childSize = dir === 'row' ? child.layout.width : child.layout.height;
+        }
 
-          mainAvail -= childSize + childMargin;
+        if (shrink > 0) {
+          totalShrinkWeight += shrink * childBasis;
         }
       }
 
       // Subtract gaps for non-spaced justifyContent
       if (!isSpaced && flowCount > 1) {
-        mainAvail -= (flowCount - 1) * mainGap;
+        usedMain += (flowCount - 1) * mainGap;
       }
 
-      // ── Distribute flex ────────────────────────────────────────────────────
-      if (totalFlex > 0 && mainAvail > 0) {
+      const freeSpace = containerMain - usedMain;
+
+      // ── Distribute flex (grow or shrink) ──────────────────────────────────
+      if (freeSpace > 0 && totalFlex > 0) {
+        // Grow: distribute positive free space across grow weights.
+        // Each flex child grows from its basis by (flex / totalFlex) * freeSpace.
         for (const child of relKids) {
           const flex = resolveFlexGrow(child.style);
 
           if (flex > 0) {
-            const size = (flex / totalFlex) * mainAvail;
+            const grow = (flex / totalFlex) * freeSpace;
+            const basis = dir === 'row' ? child.layout.width : child.layout.height;
+            const next = Math.max(0, basis + grow);
 
             if (dir === 'row') {
-              child.layout.width = Math.max(0, size);
+              child.layout.width = next;
             } else {
-              child.layout.height = Math.max(0, size);
+              child.layout.height = next;
             }
           }
         }
+      } else if (freeSpace < 0 && totalShrinkWeight > 0) {
+        // Shrink: distribute negative free space proportionally to flex-shrink × basis.
+        // Result clamps at 0; CSS technically clamps at min-content, which we don't
+        // model, so 0 is the safe lower bound.
+        const deficit = -freeSpace;
+
+        for (const child of relKids) {
+          const shrink = resolveFlexShrink(child.style);
+
+          if (shrink <= 0) {
+            continue;
+          }
+
+          const basis = dir === 'row' ? child.layout.width : child.layout.height;
+          const weight = shrink * basis;
+
+          if (weight === 0) {
+            continue;
+          }
+
+          const reduction = (weight / totalShrinkWeight) * deficit;
+          const next = Math.max(0, basis - reduction);
+
+          if (dir === 'row') {
+            child.layout.width = next;
+          } else {
+            child.layout.height = next;
+          }
+        }
+      }
+
+      // For downstream cursor math (justifyContent), recompute mainAvail = the
+      // unallocated space AFTER grow/shrink — should be 0 if we filled, > 0 if
+      // there were no flex-grow children to absorb extra space, or < 0 if not
+      // shrinkable enough.
+      let mainAvail = containerMain;
+
+      for (const child of relKids) {
+        const cm = resolveMargin(child.style, node.layout.width);
+        const childMargin = dir === 'row' ? cm.left + cm.right : cm.top + cm.bottom;
+        const childSize = dir === 'row' ? child.layout.width : child.layout.height;
+
+        mainAvail -= childSize + childMargin;
+      }
+
+      if (!isSpaced && flowCount > 1) {
+        mainAvail -= (flowCount - 1) * mainGap;
       }
 
       // ── Compute starting cursor for main axis ─────────────────────────────
@@ -402,7 +478,7 @@ export function computeLayout(
         let totalChildSize = 0;
 
         for (const child of relKids) {
-          const cm = resolveMargin(child.style);
+          const cm = resolveMargin(child.style, node.layout.width);
           const childSize = dir === 'row' ? child.layout.width : child.layout.height;
           const childMargin = dir === 'row' ? cm.left + cm.right : cm.top + cm.bottom;
 
@@ -436,7 +512,7 @@ export function computeLayout(
 
       // ── Position relative children (single line) ──────────────────────────
       for (const child of relKids) {
-        const cm = resolveMargin(child.style);
+        const cm = resolveMargin(child.style, node.layout.width);
 
         if (dir === 'row') {
           child.layout.x = cursor + cm.left;
@@ -459,7 +535,9 @@ export function computeLayout(
         ? node.layout.width - pad.left - pad.right
         : node.layout.height - pad.top - pad.bottom;
 
-      const crossGap = dir === 'row' ? resolveColumnGap(s) : resolveRowGap(s);
+      const crossGap = dir === 'row'
+        ? resolveColumnGap(s, ownContentH)
+        : resolveRowGap(s, ownContentW);
 
       // Group children into lines
       const lines: LayoutNode[][] = [];
@@ -467,7 +545,7 @@ export function computeLayout(
       let currentLineMainSize = 0;
 
       for (const child of relKids) {
-        const cm = resolveMargin(child.style);
+        const cm = resolveMargin(child.style, node.layout.width);
         const childMain = dir === 'row'
           ? child.layout.width + cm.left + cm.right
           : child.layout.height + cm.top + cm.bottom;
@@ -497,7 +575,7 @@ export function computeLayout(
         let lineCrossSize = 0;
 
         for (const child of line) {
-          const cm = resolveMargin(child.style);
+          const cm = resolveMargin(child.style, node.layout.width);
           const childCross = dir === 'row'
             ? child.layout.height + cm.top + cm.bottom
             : child.layout.width + cm.left + cm.right;
@@ -508,7 +586,7 @@ export function computeLayout(
         // Apply cross-axis stretch within this line
         for (const child of line) {
           const eff = resolveAlignSelf(child.style, alignItems);
-          const cm = resolveMargin(child.style);
+          const cm = resolveMargin(child.style, node.layout.width);
 
           if (eff === 'stretch') {
             if (dir === 'row' && child.style.height === undefined) {
@@ -523,7 +601,7 @@ export function computeLayout(
         let lineMainUsed = 0;
 
         for (const child of line) {
-          const cm = resolveMargin(child.style);
+          const cm = resolveMargin(child.style, node.layout.width);
 
           lineMainUsed += dir === 'row'
             ? child.layout.width + cm.left + cm.right
@@ -561,7 +639,7 @@ export function computeLayout(
 
         // Position each child in the line
         for (const child of line) {
-          const cm = resolveMargin(child.style);
+          const cm = resolveMargin(child.style, node.layout.width);
           const eff = resolveAlignSelf(child.style, alignItems);
 
           if (dir === 'row') {
@@ -602,7 +680,7 @@ export function computeLayout(
     // ── Position absolute children ─────────────────────────────────────────
     for (const child of absKids) {
       const cs = child.style;
-      const cm = resolveMargin(cs);
+      const cm = resolveMargin(cs, node.layout.width);
 
       // Default: top-left of parent (inside padding)
       child.layout.x = node.layout.x + pad.left + cm.left;

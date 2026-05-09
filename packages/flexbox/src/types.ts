@@ -4,8 +4,19 @@ export type Percent = `${number}%`;
 /** Size value: absolute texels or a percentage of the parent container. */
 export type FlexSize = number | Percent;
 
-/** Spacing value: always absolute texels (padding, margin, gap). */
-export type Spacing = number;
+/**
+ * Spacing value for padding, margin, and gap.
+ *
+ * - number  → absolute texels
+ * - Percent → resolved against a base dimension (CSS rules):
+ *   - padding/margin %: parent's content-box width (all four sides)
+ *   - gap %: container's own content-box dimension on that axis
+ *     (rowGap / row-direction gap → width; columnGap / column-direction gap → height)
+ *
+ * Percent gaps inside content-derived sizing (Pass 2) collapse to 0 to avoid
+ * a circular dependency with the parent's not-yet-known dimensions.
+ */
+export type Spacing = number | Percent;
 
 export type FlexDirection = 'row' | 'row-reverse' | 'column' | 'column-reverse';
 export type FlexWrap = 'nowrap' | 'wrap' | 'wrap-reverse';
@@ -60,14 +71,14 @@ export interface FlexStyle {
   flexBasis?: FlexSize | 'auto';
   alignSelf?: AlignSelf;
 
-  // ── Padding (texels) ───────────────────────────────────────────────────────
+  // ── Padding (texels or % of parent width) ──────────────────────────────────
   padding?: Spacing;
   paddingTop?: Spacing;
   paddingRight?: Spacing;
   paddingBottom?: Spacing;
   paddingLeft?: Spacing;
 
-  // ── Margin (texels) ────────────────────────────────────────────────────────
+  // ── Margin (texels or % of parent width) ───────────────────────────────────
   margin?: Spacing;
   marginTop?: Spacing;
   marginRight?: Spacing;

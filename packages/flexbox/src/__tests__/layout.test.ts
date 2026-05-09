@@ -397,6 +397,203 @@ describe('padding', () => {
   });
 });
 
+// ─── Flex shrink ──────────────────────────────────────────────────────────────
+
+describe('flex shrink', () => {
+  it('items with default shrink:1 compress proportionally to fit', () => {
+    // Three children of 100 each = 300 needed, container is 200 → 100 deficit.
+    // Equal shrink × basis weights, so each shrinks by 100/3.
+    const root = createNode({ width: 200, height: 50, flexDirection: 'row' }, [
+      createNode({ width: 100, height: 50 }),
+      createNode({ width: 100, height: 50 }),
+      createNode({ width: 100, height: 50 }),
+    ]);
+
+    computeLayout(root);
+
+    const widths = root.children.map(c => c.layout.width);
+
+    // Sum should equal container width (allow ±1 for rounding).
+    expect(widths.reduce((a, b) => a + b, 0)).toBeGreaterThanOrEqual(199);
+    expect(widths.reduce((a, b) => a + b, 0)).toBeLessThanOrEqual(201);
+
+    // Each child should shrink to ~67 (200/3 rounded).
+    for (const w of widths) {
+      expect(w).toBeGreaterThanOrEqual(66);
+      expect(w).toBeLessThanOrEqual(67);
+    }
+  });
+
+  it('flexShrink:0 prevents shrinking', () => {
+    const root = createNode({ width: 200, height: 50, flexDirection: 'row' }, [
+      createNode({ width: 100, height: 50, flexShrink: 0 }),
+      createNode({ width: 100, height: 50, flexShrink: 0 }),
+      createNode({ width: 100, height: 50, flexShrink: 0 }),
+    ]);
+
+    computeLayout(root);
+
+    // No shrink applied → children retain 100 each, overflow.
+    expect(root.children[0].layout.width).toBe(100);
+    expect(root.children[1].layout.width).toBe(100);
+    expect(root.children[2].layout.width).toBe(100);
+  });
+
+  it('shrink weight is proportional to flexShrink × basis', () => {
+    // Container 100, two children of 100 each = 100 deficit.
+    // a has shrink=1, basis=100 → weight 100. b has shrink=3, basis=100 → weight 300.
+    // a shrinks by 100/4 = 25 → 75. b shrinks by 300/4 = 75 → 25.
+    const root = createNode({ width: 100, height: 50, flexDirection: 'row' }, [
+      createNode({ width: 100, height: 50, flexShrink: 1 }),
+      createNode({ width: 100, height: 50, flexShrink: 3 }),
+    ]);
+
+    computeLayout(root);
+
+    expect(root.children[0].layout.width).toBe(75);
+    expect(root.children[1].layout.width).toBe(25);
+  });
+
+  it('column flex-shrink works on heights', () => {
+    // Three 100-tall items in a 200-tall column → shrink to ~67 each.
+    const root = createNode({ width: 50, height: 200, flexDirection: 'column' }, [
+      createNode({ width: 50, height: 100 }),
+      createNode({ width: 50, height: 100 }),
+      createNode({ width: 50, height: 100 }),
+    ]);
+
+    computeLayout(root);
+
+    const heights = root.children.map(c => c.layout.height);
+    const total = heights.reduce((a, b) => a + b, 0);
+
+    expect(total).toBeGreaterThanOrEqual(199);
+    expect(total).toBeLessThanOrEqual(201);
+  });
+});
+
+// ─── Percent spacing (gap, padding, margin) ───────────────────────────────────
+
+describe('percent spacing', () => {
+  it('"10%" gap on a 200-wide row resolves against own content width', () => {
+    // 10% of 200 = 20 texel gap between siblings
+    const root = createNode({ width: 200, height: 100, flexDirection: 'row', gap: '10%' }, [
+      createNode({ width: 50, height: 50 }),
+      createNode({ width: 50, height: 50 }),
+    ]);
+
+    computeLayout(root);
+    expect(root.children[0].layout.x).toBe(0);
+    expect(root.children[1].layout.x).toBe(70); // 50 + 20
+  });
+
+  it('"5%" gap on a 200-tall column resolves against own content height', () => {
+    // 5% of 200 = 10 texel gap between siblings
+    const root = createNode({ width: 100, height: 200, flexDirection: 'column', gap: '5%' }, [
+      createNode({ width: 100, height: 40 }),
+      createNode({ width: 100, height: 40 }),
+    ]);
+
+    computeLayout(root);
+    expect(root.children[0].layout.y).toBe(0);
+    expect(root.children[1].layout.y).toBe(50); // 40 + 10
+  });
+
+  it('"10%" padding on a 200-wide root resolves all sides against root width', () => {
+    // CSS rule: padding % uses parent (here: ref/root) width for ALL sides.
+    // Root reference width is CANONICAL_SCREEN.width = 320 → 32 texels.
+    const root = createNode({ width: 200, height: 100, padding: '10%' }, [
+      createNode({ width: 50, height: 50 }),
+    ]);
+
+    computeLayout(root);
+    // padding % on root resolves against refWidth (320), so 10% = 32
+    expect(root.children[0].layout.x).toBe(32);
+    expect(root.children[0].layout.y).toBe(32);
+  });
+
+  it('"10%" padding on a nested 200-wide parent resolves against parent width', () => {
+    const root = createNode({ width: 320, height: 200 }, [
+      createNode({ width: 200, height: 100, padding: '10%' }, [
+        createNode({ width: 50, height: 50 }),
+      ]),
+    ]);
+
+    computeLayout(root);
+    // Nested padding % resolves against the *grandparent* (root) width via the
+    // call site that passes pW; 10% of 320 = 32. Verify by checking
+    // child's offset inside the padded panel.
+    const inner = root.children[0].children[0];
+
+    // Inner panel's x starts at 0 within root, inner child x = 0 + 32 = 32
+    expect(inner.layout.x).toBe(32);
+  });
+
+  it('"5%" margin on a child inside a 200-wide row parent resolves against parent width', () => {
+    // 5% of 200 = 10 texels each side for the child's margins.
+    const root = createNode({ width: 200, height: 100, flexDirection: 'row' }, [
+      createNode({ width: 50, height: 50, margin: '5%' }),
+      createNode({ width: 50, height: 50 }),
+    ]);
+
+    computeLayout(root);
+    // First child: margin-left 10 → x = 10
+    expect(root.children[0].layout.x).toBe(10);
+    // Second child: starts after first child's right margin
+    // cursor after first child = 10 + 50 + 10 = 70 (no main gap)
+    expect(root.children[1].layout.x).toBe(70);
+  });
+
+  it('mixed numeric and percent spacing both resolve correctly', () => {
+    const root = createNode({
+      width: 200,
+      height: 100,
+      flexDirection: 'row',
+      padding: 5,
+      gap: '10%',
+    }, [
+      createNode({ width: 50, height: 50 }),
+      createNode({ width: 50, height: 50 }),
+    ]);
+
+    computeLayout(root);
+    // padding 5 (numeric) → first child x = 5
+    expect(root.children[0].layout.x).toBe(5);
+    // content width = 200 - 5 - 5 = 190; gap = 10% of 190 = 19
+    // second child x = 5 + 50 + 19 = 74
+    expect(root.children[1].layout.x).toBe(74);
+  });
+
+  it('percent gap, padding, and margin all together produce no NaN', () => {
+    // Mirror the FlexTest fixture shape: column root, 5% gap, three flex:1 row children.
+    const root = createNode(
+      { width: 320, flexDirection: 'column', gap: '5%' },
+      [
+        createNode({ flexDirection: 'row', gap: '5%', flexGrow: 1 }, [
+          createNode({ flexGrow: 1 }, [createNode({ width: 26, height: 10 })]),
+          createNode({ flexGrow: 1 }, [createNode({ width: 26, height: 10 })]),
+          createNode({ flexGrow: 1 }, [createNode({ width: 26, height: 10 })]),
+        ]),
+      ],
+    );
+
+    computeLayout(root);
+
+    function assertNoNaN(node: ReturnType<typeof createNode>): void {
+      expect(Number.isFinite(node.layout.x)).toBe(true);
+      expect(Number.isFinite(node.layout.y)).toBe(true);
+      expect(Number.isFinite(node.layout.width)).toBe(true);
+      expect(Number.isFinite(node.layout.height)).toBe(true);
+
+      for (const child of node.children) {
+        assertNoNaN(child);
+      }
+    }
+
+    assertNoNaN(root);
+  });
+});
+
 // ─── zIndex ───────────────────────────────────────────────────────────────────
 
 describe('zIndex', () => {

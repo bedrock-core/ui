@@ -65,12 +65,34 @@ function extractTextMetrics(props: JSX.Props): TextMetricsData {
 const BUTTON_PAD_H = 8; // left + right each side
 const BUTTON_PAD_V = 4; // top + bottom each side
 
-function withIntrinsicSize(element: JSX.Element, style: FlexStyle): FlexStyle {
-  if (style.width !== undefined && style.height !== undefined) {
-    return style;
+/**
+ * Pull the inner text label out of a button's children, regardless of whether
+ * the user wrote `<Button>literal</Button>` or `<Button><Text>literal</Text></Button>`.
+ */
+function extractButtonLabel(props: JSX.Props): string | undefined {
+  const ch = props.children;
+
+  if (typeof ch === 'string') {
+    return ch;
   }
 
+  if (ch && typeof ch === 'object' && !Array.isArray(ch)) {
+    const inner = (ch).props?.value;
+
+    if (typeof inner === 'string') {
+      return inner;
+    }
+  }
+
+  return undefined;
+}
+
+function withIntrinsicSize(element: JSX.Element, style: FlexStyle): FlexStyle {
   if (element.type === 'text') {
+    if (style.width !== undefined && style.height !== undefined) {
+      return style;
+    }
+
     const textData = extractTextMetrics(element.props);
     const dims = measureText({
       text: textData.text,
@@ -90,11 +112,36 @@ function withIntrinsicSize(element: JSX.Element, style: FlexStyle): FlexStyle {
   }
 
   if (element.type === 'button') {
-    const label = element.props.children;
+    // Always inject padding so the inner text/content is inset within the
+    // button's box. User-supplied padding overrides this default.
+    // Spread `style` first so its `undefined` placeholder fields don't wipe
+    // the defaults — then apply per-side defaults only if still undefined.
+    const next: FlexStyle = { ...style };
 
-    if (typeof label === 'string' && label.length > 0) {
+    if (next.paddingLeft === undefined) {
+      next.paddingLeft = next.padding ?? BUTTON_PAD_H;
+    }
+
+    if (next.paddingRight === undefined) {
+      next.paddingRight = next.padding ?? BUTTON_PAD_H;
+    }
+
+    if (next.paddingTop === undefined) {
+      next.paddingTop = next.padding ?? BUTTON_PAD_V;
+    }
+
+    if (next.paddingBottom === undefined) {
+      next.paddingBottom = next.padding ?? BUTTON_PAD_V;
+    }
+
+    if (next.width !== undefined && next.height !== undefined) {
+      return next;
+    }
+
+    const label = extractButtonLabel(element.props);
+
+    if (label !== undefined && label.length > 0) {
       const dims = measureText({ text: label });
-      const next: FlexStyle = { ...style };
 
       if (next.width === undefined) {
         next.width = dims.width + BUTTON_PAD_H * 2;
@@ -103,9 +150,13 @@ function withIntrinsicSize(element: JSX.Element, style: FlexStyle): FlexStyle {
       if (next.height === undefined) {
         next.height = dims.height + BUTTON_PAD_V * 2;
       }
-
-      return next;
     }
+
+    return next;
+  }
+
+  if (style.width !== undefined && style.height !== undefined) {
+    return style;
   }
 
   return style;
@@ -196,20 +247,40 @@ function applyToTree(
  * @returns The same element tree, mutated in-place with layout values.
  */
 export function computeLayout(tree: JSX.Element): JSX.Element {
-  // Build the layout tree (root element is always concrete)
-  const root = buildNode(tree);
+  // The "layout root" is the first concrete element in the JSX tree.
+  // Transparent wrappers (fragments, context-providers) are not flex containers
+  // and would otherwise cause the inner top-level element to be sized from its
+  // content rather than from the canonical viewport. Walk past them so the
+  // user's outermost concrete <Panel> behaves like a document body.
+  const concreteRoots = collectConcrete(tree);
+  const concreteTree = concreteRoots[0] ?? tree;
+
+  // Build the layout tree from the concrete root.
+  const root = buildNode(concreteTree);
 
   // Run the flexbox engine (outputs absolute texel positions)
   flexComputeLayout(root);
 
-  // Write root's own layout results
-  tree.props.jsonUIx = root.layout.x;
-  tree.props.jsonUIy = root.layout.y;
-  tree.props.jsonUIWidth = root.layout.width;
-  tree.props.jsonUIHeight = root.layout.height;
+  // Write the concrete root's own layout results, then propagate up to the
+  // original JSX tree so the presenter sees jsonUIHeight on the actual element
+  // it was given.
+  concreteTree.props.jsonUIx = root.layout.x;
+  concreteTree.props.jsonUIy = root.layout.y;
+  concreteTree.props.jsonUIWidth = root.layout.width;
+  concreteTree.props.jsonUIHeight = root.layout.height;
+
+  // Mirror onto the JSX root so callers reading tree.props.jsonUIHeight
+  // (e.g. presenter.ts) get the layout-computed values whether or not the
+  // top-level was wrapped in providers/fragments.
+  if (concreteTree !== tree) {
+    tree.props.jsonUIx = root.layout.x;
+    tree.props.jsonUIy = root.layout.y;
+    tree.props.jsonUIWidth = root.layout.width;
+    tree.props.jsonUIHeight = root.layout.height;
+  }
 
   // Write children's layout results
-  const ch = tree.props.children;
+  const ch = concreteTree.props.children;
   const cursor = { index: 0 };
 
   if (Array.isArray(ch)) {
@@ -219,4 +290,107 @@ export function computeLayout(tree: JSX.Element): JSX.Element {
   }
 
   return tree;
+}
+
+// ─── Debug dump ────────────────────────────────────────────────────────────────
+
+/**
+ * Format the post-layout JSX tree as a multi-line text dump for manual debugging.
+ *
+ * Call AFTER `computeLayout(tree)` so that `jsonUIx/y/Width/Height` are populated.
+ * The output is a single string with one element per line, indented by depth.
+ *
+ * Example line:
+ *   panel  x=0 y=0 w=320 h=210  flexDir=column gap='5%'
+ *
+ * Wire it in temporarily, e.g. in `presenter.ts`:
+ *   console.log(dumpLayout(tree));
+ *
+ * Paste the output to compare side-by-side with the in-game render.
+ */
+export function dumpLayout(tree: JSX.Element, depth = 0): string {
+  const lines: string[] = [];
+
+  walkDump(tree, depth, lines);
+
+  return lines.join('\n');
+}
+
+function walkDump(element: JSX.Element, depth: number, lines: string[]): void {
+  const indent = '  '.repeat(depth);
+
+  if (isTransparent(element)) {
+    lines.push(`${indent}<${String(element.type)}>`);
+    walkChildren(element, depth + 1, lines);
+
+    return;
+  }
+
+  const { props } = element;
+  const x = props.jsonUIx ?? '?';
+  const y = props.jsonUIy ?? '?';
+  const w = props.jsonUIWidth ?? '?';
+  const h = props.jsonUIHeight ?? '?';
+
+  const styleSummary = formatLayoutStyle(props.__layout);
+  const valueSummary = typeof props.value === 'string' ? `  "${props.value}"` : '';
+  const childLabelSummary = element.type === 'button' && typeof props.children === 'string'
+    ? `  "${props.children}"`
+    : '';
+
+  lines.push(
+    `${indent}${String(element.type)}  x=${x} y=${y} w=${w} h=${h}${styleSummary}${valueSummary}${childLabelSummary}`,
+  );
+
+  walkChildren(element, depth + 1, lines);
+}
+
+function walkChildren(element: JSX.Element, depth: number, lines: string[]): void {
+  const ch = element.props.children;
+
+  if (Array.isArray(ch)) {
+    for (const c of ch) {
+      if (c && typeof c === 'object') {
+        walkDump(c, depth, lines);
+      }
+    }
+  } else if (ch && typeof ch === 'object') {
+    walkDump(ch, depth, lines);
+  }
+}
+
+const STYLE_KEYS_OF_INTEREST: readonly string[] = [
+  'flexDirection',
+  'flex',
+  'flexGrow',
+  'gap',
+  'rowGap',
+  'columnGap',
+  'padding',
+  'margin',
+  'width',
+  'height',
+  'justifyContent',
+  'alignItems',
+  'position',
+];
+
+function formatLayoutStyle(layout: unknown): string {
+  if (!layout || typeof layout !== 'object') {
+    return '';
+  }
+
+  const parts: string[] = [];
+
+  for (const key of STYLE_KEYS_OF_INTEREST) {
+    const v = Reflect.get(layout, key);
+
+    if (v === undefined) {
+      continue;
+    }
+
+    parts.push(`${key}=${typeof v === 'string' ? `'${v}'` : String(v)}`);
+  }
+
+  return parts.length > 0 ? `  ${parts.join(' ')}` : '';
 }
