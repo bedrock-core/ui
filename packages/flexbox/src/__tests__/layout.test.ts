@@ -564,6 +564,45 @@ describe('percent spacing', () => {
     expect(root.children[1].layout.x).toBe(74);
   });
 
+  it('flextest-8b reproduction: card with content-derived width contains row with percent padding', () => {
+    // Mirrors the exact FlexTest 8b shape:
+    //   root (column, padding=6, gap=6, width=320)
+    //   └── card (column, padding=4, gap=2)  ← width derived from content
+    //       ├── title text (intrinsic)
+    //       ├── row panel (row, padding='10%')   ← percent padding here
+    //       │   └── inner box (w=50, h=14)
+    //       └── expect text (intrinsic)
+    // Card width should grow to fill root content (308) via cross-stretch.
+    // Then row panel padding should resolve = 10% × 308 = 30.8 each side.
+    // Row panel height = 14 + 61.6 ≈ 76.
+    const root = createNode({ width: 320, flexDirection: 'column', padding: 6, gap: 6 }, [
+      createNode({ flexDirection: 'column', padding: 4, gap: 2 }, [
+        createNode({ width: 236, height: 10 }), // title text
+        createNode({ flexDirection: 'row', padding: '10%' }, [
+          createNode({ width: 50, height: 14 }),
+        ]),
+        createNode({ width: 192, height: 10 }), // expect text
+      ]),
+    ]);
+
+    computeLayout(root);
+
+    const card = root.children[0];
+    const rowPanel = card.children[1];
+    const innerBox = rowPanel.children[0];
+
+    // Card should fill root width minus root padding
+    expect(card.layout.width).toBe(308);
+    // Row panel should be ~76 tall
+    expect(rowPanel.layout.height).toBeGreaterThanOrEqual(75);
+    expect(rowPanel.layout.height).toBeLessThanOrEqual(77);
+    // Inner box should be inset by ~31 from row panel top
+    const inset = innerBox.layout.y - rowPanel.layout.y;
+
+    expect(inset).toBeGreaterThanOrEqual(30);
+    expect(inset).toBeLessThanOrEqual(32);
+  });
+
   it('percent padding contributes to content-derived parent height', () => {
     // Regression: when a parent has percent padding and no explicit height,
     // its derived height must include the padding contribution. Pass 2's

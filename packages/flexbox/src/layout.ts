@@ -235,15 +235,19 @@ export function computeLayout(
 
   // ── Pass 2: Bottom-up — resolve content-driven sizes ──────────────────────
   //
-  // We run two iterations:
-  //   - 1st pass: parent widths may be 0 if not yet computed when this node ran;
-  //     percent padding/margin will collapse to 0 at that point.
-  //   - 2nd pass: parent widths from 1st pass are now populated, so percent
-  //     spacing on inner nodes resolves correctly and content-derived heights
-  //     properly include their padding contribution.
-  // This converges in 2 passes for typical trees because percent padding only
-  // depends on a single ancestor level.
-  for (let iteration = 0; iteration < 2; iteration++) {
+  // Runs N iterations alternating with a top-down cross-stretch update so
+  // that:
+  //   - percent padding/margin on inner nodes resolves against the parent's
+  //     final stretched width (not the Pass 2 intermediate one), and
+  //   - content-derived heights of nodes with percent padding propagate
+  //     upward through their ancestors.
+  // 3 iterations converges for trees up to ~3 levels of nested percent
+  // padding; deeper trees would need more, but this is rare.
+  for (let iteration = 0; iteration < 3; iteration++) {
+    // Bottom-up size derivation. From iteration 1 onward we GROW (Math.max)
+    // rather than overwrite — so any cross-stretch widths/heights carried
+    // over from the previous iteration's top-down pass survive and feed back
+    // into the next round of percent-padding resolution.
     for (let i = levelOrder.length - 1; i >= 1; i--) {
       const node = levelOrder[i];
       const parent = parentOf.get(node)!;
@@ -257,7 +261,11 @@ export function computeLayout(
       } else if (isPercent(s.width)) {
         node.layout.width = 0; // deferred to pass 3
       } else {
-        node.layout.width = deriveSize(node, 'width', pW);
+        const derived = deriveSize(node, 'width', pW);
+
+        node.layout.width = iteration === 0
+          ? derived
+          : Math.max(node.layout.width, derived);
       }
 
       // Height
@@ -266,10 +274,50 @@ export function computeLayout(
       } else if (isPercent(s.height)) {
         node.layout.height = 0; // deferred to pass 3
       } else {
-        node.layout.height = deriveSize(node, 'height', pW);
+        const derived = deriveSize(node, 'height', pW);
+
+        node.layout.height = iteration === 0
+          ? derived
+          : Math.max(node.layout.height, derived);
       }
 
       clamp(node, pW, pH);
+    }
+
+    // Top-down cross-stretch propagation: column parents stretch children
+    // widths to fill content box; row parents stretch children heights.
+    // This makes the next iteration's percent padding resolve against
+    // realistic parent dimensions rather than the content-derived ones.
+    for (const node of levelOrder) {
+      if (!visible(node)) {
+        continue;
+      }
+
+      const dir = mainAxis(node.style);
+      const pad = resolvePadding(node.style, parentOf.get(node)?.layout.width ?? node.layout.width);
+      const contentW = Math.max(0, node.layout.width - pad.left - pad.right);
+      const contentH = Math.max(0, node.layout.height - pad.top - pad.bottom);
+      const alignItems = node.style.alignItems ?? 'stretch';
+
+      for (const child of node.children) {
+        if (!visible(child) || !relative(child)) {
+          continue;
+        }
+
+        const eff = resolveAlignSelf(child.style, alignItems);
+
+        if (eff !== 'stretch') {
+          continue;
+        }
+
+        const cm = resolveMargin(child.style, node.layout.width);
+
+        if (dir === 'row' && child.style.height === undefined) {
+          child.layout.height = Math.max(child.layout.height, Math.max(0, contentH - cm.top - cm.bottom));
+        } else if (dir === 'column' && child.style.width === undefined) {
+          child.layout.width = Math.max(child.layout.width, Math.max(0, contentW - cm.left - cm.right));
+        }
+      }
     }
   }
 
