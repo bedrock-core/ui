@@ -7,6 +7,10 @@ import { promptUser, type ProjectConfig } from './prompts.js';
 import { generateManifestUUIDs, replaceVariables } from './utils.js';
 import https from 'node:https';
 
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
 
@@ -73,7 +77,7 @@ async function copyTemplate(
 
   // First, copy the entire template structure
   await fs.copy(templateDir, targetDir, {
-    filter: src => {
+    filter: (src) => {
       // Skip node_modules and build artifacts if they exist in template
       const relativePath = path.relative(templateDir, src);
 
@@ -99,7 +103,7 @@ async function copyTemplate(
  */
 async function fetchJson<T>(url: string): Promise<T> {
   return await new Promise<T>((resolve, reject) => {
-    const req = https.get(url, { headers: { ['User-Agent']: '@bedrock-core/cli' }, agent: false }, res => {
+    const req = https.get(url, { headers: { ['User-Agent']: '@bedrock-core/cli' }, agent: false }, (res) => {
       if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         // Follow redirect
         res.destroy();
@@ -107,17 +111,25 @@ async function fetchJson<T>(url: string): Promise<T> {
 
         return;
       }
+
       if (res.statusCode !== 200) {
         res.destroy();
         reject(new Error(`Request failed: ${res.statusCode} ${res.statusMessage}`));
 
         return;
       }
+
       let data = '';
+
       res.setEncoding('utf-8');
-      res.on('data', chunk => { data += chunk; });
+
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+
       res.on('end', () => {
         res.destroy();
+
         try {
           resolve(JSON.parse(data));
         } catch (e) {
@@ -125,6 +137,7 @@ async function fetchJson<T>(url: string): Promise<T> {
         }
       });
     });
+
     req.on('error', reject);
   });
 }
@@ -146,9 +159,11 @@ interface ReleaseResponse {
  */
 async function downloadFile(url: string, destination: string): Promise<void> {
   await fs.ensureDir(path.dirname(destination));
+
   await new Promise<void>((resolve, reject) => {
     const file = fs.createWriteStream(destination);
-    const req = https.get(url, { headers: { ['User-Agent']: '@bedrock-core/cli' }, agent: false }, res => {
+
+    const req = https.get(url, { headers: { ['User-Agent']: '@bedrock-core/cli' }, agent: false }, (res) => {
       if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         // Redirect
         res.destroy();
@@ -158,6 +173,7 @@ async function downloadFile(url: string, destination: string): Promise<void> {
 
         return;
       }
+
       if (res.statusCode !== 200) {
         res.destroy();
         file.close(() => {
@@ -166,7 +182,9 @@ async function downloadFile(url: string, destination: string): Promise<void> {
 
         return;
       }
+
       res.pipe(file);
+
       file.on('finish', () => {
         file.close(() => {
           res.destroy();
@@ -174,7 +192,8 @@ async function downloadFile(url: string, destination: string): Promise<void> {
         });
       });
     });
-    req.on('error', err => {
+
+    req.on('error', (err) => {
       file.close(() => {
         fs.unlink(destination).catch(() => {});
         reject(err);
@@ -191,21 +210,25 @@ async function downloadLatestMcpack(targetDir: string, spinner: Ora): Promise<st
     spinner.text = 'Fetching latest core-ui release...';
     const release = await fetchJson<ReleaseResponse>('https://api.github.com/repos/bedrock-core/ui/releases/latest');
     const asset = release.assets.find(a => a.name.endsWith('.mcpack'));
+
     if (!asset) {
       spinner.warn('No .mcpack asset found in latest release');
 
       return undefined;
     }
+
     spinner.text = `Downloading ${asset.name}...`;
     const includeDir = path.join(targetDir);
+
     await fs.ensureDir(includeDir);
     const dest = path.join(includeDir, asset.name);
+
     await downloadFile(asset.browser_download_url, dest);
     spinner.succeed(`Downloaded ${asset.name}`);
 
     return asset.name;
   } catch (e) {
-    spinner.warn(`Skipped downloading release asset: ${(e as Error).message}`);
+    spinner.warn(`Skipped downloading release asset: ${getErrorMessage(e)}`);
 
     return undefined;
   }
@@ -215,41 +238,45 @@ async function downloadLatestMcpack(targetDir: string, spinner: Ora): Promise<st
  * Display success message with next steps
  */
 function displayNextSteps(config: ProjectConfig, mcpackName?: string): void {
-  console.log('\n' + chalk.green('✔ Project created successfully!'));
-  console.log('\n' + chalk.bold('Next steps:') + '\n');
-  console.log(chalk.cyan(`  cd ${config.projectName}`));
-  console.log(chalk.cyan('  yarn install') + chalk.gray(' (or npm install)'));
-  console.log(chalk.cyan('  yarn run regolith-install') + chalk.gray(' (or npm run regolith-install)'));
-  console.log(chalk.cyan('  yarn run build') + chalk.gray(' (or npm run build)'));
-  console.log('\n' + chalk.bold('Companion resource pack:') + '\n');
+  console.info('\n' + chalk.green('✔ Project created successfully!'));
+  console.info('\n' + chalk.bold('Next steps:') + '\n');
+  console.info(chalk.cyan(`  cd ${config.projectName}`));
+  console.info(chalk.cyan('  yarn install') + chalk.gray(' (or npm install)'));
+  console.info(chalk.cyan('  yarn run regolith-install') + chalk.gray(' (or npm run regolith-install)'));
+  console.info(chalk.cyan('  yarn run build') + chalk.gray(' (or npm run build)'));
+  console.info('\n' + chalk.bold('Companion resource pack:') + '\n');
+
   if (mcpackName) {
-    console.log(
+    console.info(
       chalk.cyan(`  Install: open "./${mcpackName}"`) + chalk.gray(' (double-click to import into Minecraft)'),
     );
   } else {
-    console.log(
+    console.info(
       chalk.cyan('  Download latest .mcpack from: ') + chalk.gray('https://github.com/bedrock-core/ui/releases/latest'),
     );
-    console.log(chalk.cyan('  Then open the .mcpack file to import it into Minecraft.'));
+
+    console.info(chalk.cyan('  Then open the .mcpack file to import it into Minecraft.'));
   }
-  console.log('\n' + chalk.bold('Development:') + '\n');
-  console.log(chalk.cyan('  yarn run watch') + chalk.gray(' - Watch mode for auto-rebuild'));
-  console.log(chalk.cyan('  yarn run lint') + chalk.gray(' - Lint your code'));
-  console.log('\n' + chalk.gray('Push a stone button in-game to see the example UI!'));
-  console.log();
+
+  console.info('\n' + chalk.bold('Development:') + '\n');
+  console.info(chalk.cyan('  yarn run watch') + chalk.gray(' - Watch mode for auto-rebuild'));
+  console.info(chalk.cyan('  yarn run lint') + chalk.gray(' - Lint your code'));
+  console.info('\n' + chalk.gray('Push a stone button in-game to see the example UI!'));
+  console.info();
 }
 
 /**
  * Main function to create a new project
  */
 export async function createProject(initialProjectName?: string): Promise<void> {
-  console.log(chalk.bold.cyan('\n@bedrock-core/ui') + chalk.gray(' - Project Generator\n'));
+  console.info(chalk.bold.cyan('\n@bedrock-core/ui') + chalk.gray(' - Project Generator\n'));
 
   // Get user input
   const config = await promptUser(initialProjectName);
 
   // Check if target directory exists and is not empty
   const isEmpty = await isDirectoryEmpty(config.targetDir);
+
   if (!isEmpty) {
     throw new Error(
       `Directory "${config.projectName}" already exists and is not empty. Please choose a different name.`,

@@ -2,7 +2,11 @@ import js from '@eslint/js';
 import json from "@eslint/json";
 import stylistic from '@stylistic/eslint-plugin';
 import { defineConfig } from 'eslint/config';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import tseslint from 'typescript-eslint';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig([
   {
@@ -65,6 +69,7 @@ export default defineConfig([
       sourceType: "module",
       parserOptions: {
         projectService: true,
+        tsconfigRootDir: __dirname,
       },
     },
     rules: {
@@ -93,6 +98,18 @@ export default defineConfig([
           format: ['camelCase'],
           leadingUnderscore: 'require',
         },
+      ],
+       "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          "args": "all",
+          "argsIgnorePattern": "^_",
+          "caughtErrors": "all",
+          "caughtErrorsIgnorePattern": "^_",
+          "destructuredArrayIgnorePattern": "^_",
+          "varsIgnorePattern": "^_",
+          "ignoreRestSiblings": true
+        }
       ],
       // @stylistic
       '@stylistic/jsx-curly-brace-presence': ["warn", "always"],

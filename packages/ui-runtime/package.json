@@ -44,6 +44,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "generate:font-metrics": "node ./scripts/generate-font-metrics.mjs",
+    "lint": "eslint .",
     "test": "vitest run",
     "coverage": "vitest run --coverage"
   },

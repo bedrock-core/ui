@@ -11,7 +11,7 @@ program
   .description('CLI to scaffold Minecraft Bedrock addon projects with @bedrock-core/ui')
   .version('0.1.1')
   .argument('[project-name]', 'Name of the project directory')
-  .action(async(projectName?: string) => {
+  .action(async (projectName?: string) => {
     try {
       await createProject(projectName);
     } catch (error) {

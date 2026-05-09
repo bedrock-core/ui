@@ -52,7 +52,7 @@ export async function promptUser(initialProjectName?: string): Promise<ProjectCo
 
   const response = await prompts(questions, {
     onCancel: () => {
-      console.log(chalk.yellow('\n✖ Operation cancelled'));
+      console.warn(chalk.yellow('\n✖ Operation cancelled'));
       process.exit(0);
     },
   });
