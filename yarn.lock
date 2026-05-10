@@ -2,7 +2,7 @@
 # Manual changes might be lost - proceed with caution!
 
 __metadata:
-  version: 8
+  version: 9
   cacheKey: 10c0
 
 "@babel/helper-string-parser@npm:^7.27.1":
@@ -116,6 +116,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bedrock-core/ui@workspace:."
   dependencies:
+    "@bedrock-core/flexbox": "workspace:*"
     "@eslint/css": "npm:^1.2.0"
     "@eslint/js": "npm:^10.0.1"
     "@eslint/json": "npm:^1.2.0"
