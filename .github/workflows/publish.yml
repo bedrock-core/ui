@@ -91,12 +91,12 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         working-directory: packages/flexbox
-        run: npm publish --access public
+        run: npm publish --access public || npm view @bedrock-core/flexbox@${{ steps.bump-semver.outputs.new_version }} version
 
       - name: Publish to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public
+        run: npm publish --access public || npm view @bedrock-core/ui@${{ steps.bump-semver.outputs.new_version }} version
 
       - name: Commit version bump
         run: |
