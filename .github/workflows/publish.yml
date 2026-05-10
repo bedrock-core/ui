@@ -84,7 +84,7 @@ jobs:
         # Create a Bedrock .mcpack (zip) from the built resource pack contents
         env:
           TAG: ${{ steps.bump-semver.outputs.new_version }}
-        working-directory: packages/resource-pack/build/@bedrock-core/ui-resource-pack_rp
+        working-directory: packages/resource-pack/build/@bedrock-core_ui_rp
         run: |
           zip -r "$GITHUB_WORKSPACE/core-ui-${TAG}.mcpack" .
 
