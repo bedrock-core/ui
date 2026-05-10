@@ -58,11 +58,10 @@ jobs:
       - name: Install deps
         run: yarn install --immutable
 
-      - name: Bump Version of package.json
-        uses: ramonpaolo/bump-version@v2.3.1
-        with:
-          tag: ${{ steps.bump-semver.outputs.new_version }}
-          commit: false
+      - name: Bump version of package.json and flexbox/package.json
+        run: |
+          npm version ${{ steps.bump-semver.outputs.new_version }} --no-git-tag-version
+          npm version ${{ steps.bump-semver.outputs.new_version }} --no-git-tag-version --prefix packages/flexbox
 
       - name: Set up Regolith
         uses: bedrock-core/setup-regolith@1.0.0
@@ -88,16 +87,22 @@ jobs:
         run: |
           zip -r "$GITHUB_WORKSPACE/core-ui-${TAG}.mcpack" .
 
+      - name: Publish flexbox to npm
+        env:
+          YARN_NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        working-directory: packages/flexbox
+        run: yarn npm publish --access public
+
       - name: Publish to npm
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public
+          YARN_NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: yarn npm publish --access public
 
       - name: Commit version bump
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package.json
+          git add package.json packages/flexbox/package.json
           git commit -m "bump-version: bump version to '${{ steps.bump-semver.outputs.new_version }}'"
           git push
 
