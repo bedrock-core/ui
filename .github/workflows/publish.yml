@@ -93,6 +93,9 @@ jobs:
         working-directory: packages/flexbox
         run: npm publish --access public || npm view @bedrock-core/flexbox@${{ steps.bump-semver.outputs.new_version }} version
 
+      - name: Rewrite workspace dependency before publish
+        run: npm pkg set dependencies["@bedrock-core/flexbox"]="^${{ steps.bump-semver.outputs.new_version }}"
+
       - name: Publish to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
