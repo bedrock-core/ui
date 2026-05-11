@@ -26,7 +26,7 @@ export const Example = (): JSX.Element => {
   }, [auto]);
 
   return (
-    <Panel width={310} padding={5} gap={4}>
+    <Panel flexDirection={'column'} width={310} padding={5} gap={4}>
       <Text height={20}>{`§lWelcome to @bedrock-core/ui!`}</Text>
       <Text height={20}>{`Count: §e${count}`}</Text>
       <Panel flexDirection={'row'} gap={4}>

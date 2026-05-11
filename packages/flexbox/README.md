@@ -123,7 +123,7 @@ Sizes are **texels** (integer) or **percent strings** (`"50%"`) relative to the 
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `flexDirection` | `'row'` \| `'row-reverse'` \| `'column'` \| `'column-reverse'` | `'row'` | Main axis direction |
+| `flexDirection` | `'row'` \| `'row-reverse'` \| `'column'` \| `'column-reverse'` | `'column'` | Main axis direction |
 | `wrap` | `'nowrap'` \| `'wrap'` \| `'wrap-reverse'` | `'nowrap'` | Multi-line wrapping |
 | `justifyContent` | `'flex-start'` \| `'flex-end'` \| `'center'` \| `'space-between'` \| `'space-around'` \| `'space-evenly'` | `'flex-start'` | Main axis alignment |
 | `alignItems` | `'flex-start'` \| `'flex-end'` \| `'center'` \| `'stretch'` | `'stretch'` | Cross axis alignment |

@@ -25,7 +25,7 @@ function relative(node: LayoutNode): boolean {
 
 /** Resolve the primary flex axis from the flexDirection style. */
 function mainAxis(style: FlexStyle): 'row' | 'column' {
-  const d = style.flexDirection ?? 'row';
+  const d = style.flexDirection ?? 'column';
 
   return d === 'row' || d === 'row-reverse' ? 'row' : 'column';
 }
