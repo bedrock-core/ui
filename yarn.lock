@@ -67,7 +67,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@bedrock-core/flexbox@workspace:*, @bedrock-core/flexbox@workspace:packages/flexbox":
+"@bedrock-core/flexbox@npm:^0.4.2, @bedrock-core/flexbox@workspace:*, @bedrock-core/flexbox@workspace:packages/flexbox":
   version: 0.0.0-use.local
   resolution: "@bedrock-core/flexbox@workspace:packages/flexbox"
   dependencies:
@@ -116,7 +116,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bedrock-core/ui@workspace:."
   dependencies:
-    "@bedrock-core/flexbox": "workspace:*"
+    "@bedrock-core/flexbox": "npm:^0.4.2"
     "@eslint/css": "npm:^1.2.0"
     "@eslint/js": "npm:^10.0.1"
     "@eslint/json": "npm:^1.2.0"
