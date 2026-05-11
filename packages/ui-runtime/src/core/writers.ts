@@ -15,6 +15,7 @@ export const WRITERS: Record<string, Writer> = {
   panel: (p, f) => { f.label(p); },
   text: (p, f) => { f.label(p); },
   image: (p, f) => { f.label(p); },
+  item_slot: (p, f) => { f.label(p); },
   button: (p, f, ctx, cbs) => {
     if (ctx && cbs.onPress) {
       ctx.buttonCallbacks.set(ctx.buttonIndex, cbs.onPress);

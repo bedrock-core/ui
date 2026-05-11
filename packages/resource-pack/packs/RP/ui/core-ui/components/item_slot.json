@@ -1,0 +1,167 @@
+{
+	"namespace": "core-ui_components",
+	"item_slot": {
+		"type": "custom",
+		"renderer": "inventory_item_renderer",
+		"size": [
+			0,
+			0
+		],
+		"layer": 95,
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"use_anchored_offset": true,
+		"property_bag": {
+			"#size_binding_x": 0.0,
+			"#size_binding_y": 0.0,
+			"#anchored_offset_value_x": 0.0,
+			"#anchored_offset_value_y": 0.0,
+			"#item_id_aux": 0
+		},
+		"visible": "#visible",
+		"enabled": "#enabled",
+		"$normalize": 1.0,
+		"bindings": [
+			{
+				"binding_name": "#form_button_text",
+				"binding_type": "collection",
+				"binding_collection_name": "form_buttons"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.9s' * #form_button_text)",
+				"target_property_name": "#protocol_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#form_button_text - #protocol_header)",
+				"target_property_name": "#rem_after_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_header)",
+				"target_property_name": "#raw_type"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_header - #raw_type)",
+				"target_property_name": "#rem_after_type"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_type) - ('%.2s' * #raw_type) - ';')",
+				"target_property_name": "#type"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_type)",
+				"target_property_name": "#raw_width"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_type - #raw_width)",
+				"target_property_name": "#rem_after_width"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_width) - ('%.2s' * #raw_width) - ';')",
+				"target_property_name": "#size_binding_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_width)",
+				"target_property_name": "#raw_height"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_width - #raw_height)",
+				"target_property_name": "#rem_after_height"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_height) - ('%.2s' * #raw_height) - ';')",
+				"target_property_name": "#size_binding_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_height)",
+				"target_property_name": "#raw_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_height - #raw_x)",
+				"target_property_name": "#rem_after_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_x) - ('%.2s' * #raw_x) - ';') * $normalize)",
+				"target_property_name": "#anchored_offset_value_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_x)",
+				"target_property_name": "#raw_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_x - #raw_y)",
+				"target_property_name": "#rem_after_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_y) - ('%.2s' * #raw_y) - ';') * $normalize)",
+				"target_property_name": "#anchored_offset_value_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.8s' * #rem_after_y)",
+				"target_property_name": "#raw_visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_y - #raw_visible)",
+				"target_property_name": "#rem_after_visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.7s' * #raw_visible) - ('%.2s' * #raw_visible) - ';')",
+				"target_property_name": "#pre_visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#pre_visible and (#type = 'item_slot'))",
+				"target_property_name": "#visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.8s' * #rem_after_visible)",
+				"target_property_name": "#raw_enabled"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_visible - #raw_enabled)",
+				"target_property_name": "#rem_after_enabled"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.7s' * #raw_enabled) - ('%.2s' * #raw_enabled) - ';')",
+				"target_property_name": "#enabled"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_enabled - ('%.584s' * #rem_after_enabled))",
+				"target_property_name": "#rb_component"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rb_component)",
+				"target_property_name": "#rb_raw_aux"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #rb_raw_aux) - ('%.2s' * #rb_raw_aux) - ';')",
+				"target_property_name": "#item_id_aux"
+			}
+		]
+	}
+}

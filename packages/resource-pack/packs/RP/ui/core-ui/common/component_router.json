@@ -22,7 +22,7 @@
 				"image@core-ui_components.image": {}
 			},
 			{
-				"inventory@core-ui_components.inventory": {}
+				"item_slot@core-ui_components.item_slot": {}
 			}
 		]
 	}

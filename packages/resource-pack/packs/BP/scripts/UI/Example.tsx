@@ -1,24 +1,21 @@
-import { JSX, useState, Button, Panel, Text } from '@bedrock-core/ui';
-
-// Import all grid components
+import { Button, ItemAuxContext, JSX, Panel, Text, useState } from '@bedrock-core/ui';
 import {
-  ThemeDisplay,
-  SettingsDisplay,
-  TodoList,
-  RefTimer,
-  EventCounter,
   Counter,
-  ThemeController,
-  SettingsController,
-  InfoPanel,
-  ResourcesPanel,
-  GridLayoutPanel,
+  EventCounter,
   ExitPanel,
+  GridLayoutPanel,
+  InfoPanel,
   InventoryPanel,
+  RefTimer,
+  ResourcesPanel,
+  SettingsController,
+  SettingsDisplay,
+  ThemeController,
+  ThemeDisplay,
+  TodoList,
 } from './components';
-
-// Import contexts
-import { ThemeContext, SettingsContext, type Theme, type Settings } from './contexts';
+import { SettingsContext, ThemeContext, type Settings, type Theme } from './contexts';
+import itemAuxMap from '../data/itemAuxMap.generated.json';
 
 /**
  * ============================================================================
@@ -93,33 +90,35 @@ export function Example(): JSX.Element {
   const [refreshVersion, setRefreshVersion] = useState(0);
 
   return (
-    <ThemeContext value={theme}>
-      <SettingsContext value={settings}>
-        <Panel flexDirection={'column'} padding={8} gap={8}>
-          <Panel flexDirection={'row'} justifyContent={'space-between'} alignItems={'center'}>
-            <Text>{`§f@bedrock-core/ui flex demo §7#${refreshVersion}`}</Text>
-            <Button onPress={(): void => setRefreshVersion(v => v + 1)}>
-              <Text>{'§aRefresh'}</Text>
-            </Button>
+    <ItemAuxContext value={itemAuxMap}>
+      <ThemeContext value={theme}>
+        <SettingsContext value={settings}>
+          <Panel flexDirection={'column'} padding={8} gap={8}>
+            <Panel flexDirection={'row'} justifyContent={'space-between'} alignItems={'center'}>
+              <Text>{`§f@bedrock-core/ui flex demo §7#${refreshVersion}`}</Text>
+              <Button onPress={(): void => setRefreshVersion(v => v + 1)}>
+                <Text>{'§aRefresh'}</Text>
+              </Button>
+            </Panel>
+            <InventoryPanel />
+
+            <ThemeDisplay />
+            <SettingsDisplay />
+            <TodoList />
+            <RefTimer />
+
+            <ThemeController onThemeChange={setTheme} />
+            <SettingsController onSettingsChange={setSettings} />
+            <EventCounter />
+            <Counter />
+
+            <InfoPanel />
+            <ResourcesPanel />
+            <GridLayoutPanel />
+            <ExitPanel />
           </Panel>
-
-          <ThemeDisplay />
-          <SettingsDisplay />
-          <TodoList />
-          <RefTimer />
-
-          <ThemeController onThemeChange={setTheme} />
-          <SettingsController onSettingsChange={setSettings} />
-          <EventCounter />
-          <Counter />
-
-          <InfoPanel />
-          <ResourcesPanel />
-          <GridLayoutPanel />
-          <ExitPanel />
-          <InventoryPanel />
-        </Panel>
-      </SettingsContext>
-    </ThemeContext>
+        </SettingsContext>
+      </ThemeContext>
+    </ItemAuxContext>
   );
 }

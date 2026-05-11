@@ -2,7 +2,7 @@ export {
   Button,
   Fragment,
   Image,
-  Inventory,
+  ItemRenderer,
   Panel,
   Text,
 } from './components';
@@ -11,7 +11,7 @@ export type {
   ButtonProps,
   FragmentProps,
   ImageProps,
-  InventoryProps,
+  ItemRendererProps,
   PanelProps,
   TextProps,
   ControlProps,
@@ -54,3 +54,6 @@ export type {
   FunctionComponent,
   JSX,
 } from './jsx';
+
+export { ItemAuxContext } from './data/ItemAuxContext';
+export type { ItemAuxMap } from './data/ItemAuxMap';

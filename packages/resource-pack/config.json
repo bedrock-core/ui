@@ -13,6 +13,10 @@
 			"bundler": {
 				"url": "github.com/bedrock-core/regolith-filters",
 				"version": "1.0.2"
+			},
+			"item-aux": {
+				"url": "github.com/bedrock-core/regolith-filters",
+				"version": "1.0.0"
 			}
 		},
 		"formatVersion": "1.4.0",
@@ -24,6 +28,9 @@
 					"target": "local"
 				},
 				"filters": [
+					{
+						"filter": "item-aux"
+					},
 					{
 						"filter": "bundler",
 						"settings": {
@@ -39,6 +46,9 @@
 					"target": "development"
 				},
 				"filters": [
+					{
+						"filter": "item-aux"
+					},
 					{
 						"filter": "bundler",
 						"settings": {
