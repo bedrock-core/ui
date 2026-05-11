@@ -20,6 +20,9 @@
 			},
 			{
 				"image@core-ui_components.image": {}
+			},
+			{
+				"inventory@core-ui_components.inventory": {}
 			}
 		]
 	}

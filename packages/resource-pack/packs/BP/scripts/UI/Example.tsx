@@ -14,6 +14,7 @@ import {
   ResourcesPanel,
   GridLayoutPanel,
   ExitPanel,
+  InventoryPanel,
 } from './components';
 
 // Import contexts
@@ -116,6 +117,7 @@ export function Example(): JSX.Element {
           <ResourcesPanel />
           <GridLayoutPanel />
           <ExitPanel />
+          <InventoryPanel />
         </Panel>
       </SettingsContext>
     </ThemeContext>

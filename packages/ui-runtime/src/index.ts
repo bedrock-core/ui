@@ -2,6 +2,7 @@ export {
   Button,
   Fragment,
   Image,
+  Inventory,
   Panel,
   Text,
 } from './components';
@@ -10,6 +11,7 @@ export type {
   ButtonProps,
   FragmentProps,
   ImageProps,
+  InventoryProps,
   PanelProps,
   TextProps,
   ControlProps,
