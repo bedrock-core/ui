@@ -1,6 +1,6 @@
 {
 	"namespace": "core-ui_components",
-	"item_slot": {
+	"item_renderer": {
 		"type": "custom",
 		"renderer": "inventory_item_renderer",
 		"size": [
@@ -129,7 +129,7 @@
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(#pre_visible and (#type = 'item_slot'))",
+				"source_property_name": "(#pre_visible and (#type = 'item_renderer'))",
 				"target_property_name": "#visible"
 			},
 			{
@@ -150,17 +150,114 @@
 			{
 				"binding_type": "view",
 				"source_property_name": "(#rem_after_enabled - ('%.584s' * #rem_after_enabled))",
-				"target_property_name": "#rb_component"
+				"target_property_name": "#serialized_data"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rb_component)",
-				"target_property_name": "#rb_raw_aux"
+				"source_property_name": "('%.83s' * #serialized_data)",
+				"target_property_name": "#raw_aux"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #rb_raw_aux) - ('%.2s' * #rb_raw_aux) - ';')",
+				"source_property_name": "(('%.82s' * #raw_aux) - ('%.2s' * #raw_aux) - ';')",
 				"target_property_name": "#item_id_aux"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#serialized_data - #raw_aux)",
+				"target_property_name": "#rem_after_aux"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_aux)",
+				"target_property_name": "#raw_name"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_aux - #raw_name)",
+				"target_property_name": "#rem_after_name"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_name) - ('%.2s' * #raw_name) - ';')",
+				"target_property_name": "#item_name"
+			}
+		],
+		"controls": [
+			{
+				"hover_button@hover_button": {}
+			},
+			{
+				"selected_item_details_factory@common.selected_item_details_factory": {}
+			}
+		]
+	},
+	"hover_button@common.button": {
+		"$pressed_button_name": "button.info",
+		"size": [
+			18,
+			18
+		],
+		"sound_volume": 0.0,
+		"default_control": "",
+		"pressed_control": "",
+		"controls": [
+			{
+				"hover": {
+					"type": "panel",
+					"size": [
+						18,
+						18
+					],
+					"controls": [
+						{
+							"hover_text_image": {
+								"type": "image",
+								"allow_clipping": false,
+								"follows_cursor": true,
+								"alpha": 1.0,
+								"texture": "textures/ui/purpleBorder",
+								"size": [
+									"100%c+8px",
+									"100%c+8px"
+								],
+								"anchor_from": "left_middle",
+								"anchor_to": "left_middle",
+								"offset": [
+									"50%x",
+									0
+								],
+								"layer": 25,
+								"controls": [
+									{
+										"hover_text_panel": {
+											"type": "panel",
+											"size": [
+												"100%cm - 1px",
+												9
+											],
+											"controls": [
+												{
+													"hover_text": {
+														"type": "label",
+														"text": "Unset",
+														"offset": [
+															-0.5,
+															-1.5
+														],
+														"anchor_from": "top_left",
+														"anchor_to": "top_left",
+														"shadow": false
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						}
+					]
+				}
 			}
 		]
 	}

@@ -25,7 +25,11 @@
 					"anchor_to": "top_left",
 					"size": [
 						"328px",
-						"100%"
+						"98%"
+					],
+					"offset": [
+						0,
+						"1%"
 					],
 					"$protocol_header": "bcuiv0003",
 					"$show_background": false,

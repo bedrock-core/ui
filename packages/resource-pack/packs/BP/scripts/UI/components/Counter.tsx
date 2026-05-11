@@ -49,7 +49,7 @@ export const Counter: FunctionComponent = (): JSX.Element => {
             setCount(prev => prev + 1);
           }}
         >
-          <Text>{'+1'}</Text>
+          <Text>{'"+1"'}</Text>
         </Button>
 
         {/* Decrement button */}
@@ -58,7 +58,7 @@ export const Counter: FunctionComponent = (): JSX.Element => {
             setCount(prev => prev - 1);
           }}
         >
-          <Text>{'-1'}</Text>
+          <Text>{'"-1"'}</Text>
         </Button>
       </Panel>
 

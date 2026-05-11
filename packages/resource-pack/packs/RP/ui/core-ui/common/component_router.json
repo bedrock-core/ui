@@ -22,7 +22,7 @@
 				"image@core-ui_components.image": {}
 			},
 			{
-				"item_slot@core-ui_components.item_slot": {}
+				"item_renderer@core-ui_components.item_renderer": {}
 			}
 		]
 	}

@@ -20,6 +20,6 @@
 		"ui/core-ui/components/panel.json",
 		"ui/core-ui/components/text.json",
 		"ui/core-ui/components/image.json",
-		"ui/core-ui/components/item_slot.json"
+		"ui/core-ui/components/item_renderer.json"
 	]
 }
