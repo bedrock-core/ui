@@ -61,32 +61,6 @@ function extractTextMetrics(props: JSX.Props): TextMetricsData {
   };
 }
 
-// Default padding added around button text labels when no explicit size is given.
-const BUTTON_PAD_H = 8; // left + right each side
-const BUTTON_PAD_V = 4; // top + bottom each side
-
-/**
- * Pull the inner text label out of a button's children, regardless of whether
- * the user wrote `<Button>literal</Button>` or `<Button><Text>literal</Text></Button>`.
- */
-function extractButtonLabel(props: JSX.Props): string | undefined {
-  const ch = props.children;
-
-  if (typeof ch === 'string') {
-    return ch;
-  }
-
-  if (ch && typeof ch === 'object' && !Array.isArray(ch)) {
-    const inner = (ch).props?.value;
-
-    if (typeof inner === 'string') {
-      return inner;
-    }
-  }
-
-  return undefined;
-}
-
 function withIntrinsicSize(element: JSX.Element, style: FlexStyle): FlexStyle {
   if (element.type === 'text') {
     if (style.width !== undefined && style.height !== undefined) {
@@ -106,50 +80,6 @@ function withIntrinsicSize(element: JSX.Element, style: FlexStyle): FlexStyle {
 
     if (next.height === undefined) {
       next.height = dims.height;
-    }
-
-    return next;
-  }
-
-  if (element.type === 'button') {
-    // Always inject padding so the inner text/content is inset within the
-    // button's box. User-supplied padding overrides this default.
-    // Spread `style` first so its `undefined` placeholder fields don't wipe
-    // the defaults — then apply per-side defaults only if still undefined.
-    const next: FlexStyle = { ...style };
-
-    if (next.paddingLeft === undefined) {
-      next.paddingLeft = next.padding ?? BUTTON_PAD_H;
-    }
-
-    if (next.paddingRight === undefined) {
-      next.paddingRight = next.padding ?? BUTTON_PAD_H;
-    }
-
-    if (next.paddingTop === undefined) {
-      next.paddingTop = next.padding ?? BUTTON_PAD_V;
-    }
-
-    if (next.paddingBottom === undefined) {
-      next.paddingBottom = next.padding ?? BUTTON_PAD_V;
-    }
-
-    if (next.width !== undefined && next.height !== undefined) {
-      return next;
-    }
-
-    const label = extractButtonLabel(element.props);
-
-    if (label !== undefined && label.length > 0) {
-      const dims = measureText({ text: label });
-
-      if (next.width === undefined) {
-        next.width = dims.width + BUTTON_PAD_H * 2;
-      }
-
-      if (next.height === undefined) {
-        next.height = dims.height + BUTTON_PAD_V * 2;
-      }
     }
 
     return next;
