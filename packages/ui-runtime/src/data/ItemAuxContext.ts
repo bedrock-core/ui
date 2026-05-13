@@ -7,7 +7,7 @@ import type { ItemAuxMap } from './ItemAuxMap';
  * At the root of your UI, import the generated JSON and wrap with this context:
  *
  * ```tsx
-* import itemAuxMap from './data/itemAuxMap.generated.json';
+ * import itemAuxMap from './data/itemAuxMap.generated.json';
  *
  * render(
  *   <ItemAuxContext value={itemAuxMap}>
@@ -17,8 +17,8 @@ import type { ItemAuxMap } from './ItemAuxMap';
  * );
  * ```
  *
- * `ItemRenderer` reads from this context automatically — no need to pass the map
- * as a prop. Without a provider the default is an empty map and all aux values
- * will fall back to `0`.
+ * `ItemRenderer` reads from this context automatically. Without a provider,
+ * `ItemRenderer` will throw an `ItemAuxError` at render time instructing you
+ * to install the `item-aux` Regolith filter.
  */
-export const ItemAuxContext = createContext<ItemAuxMap>({});
+export const ItemAuxContext = createContext<ItemAuxMap | null>(null);

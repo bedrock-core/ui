@@ -22,6 +22,20 @@ export class SerializationError extends Error {
   }
 }
 
+export class TranslationKeysError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'TranslationKeysError';
+  }
+}
+
+export class ItemAuxError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ItemAuxError';
+  }
+}
+
 export type Writer = (
   payload: string,
   form: ActionFormData,

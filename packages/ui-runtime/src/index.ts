@@ -48,6 +48,8 @@ export type {
   Context,
   ContextProps,
   SerializationError,
+  TranslationKeysError,
+  ItemAuxError,
 } from './core';
 
 export type {
@@ -57,3 +59,6 @@ export type {
 
 export { ItemAuxContext } from './data/ItemAuxContext';
 export type { ItemAuxMap } from './data/ItemAuxMap';
+
+export { TranslationKeysContext } from './data/TranslationKeysContext';
+export type { TranslationKeysMap } from './data/TranslationKeysMap';

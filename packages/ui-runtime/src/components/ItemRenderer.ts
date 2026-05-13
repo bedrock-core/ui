@@ -2,6 +2,7 @@ import { ItemLockMode, ItemStack } from '@minecraft/server';
 import { useContext } from '../hooks';
 import { FunctionComponent, JSX } from '../jsx';
 import { ItemAuxContext } from '../data/ItemAuxContext';
+import { ItemAuxError } from '../core/types';
 import { ControlProps, withControl } from './control';
 
 export interface ItemRendererProps extends ControlProps {
@@ -17,6 +18,14 @@ export const ItemRenderer: FunctionComponent<ItemRendererProps> = ({
   ...rest
 }: ItemRendererProps): JSX.Element => {
   const auxMap = useContext(ItemAuxContext);
+
+  if (auxMap === null) {
+    throw new ItemAuxError(
+      `ItemAuxContext is not provided. Did you forget to install the 'item-aux' Regolith filter `
+      + `and wrap your UI in <ItemAuxContext value={itemAuxMap}>?`,
+    );
+  }
+
   const controlProps = withControl(rest);
 
   return {

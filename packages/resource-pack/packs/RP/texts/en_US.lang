@@ -1,2 +1,5 @@
 pack.name=@bedrock-core/ui
 pack.description=by DrAv0011
+test.longstring=Aliqua velit laborum ullamco dolor ullamco occaecat nisi labore cillum sint laboris anim minim et.
+test.longstring.bold=§lAliqua velit laborum ullamco dolor ullamco occaecat nisi labore cillum sint laboris anim minim et.
+test.multiline=Aliqua velit laborum ullamco dolor. Ullamco occaecat nisi labore cillum sint laboris anim minim et. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
