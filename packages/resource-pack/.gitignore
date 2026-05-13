@@ -1,2 +1,4 @@
 /build
 /.regolith
+**/itemAuxMap.generated.json
+**/translationKeys.generated.json

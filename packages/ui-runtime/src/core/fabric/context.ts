@@ -14,9 +14,9 @@ import { Context, ContextProps } from './types';
  *
  * function App() {
  *   return (
- *     <ThemeContext.Provider value="dark">
+ *     <ThemeContext value="dark">
  *       <ThemedComponent />
- *     </ThemeContext.Provider>
+ *     </ThemeContext>
  *   );
  * }
  *

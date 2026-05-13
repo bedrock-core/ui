@@ -23,6 +23,8 @@ export type {
   SerializableProps,
   SerializationContext,
   SerializationError,
+  TranslationKeysError,
+  ItemAuxError,
 } from './types';
 
 export { isFunction } from './guards';

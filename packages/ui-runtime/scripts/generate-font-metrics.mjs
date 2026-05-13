@@ -16,10 +16,6 @@ const DEFAULT_CONFIG = {
     lineHeight: 10,
     fallbackWidth: 6,
   },
-  'minecraft-ten': {
-    lineHeight: 9,
-    fallbackWidth: 5,
-  },
 };
 
 function parseArgs(argv) {
@@ -66,13 +62,12 @@ async function readFontList(fontListPath) {
   const content = await fs.readFile(fontListPath, 'utf8');
   const lines = content.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
 
-  if (lines.length < 2) {
-    throw new Error(`Expected at least two font paths in ${fontListPath}`);
+  if (lines.length < 1) {
+    throw new Error(`Expected at least one font path in ${fontListPath}`);
   }
 
   return {
     mojangles: lines[0],
-    'minecraft-ten': lines[1],
   };
 }
 
@@ -104,6 +99,9 @@ function extractProfile(font, lineHeight, fallbackWidth) {
   return {
     lineHeight,
     fallbackWidth,
+    // Bold draws each glyph twice shifted 1px right (shadow), extending the
+    // advance by 1px beyond the normal glyph + spacing.
+    boldOffset: 1,
     glyphWidths,
   };
 }
@@ -134,17 +132,9 @@ async function main() {
       lineHeight: Number(args.mojanglesLineHeight ?? DEFAULT_CONFIG.mojangles.lineHeight),
       fallbackWidth: Number(args.mojanglesFallbackWidth ?? DEFAULT_CONFIG.mojangles.fallbackWidth),
     },
-    'minecraft-ten': {
-      path: path.resolve(args.minecraftTen ?? defaultPaths['minecraft-ten']),
-      lineHeight: Number(args.minecraftTenLineHeight ?? DEFAULT_CONFIG['minecraft-ten'].lineHeight),
-      fallbackWidth: Number(args.minecraftTenFallbackWidth ?? DEFAULT_CONFIG['minecraft-ten'].fallbackWidth),
-    },
   };
 
-  const [mojanglesFont, tenFont] = await Promise.all([
-    loadFont(config.mojangles.path),
-    loadFont(config['minecraft-ten'].path),
-  ]);
+  const mojanglesFont = await loadFont(config.mojangles.path);
 
   const output = {
     generatedAt: new Date().toISOString(),
@@ -153,11 +143,6 @@ async function main() {
         mojanglesFont,
         config.mojangles.lineHeight,
         config.mojangles.fallbackWidth,
-      ),
-      'minecraft-ten': extractProfile(
-        tenFont,
-        config['minecraft-ten'].lineHeight,
-        config['minecraft-ten'].fallbackWidth,
       ),
     },
   };

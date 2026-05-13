@@ -1,6 +1,6 @@
 import type { Player } from '@minecraft/server';
 import type { FunctionComponent, JSX } from '../../jsx';
-import { startInputLock } from '../../util';
+import { Logger, startInputLock } from '../../util';
 import { present } from './presenter';
 import { setBuildRunner, setPlayerRoot, triggerCleanup } from './session';
 import { buildTree } from './tree';
@@ -23,8 +23,15 @@ export function render(
 
   // Helper to build and present once
   const presentOnce = (): void => {
-    // Build with traversal context carrying session bump function
-    const tree = buildTree(rootElement, player);
+    let tree: JSX.Element;
+
+    try {
+      tree = buildTree(rootElement, player);
+    } catch (err: unknown) {
+      Logger.error(`[ui-runtime] buildTree error: ${String(err)}`);
+
+      return;
+    }
 
     present(player, tree)
       .then((result) => {
@@ -37,8 +44,8 @@ export function render(
           // none: do nothing; user dismissed without callbacks
         }
       })
-      .catch(() => {
-        // Swallow to keep runtime stable; no interval loop to clear
+      .catch((err: unknown) => {
+        Logger.error(`[ui-runtime] present error: ${String(err)}`);
       });
   };
 

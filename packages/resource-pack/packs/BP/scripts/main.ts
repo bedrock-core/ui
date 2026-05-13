@@ -4,6 +4,7 @@ import { ActionFormData } from '@minecraft/server-ui';
 import { MinecraftBlockTypes, MinecraftEntityTypes } from '@minecraft/vanilla-data';
 import { Example } from './UI/Example';
 import { FlexTest } from './UI/FlexTest';
+import { FontMetricsTest } from './UI/FontMetricsTest';
 
 const isPlayer = (source: ButtonPushAfterEvent['source']): source is Player => source.typeId === MinecraftEntityTypes.Player;
 
@@ -24,6 +25,11 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
     if (block.typeId === MinecraftBlockTypes.BirchButton) {
       // Birch button → flex test fixture (visual flex behavior verification).
       render(FlexTest, source);
+    }
+
+    if (block.typeId === MinecraftBlockTypes.WoodenButton) {
+      // Oak button → font metrics test (bold/italic/format variant comparison).
+      render(FontMetricsTest, source);
     }
   }
 });
