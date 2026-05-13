@@ -6,6 +6,7 @@
 		"text": "#text",
 		"font_type": "#font_type",
 		"font_scale_factor": "#font_scale_factor",
+		"font_size": "small",
 		"size": [
 			0,
 			0

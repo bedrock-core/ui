@@ -17,8 +17,9 @@ export interface TextProps extends ControlProps {
   font?: TextFont;
 
   /**
-   * Upward scale multiplier for rendered glyph size (≥ 1.0).
-   * Maps to JSON UI font_scale_factor. Values below 1.0 are clamped to 1.0.
+   * Scale multiplier relative to the standard "normal" glyph size. Defaults to 1.0.
+   * Values below 1.0 produce smaller text; values above 1.0 produce larger text.
+   * Internally mapped to font_scale_factor accounting for the font_size:small base.
    */
   scale?: number;
 
@@ -59,6 +60,10 @@ const FONT_TYPE_MAP: Record<TextFont, string> = {
   mojangles: 'default',
 };
 
+// font_size: small is hardcoded in text.json (0.5× base render).
+// All metric calculations must account for this factor.
+const FONT_SIZE_BASE = 0.5;
+
 export const Text: FunctionComponent<TextProps> = ({
   children,
   localizationKey,
@@ -69,7 +74,7 @@ export const Text: FunctionComponent<TextProps> = ({
   maxLines,
   ...rest
 }: TextProps): JSX.Element => {
-  const clampedScale = Math.max(1.0, scale ?? 1.0);
+  const resolvedScale = scale ?? 1.0;
   const isKey = localizationKey !== undefined;
 
   let resolvedText: string;
@@ -102,10 +107,10 @@ export const Text: FunctionComponent<TextProps> = ({
       ...withControl(rest),
       value: isKey ? localizationKey : resolvedText,
       fontType: FONT_TYPE_MAP[font ?? 'mojangles'],
-      fontScaleFactor: clampedScale,
+      fontScaleFactor: resolvedScale / FONT_SIZE_BASE,
       __textMetrics: {
         font,
-        fontSize: clampedScale,
+        fontSize: resolvedScale,
         wordBreak,
         overflow,
         maxLines,

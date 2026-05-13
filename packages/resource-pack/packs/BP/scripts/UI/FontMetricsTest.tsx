@@ -7,8 +7,6 @@ const DIGITS = '(0123456789)';
 const PUNCT = '!@#$%&*()_+-=[]{}|;:\'",.<>/?';
 const NARROW = 'iIlL1.,;:!|';
 
-// ─── Glyph rows ────────────────────────────────────────────────────────────────
-
 function GlyphRows({ prefix, font, scale }: { prefix: string; font: TextFont; scale?: number }): JSX.Element {
   return (
     <Fragment>
@@ -20,80 +18,62 @@ function GlyphRows({ prefix, font, scale }: { prefix: string; font: TextFont; sc
   );
 }
 
-// ─── Mojangles glyph section ───────────────────────────────────────────────────
-
-function MojanglesSection(): JSX.Element {
-  const font: TextFont = 'mojangles';
-
-  return (
-    <Fragment>
-      <Text>{`§e§l=== mojangles glyphs ===`}</Text>
-
-      <Text>{'§7normal'}</Text>
-      <GlyphRows font={font} prefix={''} />
-
-      <Text>{'§7bold'}</Text>
-      <GlyphRows font={font} prefix={'§l'} />
-
-      <Text>{'§7italic'}</Text>
-      <GlyphRows font={font} prefix={'§o'} />
-
-      <Text>{'§7bold+italic'}</Text>
-      <GlyphRows font={font} prefix={'§l§o'} />
-
-      <Text>{'§7scale 2.0'}</Text>
-      <GlyphRows font={font} scale={2.0} prefix={''} />
-
-      <Text>{'§7scale 2.0 bold'}</Text>
-      <GlyphRows font={font} scale={2.0} prefix={'§l'} />
-
-      <Text>{'§7scale 4.0'}</Text>
-      <GlyphRows font={font} scale={4.0} prefix={''} />
-    </Fragment>
-  );
-}
-
-// ─── Localization key section ──────────────────────────────────────────────────
-
-function LocalizationKeySection(): JSX.Element {
-  const font: TextFont = 'mojangles';
-
-  return (
-    <Fragment>
-      <Text>{`§e§l=== localizationKey ===`}</Text>
-
-      <Text>{'§7plain'}</Text>
-      <Text localizationKey={'test.longstring'} />
-
-      <Text>{'§7word-wrap'}</Text>
-      <Text font={font} localizationKey={'test.longstring'} wordBreak={'break-word'} />
-
-      <Text>{'§7bold word-wrap'}</Text>
-      <Text font={font} localizationKey={'test.longstring.bold'} wordBreak={'break-word'} />
-
-      <Text>{'§7ellipsis single line'}</Text>
-      <Text font={font} localizationKey={'test.longstring'} overflow={'ellipsis'} />
-
-      <Text>{'§7maxLines=2 + ellipsis'}</Text>
-      <Text font={font} localizationKey={'test.multiline'} wordBreak={'break-word'} overflow={'ellipsis'} maxLines={2} />
-
-      <Text>{'§7maxLines=3'}</Text>
-      <Text font={font} localizationKey={'test.multiline'} wordBreak={'break-word'} maxLines={3} />
-
-      <Text>{'§7scale 2.0 ellipsis'}</Text>
-      <Text font={font} scale={2.0} localizationKey={'test.longstring'} overflow={'ellipsis'} />
-    </Fragment>
-  );
-}
-
-// ─── Root ──────────────────────────────────────────────────────────────────────
-
 export function FontMetricsTest(): JSX.Element {
+  const font: TextFont = 'mojangles';
+
   return (
     <TranslationKeysContext value={translationKeys}>
       <Panel flexDirection={'column'} gap={4} padding={4}>
-        <MojanglesSection />
-        <LocalizationKeySection />
+
+        <Text>{`§e§l=== glyphs ===`}</Text>
+
+        <Text>{'§7scale=0.5'}</Text>
+        <GlyphRows font={font} scale={0.5} prefix={''} />
+        <GlyphRows font={font} scale={0.5} prefix={'§l'} />
+
+        <Text>{'§7scale=1 (default)'}</Text>
+        <GlyphRows font={font} prefix={''} />
+        <GlyphRows font={font} prefix={'§l'} />
+        <GlyphRows font={font} prefix={'§o'} />
+        <GlyphRows font={font} prefix={'§l§o'} />
+
+        <Text>{'§7scale=2'}</Text>
+        <GlyphRows font={font} scale={2} prefix={''} />
+        <GlyphRows font={font} scale={2} prefix={'§l'} />
+
+        <Text>{'§7scale=4'}</Text>
+        <GlyphRows font={font} scale={4} prefix={''} />
+        <GlyphRows font={font} scale={4} prefix={'§l'} />
+
+        <Text>{`§e§l=== localizationKey ===`}</Text>
+
+        <Text>{'§7plain (no wrap)'}</Text>
+        <Text localizationKey={'test.longstring'} />
+
+        <Text>{'§7word-wrap'}</Text>
+        <Text font={font} localizationKey={'test.longstring'} wordBreak={'break-word'} />
+
+        <Text>{'§7bold word-wrap'}</Text>
+        <Text font={font} localizationKey={'test.longstring.bold'} wordBreak={'break-word'} />
+
+        <Text>{'§7ellipsis'}</Text>
+        <Text font={font} localizationKey={'test.longstring'} overflow={'ellipsis'} />
+
+        <Text>{'§7scale=2 word-wrap'}</Text>
+        <Text font={font} scale={2} localizationKey={'test.longstring'} wordBreak={'break-word'} />
+
+        <Text>{'§7scale=2 ellipsis'}</Text>
+        <Text font={font} scale={2} localizationKey={'test.longstring'} overflow={'ellipsis'} />
+
+        <Text>{'§7maxLines=2 ellipsis'}</Text>
+        <Text font={font} localizationKey={'test.multiline'} wordBreak={'break-word'} overflow={'ellipsis'} maxLines={2} />
+
+        <Text>{'§7maxLines=3'}</Text>
+        <Text font={font} localizationKey={'test.multiline'} wordBreak={'break-word'} maxLines={3} />
+
+        <Text>{'§7scale=2 maxLines=2 ellipsis'}</Text>
+        <Text font={font} scale={2} localizationKey={'test.multiline'} wordBreak={'break-word'} overflow={'ellipsis'} maxLines={2} />
+
       </Panel>
     </TranslationKeysContext>
   );
