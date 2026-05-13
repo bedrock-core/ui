@@ -11,9 +11,10 @@ export const TEXTURES = {
   checkbox: {
     unchecked: `${BASE}/checkbox/unchecked`,
     uncheckedHover: `${BASE}/checkbox/unchecked_hover`,
+    uncheckedDisabled: `${BASE}/checkbox/unchecked_disabled`,
     checked: `${BASE}/checkbox/checked`,
     checkedHover: `${BASE}/checkbox/checked_hover`,
-    disabled: `${BASE}/checkbox/disabled`,
+    checkedDisabled: `${BASE}/checkbox/checked_disabled`,
   },
   radio: {
     unselected: `${BASE}/radio/unselected`,

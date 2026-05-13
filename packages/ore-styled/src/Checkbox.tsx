@@ -1,4 +1,4 @@
-import { Button, Fragment, Image, Text, useState } from '@bedrock-core/ui';
+import { Button, Fragment, Panel, Text, useState } from '@bedrock-core/ui';
 import type { ControlProps, JSX } from '@bedrock-core/ui';
 
 import { SPACING, TEXTURES, SIZE } from './tokens';
@@ -33,25 +33,23 @@ export function Checkbox({
     onChange?.(next);
   }
 
-  const texture = disabled
-    ? TEXTURES.checkbox.disabled
-    : isChecked
-      ? TEXTURES.checkbox.checked
-      : TEXTURES.checkbox.unchecked;
+  const t = TEXTURES.checkbox;
 
   return (
-    <Button
-      onPress={handle}
-      enabled={!disabled}
-      flexDirection={'row'}
-      alignItems={'center'}
-      gap={SPACING.sm}
-      {...layout}
-    >
+    <Panel flexDirection={'row'} alignItems={'center'} gap={SPACING.sm} {...layout}>
       <Fragment>
-        <Image width={SIZE.checkbox} height={SIZE.checkbox} texture={texture} />
+        <Button
+          width={SIZE.checkbox}
+          height={SIZE.checkbox}
+          background={isChecked ? t.checked : t.unchecked}
+          backgroundHover={isChecked ? t.checkedHover : t.uncheckedHover}
+          backgroundPressed={isChecked ? t.unchecked : t.checked}
+          backgroundLocked={isChecked ? t.checkedDisabled : t.uncheckedDisabled}
+          onPress={handle}
+          enabled={!disabled}
+        />
         <Text>{label ?? ''}</Text>
       </Fragment>
-    </Button>
+    </Panel>
   );
 }
