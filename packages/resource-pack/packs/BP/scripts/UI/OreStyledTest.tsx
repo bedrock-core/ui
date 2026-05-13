@@ -128,8 +128,10 @@ function RadioSection(): JSX.Element {
       <RadioGroup defaultValue={'d'}>
         <Fragment>
           <Radio value={'d'} label={'Option D'} />
-          <Radio value={'e'} label={'Option E'} disabled />
         </Fragment>
+      </RadioGroup>
+      <RadioGroup defaultValue={'e'}>
+        <Radio value={'e'} label={'Option E'} disabled />
       </RadioGroup>
     </Panel>
   );

@@ -94,7 +94,7 @@ export function withControl(props: JSX.Props): JSX.Props {
     visible: visible ?? true,
     enabled: enabled ?? true,
 
-    background: background ?? 'textures/ui/core-ui/components/common/background', // [440-522] optional background texture path
+    background: background ?? '', // [440-522] optional background texture path
     $reserved: { bytes: 501 }, // Reserve space for future expansion (since v0004: 501 bytes)
 
     // Layout props (not serialized, used by layout phase) - stored with __ prefix
