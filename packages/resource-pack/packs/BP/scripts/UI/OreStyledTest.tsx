@@ -14,7 +14,7 @@ import {
   Toggle,
 } from '@bedrock-core/ore-styled';
 import type { JSX } from '@bedrock-core/ui';
-import { Fragment, Panel, Text, useState } from '@bedrock-core/ui';
+import { Fragment, Image, Panel, Text, useState } from '@bedrock-core/ui';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -196,13 +196,18 @@ function CardSection(): JSX.Element {
     <Panel flexDirection={'column'} gap={SPACING.sm}>
       <SectionLabel>{'Card'}</SectionLabel>
       <Panel flexDirection={'row'} gap={SPACING.md} wrap={'wrap'}>
-        <Fragment>
-          <Card title={'With image & desc'} image={'textures/items/diamond'} description={'A shiny diamond'} />
-          <Card title={'Title only'} />
-          <Card title={'With children'}>
-            <Text>{`${FONT_COLOR.muted}child content`}</Text>
-          </Card>
-        </Fragment>
+        <Card>
+          <Text>{`${FONT_COLOR.default}Card with text child very long so it is only 1 line card`}</Text>
+        </Card>
+        <Card>
+          <Text>{`${FONT_COLOR.default}Card with`}</Text>
+          <Text>{`${FONT_COLOR.muted}multiple children`}</Text>
+        </Card>
+        <Card>
+          <Image width={48} height={48} texture={'textures/ui/cartography_table_copy'} />
+        </Card>
+        <Card>
+        </Card>
       </Panel>
     </Panel>
   );
