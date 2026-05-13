@@ -91,7 +91,7 @@ export const Panel: FunctionComponent<PanelProps> = ({ children, ...rest }: Pane
 
 Defined in `src/core/serializer.ts`.
 
-Payload always starts with a 9-character header: `bcui` + `vXXXX` (e.g., `bcuiv0003`). Decoders must skip these first 9 chars before field slicing.
+Payload always starts with a 9-character header: `bcui` + `vXXXX` (e.g., `bcuiv0004`). Decoders must skip these first 9 chars before field slicing.
 
 Each field is composed of three conceptual parts concatenated in this order:
 
@@ -104,7 +104,7 @@ Each field is composed of three conceptual parts concatenated in this order:
 | Type     | Prefix | Prefix Width | Type Width | Marker Width | Full Width | Notes |
 |----------|--------|--------------|------------|--------------|------------|-------|
 | String   | `s:`   | 2            | 80         | 1            | 83         | Prefer to use translation keys when text larger than 32 characters is needed |
-| Number   | `n:`   | 2            | 80         | 1            | 83         | Expanded to match string width in v0003 for unified field sizing |
+| Number   | `n:`   | 2            | 80         | 1            | 83         | Expanded to match string width in v0003; unified field sizing since v0004 |
 | Boolean  | `b:`   | 2            | 5          | 1            | 8          | Serialized as `'true'` or `'false'` |
 | Reserved | `r:`   | 0            | variable   | 0            | variable   | No prefix/marker for easier JSON UI skipping |
 
@@ -165,23 +165,20 @@ Generic template (JSON UI binding entries) — copy & replace placeholders:
 
 ### Base Control Properties Deserialization Order
 
-All components inherit these base control properties, which are deserialized in this exact order after the 9-byte protocol header (`bcuiv0003`):
+All components inherit these base control properties, which are deserialized in this exact order after the 9-byte protocol header (`bcuiv0004`):
 
 ```text
-Field 0: type (string, 83 bytes)                  - component type identifier
-Field 1: width (number, 83 bytes)                 - element width
-Field 2: height (number, 83 bytes)                - element height
-Field 3: x (number, 83 bytes)                     - horizontal position
-Field 4: y (number, 83 bytes)                     - vertical position
-Field 5: visible (bool, 8 bytes)                  - visibility state (default: true)
-Field 6: enabled (bool, 8 bytes)                  - interaction enabled (default: true)
-Field 7: layer (number, 83 bytes)                 - z-index layering (default: 0)
-Field 8: alpha (number, 83 bytes)                 - transparency (default: 1.0)
-Field 9: inheritMaxSiblingWidth (bool, 8 bytes)   - width inheritance (default: false)
-Field 10: inheritMaxSiblingHeight (bool, 8 bytes) - height inheritance (default: false)
-Field 11: $reserved (402 bytes)                   - reserved for future expansion
+Field 0: type (string, 83 bytes)       - component type identifier
+Field 1: width (number, 83 bytes)      - element width
+Field 2: height (number, 83 bytes)     - element height
+Field 3: x (number, 83 bytes)          - horizontal position
+Field 4: y (number, 83 bytes)          - vertical position
+Field 5: visible (bool, 8 bytes)       - visibility state (default: true)
+Field 6: enabled (bool, 8 bytes)       - interaction enabled (default: true)
+Field 7: background (string, 83 bytes) - background texture path
+Field 8: $reserved (501 bytes)         - reserved for future expansion
 
-Total control block: 1024 bytes (9 + 83 + 498 + 16 + 16 + 402)
+Total control block: 1024 bytes (9 + 83 + (5×83) + (2×8) + 83 + 501)
 ```
 
 **Component-specific properties** are appended after the reserved block.

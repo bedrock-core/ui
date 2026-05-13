@@ -27,9 +27,15 @@
 			"#size_binding_x": 0.0,
 			"#size_binding_y": 0.0,
 			"#anchored_offset_value_x": 0.0,
-			"#anchored_offset_value_y": 0.0
+			"#anchored_offset_value_y": 0.0,
+			"#background": "",
+			"#background_hover": "",
+			"#background_pressed": "",
+			"#background_locked": "",
+			"#bg_visible": false
 		},
 		"visible": "#visible",
+		"enabled": "#enabled",
 		"$normalize": 1.0,
 		"bindings": [
 			{
@@ -166,8 +172,83 @@
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(#pre_visible and (#type = 'button') and #enabled)",
+				"source_property_name": "(#pre_visible and (#type = 'button'))",
 				"target_property_name": "#visible"
+			},
+			{
+				/* --- background (string, 83 bytes) - field 7 [440-522] --- */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_enabled)",
+				"target_property_name": "#raw_background"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_enabled - #raw_background)",
+				"target_property_name": "#rem_after_background"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_background) - ('%.2s' * #raw_background) - ';')",
+				"target_property_name": "#background"
+			},
+			{
+				/* --- skip $reserved (501 bytes) - field 8 [523-1023] --- */
+				"binding_type": "view",
+				"source_property_name": "('%.501s' * #rem_after_background)",
+				"target_property_name": "#raw_reserved"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_background - #raw_reserved)",
+				"target_property_name": "#rem_after_reserved"
+			},
+			{
+				/* --- backgroundHover (string, 83 bytes) - component field 1 [1024-1106] --- */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_reserved)",
+				"target_property_name": "#raw_bg_hover"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_reserved - #raw_bg_hover)",
+				"target_property_name": "#rem_after_bg_hover"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_bg_hover) - ('%.2s' * #raw_bg_hover) - ';')",
+				"target_property_name": "#background_hover"
+			},
+			{
+				/* --- backgroundPressed (string, 83 bytes) - component field 2 [1107-1189] --- */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_bg_hover)",
+				"target_property_name": "#raw_bg_pressed"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_bg_hover - #raw_bg_pressed)",
+				"target_property_name": "#rem_after_bg_pressed"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_bg_pressed) - ('%.2s' * #raw_bg_pressed) - ';')",
+				"target_property_name": "#background_pressed"
+			},
+			{
+				/* --- backgroundLocked (string, 83 bytes) - component field 3 [1190-1272] --- */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_bg_pressed)",
+				"target_property_name": "#raw_bg_locked"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_bg_locked) - ('%.2s' * #raw_bg_locked) - ';')",
+				"target_property_name": "#background_locked"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(not (#background = ''))",
+				"target_property_name": "#bg_visible"
 			}
 		],
 		// === Base button functionality (from vanilla_button) ===
@@ -220,10 +301,52 @@
 					"anchor_from": "center",
 					"controls": [
 						{
-							"button_image@button_image": {}
+							"bg": {
+								"type": "image",
+								"size": ["100% - 2px", "100% - 2px"],
+								"offset": [0, 0],
+								"fill": false,
+								"anchor_to": "center",
+								"anchor_from": "center",
+								"texture": "#texture",
+								"visible": "#visible",
+								"alpha": 1,
+								"bindings": [
+									{
+										/* decode background[440] directly */
+										"binding_name": "#form_button_text",
+										"binding_type": "collection",
+										"binding_collection_name": "form_buttons"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.440s' * #form_button_text)",
+										"target_property_name": "#skip_to_bg"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#form_button_text - #skip_to_bg)",
+										"target_property_name": "#rem_at_bg"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #rem_at_bg)",
+										"target_property_name": "#raw_bg"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(('%.82s' * #raw_bg) - ('%.2s' * #raw_bg) - ';')",
+										"target_property_name": "#texture"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(not (#texture = ''))",
+										"target_property_name": "#visible"
+									}
+								]
+							}
 						}
 					],
-					"$button_texture": "textures/ui/core-ui/components/button/primary/background",
 					"$default_state": true
 				}
 			},
@@ -238,10 +361,52 @@
 					"anchor_from": "center",
 					"controls": [
 						{
-							"button_image@button_image": {}
+							"bg": {
+								"type": "image",
+								"size": ["100% - 2px", "100% - 2px"],
+								"offset": [0, 0],
+								"fill": false,
+								"anchor_to": "center",
+								"anchor_from": "center",
+								"texture": "#texture",
+								"visible": "#visible",
+								"alpha": 1,
+								"bindings": [
+									{
+										/* decode backgroundHover[1024] directly */
+										"binding_name": "#form_button_text",
+										"binding_type": "collection",
+										"binding_collection_name": "form_buttons"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.1024s' * #form_button_text)",
+										"target_property_name": "#skip_to_bg_hover"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#form_button_text - #skip_to_bg_hover)",
+										"target_property_name": "#rem_at_bg_hover"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #rem_at_bg_hover)",
+										"target_property_name": "#raw_bg_hover"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(('%.82s' * #raw_bg_hover) - ('%.2s' * #raw_bg_hover) - ';')",
+										"target_property_name": "#texture"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(not (#texture = ''))",
+										"target_property_name": "#visible"
+									}
+								]
+							}
 						}
 					],
-					"$button_texture": "textures/ui/core-ui/components/button/primary/background_hover",
 					"$hover_state": true
 				}
 			},
@@ -256,10 +421,52 @@
 					"anchor_from": "center",
 					"controls": [
 						{
-							"button_image@button_image": {}
+							"bg": {
+								"type": "image",
+								"size": ["100% - 2px", "100% - 2px"],
+								"offset": [0, 0],
+								"fill": false,
+								"anchor_to": "center",
+								"anchor_from": "center",
+								"texture": "#texture",
+								"visible": "#visible",
+								"alpha": 1,
+								"bindings": [
+									{
+										/* decode backgroundPressed[1107] directly */
+										"binding_name": "#form_button_text",
+										"binding_type": "collection",
+										"binding_collection_name": "form_buttons"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.1107s' * #form_button_text)",
+										"target_property_name": "#skip_to_bg_pressed"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#form_button_text - #skip_to_bg_pressed)",
+										"target_property_name": "#rem_at_bg_pressed"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #rem_at_bg_pressed)",
+										"target_property_name": "#raw_bg_pressed"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(('%.82s' * #raw_bg_pressed) - ('%.2s' * #raw_bg_pressed) - ';')",
+										"target_property_name": "#texture"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(not (#texture = ''))",
+										"target_property_name": "#visible"
+									}
+								]
+							}
 						}
 					],
-					"$button_texture": "textures/ui/core-ui/components/button/primary/background_pressed",
 					"$pressed_state": true,
 					"$button_offset|default": [
 						0,
@@ -278,35 +485,54 @@
 					"anchor_from": "center",
 					"controls": [
 						{
-							"button_image@button_image": {}
+							"bg": {
+								"type": "image",
+								"size": ["100% - 2px", "100% - 2px"],
+								"offset": [0, 0],
+								"fill": false,
+								"anchor_to": "center",
+								"anchor_from": "center",
+								"texture": "#texture",
+								"visible": "#visible",
+								"alpha": 1,
+								"bindings": [
+									{
+										/* decode backgroundLocked[1190] directly */
+										"binding_name": "#form_button_text",
+										"binding_type": "collection",
+										"binding_collection_name": "form_buttons"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.1190s' * #form_button_text)",
+										"target_property_name": "#skip_to_bg_locked"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#form_button_text - #skip_to_bg_locked)",
+										"target_property_name": "#rem_at_bg_locked"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #rem_at_bg_locked)",
+										"target_property_name": "#raw_bg_locked"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(('%.82s' * #raw_bg_locked) - ('%.2s' * #raw_bg_locked) - ';')",
+										"target_property_name": "#texture"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(not (#texture = ''))",
+										"target_property_name": "#visible"
+									}
+								]
+							}
 						}
-					],
-					"$button_texture": "textures/ui/core-ui/components/button/disabled/background"
+					]
 				}
 			}
 		]
-	},
-	"button_image": {
-		"type": "image",
-		// TODO reminder for myself to know this is possible
-		// "ignored": "(not $button_image_visible)",
-		"size": [
-			"100% - 2px",
-			"100% - 2px"
-		],
-		"offset": [
-			0,
-			0
-		],
-		"fill": false,
-		"color": [
-			1.0,
-			1.0,
-			1.0
-		],
-		"anchor_to": "center",
-		"anchor_from": "center",
-		"texture": "$button_texture",
-		"alpha": 1
 	}
 }

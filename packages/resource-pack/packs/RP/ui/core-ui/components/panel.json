@@ -19,6 +19,19 @@
 		"visible": "#visible",
 		"enabled": "#enabled", // TODO needs testing
 		"$normalize": 1.0,
+		"controls": [
+			{
+				"panel_bg": {
+					"type": "image",
+					"size": ["100%", "100%"],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"fill": true,
+					"texture": "#background",
+					"visible": "#bg_visible"
+				}
+			}
+		],
 		"bindings": [
 			{
 				"binding_name": "#form_button_text",
@@ -152,6 +165,22 @@
 				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
 				"source_property_name": "(('%.7s' * #raw_enabled) - ('%.2s' * #raw_enabled) - ';')",
 				"target_property_name": "#enabled"
+			},
+			{
+				/* --- background (string, 83 bytes) - field 7 [440-522] --- */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_enabled)",
+				"target_property_name": "#raw_background"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_background) - ('%.2s' * #raw_background) - ';')",
+				"target_property_name": "#background"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(not (#background = ''))",
+				"target_property_name": "#bg_visible"
 			}
 		]
 	}

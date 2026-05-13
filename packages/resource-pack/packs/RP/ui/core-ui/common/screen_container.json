@@ -31,7 +31,7 @@
 						0,
 						"1%"
 					],
-					"$protocol_header": "bcuiv0003",
+					"$protocol_header": "bcuiv0004",
 					"$show_background": false,
 					"$scrolling_content": "core-ui_common.form_scrolling_content",
 					"bindings": [

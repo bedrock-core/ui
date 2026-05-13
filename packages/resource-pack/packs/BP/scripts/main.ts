@@ -5,6 +5,7 @@ import { MinecraftBlockTypes, MinecraftEntityTypes } from '@minecraft/vanilla-da
 import { Example } from './UI/Example';
 import { FlexTest } from './UI/FlexTest';
 import { FontMetricsTest } from './UI/FontMetricsTest';
+import { OreStyledTest } from './UI/OreStyledTest';
 
 const isPlayer = (source: ButtonPushAfterEvent['source']): source is Player => source.typeId === MinecraftEntityTypes.Player;
 
@@ -30,6 +31,11 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
     if (block.typeId === MinecraftBlockTypes.WoodenButton) {
       // Oak button → font metrics test (bold/italic/format variant comparison).
       render(FontMetricsTest, source);
+    }
+
+    if (block.typeId === MinecraftBlockTypes.JungleButton) {
+      // Jungle button → ore-styled component showcase.
+      render(OreStyledTest, source);
     }
   }
 });
