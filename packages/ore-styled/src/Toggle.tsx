@@ -1,4 +1,4 @@
-import { Button, Image, useState } from '@bedrock-core/ui';
+import { Button, useState } from '@bedrock-core/ui';
 import type { ControlProps, JSX } from '@bedrock-core/ui';
 import { TEXTURES, SIZE } from './tokens';
 
@@ -30,21 +30,19 @@ export function Toggle({
     onChange?.(next);
   }
 
-  const texture = disabled
-    ? TEXTURES.toggle.disabled
-    : isOn
-      ? TEXTURES.toggle.on
-      : TEXTURES.toggle.off;
+  const t = TEXTURES.toggle;
 
   return (
     <Button
-      onPress={handle}
-      enabled={!disabled}
       width={SIZE.toggle.width}
       height={SIZE.toggle.height}
+      background={isOn ? t.on : t.off}
+      backgroundHover={isOn ? t.onHover : t.offHover}
+      backgroundPressed={isOn ? t.off : t.on}
+      backgroundLocked={isOn ? t.onDisabled : t.offDisabled}
+      onPress={handle}
+      enabled={!disabled}
       {...layout}
-    >
-      <Image width={SIZE.toggle.width} height={SIZE.toggle.height} texture={texture} />
-    </Button>
+    />
   );
 }

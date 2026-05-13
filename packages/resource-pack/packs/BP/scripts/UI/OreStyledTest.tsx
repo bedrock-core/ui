@@ -110,7 +110,13 @@ function ToggleSection(): JSX.Element {
       <Panel flexDirection={'row'} gap={SPACING.md} alignItems={'center'}>
         <Fragment>
           <Toggle disabled />
-          <Text>{`${FONT_COLOR.muted}disabled`}</Text>
+          <Text>{`${FONT_COLOR.muted}disabled off`}</Text>
+        </Fragment>
+      </Panel>
+      <Panel flexDirection={'row'} gap={SPACING.md} alignItems={'center'}>
+        <Fragment>
+          <Toggle defaultOn={true} disabled />
+          <Text>{`${FONT_COLOR.muted}disabled on`}</Text>
         </Fragment>
       </Panel>
     </Panel>

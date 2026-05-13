@@ -26,9 +26,10 @@ export const TEXTURES = {
   toggle: {
     off: `${BASE}/toggle/off`,
     offHover: `${BASE}/toggle/off_hover`,
+    offDisabled: `${BASE}/toggle/off_disabled`,
     on: `${BASE}/toggle/on`,
     onHover: `${BASE}/toggle/on_hover`,
-    disabled: `${BASE}/toggle/disabled`,
+    onDisabled: `${BASE}/toggle/on_disabled`,
   },
   select: {
     background: `${BASE}/select/background`,
@@ -69,7 +70,7 @@ export const SPACING = {
 export const SIZE = {
   checkbox: 12,
   radio: 12,
-  toggle: { width: 24, height: 12 },
+  toggle: { width: 27, height: 14 },
   icon: 16,
   sm: 20,
   md: 28,
