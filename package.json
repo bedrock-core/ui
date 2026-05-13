@@ -27,6 +27,10 @@
       "types": "./packages/ui-runtime/src/index.ts",
       "import": "./packages/ui-runtime/src/index.ts"
     },
+    "./ore-styled": {
+      "types": "./packages/ore-styled/src/index.ts",
+      "import": "./packages/ore-styled/src/index.ts"
+    },
     "./flexbox": {
       "types": "./packages/flexbox/src/index.ts",
       "import": "./packages/flexbox/src/index.ts"
@@ -51,6 +55,7 @@
   "packageManager": "yarn@4.14.1",
   "workspaces": [
     "packages/ui-runtime",
+    "packages/ore-styled",
     "packages/resource-pack",
     "packages/cli",
     "packages/flexbox"
