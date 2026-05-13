@@ -45,6 +45,7 @@ function collectConcrete(element: JSX.Element): JSX.Element[] {
 interface TextMetricsData {
   text: string;
   font?: TextFont;
+  scale?: number;
 }
 
 function extractTextMetrics(props: JSX.Props): TextMetricsData {
@@ -52,12 +53,14 @@ function extractTextMetrics(props: JSX.Props): TextMetricsData {
   const metrics = props.__textMetrics;
   const isMetricsObject = metrics && typeof metrics === 'object' && !Array.isArray(metrics);
   const font = isMetricsObject ? Reflect.get(metrics, 'font') : undefined;
+  const scale = isMetricsObject ? Reflect.get(metrics, 'fontSize') : undefined;
 
   return {
     text,
-    font: font === 'mojangles' || font === 'minecraft-ten'
+    font: font === 'mojangles'
       ? font
       : undefined,
+    scale: typeof scale === 'number' ? scale : undefined,
   };
 }
 
@@ -71,6 +74,7 @@ function withIntrinsicSize(element: JSX.Element, style: FlexStyle): FlexStyle {
     const dims = measureText({
       text: textData.text,
       font: textData.font,
+      fontSize: textData.scale,
     });
     const next: FlexStyle = { ...style };
 

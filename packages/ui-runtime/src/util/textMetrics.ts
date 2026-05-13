@@ -4,11 +4,13 @@ import fontMetrics from './font-metrics.generated.json';
 export interface MeasureTextOptions {
   text: string;
   font?: TextFont;
+  fontSize?: number;
 }
 
 interface FontMetrics {
   lineHeight: number;
   fallbackWidth: number;
+  boldOffset: number;
 }
 
 interface GeneratedProfileMetrics extends FontMetrics {
@@ -39,6 +41,7 @@ function baseGlyphWidth(codePoint: number, profile: TextFont): number {
 export function measureText({
   text,
   font,
+  fontSize = 1.0,
 }: MeasureTextOptions): { width: number; height: number } {
   const profile = normalizeFont(font);
   const metrics = BASE_METRICS[profile];
@@ -86,7 +89,7 @@ export function measureText({
     let advance = baseGlyphWidth(codePoint, profile);
 
     if (bold) {
-      advance += 1;
+      advance += metrics.boldOffset;
     }
 
     lineWidth += advance;
@@ -95,7 +98,7 @@ export function measureText({
   maxLineWidth = Math.max(maxLineWidth, lineWidth);
 
   return {
-    width: Math.max(1, Math.round(maxLineWidth)),
-    height: Math.max(1, Math.round(metrics.lineHeight * lineCount)),
+    width: Math.max(1, Math.round(maxLineWidth * fontSize)),
+    height: Math.max(1, Math.round(metrics.lineHeight * lineCount * fontSize)),
   };
 }

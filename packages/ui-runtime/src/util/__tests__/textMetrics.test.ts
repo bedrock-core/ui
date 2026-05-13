@@ -23,18 +23,40 @@ describe('measureText', () => {
     expect(dims.height).toBe(10);
   });
 
-  it('uses generated minecraft-ten glyph widths', () => {
-    const dims = measureText({ text: 'WIDE TEXT', font: 'minecraft-ten' });
+  it('bold width is exactly plain width + boldOffset * charCount', () => {
+    // boldOffset = 1: each char adds 1px for the bold shadow advance
+    const plain = measureText({ text: 'Hi' });
+    const bold = measureText({ text: '§lHi' });
 
-    expect(dims.width).toBe(42);
-    expect(dims.height).toBe(9);
+    expect(bold.width).toBe(plain.width + 2); // 2 chars × 1
   });
 
-  it('applies bold formatting as wider glyph advances', () => {
-    const plain = measureText({ text: 'Title' });
-    const bold = measureText({ text: '§lTitle§r' });
+  it('italic has the same width as normal', () => {
+    const normal = measureText({ text: 'Hi' });
+    const italic = measureText({ text: '§oHi' });
 
-    expect(bold.width).toBeGreaterThan(plain.width);
+    expect(italic.width).toBe(normal.width);
+  });
+
+  it('bold italic has the same width as bold', () => {
+    const bold = measureText({ text: '§lHi' });
+    const boldItalic = measureText({ text: '§l§oHi' });
+
+    expect(boldItalic.width).toBe(bold.width);
+  });
+
+  it('§r resets bold', () => {
+    const allBold = measureText({ text: '§lHi' });
+    const resetMid = measureText({ text: '§lH§ri' });
+
+    expect(resetMid.width).toBeLessThan(allBold.width);
+  });
+
+  it('scale 2.0 doubles the width', () => {
+    const scale1 = measureText({ text: 'A' });
+    const scale2 = measureText({ text: 'A', fontSize: 2.0 });
+
+    expect(scale2.width).toBe(scale1.width * 2);
   });
 
   it('accounts for multi-line height', () => {

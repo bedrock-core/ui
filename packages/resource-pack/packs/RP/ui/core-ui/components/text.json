@@ -4,6 +4,8 @@
 	"text": {
 		"type": "label",
 		"text": "#text",
+		"font_type": "#font_type",
+		"font_scale_factor": "#font_scale_factor",
 		"size": [
 			0,
 			0
@@ -182,6 +184,38 @@
 				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
 				"source_property_name": "(('%.82s' * #raw_text) - ('%.2s' * #raw_text) - ';')",
 				"target_property_name": "#text"
+			},
+			{
+				/* --- fontType (string) --- */
+				"binding_type": "view", // full_width
+				"source_property_name": "('%.83s' * #rem_after_text)",
+				"target_property_name": "#raw_font_type"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_text - #raw_font_type)",
+				"target_property_name": "#rem_after_font_type"
+			},
+			{
+				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
+				"source_property_name": "(('%.82s' * #raw_font_type) - ('%.2s' * #raw_font_type) - ';')",
+				"target_property_name": "#font_type"
+			},
+			{
+				/* --- fontScaleFactor (number) --- */
+				"binding_type": "view", // full_width
+				"source_property_name": "('%.83s' * #rem_after_font_type)",
+				"target_property_name": "#raw_font_scale_factor"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_font_type - #raw_font_scale_factor)",
+				"target_property_name": "#rem_after_font_scale_factor"
+			},
+			{
+				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
+				"source_property_name": "(('%.82s' * #raw_font_scale_factor) - ('%.2s' * #raw_font_scale_factor) - ';')",
+				"target_property_name": "#font_scale_factor"
 			}
 		]
 	}
