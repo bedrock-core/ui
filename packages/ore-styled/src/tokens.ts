@@ -19,9 +19,10 @@ export const TEXTURES = {
   radio: {
     unselected: `${BASE}/radio/unselected`,
     unselectedHover: `${BASE}/radio/unselected_hover`,
+    unselectedDisabled: `${BASE}/radio/unselected_disabled`,
     selected: `${BASE}/radio/selected`,
     selectedHover: `${BASE}/radio/selected_hover`,
-    disabled: `${BASE}/radio/disabled`,
+    selectedDisabled: `${BASE}/radio/selected_disabled`,
   },
   toggle: {
     off: `${BASE}/toggle/off`,

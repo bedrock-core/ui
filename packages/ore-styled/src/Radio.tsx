@@ -1,4 +1,4 @@
-import { Button, Fragment, Image, Panel, Text, createContext, useContext, useState } from '@bedrock-core/ui';
+import { Button, Fragment, Panel, Text, createContext, useContext, useState } from '@bedrock-core/ui';
 import type { ControlProps, JSX } from '@bedrock-core/ui';
 
 import { SPACING, TEXTURES, SIZE } from './tokens';
@@ -59,31 +59,29 @@ export function Radio({ value, label, disabled, ...layout }: RadioProps): JSX.El
   const isDisabled = disabled ?? ctx.disabled;
   const isSelected = ctx.value === value;
 
-  const texture = isDisabled
-    ? TEXTURES.radio.disabled
-    : isSelected
-      ? TEXTURES.radio.selected
-      : TEXTURES.radio.unselected;
-
   function handle(): void {
     if (!isDisabled) {
       ctx.onChange(value);
     }
   }
 
+  const t = TEXTURES.radio;
+
   return (
-    <Button
-      onPress={handle}
-      enabled={!isDisabled}
-      flexDirection={'row'}
-      alignItems={'center'}
-      gap={SPACING.sm}
-      {...layout}
-    >
+    <Panel flexDirection={'row'} alignItems={'center'} gap={SPACING.sm} {...layout}>
       <Fragment>
-        <Image width={SIZE.radio} height={SIZE.radio} texture={texture} />
+        <Button
+          width={SIZE.radio}
+          height={SIZE.radio}
+          background={isSelected ? t.selected : t.unselected}
+          backgroundHover={isSelected ? t.selectedHover : t.unselectedHover}
+          backgroundPressed={isSelected ? t.unselected : t.selected}
+          backgroundLocked={isSelected ? t.selectedDisabled : t.unselectedDisabled}
+          onPress={handle}
+          enabled={!isDisabled}
+        />
         <Text>{label ?? ''}</Text>
       </Fragment>
-    </Button>
+    </Panel>
   );
 }

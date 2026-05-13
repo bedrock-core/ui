@@ -25,26 +25,24 @@ function SectionLabel({ children }: { children: string }): JSX.Element {
 // ─── sections ────────────────────────────────────────────────────────────────
 
 function ButtonsSection(): JSX.Element {
-  const [lastPressed, setLastPressed] = useState('none');
-
   return (
     <Panel flexDirection={'column'} gap={SPACING.sm}>
       <SectionLabel>{'Button'}</SectionLabel>
       <Panel flexDirection={'row'} gap={SPACING.sm} wrap={'wrap'}>
         <Fragment>
-          <Button onPress={() => setLastPressed('primary')}>
+          <Button>
             <Text>{`${FONT_COLOR.default}Primary`}</Text>
           </Button>
-          <Button variant={'secondary'} onPress={() => setLastPressed('secondary')}>
+          <Button variant={'secondary'}>
             <Text>{`${FONT_COLOR.default}Secondary`}</Text>
           </Button>
-          <Button variant={'danger'} onPress={() => setLastPressed('danger')}>
+          <Button variant={'danger'}>
             <Text>{`${FONT_COLOR.danger}Danger`}</Text>
           </Button>
-          <Button variant={'contrast'} onPress={() => setLastPressed('contrast')}>
+          <Button variant={'contrast'}>
             <Text>{`${FONT_COLOR.muted}Contrast`}</Text>
           </Button>
-          <Button variant={'realm'} onPress={() => setLastPressed('realm')}>
+          <Button variant={'realm'}>
             <Text>{`${FONT_COLOR.default}Realm`}</Text>
           </Button>
         </Fragment>
@@ -68,37 +66,30 @@ function ButtonsSection(): JSX.Element {
           </Button>
         </Fragment>
       </Panel>
-      <Text>{`${FONT_COLOR.muted}Last pressed: ${FONT_COLOR.default}${lastPressed}`}</Text>
     </Panel>
   );
 }
 
 function CheckboxSection(): JSX.Element {
-  const [a, setA] = useState(false);
-  const [b, setB] = useState(true);
-
   return (
     <Panel flexDirection={'column'} gap={SPACING.sm}>
       <SectionLabel>{'Checkbox'}</SectionLabel>
-      <Checkbox label={'Unchecked by default'} defaultChecked={false} onChange={setA} />
-      <Checkbox label={'Checked by default'} defaultChecked={true} onChange={setB} />
+      <Checkbox label={'Unchecked by default'} defaultChecked={false} />
+      <Checkbox label={'Checked by default'} defaultChecked={true} />
       <Checkbox label={'Disabled unchecked'} disabled />
       <Checkbox label={'Disabled checked'} defaultChecked={true} disabled />
-      <Text>{`${FONT_COLOR.muted}a=${a}  b=${b}`}</Text>
     </Panel>
   );
 }
 
 function ToggleSection(): JSX.Element {
-  const [on, setOn] = useState(false);
-
   return (
     <Panel flexDirection={'column'} gap={SPACING.sm}>
       <SectionLabel>{'Toggle'}</SectionLabel>
       <Panel flexDirection={'row'} gap={SPACING.md} alignItems={'center'}>
         <Fragment>
-          <Toggle defaultOn={false} onChange={setOn} />
-          <Text>{`${FONT_COLOR.muted}default off → ${FONT_COLOR.default}${on}`}</Text>
+          <Toggle defaultOn={false} />
+          <Text>{`${FONT_COLOR.muted}default off`}</Text>
         </Fragment>
       </Panel>
       <Panel flexDirection={'row'} gap={SPACING.md} alignItems={'center'}>
@@ -124,19 +115,22 @@ function ToggleSection(): JSX.Element {
 }
 
 function RadioSection(): JSX.Element {
-  const [selected, setSelected] = useState('a');
-
   return (
     <Panel flexDirection={'column'} gap={SPACING.sm}>
       <SectionLabel>{'RadioGroup'}</SectionLabel>
-      <RadioGroup defaultValue={'a'} onChange={setSelected}>
+      <RadioGroup defaultValue={'a'}>
         <Fragment>
           <Radio value={'a'} label={'Option A'} />
           <Radio value={'b'} label={'Option B'} />
-          <Radio value={'c'} label={'Option C (disabled)'} disabled />
+          <Radio value={'c'} label={'Option C'} disabled />
         </Fragment>
       </RadioGroup>
-      <Text>{`${FONT_COLOR.muted}selected: ${FONT_COLOR.default}${selected}`}</Text>
+      <RadioGroup defaultValue={'d'}>
+        <Fragment>
+          <Radio value={'d'} label={'Option D'} />
+          <Radio value={'e'} label={'Option E'} disabled />
+        </Fragment>
+      </RadioGroup>
     </Panel>
   );
 }
