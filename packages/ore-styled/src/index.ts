@@ -19,4 +19,7 @@ export type { CardProps } from './Card';
 export { Toggle } from './Toggle';
 export type { ToggleProps } from './Toggle';
 
+export { Divider } from './Divider';
+export type { DividerProps, DividerOrientation, DividerVariant } from './Divider';
+
 export { TEXTURES, SPACING, SIZE, FONT_COLOR } from './tokens';

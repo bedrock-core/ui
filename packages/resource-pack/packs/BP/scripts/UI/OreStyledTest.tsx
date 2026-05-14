@@ -2,6 +2,7 @@ import {
   Button,
   Card,
   Checkbox,
+  Divider,
   FONT_COLOR,
   Radio,
   RadioGroup,
@@ -236,6 +237,30 @@ function ConditionalSection(): JSX.Element {
 
 // ─── root ─────────────────────────────────────────────────────────────────────
 
+function DividerSection(): JSX.Element {
+  return (
+    <Panel flexDirection={'column'} gap={SPACING.sm}>
+      <SectionLabel>{'Divider'}</SectionLabel>
+      <Text>{`${FONT_COLOR.muted}default (2px)`}</Text>
+      <Divider />
+      <Text>{`${FONT_COLOR.muted}light (1px)`}</Text>
+      <Divider variant={'light'} />
+      <Text>{`${FONT_COLOR.muted}dark (1px)`}</Text>
+      <Divider variant={'dark'} />
+      <Text>{`${FONT_COLOR.muted}vertical variants`}</Text>
+      <Panel flexDirection={'row'} gap={SPACING.sm} height={32}>
+        <Text>{`${FONT_COLOR.muted}A`}</Text>
+        <Divider orientation={'vertical'} />
+        <Text>{`${FONT_COLOR.muted}B`}</Text>
+        <Divider orientation={'vertical'} variant={'light'} />
+        <Text>{`${FONT_COLOR.muted}C`}</Text>
+        <Divider orientation={'vertical'} variant={'dark'} />
+        <Text>{`${FONT_COLOR.muted}D`}</Text>
+      </Panel>
+    </Panel>
+  );
+}
+
 export function OreStyledTest(): JSX.Element {
   return (
     <Panel flexDirection={'column'} padding={SPACING.md} gap={SPACING.lg}>
@@ -247,6 +272,7 @@ export function OreStyledTest(): JSX.Element {
       <SelectSection />
       <TabsSection />
       <CardSection />
+      <DividerSection />
       <ConditionalSection />
     </Panel>
   );

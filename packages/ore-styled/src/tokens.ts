@@ -58,6 +58,18 @@ export const TEXTURES = {
     itemHover: `${BASE}/list/item_hover`,
     itemSelected: `${BASE}/list/item_selected`,
   },
+  divider: {
+    horizontal: {
+      default: `${BASE}/divider/horizontal/default`,
+      light: `${BASE}/divider/horizontal/light`,
+      dark: `${BASE}/divider/horizontal/dark`,
+    },
+    vertical: {
+      default: `${BASE}/divider/vertical/default`,
+      light: `${BASE}/divider/vertical/light`,
+      dark: `${BASE}/divider/vertical/dark`,
+    },
+  },
 } as const;
 
 export const SPACING = {
