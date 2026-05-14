@@ -1,7 +1,7 @@
-import { Button, Panel, createContext, useContext, useState } from '@bedrock-core/ui';
+import { Button, Panel, Text, createContext, useContext, useState } from '@bedrock-core/ui';
 import type { ControlProps, JSX } from '@bedrock-core/ui';
 
-import { SIZE, SPACING, TEXTURES } from './tokens';
+import { BUTTON_TEXT_STYLE, SIZE, SPACING, TEXTURES } from './tokens';
 
 // ─── context ──────────────────────────────────────────────────────────────────
 
@@ -72,6 +72,12 @@ export function ToggleButtonItem({ value, disabled, children, ...layout }: Toggl
     }
   }
 
+  const ts = isSelected ? BUTTON_TEXT_STYLE.primary : BUTTON_TEXT_STYLE.secondary;
+
+  const resolvedChildren = typeof children === 'string'
+    ? Text({ font: ts.font, scale: ts.scale, children: `${isDisabled ? ts.disabledColor : ts.color}${children}` })
+    : children;
+
   return (
     <Button
       width={0}
@@ -91,7 +97,7 @@ export function ToggleButtonItem({ value, disabled, children, ...layout }: Toggl
       onPress={handle}
       {...layout}
     >
-      {children}
+      {resolvedChildren}
     </Button>
   );
 }

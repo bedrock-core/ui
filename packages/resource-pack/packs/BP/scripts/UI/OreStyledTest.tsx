@@ -28,39 +28,45 @@ function ButtonsSection(): JSX.Element {
       <SectionLabel>{'Button'}</SectionLabel>
       <Panel flexDirection={'row'} gap={SPACING.sm}>
         <Fragment>
+          <Button variant={'hero'} flexGrow={1}>{'Hero'}</Button>
+          <Button variant={'hero'} flexGrow={1} enabled={false}>{'Hero'}</Button>
+        </Fragment>
+      </Panel>
+      <Panel flexDirection={'row'} gap={SPACING.sm}>
+        <Fragment>
           <Button>
-            <Text>{`${FONT_COLOR.default}Primary`}</Text>
+            {`Primary`}
           </Button>
           <Button variant={'secondary'}>
-            <Text>{`${FONT_COLOR.default}Secondary`}</Text>
+            {`Secondary`}
           </Button>
           <Button variant={'danger'}>
-            <Text>{`${FONT_COLOR.danger}Danger`}</Text>
+            {`Danger`}
           </Button>
           <Button variant={'contrast'}>
-            <Text>{`${FONT_COLOR.muted}Contrast`}</Text>
+            {`Contrast`}
           </Button>
           <Button variant={'realm'}>
-            <Text>{`${FONT_COLOR.default}Realm`}</Text>
+            {`Realm`}
           </Button>
         </Fragment>
       </Panel>
       <Panel flexDirection={'row'} gap={SPACING.sm}>
         <Fragment>
           <Button enabled={false}>
-            <Text>{`${FONT_COLOR.disabled}Primary`}</Text>
+            {`Primary`}
           </Button>
           <Button variant={'secondary'} enabled={false}>
-            <Text>{`${FONT_COLOR.disabled}Secondary`}</Text>
+            {`Secondary`}
           </Button>
           <Button variant={'danger'} enabled={false}>
-            <Text>{`${FONT_COLOR.disabled}Danger`}</Text>
+            {`Danger`}
           </Button>
           <Button variant={'contrast'} enabled={false}>
-            <Text>{`${FONT_COLOR.disabled}Contrast`}</Text>
+            {`Contrast`}
           </Button>
           <Button variant={'realm'} enabled={false}>
-            <Text>{`${FONT_COLOR.disabled}Realm`}</Text>
+            {`Realm`}
           </Button>
         </Fragment>
       </Panel>
@@ -141,27 +147,27 @@ function ToggleButtonSection(): JSX.Element {
       <SectionLabel>{'ToggleButtonGroup'}</SectionLabel>
       <ToggleButtonGroup defaultValue={'a'}>
         <ToggleButtonItem value={'a'}>
-          <Text>{`${FONT_COLOR.default}Option A`}</Text>
+          {'Option A'}
         </ToggleButtonItem>
         <ToggleButtonItem value={'b'}>
-          <Text>{`${FONT_COLOR.default}Option B`}</Text>
+          {'Option B'}
         </ToggleButtonItem>
         <ToggleButtonItem value={'c'}>
-          <Text>{`${FONT_COLOR.default}Option C`}</Text>
+          {'Option C'}
         </ToggleButtonItem>
         <ToggleButtonItem value={'d'}>
-          <Text>{`${FONT_COLOR.default}Option D`}</Text>
+          {'Option D'}
         </ToggleButtonItem>
         <ToggleButtonItem value={'e'}>
-          <Text>{`${FONT_COLOR.default}Option E`}</Text>
+          {'Option E'}
         </ToggleButtonItem>
       </ToggleButtonGroup>
       <ToggleButtonGroup defaultValue={'x'} disabled>
         <ToggleButtonItem value={'x'}>
-          <Text>{`${FONT_COLOR.muted}Disabled selected`}</Text>
+          {'Disabled selected'}
         </ToggleButtonItem>
         <ToggleButtonItem value={'y'}>
-          <Text>{`${FONT_COLOR.muted}Disabled`}</Text>
+          {'Disabled'}
         </ToggleButtonItem>
       </ToggleButtonGroup>
     </Panel>

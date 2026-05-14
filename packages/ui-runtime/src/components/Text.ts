@@ -4,7 +4,7 @@ import { TranslationKeysContext } from '../data/TranslationKeysContext';
 import { TranslationKeysError } from '../core/types';
 import { ControlProps, withControl } from './control';
 
-export type TextFont = 'mojangles';
+export type TextFont = 'mojangles' | 'minecraftTen';
 
 export type TextWordBreak = 'normal' | 'break-word';
 export type TextOverflow = 'ellipsis';
@@ -58,6 +58,7 @@ export interface TextProps extends ControlProps {
 
 const FONT_TYPE_MAP: Record<TextFont, string> = {
   mojangles: 'default',
+  minecraftTen: 'MinecraftTen',
 };
 
 // font_size: small is hardcoded in text.json (0.5× base render).

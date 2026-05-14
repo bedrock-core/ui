@@ -22,4 +22,5 @@ export type { DividerProps, DividerOrientation, DividerVariant } from './Divider
 export { ToggleButtonGroup, ToggleButtonItem } from './ToggleButton';
 export type { ToggleButtonGroupProps, ToggleButtonItemProps } from './ToggleButton';
 
-export { TEXTURES, SPACING, SIZE, FONT_COLOR } from './tokens';
+export { TEXTURES, SPACING, SIZE, FONT_COLOR, BUTTON_TEXT_STYLE } from './tokens';
+export type { ButtonTextStyle, ButtonTextFont } from './tokens';

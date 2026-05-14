@@ -16,6 +16,11 @@ const DEFAULT_CONFIG = {
     lineHeight: 10,
     fallbackWidth: 6,
   },
+  // Fonts that share glyph metrics with another profile (no separate .ttf needed).
+  // key = font name used in TextFont, value = profile name whose metrics to reuse.
+  aliases: {
+    minecraftTen: 'mojangles',
+  },
 };
 
 function parseArgs(argv) {
@@ -138,6 +143,7 @@ async function main() {
 
   const output = {
     generatedAt: new Date().toISOString(),
+    aliases: DEFAULT_CONFIG.aliases,
     profiles: {
       mojangles: extractProfile(
         mojanglesFont,

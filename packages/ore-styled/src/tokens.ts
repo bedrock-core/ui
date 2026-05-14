@@ -7,6 +7,7 @@ export const TEXTURES = {
     contrast: { default: `${BASE}/button/contrast/background`, hover: `${BASE}/button/contrast/background_hover`, pressed: `${BASE}/button/contrast/background_pressed`, disabled: `${BASE}/button/disabled/background` },
     danger: { default: `${BASE}/button/danger/background`, hover: `${BASE}/button/danger/background_hover`, pressed: `${BASE}/button/danger/background_pressed`, disabled: `${BASE}/button/disabled/background` },
     realm: { default: `${BASE}/button/realm/background`, hover: `${BASE}/button/realm/background_hover`, pressed: `${BASE}/button/realm/background_pressed`, disabled: `${BASE}/button/disabled/background` },
+    hero: { default: `${BASE}/button/primary/background`, hover: `${BASE}/button/primary/background_hover`, pressed: `${BASE}/button/primary/background_pressed`, disabled: `${BASE}/button/disabled/background` },
   },
   checkbox: {
     unchecked: `${BASE}/checkbox/unchecked`,
@@ -104,4 +105,25 @@ export const FONT_COLOR = {
   danger: '§c',
   success: '§a',
   disabled: '§8',
+} as const;
+
+// ─── Per-variant default text style for auto-labelling ────────────────────────
+// Used when Button / ToggleButtonItem receives a plain string as children.
+
+export type ButtonTextFont = 'mojangles' | 'minecraftTen';
+
+export interface ButtonTextStyle {
+  font: ButtonTextFont;
+  scale: number;
+  color: string; // enabled color code (§x)
+  disabledColor: string; // disabled color code (§x)
+}
+
+export const BUTTON_TEXT_STYLE: Record<'primary' | 'secondary' | 'contrast' | 'danger' | 'realm' | 'hero', ButtonTextStyle> = {
+  primary: { font: 'mojangles', scale: 1, color: FONT_COLOR.default, disabledColor: FONT_COLOR.disabled },
+  secondary: { font: 'mojangles', scale: 1, color: '§0', disabledColor: FONT_COLOR.disabled },
+  contrast: { font: 'mojangles', scale: 1, color: FONT_COLOR.default, disabledColor: FONT_COLOR.muted },
+  danger: { font: 'mojangles', scale: 1, color: FONT_COLOR.default, disabledColor: FONT_COLOR.disabled },
+  realm: { font: 'mojangles', scale: 1, color: FONT_COLOR.default, disabledColor: FONT_COLOR.disabled },
+  hero: { font: 'minecraftTen', scale: 1, color: FONT_COLOR.default, disabledColor: FONT_COLOR.disabled },
 } as const;

@@ -72,7 +72,7 @@ function extractTextMetrics(props: JSX.Props): TextMetricsData {
 
   return {
     text,
-    font: font === 'mojangles' ? font : undefined,
+    font: (font === 'mojangles' || font === 'minecraftTen') ? font : undefined,
     scale: typeof scale === 'number' ? scale : undefined,
     wordBreak: wordBreak === 'break-word' ? wordBreak : undefined,
     overflow: overflow === 'ellipsis' ? overflow : undefined,
