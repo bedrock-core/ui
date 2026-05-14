@@ -34,12 +34,15 @@ Custom JSX-driven UI system for Minecraft Bedrock. Components serialize into com
 
 - No features, just fixes to workflows and automated releases.
 
-### ✅ Beta 0.4.0 - Theming & Styling
+### ✅ Beta 0.4.0 - Styling
 
-- ✅ Component theming system → shipped via [@bedrock-core/ore-styled](./packages/ore-styled/README.md)
 - ✅ Flex, margins, paddings, spacing...
 
-### 🧭 Beta 0.5.0 - Navigation (Planned)
+### ✅ Beta 0.5.0 - Theming
+
+- ✅ Component theming system → shipped via [@bedrock-core/ore-styled](./packages/ore-styled/README.md)
+
+### 🧭 Beta 0.6.0 - Navigation (Planned)
 
 - Multi-screen navigation system
 - Screen parameters and state management
