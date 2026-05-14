@@ -34,16 +34,12 @@ Custom JSX-driven UI system for Minecraft Bedrock. Components serialize into com
 
 - No features, just fixes to workflows and automated releases.
 
-### 🎨 Beta 0.4.0 - Theming & Styling (Planned)
+### ✅ Beta 0.4.0 - Theming & Styling
 
-- Component theming system
-- Style variants (light/dark themes)
-- ~~Text formatting (colors, bold, underline)~~ Use [Formatting Codes](https://minecraft.wiki/w/Formatting_codes)
-  - Known issue, using §l for bold formatting breaks layout calculation
-- ✅ Automatic z-index layering
+- ✅ Component theming system → shipped via [@bedrock-core/ore-styled](./packages/ore-styled/README.md)
 - ✅ Flex, margins, paddings, spacing...
 
-### 🧭 Beta 0.X.0 - Navigation (Planned)
+### 🧭 Beta 0.5.0 - Navigation (Planned)
 
 - Multi-screen navigation system
 - Screen parameters and state management
@@ -53,6 +49,13 @@ Custom JSX-driven UI system for Minecraft Bedrock. Components serialize into com
 
 - Form components: `Input`, `Toggle`, `Slider`, `Dropdown`
 - Form submission and validation
+
+### 🚧 Beta 0.X.0 - More core components (Planned)
+
+- Item render
+- Entity render(?)
+- Inventory (optimized item render?)
+
 
 ### 👀 Beta 0.X.0 - [REDACTED] (Planned)
 
@@ -77,6 +80,8 @@ Let's talk in Discord <https://bedrock-core.drav.dev/discord>
 For technical documentation and implementation details, see:
 
 - [UI Runtime Package](./packages/ui-runtime/README.md) - Core framework internals
+- [Flexbox](./packages/flexbox/README.md) - Layout engine
+- [Ore-Styled Components](./packages/ore-styled/README.md) - Optional prebuilt Ore-UI styled components
 - [Resource Pack](./packages/resource-pack/README.md) - Test addon and reference
 - [CLI Tool](./packages/cli/README.md) - Project scaffolding
 

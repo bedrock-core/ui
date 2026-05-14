@@ -221,7 +221,7 @@ function DividerSection(): JSX.Element {
 
 export function OreStyledTest(): JSX.Element {
   return (
-    <Panel flexDirection={'column'} padding={theme.tokens.spacing.md} gap={theme.tokens.spacing.lg}>
+    <Panel flexDirection={'column'} padding={theme.tokens.spacing.md} gap={theme.tokens.spacing.lg} background={'textures/ui/ore-styled/card/background'}>
       <Text>{`§f§lore-styled component test`}</Text>
       <ButtonsSection />
       <CheckboxSection />

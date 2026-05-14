@@ -15,11 +15,13 @@ const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
 
 /**
- * Get the template directory path
+ * Get the template directory path for the chosen flavor.
  */
-function getTemplateDir(): string {
-  // When built, templates should be at the same level as dist/
-  return path.resolve(dirname, '../templates/default');
+function getTemplateDir(includeOreStyled: boolean): string {
+  // When built, templates live alongside dist/
+  const flavor = includeOreStyled ? 'ore-styled' : 'default';
+
+  return path.resolve(dirname, '../templates', flavor);
 }
 
 /**
@@ -244,6 +246,13 @@ function displayNextSteps(config: ProjectConfig, mcpackName?: string): void {
   console.info(chalk.cyan('  yarn install') + chalk.gray(' (or npm install)'));
   console.info(chalk.cyan('  yarn run regolith-install') + chalk.gray(' (or npm run regolith-install)'));
   console.info(chalk.cyan('  yarn run build') + chalk.gray(' (or npm run build)'));
+
+  if (config.includeOreStyled) {
+    console.info(
+      chalk.gray('  See packs/BP/scripts/UI/OreStyledExample.tsx for an @bedrock-core/ore-styled sample.'),
+    );
+  }
+
   console.info('\n' + chalk.bold('Companion resource pack:') + '\n');
 
   if (mcpackName) {
@@ -298,7 +307,7 @@ export async function createProject(initialProjectName?: string): Promise<void> 
 
   try {
     // Get template directory
-    const templateDir = getTemplateDir();
+    const templateDir = getTemplateDir(config.includeOreStyled);
 
     if (!await fs.pathExists(templateDir)) {
       throw new Error(`Template directory not found at: ${templateDir}`);
