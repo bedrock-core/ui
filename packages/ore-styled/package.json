@@ -1,6 +1,6 @@
 {
 	"name": "@bedrock-core/ore-styled",
-	"version": "0.5.1",
+	"version": "0.5.2",
 	"description": "Ore-UI styled compound components for @bedrock-core/ui",
 	"keywords": [
 		"ui",
@@ -33,7 +33,7 @@
 	},
 	"packageManager": "yarn@4.14.1",
 	"dependencies": {
-		"@bedrock-core/ui": "^0.5.1"
+		"@bedrock-core/ui": "^0.5.2"
 	},
 	"devDependencies": {
 		"@minecraft/server": "^2.7.0",
