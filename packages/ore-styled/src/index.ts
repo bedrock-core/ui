@@ -7,9 +7,6 @@ export type { CheckboxProps } from './Checkbox';
 export { RadioGroup, Radio } from './Radio';
 export type { RadioGroupProps, RadioProps } from './Radio';
 
-export { Select } from './Select';
-export type { SelectProps, SelectOption } from './Select';
-
 export { Tabs, TabList, Tab, TabPanel } from './Tabs';
 export type { TabsProps, TabListProps, TabProps, TabPanelProps } from './Tabs';
 

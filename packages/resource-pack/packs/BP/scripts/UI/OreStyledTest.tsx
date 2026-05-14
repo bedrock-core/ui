@@ -6,14 +6,13 @@ import {
   FONT_COLOR,
   Radio,
   RadioGroup,
-  Select,
   SPACING,
   Toggle,
   ToggleButtonGroup,
   ToggleButtonItem,
 } from '@bedrock-core/ore-styled';
 import type { JSX } from '@bedrock-core/ui';
-import { Fragment, Image, Panel, Text, useState } from '@bedrock-core/ui';
+import { Fragment, Image, Panel, Text } from '@bedrock-core/ui';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -136,32 +135,6 @@ function RadioSection(): JSX.Element {
   );
 }
 
-function SelectSection(): JSX.Element {
-  const [value, setValue] = useState('');
-
-  return (
-    <Panel flexDirection={'column'} gap={SPACING.sm}>
-      <SectionLabel>{'Select'}</SectionLabel>
-      <Select
-        placeholder={'Pick one...'}
-        options={[
-          { value: 'diamond', label: 'Diamond' },
-          { value: 'iron', label: 'Iron' },
-          { value: 'gold', label: 'Gold' },
-          { value: 'netherite', label: 'Netherite' },
-        ]}
-        onChange={setValue}
-      />
-      <Text>{`${FONT_COLOR.muted}value: ${FONT_COLOR.default}${value || '(none)'}`}</Text>
-      <Select
-        placeholder={'Disabled'}
-        options={[{ value: 'x', label: 'X' }]}
-        disabled
-      />
-    </Panel>
-  );
-}
-
 function ToggleButtonSection(): JSX.Element {
   return (
     <Panel flexDirection={'column'} gap={SPACING.sm}>
@@ -249,7 +222,6 @@ export function OreStyledTest(): JSX.Element {
       <CheckboxSection />
       <ToggleSection />
       <RadioSection />
-      <SelectSection />
       <ToggleButtonSection />
       <CardSection />
       <DividerSection />
