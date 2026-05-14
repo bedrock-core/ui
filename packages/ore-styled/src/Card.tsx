@@ -1,3 +1,4 @@
+/** @jsxImportSource @bedrock-core/ui */
 import type { ControlProps, JSX } from '@bedrock-core/ui';
 import { Panel } from '@bedrock-core/ui';
 import { theme } from './tokens';

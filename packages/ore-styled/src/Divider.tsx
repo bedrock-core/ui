@@ -1,3 +1,4 @@
+/** @jsxImportSource @bedrock-core/ui */
 import { Image, type ControlProps, type JSX } from '@bedrock-core/ui';
 import { theme } from './tokens';
 
