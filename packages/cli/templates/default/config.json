@@ -12,7 +12,7 @@
 		"filterDefinitions": {
 			"bundler": {
 				"url": "github.com/bedrock-core/regolith-filters",
-				"version": "1.0.2"
+				"version": "1.0.4"
 			}
 		},
 		"formatVersion": "1.4.0",
