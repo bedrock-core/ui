@@ -669,6 +669,51 @@ export function computeLayout(
         }
       }
 
+      // ── Bresenham integer pixel distribution for flex children ───────────────
+      // Flex grow/shrink produces fractional sizes (e.g. 304/5 = 60.8).
+      // Rounding each child's size and position independently causes overlaps:
+      // the cursor accumulates floats (190.4) that round down while the prior
+      // child's rounded size still extends to 191, producing a 1px overlap.
+      //
+      // Fix: compute exact float cursor boundaries for all children, round each
+      // boundary once, then derive each flex child's integer size from the
+      // difference between consecutive rounded boundaries. This mirrors what
+      // CSS engines do and guarantees sum(sizes) = container with no overlaps.
+      if (relKids.some(c => resolveFlexGrow(c.style) > 0 || resolveFlexShrink(c.style) > 0)) {
+        const boundaries: number[] = [cursor];
+        let bc = cursor;
+
+        for (const child of relKids) {
+          const cm = resolveMargin(child.style, node.layout.width);
+          const childMargin = dir === 'row' ? cm.left + cm.right : cm.top + cm.bottom;
+          const childSize = dir === 'row' ? child.layout.width : child.layout.height;
+
+          bc += childMargin + childSize + (isSpaced ? spacingGap : mainGap);
+          boundaries.push(bc);
+        }
+
+        const rb = boundaries.map(b => Math.round(b));
+
+        for (let i = 0; i < relKids.length; i++) {
+          const child = relKids[i];
+
+          if (resolveFlexGrow(child.style) <= 0 && resolveFlexShrink(child.style) <= 0) {
+            continue; // non-flex: keep explicit integer size
+          }
+
+          const cm = resolveMargin(child.style, node.layout.width);
+          const childMargin = dir === 'row' ? cm.left + cm.right : cm.top + cm.bottom;
+          const gap = isSpaced ? spacingGap : mainGap;
+          const snapped = Math.max(0, rb[i + 1] - rb[i] - childMargin - gap);
+
+          if (dir === 'row') {
+            child.layout.width = snapped;
+          } else {
+            child.layout.height = snapped;
+          }
+        }
+      }
+
       // ── Position relative children (single line) ──────────────────────────
       for (const child of relKids) {
         const cm = resolveMargin(child.style, node.layout.width);

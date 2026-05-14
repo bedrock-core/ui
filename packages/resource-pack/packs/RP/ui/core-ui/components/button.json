@@ -303,7 +303,7 @@
 						{
 							"bg": {
 								"type": "image",
-								"size": ["100% - 2px", "100% - 2px"],
+								"size": ["100%", "100%"],
 								"offset": [0, 0],
 								"fill": false,
 								"anchor_to": "center",
@@ -363,7 +363,7 @@
 						{
 							"bg": {
 								"type": "image",
-								"size": ["100% - 2px", "100% - 2px"],
+								"size": ["100%", "100%"],
 								"offset": [0, 0],
 								"fill": false,
 								"anchor_to": "center",
@@ -423,7 +423,7 @@
 						{
 							"bg": {
 								"type": "image",
-								"size": ["100% - 2px", "100% - 2px"],
+								"size": ["100%", "100%"],
 								"offset": [0, 0],
 								"fill": false,
 								"anchor_to": "center",
@@ -487,7 +487,7 @@
 						{
 							"bg": {
 								"type": "image",
-								"size": ["100% - 2px", "100% - 2px"],
+								"size": ["100%", "100%"],
 								"offset": [0, 0],
 								"fill": false,
 								"anchor_to": "center",

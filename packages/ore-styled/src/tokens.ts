@@ -49,6 +49,13 @@ export const TEXTURES = {
   card: {
     background: `${BASE}/card/background`,
   },
+  toggleButton: {
+    normal: `${BASE}/toggle-button/background`,
+    hover: `${BASE}/toggle-button/background_hover`,
+    pressed: `${BASE}/toggle-button/background_pressed`,
+    disabled: `${BASE}/toggle-button/background_disabled`,
+    disabledPressed: `${BASE}/toggle-button/background_disabled_pressed`,
+  },
   panel: {
     light: `${BASE}/panel/light`,
     dark: `${BASE}/panel/dark`,

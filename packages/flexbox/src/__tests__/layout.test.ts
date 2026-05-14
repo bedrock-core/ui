@@ -656,6 +656,42 @@ describe('percent spacing', () => {
 
     assertNoNaN(root);
   });
+
+  it('5 equal flex-grow children in 304px produce no overlaps (Bresenham distribution)', () => {
+    // 304 / 5 = 60.8 — fractional growth. Without Bresenham snapping the
+    // independent Math.round calls on widths (61) and positions (190.4→190)
+    // caused C to end at 191 while D started at 190 — a 1px overlap.
+    const root = createNode({ width: 304, flexDirection: 'row', gap: 0 }, [
+      createNode({ width: 0, height: 36, flexGrow: 1, flexShrink: 1 }),
+      createNode({ width: 0, height: 36, flexGrow: 1, flexShrink: 1 }),
+      createNode({ width: 0, height: 36, flexGrow: 1, flexShrink: 1 }),
+      createNode({ width: 0, height: 36, flexGrow: 1, flexShrink: 1 }),
+      createNode({ width: 0, height: 36, flexGrow: 1, flexShrink: 1 }),
+    ]);
+
+    computeLayout(root);
+
+    const children = root.children;
+
+    // All sizes must be integers
+    for (const child of children) {
+      expect(Number.isInteger(child.layout.x)).toBe(true);
+      expect(Number.isInteger(child.layout.width)).toBe(true);
+    }
+
+    // No overlaps: each child must start exactly where the previous one ends
+    for (let i = 1; i < children.length; i++) {
+      const prev = children[i - 1];
+      const curr = children[i];
+
+      expect(curr.layout.x).toBe(prev.layout.x + prev.layout.width);
+    }
+
+    // Sum of widths must fill the container exactly
+    const totalWidth = children.reduce((sum, c) => sum + c.layout.width, 0);
+
+    expect(totalWidth).toBe(304);
+  });
 });
 
 // ─── Wrap layout ─────────────────────────────────────────────────────────────

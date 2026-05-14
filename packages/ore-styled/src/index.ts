@@ -22,4 +22,7 @@ export type { ToggleProps } from './Toggle';
 export { Divider } from './Divider';
 export type { DividerProps, DividerOrientation, DividerVariant } from './Divider';
 
+export { ToggleButtonGroup, ToggleButtonItem } from './ToggleButton';
+export type { ToggleButtonGroupProps, ToggleButtonItemProps } from './ToggleButton';
+
 export { TEXTURES, SPACING, SIZE, FONT_COLOR } from './tokens';

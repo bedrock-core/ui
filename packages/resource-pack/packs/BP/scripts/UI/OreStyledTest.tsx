@@ -8,11 +8,9 @@ import {
   RadioGroup,
   Select,
   SPACING,
-  Tab,
-  TabList,
-  TabPanel,
-  Tabs,
   Toggle,
+  ToggleButtonGroup,
+  ToggleButtonItem,
 } from '@bedrock-core/ore-styled';
 import type { JSX } from '@bedrock-core/ui';
 import { Fragment, Image, Panel, Text, useState } from '@bedrock-core/ui';
@@ -164,30 +162,35 @@ function SelectSection(): JSX.Element {
   );
 }
 
-function TabsSection(): JSX.Element {
+function ToggleButtonSection(): JSX.Element {
   return (
     <Panel flexDirection={'column'} gap={SPACING.sm}>
-      <SectionLabel>{'Tabs'}</SectionLabel>
-      <Tabs defaultTab={'info'}>
-        <Fragment>
-          <TabList>
-            <Fragment>
-              <Tab id={'info'} label={'Info'} />
-              <Tab id={'stats'} label={'Stats'} />
-              <Tab id={'settings'} label={'Settings'} />
-            </Fragment>
-          </TabList>
-          <TabPanel id={'info'}>
-            <Text>{`${FONT_COLOR.default}Info panel content`}</Text>
-          </TabPanel>
-          <TabPanel id={'stats'}>
-            <Text>{`${FONT_COLOR.default}Stats panel content`}</Text>
-          </TabPanel>
-          <TabPanel id={'settings'}>
-            <Text>{`${FONT_COLOR.default}Settings panel content`}</Text>
-          </TabPanel>
-        </Fragment>
-      </Tabs>
+      <SectionLabel>{'ToggleButtonGroup'}</SectionLabel>
+      <ToggleButtonGroup defaultValue={'a'}>
+        <ToggleButtonItem value={'a'}>
+          <Text>{`${FONT_COLOR.default}Option A`}</Text>
+        </ToggleButtonItem>
+        <ToggleButtonItem value={'b'}>
+          <Text>{`${FONT_COLOR.default}Option B`}</Text>
+        </ToggleButtonItem>
+        <ToggleButtonItem value={'c'}>
+          <Text>{`${FONT_COLOR.default}Option C`}</Text>
+        </ToggleButtonItem>
+        <ToggleButtonItem value={'d'}>
+          <Text>{`${FONT_COLOR.default}Option D`}</Text>
+        </ToggleButtonItem>
+        <ToggleButtonItem value={'e'}>
+          <Text>{`${FONT_COLOR.default}Option E`}</Text>
+        </ToggleButtonItem>
+      </ToggleButtonGroup>
+      <ToggleButtonGroup defaultValue={'x'} disabled>
+        <ToggleButtonItem value={'x'}>
+          <Text>{`${FONT_COLOR.muted}Disabled selected`}</Text>
+        </ToggleButtonItem>
+        <ToggleButtonItem value={'y'}>
+          <Text>{`${FONT_COLOR.muted}Disabled`}</Text>
+        </ToggleButtonItem>
+      </ToggleButtonGroup>
     </Panel>
   );
 }
@@ -213,29 +216,6 @@ function CardSection(): JSX.Element {
     </Panel>
   );
 }
-
-function ConditionalSection(): JSX.Element {
-  const [show, setShow] = useState(true);
-
-  return (
-    <Panel flexDirection={'column'} gap={SPACING.sm}>
-      <SectionLabel>{'Conditional rendering (null children)'}</SectionLabel>
-      <Button onPress={() => setShow(v => !v)}>
-        <Text>{`${FONT_COLOR.default}Toggle item`}</Text>
-      </Button>
-      <Panel flexDirection={'row'} gap={SPACING.sm}>
-        <Fragment>
-          <Text>{`${FONT_COLOR.muted}Before`}</Text>
-          {show ? <Text>{`${FONT_COLOR.success}Visible item`}</Text> : <></>}
-          <Text>{`${FONT_COLOR.muted}After`}</Text>
-        </Fragment>
-      </Panel>
-      <Text>{`${FONT_COLOR.muted}show=${show}  (null in mixed children array)`}</Text>
-    </Panel>
-  );
-}
-
-// ─── root ─────────────────────────────────────────────────────────────────────
 
 function DividerSection(): JSX.Element {
   return (
@@ -270,10 +250,9 @@ export function OreStyledTest(): JSX.Element {
       <ToggleSection />
       <RadioSection />
       <SelectSection />
-      <TabsSection />
+      <ToggleButtonSection />
       <CardSection />
       <DividerSection />
-      <ConditionalSection />
     </Panel>
   );
 }
