@@ -1,6 +1,6 @@
 import { ActionFormData } from '@minecraft/server-ui';
 import { JSX } from '../jsx';
-import { isFunction, isSerializablePrimitive } from './guards';
+import { isElement, isFunction, isSerializablePrimitive } from './guards';
 import { SerializablePrimitive, SerializableProps, SerializationContext, SerializationError } from './types';
 import { TRANSPARENT_TYPES, WRITERS } from './writers';
 
@@ -136,10 +136,8 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
     if (children) {
       const childArray = Array.isArray(children) ? children : [children];
 
-      childArray.forEach((child: JSX.Element | string): void => {
-        if (typeof child !== 'string') {
-          serialize(child, form, context);
-        }
+      childArray.filter(isElement).forEach((child) => {
+        serialize(child, form, context);
       });
     }
 
@@ -192,10 +190,8 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
   if (children) {
     const childArray = Array.isArray(children) ? children : [children];
 
-    childArray.forEach((child: JSX.Element | string): void => {
-      if (typeof child !== 'string') {
-        serialize(child, form, context);
-      }
+    childArray.filter(isElement).forEach((child) => {
+      serialize(child, form, context);
     });
   }
 }

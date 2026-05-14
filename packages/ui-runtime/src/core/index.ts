@@ -27,7 +27,7 @@ export type {
   ItemAuxError,
 } from './types';
 
-export { isFunction } from './guards';
+export { isFunction, isElement, isNode } from './guards';
 
 export {
   getCurrentFiber,

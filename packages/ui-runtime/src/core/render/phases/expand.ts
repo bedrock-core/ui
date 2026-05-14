@@ -1,6 +1,7 @@
 import type { Player } from '@minecraft/server';
 import type { JSX } from '../../../jsx';
 import { activateFiber, createFiber, getFiber, isContextProvider } from '../../fabric';
+import { isElement } from '../../guards';
 import { generateComponentId, type TraversalContext } from '../traversal';
 
 /**
@@ -142,7 +143,7 @@ export function expandAndResolveContexts(
   }
 
   // Handle single child element
-  if (children && typeof children === 'object' && 'type' in children) {
+  if (isElement(children)) {
     const processed = expandAndResolveContexts(children, context, player);
 
     return {
@@ -164,9 +165,9 @@ export function expandAndResolveContexts(
   };
 }
 
-function processChildren(children: JSX.Element[], context: TraversalContext, player: Player): JSX.Element[] {
+function processChildren(children: JSX.Node[], context: TraversalContext, player: Player): JSX.Element[] {
   return children.map((child: JSX.Node): JSX.Element | undefined => {
-    if (!child || typeof child !== 'object' || !('type' in child)) {
+    if (!isElement(child)) {
       return undefined;
     }
 
@@ -175,12 +176,12 @@ function processChildren(children: JSX.Element[], context: TraversalContext, pla
 }
 
 // Normalizes any valid JSX child(ren) into an array of elements.
-function toChildrenArray(children: JSX.Node): JSX.Element[] {
+function toChildrenArray(children: JSX.Node): JSX.Node[] {
   if (Array.isArray(children)) {
     return children;
   }
 
-  if (children && typeof children === 'object' && 'type' in children) {
+  if (isElement(children)) {
     return [children];
   }
 
