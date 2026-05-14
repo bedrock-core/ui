@@ -66,7 +66,7 @@
     "coverage": "yarn workspaces foreach -ptA run coverage"
   },
   "dependencies": {
-    "@bedrock-core/flexbox": "^0.5.1",
+    "@bedrock-core/flexbox": "^0.5.0",
     "chalk": "^5.6.2",
     "commander": "^14.0.3",
     "fs-extra": "^11.3.5",
