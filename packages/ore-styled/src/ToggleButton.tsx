@@ -1,7 +1,6 @@
-import { Button, Panel, Text, createContext, useContext, useState } from '@bedrock-core/ui';
 import type { ControlProps, JSX } from '@bedrock-core/ui';
-
-import { BUTTON_TEXT_STYLE, SIZE, SPACING, TEXTURES } from './tokens';
+import { Button, Panel, Text, createContext, useContext, useState } from '@bedrock-core/ui';
+import { theme } from './tokens';
 
 // ─── context ──────────────────────────────────────────────────────────────────
 
@@ -64,7 +63,7 @@ export function ToggleButtonItem({ value, disabled, children, ...layout }: Toggl
   const ctx = useContext(ToggleButtonGroupContext);
   const isDisabled = disabled ?? ctx.disabled;
   const isSelected = ctx.value === value;
-  const t = TEXTURES.toggleButton;
+  const t = theme.components.toggleButton.textures;
 
   function handle(): void {
     if (!isDisabled) {
@@ -72,7 +71,7 @@ export function ToggleButtonItem({ value, disabled, children, ...layout }: Toggl
     }
   }
 
-  const ts = isSelected ? BUTTON_TEXT_STYLE.primary : BUTTON_TEXT_STYLE.secondary;
+  const ts = isSelected ? theme.components.toggleButton.textStyle.selected : theme.components.toggleButton.textStyle.unselected;
 
   const resolvedChildren = typeof children === 'string'
     ? Text({ font: ts.font, scale: ts.scale, children: `${isDisabled ? ts.disabledColor : ts.color}${children}` })
@@ -81,14 +80,14 @@ export function ToggleButtonItem({ value, disabled, children, ...layout }: Toggl
   return (
     <Button
       width={0}
-      height={SIZE.lg}
+      height={theme.components.toggleButton.height}
       flexGrow={1}
       flexShrink={1}
       justifyContent={'center'}
       alignItems={'center'}
       paddingTop={isSelected ? 2 : 0}
-      paddingLeft={SPACING.md}
-      paddingRight={SPACING.md}
+      paddingLeft={theme.components.toggleButton.paddingX}
+      paddingRight={theme.components.toggleButton.paddingX}
       background={isSelected ? t.pressed : t.normal}
       backgroundHover={isSelected ? t.pressed : t.hover}
       backgroundPressed={isSelected ? t.disabledPressed : t.pressed}

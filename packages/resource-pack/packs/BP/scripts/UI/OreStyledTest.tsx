@@ -3,10 +3,9 @@ import {
   Card,
   Checkbox,
   Divider,
-  FONT_COLOR,
   Radio,
   RadioGroup,
-  SPACING,
+  theme,
   Toggle,
   ToggleButtonGroup,
   ToggleButtonItem,
@@ -24,15 +23,15 @@ function SectionLabel({ children }: { children: string }): JSX.Element {
 
 function ButtonsSection(): JSX.Element {
   return (
-    <Panel flexDirection={'column'} gap={SPACING.sm}>
+    <Panel flexDirection={'column'} gap={theme.tokens.spacing.sm}>
       <SectionLabel>{'Button'}</SectionLabel>
-      <Panel flexDirection={'row'} gap={SPACING.sm}>
+      <Panel flexDirection={'row'} gap={theme.tokens.spacing.sm}>
         <Fragment>
           <Button variant={'hero'} flexGrow={1}>{'Hero'}</Button>
           <Button variant={'hero'} flexGrow={1} enabled={false}>{'Hero'}</Button>
         </Fragment>
       </Panel>
-      <Panel flexDirection={'row'} gap={SPACING.sm}>
+      <Panel flexDirection={'row'} gap={theme.tokens.spacing.sm}>
         <Fragment>
           <Button>
             {`Primary`}
@@ -51,7 +50,7 @@ function ButtonsSection(): JSX.Element {
           </Button>
         </Fragment>
       </Panel>
-      <Panel flexDirection={'row'} gap={SPACING.sm}>
+      <Panel flexDirection={'row'} gap={theme.tokens.spacing.sm}>
         <Fragment>
           <Button enabled={false}>
             {`Primary`}
@@ -76,7 +75,7 @@ function ButtonsSection(): JSX.Element {
 
 function CheckboxSection(): JSX.Element {
   return (
-    <Panel flexDirection={'column'} gap={SPACING.sm}>
+    <Panel flexDirection={'column'} gap={theme.tokens.spacing.sm}>
       <SectionLabel>{'Checkbox'}</SectionLabel>
       <Checkbox label={'Unchecked by default'} defaultChecked={false} />
       <Checkbox label={'Checked by default'} defaultChecked={true} />
@@ -88,30 +87,30 @@ function CheckboxSection(): JSX.Element {
 
 function ToggleSection(): JSX.Element {
   return (
-    <Panel flexDirection={'column'} gap={SPACING.sm}>
+    <Panel flexDirection={'column'} gap={theme.tokens.spacing.sm}>
       <SectionLabel>{'Toggle'}</SectionLabel>
-      <Panel flexDirection={'row'} gap={SPACING.md} alignItems={'center'}>
+      <Panel flexDirection={'row'} gap={theme.tokens.spacing.md} alignItems={'center'}>
         <Fragment>
           <Toggle defaultOn={false} />
-          <Text>{`${FONT_COLOR.muted}default off`}</Text>
+          <Text>{`${theme.tokens.fontColor.muted}default off`}</Text>
         </Fragment>
       </Panel>
-      <Panel flexDirection={'row'} gap={SPACING.md} alignItems={'center'}>
+      <Panel flexDirection={'row'} gap={theme.tokens.spacing.md} alignItems={'center'}>
         <Fragment>
           <Toggle defaultOn={true} />
-          <Text>{`${FONT_COLOR.muted}default on`}</Text>
+          <Text>{`${theme.tokens.fontColor.muted}default on`}</Text>
         </Fragment>
       </Panel>
-      <Panel flexDirection={'row'} gap={SPACING.md} alignItems={'center'}>
+      <Panel flexDirection={'row'} gap={theme.tokens.spacing.md} alignItems={'center'}>
         <Fragment>
           <Toggle disabled />
-          <Text>{`${FONT_COLOR.muted}disabled off`}</Text>
+          <Text>{`${theme.tokens.fontColor.muted}disabled off`}</Text>
         </Fragment>
       </Panel>
-      <Panel flexDirection={'row'} gap={SPACING.md} alignItems={'center'}>
+      <Panel flexDirection={'row'} gap={theme.tokens.spacing.md} alignItems={'center'}>
         <Fragment>
           <Toggle defaultOn={true} disabled />
-          <Text>{`${FONT_COLOR.muted}disabled on`}</Text>
+          <Text>{`${theme.tokens.fontColor.muted}disabled on`}</Text>
         </Fragment>
       </Panel>
     </Panel>
@@ -120,7 +119,7 @@ function ToggleSection(): JSX.Element {
 
 function RadioSection(): JSX.Element {
   return (
-    <Panel flexDirection={'column'} gap={SPACING.sm}>
+    <Panel flexDirection={'column'} gap={theme.tokens.spacing.sm}>
       <SectionLabel>{'RadioGroup'}</SectionLabel>
       <RadioGroup defaultValue={'a'}>
         <Fragment>
@@ -143,7 +142,7 @@ function RadioSection(): JSX.Element {
 
 function ToggleButtonSection(): JSX.Element {
   return (
-    <Panel flexDirection={'column'} gap={SPACING.sm}>
+    <Panel flexDirection={'column'} gap={theme.tokens.spacing.sm}>
       <SectionLabel>{'ToggleButtonGroup'}</SectionLabel>
       <ToggleButtonGroup defaultValue={'a'}>
         <ToggleButtonItem value={'a'}>
@@ -176,15 +175,15 @@ function ToggleButtonSection(): JSX.Element {
 
 function CardSection(): JSX.Element {
   return (
-    <Panel flexDirection={'column'} gap={SPACING.sm}>
+    <Panel flexDirection={'column'} gap={theme.tokens.spacing.sm}>
       <SectionLabel>{'Card'}</SectionLabel>
-      <Panel flexDirection={'row'} gap={SPACING.md} wrap={'wrap'}>
+      <Panel flexDirection={'row'} gap={theme.tokens.spacing.md} wrap={'wrap'}>
         <Card>
-          <Text>{`${FONT_COLOR.default}Card with text child very long so it is only 1 line card`}</Text>
+          <Text>{`${theme.tokens.fontColor.default}Card with text child very long so it is only 1 line card`}</Text>
         </Card>
         <Card>
-          <Text>{`${FONT_COLOR.default}Card with`}</Text>
-          <Text>{`${FONT_COLOR.muted}multiple children`}</Text>
+          <Text>{`${theme.tokens.fontColor.default}Card with`}</Text>
+          <Text>{`${theme.tokens.fontColor.muted}multiple children`}</Text>
         </Card>
         <Card>
           <Image width={48} height={48} texture={'textures/ui/cartography_table_copy'} />
@@ -198,23 +197,23 @@ function CardSection(): JSX.Element {
 
 function DividerSection(): JSX.Element {
   return (
-    <Panel flexDirection={'column'} gap={SPACING.sm}>
+    <Panel flexDirection={'column'} gap={theme.tokens.spacing.sm}>
       <SectionLabel>{'Divider'}</SectionLabel>
-      <Text>{`${FONT_COLOR.muted}default (2px)`}</Text>
+      <Text>{`${theme.tokens.fontColor.muted}default (2px)`}</Text>
       <Divider />
-      <Text>{`${FONT_COLOR.muted}light (1px)`}</Text>
+      <Text>{`${theme.tokens.fontColor.muted}light (1px)`}</Text>
       <Divider variant={'light'} />
-      <Text>{`${FONT_COLOR.muted}dark (1px)`}</Text>
+      <Text>{`${theme.tokens.fontColor.muted}dark (1px)`}</Text>
       <Divider variant={'dark'} />
-      <Text>{`${FONT_COLOR.muted}vertical variants`}</Text>
-      <Panel flexDirection={'row'} gap={SPACING.sm} height={32}>
-        <Text>{`${FONT_COLOR.muted}A`}</Text>
+      <Text>{`${theme.tokens.fontColor.muted}vertical variants`}</Text>
+      <Panel flexDirection={'row'} gap={theme.tokens.spacing.sm} height={32}>
+        <Text>{`${theme.tokens.fontColor.muted}A`}</Text>
         <Divider orientation={'vertical'} />
-        <Text>{`${FONT_COLOR.muted}B`}</Text>
+        <Text>{`${theme.tokens.fontColor.muted}B`}</Text>
         <Divider orientation={'vertical'} variant={'light'} />
-        <Text>{`${FONT_COLOR.muted}C`}</Text>
+        <Text>{`${theme.tokens.fontColor.muted}C`}</Text>
         <Divider orientation={'vertical'} variant={'dark'} />
-        <Text>{`${FONT_COLOR.muted}D`}</Text>
+        <Text>{`${theme.tokens.fontColor.muted}D`}</Text>
       </Panel>
     </Panel>
   );
@@ -222,7 +221,7 @@ function DividerSection(): JSX.Element {
 
 export function OreStyledTest(): JSX.Element {
   return (
-    <Panel flexDirection={'column'} padding={SPACING.md} gap={SPACING.lg}>
+    <Panel flexDirection={'column'} padding={theme.tokens.spacing.md} gap={theme.tokens.spacing.lg}>
       <Text>{`§f§lore-styled component test`}</Text>
       <ButtonsSection />
       <CheckboxSection />

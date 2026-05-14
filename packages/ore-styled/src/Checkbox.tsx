@@ -1,7 +1,6 @@
 import { Button, Fragment, Panel, Text, useState } from '@bedrock-core/ui';
 import type { ControlProps, JSX } from '@bedrock-core/ui';
-
-import { SPACING, TEXTURES, SIZE } from './tokens';
+import { theme } from './tokens';
 
 export interface CheckboxProps extends ControlProps {
   checked?: boolean;
@@ -33,14 +32,14 @@ export function Checkbox({
     onChange?.(next);
   }
 
-  const t = TEXTURES.checkbox;
+  const t = theme.components.checkbox.textures;
 
   return (
-    <Panel flexDirection={'row'} alignItems={'center'} gap={SPACING.sm} {...layout}>
+    <Panel flexDirection={'row'} alignItems={'center'} gap={theme.components.checkbox.gap} {...layout}>
       <Fragment>
         <Button
-          width={SIZE.checkbox}
-          height={SIZE.checkbox}
+          width={theme.components.checkbox.size}
+          height={theme.components.checkbox.size}
           background={isChecked ? t.checked : t.unchecked}
           backgroundHover={isChecked ? t.checkedHover : t.uncheckedHover}
           backgroundPressed={isChecked ? t.unchecked : t.checked}

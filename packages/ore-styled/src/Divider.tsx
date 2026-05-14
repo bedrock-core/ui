@@ -1,6 +1,5 @@
 import { Image, type ControlProps, type JSX } from '@bedrock-core/ui';
-
-import { TEXTURES } from './tokens';
+import { theme } from './tokens';
 
 export type DividerOrientation = 'horizontal' | 'vertical';
 export type DividerVariant = 'default' | 'light' | 'dark';
@@ -20,8 +19,8 @@ export interface DividerProps extends ControlProps {
 export function Divider({ orientation = 'horizontal', variant = 'default', ...rest }: DividerProps): JSX.Element {
   const isHorizontal = orientation === 'horizontal';
   const texture = isHorizontal
-    ? TEXTURES.divider.horizontal[variant]
-    : TEXTURES.divider.vertical[variant];
+    ? theme.components.divider.textures.horizontal[variant]
+    : theme.components.divider.textures.vertical[variant];
   const thickness = THICKNESS[variant];
 
   return (

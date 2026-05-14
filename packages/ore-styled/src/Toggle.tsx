@@ -1,6 +1,6 @@
-import { Button, useState } from '@bedrock-core/ui';
 import type { ControlProps, JSX } from '@bedrock-core/ui';
-import { TEXTURES, SIZE } from './tokens';
+import { Button, useState } from '@bedrock-core/ui';
+import { theme } from './tokens';
 
 export interface ToggleProps extends ControlProps {
   on?: boolean;
@@ -30,12 +30,12 @@ export function Toggle({
     onChange?.(next);
   }
 
-  const t = TEXTURES.toggle;
+  const t = theme.components.toggle.textures;
 
   return (
     <Button
-      width={SIZE.toggle.width}
-      height={SIZE.toggle.height}
+      width={theme.components.toggle.width}
+      height={theme.components.toggle.height}
       background={isOn ? t.on : t.off}
       backgroundHover={isOn ? t.onHover : t.offHover}
       backgroundPressed={isOn ? t.off : t.on}

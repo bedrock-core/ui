@@ -1,7 +1,6 @@
 import { Button, Fragment, Image, Panel, Text, createContext, useContext, useState } from '@bedrock-core/ui';
 import type { ControlProps, JSX } from '@bedrock-core/ui';
-
-import { SPACING, TEXTURES, SIZE } from './tokens';
+import { theme } from './tokens';
 
 interface TabsContextValue {
   activeTab: string;
@@ -62,15 +61,15 @@ export function Tab({ id, label, ...layout }: TabProps): JSX.Element {
   return (
     <Button
       onPress={() => ctx.setActiveTab(id)}
-      height={SIZE.tab.height}
-      paddingLeft={SPACING.md}
-      paddingRight={SPACING.md}
-      paddingTop={SPACING.xs}
-      paddingBottom={SPACING.xs}
+      height={theme.components.tabs.height}
+      paddingLeft={theme.components.tabs.padding.x}
+      paddingRight={theme.components.tabs.padding.x}
+      paddingTop={theme.components.tabs.padding.y}
+      paddingBottom={theme.components.tabs.padding.y}
       {...layout}
     >
       <Fragment>
-        <Image texture={isActive ? TEXTURES.tabs.active : TEXTURES.tabs.inactive} />
+        <Image texture={isActive ? theme.components.tabs.textures.active : theme.components.tabs.textures.inactive} />
         <Text>{label}</Text>
       </Fragment>
     </Button>

@@ -1,7 +1,6 @@
+import type { JSX, ButtonProps as PrimitiveButtonProps } from '@bedrock-core/ui';
 import { Button as PrimitiveButton, Text } from '@bedrock-core/ui';
-import type { ButtonProps as PrimitiveButtonProps, JSX } from '@bedrock-core/ui';
-
-import { BUTTON_TEXT_STYLE, SPACING, TEXTURES } from './tokens';
+import { theme } from './tokens';
 
 export type ButtonVariant = 'hero' | 'primary' | 'secondary' | 'contrast' | 'danger' | 'realm';
 
@@ -16,8 +15,8 @@ export function Button({
   children,
   ...rest
 }: ButtonProps): JSX.Element {
-  const t = TEXTURES.button[variant];
-  const ts = BUTTON_TEXT_STYLE[variant];
+  const t = theme.components.button.variants[variant].textures;
+  const ts = theme.components.button.variants[variant].textStyle;
 
   const resolvedChildren = typeof children === 'string'
     ? Text({ font: ts.font, scale: ts.scale, children: `${enabled ? ts.color : ts.disabledColor}${children}` })
@@ -30,10 +29,10 @@ export function Button({
     backgroundLocked: t.disabled,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingLeft: SPACING.md,
-    paddingRight: SPACING.md,
-    paddingTop: SPACING.sm,
-    paddingBottom: variant === 'hero' ? 10 : SPACING.sm,
+    paddingLeft: theme.components.button.padding.x,
+    paddingRight: theme.components.button.padding.x,
+    paddingTop: theme.components.button.padding.y,
+    paddingBottom: variant === 'hero' ? 10 : theme.components.button.padding.y,
     ...rest,
     enabled,
     onPress,

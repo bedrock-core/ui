@@ -1,7 +1,6 @@
-import { Panel } from '@bedrock-core/ui';
 import type { ControlProps, JSX } from '@bedrock-core/ui';
-
-import { SPACING, TEXTURES } from './tokens';
+import { Panel } from '@bedrock-core/ui';
+import { theme } from './tokens';
 
 export interface CardProps extends ControlProps {
   children?: JSX.Node;
@@ -10,9 +9,9 @@ export interface CardProps extends ControlProps {
 export function Card({ children, ...layout }: CardProps): JSX.Element {
   return (
     <Panel
-      background={TEXTURES.card.background}
-      padding={SPACING.md}
-      gap={SPACING.sm}
+      background={theme.components.card.textures.background}
+      padding={theme.components.card.padding}
+      gap={theme.components.card.gap}
       flexDirection={'column'}
       {...layout}
     >

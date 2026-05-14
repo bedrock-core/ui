@@ -1,7 +1,6 @@
 import { Button, Fragment, Panel, Text, createContext, useContext, useState } from '@bedrock-core/ui';
 import type { ControlProps, JSX } from '@bedrock-core/ui';
-
-import { SPACING, TEXTURES, SIZE } from './tokens';
+import { theme } from './tokens';
 
 interface RadioContextValue {
   value: string;
@@ -41,7 +40,7 @@ export function RadioGroup({
 
   return (
     <RadioGroupContext value={{ value: selected, onChange: handleChange, disabled }}>
-      <Panel flexDirection={'column'} gap={SPACING.sm} {...layout}>
+      <Panel flexDirection={'column'} gap={theme.components.radio.gap} {...layout}>
         {children}
       </Panel>
     </RadioGroupContext>
@@ -65,14 +64,14 @@ export function Radio({ value, label, disabled, ...layout }: RadioProps): JSX.El
     }
   }
 
-  const t = TEXTURES.radio;
+  const t = theme.components.radio.textures;
 
   return (
-    <Panel flexDirection={'row'} alignItems={'center'} gap={SPACING.sm} {...layout}>
+    <Panel flexDirection={'row'} alignItems={'center'} gap={theme.components.radio.gap} {...layout}>
       <Fragment>
         <Button
-          width={SIZE.radio}
-          height={SIZE.radio}
+          width={theme.components.radio.size}
+          height={theme.components.radio.size}
           background={isSelected ? t.selected : t.unselected}
           backgroundHover={isSelected ? t.selectedHover : t.unselectedHover}
           backgroundPressed={isSelected ? t.unselected : t.selected}
