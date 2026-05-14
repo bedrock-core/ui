@@ -28,7 +28,7 @@ function ButtonsSection(): JSX.Element {
   return (
     <Panel flexDirection={'column'} gap={SPACING.sm}>
       <SectionLabel>{'Button'}</SectionLabel>
-      <Panel flexDirection={'row'} gap={SPACING.sm} wrap={'wrap'}>
+      <Panel flexDirection={'row'} gap={SPACING.sm}>
         <Fragment>
           <Button>
             <Text>{`${FONT_COLOR.default}Primary`}</Text>
@@ -47,7 +47,7 @@ function ButtonsSection(): JSX.Element {
           </Button>
         </Fragment>
       </Panel>
-      <Panel flexDirection={'row'} gap={SPACING.sm} wrap={'wrap'}>
+      <Panel flexDirection={'row'} gap={SPACING.sm}>
         <Fragment>
           <Button enabled={false}>
             <Text>{`${FONT_COLOR.disabled}Primary`}</Text>

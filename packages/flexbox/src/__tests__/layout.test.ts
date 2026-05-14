@@ -658,6 +658,174 @@ describe('percent spacing', () => {
   });
 });
 
+// ─── Wrap layout ─────────────────────────────────────────────────────────────
+
+describe('wrap layout', () => {
+  it('all children fit on one line: height equals single line cross-size', () => {
+    // Two 40×40 cards in a 200-wide wrap row → both fit (40+8+40=88 < 200)
+    // Expected row height: 40 (single line)
+    const root = createNode({ width: 200, flexDirection: 'column' }, [
+      createNode({ flexDirection: 'row', wrap: 'wrap', gap: 8 }, [
+        createNode({ width: 40, height: 40 }),
+        createNode({ width: 40, height: 40 }),
+      ]),
+    ]);
+
+    computeLayout(root);
+    expect(root.children[0].layout.height).toBe(40);
+  });
+
+  it('overflow children wrap to second line: height = sum of line heights + cross-gap', () => {
+    // 3 children 80px wide each, gap=8, in a 200-wide row.
+    // Line 1: 80+8+80=168 fits (≤200). Adding 3rd: 168+8+80=256 > 200 → wrap.
+    // Line 2: just child 3 (80×30).
+    // Row height = max(40,40) + 8 + 30 = 78  (columnGap defaults to 0, but gap applies both axes here)
+    // Using gap=8 for both axes: 40 + 8 + 30 = 78
+    const root = createNode({ width: 200, flexDirection: 'column' }, [
+      createNode({ flexDirection: 'row', wrap: 'wrap', gap: 8 }, [
+        createNode({ width: 80, height: 40 }),
+        createNode({ width: 80, height: 40 }),
+        createNode({ width: 80, height: 30 }),
+      ]),
+    ]);
+
+    computeLayout(root);
+    // Line 1: children 0+1 (40 tall), line 2: child 2 (30 tall), cross-gap=8
+    expect(root.children[0].layout.height).toBe(40 + 8 + 30);
+  });
+
+  it('wrap row stretches to parent width via cross-stretch: correct wrapMainAvail', () => {
+    // No explicit width on the wrap row → it stretches to parent content width (200).
+    // Children: one 180px card that forces 2nd card to wrap.
+    const root = createNode({ width: 200, flexDirection: 'column' }, [
+      createNode({ flexDirection: 'row', wrap: 'wrap', gap: 8 }, [
+        createNode({ width: 180, height: 40 }),
+        createNode({ width: 80, height: 40 }),
+      ]),
+    ]);
+
+    computeLayout(root);
+    const row = root.children[0];
+
+    expect(row.layout.width).toBe(200);
+    // 180 on line 1, 80 wraps to line 2 → height = 40 + 8 + 40 = 88
+    expect(row.layout.height).toBe(88);
+  });
+
+  it('wrap row height feeds correctly into parent column height', () => {
+    // Reproduces the OreStyled cards-row bug:
+    //   column (width=304, padding=8, gap=12)
+    //   ├── label text  (height=10)
+    //   └── cards row   (wrap, gap=8)
+    //       ├── card1   width=304, height=64   → line 1 alone (fills row)
+    //       ├── card2   width=101, height=64   → line 2
+    //       ├── card3   width=64,  height=64   → line 2
+    //       └── card4   width=16,  height=64   → line 2
+    //
+    // Expected card-section height: 10 + 4(gap) + 136(cards) = 150
+    // The bug was that deriveSize summed all 4 widths → wrapMainAvail=509 →
+    // all cards "fit" on one line → height=64 → section height=78 → next
+    // sibling was placed overlapping the second wrap line.
+    const column = createNode({ width: 304, flexDirection: 'column', gap: 4 }, [
+      createNode({ width: 163, height: 10 }), // label
+      createNode({ flexDirection: 'row', wrap: 'wrap', gap: 8 }, [
+        createNode({ width: 304, height: 64 }), // card1 – 1 line alone
+        createNode({ width: 101, height: 64 }), // card2
+        createNode({ width: 64, height: 64 }), // card3
+        createNode({ width: 16, height: 64 }), // card4
+      ]),
+    ]);
+
+    computeLayout(column);
+
+    const cardsRow = column.children[1];
+
+    // Cards row: card1 on line1 (64), cards2-4 on line2 (64), cross-gap=8
+    expect(cardsRow.layout.height).toBe(64 + 8 + 64);
+
+    // Cards row starts at y = paddingTop(0) + label(10) + gap(4) = 14
+    expect(cardsRow.layout.y).toBe(14);
+  });
+
+  it('explicit width on wrap row is never overridden by min-content', () => {
+    // If the user sets an explicit width, min-content from deriveSize is irrelevant
+    // because Pass 2 uses the explicit value (s.width === 'number' → not deriveSize).
+    const root = createNode({ width: 300, flexDirection: 'column' }, [
+      createNode({ width: 150, flexDirection: 'row', wrap: 'wrap', gap: 8 }, [
+        createNode({ width: 80, height: 40 }),
+        createNode({ width: 80, height: 40 }),
+      ]),
+    ]);
+
+    computeLayout(root);
+    expect(root.children[0].layout.width).toBe(150);
+    // 80+8+80=168 > 150 → card2 wraps → height = 40 + 8 + 40 = 88
+    expect(root.children[0].layout.height).toBe(88);
+  });
+
+  it('second-line children are positioned below first line', () => {
+    // Verify x/y positions of wrapped children are correct.
+    const root = createNode({ width: 200, flexDirection: 'column' }, [
+      createNode({ flexDirection: 'row', wrap: 'wrap', gap: 8 }, [
+        createNode({ width: 80, height: 40 }),
+        createNode({ width: 80, height: 40 }),
+        createNode({ width: 80, height: 40 }),
+      ]),
+    ]);
+
+    computeLayout(root);
+    const row = root.children[0];
+    const [c0, c1, c2] = row.children;
+
+    // Line 1: c0 at x=0, c1 at x=88
+    expect(c0.layout.x).toBe(0);
+    expect(c0.layout.y).toBe(0);
+    expect(c1.layout.x).toBe(88); // 80 + 8
+    expect(c1.layout.y).toBe(0);
+
+    // Line 2: c2 at x=0, y=48 (40 + 8 cross-gap)
+    expect(c2.layout.x).toBe(0);
+    expect(c2.layout.y).toBe(48);
+  });
+  it('implicit-height children in wrap row: no Pass-2 height bloat', () => {
+    // Children have NO explicit height — heights come from their content.
+    // Without the wrap-skip guard in Pass 2 cross-stretch, each iteration
+    // inflates all card heights to the container's total cross-size, then
+    // the container grows from that, and the next iteration inflates again
+    // → exponential bloat (e.g., 98 → 204 → 416 → …).
+    //
+    // With the fix, Pass 2 cross-stretch skips wrap containers entirely.
+    // Pass 3 handles per-line stretch correctly (each child stretches to
+    // its *line's* tallest sibling, not the whole container's height).
+    //
+    //  wrap row (width=200, no explicit height)
+    //  ├── card1 (width=180): content child h=60 → natural height 60, alone on line 1
+    //  └── card2 (width=80):  content child h=40 → natural height 40, wraps to line 2
+    //
+    //  Expected row height: 60 + 8 (cross-gap) + 40 = 108 (stable, no bloat)
+    const root = createNode({ width: 200, flexDirection: 'column' }, [
+      createNode({ flexDirection: 'row', wrap: 'wrap', gap: 8 }, [
+        createNode({ width: 180 }, [createNode({ width: 160, height: 60 })]),
+        createNode({ width: 80 }, [createNode({ width: 60, height: 40 })]),
+      ]),
+    ]);
+
+    computeLayout(root);
+
+    const row = root.children[0];
+    const [card1, card2] = row.children;
+
+    // Per-line cross-stretch (Pass 3):
+    //   line1: only card1 → lineCrossSize=60 → card1 stretches to 60 (unchanged)
+    //   line2: only card2 → lineCrossSize=40 → card2 stretches to 40 (unchanged)
+    expect(card1.layout.height).toBe(60);
+    expect(card2.layout.height).toBe(40);
+
+    // Row height = 60 + 8 + 40 = 108 (no exponential bloat)
+    expect(row.layout.height).toBe(108);
+  });
+});
+
 // ─── zIndex ───────────────────────────────────────────────────────────────────
 
 describe('zIndex', () => {
