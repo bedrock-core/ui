@@ -86,6 +86,36 @@ function deriveSize(node: LayoutNode, axis: 'width' | 'height', parentWidth: num
   const kids = node.children.filter(c => visible(c) && relative(c));
 
   if (isMainAxis) {
+    // Wrap containers use min-content semantics on the main axis: the intrinsic
+    // width/height is the widest/tallest single child + padding. Summing all
+    // children would produce a layout width larger than the parent constraint,
+    // causing the cross-axis wrap simulation (below) to see an inflated
+    // wrapMainAvail and collapse all children onto one line — producing a wrong
+    // (too-small) container height. With min-content semantics the cross-stretch
+    // pass correctly limits the wrap row to the parent's content width, and the
+    // wrap simulation then breaks lines properly.
+    const isWrap = (s.wrap ?? 'nowrap') !== 'nowrap';
+
+    if (isWrap) {
+      let max = paddingMain;
+
+      for (const child of kids) {
+        const styleSize = axis === 'width' ? child.style.width : child.style.height;
+
+        if (isPercent(styleSize)) {
+          continue;
+        }
+
+        const childSize = axis === 'width' ? child.layout.width : child.layout.height;
+        const cm = resolveMargin(child.style, parentWidth);
+        const childMargin = axis === 'width' ? cm.left + cm.right : cm.top + cm.bottom;
+
+        max = Math.max(max, paddingMain + childSize + childMargin);
+      }
+
+      return max;
+    }
+
     let total = paddingMain;
     let count = 0;
 
@@ -114,6 +144,67 @@ function deriveSize(node: LayoutNode, axis: 'width' | 'height', parentWidth: num
 
     return total;
   } else {
+    // Cross axis: for wrap containers simulate line-breaking so the parent gets
+    // the correct stacked height in Pass 2 rather than just max(child cross size).
+    // wrapMainAvail comes from node.layout.width/height which is populated by the
+    // cross-stretch top-down step between Pass 2 iterations, so by iteration 1 the
+    // value is reliable.
+    const isWrap = (s.wrap ?? 'nowrap') !== 'nowrap';
+
+    if (isWrap) {
+      const wrapMainAvail = dir === 'row'
+        ? node.layout.width - pad.left - pad.right
+        : node.layout.height - pad.top - pad.bottom;
+
+      if (wrapMainAvail > 0) {
+        const wrapMainGap = dir === 'row' ? resolveRowGap(s, 0) : resolveColumnGap(s, 0);
+        const wrapCrossGap = dir === 'row' ? resolveColumnGap(s, 0) : resolveRowGap(s, 0);
+
+        const lineCrossSizes: number[] = [];
+        let lineMainUsed = 0;
+        let lineCrossMax = 0;
+        let lineHasChild = false;
+
+        for (const child of kids) {
+          const styleMainSize = dir === 'row' ? child.style.width : child.style.height;
+
+          if (isPercent(styleMainSize)) {
+            continue;
+          }
+
+          const cm = resolveMargin(child.style, parentWidth);
+          const childMain = dir === 'row'
+            ? child.layout.width + cm.left + cm.right
+            : child.layout.height + cm.top + cm.bottom;
+          const childCross = dir === 'row'
+            ? child.layout.height + cm.top + cm.bottom
+            : child.layout.width + cm.left + cm.right;
+          const gapOffset = lineHasChild ? wrapMainGap : 0;
+
+          if (lineHasChild && lineMainUsed + gapOffset + childMain > wrapMainAvail + 0.001) {
+            lineCrossSizes.push(lineCrossMax);
+            lineMainUsed = childMain;
+            lineCrossMax = childCross;
+          } else {
+            lineMainUsed += gapOffset + childMain;
+            lineCrossMax = Math.max(lineCrossMax, childCross);
+            lineHasChild = true;
+          }
+        }
+
+        if (lineHasChild) {
+          lineCrossSizes.push(lineCrossMax);
+        }
+
+        if (lineCrossSizes.length > 0) {
+          const totalCross = lineCrossSizes.reduce((a, b) => a + b, 0)
+            + Math.max(0, lineCrossSizes.length - 1) * wrapCrossGap;
+
+          return totalCross + paddingMain;
+        }
+      }
+    }
+
     // Cross axis: take the max child size
     let max = 0;
 
@@ -291,6 +382,14 @@ export function computeLayout(
     // realistic parent dimensions rather than the content-derived ones.
     for (const node of levelOrder) {
       if (!visible(node)) {
+        continue;
+      }
+
+      // Skip wrap containers: their children are cross-stretched per-line in
+      // Pass 3 (using crossCursor / lineCrossSize). Applying the full container
+      // cross-size here would inflate child heights across all 3 iterations,
+      // causing exponential height bloat (e.g., 98 → 204 → 416 → …).
+      if ((node.style.wrap ?? 'nowrap') !== 'nowrap') {
         continue;
       }
 
@@ -570,6 +669,51 @@ export function computeLayout(
         }
       }
 
+      // ── Bresenham integer pixel distribution for flex children ───────────────
+      // Flex grow/shrink produces fractional sizes (e.g. 304/5 = 60.8).
+      // Rounding each child's size and position independently causes overlaps:
+      // the cursor accumulates floats (190.4) that round down while the prior
+      // child's rounded size still extends to 191, producing a 1px overlap.
+      //
+      // Fix: compute exact float cursor boundaries for all children, round each
+      // boundary once, then derive each flex child's integer size from the
+      // difference between consecutive rounded boundaries. This mirrors what
+      // CSS engines do and guarantees sum(sizes) = container with no overlaps.
+      if (relKids.some(c => resolveFlexGrow(c.style) > 0 || resolveFlexShrink(c.style) > 0)) {
+        const boundaries: number[] = [cursor];
+        let bc = cursor;
+
+        for (const child of relKids) {
+          const cm = resolveMargin(child.style, node.layout.width);
+          const childMargin = dir === 'row' ? cm.left + cm.right : cm.top + cm.bottom;
+          const childSize = dir === 'row' ? child.layout.width : child.layout.height;
+
+          bc += childMargin + childSize + (isSpaced ? spacingGap : mainGap);
+          boundaries.push(bc);
+        }
+
+        const rb = boundaries.map(b => Math.round(b));
+
+        for (let i = 0; i < relKids.length; i++) {
+          const child = relKids[i];
+
+          if (resolveFlexGrow(child.style) <= 0 && resolveFlexShrink(child.style) <= 0) {
+            continue; // non-flex: keep explicit integer size
+          }
+
+          const cm = resolveMargin(child.style, node.layout.width);
+          const childMargin = dir === 'row' ? cm.left + cm.right : cm.top + cm.bottom;
+          const gap = isSpaced ? spacingGap : mainGap;
+          const snapped = Math.max(0, rb[i + 1] - rb[i] - childMargin - gap);
+
+          if (dir === 'row') {
+            child.layout.width = snapped;
+          } else {
+            child.layout.height = snapped;
+          }
+        }
+      }
+
       // ── Position relative children (single line) ──────────────────────────
       for (const child of relKids) {
         const cm = resolveMargin(child.style, node.layout.width);
@@ -734,6 +878,20 @@ export function computeLayout(
         }
 
         crossCursor += lineCrossSize + crossGap;
+      }
+
+      // ── Correct container cross-axis size for wrapped content ──────────────
+      if (lines.length > 0) {
+        const initialCross = dir === 'row'
+          ? node.layout.y + pad.top
+          : node.layout.x + pad.left;
+        const contentCross = (crossCursor - initialCross) - crossGap;
+
+        if (dir === 'row' && node.style.height === undefined) {
+          node.layout.height = pad.top + contentCross + pad.bottom;
+        } else if (dir === 'column' && node.style.width === undefined) {
+          node.layout.width = pad.left + contentCross + pad.right;
+        }
       }
     }
 

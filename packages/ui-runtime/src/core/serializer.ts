@@ -15,9 +15,9 @@ export const FIELD_MARKERS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmn
 export const PAD_CHAR = ';';
 
 // Protocol version tag (format: 'v' + 4 hex digits)
-// e.g., 'bcuiv0003'
+// e.g., 'bcuiv0004'
 // Increment when making backward-incompatible changes to the payload layout.
-export const VERSION = 'v0003';
+export const VERSION = 'v0004';
 export const PROTOCOL_HEADER = `bcui${VERSION}`;
 export const PROTOCOL_HEADER_LENGTH = 9; // bytes, all characters are single-byte ASCII
 

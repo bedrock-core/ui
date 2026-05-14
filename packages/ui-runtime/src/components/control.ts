@@ -4,6 +4,7 @@ import type { LayoutProps } from './layout';
 export interface ControlProps extends LayoutProps {
   visible?: boolean;
   enabled?: boolean;
+  background?: string;
 }
 
 /**
@@ -11,7 +12,7 @@ export interface ControlProps extends LayoutProps {
  * All JSON UI components need at least these values as they define the base control properties.
  *
  * SERIALIZATION ORDER (must match control.json deserialization):
- * Protocol v0003 - Layout computed values: x, y, width, height calculated by flex engine
+ * Protocol v0004 - Layout computed values: x, y, width, height calculated by flex engine
  * After protocol header (9 bytes: "bcuiv****") and type (string, 83 bytes), fields are serialized in this exact order:
  *
  * Byte Allocation Map (1024-byte control block):
@@ -23,13 +24,10 @@ export interface ControlProps extends LayoutProps {
  * [341-423]: Field 4: y (number, 83 bytes) - computed y position from layout
  * [424-431]: Field 5: visible (bool, 8 bytes) - visibility state
  * [432-439]: Field 6: enabled (bool, 8 bytes) - interaction enabled state
- * [440-522]: Field 7: layer (number, 83 bytes) - z-index layering
- * [523-605]: Field 8: alpha (number, 83 bytes) - element transparency
- * [606-613]: Field 9: inheritMaxSiblingWidth (bool, 8 bytes) - width inheritance flag
- * [614-621]: Field 10: inheritMaxSiblingHeight (bool, 8 bytes) - height inheritance flag
- * [622-1023]: Reserved (402 bytes)
+ * [440-522]: Field 7: background (string, 83 bytes) - optional background texture path
+ * [523-1023]: Reserved (501 bytes)
  *
- * Reserved calculation: 1024 - 9 - 83 - (6 × 83) - (4 × 8) = 402 bytes
+ * Reserved calculation: 1024 - 9 - 83 - (6 × 83) - (2 × 8) - 83 = 501 bytes
  * (up to 1024 bytes total reserved block for future expansion)
  *
  * Component-specific properties are appended after the reserved block.
@@ -44,6 +42,7 @@ export function withControl(props: JSX.Props): JSX.Props {
   const {
     visible,
     enabled,
+    background,
     // Layout props
     width,
     height,
@@ -95,12 +94,8 @@ export function withControl(props: JSX.Props): JSX.Props {
     visible: visible ?? true,
     enabled: enabled ?? true,
 
-    // Legacy fields (kept for byte space)
-    layer: 0,
-    alpha: 1.0,
-    inheritMaxSiblingWidth: false,
-    inheritMaxSiblingHeight: false,
-    $reserved: { bytes: 402 }, // Reserve space for future expansion (since v0003: 402 bytes)
+    background: background ?? '', // [440-522] optional background texture path
+    $reserved: { bytes: 501 }, // Reserve space for future expansion (since v0004: 501 bytes)
 
     // Layout props (not serialized, used by layout phase) - stored with __ prefix
     __layout: {

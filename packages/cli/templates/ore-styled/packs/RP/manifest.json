@@ -1,0 +1,28 @@
+{
+	"format_version": 2,
+	"header": {
+		"name": "pack.name",
+		"description": "pack.description",
+		"uuid": "{{RP_HEADER_UUID}}",
+		"pack_scope": "world",
+		"version": [1, 0, 0],
+		"min_engine_version": [1, 21, 120]
+	},
+	"modules": [
+		{
+			"type": "resources",
+			"uuid": "{{RP_MODULE_UUID}}",
+			"version": [1, 0, 0]
+		}
+	],
+	"dependencies": [
+		{
+			"uuid": "{{BP_HEADER_UUID}}",
+			"version": [1, 0, 0]
+		}
+	],
+	"metadata": {
+		"product_type": "addon",
+		"authors": ["{{AUTHOR}}"]
+	}
+}

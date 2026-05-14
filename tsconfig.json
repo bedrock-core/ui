@@ -33,6 +33,12 @@
 			],
 			"@bedrock-core/ui/jsx-dev-runtime": [
 				"./packages/ui-runtime/src/jsx/jsx-dev-runtime.ts"
+			],
+			"@bedrock-core/ore-styled": [
+				"./packages/ore-styled/src/index.ts"
+			],
+			"@bedrock-core/ore-styled/*": [
+				"./packages/ore-styled/src/*"
 			]
 		}
 	},

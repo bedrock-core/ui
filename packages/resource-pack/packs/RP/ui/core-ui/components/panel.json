@@ -2,13 +2,11 @@
 	"namespace": "core-ui_components",
 	// idk how to make it work "extending" control.json, so copy/paste it here for now
 	"panel": {
-		"type": "image",
-		"texture": "textures/ui/core-ui/components/panel/light/background",
+		"type": "panel",
 		"size": [
 			0,
 			0
 		],
-		"layer": 10,
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
 		"use_anchored_offset": true,
@@ -21,6 +19,53 @@
 		"visible": "#visible",
 		"enabled": "#enabled", // TODO needs testing
 		"$normalize": 1.0,
+		"controls": [
+			{
+				"panel_bg": {
+					"type": "image",
+					"size": ["100%", "100%"],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"fill": true,
+					"texture": "#texture",
+					"visible": "#visible",
+					"bindings": [
+						{
+							/* decode background directly - computed bindings don't propagate to children */
+							"binding_name": "#form_button_text",
+							"binding_type": "collection",
+							"binding_collection_name": "form_buttons"
+						},
+						{
+							/* skip 440 bytes: header(9)+type(83)+width(83)+height(83)+x(83)+y(83)+visible(8)+enabled(8) */
+							"binding_type": "view",
+							"source_property_name": "('%.440s' * #form_button_text)",
+							"target_property_name": "#skip_to_bg"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#form_button_text - #skip_to_bg)",
+							"target_property_name": "#rem_at_bg"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_bg)",
+							"target_property_name": "#raw_bg"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_bg) - ('%.2s' * #raw_bg) - ';')",
+							"target_property_name": "#texture"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(not (#texture = ''))",
+							"target_property_name": "#visible"
+						}
+					]
+				}
+			}
+		],
 		"bindings": [
 			{
 				"binding_name": "#form_button_text",
@@ -154,6 +199,22 @@
 				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
 				"source_property_name": "(('%.7s' * #raw_enabled) - ('%.2s' * #raw_enabled) - ';')",
 				"target_property_name": "#enabled"
+			},
+			{
+				/* --- background (string, 83 bytes) - field 7 [440-522] --- */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_enabled)",
+				"target_property_name": "#raw_background"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_background) - ('%.2s' * #raw_background) - ';')",
+				"target_property_name": "#background"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(not (#background = ''))",
+				"target_property_name": "#bg_visible"
 			}
 		]
 	}

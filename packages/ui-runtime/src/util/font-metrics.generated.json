@@ -1,5 +1,8 @@
 {
-  "generatedAt": "2026-05-13T00:22:05.916Z",
+  "generatedAt": "2026-05-14T05:50:09.060Z",
+  "aliases": {
+    "minecraftTen": "mojangles"
+  },
   "profiles": {
     "mojangles": {
       "lineHeight": 10,

@@ -1,0 +1,45 @@
+{
+	"name": "@bedrock-core/ore-styled",
+	"version": "0.4.3",
+	"description": "Ore-UI styled compound components for @bedrock-core/ui",
+	"keywords": [
+		"ui",
+		"minecraft",
+		"bedrock",
+		"ore-ui",
+		"components"
+	],
+	"license": "MIT",
+	"author": "DrAv0011",
+	"repository": "github:bedrock-core/ui",
+	"type": "module",
+	"main": "src/index.ts",
+	"types": "src/index.ts",
+	"exports": {
+		".": {
+			"types": "./src/index.ts",
+			"import": "./src/index.ts"
+		}
+	},
+	"files": [
+		"src"
+	],
+	"sideEffects": false,
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"lint": "eslint .",
+		"test": "vitest run"
+	},
+	"packageManager": "yarn@4.14.1",
+	"dependencies": {
+		"@bedrock-core/ui": "workspace:*"
+	},
+	"devDependencies": {
+		"@minecraft/server": "^2.7.0",
+		"typescript": "^6.0.3",
+		"vitest": "^4.1.5"
+	},
+	"peerDependencies": {
+		"@minecraft/server": "*"
+	}
+}

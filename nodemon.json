@@ -1,5 +1,5 @@
 {
-  "watch": ["packages/ui-runtime/src"],  
+  "watch": ["packages/ui-runtime/src", "packages/flexbox/src", "packages/ore-styled/src"],  
   "ext": "ts,js,json",
   "exec": "node nodemon-execution.js"
 }

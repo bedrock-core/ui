@@ -10,6 +10,7 @@ export default defineConfig([
 	...baseConfig,
 	{
 		files: ['**/*.ts', '**/*.tsx'],
+		ignores: ['templates/**/*.ts', 'templates/**/*.tsx'],
 		languageOptions: {
 			parserOptions: {
 				tsconfigRootDir: __dirname,

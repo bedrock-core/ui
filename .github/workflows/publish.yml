@@ -58,10 +58,11 @@ jobs:
       - name: Install deps
         run: yarn install --immutable
 
-      - name: Bump version of package.json and flexbox/package.json
+      - name: Bump version of package.json, flexbox and ore-styled
         run: |
           npm version ${{ steps.bump-semver.outputs.new_version }} --no-git-tag-version
           npm version ${{ steps.bump-semver.outputs.new_version }} --no-git-tag-version --prefix packages/flexbox
+          npm version ${{ steps.bump-semver.outputs.new_version }} --no-git-tag-version --prefix packages/ore-styled
 
       - name: Set up Regolith
         uses: bedrock-core/setup-regolith@1.0.0
@@ -101,11 +102,21 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access public || npm view @bedrock-core/ui@${{ steps.bump-semver.outputs.new_version }} version
 
+      - name: Rewrite ore-styled workspace dependency before publish
+        working-directory: packages/ore-styled
+        run: npm pkg set dependencies["@bedrock-core/ui"]="^${{ steps.bump-semver.outputs.new_version }}"
+
+      - name: Publish ore-styled to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        working-directory: packages/ore-styled
+        run: npm publish --access public || npm view @bedrock-core/ore-styled@${{ steps.bump-semver.outputs.new_version }} version
+
       - name: Commit version bump
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package.json packages/flexbox/package.json
+          git add package.json packages/flexbox/package.json packages/ore-styled/package.json
           git commit -m "bump-version: bump version to '${{ steps.bump-semver.outputs.new_version }}'"
           git push
 

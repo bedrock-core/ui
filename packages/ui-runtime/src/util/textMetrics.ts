@@ -17,17 +17,30 @@ interface GeneratedProfileMetrics extends FontMetrics {
   glyphWidths: Record<string, number>;
 }
 
-const BASE_METRICS: Record<TextFont, GeneratedProfileMetrics> = fontMetrics.profiles;
+type ProfileName = 'mojangles';
 
-function normalizeFont(font?: TextFont): TextFont {
-  return font ?? 'mojangles';
+interface GeneratedFontMetrics {
+  generatedAt: string;
+  aliases: Record<string, ProfileName>;
+  profiles: Record<ProfileName, GeneratedProfileMetrics>;
+}
+// eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
+const typedFontMetrics = fontMetrics as unknown as GeneratedFontMetrics;
+
+const BASE_METRICS = typedFontMetrics.profiles;
+const FONT_ALIASES = typedFontMetrics.aliases;
+
+function normalizeFont(font?: TextFont): ProfileName {
+  const name: string = font ?? 'mojangles';
+
+  return FONT_ALIASES[name] ?? 'mojangles';
 }
 
 function isColorCode(code: string): boolean {
   return /^[0-9a-f]$/i.test(code);
 }
 
-function baseGlyphWidth(codePoint: number, profile: TextFont): number {
+function baseGlyphWidth(codePoint: number, profile: ProfileName): number {
   const metrics = BASE_METRICS[profile];
   const width = metrics.glyphWidths[String(codePoint)];
 
