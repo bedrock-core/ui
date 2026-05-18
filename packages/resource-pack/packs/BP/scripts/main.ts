@@ -5,6 +5,7 @@ import { MinecraftBlockTypes, MinecraftEntityTypes } from '@minecraft/vanilla-da
 import { Example } from './UI/Example';
 import { FlexTest } from './UI/FlexTest';
 import { FontMetricsTest } from './UI/FontMetricsTest';
+import { NavigationTest } from './UI/NavigationTest';
 import { OreStyledTest } from './UI/OreStyledTest';
 
 const isPlayer = (source: ButtonPushAfterEvent['source']): source is Player => source.typeId === MinecraftEntityTypes.Player;
@@ -36,6 +37,11 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
     if (block.typeId === MinecraftBlockTypes.JungleButton) {
       // Jungle button → ore-styled component showcase.
       render(OreStyledTest, source);
+    }
+
+    if (block.typeId === MinecraftBlockTypes.WarpedButton) {
+      // Warped button → navigation system test (stack navigator, typed params).
+      render(NavigationTest, source);
     }
   }
 });

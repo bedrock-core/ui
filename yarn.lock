@@ -75,6 +75,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@bedrock-core/navigation@workspace:packages/navigation":
+  version: 0.0.0-use.local
+  resolution: "@bedrock-core/navigation@workspace:packages/navigation"
+  dependencies:
+    "@bedrock-core/ui": "workspace:*"
+    "@minecraft/server": "npm:^2.7.0"
+    typescript: "npm:^6.0.3"
+  peerDependencies:
+    "@minecraft/server": "*"
+  languageName: unknown
+  linkType: soft
+
 "@bedrock-core/ore-styled@workspace:packages/ore-styled":
   version: 0.0.0-use.local
   resolution: "@bedrock-core/ore-styled@workspace:packages/ore-styled"
