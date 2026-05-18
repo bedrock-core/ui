@@ -11,6 +11,10 @@
 		"controls": [
 			{
 				"button@controlled_button": {}
+			},
+			{
+				/* item_renderer components serialized as buttons land here */
+				"item_renderer@core-ui_components.item_renderer": {}
 			}
 		]
 	},

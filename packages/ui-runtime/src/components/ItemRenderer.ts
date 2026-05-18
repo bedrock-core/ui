@@ -26,7 +26,7 @@ export const ItemRenderer: FunctionComponent<ItemRendererProps> = ({
     );
   }
 
-  const controlProps = withControl(rest);
+  const controlProps = withControl({ width: 16, height: 16, ...rest });
 
   return {
     type: 'item_renderer',

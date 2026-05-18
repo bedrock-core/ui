@@ -20,9 +20,6 @@
 			},
 			{
 				"image@core-ui_components.image": {}
-			},
-			{
-				"item_renderer@core-ui_components.item_renderer": {}
 			}
 		]
 	}

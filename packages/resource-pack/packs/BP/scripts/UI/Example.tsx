@@ -15,7 +15,7 @@ import {
   TodoList,
 } from './components';
 import { SettingsContext, ThemeContext, type Settings, type Theme } from './contexts';
-import itemAuxMap from '../data/itemAuxMap.generated.json';
+import { itemAuxMap } from '../data/auxMap';
 
 /**
  * ============================================================================
@@ -102,7 +102,7 @@ export function Example(): JSX.Element {
             </Panel>
             <InventoryPanel />
 
-            <ThemeDisplay />
+            {/* <ThemeDisplay />
             <SettingsDisplay />
             <TodoList />
             <RefTimer />
@@ -115,7 +115,7 @@ export function Example(): JSX.Element {
             <InfoPanel />
             <ResourcesPanel />
             <GridLayoutPanel />
-            <ExitPanel />
+            <ExitPanel /> */}
           </Panel>
         </SettingsContext>
       </ThemeContext>

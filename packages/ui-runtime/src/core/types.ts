@@ -41,4 +41,5 @@ export type Writer = (
   form: ActionFormData,
   ctx: SerializationContext | undefined,
   callbacks: Record<string, (...args: unknown[]) => void>,
+  props?: SerializableProps,
 ) => void;

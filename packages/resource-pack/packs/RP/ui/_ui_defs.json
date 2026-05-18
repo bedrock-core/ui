@@ -4,12 +4,12 @@
 		// Animations
 		"ui/core-ui/animations/screen_events.json",
 		// Base control, all components should extend this
-		// Control [0,511] 512 bytes
+		// Control [0,1023] 1024 bytes
 		"ui/core-ui/common/screen_container.json",
 		"ui/core-ui/common/component_router.json",
 		// -----------------------------------------------
 		// After the initial reserved bytes for the common, rest of bytes 
-		// after 512 for its own use and 
+		// after 1024 for its own use and 
 		// available in #serialized_data binding
 		// ------------------- Server --------------------
 		"ui/core-ui/components/button.json",

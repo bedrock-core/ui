@@ -184,7 +184,7 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
     throw new SerializationError(`Unknown native component type: ${type}. Known types: ${known}`);
   }
 
-  writer(payload, form, context, callbacks);
+  writer(payload, form, context, callbacks, serializableProps);
 
   // Recursively handle children
   if (children) {
