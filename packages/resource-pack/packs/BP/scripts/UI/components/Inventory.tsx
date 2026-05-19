@@ -8,5 +8,7 @@ export const InventoryPanel: FunctionComponent = (): JSX.Element => (
     <ItemRenderer item={new ItemStack(MinecraftItemTypes.Stone, 1)} />
     <ItemRenderer item={new ItemStack(MinecraftItemTypes.NetheriteAxe, 1)} />
     <ItemRenderer item={new ItemStack(MinecraftItemTypes.PinkStainedGlassPane, 1)} />
+    <ItemRenderer item={new ItemStack(MinecraftItemTypes.BlackStainedGlassPane, 1)} />
+    <ItemRenderer item={new ItemStack(MinecraftItemTypes.Stone, 1)} />
   </Panel>
 );
