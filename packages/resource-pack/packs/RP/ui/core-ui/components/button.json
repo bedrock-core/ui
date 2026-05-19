@@ -1,24 +1,6 @@
 {
-	"namespace": "core-ui_components",
+	"namespace": "core_ui_components",
 	"button": {
-		"type": "panel",
-		// Components must be inside a panel with size [1,1] so size_binding values map 1:1 to pixels.
-		"size": [
-			1,
-			1
-		],
-		"layer": 80,
-		"controls": [
-			{
-				"button@controlled_button": {}
-			},
-			{
-				/* item_renderer components serialized as buttons land here */
-				"item_renderer@core-ui_components.item_renderer": {}
-			}
-		]
-	},
-	"controlled_button": {
 		"type": "button",
 		"size": [
 			0,

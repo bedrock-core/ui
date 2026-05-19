@@ -102,7 +102,7 @@ export function Example(): JSX.Element {
             </Panel>
             <InventoryPanel />
 
-            {/* <ThemeDisplay />
+            <ThemeDisplay />
             <SettingsDisplay />
             <TodoList />
             <RefTimer />
@@ -115,7 +115,7 @@ export function Example(): JSX.Element {
             <InfoPanel />
             <ResourcesPanel />
             <GridLayoutPanel />
-            <ExitPanel /> */}
+            <ExitPanel />
           </Panel>
         </SettingsContext>
       </ThemeContext>

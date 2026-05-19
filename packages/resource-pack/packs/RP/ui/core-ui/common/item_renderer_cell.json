@@ -1,22 +1,23 @@
 {
-	"namespace": "core_ui_components",
-	"item_renderer": {
+	// Grid cell template for item_renderer entries.
+	// Rendered by the item_renderer_grid in screen_container, which provides
+	// the native grid context beacon.item_renderer requires to display items.
+	"namespace": "core_ui_common",
+	"item_renderer_cell": {
 		"type": "panel",
 		"size": [
-			0,
-			0
+			1,
+			1
 		],
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
 		"use_anchored_offset": true,
 		"property_bag": {
-			"#size_binding_x": 0.0,
-			"#size_binding_y": 0.0,
 			"#anchored_offset_value_x": 0.0,
-			"#anchored_offset_value_y": 0.0
+			"#anchored_offset_value_y": 0.0,
+			"#visible": false
 		},
 		"visible": "#visible",
-		"$normalize": 1.0,
 		"bindings": [
 			{
 				"binding_name": "#form_button_text",
@@ -24,6 +25,7 @@
 				"binding_collection_name": "form_buttons"
 			},
 			{
+				/* --- strip protocol header (9 chars) --- */
 				"binding_type": "view",
 				"source_property_name": "('%.9s' * #form_button_text)",
 				"target_property_name": "#protocol_header"
@@ -50,7 +52,7 @@
 				"target_property_name": "#type"
 			},
 			{
-				/* --- width (number) - field 1 --- */
+				/* --- width (number) - field 1 - advance remainder only --- */
 				"binding_type": "view",
 				"source_property_name": "('%.83s' * #rem_after_type)",
 				"target_property_name": "#raw_width"
@@ -61,12 +63,7 @@
 				"target_property_name": "#rem_after_width"
 			},
 			{
-				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #raw_width) - ('%.2s' * #raw_width) - ';')",
-				"target_property_name": "#size_binding_x"
-			},
-			{
-				/* --- height (number) - field 2 --- */
+				/* --- height (number) - field 2 - advance remainder only --- */
 				"binding_type": "view",
 				"source_property_name": "('%.83s' * #rem_after_width)",
 				"target_property_name": "#raw_height"
@@ -75,11 +72,6 @@
 				"binding_type": "view",
 				"source_property_name": "(#rem_after_width - #raw_height)",
 				"target_property_name": "#rem_after_height"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #raw_height) - ('%.2s' * #raw_height) - ';')",
-				"target_property_name": "#size_binding_y"
 			},
 			{
 				/* --- x (number) - field 3 --- */
@@ -94,7 +86,7 @@
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "((('%.82s' * #raw_x) - ('%.2s' * #raw_x) - ';') * $normalize)",
+				"source_property_name": "(('%.82s' * #raw_x) - ('%.2s' * #raw_x) - ';')",
 				"target_property_name": "#anchored_offset_value_x"
 			},
 			{
@@ -110,7 +102,7 @@
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "((('%.82s' * #raw_y) - ('%.2s' * #raw_y) - ';') * $normalize)",
+				"source_property_name": "(('%.82s' * #raw_y) - ('%.2s' * #raw_y) - ';')",
 				"target_property_name": "#anchored_offset_value_y"
 			},
 			{
@@ -133,45 +125,25 @@
 				"binding_type": "view",
 				"source_property_name": "(#pre_visible and (#type = 'item_renderer'))",
 				"target_property_name": "#visible"
-			},
-			{
-				/* --- item_id_aux — read texture slot and extract item_id for beacon.item_renderer --- */
-				"binding_name": "#form_button_texture",
-				"binding_type": "collection",
-				"binding_collection_name": "form_buttons"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "((#form_button_texture - (#form_button_texture % 65536)) / 65536)",
-				"target_property_name": "#item_id_aux"
 			}
 		],
 		"controls": [
 			{
-				/* 1×1 grid provides the grid context beacon.item_renderer needs to render items */
-				"item_grid": {
-					"type": "grid",
+				"item@beacon.item_renderer": {
 					"size": [
 						"16px",
 						"16px"
 					],
-					"grid_dimensions": [ 1, 1 ],
-					"controls": [
+					"bindings": [
 						{
-							"item@beacon.item_renderer": {
-								"size": [
-									"16px",
-									"16px"
-								],
-								"bindings": [
-									{
-										"binding_type": "view",
-										"source_control_name": "item_renderer",
-										"source_property_name": "#item_id_aux",
-										"target_property_name": "#item_id_aux"
-									}
-								]
-							}
+							"binding_name": "#form_button_texture",
+							"binding_type": "collection",
+							"binding_collection_name": "form_buttons"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "((#form_button_texture - (#form_button_texture % 65536)) / 65536)",
+							"target_property_name": "#item_id_aux"
 						}
 					]
 				}

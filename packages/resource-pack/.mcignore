@@ -1,2 +1,3 @@
-/build
-/.regolith
+**/build/**
+**/.regolith/**
+**/node_modules/**

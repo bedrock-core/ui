@@ -1,5 +1,5 @@
 {
-	"namespace": "core-ui_common",
+	"namespace": "core_ui_common",
 	"screen_container": {
 		"type": "panel",
 		"size": [
@@ -33,7 +33,7 @@
 					],
 					"$protocol_header": "bcuiv0004",
 					"$show_background": false,
-					"$scrolling_content": "core-ui_common.form_scrolling_content",
+					"$scrolling_content": "core_ui_common.form_scrolling_content",
 					"bindings": [
 						{
 							"binding_type": "view",
@@ -74,10 +74,10 @@
 					"factory": {
 						"name": "buttons",
 						"control_ids": {
-							"button": "@core-ui_components.button",
-							"label": "@core-ui_common.component_router",
-							"header": "@core-ui_common.unused",
-							"divider": "@core-ui_common.unused"
+							"button": "@core_ui_common.button_router",
+							"label": "@core_ui_common.label_router",
+							"header": "@core_ui_common.unused",
+							"divider": "@core_ui_common.unused"
 						}
 					},
 					"collection_name": "form_buttons",

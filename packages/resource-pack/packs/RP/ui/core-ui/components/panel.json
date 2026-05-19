@@ -1,5 +1,5 @@
 {
-	"namespace": "core-ui_components",
+	"namespace": "core_ui_components",
 	// idk how to make it work "extending" control.json, so copy/paste it here for now
 	"panel": {
 		"type": "panel",

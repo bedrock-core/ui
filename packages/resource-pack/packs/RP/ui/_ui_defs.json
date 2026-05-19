@@ -6,7 +6,10 @@
 		// Base control, all components should extend this
 		// Control [0,1023] 1024 bytes
 		"ui/core-ui/common/screen_container.json",
-		"ui/core-ui/common/component_router.json",
+		"ui/core-ui/common/label_router.json",
+		"ui/core-ui/common/button_router.json",
+		// item_renderer_cell.json — kept for future use when filtering by type is needed
+		// "ui/core-ui/common/item_renderer_cell.json",
 		// -----------------------------------------------
 		// After the initial reserved bytes for the common, rest of bytes 
 		// after 1024 for its own use and 
@@ -20,6 +23,7 @@
 		"ui/core-ui/components/panel.json",
 		"ui/core-ui/components/text.json",
 		"ui/core-ui/components/image.json",
-		"ui/core-ui/components/item_renderer.json"
+		// "ui/core-ui/components/item_renderer.json" — superseded by item_renderer_cell.json + item_renderer_grid
+		"ui/core-ui/screens/grid_test_form.json"
 	]
 }

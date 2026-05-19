@@ -5,6 +5,7 @@ import { MinecraftBlockTypes, MinecraftEntityTypes } from '@minecraft/vanilla-da
 import { Example } from './UI/Example';
 import { FlexTest } from './UI/FlexTest';
 import { FontMetricsTest } from './UI/FontMetricsTest';
+import { showGridTest } from './UI/GridTest';
 import { NavigationTest } from './UI/NavigationTest';
 import { OreStyledTest } from './UI/OreStyledTest';
 
@@ -42,6 +43,11 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
     if (block.typeId === MinecraftBlockTypes.WarpedButton) {
       // Warped button → navigation system test (stack navigator, typed params).
       render(NavigationTest, source);
+    }
+
+    if (block.typeId === MinecraftBlockTypes.CrimsonButton) {
+      // Crimson button → grid test (bypass factory, verify item rendering via native grid).
+      showGridTest(source);
     }
   }
 });

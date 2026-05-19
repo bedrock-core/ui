@@ -42,7 +42,7 @@ The system uses a routing architecture to handle different component types:
 **For Client-Only Components** (`Panel`, `Text`, `Image`, `Fragment`):
 
 1. All serialized data gets injected via `form.label()` calls
-2. The `screen_container.json` factory maps `"label"` entries to `@core-ui_common.component_router`
+2. The `screen_container.json` factory maps `"label"` entries to `@core_ui_common.component_router`
 3. The `component_router` acts as a dispatcher containing all possible component types
 4. Each component JSON file (e.g., `panel.json`) uses conditional bindings: `(#type = 'panel') and #visible` to determine if it should render
 5. Only the matching component type renders, others remain invisible
@@ -226,6 +226,7 @@ Mocks are located in `src/__mocks__/@minecraft/`.
 - JSON UI string ops with numbers can behave unpredictably; prefix markers before numeric-derived substrings client-side.
 - **Texel values & JSON UI:** Dimension and position values are serialized as raw integer texels (Pocket-space). JSON UI ignores numbers with decimal points, so the layout engine rounds all values to integers before serialization.
 - Subtraction operator (`-`) removes all occurrences; use distinct prefixes to avoid collisions.
+- **`beacon.item_renderer` requires a grid collection context to render items.** Blocks render correctly anywhere, but items (non-block typeIds) only render when `beacon.item_renderer` is inside a `type: "grid"` control with `collection_name: "form_buttons"`. Placing item renderers inside factory-created panels or standalone positioned elements will silently produce no item icon. See `grid_test_form.json` for a working reference implementation.
 
 
 ## ⚠️ Breaking Change Guards

@@ -180,7 +180,7 @@ export const Panel = ({ children, ...rest }: PanelProps): JSX.Element => ({
 **For Client-Only Components** (`Panel`, `Text`, `Image`, `Fragment`):
 
 1. Serialized payload injected via `form.label()` call
-2. Resource Pack's `screen_container.json` factory maps to `@core-ui_common.component_router`
+2. Resource Pack's `screen_container.json` factory maps to `@core_ui_common.component_router`
 3. Router contains all possible component JSON files
 4. Each component's conditional binding `(#type = 'panel') and #visible` determines render
 5. Only matching type renders; others invisible
