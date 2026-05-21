@@ -1,0 +1,12 @@
+{
+	"format_version": "1.20.30",
+	"minecraft:item": {
+		"description": {
+			"identifier": "test:gamma_item",
+			"category": "Items"
+		},
+		"components": {
+			"minecraft:icon": "test:gamma_item"
+		}
+	}
+}

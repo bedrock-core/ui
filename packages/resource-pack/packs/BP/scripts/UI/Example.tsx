@@ -15,7 +15,7 @@ import {
   TodoList,
 } from './components';
 import { SettingsContext, ThemeContext, type Settings, type Theme } from './contexts';
-import { itemAuxMap } from '../data/auxMap';
+import itemAuxMap from '../data/itemAuxMap.generated.json';
 
 /**
  * ============================================================================
