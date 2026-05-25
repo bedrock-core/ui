@@ -58,11 +58,15 @@ jobs:
       - name: Install deps
         run: yarn install --immutable
 
-      - name: Bump version of package.json, flexbox and ore-styled
+      - name: Bump version of all packages
         run: |
-          npm version ${{ steps.bump-semver.outputs.new_version }} --no-git-tag-version
-          npm version ${{ steps.bump-semver.outputs.new_version }} --no-git-tag-version --prefix packages/flexbox
-          npm version ${{ steps.bump-semver.outputs.new_version }} --no-git-tag-version --prefix packages/ore-styled
+          VER=${{ steps.bump-semver.outputs.new_version }}
+          npm version $VER --no-git-tag-version
+          npm version $VER --no-git-tag-version --prefix packages/ui-runtime
+          npm version $VER --no-git-tag-version --prefix packages/flexbox
+          npm version $VER --no-git-tag-version --prefix packages/navigation
+          npm version $VER --no-git-tag-version --prefix packages/ore-styled
+          npm version $VER --no-git-tag-version --prefix packages/cli
 
       - name: Set up Regolith
         uses: bedrock-core/setup-regolith@1.0.0
@@ -81,42 +85,78 @@ jobs:
         run: yarn build
 
       - name: Package Resource Pack (.mcpack)
-        # Create a Bedrock .mcpack (zip) from the built resource pack contents
         env:
           TAG: ${{ steps.bump-semver.outputs.new_version }}
         working-directory: packages/resource-pack/build/@bedrock-core_ui_rp
-        run: |
-          zip -r "$GITHUB_WORKSPACE/core-ui-${TAG}.mcpack" .
+        run: zip -r "$GITHUB_WORKSPACE/core-ui-${TAG}.mcpack" .
 
-      - name: Publish flexbox to npm
+      # ── Publish in topological order ───────────────────────────────────────────
+
+      - name: Publish @bedrock-core/flexbox
+        working-directory: packages/flexbox
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        working-directory: packages/flexbox
         run: npm publish --access public || npm view @bedrock-core/flexbox@${{ steps.bump-semver.outputs.new_version }} version
 
-      - name: Rewrite workspace dependency before publish
-        run: npm pkg set dependencies["@bedrock-core/flexbox"]="^${{ steps.bump-semver.outputs.new_version }}"
+      - name: Rewrite workspace deps → @bedrock-core/ui-runtime
+        run: npm pkg set dependencies["@bedrock-core/flexbox"]="^${{ steps.bump-semver.outputs.new_version }}" --prefix packages/ui-runtime
 
-      - name: Publish to npm
+      - name: Publish @bedrock-core/ui-runtime
+        working-directory: packages/ui-runtime
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public || npm view @bedrock-core/ui-runtime@${{ steps.bump-semver.outputs.new_version }} version
+
+      - name: Rewrite workspace deps → @bedrock-core/navigation
+        run: npm pkg set devDependencies["@bedrock-core/ui-runtime"]="^${{ steps.bump-semver.outputs.new_version }}" --prefix packages/navigation
+
+      - name: Publish @bedrock-core/navigation
+        working-directory: packages/navigation
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public || npm view @bedrock-core/navigation@${{ steps.bump-semver.outputs.new_version }} version
+
+      - name: Rewrite workspace deps → @bedrock-core/ore-styled
+        run: npm pkg set devDependencies["@bedrock-core/ui-runtime"]="^${{ steps.bump-semver.outputs.new_version }}" --prefix packages/ore-styled
+
+      - name: Publish @bedrock-core/ore-styled
+        working-directory: packages/ore-styled
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public || npm view @bedrock-core/ore-styled@${{ steps.bump-semver.outputs.new_version }} version
+
+      - name: Publish @bedrock-core/cli
+        working-directory: packages/cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public || npm view @bedrock-core/cli@${{ steps.bump-semver.outputs.new_version }} version
+
+      - name: Rewrite workspace deps → @bedrock-core/ui (meta)
+        run: |
+          VER=${{ steps.bump-semver.outputs.new_version }}
+          npm pkg set dependencies["@bedrock-core/ui-runtime"]="^$VER"
+          npm pkg set dependencies["@bedrock-core/navigation"]="^$VER"
+          npm pkg set dependencies["@bedrock-core/ore-styled"]="^$VER"
+          npm pkg set dependencies["@bedrock-core/flexbox"]="^$VER"
+
+      - name: Publish @bedrock-core/ui
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access public || npm view @bedrock-core/ui@${{ steps.bump-semver.outputs.new_version }} version
 
-      - name: Rewrite ore-styled workspace dependency before publish
-        working-directory: packages/ore-styled
-        run: npm pkg set dependencies["@bedrock-core/ui"]="^${{ steps.bump-semver.outputs.new_version }}"
+      # ── Commit, tag, release ───────────────────────────────────────────────────
 
-      - name: Publish ore-styled to npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        working-directory: packages/ore-styled
-        run: npm publish --access public || npm view @bedrock-core/ore-styled@${{ steps.bump-semver.outputs.new_version }} version
-
-      - name: Commit version bump
+      - name: Commit version bumps
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package.json packages/flexbox/package.json packages/ore-styled/package.json
+          git add \
+            package.json \
+            packages/ui-runtime/package.json \
+            packages/flexbox/package.json \
+            packages/navigation/package.json \
+            packages/ore-styled/package.json \
+            packages/cli/package.json
           git commit -m "bump-version: bump version to '${{ steps.bump-semver.outputs.new_version }}'"
           git push
 

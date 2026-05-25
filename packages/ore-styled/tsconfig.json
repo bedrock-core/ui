@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"noEmit": true,
 		"jsx": "react-jsx",
-		"jsxImportSource": "@bedrock-core/ui"
+		"jsxImportSource": "@bedrock-core/ui-runtime"
 	},
 	"include": [
 		"./src/**/*"

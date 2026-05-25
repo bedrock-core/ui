@@ -1,4 +1,4 @@
-import { useContext } from '@bedrock-core/ui';
+import { useContext } from '@bedrock-core/ui-runtime';
 import type { NavigationHelpers, RouteObject } from './types';
 import { NavigationContext } from './context';
 

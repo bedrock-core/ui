@@ -1,4 +1,4 @@
-import type { JSX } from '@bedrock-core/ui';
+import type { JSX } from '@bedrock-core/ui-runtime';
 
 /**
  * Rest-argument tuple for `navigate` / `push` calls.

@@ -1,5 +1,5 @@
-import type { JSX, ButtonProps as PrimitiveButtonProps } from '@bedrock-core/ui';
-import { Button as PrimitiveButton, Text } from '@bedrock-core/ui';
+import type { JSX, ButtonProps as PrimitiveButtonProps } from '@bedrock-core/ui-runtime';
+import { Button as PrimitiveButton, Text } from '@bedrock-core/ui-runtime';
 import { theme } from './tokens';
 
 export type ButtonVariant = 'hero' | 'primary' | 'secondary' | 'contrast' | 'danger' | 'realm';

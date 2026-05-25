@@ -27,14 +27,6 @@
     ".": {
       "types": "./src/index.ts",
       "import": "./src/index.ts"
-    },
-    "./jsx-runtime": {
-      "types": "./node_modules/@bedrock-core/ui/src/jsx/jsx-runtime.ts",
-      "import": "./node_modules/@bedrock-core/ui/src/jsx/jsx-runtime.ts"
-    },
-    "./jsx-dev-runtime": {
-      "types": "./node_modules/@bedrock-core/ui/src/jsx/jsx-dev-runtime.ts",
-      "import": "./node_modules/@bedrock-core/ui/src/jsx/jsx-dev-runtime.ts"
     }
   },
   "files": [
@@ -47,13 +39,10 @@
   },
   "packageManager": "yarn@4.9.3",
   "devDependencies": {
-    "@minecraft/server": "^2.7.0",
+    "@bedrock-core/ui-runtime": "workspace:*",
     "typescript": "^6.0.3"
   },
   "peerDependencies": {
-    "@minecraft/server": "*"
-  },
-  "dependencies": {
-    "@bedrock-core/ui": "workspace:*"
+    "@bedrock-core/ui-runtime": "*"
   }
 }

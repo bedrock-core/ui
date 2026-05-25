@@ -21,35 +21,34 @@
   ],
   "repository": "github:bedrock-core/ui",
   "type": "module",
-  "bin": "./packages/cli/dist/index.js",
   "exports": {
     ".": {
-      "types": "./packages/ui-runtime/src/index.ts",
-      "import": "./packages/ui-runtime/src/index.ts"
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
     },
     "./navigation": {
-      "types": "./packages/navigation/src/index.ts",
-      "import": "./packages/navigation/src/index.ts"
+      "types": "./src/navigation.ts",
+      "import": "./src/navigation.ts"
+    },
+    "./ore-styled": {
+      "types": "./src/ore-styled.ts",
+      "import": "./src/ore-styled.ts"
     },
     "./flexbox": {
-      "types": "./packages/flexbox/src/index.ts",
-      "import": "./packages/flexbox/src/index.ts"
+      "types": "./src/flexbox.ts",
+      "import": "./src/flexbox.ts"
     },
     "./jsx-runtime": {
-      "types": "./packages/ui-runtime/src/jsx/jsx-runtime.ts",
-      "import": "./packages/ui-runtime/src/jsx/jsx-runtime.ts"
+      "types": "./src/jsx/jsx-runtime.ts",
+      "import": "./src/jsx/jsx-runtime.ts"
     },
     "./jsx-dev-runtime": {
-      "types": "./packages/ui-runtime/src/jsx/jsx-dev-runtime.ts",
-      "import": "./packages/ui-runtime/src/jsx/jsx-dev-runtime.ts"
+      "types": "./src/jsx/jsx-dev-runtime.ts",
+      "import": "./src/jsx/jsx-dev-runtime.ts"
     }
   },
   "files": [
-    "packages/ui-runtime/src",
-    "packages/navigation/src",
-    "packages/flexbox/src",
-    "packages/cli/dist",
-    "packages/cli/templates",
+    "src",
     "README.md",
     "LICENSE"
   ],
@@ -72,13 +71,10 @@
     "coverage": "yarn workspaces foreach -ptA run coverage"
   },
   "dependencies": {
-    "@bedrock-core/flexbox": "^0.5.3",
-    "chalk": "^5.6.2",
-    "commander": "^14.0.3",
-    "fs-extra": "^11.3.5",
-    "ora": "^9.4.0",
-    "prompts": "^2.4.2",
-    "validate-npm-package-name": "^7.0.2"
+    "@bedrock-core/flexbox": "workspace:*",
+    "@bedrock-core/navigation": "workspace:*",
+    "@bedrock-core/ore-styled": "workspace:*",
+    "@bedrock-core/ui-runtime": "workspace:*"
   },
   "devDependencies": {
     "@eslint/css": "^1.2.0",

@@ -1,4 +1,4 @@
-import type { TextFont } from '@bedrock-core/ui';
+import type { TextFont } from '@bedrock-core/ui-runtime';
 
 const BASE = 'textures/ui/ore-styled' as const;
 

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, JSX } from '@bedrock-core/ui';
+import { createContext, useContext, useState, JSX } from '@bedrock-core/ui-runtime';
 import type {
   NavigationHelpers,
   NavigationState,
