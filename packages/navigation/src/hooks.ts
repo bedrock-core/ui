@@ -1,7 +1,3 @@
-/**
- * Navigation hooks for accessing navigation and route information within screens.
- */
-
 import { useContext } from '@bedrock-core/ui';
 import type { NavigationHelpers, RouteObject } from './types';
 import { NavigationContext } from './context';
@@ -22,8 +18,7 @@ export function useNavigation<TRoutes extends Record<string, unknown>>(): Naviga
     );
   }
 
-  // Safe cast: context is populated by createStackNavigator<TRoutes>, caller asserts the same TRoutes.
-  return ctx.helpers as NavigationHelpers<TRoutes>;
+  return ctx.helpers;
 }
 
 /**
@@ -34,7 +29,7 @@ export function useNavigation<TRoutes extends Record<string, unknown>>(): Naviga
  */
 export function useRoute<
   TRoutes extends Record<string, unknown>,
-  K extends keyof TRoutes & string = keyof TRoutes & string,
+  K extends keyof TRoutes = keyof TRoutes,
 >(): RouteObject<TRoutes[K]> {
   const ctx = useContext(NavigationContext);
 
@@ -54,6 +49,7 @@ export function useRoute<
   return {
     key: focusedRoute.key,
     name: focusedRoute.name,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Route.params is unknown internally; caller asserts TRoutes[K] at the hook call site
     params: focusedRoute.params as RouteObject<TRoutes[K]>['params'],
   };
 }

@@ -1,37 +1,32 @@
-/**
- * Navigation context and provider for managing navigation state per player session.
- */
-
 import { createContext, useContext, useState, JSX } from '@bedrock-core/ui';
 import type {
   NavigationHelpers,
   NavigationState,
   ScreenComponent,
-  ScreensMap,
   StackNavigatorOptions,
 } from './types';
-import { stackReducer, type StackAction } from './reducer';
+import { stackReducer, type StackAction, type ScreenDefaults } from './reducer';
 
-/**
- * Navigation context type.
- */
-export interface NavigationContextValue<TRoutes extends Record<string, unknown> = Record<string, unknown>> {
+export interface NavigationContextValue<
+  TRoutes extends Record<string, unknown> = Record<string, unknown>,
+> {
   state: NavigationState<TRoutes>;
   dispatch: (action: StackAction<TRoutes>) => void;
   helpers: NavigationHelpers<TRoutes>;
-  routeNames: (keyof TRoutes & string)[];
-  initialRouteName?: keyof TRoutes & string;
+  routeNames: Extract<keyof TRoutes, string>[];
+  initialRouteName?: Extract<keyof TRoutes, string>;
 }
 
 /**
- * Create navigation context.
- * Unparameterized at module level — type is recovered via casts in hooks and createStackNavigator.
+ * Module-level context — unparameterized so it can be created once at module load.
+ * Types are recovered via casts inside hooks and createStackNavigator.
  */
 export const NavigationContext = createContext<NavigationContextValue | undefined>(undefined);
 
 /**
- * NavigationContainer component that provides navigation state to child navigators.
- * Wraps your app root and wires up state management via useState + stackReducer.
+ * Provides a navigation context boundary. Wrap your app root with this.
+ * The actual state is owned by the Navigator inside; this just establishes
+ * the context slot with a stale placeholder so hooks can detect missing providers.
  */
 export function NavigationContainer({
   children,
@@ -40,45 +35,72 @@ export function NavigationContainer({
   children: JSX.Node;
   initialState?: NavigationState;
 }): JSX.Element {
+  const placeholder: NavigationContextValue = {
+    state: initialState ?? {
+      type: 'stack',
+      key: 'stack-placeholder',
+      routeNames: [],
+      routes: [],
+      index: 0,
+      stale: true,
+    },
+    dispatch: (): void => {},
+    helpers: buildNoopHelpers(),
+    routeNames: [],
+    initialRouteName: undefined,
+  };
+
   return {
     type: 'context-provider',
-    props: {
-      __context: NavigationContext,
-      value: {
-        state: initialState ?? {
-          type: 'stack',
-          key: 'stack-0',
-          routeNames: [],
-          routes: [],
-          index: 0,
-          stale: true,
-        },
-        dispatch: (): void => {},
-        helpers: {},
-        routeNames: [],
-      },
-      children,
-    },
+    props: { __context: NavigationContext, value: placeholder, children },
   };
 }
 
-/**
- * Create stack navigator factory.
- * Returns Navigator and Screen components for declaring a typed screen set.
- */
+/** No-op helpers for the placeholder context before Navigator mounts. */
+function buildNoopHelpers(): NavigationHelpers<Record<string, unknown>> {
+  return {
+    navigate: (): void => {},
+    push: (): void => {},
+    goBack: (): void => {},
+    canGoBack: (): boolean => false,
+    reset: (): void => {},
+    setParams: (): void => {},
+    getState: (): NavigationState<Record<string, unknown>> => ({
+      type: 'stack', key: '', routeNames: [], routes: [], index: 0, stale: true,
+    }),
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- return type is a complex generic object; consumers use the inferred type via `typeof Stack`
 export function createStackNavigator<TRoutes extends Record<string, unknown>>(
   options: StackNavigatorOptions<TRoutes>,
 ) {
-  const routeNames = Object.keys(options.screens) as (keyof TRoutes & string)[];
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Object.keys always returns string[]; TRoutes keys are guaranteed strings by Record<string, unknown>
+  const routeNames = Object.keys(options.screens) as Extract<keyof TRoutes, string>[];
   const { initialRouteName } = options;
 
-  /**
-   * Resolves the screen component for a given route name from the screens map.
-   */
-  function resolveScreenComponent(name: keyof TRoutes & string): ScreenComponent<TRoutes, typeof name> | undefined {
-    const entry = (options.screens)[name];
+  // Extract initialParams from each screen entry into a screenDefaults map.
+  const screenDefaults: ScreenDefaults<TRoutes> = {};
 
-    if (!entry) { return undefined; }
+  for (const key of routeNames) {
+    const entry = options.screens[key];
+
+    //
+    if (entry != null && typeof entry === 'object' && 'initialParams' in entry) {
+      (screenDefaults as Record<string, unknown>)[key] = (entry as { initialParams?: unknown }).initialParams;
+    }
+  }
+
+  const reducerConfig = { routeNames, initialRouteName, screenDefaults };
+
+  function resolveScreenComponent(
+    name: Extract<keyof TRoutes, string>,
+  ): ScreenComponent<TRoutes, typeof name> | undefined {
+    const entry = options.screens[name];
+
+    if (entry == null) {
+      return undefined;
+    }
 
     if (typeof entry === 'function') {
       return entry;
@@ -87,89 +109,60 @@ export function createStackNavigator<TRoutes extends Record<string, unknown>>(
     return (entry as { screen: ScreenComponent<TRoutes, typeof name> }).screen;
   }
 
-  /**
-   * Navigator component — a proper function component that reads navigation state
-   * from context and renders the currently active screen.
-   * No custom element types; fully transparent to the runtime serializer.
-   */
-  function Navigator({ initialRouteName: propInitialRouteName }: { initialRouteName?: keyof TRoutes & string }): JSX.Element {
-    const finalInitialRouteName = propInitialRouteName ?? initialRouteName ?? routeNames[0];
+  function Navigator({
+    initialRouteName: propInitialRouteName,
+  }: {
+    initialRouteName?: Extract<keyof TRoutes, string>;
+  }): JSX.Element {
+    const effectiveInitialRoute
+      = propInitialRouteName ?? initialRouteName ?? routeNames[0];
 
-    // Read existing context value (set by NavigationContainer above)
+    const cfg = { ...reducerConfig, initialRouteName: effectiveInitialRoute };
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- context is module-level unparameterized; createStackNavigator guarantees it was populated with TRoutes
     const existingCtx = useContext(NavigationContext) as NavigationContextValue<TRoutes> | undefined;
 
-    // Bootstrap state on first render (stale or missing)
-    const [navState, setNavState] = useState<NavigationState<TRoutes>>(() => {
-      if (existingCtx && !existingCtx.state.stale) {
-        return existingCtx.state;
-      }
+    const [navState, setNavState] = useState<NavigationState<TRoutes>>(() =>
+      existingCtx != null && !existingCtx.state.stale
+        ? existingCtx.state
+        : stackReducer<TRoutes>(undefined, { type: 'GO_BACK' }, cfg),
+    );
 
-      return stackReducer<TRoutes>(
-        undefined,
-        { type: 'GO_BACK' }, // dummy action to trigger initialization
-        { routeNames, initialRouteName: finalInitialRouteName },
-      );
-    });
-
-    // Build dispatch + helpers once, referencing setNavState
     const dispatch = (action: StackAction<TRoutes>): void => {
-      setNavState(prev =>
-        stackReducer<TRoutes>(prev, action, { routeNames, initialRouteName: finalInitialRouteName }),
-      );
+      setNavState(prev => stackReducer<TRoutes>(prev, action, cfg));
     };
 
-    const helpers: NavigationHelpers<TRoutes> = {
-      navigate(...args) {
-        const [name, params] = args as [keyof TRoutes & string, unknown];
+    const helpers = buildHelpers<TRoutes>(navState, dispatch);
 
-        dispatch({ type: 'NAVIGATE', payload: { name, params } } as unknown as StackAction<TRoutes>);
-      },
-      push(...args) {
-        const [name, params] = args as [keyof TRoutes & string, unknown];
+    // ── Resolve active screen ─────────────────────────────────────────────────
 
-        dispatch({ type: 'PUSH', payload: { name, params } } as unknown as StackAction<TRoutes>);
-      },
-      goBack() {
-        dispatch({ type: 'GO_BACK' });
-      },
-      canGoBack() {
-        return navState.index > 0;
-      },
-      reset(resetState) {
-        dispatch({ type: 'RESET', payload: resetState } as unknown as StackAction<TRoutes>);
-      },
-      setParams(name, params) {
-        dispatch({ type: 'SET_PARAMS', payload: { name, params } } as unknown as StackAction<TRoutes>);
-      },
-      getState() {
-        return navState;
-      },
-    };
-
-    // Determine active screen
     const focusedRoute = navState.routes[navState.index];
-    const activeRouteName = focusedRoute?.name ?? finalInitialRouteName;
-    const ScreenComponent = resolveScreenComponent(activeRouteName);
 
-    if (!ScreenComponent) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- route name is always a registered screen key; narrowed from string to Extract at the runtime boundary
+    const activeRouteName = (focusedRoute?.name ?? effectiveInitialRoute) as Extract<keyof TRoutes, string>;
+
+    const ActiveScreen = resolveScreenComponent(activeRouteName);
+
+    if (ActiveScreen == null) {
       return { type: 'fragment', props: { children: [] } };
     }
 
     const routeObject = {
       key: focusedRoute?.key ?? activeRouteName,
       name: activeRouteName,
-      params: (focusedRoute?.params ?? undefined) as TRoutes[typeof activeRouteName] extends undefined
-        ? undefined
-        : TRoutes[typeof activeRouteName],
+      // Stored params win over defaults; screen always sees at least its initialParams.
+      params: mergeRouteParams(
+        screenDefaults[activeRouteName],
+        focusedRoute?.params,
+      ),
     };
 
-    // Provide updated context with live state + helpers to the screen tree
     const contextValue: NavigationContextValue<TRoutes> = {
       state: navState,
       dispatch,
       helpers,
       routeNames,
-      initialRouteName: finalInitialRouteName,
+      initialRouteName: effectiveInitialRoute,
     };
 
     return {
@@ -178,28 +171,18 @@ export function createStackNavigator<TRoutes extends Record<string, unknown>>(
         __context: NavigationContext,
         value: contextValue,
         children: {
-          type: ScreenComponent as (props: Record<string, unknown>) => JSX.Element,
-          props: {
-            navigation: helpers,
-            route: routeObject,
-          },
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- JSX element object construction requires an unparameterized function type; screen receives correctly typed props via ScreenProps
+          type: ActiveScreen as (props: Record<string, unknown>) => JSX.Element,
+          props: { navigation: helpers, route: routeObject },
         },
       },
     };
   }
 
-  /**
-   * Screen component for declaring a route in navigator config (JSX declarative form).
-   * This is a convenience for IDE discoverability — the runtime reads `options.screens` directly.
-   */
-  function Screen<K extends keyof TRoutes & string>({
-    name: _name,
-    component: _component,
-    initialParams: _initialParams,
-  }: {
+  function Screen<K extends Extract<keyof TRoutes, string>>(_props: {
     name: K;
     component: ScreenComponent<TRoutes, K>;
-    initialParams?: TRoutes[K] extends undefined ? never : Partial<TRoutes[K] & Record<string, unknown>>;
+    initialParams?: Partial<Exclude<TRoutes[K], undefined> & Record<string, unknown>>;
   }): JSX.Element {
     return { type: 'fragment', props: { children: [] } };
   }
@@ -210,4 +193,59 @@ export function createStackNavigator<TRoutes extends Record<string, unknown>>(
     routeNames,
     initialRouteName: initialRouteName ?? routeNames[0],
   };
+}
+
+function buildHelpers<TRoutes extends Record<string, unknown>>(
+  navState: NavigationState<TRoutes>,
+  dispatch: (action: StackAction<TRoutes>) => void,
+): NavigationHelpers<TRoutes> {
+  return {
+    navigate(...args): void {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- rest args are validated by NavigateArgs<K, TRoutes[K]> at the call site; destructured here for dispatch
+      const [name, params] = args as [Extract<keyof TRoutes, string>, unknown];
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- RouteEntry discriminated union cannot be constructed without assertion; type safety enforced at NavigationHelpers interface
+      dispatch({ type: 'NAVIGATE', payload: { name, params } } as unknown as StackAction<TRoutes>);
+    },
+    push(...args): void {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- same as navigate above
+      const [name, params] = args as [Extract<keyof TRoutes, string>, unknown];
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- same as navigate above
+      dispatch({ type: 'PUSH', payload: { name, params } } as unknown as StackAction<TRoutes>);
+    },
+    goBack(): void {
+      dispatch({ type: 'GO_BACK' });
+    },
+    canGoBack(): boolean {
+      return navState.index > 0;
+    },
+    reset(resetState): void {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- ResetRouteEntry union cannot be verified at this level; enforced at NavigationHelpers interface
+      dispatch({ type: 'RESET', payload: resetState } as unknown as StackAction<TRoutes>);
+    },
+    setParams(name, params): void {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- SetParamsEntry union cannot be verified at this level; enforced at NavigationHelpers interface
+      dispatch({ type: 'SET_PARAMS', payload: { name, params } } as unknown as StackAction<TRoutes>);
+    },
+    getState(): NavigationState<TRoutes> {
+      return navState;
+    },
+  };
+}
+
+function mergeRouteParams(
+  defaults: Record<string, unknown> | undefined,
+  stored: unknown,
+): unknown {
+  if (defaults == null) {
+    return stored;
+  }
+
+  if (stored == null) {
+    return defaults;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Route.params is unknown internally; always a plain object at runtime
+  return { ...defaults, ...(stored as Record<string, unknown>) };
 }

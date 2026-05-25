@@ -9,7 +9,7 @@
 
 export { NavigationContainer, createStackNavigator } from './context';
 export { useNavigation, useRoute } from './hooks';
-export { stackReducer, type StackAction } from './reducer';
+export { stackReducer, type StackAction, type ScreenDefaults } from './reducer';
 
 export type {
   Route,
@@ -17,9 +17,8 @@ export type {
   StackNavigatorOptions,
   NavigationHelpers,
   RouteObject,
-  ScreenOptions,
+  ScreenProps,
   ScreenComponent,
-  ScreenComponentProps,
   ScreensMap,
   RouteEntry,
   ResetRouteEntry,
