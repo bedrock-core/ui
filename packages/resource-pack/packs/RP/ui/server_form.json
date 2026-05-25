@@ -50,9 +50,6 @@
 								}
 							}
 						}
-					},
-					{
-						"core_ui_server_form_grid@grid_test.grid_items": {}
 					}
 				]
 			},
