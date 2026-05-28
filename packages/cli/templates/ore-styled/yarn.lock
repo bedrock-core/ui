@@ -5,18 +5,18 @@ __metadata:
   version: 9
   cacheKey: 10c0
 
-"@bedrock-core/flexbox@npm:^0.4.2":
-  version: 0.4.2
-  resolution: "@bedrock-core/flexbox@npm:0.4.2"
-  checksum: 10c0/b31d7c39fd333d78b46f27bd7277fd6e43736bb400309fbdc27c0cf6b9da75021b58e2b19e9e20bdf60681bc580317ee0c9b3f5a2667d9bb06a4ecbca4000b1c
+"@bedrock-core/flexbox@npm:^0.5.3":
+  version: 0.5.3
+  resolution: "@bedrock-core/flexbox@npm:0.5.3"
+  checksum: 10c0/be633c9e865e0ee8532a2656abeb5541ec7bb258948099d5def3524c5d3cb449b0d170c69df1142c4d218443a80d7d865407948441442afd0e91f433333ac3f8
   languageName: node
   linkType: hard
 
-"@bedrock-core/ui@npm:^0.4.0":
-  version: 0.4.2
-  resolution: "@bedrock-core/ui@npm:0.4.2"
+"@bedrock-core/ui@npm:^0.5.0":
+  version: 0.5.3
+  resolution: "@bedrock-core/ui@npm:0.5.3"
   dependencies:
-    "@bedrock-core/flexbox": "npm:^0.4.2"
+    "@bedrock-core/flexbox": "npm:^0.5.3"
     chalk: "npm:^5.6.2"
     commander: "npm:^14.0.3"
     fs-extra: "npm:^11.3.5"
@@ -28,7 +28,7 @@ __metadata:
     "@minecraft/server-ui": "*"
   bin:
     ui: packages/cli/dist/index.js
-  checksum: 10c0/0066504e7b929b309eff597576db53943fadb25dbeece581c3829699c9365a933c31cc341405d70765deb736c952f67e08f77d847d55ebd3debb9a147311ca99
+  checksum: 10c0/cac5f8281dd5f7d08fdaddb5cf4c9eba42bc9290f8d1fbfcea713ac38a22bb23b87bb36cb169c03a2e81688bda6ac78ea797ab76b5598819c602de0fd9f08f7d
   languageName: node
   linkType: hard
 
@@ -1926,7 +1926,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "{{PROJECT_NAME}}@workspace:."
   dependencies:
-    "@bedrock-core/ui": "npm:^0.4.0"
+    "@bedrock-core/ui": "npm:^0.5.0"
     "@eslint/js": "npm:^10.0.1"
     "@eslint/json": "npm:^1.2.0"
     "@minecraft/server": "npm:2.7.0"
