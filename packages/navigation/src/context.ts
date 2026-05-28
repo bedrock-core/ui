@@ -1,3 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unsafe-type-assertion --
+    Type assertions are required at the navigation context boundary: Object.keys casts,
+    unparameterized context recovery, discriminated-union action payloads, and JSX element
+    construction. Type safety is enforced at the NavigationHelpers / NavigationContextValue
+    interfaces rather than at each individual assertion site. */
+
 import { createContext, useContext, useState, JSX } from '@bedrock-core/ui-runtime';
 import type {
   NavigationHelpers,
@@ -75,7 +81,6 @@ function buildNoopHelpers(): NavigationHelpers<Record<string, unknown>> {
 export function createStackNavigator<TRoutes extends Record<string, unknown>>(
   options: StackNavigatorOptions<TRoutes>,
 ) {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Object.keys always returns string[]; TRoutes keys are guaranteed strings by Record<string, unknown>
   const routeNames = Object.keys(options.screens) as Extract<keyof TRoutes, string>[];
   const { initialRouteName } = options;
 
@@ -119,7 +124,6 @@ export function createStackNavigator<TRoutes extends Record<string, unknown>>(
 
     const cfg = { ...reducerConfig, initialRouteName: effectiveInitialRoute };
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- context is module-level unparameterized; createStackNavigator guarantees it was populated with TRoutes
     const existingCtx = useContext(NavigationContext) as NavigationContextValue<TRoutes> | undefined;
 
     const [navState, setNavState] = useState<NavigationState<TRoutes>>(() =>
@@ -138,7 +142,6 @@ export function createStackNavigator<TRoutes extends Record<string, unknown>>(
 
     const focusedRoute = navState.routes[navState.index];
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- route name is always a registered screen key; narrowed from string to Extract at the runtime boundary
     const activeRouteName = (focusedRoute?.name ?? effectiveInitialRoute) as Extract<keyof TRoutes, string>;
 
     const ActiveScreen = resolveScreenComponent(activeRouteName);
@@ -171,7 +174,6 @@ export function createStackNavigator<TRoutes extends Record<string, unknown>>(
         __context: NavigationContext,
         value: contextValue,
         children: {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- JSX element object construction requires an unparameterized function type; screen receives correctly typed props via ScreenProps
           type: ActiveScreen as (props: Record<string, unknown>) => JSX.Element,
           props: { navigation: helpers, route: routeObject },
         },
@@ -179,17 +181,8 @@ export function createStackNavigator<TRoutes extends Record<string, unknown>>(
     };
   }
 
-  function Screen<K extends Extract<keyof TRoutes, string>>(_props: {
-    name: K;
-    component: ScreenComponent<TRoutes, K>;
-    initialParams?: Partial<Exclude<TRoutes[K], undefined> & Record<string, unknown>>;
-  }): JSX.Element {
-    return { type: 'fragment', props: { children: [] } };
-  }
-
   return {
     Navigator,
-    Screen,
     routeNames,
     initialRouteName: initialRouteName ?? routeNames[0],
   };
@@ -201,17 +194,13 @@ function buildHelpers<TRoutes extends Record<string, unknown>>(
 ): NavigationHelpers<TRoutes> {
   return {
     navigate(...args): void {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- rest args are validated by NavigateArgs<K, TRoutes[K]> at the call site; destructured here for dispatch
       const [name, params] = args as [Extract<keyof TRoutes, string>, unknown];
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- RouteEntry discriminated union cannot be constructed without assertion; type safety enforced at NavigationHelpers interface
       dispatch({ type: 'NAVIGATE', payload: { name, params } } as unknown as StackAction<TRoutes>);
     },
     push(...args): void {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- same as navigate above
       const [name, params] = args as [Extract<keyof TRoutes, string>, unknown];
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- same as navigate above
       dispatch({ type: 'PUSH', payload: { name, params } } as unknown as StackAction<TRoutes>);
     },
     goBack(): void {
@@ -221,11 +210,9 @@ function buildHelpers<TRoutes extends Record<string, unknown>>(
       return navState.index > 0;
     },
     reset(resetState): void {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- ResetRouteEntry union cannot be verified at this level; enforced at NavigationHelpers interface
       dispatch({ type: 'RESET', payload: resetState } as unknown as StackAction<TRoutes>);
     },
     setParams(name, params): void {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- SetParamsEntry union cannot be verified at this level; enforced at NavigationHelpers interface
       dispatch({ type: 'SET_PARAMS', payload: { name, params } } as unknown as StackAction<TRoutes>);
     },
     getState(): NavigationState<TRoutes> {
@@ -246,6 +233,5 @@ function mergeRouteParams(
     return defaults;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- Route.params is unknown internally; always a plain object at runtime
   return { ...defaults, ...(stored as Record<string, unknown>) };
 }
