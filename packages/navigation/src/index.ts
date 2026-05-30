@@ -7,8 +7,9 @@
  * Key principle: one render() call per player, all screen transitions via navigation actions.
  */
 
-export { NavigationContainer, createStackNavigator } from './context';
-export { createTabNavigator } from './tab-navigator';
+export { NavigationContainer } from './context';
+export { createStackNavigator } from './navigators/stack-navigator';
+export { createTabNavigator } from './navigators/tab-navigator';
 export { useNavigation, useRoute } from './hooks';
 export { stackReducer, type StackAction, type ScreenDefaults } from './reducer';
 

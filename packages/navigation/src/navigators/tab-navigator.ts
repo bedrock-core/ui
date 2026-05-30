@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unsafe-type-assertion --
-    Type assertions are required at the navigation context boundary (same pattern as context.ts). */
+    Type assertions are required at the navigation context boundary (same pattern as stack-navigator.ts). */
 
 import { useState, useScreenType, JSX, Panel, TabButton } from '@bedrock-core/ui-runtime';
 import type {
   NavigationHelpers,
   NavigationState,
-  ScreenComponent,
   TabNavigatorOptions,
-} from './types';
-import { NavigationContext } from './context';
-import type { NavigationContextValue } from './context';
+} from '../types';
+import { NavigationContext } from '../context';
+import type { NavigationContextValue } from '../context';
+import { resolveScreenComponent } from './resolve-screen';
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- inferred generic return
 export function createTabNavigator<TRoutes extends Record<string, unknown>>(
@@ -17,22 +17,6 @@ export function createTabNavigator<TRoutes extends Record<string, unknown>>(
 ) {
   const routeNames = Object.keys(options.screens) as Extract<keyof TRoutes, string>[];
   const { initialRouteName } = options;
-
-  function resolveScreenComponent(
-    name: Extract<keyof TRoutes, string>,
-  ): ScreenComponent<TRoutes, typeof name> | undefined {
-    const entry = options.screens[name];
-
-    if (entry == null) {
-      return undefined;
-    }
-
-    if (typeof entry === 'function') {
-      return entry;
-    }
-
-    return (entry as { screen: ScreenComponent<TRoutes, typeof name> }).screen;
-  }
 
   function Navigator(): JSX.Element {
     // A tab navigator drives the inventory RP layout (tab bar + item grid),
@@ -45,7 +29,7 @@ export function createTabNavigator<TRoutes extends Record<string, unknown>>(
 
     const helpers = buildTabHelpers<TRoutes>(activeTab, setActiveTab, routeNames);
 
-    const ActiveScreen = resolveScreenComponent(activeTab);
+    const ActiveScreen = resolveScreenComponent(options.screens, activeTab);
 
     const navState: NavigationState<TRoutes> = {
       type: 'stack',
