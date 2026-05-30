@@ -1,6 +1,7 @@
 {
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
+		"rootDir": "../..",
 		"outDir": "packs/BP/scripts/",
 		"paths": {
 			"@bedrock-core/ui": [

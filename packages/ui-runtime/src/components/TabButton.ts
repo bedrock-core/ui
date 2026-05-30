@@ -27,7 +27,11 @@ export const TabButton: FunctionComponent<TabButtonProps> = ({
 }: TabButtonProps): JSX.Element => ({
   type: 'tab_button',
   props: {
-    ...withControl({ height: 20, ...rest }),
+    ...withControl({
+      height: 20,
+      background: active ? 'textures/ui/TabTopFront' : 'textures/ui/TabTopBack',
+      ...rest,
+    }),
     label,
     active,
     onPress: onPress ?? ((): void => {}),

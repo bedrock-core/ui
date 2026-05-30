@@ -1,4 +1,5 @@
-import { JSX, Panel, Text, Button, FunctionComponent, useExit, usePlayer } from '@bedrock-core/ui';
+import { JSX, Panel, Text, FunctionComponent, useExit, usePlayer } from '@bedrock-core/ui';
+import { Button } from '@bedrock-core/ore-styled';
 
 /**
  * ExitPanel - Button to close the UI using useExit hook
@@ -17,9 +18,7 @@ export const ExitPanel: FunctionComponent = (): JSX.Element => {
     <Panel flexDirection={'column'} padding={6} gap={4}>
       <Text>{'§cExit Panel'}</Text>
       <Text>{'§7Close the UI'}</Text>
-      <Button onPress={handleExit}>
-        <Text>{'§cEXIT'}</Text>
-      </Button>
+      <Button variant={'danger'} onPress={handleExit}>{'§cEXIT'}</Button>
       <Text>{'§7Thanks for testing!'}</Text>
     </Panel>
   );

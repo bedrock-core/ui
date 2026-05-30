@@ -13,31 +13,53 @@
 		"anchor_to": "top_left",
 		"controls": [
 			{
-				"left@inventory_screen.left_panel": {}
+				"bg": {
+					"type": "image",
+					"size": [ "100%", "100%" ],
+					"texture": "textures/ui/dialog_background_opaque"
+				}
 			},
 			{
-				"right@inventory_screen.right_panel": {}
+				"left@inventory_screen.left_panel": {}
 			}
 		]
 	},
 
 	// ─── Left Panel ────────────────────────────────────────────────────────────
-	// Contains (bottom to top by layer):
-	//   layer 0   – content scroll (full height, non-item/non-tab form elements)
-	//   layer 500 – item grid (fixed, NOT in scroll, 9×6 below tab bar)
-	//   layer 1001– tab bar overlay (fixed top 20px, hides empty scroll gap)
+	// Same pattern as grid_test: item grid at layer 0 (not in a scroll),
+	// content scroll for non-items at layer 2 offset below tab bar,
+	// tab bar overlay at layer 1001.
 	"left_panel": {
 		"type": "panel",
 		"size": [
-			"50%",
+			"100%",
 			"100%"
 		],
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
 		"controls": [
 			{
-				"content_scroll@common.scrolling_panel": {
+				// Item grid — inherits grid_test.grid_items exactly (same template/collection),
+				// just with size overridden to fill full width.
+				"item_grid@grid_test.grid_items": {
 					"layer": 0,
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"size": [
+						"100%",
+						"98%"
+					],
+					"offset": [
+						0,
+						20
+					]
+				}
+			},
+			{
+				// Content scroll — non-item form elements (buttons, labels).
+				// Starts below tab bar; item_renderer routed to unused inside content_scrolling_content.
+				"content_scroll@common.scrolling_panel": {
+					"layer": 2,
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
 					"size": [
@@ -46,21 +68,10 @@
 					],
 					"offset": [
 						0,
-						0
+						20
 					],
 					"$show_background": false,
 					"$scrolling_content": "inventory_screen.content_scrolling_content"
-				}
-			},
-			{
-				"item_grid@inventory_screen.left_item_grid": {
-					"layer": 500,
-					"anchor_from": "top_left",
-					"anchor_to": "top_left",
-					"offset": [
-						0,
-						20
-					]
 				}
 			},
 			{
@@ -483,24 +494,6 @@
 		]
 	},
 
-	// ─── Left Item Grid ────────────────────────────────────────────────────────
-	// 9-column item grid, 6 visible rows (96px), max 200 rows.
-	// Renders all form_buttons as item slots; non-item types show as air (aux=0).
-	// NOT inside any scroll container — required for beacon.item_renderer to work.
-	"left_item_grid": {
-		"type": "grid",
-		"size": [
-			"50%",
-			96
-		],
-		"grid_dimensions": [
-			9,
-			200
-		],
-		"grid_item_template": "grid_test.grid_item_panel",
-		"collection_name": "form_buttons"
-	},
-
 	// ─── Content Scrolling Content ─────────────────────────────────────────────
 	// Content area for non-item, non-tab-button form elements.
 	// All such elements are absolutely positioned (x/y from serialised data).
@@ -573,128 +566,6 @@
 				}
 			}
 		]
-	},
+	}
 
-	// ─── Right Panel ───────────────────────────────────────────────────────────
-	// Shows player inventory and armor.
-	//
-	// OPTION A (active): Uses native Minecraft inventory bindings.
-	//   If slots render empty in-game, vanilla collections are unavailable in
-	//   ActionFormData context → switch to Option B.
-	//
-	// OPTION B (commented): Form-button grid driven by item_renderer elements.
-	//   Uncomment "right_form_grid" and comment out "vanilla_inventory" to use.
-	"right_panel": {
-		"type": "panel",
-		"size": [
-			"50%",
-			"100%"
-		],
-		"anchor_from": "top_right",
-		"anchor_to": "top_right",
-		"controls": [
-			// ── Option A: vanilla inventory bindings ──────────────────────────
-			{
-				"vanilla_inventory@inventory_screen.vanilla_inventory": {}
-			}
-
-			// ── Option B: form-button inventory grid (uncomment to use) ───────
-			// {
-			// 	"right_form_grid@inventory_screen.right_form_grid": {}
-			// }
-		]
-	},
-
-	// ─── Option A: Vanilla Inventory ──────────────────────────────────────────
-	"vanilla_inventory": {
-		"type": "panel",
-		"size": [
-			"100%",
-			"100%"
-		],
-		"anchor_from": "center",
-		"anchor_to": "center",
-		"controls": [
-			{
-				// Main 9×3 inventory grid
-				"inventory_grid": {
-					"type": "grid",
-					"size": [
-						162,
-						54
-					],
-					"anchor_from": "top_middle",
-					"anchor_to": "top_middle",
-					"offset": [
-						0,
-						20
-					],
-					"grid_dimensions": [
-						9,
-						3
-					],
-					"grid_item_template": "common.grid_item_for_inventory",
-					"collection_name": "inventory_items"
-				}
-			},
-			{
-				// Hotbar 9×1
-				"hotbar_grid": {
-					"type": "grid",
-					"size": [
-						162,
-						18
-					],
-					"anchor_from": "top_middle",
-					"anchor_to": "top_middle",
-					"offset": [
-						0,
-						80
-					],
-					"grid_dimensions": [
-						9,
-						1
-					],
-					"grid_item_template": "common.grid_item_for_hotbar",
-					"collection_name": "hotbar_items"
-				}
-			},
-			{
-				// Armor 1×4
-				"armor_grid": {
-					"type": "grid",
-					"size": [
-						18,
-						72
-					],
-					"anchor_from": "top_left",
-					"anchor_to": "top_left",
-					"offset": [
-						4,
-						20
-					],
-					"grid_dimensions": [
-						1,
-						4
-					],
-					"grid_item_template": "common.grid_item_for_armor",
-					"collection_name": "armor_items"
-				}
-			}
-		]
-	},
-
-	// ─── Option B: Form-Button Inventory Grid ──────────────────────────────────
-	// Uses item_renderer elements sent by the server as form buttons.
-	// Items appear in a 9×4 grid on the right side.
-	// "right_form_grid": {
-	// 	"type": "grid",
-	// 	"size": ["100%", 72],
-	// 	"anchor_from": "top_middle",
-	// 	"anchor_to": "top_middle",
-	// 	"offset": [0, 20],
-	// 	"grid_dimensions": [9, 4],
-	// 	"grid_item_template": "grid_test.grid_item_panel",
-	// 	"collection_name": "form_buttons"
-	// }
 }

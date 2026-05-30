@@ -1,6 +1,6 @@
 import { Player } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
-import itemAuxMap from '../data/itemAuxMap.generated.json';
+import itemAuxMap from '../../data/itemAuxMap.generated.json';
 
 const GRID_MAGIC = '§g§r§i§d';
 

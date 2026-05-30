@@ -13,13 +13,9 @@ import {
 import type { JSX } from '@bedrock-core/ui';
 import { Fragment, Image, Panel, Text } from '@bedrock-core/ui';
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
-
 function SectionLabel({ children }: { children: string }): JSX.Element {
   return <Text>{`§e§l${children}`}</Text>;
 }
-
-// ─── sections ────────────────────────────────────────────────────────────────
 
 function ButtonsSection(): JSX.Element {
   return (
@@ -33,40 +29,20 @@ function ButtonsSection(): JSX.Element {
       </Panel>
       <Panel flexDirection={'row'} gap={theme.tokens.spacing.sm}>
         <Fragment>
-          <Button>
-            {`Primary`}
-          </Button>
-          <Button variant={'secondary'}>
-            {`Secondary`}
-          </Button>
-          <Button variant={'danger'}>
-            {`Danger`}
-          </Button>
-          <Button variant={'contrast'}>
-            {`Contrast`}
-          </Button>
-          <Button variant={'realm'}>
-            {`Realm`}
-          </Button>
+          <Button>{'Primary'}</Button>
+          <Button variant={'secondary'}>{'Secondary'}</Button>
+          <Button variant={'danger'}>{'Danger'}</Button>
+          <Button variant={'contrast'}>{'Contrast'}</Button>
+          <Button variant={'realm'}>{'Realm'}</Button>
         </Fragment>
       </Panel>
       <Panel flexDirection={'row'} gap={theme.tokens.spacing.sm}>
         <Fragment>
-          <Button enabled={false}>
-            {`Primary`}
-          </Button>
-          <Button variant={'secondary'} enabled={false}>
-            {`Secondary`}
-          </Button>
-          <Button variant={'danger'} enabled={false}>
-            {`Danger`}
-          </Button>
-          <Button variant={'contrast'} enabled={false}>
-            {`Contrast`}
-          </Button>
-          <Button variant={'realm'} enabled={false}>
-            {`Realm`}
-          </Button>
+          <Button enabled={false}>{'Primary'}</Button>
+          <Button variant={'secondary'} enabled={false}>{'Secondary'}</Button>
+          <Button variant={'danger'} enabled={false}>{'Danger'}</Button>
+          <Button variant={'contrast'} enabled={false}>{'Contrast'}</Button>
+          <Button variant={'realm'} enabled={false}>{'Realm'}</Button>
         </Fragment>
       </Panel>
     </Panel>
@@ -145,29 +121,15 @@ function ToggleButtonSection(): JSX.Element {
     <Panel flexDirection={'column'} gap={theme.tokens.spacing.sm}>
       <SectionLabel>{'ToggleButtonGroup'}</SectionLabel>
       <ToggleButtonGroup defaultValue={'a'}>
-        <ToggleButtonItem value={'a'}>
-          {'Option A'}
-        </ToggleButtonItem>
-        <ToggleButtonItem value={'b'}>
-          {'Option B'}
-        </ToggleButtonItem>
-        <ToggleButtonItem value={'c'}>
-          {'Option C'}
-        </ToggleButtonItem>
-        <ToggleButtonItem value={'d'}>
-          {'Option D'}
-        </ToggleButtonItem>
-        <ToggleButtonItem value={'e'}>
-          {'Option E'}
-        </ToggleButtonItem>
+        <ToggleButtonItem value={'a'}>{'Option A'}</ToggleButtonItem>
+        <ToggleButtonItem value={'b'}>{'Option B'}</ToggleButtonItem>
+        <ToggleButtonItem value={'c'}>{'Option C'}</ToggleButtonItem>
+        <ToggleButtonItem value={'d'}>{'Option D'}</ToggleButtonItem>
+        <ToggleButtonItem value={'e'}>{'Option E'}</ToggleButtonItem>
       </ToggleButtonGroup>
       <ToggleButtonGroup defaultValue={'x'} disabled>
-        <ToggleButtonItem value={'x'}>
-          {'Disabled selected'}
-        </ToggleButtonItem>
-        <ToggleButtonItem value={'y'}>
-          {'Disabled'}
-        </ToggleButtonItem>
+        <ToggleButtonItem value={'x'}>{'Disabled selected'}</ToggleButtonItem>
+        <ToggleButtonItem value={'y'}>{'Disabled'}</ToggleButtonItem>
       </ToggleButtonGroup>
     </Panel>
   );
@@ -188,8 +150,7 @@ function CardSection(): JSX.Element {
         <Card>
           <Image width={48} height={48} texture={'textures/ui/cartography_table_copy'} />
         </Card>
-        <Card>
-        </Card>
+        <Card />
       </Panel>
     </Panel>
   );
@@ -219,10 +180,10 @@ function DividerSection(): JSX.Element {
   );
 }
 
-export function OreStyledTest(): JSX.Element {
+export function OreStyled(): JSX.Element {
   return (
     <Panel flexDirection={'column'} padding={theme.tokens.spacing.md} gap={theme.tokens.spacing.lg} background={'textures/ui/ore-styled/card/background'}>
-      <Text>{`§f§lore-styled component test`}</Text>
+      <Text>{`§f§lore-styled component demo`}</Text>
       <ButtonsSection />
       <CheckboxSection />
       <ToggleSection />

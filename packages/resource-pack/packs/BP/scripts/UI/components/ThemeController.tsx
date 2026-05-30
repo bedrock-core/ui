@@ -1,4 +1,5 @@
-import { JSX, Panel, Text, Button, FunctionComponent } from '@bedrock-core/ui';
+import { JSX, Panel, Text, FunctionComponent } from '@bedrock-core/ui';
+import { Button } from '@bedrock-core/ore-styled';
 import { Theme } from '../contexts';
 
 interface ThemeControllerProps { onThemeChange: (theme: Theme) => void }
@@ -11,29 +12,9 @@ export const ThemeController: FunctionComponent<ThemeControllerProps> = ({ onThe
   <Panel flexDirection={'column'} padding={6} gap={4}>
     <Text>{'§eTheme Control'}</Text>
 
-    <Button
-      onPress={(): void => {
-        onThemeChange('light');
-      }}
-    >
-      <Text>{'§f■ Light'}</Text>
-    </Button>
-
-    <Button
-      onPress={(): void => {
-        onThemeChange('dark');
-      }}
-    >
-      <Text>{'§8■ Dark'}</Text>
-    </Button>
-
-    <Button
-      onPress={(): void => {
-        onThemeChange('neon');
-      }}
-    >
-      <Text>{'§d■ Neon'}</Text>
-    </Button>
+    <Button onPress={(): void => { onThemeChange('light'); }}>{'§f■ Light'}</Button>
+    <Button variant={'secondary'} onPress={(): void => { onThemeChange('dark'); }}>{'§8■ Dark'}</Button>
+    <Button variant={'contrast'} onPress={(): void => { onThemeChange('neon'); }}>{'§d■ Neon'}</Button>
 
     <Text flex={1}> </Text>
     <Text>{'§7useContext provider'}</Text>

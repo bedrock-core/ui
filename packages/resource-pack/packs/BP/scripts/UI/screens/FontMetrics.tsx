@@ -1,6 +1,6 @@
 import { Fragment, JSX, Panel, Text, TranslationKeysContext } from '@bedrock-core/ui';
 import type { TextFont } from '@bedrock-core/ui/components/Text';
-import translationKeys from '../data/translationKeys.generated.json';
+import translationKeys from '../../data/translationKeys.generated.json';
 
 const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 const DIGITS = '(0123456789)';
@@ -18,7 +18,7 @@ function GlyphRows({ prefix, font, scale }: { prefix: string; font: TextFont; sc
   );
 }
 
-export function FontMetricsTest(): JSX.Element {
+export function FontMetrics(): JSX.Element {
   const font: TextFont = 'mojangles';
 
   return (

@@ -28,10 +28,17 @@
 	"grid_item_panel": {
 		"type": "panel",
 		"size": [
-			16,
-			16
+			18,
+			18
 		],
 		"controls": [
+			{
+				"bg": {
+					"type": "image",
+					"size": [ 18, 18 ],
+					"texture": "textures/ui/cell_image"
+				}
+			},
 			{
 				"item_slot@grid_test.item_button": {}
 			}
