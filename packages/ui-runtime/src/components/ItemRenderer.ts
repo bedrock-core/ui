@@ -3,6 +3,7 @@ import { useContext } from '../hooks';
 import { FunctionComponent, JSX } from '../jsx';
 import { ItemAuxContext } from '../data/ItemAuxContext';
 import { InventoryScreenContext } from '../data/InventoryScreenContext';
+import { FixedScreenContext } from '../data/FixedScreenContext';
 import { ItemAuxError } from '../core/types';
 import { ControlProps, withControl } from './control';
 
@@ -19,7 +20,7 @@ export const ItemRenderer: FunctionComponent<ItemRendererProps> = ({
   ...rest
 }: ItemRendererProps): JSX.Element => {
   const auxMap = useContext(ItemAuxContext);
-  const inInventoryScreen = useContext(InventoryScreenContext);
+  const allowed = useContext(InventoryScreenContext) || useContext(FixedScreenContext);
 
   if (auxMap === null) {
     throw new ItemAuxError(
@@ -28,10 +29,10 @@ export const ItemRenderer: FunctionComponent<ItemRendererProps> = ({
     );
   }
 
-  if (!inInventoryScreen) {
+  if (!allowed) {
     throw new ItemAuxError(
-      'ItemRenderer can only be used inside an inventory screen. '
-      + 'Wrap your UI in <InventoryScreen> or use createTabNavigator.',
+      'ItemRenderer can only be used inside an item-capable screen. '
+      + 'Wrap your UI in <InventoryScreen> (or use createTabNavigator) or <FixedScreen>.',
     );
   }
 

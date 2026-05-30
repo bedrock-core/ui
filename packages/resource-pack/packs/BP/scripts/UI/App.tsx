@@ -17,6 +17,7 @@ import { FlexLayout } from './screens/FlexLayout';
 import { FontMetrics } from './screens/FontMetrics';
 import { OreStyled } from './screens/OreStyled';
 import { InventoryDemo } from './screens/InventoryDemo';
+import { FixedDemo } from './screens/FixedDemo';
 
 // ─── Route map ────────────────────────────────────────────────────────────────
 
@@ -27,6 +28,7 @@ type AppRoutes = {
   FontMetrics: undefined;
   OreStyled: undefined;
   InventoryDemo: undefined;
+  FixedDemo: undefined;
 };
 
 type AppScreen<K extends keyof AppRoutes> = ScreenProps<AppRoutes, K>;
@@ -64,6 +66,9 @@ function HomeScreen({ navigation }: AppScreen<'Home'>): JSX.Element {
 
       <Button variant={'contrast'} onPress={(): void => navigation.navigate('InventoryDemo')}>
         {'§cInventory Screen'}
+      </Button>
+      <Button variant={'contrast'} onPress={(): void => navigation.navigate('FixedDemo')}>
+        {'§bFixed Screen'}
       </Button>
     </Card>
   );
@@ -111,6 +116,10 @@ function InventoryDemoScreen(): JSX.Element {
   return <InventoryDemo />;
 }
 
+function FixedDemoScreen(): JSX.Element {
+  return <FixedDemo />;
+}
+
 // ─── Navigator ────────────────────────────────────────────────────────────────
 
 const Stack = createStackNavigator<AppRoutes>({
@@ -122,6 +131,7 @@ const Stack = createStackNavigator<AppRoutes>({
     FontMetrics: FontMetricsScreen,
     OreStyled: OreStyledScreen,
     InventoryDemo: InventoryDemoScreen,
+    FixedDemo: FixedDemoScreen,
   },
 });
 

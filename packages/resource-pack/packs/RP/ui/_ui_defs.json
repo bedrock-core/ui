@@ -25,6 +25,7 @@
 		"ui/core-ui/components/image.json",
 		// "ui/core-ui/components/item_renderer.json" — superseded by item_renderer_cell.json + item_renderer_grid
 		"ui/core-ui/screens/grid_test_form.json",
-		"ui/core-ui/screens/inventory_screen.json"
+		"ui/core-ui/screens/inventory_screen.json",
+		"ui/core-ui/screens/fixed_screen.json"
 	]
 }

@@ -1,5 +1,6 @@
 export {
   Button,
+  FixedScreen,
   Fragment,
   Image,
   InventoryScreen,
@@ -11,6 +12,7 @@ export {
 
 export type {
   ButtonProps,
+  FixedScreenProps,
   FragmentProps,
   ImageProps,
   InventoryScreenProps,
@@ -69,6 +71,7 @@ export { ItemAuxContext } from './data/ItemAuxContext';
 export type { ItemAuxMap } from './data/ItemAuxMap';
 
 export { InventoryScreenContext } from './data/InventoryScreenContext';
+export { FixedScreenContext } from './data/FixedScreenContext';
 
 export { TranslationKeysContext } from './data/TranslationKeysContext';
 export type { TranslationKeysMap } from './data/TranslationKeysMap';

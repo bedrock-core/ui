@@ -245,15 +245,31 @@ export function serializeProps({ type, ...props }: SerializableProps & { type: s
   return [result, finalBytes];
 }
 
-export type ScreenType = 'default' | 'inventory';
+export type ScreenType = 'default' | 'inventory' | 'fixed';
+
+/**
+ * Encode a boolean as an 8-byte field: 'b:' prefix (2) + value padded to
+ * TYPE_WIDTH.b (5) + marker (1). Matches the boolean layout produced by
+ * serializeProps so the RP can parse it with the same fixed-width slicing.
+ */
+function serializeBoolField(value: boolean, marker: string): string {
+  const raw = value ? 'true' : 'false';
+  const padded = raw + PAD_CHAR.repeat(TYPE_WIDTH.b - raw.length);
+
+  return `${TYPE_PREFIX.b}:${padded}${marker}`;
+}
 
 /**
  * Serialize the form title metadata containing the root content height and screen type.
- * Layout: PROTOCOL_HEADER + n:contentHeight (83 bytes) + b:isInventory (8 bytes) = 100 bytes total.
+ * Layout: PROTOCOL_HEADER (9) + n:contentHeight (83) + b:isInventory (8) + b:isFixed (8) = 108 bytes total.
  * The RP reads #title_text to determine which screen layout to activate and to size the scroll panel.
  *
+ * isInventory and isFixed are mutually exclusive; both false means the default scroll form.
+ * The isFixed field is appended at the tail, so existing field offsets are unchanged and
+ * older RP readers that only parse height/isInventory continue to work without a version bump.
+ *
  * @param contentHeight - Root panel computed height in pixels
- * @param screenType - Which RP layout to activate (default: scroll form; inventory: two-panel layout)
+ * @param screenType - Which RP layout to activate (default: scroll form; inventory: two-panel layout; fixed: non-scrolling layout)
  * @returns Full title string for form.title()
  */
 export function serializeTitleMetadata(contentHeight: number, screenType: ScreenType = 'default'): string {
@@ -262,11 +278,9 @@ export function serializeTitleMetadata(contentHeight: number, screenType: Screen
   const heightPadded = rawStr + PAD_CHAR.repeat(TYPE_WIDTH.n - rawStr.length);
   const heightField = `${TYPE_PREFIX.n}:${heightPadded}${FIELD_MARKERS[0]}`;
 
-  // Field 1: boolean field — 'b:' prefix (2) + value padded to TYPE_WIDTH.b (5) + marker (1) = 8 bytes
-  const isInventory = screenType === 'inventory';
-  const boolRaw = isInventory ? 'true' : 'false';
-  const boolPadded = boolRaw + PAD_CHAR.repeat(TYPE_WIDTH.b - boolRaw.length);
-  const boolField = `${TYPE_PREFIX.b}:${boolPadded}${FIELD_MARKERS[1]}`;
+  // Field 1: isInventory bool — Field 2: isFixed bool (each 8 bytes).
+  const inventoryField = serializeBoolField(screenType === 'inventory', FIELD_MARKERS[1]);
+  const fixedField = serializeBoolField(screenType === 'fixed', FIELD_MARKERS[2]);
 
-  return PROTOCOL_HEADER + heightField + boolField;
+  return PROTOCOL_HEADER + heightField + inventoryField + fixedField;
 }

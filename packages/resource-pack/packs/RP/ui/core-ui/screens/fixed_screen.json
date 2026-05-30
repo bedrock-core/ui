@@ -1,0 +1,53 @@
+{
+	"namespace": "fixed_screen",
+
+	// ─── Content ───────────────────────────────────────────────────────────────
+	// Fixed (non-scrolling) layout. Referenced from screen_container when isFixed=true.
+	// Buttons/labels are rendered here in a fixed collection; items are drawn by the
+	// shared grid_items overlay. Because nothing scrolls, both share one fixed
+	// coordinate space and stay aligned.
+	"content": {
+		"type": "panel",
+		"size": [
+			"100%",
+			"100%"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"controls": [
+			{
+				"content_collection": {
+					"type": "collection_panel",
+					"size": [
+						"100%",
+						5000
+					],
+					"offset": [
+						"-50%",
+						"-50%"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"factory": {
+						"name": "fixed_content_items",
+						"control_ids": {
+							"button": "@core_ui_common.button_router",
+							"label": "@core_ui_common.label_router",
+							"tab_button": "@core_ui_common.unused",
+							"item_renderer": "@core_ui_common.unused",
+							"header": "@core_ui_common.unused",
+							"divider": "@core_ui_common.unused"
+						}
+					},
+					"collection_name": "form_buttons",
+					"bindings": [
+						{
+							"binding_name": "#form_button_contents",
+							"binding_name_override": "#collection_length"
+						}
+					]
+				}
+			}
+		]
+	}
+}

@@ -49,6 +49,24 @@
 				"binding_type": "view",
 				"source_property_name": "(not ((#raw_is_inventory - 'b:true;1') = #raw_is_inventory))",
 				"target_property_name": "#is_inventory"
+			},
+			{
+				/* Advance past the isInventory field to reach the isFixed bool field */
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_height_sc - #raw_is_inventory)",
+				"target_property_name": "#rem_after_inventory_sc"
+			},
+			{
+				/* Read the next 8-byte bool field: 'b:true;2' = fixed, 'b:false2' = not fixed */
+				"binding_type": "view",
+				"source_property_name": "('%.8s' * #rem_after_inventory_sc)",
+				"target_property_name": "#raw_is_fixed"
+			},
+			{
+				/* is_fixed = true when field equals 'b:true;2' */
+				"binding_type": "view",
+				"source_property_name": "(not ((#raw_is_fixed - 'b:true;2') = #raw_is_fixed))",
+				"target_property_name": "#is_fixed"
 			}
 		],
 		"controls": [
@@ -72,7 +90,7 @@
 						{
 							"binding_type": "view",
 							"source_control_name": "screen_container",
-							"source_property_name": "((not ((#title_text - $protocol_header) = #title_text)) and (not #is_inventory))",
+							"source_property_name": "((not ((#title_text - $protocol_header) = #title_text)) and (not #is_inventory) and (not #is_fixed))",
 							"target_property_name": "#visible"
 						}
 					]
@@ -85,6 +103,18 @@
 							"binding_type": "view",
 							"source_control_name": "screen_container",
 							"source_property_name": "(not #is_inventory)",
+							"target_property_name": "#visible"
+						}
+					]
+				}
+			},
+			{
+				"fixed_root@fixed_screen.content": {
+					"bindings": [
+						{
+							"binding_type": "view",
+							"source_control_name": "screen_container",
+							"source_property_name": "#is_fixed",
 							"target_property_name": "#visible"
 						}
 					]
