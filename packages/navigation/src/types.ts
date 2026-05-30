@@ -464,12 +464,12 @@ export interface TabBarProps<TRoutes extends Record<string, unknown> = Record<st
  *
  * @example
  * ```tsx
- * type InventoryRoutes = {
+ * type TabRoutes = {
  *   Items:     undefined;
  *   Equipment: undefined;
  * };
  *
- * const { Navigator } = createTabNavigator<InventoryRoutes>({
+ * const { Navigator } = createTabNavigator<TabRoutes>({
  *   initialRouteName: 'Items',
  *   screens: { Items: ItemsTab, Equipment: EquipmentTab },
  *   tabBar: ({ state, navigation }) => (

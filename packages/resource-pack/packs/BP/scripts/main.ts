@@ -15,7 +15,7 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
 
   if (block.typeId === MinecraftBlockTypes.StoneButton) {
     // Stone button → demo hub (Home → all demos). Scroll is the baseline;
-    // the inventory/fixed demos declare their own layout via useSetScreen.
+    // the Fixed demo declares its own layout via useSetScreen.
     render(App, source);
   }
 

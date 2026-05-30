@@ -1,6 +1,6 @@
 import { ActionFormData } from '@minecraft/server-ui';
 
-export type ScreenType = 'scroll' | 'inventory' | 'fixed';
+export type ScreenType = 'scroll' | 'fixed';
 
 export interface ReservedBytes { bytes: number }
 

@@ -12,6 +12,7 @@
 			"50% - 50%c",
 			"0%"
 		],
+		"$protocol_header": "bcuiv0005",
 		"bindings": [
 			{
 				"binding_name": "#title_text"
@@ -40,38 +41,22 @@
 				"target_property_name": "#screen_type"
 			},
 			{
+				/* Render only for bcui forms — visible when the title carries the protocol header */
 				"binding_type": "view",
-				"source_property_name": "(#screen_type = 'inventory')",
-				"target_property_name": "#is_inventory"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#screen_type = 'fixed')",
-				"target_property_name": "#is_fixed"
+				"source_property_name": "(not ((#title_text - $protocol_header) = #title_text))",
+				"target_property_name": "#visible"
 			}
 		],
 		"controls": [
 			{
-				/* Scroll form — visible when the screen is neither inventory nor fixed.
+				/* Scroll form — visible when the screen is not fixed.
 				   No protocol guard needed: server_form only shows screen_container for bcui forms. */
 				"scroll_root@core_ui_screens.scroll": {
 					"bindings": [
 						{
 							"binding_type": "view",
 							"source_control_name": "screen_container",
-							"source_property_name": "((not #is_inventory) and (not #is_fixed))",
-							"target_property_name": "#visible"
-						}
-					]
-				}
-			},
-			{
-				"core_ui_server_form_grid@grid_test.grid_items": {
-					"bindings": [
-						{
-							"binding_type": "view",
-							"source_control_name": "screen_container",
-							"source_property_name": "(not #is_inventory)",
+							"source_property_name": "(#screen_type = 'scroll')",
 							"target_property_name": "#visible"
 						}
 					]
@@ -83,19 +68,7 @@
 						{
 							"binding_type": "view",
 							"source_control_name": "screen_container",
-							"source_property_name": "#is_fixed",
-							"target_property_name": "#visible"
-						}
-					]
-				}
-			},
-			{
-				"inventory_root@core_ui_screens.inventory": {
-					"bindings": [
-						{
-							"binding_type": "view",
-							"source_control_name": "screen_container",
-							"source_property_name": "#is_inventory",
+							"source_property_name": "(#screen_type = 'fixed')",
 							"target_property_name": "#visible"
 						}
 					]

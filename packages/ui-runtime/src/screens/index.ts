@@ -15,17 +15,15 @@ export interface ScreenDescriptor {
 }
 
 const Scroll: ScreenDescriptor = { type: 'scroll', allowsItems: false };
-const Inventory: ScreenDescriptor = { type: 'inventory', allowsItems: true };
 const Fixed: ScreenDescriptor = { type: 'fixed', allowsItems: true };
 
 /**
  * The built-in screen descriptors.
  *
  * - `Screen.Scroll` — default scrolling form; no item rendering.
- * - `Screen.Inventory` — two-panel tab + item-grid layout (use with createTabNavigator).
  * - `Screen.Fixed` — single non-scrolling page; item rendering stays aligned with controls.
  */
-export const Screen = { Scroll, Inventory, Fixed } as const;
+export const Screen = { Scroll, Fixed } as const;
 
 /** Session baseline used when none has been set yet. */
 export const DEFAULT_SCREEN: ScreenDescriptor = Scroll;

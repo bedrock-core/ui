@@ -20,7 +20,7 @@
 		],
 		"grid_dimensions": [
 			9,
-			200
+			8
 		],
 		"grid_item_template": "grid_test.grid_item_panel",
 		"collection_name": "form_buttons"
@@ -35,7 +35,10 @@
 			{
 				"bg": {
 					"type": "image",
-					"size": [ 18, 18 ],
+					"size": [
+						18,
+						18
+					],
 					"texture": "textures/ui/cell_image"
 				}
 			},
@@ -88,17 +91,13 @@
 	},
 	"item_render_panel": {
 		"type": "panel",
-		"size": [
-			14,
-			14
+		"offset": [
+			1,
+			1
 		],
 		"controls": [
 			{
 				"item@beacon.item_renderer": {
-					"size": [
-						14,
-						14
-					],
 					"bindings": "$aux_id"
 				}
 			}

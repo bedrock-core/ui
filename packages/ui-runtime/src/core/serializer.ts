@@ -263,15 +263,15 @@ function serializeStringField(value: string, marker: string): string {
  *
  * Screen type comes first because every screen reads it; the height comes second because
  * only some screens (the scrolling ones) need it. The screen type is encoded as a string
- * ('scroll' | 'inventory' | 'fixed') so adding layouts needs no new fields. Changing this
+ * ('scroll' | 'fixed') so adding layouts needs no new fields. Changing this
  * layout is backward-incompatible — bump VERSION.
  *
  * @param contentHeight - Root panel computed height in pixels
- * @param screenType - Which RP layout to activate (scroll: scrolling form; inventory: two-panel layout; fixed: non-scrolling layout)
+ * @param screenType - Which RP layout to activate (scroll: scrolling form; fixed: non-scrolling layout)
  * @returns Full title string for form.title()
  */
 export function serializeTitleMetadata(contentHeight: number, screenType: ScreenType = 'scroll'): string {
-  // Field 0: screen type string field — 'scroll' | 'inventory' | 'fixed' (83 bytes)
+  // Field 0: screen type string field — 'scroll' | 'fixed' (83 bytes)
   const screenField = serializeStringField(screenType, FIELD_MARKERS[0]);
 
   // Field 1: number field — 'n:' prefix (2) + value padded to TYPE_WIDTH.n (80) + marker (1) = 83 bytes

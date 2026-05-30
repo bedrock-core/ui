@@ -3,7 +3,7 @@
 
 	// ─── Root ──────────────────────────────────────────────────────────────────
 	// Default scrolling form. Referenced from screen_container when the screen is
-	// neither inventory nor fixed. Scrolls the form_buttons content (buttons/labels).
+	// not fixed. Scrolls the form_buttons content (buttons/labels).
 	"scroll@common.scrolling_panel": {
 		"layer": 999,
 		"anchor_from": "top_left",

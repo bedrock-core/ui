@@ -7,7 +7,7 @@ import itemAuxMap from '../../data/itemAuxMap.generated.json';
 /**
  * FixedScreen demo — a single, non-scrolling page. Because nothing scrolls,
  * ItemRenderer slots stay aligned with the surrounding buttons/labels.
- * Contrast with InventoryDemo (two-panel tab layout) and the default scroll form.
+ * Contrast with the default scroll form.
  */
 function FixedContent(): JSX.Element {
   const exit = useExit();

@@ -5,15 +5,15 @@ import { usePlayer } from './usePlayer';
 /**
  * Sets the screen layout for the current build, overriding the baseline passed
  * to `render(root, player, screen)`. Call at component render time (not inside
- * effects or callbacks) — typically a screen component declaring that it is an
- * inventory or fixed screen.
+ * effects or callbacks) — typically a screen component declaring that it is a
+ * fixed screen.
  *
  * Choosing the screen is the screen's own responsibility, not the navigator's:
  *
  * ```tsx
- * function InventoryScreen() {
- *   useSetScreen(Screen.Inventory);
- *   return <Tabs.Navigator tabBar={...} />;
+ * function MyItemScreen() {
+ *   useSetScreen(Screen.Fixed);
+ *   return <ItemRenderer item={stack} />;
  * }
  * ```
  */

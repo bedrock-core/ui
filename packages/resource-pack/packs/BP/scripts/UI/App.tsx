@@ -16,12 +16,11 @@ import { HooksDemo } from './screens/HooksDemo';
 import { FlexLayout } from './screens/FlexLayout';
 import { FontMetrics } from './screens/FontMetrics';
 import { OreStyled } from './screens/OreStyled';
-import { InventoryDemo } from './screens/InventoryDemo';
 import { FixedDemo } from './screens/FixedDemo';
 
 // ─── Route map ────────────────────────────────────────────────────────────────
-// The hub renders under the Scroll baseline; the item-capable demos (Inventory,
-// Fixed) declare their own screen layout via useSetScreen when navigated to.
+// The hub renders under the Scroll baseline; the Fixed demo declares its own
+// screen layout via useSetScreen when navigated to.
 
 type AppRoutes = {
   Home: undefined;
@@ -29,7 +28,6 @@ type AppRoutes = {
   FlexLayout: undefined;
   FontMetrics: undefined;
   OreStyled: undefined;
-  InventoryDemo: undefined;
   FixedDemo: undefined;
 };
 
@@ -66,9 +64,6 @@ function HomeScreen({ navigation }: AppScreen<'Home'>): JSX.Element {
 
       <Divider variant={'light'} />
 
-      <Button variant={'contrast'} onPress={(): void => navigation.navigate('InventoryDemo')}>
-        {'§cInventory Screen'}
-      </Button>
       <Button variant={'contrast'} onPress={(): void => navigation.navigate('FixedDemo')}>
         {'§bFixed Screen'}
       </Button>
@@ -114,11 +109,7 @@ function OreStyledScreen(): JSX.Element {
   );
 }
 
-// Item-capable demos render their own layout (no BackBar — they have a Close button).
-function InventoryDemoScreen(): JSX.Element {
-  return <InventoryDemo />;
-}
-
+// Item-capable demo renders its own layout (no BackBar — it has a Close button).
 function FixedDemoScreen(): JSX.Element {
   return <FixedDemo />;
 }
@@ -133,7 +124,6 @@ const Stack = createStackNavigator<AppRoutes>({
     FlexLayout: FlexLayoutScreen,
     FontMetrics: FontMetricsScreen,
     OreStyled: OreStyledScreen,
-    InventoryDemo: InventoryDemoScreen,
     FixedDemo: FixedDemoScreen,
   },
 });
