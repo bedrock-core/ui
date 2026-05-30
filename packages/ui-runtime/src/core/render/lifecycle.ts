@@ -2,7 +2,7 @@ import type { Player } from '@minecraft/server';
 import type { FunctionComponent, JSX } from '../../jsx';
 import { Logger, startInputLock } from '../../util';
 import { present } from './presenter';
-import { setBuildRunner, setPlayerRoot, triggerCleanup } from './session';
+import { setBuildRunner, setPlayerRoot, setPlayerScreenType, triggerCleanup } from './session';
 import { buildTree } from './tree';
 
 export function render(
@@ -17,13 +17,19 @@ export function render(
   // Register this player's session root and a background build runner
   setPlayerRoot(player, rootElement);
   setBuildRunner(player, () => {
-    // Build-only pass to flush effects without presenting
+    // Reset screen type before each build so stale inventory state doesn't bleed
+    // through if the new tree omits useScreenType.
+    setPlayerScreenType(player, 'default');
     buildTree(rootElement, player);
   });
 
   // Helper to build and present once
   const presentOnce = (): void => {
     let tree: JSX.Element;
+
+    // Reset screen type before each build so stale inventory state doesn't bleed
+    // through if the new tree omits useScreenType.
+    setPlayerScreenType(player, 'default');
 
     try {
       tree = buildTree(rootElement, player);

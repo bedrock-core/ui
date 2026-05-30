@@ -2,8 +2,10 @@ export {
   Button,
   Fragment,
   Image,
+  InventoryScreen,
   ItemRenderer,
   Panel,
+  TabButton,
   Text,
 } from './components';
 
@@ -11,8 +13,10 @@ export type {
   ButtonProps,
   FragmentProps,
   ImageProps,
+  InventoryScreenProps,
   ItemRendererProps,
   PanelProps,
+  TabButtonProps,
   TextProps,
   TextFont,
   TextOverflow,
@@ -63,6 +67,8 @@ export type {
 
 export { ItemAuxContext } from './data/ItemAuxContext';
 export type { ItemAuxMap } from './data/ItemAuxMap';
+
+export { InventoryScreenContext } from './data/InventoryScreenContext';
 
 export { TranslationKeysContext } from './data/TranslationKeysContext';
 export type { TranslationKeysMap } from './data/TranslationKeysMap';

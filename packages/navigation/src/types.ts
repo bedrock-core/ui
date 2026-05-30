@@ -431,6 +431,32 @@ export interface StackNavigatorOptions<TRoutes extends Record<string, unknown>> 
 }
 
 /**
+ * Options accepted by `createTabNavigator`.
+ * Identical shape to `StackNavigatorOptions` — the tab navigator is also
+ * driven by a screens map where each key is a tab name.
+ *
+ * @example
+ * ```ts
+ * type InventoryRoutes = {
+ *   Items:     undefined;
+ *   Equipment: undefined;
+ * };
+ *
+ * const { Navigator } = createTabNavigator<InventoryRoutes>({
+ *   initialRouteName: 'Items',
+ *   screens: {
+ *     Items:     ItemsTab,
+ *     Equipment: EquipmentTab,
+ *   },
+ * });
+ * ```
+ */
+export interface TabNavigatorOptions<TRoutes extends Record<string, unknown>> {
+  screens: ScreensMap<TRoutes>;
+  initialRouteName?: Extract<keyof TRoutes, string>;
+}
+
+/**
  * The route object passed to a screen component via `useRoute`.
  * `TParams` is `undefined` for parameterless routes, in which case `params`
  * is typed as `undefined` rather than an empty object.

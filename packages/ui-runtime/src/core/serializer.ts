@@ -245,19 +245,28 @@ export function serializeProps({ type, ...props }: SerializableProps & { type: s
   return [result, finalBytes];
 }
 
+export type ScreenType = 'default' | 'inventory';
+
 /**
- * Serialize the form title metadata containing the root content height.
- * Encodes as: PROTOCOL_HEADER + number field (83 bytes).
- * The RP reads this from #title_text to size the scrollable content panel.
+ * Serialize the form title metadata containing the root content height and screen type.
+ * Layout: PROTOCOL_HEADER + n:contentHeight (83 bytes) + b:isInventory (8 bytes) = 100 bytes total.
+ * The RP reads #title_text to determine which screen layout to activate and to size the scroll panel.
  *
  * @param contentHeight - Root panel computed height in pixels
+ * @param screenType - Which RP layout to activate (default: scroll form; inventory: two-panel layout)
  * @returns Full title string for form.title()
  */
-export function serializeTitleMetadata(contentHeight: number): string {
+export function serializeTitleMetadata(contentHeight: number, screenType: ScreenType = 'default'): string {
   const rawStr = Math.round(contentHeight).toString();
-  // number field: 'n:' prefix (2) + value padded to TYPE_WIDTH.n (80) + marker (1) = 83 bytes
-  const padded = rawStr + PAD_CHAR.repeat(TYPE_WIDTH.n - rawStr.length);
-  const field = `${TYPE_PREFIX.n}:${padded}${FIELD_MARKERS[0]}`;
+  // Field 0: number field — 'n:' prefix (2) + value padded to TYPE_WIDTH.n (80) + marker (1) = 83 bytes
+  const heightPadded = rawStr + PAD_CHAR.repeat(TYPE_WIDTH.n - rawStr.length);
+  const heightField = `${TYPE_PREFIX.n}:${heightPadded}${FIELD_MARKERS[0]}`;
 
-  return PROTOCOL_HEADER + field;
+  // Field 1: boolean field — 'b:' prefix (2) + value padded to TYPE_WIDTH.b (5) + marker (1) = 8 bytes
+  const isInventory = screenType === 'inventory';
+  const boolRaw = isInventory ? 'true' : 'false';
+  const boolPadded = boolRaw + PAD_CHAR.repeat(TYPE_WIDTH.b - boolRaw.length);
+  const boolField = `${TYPE_PREFIX.b}:${boolPadded}${FIELD_MARKERS[1]}`;
+
+  return PROTOCOL_HEADER + heightField + boolField;
 }

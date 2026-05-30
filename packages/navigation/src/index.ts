@@ -8,6 +8,7 @@
  */
 
 export { NavigationContainer, createStackNavigator } from './context';
+export { createTabNavigator } from './tab-navigator';
 export { useNavigation, useRoute } from './hooks';
 export { stackReducer, type StackAction, type ScreenDefaults } from './reducer';
 
@@ -15,6 +16,7 @@ export type {
   Route,
   NavigationState,
   StackNavigatorOptions,
+  TabNavigatorOptions,
   NavigationHelpers,
   RouteObject,
   ScreenProps,

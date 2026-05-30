@@ -1,0 +1,700 @@
+{
+	"namespace": "inventory_screen",
+
+	// ─── Root ──────────────────────────────────────────────────────────────────
+	// Two-panel container. Referenced from screen_container when isInventory=true.
+	"root": {
+		"type": "panel",
+		"size": [
+			"100%",
+			"100%"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"controls": [
+			{
+				"left@inventory_screen.left_panel": {}
+			},
+			{
+				"right@inventory_screen.right_panel": {}
+			}
+		]
+	},
+
+	// ─── Left Panel ────────────────────────────────────────────────────────────
+	// Contains (bottom to top by layer):
+	//   layer 0   – content scroll (full height, non-item/non-tab form elements)
+	//   layer 500 – item grid (fixed, NOT in scroll, 9×6 below tab bar)
+	//   layer 1001– tab bar overlay (fixed top 20px, hides empty scroll gap)
+	"left_panel": {
+		"type": "panel",
+		"size": [
+			"50%",
+			"100%"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"controls": [
+			{
+				"content_scroll@common.scrolling_panel": {
+					"layer": 0,
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"offset": [
+						0,
+						0
+					],
+					"$show_background": false,
+					"$scrolling_content": "inventory_screen.content_scrolling_content"
+				}
+			},
+			{
+				"item_grid@inventory_screen.left_item_grid": {
+					"layer": 500,
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"offset": [
+						0,
+						20
+					]
+				}
+			},
+			{
+				"tab_bar@inventory_screen.tab_bar": {
+					"layer": 1001,
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"offset": [
+						0,
+						0
+					]
+				}
+			}
+		]
+	},
+
+	// ─── Tab Bar ───────────────────────────────────────────────────────────────
+	// Fixed 20px strip at top of left panel. Renders only tab_button elements
+	// from form_buttons at their serialised x/y positions. Other types → unused.
+	// Clipping to 20px height hides any off-bounds content.
+	"tab_bar": {
+		"type": "panel",
+		"size": [
+			"100%",
+			20
+		],
+		"clips_children": true,
+		"controls": [
+			{
+				"collection": {
+					"type": "collection_panel",
+					"size": [
+						"100%",
+						5000
+					],
+					"offset": [
+						"-50%",
+						"-50%"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"factory": {
+						"name": "tab_bar_items",
+						"control_ids": {
+							"tab_button": "@inventory_screen.tab_button_router",
+							"button": "@core_ui_common.unused",
+							"label": "@core_ui_common.unused",
+							"text": "@core_ui_common.unused",
+							"image": "@core_ui_common.unused",
+							"item_renderer": "@core_ui_common.unused"
+						}
+					},
+					"collection_name": "form_buttons",
+					"bindings": [
+						{
+							"binding_name": "#form_button_contents",
+							"binding_name_override": "#collection_length"
+						}
+					]
+				}
+			}
+		]
+	},
+
+	// ─── Tab Button Router ─────────────────────────────────────────────────────
+	// 1×1 wrapper (same pattern as button_router/label_router).
+	"tab_button_router": {
+		"type": "panel",
+		"size": [
+			1,
+			1
+		],
+		"controls": [
+			{
+				"btn@inventory_screen.tab_button_component": {}
+			}
+		]
+	},
+
+	// ─── Tab Button Component ──────────────────────────────────────────────────
+	// Parses common control fields + label string from serialised data.
+	// Visible only when #type = 'tab_button'.
+	// Uses #background for active/inactive texture (set by TabButton TypeScript component).
+	// Label is displayed as a child text control.
+	"tab_button_component": {
+		"type": "button",
+		"size": [
+			0,
+			0
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"use_anchored_offset": true,
+		"property_bag": {
+			"#size_binding_x": 0.0,
+			"#size_binding_y": 0.0,
+			"#anchored_offset_value_x": 0.0,
+			"#anchored_offset_value_y": 0.0,
+			"#bg_visible": false,
+			"#label": ""
+		},
+		"visible": "#visible",
+		"enabled": "#enabled",
+		"$normalize": 1.0,
+		"$pressed_button_name": "button.form_button_click",
+		"sound_name": "random.click",
+		"sound_volume": 1.0,
+		"sound_pitch": 1.0,
+		"default_control": "default",
+		"hover_control": "hover",
+		"pressed_control": "pressed",
+		"button_mappings": [
+			{
+				"from_button_id": "button.menu_select",
+				"to_button_id": "button.form_button_click",
+				"mapping_type": "pressed"
+			},
+			{
+				"from_button_id": "button.menu_ok",
+				"to_button_id": "button.form_button_click",
+				"mapping_type": "focused"
+			}
+		],
+		"bindings": [
+			{
+				"binding_type": "collection_details",
+				"binding_collection_name": "form_buttons"
+			},
+			{
+				"binding_name": "#form_button_text",
+				"binding_type": "collection",
+				"binding_collection_name": "form_buttons"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.9s' * #form_button_text)",
+				"target_property_name": "#protocol_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#form_button_text - #protocol_header)",
+				"target_property_name": "#rem_after_header"
+			},
+			{
+				/* type (string, 83 bytes) */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_header)",
+				"target_property_name": "#raw_type"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_header - #raw_type)",
+				"target_property_name": "#rem_after_type"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_type) - ('%.2s' * #raw_type) - ';')",
+				"target_property_name": "#type"
+			},
+			{
+				/* width (number, 83 bytes) */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_type)",
+				"target_property_name": "#raw_width"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_type - #raw_width)",
+				"target_property_name": "#rem_after_width"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_width) - ('%.2s' * #raw_width) - ';')",
+				"target_property_name": "#size_binding_x"
+			},
+			{
+				/* height (number, 83 bytes) */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_width)",
+				"target_property_name": "#raw_height"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_width - #raw_height)",
+				"target_property_name": "#rem_after_height"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_height) - ('%.2s' * #raw_height) - ';')",
+				"target_property_name": "#size_binding_y"
+			},
+			{
+				/* x (number, 83 bytes) */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_height)",
+				"target_property_name": "#raw_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_height - #raw_x)",
+				"target_property_name": "#rem_after_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_x) - ('%.2s' * #raw_x) - ';') * $normalize)",
+				"target_property_name": "#anchored_offset_value_x"
+			},
+			{
+				/* y (number, 83 bytes) */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_x)",
+				"target_property_name": "#raw_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_x - #raw_y)",
+				"target_property_name": "#rem_after_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_y) - ('%.2s' * #raw_y) - ';') * $normalize)",
+				"target_property_name": "#anchored_offset_value_y"
+			},
+			{
+				/* visible (bool, 8 bytes) */
+				"binding_type": "view",
+				"source_property_name": "('%.8s' * #rem_after_y)",
+				"target_property_name": "#raw_visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_y - #raw_visible)",
+				"target_property_name": "#rem_after_visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.7s' * #raw_visible) - ('%.2s' * #raw_visible) - ';')",
+				"target_property_name": "#pre_visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#pre_visible and (#type = 'tab_button'))",
+				"target_property_name": "#visible"
+			},
+			{
+				/* enabled (bool, 8 bytes) */
+				"binding_type": "view",
+				"source_property_name": "('%.8s' * #rem_after_visible)",
+				"target_property_name": "#raw_enabled"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_visible - #raw_enabled)",
+				"target_property_name": "#rem_after_enabled"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.7s' * #raw_enabled) - ('%.2s' * #raw_enabled) - ';')",
+				"target_property_name": "#enabled"
+			},
+			{
+				/* Skip background (83) + reserved (501) = 584 bytes → reach serialized_data at [1024] */
+				"binding_type": "view",
+				"source_property_name": "('%.584s' * #rem_after_enabled)",
+				"target_property_name": "#skip_to_data"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_enabled - #skip_to_data)",
+				"target_property_name": "#serialized_data"
+			},
+			{
+				/* label (string, 83 bytes) – component field at [1024] */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #serialized_data)",
+				"target_property_name": "#raw_label"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_label) - ('%.2s' * #raw_label) - ';')",
+				"target_property_name": "#label"
+			},
+			{
+				/* background (string, 83 bytes) – read at [440] for active/inactive texture */
+				"binding_type": "view",
+				"source_property_name": "('%.440s' * #form_button_text)",
+				"target_property_name": "#skip_to_bg"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#form_button_text - #skip_to_bg)",
+				"target_property_name": "#rem_at_bg"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_at_bg)",
+				"target_property_name": "#raw_bg"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_bg) - ('%.2s' * #raw_bg) - ';')",
+				"target_property_name": "#background"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(not (#background = ''))",
+				"target_property_name": "#bg_visible"
+			}
+		],
+		"controls": [
+			{
+				"default": {
+					"type": "panel",
+					"size": ["100%", "100%"],
+					"controls": [
+						{
+							"bg": {
+								"type": "image",
+								"size": ["100%", "100%"],
+								"texture": "#background",
+								"visible": "#bg_visible",
+								"bindings": [
+									{
+										"binding_name": "#background"
+									},
+									{
+										"binding_name": "#bg_visible"
+									}
+								]
+							}
+						},
+						{
+							"lbl": {
+								"type": "label",
+								"text": "#label",
+								"font_type": "default",
+								"font_size": "small",
+								"size": ["100%", "100%"],
+								"color": [1, 1, 1],
+								"shadow": true,
+								"bindings": [
+									{
+										"binding_name": "#label"
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"hover": {
+					"type": "panel",
+					"size": ["100%", "100%"],
+					"controls": [
+						{
+							"bg": {
+								"type": "image",
+								"size": ["100%", "100%"],
+								"texture": "#background",
+								"visible": "#bg_visible",
+								"alpha": 0.8,
+								"bindings": [
+									{ "binding_name": "#background" },
+									{ "binding_name": "#bg_visible" }
+								]
+							}
+						},
+						{
+							"lbl": {
+								"type": "label",
+								"text": "#label",
+								"font_type": "default",
+								"font_size": "small",
+								"size": ["100%", "100%"],
+								"color": [1, 1, 0],
+								"shadow": true,
+								"bindings": [
+									{ "binding_name": "#label" }
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"pressed": {
+					"type": "panel",
+					"size": ["100%", "100%"],
+					"controls": [
+						{
+							"bg": {
+								"type": "image",
+								"size": ["100%", "100%"],
+								"texture": "#background",
+								"visible": "#bg_visible",
+								"bindings": [
+									{ "binding_name": "#background" },
+									{ "binding_name": "#bg_visible" }
+								]
+							}
+						},
+						{
+							"lbl": {
+								"type": "label",
+								"text": "#label",
+								"font_type": "default",
+								"font_size": "small",
+								"size": ["100%", "100%"],
+								"color": [1, 1, 0],
+								"shadow": true,
+								"bindings": [
+									{ "binding_name": "#label" }
+								]
+							}
+						}
+					]
+				}
+			}
+		]
+	},
+
+	// ─── Left Item Grid ────────────────────────────────────────────────────────
+	// 9-column item grid, 6 visible rows (96px), max 200 rows.
+	// Renders all form_buttons as item slots; non-item types show as air (aux=0).
+	// NOT inside any scroll container — required for beacon.item_renderer to work.
+	"left_item_grid": {
+		"type": "grid",
+		"size": [
+			"50%",
+			96
+		],
+		"grid_dimensions": [
+			9,
+			200
+		],
+		"grid_item_template": "grid_test.grid_item_panel",
+		"collection_name": "form_buttons"
+	},
+
+	// ─── Content Scrolling Content ─────────────────────────────────────────────
+	// Content area for non-item, non-tab-button form elements.
+	// All such elements are absolutely positioned (x/y from serialised data).
+	"content_scrolling_content": {
+		"type": "panel",
+		"size": [
+			"100%",
+			"100%c"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"controls": [
+			{
+				"content_collection": {
+					"type": "collection_panel",
+					"size": [
+						"100%",
+						5000
+					],
+					"offset": [
+						"-50%",
+						"-50%"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"property_bag": {
+						"#size_binding_y": 0.0
+					},
+					"factory": {
+						"name": "content_items",
+						"control_ids": {
+							"button": "@core_ui_common.button_router",
+							"label": "@core_ui_common.label_router",
+							"tab_button": "@core_ui_common.unused",
+							"item_renderer": "@core_ui_common.unused",
+							"header": "@core_ui_common.unused",
+							"divider": "@core_ui_common.unused"
+						}
+					},
+					"collection_name": "form_buttons",
+					"bindings": [
+						{
+							"binding_name": "#form_button_contents",
+							"binding_name_override": "#collection_length"
+						},
+						{
+							"binding_name": "#title_text"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.9s' * #title_text)",
+							"target_property_name": "#protocol_header"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#title_text - #protocol_header)",
+							"target_property_name": "#rem_after_header"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_after_header)",
+							"target_property_name": "#raw_title_height"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "((('%.82s' * #raw_title_height) - ('%.2s' * #raw_title_height) - ';'))",
+							"target_property_name": "#size_binding_y"
+						}
+					]
+				}
+			}
+		]
+	},
+
+	// ─── Right Panel ───────────────────────────────────────────────────────────
+	// Shows player inventory and armor.
+	//
+	// OPTION A (active): Uses native Minecraft inventory bindings.
+	//   If slots render empty in-game, vanilla collections are unavailable in
+	//   ActionFormData context → switch to Option B.
+	//
+	// OPTION B (commented): Form-button grid driven by item_renderer elements.
+	//   Uncomment "right_form_grid" and comment out "vanilla_inventory" to use.
+	"right_panel": {
+		"type": "panel",
+		"size": [
+			"50%",
+			"100%"
+		],
+		"anchor_from": "top_right",
+		"anchor_to": "top_right",
+		"controls": [
+			// ── Option A: vanilla inventory bindings ──────────────────────────
+			{
+				"vanilla_inventory@inventory_screen.vanilla_inventory": {}
+			}
+
+			// ── Option B: form-button inventory grid (uncomment to use) ───────
+			// {
+			// 	"right_form_grid@inventory_screen.right_form_grid": {}
+			// }
+		]
+	},
+
+	// ─── Option A: Vanilla Inventory ──────────────────────────────────────────
+	"vanilla_inventory": {
+		"type": "panel",
+		"size": [
+			"100%",
+			"100%"
+		],
+		"anchor_from": "center",
+		"anchor_to": "center",
+		"controls": [
+			{
+				// Main 9×3 inventory grid
+				"inventory_grid": {
+					"type": "grid",
+					"size": [
+						162,
+						54
+					],
+					"anchor_from": "top_middle",
+					"anchor_to": "top_middle",
+					"offset": [
+						0,
+						20
+					],
+					"grid_dimensions": [
+						9,
+						3
+					],
+					"grid_item_template": "common.grid_item_for_inventory",
+					"collection_name": "inventory_items"
+				}
+			},
+			{
+				// Hotbar 9×1
+				"hotbar_grid": {
+					"type": "grid",
+					"size": [
+						162,
+						18
+					],
+					"anchor_from": "top_middle",
+					"anchor_to": "top_middle",
+					"offset": [
+						0,
+						80
+					],
+					"grid_dimensions": [
+						9,
+						1
+					],
+					"grid_item_template": "common.grid_item_for_hotbar",
+					"collection_name": "hotbar_items"
+				}
+			},
+			{
+				// Armor 1×4
+				"armor_grid": {
+					"type": "grid",
+					"size": [
+						18,
+						72
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"offset": [
+						4,
+						20
+					],
+					"grid_dimensions": [
+						1,
+						4
+					],
+					"grid_item_template": "common.grid_item_for_armor",
+					"collection_name": "armor_items"
+				}
+			}
+		]
+	},
+
+	// ─── Option B: Form-Button Inventory Grid ──────────────────────────────────
+	// Uses item_renderer elements sent by the server as form buttons.
+	// Items appear in a 9×4 grid on the right side.
+	// "right_form_grid": {
+	// 	"type": "grid",
+	// 	"size": ["100%", 72],
+	// 	"anchor_from": "top_middle",
+	// 	"anchor_to": "top_middle",
+	// 	"offset": [0, 20],
+	// 	"grid_dimensions": [9, 4],
+	// 	"grid_item_template": "grid_test.grid_item_panel",
+	// 	"collection_name": "form_buttons"
+	// }
+}

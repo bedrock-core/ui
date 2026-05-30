@@ -2,6 +2,7 @@ import { ItemLockMode, ItemStack } from '@minecraft/server';
 import { useContext } from '../hooks';
 import { FunctionComponent, JSX } from '../jsx';
 import { ItemAuxContext } from '../data/ItemAuxContext';
+import { InventoryScreenContext } from '../data/InventoryScreenContext';
 import { ItemAuxError } from '../core/types';
 import { ControlProps, withControl } from './control';
 
@@ -18,11 +19,19 @@ export const ItemRenderer: FunctionComponent<ItemRendererProps> = ({
   ...rest
 }: ItemRendererProps): JSX.Element => {
   const auxMap = useContext(ItemAuxContext);
+  const inInventoryScreen = useContext(InventoryScreenContext);
 
   if (auxMap === null) {
     throw new ItemAuxError(
       `ItemAuxContext is not provided. Did you forget to install the 'item-aux' Regolith filter `
       + `and wrap your UI in <ItemAuxContext value={itemAuxMap}>?`,
+    );
+  }
+
+  if (!inInventoryScreen) {
+    throw new ItemAuxError(
+      'ItemRenderer can only be used inside an inventory screen. '
+      + 'Wrap your UI in <InventoryScreen> or use createTabNavigator.',
     );
   }
 

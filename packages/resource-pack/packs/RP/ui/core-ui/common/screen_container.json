@@ -15,6 +15,40 @@
 		"bindings": [
 			{
 				"binding_name": "#title_text"
+			},
+			{
+				/* Strip protocol header (9 bytes) */
+				"binding_type": "view",
+				"source_property_name": "('%.9s' * #title_text)",
+				"target_property_name": "#protocol_header_sc"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#title_text - #protocol_header_sc)",
+				"target_property_name": "#rem_after_header_sc"
+			},
+			{
+				/* Skip contentHeight field (83 bytes) to reach isInventory bool field */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_header_sc)",
+				"target_property_name": "#raw_height_sc"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_header_sc - #raw_height_sc)",
+				"target_property_name": "#rem_after_height_sc"
+			},
+			{
+				/* Read the 8-byte bool field: 'b:true;1' = inventory, 'b:false1' = default */
+				"binding_type": "view",
+				"source_property_name": "('%.8s' * #rem_after_height_sc)",
+				"target_property_name": "#raw_is_inventory"
+			},
+			{
+				/* is_inventory = true when field equals 'b:true;1' */
+				"binding_type": "view",
+				"source_property_name": "(not ((#raw_is_inventory - 'b:true;1') = #raw_is_inventory))",
+				"target_property_name": "#is_inventory"
 			}
 		],
 		"controls": [
@@ -38,14 +72,35 @@
 						{
 							"binding_type": "view",
 							"source_control_name": "screen_container",
-							"source_property_name": "(not ((#title_text - $protocol_header) = #title_text))",
+							"source_property_name": "((not ((#title_text - $protocol_header) = #title_text)) and (not #is_inventory))",
 							"target_property_name": "#visible"
 						}
 					]
 				}
 			},
 			{
-				"core_ui_server_form_grid@grid_test.grid_items": {}
+				"core_ui_server_form_grid@grid_test.grid_items": {
+					"bindings": [
+						{
+							"binding_type": "view",
+							"source_control_name": "screen_container",
+							"source_property_name": "(not #is_inventory)",
+							"target_property_name": "#visible"
+						}
+					]
+				}
+			},
+			{
+				"inventory_root@inventory_screen.root": {
+					"bindings": [
+						{
+							"binding_type": "view",
+							"source_control_name": "screen_container",
+							"source_property_name": "#is_inventory",
+							"target_property_name": "#visible"
+						}
+					]
+				}
 			}
 		]
 	},

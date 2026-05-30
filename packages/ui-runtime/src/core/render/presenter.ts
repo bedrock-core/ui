@@ -5,7 +5,7 @@ import type { JSX } from '../../jsx';
 import { getFibersForPlayer } from '../fabric';
 import { serialize, serializeTitleMetadata } from '../serializer';
 import type { SerializationContext } from '../types';
-import { beginInteractiveTransaction, endInteractiveTransaction } from './session';
+import { beginInteractiveTransaction, endInteractiveTransaction, getPlayerScreenType } from './session';
 
 export async function present(
   player: Player,
@@ -26,7 +26,10 @@ export async function present(
     ? rawHeight
     : CANONICAL_SCREEN.height;
 
-  form.title(serializeTitleMetadata(contentHeight));
+  // Screen type is written into session by useScreenType() during buildTree (called before present).
+  const screenType = getPlayerScreenType(player);
+
+  form.title(serializeTitleMetadata(contentHeight, screenType));
 
   serialize(tree, form, serializationContext);
 
