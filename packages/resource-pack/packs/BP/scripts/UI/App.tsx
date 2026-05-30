@@ -20,6 +20,8 @@ import { InventoryDemo } from './screens/InventoryDemo';
 import { FixedDemo } from './screens/FixedDemo';
 
 // ─── Route map ────────────────────────────────────────────────────────────────
+// The hub renders under the Scroll baseline; the item-capable demos (Inventory,
+// Fixed) declare their own screen layout via useSetScreen when navigated to.
 
 type AppRoutes = {
   Home: undefined;
@@ -112,6 +114,7 @@ function OreStyledScreen(): JSX.Element {
   );
 }
 
+// Item-capable demos render their own layout (no BackBar — they have a Close button).
 function InventoryDemoScreen(): JSX.Element {
   return <InventoryDemo />;
 }

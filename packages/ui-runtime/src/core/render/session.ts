@@ -1,10 +1,9 @@
 import type { Player } from '@minecraft/server';
 import { uiManager } from '@minecraft/server-ui';
 import type { JSX } from '../../jsx';
-import { DEFAULT_SCREEN, SCREEN_BY_TYPE, type ScreenDescriptor } from '../../screens';
+import { DEFAULT_SCREEN, type ScreenDescriptor } from '../../screens';
 import { Logger, stopInputLock } from '../../util';
 import { getFibersForPlayer } from '../fabric';
-import type { ScreenType } from '../types';
 import { cleanupComponentTree } from './tree';
 
 /**
@@ -70,11 +69,6 @@ export function setPlayerScreen(player: Player, screen: ScreenDescriptor): void 
 
 export function getPlayerScreen(player: Player): ScreenDescriptor {
   return sessions.get(player.id)?.screen ?? DEFAULT_SCREEN;
-}
-
-/** Override the current screen by bare type (used by the useScreenType hook). */
-export function setPlayerScreenType(player: Player, type: ScreenType): void {
-  getOrCreate(player).screen = SCREEN_BY_TYPE[type];
 }
 
 /**

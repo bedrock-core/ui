@@ -30,8 +30,7 @@ export const ItemRenderer: FunctionComponent<ItemRendererProps> = ({
   if (!screen.allowsItems) {
     throw new ItemAuxError(
       `ItemRenderer can only be used on an item-capable screen, but the current screen is '${screen.type}'. `
-      + 'Render with Screen.Inventory (or createTabNavigator) or Screen.Fixed, '
-      + 'or call useScreenType to override the screen for this build.',
+      + 'Render the screen with Screen.Inventory or Screen.Fixed.',
     );
   }
 

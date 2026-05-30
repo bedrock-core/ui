@@ -26,7 +26,7 @@ export async function present(
     ? rawHeight
     : CANONICAL_SCREEN.height;
 
-  // The session screen is the render baseline, possibly overridden via useScreenType() during buildTree.
+  // The session screen is the render baseline set by render().
   const screen = getPlayerScreen(player);
 
   form.title(serializeTitleMetadata(contentHeight, screen.type));

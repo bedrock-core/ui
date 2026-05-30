@@ -19,8 +19,7 @@ export function render(
   // Register this player's session root and a background build runner
   setPlayerRoot(player, rootElement);
   setBuildRunner(player, () => {
-    // Reset to the render baseline before each build so a stale per-build
-    // override (useScreenType) doesn't bleed through if the new tree omits it.
+    // Re-assert the render baseline screen before each build.
     setPlayerScreen(player, screen);
     buildTree(rootElement, player);
   });
@@ -29,8 +28,7 @@ export function render(
   const presentOnce = (): void => {
     let tree: JSX.Element;
 
-    // Reset to the render baseline before each build so a stale per-build
-    // override (useScreenType) doesn't bleed through if the new tree omits it.
+    // Re-assert the render baseline screen before each build.
     setPlayerScreen(player, screen);
 
     try {

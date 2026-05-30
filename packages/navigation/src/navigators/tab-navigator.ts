@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-type-assertion --
     Type assertions are required at the navigation context boundary (same pattern as stack-navigator.ts). */
 
-import { useState, useScreenType, JSX, Panel, TabButton } from '@bedrock-core/ui-runtime';
+import { useState, JSX, Panel } from '@bedrock-core/ui-runtime';
 import type {
   NavigationHelpers,
   NavigationState,
@@ -16,29 +16,17 @@ export function createTabNavigator<TRoutes extends Record<string, unknown>>(
   options: TabNavigatorOptions<TRoutes>,
 ) {
   const routeNames = Object.keys(options.screens) as Extract<keyof TRoutes, string>[];
-  const { initialRouteName } = options;
+  const { initialRouteName, tabBar } = options;
 
   function Navigator(): JSX.Element {
-    // A tab navigator drives the inventory RP layout (tab bar + item grid),
-    // so it self-declares its screen type regardless of the render baseline.
-    useScreenType('inventory');
-
     const effectiveInitialTab = initialRouteName ?? routeNames[0];
 
     const [activeTab, setActiveTab] = useState<Extract<keyof TRoutes, string>>(effectiveInitialTab);
 
-    const helpers = buildTabHelpers<TRoutes>(activeTab, setActiveTab, routeNames);
+    const navState = buildTabState<TRoutes>(routeNames, activeTab);
+    const helpers = buildTabHelpers<TRoutes>(routeNames, activeTab, setActiveTab);
 
     const ActiveScreen = resolveScreenComponent(options.screens, activeTab);
-
-    const navState: NavigationState<TRoutes> = {
-      type: 'stack',
-      key: `tab-${activeTab as string}`,
-      routeNames,
-      routes: [{ key: activeTab, name: activeTab }],
-      index: 0,
-      stale: false,
-    };
 
     const contextValue: NavigationContextValue<TRoutes> = {
       state: navState,
@@ -48,57 +36,38 @@ export function createTabNavigator<TRoutes extends Record<string, unknown>>(
       initialRouteName: effectiveInitialTab,
     };
 
+    const focusedRoute = navState.routes[navState.index];
+
     const routeObject = {
-      key: activeTab as string,
-      name: activeTab as string,
-      params: undefined as TRoutes[typeof activeTab] extends undefined ? undefined : TRoutes[typeof activeTab],
+      key: focusedRoute.key,
+      name: focusedRoute.name,
+      params: focusedRoute.params as TRoutes[typeof activeTab] extends undefined ? undefined : TRoutes[typeof activeTab],
     };
 
-    // Tab bar: one TabButton per route, equal width, 20px tall
-    const tabBarChildren: JSX.Element[] = routeNames.map(name => ({
-      type: TabButton as unknown as (props: Record<string, unknown>) => JSX.Element,
-      props: {
-        label: name,
-        active: name === activeTab,
-        flexGrow: 1,
-        height: 20,
-        onPress: (): void => { setActiveTab(name); },
-      },
-    }));
-
-    const tabBarPanel: JSX.Element = {
-      type: Panel as unknown as (props: Record<string, unknown>) => JSX.Element,
-      props: {
-        width: '100%',
-        height: 20,
-        flexDirection: 'row',
-        children: tabBarChildren,
-      },
-    };
-
-    const contentChildren: JSX.Element[] = ActiveScreen
-      ? [{
-          type: ActiveScreen as unknown as (props: Record<string, unknown>) => JSX.Element,
-          props: { navigation: helpers, route: routeObject },
-        }]
-      : [];
+    // Consumer-supplied tab bar — the navigator ships none of its own.
+    const tabBarElement = tabBar({ state: navState, navigation: helpers });
 
     const contentPanel: JSX.Element = {
       type: Panel as unknown as (props: Record<string, unknown>) => JSX.Element,
       props: {
         width: '100%',
         flexGrow: 1,
-        children: contentChildren,
+        children: ActiveScreen
+          ? [{
+              type: ActiveScreen as unknown as (props: Record<string, unknown>) => JSX.Element,
+              props: { navigation: helpers, route: routeObject },
+            }]
+          : [],
       },
     };
 
-    const innerPanel: JSX.Element = {
+    const layout: JSX.Element = {
       type: Panel as unknown as (props: Record<string, unknown>) => JSX.Element,
       props: {
         width: '100%',
         height: '100%',
         flexDirection: 'column',
-        children: [tabBarPanel, contentPanel],
+        children: [tabBarElement, contentPanel],
       },
     };
 
@@ -107,7 +76,7 @@ export function createTabNavigator<TRoutes extends Record<string, unknown>>(
       props: {
         __context: NavigationContext,
         value: contextValue,
-        children: innerPanel,
+        children: layout,
       },
     };
   }
@@ -119,25 +88,42 @@ export function createTabNavigator<TRoutes extends Record<string, unknown>>(
   };
 }
 
+/** Build the tab navigator's state: one route per tab, `index` = active tab. */
+function buildTabState<TRoutes extends Record<string, unknown>>(
+  routeNames: Extract<keyof TRoutes, string>[],
+  activeTab: Extract<keyof TRoutes, string>,
+): NavigationState<TRoutes> {
+  return {
+    type: 'tab',
+    key: 'tab',
+    routeNames,
+    routes: routeNames.map(name => ({ key: `tab-${name}`, name })),
+    index: Math.max(0, routeNames.indexOf(activeTab)),
+    stale: false,
+  };
+}
+
 function buildTabHelpers<TRoutes extends Record<string, unknown>>(
+  routeNames: Extract<keyof TRoutes, string>[],
   activeTab: Extract<keyof TRoutes, string>,
   setActiveTab: (name: Extract<keyof TRoutes, string>) => void,
-  routeNames: Extract<keyof TRoutes, string>[],
 ): NavigationHelpers<TRoutes> {
+  const switchTo = (name: Extract<keyof TRoutes, string>): void => {
+    if (routeNames.includes(name)) {
+      setActiveTab(name);
+    }
+  };
+
   return {
     navigate(...args): void {
       const [name] = args as [Extract<keyof TRoutes, string>, unknown];
 
-      if (routeNames.includes(name)) {
-        setActiveTab(name);
-      }
+      switchTo(name);
     },
     push(...args): void {
       const [name] = args as [Extract<keyof TRoutes, string>, unknown];
 
-      if (routeNames.includes(name)) {
-        setActiveTab(name);
-      }
+      switchTo(name);
     },
     goBack(): void {
       // No-op for tab navigators — use the outer stack navigator's goBack if needed.
@@ -148,22 +134,15 @@ function buildTabHelpers<TRoutes extends Record<string, unknown>>(
     reset(state): void {
       const targetRoute = state.routes[state.index];
 
-      if (targetRoute && routeNames.includes(targetRoute.name)) {
-        setActiveTab(targetRoute.name);
+      if (targetRoute) {
+        switchTo(targetRoute.name);
       }
     },
     setParams(): void {
       // Tab screens don't use stack-style params; this is a no-op.
     },
     getState(): NavigationState<TRoutes> {
-      return {
-        type: 'stack',
-        key: `tab-${activeTab as string}`,
-        routeNames,
-        routes: [{ key: activeTab, name: activeTab }],
-        index: 0,
-        stale: false,
-      };
+      return buildTabState<TRoutes>(routeNames, activeTab);
     },
   };
 }

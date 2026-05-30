@@ -1,4 +1,4 @@
-import { ItemAuxContext, ItemRenderer, Panel, Text, useExit, type JSX } from '@bedrock-core/ui';
+import { ItemAuxContext, ItemRenderer, Panel, Screen, TabButton, Text, useExit, useSetScreen, type JSX } from '@bedrock-core/ui';
 import { Button } from '@bedrock-core/ore-styled';
 import { createTabNavigator } from '@bedrock-core/navigation';
 import { ItemStack } from '@minecraft/server';
@@ -60,8 +60,8 @@ function InfoTab(): JSX.Element {
       </Panel>
       <Text>{'§7This tab has no items — only scroll content.'}</Text>
       <Text>{'§fInventory Screen demo:'}</Text>
-      <Text>{'§7• Left panel: tabs + item grid'}</Text>
-      <Text>{'§7• Right panel: vanilla inventory bindings'}</Text>
+      <Text>{'§7• Tab bar is supplied by the consumer (tabBar prop)'}</Text>
+      <Text>{'§7• Navigator owns active-tab state'}</Text>
       <Text>{'§7• Tab switching rerenders via navigation'}</Text>
       <Button>{'§aSome Action'}</Button>
       <Button variant={'secondary'}>{'§bAnother Action'}</Button>
@@ -76,9 +76,25 @@ const Tabs = createTabNavigator<InventoryRoutes>({
     Blocks: BlocksTab,
     Info: InfoTab,
   },
+  // No default tab bar — the consumer renders it from the live tab state.
+  tabBar: ({ state, navigation }) => (
+    <Panel flexDirection={'row'} height={20}>
+      {state.routeNames.map((name, i) => (
+        <TabButton
+          label={name}
+          active={i === state.index}
+          flexGrow={1}
+          onPress={(): void => { navigation.navigate(name); }}
+        />
+      ))}
+    </Panel>
+  ),
 });
 
 export function InventoryDemo(): JSX.Element {
+  // The screen declares its own layout — not the navigator's job.
+  useSetScreen(Screen.Inventory);
+
   return (
     <ItemAuxContext value={itemAuxMap}>
       <Tabs.Navigator />

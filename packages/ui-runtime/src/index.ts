@@ -41,8 +41,8 @@ export {
   useContext,
   useReducer,
   usePlayer,
-  useScreenType,
   useScreen,
+  useSetScreen,
   useEvent,
   useExit,
 } from './hooks';

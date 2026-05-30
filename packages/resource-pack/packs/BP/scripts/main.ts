@@ -13,8 +13,8 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
   }
 
   if (block.typeId === MinecraftBlockTypes.StoneButton) {
-    // Stone button → main app navigator (Home → all demos with back buttons).
-    // Scroll is the baseline; inventory/fixed demos override per-build via useScreenType.
+    // Stone button → demo hub (Home → all demos). Scroll is the baseline;
+    // the inventory/fixed demos declare their own layout via useSetScreen.
     render(App, source, Screen.Scroll);
   }
 

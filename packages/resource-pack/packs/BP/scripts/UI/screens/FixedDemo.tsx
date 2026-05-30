@@ -1,4 +1,4 @@
-import { ItemAuxContext, ItemRenderer, Panel, Text, useExit, useScreenType, type JSX } from '@bedrock-core/ui';
+import { ItemAuxContext, ItemRenderer, Panel, Screen, Text, useExit, useSetScreen, type JSX } from '@bedrock-core/ui';
 import { Button } from '@bedrock-core/ore-styled';
 import { ItemStack } from '@minecraft/server';
 import { MinecraftItemTypes } from '@minecraft/vanilla-data';
@@ -36,8 +36,8 @@ function FixedContent(): JSX.Element {
 }
 
 export function FixedDemo(): JSX.Element {
-  // Override the render baseline to the fixed (non-scrolling) layout for this build.
-  useScreenType('fixed');
+  // The screen declares its own layout — not the navigator's job.
+  useSetScreen(Screen.Fixed);
 
   return (
     <ItemAuxContext value={itemAuxMap}>

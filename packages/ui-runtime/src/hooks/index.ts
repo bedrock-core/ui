@@ -4,7 +4,7 @@ export { useRef } from './useRef';
 export { useContext } from './useContext';
 export { useReducer } from './useReducer';
 export { usePlayer } from './usePlayer';
-export { useScreenType } from './useScreenType';
 export { useScreen } from './useScreen';
+export { useSetScreen } from './useSetScreen';
 export { useEvent, EventSignal } from './useEvent';
 export { useExit } from './useExit';
