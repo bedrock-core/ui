@@ -111,7 +111,7 @@ render(element, player) → buildTree() → present() → [user sees form] → e
 
 **Payload Structure:**
 ```
-bcuiv0004 + [type field] + [control fields] + [reserved] + [component-specific fields]
+bcuiv0005 + [type field] + [control fields] + [reserved] + [component-specific fields]
  └─ 9 chars (header)
 ```
 
@@ -131,14 +131,14 @@ Reserved:  Variable (no prefix/marker for easier JSON UI skipping)
 
 **Constants (never change):**
 ```ts
-const PROTOCOL_HEADER = 'bcuiv0004';    // 9 chars
+const PROTOCOL_HEADER = 'bcuiv0005';    // 9 chars
 const PAD_CHAR = ';';                  // Only padding char
 const FIELD_MARKERS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_';
-const VERSION = 'v0004';               // Only update with migrations
+const VERSION = 'v0005';               // Only update with migrations
 ```
 
 **Byte Allocation Map (1024-byte control block):**
-- [0-8]: Protocol header (9 bytes: "bcuiv0003")
+- [0-8]: Protocol header (9 bytes: "bcuiv0005")
 - [9-91]: Type field (string, 83 bytes)
 - [92-174]: Width (number, 83 bytes)
 - [175-257]: Height (number, 83 bytes)
@@ -149,6 +149,21 @@ const VERSION = 'v0004';               // Only update with migrations
 - [440-522]: Background (string, 83 bytes)
 - [523-1023]: Reserved for future (501 bytes)
 - [1024+]: Component-specific data per type
+
+### Title Metadata (Screen Selection)
+
+The protocol carries **two distinct payloads**: each form-button *label* holds a component's control block (above), while the form *title* (`#title_text`) holds screen-level metadata produced by `serializeTitleMetadata()` (`serializer.ts`). The title selects which Resource Pack screen layout mounts:
+
+```
+bcuiv0005 + [screen type: string, 83 bytes] + [content height: number, 83 bytes]   // 175 bytes total
+ └─ 9 chars (header)        └─ 'scroll' | 'inventory' | 'fixed'   └─ root height for scroll sizing
+```
+
+- **Screen type is field 0** (every screen reads it to route); **height is field 1** (only the scrolling layouts use it).
+- `core-ui/common/screen_container.json` deserializes it: strip the 9-byte header, slice the 83-byte screen-type field, extract the value, then route visibility — `#screen_type = 'inventory'` → inventory, `= 'fixed'` → fixed, else scroll.
+- Scrolling layouts (`core_ui_screens.scroll`, inventory content scroll) **skip** the screen-type field to reach the height field for `#size_binding_y`.
+- No bcui guard is needed inside `screen_container`; `server_form.json` only mounts it for forms whose title carries the header (collapses to `0px` otherwise).
+- The screen type originates from the `render(root, player, screen)` baseline (`Screen.Scroll | Inventory | Fixed`), overridable per-build by the `useSetScreen(screen)` hook — never by navigators.
 
 ### withControl() Function
 
@@ -282,7 +297,7 @@ test('panel serialization', () => {
     width: 100,
     height: 50,
   });
-  expect(payload).toMatch(/^bcuiv0004s:panel/);  // Header + type
+  expect(payload).toMatch(/^bcuiv0005s:panel/);  // Header + type
   expect(payload.length).toBeGreaterThanOrEqual(92);  // At least header + type
 });
 ```

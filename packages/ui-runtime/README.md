@@ -91,7 +91,7 @@ export const Panel: FunctionComponent<PanelProps> = ({ children, ...rest }: Pane
 
 Defined in `src/core/serializer.ts`.
 
-Payload always starts with a 9-character header: `bcui` + `vXXXX` (e.g., `bcuiv0004`). Decoders must skip these first 9 chars before field slicing.
+Payload always starts with a 9-character header: `bcui` + `vXXXX` (e.g., `bcuiv0005`). Decoders must skip these first 9 chars before field slicing.
 
 Each field is composed of three conceptual parts concatenated in this order:
 
@@ -165,7 +165,7 @@ Generic template (JSON UI binding entries) — copy & replace placeholders:
 
 ### Base Control Properties Deserialization Order
 
-All components inherit these base control properties, which are deserialized in this exact order after the 9-byte protocol header (`bcuiv0004`):
+All components inherit these base control properties, which are deserialized in this exact order after the 9-byte protocol header (`bcuiv0005`):
 
 ```text
 Field 0: type (string, 83 bytes)       - component type identifier
@@ -182,6 +182,26 @@ Total control block: 1024 bytes (9 + 83 + (5×83) + (2×8) + 83 + 501)
 ```
 
 **Component-specific properties** are appended after the reserved block.
+
+### Title Metadata (Screen Selection)
+
+Two distinct payloads share the protocol. Each **form button label** carries a component's control block (above), while the **form title** (`#title_text`) carries screen-level metadata. The title is produced by `serializeTitleMetadata()` and selects which Resource Pack screen layout to mount:
+
+| Field  | Type   | Bytes | Purpose |
+|--------|--------|-------|---------|
+| header | —      | 9     | `bcuiv0005` protocol header |
+| 0      | string | 83    | screen type: `scroll` \| `inventory` \| `fixed` |
+| 1      | number | 83    | root content height (used to size the scroll container) |
+
+Total: **175 bytes**. The screen type comes first because **every** screen reads it to route; the height comes second because only the scrolling layouts need it.
+
+Deserialization (`core-ui/common/screen_container.json`):
+
+1. Bind `#title_text`, strip the 9-byte header → `#rem_after_header_sc`.
+2. Slice the 83-byte screen-type field and extract its value (drop the `s:` prefix + `;` padding) → `#screen_type`.
+3. Route by comparison: `#screen_type = 'inventory'` → inventory layout, `= 'fixed'` → fixed layout, otherwise → scroll layout.
+
+Scrolling layouts (`core_ui_screens.scroll` and the inventory content scroll) additionally **skip** the screen-type field to reach the height field, then bind it to `#size_binding_y`. No protocol guard is needed inside `screen_container` — `server_form.json` only mounts it for forms whose title carries the header (it collapses the container to `0px` otherwise).
 
 ### Decoding Rules & Tips
 

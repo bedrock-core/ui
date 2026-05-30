@@ -15,16 +15,16 @@ export const FIELD_MARKERS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmn
 export const PAD_CHAR = ';';
 
 // Protocol version tag (format: 'v' + 4 hex digits)
-// e.g., 'bcuiv0004'
+// e.g., 'bcuiv0005'
 // Increment when making backward-incompatible changes to the payload layout.
-export const VERSION = 'v0004';
+export const VERSION = 'v0005';
 export const PROTOCOL_HEADER = `bcui${VERSION}`;
 export const PROTOCOL_HEADER_LENGTH = 9; // bytes, all characters are single-byte ASCII
 
 // Public protocol constants (exported for tests and decoders)
 export const TYPE_WIDTH = {
   s: 80,
-  n: 80, // Expanded from 24 to match string width
+  n: 80,
   b: 5,
   r: 0, // variable
 };
@@ -246,39 +246,38 @@ export function serializeProps({ type, ...props }: SerializableProps & { type: s
 }
 
 /**
- * Encode a boolean as an 8-byte field: 'b:' prefix (2) + value padded to
- * TYPE_WIDTH.b (5) + marker (1). Matches the boolean layout produced by
+ * Encode a string as an 83-byte field: 's:' prefix (2) + value padded to
+ * TYPE_WIDTH.s (80) + marker (1). Matches the string layout produced by
  * serializeProps so the RP can parse it with the same fixed-width slicing.
  */
-function serializeBoolField(value: boolean, marker: string): string {
-  const raw = value ? 'true' : 'false';
-  const padded = raw + PAD_CHAR.repeat(TYPE_WIDTH.b - raw.length);
+function serializeStringField(value: string, marker: string): string {
+  const padded = value + PAD_CHAR.repeat(TYPE_WIDTH.s - value.length);
 
-  return `${TYPE_PREFIX.b}:${padded}${marker}`;
+  return `${TYPE_PREFIX.s}:${padded}${marker}`;
 }
 
 /**
- * Serialize the form title metadata containing the root content height and screen type.
- * Layout: PROTOCOL_HEADER (9) + n:contentHeight (83) + b:isInventory (8) + b:isFixed (8) = 108 bytes total.
+ * Serialize the form title metadata containing the screen type and root content height.
+ * Layout: PROTOCOL_HEADER (9) + s:screenType (83) + n:contentHeight (83) = 175 bytes total.
  * The RP reads #title_text to determine which screen layout to activate and to size the scroll panel.
  *
- * isInventory and isFixed are mutually exclusive; both false means the scroll form.
- * The isFixed field is appended at the tail, so existing field offsets are unchanged and
- * older RP readers that only parse height/isInventory continue to work without a version bump.
+ * Screen type comes first because every screen reads it; the height comes second because
+ * only some screens (the scrolling ones) need it. The screen type is encoded as a string
+ * ('scroll' | 'inventory' | 'fixed') so adding layouts needs no new fields. Changing this
+ * layout is backward-incompatible — bump VERSION.
  *
  * @param contentHeight - Root panel computed height in pixels
  * @param screenType - Which RP layout to activate (scroll: scrolling form; inventory: two-panel layout; fixed: non-scrolling layout)
  * @returns Full title string for form.title()
  */
 export function serializeTitleMetadata(contentHeight: number, screenType: ScreenType = 'scroll'): string {
+  // Field 0: screen type string field — 'scroll' | 'inventory' | 'fixed' (83 bytes)
+  const screenField = serializeStringField(screenType, FIELD_MARKERS[0]);
+
+  // Field 1: number field — 'n:' prefix (2) + value padded to TYPE_WIDTH.n (80) + marker (1) = 83 bytes
   const rawStr = Math.round(contentHeight).toString();
-  // Field 0: number field — 'n:' prefix (2) + value padded to TYPE_WIDTH.n (80) + marker (1) = 83 bytes
   const heightPadded = rawStr + PAD_CHAR.repeat(TYPE_WIDTH.n - rawStr.length);
-  const heightField = `${TYPE_PREFIX.n}:${heightPadded}${FIELD_MARKERS[0]}`;
+  const heightField = `${TYPE_PREFIX.n}:${heightPadded}${FIELD_MARKERS[1]}`;
 
-  // Field 1: isInventory bool — Field 2: isFixed bool (each 8 bytes).
-  const inventoryField = serializeBoolField(screenType === 'inventory', FIELD_MARKERS[1]);
-  const fixedField = serializeBoolField(screenType === 'fixed', FIELD_MARKERS[2]);
-
-  return PROTOCOL_HEADER + heightField + inventoryField + fixedField;
+  return PROTOCOL_HEADER + screenField + heightField;
 }

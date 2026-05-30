@@ -28,69 +28,38 @@
 				"target_property_name": "#rem_after_header_sc"
 			},
 			{
-				/* Skip contentHeight field (83 bytes) to reach isInventory bool field */
+				/* Screen type is the first field after the header (83 bytes): 's:' + value + padding + marker */
 				"binding_type": "view",
 				"source_property_name": "('%.83s' * #rem_after_header_sc)",
-				"target_property_name": "#raw_height_sc"
+				"target_property_name": "#raw_screen_type"
+			},
+			{
+				/* Extract the value: drop the 's:' prefix and the ';' padding */
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_screen_type) - ('%.2s' * #raw_screen_type) - ';')",
+				"target_property_name": "#screen_type"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(#rem_after_header_sc - #raw_height_sc)",
-				"target_property_name": "#rem_after_height_sc"
-			},
-			{
-				/* Read the 8-byte bool field: 'b:true;1' = inventory, 'b:false1' = default */
-				"binding_type": "view",
-				"source_property_name": "('%.8s' * #rem_after_height_sc)",
-				"target_property_name": "#raw_is_inventory"
-			},
-			{
-				/* is_inventory = true when field equals 'b:true;1' */
-				"binding_type": "view",
-				"source_property_name": "(not ((#raw_is_inventory - 'b:true;1') = #raw_is_inventory))",
+				"source_property_name": "(#screen_type = 'inventory')",
 				"target_property_name": "#is_inventory"
 			},
 			{
-				/* Advance past the isInventory field to reach the isFixed bool field */
 				"binding_type": "view",
-				"source_property_name": "(#rem_after_height_sc - #raw_is_inventory)",
-				"target_property_name": "#rem_after_inventory_sc"
-			},
-			{
-				/* Read the next 8-byte bool field: 'b:true;2' = fixed, 'b:false2' = not fixed */
-				"binding_type": "view",
-				"source_property_name": "('%.8s' * #rem_after_inventory_sc)",
-				"target_property_name": "#raw_is_fixed"
-			},
-			{
-				/* is_fixed = true when field equals 'b:true;2' */
-				"binding_type": "view",
-				"source_property_name": "(not ((#raw_is_fixed - 'b:true;2') = #raw_is_fixed))",
+				"source_property_name": "(#screen_type = 'fixed')",
 				"target_property_name": "#is_fixed"
 			}
 		],
 		"controls": [
 			{
-				"scrolling_panel@common.scrolling_panel": {
-					"layer": 999,
-					"anchor_from": "top_left",
-					"anchor_to": "top_left",
-					"size": [
-						"328px",
-						"98%"
-					],
-					"offset": [
-						0,
-						"1%"
-					],
-					"$protocol_header": "bcuiv0004",
-					"$show_background": false,
-					"$scrolling_content": "core_ui_common.form_scrolling_content",
+				/* Scroll form — visible when the screen is neither inventory nor fixed.
+				   No protocol guard needed: server_form only shows screen_container for bcui forms. */
+				"scroll_root@core_ui_screens.scroll": {
 					"bindings": [
 						{
 							"binding_type": "view",
 							"source_control_name": "screen_container",
-							"source_property_name": "((not ((#title_text - $protocol_header) = #title_text)) and (not #is_inventory) and (not #is_fixed))",
+							"source_property_name": "((not #is_inventory) and (not #is_fixed))",
 							"target_property_name": "#visible"
 						}
 					]
@@ -109,7 +78,7 @@
 				}
 			},
 			{
-				"fixed_root@fixed_screen.content": {
+				"fixed_root@core_ui_screens.fixed": {
 					"bindings": [
 						{
 							"binding_type": "view",
@@ -121,81 +90,13 @@
 				}
 			},
 			{
-				"inventory_root@inventory_screen.root": {
+				"inventory_root@core_ui_screens.inventory": {
 					"bindings": [
 						{
 							"binding_type": "view",
 							"source_control_name": "screen_container",
 							"source_property_name": "#is_inventory",
 							"target_property_name": "#visible"
-						}
-					]
-				}
-			}
-		]
-	},
-	"form_scrolling_content": {
-		"type": "panel",
-		"size": [
-			"328px",
-			"100%c"
-		],
-		"anchor_from": "top_left",
-		"anchor_to": "top_left",
-		"controls": [
-			{
-				"generated_contents": {
-					"type": "collection_panel",
-					"size": [
-						"328px",
-						"5000px"
-					],
-					"offset": [
-						"-50%",
-						"-50%"
-					],
-					"anchor_from": "top_left",
-					"anchor_to": "top_left",
-					"property_bag": {
-						"#size_binding_y": 0.0
-					},
-					"factory": {
-						"name": "buttons",
-						"control_ids": {
-							"button": "@core_ui_common.button_router",
-							"label": "@core_ui_common.label_router",
-							"header": "@core_ui_common.unused",
-							"divider": "@core_ui_common.unused"
-						}
-					},
-					"collection_name": "form_buttons",
-					"bindings": [
-						{
-							"binding_name": "#form_button_contents",
-							"binding_name_override": "#collection_length"
-						},
-						{
-							"binding_name": "#title_text"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.9s' * #title_text)",
-							"target_property_name": "#protocol_header"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(#title_text - #protocol_header)",
-							"target_property_name": "#rem_after_header"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_after_header)",
-							"target_property_name": "#raw_title_height"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "((('%.82s' * #raw_title_height) - ('%.2s' * #raw_title_height) - ';'))",
-							"target_property_name": "#size_binding_y"
 						}
 					]
 				}

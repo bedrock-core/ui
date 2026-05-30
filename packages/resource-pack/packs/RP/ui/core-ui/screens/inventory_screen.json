@@ -1,9 +1,8 @@
 {
-	"namespace": "inventory_screen",
-
+	"namespace": "core_ui_screens",
 	// ─── Root ──────────────────────────────────────────────────────────────────
 	// Two-panel container. Referenced from screen_container when isInventory=true.
-	"root": {
+	"inventory": {
 		"type": "panel",
 		"size": [
 			"100%",
@@ -15,16 +14,18 @@
 			{
 				"bg": {
 					"type": "image",
-					"size": [ "100%", "100%" ],
+					"size": [
+						"100%",
+						"100%"
+					],
 					"texture": "textures/ui/dialog_background_opaque"
 				}
 			},
 			{
-				"left@inventory_screen.left_panel": {}
+				"left@core_ui_screens.left_panel": {}
 			}
 		]
 	},
-
 	// ─── Left Panel ────────────────────────────────────────────────────────────
 	// Same pattern as grid_test: item grid at layer 0 (not in a scroll),
 	// content scroll for non-items at layer 2 offset below tab bar,
@@ -71,11 +72,11 @@
 						20
 					],
 					"$show_background": false,
-					"$scrolling_content": "inventory_screen.content_scrolling_content"
+					"$scrolling_content": "core_ui_screens.content_scrolling_content"
 				}
 			},
 			{
-				"tab_bar@inventory_screen.tab_bar": {
+				"tab_bar@core_ui_screens.tab_bar": {
 					"layer": 1001,
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
@@ -87,7 +88,6 @@
 			}
 		]
 	},
-
 	// ─── Tab Bar ───────────────────────────────────────────────────────────────
 	// Fixed 20px strip at top of left panel. Renders only tab_button elements
 	// from form_buttons at their serialised x/y positions. Other types → unused.
@@ -116,7 +116,7 @@
 					"factory": {
 						"name": "tab_bar_items",
 						"control_ids": {
-							"tab_button": "@inventory_screen.tab_button_router",
+							"tab_button": "@core_ui_screens.tab_button_router",
 							"button": "@core_ui_common.unused",
 							"label": "@core_ui_common.unused",
 							"text": "@core_ui_common.unused",
@@ -135,7 +135,6 @@
 			}
 		]
 	},
-
 	// ─── Tab Button Router ─────────────────────────────────────────────────────
 	// 1×1 wrapper (same pattern as button_router/label_router).
 	"tab_button_router": {
@@ -146,11 +145,10 @@
 		],
 		"controls": [
 			{
-				"btn@inventory_screen.tab_button_component": {}
+				"btn@core_ui_screens.tab_button_component": {}
 			}
 		]
 	},
-
 	// ─── Tab Button Component ──────────────────────────────────────────────────
 	// Parses common control fields + label string from serialised data.
 	// Visible only when #type = 'tab_button'.
@@ -385,12 +383,18 @@
 			{
 				"default": {
 					"type": "panel",
-					"size": ["100%", "100%"],
+					"size": [
+						"100%",
+						"100%"
+					],
 					"controls": [
 						{
 							"bg": {
 								"type": "image",
-								"size": ["100%", "100%"],
+								"size": [
+									"100%",
+									"100%"
+								],
 								"texture": "#background",
 								"visible": "#bg_visible",
 								"bindings": [
@@ -409,8 +413,15 @@
 								"text": "#label",
 								"font_type": "default",
 								"font_size": "small",
-								"size": ["100%", "100%"],
-								"color": [1, 1, 1],
+								"size": [
+									"100%",
+									"100%"
+								],
+								"color": [
+									1,
+									1,
+									1
+								],
 								"shadow": true,
 								"bindings": [
 									{
@@ -425,18 +436,28 @@
 			{
 				"hover": {
 					"type": "panel",
-					"size": ["100%", "100%"],
+					"size": [
+						"100%",
+						"100%"
+					],
 					"controls": [
 						{
 							"bg": {
 								"type": "image",
-								"size": ["100%", "100%"],
+								"size": [
+									"100%",
+									"100%"
+								],
 								"texture": "#background",
 								"visible": "#bg_visible",
 								"alpha": 0.8,
 								"bindings": [
-									{ "binding_name": "#background" },
-									{ "binding_name": "#bg_visible" }
+									{
+										"binding_name": "#background"
+									},
+									{
+										"binding_name": "#bg_visible"
+									}
 								]
 							}
 						},
@@ -446,11 +467,20 @@
 								"text": "#label",
 								"font_type": "default",
 								"font_size": "small",
-								"size": ["100%", "100%"],
-								"color": [1, 1, 0],
+								"size": [
+									"100%",
+									"100%"
+								],
+								"color": [
+									1,
+									1,
+									0
+								],
 								"shadow": true,
 								"bindings": [
-									{ "binding_name": "#label" }
+									{
+										"binding_name": "#label"
+									}
 								]
 							}
 						}
@@ -460,17 +490,27 @@
 			{
 				"pressed": {
 					"type": "panel",
-					"size": ["100%", "100%"],
+					"size": [
+						"100%",
+						"100%"
+					],
 					"controls": [
 						{
 							"bg": {
 								"type": "image",
-								"size": ["100%", "100%"],
+								"size": [
+									"100%",
+									"100%"
+								],
 								"texture": "#background",
 								"visible": "#bg_visible",
 								"bindings": [
-									{ "binding_name": "#background" },
-									{ "binding_name": "#bg_visible" }
+									{
+										"binding_name": "#background"
+									},
+									{
+										"binding_name": "#bg_visible"
+									}
 								]
 							}
 						},
@@ -480,11 +520,20 @@
 								"text": "#label",
 								"font_type": "default",
 								"font_size": "small",
-								"size": ["100%", "100%"],
-								"color": [1, 1, 0],
+								"size": [
+									"100%",
+									"100%"
+								],
+								"color": [
+									1,
+									1,
+									0
+								],
 								"shadow": true,
 								"bindings": [
-									{ "binding_name": "#label" }
+									{
+										"binding_name": "#label"
+									}
 								]
 							}
 						}
@@ -493,7 +542,6 @@
 			}
 		]
 	},
-
 	// ─── Content Scrolling Content ─────────────────────────────────────────────
 	// Content area for non-item, non-tab-button form elements.
 	// All such elements are absolutely positioned (x/y from serialised data).
@@ -553,8 +601,19 @@
 							"target_property_name": "#rem_after_header"
 						},
 						{
+							/* Skip the screen-type field (83 bytes) to reach the height field */
 							"binding_type": "view",
 							"source_property_name": "('%.83s' * #rem_after_header)",
+							"target_property_name": "#raw_screen_type"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#rem_after_header - #raw_screen_type)",
+							"target_property_name": "#rem_after_screen"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_after_screen)",
 							"target_property_name": "#raw_title_height"
 						},
 						{
@@ -567,5 +626,4 @@
 			}
 		]
 	}
-
 }

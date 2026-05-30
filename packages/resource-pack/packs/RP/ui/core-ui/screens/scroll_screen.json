@@ -1,0 +1,104 @@
+{
+	"namespace": "core_ui_screens",
+
+	// ─── Root ──────────────────────────────────────────────────────────────────
+	// Default scrolling form. Referenced from screen_container when the screen is
+	// neither inventory nor fixed. Scrolls the form_buttons content (buttons/labels).
+	"scroll@common.scrolling_panel": {
+		"layer": 999,
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"size": [
+			"328px",
+			"98%"
+		],
+		"offset": [
+			0,
+			"1%"
+		],
+		"$show_background": false,
+		"$scrolling_content": "core_ui_screens.form_scrolling_content"
+	},
+
+	// ─── Scrolling Content ───────────────────────────────────────────────────────
+	// Non-item form elements (buttons, labels), absolutely positioned and scrolled.
+	"form_scrolling_content": {
+		"type": "panel",
+		"size": [
+			"328px",
+			"100%c"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"controls": [
+			{
+				"generated_contents": {
+					"type": "collection_panel",
+					"size": [
+						"328px",
+						"5000px"
+					],
+					"offset": [
+						"-50%",
+						"-50%"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"property_bag": {
+						"#size_binding_y": 0.0
+					},
+					"factory": {
+						"name": "buttons",
+						"control_ids": {
+							"button": "@core_ui_common.button_router",
+							"label": "@core_ui_common.label_router",
+							"header": "@core_ui_common.unused",
+							"divider": "@core_ui_common.unused"
+						}
+					},
+					"collection_name": "form_buttons",
+					"bindings": [
+						{
+							"binding_name": "#form_button_contents",
+							"binding_name_override": "#collection_length"
+						},
+						{
+							"binding_name": "#title_text"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.9s' * #title_text)",
+							"target_property_name": "#protocol_header"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#title_text - #protocol_header)",
+							"target_property_name": "#rem_after_header"
+						},
+						{
+							/* Skip the screen-type field (83 bytes) to reach the height field */
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_after_header)",
+							"target_property_name": "#raw_screen_type"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#rem_after_header - #raw_screen_type)",
+							"target_property_name": "#rem_after_screen"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_after_screen)",
+							"target_property_name": "#raw_title_height"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "((('%.82s' * #raw_title_height) - ('%.2s' * #raw_title_height) - ';'))",
+							"target_property_name": "#size_binding_y"
+						}
+					]
+				}
+			}
+		]
+	}
+}

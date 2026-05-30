@@ -1,12 +1,12 @@
 {
-	"namespace": "fixed_screen",
+	"namespace": "core_ui_screens",
 
-	// ─── Content ───────────────────────────────────────────────────────────────
+	// ─── Root ──────────────────────────────────────────────────────────────────
 	// Fixed (non-scrolling) layout. Referenced from screen_container when isFixed=true.
 	// Buttons/labels are rendered here in a fixed collection; items are drawn by the
 	// shared grid_items overlay. Because nothing scrolls, both share one fixed
 	// coordinate space and stay aligned.
-	"content": {
+	"fixed": {
 		"type": "panel",
 		"size": [
 			"100%",
@@ -20,7 +20,7 @@
 					"type": "collection_panel",
 					"size": [
 						"100%",
-						5000
+						"100%"
 					],
 					"offset": [
 						"-50%",
@@ -33,8 +33,6 @@
 						"control_ids": {
 							"button": "@core_ui_common.button_router",
 							"label": "@core_ui_common.label_router",
-							"tab_button": "@core_ui_common.unused",
-							"item_renderer": "@core_ui_common.unused",
 							"header": "@core_ui_common.unused",
 							"divider": "@core_ui_common.unused"
 						}

@@ -1,7 +1,7 @@
 import type { Player } from '@minecraft/server';
 import type { FunctionComponent, JSX } from '../../jsx';
+import { DEFAULT_SCREEN, type ScreenDescriptor } from '../../screens';
 import { Logger, startInputLock } from '../../util';
-import type { ScreenDescriptor } from '../../screens';
 import { present } from './presenter';
 import { setBuildRunner, setPlayerRoot, setPlayerScreen, triggerCleanup } from './session';
 import { buildTree } from './tree';
@@ -9,7 +9,7 @@ import { buildTree } from './tree';
 export function render(
   root: JSX.Element | FunctionComponent,
   player: Player,
-  screen: ScreenDescriptor,
+  screen: ScreenDescriptor = DEFAULT_SCREEN,
 ): void {
   startInputLock(player);
 
