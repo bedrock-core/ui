@@ -10,10 +10,8 @@ export {
 
 // Components
 export { Button, type ButtonProps } from './Button';
-export { FixedScreen, type FixedScreenProps } from './FixedScreen';
 export { Fragment, type FragmentProps } from './Fragment';
 export { Image, type ImageProps } from './Image';
-export { InventoryScreen, type InventoryScreenProps } from './InventoryScreen';
 export { ItemRenderer, type ItemRendererProps } from './ItemRenderer';
 export { Panel, type PanelProps } from './Panel';
 export { TabButton, type TabButtonProps } from './TabButton';

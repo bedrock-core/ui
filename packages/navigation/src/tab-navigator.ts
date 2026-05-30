@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-type-assertion --
     Type assertions are required at the navigation context boundary (same pattern as context.ts). */
 
-import { useState, JSX, InventoryScreen, Panel, TabButton } from '@bedrock-core/ui-runtime';
+import { useState, useScreenType, JSX, Panel, TabButton } from '@bedrock-core/ui-runtime';
 import type {
   NavigationHelpers,
   NavigationState,
@@ -35,6 +35,10 @@ export function createTabNavigator<TRoutes extends Record<string, unknown>>(
   }
 
   function Navigator(): JSX.Element {
+    // A tab navigator drives the inventory RP layout (tab bar + item grid),
+    // so it self-declares its screen type regardless of the render baseline.
+    useScreenType('inventory');
+
     const effectiveInitialTab = initialRouteName ?? routeNames[0];
 
     const [activeTab, setActiveTab] = useState<Extract<keyof TRoutes, string>>(effectiveInitialTab);
@@ -47,7 +51,7 @@ export function createTabNavigator<TRoutes extends Record<string, unknown>>(
       type: 'stack',
       key: `tab-${activeTab as string}`,
       routeNames,
-      routes: [{ key: activeTab as string, name: activeTab as string }],
+      routes: [{ key: activeTab, name: activeTab }],
       index: 0,
       stale: false,
     };
@@ -67,10 +71,10 @@ export function createTabNavigator<TRoutes extends Record<string, unknown>>(
     };
 
     // Tab bar: one TabButton per route, equal width, 20px tall
-    const tabBarChildren: JSX.Element[] = routeNames.map((name) => ({
+    const tabBarChildren: JSX.Element[] = routeNames.map(name => ({
       type: TabButton as unknown as (props: Record<string, unknown>) => JSX.Element,
       props: {
-        label: name as string,
+        label: name,
         active: name === activeTab,
         flexGrow: 1,
         height: 20,
@@ -81,7 +85,7 @@ export function createTabNavigator<TRoutes extends Record<string, unknown>>(
     const tabBarPanel: JSX.Element = {
       type: Panel as unknown as (props: Record<string, unknown>) => JSX.Element,
       props: {
-        width: '100%' as unknown as number,
+        width: '100%',
         height: 20,
         flexDirection: 'row',
         children: tabBarChildren,
@@ -98,7 +102,7 @@ export function createTabNavigator<TRoutes extends Record<string, unknown>>(
     const contentPanel: JSX.Element = {
       type: Panel as unknown as (props: Record<string, unknown>) => JSX.Element,
       props: {
-        width: '100%' as unknown as number,
+        width: '100%',
         flexGrow: 1,
         children: contentChildren,
       },
@@ -107,25 +111,20 @@ export function createTabNavigator<TRoutes extends Record<string, unknown>>(
     const innerPanel: JSX.Element = {
       type: Panel as unknown as (props: Record<string, unknown>) => JSX.Element,
       props: {
-        width: '100%' as unknown as number,
-        height: '100%' as unknown as number,
+        width: '100%',
+        height: '100%',
         flexDirection: 'column',
         children: [tabBarPanel, contentPanel],
       },
     };
 
-    const withContext: JSX.Element = {
+    return {
       type: 'context-provider',
       props: {
         __context: NavigationContext,
-        value: contextValue as NavigationContextValue,
+        value: contextValue,
         children: innerPanel,
       },
-    };
-
-    return {
-      type: InventoryScreen as unknown as (props: Record<string, unknown>) => JSX.Element,
-      props: { children: withContext },
     };
   }
 
@@ -165,8 +164,8 @@ function buildTabHelpers<TRoutes extends Record<string, unknown>>(
     reset(state): void {
       const targetRoute = state.routes[state.index];
 
-      if (targetRoute && routeNames.includes(targetRoute.name as Extract<keyof TRoutes, string>)) {
-        setActiveTab(targetRoute.name as Extract<keyof TRoutes, string>);
+      if (targetRoute && routeNames.includes(targetRoute.name)) {
+        setActiveTab(targetRoute.name);
       }
     },
     setParams(): void {
@@ -177,7 +176,7 @@ function buildTabHelpers<TRoutes extends Record<string, unknown>>(
         type: 'stack',
         key: `tab-${activeTab as string}`,
         routeNames,
-        routes: [{ key: activeTab as string, name: activeTab as string }],
+        routes: [{ key: activeTab, name: activeTab }],
         index: 0,
         stale: false,
       };

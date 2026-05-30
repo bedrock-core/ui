@@ -1,9 +1,7 @@
 import { ItemLockMode, ItemStack } from '@minecraft/server';
-import { useContext } from '../hooks';
+import { useContext, useScreen } from '../hooks';
 import { FunctionComponent, JSX } from '../jsx';
 import { ItemAuxContext } from '../data/ItemAuxContext';
-import { InventoryScreenContext } from '../data/InventoryScreenContext';
-import { FixedScreenContext } from '../data/FixedScreenContext';
 import { ItemAuxError } from '../core/types';
 import { ControlProps, withControl } from './control';
 
@@ -20,7 +18,7 @@ export const ItemRenderer: FunctionComponent<ItemRendererProps> = ({
   ...rest
 }: ItemRendererProps): JSX.Element => {
   const auxMap = useContext(ItemAuxContext);
-  const allowed = useContext(InventoryScreenContext) || useContext(FixedScreenContext);
+  const screen = useScreen();
 
   if (auxMap === null) {
     throw new ItemAuxError(
@@ -29,10 +27,11 @@ export const ItemRenderer: FunctionComponent<ItemRendererProps> = ({
     );
   }
 
-  if (!allowed) {
+  if (!screen.allowsItems) {
     throw new ItemAuxError(
-      'ItemRenderer can only be used inside an item-capable screen. '
-      + 'Wrap your UI in <InventoryScreen> (or use createTabNavigator) or <FixedScreen>.',
+      `ItemRenderer can only be used on an item-capable screen, but the current screen is '${screen.type}'. `
+      + 'Render with Screen.Inventory (or createTabNavigator) or Screen.Fixed, '
+      + 'or call useScreenType to override the screen for this build.',
     );
   }
 

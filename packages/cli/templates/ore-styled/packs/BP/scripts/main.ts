@@ -1,4 +1,4 @@
-import { render } from '@bedrock-core/ui';
+import { render, Screen } from '@bedrock-core/ui';
 import { ButtonPushAfterEvent, Entity, Player, world } from '@minecraft/server';
 import { MinecraftEntityTypes } from '@minecraft/vanilla-data';
 import { Example } from './UI/Example';
@@ -11,5 +11,5 @@ world.afterEvents.buttonPush.subscribe(({ source }: ButtonPushAfterEvent): void 
   }
 
   // Present the Example UI for this player
-  render(Example, source);
+  render(Example, source, Screen.Scroll);
 });

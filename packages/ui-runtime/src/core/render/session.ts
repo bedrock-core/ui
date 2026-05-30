@@ -1,10 +1,11 @@
 import type { Player } from '@minecraft/server';
-import type { JSX } from '../../jsx';
-import { getFibersForPlayer } from '../fabric';
-import { Logger, stopInputLock } from '../../util';
-import { cleanupComponentTree } from './tree';
 import { uiManager } from '@minecraft/server-ui';
-import type { ScreenType } from '../serializer';
+import type { JSX } from '../../jsx';
+import { DEFAULT_SCREEN, SCREEN_BY_TYPE, type ScreenDescriptor } from '../../screens';
+import { Logger, stopInputLock } from '../../util';
+import { getFibersForPlayer } from '../fabric';
+import type { ScreenType } from '../types';
+import { cleanupComponentTree } from './tree';
 
 /**
  * Lightweight per-player render session state for background logic passes.
@@ -15,7 +16,7 @@ interface SessionState {
   runBuild?: () => void;
   pending: boolean;
   suppress: boolean;
-  screenType: ScreenType;
+  screen: ScreenDescriptor;
 }
 
 const sessions = new Map<string, SessionState>();
@@ -25,7 +26,7 @@ function getOrCreate(player: Player): SessionState {
   let session = sessions.get(id);
 
   if (!session) {
-    session = { pending: false, suppress: false, screenType: 'default' };
+    session = { pending: false, suppress: false, screen: DEFAULT_SCREEN };
 
     sessions.set(id, session);
   }
@@ -60,15 +61,20 @@ export function clearPlayerRoot(player: Player): void {
   session.runBuild = undefined;
   session.pending = false;
   session.suppress = false;
-  session.screenType = 'default';
+  session.screen = DEFAULT_SCREEN;
 }
 
+export function setPlayerScreen(player: Player, screen: ScreenDescriptor): void {
+  getOrCreate(player).screen = screen;
+}
+
+export function getPlayerScreen(player: Player): ScreenDescriptor {
+  return sessions.get(player.id)?.screen ?? DEFAULT_SCREEN;
+}
+
+/** Override the current screen by bare type (used by the useScreenType hook). */
 export function setPlayerScreenType(player: Player, type: ScreenType): void {
-  getOrCreate(player).screenType = type;
-}
-
-export function getPlayerScreenType(player: Player): ScreenType {
-  return sessions.get(player.id)?.screenType ?? 'default';
+  getOrCreate(player).screen = SCREEN_BY_TYPE[type];
 }
 
 /**

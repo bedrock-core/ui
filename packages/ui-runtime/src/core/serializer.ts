@@ -1,7 +1,7 @@
 import { ActionFormData } from '@minecraft/server-ui';
 import { JSX } from '../jsx';
 import { isElement, isFunction, isSerializablePrimitive } from './guards';
-import { SerializablePrimitive, SerializableProps, SerializationContext, SerializationError } from './types';
+import { ScreenType, SerializablePrimitive, SerializableProps, SerializationContext, SerializationError } from './types';
 import { TRANSPARENT_TYPES, WRITERS } from './writers';
 
 /**
@@ -245,8 +245,6 @@ export function serializeProps({ type, ...props }: SerializableProps & { type: s
   return [result, finalBytes];
 }
 
-export type ScreenType = 'default' | 'inventory' | 'fixed';
-
 /**
  * Encode a boolean as an 8-byte field: 'b:' prefix (2) + value padded to
  * TYPE_WIDTH.b (5) + marker (1). Matches the boolean layout produced by
@@ -264,15 +262,15 @@ function serializeBoolField(value: boolean, marker: string): string {
  * Layout: PROTOCOL_HEADER (9) + n:contentHeight (83) + b:isInventory (8) + b:isFixed (8) = 108 bytes total.
  * The RP reads #title_text to determine which screen layout to activate and to size the scroll panel.
  *
- * isInventory and isFixed are mutually exclusive; both false means the default scroll form.
+ * isInventory and isFixed are mutually exclusive; both false means the scroll form.
  * The isFixed field is appended at the tail, so existing field offsets are unchanged and
  * older RP readers that only parse height/isInventory continue to work without a version bump.
  *
  * @param contentHeight - Root panel computed height in pixels
- * @param screenType - Which RP layout to activate (default: scroll form; inventory: two-panel layout; fixed: non-scrolling layout)
+ * @param screenType - Which RP layout to activate (scroll: scrolling form; inventory: two-panel layout; fixed: non-scrolling layout)
  * @returns Full title string for form.title()
  */
-export function serializeTitleMetadata(contentHeight: number, screenType: ScreenType = 'default'): string {
+export function serializeTitleMetadata(contentHeight: number, screenType: ScreenType = 'scroll'): string {
   const rawStr = Math.round(contentHeight).toString();
   // Field 0: number field — 'n:' prefix (2) + value padded to TYPE_WIDTH.n (80) + marker (1) = 83 bytes
   const heightPadded = rawStr + PAD_CHAR.repeat(TYPE_WIDTH.n - rawStr.length);

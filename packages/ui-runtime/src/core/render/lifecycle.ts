@@ -1,13 +1,15 @@
 import type { Player } from '@minecraft/server';
 import type { FunctionComponent, JSX } from '../../jsx';
 import { Logger, startInputLock } from '../../util';
+import type { ScreenDescriptor } from '../../screens';
 import { present } from './presenter';
-import { setBuildRunner, setPlayerRoot, setPlayerScreenType, triggerCleanup } from './session';
+import { setBuildRunner, setPlayerRoot, setPlayerScreen, triggerCleanup } from './session';
 import { buildTree } from './tree';
 
 export function render(
   root: JSX.Element | FunctionComponent,
   player: Player,
+  screen: ScreenDescriptor,
 ): void {
   startInputLock(player);
 
@@ -17,9 +19,9 @@ export function render(
   // Register this player's session root and a background build runner
   setPlayerRoot(player, rootElement);
   setBuildRunner(player, () => {
-    // Reset screen type before each build so stale inventory state doesn't bleed
-    // through if the new tree omits useScreenType.
-    setPlayerScreenType(player, 'default');
+    // Reset to the render baseline before each build so a stale per-build
+    // override (useScreenType) doesn't bleed through if the new tree omits it.
+    setPlayerScreen(player, screen);
     buildTree(rootElement, player);
   });
 
@@ -27,9 +29,9 @@ export function render(
   const presentOnce = (): void => {
     let tree: JSX.Element;
 
-    // Reset screen type before each build so stale inventory state doesn't bleed
-    // through if the new tree omits useScreenType.
-    setPlayerScreenType(player, 'default');
+    // Reset to the render baseline before each build so a stale per-build
+    // override (useScreenType) doesn't bleed through if the new tree omits it.
+    setPlayerScreen(player, screen);
 
     try {
       tree = buildTree(rootElement, player);

@@ -1,9 +1,7 @@
 export {
   Button,
-  FixedScreen,
   Fragment,
   Image,
-  InventoryScreen,
   ItemRenderer,
   Panel,
   TabButton,
@@ -12,10 +10,8 @@ export {
 
 export type {
   ButtonProps,
-  FixedScreenProps,
   FragmentProps,
   ImageProps,
-  InventoryScreenProps,
   ItemRendererProps,
   PanelProps,
   TabButtonProps,
@@ -45,9 +41,14 @@ export {
   useContext,
   useReducer,
   usePlayer,
+  useScreenType,
+  useScreen,
   useEvent,
   useExit,
 } from './hooks';
+
+export { Screen } from './screens';
+export type { ScreenDescriptor, ScreenType } from './screens';
 
 export {
   render,
@@ -69,9 +70,6 @@ export type {
 
 export { ItemAuxContext } from './data/ItemAuxContext';
 export type { ItemAuxMap } from './data/ItemAuxMap';
-
-export { InventoryScreenContext } from './data/InventoryScreenContext';
-export { FixedScreenContext } from './data/FixedScreenContext';
 
 export { TranslationKeysContext } from './data/TranslationKeysContext';
 export type { TranslationKeysMap } from './data/TranslationKeysMap';

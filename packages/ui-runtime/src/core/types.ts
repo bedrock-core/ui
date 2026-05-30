@@ -1,5 +1,7 @@
 import { ActionFormData } from '@minecraft/server-ui';
 
+export type ScreenType = 'scroll' | 'inventory' | 'fixed';
+
 export interface ReservedBytes { bytes: number }
 
 export type SerializablePrimitive = string | number | boolean | ReservedBytes;

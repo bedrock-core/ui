@@ -1,4 +1,4 @@
-import { render } from '@bedrock-core/ui';
+import { render, Screen } from '@bedrock-core/ui';
 import { ButtonPushAfterEvent, Player, world } from '@minecraft/server';
 import { MinecraftBlockTypes, MinecraftEntityTypes } from '@minecraft/vanilla-data';
 import { App } from './UI/App';
@@ -13,8 +13,9 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
   }
 
   if (block.typeId === MinecraftBlockTypes.StoneButton) {
-    // Stone button → main app navigator (Home → all demos with back buttons)
-    render(App, source);
+    // Stone button → main app navigator (Home → all demos with back buttons).
+    // Scroll is the baseline; inventory/fixed demos override per-build via useScreenType.
+    render(App, source, Screen.Scroll);
   }
 
   if (block.typeId === MinecraftBlockTypes.CrimsonButton) {
