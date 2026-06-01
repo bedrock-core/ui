@@ -1,6 +1,5 @@
 {
 	"namespace": "core_ui_components",
-
 	// ─── Item layer ──────────────────────────────────────────────────────────────
 	// A grid BOUND TO form_buttons (the context beacon.item_renderer needs to draw
 	// item icons), but laid out so cells don't flow by index: every cell is zero-size
@@ -13,6 +12,7 @@
 			"100%",
 			"100%"
 		],
+		"layer": 90,
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
 		"collection_name": "form_buttons",
@@ -22,7 +22,6 @@
 		],
 		"grid_item_template": "core_ui_components.item_cell"
 	},
-
 	// ─── Item cell ───────────────────────────────────────────────────────────────
 	// Zero-size, anchored-offset cell. Parses type / x / y / visible from the entry's
 	// serialized control block and shows beacon.item_renderer only for item entries.

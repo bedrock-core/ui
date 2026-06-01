@@ -6,6 +6,7 @@
 			0,
 			0
 		],
+		"layer": 50,
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
 		"use_anchored_offset": true,
