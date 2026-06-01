@@ -4,7 +4,6 @@ export {
   Image,
   ItemRenderer,
   Panel,
-  TabButton,
   Text,
 } from './components';
 
@@ -14,7 +13,6 @@ export type {
   ImageProps,
   ItemRendererProps,
   PanelProps,
-  TabButtonProps,
   TextProps,
   TextFont,
   TextOverflow,

@@ -387,7 +387,8 @@ export interface Route {
  * ```
  */
 export interface NavigationState<TRoutes extends Record<string, unknown> = Record<string, unknown>> {
-  type: 'stack' | 'tab';
+  /** Always `'stack'` for stack navigators. */
+  type: 'stack';
   /** Unique key for this navigator instance. */
   key: string;
   /** Ordered list of all possible route names registered in this navigator. */
@@ -427,67 +428,6 @@ export interface StackNavigatorOptions<TRoutes extends Record<string, unknown>> 
    * Defaults to the first key declared in `screens` if omitted.
    */
   initialRouteName?: Extract<keyof TRoutes, string>;
-}
-
-/**
- * Props passed to a tab navigator's `tabBar` render-prop. Mirrors React
- * Navigation: the bar reads `state.routes` / `state.index` to render a button
- * per tab and calls `navigation.navigate(name)` to switch the active tab.
- *
- * @example
- * ```tsx
- * tabBar: ({ state, navigation }) => (
- *   <Panel flexDirection="row" height={20}>
- *     {state.routes.map((route, i) => (
- *       <TabButton
- *         label={route.name}
- *         active={i === state.index}
- *         flexGrow={1}
- *         onPress={() => navigation.navigate(route.name)}
- *       />
- *     ))}
- *   </Panel>
- * )
- * ```
- */
-export interface TabBarProps<TRoutes extends Record<string, unknown> = Record<string, unknown>> {
-  /** Current tab navigator state (`type: 'tab'`); `routes` has one entry per tab. */
-  state: NavigationState<TRoutes>;
-  /** Navigation helpers — call `navigate(name)` to switch tabs. */
-  navigation: NavigationHelpers<TRoutes>;
-}
-
-/**
- * Options accepted by `createTabNavigator`. Same factory shape as
- * `StackNavigatorOptions` (screens map + optional initial route), plus a
- * required `tabBar` render-prop — the tab navigator ships no default tab bar.
- *
- * @example
- * ```tsx
- * type TabRoutes = {
- *   Items:     undefined;
- *   Equipment: undefined;
- * };
- *
- * const { Navigator } = createTabNavigator<TabRoutes>({
- *   initialRouteName: 'Items',
- *   screens: { Items: ItemsTab, Equipment: EquipmentTab },
- *   tabBar: ({ state, navigation }) => (
- *     <Panel flexDirection="row" height={20}>
- *       {state.routes.map((route, i) => (
- *         <TabButton label={route.name} active={i === state.index}
- *           flexGrow={1} onPress={() => navigation.navigate(route.name)} />
- *       ))}
- *     </Panel>
- *   ),
- * });
- * ```
- */
-export interface TabNavigatorOptions<TRoutes extends Record<string, unknown>> {
-  screens: ScreensMap<TRoutes>;
-  initialRouteName?: Extract<keyof TRoutes, string>;
-  /** Renders the tab bar. Receives the live tab state + navigation helpers. */
-  tabBar: (props: TabBarProps<TRoutes>) => JSX.Element;
 }
 
 /**

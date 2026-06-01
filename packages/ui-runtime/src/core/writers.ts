@@ -37,15 +37,4 @@ export const WRITERS: Record<string, Writer> = {
 
     f.button(p);
   },
-  tab_button: (p, f, ctx, cbs) => {
-    if (ctx) {
-      if (cbs.onPress) {
-        ctx.buttonCallbacks.set(ctx.buttonIndex, cbs.onPress);
-      }
-
-      ctx.buttonIndex++;
-    }
-
-    f.button(p);
-  },
 };

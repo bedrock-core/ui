@@ -2,9 +2,9 @@
 	"namespace": "core_ui_screens",
 
 	// ─── Root ──────────────────────────────────────────────────────────────────
-	// Fixed (non-scrolling) layout. Referenced from screen_container when isFixed=true.
-	// Items are drawn by the item grid (layer 0); buttons/labels by the fixed collection
-	// above it. Because nothing scrolls, both share one fixed coordinate space and stay aligned.
+	// Fixed (non-scrolling) layout. Two layers over form_buttons:
+	//   Layer 0: item_grid (type: grid bound to form_buttons) — items ONLY render here
+	//   Layer 1: content_collection (collection_panel factory) — all non-item controls
 	"fixed": {
 		"type": "panel",
 		"size": [
@@ -15,19 +15,8 @@
 		"anchor_to": "top_left",
 		"controls": [
 			{
-				// Item grid — inherits grid_test.grid_items (template + form_buttons collection).
-				"item_grid@grid_test.grid_items": {
-					"layer": 0,
-					"anchor_from": "top_left",
-					"anchor_to": "top_left",
-					"size": [
-						"100%",
-						"100%"
-					],
-					"offset": [
-						0,
-						0
-					]
+				"item_grid@core_ui_components.item_renderer": {
+					"layer": 0
 				}
 			},
 			{
