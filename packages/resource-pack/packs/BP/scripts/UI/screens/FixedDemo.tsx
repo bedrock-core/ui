@@ -24,7 +24,7 @@ function FixedContent(): JSX.Element {
       <Panel flexDirection={'row'} gap={4}>
         <ItemRenderer item={new ItemStack(MinecraftItemTypes.DiamondSword, 1)} />
         <ItemRenderer item={new ItemStack(MinecraftItemTypes.GoldenApple, 3)} />
-        <ItemRenderer item={new ItemStack(MinecraftItemTypes.Emerald, 64)} />
+        <ItemRenderer item={new ItemStack(MinecraftItemTypes.BoneBlock, 64)} />
         <ItemRenderer item={new ItemStack(MinecraftItemTypes.EnderPearl, 16)} />
       </Panel>
 

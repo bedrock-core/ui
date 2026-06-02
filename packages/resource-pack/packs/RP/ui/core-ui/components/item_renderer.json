@@ -1,47 +1,42 @@
 {
 	"namespace": "core_ui_components",
 	// ─── Item layer ──────────────────────────────────────────────────────────────
-	// A grid BOUND TO form_buttons (the context beacon.item_renderer needs to draw
-	// item icons), but laid out so cells don't flow by index: every cell is zero-size
-	// (grid collapses them all onto the origin) and positions itself by its serialized
-	// x/y via use_anchored_offset. That makes this a "paper layer" that overlays the
-	// control layer (content_collection) pixel-for-pixel at the same x/y.
+	// 9×8 grid bound to form_buttons. beacon.item_renderer needs this native grid
+	// context to draw item icons. Cells are 18×18; non-item entries are hidden by
+	// the type filter in item_cell.
 	"item_renderer": {
 		"type": "grid",
 		"size": [
-			"100%",
-			"100%"
+			"328px",
+			"210px"
 		],
 		"layer": 90,
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
 		"collection_name": "form_buttons",
 		"grid_dimensions": [
-			1,
-			200
+			9,
+			8
 		],
-		"grid_item_template": "core_ui_components.item_cell"
+		"grid_item_template": "core_ui_components.item_cell",
+		"bindings": [
+			{
+				"binding_name": "#form_button_length",
+				"binding_name_override": "#maximum_grid_items",
+				"binding_condition": "once"
+			}
+		]
 	},
 	// ─── Item cell ───────────────────────────────────────────────────────────────
-	// Zero-size, anchored-offset cell. Parses type / x / y / visible from the entry's
-	// serialized control block and shows beacon.item_renderer only for item entries.
+	// 18×18 grid cell. Parses type / visible from the entry's serialized control
+	// block and shows beacon.item_renderer only for item entries.
 	"item_cell": {
 		"type": "panel",
 		"size": [
-			0,
-			0
+			18,
+			18
 		],
-		"anchor_from": "top_left",
-		"anchor_to": "top_left",
-		"use_anchored_offset": true,
-		"property_bag": {
-			"#anchored_offset_value_x": 0.0,
-			"#anchored_offset_value_y": 0.0,
-			"#item_id_aux": 0,
-			"#visible": false
-		},
 		"visible": "#visible",
-		"$normalize": 1.0,
 		"$aux_id": [
 			{
 				"binding_name": "#form_button_texture",
@@ -82,43 +77,6 @@
 				"target_property_name": "#type"
 			},
 			{
-				/* x (field 3) — skip header(9)+type(83)+width(83)+height(83) = 258 bytes */
-				"binding_type": "view",
-				"source_property_name": "('%.258s' * #form_button_text)",
-				"target_property_name": "#skip_to_x"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#form_button_text - #skip_to_x)",
-				"target_property_name": "#rem_at_x"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_at_x)",
-				"target_property_name": "#raw_x"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "((('%.82s' * #raw_x) - ('%.2s' * #raw_x) - ';') * $normalize)",
-				"target_property_name": "#anchored_offset_value_x"
-			},
-			{
-				/* y (field 4) */
-				"binding_type": "view",
-				"source_property_name": "(#rem_at_x - #raw_x)",
-				"target_property_name": "#rem_after_x"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_after_x)",
-				"target_property_name": "#raw_y"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "((('%.82s' * #raw_y) - ('%.2s' * #raw_y) - ';') * $normalize)",
-				"target_property_name": "#anchored_offset_value_y"
-			},
-			{
 				/* visible (field 5, bool) — skip header(9)+type+width+height+x+y = 424 bytes */
 				"binding_type": "view",
 				"source_property_name": "('%.424s' * #form_button_text)",
@@ -147,8 +105,6 @@
 		],
 		"controls": [
 			{
-				/* 16×16 item icon anchored at the cell's top-left (= the serialized x/y).
-				   The cell's #visible gates the whole subtree, so non-items draw nothing. */
 				"item@beacon.item_renderer": {
 					"size": [
 						16,
@@ -156,6 +112,10 @@
 					],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
+					"offset": [
+						1,
+						1
+					],
 					"bindings": "$aux_id"
 				}
 			}
