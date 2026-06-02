@@ -246,7 +246,7 @@ Mocks are located in `src/__mocks__/@minecraft/`.
 - JSON UI string ops with numbers can behave unpredictably; prefix markers before numeric-derived substrings client-side.
 - **Texel values & JSON UI:** Dimension and position values are serialized as raw integer texels (Pocket-space). JSON UI ignores numbers with decimal points, so the layout engine rounds all values to integers before serialization.
 - Subtraction operator (`-`) removes all occurrences; use distinct prefixes to avoid collisions.
-- **`beacon.item_renderer` requires a grid collection context to render items.** Blocks render correctly anywhere, but items (non-block typeIds) only render when `beacon.item_renderer` is inside a `type: "grid"` control with `collection_name: "form_buttons"`. Placing item renderers inside factory-created panels or standalone positioned elements will silently produce no item icon. See `grid_test_form.json` for a working reference implementation.
+- **`beacon.item_renderer` cannot be placed inside a scroll container.** Both blocks and items render correctly when the renderer is outside of any scroll layout. Placing `beacon.item_renderer` inside a scroll will silently produce no icon for items type.
 
 
 ## ⚠️ Breaking Change Guards
