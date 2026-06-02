@@ -43,7 +43,7 @@
 				"binding_type": "collection",
 				"binding_collection_name": "form_buttons"
 			},
-		{
+			{
 				/* --- strip protocol header (9 chars) --- */
 				"binding_type": "view", // protocol header size
 				"source_property_name": "('%.9s' * #form_button_text)",
