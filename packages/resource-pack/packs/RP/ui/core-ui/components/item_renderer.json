@@ -2,8 +2,8 @@
 	"namespace": "core_ui_components",
 	// ─── Item layer ──────────────────────────────────────────────────────────────
 	// 9×8 grid bound to form_buttons. beacon.item_renderer needs this native grid
-	// context to draw item icons. Cells are 18×18; non-item entries are hidden by
-	// the type filter in item_cell.
+	// context to draw item icons. Each cell uses use_anchored_offset to position
+	// itself at its serialized (x, y) — grid slot index is irrelevant.
 	"item_renderer": {
 		"type": "grid",
 		"size": [
@@ -28,16 +28,20 @@
 		]
 	},
 	// ─── Item cell ───────────────────────────────────────────────────────────────
-	// 18×18 grid cell. Parses type / visible from the entry's serialized control
-	// block and shows beacon.item_renderer only for item entries.
+	// 16×16 grid cell (matches ItemRenderer's declared size). Positioned via
+	// use_anchored_offset so it ignores its natural grid slot and lands at the
+	// absolute (x, y) from the serialized payload — same coordinate origin as
+	// content_collection. Non-item entries hidden by type filter.
 	"item_cell": {
 		"type": "panel",
 		"size": [
-			18,
-			18
+			16,
+			16
 		],
 		"visible": "#visible",
+		"$normalize": 1.0,
 		"$aux_id": [
+			/* item texture / aux */
 			{
 				"binding_name": "#form_button_texture",
 				"binding_type": "collection",
@@ -112,10 +116,6 @@
 					],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
-					"offset": [
-						1,
-						1
-					],
 					"bindings": "$aux_id"
 				}
 			}

@@ -1,3 +1,4 @@
+// mc-disable resourcepack.ui.inheritance.missing
 {
 	"namespace": "core_ui_screens",
 
@@ -10,7 +11,7 @@
 		"anchor_to": "top_left",
 		"size": [
 			"328px",
-			"98%"
+			"95%"
 		],
 		"offset": [
 			0,
