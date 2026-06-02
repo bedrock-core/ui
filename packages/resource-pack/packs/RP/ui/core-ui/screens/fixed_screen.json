@@ -15,13 +15,11 @@
 		"anchor_to": "top_left",
 		"offset": [
 			0,
-			"50% - 25%c"
+			"50% - 50%c"
 		],
+		"clips_children": true,
+		"allow_clipping": true,
 		"controls": [
-			{
-				// Item layer — fills the fixed root; cells self-position by serialized x/y.
-				"item_grid@core_ui_components.item_renderer": {}
-			},
 			{
 				// Control layer — collection_panel with center moved to root top-left
 				// via -50%/-50% offset so anchored-offset coordinates start at (0,0) = top-left.

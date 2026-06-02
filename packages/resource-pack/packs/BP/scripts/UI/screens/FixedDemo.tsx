@@ -13,8 +13,7 @@ function FixedContent(): JSX.Element {
   const exit = useExit();
 
   return (
-    // <Panel flexDirection={'column'} gap={6} padding={8} background={'textures/ui/recipe_book_group_expanded'}>
-    <Panel flexDirection={'column'} gap={6} padding={8}>
+    <Panel flexDirection={'column'} gap={6} padding={8} background={'textures/ui/recipe_book_group_expanded'}>
       <Panel flexDirection={'row'} justifyContent={'space-between'} alignItems={'center'}>
         <Text>{'§b§lFixed Screen'}</Text>
         <Button variant={'secondary'} onPress={exit}>{'§7Close'}</Button>

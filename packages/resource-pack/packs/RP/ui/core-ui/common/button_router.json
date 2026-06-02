@@ -12,6 +12,9 @@
 		"controls": [
 			{
 				"button@core_ui_components.button": {}
+			},
+			{
+				"item_cell@core_ui_components.item_cell": {}
 			}
 		]
 	}

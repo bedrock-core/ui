@@ -17,6 +17,7 @@ import { FlexLayout } from './screens/FlexLayout';
 import { FontMetrics } from './screens/FontMetrics';
 import { OreStyled } from './screens/OreStyled';
 import { FixedDemo } from './screens/FixedDemo';
+import { GridTest } from './screens/GridTest';
 
 // ─── Route map ────────────────────────────────────────────────────────────────
 // The hub renders under the Scroll baseline; the Fixed demo declares its own
@@ -29,6 +30,7 @@ type AppRoutes = {
   FontMetrics: undefined;
   OreStyled: undefined;
   FixedDemo: undefined;
+  GridTest: undefined;
 };
 
 type AppScreen<K extends keyof AppRoutes> = ScreenProps<AppRoutes, K>;
@@ -66,6 +68,9 @@ function HomeScreen({ navigation }: AppScreen<'Home'>): JSX.Element {
 
       <Button variant={'contrast'} onPress={(): void => navigation.navigate('FixedDemo')}>
         {'§bFixed Screen'}
+      </Button>
+      <Button variant={'contrast'} onPress={(): void => navigation.navigate('GridTest')}>
+        {'§dItem ID Grid Test'}
       </Button>
     </Card>
   );
@@ -114,6 +119,11 @@ function FixedDemoScreen(): JSX.Element {
   return <FixedDemo />;
 }
 
+// Item ID grid test — also item-capable, renders its own layout.
+function GridTestScreen(): JSX.Element {
+  return <GridTest />;
+}
+
 // ─── Navigator ────────────────────────────────────────────────────────────────
 
 const Stack = createStackNavigator<AppRoutes>({
@@ -125,6 +135,7 @@ const Stack = createStackNavigator<AppRoutes>({
     FontMetrics: FontMetricsScreen,
     OreStyled: OreStyledScreen,
     FixedDemo: FixedDemoScreen,
+    GridTest: GridTestScreen,
   },
 });
 

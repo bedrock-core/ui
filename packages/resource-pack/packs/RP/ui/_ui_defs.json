@@ -13,7 +13,6 @@
 		// after 1024 for its own use and 
 		// available in #serialized_data binding
 		// Screens
-		"ui/core-ui/screens/grid_test_form.json",
 		"ui/core-ui/screens/scroll_screen.json",
 		"ui/core-ui/screens/fixed_screen.json",
 		// Components 
