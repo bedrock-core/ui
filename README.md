@@ -42,11 +42,16 @@ Custom JSX-driven UI system for Minecraft Bedrock. Components serialize into com
 
 - ✅ Component theming system → shipped via [@bedrock-core/ore-styled](./packages/ore-styled/README.md)
 
-### 🧭 Beta 0.6.0 - Navigation (Planned)
+### ✅ Beta 0.6.0 - Navigation & Item Rendering
 
-- Multi-screen navigation system
-- Screen parameters and state management
-- Navigation hooks: `goBack()`, `navigate()`
+- ✅ Stack-based multi-screen navigation system
+- ✅ Screen parameters and typed route state
+- ✅ Navigation hooks: `useNavigation()`, `useRoute()`
+- ✅ `NavigationContainer`, `createStackNavigator`, `Screen`
+- ✅ `ItemRenderer` component — render item icons inside layouts
+- ✅ `Screen.Fixed` descriptor for item-capable screens
+- ✅ `useSetScreen` hook — override screen layout per build
+- ✅ Ore-Styled item components: `ItemSlot`, `ItemContainer`, `EquipmentSlots`
 
 ### 🚧 Beta 0.X.0 - Interactive Components (Planned)
 
@@ -55,9 +60,8 @@ Custom JSX-driven UI system for Minecraft Bedrock. Components serialize into com
 
 ### 🚧 Beta 0.X.0 - More core components (Planned)
 
-- Item render
 - Entity render(?)
-- Inventory (optimized item render?)
+- Structure render(?)
 
 
 ### 👀 Beta 0.X.0 - [REDACTED] (Planned)

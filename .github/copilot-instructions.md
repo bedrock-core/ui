@@ -4,7 +4,7 @@ Essential knowledge for AI agents working on this Minecraft Bedrock UI serializa
 
 ## Monorepo Structure
 
-This is a **monorepo with three independent packages** (using Yarn workspaces):
+This is a **monorepo with six independent packages** (using Yarn workspaces):
 
 - **`packages/ui-runtime`** – Core framework library (`@bedrock-core/ui-runtime`)
   - Pure TypeScript serialization, components, hooks, and rendering logic
@@ -25,6 +25,21 @@ This is a **monorepo with three independent packages** (using Yarn workspaces):
   - Template system with variable replacement ({{PROJECT_NAME}}, etc.)
   - Downloads companion resource pack automatically during generation
   - Entry: `src/index.ts` → `dist/index.js` (executable via `npx @bedrock-core/cli`)
+
+- **`packages/navigation`** – Stack navigation system (`@bedrock-core/navigation`)
+  - Single-root-render stack navigator inspired by React Navigation
+  - Exports: `NavigationContainer`, `createStackNavigator`, `useNavigation`, `useRoute`
+  - All screen transitions happen via navigation actions, not new `render()` calls
+
+- **`packages/flexbox`** – Flexbox layout engine (`@bedrock-core/flexbox`)
+  - Pure TypeScript Yoga-style layout algorithm for computing component positions
+  - Exports: `createNode()`, `computeLayout()`, `CANONICAL_SCREEN`, flex/alignment utilities
+  - Used internally by ui-runtime; also available standalone for custom layout logic
+
+- **`packages/ore-styled`** – Ore-UI styled component library (`@bedrock-core/ore-styled`)
+  - Pre-built compound components matching Minecraft's Ore-UI visual language
+  - Exports: `Button`, `Card`, `Checkbox`, `RadioGroup`/`Radio`, `Toggle`, `ToggleButtonGroup`/`ToggleButtonItem`, `Divider`, `ItemSlot`, `ItemContainer`, `EquipmentSlots`, `theme`
+  - Requires the companion `@bedrock-core/ore-styled` resource pack for textures
 
 ## Research Guidelines
 
@@ -97,6 +112,8 @@ render(element, player) → buildTree() → present() → [user sees form] → e
   - Must use `withControl(rest)` to apply standard control props
   - Children passed via props, not rest parameters
   - Pattern: `export const Panel = ({ children, ...rest }): JSX.Element => ({ type: 'panel', props: { ...withControl(rest), children } })`
+  - Available components: `Panel`, `Text`, `Image`, `Button`, `Fragment`, `ItemRenderer`
+  - `ItemRenderer` requires `ItemAuxContext` and a screen with `allowsItems: true` (e.g. `Screen.Fixed`)
 
 - **Fiber System** (`src/core/fabric/`): Manages component instances and hook state
   - **Registry** (`registry.ts`): Global Map<string, Fiber> tracking all instances
@@ -163,7 +180,9 @@ bcuiv0005 + [screen type: string, 83 bytes] + [content height: number, 83 bytes]
 - `core-ui/common/screen_container.json` deserializes it: strip the 9-byte header, slice the 83-byte screen-type field, extract the value, then route visibility — `#screen_type = 'inventory'` → inventory, `= 'fixed'` → fixed, else scroll.
 - Scrolling layouts (`core_ui_screens.scroll`, inventory content scroll) **skip** the screen-type field to reach the height field for `#size_binding_y`.
 - No bcui guard is needed inside `screen_container`; `server_form.json` only mounts it for forms whose title carries the header (collapses to `0px` otherwise).
-- The screen type originates from the `render(root, player, screen)` baseline (`Screen.Scroll | Inventory | Fixed`), overridable per-build by the `useSetScreen(screen)` hook — never by navigators.
+- The screen type originates from the `render(root, player, screen)` baseline (`Screen.Scroll | Fixed`), overridable per-build by the `useSetScreen(screen)` hook — never by navigators.
+
+> **Field numbering note:** The title payload's "field 0" (screen type) and "field 1" (content height) are **separate from the component control block's field indices** (field 0 = type at byte 9, field 1 = width at byte 92, etc.). These are two completely different payloads with independent byte layouts. Do not conflate them.
 
 ### withControl() Function
 
@@ -323,7 +342,7 @@ Resource Pack slices serialized data by fixed byte offsets using JSON UI binding
 
 - **Never** modify `TYPE_WIDTH`, `PAD_CHAR`, or canonical field order
 - **Never** change the 9-char header format (`bcui` + version)
-- **Always** append new fields to end; use `reserveBytes()` for future space
+- **Always** append new fields to end; claim future space by extending the `$reserved` field in `withControl()` (the reserved block in `control.ts` is where unallocated bytes are held — there is no standalone `reserveBytes()` function)
 - **Always** increment `VERSION` when making protocol-breaking changes (with migration docs)
 - **Test rigorously** – serialization format is frozen once clients decode it
 
@@ -339,6 +358,7 @@ Hooks follow React-like patterns but adapted for Minecraft server environment:
 - **`usePlayer()`** – Current player from render context
 - **`useEvent(eventKey)`** – Listen to global events
 - **`useExit()`** – Cleanup callback when form closes
+- **`useSetScreen(screen)`** – Overrides the baseline screen descriptor for the current build. Call at component render time (not inside effects or callbacks). Typically used by a screen component to declare it needs `Screen.Fixed` for item rendering.
 
 **Rules:**
 - Hooks must be called in consistent order (no conditional hook calls)

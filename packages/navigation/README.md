@@ -14,11 +14,11 @@ This is a stack-only navigator. It does **not** support:
 
 ## Core API
 
-- **NavigationContainer** – Context provider managing navigation state per player session
-- **createStackNavigator** – Factory to create a stack navigator with registered screens
-- **Screen** – JSX element for declaring a routed screen
-- **useNavigation** – Hook to access navigation object with `navigate`, `push`, `goBack`, etc.
-- **useRoute** – Hook to access current route object and params
+- **`NavigationContainer`** – Context provider that initializes and manages navigation state per player session. Wrap the entire navigator tree in this component as the root passed to `render()`.
+- **`createStackNavigator(config)`** – Factory that returns a `{ Navigator, Screen }` object. Register screens by passing a `{ screens: { [name]: component | { screen, initialParams } } }` config.
+- **`Screen`** – *(from `createStackNavigator`)* Declare a named, routed screen within the navigator.
+- **`useNavigation<TRoutes>()`** – Hook returning a `NavigationHelpers<TRoutes>` object with: `navigate(name, params?)`, `push(name, params?)`, `goBack()`, `canGoBack()`, `reset(state)`, `setParams(name, params)`, `getState()`.
+- **`useRoute<TRoutes, K>()`** – Hook returning the current `RouteObject<TRoutes[K]>` with shape `{ key: string, name: K, params: TRoutes[K] }`. Must be called from within a screen component.
 
 ## Usage
 

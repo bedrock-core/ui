@@ -12,19 +12,19 @@
 		"loopback:preview": "CheckNetIsolation.exe LoopbackExempt -a -p=S-1-15-2-424268864-5579737-879501358-346833251-474568803-887069379-4040235476"
 	},
 	"dependencies": {
-		"@bedrock-core/ui": "^0.5.0",
+		"@bedrock-core/ui": "^0.5.3",
 		"@minecraft/server": "2.7.0",
 		"@minecraft/server-ui": "2.0.0",
-		"@minecraft/vanilla-data": "1.21.100"
+		"@minecraft/vanilla-data": "1.26.21"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
-		"@eslint/json": "^1.2.0",
+		"@eslint/json": "^2.0.0",
 		"@stylistic/eslint-plugin": "^5.10.0",
-		"eslint": "^10.3.0",
-		"eslint-plugin-minecraft-linting": "^1.2.6",
+		"eslint": "^10.4.1",
+		"eslint-plugin-minecraft-linting": "^1.2.7",
 		"typescript": "^6.0.3",
-		"typescript-eslint": "^8.59.2"
+		"typescript-eslint": "^8.60.1"
 	},
 	"packageManager": "yarn@4.14.1"
 }

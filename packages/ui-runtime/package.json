@@ -1,6 +1,6 @@
 {
   "name": "@bedrock-core/ui-runtime",
-  "version": "0.2.0",
+  "version": "0.5.3",
   "description": "@bedrock-core/ui runtime",
   "keywords": [
     "ui",
