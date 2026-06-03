@@ -42,12 +42,8 @@ export type {
   JSX,
 } from './jsx';
 
-export { getCalibratedAuxMap } from './data/calibratedAuxMap';
 export { ItemAuxContext } from './data/ItemAuxContext';
-export type { ItemAuxData } from './data/ItemAuxData';
 export type { ItemAuxMap } from './data/ItemAuxMap';
-export { ItemAuxProvider } from './data/ItemAuxProvider';
 
 export { TranslationKeysContext } from './data/TranslationKeysContext';
 export type { TranslationKeysMap } from './data/TranslationKeysMap';
-export { TranslationKeysProvider } from './data/TranslationKeysProvider';

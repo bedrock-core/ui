@@ -1,8 +1,13 @@
 import type { Player } from '@minecraft/server';
 import { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
+import defaultItemAuxData from '@bedrock-core/generated/item-aux';
+import defaultTranslationKeys from '@bedrock-core/generated/translation-keys';
 import type { FunctionComponent } from '../../jsx';
 import { Context } from '../fabric';
 import type { Fiber } from '../fabric/types';
+import { getCalibratedAuxMap } from '../../data/calibratedAuxMap';
+import { ItemAuxContext } from '../../data/ItemAuxContext';
+import { TranslationKeysContext } from '../../data/TranslationKeysContext';
 
 /**
  * Encapsulates parent state for inheritance calculations.
@@ -74,10 +79,16 @@ export function generateComponentId(
  * Used as the entry point for Phase 1.
  */
 export function createInitialContext(): TraversalContext {
+  const currentContext = new Map<Context<unknown>, unknown>();
+
+  /* eslint-disable @typescript-eslint/no-unsafe-type-assertion */
+  currentContext.set(ItemAuxContext as Context<unknown>, getCalibratedAuxMap(defaultItemAuxData));
+  currentContext.set(TranslationKeysContext as Context<unknown>, defaultTranslationKeys);
+
   return {
     parentPath: [],
     idCounters: new Map(),
-    currentContext: new Map<Context<unknown>, unknown>(),
+    currentContext,
     parentFiber: undefined,
   };
 }

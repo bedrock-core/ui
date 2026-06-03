@@ -1,5 +1,5 @@
 import { Button } from '@bedrock-core/ore-styled';
-import { ItemAuxProvider, ItemRenderer, Panel, Screen, Text, useExit, useSetScreen, type JSX } from '@bedrock-core/ui';
+import { ItemRenderer, Panel, Screen, Text, useExit, useSetScreen, type JSX } from '@bedrock-core/ui';
 import { ItemStack } from '@minecraft/server';
 import { MinecraftItemTypes } from '@minecraft/vanilla-data';
 
@@ -38,9 +38,5 @@ export function FixedDemo(): JSX.Element {
   // The screen declares its own layout — not the navigator's job.
   useSetScreen(Screen.Fixed);
 
-  return (
-    <ItemAuxProvider>
-      <FixedContent />
-    </ItemAuxProvider>
-  );
+  return <FixedContent />;
 }

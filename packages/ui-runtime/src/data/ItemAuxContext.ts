@@ -4,21 +4,18 @@ import type { ItemAuxMap } from './ItemAuxMap';
 /**
  * Context that provides the item aux map (typeId → aux value) to the component tree.
  *
- * At the root of your UI, use `ItemAuxProvider` which handles calibration automatically:
+ * Seeded automatically at the render root with calibrated data from the `item-aux`
+ * Regolith filter — no provider needed. `ItemRenderer` just works out of the box.
+ *
+ * To override for a subtree (e.g. custom item data), wrap with this context:
  *
  * ```tsx
- * import itemAuxData from './data/item-aux/itemAuxMap.generated.json';
- *
- * render(
- *   <ItemAuxProvider data={itemAuxData}>
- *     <MyInventory />
- *   </ItemAuxProvider>,
- *   player,
- * );
+ * <ItemAuxContext value={myCustomAuxMap}>
+ *   <MyInventory />
+ * </ItemAuxContext>
  * ```
  *
- * `ItemRenderer` reads from this context automatically. Without a provider,
- * `ItemRenderer` will throw an `ItemAuxError` at render time instructing you
- * to install the `item-aux` Regolith filter.
+ * If the `item-aux` generated package is missing, `ItemRenderer` will throw an
+ * `ItemAuxError` at render time.
  */
 export const ItemAuxContext = createContext<ItemAuxMap | null>(null);

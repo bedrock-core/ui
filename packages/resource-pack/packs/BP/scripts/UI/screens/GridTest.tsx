@@ -1,5 +1,5 @@
 import { Button } from '@bedrock-core/ore-styled';
-import { ItemAuxProvider, ItemRenderer, Panel, Screen, Text, useExit, useSetScreen, type JSX } from '@bedrock-core/ui';
+import { ItemRenderer, Panel, Screen, Text, useExit, useSetScreen, type JSX } from '@bedrock-core/ui';
 import { ItemStack } from '@minecraft/server';
 
 const ENTRIES: Array<[label: string, typeId: string]> = [
@@ -62,9 +62,5 @@ function GridTestContent(): JSX.Element {
 export function GridTest(): JSX.Element {
   useSetScreen(Screen.Fixed);
 
-  return (
-    <ItemAuxProvider>
-      <GridTestContent />
-    </ItemAuxProvider>
-  );
+  return <GridTestContent />;
 }

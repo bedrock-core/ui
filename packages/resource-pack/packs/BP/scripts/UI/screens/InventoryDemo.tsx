@@ -1,5 +1,5 @@
 import { Button, EquipmentSlots, ItemContainer, ItemSlot, theme } from '@bedrock-core/ore-styled';
-import { ItemAuxProvider, Panel, Screen, Text, useExit, usePlayer, useSetScreen, type JSX } from '@bedrock-core/ui';
+import { Panel, Screen, Text, useExit, usePlayer, useSetScreen, type JSX } from '@bedrock-core/ui';
 
 function InventoryDemoContent(): JSX.Element {
   const player = usePlayer();
@@ -47,9 +47,5 @@ function InventoryDemoContent(): JSX.Element {
 export function InventoryDemo(): JSX.Element {
   useSetScreen(Screen.Fixed);
 
-  return (
-    <ItemAuxProvider>
-      <InventoryDemoContent />
-    </ItemAuxProvider>
-  );
+  return <InventoryDemoContent />;
 }

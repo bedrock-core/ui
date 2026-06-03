@@ -4,23 +4,18 @@ import type { TranslationKeysMap } from './TranslationKeysMap';
 /**
  * Context that provides the translation keys map (key → resolved string) to the component tree.
  *
- * At the root of your UI, import the generated JSON and wrap with this context:
+ * Seeded automatically at the render root with data from the `translation-keys`
+ * Regolith filter — no provider needed. `Text` with a `localizationKey` prop just works.
+ *
+ * To override for a subtree (e.g. a different language or custom strings), wrap with this context:
  *
  * ```tsx
- * import translationKeys from './data/translationKeys.generated.json';
- *
- * render(
- *   <TranslationKeysContext value={translationKeys}>
- *     <MyScreen />
- *   </TranslationKeysContext>,
- *   player,
- * );
+ * <TranslationKeysContext value={myTranslationKeys}>
+ *   <MyScreen />
+ * </TranslationKeysContext>
  * ```
  *
- * `Text` with a `localizationKey` prop reads from this context automatically to resolve
- * the display string for layout metrics (word-wrap, ellipsis, measureText).
- *
- * Without a provider, using `localizationKey` will throw a `TranslationKeysError` at
- * render time instructing you to install the `translation-keys` Regolith filter.
+ * If the `translation-keys` generated package is missing, using `localizationKey` will
+ * throw a `TranslationKeysError` at render time.
  */
 export const TranslationKeysContext = createContext<TranslationKeysMap | null>(null);
