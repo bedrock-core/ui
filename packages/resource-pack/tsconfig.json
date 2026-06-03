@@ -21,10 +21,17 @@
 			],
 			"@bedrock-core/ui/jsx-dev-runtime": [
 				"../../packages/ui-runtime/src/jsx/jsx-dev-runtime.ts"
+			],
+			"@bedrock-core/generated/item-aux": [
+				"./packs/data/item-aux/itemAuxMap.generated.json"
+			],
+			"@bedrock-core/generated/translation-keys": [
+				"./packs/data/translation-keys/translationKeys.generated.json"
 			]
 		}
 	},
 	"include": [
-		"packs/BP/scripts/**/*"
+		"packs/BP/scripts/**/*",
+		"packs/data/**/*"
 	]
 }

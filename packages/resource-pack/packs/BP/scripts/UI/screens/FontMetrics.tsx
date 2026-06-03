@@ -1,6 +1,5 @@
-import { Fragment, JSX, Panel, Text, TranslationKeysContext } from '@bedrock-core/ui';
+import { Fragment, JSX, Panel, Text, TranslationKeysProvider } from '@bedrock-core/ui';
 import type { TextFont } from '@bedrock-core/ui/components/Text';
-import translationKeys from '../../data/translationKeys.generated.json';
 
 const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 const DIGITS = '(0123456789)';
@@ -22,7 +21,7 @@ export function FontMetrics(): JSX.Element {
   const font: TextFont = 'mojangles';
 
   return (
-    <TranslationKeysContext value={translationKeys}>
+    <TranslationKeysProvider>
       <Panel flexDirection={'column'} gap={4} padding={4}>
 
         <Text>{`§e§l=== glyphs ===`}</Text>
@@ -75,6 +74,6 @@ export function FontMetrics(): JSX.Element {
         <Text font={font} scale={2} localizationKey={'test.multiline'} wordBreak={'break-word'} overflow={'ellipsis'} maxLines={2} />
 
       </Panel>
-    </TranslationKeysContext>
+    </TranslationKeysProvider>
   );
 }

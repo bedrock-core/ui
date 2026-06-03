@@ -1,8 +1,7 @@
 import { Button } from '@bedrock-core/ore-styled';
-import { ItemAuxContext, ItemRenderer, Panel, Screen, Text, useExit, useSetScreen, type JSX } from '@bedrock-core/ui';
+import { ItemAuxProvider, ItemRenderer, Panel, Screen, Text, useExit, useSetScreen, type JSX } from '@bedrock-core/ui';
 import { ItemStack } from '@minecraft/server';
 import { MinecraftItemTypes } from '@minecraft/vanilla-data';
-import itemAuxMap from '../../data/itemAuxMap.generated.json';
 
 /**
  * FixedScreen demo — a single, non-scrolling page. Because nothing scrolls,
@@ -40,8 +39,8 @@ export function FixedDemo(): JSX.Element {
   useSetScreen(Screen.Fixed);
 
   return (
-    <ItemAuxContext value={itemAuxMap}>
+    <ItemAuxProvider>
       <FixedContent />
-    </ItemAuxContext>
+    </ItemAuxProvider>
   );
 }

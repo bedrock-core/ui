@@ -4,15 +4,15 @@ import type { ItemAuxMap } from './ItemAuxMap';
 /**
  * Context that provides the item aux map (typeId → aux value) to the component tree.
  *
- * At the root of your UI, import the generated JSON and wrap with this context:
+ * At the root of your UI, use `ItemAuxProvider` which handles calibration automatically:
  *
  * ```tsx
- * import itemAuxMap from './data/itemAuxMap.generated.json';
+ * import itemAuxData from './data/item-aux/itemAuxMap.generated.json';
  *
  * render(
- *   <ItemAuxContext value={itemAuxMap}>
+ *   <ItemAuxProvider data={itemAuxData}>
  *     <MyInventory />
- *   </ItemAuxContext>,
+ *   </ItemAuxProvider>,
  *   player,
  * );
  * ```

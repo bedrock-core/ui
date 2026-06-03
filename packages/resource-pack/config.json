@@ -11,16 +11,16 @@
 		"dataPath": "./packs/data",
 		"filterDefinitions": {
 			"bundler": {
-				"url": "github.com/bedrock-core/regolith-filters",
-				"version": "1.0.4"
+				"runWith": "nodejs",
+				"script": "../../../regolith-filters/bundler/main.js"
 			},
 			"item-aux": {
 				"runWith": "nodejs",
 				"script": "../../../regolith-filters/item-aux/main.js"
 			},
 			"translation-keys": {
-				"url": "github.com/bedrock-core/regolith-filters",
-				"version": "1.0.0"
+				"runWith": "nodejs",
+				"script": "../../../regolith-filters/translation-keys/main.js"
 			}
 		},
 		"formatVersion": "1.4.0",
