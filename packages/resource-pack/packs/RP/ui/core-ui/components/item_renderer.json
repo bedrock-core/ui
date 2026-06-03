@@ -24,19 +24,6 @@
 		"visible": "#visible",
 		"enabled": "#enabled",
 		"$normalize": 1.0,
-		"$aux_id": [
-			/* item texture / aux */
-			{
-				"binding_name": "#form_button_texture",
-				"binding_type": "collection",
-				"binding_collection_name": "form_buttons"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "((#form_button_texture - (#form_button_texture % 65536)) / 65536)",
-				"target_property_name": "#item_id_aux"
-			}
-		],
 		"bindings": [
 			{
 				"binding_name": "#form_button_text",
@@ -174,14 +161,27 @@
 		],
 		"controls": [
 			{
-				"item@beacon.item_renderer": {
+				"item": {
+					"type": "custom",
+					"renderer": "inventory_item_renderer",
 					"size": [
 						16,
 						16
 					],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
-					"bindings": "$aux_id"
+					"bindings": [
+						{
+							"binding_name": "#form_button_texture",
+							"binding_type": "collection",
+							"binding_collection_name": "form_buttons"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "((#form_button_texture - (#form_button_texture % 65536)) / 65536)",
+							"target_property_name": "#item_id_aux"
+						}
+					]
 				}
 			}
 		]

@@ -36,7 +36,7 @@
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
 					"factory": {
-						"name": "fixed_content_items",
+						"name": "buttons",
 						"control_ids": {
 							"button": "@core_ui_common.button_router",
 							"label": "@core_ui_common.label_router",

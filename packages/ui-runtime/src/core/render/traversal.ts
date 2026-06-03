@@ -6,7 +6,7 @@ import type { FunctionComponent } from '../../jsx';
 import { Context } from '../fabric';
 import type { Fiber } from '../fabric/types';
 import { getCalibratedAuxMap } from '../../data/calibratedAuxMap';
-import { ItemAuxContext } from '../../data/ItemAuxContext';
+import { ItemAuxContext } from '../../data/ItemAux';
 import { TranslationKeysContext } from '../../data/TranslationKeys';
 
 /**
