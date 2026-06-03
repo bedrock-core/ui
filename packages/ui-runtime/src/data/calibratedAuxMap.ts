@@ -1,6 +1,5 @@
 import { ItemTypes } from '@minecraft/server';
-import type { ItemAuxData } from './ItemAuxData';
-import type { ItemAuxMap } from './ItemAuxMap';
+import type { ItemAuxData, ItemAuxMap } from './ItemAux';
 
 const cache = new WeakMap<ItemAuxData, ItemAuxMap>();
 

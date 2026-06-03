@@ -1,5 +1,5 @@
 declare module '@bedrock-core/generated/item-aux' {
-  import type { ItemAuxData } from './ItemAuxData';
+  import type { ItemAuxData } from './ItemAux';
 
   const value: ItemAuxData;
 

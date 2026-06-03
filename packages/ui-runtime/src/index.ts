@@ -42,8 +42,8 @@ export type {
   JSX,
 } from './jsx';
 
-export { ItemAuxContext } from './data/ItemAuxContext';
-export type { ItemAuxMap } from './data/ItemAuxMap';
+export { ItemAuxContext } from './data/ItemAux';
+export type { ItemAuxMap } from './data/ItemAux';
 
-export { TranslationKeysContext } from './data/TranslationKeysContext';
-export type { TranslationKeysMap } from './data/TranslationKeysMap';
+export { TranslationKeysContext } from './data/TranslationKeys';
+export type { TranslationKeysMap } from './data/TranslationKeys';

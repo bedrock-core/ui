@@ -1,6 +1,6 @@
 import { ItemStack } from '@minecraft/server';
 import { ItemAuxError } from '../core/types';
-import { ItemAuxContext } from '../data/ItemAuxContext';
+import { ItemAuxContext } from '../data/ItemAux';
 import { useContext, useScreen } from '../hooks';
 import { FunctionComponent, JSX } from '../jsx';
 import { ControlProps, withControl } from './control';

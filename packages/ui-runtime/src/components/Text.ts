@@ -1,6 +1,6 @@
 import { useContext } from '../hooks';
 import { FunctionComponent, JSX } from '../jsx';
-import { TranslationKeysContext } from '../data/TranslationKeysContext';
+import { TranslationKeysContext } from '../data/TranslationKeys';
 import { TranslationKeysError } from '../core/types';
 import { ControlProps, withControl } from './control';
 

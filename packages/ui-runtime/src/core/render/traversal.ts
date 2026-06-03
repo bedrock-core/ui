@@ -7,7 +7,7 @@ import { Context } from '../fabric';
 import type { Fiber } from '../fabric/types';
 import { getCalibratedAuxMap } from '../../data/calibratedAuxMap';
 import { ItemAuxContext } from '../../data/ItemAuxContext';
-import { TranslationKeysContext } from '../../data/TranslationKeysContext';
+import { TranslationKeysContext } from '../../data/TranslationKeys';
 
 /**
  * Encapsulates parent state for inheritance calculations.
