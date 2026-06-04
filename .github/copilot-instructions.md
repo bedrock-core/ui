@@ -358,6 +358,7 @@ Hooks follow React-like patterns but adapted for Minecraft server environment:
 - **`usePlayer()`** – Current player from render context
 - **`useEvent(eventKey)`** – Listen to global events
 - **`useExit()`** – Cleanup callback when form closes
+- **`useScreen()`** — Read the screen descriptor currently in effect for the build (the baseline from `render()` or a `useSetScreen` override)
 - **`useSetScreen(screen)`** – Overrides the baseline screen descriptor for the current build. Call at component render time (not inside effects or callbacks). Typically used by a screen component to declare it needs `Screen.Fixed` for item rendering.
 
 **Rules:**

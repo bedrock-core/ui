@@ -1,4 +1,4 @@
-import { ItemStack } from '@minecraft/server';
+import { ItemComponentTypes, ItemStack } from '@minecraft/server';
 import { ItemAuxError } from '../core/types';
 import { ItemAuxContext } from '../data/ItemAux';
 import { useContext, useScreen } from '../hooks';
@@ -32,11 +32,14 @@ export const ItemRenderer: FunctionComponent<ItemRendererProps> = ({
 
   const controlProps = withControl({ width: 16, height: 16, ...rest });
 
+  const enchantable = item.getComponent(ItemComponentTypes.Enchantable);
+  const isEnchanted = enchantable !== undefined && enchantable.getEnchantments().length > 0;
+
   return {
     type: 'item_renderer',
     props: {
       ...controlProps,
-      aux: auxMap[item.typeId] ?? 0,
+      aux: (auxMap[item.typeId] ?? 0) + (isEnchanted ? 32768 : 0),
     },
   };
 };
