@@ -1,5 +1,5 @@
 import { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
-import type { Player } from '@minecraft/server';
+import { HudVisibility, type Player } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
 import type { JSX } from '../../jsx';
 import { getFibersForPlayer } from '../fabric';
@@ -33,6 +33,8 @@ export async function present(
 
   serialize(tree, form, serializationContext);
 
+  player.onScreenDisplay.setHudVisibility(HudVisibility.Hide);
+
   return form.show(player).then((response) => {
     if (response.canceled) {
       // User ESC
@@ -61,5 +63,7 @@ export async function present(
     }
 
     return 'none';
+  }).finally(() => {
+    player.onScreenDisplay.resetHudElementsVisibility();
   });
 }

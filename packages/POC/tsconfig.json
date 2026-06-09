@@ -1,0 +1,11 @@
+{
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"rootDir": "../..",
+		"outDir": "packs/BP/scripts/"
+	},
+	"include": [
+		"packs/BP/scripts/**/*",
+		"packs/data/**/*"
+	]
+}

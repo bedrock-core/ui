@@ -1,9 +1,31 @@
 {
 	"namespace": "server_form",
+	"hud_mirror": {
+		"type": "screen",
+		"render_only_when_topmost": false,
+		"should_steal_mouse": false,
+		"is_showing_menu": false,
+		"controls": [
+			{ "inv@server_form.player_inventory": {} },
+			{ "armor@server_form.armor_panel": {} },
+			{ "offhand@server_form.offhand_panel": {} }
+		]
+	},
+
 	"third_party_server_screen": {
+		"force_render_below": true,
 		"$screen_animations": [
 			"@core_ui_animations.screen_enter_animation",
 			"@core_ui_animations.screen_exit_animation"
+		],
+		"modifications": [
+			{
+				"array_name": "controls",
+				"operation": "insert_front",
+				"value": [
+					{ "hud_mirror@server_form.hud_mirror": {} }
+				]
+			}
 		]
 	},
 	"long_form": {
@@ -73,5 +95,457 @@
 				]
 			}
 		]
+	},
+	"inv_slot@common.empty_panel": {
+		"$ci|default": 0,
+		"size": [18, 18],
+		"controls": [
+			{
+				"stack": {
+					"type": "stack_panel",
+					"size": [0, 0],
+					"collection_name": "hotbar_items",
+					"controls": [
+						{
+							"binder@common.empty_panel": {
+								"collection_index": "$ci",
+								"bindings": [
+									{
+										"binding_type": "collection",
+										"binding_name": "#item_id_aux",
+										"binding_collection_name": "hotbar_items",
+										"binding_condition": "always"
+									}
+								]
+							}
+						}
+					],
+					"bindings": [
+						{
+							"binding_type": "view",
+							"source_control_name": "binder",
+							"resolve_sibling_scope": true,
+							"source_property_name": "#item_id_aux",
+							"target_property_name": "#item_id_aux"
+						}
+					]
+				}
+			},
+			{
+				"renderer": {
+					"type": "custom",
+					"renderer": "inventory_item_renderer",
+					"size": ["100%", "100%"],
+					"layer": 2,
+					"bindings": [
+						{
+							"binding_type": "view",
+							"source_control_name": "stack",
+							"resolve_sibling_scope": true,
+							"source_property_name": "#item_id_aux",
+							"target_property_name": "#item_id_aux"
+						}
+					]
+				}
+			}
+		]
+	},
+
+	"player_inventory@common.empty_panel": {
+		"size": [
+			162,
+			76
+		],
+		"controls": [
+			{
+				"main": {
+					"type": "stack_panel",
+					"orientation": "vertical",
+					"size": [
+						162,
+						54
+					],
+					"controls": [
+						{
+							"row0": {
+								"type": "stack_panel",
+								"orientation": "horizontal",
+								"controls": [
+									{
+										"s9@inv_slot": {
+											"$ci": 9,
+											"size": [
+												18,
+												18
+											]
+										}
+									},
+									{
+										"s10@inv_slot": {
+											"$ci": 10,
+											"size": [
+												18,
+												18
+											]
+										}
+									},
+									{
+										"s11@inv_slot": {
+											"$ci": 11,
+											"size": [
+												18,
+												18
+											]
+										}
+									},
+									{
+										"s12@inv_slot": {
+											"$ci": 12,
+											"size": [
+												18,
+												18
+											]
+										}
+									},
+									{
+										"s13@inv_slot": {
+											"$ci": 13,
+											"size": [
+												18,
+												18
+											]
+										}
+									},
+									{
+										"s14@inv_slot": {
+											"$ci": 14,
+											"size": [
+												18,
+												18
+											]
+										}
+									},
+									{
+										"s15@inv_slot": {
+											"$ci": 15,
+											"size": [
+												18,
+												18
+											]
+										}
+									},
+									{
+										"s16@inv_slot": {
+											"$ci": 16,
+											"size": [
+												18,
+												18
+											]
+										}
+									},
+									{
+										"s17@inv_slot": {
+											"$ci": 17,
+											"size": [
+												18,
+												18
+											]
+										}
+									}
+								]
+							}
+						},
+						{
+							"row1": {
+								"type": "stack_panel",
+								"orientation": "horizontal",
+								"controls": [
+									{
+										"s18@inv_slot": {
+											"$ci": 18,
+											"size": [
+												18,
+												18
+											]
+										}
+									},
+									{
+										"s19@inv_slot": {
+											"$ci": 19,
+											"size": [
+												18,
+												18
+											]
+										}
+									},
+									{
+										"s20@inv_slot": {
+											"$ci": 20,
+											"size": [
+												18,
+												18
+											]
+										}
+									},
+									{
+										"s21@inv_slot": {
+											"$ci": 21,
+											"size": [
+												18,
+												18
+											]
+										}
+									},
+									{
+										"s22@inv_slot": {
+											"$ci": 22,
+											"size": [
+												18,
+												18
+											]
+										}
+									},
+									{
+										"s23@inv_slot": {
+											"$ci": 23,
+											"size": [
+												18,
+												18
+											]
+										}
+									},
+									{
+										"s24@inv_slot": {
+											"$ci": 24,
+											"size": [
+												18,
+												18
+											]
+										}
+									},
+									{
+										"s25@inv_slot": {
+											"$ci": 25,
+											"size": [
+												18,
+												18
+											]
+										}
+									},
+									{
+										"s26@inv_slot": {
+											"$ci": 26,
+											"size": [
+												18,
+												18
+											]
+										}
+									}
+								]
+							}
+						},
+						{
+							"row2": {
+								"type": "stack_panel",
+								"orientation": "horizontal",
+								"controls": [
+									{
+										"s27@inv_slot": {
+											"$ci": 27,
+											"size": [
+												18,
+												18
+											]
+										}
+									},
+									{
+										"s28@inv_slot": {
+											"$ci": 28,
+											"size": [
+												18,
+												18
+											]
+										}
+									},
+									{
+										"s29@inv_slot": {
+											"$ci": 29,
+											"size": [
+												18,
+												18
+											]
+										}
+									},
+									{
+										"s30@inv_slot": {
+											"$ci": 30,
+											"size": [
+												18,
+												18
+											]
+										}
+									},
+									{
+										"s31@inv_slot": {
+											"$ci": 31,
+											"size": [
+												18,
+												18
+											]
+										}
+									},
+									{
+										"s32@inv_slot": {
+											"$ci": 32,
+											"size": [
+												18,
+												18
+											]
+										}
+									},
+									{
+										"s33@inv_slot": {
+											"$ci": 33,
+											"size": [
+												18,
+												18
+											]
+										}
+									},
+									{
+										"s34@inv_slot": {
+											"$ci": 34,
+											"size": [
+												18,
+												18
+											]
+										}
+									},
+									{
+										"s35@inv_slot": {
+											"$ci": 35,
+											"size": [
+												18,
+												18
+											]
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"hotbar": {
+					"type": "stack_panel",
+					"orientation": "horizontal",
+					"size": [
+						162,
+						18
+					],
+					"controls": [
+						{
+							"s0@inv_slot": {
+								"$ci": 0,
+								"size": [
+									18,
+									18
+								]
+							}
+						},
+						{
+							"s1@inv_slot": {
+								"$ci": 1,
+								"size": [
+									18,
+									18
+								]
+							}
+						},
+						{
+							"s2@inv_slot": {
+								"$ci": 2,
+								"size": [
+									18,
+									18
+								]
+							}
+						},
+						{
+							"s3@inv_slot": {
+								"$ci": 3,
+								"size": [
+									18,
+									18
+								]
+							}
+						},
+						{
+							"s4@inv_slot": {
+								"$ci": 4,
+								"size": [
+									18,
+									18
+								]
+							}
+						},
+						{
+							"s5@inv_slot": {
+								"$ci": 5,
+								"size": [
+									18,
+									18
+								]
+							}
+						},
+						{
+							"s6@inv_slot": {
+								"$ci": 6,
+								"size": [
+									18,
+									18
+								]
+							}
+						},
+						{
+							"s7@inv_slot": {
+								"$ci": 7,
+								"size": [
+									18,
+									18
+								]
+							}
+						},
+						{
+							"s8@inv_slot": {
+								"$ci": 8,
+								"size": [
+									18,
+									18
+								]
+							}
+						}
+					]
+				}
+			}
+		]
+	},
+	"armor_panel@common.empty_panel": {
+		"size": [18, 72],
+		"controls": [
+			{ "s36@inv_slot": { "$ci": 36, "size": [18, 18] } },
+			{ "s37@inv_slot": { "$ci": 37, "size": [18, 18] } },
+			{ "s38@inv_slot": { "$ci": 38, "size": [18, 18] } },
+			{ "s39@inv_slot": { "$ci": 39, "size": [18, 18] } }
+		]
+	},
+
+	"offhand_panel@common.empty_panel": {
+		"size": [18, 18],
+		"controls": [
+			{ "s40@inv_slot": { "$ci": 40, "size": [18, 18] } }
+		]
 	}
+
 }

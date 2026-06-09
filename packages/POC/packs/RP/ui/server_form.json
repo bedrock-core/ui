@@ -1,0 +1,209 @@
+{
+	"namespace": "server_form",
+
+	"third_party_server_screen": {
+		"modifications": [
+			{
+				"array_name": "controls",
+				"operation": "insert_front",
+				"value": [
+					{ "proof@server_form.proof_overlay": {} }
+				]
+			}
+		]
+	},
+
+	"proof_overlay": {
+		"type": "stack_panel",
+		"orientation": "horizontal",
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"offset": [4, 4],
+		"layer": 10,
+		"size": ["100%c", "100%c"],
+		"controls": [
+			{ "left@server_form.left_column": {} },
+			{ "right@server_form.right_column": {} },
+			{ "factory@server_form.factory_column": {} },
+			{ "scroll_factory@server_form.scroll_factory_column": {} }
+		]
+	},
+
+	"left_column": {
+		"type": "stack_panel",
+		"orientation": "vertical",
+		"size": [160, "100%c"],
+		"controls": [
+			{ "lbl_range@server_form.row_label": { "$lbl": "Block raw_id=1 | Item raw_id=257:" } },
+			{ "row_range@server_form.range_row": {} },
+			{ "lbl_enchant@server_form.row_label": { "$lbl": "Enchant +32768 (right = glow):" } },
+			{ "row_enchant@server_form.enchant_row": {} }
+		]
+	},
+
+	"right_column": {
+		"type": "stack_panel",
+		"orientation": "vertical",
+		"size": [160, "100%c"],
+		"controls": [
+			{ "lbl@server_form.row_label": { "$lbl": "Scroll view:" } },
+			{ "scroll@server_form.scroll_container": {} }
+		]
+	},
+
+	"factory_column": {
+		"type": "stack_panel",
+		"orientation": "vertical",
+		"size": [160, "100%c"],
+		"controls": [
+			{ "lbl@server_form.row_label": { "$lbl": "Factory (2x stone, 2x spear):" } },
+			{ "lbl_stones@server_form.row_label": { "$lbl": "2x stone:" } },
+			{ "stones@server_form.stone_factory": {} },
+			{ "lbl_spears@server_form.row_label": { "$lbl": "2x spear:" } },
+			{ "spears@server_form.spear_factory": {} }
+		]
+	},
+
+	"scroll_factory_column": {
+		"type": "stack_panel",
+		"orientation": "vertical",
+		"size": [160, "100%c"],
+		"controls": [
+			{ "lbl@server_form.row_label": { "$lbl": "Scroll Factory (2x stone, 2x spear):" } },
+			{ "scroll@server_form.factory_scroll": {} }
+		]
+	},
+
+	"scroll_container@common.scrolling_panel": {
+		"size": [160, 80],
+		"$show_background": false,
+		"$scrolling_content": "server_form.scroll_items"
+	},
+
+	"scroll_items": {
+		"type": "stack_panel",
+		"orientation": "vertical",
+		"size": [160, 300],
+		"controls": [
+			{ "lbl_range@server_form.row_label": { "$lbl": "Block raw_id=1 | Item raw_id=257:" } },
+			{ "row_range@server_form.range_row": {} },
+			{ "lbl_enchant@server_form.row_label": { "$lbl": "Enchant +32768 (right = glow):" } },
+			{ "row_enchant@server_form.enchant_row": {} }
+		]
+	},
+
+	"factory_scroll@common.scrolling_panel": {
+		"size": [160, 80],
+		"$show_background": false,
+		"$scrolling_content": "server_form.factory_scroll_items"
+	},
+
+	"factory_scroll_items": {
+		"type": "stack_panel",
+		"orientation": "vertical",
+		"size": [160, 300],
+		"controls": [
+			{ "lbl_stones@server_form.row_label": { "$lbl": "2x stone:" } },
+			{ "stones@server_form.stone_factory": {} },
+			{ "lbl_spears@server_form.row_label": { "$lbl": "2x spear:" } },
+			{ "spears@server_form.spear_factory": {} }
+		]
+	},
+
+	"stone_factory": {
+		"type": "stack_panel",
+		"orientation": "horizontal",
+		"size": ["100%cm", "100%c"],
+		"factory": {
+			"name": "poc_stone_factory",
+			"control_name": "server_form.stone_cell"
+		},
+		"property_bag": {
+			"#count": 2
+		},
+		"bindings": [
+			{
+				"binding_type": "view",
+				"source_property_name": "#count",
+				"target_property_name": "#collection_length"
+			}
+		]
+	},
+
+	"spear_factory": {
+		"type": "stack_panel",
+		"orientation": "horizontal",
+		"size": ["100%cm", "100%c"],
+		"factory": {
+			"name": "poc_spear_factory",
+			"control_name": "server_form.spear_cell"
+		},
+		"property_bag": {
+			"#count": 2
+		},
+		"bindings": [
+			{
+				"binding_type": "view",
+				"source_property_name": "#count",
+				"target_property_name": "#collection_length"
+			}
+		]
+	},
+
+	"stone_cell": {
+		"type": "custom",
+		"renderer": "inventory_item_renderer",
+		"size": [32, 32],
+		"property_bag": {
+			"#item_id_aux": 65536
+		}
+	},
+
+	"spear_cell": {
+		"type": "custom",
+		"renderer": "inventory_item_renderer",
+		"size": [32, 32],
+		"property_bag": {
+			"#item_id_aux": 16842752
+		}
+	},
+
+	"row_label": {
+		"type": "label",
+		"$lbl|default": "",
+		"text": "$lbl",
+		"color": [1, 1, 1, 1],
+		"font_size": "small",
+		"size": ["100%", "default"]
+	},
+
+	"item_cell": {
+		"type": "custom",
+		"renderer": "inventory_item_renderer",
+		"size": [32, 32],
+		"$aux|default": 0,
+		"property_bag": {
+			"#item_id_aux": "$aux"
+		}
+	},
+
+	"range_row": {
+		"type": "stack_panel",
+		"orientation": "horizontal",
+		"size": ["100%c", 32],
+		"controls": [
+			{ "stone@server_form.item_cell": { "$aux": 65536 } },
+			{ "spear@server_form.item_cell": { "$aux": 16842752 } }
+		]
+	},
+
+	"enchant_row": {
+		"type": "stack_panel",
+		"orientation": "horizontal",
+		"size": ["100%c", 32],
+		"controls": [
+			{ "plain@server_form.item_cell": { "$aux": 65536 } },
+			{ "glowing@server_form.item_cell": { "$aux": 98304 } }
+		]
+	}
+}

@@ -1,0 +1,52 @@
+{
+	"$schema": "https://raw.githubusercontent.com/Bedrock-OSS/regolith-schemas/main/config/v1.4.json",
+	"author": "DrAv0011",
+	"description": "Test addon and reference implementation for @bedrock-core/ui library",
+	"name": "POC",
+	"packs": {
+		"behaviorPack": "./packs/BP",
+		"resourcePack": "./packs/RP"
+	},
+	"regolith": {
+		"dataPath": "./packs/data",
+		"filterDefinitions": {
+			"bundler": {
+				"runWith": "nodejs",
+				"script": "../../../regolith-filters/bundler/main.js"
+			}
+		},
+		"formatVersion": "1.4.0",
+		"profiles": {
+			"build": {
+				"export": {
+					"build": "standard",
+					"readOnly": true,
+					"target": "local"
+				},
+				"filters": [
+					{
+						"filter": "bundler",
+						"settings": {
+							"debug": false
+						}
+					}
+				]
+			},
+			"default": {
+				"export": {
+					"build": "standard",
+					"readOnly": false,
+					"target": "development"
+				},
+				"filters": [
+					{
+						"filter": "bundler",
+						"settings": {
+							"debug": true
+						}
+					}
+				]
+			}
+		}
+	}
+}

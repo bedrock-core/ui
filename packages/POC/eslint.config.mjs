@@ -1,0 +1,54 @@
+import stylistic from "@stylistic/eslint-plugin";
+import minecraftLinting from "eslint-plugin-minecraft-linting";
+import { defineConfig } from "eslint/config";
+import { dirname } from "path";
+import tseslint from "typescript-eslint";
+import { fileURLToPath } from "url";
+import baseConfig from '../../eslint.config.mjs';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+export default defineConfig([
+  ...baseConfig,
+
+  {
+    files: ["**/*.ts", "**/*.tsx"],
+    ignores: ["**/*.d.ts"],
+    plugins: { 
+      "@stylistic": stylistic,
+      "@typescript-eslint": tseslint.plugin,
+      "@minecraft": minecraftLinting
+    },
+
+    languageOptions: {
+      parser: tseslint.parser,
+      ecmaVersion: "latest",
+      sourceType: "module",
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: __dirname,
+      },
+    },
+
+    rules: {
+      ...baseConfig.rules,
+      "@minecraft/avoid-unnecessary-command": "error",
+    }
+  },
+
+  {
+    ignores: [
+      ".*/**",           // Any directory starting with dot (.yarn, .vscode, .regolith, etc.)
+      ".*",              // Any file starting with dot
+      "node_modules/**",
+      "**/*.*js",        // Generated JS files
+      "filters/**",      // The filters directory
+      "build/**",        // Build output
+      "*.json",          // Root level JSON files (config.json, package.json, tsconfig.json)
+      "*.md",            // Root level markdown files
+      "*.mjs",           // Root level mjs files (like this config)
+      "*.js",            // Root level js files
+    ],
+  }
+]);

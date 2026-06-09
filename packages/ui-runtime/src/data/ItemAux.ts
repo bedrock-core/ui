@@ -1,8 +1,17 @@
 import { createContext } from '../core/fabric/context';
 
 export interface ItemAuxData {
-  items: Record<string, number>;
-  correctionBoundaryAux: number;
+  /** Raw numeric IDs for all vanilla items/blocks (typeId → raw_id). */
+  vanillaRawIds: Record<string, number>;
+  /** Offset added to |minVanillaRawId| to compute the custom block base ID. */
+  blockBaseOffset: number;
+  /**
+   * First vanilla raw_id that may be displaced by developer-build items absent
+   * from the public API. At runtime, any extra `minecraft:` items found via
+   * `ItemTypes.getAll()` that are not in `vanillaRawIds` are counted, and that
+   * count is added to the offset for all vanilla items with raw_id >= this value.
+   */
+  shiftThreshold: number;
 }
 
 /**
