@@ -14,13 +14,17 @@ export interface ScreenDescriptor {
   readonly allowsItems: boolean;
 }
 
-const Scroll: ScreenDescriptor = { type: 'scroll', allowsItems: false };
+// Items render fine inside common.scrolling_panel — including with
+// use_anchored_offset positioning (POC set E). The earlier `allowsItems: false`
+// guard was over-conservative; it blamed scroll for what was actually the aux
+// divide bug in item_renderer.json. Both screens now permit items.
+const Scroll: ScreenDescriptor = { type: 'scroll', allowsItems: true };
 const Fixed: ScreenDescriptor = { type: 'fixed', allowsItems: true };
 
 /**
  * The built-in screen descriptors.
  *
- * - `Screen.Scroll` — default scrolling form; no item rendering.
+ * - `Screen.Scroll` — default scrolling form; items scroll with the content.
  * - `Screen.Fixed` — single non-scrolling page; item rendering stays aligned with controls.
  */
 export const Screen = { Scroll, Fixed } as const;

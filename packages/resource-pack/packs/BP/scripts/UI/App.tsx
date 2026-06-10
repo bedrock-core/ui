@@ -17,6 +17,7 @@ import { FlexLayout } from './screens/FlexLayout';
 import { FontMetrics } from './screens/FontMetrics';
 import { OreStyled } from './screens/OreStyled';
 import { FixedDemo } from './screens/FixedDemo';
+import { ScrollDemo } from './screens/ScrollDemo';
 import { GridTest } from './screens/GridTest';
 import { InventoryDemo } from './screens/InventoryDemo';
 
@@ -31,6 +32,7 @@ type AppRoutes = {
   FontMetrics: undefined;
   OreStyled: undefined;
   FixedDemo: undefined;
+  ScrollDemo: undefined;
   GridTest: undefined;
   InventoryDemo: undefined;
 };
@@ -70,6 +72,9 @@ function HomeScreen({ navigation }: AppScreen<'Home'>): JSX.Element {
 
       <Button variant={'contrast'} onPress={(): void => navigation.navigate('FixedDemo')}>
         {'§bFixed Screen'}
+      </Button>
+      <Button variant={'contrast'} onPress={(): void => navigation.navigate('ScrollDemo')}>
+        {'§bScroll Screen + Items'}
       </Button>
       <Button variant={'contrast'} onPress={(): void => navigation.navigate('GridTest')}>
         {'§dItem ID Grid Test'}
@@ -124,6 +129,11 @@ function FixedDemoScreen(): JSX.Element {
   return <FixedDemo />;
 }
 
+// Scrolling item demo — renders its own scroll layout with a Close button.
+function ScrollDemoScreen(): JSX.Element {
+  return <ScrollDemo />;
+}
+
 // Item ID grid test — also item-capable, renders its own layout.
 function GridTestScreen(): JSX.Element {
   return <GridTest />;
@@ -145,6 +155,7 @@ const Stack = createStackNavigator<AppRoutes>({
     FontMetrics: FontMetricsScreen,
     OreStyled: OreStyledScreen,
     FixedDemo: FixedDemoScreen,
+    ScrollDemo: ScrollDemoScreen,
     GridTest: GridTestScreen,
     InventoryDemo: InventoryDemoScreen,
   },

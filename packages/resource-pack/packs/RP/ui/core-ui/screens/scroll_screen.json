@@ -5,7 +5,12 @@
 	// Default scrolling form. Referenced from screen_container when the screen is
 	// not fixed. Scrolls the form_buttons content (buttons/labels).
 	"scroll@common.scrolling_panel": {
-		"layer": 999,
+		// No elevated layer here on purpose. Item sprites (2D) vanish inside
+		// common.scrolling_panel when their cumulative layer is high — layer 999
+		// on this root killed every ItemRenderer in scroll while blocks (3D
+		// meshes) survived. The sibling fixed screen has no layer either, 
+		// and scroll/fixed are #visible-toggled so they never need to 
+		// out-layer each other.
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
 		"size": [
