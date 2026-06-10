@@ -3,23 +3,16 @@ import type { ScreenType } from '../core/types';
 export type { ScreenType };
 
 /**
- * Describes a screen kind: which RP JSON UI layout it activates (`type`) and
- * whether ItemRenderer is permitted inside it (`allowsItems`).
+ * Describes a screen kind: which RP JSON UI layout it activates (`type`).
  *
- * Pass a descriptor to `render(root, player, screen)` to choose the screen
- * layout and whether ItemRenderer is permitted.
+ * Pass a descriptor to `render(root, player, screen)` to choose the screen layout.
  */
 export interface ScreenDescriptor {
   readonly type: ScreenType;
-  readonly allowsItems: boolean;
 }
 
-// Items render fine inside common.scrolling_panel — including with
-// use_anchored_offset positioning (POC set E). The earlier `allowsItems: false`
-// guard was over-conservative; it blamed scroll for what was actually the aux
-// divide bug in item_renderer.json. Both screens now permit items.
-const Scroll: ScreenDescriptor = { type: 'scroll', allowsItems: true };
-const Fixed: ScreenDescriptor = { type: 'fixed', allowsItems: true };
+const Scroll: ScreenDescriptor = { type: 'scroll' };
+const Fixed: ScreenDescriptor = { type: 'fixed' };
 
 /**
  * The built-in screen descriptors.

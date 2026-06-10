@@ -124,7 +124,7 @@ function OreStyledScreen(): JSX.Element {
   );
 }
 
-// Item-capable demo renders its own layout (no BackBar — it has a Close button).
+// Fixed-layout item demo — renders its own layout (no BackBar — it has a Close button).
 function FixedDemoScreen(): JSX.Element {
   return <FixedDemo />;
 }
@@ -134,12 +134,12 @@ function ScrollDemoScreen(): JSX.Element {
   return <ScrollDemo />;
 }
 
-// Item ID grid test — also item-capable, renders its own layout.
+// Item ID grid test — renders its own layout.
 function GridTestScreen(): JSX.Element {
   return <GridTest />;
 }
 
-// Inventory slots demo — item-capable, renders its own layout.
+// Inventory slots demo — renders its own layout.
 function InventoryDemoScreen(): JSX.Element {
   return <InventoryDemo />;
 }

@@ -108,11 +108,11 @@ block-only test in this investigation passed while the same cell with an item
 failed. **Always probe item rendering with an item (`raw_id ≥ 256`, e.g. spear
 `16842752`), never just a block.**
 
-> Historical note: the runtime guard `Screen.Scroll.allowsItems = false` (throw
-> in `ItemRenderer`) was added when this layer quirk was misattributed to
-> "scroll can't render items". With the layer fix in place the guard is relaxed
-> (`allowsItems: true` for both screens in `ui-runtime/src/screens/index.ts`),
-> and items render on scroll and fixed alike. No `grid` is required on either.
+> Historical note: a runtime guard (`ScreenDescriptor.allowsItems`, throw in
+> `ItemRenderer`) used to block items on `Screen.Scroll` — it dated from when
+> this layer quirk was misattributed to "scroll can't render items". With the
+> layer fix in place the field and the guard were **removed entirely**; items
+> render on scroll and fixed alike. No `grid` is required on either.
 
 ### 4 — Shift threshold calibration
 > At runtime, `ItemTypes.getAll()` may return extra `minecraft:` items that are absent from the public `vanillaRawIds` map (for example due to version mismatch as it needs to be "precompiled"). The number of such extras determines an offset applied to all items with `raw_id >= shiftThreshold`, keeping custom IDs stable across dev and release builds.

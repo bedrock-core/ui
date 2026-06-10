@@ -1,7 +1,7 @@
 import { ItemComponentTypes, ItemStack } from '@minecraft/server';
 import { ItemAuxError } from '../core/types';
 import { ItemAuxContext } from '../data/ItemAux';
-import { useContext, useScreen } from '../hooks';
+import { useContext } from '../hooks';
 import { FunctionComponent, JSX } from '../jsx';
 import { ControlProps, withControl } from './control';
 
@@ -14,19 +14,11 @@ export const ItemRenderer: FunctionComponent<ItemRendererProps> = ({
   ...rest
 }: ItemRendererProps): JSX.Element => {
   const auxMap = useContext(ItemAuxContext);
-  const screen = useScreen();
 
   if (auxMap === null) {
     throw new ItemAuxError(
       `ItemAuxContext is not provided. Did you forget to install the 'item-aux' Regolith filter `
       + `and wrap your UI in <ItemAuxContext value={itemAuxMap}>?`,
-    );
-  }
-
-  if (!screen.allowsItems) {
-    throw new ItemAuxError(
-      `ItemRenderer can only be used on an item-capable screen, but the current screen is '${screen.type}'. `
-      + 'Render the screen with Screen.Fixed.',
     );
   }
 

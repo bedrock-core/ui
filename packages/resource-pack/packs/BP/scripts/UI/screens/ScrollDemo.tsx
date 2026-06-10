@@ -4,10 +4,10 @@ import { EnchantmentTypes, ItemComponentTypes, ItemStack } from '@minecraft/serv
 import { MinecraftEnchantmentTypes, MinecraftItemTypes } from '@minecraft/vanilla-data';
 
 /**
- * ScrollScreen demo — the default scrolling form, now with ItemRenderers.
- * Verifies that items render AND scroll with the content (the guard that
- * blocked items on Screen.Scroll has been lifted). Enough rows are emitted to
- * overflow the viewport so the scrollbar actually engages.
+ * ScrollScreen demo — the default scrolling form with ItemRenderers.
+ * Verifies that items render AND scroll with the content (enchanted items show
+ * the glint). Enough rows are emitted to overflow the viewport so the
+ * scrollbar actually engages.
  */
 const ROW_ITEMS = [
   MinecraftItemTypes.DiamondSword,

@@ -113,7 +113,7 @@ render(element, player) → buildTree() → present() → [user sees form] → e
   - Children passed via props, not rest parameters
   - Pattern: `export const Panel = ({ children, ...rest }): JSX.Element => ({ type: 'panel', props: { ...withControl(rest), children } })`
   - Available components: `Panel`, `Text`, `Image`, `Button`, `Fragment`, `ItemRenderer`
-  - `ItemRenderer` requires `ItemAuxContext` and a screen with `allowsItems: true` (e.g. `Screen.Fixed`)
+  - `ItemRenderer` requires `ItemAuxContext`
 
 - **Fiber System** (`src/core/fabric/`): Manages component instances and hook state
   - **Registry** (`registry.ts`): Global Map<string, Fiber> tracking all instances

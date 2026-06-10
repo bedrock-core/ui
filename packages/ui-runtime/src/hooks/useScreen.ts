@@ -4,8 +4,7 @@ import { usePlayer } from './usePlayer';
 
 /**
  * Returns the screen descriptor in effect for the current build — the baseline
- * passed to `render()`. ItemRenderer uses this to decide whether item rendering
- * is permitted.
+ * passed to `render()`, or the override set via `useSetScreen`.
  */
 export function useScreen(): ScreenDescriptor {
   return getPlayerScreen(usePlayer());
