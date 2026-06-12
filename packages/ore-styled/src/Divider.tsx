@@ -1,5 +1,5 @@
-/** @jsxImportSource @bedrock-core/ui */
-import { Image, type ControlProps, type JSX } from '@bedrock-core/ui';
+/** @jsxImportSource @bedrock-core/ui-runtime */
+import { Image, type ControlProps, type JSX } from '@bedrock-core/ui-runtime';
 import { theme } from './tokens';
 
 export type DividerOrientation = 'horizontal' | 'vertical';

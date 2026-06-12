@@ -8,7 +8,6 @@ export interface ProjectConfig {
   author: string;
   description: string;
   targetDir: string;
-  includeOreStyled: boolean;
 }
 
 export async function promptUser(initialProjectName?: string): Promise<ProjectConfig> {
@@ -51,16 +50,6 @@ export async function promptUser(initialProjectName?: string): Promise<ProjectCo
     initial: 'A Minecraft Bedrock addon with custom UI',
   });
 
-  // Optional ore-styled addon
-  questions.push({
-    type: 'toggle',
-    name: 'includeOreStyled',
-    message: 'Include @bedrock-core/ore-styled? (recommended — prebuilt Ore-UI styled components)',
-    initial: true,
-    active: 'yes',
-    inactive: 'no',
-  });
-
   const response = await prompts(questions, {
     onCancel: () => {
       console.warn(chalk.yellow('\n✖ Operation cancelled'));
@@ -76,6 +65,5 @@ export async function promptUser(initialProjectName?: string): Promise<ProjectCo
     author: response.author,
     description: response.description,
     targetDir,
-    includeOreStyled: response.includeOreStyled ?? true,
   };
 }

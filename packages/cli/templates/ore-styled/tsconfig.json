@@ -20,13 +20,19 @@
 		"resolveJsonModule": true,
 		"rootDir": "packs/BP/scripts",
 		"jsx": "react-jsx",
-		"jsxImportSource": "@bedrock-core/ui"
+		"jsxImportSource": "@bedrock-core/ui",
+		"paths": {
+			"@bedrock-core/generated/translation-keys": [
+				"./packs/data/translation-keys/translationKeys.generated.json"
+			]
+		}
 	},
 	"files": [
 		"packs/BP/scripts/main.ts"
 	],
 	"include": [
-		"packs/BP/scripts/**/*"
+		"packs/BP/scripts/**/*",
+		"packs/data/**/*"
 	],
 	"exclude": [
 		"node_modules",

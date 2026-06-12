@@ -1,4 +1,5 @@
-import { JSX, Panel, Text, Button, FunctionComponent, useState, useEffect, useRef } from '@bedrock-core/ui';
+import { JSX, Panel, Text, FunctionComponent, useState, useEffect, useRef } from '@bedrock-core/ui';
+import { Button } from '@bedrock-core/ore-styled';
 import { system } from '@minecraft/server';
 
 /**
@@ -62,30 +63,18 @@ export const RefTimer: FunctionComponent = (): JSX.Element => {
       <Text>{`Renders: §6${renderCount}`}</Text>
 
       <Panel flexDirection={'row'} gap={6}>
-        <Button
-          onPress={(): void => {
-            startTimer();
-          }}
-        >
-          <Text>{'§aStart'}</Text>
-        </Button>
-
-        <Button
-          onPress={(): void => {
-            stopTimer();
-          }}
-        >
-          <Text>{'§cStop'}</Text>
-        </Button>
+        <Button onPress={(): void => { startTimer(); }}>{'§aStart'}</Button>
+        <Button variant={'danger'} onPress={(): void => { stopTimer(); }}>{'§cStop'}</Button>
       </Panel>
 
       <Button
+        variant={'secondary'}
         onPress={(): void => {
           stopTimer();
           setCount(0);
         }}
       >
-        <Text>{'§6Reset'}</Text>
+        {'§6Reset'}
       </Button>
     </Panel>
   );

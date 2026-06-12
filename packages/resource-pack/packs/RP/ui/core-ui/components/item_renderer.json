@@ -1,13 +1,17 @@
 {
-	"namespace": "core-ui_components",
-	"item_renderer": {
-		"type": "custom",
-		"renderer": "inventory_item_renderer",
+	"namespace": "core_ui_components",
+	// ─── Item cell ───────────────────────────────────────────────────────────────
+	// 16×16 grid cell (matches ItemRenderer's declared size). Positioned via
+	// use_anchored_offset so it ignores its natural grid slot and lands at the
+	// absolute (x, y) from the serialized payload — same coordinate origin as
+	// content_collection. Non-item entries hidden by type filter.
+	"item_cell": {
+		"type": "panel",
 		"size": [
-			0,
-			0
+			16,
+			16
 		],
-		"layer": 95,
+		"layer": 90,
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
 		"use_anchored_offset": true,
@@ -15,8 +19,7 @@
 			"#size_binding_x": 0.0,
 			"#size_binding_y": 0.0,
 			"#anchored_offset_value_x": 0.0,
-			"#anchored_offset_value_y": 0.0,
-			"#item_id_aux": 0
+			"#anchored_offset_value_y": 0.0
 		},
 		"visible": "#visible",
 		"enabled": "#enabled",
@@ -28,7 +31,8 @@
 				"binding_collection_name": "form_buttons"
 			},
 			{
-				"binding_type": "view",
+				/* --- strip protocol header (9 chars) --- */
+				"binding_type": "view", // protocol header size
 				"source_property_name": "('%.9s' * #form_button_text)",
 				"target_property_name": "#protocol_header"
 			},
@@ -38,7 +42,8 @@
 				"target_property_name": "#rem_after_header"
 			},
 			{
-				"binding_type": "view",
+				/* --- type (string) - field 0 --- */
+				"binding_type": "view", // full_width
 				"source_property_name": "('%.83s' * #rem_after_header)",
 				"target_property_name": "#raw_type"
 			},
@@ -48,12 +53,13 @@
 				"target_property_name": "#rem_after_type"
 			},
 			{
-				"binding_type": "view",
+				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
 				"source_property_name": "(('%.82s' * #raw_type) - ('%.2s' * #raw_type) - ';')",
 				"target_property_name": "#type"
 			},
 			{
-				"binding_type": "view",
+				/* --- width (int) - field 1 --- */
+				"binding_type": "view", // full_width
 				"source_property_name": "('%.83s' * #rem_after_type)",
 				"target_property_name": "#raw_width"
 			},
@@ -63,12 +69,13 @@
 				"target_property_name": "#rem_after_width"
 			},
 			{
-				"binding_type": "view",
+				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
 				"source_property_name": "(('%.82s' * #raw_width) - ('%.2s' * #raw_width) - ';')",
 				"target_property_name": "#size_binding_x"
 			},
 			{
-				"binding_type": "view",
+				/* --- height (int) - field 2 --- */
+				"binding_type": "view", // full_width
 				"source_property_name": "('%.83s' * #rem_after_width)",
 				"target_property_name": "#raw_height"
 			},
@@ -78,12 +85,13 @@
 				"target_property_name": "#rem_after_height"
 			},
 			{
-				"binding_type": "view",
+				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
 				"source_property_name": "(('%.82s' * #raw_height) - ('%.2s' * #raw_height) - ';')",
 				"target_property_name": "#size_binding_y"
 			},
 			{
-				"binding_type": "view",
+				/* --- x (int) - field 3 --- */
+				"binding_type": "view", // full_width
 				"source_property_name": "('%.83s' * #rem_after_height)",
 				"target_property_name": "#raw_x"
 			},
@@ -93,12 +101,13 @@
 				"target_property_name": "#rem_after_x"
 			},
 			{
-				"binding_type": "view",
+				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
 				"source_property_name": "((('%.82s' * #raw_x) - ('%.2s' * #raw_x) - ';') * $normalize)",
 				"target_property_name": "#anchored_offset_value_x"
 			},
 			{
-				"binding_type": "view",
+				/* --- y (float) - field 4 --- */
+				"binding_type": "view", // full_width
 				"source_property_name": "('%.83s' * #rem_after_x)",
 				"target_property_name": "#raw_y"
 			},
@@ -108,12 +117,13 @@
 				"target_property_name": "#rem_after_y"
 			},
 			{
-				"binding_type": "view",
+				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
 				"source_property_name": "((('%.82s' * #raw_y) - ('%.2s' * #raw_y) - ';') * $normalize)",
 				"target_property_name": "#anchored_offset_value_y"
 			},
 			{
-				"binding_type": "view",
+				/* --- visible (boolean) - field 5 --- */
+				"binding_type": "view", // full_width
 				"source_property_name": "('%.8s' * #rem_after_y)",
 				"target_property_name": "#raw_visible"
 			},
@@ -123,17 +133,13 @@
 				"target_property_name": "#rem_after_visible"
 			},
 			{
-				"binding_type": "view",
+				"binding_type": "view", // (full_width - marker_width) - prefix_width (s:) - padding_char (;)
 				"source_property_name": "(('%.7s' * #raw_visible) - ('%.2s' * #raw_visible) - ';')",
 				"target_property_name": "#pre_visible"
 			},
 			{
-				"binding_type": "view",
-				"source_property_name": "(#pre_visible and (#type = 'item_renderer'))",
-				"target_property_name": "#visible"
-			},
-			{
-				"binding_type": "view",
+				/* --- enabled (boolean) - field 6 --- */
+				"binding_type": "view", // full_width
 				"source_property_name": "('%.8s' * #rem_after_visible)",
 				"target_property_name": "#raw_enabled"
 			},
@@ -143,118 +149,37 @@
 				"target_property_name": "#rem_after_enabled"
 			},
 			{
-				"binding_type": "view",
+				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
 				"source_property_name": "(('%.7s' * #raw_enabled) - ('%.2s' * #raw_enabled) - ';')",
 				"target_property_name": "#enabled"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(#rem_after_enabled - ('%.584s' * #rem_after_enabled))",
-				"target_property_name": "#serialized_data"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #serialized_data)",
-				"target_property_name": "#raw_aux"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #raw_aux) - ('%.2s' * #raw_aux) - ';')",
-				"target_property_name": "#item_id_aux"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#serialized_data - #raw_aux)",
-				"target_property_name": "#rem_after_aux"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_after_aux)",
-				"target_property_name": "#raw_name"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_aux - #raw_name)",
-				"target_property_name": "#rem_after_name"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #raw_name) - ('%.2s' * #raw_name) - ';')",
-				"target_property_name": "#item_name"
+				"source_property_name": "(#pre_visible and (#type = 'item_renderer'))",
+				"target_property_name": "#visible"
 			}
 		],
 		"controls": [
 			{
-				"hover_button@hover_button": {}
-			},
-			{
-				"selected_item_details_factory@common.selected_item_details_factory": {}
-			}
-		]
-	},
-	"hover_button@common.button": {
-		"$pressed_button_name": "button.info",
-		"size": [
-			18,
-			18
-		],
-		"sound_volume": 0.0,
-		"default_control": "",
-		"pressed_control": "",
-		"controls": [
-			{
-				"hover": {
-					"type": "panel",
+				"item": {
+					"type": "custom",
+					"renderer": "inventory_item_renderer",
 					"size": [
-						18,
-						18
+						16,
+						16
 					],
-					"controls": [
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"bindings": [
 						{
-							"hover_text_image": {
-								"type": "image",
-								"allow_clipping": false,
-								"follows_cursor": true,
-								"alpha": 1.0,
-								"texture": "textures/ui/purpleBorder",
-								"size": [
-									"100%c+8px",
-									"100%c+8px"
-								],
-								"anchor_from": "left_middle",
-								"anchor_to": "left_middle",
-								"offset": [
-									"50%x",
-									0
-								],
-								"layer": 25,
-								"controls": [
-									{
-										"hover_text_panel": {
-											"type": "panel",
-											"size": [
-												"100%cm - 1px",
-												9
-											],
-											"controls": [
-												{
-													"hover_text": {
-														"type": "label",
-														"text": "Unset",
-														"offset": [
-															-0.5,
-															-1.5
-														],
-														"anchor_from": "top_left",
-														"anchor_to": "top_left",
-														"shadow": false
-													}
-												}
-											]
-										}
-									}
-								]
-							}
+							"binding_name": "#form_button_texture",
+							"binding_type": "collection",
+							"binding_collection_name": "form_buttons"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "((#form_button_texture - (#form_button_texture % 65536)) / 65536)",
+							"target_property_name": "#item_id_aux"
 						}
 					]
 				}

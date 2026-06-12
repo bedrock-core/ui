@@ -7,7 +7,6 @@
 		"allowJs": false,
 		"checkJs": false,
 		"noEmit": true,
-		"rootDir": "./packages",
 		"declaration": true,
 		"declarationMap": true,
 		"sourceMap": true,
@@ -34,6 +33,18 @@
 			"@bedrock-core/ui/jsx-dev-runtime": [
 				"./packages/ui-runtime/src/jsx/jsx-dev-runtime.ts"
 			],
+			"@bedrock-core/ui-runtime": [
+				"./packages/ui-runtime/src/index.ts"
+			],
+			"@bedrock-core/ui-runtime/*": [
+				"./packages/ui-runtime/src/*"
+			],
+			"@bedrock-core/navigation": [
+				"./packages/navigation/src/index.ts"
+			],
+			"@bedrock-core/navigation/*": [
+				"./packages/navigation/src/*"
+			],
 			"@bedrock-core/ore-styled": [
 				"./packages/ore-styled/src/index.ts"
 			],
@@ -44,6 +55,7 @@
 	},
 	"exclude": [
 		"node_modules",
-		"**/node_modules"
+		"**/node_modules",
+		"packages/cli/templates"
 	]
 }

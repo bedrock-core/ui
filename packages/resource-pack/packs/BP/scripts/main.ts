@@ -2,40 +2,31 @@ import { render } from '@bedrock-core/ui';
 import { ButtonPushAfterEvent, Player, world } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
 import { MinecraftBlockTypes, MinecraftEntityTypes } from '@minecraft/vanilla-data';
-import { Example } from './UI/Example';
-import { FlexTest } from './UI/FlexTest';
-import { FontMetricsTest } from './UI/FontMetricsTest';
-import { OreStyledTest } from './UI/OreStyledTest';
+import { App } from './UI/App';
 
-const isPlayer = (source: ButtonPushAfterEvent['source']): source is Player => source.typeId === MinecraftEntityTypes.Player;
+const isPlayer = (source: ButtonPushAfterEvent['source']): source is Player =>
+  source.typeId === MinecraftEntityTypes.Player;
 
 world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent): void => {
-  if (isPlayer(source)) {
-    if (block.typeId === MinecraftBlockTypes.StoneButton) {
-      render(Example, source);
-    }
+  if (!isPlayer(source)) {
+    return;
+  }
 
-    if (block.typeId === MinecraftBlockTypes.AcaciaButton) {
-      const form = new ActionFormData();
+  if (block.typeId === MinecraftBlockTypes.StoneButton) {
+    // Stone button → demo hub (Home → all demos). Scroll is the baseline;
+    // the Fixed demo declares its own layout via useSetScreen.
+    render(App, source);
+  }
 
-      form.title('test');
-      form.label('test');
-      form.show(source);
-    }
+  if (block.typeId === MinecraftBlockTypes.AcaciaButton) {
+    // Acacia button → vanilla form
+    const form = new ActionFormData();
 
-    if (block.typeId === MinecraftBlockTypes.BirchButton) {
-      // Birch button → flex test fixture (visual flex behavior verification).
-      render(FlexTest, source);
-    }
+    form.title('Vanilla Form');
+    form.button('Button 1');
+    form.button('Button 2');
+    form.button('Button 3');
 
-    if (block.typeId === MinecraftBlockTypes.WoodenButton) {
-      // Oak button → font metrics test (bold/italic/format variant comparison).
-      render(FontMetricsTest, source);
-    }
-
-    if (block.typeId === MinecraftBlockTypes.JungleButton) {
-      // Jungle button → ore-styled component showcase.
-      render(OreStyledTest, source);
-    }
+    form.show(source);
   }
 });

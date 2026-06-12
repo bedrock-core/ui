@@ -1,11 +1,11 @@
 import { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
-import type { Player } from '@minecraft/server';
+import { type Player } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
 import type { JSX } from '../../jsx';
 import { getFibersForPlayer } from '../fabric';
 import { serialize, serializeTitleMetadata } from '../serializer';
 import type { SerializationContext } from '../types';
-import { beginInteractiveTransaction, endInteractiveTransaction } from './session';
+import { beginInteractiveTransaction, endInteractiveTransaction, getPlayerScreen } from './session';
 
 export async function present(
   player: Player,
@@ -26,7 +26,10 @@ export async function present(
     ? rawHeight
     : CANONICAL_SCREEN.height;
 
-  form.title(serializeTitleMetadata(contentHeight));
+  // The session screen is the render baseline set by render().
+  const screen = getPlayerScreen(player);
+
+  form.title(serializeTitleMetadata(contentHeight, screen.type));
 
   serialize(tree, form, serializationContext);
 

@@ -1,6 +1,7 @@
 {
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
+		"rootDir": "../..",
 		"outDir": "packs/BP/scripts/",
 		"paths": {
 			"@bedrock-core/ui": [
@@ -9,15 +10,25 @@
 			"@bedrock-core/ui/*": [
 				"../../packages/ui-runtime/src/*"
 			],
+			"@bedrock-core/ui-runtime": [
+				"../../packages/ui-runtime/src/index.ts"
+			],
+			"@bedrock-core/ui-runtime/*": [
+				"../../packages/ui-runtime/src/*"
+			],
 			"@bedrock-core/ui/jsx-runtime": [
 				"../../packages/ui-runtime/src/jsx/jsx-runtime.ts"
 			],
 			"@bedrock-core/ui/jsx-dev-runtime": [
 				"../../packages/ui-runtime/src/jsx/jsx-dev-runtime.ts"
+			],
+			"@bedrock-core/generated/translation-keys": [
+				"./packs/data/translation-keys/translationKeys.generated.json"
 			]
-		},
+		}
 	},
 	"include": [
-		"packs/BP/scripts/**/*"
+		"packs/BP/scripts/**/*",
+		"packs/data/**/*"
 	]
 }

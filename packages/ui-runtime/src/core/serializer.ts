@@ -1,7 +1,7 @@
 import { ActionFormData } from '@minecraft/server-ui';
 import { JSX } from '../jsx';
-import { isFunction, isSerializablePrimitive } from './guards';
-import { SerializablePrimitive, SerializableProps, SerializationContext, SerializationError } from './types';
+import { isElement, isFunction, isSerializablePrimitive } from './guards';
+import { ScreenType, SerializablePrimitive, SerializableProps, SerializationContext, SerializationError } from './types';
 import { TRANSPARENT_TYPES, WRITERS } from './writers';
 
 /**
@@ -15,16 +15,16 @@ export const FIELD_MARKERS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmn
 export const PAD_CHAR = ';';
 
 // Protocol version tag (format: 'v' + 4 hex digits)
-// e.g., 'bcuiv0004'
+// e.g., 'bcuiv0005'
 // Increment when making backward-incompatible changes to the payload layout.
-export const VERSION = 'v0004';
+export const VERSION = 'v0005';
 export const PROTOCOL_HEADER = `bcui${VERSION}`;
 export const PROTOCOL_HEADER_LENGTH = 9; // bytes, all characters are single-byte ASCII
 
 // Public protocol constants (exported for tests and decoders)
 export const TYPE_WIDTH = {
   s: 80,
-  n: 80, // Expanded from 24 to match string width
+  n: 80,
   b: 5,
   r: 0, // variable
 };
@@ -136,10 +136,8 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
     if (children) {
       const childArray = Array.isArray(children) ? children : [children];
 
-      childArray.forEach((child: JSX.Element | string): void => {
-        if (typeof child !== 'string') {
-          serialize(child, form, context);
-        }
+      childArray.filter(isElement).forEach((child) => {
+        serialize(child, form, context);
       });
     }
 
@@ -186,16 +184,14 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
     throw new SerializationError(`Unknown native component type: ${type}. Known types: ${known}`);
   }
 
-  writer(payload, form, context, callbacks);
+  writer(payload, form, context, callbacks, serializableProps);
 
   // Recursively handle children
   if (children) {
     const childArray = Array.isArray(children) ? children : [children];
 
-    childArray.forEach((child: JSX.Element | string): void => {
-      if (typeof child !== 'string') {
-        serialize(child, form, context);
-      }
+    childArray.filter(isElement).forEach((child) => {
+      serialize(child, form, context);
     });
   }
 }
@@ -250,18 +246,24 @@ export function serializeProps({ type, ...props }: SerializableProps & { type: s
 }
 
 /**
- * Serialize the form title metadata containing the root content height.
- * Encodes as: PROTOCOL_HEADER + number field (83 bytes).
- * The RP reads this from #title_text to size the scrollable content panel.
+ * Serialize the form title metadata containing the screen type and root content height.
+ * Layout: PROTOCOL_HEADER (9) + s:screenType (83) + n:contentHeight (83) = 175 bytes total.
+ * The RP reads #title_text to determine which screen layout to activate and to size the scroll panel.
+ *
+ * Screen type comes first because every screen reads it; the height comes second because
+ * only some screens (the scrolling ones) need it. The screen type is encoded as a string
+ * ('scroll' | 'fixed') so adding layouts needs no new fields. Changing this
+ * layout is backward-incompatible — bump VERSION.
+ *
+ * Delegates to serializeProps with the screen type in the leading `type` slot, so the
+ * title payload follows the exact same fixed-width field rules as component payloads.
  *
  * @param contentHeight - Root panel computed height in pixels
+ * @param screenType - Which RP layout to activate (scroll: scrolling form; fixed: non-scrolling layout)
  * @returns Full title string for form.title()
  */
-export function serializeTitleMetadata(contentHeight: number): string {
-  const rawStr = Math.round(contentHeight).toString();
-  // number field: 'n:' prefix (2) + value padded to TYPE_WIDTH.n (80) + marker (1) = 83 bytes
-  const padded = rawStr + PAD_CHAR.repeat(TYPE_WIDTH.n - rawStr.length);
-  const field = `${TYPE_PREFIX.n}:${padded}${FIELD_MARKERS[0]}`;
+export function serializeTitleMetadata(contentHeight: number, screenType: ScreenType = 'scroll'): string {
+  const [payload] = serializeProps({ type: screenType, contentHeight: Math.round(contentHeight) });
 
-  return PROTOCOL_HEADER + field;
+  return payload;
 }

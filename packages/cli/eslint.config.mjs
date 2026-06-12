@@ -7,10 +7,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export default defineConfig([
+	// Exclude the CLI template directory — it's scaffolding, not source to lint.
+	{ ignores: ['templates/**'] },
 	...baseConfig,
 	{
 		files: ['**/*.ts', '**/*.tsx'],
-		ignores: ['templates/**/*.ts', 'templates/**/*.tsx'],
 		languageOptions: {
 			parserOptions: {
 				tsconfigRootDir: __dirname,

@@ -1,5 +1,5 @@
 {
-	"namespace": "core-ui_animations",
+	"namespace": "core_ui_animations",
 	// Screen transition animations to avoid "flash" effect
 	"screen_enter_animation": {
 		"anim_type": "wait",

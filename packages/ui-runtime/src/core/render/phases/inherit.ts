@@ -1,6 +1,7 @@
 import { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
 import { isControlled } from '../../../components/control';
 import type { JSX } from '../../../jsx';
+import { isElement } from '../../guards';
 import { type ParentState, type TraversalContext } from '../traversal';
 
 function toPocketUnit(value: number): number {
@@ -45,8 +46,8 @@ export function applyInheritance(element: JSX.Element, context: TraversalContext
 
     if (props.children) {
       if (Array.isArray(props.children)) {
-        newProps.children = props.children.map((child: JSX.Element) => applyInheritance(child, childContext));
-      } else if (typeof props.children === 'object' && props.children !== null) {
+        newProps.children = props.children.filter(isElement).map(child => applyInheritance(child, childContext));
+      } else if (isElement(props.children)) {
         newProps.children = applyInheritance(props.children, childContext);
       } else {
         newProps.children = props.children;
@@ -107,8 +108,8 @@ export function applyInheritance(element: JSX.Element, context: TraversalContext
     // Process children with new parent state
     if (newProps.children) {
       if (Array.isArray(newProps.children)) {
-        newProps.children = newProps.children.map((child: JSX.Element) => applyInheritance(child, childContext));
-      } else if (typeof newProps.children === 'object' && newProps.children !== null) {
+        newProps.children = newProps.children.filter(isElement).map(child => applyInheritance(child, childContext));
+      } else if (isElement(newProps.children)) {
         newProps.children = applyInheritance(newProps.children, childContext);
       }
     }

@@ -1,6 +1,6 @@
-/** @jsxImportSource @bedrock-core/ui */
-import type { ControlProps, JSX } from '@bedrock-core/ui';
-import { Button, useState } from '@bedrock-core/ui';
+/** @jsxImportSource @bedrock-core/ui-runtime */
+import type { ControlProps, JSX } from '@bedrock-core/ui-runtime';
+import { Button, useState } from '@bedrock-core/ui-runtime';
 import { theme } from './tokens';
 
 export interface ToggleProps extends ControlProps {

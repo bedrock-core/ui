@@ -5,7 +5,7 @@ CLI tool to scaffold Minecraft Bedrock addon projects with `@bedrock-core/ui` pr
 ## Usage
 
 ```bash
-npx @bedrock-core/ui
+npx @bedrock-core/cli
 ```
 
 This will interactively prompt you for:

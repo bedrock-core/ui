@@ -1,5 +1,7 @@
 import { ActionFormData } from '@minecraft/server-ui';
 
+export type ScreenType = 'scroll' | 'fixed';
+
 export interface ReservedBytes { bytes: number }
 
 export type SerializablePrimitive = string | number | boolean | ReservedBytes;
@@ -41,4 +43,5 @@ export type Writer = (
   form: ActionFormData,
   ctx: SerializationContext | undefined,
   callbacks: Record<string, (...args: unknown[]) => void>,
+  props?: SerializableProps,
 ) => void;

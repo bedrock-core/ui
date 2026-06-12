@@ -19,5 +19,14 @@ export type { DividerProps, DividerOrientation, DividerVariant } from './Divider
 export { ToggleButtonGroup, ToggleButtonItem } from './ToggleButton';
 export type { ToggleButtonGroupProps, ToggleButtonItemProps } from './ToggleButton';
 
+export { ItemSlot } from './ItemSlot';
+export type { ItemSlotProps } from './ItemSlot';
+
+export { ItemContainer } from './ItemContainer';
+export type { ItemContainerProps } from './ItemContainer';
+
+export { EquipmentSlots } from './EquipmentSlots';
+export type { EquipmentSlotsProps } from './EquipmentSlots';
+
 export { theme } from './tokens';
 export type { Theme as OreTheme, ButtonTextStyle } from './tokens';

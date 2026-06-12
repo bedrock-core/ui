@@ -1,0 +1,24 @@
+{
+	// Routes label-type factory entries to the appropriate client component.
+	// Parallel to button_router which handles button-type entries.
+	"namespace": "core_ui_common",
+	"label_router": {
+		"type": "panel",
+		// Components must be inside a panel with size [1,1] so size_binding values map 1:1 to pixels.
+		"size": [
+			1,
+			1
+		],
+		"controls": [
+			{
+				"panel@core_ui_components.panel": {}
+			},
+			{
+				"text@core_ui_components.text": {}
+			},
+			{
+				"image@core_ui_components.image": {}
+			}
+		]
+	}
+}

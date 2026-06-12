@@ -13,6 +13,5 @@ export { ThemeController } from './ThemeController';
 export { SettingsController } from './SettingsController';
 export { InfoPanel } from './InfoPanel';
 export { ResourcesPanel } from './ResourcesPanel';
-export { GridLayoutPanel } from './GridLayoutPanel';
 export { ExitPanel } from './ExitPanel';
-export { InventoryPanel } from './Inventory';
+export { BackBar } from './BackBar';

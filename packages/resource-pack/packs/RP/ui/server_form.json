@@ -2,12 +2,12 @@
 	"namespace": "server_form",
 	"third_party_server_screen": {
 		"$screen_animations": [
-			"@core-ui_animations.screen_enter_animation",
-			"@core-ui_animations.screen_exit_animation"
+			"@core_ui_animations.screen_enter_animation",
+			"@core_ui_animations.screen_exit_animation"
 		]
 	},
 	"long_form": {
-		"$protocol_header": "bcuiv0004",
+		"$protocol_header": "bcuiv0005",
 		"modifications": [
 			{
 				"array_name": "bindings",
@@ -26,7 +26,7 @@
 		]
 	},
 	"main_screen_content": {
-		"$protocol_header": "bcuiv0004",
+		"$protocol_header": "bcuiv0005",
 		"size": [
 			"0px",
 			"0px"
@@ -41,12 +41,12 @@
 				"operation": "insert_back",
 				"value": [
 					{
-						"core-ui_server_form_factory": {
+						"core_ui_server_form_factory": {
 							"type": "panel",
 							"factory": {
 								"name": "server_form_factory",
 								"control_ids": {
-									"long_form": "@core-ui_common.screen_container"
+									"long_form": "@core_ui_common.screen_container"
 								}
 							}
 						}

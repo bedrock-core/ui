@@ -1,5 +1,5 @@
-import type { Player } from '@minecraft/server';
 import { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
+import type { Player } from '@minecraft/server';
 import type { FunctionComponent } from '../../jsx';
 import { Context } from '../fabric';
 import type { Fiber } from '../fabric/types';
@@ -77,7 +77,7 @@ export function createInitialContext(): TraversalContext {
   return {
     parentPath: [],
     idCounters: new Map(),
-    currentContext: new Map<Context<unknown>, unknown>(),
+    currentContext: new Map(),
     parentFiber: undefined,
   };
 }

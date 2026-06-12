@@ -2,7 +2,7 @@
 # Manual changes might be lost - proceed with caution!
 
 __metadata:
-  version: 9
+  version: 8
   cacheKey: 10c0
 
 "@babel/helper-string-parser@npm:^7.27.1":
@@ -67,7 +67,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@bedrock-core/flexbox@npm:^0.5.2, @bedrock-core/flexbox@workspace:*, @bedrock-core/flexbox@workspace:packages/flexbox":
+"@bedrock-core/flexbox@workspace:*, @bedrock-core/flexbox@workspace:packages/flexbox":
   version: 0.0.0-use.local
   resolution: "@bedrock-core/flexbox@workspace:packages/flexbox"
   dependencies:
@@ -75,16 +75,26 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@bedrock-core/ore-styled@workspace:packages/ore-styled":
+"@bedrock-core/navigation@workspace:*, @bedrock-core/navigation@workspace:packages/navigation":
+  version: 0.0.0-use.local
+  resolution: "@bedrock-core/navigation@workspace:packages/navigation"
+  dependencies:
+    "@bedrock-core/ui-runtime": "workspace:*"
+    typescript: "npm:^6.0.3"
+  peerDependencies:
+    "@bedrock-core/ui-runtime": "*"
+  languageName: unknown
+  linkType: soft
+
+"@bedrock-core/ore-styled@workspace:*, @bedrock-core/ore-styled@workspace:packages/ore-styled":
   version: 0.0.0-use.local
   resolution: "@bedrock-core/ore-styled@workspace:packages/ore-styled"
   dependencies:
-    "@bedrock-core/ui": "npm:^0.5.2"
-    "@minecraft/server": "npm:^2.7.0"
+    "@bedrock-core/ui-runtime": "workspace:*"
     typescript: "npm:^6.0.3"
     vitest: "npm:^4.1.5"
   peerDependencies:
-    "@minecraft/server": "*"
+    "@bedrock-core/ui-runtime": "*"
   languageName: unknown
   linkType: soft
 
@@ -92,6 +102,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bedrock-core/ui-resource-pack@workspace:packages/resource-pack"
   dependencies:
+    "@bedrock-core/navigation": "workspace:*"
+    "@bedrock-core/ore-styled": "workspace:*"
     "@bedrock-core/ui": "workspace:*"
     "@eslint/js": "npm:^10.0.1"
     "@eslint/json": "npm:^1.2.0"
@@ -108,7 +120,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@bedrock-core/ui-runtime@workspace:packages/ui-runtime":
+"@bedrock-core/ui-runtime@workspace:*, @bedrock-core/ui-runtime@workspace:packages/ui-runtime":
   version: 0.0.0-use.local
   resolution: "@bedrock-core/ui-runtime@workspace:packages/ui-runtime"
   dependencies:
@@ -125,11 +137,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@bedrock-core/ui@npm:^0.5.2, @bedrock-core/ui@workspace:*, @bedrock-core/ui@workspace:.":
+"@bedrock-core/ui@workspace:*, @bedrock-core/ui@workspace:.":
   version: 0.0.0-use.local
   resolution: "@bedrock-core/ui@workspace:."
   dependencies:
-    "@bedrock-core/flexbox": "npm:^0.5.2"
+    "@bedrock-core/flexbox": "workspace:*"
+    "@bedrock-core/navigation": "workspace:*"
+    "@bedrock-core/ore-styled": "workspace:*"
+    "@bedrock-core/ui-runtime": "workspace:*"
     "@eslint/css": "npm:^1.2.0"
     "@eslint/js": "npm:^10.0.1"
     "@eslint/json": "npm:^1.2.0"
@@ -138,23 +153,15 @@ __metadata:
     "@minecraft/server-ui": "npm:^2.0.0"
     "@stylistic/eslint-plugin": "npm:^5.10.0"
     "@vitest/coverage-v8": "npm:^4.1.5"
-    chalk: "npm:^5.6.2"
-    commander: "npm:^14.0.3"
     concurrently: "npm:^9.2.1"
     eslint: "npm:^10.3.0"
-    fs-extra: "npm:^11.3.5"
     nodemon: "npm:^3.1.14"
-    ora: "npm:^9.4.0"
-    prompts: "npm:^2.4.2"
     typescript: "npm:^6.0.3"
     typescript-eslint: "npm:^8.59.2"
-    validate-npm-package-name: "npm:^7.0.2"
     vitest: "npm:^4.1.5"
   peerDependencies:
     "@minecraft/server": "*"
     "@minecraft/server-ui": "*"
-  bin:
-    ui: ./packages/cli/dist/index.js
   languageName: unknown
   linkType: soft
 

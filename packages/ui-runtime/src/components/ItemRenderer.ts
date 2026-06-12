@@ -1,44 +1,46 @@
-import { ItemLockMode, ItemStack } from '@minecraft/server';
+import { ItemComponentTypes, ItemStack } from '@minecraft/server';
+import { ItemAuxError } from '../core/types';
+import { ItemAuxContext } from '../data/ItemAux';
 import { useContext } from '../hooks';
 import { FunctionComponent, JSX } from '../jsx';
-import { ItemAuxContext } from '../data/ItemAuxContext';
-import { ItemAuxError } from '../core/types';
 import { ControlProps, withControl } from './control';
 
+/** @experimental */
 export interface ItemRendererProps extends ControlProps {
-  /** ItemStack to render in this slot. Omit or pass `undefined` for an empty slot. */
-  item?: ItemStack;
-  /** When true, renders a hover tooltip showing item name and lore alongside the slot. */
-  tooltip?: boolean;
+  item: ItemStack;
 }
 
+/**
+ * Renders an item icon using the aux ID map supplied via `ItemAuxContext`.
+ *
+ * **Requires a manual `ItemAuxContext` wrapping the component tree.**
+ * Throws `ItemAuxError` at render time if no provider is present.
+ *
+ * @experimental
+ */
 export const ItemRenderer: FunctionComponent<ItemRendererProps> = ({
   item,
-  tooltip = true,
   ...rest
 }: ItemRendererProps): JSX.Element => {
   const auxMap = useContext(ItemAuxContext);
 
   if (auxMap === null) {
     throw new ItemAuxError(
-      `ItemAuxContext is not provided. Did you forget to install the 'item-aux' Regolith filter `
-      + `and wrap your UI in <ItemAuxContext value={itemAuxMap}>?`,
+      `ItemAuxContext is not provided. Wrap your component tree with `
+      + `<ItemAuxContext value={myMap}> and supply your own ItemAuxMap.`,
     );
   }
 
-  const controlProps = withControl(rest);
+  const controlProps = withControl({ width: 16, height: 16, enabled: false, ...rest });
+
+  const enchantable = item.getComponent(ItemComponentTypes.Enchantable);
+  const isEnchanted = enchantable !== undefined && enchantable.getEnchantments().length > 0;
 
   return {
     type: 'item_renderer',
     props: {
       ...controlProps,
-      aux: item ? (auxMap[item.typeId] ?? 0) : 0,
-      nameTag: item?.nameTag ?? item?.localizationKey ?? '',
-      amount: item?.amount ?? 0,
-      keepOnDeath: item?.keepOnDeath ?? false,
-      lockMode: (item?.lockMode ?? ItemLockMode.none).toString(),
-      lore: item?.getLore().join('\n') ?? '',
-      tooltip: !!tooltip,
+      aux: (auxMap[item.typeId] ?? 0) + (isEnchanted ? 32768 : 0),
     },
   };
 };

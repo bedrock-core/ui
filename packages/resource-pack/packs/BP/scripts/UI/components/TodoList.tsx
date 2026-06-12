@@ -1,4 +1,5 @@
-import { JSX, Panel, Text, Button, FunctionComponent, useReducer } from '@bedrock-core/ui';
+import { JSX, Panel, Text, FunctionComponent, useReducer } from '@bedrock-core/ui';
+import { Button } from '@bedrock-core/ore-styled';
 
 /**
  * ============================================================================
@@ -59,31 +60,19 @@ export const TodoList: FunctionComponent = (): JSX.Element => {
       <Text>{`Done: §a${completedCount}`}</Text>
 
       <Panel flexDirection={'row'} gap={6}>
-        <Button
-          onPress={(): void => {
-            addTodo();
-          }}
-        >
-          <Text>{'§a+ Add'}</Text>
-        </Button>
-
-        <Button
-          onPress={(): void => {
-            clearCompleted();
-          }}
-        >
-          <Text>{'§cClear'}</Text>
-        </Button>
+        <Button onPress={(): void => { addTodo(); }}>{'§a+ Add'}</Button>
+        <Button variant={'danger'} onPress={(): void => { clearCompleted(); }}>{'§cClear'}</Button>
       </Panel>
 
       <Button
+        variant={'secondary'}
         onPress={(): void => {
           if (todos.length > 0) {
             dispatch({ type: 'toggle', id: todos[0].id });
           }
         }}
       >
-        <Text>{'§9Toggle First'}</Text>
+        {'§9Toggle First'}
       </Button>
     </Panel>
   );

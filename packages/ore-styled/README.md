@@ -22,6 +22,9 @@ npm install @bedrock-core/ore-styled
 - `Toggle` — switch-style boolean input
 - `ToggleButtonGroup` / `ToggleButtonItem` — multi-button selector
 - `Divider` — horizontal/vertical separator
+- `ItemSlot` — single inventory slot rendering an `ItemStack` with optional overlay texture
+- `ItemContainer` — grid of `ItemSlot` components covering a `Container`'s slots
+- `EquipmentSlots` — vertical column of equipment slots (helmet → boots + offhand) from an `EntityEquippableComponent`
 - `theme` — design tokens for ad-hoc styling
 
 ## Usage

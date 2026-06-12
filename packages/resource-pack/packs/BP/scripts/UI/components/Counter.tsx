@@ -1,4 +1,5 @@
-import { JSX, Panel, Text, Button, FunctionComponent, useState, useEffect } from '@bedrock-core/ui';
+import { JSX, Panel, Text, FunctionComponent, useState, useEffect } from '@bedrock-core/ui';
+import { Button } from '@bedrock-core/ore-styled';
 import { system } from '@minecraft/server';
 
 /**
@@ -44,31 +45,12 @@ export const Counter: FunctionComponent = (): JSX.Element => {
 
       <Panel flexDirection={'row'} gap={6}>
         {/* Increment button */}
-        <Button
-          onPress={(): void => {
-            setCount(prev => prev + 1);
-          }}
-        >
-          <Text>{'§a+1'}</Text>
-        </Button>
-
-        {/* Decrement button */}
-        <Button
-          onPress={(): void => {
-            setCount(prev => prev - 1);
-          }}
-        >
-          <Text>{'§c-1'}</Text>
-        </Button>
+        <Button onPress={(): void => { setCount(prev => prev + 1); }}>{'§a+1'}</Button>
+        <Button variant={'danger'} onPress={(): void => { setCount(prev => prev - 1); }}>{'§c-1'}</Button>
       </Panel>
 
-      {/* Toggle auto-increment */}
-      <Button
-        onPress={(): void => {
-          setIsAutoIncrement(!isAutoIncrement);
-        }}
-      >
-        <Text>{`§9${isAutoIncrement ? 'Stop' : 'Start'} Auto`}</Text>
+      <Button variant={'secondary'} onPress={(): void => { setIsAutoIncrement(!isAutoIncrement); }}>
+        {`§9${isAutoIncrement ? 'Stop' : 'Start'} Auto`}
       </Button>
     </Panel>
   );

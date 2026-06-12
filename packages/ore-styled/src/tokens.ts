@@ -1,4 +1,4 @@
-import type { TextFont } from '@bedrock-core/ui';
+import type { TextFont } from '@bedrock-core/ui-runtime';
 
 const BASE = 'textures/ui/ore-styled' as const;
 
@@ -69,6 +69,21 @@ export interface Theme {
       paddingX: number;
       textures: { normal: string; hover: string; pressed: string; disabled: string; disabledPressed: string };
       textStyle: { selected: ButtonTextStyle; unselected: ButtonTextStyle };
+    };
+    itemSlot: {
+      size: number;
+      textures: {
+        slot: string;
+        slotHover: string;
+        slotDisabled: string;
+        equipment: {
+          helmet: string;
+          chestplate: string;
+          leggings: string;
+          boots: string;
+          shield: string;
+        };
+      };
     };
   };
 }
@@ -168,6 +183,21 @@ const oreTheme: Theme = {
       textStyle: {
         selected: { font: 'mojangles', scale: 1, color: '§f', disabledColor: '§8' },
         unselected: { font: 'mojangles', scale: 1, color: '§0', disabledColor: '§8' },
+      },
+    },
+    itemSlot: {
+      size: 18,
+      textures: {
+        slot: 'textures/ui/slot_enabled',
+        slotHover: 'textures/ui/slot_enabled_hover',
+        slotDisabled: 'textures/ui/slot_disabled',
+        equipment: {
+          helmet: 'textures/ui/empty_armor_slot_helmet',
+          chestplate: 'textures/ui/empty_armor_slot_chestplate',
+          leggings: 'textures/ui/empty_armor_slot_leggings',
+          boots: 'textures/ui/empty_armor_slot_boots',
+          shield: 'textures/ui/empty_armor_slot_shield',
+        },
       },
     },
   },

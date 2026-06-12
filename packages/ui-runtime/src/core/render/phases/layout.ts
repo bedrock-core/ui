@@ -2,6 +2,7 @@ import type { FlexStyle, LayoutNode } from '@bedrock-core/flexbox';
 import { CANONICAL_SCREEN, createNode, computeLayout as flexComputeLayout } from '@bedrock-core/flexbox';
 import { TextFont, TextOverflow, TextWordBreak } from '@bedrock-core/ui/components/Text';
 import type { JSX } from '../../../jsx';
+import { isElement } from '../../guards';
 import { ellipsizeText, measureText, wrapText } from '../../../util/textMetrics';
 
 // ─── Transparent element types that don't participate in layout ────────────────
@@ -14,7 +15,11 @@ function isTransparent(el: JSX.Element): boolean {
 
 // ─── Build LayoutNode tree from JSX element tree ────────────────────────────────
 
-function collectConcrete(element: JSX.Element): JSX.Element[] {
+function collectConcrete(element: JSX.Node): JSX.Element[] {
+  if (!isElement(element)) {
+    return [];
+  }
+
   if (isTransparent(element)) {
     const ch = element.props.children;
 
@@ -194,7 +199,7 @@ function buildNode(element: JSX.Element, availableWidth?: number): LayoutNode {
 
   if (Array.isArray(rawChildren)) {
     childElements = rawChildren.flatMap(collectConcrete);
-  } else if (rawChildren && typeof rawChildren === 'object') {
+  } else if (isElement(rawChildren)) {
     childElements = collectConcrete(rawChildren);
   }
 
@@ -212,8 +217,10 @@ function applyToTree(
     const ch = element.props.children;
 
     if (Array.isArray(ch)) {
-      ch.forEach(c => applyToTree(c, parentNode, cursor));
-    } else if (ch && typeof ch === 'object') {
+      ch.filter(isElement).forEach((c) => {
+        applyToTree(c, parentNode, cursor);
+      });
+    } else if (isElement(ch)) {
       applyToTree(ch, parentNode, cursor);
     }
 
@@ -235,8 +242,10 @@ function applyToTree(
   const childCursor = { index: 0 };
 
   if (Array.isArray(ch)) {
-    ch.forEach(c => applyToTree(c, node, childCursor));
-  } else if (ch && typeof ch === 'object') {
+    ch.filter(isElement).forEach((c) => {
+      applyToTree(c, node, childCursor);
+    });
+  } else if (isElement(ch)) {
     applyToTree(ch, node, childCursor);
   }
 }
@@ -277,8 +286,10 @@ export function computeLayout(tree: JSX.Element): JSX.Element {
   const cursor = { index: 0 };
 
   if (Array.isArray(ch)) {
-    ch.forEach(c => applyToTree(c, root, cursor));
-  } else if (ch && typeof ch === 'object') {
+    ch.filter(isElement).forEach((c) => {
+      applyToTree(c, root, cursor);
+    });
+  } else if (isElement(ch)) {
     applyToTree(ch, root, cursor);
   }
 

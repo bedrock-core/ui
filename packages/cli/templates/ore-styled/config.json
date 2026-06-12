@@ -12,7 +12,11 @@
 		"filterDefinitions": {
 			"bundler": {
 				"url": "github.com/bedrock-core/regolith-filters",
-				"version": "1.0.4"
+				"version": "1.1.0"
+			},
+			"translation-keys": {
+				"url": "github.com/bedrock-core/regolith-filters",
+				"version": "1.1.0"
 			}
 		},
 		"formatVersion": "1.4.0",
@@ -24,6 +28,7 @@
 					"target": "local"
 				},
 				"filters": [
+					{ "filter": "translation-keys" },
 					{
 						"filter": "bundler",
 						"settings": {
@@ -39,6 +44,7 @@
 					"target": "development"
 				},
 				"filters": [
+					{ "filter": "translation-keys" },
 					{
 						"filter": "bundler",
 						"settings": {

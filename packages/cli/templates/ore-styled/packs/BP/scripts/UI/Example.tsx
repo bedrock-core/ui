@@ -1,4 +1,11 @@
+import translationKeys from '@bedrock-core/generated/translation-keys';
 import {
+  createStackNavigator,
+  NavigationContainer,
+  type ScreenProps,
+} from '@bedrock-core/navigation';
+import {
+  Button,
   Card,
   Checkbox,
   Divider,
@@ -7,26 +14,36 @@ import {
   theme,
   Toggle,
 } from '@bedrock-core/ore-styled';
-import {
-  Fragment,
-  JSX,
-  Panel,
-  Text,
-  useState,
-} from '@bedrock-core/ui';
+import { Fragment, type JSX, Panel, Text, TranslationKeysContext, useState } from '@bedrock-core/ui';
 
-export const Example = (): JSX.Element => {
+// ─── Route map ────────────────────────────────────────────────────────────────
+
+type AppRoutes = {
+  Home: undefined;
+  Settings: { plan: string };
+};
+
+type Screen<K extends keyof AppRoutes> = ScreenProps<AppRoutes, K>;
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const { fontColor, spacing } = theme.tokens;
+
+// ─── Screens ──────────────────────────────────────────────────────────────────
+
+function HomeScreen({ navigation }: Screen<'Home'>): JSX.Element {
   const [enabled, setEnabled] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const [plan, setPlan] = useState('basic');
 
   return (
-    <Panel flexDirection={'column'} padding={theme.tokens.spacing.md} gap={theme.tokens.spacing.md}>
+    <Panel flexDirection={'column'} padding={spacing.md} gap={spacing.md}>
       <Text>{'§lOre-Styled Example'}</Text>
+
       <Card>
         <Text>{'Preferences'}</Text>
         <Divider />
-        <Panel flexDirection={'row'} alignItems={'center'} gap={theme.tokens.spacing.md}>
+        <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.md}>
           <Fragment>
             <Toggle on={enabled} onChange={setEnabled} />
             <Text>{`Auto-save: ${enabled ? '§aON' : '§cOFF'}`}</Text>
@@ -34,6 +51,7 @@ export const Example = (): JSX.Element => {
         </Panel>
         <Checkbox label={'I agree to the terms'} checked={accepted} onChange={setAccepted} />
       </Card>
+
       <Card>
         <Text>{'Choose a plan'}</Text>
         <Divider />
@@ -45,6 +63,54 @@ export const Example = (): JSX.Element => {
           </Fragment>
         </RadioGroup>
       </Card>
+
+      <Button onPress={(): void => navigation.navigate('Settings', { plan })}>
+        {`${fontColor.default}Go to Settings →`}
+      </Button>
     </Panel>
   );
-};
+}
+
+function SettingsScreen({ navigation, route }: Screen<'Settings'>): JSX.Element {
+  const { plan } = route.params;
+
+  return (
+    <Panel flexDirection={'column'} padding={spacing.md} gap={spacing.md}>
+      <Text>{'§lSettings'}</Text>
+
+      <Card>
+        <Text>{`${fontColor.muted}Selected plan: ${fontColor.default}§l${plan}`}</Text>
+        <Divider />
+        <Text>{`${fontColor.disabled}Manage your account settings here.`}</Text>
+      </Card>
+
+      <Button variant={'secondary'} onPress={(): void => navigation.goBack()}>
+        {`${fontColor.default}<- Go Back`}
+      </Button>
+    </Panel>
+  );
+}
+
+// ─── Navigator ────────────────────────────────────────────────────────────────
+
+const Stack = createStackNavigator<AppRoutes>({
+  initialRouteName: 'Home',
+  screens: {
+    Home: HomeScreen,
+    Settings: SettingsScreen,
+  },
+});
+
+// ─── Root ─────────────────────────────────────────────────────────────────────
+
+export function Example(): JSX.Element {
+  return (
+    // Translation keys come from the translation-keys Regolith filter (see config.json).
+    // Providing them at the root enables <Text localizationKey={...} /> everywhere.
+    <TranslationKeysContext value={translationKeys}>
+      <NavigationContainer>
+        <Stack.Navigator />
+      </NavigationContainer>
+    </TranslationKeysContext>
+  );
+}

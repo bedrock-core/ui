@@ -11,16 +11,12 @@
 		"dataPath": "./packs/data",
 		"filterDefinitions": {
 			"bundler": {
-				"url": "github.com/bedrock-core/regolith-filters",
-				"version": "1.0.4"
-			},
-			"item-aux": {
-				"url": "github.com/bedrock-core/regolith-filters",
-				"version": "1.0.0"
+				"runWith": "nodejs",
+				"script": "../../../regolith-filters/bundler/main.js"
 			},
 			"translation-keys": {
-				"url": "github.com/bedrock-core/regolith-filters",
-				"version": "1.0.0"
+				"runWith": "nodejs",
+				"script": "../../../regolith-filters/translation-keys/main.js"
 			}
 		},
 		"formatVersion": "1.4.0",
@@ -32,9 +28,6 @@
 					"target": "local"
 				},
 				"filters": [
-					{
-						"filter": "item-aux"
-					},
 					{
 						"filter": "translation-keys"
 					},
@@ -53,9 +46,6 @@
 					"target": "development"
 				},
 				"filters": [
-					{
-						"filter": "item-aux"
-					},
 					{
 						"filter": "translation-keys"
 					},

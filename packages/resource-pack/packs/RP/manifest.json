@@ -7,13 +7,13 @@
 		"pack_scope": "world",
 		"version": [
 			1,
-			1,
+			6,
 			0
 		],
 		"min_engine_version": [
 			1,
-			21,
-			132
+			26,
+			21
 		]
 	},
 	"modules": [
