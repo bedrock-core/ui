@@ -27,16 +27,6 @@
 			]
 		}
 	],
-	"dependencies": [
-		{
-			"uuid": "6c4a78bf-e298-4c9b-bcd7-a517eebccc92",
-			"version": [
-				1,
-				0,
-				0
-			]
-		}
-	],
 	"metadata": {
 		"authors": [
 			"DrAv0011"
