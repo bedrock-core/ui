@@ -27,8 +27,6 @@ npm install @bedrock-core/ore-styled
 - `EquipmentSlots` — vertical column of equipment slots (helmet → boots + offhand) from an `EntityEquippableComponent`
 - `theme` — design tokens for ad-hoc styling
 
-> **Note:** `ItemSlot`, `ItemContainer`, and `EquipmentSlots` require a `Screen.Fixed` screen (passed to `render()` or set via `useSetScreen`) and the [item-aux Regolith filter](https://github.com/bedrock-core/regolith-filters/tree/main/item-aux) to be installed. The runtime seeds the aux map automatically — no wrapping needed.
-
 ## Usage
 
 ```tsx

@@ -1,10 +1,5 @@
 {
 	"namespace": "core_ui_screens",
-	// ─── Root ──────────────────────────────────────────────────────────────────
-	// Fixed (non-scrolling) layout. Two layers over form_buttons:
-	//   Layer 0: item_grid (type: grid bound to form_buttons) — items ONLY render here
-	//   Layer 1: content_collection (collection_panel factory) — all non-item controls
-	//
 	"fixed": {
 		"type": "panel",
 		"size": [
@@ -21,8 +16,6 @@
 		"allow_clipping": true,
 		"controls": [
 			{
-				// Control layer — collection_panel with center moved to root top-left
-				// via -50%/-50% offset so anchored-offset coordinates start at (0,0) = top-left.
 				"content_collection": {
 					"type": "collection_panel",
 					"size": [

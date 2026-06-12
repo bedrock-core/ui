@@ -1,9 +1,0 @@
-{
-	"resource_pack_name": "bedrock-core-test",
-	"texture_name": "atlas.items",
-	"texture_data": {
-		"test:alpha_item": { "textures": "textures/items/alpha" },
-		"test:beta_item":  { "textures": "textures/items/beta" },
-		"test:gamma_item": { "textures": "textures/items/gamma" }
-	}
-}

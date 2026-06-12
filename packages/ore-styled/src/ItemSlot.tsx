@@ -4,11 +4,13 @@ import { Image, ItemRenderer, Panel } from '@bedrock-core/ui';
 import type { ContainerSlot } from '@minecraft/server';
 import { theme } from './tokens';
 
+/** @experimental */
 export interface ItemSlotProps extends ControlProps {
   slot?: ContainerSlot;
   overlay?: string;
 }
 
+/** @experimental */
 export function ItemSlot({ slot, overlay, ...layout }: ItemSlotProps): JSX.Element {
   const { size, textures } = theme.components.itemSlot;
   const item = slot?.getItem();

@@ -5,10 +5,19 @@ import { useContext } from '../hooks';
 import { FunctionComponent, JSX } from '../jsx';
 import { ControlProps, withControl } from './control';
 
+/** @experimental */
 export interface ItemRendererProps extends ControlProps {
   item: ItemStack;
 }
 
+/**
+ * Renders an item icon using the aux ID map supplied via `ItemAuxContext`.
+ *
+ * **Requires a manual `ItemAuxContext` wrapping the component tree.**
+ * Throws `ItemAuxError` at render time if no provider is present.
+ *
+ * @experimental
+ */
 export const ItemRenderer: FunctionComponent<ItemRendererProps> = ({
   item,
   ...rest
@@ -17,8 +26,8 @@ export const ItemRenderer: FunctionComponent<ItemRendererProps> = ({
 
   if (auxMap === null) {
     throw new ItemAuxError(
-      `ItemAuxContext is not provided. Did you forget to install the 'item-aux' Regolith filter `
-      + `and wrap your UI in <ItemAuxContext value={itemAuxMap}>?`,
+      `ItemAuxContext is not provided. Wrap your component tree with `
+      + `<ItemAuxContext value={myMap}> and supply your own ItemAuxMap.`,
     );
   }
 

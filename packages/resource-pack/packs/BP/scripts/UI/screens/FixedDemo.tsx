@@ -1,12 +1,9 @@
-import { Button } from '@bedrock-core/ore-styled';
-import { ItemRenderer, Panel, Screen, Text, useExit, useSetScreen, type JSX } from '@bedrock-core/ui';
-import { ItemStack } from '@minecraft/server';
-import { MinecraftItemTypes } from '@minecraft/vanilla-data';
+import { Button, Divider } from '@bedrock-core/ore-styled';
+import { Panel, Screen, Text, useExit, useSetScreen, type JSX } from '@bedrock-core/ui';
 
 /**
- * FixedScreen demo — a single, non-scrolling page. Because nothing scrolls,
- * ItemRenderer slots stay aligned with the surrounding buttons/labels.
- * Contrast with the default scroll form.
+ * FixedScreen demo — a single, non-scrolling page.
+ * Demonstrates fixed-layout controls: buttons, text, and panel arrangements.
  */
 function FixedContent(): JSX.Element {
   const exit = useExit();
@@ -18,24 +15,28 @@ function FixedContent(): JSX.Element {
         <Button variant={'secondary'} onPress={exit}>{'§7Close'}</Button>
       </Panel>
 
-      <Text>{'§7Non-scrolling layout — items render inline with controls:'}</Text>
+      <Text>{'§7Non-scrolling layout — controls share one fixed coordinate space.'}</Text>
+
+      <Divider />
 
       <Panel flexDirection={'row'} gap={4}>
-        <ItemRenderer item={new ItemStack(MinecraftItemTypes.DiamondSword, 1)} />
-        <ItemRenderer item={new ItemStack(MinecraftItemTypes.GoldenApple, 3)} />
-        <ItemRenderer item={new ItemStack(MinecraftItemTypes.BoneBlock, 64)} />
-        <ItemRenderer item={new ItemStack(MinecraftItemTypes.EnderPearl, 16)} />
+        <Button>{'§aPrimary'}</Button>
+        <Button variant={'secondary'}>{'§bSecondary'}</Button>
+        <Button variant={'contrast'}>{'§eContrast'}</Button>
       </Panel>
 
-      <Text>{'§7Buttons and items share one fixed coordinate space:'}</Text>
-      <Button>{'§aPrimary Action'}</Button>
-      <Button variant={'secondary'}>{'§bSecondary Action'}</Button>
+      <Divider variant={'light'} />
+
+      <Panel flexDirection={'column'} gap={2}>
+        <Text font={'minecraftTen'} scale={2}>{'§6Large heading'}</Text>
+        <Text>{'§7Body text at default scale. Color codes and formatting work here.'}</Text>
+        <Text>{'§8Small caption at default scale.'}</Text>
+      </Panel>
     </Panel>
   );
 }
 
 export function FixedDemo(): JSX.Element {
-  // The screen declares its own layout — not the navigator's job.
   useSetScreen(Screen.Fixed);
 
   return <FixedContent />;

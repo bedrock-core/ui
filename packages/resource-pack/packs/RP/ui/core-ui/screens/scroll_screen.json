@@ -1,9 +1,6 @@
 // mc-disable resourcepack.ui.inheritance.missing
 {
 	"namespace": "core_ui_screens",
-	// ─── Root ──────────────────────────────────────────────────────────────────
-	// Default scrolling form. Referenced from screen_container when the screen is
-	// not fixed. Scrolls the form_buttons content (buttons/labels).
 	"scroll@common.scrolling_panel": {
 		// No elevated layer here on purpose. Item sprites (2D) vanish inside
 		// common.scrolling_panel when their cumulative layer is high — layer 999
@@ -24,8 +21,6 @@
 		"$show_background": false,
 		"$scrolling_content": "core_ui_screens.form_scrolling_content"
 	},
-	// ─── Scrolling Content ───────────────────────────────────────────────────────
-	// Non-item form elements (buttons, labels), absolutely positioned and scrolled.
 	"form_scrolling_content": {
 		"type": "panel",
 		"size": [

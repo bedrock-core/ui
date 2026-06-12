@@ -14,10 +14,6 @@
 				"runWith": "nodejs",
 				"script": "../../../regolith-filters/bundler/main.js"
 			},
-			"item-aux": {
-				"runWith": "nodejs",
-				"script": "../../../regolith-filters/item-aux/main.js"
-			},
 			"translation-keys": {
 				"runWith": "nodejs",
 				"script": "../../../regolith-filters/translation-keys/main.js"
@@ -32,9 +28,6 @@
 					"target": "local"
 				},
 				"filters": [
-					{
-						"filter": "item-aux"
-					},
 					{
 						"filter": "translation-keys"
 					},
@@ -53,9 +46,6 @@
 					"target": "development"
 				},
 				"filters": [
-					{
-						"filter": "item-aux"
-					},
 					{
 						"filter": "translation-keys"
 					},
