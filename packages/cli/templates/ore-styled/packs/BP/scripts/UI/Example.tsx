@@ -1,6 +1,7 @@
+import translationKeys from '@bedrock-core/generated/translation-keys';
 import {
-  NavigationContainer,
   createStackNavigator,
+  NavigationContainer,
   type ScreenProps,
 } from '@bedrock-core/navigation';
 import {
@@ -13,7 +14,7 @@ import {
   theme,
   Toggle,
 } from '@bedrock-core/ore-styled';
-import { Fragment, type JSX, Panel, Text, useState } from '@bedrock-core/ui';
+import { Fragment, type JSX, Panel, Text, TranslationKeysContext, useState } from '@bedrock-core/ui';
 
 // ─── Route map ────────────────────────────────────────────────────────────────
 
@@ -104,8 +105,12 @@ const Stack = createStackNavigator<AppRoutes>({
 
 export function Example(): JSX.Element {
   return (
-    <NavigationContainer>
-      <Stack.Navigator />
-    </NavigationContainer>
+    // Translation keys come from the translation-keys Regolith filter (see config.json).
+    // Providing them at the root enables <Text localizationKey={...} /> everywhere.
+    <TranslationKeysContext value={translationKeys}>
+      <NavigationContainer>
+        <Stack.Navigator />
+      </NavigationContainer>
+    </TranslationKeysContext>
   );
 }

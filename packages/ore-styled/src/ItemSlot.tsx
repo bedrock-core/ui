@@ -1,6 +1,6 @@
-/** @jsxImportSource @bedrock-core/ui */
-import type { ControlProps, JSX } from '@bedrock-core/ui';
-import { Image, ItemRenderer, Panel } from '@bedrock-core/ui';
+/** @jsxImportSource @bedrock-core/ui-runtime */
+import type { ControlProps, JSX } from '@bedrock-core/ui-runtime';
+import { Image, ItemRenderer, Panel } from '@bedrock-core/ui-runtime';
 import type { ContainerSlot } from '@minecraft/server';
 import { theme } from './tokens';
 

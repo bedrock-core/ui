@@ -1,7 +1,5 @@
 import { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
-import defaultTranslationKeys from '@bedrock-core/generated/translation-keys';
 import type { Player } from '@minecraft/server';
-import { TranslationKeysContext } from '../../data/TranslationKeys';
 import type { FunctionComponent } from '../../jsx';
 import { Context } from '../fabric';
 import type { Fiber } from '../fabric/types';
@@ -76,15 +74,10 @@ export function generateComponentId(
  * Used as the entry point for Phase 1.
  */
 export function createInitialContext(): TraversalContext {
-  const currentContext = new Map<Context<unknown>, unknown>();
-
-  /* eslint-disable @typescript-eslint/no-unsafe-type-assertion */
-  currentContext.set(TranslationKeysContext as Context<unknown>, defaultTranslationKeys);
-
   return {
     parentPath: [],
     idCounters: new Map(),
-    currentContext,
+    currentContext: new Map(),
     parentFiber: undefined,
   };
 }

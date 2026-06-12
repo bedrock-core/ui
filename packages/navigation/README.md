@@ -15,15 +15,14 @@ This is a stack-only navigator. It does **not** support:
 ## Core API
 
 - **`NavigationContainer`** – Context provider that initializes and manages navigation state per player session. Wrap the entire navigator tree in this component as the root passed to `render()`.
-- **`createStackNavigator(config)`** – Factory that returns a `{ Navigator, Screen }` object. Register screens by passing a `{ screens: { [name]: component | { screen, initialParams } } }` config.
-- **`Screen`** – *(from `createStackNavigator`)* Declare a named, routed screen within the navigator.
+- **`createStackNavigator(config)`** – Factory that returns a `{ Navigator }` object. Register screens by passing a `{ screens: { [name]: component | { screen, initialParams } } }` config.
 - **`useNavigation<TRoutes>()`** – Hook returning a `NavigationHelpers<TRoutes>` object with: `navigate(name, params?)`, `push(name, params?)`, `goBack()`, `canGoBack()`, `reset(state)`, `setParams(name, params)`, `getState()`.
 - **`useRoute<TRoutes, K>()`** – Hook returning the current `RouteObject<TRoutes[K]>` with shape `{ key: string, name: K, params: TRoutes[K] }`. Must be called from within a screen component.
 
 ## Usage
 
 ```tsx
-import { NavigationContainer, createStackNavigator, Screen } from '@bedrock-core/navigation';
+import { NavigationContainer, createStackNavigator } from '@bedrock-core/navigation';
 import { useNavigation, useRoute } from '@bedrock-core/navigation';
 
 // Define screens

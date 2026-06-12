@@ -10,18 +10,23 @@ export type TranslationKeysMap = Record<string, string>;
 /**
  * Context that provides the translation keys map (key → resolved string) to the component tree.
  *
- * Seeded automatically at the render root with data from the `translation-keys`
- * Regolith filter — no provider needed. `Text` with a `localizationKey` prop just works.
- *
- * To override for a subtree (e.g. a different language or custom strings), wrap with this context:
+ * Using `Text` with a `localizationKey` prop requires the `translation-keys`
+ * Regolith filter and this context at the root of the UI. The filter resolves
+ * keys from your pack's .lang files into a generated module that you pass in:
  *
  * ```tsx
- * <TranslationKeysContext value={myTranslationKeys}>
+ * import translationKeys from '@bedrock-core/generated/translation-keys';
+ *
+ * <TranslationKeysContext value={translationKeys}>
  *   <MyScreen />
  * </TranslationKeysContext>
  * ```
  *
- * If the `translation-keys` generated package is missing, using `localizationKey` will
- * throw a `TranslationKeysError` at render time.
+ * Projects that never use `localizationKey` need neither the filter nor this
+ * context. Rendering a `localizationKey` without a provider throws a
+ * `TranslationKeysError`.
+ *
+ * The context can also be nested to override keys for a subtree
+ * (e.g. a different language or custom strings).
  */
 export const TranslationKeysContext = createContext<TranslationKeysMap | null>(null);

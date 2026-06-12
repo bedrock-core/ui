@@ -64,9 +64,14 @@ export const TodoList: FunctionComponent = (): JSX.Element => {
         <Button variant={'danger'} onPress={(): void => { clearCompleted(); }}>{'§cClear'}</Button>
       </Panel>
 
-      <Button variant={'secondary'} onPress={(): void => {
-        if (todos.length > 0) { dispatch({ type: 'toggle', id: todos[0].id }); }
-      }}>
+      <Button
+        variant={'secondary'}
+        onPress={(): void => {
+          if (todos.length > 0) {
+            dispatch({ type: 'toggle', id: todos[0].id });
+          }
+        }}
+      >
         {'§9Toggle First'}
       </Button>
     </Panel>

@@ -120,5 +120,14 @@ export default defineConfig([
       'prefer-const': 'warn',
     },
   },
+
+  // Generator filter files
+  {
+    files: ['**/*.ts', '**/*.tsx'],
+    ignores: ['packs/BP/scripts/**/*.ts'],
+    rules: {
+      '@typescript-eslint/naming-convention': 'off',
+    },
+  },
 ]);
 

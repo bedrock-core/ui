@@ -173,12 +173,12 @@ The protocol carries **two distinct payloads**: each form-button *label* holds a
 
 ```
 bcuiv0005 + [screen type: string, 83 bytes] + [content height: number, 83 bytes]   // 175 bytes total
- └─ 9 chars (header)        └─ 'scroll' | 'inventory' | 'fixed'   └─ root height for scroll sizing
+ └─ 9 chars (header)        └─ 'scroll' | 'fixed'             └─ root height for scroll sizing
 ```
 
 - **Screen type is field 0** (every screen reads it to route); **height is field 1** (only the scrolling layouts use it).
-- `core-ui/common/screen_container.json` deserializes it: strip the 9-byte header, slice the 83-byte screen-type field, extract the value, then route visibility — `#screen_type = 'inventory'` → inventory, `= 'fixed'` → fixed, else scroll.
-- Scrolling layouts (`core_ui_screens.scroll`, inventory content scroll) **skip** the screen-type field to reach the height field for `#size_binding_y`.
+- `core-ui/common/screen_container.json` deserializes it: strip the 9-byte header, slice the 83-byte screen-type field, extract the value, then route visibility — `#screen_type = 'fixed'` → fixed, else scroll.
+- Scrolling layouts (`core_ui_screens.scroll`) **skip** the screen-type field to reach the height field for `#size_binding_y`.
 - No bcui guard is needed inside `screen_container`; `server_form.json` only mounts it for forms whose title carries the header (collapses to `0px` otherwise).
 - The screen type originates from the `render(root, player, screen)` baseline (`Screen.Scroll | Fixed`), overridable per-build by the `useSetScreen(screen)` hook — never by navigators.
 

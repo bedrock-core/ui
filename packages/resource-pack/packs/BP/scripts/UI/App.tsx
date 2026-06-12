@@ -1,4 +1,5 @@
-import { Panel, Text, type JSX } from '@bedrock-core/ui';
+import translationKeys from '@bedrock-core/generated/translation-keys';
+import { Panel, Text, TranslationKeysContext, type JSX } from '@bedrock-core/ui';
 import {
   Button,
   Card,
@@ -143,8 +144,10 @@ const Stack = createStackNavigator<AppRoutes>({
 
 export function App(): JSX.Element {
   return (
-    <NavigationContainer>
-      <Stack.Navigator />
-    </NavigationContainer>
+    <TranslationKeysContext value={translationKeys}>
+      <NavigationContainer>
+        <Stack.Navigator />
+      </NavigationContainer>
+    </TranslationKeysContext>
   );
 }

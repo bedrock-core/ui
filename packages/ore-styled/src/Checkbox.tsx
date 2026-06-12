@@ -1,6 +1,6 @@
-/** @jsxImportSource @bedrock-core/ui */
-import { Button, Fragment, Panel, Text, useState } from '@bedrock-core/ui';
-import type { ControlProps, JSX } from '@bedrock-core/ui';
+/** @jsxImportSource @bedrock-core/ui-runtime */
+import { Button, Fragment, Panel, Text, useState } from '@bedrock-core/ui-runtime';
+import type { ControlProps, JSX } from '@bedrock-core/ui-runtime';
 import { theme } from './tokens';
 
 export interface CheckboxProps extends ControlProps {

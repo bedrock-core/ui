@@ -67,7 +67,15 @@ export const RefTimer: FunctionComponent = (): JSX.Element => {
         <Button variant={'danger'} onPress={(): void => { stopTimer(); }}>{'§cStop'}</Button>
       </Panel>
 
-      <Button variant={'secondary'} onPress={(): void => { stopTimer(); setCount(0); }}>{'§6Reset'}</Button>
+      <Button
+        variant={'secondary'}
+        onPress={(): void => {
+          stopTimer();
+          setCount(0);
+        }}
+      >
+        {'§6Reset'}
+      </Button>
     </Panel>
   );
 };

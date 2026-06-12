@@ -246,17 +246,6 @@ export function serializeProps({ type, ...props }: SerializableProps & { type: s
 }
 
 /**
- * Encode a string as an 83-byte field: 's:' prefix (2) + value padded to
- * TYPE_WIDTH.s (80) + marker (1). Matches the string layout produced by
- * serializeProps so the RP can parse it with the same fixed-width slicing.
- */
-function serializeStringField(value: string, marker: string): string {
-  const padded = value + PAD_CHAR.repeat(TYPE_WIDTH.s - value.length);
-
-  return `${TYPE_PREFIX.s}:${padded}${marker}`;
-}
-
-/**
  * Serialize the form title metadata containing the screen type and root content height.
  * Layout: PROTOCOL_HEADER (9) + s:screenType (83) + n:contentHeight (83) = 175 bytes total.
  * The RP reads #title_text to determine which screen layout to activate and to size the scroll panel.
@@ -266,18 +255,15 @@ function serializeStringField(value: string, marker: string): string {
  * ('scroll' | 'fixed') so adding layouts needs no new fields. Changing this
  * layout is backward-incompatible — bump VERSION.
  *
+ * Delegates to serializeProps with the screen type in the leading `type` slot, so the
+ * title payload follows the exact same fixed-width field rules as component payloads.
+ *
  * @param contentHeight - Root panel computed height in pixels
  * @param screenType - Which RP layout to activate (scroll: scrolling form; fixed: non-scrolling layout)
  * @returns Full title string for form.title()
  */
 export function serializeTitleMetadata(contentHeight: number, screenType: ScreenType = 'scroll'): string {
-  // Field 0: screen type string field — 'scroll' | 'fixed' (83 bytes)
-  const screenField = serializeStringField(screenType, FIELD_MARKERS[0]);
+  const [payload] = serializeProps({ type: screenType, contentHeight: Math.round(contentHeight) });
 
-  // Field 1: number field — 'n:' prefix (2) + value padded to TYPE_WIDTH.n (80) + marker (1) = 83 bytes
-  const rawStr = Math.round(contentHeight).toString();
-  const heightPadded = rawStr + PAD_CHAR.repeat(TYPE_WIDTH.n - rawStr.length);
-  const heightField = `${TYPE_PREFIX.n}:${heightPadded}${FIELD_MARKERS[1]}`;
-
-  return PROTOCOL_HEADER + screenField + heightField;
+  return payload;
 }

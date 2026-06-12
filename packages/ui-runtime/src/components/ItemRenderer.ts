@@ -31,7 +31,7 @@ export const ItemRenderer: FunctionComponent<ItemRendererProps> = ({
     );
   }
 
-  const controlProps = withControl({ width: 16, height: 16, ...rest });
+  const controlProps = withControl({ width: 16, height: 16, enabled: false, ...rest });
 
   const enchantable = item.getComponent(ItemComponentTypes.Enchantable);
   const isEnchanted = enchantable !== undefined && enchantable.getEnchantments().length > 0;

@@ -31,10 +31,20 @@ export interface TextProps extends ControlProps {
 
   /**
    * Minecraft translation key (e.g. `"ui.myscreen.title"`).
-   * The key must exist in your pack's .lang files and in the generated
-   * `translationKeys.generated.json`. Requires `TranslationKeysContext`
-   * to be provided at the root of the UI.
    *
+   * Requires the `translation-keys` Regolith filter: the key must exist in
+   * your pack's .lang files so the filter can resolve it, and the generated
+   * keys must be provided at the root of the UI via `TranslationKeysContext`:
+   *
+   * ```tsx
+   * import translationKeys from '@bedrock-core/generated/translation-keys';
+   *
+   * <TranslationKeysContext value={translationKeys}>
+   *   <MyScreen />
+   * </TranslationKeysContext>
+   * ```
+   *
+   * Without the filter and provider, rendering throws a `TranslationKeysError`.
    * Takes priority over `children` when both are provided.
    */
   localizationKey?: string;
@@ -85,8 +95,10 @@ export const Text: FunctionComponent<TextProps> = ({
 
     if (translationKeys === null) {
       throw new TranslationKeysError(
-        `TranslationKeysContext is not provided. Did you forget to install the 'translation-keys' Regolith filter `
-        + `and wrap your UI in <TranslationKeysContext value={translationKeys}>?`,
+        `localizationKey requires translation keys, but no TranslationKeysContext is provided. `
+        + `Install the 'translation-keys' Regolith filter, then wrap your UI root: `
+        + `import translationKeys from '@bedrock-core/generated/translation-keys'; `
+        + `<TranslationKeysContext value={translationKeys}>...</TranslationKeysContext>`,
       );
     }
 

@@ -14,15 +14,28 @@ export const SettingsController: FunctionComponent<SettingsControllerProps> = ({
 
     <Button onPress={(): void => {
       onSettingsChange(prev => ({ ...prev, volume: Math.min(100, prev.volume + 10) }));
-    }}>{'§aVolume +'}</Button>
+    }}
+    >
+      {'§aVolume +'}
+    </Button>
 
-    <Button variant={'danger'} onPress={(): void => {
-      onSettingsChange(prev => ({ ...prev, volume: Math.max(0, prev.volume - 10) }));
-    }}>{'§cVolume -'}</Button>
+    <Button
+      variant={'danger'}
+      onPress={(): void => {
+        onSettingsChange(prev => ({ ...prev, volume: Math.max(0, prev.volume - 10) }));
+      }}
+    >
+      {'§cVolume -'}
+    </Button>
 
-    <Button variant={'secondary'} onPress={(): void => {
-      onSettingsChange(prev => ({ ...prev, showNotifications: !prev.showNotifications }));
-    }}>{'§9Toggle Notify'}</Button>
+    <Button
+      variant={'secondary'}
+      onPress={(): void => {
+        onSettingsChange(prev => ({ ...prev, showNotifications: !prev.showNotifications }));
+      }}
+    >
+      {'§9Toggle Notify'}
+    </Button>
 
     <Text>{'§7State management'}</Text>
   </Panel>
