@@ -1,6 +1,6 @@
 {
   "name": "@bedrock-core/ui-runtime",
-  "version": "0.5.3",
+  "version": "0.6.0",
   "description": "@bedrock-core/ui runtime",
   "keywords": [
     "ui",
@@ -62,6 +62,6 @@
     "@minecraft/server-ui": "*"
   },
   "dependencies": {
-    "@bedrock-core/flexbox": "workspace:*"
+    "@bedrock-core/flexbox": "^0.6.0"
   }
 }
