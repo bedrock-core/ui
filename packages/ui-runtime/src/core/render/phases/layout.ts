@@ -2,15 +2,14 @@ import type { FlexStyle, LayoutNode } from '@bedrock-core/flexbox';
 import { CANONICAL_SCREEN, createNode, computeLayout as flexComputeLayout } from '@bedrock-core/flexbox';
 import { TextFont, TextOverflow, TextWordBreak } from '@bedrock-core/ui/components/Text';
 import type { JSX } from '../../../jsx';
+import { isTransparentType } from '../../componentRegistry';
 import { isElement } from '../../guards';
 import { ellipsizeText, measureText, wrapText } from '../../../util/textMetrics';
 
 // ─── Transparent element types that don't participate in layout ────────────────
 
-const TRANSPARENT = new Set(['fragment', 'context-provider']);
-
 function isTransparent(el: JSX.Element): boolean {
-  return typeof el.type === 'string' && TRANSPARENT.has(el.type);
+  return typeof el.type === 'string' && isTransparentType(el.type);
 }
 
 // ─── Build LayoutNode tree from JSX element tree ────────────────────────────────

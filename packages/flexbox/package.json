@@ -39,7 +39,6 @@
     "test": "vitest run",
     "coverage": "vitest run --coverage"
   },
-  "packageManager": "yarn@4.9.3",
   "devDependencies": {
     "vitest": "^4.1.5"
   }

@@ -25,6 +25,5 @@
 		"eslint-plugin-minecraft-linting": "^1.2.7",
 		"typescript": "^6.0.3",
 		"typescript-eslint": "^8.60.1"
-	},
-	"packageManager": "yarn@4.14.1"
+	}
 }

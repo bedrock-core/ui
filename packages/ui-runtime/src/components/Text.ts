@@ -1,7 +1,8 @@
 import { useContext } from '../hooks';
 import { FunctionComponent, JSX } from '../jsx';
 import { TranslationKeysContext } from '../data/TranslationKeys';
-import { TranslationKeysError } from '../core/types';
+import { TranslationKeysError, type Writer } from '../core/types';
+import { emitLabel } from '../core/writers';
 import { ControlProps, withControl } from './control';
 
 export type TextFont = 'mojangles' | 'minecraftTen';
@@ -133,4 +134,9 @@ export const Text: FunctionComponent<TextProps> = ({
       },
     },
   };
+};
+
+/** Serializes a `text` into the static (label) slot. */
+export const textWriter: Writer = (payload, form) => {
+  emitLabel(payload, form);
 };

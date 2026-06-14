@@ -1,8 +1,8 @@
 import { ActionFormData } from '@minecraft/server-ui';
 import { JSX } from '../jsx';
+import { getComponentDescriptor, getRegisteredTypes, isTransparentType } from './componentRegistry';
 import { isElement, isFunction, isSerializablePrimitive } from './guards';
 import { ScreenType, SerializablePrimitive, SerializableProps, SerializationContext, SerializationError } from './types';
-import { TRANSPARENT_TYPES, WRITERS } from './writers';
 
 /**
  * This makes each full field substring unique even when two field values & padding are identical.
@@ -132,7 +132,7 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
   }
 
   // Transparent components: do not emit payload, serialize children only
-  if (TRANSPARENT_TYPES.has(type)) {
+  if (isTransparentType(type)) {
     if (children) {
       const childArray = Array.isArray(children) ? children : [children];
 
@@ -176,15 +176,15 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
 
   const [payload] = serializeProps({ type, ...serializableProps });
 
-  const writer = WRITERS[type];
+  const descriptor = getComponentDescriptor(type);
 
-  if (!writer) {
-    const known = Object.keys(WRITERS).sort().join(', ');
+  if (!descriptor?.writer) {
+    const known = getRegisteredTypes().join(', ');
 
     throw new SerializationError(`Unknown native component type: ${type}. Known types: ${known}`);
   }
 
-  writer(payload, form, context, callbacks, serializableProps);
+  descriptor.writer(payload, form, context, callbacks, serializableProps);
 
   // Recursively handle children
   if (children) {

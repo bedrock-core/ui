@@ -28,10 +28,8 @@
 	"sideEffects": false,
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
-		"lint": "eslint .",
-		"test": "vitest run"
+		"lint": "eslint ."
 	},
-	"packageManager": "yarn@4.14.1",
 	"devDependencies": {
 		"@bedrock-core/ui-runtime": "^0.6.0",
 		"typescript": "^6.0.3",

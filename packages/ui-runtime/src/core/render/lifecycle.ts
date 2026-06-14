@@ -1,4 +1,5 @@
 import type { Player } from '@minecraft/server';
+import { registerNativeComponents } from '../../components';
 import type { FunctionComponent, JSX } from '../../jsx';
 import { DEFAULT_SCREEN, type ScreenDescriptor } from '../../screens';
 import { Logger, startInputLock } from '../../util';
@@ -11,6 +12,10 @@ export function render(
   player: Player,
   screen: ScreenDescriptor = DEFAULT_SCREEN,
 ): void {
+  // Ensure the built-in native components are registered before the first build/
+  // serialize. Idempotent — safe to call on every render.
+  registerNativeComponents();
+
   startInputLock(player);
 
   // Convert function component to JSX element if needed

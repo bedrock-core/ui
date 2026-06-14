@@ -48,7 +48,6 @@
     "test": "vitest run",
     "coverage": "vitest run --coverage"
   },
-  "packageManager": "yarn@4.9.3",
   "devDependencies": {
     "@minecraft/server": "^2.7.0",
     "@minecraft/server-ui": "^2.0.0",

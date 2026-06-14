@@ -1,3 +1,5 @@
+import type { Writer } from '../core/types';
+import { emitLabel } from '../core/writers';
 import { ControlProps, withControl } from './control';
 import { FunctionComponent, JSX } from '../jsx';
 
@@ -10,3 +12,8 @@ export const Panel: FunctionComponent<PanelProps> = ({ children, ...rest }: Pane
     children,
   },
 });
+
+/** Serializes a `panel` into the static (label) slot. */
+export const panelWriter: Writer = (payload, form) => {
+  emitLabel(payload, form);
+};

@@ -16,6 +16,19 @@ export {
 // Rendering
 export { render } from './render';
 
+// Component registry (custom native component registration)
+export {
+  registerComponent,
+  getComponentDescriptor,
+  getRegisteredTypes,
+  isTransparentType,
+} from './componentRegistry';
+
+export type { ComponentDescriptor } from './componentRegistry';
+
+// Writer slot helpers (for custom component writers)
+export { emitButton, emitLabel } from './writers';
+
 // Types
 export type {
   ReservedBytes,
@@ -25,6 +38,7 @@ export type {
   SerializationError,
   TranslationKeysError,
   ItemAuxError,
+  Writer,
 } from './types';
 
 export { isFunction, isElement, isNode } from './guards';

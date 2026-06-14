@@ -2,16 +2,18 @@ export {
   Button,
   Fragment,
   Image,
+  Input,
   ItemRenderer,
   Panel,
   Text,
+  withControl,
 } from './components';
 
 export type {
   AlignContent, AlignItems, AlignSelf, ButtonProps, ControlProps, Display, FlexDirection,
   FlexSize,
   FlexWrap, FragmentProps,
-  ImageProps,
+  ImageProps, InputProps,
   ItemRendererProps, JustifyContent, LayoutProps, PanelProps, Position,
   Spacing, TextFont,
   TextOverflow, TextProps, TextStyle,
@@ -20,21 +22,26 @@ export type {
 
 export {
   useContext, useEffect, useEvent,
-  useExit, usePlayer, useReducer, useRef, useScreen,
+  useExit, useModalForm, usePlayer, useReducer, useRef, useScreen,
   useSetScreen, useState,
 } from './hooks';
+
+export type { ModalFormBuilder, ShowModalFormOptions } from './hooks';
 
 export { Screen } from './screens';
 export type { ScreenDescriptor, ScreenType } from './screens';
 
 export {
-  createContext, render,
+  createContext, emitButton, emitLabel,
+  getRegisteredTypes, registerComponent, render,
 } from './core';
 
 export type {
+  ComponentDescriptor,
   Context,
   ContextProps, ItemAuxError, SerializationError,
   TranslationKeysError,
+  Writer,
 } from './core';
 
 export type {

@@ -16,6 +16,7 @@ import { BackBar } from './components/BackBar';
 import { HooksDemo } from './screens/HooksDemo';
 import { FlexLayout } from './screens/FlexLayout';
 import { FontMetrics } from './screens/FontMetrics';
+import { FormDemo } from './screens/FormDemo';
 import { OreStyled } from './screens/OreStyled';
 import { FixedDemo } from './screens/FixedDemo';
 import { ScrollDemo } from './screens/ScrollDemo';
@@ -29,6 +30,7 @@ type AppRoutes = {
   HooksDemo: undefined;
   FlexLayout: undefined;
   FontMetrics: undefined;
+  FormDemo: undefined;
   OreStyled: undefined;
   FixedDemo: undefined;
   ScrollDemo: undefined;
@@ -63,6 +65,9 @@ function HomeScreen({ navigation }: AppScreen<'Home'>): JSX.Element {
       </Button>
       <Button variant={'secondary'} onPress={(): void => navigation.navigate('OreStyled')}>
         {'§dOre-Styled Components'}
+      </Button>
+      <Button variant={'secondary'} onPress={(): void => navigation.navigate('FormDemo')}>
+        {'§6Form Inputs'}
       </Button>
 
       <Divider variant={'light'} />
@@ -115,6 +120,15 @@ function OreStyledScreen(): JSX.Element {
   );
 }
 
+function FormDemoScreen(): JSX.Element {
+  return (
+    <Panel flexDirection={'column'} gap={spacing.sm}>
+      <BackBar title={'Form Inputs'} />
+      <FormDemo />
+    </Panel>
+  );
+}
+
 // Fixed-layout item demo — renders its own layout (no BackBar — it has a Close button).
 function FixedDemoScreen(): JSX.Element {
   return <FixedDemo />;
@@ -134,6 +148,7 @@ const Stack = createStackNavigator<AppRoutes>({
     HooksDemo: HooksDemoScreen,
     FlexLayout: FlexLayoutScreen,
     FontMetrics: FontMetricsScreen,
+    FormDemo: FormDemoScreen,
     OreStyled: OreStyledScreen,
     FixedDemo: FixedDemoScreen,
     ScrollDemo: ScrollDemoScreen,

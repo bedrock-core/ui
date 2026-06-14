@@ -46,6 +46,5 @@
     "@types/prompts": "^2.4.9",
     "@types/validate-npm-package-name": "^4.0.2",
     "typescript": "^6.0.3"
-  },
-  "packageManager": "yarn@4.9.3"
+  }
 }

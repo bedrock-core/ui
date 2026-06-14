@@ -1,5 +1,6 @@
 import { ItemComponentTypes, ItemStack } from '@minecraft/server';
-import { ItemAuxError } from '../core/types';
+import { ItemAuxError, type Writer } from '../core/types';
+import { emitButton } from '../core/writers';
 import { ItemAuxContext } from '../data/ItemAux';
 import { useContext } from '../hooks';
 import { FunctionComponent, JSX } from '../jsx';
@@ -43,4 +44,9 @@ export const ItemRenderer: FunctionComponent<ItemRendererProps> = ({
       aux: (auxMap[item.typeId] ?? 0) + (isEnchanted ? 32768 : 0),
     },
   };
+};
+
+/** Serializes an `item_renderer` into the interactive (button) slot, passing the aux id as icon. */
+export const itemRendererWriter: Writer = (payload, form, ctx, callbacks, props) => {
+  emitButton(payload, form, ctx, callbacks, String(props?.aux ?? 0));
 };

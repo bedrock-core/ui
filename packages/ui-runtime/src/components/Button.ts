@@ -1,3 +1,5 @@
+import type { Writer } from '../core/types';
+import { emitButton } from '../core/writers';
 import { FunctionComponent, JSX } from '../jsx';
 import { ControlProps, withControl } from './control';
 
@@ -20,3 +22,8 @@ export const Button: FunctionComponent<ButtonProps> = ({ onPress, backgroundHove
     children,
   },
 });
+
+/** Serializes a `button` into the interactive (button) slot. */
+export const buttonWriter: Writer = (payload, form, ctx, callbacks) => {
+  emitButton(payload, form, ctx, callbacks);
+};

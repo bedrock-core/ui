@@ -1,6 +1,7 @@
 import { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
 import { isControlled } from '../../../components/control';
 import type { JSX } from '../../../jsx';
+import { isTransparentType } from '../../componentRegistry';
 import { isElement } from '../../guards';
 import { type ParentState, type TraversalContext } from '../traversal';
 
@@ -34,8 +35,8 @@ export function applyInheritance(element: JSX.Element, context: TraversalContext
 
   const props = element.props;
 
-  // Skip for fragments and context providers (they don't render but propagate parent state)
-  if (element.type === 'fragment' || element.type === 'context-provider') {
+  // Skip for transparent components (they don't render but propagate parent state)
+  if (typeof element.type === 'string' && isTransparentType(element.type)) {
     // Still process children with parent state propagated
     const childContext: TraversalContext = {
       ...context,
