@@ -1,15 +1,17 @@
 // mc-disable resourcepack.ui.inheritance.missing
+//
+// Custom scroll built on the raw `scroll_view` control (not common.scrolling_panel).
+// Vanilla `scroll_view_control` drives scrolling off a `scrollbar_box` on a
+// `scroll_track`, so those must exist; scroll_content is offset WITHIN scroll_view_port.
+//
+// Dynamic height: #size_binding only maps 1:1 to pixels inside a [1,1] parent (same
+// reason button_router/label_router wrap their components in [1,1]). So the scroll
+// content sits inside a [1,1] `size_anchor`, and #size_binding_y (decoded from the
+// #title_text contentHeight field) becomes its real pixel height = the scroll extent.
 {
 	"namespace": "core_ui_screens",
-	"scroll@common.scrolling_panel": {
-		// No elevated layer here on purpose. Item sprites (2D) vanish inside
-		// common.scrolling_panel when their cumulative layer is high — layer 999
-		// on this root killed every ItemRenderer in scroll while blocks (3D
-		// meshes) survived. The sibling fixed screen has no layer either, 
-		// and scroll/fixed are #visible-toggled so they never need to 
-		// out-layer each other.
-		"anchor_from": "top_left",
-		"anchor_to": "top_left",
+	"scroll": {
+		"type": "scroll_view",
 		"size": [
 			"328px",
 			"95%"
@@ -18,24 +20,193 @@
 			0,
 			"1%"
 		],
-		"$show_background": false,
-		"$scrolling_content": "core_ui_screens.form_scrolling_content"
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"scroll_speed": 15,
+		"scrollbar_track_button": "button.scrollbar_skip_track",
+		"scrollbar_touch_button": "button.scrollbar_touch",
+		"always_listen_to_input": true,
+		"always_handle_pointer": true,
+		"always_handle_scrolling": true,
+		"scroll_content": "scrolling_content",
+		"scroll_view_port": "scrolling_view_port",
+		"scrollbar_track": "track",
+		"scrollbar_box": "box",
+		"scroll_box_and_track_panel": "bar_and_track",
+		// menu_select = mouse click / controller A / touch tap -> scroll interaction
+		"button_mappings": [
+			{
+				"from_button_id": "button.menu_select",
+				"to_button_id": "button.scrollbar_touch",
+				"mapping_type": "pressed",
+				"button_up_right_of_first_refusal": true
+			}
+		],
+		"controls": [
+			{
+				"scrolling_view_port": {
+					"type": "panel",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"clips_children": true,
+					"controls": [
+						{
+							// [1,1] parent so the content's #size_binding_y maps 1:1 to pixels
+							"size_anchor": {
+								"type": "panel",
+								"size": [
+									1,
+									1
+								],
+								"anchor_from": "top_left",
+								"anchor_to": "top_left",
+								"controls": [
+									{
+										"scrolling_content@core_ui_screens.scroll_content": {
+											"anchor_from": "top_left",
+											"anchor_to": "top_left"
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				// Vanilla scroll bar: track = ScrollRail texture, box/thumb = ScrollHandle
+				// texture (both via the common.* image controls).
+				"bar_and_track": {
+					"type": "panel",
+					"size": [
+						"6px",
+						"100%"
+					],
+					"anchor_from": "right_middle",
+					"anchor_to": "right_middle",
+					"controls": [
+						{
+							"track": {
+								"type": "scroll_track",
+								"size": [
+									"6px",
+									"100%"
+								],
+								"anchor_from": "center",
+								"anchor_to": "center",
+								// click/tap on the empty track jumps the scroll toward that point
+								"button_mappings": [
+									{
+										"from_button_id": "button.menu_select",
+										"to_button_id": "button.scrollbar_skip_track",
+										"mapping_type": "pressed"
+									}
+								],
+								"controls": [
+									{
+										"bar_indent@common.scroll_indent_image": {
+											"anchor_from": "center",
+											"anchor_to": "center"
+										}
+									}
+								]
+							}
+						},
+						{
+							"box": {
+								"type": "scrollbar_box",
+								"size": [
+									"6px",
+									"20%"
+								],
+								"anchor_from": "top_middle",
+								"anchor_to": "top_middle",
+								"draggable": "vertical",
+								"contained": true,
+								// lets the mouse/controller/touch grab and drag the thumb
+								"button_mappings": [
+									{
+										"from_button_id": "button.menu_select",
+										"to_button_id": "button.menu_select",
+										"mapping_type": "pressed",
+										"button_up_right_of_first_refusal": true
+									}
+								],
+								"controls": [
+									{
+										"handle@common.scrollbar_box_image": {
+											"anchor_from": "center",
+											"anchor_to": "center"
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		]
 	},
-	"form_scrolling_content": {
+	"scroll_content": {
 		"type": "panel",
 		"size": [
 			"328px",
-			"100%c"
+			0
 		],
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
+		"property_bag": {
+			"#size_binding_y": 0.0
+		},
+		"bindings": [
+			{
+				"binding_name": "#title_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.9s' * #title_text)",
+				"target_property_name": "#protocol_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#title_text - #protocol_header)",
+				"target_property_name": "#rem_after_header"
+			},
+			{
+				/* Skip the screen-type field (83 bytes) to reach the height field */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_header)",
+				"target_property_name": "#raw_screen_type"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_header - #raw_screen_type)",
+				"target_property_name": "#rem_after_screen"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_screen)",
+				"target_property_name": "#raw_title_height"
+			},
+			{
+				/* decoded contentHeight -> #size_binding_y. '* 1' coerces the numeric
+				   string to a number so it isn't re-parsed as a size expression. */
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_title_height) - ('%.2s' * #raw_title_height) - ';') * 1)",
+				"target_property_name": "#size_binding_y"
+			}
+		],
 		"controls": [
 			{
-				"generated_contents": {
+				"buttons_collection": {
 					"type": "collection_panel",
 					"size": [
-						"328px",
-						"5000px"
+						"100%",
+						"100%"
 					],
 					"offset": [
 						"-50%",
@@ -43,12 +214,6 @@
 					],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
-					// "use_anchored_offset": true,
-					// "property_bag": {
-					// 	"#size_binding_x": 328.0,
-					// 	"#size_binding_y": 5000.0
-					// },
-					// "$normalize": 1.0,
 					"factory": {
 						"name": "buttons",
 						"control_ids": {
@@ -63,41 +228,7 @@
 						{
 							"binding_name": "#form_button_contents",
 							"binding_name_override": "#collection_length"
-						},
-						{
-							"binding_name": "#title_text"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.9s' * #title_text)",
-							"target_property_name": "#protocol_header"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(#title_text - #protocol_header)",
-							"target_property_name": "#rem_after_header"
-						},
-						{
-							/* Skip the screen-type field (83 bytes) to reach the height field */
-							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_after_header)",
-							"target_property_name": "#raw_screen_type"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(#rem_after_header - #raw_screen_type)",
-							"target_property_name": "#rem_after_screen"
 						}
-						// {
-						// 	"binding_type": "view",
-						// 	"source_property_name": "('%.83s' * #rem_after_screen)",
-						// 	"target_property_name": "#raw_title_height"
-						// },
-						// {
-						// 	"binding_type": "view",
-						// 	"source_property_name": "((('%.82s' * #raw_title_height) - ('%.2s' * #raw_title_height) - ';') * $normalize)",
-						// 	"target_property_name": "#size_binding_y"
-						// }
 					]
 				}
 			}

@@ -49,26 +49,12 @@
 		],
 		"controls": [
 			{
-				/* Scroll form — visible when the screen is not fixed.
-				   No protocol guard needed: server_form only shows screen_container for bcui forms. */
 				"scroll_root@core_ui_screens.scroll": {
 					"bindings": [
 						{
 							"binding_type": "view",
 							"source_control_name": "screen_container",
 							"source_property_name": "(#screen_type = 'scroll')",
-							"target_property_name": "#visible"
-						}
-					]
-				}
-			},
-			{
-				"fixed_root@core_ui_screens.fixed": {
-					"bindings": [
-						{
-							"binding_type": "view",
-							"source_control_name": "screen_container",
-							"source_property_name": "(#screen_type = 'fixed')",
 							"target_property_name": "#visible"
 						}
 					]

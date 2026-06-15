@@ -1,3 +1,4 @@
+import { theme } from '@bedrock-core/ore-styled';
 import { Fragment, JSX, Panel, Text } from '@bedrock-core/ui';
 import type { TextFont } from '@bedrock-core/ui/components/Text';
 
@@ -21,7 +22,7 @@ export function FontMetrics(): JSX.Element {
   const font: TextFont = 'mojangles';
 
   return (
-    <Panel flexDirection={'column'} gap={4} padding={4}>
+    <Panel flexDirection={'column'} padding={theme.tokens.spacing.md} gap={theme.tokens.spacing.lg} background={'textures/ui/ore-styled/card/background'}>
 
       <Text>{`§e§l=== glyphs ===`}</Text>
 

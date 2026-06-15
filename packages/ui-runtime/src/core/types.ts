@@ -1,6 +1,9 @@
 import { ActionFormData } from '@minecraft/server-ui';
 
-export type ScreenType = 'scroll' | 'fixed';
+// Screen layout kinds. Currently just 'scroll' (dynamic scroll height made a separate
+// non-scrolling 'fixed' layout redundant). Extend this union as new screen types with
+// distinct RP layouts/capabilities are added.
+export type ScreenType = 'scroll';
 
 export interface ReservedBytes { bytes: number }
 

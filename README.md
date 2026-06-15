@@ -49,7 +49,6 @@ Custom JSX-driven UI system for Minecraft Bedrock. Components serialize into com
 - ✅ Navigation hooks: `useNavigation()`, `useRoute()`
 - ✅ `NavigationContainer`, `createStackNavigator`, `Screen`
 - ✅ `ItemRenderer` component — render item icons inside layouts
-- ✅ `Screen.Fixed` descriptor for item-capable screens
 - ✅ `useSetScreen` hook — override screen layout per build
 - ✅ Ore-Styled item components: `ItemSlot`, `ItemContainer`, `EquipmentSlots`
 

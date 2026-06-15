@@ -252,14 +252,14 @@ export function serializeProps({ type, ...props }: SerializableProps & { type: s
  *
  * Screen type comes first because every screen reads it; the height comes second because
  * only some screens (the scrolling ones) need it. The screen type is encoded as a string
- * ('scroll' | 'fixed') so adding layouts needs no new fields. Changing this
+ * (currently just 'scroll') so adding layouts needs no new fields. Changing this
  * layout is backward-incompatible — bump VERSION.
  *
  * Delegates to serializeProps with the screen type in the leading `type` slot, so the
  * title payload follows the exact same fixed-width field rules as component payloads.
  *
  * @param contentHeight - Root panel computed height in pixels
- * @param screenType - Which RP layout to activate (scroll: scrolling form; fixed: non-scrolling layout)
+ * @param screenType - Which RP layout to activate (currently 'scroll')
  * @returns Full title string for form.title()
  */
 export function serializeTitleMetadata(contentHeight: number, screenType: ScreenType = 'scroll'): string {

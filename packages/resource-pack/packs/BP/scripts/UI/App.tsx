@@ -18,12 +18,9 @@ import { FlexLayout } from './screens/FlexLayout';
 import { FontMetrics } from './screens/FontMetrics';
 import { FormDemo } from './screens/FormDemo';
 import { OreStyled } from './screens/OreStyled';
-import { FixedDemo } from './screens/FixedDemo';
 import { ScrollDemo } from './screens/ScrollDemo';
 
 // ─── Route map ────────────────────────────────────────────────────────────────
-// The hub renders under the Scroll baseline; the Fixed demo declares its own
-// screen layout via useSetScreen when navigated to.
 
 type AppRoutes = {
   Home: undefined;
@@ -32,7 +29,6 @@ type AppRoutes = {
   FontMetrics: undefined;
   FormDemo: undefined;
   OreStyled: undefined;
-  FixedDemo: undefined;
   ScrollDemo: undefined;
 };
 
@@ -72,9 +68,6 @@ function HomeScreen({ navigation }: AppScreen<'Home'>): JSX.Element {
 
       <Divider variant={'light'} />
 
-      <Button variant={'contrast'} onPress={(): void => navigation.navigate('FixedDemo')}>
-        {'§bFixed Screen'}
-      </Button>
       <Button variant={'contrast'} onPress={(): void => navigation.navigate('ScrollDemo')}>
         {'§bScroll Screen + Items'}
       </Button>
@@ -129,11 +122,6 @@ function FormDemoScreen(): JSX.Element {
   );
 }
 
-// Fixed-layout item demo — renders its own layout (no BackBar — it has a Close button).
-function FixedDemoScreen(): JSX.Element {
-  return <FixedDemo />;
-}
-
 // Scrolling item demo — renders its own scroll layout with a Close button.
 function ScrollDemoScreen(): JSX.Element {
   return <ScrollDemo />;
@@ -150,7 +138,6 @@ const Stack = createStackNavigator<AppRoutes>({
     FontMetrics: FontMetricsScreen,
     FormDemo: FormDemoScreen,
     OreStyled: OreStyledScreen,
-    FixedDemo: FixedDemoScreen,
     ScrollDemo: ScrollDemoScreen,
   },
 });

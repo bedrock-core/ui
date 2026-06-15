@@ -12,15 +12,16 @@ export interface ScreenDescriptor {
 }
 
 const Scroll: ScreenDescriptor = { type: 'scroll' };
-const Fixed: ScreenDescriptor = { type: 'fixed' };
 
 /**
  * The built-in screen descriptors.
  *
- * - `Screen.Scroll` — default scrolling form; items scroll with the content.
- * - `Screen.Fixed` — single non-scrolling page; item rendering stays aligned with controls.
+ * - `Screen.Scroll` — default scrolling form; content scrolls when it exceeds the
+ *   viewport and simply renders no scrollbar when it fits.
+ *
+ * Add new descriptors here as additional screen types (with distinct RP layouts) land.
  */
-export const Screen = { Scroll, Fixed } as const;
+export const Screen = { Scroll } as const;
 
 /** Session baseline used when none has been set yet. */
 export const DEFAULT_SCREEN: ScreenDescriptor = Scroll;

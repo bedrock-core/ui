@@ -1,11 +1,6 @@
 {
 	"namespace": "core_ui_components",
-	// ─── Item cell ───────────────────────────────────────────────────────────────
-	// 16×16 grid cell (matches ItemRenderer's declared size). Positioned via
-	// use_anchored_offset so it ignores its natural grid slot and lands at the
-	// absolute (x, y) from the serialized payload — same coordinate origin as
-	// content_collection. Non-item entries hidden by type filter.
-	"item_cell": {
+	"item_renderer": {
 		"type": "panel",
 		"size": [
 			16,

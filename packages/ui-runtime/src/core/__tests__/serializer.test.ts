@@ -55,12 +55,12 @@ describe('serializeTitleMetadata', () => {
   });
 
   it('encodes screen type as field 0 and height as field 1 with unique markers', () => {
-    const payload = serializeTitleMetadata(120, 'fixed');
+    const payload = serializeTitleMetadata(120, 'scroll');
 
     const screenField = payload.slice(PROTOCOL_HEADER_LENGTH, PROTOCOL_HEADER_LENGTH + FULL_WIDTH.s);
     const heightField = payload.slice(PROTOCOL_HEADER_LENGTH + FULL_WIDTH.s);
 
-    expect(screenField).toBe(`s:fixed${PAD_CHAR.repeat(80 - 'fixed'.length)}${FIELD_MARKERS[0]}`);
+    expect(screenField).toBe(`s:scroll${PAD_CHAR.repeat(80 - 'scroll'.length)}${FIELD_MARKERS[0]}`);
     expect(heightField).toBe(`n:120${PAD_CHAR.repeat(80 - '120'.length)}${FIELD_MARKERS[1]}`);
   });
 

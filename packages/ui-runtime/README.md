@@ -190,7 +190,7 @@ Two distinct payloads share the protocol. Each **form button label** carries a c
 | Field  | Type   | Bytes | Purpose |
 |--------|--------|-------|---------|
 | header | —      | 9     | `bcuiv0005` protocol header |
-| 0      | string | 83    | screen type: `scroll` \| `fixed` |
+| 0      | string | 83    | screen type: `scroll` (extensible — more types may be added) |
 | 1      | number | 83    | root content height (used to size the scroll container) |
 
 Total: **175 bytes**. The screen type comes first because **every** screen reads it to route; the height comes second because only the scrolling layouts need it.
@@ -199,7 +199,7 @@ Deserialization (`core-ui/common/screen_container.json`):
 
 1. Bind `#title_text`, strip the 9-byte header → `#rem_after_header_sc`.
 2. Slice the 83-byte screen-type field and extract its value (drop the `s:` prefix + `;` padding) → `#screen_type`.
-3. Route by comparison: `#screen_type = 'fixed'` → fixed layout, otherwise → scroll layout.
+3. Route by comparison on `#screen_type` (currently only `scroll`; the container mounts `core_ui_screens.scroll` when `#screen_type = 'scroll'`). The routing stays so new screen types can be added without protocol changes.
 
 Scrolling layouts (`core_ui_screens.scroll`) additionally **skip** the screen-type field to reach the height field, then bind it to `#size_binding_y`. No protocol guard is needed inside `screen_container` — `server_form.json` only mounts it for forms whose title carries the header (it collapses the container to `0px` otherwise).
 
