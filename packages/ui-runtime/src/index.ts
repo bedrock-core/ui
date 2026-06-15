@@ -1,45 +1,76 @@
 export {
   Button,
+  Dropdown,
   Fragment,
   Image,
   Input,
   ItemRenderer,
   Panel,
+  Slider,
   Text,
   withControl,
 } from './components';
 
 export type {
-  AlignContent, AlignItems, AlignSelf, ButtonProps, ControlProps, Display, FlexDirection,
+  AlignContent,
+  AlignItems,
+  AlignSelf,
+  ButtonProps,
+  ControlProps,
+  Display,
+  DropdownProps,
+  FlexDirection,
   FlexSize,
-  FlexWrap, FragmentProps,
-  ImageProps, InputProps,
-  ItemRendererProps, JustifyContent, LayoutProps, PanelProps, Position,
-  Spacing, TextFont,
-  TextOverflow, TextProps, TextStyle,
+  FlexWrap,
+  FragmentProps,
+  ImageProps,
+  InputProps,
+  ItemRendererProps,
+  JustifyContent,
+  LayoutProps,
+  ModalFieldProps,
+  PanelProps,
+  Position,
+  SliderProps,
+  Spacing,
+  TextFont,
+  TextOverflow,
+  TextProps,
+  TextStyle,
   TextWordBreak,
 } from './components';
 
 export {
-  useContext, useEffect, useEvent,
-  useExit, useModalForm, usePlayer, useReducer, useRef, useScreen,
-  useSetScreen, useState,
+  useContext,
+  useEffect,
+  useEvent,
+  useExit,
+  usePlayer,
+  useReducer,
+  useRef,
+  useScreen,
+  useSetScreen,
+  useState,
 } from './hooks';
-
-export type { ModalFormBuilder, ShowModalFormOptions } from './hooks';
 
 export { Screen } from './screens';
 export type { ScreenDescriptor, ScreenType } from './screens';
 
 export {
-  createContext, emitButton, emitLabel,
-  getRegisteredTypes, registerComponent, render,
+  createContext,
+  emitButton,
+  emitLabel,
+  getRegisteredTypes,
+  registerComponent,
+  render,
 } from './core';
 
 export type {
   ComponentDescriptor,
   Context,
-  ContextProps, ItemAuxError, SerializationError,
+  ContextProps,
+  ItemAuxError,
+  SerializationError,
   TranslationKeysError,
   Writer,
 } from './core';

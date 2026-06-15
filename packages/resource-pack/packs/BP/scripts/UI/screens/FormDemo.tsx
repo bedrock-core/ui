@@ -1,16 +1,28 @@
 import { Card, Divider, theme } from '@bedrock-core/ore-styled';
-import { Input, Text, useState, type JSX } from '@bedrock-core/ui';
+import { Dropdown, Input, Slider, Text, useState, type JSX } from '@bedrock-core/ui';
 
 const { spacing, fontColor } = theme.tokens;
 const fieldBg = theme.components.button.variants.secondary.textures;
 
+const DIFFICULTIES = ['Peaceful', 'Easy', 'Normal', 'Hard'];
+
 /**
- * Demonstrates modal-backed inputs: each Input is a button that looks like a
- * field; pressing it opens a single-field ModalFormData and feeds the result
- * back into state (confirm commits, cancel keeps).
+ * Demonstrates modal-backed inputs: each field is a button that looks like a
+ * form control; pressing it opens a single-control ModalFormData and feeds the
+ * result back into state (confirm commits, cancel keeps).
  */
 export function FormDemo(): JSX.Element {
   const [name, setName] = useState('');
+  const [difficulty, setDifficulty] = useState('Normal');
+  const [volume, setVolume] = useState(50);
+
+  const field = {
+    background: fieldBg.default,
+    paddingLeft: 8,
+    paddingRight: 8,
+    paddingTop: 4,
+    paddingBottom: 4,
+  };
 
   return (
     <Card flexDirection={'column'} padding={12} gap={spacing.md}>
@@ -27,13 +39,35 @@ export function FormDemo(): JSX.Element {
         onChange={setName}
         title={'Edit name'}
         submitLabel={'Save'}
-        background={fieldBg.default}
-        paddingLeft={8}
-        paddingRight={8}
-        paddingTop={4}
-        paddingBottom={4}
+        {...field}
       />
       <Text>{`Echo: ${name !== '' ? `§a${name}` : '§8(empty)'}`}</Text>
+
+      {/* Dropdown → single-dropdown ModalFormData */}
+      <Dropdown
+        label={'§fDifficulty'}
+        options={DIFFICULTIES}
+        value={difficulty}
+        onChange={setDifficulty}
+        title={'Select difficulty'}
+        submitLabel={'Save'}
+        {...field}
+      />
+      <Text>{`Echo: §a${difficulty}`}</Text>
+
+      {/* Slider → single-slider ModalFormData */}
+      <Slider
+        label={'§fVolume'}
+        min={0}
+        max={100}
+        step={5}
+        value={volume}
+        onChange={setVolume}
+        title={'Set volume'}
+        submitLabel={'Save'}
+        {...field}
+      />
+      <Text>{`Echo: §a${volume}%`}</Text>
     </Card>
   );
 }

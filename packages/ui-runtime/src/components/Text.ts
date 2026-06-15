@@ -76,6 +76,18 @@ const FONT_TYPE_MAP: Record<TextFont, string> = {
 // All metric calculations must account for this factor.
 const FONT_SIZE_BASE = 0.5;
 
+/**
+ * Make raw text safe to render as a Bedrock JSON UI label. JSON UI feeds a
+ * label's `text` through a numeric string-format path, so a value that starts
+ * with a digit (or a leading `-`) renders blank or garbled. Prefixing a
+ * zero-width `§r` shifts the leading character off the digit without changing
+ * what's shown — the section code is consumed by the renderer and the text
+ * metrics already treat `§x` as zero-width, so width/layout are unaffected.
+ */
+function safeLabelText(text: string): string {
+  return /^[\d-]/.test(text) ? `§r${text}` : text;
+}
+
 export const Text: FunctionComponent<TextProps> = ({
   children,
   localizationKey,
@@ -119,7 +131,9 @@ export const Text: FunctionComponent<TextProps> = ({
     type: 'text',
     props: {
       ...withControl(rest),
-      value: isKey ? localizationKey : resolvedText,
+      // Keys pass through — we send the key, not the resolved string, so a
+      // digit-leading .lang entry is guarded there; raw text uses safeLabelText.
+      value: isKey ? localizationKey : safeLabelText(resolvedText),
       fontType: FONT_TYPE_MAP[font ?? 'mojangles'],
       fontScaleFactor: resolvedScale / FONT_SIZE_BASE,
       __textMetrics: {

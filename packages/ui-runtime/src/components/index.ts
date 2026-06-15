@@ -1,5 +1,6 @@
 // Component utilities
 export { withControl, type ControlProps } from './control';
+export { type ModalFieldProps } from './modalField';
 
 export {
   type AlignContent, type AlignItems, type AlignSelf,
@@ -10,9 +11,11 @@ export {
 
 // Components
 export { Button, buttonWriter, type ButtonProps } from './Button';
+export { Dropdown, type DropdownProps } from './Dropdown';
 export { Fragment, type FragmentProps } from './Fragment';
 export { Image, imageWriter, type ImageProps } from './Image';
 export { Input, type InputProps } from './Input';
+export { Slider, type SliderProps } from './Slider';
 export { ItemRenderer, itemRendererWriter, type ItemRendererProps } from './ItemRenderer';
 export { Panel, panelWriter, type PanelProps } from './Panel';
 export { Text, textWriter, type TextFont, type TextOverflow, type TextProps, type TextStyle, type TextWordBreak } from './Text';
