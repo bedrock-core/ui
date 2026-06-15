@@ -67,6 +67,8 @@ jobs:
           npm version $VER --no-git-tag-version --prefix packages/navigation
           npm version $VER --no-git-tag-version --prefix packages/ore-styled
           npm version $VER --no-git-tag-version --prefix packages/cli
+          # Keep the CLI starter template's @bedrock-core/ui dependency in sync
+          npm pkg set dependencies["@bedrock-core/ui"]="^$VER" --prefix packages/cli/templates/ore-styled
 
       - name: Set up Regolith
         uses: bedrock-core/setup-regolith@1.0.1
@@ -156,7 +158,8 @@ jobs:
             packages/flexbox/package.json \
             packages/navigation/package.json \
             packages/ore-styled/package.json \
-            packages/cli/package.json
+            packages/cli/package.json \
+            packages/cli/templates/ore-styled/package.json
           git commit -m "bump-version: bump version to '${{ steps.bump-semver.outputs.new_version }}'"
           git push
 
