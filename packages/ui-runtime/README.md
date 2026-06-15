@@ -246,7 +246,6 @@ Mocks are located in `src/__mocks__/@minecraft/`.
 - JSON UI string ops with numbers can behave unpredictably; prefix markers before numeric-derived substrings client-side.
 - **Texel values & JSON UI:** Dimension and position values are serialized as raw integer texels (Pocket-space). JSON UI ignores numbers with decimal points, so the layout engine rounds all values to integers before serialization.
 - Subtraction operator (`-`) removes all occurrences; use distinct prefixes to avoid collisions.
-- **`beacon.item_renderer` cannot be placed inside a scroll container.** Both blocks and items render correctly when the renderer is outside of any scroll layout. Placing `beacon.item_renderer` inside a scroll will silently produce no icon for items type.
 
 
 ## ⚠️ Breaking Change Guards
