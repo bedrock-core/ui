@@ -1,6 +1,6 @@
 {
 	"name": "@bedrock-core/ore-styled",
-	"version": "0.6.0",
+	"version": "0.7.0",
 	"description": "Ore-UI styled compound components for @bedrock-core/ui",
 	"keywords": [
 		"ui",
@@ -31,7 +31,7 @@
 		"lint": "eslint ."
 	},
 	"devDependencies": {
-		"@bedrock-core/ui-runtime": "^0.6.0",
+		"@bedrock-core/ui-runtime": "^0.7.0",
 		"typescript": "^6.0.3",
 		"vitest": "^4.1.5"
 	},
