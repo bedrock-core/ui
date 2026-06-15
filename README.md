@@ -52,10 +52,16 @@ Custom JSX-driven UI system for Minecraft Bedrock. Components serialize into com
 - ✅ `useSetScreen` hook — override screen layout per build
 - ✅ Ore-Styled item components: `ItemSlot`, `ItemContainer`, `EquipmentSlots`
 
-### 🚧 Beta 0.X.0 - Interactive Components (Planned)
+### ✅ Beta 0.7.0 - Interactive Components & Custom Natives
 
-- Form components: `Input`, `Toggle`, `Slider`, `Dropdown`
-- Form submission and validation
+- ✅ Custom native component API — register your own native JSON UI components compatible with @bedrock-core/ui
+- ✅ Modal-backed form primitives in `@bedrock-core/ui`: `Input`, `Dropdown`, `Slider`  (v0)
+- ✅ Ore-Styled form fields in `@bedrock-core/ore-styled`: `Input`, `Dropdown`, `Slider`
+- ✅ Scroll fixes — corrected scroll sizing and removed the fixed screen layout
+
+### 🚧 Beta 0.X.0 - Forms (Planned)
+
+- Form submission and validation helpers
 
 ### 🚧 Beta 0.X.0 - More core components (Planned)
 
@@ -71,7 +77,6 @@ Custom JSX-driven UI system for Minecraft Bedrock. Components serialize into com
 
 ### 🚀 Future Considerations
 
-- Custom component registration API (create your own native JSON UI components compatible with @bedrock-core/ui)
 - Compound components (tabs, menus, dialogs)
 - Animation support
 - Resource pack builder automation
