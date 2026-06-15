@@ -17,6 +17,9 @@ npm install @bedrock-core/ore-styled
 - `Button` — styled press button with variants
 - `Card` — content container with Ore-UI framing
 - `Checkbox` — boolean input with on/off textures
+- `Input` — text field; pressing it opens the native modal text field
+- `Dropdown` — selector field with a chevron; pressing it opens the native modal dropdown
+- `Slider` — field drawn as a track + thumb (positioned by value); pressing it opens the native modal slider
 - `RadioGroup` / `Radio` — single-select group
 - `Tabs` / `TabList` / `Tab` / `TabPanel` — tabbed navigation
 - `Toggle` — switch-style boolean input

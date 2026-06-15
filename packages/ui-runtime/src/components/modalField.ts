@@ -6,6 +6,12 @@ import { ControlProps } from './control';
  * control label of the single-control `ModalFormData` each one opens.
  */
 export interface ModalFieldProps extends ControlProps {
+  /** Hover-state background texture, forwarded to the underlying `Button` face. */
+  backgroundHover?: string;
+  /** Pressed-state background texture, forwarded to the underlying `Button` face. */
+  backgroundPressed?: string;
+  /** Locked/disabled-state background texture, forwarded to the underlying `Button` face. */
+  backgroundLocked?: string;
   /** Label for the control inside the modal. */
   label?: string;
   /** Modal title. Defaults to `label`. */

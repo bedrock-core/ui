@@ -17,6 +17,12 @@ export interface InputProps extends ModalFieldProps {
   onCancel?: () => void;
   /** Placeholder shown on the face when empty, and inside the modal text field. */
   placeholder?: string;
+  /**
+   * Overrides the default text face. When provided, this node is rendered inside
+   * the button instead of the value `Text`, letting styled wrappers draw a custom
+   * face (e.g. colored value text) while reusing the modal/state logic.
+   */
+  face?: JSX.Node;
 }
 
 /**
@@ -43,13 +49,14 @@ export const Input: FunctionComponent<InputProps> = ({
   submitLabel,
   tooltip,
   enabled,
+  face,
   ...rest
 }: InputProps): JSX.Element => {
   const [internal, setInternal] = useState(defaultValue ?? '');
   const current = value ?? internal;
   const player = usePlayer();
 
-  const face = current !== '' ? current : (placeholder ?? '');
+  const faceText = current !== '' ? current : (placeholder ?? '');
 
   const handlePress = async (): Promise<void> => {
     if (enabled === false) {
@@ -80,6 +87,6 @@ export const Input: FunctionComponent<InputProps> = ({
     ...rest,
     enabled,
     onPress: handlePress,
-    children: Text({ children: face }),
+    children: face ?? Text({ children: faceText }),
   });
 };

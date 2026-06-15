@@ -3,15 +3,18 @@ import {
   Card,
   Checkbox,
   Divider,
+  Dropdown,
+  Input,
   Radio,
   RadioGroup,
+  Slider,
   theme,
   Toggle,
   ToggleButtonGroup,
   ToggleButtonItem,
 } from '@bedrock-core/ore-styled';
 import type { JSX } from '@bedrock-core/ui';
-import { Fragment, Image, Panel, Text } from '@bedrock-core/ui';
+import { Fragment, Image, Panel, Text, useState } from '@bedrock-core/ui';
 
 function SectionLabel({ children }: { children: string }): JSX.Element {
   return <Text>{`§e§l${children}`}</Text>;
@@ -135,6 +138,44 @@ function ToggleButtonSection(): JSX.Element {
   );
 }
 
+function InputSection(): JSX.Element {
+  return (
+    <Panel flexDirection={'column'} gap={theme.tokens.spacing.sm}>
+      <SectionLabel>{'Input'}</SectionLabel>
+      <Input placeholder={'Enter your name'} label={'Name'} />
+      <Input defaultValue={'Steve'} label={'Name'} />
+      <Input defaultValue={'Locked'} enabled={false} />
+    </Panel>
+  );
+}
+
+function DropdownSection(): JSX.Element {
+  return (
+    <Panel flexDirection={'column'} gap={theme.tokens.spacing.sm}>
+      <SectionLabel>{'Dropdown'}</SectionLabel>
+      <Dropdown options={['Easy', 'Normal', 'Hard']} label={'Difficulty'} />
+      <Dropdown options={['Red', 'Green', 'Blue']} defaultValue={'Green'} label={'Color'} />
+      <Dropdown options={['On', 'Off']} enabled={false} />
+    </Panel>
+  );
+}
+
+function SliderSection(): JSX.Element {
+  const [volume, setVolume] = useState(50);
+
+  return (
+    <Panel flexDirection={'column'} gap={theme.tokens.spacing.sm}>
+      <SectionLabel>{'Slider'}</SectionLabel>
+      <Slider min={0} max={10} defaultValue={3} label={'Size'} />
+      <Panel flexDirection={'row'} gap={theme.tokens.spacing.md} alignItems={'center'}>
+        <Slider min={0} max={100} value={volume} onChange={setVolume} label={'Volume'} flex={1} />
+        <Text>{`${theme.tokens.fontColor.muted}${volume}`}</Text>
+      </Panel>
+      <Slider min={0} max={10} defaultValue={3} enabled={false} />
+    </Panel>
+  );
+}
+
 function CardSection(): JSX.Element {
   return (
     <Panel flexDirection={'column'} gap={theme.tokens.spacing.sm}>
@@ -189,6 +230,9 @@ export function OreStyled(): JSX.Element {
       <ToggleSection />
       <RadioSection />
       <ToggleButtonSection />
+      <InputSection />
+      <DropdownSection />
+      <SliderSection />
       <CardSection />
       <DividerSection />
     </Panel>

@@ -21,6 +21,12 @@ export interface SliderProps extends ModalFieldProps {
   onChange?: (value: number) => void;
   /** Called when the player cancels (X / Esc) the modal. */
   onCancel?: () => void;
+  /**
+   * Overrides the default text face. When provided, this node is rendered inside
+   * the button instead of the value `Text`, letting styled wrappers draw a custom
+   * face (e.g. a track and thumb) while reusing the modal/state logic.
+   */
+  face?: JSX.Node;
 }
 
 /**
@@ -49,13 +55,14 @@ export const Slider: FunctionComponent<SliderProps> = ({
   submitLabel,
   tooltip,
   enabled,
+  face,
   ...rest
 }: SliderProps): JSX.Element => {
   const [internal, setInternal] = useState(defaultValue ?? min);
   const current = value ?? internal;
   const player = usePlayer();
 
-  const face = `${current}`;
+  const faceText = `${current}`;
 
   const handlePress = async (): Promise<void> => {
     if (enabled === false) {
@@ -86,6 +93,6 @@ export const Slider: FunctionComponent<SliderProps> = ({
     ...rest,
     enabled,
     onPress: handlePress,
-    children: Text({ children: face }),
+    children: face ?? Text({ children: faceText }),
   });
 };

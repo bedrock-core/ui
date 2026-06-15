@@ -12,10 +12,10 @@
 		"controls": [
 			{
 				"button@core_ui_components.button": {}
+			},
+			{
+				"item_renderer@core_ui_components.item_renderer": {}
 			}
-			// {
-			// 	"item_renderer@core_ui_components.item_renderer": {}
-			// }
 		]
 	}
 }

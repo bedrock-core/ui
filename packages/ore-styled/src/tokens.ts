@@ -85,6 +85,33 @@ export interface Theme {
         };
       };
     };
+    field: {
+      padding: { top: number; bottom: number; x: number };
+      gap: number;
+      textStyle: { font: TextFont; scale: number; value: string; placeholder: string; disabled: string };
+      textures: { background: string; backgroundHover: string; backgroundDisabled: string };
+    };
+    dropdown: {
+      padding: { top: number; bottom: number; x: number };
+      arrow: { width: number; height: number };
+      textStyle: { font: TextFont; scale: number; value: string; disabled: string };
+      textures: {
+        background: string; backgroundHover: string; backgroundDisabled: string;
+        arrow: string; arrowDisabled: string;
+      };
+    };
+    slider: {
+      height: number;
+      /** Height of the track + progress bar, centered vertically within `height`. */
+      trackHeight: number;
+      thumb: { width: number; height: number };
+      textStyle: { font: TextFont; scale: number; value: string; disabled: string };
+      textures: {
+        track: string; trackDisabled: string;
+        progress: string; progressDisabled: string;
+        thumb: string; thumbHover: string; thumbDisabled: string;
+      };
+    };
   };
 }
 
@@ -198,6 +225,43 @@ const oreTheme: Theme = {
           boots: 'textures/ui/empty_armor_slot_boots',
           shield: 'textures/ui/empty_armor_slot_shield',
         },
+      },
+    },
+    field: {
+      padding: { top: 10, bottom: 8, x: 8 },
+      gap: 4,
+      textStyle: { font: 'mojangles', scale: 1, value: '§f', placeholder: '§7', disabled: '§8' },
+      textures: {
+        background: `${BASE}/field/background`,
+        backgroundHover: `${BASE}/field/background_hover`,
+        backgroundDisabled: `${BASE}/field/background_disabled`,
+      },
+    },
+    dropdown: {
+      padding: { top: 8, bottom: 10, x: 10 },
+      arrow: { width: 7, height: 4 },
+      textStyle: { font: 'mojangles', scale: 1, value: '§0', disabled: '§8' },
+      textures: {
+        background: `${BASE}/dropdown/background`,
+        backgroundHover: `${BASE}/dropdown/background_hover`,
+        backgroundDisabled: `${BASE}/dropdown/background_disabled`,
+        arrow: `${BASE}/dropdown/arrow`,
+        arrowDisabled: `${BASE}/dropdown/arrow_disabled`,
+      },
+    },
+    slider: {
+      height: 20,
+      trackHeight: 6,
+      thumb: { width: 16, height: 16 },
+      textStyle: { font: 'mojangles', scale: 1, value: '§f', disabled: '§8' },
+      textures: {
+        track: `${BASE}/slider/track`,
+        trackDisabled: `${BASE}/slider/track_disabled`,
+        progress: `${BASE}/slider/progress`,
+        progressDisabled: `${BASE}/slider/progress_disabled`,
+        thumb: `${BASE}/slider/thumb`,
+        thumbHover: `${BASE}/slider/thumb_hover`,
+        thumbDisabled: `${BASE}/slider/thumb_disabled`,
       },
     },
   },

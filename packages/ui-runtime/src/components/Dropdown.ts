@@ -17,6 +17,12 @@ export interface DropdownProps extends ModalFieldProps {
   onChange?: (value: string, index: number) => void;
   /** Called when the player cancels (X / Esc) the modal. */
   onCancel?: () => void;
+  /**
+   * Overrides the default text face. When provided, this node is rendered inside
+   * the button instead of the value `Text`, letting styled wrappers draw a custom
+   * face (e.g. value text plus a chevron) while reusing the modal/state logic.
+   */
+  face?: JSX.Node;
 }
 
 /**
@@ -43,6 +49,7 @@ export const Dropdown: FunctionComponent<DropdownProps> = ({
   submitLabel,
   tooltip,
   enabled,
+  face,
   ...rest
 }: DropdownProps): JSX.Element => {
   const [internal, setInternal] = useState(defaultValue ?? options[0] ?? '');
@@ -50,7 +57,7 @@ export const Dropdown: FunctionComponent<DropdownProps> = ({
   const player = usePlayer();
 
   const currentIndex = Math.max(0, options.indexOf(current));
-  const face = options[currentIndex] ?? '';
+  const faceText = options[currentIndex] ?? '';
 
   const handlePress = async (): Promise<void> => {
     if (enabled === false) {
@@ -82,6 +89,6 @@ export const Dropdown: FunctionComponent<DropdownProps> = ({
     ...rest,
     enabled,
     onPress: handlePress,
-    children: Text({ children: face }),
+    children: face ?? Text({ children: faceText }),
   });
 };

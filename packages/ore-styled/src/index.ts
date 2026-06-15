@@ -16,6 +16,15 @@ export type { ToggleProps } from './Toggle';
 export { Divider } from './Divider';
 export type { DividerProps, DividerOrientation, DividerVariant } from './Divider';
 
+export { Input } from './Input';
+export type { InputProps } from './Input';
+
+export { Dropdown } from './Dropdown';
+export type { DropdownProps } from './Dropdown';
+
+export { Slider } from './Slider';
+export type { SliderProps } from './Slider';
+
 export { ToggleButtonGroup, ToggleButtonItem } from './ToggleButton';
 export type { ToggleButtonGroupProps, ToggleButtonItemProps } from './ToggleButton';
 
