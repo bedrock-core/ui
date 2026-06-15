@@ -1,13 +1,3 @@
-// mc-disable resourcepack.ui.inheritance.missing
-//
-// Custom scroll built on the raw `scroll_view` control (not common.scrolling_panel).
-// Vanilla `scroll_view_control` drives scrolling off a `scrollbar_box` on a
-// `scroll_track`, so those must exist; scroll_content is offset WITHIN scroll_view_port.
-//
-// Dynamic height: #size_binding only maps 1:1 to pixels inside a [1,1] parent (same
-// reason button_router/label_router wrap their components in [1,1]). So the scroll
-// content sits inside a [1,1] `size_anchor`, and #size_binding_y (decoded from the
-// #title_text contentHeight field) becomes its real pixel height = the scroll extent.
 {
 	"namespace": "core_ui_screens",
 	"scroll": {
