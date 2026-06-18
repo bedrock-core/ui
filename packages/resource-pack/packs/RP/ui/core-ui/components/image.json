@@ -20,6 +20,7 @@
 		"visible": "#visible",
 		"enabled": "#enabled", // TODO needs testing
 		"$normalize": 1.0,
+		"$region_filter|default": 0,
 		"bindings": [
 			{
 				"binding_name": "#form_button_text",
@@ -136,7 +137,7 @@
 			{
 				"binding_type": "view",
 				"source_property_name": "(#pre_visible and (#type = 'image'))",
-				"target_property_name": "#visible"
+				"target_property_name": "#visible_pre_region"
 			},
 			{
 				/* --- enabled (boolean) - field 6 --- */
@@ -180,6 +181,33 @@
 				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
 				"source_property_name": "(('%.82s' * #raw_texture) - ('%.2s' * #raw_texture) - ';')",
 				"target_property_name": "#texture"
+			},
+			{
+				/* --- region (number) - field 8 [523-605]: skip background (83) to reach it --- */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_enabled)",
+				"target_property_name": "#skip_bg_for_region"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_enabled - #skip_bg_for_region)",
+				"target_property_name": "#rem_at_region"
+			},
+			{
+				"binding_type": "view", // full_width
+				"source_property_name": "('%.83s' * #rem_at_region)",
+				"target_property_name": "#raw_region"
+			},
+			{
+				"binding_type": "view", // ((full_width - marker) - prefix (n:) - padding (;)) * 1 to coerce to number
+				"source_property_name": "((('%.82s' * #raw_region) - ('%.2s' * #raw_region) - ';') * 1)",
+				"target_property_name": "#region"
+			},
+			{
+				/* Gate on the active scroll region: $region_filter is substituted per scroll instance */
+				"binding_type": "view",
+				"source_property_name": "(#visible_pre_region and (#region = $region_filter))",
+				"target_property_name": "#visible"
 			}
 		]
 	}

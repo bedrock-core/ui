@@ -17,19 +17,26 @@ export async function present(
   // Snapshot and show
   const form: ActionFormData = new ActionFormData();
 
-  // Encode title with protocol header and root content_height metadata.
-  // Use the layout-computed root height; fall back to the canonical viewport
-  // height if the value is missing, non-finite, or non-positive so the RP
-  // always receives a usable scroll container height.
-  const rawHeight = tree.props.jsonUIHeight;
-  const contentHeight = (typeof rawHeight === 'number' && Number.isFinite(rawHeight) && rawHeight > 0)
-    ? rawHeight
-    : CANONICAL_SCREEN.height;
-
   // The session screen is the render baseline set by render().
   const screen = getPlayerScreen(player);
 
-  form.title(serializeTitleMetadata(contentHeight, screen.type));
+  // Encode title with protocol header and per-region extent metadata. The
+  // region-aware layout pass surfaces one extent per region on the tree; a
+  // single-region screen yields a one-element array equal to the root height.
+  // Fall back to the canonical viewport height for any missing, non-finite, or
+  // non-positive extent so the RP always receives a usable scroll container size.
+  const rawExtents = tree.props.jsonUIRegionExtents;
+  const extentsSource = Array.isArray(rawExtents) && rawExtents.length > 0
+    ? rawExtents as number[]
+    : [tree.props.jsonUIHeight];
+
+  const regionExtents = extentsSource.map((extent) => {
+    return (typeof extent === 'number' && Number.isFinite(extent) && extent > 0)
+      ? extent
+      : CANONICAL_SCREEN.height;
+  });
+
+  form.title(serializeTitleMetadata(screen.type, regionExtents));
 
   serialize(tree, form, serializationContext);
 

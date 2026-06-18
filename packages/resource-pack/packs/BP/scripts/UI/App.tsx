@@ -19,6 +19,7 @@ import { FontMetrics } from './screens/FontMetrics';
 import { FormDemo } from './screens/FormDemo';
 import { OreStyled } from './screens/OreStyled';
 import { ScrollDemo } from './screens/ScrollDemo';
+import { DualScrollDemo } from './screens/DualScrollDemo';
 
 // ─── Route map ────────────────────────────────────────────────────────────────
 
@@ -30,6 +31,7 @@ type AppRoutes = {
   FormDemo: undefined;
   OreStyled: undefined;
   ScrollDemo: undefined;
+  DualScrollDemo: undefined;
 };
 
 type AppScreen<K extends keyof AppRoutes> = ScreenProps<AppRoutes, K>;
@@ -70,6 +72,9 @@ function HomeScreen({ navigation }: AppScreen<'Home'>): JSX.Element {
 
       <Button variant={'contrast'} onPress={(): void => navigation.navigate('ScrollDemo')}>
         {'§bScroll Screen + Items'}
+      </Button>
+      <Button variant={'contrast'} onPress={(): void => navigation.navigate('DualScrollDemo')}>
+        {'§dDual Scroll Screen'}
       </Button>
     </Card>
   );
@@ -127,6 +132,12 @@ function ScrollDemoScreen(): JSX.Element {
   return <ScrollDemo />;
 }
 
+// Dual-scroll demo — renders its own two-region layout directly (no concrete wrapper
+// above the slots, so the region-aware layout pass can reach them).
+function DualScrollDemoScreen(): JSX.Element {
+  return <DualScrollDemo />;
+}
+
 // ─── Navigator ────────────────────────────────────────────────────────────────
 
 const Stack = createStackNavigator<AppRoutes>({
@@ -139,6 +150,7 @@ const Stack = createStackNavigator<AppRoutes>({
     FormDemo: FormDemoScreen,
     OreStyled: OreStyledScreen,
     ScrollDemo: ScrollDemoScreen,
+    DualScrollDemo: DualScrollDemoScreen,
   },
 });
 

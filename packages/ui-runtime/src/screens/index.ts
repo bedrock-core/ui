@@ -2,6 +2,8 @@ import type { ScreenType } from '../core/types';
 
 export type { ScreenType };
 
+export { DualScroll, DUAL_SCROLL_REGION_WIDTH, type DualScrollProps, type DualScrollSlotProps } from './DualScroll';
+
 /**
  * Describes a screen kind: which RP JSON UI layout it activates (`type`).
  *

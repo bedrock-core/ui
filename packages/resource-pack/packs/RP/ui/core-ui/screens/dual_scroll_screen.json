@@ -1,0 +1,415 @@
+{
+	"namespace": "core_ui_screens",
+
+	// Two independent vertical scroll regions side by side. Both bind the SAME
+	// `form_buttons` collection; each region's content selects region-specific routers
+	// (region 0 = base routers, region 1 = *_r1 routers passing $region_filter: 1) so each
+	// column only shows its own elements. Each region reads its own scroll extent field from
+	// the title metadata (extent0 for the left column, extent1 for the right).
+	"dual_scroll": {
+		"type": "panel",
+		// Fixed total footprint = two 160px columns + 8px middle gap = 328px (same as the
+		// single scroll). screen_container's "50% - 50%c" offset centers this fixed width.
+		// Region columns are 160px = canonical_width/2; the ui-runtime DUAL_SCROLL_REGION_WIDTH
+		// constant must match.
+		"size": [
+			"328px",
+			"100%"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"controls": [
+			{
+				"left_scroll@core_ui_screens.dual_left_scroll": {}
+			},
+			{
+				"right_scroll@core_ui_screens.dual_right_scroll": {}
+			}
+		]
+	},
+
+	// Shared scrollbar (track + thumb). Identical for both regions, so factored out and
+	// referenced by name from each scroll_view's controls.
+	"dual_scrollbar": {
+		"type": "panel",
+		"size": [
+			"6px",
+			"100%"
+		],
+		"anchor_from": "right_middle",
+		"anchor_to": "right_middle",
+		"controls": [
+			{
+				"track": {
+					"type": "scroll_track",
+					"size": [
+						"6px",
+						"100%"
+					],
+					"anchor_from": "center",
+					"anchor_to": "center",
+					"button_mappings": [
+						{
+							"from_button_id": "button.menu_select",
+							"to_button_id": "button.scrollbar_skip_track",
+							"mapping_type": "pressed"
+						}
+					],
+					"controls": [
+						{
+							"bar_indent@common.scroll_indent_image": {
+								"anchor_from": "center",
+								"anchor_to": "center"
+							}
+						}
+					]
+				}
+			},
+			{
+				"box": {
+					"type": "scrollbar_box",
+					"size": [
+						"6px",
+						"20%"
+					],
+					"anchor_from": "top_middle",
+					"anchor_to": "top_middle",
+					"draggable": "vertical",
+					"contained": true,
+					"button_mappings": [
+						{
+							"from_button_id": "button.menu_select",
+							"to_button_id": "button.menu_select",
+							"mapping_type": "pressed",
+							"button_up_right_of_first_refusal": true
+						}
+					],
+					"controls": [
+						{
+							"handle@common.scrollbar_box_image": {
+								"anchor_from": "center",
+								"anchor_to": "center"
+							}
+						}
+					]
+				}
+			}
+		]
+	},
+
+	// ── Left region (region 0) ──────────────────────────────────────────────────────
+	"dual_left_scroll": {
+		"type": "scroll_view",
+		"size": [
+			"160px",
+			"95%"
+		],
+		"offset": [
+			0,
+			"1%"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"scroll_speed": 15,
+		"scrollbar_track_button": "button.scrollbar_skip_track",
+		"scrollbar_touch_button": "button.scrollbar_touch",
+		"always_listen_to_input": true,
+		"always_handle_pointer": true,
+		// false (vanilla scroll_view_control default) so each region only handles the
+		// mouse wheel while it is hovered. With two scroll_views, `true` makes both
+		// greedily capture the wheel and only one ever responds.
+		"always_handle_scrolling": false,
+		"scroll_content": "scrolling_content",
+		"scroll_view_port": "scrolling_view_port",
+		"scrollbar_track": "track",
+		"scrollbar_box": "box",
+		"scroll_box_and_track_panel": "bar_and_track",
+		"button_mappings": [
+			{
+				"from_button_id": "button.menu_select",
+				"to_button_id": "button.scrollbar_touch",
+				"mapping_type": "pressed",
+				"button_up_right_of_first_refusal": true
+			}
+		],
+		"controls": [
+			{
+				"scrolling_view_port": {
+					"type": "panel",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"clips_children": true,
+					"controls": [
+						{
+							"size_anchor": {
+								"type": "panel",
+								"size": [
+									1,
+									1
+								],
+								"anchor_from": "top_left",
+								"anchor_to": "top_left",
+								"controls": [
+									{
+										"scrolling_content@core_ui_screens.dual_left_content": {
+											"anchor_from": "top_left",
+											"anchor_to": "top_left"
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"bar_and_track@core_ui_screens.dual_scrollbar": {}
+			}
+		]
+	},
+
+	// ── Right region (region 1) ─────────────────────────────────────────────────────
+	"dual_right_scroll": {
+		"type": "scroll_view",
+		"size": [
+			"160px",
+			"95%"
+		],
+		"offset": [
+			0,
+			"1%"
+		],
+		"anchor_from": "top_right",
+		"anchor_to": "top_right",
+		"scroll_speed": 15,
+		"scrollbar_track_button": "button.scrollbar_skip_track",
+		"scrollbar_touch_button": "button.scrollbar_touch",
+		"always_listen_to_input": true,
+		"always_handle_pointer": true,
+		// false (vanilla scroll_view_control default) so each region only handles the
+		// mouse wheel while it is hovered. With two scroll_views, `true` makes both
+		// greedily capture the wheel and only one ever responds.
+		"always_handle_scrolling": false,
+		"scroll_content": "scrolling_content",
+		"scroll_view_port": "scrolling_view_port",
+		"scrollbar_track": "track",
+		"scrollbar_box": "box",
+		"scroll_box_and_track_panel": "bar_and_track",
+		"button_mappings": [
+			{
+				"from_button_id": "button.menu_select",
+				"to_button_id": "button.scrollbar_touch",
+				"mapping_type": "pressed",
+				"button_up_right_of_first_refusal": true
+			}
+		],
+		"controls": [
+			{
+				"scrolling_view_port": {
+					"type": "panel",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"clips_children": true,
+					"controls": [
+						{
+							"size_anchor": {
+								"type": "panel",
+								"size": [
+									1,
+									1
+								],
+								"anchor_from": "top_left",
+								"anchor_to": "top_left",
+								"controls": [
+									{
+										"scrolling_content@core_ui_screens.dual_right_content": {
+											"anchor_from": "top_left",
+											"anchor_to": "top_left"
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"bar_and_track@core_ui_screens.dual_scrollbar": {}
+			}
+		]
+	},
+
+	// ── Left content (region 0): reads extent0, base routers ─────────────────────────
+	"dual_left_content": {
+		"type": "panel",
+		"size": [
+			"160px",
+			0
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"property_bag": {
+			"#size_binding_y": 0.0
+		},
+		"bindings": [
+			{
+				"binding_name": "#title_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.9s' * #title_text)",
+				"target_property_name": "#protocol_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#title_text - #protocol_header)",
+				"target_property_name": "#rem_after_header"
+			},
+			{
+				/* Skip the screen-type field (83 bytes) to reach extent0 */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_header)",
+				"target_property_name": "#raw_screen_type"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_header - #raw_screen_type)",
+				"target_property_name": "#rem_after_screen"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_screen)",
+				"target_property_name": "#raw_extent"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_extent) - ('%.2s' * #raw_extent) - ';') * 1)",
+				"target_property_name": "#size_binding_y"
+			}
+		],
+		"controls": [
+			{
+				"buttons_collection": {
+					"type": "collection_panel",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"offset": [
+						"-50%",
+						"-50%"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"factory": {
+						"name": "buttons",
+						"control_ids": {
+							"button": "@core_ui_common.button_router",
+							"label": "@core_ui_common.label_router",
+							"header": "@core_ui_common.unused",
+							"divider": "@core_ui_common.unused"
+						}
+					},
+					"collection_name": "form_buttons",
+					"bindings": [
+						{
+							"binding_name": "#form_button_contents",
+							"binding_name_override": "#collection_length"
+						}
+					]
+				}
+			}
+		]
+	},
+
+	// ── Right content (region 1): reads extent1, *_r1 routers ────────────────────────
+	"dual_right_content": {
+		"type": "panel",
+		"size": [
+			"160px",
+			0
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"property_bag": {
+			"#size_binding_y": 0.0
+		},
+		"bindings": [
+			{
+				"binding_name": "#title_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.9s' * #title_text)",
+				"target_property_name": "#protocol_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#title_text - #protocol_header)",
+				"target_property_name": "#rem_after_header"
+			},
+			{
+				/* Skip the screen-type field (83) + extent0 (83) = 166 bytes to reach extent1 */
+				"binding_type": "view",
+				"source_property_name": "('%.166s' * #rem_after_header)",
+				"target_property_name": "#skip_type_and_extent0"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_header - #skip_type_and_extent0)",
+				"target_property_name": "#rem_after_extent0"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_extent0)",
+				"target_property_name": "#raw_extent"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_extent) - ('%.2s' * #raw_extent) - ';') * 1)",
+				"target_property_name": "#size_binding_y"
+			}
+		],
+		"controls": [
+			{
+				"buttons_collection": {
+					"type": "collection_panel",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"offset": [
+						"-50%",
+						"-50%"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"factory": {
+						"name": "buttons",
+						"control_ids": {
+							"button": "@core_ui_common.button_router_r1",
+							"label": "@core_ui_common.label_router_r1",
+							"header": "@core_ui_common.unused",
+							"divider": "@core_ui_common.unused"
+						}
+					},
+					"collection_name": "form_buttons",
+					"bindings": [
+						{
+							"binding_name": "#form_button_contents",
+							"binding_name_override": "#collection_length"
+						}
+					]
+				}
+			}
+		]
+	}
+}

@@ -47,35 +47,43 @@ describe('serializeProps — text font field', () => {
 });
 
 describe('serializeTitleMetadata', () => {
-  it('is header + string field + number field (175 bytes)', () => {
-    const payload = serializeTitleMetadata(120, 'scroll');
+  it('single region is header + string field + one number field (175 bytes)', () => {
+    const payload = serializeTitleMetadata('scroll', [120]);
 
     expect(payload).toHaveLength(PROTOCOL_HEADER_LENGTH + FULL_WIDTH.s + FULL_WIDTH.n);
     expect(payload.startsWith(PROTOCOL_HEADER)).toBe(true);
   });
 
-  it('encodes screen type as field 0 and height as field 1 with unique markers', () => {
-    const payload = serializeTitleMetadata(120, 'scroll');
+  it('encodes screen type as field 0 and the region extent as field 1 with unique markers', () => {
+    const payload = serializeTitleMetadata('scroll', [120]);
 
     const screenField = payload.slice(PROTOCOL_HEADER_LENGTH, PROTOCOL_HEADER_LENGTH + FULL_WIDTH.s);
-    const heightField = payload.slice(PROTOCOL_HEADER_LENGTH + FULL_WIDTH.s);
+    const extentField = payload.slice(PROTOCOL_HEADER_LENGTH + FULL_WIDTH.s);
 
     expect(screenField).toBe(`s:scroll${PAD_CHAR.repeat(80 - 'scroll'.length)}${FIELD_MARKERS[0]}`);
-    expect(heightField).toBe(`n:120${PAD_CHAR.repeat(80 - '120'.length)}${FIELD_MARKERS[1]}`);
+    expect(extentField).toBe(`n:120${PAD_CHAR.repeat(80 - '120'.length)}${FIELD_MARKERS[1]}`);
+  });
+
+  it('encodes one number field per region in index order', () => {
+    const payload = serializeTitleMetadata('dual_scroll', [120, 240]);
+
+    expect(payload).toHaveLength(PROTOCOL_HEADER_LENGTH + FULL_WIDTH.s + 2 * FULL_WIDTH.n);
+
+    const extent0 = payload.slice(PROTOCOL_HEADER_LENGTH + FULL_WIDTH.s, PROTOCOL_HEADER_LENGTH + FULL_WIDTH.s + FULL_WIDTH.n);
+    const extent1 = payload.slice(PROTOCOL_HEADER_LENGTH + FULL_WIDTH.s + FULL_WIDTH.n);
+
+    expect(extent0).toBe(`n:120${PAD_CHAR.repeat(80 - '120'.length)}${FIELD_MARKERS[1]}`);
+    expect(extent1).toBe(`n:240${PAD_CHAR.repeat(80 - '240'.length)}${FIELD_MARKERS[2]}`);
   });
 
   it('matches the layout serializeProps produces for the same values', () => {
-    const [propsPayload] = serializeProps({ type: 'scroll', contentHeight: 64 });
+    const [propsPayload] = serializeProps({ type: 'scroll', extent0: 64 });
 
-    expect(serializeTitleMetadata(64, 'scroll')).toBe(propsPayload);
+    expect(serializeTitleMetadata('scroll', [64])).toBe(propsPayload);
   });
 
-  it('rounds fractional content heights', () => {
-    expect(serializeTitleMetadata(99.6, 'scroll')).toContain('n:100');
-    expect(serializeTitleMetadata(99.4, 'scroll')).toContain('n:99;');
-  });
-
-  it('defaults to scroll screen type', () => {
-    expect(serializeTitleMetadata(0)).toContain('s:scroll');
+  it('rounds fractional region extents', () => {
+    expect(serializeTitleMetadata('scroll', [99.6])).toContain('n:100');
+    expect(serializeTitleMetadata('scroll', [99.4])).toContain('n:99;');
   });
 });

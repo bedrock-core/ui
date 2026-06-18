@@ -211,16 +211,17 @@ function applyToTree(
   element: JSX.Element,
   parentNode: LayoutNode,
   cursor: { index: number },
+  regionIndex = 0,
 ): void {
   if (isTransparent(element)) {
     const ch = element.props.children;
 
     if (Array.isArray(ch)) {
       ch.filter(isElement).forEach((c) => {
-        applyToTree(c, parentNode, cursor);
+        applyToTree(c, parentNode, cursor, regionIndex);
       });
     } else if (isElement(ch)) {
-      applyToTree(ch, parentNode, cursor);
+      applyToTree(ch, parentNode, cursor, regionIndex);
     }
 
     return;
@@ -236,16 +237,82 @@ function applyToTree(
   element.props.jsonUIy = node.layout.y;
   element.props.jsonUIWidth = node.layout.width;
   element.props.jsonUIHeight = node.layout.height;
+  // Tag the element with the region (scroll) it belongs to. The `region` key was
+  // seeded by withControl (default 0), so reassigning it keeps the canonical
+  // field order intact for serialization.
+  element.props.region = regionIndex;
 
   const ch = element.props.children;
   const childCursor = { index: 0 };
 
   if (Array.isArray(ch)) {
     ch.filter(isElement).forEach((c) => {
-      applyToTree(c, node, childCursor);
+      applyToTree(c, node, childCursor, regionIndex);
     });
   } else if (isElement(ch)) {
-    applyToTree(ch, node, childCursor);
+    applyToTree(ch, node, childCursor, regionIndex);
+  }
+}
+
+// ─── Region slots ───────────────────────────────────────────────────────────────
+
+/**
+ * Marker type for a region/slot wrapper. A slot is transparent (emits no payload)
+ * and acts as an independent layout root: its concrete descendants are laid out in
+ * their own coordinate space and tagged with the slot's region index. Multi-region
+ * screens (e.g. dual scroll) wrap their content in these; single-region screens use
+ * none and fall through to the original whole-tree layout path.
+ */
+export const REGION_SLOT_TYPE = 'region-slot';
+
+function isRegionSlot(element: JSX.Node): boolean {
+  return isElement(element) && element.type === REGION_SLOT_TYPE;
+}
+
+function regionIndexOf(slot: JSX.Element): number {
+  const raw = slot.props.__region;
+
+  return typeof raw === 'number' && Number.isFinite(raw) ? raw : 0;
+}
+
+/**
+ * The flexbox width available to a region's content. Slot components set `__regionWidth`
+ * to their column width so percentages / stretch / text-wrap inside resolve against the
+ * real column — not the full screen. Falls back to the canonical screen width.
+ */
+function regionWidthOf(slot: JSX.Element): number {
+  const raw = slot.props.__regionWidth;
+
+  return typeof raw === 'number' && Number.isFinite(raw) && raw > 0 ? raw : CANONICAL_SCREEN.width;
+}
+
+/**
+ * Collect region-slot elements in document order, descending only through
+ * transparent wrappers (the screen component / fragments above the slots) and not
+ * into the slots themselves. Concrete content is never scanned for nested slots —
+ * slots are structural children of the screen component.
+ */
+function findRegionSlots(element: JSX.Node, out: JSX.Element[]): void {
+  if (!isElement(element)) {
+    return;
+  }
+
+  if (isRegionSlot(element)) {
+    out.push(element);
+
+    return;
+  }
+
+  if (!isTransparent(element)) {
+    return;
+  }
+
+  const ch = element.props.children;
+
+  if (Array.isArray(ch)) {
+    ch.forEach(c => findRegionSlots(c, out));
+  } else if (isElement(ch)) {
+    findRegionSlots(ch, out);
   }
 }
 
@@ -262,6 +329,14 @@ function applyToTree(
  * @returns The same element tree, mutated in-place with layout values.
  */
 export function computeLayout(tree: JSX.Element): JSX.Element {
+  const slots: JSX.Element[] = [];
+
+  findRegionSlots(tree, slots);
+
+  if (slots.length > 0) {
+    return computeRegionLayout(tree, slots);
+  }
+
   const concreteRoots = collectConcrete(tree);
   const concreteTree = concreteRoots[0] ?? tree;
 
@@ -291,6 +366,55 @@ export function computeLayout(tree: JSX.Element): JSX.Element {
   } else if (isElement(ch)) {
     applyToTree(ch, root, cursor);
   }
+
+  // Single region: one extent equal to the root content height.
+  tree.props.jsonUIRegionExtents = [root.layout.height];
+
+  return tree;
+}
+
+/**
+ * Multi-region layout: lay out each slot independently in its own coordinate
+ * space. Each slot's concrete roots become children of a synthetic column root so
+ * 1..N roots are handled uniformly; the resulting offsets are region-local and the
+ * synthetic root's height is that region's scroll extent.
+ *
+ * Region extents are written in region-index order to `tree.props.jsonUIRegionExtents`
+ * for the presenter to encode into the title metadata.
+ */
+function computeRegionLayout(tree: JSX.Element, slots: JSX.Element[]): JSX.Element {
+  const ordered = [...slots].sort((a, b) => regionIndexOf(a) - regionIndexOf(b));
+  const maxRegion = ordered.reduce((m, s) => Math.max(m, regionIndexOf(s)), 0);
+  const extents: number[] = new Array(maxRegion + 1).fill(CANONICAL_SCREEN.height);
+
+  for (const slot of ordered) {
+    const regionIndex = regionIndexOf(slot);
+    const regionWidth = regionWidthOf(slot);
+    // `expand` normalizes children to an array, so collect concrete roots across
+    // the whole child list (collectConcrete itself takes a single node).
+    const rawChildren = slot.props.children;
+    const roots = Array.isArray(rawChildren)
+      ? rawChildren.flatMap(c => collectConcrete(c))
+      : collectConcrete(rawChildren);
+    // Lay each region out in its own column whose width is the region width, so the
+    // content's percentages / stretch / text-wrap resolve against the real column.
+    const childNodes = roots.map(r => buildNode(r, regionWidth));
+    const syntheticRoot = createNode({ flexDirection: 'column', width: regionWidth }, childNodes);
+
+    flexComputeLayout(syntheticRoot);
+
+    const cursor = { index: 0 };
+
+    roots.forEach((r) => {
+      applyToTree(r, syntheticRoot, cursor, regionIndex);
+    });
+
+    extents[regionIndex] = syntheticRoot.layout.height;
+  }
+
+  tree.props.jsonUIRegionExtents = extents;
+  // Fall back height for any consumer reading the legacy single value.
+  tree.props.jsonUIHeight = extents[0];
 
   return tree;
 }

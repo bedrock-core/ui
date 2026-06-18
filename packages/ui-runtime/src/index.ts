@@ -53,8 +53,8 @@ export {
   useState,
 } from './hooks';
 
-export { Screen } from './screens';
-export type { ScreenDescriptor, ScreenType } from './screens';
+export { DualScroll, DUAL_SCROLL_REGION_WIDTH, Screen } from './screens';
+export type { DualScrollProps, DualScrollSlotProps, ScreenDescriptor, ScreenType } from './screens';
 
 export {
   createContext,

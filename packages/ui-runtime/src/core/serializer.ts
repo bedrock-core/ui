@@ -15,9 +15,11 @@ export const FIELD_MARKERS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmn
 export const PAD_CHAR = ';';
 
 // Protocol version tag (format: 'v' + 4 hex digits)
-// e.g., 'bcuiv0005'
+// e.g., 'bcuiv0006'
 // Increment when making backward-incompatible changes to the payload layout.
-export const VERSION = 'v0005';
+// v0006: added the common `region` field (carved from the reserved block) and
+// generalized the title metadata to carry one extent per region.
+export const VERSION = 'v0006';
 export const PROTOCOL_HEADER = `bcui${VERSION}`;
 export const PROTOCOL_HEADER_LENGTH = 9; // bytes, all characters are single-byte ASCII
 
@@ -246,24 +248,36 @@ export function serializeProps({ type, ...props }: SerializableProps & { type: s
 }
 
 /**
- * Serialize the form title metadata containing the screen type and root content height.
- * Layout: PROTOCOL_HEADER (9) + s:screenType (83) + n:contentHeight (83) = 175 bytes total.
- * The RP reads #title_text to determine which screen layout to activate and to size the scroll panel.
+ * Serialize the form title metadata containing the screen type and per-region extents.
+ * Layout: PROTOCOL_HEADER (9) + s:screenType (83) + n:extent₀ (83) [+ n:extent₁ (83) ...].
+ * The RP reads #title_text to determine which screen layout to activate and to size each
+ * scroll region.
  *
- * Screen type comes first because every screen reads it; the height comes second because
- * only some screens (the scrolling ones) need it. The screen type is encoded as a string
- * (currently just 'scroll') so adding layouts needs no new fields. Changing this
- * layout is backward-incompatible — bump VERSION.
+ * Screen type comes first because every screen reads it; the region extents follow, one
+ * fixed-width number field per region in region-index order. A single-region screen (e.g.
+ * 'scroll') emits exactly one extent, so its title layout is identical to previous versions
+ * (aside from the VERSION tag). Multi-region screens (e.g. 'dual_scroll') emit one extent
+ * per region; each region's RP template reads the field at its own index.
+ *
+ * The extent is the dimension the region scrolls along — height for vertical scroll,
+ * width for horizontal scroll. The screen type and the region kinds are agreed between the
+ * TS descriptor and the RP template, so both sides know which dimension each field carries.
  *
  * Delegates to serializeProps with the screen type in the leading `type` slot, so the
  * title payload follows the exact same fixed-width field rules as component payloads.
  *
- * @param contentHeight - Root panel computed height in pixels
- * @param screenType - Which RP layout to activate (currently 'scroll')
+ * @param screenType - Which RP layout to activate (e.g. 'scroll', 'dual_scroll')
+ * @param regionExtents - Scroll extent (px) per region, in region-index order
  * @returns Full title string for form.title()
  */
-export function serializeTitleMetadata(contentHeight: number, screenType: ScreenType = 'scroll'): string {
-  const [payload] = serializeProps({ type: screenType, contentHeight: Math.round(contentHeight) });
+export function serializeTitleMetadata(screenType: ScreenType, regionExtents: readonly number[]): string {
+  const extents: SerializableProps = {};
+
+  regionExtents.forEach((extent, index) => {
+    extents[`extent${index}`] = Math.round(extent);
+  });
+
+  const [payload] = serializeProps({ type: screenType, ...extents });
 
   return payload;
 }

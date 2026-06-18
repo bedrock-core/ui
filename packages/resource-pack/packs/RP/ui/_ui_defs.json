@@ -14,6 +14,7 @@
 		// available in #serialized_data binding
 		// Screens
 		"ui/core-ui/screens/scroll_screen.json",
+		"ui/core-ui/screens/dual_scroll_screen.json",
 		// Components 
 		"ui/core-ui/components/button.json",
 		"ui/core-ui/components/panel.json",

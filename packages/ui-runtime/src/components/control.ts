@@ -25,9 +25,14 @@ export interface ControlProps extends LayoutProps {
  * [424-431]: Field 5: visible (bool, 8 bytes) - visibility state
  * [432-439]: Field 6: enabled (bool, 8 bytes) - interaction enabled state
  * [440-522]: Field 7: background (string, 83 bytes) - optional background texture path
- * [523-1023]: Reserved (501 bytes)
+ * [523-605]: Field 8: region (number, 83 bytes) - region/scroll index this element belongs to
+ * [606-1023]: Reserved (418 bytes)
  *
- * Reserved calculation: 1024 - 9 - 83 - (6 × 83) - (2 × 8) - 83 = 501 bytes
+ * The `region` field was carved from the reserved block (v0005: 501 → v0006: 418) so the
+ * absolute offset of every component-specific field after the reserved block (e.g.
+ * backgroundHover at [1024]) is unchanged.
+ *
+ * Reserved calculation: 1024 - 9 - 83 - (6 × 83) - (2 × 8) - 83 (background) - 83 (region) = 418 bytes
  * (up to 1024 bytes total reserved block for future expansion)
  *
  * Component-specific properties are appended after the reserved block.
@@ -95,7 +100,11 @@ export function withControl(props: JSX.Props): JSX.Props {
     enabled: enabled ?? true,
 
     background: background ?? '', // [440-522] optional background texture path
-    $reserved: { bytes: 501 }, // Reserve space for future expansion (since v0004: 501 bytes)
+    // [523-605] region/scroll index. Defaults to 0 (single-region screens). For
+    // multi-region screens the region-propagation pass overwrites this in place
+    // (keeping the canonical key order) with the nearest slot ancestor's index.
+    region: 0,
+    $reserved: { bytes: 418 }, // Reserve space for future expansion (v0006: 418 bytes, carved 83 for region)
 
     // Layout props (not serialized, used by layout phase) - stored with __ prefix
     __layout: {

@@ -12,7 +12,7 @@
 			"50% - 50%c",
 			"0%"
 		],
-		"$protocol_header": "bcuiv0005",
+		"$protocol_header": "bcuiv0006",
 		"bindings": [
 			{
 				"binding_name": "#title_text"
@@ -55,6 +55,18 @@
 							"binding_type": "view",
 							"source_control_name": "screen_container",
 							"source_property_name": "(#screen_type = 'scroll')",
+							"target_property_name": "#visible"
+						}
+					]
+				}
+			},
+			{
+				"dual_scroll_root@core_ui_screens.dual_scroll": {
+					"bindings": [
+						{
+							"binding_type": "view",
+							"source_control_name": "screen_container",
+							"source_property_name": "(#screen_type = 'dual_scroll')",
 							"target_property_name": "#visible"
 						}
 					]

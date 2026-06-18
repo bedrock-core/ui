@@ -20,5 +20,31 @@
 				"image@core_ui_components.image": {}
 			}
 		]
+	},
+	// Region-1 variant: passes $region_filter: 1 to each component @ref so region-1 scrolls
+	// only show their own static elements. Region 0 uses the base label_router (default 0).
+	"label_router_r1": {
+		"type": "panel",
+		"size": [
+			1,
+			1
+		],
+		"controls": [
+			{
+				"panel@core_ui_components.panel": {
+					"$region_filter": 1
+				}
+			},
+			{
+				"text@core_ui_components.text": {
+					"$region_filter": 1
+				}
+			},
+			{
+				"image@core_ui_components.image": {
+					"$region_filter": 1
+				}
+			}
+		]
 	}
 }

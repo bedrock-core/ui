@@ -49,4 +49,7 @@ export function registerNativeComponents(): void {
   registerComponent('item_renderer', { writer: itemRendererWriter });
   registerComponent('fragment', { transparent: true });
   registerComponent('context-provider', { transparent: true });
+  // Region/slot wrapper: emits no payload; the layout pass treats it as an
+  // independent layout root and tags its descendants with its region index.
+  registerComponent('region-slot', { transparent: true });
 }
