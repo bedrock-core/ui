@@ -247,37 +247,42 @@ export function serializeProps({ type, ...props }: SerializableProps & { type: s
   return [result, finalBytes];
 }
 
+/** Per-region content box surfaced by the layout pass for title encoding. */
+export interface RegionMetrics {
+  /** Content height (px) — the vertical scroll extent. */
+  height: number;
+  /** Content width (px) — the column content width. */
+  width: number;
+}
+
 /**
- * Serialize the form title metadata containing the screen type and per-region extents.
- * Layout: PROTOCOL_HEADER (9) + s:screenType (83) + n:extent₀ (83) [+ n:extent₁ (83) ...].
- * The RP reads #title_text to determine which screen layout to activate and to size each
- * scroll region.
+ * Serialize the form title metadata containing the screen type and per-region metrics.
+ * Layout: PROTOCOL_HEADER (9) + s:screenType (83) + per region [ n:height (83), n:width (83) ].
  *
- * Screen type comes first because every screen reads it; the region extents follow, one
- * fixed-width number field per region in region-index order. A single-region screen (e.g.
- * 'scroll') emits exactly one extent, so its title layout is identical to previous versions
- * (aside from the VERSION tag). Multi-region screens (e.g. 'dual_scroll') emit one extent
- * per region; each region's RP template reads the field at its own index.
+ * Screen type comes first because every screen reads it; then each region contributes a
+ * height then a width field, in region-index order. Height is first so a single-region
+ * screen (e.g. 'scroll') keeps the height field immediately after the screen type and simply
+ * ignores the trailing width. Region r's height is field 1+2r, its width is field 2+2r.
  *
- * The extent is the dimension the region scrolls along — height for vertical scroll,
- * width for horizontal scroll. The screen type and the region kinds are agreed between the
- * TS descriptor and the RP template, so both sides know which dimension each field carries.
- *
- * Delegates to serializeProps with the screen type in the leading `type` slot, so the
- * title payload follows the exact same fixed-width field rules as component payloads.
+ * Both are consumed via the [1,1] `size_anchor` trick on the scroll content panel: the panel
+ * overflows its 1px anchor and #size_binding_y / #size_binding_x map 1:1 to pixels for its
+ * height (scroll extent) and width (column content width). (The scroll_view viewport and the
+ * container are NOT inside such an anchor — they need a responsive % height — so their width
+ * stays a baked per-screen value that matches the encoded width.)
  *
  * @param screenType - Which RP layout to activate (e.g. 'scroll', 'dual_scroll')
- * @param regionExtents - Scroll extent (px) per region, in region-index order
+ * @param regions - Content metrics per region, in region-index order
  * @returns Full title string for form.title()
  */
-export function serializeTitleMetadata(screenType: ScreenType, regionExtents: readonly number[]): string {
-  const extents: SerializableProps = {};
+export function serializeTitleMetadata(screenType: ScreenType, regions: readonly RegionMetrics[]): string {
+  const fields: SerializableProps = {};
 
-  regionExtents.forEach((extent, index) => {
-    extents[`extent${index}`] = Math.round(extent);
+  regions.forEach((region, index) => {
+    fields[`height${index}`] = Math.round(region.height);
+    fields[`width${index}`] = Math.round(region.width);
   });
 
-  const [payload] = serializeProps({ type: screenType, ...extents });
+  const [payload] = serializeProps({ type: screenType, ...fields });
 
   return payload;
 }

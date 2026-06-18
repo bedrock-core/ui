@@ -2,6 +2,7 @@ import type { FlexStyle, LayoutNode } from '@bedrock-core/flexbox';
 import { CANONICAL_SCREEN, createNode, computeLayout as flexComputeLayout } from '@bedrock-core/flexbox';
 import { TextFont, TextOverflow, TextWordBreak } from '@bedrock-core/ui/components/Text';
 import type { JSX } from '../../../jsx';
+import type { RegionMetrics } from '../../serializer';
 import { isTransparentType } from '../../componentRegistry';
 import { isElement } from '../../guards';
 import { ellipsizeText, measureText, wrapText } from '../../../util/textMetrics';
@@ -367,8 +368,8 @@ export function computeLayout(tree: JSX.Element): JSX.Element {
     applyToTree(ch, root, cursor);
   }
 
-  // Single region: one extent equal to the root content height.
-  tree.props.jsonUIRegionExtents = [root.layout.height];
+  // Single region: one region whose content box is the root's.
+  tree.props.jsonUIRegions = [{ width: root.layout.width, height: root.layout.height }] as RegionMetrics[];
 
   return tree;
 }
@@ -379,13 +380,16 @@ export function computeLayout(tree: JSX.Element): JSX.Element {
  * 1..N roots are handled uniformly; the resulting offsets are region-local and the
  * synthetic root's height is that region's scroll extent.
  *
- * Region extents are written in region-index order to `tree.props.jsonUIRegionExtents`
- * for the presenter to encode into the title metadata.
+ * Region metrics ({ width, height }) are written in region-index order to
+ * `tree.props.jsonUIRegions` for the presenter to encode into the title metadata.
  */
 function computeRegionLayout(tree: JSX.Element, slots: JSX.Element[]): JSX.Element {
   const ordered = [...slots].sort((a, b) => regionIndexOf(a) - regionIndexOf(b));
   const maxRegion = ordered.reduce((m, s) => Math.max(m, regionIndexOf(s)), 0);
-  const extents: number[] = new Array(maxRegion + 1).fill(CANONICAL_SCREEN.height);
+  const regions: RegionMetrics[] = Array.from(
+    { length: maxRegion + 1 },
+    () => ({ width: CANONICAL_SCREEN.width, height: CANONICAL_SCREEN.height }),
+  );
 
   for (const slot of ordered) {
     const regionIndex = regionIndexOf(slot);
@@ -409,12 +413,12 @@ function computeRegionLayout(tree: JSX.Element, slots: JSX.Element[]): JSX.Eleme
       applyToTree(r, syntheticRoot, cursor, regionIndex);
     });
 
-    extents[regionIndex] = syntheticRoot.layout.height;
+    regions[regionIndex] = { width: syntheticRoot.layout.width, height: syntheticRoot.layout.height };
   }
 
-  tree.props.jsonUIRegionExtents = extents;
+  tree.props.jsonUIRegions = regions;
   // Fall back height for any consumer reading the legacy single value.
-  tree.props.jsonUIHeight = extents[0];
+  tree.props.jsonUIHeight = regions[0].height;
 
   return tree;
 }

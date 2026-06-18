@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Player } from '@minecraft/server';
 import { Panel } from '../../components/Panel';
-import { DualScroll, DUAL_SCROLL_REGION_WIDTH } from '../../screens/DualScroll';
+import { DualScroll, DUAL_SCROLL_LEFT_WIDTH, DUAL_SCROLL_RIGHT_WIDTH } from '../../screens/DualScroll';
 import { isElement } from '../guards';
 import { expandAndResolveContexts } from '../render/phases/expand';
 import { computeLayout } from '../render/phases/layout';
@@ -75,14 +75,14 @@ describe('region pipeline (expand + layout)', () => {
     expect(region0).toHaveLength(3);
     expect(region1).toHaveLength(2);
 
-    // Each region's column stretches to the region width (not the full screen).
-    expect(region0[0].props.jsonUIWidth).toBe(DUAL_SCROLL_REGION_WIDTH);
-    expect(region1[0].props.jsonUIWidth).toBe(DUAL_SCROLL_REGION_WIDTH);
+    // Each region's column stretches to its own (asymmetric) region width.
+    expect(region0[0].props.jsonUIWidth).toBe(DUAL_SCROLL_LEFT_WIDTH);
+    expect(region1[0].props.jsonUIWidth).toBe(DUAL_SCROLL_RIGHT_WIDTH);
 
     // Region 0 rows are stacked: at least one panel sits below the top (non-zero y).
     expect(region0.some(p => (p.props.jsonUIy as number) > 0)).toBe(true);
 
-    // Two regions, two extents.
-    expect(expanded.props.jsonUIRegionExtents).toHaveLength(2);
+    // Two regions, each with metrics.
+    expect(expanded.props.jsonUIRegions).toHaveLength(2);
   });
 });

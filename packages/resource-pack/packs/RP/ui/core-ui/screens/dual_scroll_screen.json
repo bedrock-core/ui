@@ -4,16 +4,22 @@
 	// Two independent vertical scroll regions side by side. Both bind the SAME
 	// `form_buttons` collection; each region's content selects region-specific routers
 	// (region 0 = base routers, region 1 = *_r1 routers passing $region_filter: 1) so each
-	// column only shows its own elements. Each region reads its own scroll extent field from
-	// the title metadata (extent0 for the left column, extent1 for the right).
+	// column only shows its own elements.
+	//
+	// Asymmetric 34% / 66% columns: left 109px, right 211px, summing to the 320px container
+	// (centered by screen_container's "50% - 50%c" offset). The two columns are flush (no gap
+	// — authors add padding). The scroll_view VIEWPORT widths are baked here (109 / 211) and
+	// must match DUAL_SCROLL_LEFT_WIDTH / DUAL_SCROLL_RIGHT_WIDTH in ui-runtime; the CONTENT
+	// width is data-driven from the title (via the [1,1] size_anchor #size_binding_x trick).
+	//
+	// Title field layout (each field 83 bytes, after the 9-byte header):
+	//   [0] screen type  [1] height0  [2] width0  [3] height1  [4] width1
+	// skips: height0 -> 83, width0 -> 166, height1 -> 249, width1 -> 332.
+
 	"dual_scroll": {
 		"type": "panel",
-		// Fixed total footprint = two 160px columns + 8px middle gap = 328px (same as the
-		// single scroll). screen_container's "50% - 50%c" offset centers this fixed width.
-		// Region columns are 160px = canonical_width/2; the ui-runtime DUAL_SCROLL_REGION_WIDTH
-		// constant must match.
 		"size": [
-			"328px",
+			"320px",
 			"100%"
 		],
 		"anchor_from": "top_left",
@@ -28,8 +34,7 @@
 		]
 	},
 
-	// Shared scrollbar (track + thumb). Identical for both regions, so factored out and
-	// referenced by name from each scroll_view's controls.
+	// Shared scrollbar (track + thumb), referenced by name from each scroll_view.
 	"dual_scrollbar": {
 		"type": "panel",
 		"size": [
@@ -100,8 +105,9 @@
 	// ── Left region (region 0) ──────────────────────────────────────────────────────
 	"dual_left_scroll": {
 		"type": "scroll_view",
+		// 34% column — baked viewport width; must match DUAL_SCROLL_LEFT_WIDTH in ui-runtime.
 		"size": [
-			"160px",
+			"109px",
 			"95%"
 		],
 		"offset": [
@@ -115,9 +121,8 @@
 		"scrollbar_touch_button": "button.scrollbar_touch",
 		"always_listen_to_input": true,
 		"always_handle_pointer": true,
-		// false (vanilla scroll_view_control default) so each region only handles the
-		// mouse wheel while it is hovered. With two scroll_views, `true` makes both
-		// greedily capture the wheel and only one ever responds.
+		// false (vanilla scroll_view_control default) so each region only handles the mouse
+		// wheel while hovered (otherwise both greedily capture it and only one responds).
 		"always_handle_scrolling": false,
 		"scroll_content": "scrolling_content",
 		"scroll_view_port": "scrolling_view_port",
@@ -175,8 +180,9 @@
 	// ── Right region (region 1) ─────────────────────────────────────────────────────
 	"dual_right_scroll": {
 		"type": "scroll_view",
+		// 66% column — baked viewport width; must match DUAL_SCROLL_RIGHT_WIDTH in ui-runtime.
 		"size": [
-			"160px",
+			"211px",
 			"95%"
 		],
 		"offset": [
@@ -190,9 +196,6 @@
 		"scrollbar_touch_button": "button.scrollbar_touch",
 		"always_listen_to_input": true,
 		"always_handle_pointer": true,
-		// false (vanilla scroll_view_control default) so each region only handles the
-		// mouse wheel while it is hovered. With two scroll_views, `true` makes both
-		// greedily capture the wheel and only one ever responds.
 		"always_handle_scrolling": false,
 		"scroll_content": "scrolling_content",
 		"scroll_view_port": "scrolling_view_port",
@@ -247,16 +250,21 @@
 		]
 	},
 
-	// ── Left content (region 0): reads extent0, base routers ─────────────────────────
+	// ── Left content (region 0): height0 @ skip 83, width0 @ skip 166, base routers ───
+	// Width is data-driven via #size_binding_x exactly like #size_binding_y: this panel sits
+	// inside the [1,1] size_anchor, so both bindings map 1:1 to pixels (it overflows the
+	// anchor and the scroll_view scrolls it). The viewport/container widths are baked (160 /
+	// 320) and match the encoded width.
 	"dual_left_content": {
 		"type": "panel",
 		"size": [
-			"160px",
+			0,
 			0
 		],
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
 		"property_bag": {
+			"#size_binding_x": 0.0,
 			"#size_binding_y": 0.0
 		},
 		"bindings": [
@@ -274,25 +282,46 @@
 				"target_property_name": "#rem_after_header"
 			},
 			{
-				/* Skip the screen-type field (83 bytes) to reach extent0 */
+				/* height0 @ skip 83 (after the screen-type field) */
 				"binding_type": "view",
 				"source_property_name": "('%.83s' * #rem_after_header)",
-				"target_property_name": "#raw_screen_type"
+				"target_property_name": "#pre_h0"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(#rem_after_header - #raw_screen_type)",
-				"target_property_name": "#rem_after_screen"
+				"source_property_name": "(#rem_after_header - #pre_h0)",
+				"target_property_name": "#at_h0"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_after_screen)",
-				"target_property_name": "#raw_extent"
+				"source_property_name": "('%.83s' * #at_h0)",
+				"target_property_name": "#raw_height"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "((('%.82s' * #raw_extent) - ('%.2s' * #raw_extent) - ';') * 1)",
+				"source_property_name": "((('%.82s' * #raw_height) - ('%.2s' * #raw_height) - ';') * 1)",
 				"target_property_name": "#size_binding_y"
+			},
+			{
+				/* width0 @ skip 166 (screen type + height0) */
+				"binding_type": "view",
+				"source_property_name": "('%.166s' * #rem_after_header)",
+				"target_property_name": "#pre_w0"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_header - #pre_w0)",
+				"target_property_name": "#at_w0"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_w0)",
+				"target_property_name": "#raw_width"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_width) - ('%.2s' * #raw_width) - ';') * 1)",
+				"target_property_name": "#size_binding_x"
 			}
 		],
 		"controls": [
@@ -330,16 +359,17 @@
 		]
 	},
 
-	// ── Right content (region 1): reads extent1, *_r1 routers ────────────────────────
+	// ── Right content (region 1): height1 @ skip 249, width1 @ skip 332, *_r1 routers ─
 	"dual_right_content": {
 		"type": "panel",
 		"size": [
-			"160px",
+			0,
 			0
 		],
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
 		"property_bag": {
+			"#size_binding_x": 0.0,
 			"#size_binding_y": 0.0
 		},
 		"bindings": [
@@ -357,25 +387,46 @@
 				"target_property_name": "#rem_after_header"
 			},
 			{
-				/* Skip the screen-type field (83) + extent0 (83) = 166 bytes to reach extent1 */
+				/* height1 @ skip 249 (screen type + height0 + width0) */
 				"binding_type": "view",
-				"source_property_name": "('%.166s' * #rem_after_header)",
-				"target_property_name": "#skip_type_and_extent0"
+				"source_property_name": "('%.249s' * #rem_after_header)",
+				"target_property_name": "#pre_h1"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(#rem_after_header - #skip_type_and_extent0)",
-				"target_property_name": "#rem_after_extent0"
+				"source_property_name": "(#rem_after_header - #pre_h1)",
+				"target_property_name": "#at_h1"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_after_extent0)",
-				"target_property_name": "#raw_extent"
+				"source_property_name": "('%.83s' * #at_h1)",
+				"target_property_name": "#raw_height"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "((('%.82s' * #raw_extent) - ('%.2s' * #raw_extent) - ';') * 1)",
+				"source_property_name": "((('%.82s' * #raw_height) - ('%.2s' * #raw_height) - ';') * 1)",
 				"target_property_name": "#size_binding_y"
+			},
+			{
+				/* width1 @ skip 332 (screen type + height0 + width0 + height1) */
+				"binding_type": "view",
+				"source_property_name": "('%.332s' * #rem_after_header)",
+				"target_property_name": "#pre_w1"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_header - #pre_w1)",
+				"target_property_name": "#at_w1"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_w1)",
+				"target_property_name": "#raw_width"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_width) - ('%.2s' * #raw_width) - ';') * 1)",
+				"target_property_name": "#size_binding_x"
 			}
 		],
 		"controls": [

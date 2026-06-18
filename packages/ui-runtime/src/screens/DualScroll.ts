@@ -3,12 +3,14 @@ import { useSetScreen } from '../hooks';
 import type { FunctionComponent, JSX } from '../jsx';
 
 /**
- * Flexbox width (px) of each dual-scroll column — half the canonical content width.
- * Both columns plus the inter-column gap make up the single-scroll footprint, so the
- * dual layout occupies the same centered width as a normal scroll screen. The RP
- * `dual_scroll_screen.json` region geometry must match this value.
+ * Column widths (px) for the dual-scroll screen — an asymmetric 34% / 66% split of the
+ * canonical content width. The two columns sum to the full canonical width and are centered.
+ * These MUST match the scroll_view viewport widths baked into `dual_scroll_screen.json`
+ * (the content width is title-driven from these values; the viewport widths are baked).
  */
-export const DUAL_SCROLL_REGION_WIDTH = Math.floor(CANONICAL_SCREEN.width / 2);
+export const DUAL_SCROLL_TOTAL_WIDTH = CANONICAL_SCREEN.width;
+export const DUAL_SCROLL_LEFT_WIDTH = Math.round(DUAL_SCROLL_TOTAL_WIDTH * 0.34);
+export const DUAL_SCROLL_RIGHT_WIDTH = DUAL_SCROLL_TOTAL_WIDTH - DUAL_SCROLL_LEFT_WIDTH;
 
 export interface DualScrollProps {
   /** Must be the two slot elements: `<DualScroll.Left>` and `<DualScroll.Right>`. */
@@ -26,13 +28,13 @@ export interface DualScrollSlotProps {
  */
 const Left: FunctionComponent<DualScrollSlotProps> = ({ children }: DualScrollSlotProps): JSX.Element => ({
   type: 'region-slot',
-  props: { __region: 0, __regionWidth: DUAL_SCROLL_REGION_WIDTH, children },
+  props: { __region: 0, __regionWidth: DUAL_SCROLL_LEFT_WIDTH, children },
 });
 
 /** Region slot for the right (region 1) column of a dual scroll screen. */
 const Right: FunctionComponent<DualScrollSlotProps> = ({ children }: DualScrollSlotProps): JSX.Element => ({
   type: 'region-slot',
-  props: { __region: 1, __regionWidth: DUAL_SCROLL_REGION_WIDTH, children },
+  props: { __region: 1, __regionWidth: DUAL_SCROLL_RIGHT_WIDTH, children },
 });
 
 /**

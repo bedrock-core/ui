@@ -3,7 +3,7 @@ import { type Player } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
 import type { JSX } from '../../jsx';
 import { getFibersForPlayer } from '../fabric';
-import { serialize, serializeTitleMetadata } from '../serializer';
+import { serialize, serializeTitleMetadata, type RegionMetrics } from '../serializer';
 import type { SerializationContext } from '../types';
 import { beginInteractiveTransaction, endInteractiveTransaction, getPlayerScreen } from './session';
 
@@ -20,23 +20,25 @@ export async function present(
   // The session screen is the render baseline set by render().
   const screen = getPlayerScreen(player);
 
-  // Encode title with protocol header and per-region extent metadata. The
-  // region-aware layout pass surfaces one extent per region on the tree; a
-  // single-region screen yields a one-element array equal to the root height.
-  // Fall back to the canonical viewport height for any missing, non-finite, or
-  // non-positive extent so the RP always receives a usable scroll container size.
-  const rawExtents = tree.props.jsonUIRegionExtents;
-  const extentsSource = Array.isArray(rawExtents) && rawExtents.length > 0
-    ? rawExtents as number[]
-    : [tree.props.jsonUIHeight];
+  // Encode title with protocol header and per-region metrics. The region-aware
+  // layout pass surfaces one { width, height } per region on the tree; a
+  // single-region screen yields a one-element array sized to the root. Fall back to
+  // the canonical viewport dimensions for any missing / non-finite / non-positive
+  // value so the RP always receives a usable scroll container size.
+  const rawRegions = tree.props.jsonUIRegions;
+  const regionsSource: RegionMetrics[] = Array.isArray(rawRegions) && rawRegions.length > 0
+    ? rawRegions as RegionMetrics[]
+    : [{ width: CANONICAL_SCREEN.width, height: tree.props.jsonUIHeight as number }];
 
-  const regionExtents = extentsSource.map((extent) => {
-    return (typeof extent === 'number' && Number.isFinite(extent) && extent > 0)
-      ? extent
-      : CANONICAL_SCREEN.height;
-  });
+  const sane = (value: unknown, fallback: number): number =>
+    (typeof value === 'number' && Number.isFinite(value) && value > 0) ? value : fallback;
 
-  form.title(serializeTitleMetadata(screen.type, regionExtents));
+  const regions: RegionMetrics[] = regionsSource.map(region => ({
+    height: sane(region?.height, CANONICAL_SCREEN.height),
+    width: sane(region?.width, CANONICAL_SCREEN.width),
+  }));
+
+  form.title(serializeTitleMetadata(screen.type, regions));
 
   serialize(tree, form, serializationContext);
 

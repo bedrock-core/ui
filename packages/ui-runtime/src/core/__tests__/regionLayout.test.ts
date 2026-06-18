@@ -34,7 +34,7 @@ describe('computeLayout — single region (no slots)', () => {
     expect(tree.props.region).toBe(0); // root keeps the withControl default (0)
     expect(a.props.region).toBe(0);
     expect(b.props.region).toBe(0);
-    expect(tree.props.jsonUIRegionExtents).toHaveLength(1);
+    expect(tree.props.jsonUIRegions).toHaveLength(1);
   });
 });
 
@@ -60,14 +60,14 @@ describe('computeLayout — multi region (slots)', () => {
     expect(left.props.jsonUIy).toBe(0);
     expect(right.props.jsonUIy).toBe(0);
 
-    // One extent per region, in region-index order. Extents floor at the canonical
-    // viewport height, so both regions report at least that — but they are computed
-    // independently (the right column's taller content does not affect the left).
-    const extents = tree.props.jsonUIRegionExtents as number[];
+    // One { width, height } per region, in region-index order. Heights floor at the
+    // canonical viewport, but are computed independently per region.
+    const regions = tree.props.jsonUIRegions as { width: number; height: number }[];
 
-    expect(extents).toHaveLength(2);
-    expect(extents[0]).toBeGreaterThan(0);
-    expect(extents[1]).toBeGreaterThan(0);
+    expect(regions).toHaveLength(2);
+    expect(regions[0].height).toBeGreaterThan(0);
+    expect(regions[0].width).toBeGreaterThan(0);
+    expect(regions[1].height).toBeGreaterThan(0);
   });
 
   it('DualScroll slot components produce region-slot elements tagged 0 and 1', () => {
@@ -119,10 +119,10 @@ describe('computeLayout — multi region (slots)', () => {
     expect(rightRoot.props.region).toBe(1);
     expect(rightRowEls[1].props.jsonUIy).toBeGreaterThan(rightRowEls[0].props.jsonUIy as number);
 
-    expect(tree.props.jsonUIRegionExtents).toHaveLength(2);
+    expect(tree.props.jsonUIRegions).toHaveLength(2);
   });
 
-  it('orders extents by region index regardless of document order', () => {
+  it('orders regions by region index regardless of document order', () => {
     const tree: JSX.Element = {
       type: 'fragment',
       props: { children: [slot(1, panel(150, 90)), slot(0, panel(150, 40))] },
@@ -130,8 +130,8 @@ describe('computeLayout — multi region (slots)', () => {
 
     computeLayout(tree);
 
-    const extents = tree.props.jsonUIRegionExtents as number[];
+    const regions = tree.props.jsonUIRegions as { width: number; height: number }[];
 
-    expect(extents).toHaveLength(2);
+    expect(regions).toHaveLength(2);
   });
 });
