@@ -1,6 +1,13 @@
 {
 	// Routes button-type factory entries to the appropriate interactive component.
 	// Parallel to label_router which handles label-type entries.
+	//
+	// Region filtering: a single parameterized router serves every scroll region. The
+	// region's collection_panel sets $region_filter (= its region index); the factory
+	// instantiates this router in that scope, and the router forwards $region_filter to
+	// each component via a direct @ref (reliable variable passing). Each component then
+	// self-hides unless its decoded #region matches $region_filter. Region 0 is the
+	// default, so a single-region screen needs to pass nothing.
 	"namespace": "core_ui_common",
 	"button_router": {
 		"type": "panel",
@@ -9,35 +16,18 @@
 			1,
 			1
 		],
-		"controls": [
-			{
-				"button@core_ui_components.button": {}
-			},
-			{
-				"item_renderer@core_ui_components.item_renderer": {}
-			}
-		]
-	},
-	// Region-1 variant: identical to button_router but passes $region_filter: 1 down to each
-	// component's @ref (reliable direct-reference variable passing), so region-1 scrolls only
-	// show their own elements. Region 0 uses the base button_router (component default 0).
-	"button_router_r1": {
-		"type": "panel",
-		"size": [
-			1,
-			1
-		],
+		"$region_filter|default": 0,
 		"controls": [
 			{
 				"button@core_ui_components.button": {
-					"$region_filter": 1
-				}
-			},
-			{
-				"item_renderer@core_ui_components.item_renderer": {
-					"$region_filter": 1
+					"$region_filter": "$region_filter"
 				}
 			}
+			// {
+			// 	"item_renderer@core_ui_components.item_renderer": {
+			// 		"$region_filter": "$region_filter"
+			// 	}
+			// }
 		]
 	}
 }

@@ -20,6 +20,9 @@ import { FormDemo } from './screens/FormDemo';
 import { OreStyled } from './screens/OreStyled';
 import { ScrollDemo } from './screens/ScrollDemo';
 import { DualScrollDemo } from './screens/DualScrollDemo';
+import { TripleScrollDemo } from './screens/TripleScrollDemo';
+import { TripleHScrollDemo } from './screens/TripleHScrollDemo';
+import { FixedHeaderScrollDemo } from './screens/FixedHeaderScrollDemo';
 
 // ─── Route map ────────────────────────────────────────────────────────────────
 
@@ -32,6 +35,9 @@ type AppRoutes = {
   OreStyled: undefined;
   ScrollDemo: undefined;
   DualScrollDemo: undefined;
+  TripleScrollDemo: undefined;
+  TripleHScrollDemo: undefined;
+  FixedHeaderScrollDemo: undefined;
 };
 
 type AppScreen<K extends keyof AppRoutes> = ScreenProps<AppRoutes, K>;
@@ -75,6 +81,15 @@ function HomeScreen({ navigation }: AppScreen<'Home'>): JSX.Element {
       </Button>
       <Button variant={'contrast'} onPress={(): void => navigation.navigate('DualScrollDemo')}>
         {'§dDual Scroll Screen'}
+      </Button>
+      <Button variant={'contrast'} onPress={(): void => navigation.navigate('TripleScrollDemo')}>
+        {'§aTriple Scroll Screen'}
+      </Button>
+      <Button variant={'contrast'} onPress={(): void => navigation.navigate('TripleHScrollDemo')}>
+        {'§eTriple Horizontal Scroll'}
+      </Button>
+      <Button variant={'contrast'} onPress={(): void => navigation.navigate('FixedHeaderScrollDemo')}>
+        {'§6Fixed Header + Scroll'}
       </Button>
     </Card>
   );
@@ -138,6 +153,19 @@ function DualScrollDemoScreen(): JSX.Element {
   return <DualScrollDemo />;
 }
 
+// Region demos — each renders its own multi-region layout directly.
+function TripleScrollDemoScreen(): JSX.Element {
+  return <TripleScrollDemo />;
+}
+
+function TripleHScrollDemoScreen(): JSX.Element {
+  return <TripleHScrollDemo />;
+}
+
+function FixedHeaderScrollDemoScreen(): JSX.Element {
+  return <FixedHeaderScrollDemo />;
+}
+
 // ─── Navigator ────────────────────────────────────────────────────────────────
 
 const Stack = createStackNavigator<AppRoutes>({
@@ -151,6 +179,9 @@ const Stack = createStackNavigator<AppRoutes>({
     OreStyled: OreStyledScreen,
     ScrollDemo: ScrollDemoScreen,
     DualScrollDemo: DualScrollDemoScreen,
+    TripleScrollDemo: TripleScrollDemoScreen,
+    TripleHScrollDemo: TripleHScrollDemoScreen,
+    FixedHeaderScrollDemo: FixedHeaderScrollDemoScreen,
   },
 });
 

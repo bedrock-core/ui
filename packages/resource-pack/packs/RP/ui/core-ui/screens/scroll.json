@@ -1,0 +1,779 @@
+{
+	// ─────────────────────────────────────────────────────────────────────────────
+	// MAIN scroll (the base) — the proven single-scroll layout, fixed size.
+	//
+	// This is the original working `scroll_screen` structure. The ONLY change for the
+	// v0007 scroll-list title is WHERE the content height is read: the title is now
+	//   header(9) + s:'scrolls'(83) + scroll0[ axis, x, y, width, height, extent ] (6×83)
+	// so the root scroll's content height is the `extent` field of block 0 → at byte
+	// offset 83·6 = 498 after the header (skip type + axis,x,y,width,height).
+	//
+	// Width is baked (the main scroll always fills the centered content area); only the
+	// scroll height (content extent) is data-driven, exactly like before. The extra
+	// positioned scrolls are a SEPARATE control added on top once this base is verified.
+	// ─────────────────────────────────────────────────────────────────────────────
+	"namespace": "core_ui_screens",
+	"scroll": {
+		"type": "scroll_view",
+		"size": [
+			"328px",
+			"95%"
+		],
+		"offset": [
+			0,
+			"1%"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		/* Single-scroll default: hide when block 1 exists (≥2 scrolls), so a baked
+		   multi-scroll layout (e.g. dual_scroll) takes over without overlap. */
+		"property_bag": {
+			"#axis1": ""
+		},
+		"visible": "#visible",
+		"scroll_speed": 15,
+		"scrollbar_track_button": "button.scrollbar_skip_track",
+		"scrollbar_touch_button": "button.scrollbar_touch",
+		"always_listen_to_input": true,
+		"always_handle_pointer": true,
+		"always_handle_scrolling": true,
+		"scroll_content": "scrolling_content",
+		"scroll_view_port": "scrolling_view_port",
+		"scrollbar_track": "track",
+		"scrollbar_box": "box",
+		"scroll_box_and_track_panel": "bar_and_track",
+		"button_mappings": [
+			{
+				"from_button_id": "button.menu_select",
+				"to_button_id": "button.scrollbar_touch",
+				"mapping_type": "pressed",
+				"button_up_right_of_first_refusal": true
+			}
+		],
+		"bindings": [
+			{
+				"binding_name": "#title_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.9s' * #title_text)",
+				"target_property_name": "#protocol_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#title_text - #protocol_header)",
+				"target_property_name": "#rem_after_header"
+			},
+			{
+				/* block 1 axis @ 581 — present only when there are ≥2 scrolls */
+				"binding_type": "view",
+				"source_property_name": "('%.581s' * #rem_after_header)",
+				"target_property_name": "#pre_axis1"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_header - #pre_axis1)",
+				"target_property_name": "#at_axis1"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_axis1)",
+				"target_property_name": "#raw_axis1"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_axis1) - ('%.2s' * #raw_axis1) - ';')",
+				"target_property_name": "#axis1"
+			},
+			{
+				/* visible only for the single-scroll case (block 1 absent) */
+				"binding_type": "view",
+				"source_property_name": "(#axis1 = '')",
+				"target_property_name": "#visible"
+			}
+		],
+		"controls": [
+			{
+				"scrolling_view_port": {
+					"type": "panel",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"clips_children": true,
+					"controls": [
+						{
+							"size_anchor": {
+								"type": "panel",
+								"size": [
+									1,
+									1
+								],
+								"anchor_from": "top_left",
+								"anchor_to": "top_left",
+								"controls": [
+									{
+										"scrolling_content@core_ui_screens.scroll_content": {
+											"anchor_from": "top_left",
+											"anchor_to": "top_left"
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"bar_and_track": {
+					"type": "panel",
+					"size": [
+						"6px",
+						"100%"
+					],
+					"anchor_from": "right_middle",
+					"anchor_to": "right_middle",
+					"controls": [
+						{
+							"track": {
+								"type": "scroll_track",
+								"size": [
+									"6px",
+									"100%"
+								],
+								"anchor_from": "center",
+								"anchor_to": "center",
+								"button_mappings": [
+									{
+										"from_button_id": "button.menu_select",
+										"to_button_id": "button.scrollbar_skip_track",
+										"mapping_type": "pressed"
+									}
+								],
+								"controls": [
+									{
+										"bar_indent@common.scroll_indent_image": {
+											"anchor_from": "center",
+											"anchor_to": "center"
+										}
+									}
+								]
+							}
+						},
+						{
+							"box": {
+								"type": "scrollbar_box",
+								"size": [
+									"6px",
+									"20%"
+								],
+								"anchor_from": "top_middle",
+								"anchor_to": "top_middle",
+								"draggable": "vertical",
+								"contained": true,
+								"button_mappings": [
+									{
+										"from_button_id": "button.menu_select",
+										"to_button_id": "button.menu_select",
+										"mapping_type": "pressed",
+										"button_up_right_of_first_refusal": true
+									}
+								],
+								"controls": [
+									{
+										"handle@common.scrollbar_box_image": {
+											"anchor_from": "center",
+											"anchor_to": "center"
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		]
+	},
+	"scroll_content": {
+		"type": "panel",
+		"size": [
+			"328px",
+			0
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"property_bag": {
+			"#size_binding_y": 0.0
+		},
+		"bindings": [
+			{
+				"binding_name": "#title_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.9s' * #title_text)",
+				"target_property_name": "#protocol_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#title_text - #protocol_header)",
+				"target_property_name": "#rem_after_header"
+			},
+			{
+				/* Skip type + axis,x,y,width,height (6 × 83 = 498) to reach scroll 0's extent. */
+				"binding_type": "view",
+				"source_property_name": "('%.498s' * #rem_after_header)",
+				"target_property_name": "#pre_extent"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_header - #pre_extent)",
+				"target_property_name": "#at_extent"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_extent)",
+				"target_property_name": "#raw_extent"
+			},
+			{
+				/* decoded extent -> #size_binding_y. '* 1' coerces the numeric string. */
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_extent) - ('%.2s' * #raw_extent) - ';') * 1)",
+				"target_property_name": "#size_binding_y"
+			}
+		],
+		"controls": [
+			{
+				"buttons_collection": {
+					"type": "collection_panel",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"offset": [
+						"-50%",
+						"-50%"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"factory": {
+						"name": "buttons",
+						"control_ids": {
+							"button": "@core_ui_common.button_router",
+							"label": "@core_ui_common.label_router",
+							"header": "@core_ui_common.unused",
+							"divider": "@core_ui_common.unused"
+						}
+					},
+					"collection_name": "form_buttons",
+					"bindings": [
+						{
+							"binding_name": "#form_button_contents",
+							"binding_name_override": "#collection_length"
+						}
+					]
+				}
+			},
+			{
+				"scroll_1@core_ui_screens.positioned_scroll": {
+					"$index": 1,
+					"$block_skip": "'%.581s'",
+					"$vp_x": 0,
+					"$vp_width": "160px"
+				}
+			},
+			{
+				"scroll_2@core_ui_screens.positioned_scroll": {
+					"$index": 2,
+					"$block_skip": "'%.1079s'",
+					"$vp_x": 164,
+					"$vp_width": "160px"
+				}
+			},
+			{
+				"scroll_3@core_ui_screens.positioned_scroll": {
+					"$index": 3,
+					"$block_skip": "'%.1577s'",
+					"$vp_x": 0,
+					"$vp_width": "160px"
+				}
+			},
+			{
+				"scroll_4@core_ui_screens.positioned_scroll": {
+					"$index": 4,
+					"$block_skip": "'%.2075s'",
+					"$vp_x": 164,
+					"$vp_width": "160px"
+				}
+			}
+		]
+	},
+
+	// ─── EXTRA positioned scroll (scroll_1..N) — data-driven viewport ───
+	// Reads its own block i from the title (axis, x, y, width, height, extent in PIXELS) and
+	// positions+sizes itself within scroll_content via #anchored_offset (x,y) and
+	// #size_binding (width,height). It is mounted DIRECTLY inside scroll_content, so those
+	// engine values are FRACTIONS of scroll_content (328 × extent0). The decoded pixels are
+	// converted to fractions by multiplying with $normalize_x (≈1/contentWidth) and
+	// $normalize_y (≈1/contentHeight) — the same multiply trick panel.json uses with
+	// $normalize. Because the result is ≤ 1 the box fits inside scroll_content and renders
+	// as a normal child (no [1,1]/overflow needed). Hidden when its block is absent (axis '').
+	//
+	// DEBUG phase: the body is a solid fill so we can confirm the rect lands at the
+	// computed position/size before re-adding the nested scroll_view + content.
+	"positioned_scroll": {
+		"type": "scroll_view",
+		/* Data-driven viewport: size from the title via #size_binding, position via anchored
+		   offset. Decoded as PIXELS then × $normalize_x (≈1/320) and $normalize_y (≈1/210) so
+		   they become fractions of scroll_content (328 × extent0). The scroll_view renders as a
+		   fitting child of scroll_content (confirmed with literals). Hidden when its block is
+		   absent (axis ''). */
+		"size": [
+			0,
+			0
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"use_anchored_offset": true,
+		"$index|default": 1,
+		"$block_skip|default": "'%.581s'",
+		"$normalize_x|default": 0.003125,
+		"$normalize_y|default": 0.0047619,
+		"property_bag": {
+			"#size_binding_x": 0.0,
+			"#size_binding_y": 0.0,
+			"#anchored_offset_value_x": 0.0,
+			"#anchored_offset_value_y": 0.0,
+			"#axis": ""
+		},
+		"visible": "#visible",
+		"scroll_speed": 15,
+		"scrollbar_track_button": "button.scrollbar_skip_track",
+		"scrollbar_touch_button": "button.scrollbar_touch",
+		"always_listen_to_input": true,
+		"always_handle_pointer": true,
+		"always_handle_scrolling": false,
+		"scroll_content": "scrolling_content",
+		"scroll_view_port": "scrolling_view_port",
+		"scrollbar_track": "track",
+		"scrollbar_box": "box",
+		"scroll_box_and_track_panel": "bar_and_track",
+		"button_mappings": [
+			{
+				"from_button_id": "button.menu_select",
+				"to_button_id": "button.scrollbar_touch",
+				"mapping_type": "pressed",
+				"button_up_right_of_first_refusal": true
+			}
+		],
+		"bindings": [
+			{
+				"binding_name": "#title_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.9s' * #title_text)",
+				"target_property_name": "#protocol_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#title_text - #protocol_header)",
+				"target_property_name": "#rem_after_header"
+			},
+			{
+				/* Skip to this scroll's block: $block_skip = 83 + 498*index (after header). */
+				"binding_type": "view",
+				"source_property_name": "($block_skip * #rem_after_header)",
+				"target_property_name": "#pre_block"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_header - #pre_block)",
+				"target_property_name": "#at_axis"
+			},
+			{
+				/* field 0: axis (string) */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_axis)",
+				"target_property_name": "#raw_axis"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#at_axis - #raw_axis)",
+				"target_property_name": "#at_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_axis) - ('%.2s' * #raw_axis) - ';')",
+				"target_property_name": "#axis"
+			},
+			{
+				/* field 1: x (number) -> anchored offset x */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_x)",
+				"target_property_name": "#raw_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#at_x - #raw_x)",
+				"target_property_name": "#at_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_x) - ('%.2s' * #raw_x) - ';') * $normalize_x)",
+				"target_property_name": "#anchored_offset_value_x"
+			},
+			{
+				/* field 2: y (number) -> anchored offset y */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_y)",
+				"target_property_name": "#raw_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#at_y - #raw_y)",
+				"target_property_name": "#at_w"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_y) - ('%.2s' * #raw_y) - ';') * $normalize_y)",
+				"target_property_name": "#anchored_offset_value_y"
+			},
+			{
+				/* field 3: width (number) -> size_binding x */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_w)",
+				"target_property_name": "#raw_w"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#at_w - #raw_w)",
+				"target_property_name": "#at_h"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_w) - ('%.2s' * #raw_w) - ';') * $normalize_x)",
+				"target_property_name": "#size_binding_x"
+			},
+			{
+				/* field 4: height (number) -> size_binding y */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_h)",
+				"target_property_name": "#raw_h"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_h) - ('%.2s' * #raw_h) - ';') * $normalize_y)",
+				"target_property_name": "#size_binding_y"
+			},
+			{
+				/* present only when this block exists (axis decoded to a non-empty string) */
+				"binding_type": "view",
+				"source_property_name": "(not (#axis = ''))",
+				"target_property_name": "#visible"
+			}
+		],
+		"controls": [
+			{
+				"scrolling_view_port": {
+					"type": "panel",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"clips_children": true,
+					"controls": [
+						{
+							"size_anchor": {
+								"type": "panel",
+								"size": [
+									1,
+									1
+								],
+								"anchor_from": "top_left",
+								"anchor_to": "top_left",
+								"controls": [
+									{
+										"scrolling_content": {
+											"type": "image",
+											"size": [
+												"164px",
+												"400px"
+											],
+											"anchor_from": "top_left",
+											"anchor_to": "top_left",
+											"texture": "textures/ui/recipe_book_group_expanded",
+											"alpha": 1.0
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"bar_and_track@core_ui_screens.scrollbar": {}
+			}
+		]
+	},
+
+	// The scroll_view fills the (self-sized) frame. Content + scrollbar live here.
+	"positioned_scroll_view": {
+		"type": "scroll_view",
+		"size": [
+			"100%",
+			"100%"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"$index|default": 1,
+		"$block_skip|default": "'%.581s'",
+		"scroll_speed": 15,
+		"scrollbar_track_button": "button.scrollbar_skip_track",
+		"scrollbar_touch_button": "button.scrollbar_touch",
+		"always_listen_to_input": true,
+		"always_handle_pointer": true,
+		"always_handle_scrolling": false,
+		"scroll_content": "scrolling_content",
+		"scroll_view_port": "scrolling_view_port",
+		"scrollbar_track": "track",
+		"scrollbar_box": "box",
+		"scroll_box_and_track_panel": "bar_and_track",
+		"button_mappings": [
+			{
+				"from_button_id": "button.menu_select",
+				"to_button_id": "button.scrollbar_touch",
+				"mapping_type": "pressed",
+				"button_up_right_of_first_refusal": true
+			}
+		],
+		"controls": [
+			{
+				"scrolling_view_port": {
+					"type": "panel",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"clips_children": true,
+					"controls": [
+						{
+							"size_anchor": {
+								"type": "panel",
+								"size": [
+									1,
+									1
+								],
+								"anchor_from": "top_left",
+								"anchor_to": "top_left",
+								"controls": [
+									{
+										"scrolling_content@core_ui_screens.positioned_scroll_content": {
+											"anchor_from": "top_left",
+											"anchor_to": "top_left",
+											"$region_filter": "$index",
+											"$block_skip": "$block_skip"
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"bar_and_track@core_ui_screens.scrollbar": {}
+			}
+		]
+	},
+
+	// Content for a positioned scroll: width = viewport width, height = content extent.
+	"positioned_scroll_content": {
+		"type": "panel",
+		"size": [
+			0,
+			0
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"$region_filter|default": 1,
+		"$block_skip|default": "'%.581s'",
+		"property_bag": {
+			"#size_binding_x": 0.0,
+			"#size_binding_y": 0.0
+		},
+		"bindings": [
+			{
+				"binding_name": "#title_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.9s' * #title_text)",
+				"target_property_name": "#protocol_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#title_text - #protocol_header)",
+				"target_property_name": "#rem_after_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "($block_skip * #rem_after_header)",
+				"target_property_name": "#pre_block"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_header - #pre_block)",
+				"target_property_name": "#at_block"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.249s' * #at_block)",
+				"target_property_name": "#pre_w"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#at_block - #pre_w)",
+				"target_property_name": "#at_w"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_w)",
+				"target_property_name": "#raw_w"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_w) - ('%.2s' * #raw_w) - ';') * 1)",
+				"target_property_name": "#size_binding_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.415s' * #at_block)",
+				"target_property_name": "#pre_e"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#at_block - #pre_e)",
+				"target_property_name": "#at_e"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_e)",
+				"target_property_name": "#raw_e"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_e) - ('%.2s' * #raw_e) - ';') * 1)",
+				"target_property_name": "#size_binding_y"
+			}
+		],
+		"controls": [
+			{
+				"buttons_collection": {
+					"type": "collection_panel",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"offset": [
+						"-50%",
+						"-50%"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"$region_filter": "$region_filter",
+					"factory": {
+						"name": "buttons",
+						"control_ids": {
+							"button": "@core_ui_common.button_router",
+							"label": "@core_ui_common.label_router",
+							"header": "@core_ui_common.unused",
+							"divider": "@core_ui_common.unused"
+						}
+					},
+					"collection_name": "form_buttons",
+					"bindings": [
+						{
+							"binding_name": "#form_button_contents",
+							"binding_name_override": "#collection_length"
+						}
+					]
+				}
+			}
+		]
+	},
+
+	"scrollbar": {
+		"type": "panel",
+		"size": [
+			"6px",
+			"100%"
+		],
+		"anchor_from": "right_middle",
+		"anchor_to": "right_middle",
+		"controls": [
+			{
+				"track": {
+					"type": "scroll_track",
+					"size": [
+						"6px",
+						"100%"
+					],
+					"anchor_from": "center",
+					"anchor_to": "center",
+					"button_mappings": [
+						{
+							"from_button_id": "button.menu_select",
+							"to_button_id": "button.scrollbar_skip_track",
+							"mapping_type": "pressed"
+						}
+					],
+					"controls": [
+						{
+							"bar_indent@common.scroll_indent_image": {
+								"anchor_from": "center",
+								"anchor_to": "center"
+							}
+						}
+					]
+				}
+			},
+			{
+				"box": {
+					"type": "scrollbar_box",
+					"size": [
+						"6px",
+						"20%"
+					],
+					"anchor_from": "top_middle",
+					"anchor_to": "top_middle",
+					"draggable": "vertical",
+					"contained": true,
+					"button_mappings": [
+						{
+							"from_button_id": "button.menu_select",
+							"to_button_id": "button.menu_select",
+							"mapping_type": "pressed",
+							"button_up_right_of_first_refusal": true
+						}
+					],
+					"controls": [
+						{
+							"handle@common.scrollbar_box_image": {
+								"anchor_from": "center",
+								"anchor_to": "center"
+							}
+						}
+					]
+				}
+			}
+		]
+	}
+}

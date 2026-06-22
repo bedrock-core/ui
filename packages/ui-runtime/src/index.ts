@@ -6,6 +6,8 @@ export {
   Input,
   ItemRenderer,
   Panel,
+  Scroll,
+  ScrollArea,
   Slider,
   Text,
   withControl,
@@ -31,6 +33,8 @@ export type {
   ModalFieldProps,
   PanelProps,
   Position,
+  ScrollProps,
+  ScrollAreaProps,
   SliderProps,
   Spacing,
   TextFont,
@@ -48,13 +52,8 @@ export {
   usePlayer,
   useReducer,
   useRef,
-  useScreen,
-  useSetScreen,
   useState,
 } from './hooks';
-
-export { DualScroll, DUAL_SCROLL_TOTAL_WIDTH, DUAL_SCROLL_LEFT_WIDTH, DUAL_SCROLL_RIGHT_WIDTH, Screen } from './screens';
-export type { DualScrollProps, DualScrollSlotProps, ScreenDescriptor, ScreenType } from './screens';
 
 export {
   createContext,

@@ -1,5 +1,5 @@
 import { Button } from '@bedrock-core/ore-styled';
-import { Panel, Screen, Text, useExit, useSetScreen, type JSX } from '@bedrock-core/ui';
+import { Panel, Text, useExit, type JSX } from '@bedrock-core/ui';
 
 /**
  * ScrollScreen demo — the default scrolling form.
@@ -48,8 +48,8 @@ function ScrollContent(): JSX.Element {
   );
 }
 
+// The default render path is a single full-screen root scroll — no <Scroll> wrapper
+// needed, content just scrolls when it overflows the viewport.
 export function ScrollDemo(): JSX.Element {
-  useSetScreen(Screen.Scroll);
-
   return <ScrollContent />;
 }

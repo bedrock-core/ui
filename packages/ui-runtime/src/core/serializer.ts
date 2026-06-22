@@ -2,7 +2,7 @@ import { ActionFormData } from '@minecraft/server-ui';
 import { JSX } from '../jsx';
 import { getComponentDescriptor, getRegisteredTypes, isTransparentType } from './componentRegistry';
 import { isElement, isFunction, isSerializablePrimitive } from './guards';
-import { ScreenType, SerializablePrimitive, SerializableProps, SerializationContext, SerializationError } from './types';
+import { SerializablePrimitive, SerializableProps, SerializationContext, SerializationError } from './types';
 
 /**
  * This makes each full field substring unique even when two field values & padding are identical.
@@ -15,11 +15,14 @@ export const FIELD_MARKERS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmn
 export const PAD_CHAR = ';';
 
 // Protocol version tag (format: 'v' + 4 hex digits)
-// e.g., 'bcuiv0006'
+// e.g., 'bcuiv0007'
 // Increment when making backward-incompatible changes to the payload layout.
 // v0006: added the common `region` field (carved from the reserved block) and
 // generalized the title metadata to carry one extent per region.
-export const VERSION = 'v0006';
+// v0007: scroll-component model — the title carries a flat list of scroll viewports
+// (axis + geometry + content extent) instead of a screen type + per-region extents.
+// The component `region` field now holds the scroll index it belongs to.
+export const VERSION = 'v0007';
 export const PROTOCOL_HEADER = `bcui${VERSION}`;
 export const PROTOCOL_HEADER_LENGTH = 9; // bytes, all characters are single-byte ASCII
 
@@ -247,42 +250,62 @@ export function serializeProps({ type, ...props }: SerializableProps & { type: s
   return [result, finalBytes];
 }
 
-/** Per-region content box surfaced by the layout pass for title encoding. */
-export interface RegionMetrics {
-  /** Content height (px) — the vertical scroll extent. */
-  height: number;
-  /** Content width (px) — the column content width. */
+/**
+ * Per-scroll geometry surfaced by the layout pass for title encoding.
+ *
+ * A scroll is a viewport rectangle on screen plus a scrollable content `extent` along its
+ * `axis`. The RP pool of generic scroll controls reads one of these per index and
+ * positions/sizes itself from it.
+ */
+export interface ScrollMetrics {
+  /** Scroll axis: 'y' (vertical) or 'x' (horizontal). */
+  axis: 'x' | 'y';
+  /** Viewport top-left x (px, screen space). */
+  x: number;
+  /** Viewport top-left y (px, screen space). */
+  y: number;
+  /** Viewport width (px). */
   width: number;
+  /** Viewport height (px). */
+  height: number;
+  /** Content extent (px) along the scroll axis — the scrollable length. */
+  extent: number;
 }
 
+/** Per-scroll title field count: axis + x + y + width + height + extent. */
+export const SCROLL_FIELD_COUNT = 6;
+
 /**
- * Serialize the form title metadata containing the screen type and per-region metrics.
- * Layout: PROTOCOL_HEADER (9) + s:screenType (83) + per region [ n:height (83), n:width (83) ].
+ * Serialize the form title metadata: a flat list of scroll viewports.
  *
- * Screen type comes first because every screen reads it; then each region contributes a
- * height then a width field, in region-index order. Height is first so a single-region
- * screen (e.g. 'scroll') keeps the height field immediately after the screen type and simply
- * ignores the trailing width. Region r's height is field 1+2r, its width is field 2+2r.
+ * Layout: PROTOCOL_HEADER (9) + s:'scrolls' (83) + per scroll
+ *   [ s:axis (83), n:x (83), n:y (83), n:width (83), n:height (83), n:extent (83) ].
  *
- * Both are consumed via the [1,1] `size_anchor` trick on the scroll content panel: the panel
- * overflows its 1px anchor and #size_binding_y / #size_binding_x map 1:1 to pixels for its
- * height (scroll extent) and width (column content width). (The scroll_view viewport and the
- * container are NOT inside such an anchor — they need a responsive % height — so their width
- * stays a baked per-screen value that matches the encoded width.)
+ * The leading `'scrolls'` field is a fixed marker (field 0) so every scroll block sits at a
+ * predictable offset: scroll `i`'s block starts at FULL_WIDTH.s + i·(SCROLL_FIELD_COUNT·83)
+ * bytes after the header. A pooled scroll whose index is beyond the emitted list decodes an
+ * empty axis and hides itself — so no explicit count field is needed.
  *
- * @param screenType - Which RP layout to activate (e.g. 'scroll', 'dual_scroll')
- * @param regions - Content metrics per region, in region-index order
+ * Geometry is consumed RP-side via `use_anchored_offset` (viewport position) and
+ * `#size_binding_*` (viewport size); the content panel uses the `[1,1]` size_anchor trick to
+ * overflow only the scroll axis by `extent`.
+ *
+ * @param scrolls - Scroll viewports in index order (index 0 is the root scroll)
  * @returns Full title string for form.title()
  */
-export function serializeTitleMetadata(screenType: ScreenType, regions: readonly RegionMetrics[]): string {
+export function serializeScrollMetadata(scrolls: readonly ScrollMetrics[]): string {
   const fields: SerializableProps = {};
 
-  regions.forEach((region, index) => {
-    fields[`height${index}`] = Math.round(region.height);
-    fields[`width${index}`] = Math.round(region.width);
+  scrolls.forEach((scroll, index) => {
+    fields[`axis${index}`] = scroll.axis;
+    fields[`x${index}`] = Math.round(scroll.x);
+    fields[`y${index}`] = Math.round(scroll.y);
+    fields[`width${index}`] = Math.round(scroll.width);
+    fields[`height${index}`] = Math.round(scroll.height);
+    fields[`extent${index}`] = Math.round(scroll.extent);
   });
 
-  const [payload] = serializeProps({ type: screenType, ...fields });
+  const [payload] = serializeProps({ type: 'scrolls', ...fields });
 
   return payload;
 }

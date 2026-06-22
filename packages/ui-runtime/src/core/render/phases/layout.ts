@@ -1,8 +1,8 @@
-import type { FlexStyle, LayoutNode } from '@bedrock-core/flexbox';
+import type { FlexSize, FlexStyle, LayoutNode } from '@bedrock-core/flexbox';
 import { CANONICAL_SCREEN, createNode, computeLayout as flexComputeLayout } from '@bedrock-core/flexbox';
 import { TextFont, TextOverflow, TextWordBreak } from '@bedrock-core/ui/components/Text';
 import type { JSX } from '../../../jsx';
-import type { RegionMetrics } from '../../serializer';
+import type { ScrollMetrics } from '../../serializer';
 import { isTransparentType } from '../../componentRegistry';
 import { isElement } from '../../guards';
 import { ellipsizeText, measureText, wrapText } from '../../../util/textMetrics';
@@ -18,6 +18,12 @@ function isTransparent(el: JSX.Element): boolean {
 function collectConcrete(element: JSX.Node): JSX.Element[] {
   if (!isElement(element)) {
     return [];
+  }
+
+  // A <Scroll> is a leaf box in the MAIN pass: it reserves its flex space but its content
+  // is laid out separately (in its own scroll viewport), so don't descend into it here.
+  if (element.type === SCROLL_SLOT_TYPE) {
+    return [element];
   }
 
   if (isTransparent(element)) {
@@ -176,6 +182,11 @@ function withIntrinsicSize(
  * before the flexbox engine computes their heights.
  */
 function buildNode(element: JSX.Element, availableWidth?: number): LayoutNode {
+  // A <Scroll> lays out as a leaf flex box; its viewport rect comes from the parent flow.
+  if (element.type === SCROLL_SLOT_TYPE) {
+    return createNode(scrollFlexStyle(element), []);
+  }
+
   const baseStyle = (element.props.__layout ?? {}) as FlexStyle;
   const style = withIntrinsicSize(element, baseStyle, availableWidth);
 
@@ -214,6 +225,21 @@ function applyToTree(
   cursor: { index: number },
   regionIndex = 0,
 ): void {
+  // A <Scroll> consumes its leaf node (its viewport rect) but isn't descended here —
+  // its content is laid out region-locally in a separate pass.
+  if (element.type === SCROLL_SLOT_TYPE) {
+    const node = parentNode.children[cursor.index++];
+
+    if (node) {
+      element.props.jsonUIx = node.layout.x;
+      element.props.jsonUIy = node.layout.y;
+      element.props.jsonUIWidth = node.layout.width;
+      element.props.jsonUIHeight = node.layout.height;
+    }
+
+    return;
+  }
+
   if (isTransparent(element)) {
     const ch = element.props.children;
 
@@ -255,66 +281,167 @@ function applyToTree(
   }
 }
 
-// ─── Region slots ───────────────────────────────────────────────────────────────
+// ─── Scroll slots ───────────────────────────────────────────────────────────────
 
 /**
- * Marker type for a region/slot wrapper. A slot is transparent (emits no payload)
- * and acts as an independent layout root: its concrete descendants are laid out in
- * their own coordinate space and tagged with the slot's region index. Multi-region
- * screens (e.g. dual scroll) wrap their content in these; single-region screens use
- * none and fall through to the original whole-tree layout path.
+ * Marker type for a `<Scroll>` wrapper. A slot is transparent (emits no payload) and
+ * acts as an independent layout root: its concrete descendants are laid out in their own
+ * coordinate space (inside the scroll's viewport) and tagged with the scroll index.
+ * When no slots are present the whole tree falls into a single implicit root scroll.
  */
-export const REGION_SLOT_TYPE = 'region-slot';
+export const SCROLL_SLOT_TYPE = 'scroll-slot';
 
-function isRegionSlot(element: JSX.Node): boolean {
-  return isElement(element) && element.type === REGION_SLOT_TYPE;
+type ScrollAxis = 'x' | 'y';
+
+interface ScrollSlotConfig {
+  axis: ScrollAxis;
+  /** Absolute viewport left/top (px); set => removed from the outer flex flow. */
+  x?: number;
+  y?: number;
+  /** Viewport size override (px or %); in flow it sizes the flex item. */
+  width?: FlexSize;
+  height?: FlexSize;
+  /** True when both x and y are set — the viewport is absolutely positioned. */
+  absolute: boolean;
 }
 
-function regionIndexOf(slot: JSX.Element): number {
-  const raw = slot.props.__region;
+function asNumber(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
 
-  return typeof raw === 'number' && Number.isFinite(raw) ? raw : 0;
+function isPercent(value: unknown): value is `${number}%` {
+  return typeof value === 'string' && /^-?\d+(?:\.\d+)?%$/.test(value);
+}
+
+function asFlexSize(value: unknown): FlexSize | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+
+  return isPercent(value) ? value : undefined;
+}
+
+function scrollSlotConfig(slot: JSX.Element): ScrollSlotConfig {
+  const p = slot.props;
+  const x = asNumber(p.__x);
+  const y = asNumber(p.__y);
+
+  return {
+    axis: p.__axis === 'x' ? 'x' : 'y',
+    x,
+    y,
+    width: asFlexSize(p.__width),
+    height: asFlexSize(p.__height),
+    absolute: x !== undefined && y !== undefined,
+  };
 }
 
 /**
- * The flexbox width available to a region's content. Slot components set `__regionWidth`
- * to their column width so percentages / stretch / text-wrap inside resolve against the
- * real column — not the full screen. Falls back to the canonical screen width.
+ * Width handed to the flex root for a horizontal scroll so its row of content can lay
+ * out at natural widths without shrinking. The real scroll extent is then read back from
+ * the children's right edge. Generous (≫ screen) but bounded.
  */
-function regionWidthOf(slot: JSX.Element): number {
-  const raw = slot.props.__regionWidth;
+const HORIZONTAL_EXTENT_BOUND = CANONICAL_SCREEN.width * 64;
 
-  return typeof raw === 'number' && Number.isFinite(raw) && raw > 0 ? raw : CANONICAL_SCREEN.width;
+/**
+ * The flex style for a `<Scroll>` leaf box in the main pass. It grows to share its flex
+ * parent's space unless a size is fixed; both `x`+`y` make it absolutely positioned.
+ */
+function scrollFlexStyle(slot: JSX.Element): FlexStyle {
+  const cfg = scrollSlotConfig(slot);
+  const style: FlexStyle = {};
+
+  if (cfg.width !== undefined) {
+    style.width = cfg.width;
+  }
+
+  if (cfg.height !== undefined) {
+    style.height = cfg.height;
+  }
+
+  if (cfg.absolute) {
+    style.position = 'absolute';
+    style.left = cfg.x;
+    style.top = cfg.y;
+  } else if (cfg.width === undefined && cfg.height === undefined) {
+    // No fixed size → fill the available space in the flex parent (e.g. equal columns).
+    style.flexGrow = 1;
+  }
+
+  return style;
 }
 
 /**
- * Collect region-slot elements in document order, descending only through
- * transparent wrappers (the screen component / fragments above the slots) and not
- * into the slots themselves. Concrete content is never scanned for nested slots —
- * slots are structural children of the screen component.
+ * Collect `<Scroll>` elements in document order, descending through ALL elements
+ * (concrete and transparent) but NOT into the scrolls themselves — a scroll's content is
+ * its own region. Index in this list + 1 is the scroll index (index 0 is the main scroll).
  */
-function findRegionSlots(element: JSX.Node, out: JSX.Element[]): void {
+function findScrolls(element: JSX.Node, out: JSX.Element[]): void {
+  if (Array.isArray(element)) {
+    element.forEach(c => findScrolls(c, out));
+
+    return;
+  }
+
   if (!isElement(element)) {
     return;
   }
 
-  if (isRegionSlot(element)) {
+  if (element.type === SCROLL_SLOT_TYPE) {
     out.push(element);
 
     return;
   }
 
-  if (!isTransparent(element)) {
-    return;
+  findScrolls(element.props.children, out);
+}
+
+/** Lay out a scroll's content and return its scroll extent (px) along the axis. */
+function layoutScrollContent(slot: JSX.Element, axis: ScrollAxis, viewportWidth: number, viewportHeight: number, index: number): number {
+  // `expand` normalizes children to an array, so collect concrete roots across the
+  // whole child list (collectConcrete itself takes a single node).
+  const rawChildren = slot.props.children;
+  const roots = Array.isArray(rawChildren)
+    ? rawChildren.flatMap(c => collectConcrete(c))
+    : collectConcrete(rawChildren);
+
+  let syntheticRoot: LayoutNode;
+  let extent: number;
+
+  if (axis === 'x') {
+    // Horizontal: lay content in a row at natural widths (height stretched to the
+    // viewport). Extent = content right edge. No wrap → intrinsic widths.
+    const childNodes = roots.map(r => buildNode(r));
+
+    syntheticRoot = createNode(
+      { flexDirection: 'row', width: HORIZONTAL_EXTENT_BOUND, height: viewportHeight },
+      childNodes,
+    );
+
+    flexComputeLayout(syntheticRoot, viewportWidth, viewportHeight);
+
+    extent = syntheticRoot.children.reduce((max, c) => Math.max(max, c.layout.x + c.layout.width), 0);
+  } else {
+    // Vertical: lay content in a column whose width is the viewport width, so
+    // percentages / stretch / text-wrap resolve against the real column. The flex
+    // engine floors the root height to refHeight — pass the viewport height so the
+    // extent floors to the viewport (not the canonical 210), then grows with content.
+    const childNodes = roots.map(r => buildNode(r, viewportWidth));
+
+    syntheticRoot = createNode({ flexDirection: 'column', width: viewportWidth }, childNodes);
+
+    flexComputeLayout(syntheticRoot, viewportWidth, viewportHeight);
+
+    extent = syntheticRoot.layout.height;
   }
 
-  const ch = element.props.children;
+  const cursor = { index: 0 };
 
-  if (Array.isArray(ch)) {
-    ch.forEach(c => findRegionSlots(c, out));
-  } else if (isElement(ch)) {
-    findRegionSlots(ch, out);
-  }
+  roots.forEach((r) => {
+    applyToTree(r, syntheticRoot, cursor, index);
+  });
+
+  return extent;
 }
 
 // ─── Phase 2 entry point ────────────────────────────────────────────────────────
@@ -322,9 +449,11 @@ function findRegionSlots(element: JSX.Node, out: JSX.Element[]): void {
 /**
  * Phase 2 of the render pipeline: compute layout for the full JSX element tree.
  *
- * A single flexbox pass is run. Text elements with wordBreak / overflow / maxLines
- * props have their values rewritten inline during buildNode, using the parent
- * container's available content width propagated top-down from CANONICAL_SCREEN.
+ * There is ALWAYS a main scroll (index 0) = the whole tree laid out full-screen, with
+ * each `<Scroll>` treated as a leaf box (its viewport rect comes from the normal flow).
+ * Each `<Scroll>` then becomes an additional scroll (index 1+): its content is laid out
+ * region-locally inside its viewport rect. Per-scroll `{ axis, x, y, width, height,
+ * extent }` is written to `tree.props.jsonUIScrolls` (index 0 = main) for the presenter.
  *
  * @param tree Root JSX element after Phase 1 (function components expanded).
  * @returns The same element tree, mutated in-place with layout values.
@@ -332,12 +461,9 @@ function findRegionSlots(element: JSX.Node, out: JSX.Element[]): void {
 export function computeLayout(tree: JSX.Element): JSX.Element {
   const slots: JSX.Element[] = [];
 
-  findRegionSlots(tree, slots);
+  findScrolls(tree, slots);
 
-  if (slots.length > 0) {
-    return computeRegionLayout(tree, slots);
-  }
-
+  // ── Main pass (index 0): whole tree, <Scroll>s as leaf boxes ────────────────────
   const concreteRoots = collectConcrete(tree);
   const concreteTree = concreteRoots[0] ?? tree;
 
@@ -362,63 +488,36 @@ export function computeLayout(tree: JSX.Element): JSX.Element {
 
   if (Array.isArray(ch)) {
     ch.filter(isElement).forEach((c) => {
-      applyToTree(c, root, cursor);
+      applyToTree(c, root, cursor, 0);
     });
   } else if (isElement(ch)) {
-    applyToTree(ch, root, cursor);
+    applyToTree(ch, root, cursor, 0);
   }
 
-  // Single region: one region whose content box is the root's.
-  tree.props.jsonUIRegions = [{ width: root.layout.width, height: root.layout.height }] as RegionMetrics[];
+  const scrolls: ScrollMetrics[] = [{
+    axis: 'y',
+    x: 0,
+    y: 0,
+    width: CANONICAL_SCREEN.width,
+    height: CANONICAL_SCREEN.height,
+    extent: root.layout.height,
+  }];
 
-  return tree;
-}
+  // ── Per-scroll passes (index 1+): each <Scroll>'s content, region-local ──────────
+  slots.forEach((slot, k) => {
+    const index = k + 1;
+    const cfg = scrollSlotConfig(slot);
+    const x = asNumber(slot.props.jsonUIx) ?? 0;
+    const y = asNumber(slot.props.jsonUIy) ?? 0;
+    const width = asNumber(slot.props.jsonUIWidth) ?? CANONICAL_SCREEN.width;
+    const height = asNumber(slot.props.jsonUIHeight) ?? CANONICAL_SCREEN.height;
+    const extent = layoutScrollContent(slot, cfg.axis, width, height, index);
 
-/**
- * Multi-region layout: lay out each slot independently in its own coordinate
- * space. Each slot's concrete roots become children of a synthetic column root so
- * 1..N roots are handled uniformly; the resulting offsets are region-local and the
- * synthetic root's height is that region's scroll extent.
- *
- * Region metrics ({ width, height }) are written in region-index order to
- * `tree.props.jsonUIRegions` for the presenter to encode into the title metadata.
- */
-function computeRegionLayout(tree: JSX.Element, slots: JSX.Element[]): JSX.Element {
-  const ordered = [...slots].sort((a, b) => regionIndexOf(a) - regionIndexOf(b));
-  const maxRegion = ordered.reduce((m, s) => Math.max(m, regionIndexOf(s)), 0);
-  const regions: RegionMetrics[] = Array.from(
-    { length: maxRegion + 1 },
-    () => ({ width: CANONICAL_SCREEN.width, height: CANONICAL_SCREEN.height }),
-  );
+    scrolls[index] = { axis: cfg.axis, x, y, width, height, extent };
+  });
 
-  for (const slot of ordered) {
-    const regionIndex = regionIndexOf(slot);
-    const regionWidth = regionWidthOf(slot);
-    // `expand` normalizes children to an array, so collect concrete roots across
-    // the whole child list (collectConcrete itself takes a single node).
-    const rawChildren = slot.props.children;
-    const roots = Array.isArray(rawChildren)
-      ? rawChildren.flatMap(c => collectConcrete(c))
-      : collectConcrete(rawChildren);
-    // Lay each region out in its own column whose width is the region width, so the
-    // content's percentages / stretch / text-wrap resolve against the real column.
-    const childNodes = roots.map(r => buildNode(r, regionWidth));
-    const syntheticRoot = createNode({ flexDirection: 'column', width: regionWidth }, childNodes);
-
-    flexComputeLayout(syntheticRoot);
-
-    const cursor = { index: 0 };
-
-    roots.forEach((r) => {
-      applyToTree(r, syntheticRoot, cursor, regionIndex);
-    });
-
-    regions[regionIndex] = { width: syntheticRoot.layout.width, height: syntheticRoot.layout.height };
-  }
-
-  tree.props.jsonUIRegions = regions;
-  // Fall back height for any consumer reading the legacy single value.
-  tree.props.jsonUIHeight = regions[0].height;
+  tree.props.jsonUIScrolls = scrolls;
+  tree.props.jsonUIHeight = scrolls[0].height;
 
   return tree;
 }

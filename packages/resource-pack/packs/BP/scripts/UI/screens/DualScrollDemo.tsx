@@ -1,13 +1,12 @@
 import { Button } from '@bedrock-core/ore-styled';
-import { DualScroll, Panel, Text, useExit, type JSX } from '@bedrock-core/ui';
+import { Image, Panel, Scroll, Text, useExit, type JSX } from '@bedrock-core/ui';
 
 /**
- * DualScroll demo — two independent vertical scroll regions.
+ * Dual scroll demo — two side-by-side vertical scrolls.
  *
- * No widths are hardcoded: each column fills its region (DUAL_SCROLL_REGION_WIDTH),
- * so panels stretch and lay out against the real column width. The screen wrapper
- * renders `<DualScroll>` directly with no concrete element above the slots — required
- * so the region-aware layout pass can reach them.
+ * The outer Panel is fixed to the full viewport height (flexDirection row) so the MAIN
+ * scroll has nothing to scroll; the two `<Scroll>` children become extra scrolls 1 and 2,
+ * flex-positioned as equal columns. Each scrolls independently.
  */
 function Row({ label }: { label: string }): JSX.Element {
   return (
@@ -24,8 +23,9 @@ export function DualScrollDemo(): JSX.Element {
   const right = Array.from({ length: 30 }, (_, i) => `§b${`Right row ${String(i + 1)}`}`);
 
   return (
-    <DualScroll>
-      <DualScroll.Left>
+    <Panel flexDirection={'row'} width={'100%'} height={'100%'} gap={4}>
+      <Image texture={'textures/ui/recipe_book_group_collapsed'} width={32} height={32} />
+      <Scroll x={0} y={0} width={200} height={120}>
         <Panel flexDirection={'column'} gap={4} padding={6} background={'textures/ui/recipe_book_group_expanded'}>
           {[
             <Panel flexDirection={'row'} justifyContent={'space-between'} alignItems={'center'}>
@@ -35,16 +35,16 @@ export function DualScrollDemo(): JSX.Element {
             ...left.map(label => <Row label={label} />),
           ]}
         </Panel>
-      </DualScroll.Left>
+      </Scroll>
 
-      <DualScroll.Right>
+      <Scroll x={60} y={60} width={200} height={120}>
         <Panel flexDirection={'column'} gap={4} padding={6} background={'textures/ui/recipe_book_group_expanded'}>
           {[
             <Text font={'minecraftTen'}>{'§eRight'}</Text>,
             ...right.map(label => <Row label={label} />),
           ]}
         </Panel>
-      </DualScroll.Right>
-    </DualScroll>
+      </Scroll>
+    </Panel>
   );
 }

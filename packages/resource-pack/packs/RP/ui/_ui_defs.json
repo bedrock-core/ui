@@ -12,9 +12,10 @@
 		// After the initial reserved bytes for the common, rest of bytes 
 		// after 1024 for its own use and 
 		// available in #serialized_data binding
-		// Screens
-		"ui/core-ui/screens/scroll_screen.json",
-		"ui/core-ui/screens/dual_scroll_screen.json",
+		// Scrolls — one generic pooled scroll control, mounted scroll_0..N by screen_container.
+		"ui/core-ui/screens/scroll.json",
+		// Baked DUAL scroll (proven recipe), gated on ≥2 scrolls in the title.
+		"ui/core-ui/screens/dual_scroll.json",
 		// Components 
 		"ui/core-ui/components/button.json",
 		"ui/core-ui/components/panel.json",
