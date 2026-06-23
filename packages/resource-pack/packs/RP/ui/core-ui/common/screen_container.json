@@ -1,9 +1,9 @@
 {
-	// Mounts the MAIN scroll (index 0, the proven fixed base). The EXTRA positioned scrolls
-	// (index 1..N) live INSIDE that main scroll (scroll.scrolling_view_port → size_anchor),
-	// so the main scroll_view draws their overflow and their pixel #size_binding/anchored
-	// offset map 1:1. Centering is a literal 50% - 164px (half the baked 328px width) so the
-	// always-present extras can't perturb it.
+	// Two modes, by scroll count:
+	//  • 0 nested scrolls → the MAIN scroll (scroll_root) wraps & scrolls everything (region 0).
+	//  • ≥1 nested scrolls → the screen is fixed (region-0 content fits) and the POOL of custom
+	//    scrolls (scroll_pool, gated on ≥2 scrolls) renders as a sibling over the content area.
+	// Both are 328px-wide, centred by the literal 50% - 164px offset.
 	"namespace": "core_ui_common",
 	"screen_container": {
 		"type": "panel",
@@ -34,7 +34,7 @@
 				"scroll_root@core_ui_screens.scroll": {}
 			},
 			{
-				"dual_scroll@core_ui_screens.dual_scroll": {}
+				"scroll_pool@core_ui_screens.scroll_pool": {}
 			}
 		]
 	},

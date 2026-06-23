@@ -31,5 +31,20 @@
 				}
 			}
 		]
+	},
+	// Per-region router variants (see button_router for the rationale): a factory's
+	// control_ids cannot forward $region_filter, so each pooled scroll points its factory
+	// at the variant matching its scroll index. Append label_router_r5… to grow the pool.
+	"label_router_r1@label_router": {
+		"$region_filter": 1
+	},
+	"label_router_r2@label_router": {
+		"$region_filter": 2
+	},
+	"label_router_r3@label_router": {
+		"$region_filter": 3
+	},
+	"label_router_r4@label_router": {
+		"$region_filter": 4
 	}
 }

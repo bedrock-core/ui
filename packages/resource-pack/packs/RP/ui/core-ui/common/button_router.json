@@ -29,5 +29,22 @@
 			// 	}
 			// }
 		]
+	},
+	// Per-region router variants. A factory's control_ids cannot forward the
+	// collection_panel's $region_filter into the controls it instantiates, so each pooled
+	// scroll points its factory at the variant whose $region_filter matches its scroll
+	// index. These are thin extensions of button_router (which forwards $region_filter to
+	// the button component). Append button_router_r5… alongside scroll_5… to grow the pool.
+	"button_router_r1@button_router": {
+		"$region_filter": 1
+	},
+	"button_router_r2@button_router": {
+		"$region_filter": 2
+	},
+	"button_router_r3@button_router": {
+		"$region_filter": 3
+	},
+	"button_router_r4@button_router": {
+		"$region_filter": 4
 	}
 }

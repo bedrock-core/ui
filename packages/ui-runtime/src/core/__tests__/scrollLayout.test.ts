@@ -3,7 +3,7 @@ import type { JSX } from '../../jsx';
 import type { ScrollMetrics } from '../serializer';
 import { withControl } from '../../components/control';
 import { registerNativeComponents } from '../../components';
-import { Scroll, ScrollArea } from '../../components/Scroll';
+import { Scroll } from '../../components/Scroll';
 import { computeLayout } from '../render/phases/layout';
 
 beforeAll(() => {
@@ -33,8 +33,18 @@ function scrollSlot(props: Record<string, unknown>, children: JSX.Node): JSX.Ele
   return { type: 'scroll-slot', props: { ...props, children } };
 }
 
+function isScrollMetricsArray(value: unknown): value is ScrollMetrics[] {
+  return Array.isArray(value);
+}
+
 function scrolls(tree: JSX.Element): ScrollMetrics[] {
-  return tree.props.jsonUIScrolls as ScrollMetrics[];
+  const value = tree.props.jsonUIScrolls;
+
+  if (!isScrollMetricsArray(value)) {
+    throw new Error('computeLayout did not emit jsonUIScrolls');
+  }
+
+  return value;
 }
 
 describe('computeLayout — main scroll only (no <Scroll>)', () => {
@@ -107,7 +117,7 @@ describe('computeLayout — nested scrolls (main 0 + extras 1+)', () => {
   });
 });
 
-describe('Scroll / ScrollArea components', () => {
+describe('Scroll component', () => {
   it('Scroll emits a scroll-slot carrying axis + geometry', () => {
     const el = Scroll({ axis: 'x', width: 120, x: 10, y: 20, children: panel(10, 10) });
 
@@ -116,12 +126,5 @@ describe('Scroll / ScrollArea components', () => {
     expect(el.props.__width).toBe(120);
     expect(el.props.__x).toBe(10);
     expect(el.props.__y).toBe(20);
-  });
-
-  it('ScrollArea emits a transparent fragment carrying direction', () => {
-    const el = ScrollArea({ direction: 'row', children: panel(10, 10) });
-
-    expect(el.type).toBe('fragment');
-    expect(el.props.__direction).toBe('row');
   });
 });

@@ -18,7 +18,7 @@ export { Input, type InputProps } from './Input';
 export { Slider, type SliderProps } from './Slider';
 export { ItemRenderer, itemRendererWriter, type ItemRendererProps } from './ItemRenderer';
 export { Panel, panelWriter, type PanelProps } from './Panel';
-export { Scroll, ScrollArea, type ScrollProps, type ScrollAreaProps } from './Scroll';
+export { Scroll, type ScrollProps } from './Scroll';
 export { Text, textWriter, type TextFont, type TextOverflow, type TextProps, type TextStyle, type TextWordBreak } from './Text';
 
 import { registerComponent } from '../core/componentRegistry';

@@ -18,7 +18,7 @@ export function FixedHeaderScrollDemo(): JSX.Element {
   const exit = useExit();
 
   return (
-    <>
+    <Panel flexDirection={'column'} width={'100%'} height={'100%'} gap={4}>
       <Scroll height={30}>
         <Panel
           flexDirection={'row'}
@@ -39,6 +39,6 @@ export function FixedHeaderScrollDemo(): JSX.Element {
           ))}
         </Panel>
       </Scroll>
-    </>
+    </Panel>
   );
 }

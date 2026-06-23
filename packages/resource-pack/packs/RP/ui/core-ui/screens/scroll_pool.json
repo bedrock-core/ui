@@ -1,25 +1,31 @@
 {
 	// ─────────────────────────────────────────────────────────────────────────────
-	// DUAL scroll, now built from ONE generic parameterized scroll control.
+	// Generic SCROLL POOL — `scroll_pool` mounts scroll_1..N of ONE generic control
+	// (`pooled_scroll`), replacing every per-topology screen. It is a SIBLING of the main
+	// scroll in screen_container (a flat, screen-sized panel) — the one place a data-driven
+	// scroll_view's #size_binding resolves and renders. The pool is gated to ≥2 scrolls
+	// (block 1 present): on a single-scroll screen it is absent so its scroll_views can't
+	// intercept the root scroll's input; with custom scrolls the screen is fixed (region-0
+	// content fits) and the pool draws the scrolls over the content area.
 	//
-	// Phase 1 of the pooled-scroll generalization: `pooled_scroll` is a single scroll_view
-	// whose FULL viewport geometry (x, y, width, height) is decoded from its own title block
-	// and applied via #size_binding (size) + use_anchored_offset (position). Decoded pixels ×
-	// $normalize (1/320 for x/width) / $normalize_y (1/210 for y/height) → fraction of the
-	// 328×full-height dual_scroll panel — the proven recipe (a scroll_view that is a direct
-	// child of a flat sized panel renders #size_binding fine). Content sizing stays in the
-	// [1,1] size_anchor (#size_binding × 1, pixel-exact).
+	// Each pooled scroll decodes its FULL viewport geometry (x, y, width, height) from its own
+	// title block and applies it via #size_binding (size) + use_anchored_offset (position):
+	// decoded pixels × $normalize (1/320 x/width) / $normalize_y (1/210 y/height) → fraction of
+	// the 328×full-height pool panel. Content sizing stays in the [1,1] size_anchor
+	// (#size_binding × 1, pixel-exact). A scroll whose block is absent decodes to 0 → collapses.
 	//
-	// The ONLY per-instance values are $block_skip (where this scroll's block starts) and
-	// $region_filter (which collection region it shows). Within a block the field offsets are
-	// fixed for every scroll: axis@0, x@83, y@166, width@249, height@332, extent@415.
-	//
-	// Block i starts at 83 + 498·i after the header → $block_skip: '%.581s' (i=1),
-	// '%.1079s' (i=2), '%.1577s' (i=3), '%.2075s' (i=4). The whole control is gated on
-	// block 1 existing (≥2 scrolls), so it replaces the single `scroll` for 2+ scroll screens.
+	// The only per-instance values are $block_skip (a NUMBER = where this scroll's block
+	// starts: 83 + 498·i → 581, 1079, 1577, 2075) and $factory_ids (the WHOLE factory
+	// control_ids object, pointing at the per-region router variants button_router_rN /
+	// label_router_rN). A factory's control_ids cannot forward the collection_panel's
+	// $region_filter into the controls it instantiates, so the region is baked into the
+	// router refs instead. The slice spec is BUILT at runtime: ('%.' + $block_skip + 's').
+	// Within a block the field offsets are fixed for every scroll: axis@0, x@83, y@166,
+	// width@249, height@332, extent@415. Append scroll_5@…{ $block_skip: 2573,
+	// $factory_ids: { button: @…button_router_r5, … } } (+ button/label_router_r5) to grow.
 	// ─────────────────────────────────────────────────────────────────────────────
 	"namespace": "core_ui_screens",
-	"dual_scroll": {
+	"scroll_pool": {
 		"type": "panel",
 		"size": [
 			"328px",
@@ -27,6 +33,9 @@
 		],
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
+		/* Present ONLY when there are ≥2 scrolls (block 1 exists). On a normal single-scroll
+		   screen the whole pool is absent, so its (otherwise input-listening) scroll_views
+		   can't intercept the root scroll's scrolling/pointer. */
 		"property_bag": {
 			"#axis1": ""
 		},
@@ -74,15 +83,47 @@
 		],
 		"controls": [
 			{
-				"left_scroll@core_ui_screens.pooled_scroll": {
+				"scroll_1@core_ui_screens.pooled_scroll": {
 					"$block_skip": 581,
-					"$region_filter": 1
+					"$factory_ids": {
+						"button": "@core_ui_common.button_router_r1",
+						"label": "@core_ui_common.label_router_r1",
+						"header": "@core_ui_common.unused",
+						"divider": "@core_ui_common.unused"
+					}
 				}
 			},
 			{
-				"right_scroll@core_ui_screens.pooled_scroll": {
+				"scroll_2@core_ui_screens.pooled_scroll": {
 					"$block_skip": 1079,
-					"$region_filter": 2
+					"$factory_ids": {
+						"button": "@core_ui_common.button_router_r2",
+						"label": "@core_ui_common.label_router_r2",
+						"header": "@core_ui_common.unused",
+						"divider": "@core_ui_common.unused"
+					}
+				}
+			},
+			{
+				"scroll_3@core_ui_screens.pooled_scroll": {
+					"$block_skip": 1577,
+					"$factory_ids": {
+						"button": "@core_ui_common.button_router_r3",
+						"label": "@core_ui_common.label_router_r3",
+						"header": "@core_ui_common.unused",
+						"divider": "@core_ui_common.unused"
+					}
+				}
+			},
+			{
+				"scroll_4@core_ui_screens.pooled_scroll": {
+					"$block_skip": 2075,
+					"$factory_ids": {
+						"button": "@core_ui_common.button_router_r4",
+						"label": "@core_ui_common.label_router_r4",
+						"header": "@core_ui_common.unused",
+						"divider": "@core_ui_common.unused"
+					}
 				}
 			}
 		]
@@ -98,8 +139,14 @@
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
 		"use_anchored_offset": true,
+		"layer": 10,
 		"$block_skip|default": 581,
-		"$region_filter|default": 1,
+		"$factory_ids|default": {
+			"button": "@core_ui_common.button_router",
+			"label": "@core_ui_common.label_router",
+			"header": "@core_ui_common.unused",
+			"divider": "@core_ui_common.unused"
+		},
 		"$normalize|default": 0.003125,
 		"$normalize_y|default": 0.0047619,
 		"property_bag": {
@@ -109,7 +156,7 @@
 			"#anchored_offset_value_y": 0.0,
 			"#axis": ""
 		},
-		"visible": "#visible",
+		"visible": true,
 		"scroll_speed": 15,
 		"scrollbar_track_button": "button.scrollbar_skip_track",
 		"scrollbar_touch_button": "button.scrollbar_touch",
@@ -153,22 +200,6 @@
 				"binding_type": "view",
 				"source_property_name": "(#rem_after_header - #pre_block)",
 				"target_property_name": "#at_block"
-			},
-			{
-				/* axis @ 0 -> visibility gate (hide when this block is absent) */
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #at_block)",
-				"target_property_name": "#raw_axis"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #raw_axis) - ('%.2s' * #raw_axis) - ';')",
-				"target_property_name": "#axis"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(not (#axis = ''))",
-				"target_property_name": "#visible"
 			},
 			{
 				/* x @ 83 -> anchored offset x (× $normalize) */
@@ -282,7 +313,7 @@
 											"anchor_from": "top_left",
 											"anchor_to": "top_left",
 											"$block_skip": "$block_skip",
-											"$region_filter": "$region_filter"
+											"$factory_ids": "$factory_ids"
 										}
 									}
 								]
@@ -301,16 +332,26 @@
 	// Lives in the [1,1] size_anchor, so #size_binding maps 1:1 to pixels (× 1, no normalize).
 	"pooled_scroll_content": {
 		"type": "panel",
+		/* Width is the LITERAL 328 (same as the main scroll_content) so the collection's -50%
+		   X-centering resolves correctly; the narrower viewport just clips it. Only the height
+		   (content extent) is data-driven, exactly like the main scroll. */
 		"size": [
-			0,
+			"328px",
 			0
 		],
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
 		"$block_skip|default": 581,
-		"$region_filter|default": 1,
+		/* The factory's control_ids cannot forward $region_filter to the controls it
+		   instantiates, so the per-region router refs are passed in WHOLE as $factory_ids
+		   (vanilla pattern). Default = region 0 (the base routers). */
+		"$factory_ids|default": {
+			"button": "@core_ui_common.button_router",
+			"label": "@core_ui_common.label_router",
+			"header": "@core_ui_common.unused",
+			"divider": "@core_ui_common.unused"
+		},
 		"property_bag": {
-			"#size_binding_x": 0.0,
 			"#size_binding_y": 0.0
 		},
 		"bindings": [
@@ -336,27 +377,6 @@
 				"binding_type": "view",
 				"source_property_name": "(#rem_after_header - #pre_block)",
 				"target_property_name": "#at_block"
-			},
-			{
-				/* width @ 249 -> content width */
-				"binding_type": "view",
-				"source_property_name": "('%.249s' * #at_block)",
-				"target_property_name": "#pre_w"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#at_block - #pre_w)",
-				"target_property_name": "#at_w"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #at_w)",
-				"target_property_name": "#raw_w"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "((('%.82s' * #raw_w) - ('%.2s' * #raw_w) - ';') * 1)",
-				"target_property_name": "#size_binding_x"
 			},
 			{
 				/* extent @ 415 -> content height (scrollable length) */
@@ -394,15 +414,9 @@
 					],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
-					"$region_filter": "$region_filter",
 					"factory": {
 						"name": "buttons",
-						"control_ids": {
-							"button": "@core_ui_common.button_router",
-							"label": "@core_ui_common.label_router",
-							"header": "@core_ui_common.unused",
-							"divider": "@core_ui_common.unused"
-						}
+						"control_ids": "$factory_ids"
 					},
 					"collection_name": "form_buttons",
 					"bindings": [

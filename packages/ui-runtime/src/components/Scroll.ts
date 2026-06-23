@@ -3,19 +3,20 @@ import type { FlexSize } from './layout';
 
 /**
  * `<Scroll>` — one scroll region. Each `<Scroll>` in a render becomes an independent
- * scroll viewport (index 0 is the root); its children scroll along `axis`. Without
- * geometry props the viewports stack/flex automatically (see {@link ScrollArea} for the
- * outer direction); setting both `x` and `y` positions the viewport absolutely.
+ * scroll viewport (index 0 is the root); its children scroll along `axis`. A `<Scroll>`
+ * is a leaf box in its parent's flex flow, so arrange a group with the parent's
+ * `flexDirection` (e.g. a row `<Panel>` for side-by-side columns); setting both `x` and
+ * `y` positions the viewport absolutely.
  *
  * Content NOT wrapped in any `<Scroll>` falls into a single full-screen root scroll, so
  * simple UIs need no `<Scroll>` at all.
  *
  * ```tsx
  * render(
- *   <ScrollArea direction="row">
+ *   <Panel flexDirection="row" gap={4}>
  *     <Scroll>{left}</Scroll>
  *     <Scroll>{right}</Scroll>
- *   </ScrollArea>,
+ *   </Panel>,
  *   player,
  * );
  * ```
@@ -39,22 +40,4 @@ export const Scroll: FunctionComponent<ScrollProps> = (
 ): JSX.Element => ({
   type: 'scroll-slot',
   props: { __axis: axis, __width: width, __height: height, __x: x, __y: y, children },
-});
-
-/**
- * `<ScrollArea>` — optional wrapper that sets the outer arrangement direction for the
- * `<Scroll>` viewports it contains. Transparent: it only carries `direction`. Default
- * stacking is a column; use `direction="row"` for side-by-side scroll columns.
- */
-export interface ScrollAreaProps {
-  /** Outer flow direction for contained scroll viewports. Default `'column'`. */
-  direction?: 'row' | 'column';
-  children?: JSX.Node;
-}
-
-export const ScrollArea: FunctionComponent<ScrollAreaProps> = (
-  { direction = 'column', children }: ScrollAreaProps,
-): JSX.Element => ({
-  type: 'fragment',
-  props: { __direction: direction, children },
 });

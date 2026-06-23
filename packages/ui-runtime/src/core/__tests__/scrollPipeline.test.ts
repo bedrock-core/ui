@@ -10,14 +10,30 @@ import type { JSX } from '../../jsx';
 import type { ScrollMetrics } from '../serializer';
 
 function el(type: unknown, props: Record<string, unknown>): JSX.Element {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- test element factory; the { type, props } shape is a JSX.Element at runtime
   return { type, props } as JSX.Element;
+}
+
+/** Reads the layout-emitted scroll list off a tree with a runtime check (no assertion). */
+function scrollsOf(tree: JSX.Element): ScrollMetrics[] {
+  const value = tree.props.jsonUIScrolls;
+
+  if (!isScrollMetricsArray(value)) {
+    throw new Error('computeLayout did not emit jsonUIScrolls');
+  }
+
+  return value;
+}
+
+function isScrollMetricsArray(value: unknown): value is ScrollMetrics[] {
+  return Array.isArray(value);
 }
 
 /** Collect concrete (string-typed) elements of a given type from a tree. */
 function collect(node: JSX.Node, type: string, out: JSX.Element[]): void {
   if (!isElement(node)) {
     if (Array.isArray(node)) {
-      node.forEach(n => collect(n as JSX.Node, type, out));
+      node.forEach(n => collect(n, type, out));
     }
 
     return;
@@ -27,16 +43,17 @@ function collect(node: JSX.Node, type: string, out: JSX.Element[]): void {
     out.push(node);
   }
 
-  collect(node.props.children as JSX.Node, type, out);
+  collect(node.props.children, type, out);
 }
 
 /**
- * Full expand → layout pipeline over real `<Scroll>` / `<ScrollArea>` components:
+ * Full expand → layout pipeline over real `<Scroll>` components:
  * the slots must be found across the expanded (array-normalized) children, each scroll
  * laid out in its own viewport, and every descendant tagged with its scroll index.
  */
 describe('scroll pipeline (expand + layout)', () => {
   it('main scroll + two nested row-arranged scrolls with per-scroll region tags', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- minimal Player stub; only its identity is used by the pipeline
     const player = { id: 'scroll-pipeline' } as unknown as Player;
 
     // A fixed-height row container with two <Scroll>s (the dual-scroll shape): the main
@@ -75,7 +92,7 @@ describe('scroll pipeline (expand + layout)', () => {
     expect(panels.filter(p => p.props.region === 2)).toHaveLength(2); // column root + 1 row
 
     // Main scroll + 2 nested, the nested side by side at half the canonical width.
-    const scrolls = expanded.props.jsonUIScrolls as ScrollMetrics[];
+    const scrolls = scrollsOf(expanded);
 
     expect(scrolls).toHaveLength(3);
     expect(scrolls[0]).toMatchObject({ axis: 'y', x: 0, y: 0, width: 320, height: 210 });
@@ -87,10 +104,11 @@ describe('scroll pipeline (expand + layout)', () => {
     // Region 1's stacked rows get increasing region-local y.
     const region1 = panels.filter(p => p.props.region === 1);
 
-    expect(region1.some(p => (p.props.jsonUIy as number) > 0)).toBe(true);
+    expect(region1.some(p => typeof p.props.jsonUIy === 'number' && p.props.jsonUIy > 0)).toBe(true);
   });
 
   it('falls into a single root scroll when no <Scroll> is used', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- minimal Player stub; only its identity is used by the pipeline
     const player = { id: 'scroll-root' } as unknown as Player;
 
     const tree = el(Panel, {
@@ -102,7 +120,7 @@ describe('scroll pipeline (expand + layout)', () => {
 
     computeLayout(expanded);
 
-    const scrolls = expanded.props.jsonUIScrolls as ScrollMetrics[];
+    const scrolls = scrollsOf(expanded);
 
     expect(scrolls).toHaveLength(1);
     expect(scrolls[0]).toMatchObject({ axis: 'y', x: 0, y: 0, width: 320, height: 210 });

@@ -3,7 +3,7 @@ import { type Player } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
 import type { JSX } from '../../jsx';
 import { getFibersForPlayer } from '../fabric';
-import { serialize, serializeScrollMetadata, FULL_WIDTH, PROTOCOL_HEADER_LENGTH, type ScrollMetrics } from '../serializer';
+import { serialize, serializeScrollMetadata, type ScrollMetrics } from '../serializer';
 import type { SerializationContext } from '../types';
 import { beginInteractiveTransaction, endInteractiveTransaction } from './session';
 
@@ -47,36 +47,7 @@ export async function present(
     extent: sane(scroll?.extent, CANONICAL_SCREEN.height),
   }));
 
-  const title = serializeScrollMetadata(scrolls);
-
-  form.title(title);
-
-  // ── DEBUG: verify the title byte-slicing matches the RP offsets ───────────────────
-  // Every field is FULL_WIDTH.n (83) bytes: "X:" (2) + value padded to 80 + marker (1).
-  // Field index i sits at PROTOCOL_HEADER_LENGTH + i*83. Layout: 0='scrolls', then per
-  // scroll axis,x,y,width,height,extent. So scroll s: axis@(1+6s), x@(2+6s), y@(3+6s),
-  // width@(4+6s), height@(5+6s), extent@(6+6s). The RP reads block s at rem-offset
-  // (1+6s)*83 and within it width at +249, extent at +415 → field (4+6s)/(6+6s).
-  const fieldAt = (i: number): { remOffset: number; value: string } => {
-    const start = PROTOCOL_HEADER_LENGTH + i * FULL_WIDTH.n;
-    const raw = title.slice(start, start + FULL_WIDTH.n);
-    // drop "X:" prefix (2) and trailing marker (1), strip ';' padding
-    const value = raw.slice(2, FULL_WIDTH.n - 1).replace(/;+$/, '');
-
-    return { remOffset: i * FULL_WIDTH.n, value };
-  };
-
-  const report = scrolls.map((s, k) => {
-    const x = fieldAt(2 + 6 * k);
-    const y = fieldAt(3 + 6 * k);
-    const w = fieldAt(4 + 6 * k);
-    const h = fieldAt(5 + 6 * k);
-
-    return `#${k} ts{x:${Math.round(s.x)},y:${Math.round(s.y)},w:${Math.round(s.width)},h:${Math.round(s.height)}} `
-      + `title{ x@${x.remOffset}="${x.value}", y@${y.remOffset}="${y.value}", width@${w.remOffset}="${w.value}", height@${h.remOffset}="${h.value}" }`;
-  });
-
-  console.warn(`[bcui] title len=${title.length} scrolls=${scrolls.length}\n  ${report.join('\n  ')}`);
+  form.title(serializeScrollMetadata(scrolls));
 
   serialize(tree, form, serializationContext);
 
