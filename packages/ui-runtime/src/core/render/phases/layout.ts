@@ -1,10 +1,12 @@
-import type { FlexSize, FlexStyle, LayoutNode } from '@bedrock-core/flexbox';
+import type { FlexStyle, LayoutNode } from '@bedrock-core/flexbox';
 import { CANONICAL_SCREEN, createNode, computeLayout as flexComputeLayout } from '@bedrock-core/flexbox';
 import { TextFont, TextOverflow, TextWordBreak } from '@bedrock-core/ui/components/Text';
 import type { JSX } from '../../../jsx';
+import { MAX_SCROLLS, SCROLL_SLOT_TYPE, type ScrollAxis } from '../../../components/Scroll';
 import type { ScrollMetrics } from '../../serializer';
 import { isTransparentType } from '../../componentRegistry';
 import { isElement } from '../../guards';
+import { ScrollLimitError } from '../../types';
 import { ellipsizeText, measureText, wrapText } from '../../../util/textMetrics';
 
 // ─── Transparent element types that don't participate in layout ────────────────
@@ -283,57 +285,18 @@ function applyToTree(
 
 // ─── Scroll slots ───────────────────────────────────────────────────────────────
 
-/**
- * Marker type for a `<Scroll>` wrapper. A slot is transparent (emits no payload) and
- * acts as an independent layout root: its concrete descendants are laid out in their own
- * coordinate space (inside the scroll's viewport) and tagged with the scroll index.
- * When no slots are present the whole tree falls into a single implicit root scroll.
- */
-export const SCROLL_SLOT_TYPE = 'scroll-slot';
-
-type ScrollAxis = 'x' | 'y';
-
-interface ScrollSlotConfig {
-  axis: ScrollAxis;
-  /** Absolute viewport left/top (px); set => removed from the outer flex flow. */
-  x?: number;
-  y?: number;
-  /** Viewport size override (px or %); in flow it sizes the flex item. */
-  width?: FlexSize;
-  height?: FlexSize;
-  /** True when both x and y are set — the viewport is absolutely positioned. */
-  absolute: boolean;
-}
+// A `<Scroll>` wrapper (`SCROLL_SLOT_TYPE`) is transparent (emits no payload) and acts as an
+// independent layout root: its concrete descendants are laid out in their own coordinate space
+// (inside the scroll's viewport) and tagged with the scroll index. When no slots are present the
+// whole tree falls into a single implicit root scroll.
 
 function asNumber(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }
 
-function isPercent(value: unknown): value is `${number}%` {
-  return typeof value === 'string' && /^-?\d+(?:\.\d+)?%$/.test(value);
-}
-
-function asFlexSize(value: unknown): FlexSize | undefined {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return value;
-  }
-
-  return isPercent(value) ? value : undefined;
-}
-
-function scrollSlotConfig(slot: JSX.Element): ScrollSlotConfig {
-  const p = slot.props;
-  const x = asNumber(p.__x);
-  const y = asNumber(p.__y);
-
-  return {
-    axis: p.__axis === 'x' ? 'x' : 'y',
-    x,
-    y,
-    width: asFlexSize(p.__width),
-    height: asFlexSize(p.__height),
-    absolute: x !== undefined && y !== undefined,
-  };
+/** The scroll direction tagged onto the slot by the `<Scroll>` component. */
+function scrollAxis(slot: JSX.Element): ScrollAxis {
+  return slot.props.__axis === 'x' ? 'x' : 'y';
 }
 
 /**
@@ -344,27 +307,21 @@ function scrollSlotConfig(slot: JSX.Element): ScrollSlotConfig {
 const HORIZONTAL_EXTENT_BOUND = CANONICAL_SCREEN.width * 64;
 
 /**
- * The flex style for a `<Scroll>` leaf box in the main pass. It grows to share its flex
- * parent's space unless a size is fixed; both `x`+`y` make it absolutely positioned.
+ * The flex style for a `<Scroll>` leaf box in the main pass. The slot carries the full
+ * control layout (via `withControl` → `__layout`), so the viewport is sized/positioned
+ * exactly like any other control: explicit `width`/`height`, `flexGrow`, `margin`,
+ * `position: 'absolute'` + `top`/`left`, etc. As a convenience, a scroll with no size,
+ * grow, or absolute position defaults to `flexGrow: 1` so bare `<Scroll>`s share the
+ * parent's space (equal columns / a tall body scroll).
  */
 function scrollFlexStyle(slot: JSX.Element): FlexStyle {
-  const cfg = scrollSlotConfig(slot);
-  const style: FlexStyle = {};
+  const style = { ...(slot.props.__layout ?? {}) } as FlexStyle;
 
-  if (cfg.width !== undefined) {
-    style.width = cfg.width;
-  }
+  const positioned = style.position === 'absolute';
+  const sized = style.width !== undefined || style.height !== undefined;
+  const grows = style.flexGrow !== undefined || style.flexBasis !== undefined;
 
-  if (cfg.height !== undefined) {
-    style.height = cfg.height;
-  }
-
-  if (cfg.absolute) {
-    style.position = 'absolute';
-    style.left = cfg.x;
-    style.top = cfg.y;
-  } else if (cfg.width === undefined && cfg.height === undefined) {
-    // No fixed size → fill the available space in the flex parent (e.g. equal columns).
+  if (!positioned && !sized && !grows) {
     style.flexGrow = 1;
   }
 
@@ -463,6 +420,15 @@ export function computeLayout(tree: JSX.Element): JSX.Element {
 
   findScrolls(tree, slots);
 
+  // Fail loudly rather than silently dropping scrolls: the RP only pools MAX_SCROLLS
+  // custom viewports (indices 1..MAX_SCROLLS), so any beyond that would never render.
+  if (slots.length > MAX_SCROLLS) {
+    throw new ScrollLimitError(
+      `Too many <Scroll>s: found ${slots.length}, but a render supports at most ${MAX_SCROLLS} `
+      + `(plus the implicit root scroll). Scrolls beyond the ${MAX_SCROLLS}th would not render.`,
+    );
+  }
+
   // ── Main pass (index 0): whole tree, <Scroll>s as leaf boxes ────────────────────
   const concreteRoots = collectConcrete(tree);
   const concreteTree = concreteRoots[0] ?? tree;
@@ -506,14 +472,14 @@ export function computeLayout(tree: JSX.Element): JSX.Element {
   // ── Per-scroll passes (index 1+): each <Scroll>'s content, region-local ──────────
   slots.forEach((slot, k) => {
     const index = k + 1;
-    const cfg = scrollSlotConfig(slot);
+    const axis = scrollAxis(slot);
     const x = asNumber(slot.props.jsonUIx) ?? 0;
     const y = asNumber(slot.props.jsonUIy) ?? 0;
     const width = asNumber(slot.props.jsonUIWidth) ?? CANONICAL_SCREEN.width;
     const height = asNumber(slot.props.jsonUIHeight) ?? CANONICAL_SCREEN.height;
-    const extent = layoutScrollContent(slot, cfg.axis, width, height, index);
+    const extent = layoutScrollContent(slot, axis, width, height, index);
 
-    scrolls[index] = { axis: cfg.axis, x, y, width, height, extent };
+    scrolls[index] = { axis, x, y, width, height, extent };
   });
 
   tree.props.jsonUIScrolls = scrolls;

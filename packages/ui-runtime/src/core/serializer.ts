@@ -136,6 +136,17 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
     );
   }
 
+  // Statically hidden subtree: `visible` is a build-time boolean and the form never
+  // re-renders, so a hidden element can never become visible without a fresh serialize.
+  // The layout pass already reserved its box (visible siblings carry final absolute
+  // coords), so we drop it AND its children entirely — no payload bytes, no generator
+  // slot, no button index consumed. This is the cost the Scroll "Performance" note warns
+  // about: fewer items per generator. Default visible is `true`, so only an explicit
+  // `visible={false}` triggers this.
+  if (rest.visible === false) {
+    return;
+  }
+
   // Transparent components: do not emit payload, serialize children only
   if (isTransparentType(type)) {
     if (children) {

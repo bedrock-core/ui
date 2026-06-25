@@ -36,6 +36,13 @@ export class ItemAuxError extends Error {
   }
 }
 
+export class ScrollLimitError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ScrollLimitError';
+  }
+}
+
 export type Writer = (
   payload: string,
   form: ActionFormData,

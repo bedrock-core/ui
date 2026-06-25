@@ -67,6 +67,7 @@ export type {
   Context,
   ContextProps,
   ItemAuxError,
+  ScrollLimitError,
   SerializationError,
   TranslationKeysError,
   Writer,

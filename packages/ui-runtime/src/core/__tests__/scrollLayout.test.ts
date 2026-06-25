@@ -3,7 +3,8 @@ import type { JSX } from '../../jsx';
 import type { ScrollMetrics } from '../serializer';
 import { withControl } from '../../components/control';
 import { registerNativeComponents } from '../../components';
-import { Scroll } from '../../components/Scroll';
+import { MAX_SCROLLS, Scroll } from '../../components/Scroll';
+import { ScrollLimitError } from '../types';
 import { computeLayout } from '../render/phases/layout';
 
 beforeAll(() => {
@@ -29,8 +30,18 @@ function box(width: number, height: number, direction: 'row' | 'column', childre
   return { type: 'panel', props: { ...withControl({ width, height, flexDirection: direction }), children } };
 }
 
-function scrollSlot(props: Record<string, unknown>, children: JSX.Node): JSX.Element {
-  return { type: 'scroll-slot', props: { ...props, children } };
+/**
+ * Build a scroll-slot the way the `<Scroll>` component does: control props flow through
+ * `withControl` into `__layout`, and the axis is tagged separately on `__axis`.
+ */
+function scrollSlot(
+  { axis, ...layout }: { axis?: 'x' | 'y' } & Record<string, unknown>,
+  children: JSX.Node,
+): JSX.Element {
+  return {
+    type: 'scroll-slot',
+    props: { ...withControl(layout), __axis: axis ?? 'y', children },
+  };
 }
 
 function isScrollMetricsArray(value: unknown): value is ScrollMetrics[] {
@@ -96,7 +107,7 @@ describe('computeLayout — nested scrolls (main 0 + extras 1+)', () => {
 
   it('horizontal nested scroll: extent = content width, height = viewport', () => {
     const content = row(40, [panel(200, 40), panel(200, 40)]);
-    const tree = box(320, 210, 'column', [scrollSlot({ __axis: 'x' }, content)]);
+    const tree = box(320, 210, 'column', [scrollSlot({ axis: 'x' }, content)]);
 
     computeLayout(tree);
 
@@ -107,9 +118,11 @@ describe('computeLayout — nested scrolls (main 0 + extras 1+)', () => {
     expect(s[1].extent).toBe(400);
   });
 
-  it('absolute geometry: scroll uses its x/y/width/height', () => {
+  it('absolute geometry: scroll uses its position/top/left/width/height', () => {
     const content = column(100, [panel(80, 20)]);
-    const tree = box(320, 210, 'column', [scrollSlot({ __x: 30, __y: 50, __width: 100, __height: 80 }, content)]);
+    const tree = box(320, 210, 'column', [
+      scrollSlot({ position: 'absolute', left: 30, top: 50, width: 100, height: 80 }, content),
+    ]);
 
     computeLayout(tree);
 
@@ -118,13 +131,45 @@ describe('computeLayout — nested scrolls (main 0 + extras 1+)', () => {
 });
 
 describe('Scroll component', () => {
-  it('Scroll emits a scroll-slot carrying axis + geometry', () => {
-    const el = Scroll({ axis: 'x', width: 120, x: 10, y: 20, children: panel(10, 10) });
+  it('Scroll emits a scroll-slot carrying control layout (axis fixed to y)', () => {
+    const el = Scroll({ width: 120, position: 'absolute', left: 10, top: 20, children: panel(10, 10) });
 
     expect(el.type).toBe('scroll-slot');
-    expect(el.props.__axis).toBe('x');
-    expect(el.props.__width).toBe(120);
-    expect(el.props.__x).toBe(10);
-    expect(el.props.__y).toBe(20);
+    expect(el.props.__axis).toBe('y'); // axis isn't public; internal default keeps the protocol field
+    // Control props flow through withControl into __layout (like any other component).
+    expect(el.props.__layout).toMatchObject({ width: 120, position: 'absolute', left: 10, top: 20 });
+  });
+
+  it('an un-sized, non-absolute Scroll defaults its viewport to flexGrow:1', () => {
+    const colA = column(160, [panel(140, 40)]);
+    const colB = column(160, [panel(140, 40)]);
+    const tree = box(320, 210, 'row', [
+      Scroll({ children: colA }),
+      Scroll({ children: colB }),
+    ]);
+
+    computeLayout(tree);
+
+    const s = scrolls(tree);
+
+    expect(s[1].width).toBe(160);
+    expect(s[2].width).toBe(160);
+  });
+});
+
+describe('computeLayout — scroll limit', () => {
+  function nScrolls(n: number): JSX.Element {
+    return box(320, 210, 'row', Array.from({ length: n }, () => Scroll({ children: panel(10, 10) })));
+  }
+
+  it(`accepts exactly MAX_SCROLLS (${MAX_SCROLLS}) custom scrolls`, () => {
+    const tree = nScrolls(MAX_SCROLLS);
+
+    expect(() => computeLayout(tree)).not.toThrow();
+    expect(scrolls(tree)).toHaveLength(MAX_SCROLLS + 1); // + root
+  });
+
+  it('throws a ScrollLimitError when there are more than MAX_SCROLLS', () => {
+    expect(() => computeLayout(nScrolls(MAX_SCROLLS + 1))).toThrow(ScrollLimitError);
   });
 });
