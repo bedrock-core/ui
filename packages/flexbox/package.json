@@ -1,6 +1,6 @@
 {
   "name": "@bedrock-core/flexbox",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "@bedrock-core/ui flexbox layout engine",
   "keywords": [
     "ui",
