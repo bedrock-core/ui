@@ -1,6 +1,13 @@
 {
 	// Routes button-type factory entries to the appropriate interactive component.
 	// Parallel to label_router which handles label-type entries.
+	//
+	// Region filtering: a single parameterized router serves every scroll region. The
+	// region's collection_panel sets $region_filter (= its region index); the factory
+	// instantiates this router in that scope, and the router forwards $region_filter to
+	// each component via a direct @ref (reliable variable passing). Each component then
+	// self-hides unless its decoded #region matches $region_filter. Region 0 is the
+	// default, so a single-region screen needs to pass nothing.
 	"namespace": "core_ui_common",
 	"button_router": {
 		"type": "panel",
@@ -9,13 +16,35 @@
 			1,
 			1
 		],
+		"$region_filter|default": 0,
 		"controls": [
 			{
-				"button@core_ui_components.button": {}
+				"button@core_ui_components.button": {
+					"$region_filter": "$region_filter"
+				}
 			},
 			{
-				"item_renderer@core_ui_components.item_renderer": {}
+				"item_renderer@core_ui_components.item_renderer": {
+					"$region_filter": "$region_filter"
+				}
 			}
 		]
+	},
+	// Per-region router variants. A factory's control_ids cannot forward the
+	// collection_panel's $region_filter into the controls it instantiates, so each pooled
+	// scroll points its factory at the variant whose $region_filter matches its scroll
+	// index. These are thin extensions of button_router (which forwards $region_filter to
+	// the button component). Append button_router_r5… alongside scroll_5… to grow the pool.
+	"button_router_r1@button_router": {
+		"$region_filter": 1
+	},
+	"button_router_r2@button_router": {
+		"$region_filter": 2
+	},
+	"button_router_r3@button_router": {
+		"$region_filter": 3
+	},
+	"button_router_r4@button_router": {
+		"$region_filter": 4
 	}
 }

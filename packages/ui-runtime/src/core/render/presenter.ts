@@ -3,9 +3,9 @@ import { type Player } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
 import type { JSX } from '../../jsx';
 import { getFibersForPlayer } from '../fabric';
-import { serialize, serializeTitleMetadata } from '../serializer';
+import { serialize, serializeScrollMetadata, type ScrollMetrics } from '../serializer';
 import type { SerializationContext } from '../types';
-import { beginInteractiveTransaction, endInteractiveTransaction, getPlayerScreen } from './session';
+import { beginInteractiveTransaction, endInteractiveTransaction } from './session';
 
 export async function present(
   player: Player,
@@ -17,19 +17,37 @@ export async function present(
   // Snapshot and show
   const form: ActionFormData = new ActionFormData();
 
-  // Encode title with protocol header and root content_height metadata.
-  // Use the layout-computed root height; fall back to the canonical viewport
-  // height if the value is missing, non-finite, or non-positive so the RP
-  // always receives a usable scroll container height.
-  const rawHeight = tree.props.jsonUIHeight;
-  const contentHeight = (typeof rawHeight === 'number' && Number.isFinite(rawHeight) && rawHeight > 0)
-    ? rawHeight
-    : CANONICAL_SCREEN.height;
+  // Coerce a tree-derived metric to a finite number. Position (x/y) may legitimately be
+  // 0 or negative, so `allowNonPositive` skips the > 0 guard for those.
+  const sane = (value: unknown, fallback: number, allowNonPositive = false): number =>
+    (typeof value === 'number' && Number.isFinite(value) && (allowNonPositive || value > 0)) ? value : fallback;
 
-  // The session screen is the render baseline set by render().
-  const screen = getPlayerScreen(player);
+  // Encode the title with the protocol header and the scroll list. The layout pass
+  // surfaces one { axis, x, y, width, height, extent } per scroll on the tree (index 0
+  // is the root scroll). Fall back to a single full-screen vertical scroll if the tree
+  // produced nothing usable, so the RP always receives at least the root scroll.
+  const rawScrolls = tree.props.jsonUIScrolls;
+  const scrollsSource: ScrollMetrics[] = Array.isArray(rawScrolls) && rawScrolls.length > 0
+    ? rawScrolls
+    : [{
+        axis: 'y',
+        x: 0,
+        y: 0,
+        width: CANONICAL_SCREEN.width,
+        height: CANONICAL_SCREEN.height,
+        extent: sane(tree.props.jsonUIHeight, CANONICAL_SCREEN.height),
+      }];
 
-  form.title(serializeTitleMetadata(contentHeight, screen.type));
+  const scrolls: ScrollMetrics[] = scrollsSource.map(scroll => ({
+    axis: scroll?.axis === 'x' ? 'x' : 'y',
+    x: sane(scroll?.x, 0, true),
+    y: sane(scroll?.y, 0, true),
+    width: sane(scroll?.width, CANONICAL_SCREEN.width),
+    height: sane(scroll?.height, CANONICAL_SCREEN.height),
+    extent: sane(scroll?.extent, CANONICAL_SCREEN.height),
+  }));
+
+  form.title(serializeScrollMetadata(scrolls));
 
   serialize(tree, form, serializationContext);
 

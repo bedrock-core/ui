@@ -1,0 +1,320 @@
+{
+	// ─────────────────────────────────────────────────────────────────────────────
+	// MAIN scroll (the base) — the proven single-scroll layout, fixed size.
+	//
+	// This is the original working `scroll_screen` structure. The ONLY change for the
+	// v0007 scroll-list title is WHERE the content height is read: the title is now
+	//   header(9) + s:'scrolls'(83) + scroll0[ axis, x, y, width, height, extent ] (6×83)
+	// so the root scroll's content height is the `extent` field of block 0 → at byte
+	// offset 83·6 = 498 after the header (skip type + axis,x,y,width,height).
+	//
+	// Width is baked (the main scroll always fills the centered content area); only the
+	// scroll height (content extent) is data-driven, exactly like before. The extra
+	// positioned scrolls are a SEPARATE control added on top once this base is verified.
+	// ─────────────────────────────────────────────────────────────────────────────
+	"namespace": "core_ui_screens",
+	"scroll": {
+		"type": "scroll_view",
+		"size": [
+			"328px",
+			"95%"
+		],
+		"offset": [
+			0,
+			"1%"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		/* Root scroll (index 0): present ONLY in single-scroll mode (no custom <Scroll>s). In pool
+		   mode (≥1 custom scroll → block 1 present → #axis1 not empty) this hides and scroll_pool's
+		   pool_content owns region-0 rendering. NOTE: the `visible` field only honors a binding to
+		   the property literally named `#visible` — a custom name (e.g. #not_pool_mode) is silently
+		   ignored, which is why scroll_pool (uses #visible) worked but this didn't until renamed. */
+		"visible": "#visible",
+		"property_bag": {
+			"#axis1": "",
+			"#visible": true
+		},
+		"bindings": [
+			{
+				"binding_name": "#title_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.9s' * #title_text)",
+				"target_property_name": "#protocol_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#title_text - #protocol_header)",
+				"target_property_name": "#rem_after_header"
+			},
+			{
+				/* block 1 axis at offset 581 — present when there are ≥1 custom scrolls */
+				"binding_type": "view",
+				"source_property_name": "('%.581s' * #rem_after_header)",
+				"target_property_name": "#pre_axis1"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_header - #pre_axis1)",
+				"target_property_name": "#at_axis1"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_axis1)",
+				"target_property_name": "#raw_axis1"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_axis1) - ('%.2s' * #raw_axis1) - ';')",
+				"target_property_name": "#axis1"
+			},
+			{
+				/* visible only in single mode (axis1 empty = no custom scrolls) */
+				"binding_type": "view",
+				"source_property_name": "(#axis1 = '')",
+				"target_property_name": "#visible"
+			}
+		],
+		"scroll_speed": 15,
+		"scrollbar_track_button": "button.scrollbar_skip_track",
+		"scrollbar_touch_button": "button.scrollbar_touch",
+		"always_listen_to_input": true,
+		"always_handle_pointer": true,
+		"always_handle_scrolling": true,
+		"scroll_content": "scrolling_content",
+		"scroll_view_port": "scrolling_view_port",
+		"scrollbar_track": "track",
+		"scrollbar_box": "box",
+		"scroll_box_and_track_panel": "bar_and_track",
+		"button_mappings": [
+			{
+				"from_button_id": "button.menu_select",
+				"to_button_id": "button.scrollbar_touch",
+				"mapping_type": "pressed",
+				"button_up_right_of_first_refusal": true
+			}
+		],
+		"controls": [
+			{
+				"scrolling_view_port": {
+					"type": "panel",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"clips_children": true,
+					"controls": [
+						{
+							"size_anchor": {
+								"type": "panel",
+								"size": [
+									1,
+									1
+								],
+								"anchor_from": "top_left",
+								"anchor_to": "top_left",
+								"controls": [
+									{
+										"scrolling_content@core_ui_screens.scroll_content": {
+											"anchor_from": "top_left",
+											"anchor_to": "top_left"
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"bar_and_track@core_ui_screens.scrollbar": {}
+			}
+		]
+	},
+	"scroll_content": {
+		"type": "panel",
+		"size": [
+			"328px",
+			0
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		/* In single mode this collection renders region-0; in pool mode scroll_pool.pool_content
+		   does, so hide it here to avoid a duplicate. The gate MUST bind the property literally
+		   named `#visible` — the `visible` field ignores any other name (the earlier #not_pool_mode
+		   bound nothing, so this never hid → the "duplicated header"). The parent scroll_view's gate
+		   also hides this, but gating here too is harmless and keeps the rule obvious. */
+		"visible": "#visible",
+		"property_bag": {
+			"#size_binding_y": 0.0,
+			"#axis1": "",
+			"#visible": true
+		},
+		"bindings": [
+			{
+				"binding_name": "#title_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.9s' * #title_text)",
+				"target_property_name": "#protocol_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#title_text - #protocol_header)",
+				"target_property_name": "#rem_after_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.498s' * #rem_after_header)",
+				"target_property_name": "#pre_extent"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_header - #pre_extent)",
+				"target_property_name": "#at_extent"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_extent)",
+				"target_property_name": "#raw_extent"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_extent) - ('%.2s' * #raw_extent) - ';') * 1)",
+				"target_property_name": "#size_binding_y"
+			},
+			{
+				/* block 1 axis @ 581 — present when there are ≥1 custom scrolls (pool mode) */
+				"binding_type": "view",
+				"source_property_name": "('%.581s' * #rem_after_header)",
+				"target_property_name": "#pre_axis1"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_header - #pre_axis1)",
+				"target_property_name": "#at_axis1"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_axis1)",
+				"target_property_name": "#raw_axis1"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_axis1) - ('%.2s' * #raw_axis1) - ';')",
+				"target_property_name": "#axis1"
+			},
+			{
+				/* single mode → visible; pool mode (axis1 not empty) → hidden. Uses the
+				   conventional #visible property name that every component binds its visibility to. */
+				"binding_type": "view",
+				"source_property_name": "(#axis1 = '')",
+				"target_property_name": "#visible"
+			}
+		],
+		"controls": [
+			{
+				"buttons_collection": {
+					"type": "collection_panel",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"offset": [
+						"-50%",
+						"-50%"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"factory": {
+						"name": "buttons",
+						"control_ids": {
+							"button": "@core_ui_common.button_router",
+							"label": "@core_ui_common.label_router",
+							"header": "@core_ui_common.unused",
+							"divider": "@core_ui_common.unused"
+						}
+					},
+					"collection_name": "form_buttons",
+					"bindings": [
+						{
+							"binding_name": "#form_button_contents",
+							"binding_name_override": "#collection_length"
+						}
+					]
+				}
+			}
+		]
+	},
+	"scrollbar": {
+		"type": "panel",
+		"size": [
+			"6px",
+			"100%"
+		],
+		"anchor_from": "right_middle",
+		"anchor_to": "right_middle",
+		"controls": [
+			{
+				"track": {
+					"type": "scroll_track",
+					"size": [
+						"6px",
+						"100%"
+					],
+					"anchor_from": "center",
+					"anchor_to": "center",
+					"button_mappings": [
+						{
+							"from_button_id": "button.menu_select",
+							"to_button_id": "button.scrollbar_skip_track",
+							"mapping_type": "pressed"
+						}
+					],
+					"controls": [
+						{
+							"bar_indent@common.scroll_indent_image": {
+								"anchor_from": "center",
+								"anchor_to": "center"
+							}
+						}
+					]
+				}
+			},
+			{
+				"box": {
+					"type": "scrollbar_box",
+					"size": [
+						"6px",
+						"20%"
+					],
+					"anchor_from": "top_middle",
+					"anchor_to": "top_middle",
+					"draggable": "vertical",
+					"contained": true,
+					"button_mappings": [
+						{
+							"from_button_id": "button.menu_select",
+							"to_button_id": "button.menu_select",
+							"mapping_type": "pressed",
+							"button_up_right_of_first_refusal": true
+						}
+					],
+					"controls": [
+						{
+							"handle@common.scrollbar_box_image": {
+								"anchor_from": "center",
+								"anchor_to": "center"
+							}
+						}
+					]
+				}
+			}
+		]
+	}
+}

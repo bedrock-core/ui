@@ -1,0 +1,496 @@
+{
+	// ─────────────────────────────────────────────────────────────────────────────
+	// Generic SCROLL POOL — `scroll_pool` mounts scroll_1..N of ONE generic control
+	// (`pooled_scroll`), replacing every per-topology screen. It is a SIBLING of the main
+	// scroll in screen_container (a flat, screen-sized panel) — the one place a data-driven
+	// scroll_view's #size_binding resolves and renders. The pool is gated to ≥2 scrolls
+	// (block 1 present): on a single-scroll screen it is absent so its scroll_views can't
+	// intercept the root scroll's input; with custom scrolls the screen is fixed (region-0
+	// content fits) and the pool draws the scrolls over the content area.
+	//
+	// Each pooled scroll decodes its FULL viewport geometry (x, y, width, height) from its own
+	// title block and applies it via #size_binding (size) + use_anchored_offset (position):
+	// decoded pixels × $normalize (1/320 x/width) / $normalize_y (1/210 y/height) → fraction of
+	// the FIXED 328×210 canonical pool panel (must equal the layout's CANONICAL_SCREEN so a
+	// fraction maps back to the exact canonical px). Content sizing stays in the [1,1] size_anchor
+	// (#size_binding × 1, pixel-exact). A scroll whose block is absent decodes to 0 → collapses.
+	//
+	// The only per-instance values are $block_skip (a NUMBER = where this scroll's block
+	// starts: 83 + 498·i → 581, 1079, 1577, 2075) and $factory_ids (the WHOLE factory
+	// control_ids object, pointing at the per-region router variants button_router_rN /
+	// label_router_rN). A factory's control_ids cannot forward the collection_panel's
+	// $region_filter into the controls it instantiates, so the region is baked into the
+	// router refs instead. The slice spec is BUILT at runtime: ('%.' + $block_skip + 's').
+	// Within a block the field offsets are fixed for every scroll: axis@0, x@83, y@166,
+	// width@249, height@332, extent@415. Append scroll_5@…{ $block_skip: 2573,
+	// $factory_ids: { button: @…button_router_r5, … } } (+ button/label_router_r5) to grow.
+	// ─────────────────────────────────────────────────────────────────────────────
+	"namespace": "core_ui_screens",
+	/* Flat region-0 generator for pool mode. Renders all region-0 items (panels, images, text,
+	   buttons not wrapped in <Scroll>) at their absolute pixel positions, using the same
+	   buttons_collection factory as scroll_content but without a scroll_view wrapper. Sized
+	   328px × 100% to match the pool panel so item coordinates are consistent. */
+	"pool_content": {
+		"type": "panel",
+		"size": [
+			"328px",
+			"100%"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"controls": [
+			{
+				"buttons_collection": {
+					"type": "collection_panel",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"offset": [
+						"-50%",
+						"-50%"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"factory": {
+						"name": "buttons",
+						"control_ids": {
+							"button": "@core_ui_common.button_router",
+							"label": "@core_ui_common.label_router",
+							"header": "@core_ui_common.unused",
+							"divider": "@core_ui_common.unused"
+						}
+					},
+					"collection_name": "form_buttons",
+					"bindings": [
+						{
+							"binding_name": "#form_button_contents",
+							"binding_name_override": "#collection_length"
+						}
+					]
+				}
+			}
+		]
+	},
+
+	"scroll_pool": {
+		"type": "panel",
+		/* FIXED canonical 328×210 box — NOT 100% height. The layout pass works in a 320×210
+		   canonical space and the title carries px in that space. Region-0 content and scroll
+		   content render in raw pixels (the [1,1] size_anchor), but a pooled scroll's viewport
+		   geometry is applied as a FRACTION of this panel (px × $normalize_y, 1/210). Only when
+		   the panel is exactly 210px tall do the two frames coincide: fraction×210px = canonical
+		   px. A "100%" (screen-height) panel stretched viewports by screenHeight/210 while pixel
+		   content stayed put → vertical drift (header gap, triple-scroll region-0 offset). */
+		"size": [
+			"328px",
+			"210px"
+		],
+		/* centre the fixed-height box vertically (screen_container already centres it in x) */
+		"offset": [
+			0,
+			"50% - 105px"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		/* Present ONLY when there are ≥1 custom scrolls (block 1 exists). On a no-<Scroll>
+		   screen the whole pool is absent so its scroll_views can't intercept the root scroll.
+		   When active, pool_content renders region-0 items and scroll_1..N overlay on top. */
+		"property_bag": {
+			"#axis1": ""
+		},
+		"visible": "#visible",
+		"bindings": [
+			{
+				"binding_name": "#title_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.9s' * #title_text)",
+				"target_property_name": "#protocol_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#title_text - #protocol_header)",
+				"target_property_name": "#rem_after_header"
+			},
+			{
+				/* block 1 axis @ 581 — present only when there are ≥2 scrolls */
+				"binding_type": "view",
+				"source_property_name": "('%.581s' * #rem_after_header)",
+				"target_property_name": "#pre_axis1"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_header - #pre_axis1)",
+				"target_property_name": "#at_axis1"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_axis1)",
+				"target_property_name": "#raw_axis1"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_axis1) - ('%.2s' * #raw_axis1) - ';')",
+				"target_property_name": "#axis1"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(not (#axis1 = ''))",
+				"target_property_name": "#visible"
+			}
+		],
+		"controls": [
+			{
+				/* Region-0 generator: renders all non-scroll content as a flat background layer */
+				"pool_content@core_ui_screens.pool_content": {}
+			},
+			{
+				"scroll_1@core_ui_screens.pooled_scroll": {
+					"$block_skip": 581,
+					"$factory_ids": {
+						"button": "@core_ui_common.button_router_r1",
+						"label": "@core_ui_common.label_router_r1",
+						"header": "@core_ui_common.unused",
+						"divider": "@core_ui_common.unused"
+					}
+				}
+			},
+			{
+				"scroll_2@core_ui_screens.pooled_scroll": {
+					"$block_skip": 1079,
+					"$factory_ids": {
+						"button": "@core_ui_common.button_router_r2",
+						"label": "@core_ui_common.label_router_r2",
+						"header": "@core_ui_common.unused",
+						"divider": "@core_ui_common.unused"
+					}
+				}
+			},
+			{
+				"scroll_3@core_ui_screens.pooled_scroll": {
+					"$block_skip": 1577,
+					"$factory_ids": {
+						"button": "@core_ui_common.button_router_r3",
+						"label": "@core_ui_common.label_router_r3",
+						"header": "@core_ui_common.unused",
+						"divider": "@core_ui_common.unused"
+					}
+				}
+			},
+			{
+				"scroll_4@core_ui_screens.pooled_scroll": {
+					"$block_skip": 2075,
+					"$factory_ids": {
+						"button": "@core_ui_common.button_router_r4",
+						"label": "@core_ui_common.label_router_r4",
+						"header": "@core_ui_common.unused",
+						"divider": "@core_ui_common.unused"
+					}
+				}
+			}
+		]
+	},
+
+	// ── Generic pooled scroll: full viewport geometry decoded from its own block ───────
+	"pooled_scroll": {
+		"type": "scroll_view",
+		"size": [
+			0,
+			0
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"use_anchored_offset": true,
+		"layer": 10,
+		"$block_skip|default": 581,
+		"$factory_ids|default": {
+			"button": "@core_ui_common.button_router",
+			"label": "@core_ui_common.label_router",
+			"header": "@core_ui_common.unused",
+			"divider": "@core_ui_common.unused"
+		},
+		"$normalize|default": 0.003125,
+		"$normalize_y|default": 0.0047619,
+		"property_bag": {
+			"#size_binding_x": 0.0,
+			"#size_binding_y": 0.0,
+			"#anchored_offset_value_x": 0.0,
+			"#anchored_offset_value_y": 0.0,
+			"#axis": ""
+		},
+		"visible": true,
+		"scroll_speed": 15,
+		"scrollbar_track_button": "button.scrollbar_skip_track",
+		"scrollbar_touch_button": "button.scrollbar_touch",
+		"always_listen_to_input": true,
+		"always_handle_pointer": true,
+		"always_handle_scrolling": false,
+		"scroll_content": "scrolling_content",
+		"scroll_view_port": "scrolling_view_port",
+		"scrollbar_track": "track",
+		"scrollbar_box": "box",
+		"scroll_box_and_track_panel": "bar_and_track",
+		"button_mappings": [
+			{
+				"from_button_id": "button.menu_select",
+				"to_button_id": "button.scrollbar_touch",
+				"mapping_type": "pressed",
+				"button_up_right_of_first_refusal": true
+			}
+		],
+		"bindings": [
+			{
+				"binding_name": "#title_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.9s' * #title_text)",
+				"target_property_name": "#protocol_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#title_text - #protocol_header)",
+				"target_property_name": "#rem_after_header"
+			},
+			{
+				/* skip to this scroll's block; within it every field is at a fixed offset */
+				"binding_type": "view",
+				"source_property_name": "(('%.' + $block_skip + 's') * #rem_after_header)",
+				"target_property_name": "#pre_block"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_header - #pre_block)",
+				"target_property_name": "#at_block"
+			},
+			{
+				/* x @ 83 -> anchored offset x (× $normalize) */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_block)",
+				"target_property_name": "#pre_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#at_block - #pre_x)",
+				"target_property_name": "#at_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_x)",
+				"target_property_name": "#raw_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_x) - ('%.2s' * #raw_x) - ';') * $normalize)",
+				"target_property_name": "#anchored_offset_value_x"
+			},
+			{
+				/* y @ 166 -> anchored offset y (× $normalize_y) */
+				"binding_type": "view",
+				"source_property_name": "('%.166s' * #at_block)",
+				"target_property_name": "#pre_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#at_block - #pre_y)",
+				"target_property_name": "#at_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_y)",
+				"target_property_name": "#raw_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_y) - ('%.2s' * #raw_y) - ';') * $normalize_y)",
+				"target_property_name": "#anchored_offset_value_y"
+			},
+			{
+				/* width @ 249 -> size_binding x (× $normalize) */
+				"binding_type": "view",
+				"source_property_name": "('%.249s' * #at_block)",
+				"target_property_name": "#pre_w"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#at_block - #pre_w)",
+				"target_property_name": "#at_w"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_w)",
+				"target_property_name": "#raw_w"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_w) - ('%.2s' * #raw_w) - ';') * $normalize)",
+				"target_property_name": "#size_binding_x"
+			},
+			{
+				/* height @ 332 -> size_binding y (× $normalize_y) */
+				"binding_type": "view",
+				"source_property_name": "('%.332s' * #at_block)",
+				"target_property_name": "#pre_h"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#at_block - #pre_h)",
+				"target_property_name": "#at_h"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_h)",
+				"target_property_name": "#raw_h"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_h) - ('%.2s' * #raw_h) - ';') * $normalize_y)",
+				"target_property_name": "#size_binding_y"
+			}
+		],
+		"controls": [
+			{
+				"scrolling_view_port": {
+					"type": "panel",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"clips_children": true,
+					"controls": [
+						{
+							"size_anchor": {
+								"type": "panel",
+								"size": [
+									1,
+									1
+								],
+								"anchor_from": "top_left",
+								"anchor_to": "top_left",
+								"controls": [
+									{
+										"scrolling_content@core_ui_screens.pooled_scroll_content": {
+											"anchor_from": "top_left",
+											"anchor_to": "top_left",
+											"$block_skip": "$block_skip",
+											"$factory_ids": "$factory_ids"
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"bar_and_track@core_ui_screens.scrollbar": {}
+			}
+		]
+	},
+
+	// ── Generic pooled scroll CONTENT: width @ 249, extent @ 415 (relative to block) ───
+	// Lives in the [1,1] size_anchor, so #size_binding maps 1:1 to pixels (× 1, no normalize).
+	"pooled_scroll_content": {
+		"type": "panel",
+		/* Width is the LITERAL 328 (same as the main scroll_content) so the collection's -50%
+		   X-centering resolves correctly; the narrower viewport just clips it. Only the height
+		   (content extent) is data-driven, exactly like the main scroll. */
+		"size": [
+			"328px",
+			0
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"$block_skip|default": 581,
+		/* The factory's control_ids cannot forward $region_filter to the controls it
+		   instantiates, so the per-region router refs are passed in WHOLE as $factory_ids
+		   (vanilla pattern). Default = region 0 (the base routers). */
+		"$factory_ids|default": {
+			"button": "@core_ui_common.button_router",
+			"label": "@core_ui_common.label_router",
+			"header": "@core_ui_common.unused",
+			"divider": "@core_ui_common.unused"
+		},
+		"property_bag": {
+			"#size_binding_y": 0.0
+		},
+		"bindings": [
+			{
+				"binding_name": "#title_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.9s' * #title_text)",
+				"target_property_name": "#protocol_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#title_text - #protocol_header)",
+				"target_property_name": "#rem_after_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.' + $block_skip + 's') * #rem_after_header)",
+				"target_property_name": "#pre_block"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_header - #pre_block)",
+				"target_property_name": "#at_block"
+			},
+			{
+				/* extent @ 415 -> content height (scrollable length) */
+				"binding_type": "view",
+				"source_property_name": "('%.415s' * #at_block)",
+				"target_property_name": "#pre_e"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#at_block - #pre_e)",
+				"target_property_name": "#at_e"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_e)",
+				"target_property_name": "#raw_e"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_e) - ('%.2s' * #raw_e) - ';') * 1)",
+				"target_property_name": "#size_binding_y"
+			}
+		],
+		"controls": [
+			{
+				"buttons_collection": {
+					"type": "collection_panel",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"offset": [
+						"-50%",
+						"-50%"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"factory": {
+						"name": "buttons",
+						"control_ids": "$factory_ids"
+					},
+					"collection_name": "form_buttons",
+					"bindings": [
+						{
+							"binding_name": "#form_button_contents",
+							"binding_name_override": "#collection_length"
+						}
+					]
+				}
+			}
+		]
+	}
+}

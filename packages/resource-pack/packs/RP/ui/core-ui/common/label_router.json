@@ -1,6 +1,10 @@
 {
 	// Routes label-type factory entries to the appropriate client component.
 	// Parallel to button_router which handles button-type entries.
+	//
+	// Region filtering: see button_router. A single parameterized router serves every
+	// region; $region_filter is set by the region's collection_panel and forwarded to
+	// each component via a direct @ref. Region 0 is the default.
 	"namespace": "core_ui_common",
 	"label_router": {
 		"type": "panel",
@@ -9,16 +13,38 @@
 			1,
 			1
 		],
+		"$region_filter|default": 0,
 		"controls": [
 			{
-				"panel@core_ui_components.panel": {}
+				"panel@core_ui_components.panel": {
+					"$region_filter": "$region_filter"
+				}
 			},
 			{
-				"text@core_ui_components.text": {}
+				"text@core_ui_components.text": {
+					"$region_filter": "$region_filter"
+				}
 			},
 			{
-				"image@core_ui_components.image": {}
+				"image@core_ui_components.image": {
+					"$region_filter": "$region_filter"
+				}
 			}
 		]
+	},
+	// Per-region router variants (see button_router for the rationale): a factory's
+	// control_ids cannot forward $region_filter, so each pooled scroll points its factory
+	// at the variant matching its scroll index. Append label_router_r5… to grow the pool.
+	"label_router_r1@label_router": {
+		"$region_filter": 1
+	},
+	"label_router_r2@label_router": {
+		"$region_filter": 2
+	},
+	"label_router_r3@label_router": {
+		"$region_filter": 3
+	},
+	"label_router_r4@label_router": {
+		"$region_filter": 4
 	}
 }

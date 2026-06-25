@@ -1,7 +1,6 @@
 import type { Player } from '@minecraft/server';
 import { uiManager } from '@minecraft/server-ui';
 import type { JSX } from '../../jsx';
-import { DEFAULT_SCREEN, type ScreenDescriptor } from '../../screens';
 import { Logger, stopInputLock } from '../../util';
 import { getFibersForPlayer } from '../fabric';
 import { cleanupComponentTree } from './tree';
@@ -15,7 +14,6 @@ interface SessionState {
   runBuild?: () => void;
   pending: boolean;
   suppress: boolean;
-  screen: ScreenDescriptor;
 }
 
 const sessions = new Map<string, SessionState>();
@@ -25,7 +23,7 @@ function getOrCreate(player: Player): SessionState {
   let session = sessions.get(id);
 
   if (!session) {
-    session = { pending: false, suppress: false, screen: DEFAULT_SCREEN };
+    session = { pending: false, suppress: false };
 
     sessions.set(id, session);
   }
@@ -60,15 +58,6 @@ export function clearPlayerRoot(player: Player): void {
   session.runBuild = undefined;
   session.pending = false;
   session.suppress = false;
-  session.screen = DEFAULT_SCREEN;
-}
-
-export function setPlayerScreen(player: Player, screen: ScreenDescriptor): void {
-  getOrCreate(player).screen = screen;
-}
-
-export function getPlayerScreen(player: Player): ScreenDescriptor {
-  return sessions.get(player.id)?.screen ?? DEFAULT_SCREEN;
 }
 
 /**

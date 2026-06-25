@@ -18,6 +18,7 @@ export { Input, type InputProps } from './Input';
 export { Slider, type SliderProps } from './Slider';
 export { ItemRenderer, itemRendererWriter, type ItemRendererProps } from './ItemRenderer';
 export { Panel, panelWriter, type PanelProps } from './Panel';
+export { Scroll, SCROLL_SLOT_TYPE, MAX_SCROLLS, type ScrollAxis, type ScrollProps } from './Scroll';
 export { Text, textWriter, type TextFont, type TextOverflow, type TextProps, type TextStyle, type TextWordBreak } from './Text';
 
 import { registerComponent } from '../core/componentRegistry';
@@ -25,6 +26,7 @@ import { buttonWriter } from './Button';
 import { imageWriter } from './Image';
 import { itemRendererWriter } from './ItemRenderer';
 import { panelWriter } from './Panel';
+import { SCROLL_SLOT_TYPE } from './Scroll';
 import { textWriter } from './Text';
 
 let registered = false;
@@ -49,4 +51,7 @@ export function registerNativeComponents(): void {
   registerComponent('item_renderer', { writer: itemRendererWriter });
   registerComponent('fragment', { transparent: true });
   registerComponent('context-provider', { transparent: true });
+  // Scroll wrapper: emits no payload; the layout pass treats each as an independent
+  // layout root (its own viewport) and tags its descendants with its scroll index.
+  registerComponent(SCROLL_SLOT_TYPE, { transparent: true });
 }

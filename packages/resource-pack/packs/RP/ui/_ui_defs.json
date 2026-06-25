@@ -12,8 +12,11 @@
 		// After the initial reserved bytes for the common, rest of bytes 
 		// after 1024 for its own use and 
 		// available in #serialized_data binding
-		// Screens
-		"ui/core-ui/screens/scroll_screen.json",
+		// Main scroll (index 0): wraps region-0 content; the only scroll on single-scroll screens.
+		"ui/core-ui/screens/scroll.json",
+		// Generic scroll pool: scroll_1..N of one parameterized control (data-driven geometry),
+		// mounted as a sibling of the main scroll for multi-scroll screens.
+		"ui/core-ui/screens/scroll_pool.json",
 		// Components 
 		"ui/core-ui/components/button.json",
 		"ui/core-ui/components/panel.json",

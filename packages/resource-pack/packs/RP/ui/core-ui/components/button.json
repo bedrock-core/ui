@@ -24,6 +24,7 @@
 		"visible": "#visible",
 		"enabled": "#enabled",
 		"$normalize": 1.0,
+		"$region_filter|default": 0,
 		"bindings": [
 			{
 				"binding_type": "collection_details",
@@ -160,7 +161,7 @@
 			{
 				"binding_type": "view",
 				"source_property_name": "(#pre_visible and (#type = 'button'))",
-				"target_property_name": "#visible"
+				"target_property_name": "#visible_pre_region"
 			},
 			{
 				/* --- background (string, 83 bytes) - field 7 [440-522] --- */
@@ -179,14 +180,30 @@
 				"target_property_name": "#background"
 			},
 			{
-				/* --- skip $reserved (501 bytes) - field 8 [523-1023] --- */
+				/* --- region (number, 83 bytes) - field 8 [523-605] --- */
 				"binding_type": "view",
-				"source_property_name": "('%.501s' * #rem_after_background)",
+				"source_property_name": "('%.83s' * #rem_after_background)",
+				"target_property_name": "#raw_region"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_background - #raw_region)",
+				"target_property_name": "#rem_after_region"
+			},
+			{
+				"binding_type": "view", // ((full_width - marker) - prefix (n:) - padding (;)) * 1 to coerce to number
+				"source_property_name": "((('%.82s' * #raw_region) - ('%.2s' * #raw_region) - ';') * 1)",
+				"target_property_name": "#region"
+			},
+			{
+				/* --- skip $reserved (418 bytes) - field 9 [606-1023] --- */
+				"binding_type": "view",
+				"source_property_name": "('%.418s' * #rem_after_region)",
 				"target_property_name": "#raw_reserved"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(#rem_after_background - #raw_reserved)",
+				"source_property_name": "(#rem_after_region - #raw_reserved)",
 				"target_property_name": "#rem_after_reserved"
 			},
 			{
@@ -236,6 +253,12 @@
 				"binding_type": "view",
 				"source_property_name": "(not (#background = ''))",
 				"target_property_name": "#bg_visible"
+			},
+			{
+				/* Gate on the active scroll region: $region_filter is substituted per scroll instance */
+				"binding_type": "view",
+				"source_property_name": "(#visible_pre_region and (#region = $region_filter))",
+				"target_property_name": "#visible"
 			}
 		],
 		// === Base button functionality (from vanilla_button) ===

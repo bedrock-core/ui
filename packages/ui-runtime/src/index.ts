@@ -6,6 +6,7 @@ export {
   Input,
   ItemRenderer,
   Panel,
+  Scroll,
   Slider,
   Text,
   withControl,
@@ -31,6 +32,7 @@ export type {
   ModalFieldProps,
   PanelProps,
   Position,
+  ScrollProps,
   SliderProps,
   Spacing,
   TextFont,
@@ -48,13 +50,8 @@ export {
   usePlayer,
   useReducer,
   useRef,
-  useScreen,
-  useSetScreen,
   useState,
 } from './hooks';
-
-export { Screen } from './screens';
-export type { ScreenDescriptor, ScreenType } from './screens';
 
 export {
   createContext,
@@ -70,6 +67,7 @@ export type {
   Context,
   ContextProps,
   ItemAuxError,
+  ScrollLimitError,
   SerializationError,
   TranslationKeysError,
   Writer,

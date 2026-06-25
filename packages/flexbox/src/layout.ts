@@ -290,8 +290,8 @@ function applyCrossAlign(
  */
 export function computeLayout(
   root: LayoutNode,
-  refWidth = CANONICAL_SCREEN.width,
-  refHeight = CANONICAL_SCREEN.height,
+  refWidth: number = CANONICAL_SCREEN.width,
+  refHeight: number = CANONICAL_SCREEN.height,
 ): void {
   // ── Root initialisation ─────────────────────────────────────────────────────
   const explicitRootWidth = resolveSize(root.style.width, refWidth);

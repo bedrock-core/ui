@@ -38,6 +38,7 @@ export type {
   SerializationError,
   TranslationKeysError,
   ItemAuxError,
+  ScrollLimitError,
   Writer,
 } from './types';
 

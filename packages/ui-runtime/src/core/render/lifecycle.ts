@@ -1,16 +1,14 @@
 import type { Player } from '@minecraft/server';
 import { registerNativeComponents } from '../../components';
 import type { FunctionComponent, JSX } from '../../jsx';
-import { DEFAULT_SCREEN, type ScreenDescriptor } from '../../screens';
 import { Logger, startInputLock } from '../../util';
 import { present } from './presenter';
-import { setBuildRunner, setPlayerRoot, setPlayerScreen, triggerCleanup } from './session';
+import { setBuildRunner, setPlayerRoot, triggerCleanup } from './session';
 import { buildTree } from './tree';
 
 export function render(
   root: JSX.Element | FunctionComponent,
   player: Player,
-  screen: ScreenDescriptor = DEFAULT_SCREEN,
 ): void {
   // Ensure the built-in native components are registered before the first build/
   // serialize. Idempotent — safe to call on every render.
@@ -24,17 +22,12 @@ export function render(
   // Register this player's session root and a background build runner
   setPlayerRoot(player, rootElement);
   setBuildRunner(player, () => {
-    // Re-assert the render baseline screen before each build.
-    setPlayerScreen(player, screen);
     buildTree(rootElement, player);
   });
 
   // Helper to build and present once
   const presentOnce = (): void => {
     let tree: JSX.Element;
-
-    // Re-assert the render baseline screen before each build.
-    setPlayerScreen(player, screen);
 
     try {
       tree = buildTree(rootElement, player);
