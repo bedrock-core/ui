@@ -59,6 +59,10 @@ Custom JSX-driven UI system for Minecraft Bedrock. Components serialize into com
 - ✅ Ore-Styled form fields in `@bedrock-core/ore-styled`: `Input`, `Dropdown`, `Slider`
 - ✅ Scroll fixes — corrected scroll sizing and removed the fixed screen layout
 
+### ✅ Beta 0.8.0 - Multi-Scroll & Layout Polish
+
+- ✅ `<Scroll>` component — declare up to 4 independent scroll regions per render (pool protocol v0007)
+
 ### 🚧 Beta 0.X.0 - Forms (Planned)
 
 - Form submission and validation helpers
