@@ -39,21 +39,23 @@ export function TripleScrollDemo(): JSX.Element {
   const exit = useExit();
 
   return (
-    <Panel flexDirection={'column'} width={'100%'} height={'100%'} gap={4}>
-      <Panel flexDirection={'row'} width={'100%'} flexGrow={1} gap={4}>
+    <Panel flexDirection={'column'} width={'100%'} height={'100%'}>
+      <Panel flexDirection={'row'} width={'100%'} flexGrow={1}>
         <Scroll><Column col={0} /></Scroll>
         <Scroll><Column col={1} /></Scroll>
       </Panel>
 
-      <Panel flexDirection={'row'} width={'100%'} flexGrow={1} gap={4}>
-        <Scroll><Column col={2} onClose={exit} /></Scroll>
+      <Panel flexDirection={'row'} width={'100%'} flexGrow={1}>
+        <Scroll>
+          <Column col={2} onClose={exit} />
+        </Scroll>
         <Panel
-          flexGrow={1}
+          flex={1}
           alignItems={'center'}
           justifyContent={'center'}
           background={'textures/ui/recipe_book_group_expanded'}
         >
-          <Image texture={'textures/ui/recipe_book_group_collapsed'} width={48} height={48} />
+          <Image texture={'textures/ui/recipe_book_group_collapsed'} />
         </Panel>
       </Panel>
     </Panel>

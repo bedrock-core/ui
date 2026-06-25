@@ -11,7 +11,8 @@
 	// Each pooled scroll decodes its FULL viewport geometry (x, y, width, height) from its own
 	// title block and applies it via #size_binding (size) + use_anchored_offset (position):
 	// decoded pixels × $normalize (1/320 x/width) / $normalize_y (1/210 y/height) → fraction of
-	// the 328×full-height pool panel. Content sizing stays in the [1,1] size_anchor
+	// the FIXED 328×210 canonical pool panel (must equal the layout's CANONICAL_SCREEN so a
+	// fraction maps back to the exact canonical px). Content sizing stays in the [1,1] size_anchor
 	// (#size_binding × 1, pixel-exact). A scroll whose block is absent decodes to 0 → collapses.
 	//
 	// The only per-instance values are $block_skip (a NUMBER = where this scroll's block
@@ -25,7 +26,11 @@
 	// $factory_ids: { button: @…button_router_r5, … } } (+ button/label_router_r5) to grow.
 	// ─────────────────────────────────────────────────────────────────────────────
 	"namespace": "core_ui_screens",
-	"scroll_pool": {
+	/* Flat region-0 generator for pool mode. Renders all region-0 items (panels, images, text,
+	   buttons not wrapped in <Scroll>) at their absolute pixel positions, using the same
+	   buttons_collection factory as scroll_content but without a scroll_view wrapper. Sized
+	   328px × 100% to match the pool panel so item coordinates are consistent. */
+	"pool_content": {
 		"type": "panel",
 		"size": [
 			"328px",
@@ -33,9 +38,64 @@
 		],
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
-		/* Present ONLY when there are ≥2 scrolls (block 1 exists). On a normal single-scroll
-		   screen the whole pool is absent, so its (otherwise input-listening) scroll_views
-		   can't intercept the root scroll's scrolling/pointer. */
+		"controls": [
+			{
+				"buttons_collection": {
+					"type": "collection_panel",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"offset": [
+						"-50%",
+						"-50%"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"factory": {
+						"name": "buttons",
+						"control_ids": {
+							"button": "@core_ui_common.button_router",
+							"label": "@core_ui_common.label_router",
+							"header": "@core_ui_common.unused",
+							"divider": "@core_ui_common.unused"
+						}
+					},
+					"collection_name": "form_buttons",
+					"bindings": [
+						{
+							"binding_name": "#form_button_contents",
+							"binding_name_override": "#collection_length"
+						}
+					]
+				}
+			}
+		]
+	},
+
+	"scroll_pool": {
+		"type": "panel",
+		/* FIXED canonical 328×210 box — NOT 100% height. The layout pass works in a 320×210
+		   canonical space and the title carries px in that space. Region-0 content and scroll
+		   content render in raw pixels (the [1,1] size_anchor), but a pooled scroll's viewport
+		   geometry is applied as a FRACTION of this panel (px × $normalize_y, 1/210). Only when
+		   the panel is exactly 210px tall do the two frames coincide: fraction×210px = canonical
+		   px. A "100%" (screen-height) panel stretched viewports by screenHeight/210 while pixel
+		   content stayed put → vertical drift (header gap, triple-scroll region-0 offset). */
+		"size": [
+			"328px",
+			"210px"
+		],
+		/* centre the fixed-height box vertically (screen_container already centres it in x) */
+		"offset": [
+			0,
+			"50% - 105px"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		/* Present ONLY when there are ≥1 custom scrolls (block 1 exists). On a no-<Scroll>
+		   screen the whole pool is absent so its scroll_views can't intercept the root scroll.
+		   When active, pool_content renders region-0 items and scroll_1..N overlay on top. */
 		"property_bag": {
 			"#axis1": ""
 		},
@@ -82,6 +142,10 @@
 			}
 		],
 		"controls": [
+			{
+				/* Region-0 generator: renders all non-scroll content as a flat background layer */
+				"pool_content@core_ui_screens.pool_content": {}
+			},
 			{
 				"scroll_1@core_ui_screens.pooled_scroll": {
 					"$block_skip": 581,

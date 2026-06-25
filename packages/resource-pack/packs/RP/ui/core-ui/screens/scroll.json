@@ -25,8 +25,56 @@
 		],
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
-		/* Root scroll (index 0): ALWAYS present. Renders the region-0 elements (everything not
-		   inside a <Scroll>); the pooled scrolls (scroll_1..N) overlay it as nested regions. */
+		/* Root scroll (index 0): present ONLY in single-scroll mode (no custom <Scroll>s).
+		   When pool mode is active (≥1 custom scroll → block 1 present → #axis1 not empty),
+		   this scroll_view is hidden; the scroll_pool's pool_content takes over region-0 rendering
+		   at full 328px × 100% size with no offset, matching the pool's coordinate space. */
+		"visible": "#not_pool_mode",
+		"property_bag": {
+			"#axis1": ""
+		},
+		"bindings": [
+			{
+				"binding_name": "#title_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.9s' * #title_text)",
+				"target_property_name": "#protocol_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#title_text - #protocol_header)",
+				"target_property_name": "#rem_after_header"
+			},
+			{
+				/* block 1 axis at offset 581 — present when there are ≥1 custom scrolls */
+				"binding_type": "view",
+				"source_property_name": "('%.581s' * #rem_after_header)",
+				"target_property_name": "#pre_axis1"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_header - #pre_axis1)",
+				"target_property_name": "#at_axis1"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_axis1)",
+				"target_property_name": "#raw_axis1"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_axis1) - ('%.2s' * #raw_axis1) - ';')",
+				"target_property_name": "#axis1"
+			},
+			{
+				/* hidden in pool mode (axis1 not empty = custom scrolls present) */
+				"binding_type": "view",
+				"source_property_name": "(#axis1 = '')",
+				"target_property_name": "#not_pool_mode"
+			}
+		],
 		"scroll_speed": 15,
 		"scrollbar_track_button": "button.scrollbar_skip_track",
 		"scrollbar_touch_button": "button.scrollbar_touch",
@@ -93,8 +141,18 @@
 		],
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
+		/* Gate the region-0 content on THIS inner panel — the verified analog of
+		   scroll_pool.pool_content. A plain panel directly wrapping the collection honors visible
+		   and propagates it to the collection (proven: scroll_pool→pool_content→collection hides
+		   in single mode). Gating ABOVE the scroll_view (its own visible, or a wrapper panel) does
+		   NOT reach the collection — the scroll_view renders its content regardless (binary search
+		   confirmed scroll_root as the duplicate source). #title_text is already proven to evaluate
+		   here (the extent binding below reads it). Hidden in pool mode → pool_content owns region 0. */
+		"visible": "#visible",
 		"property_bag": {
-			"#size_binding_y": 0.0
+			"#size_binding_y": 0.0,
+			"#axis1": "",
+			"#visible": true
 		},
 		"bindings": [
 			{
@@ -129,9 +187,112 @@
 				"binding_type": "view",
 				"source_property_name": "((('%.82s' * #raw_extent) - ('%.2s' * #raw_extent) - ';') * 1)",
 				"target_property_name": "#size_binding_y"
+			},
+			{
+				/* block 1 axis @ 581 — present when there are ≥1 custom scrolls (pool mode) */
+				"binding_type": "view",
+				"source_property_name": "('%.581s' * #rem_after_header)",
+				"target_property_name": "#pre_axis1"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_header - #pre_axis1)",
+				"target_property_name": "#at_axis1"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_axis1)",
+				"target_property_name": "#raw_axis1"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_axis1) - ('%.2s' * #raw_axis1) - ';')",
+				"target_property_name": "#axis1"
+			},
+			{
+				/* single mode → visible; pool mode (axis1 not empty) → hidden. Uses the
+				   conventional #visible property name that every component binds its visibility to. */
+				"binding_type": "view",
+				"source_property_name": "(#axis1 = '')",
+				"target_property_name": "#visible"
 			}
 		],
 		"controls": [
+			{
+				/* DEBUG: prints the decoded axis1 (mode flag) at the top of the region-0 content.
+				   Shows only while scroll_content is visible — if you see the duplicated header but
+				   NOT this label, the collection is rendering despite its parent being hidden. */
+				"debug_axis_label": {
+					"type": "label",
+					"size": [
+						"100%",
+						"default"
+					],
+					"offset": [
+						0,
+						0
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"layer": 100,
+					"color": [
+						1,
+						0,
+						0
+					],
+					"text": "#dbg_text",
+					"property_bag": {
+						"#axis1": "",
+						"#dbg_text": ""
+					},
+					"bindings": [
+						{
+							"binding_name": "#title_text"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.9s' * #title_text)",
+							"target_property_name": "#protocol_header"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#title_text - #protocol_header)",
+							"target_property_name": "#rem_after_header"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.581s' * #rem_after_header)",
+							"target_property_name": "#pre_axis1"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#rem_after_header - #pre_axis1)",
+							"target_property_name": "#at_axis1"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #at_axis1)",
+							"target_property_name": "#raw_axis1"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_axis1) - ('%.2s' * #raw_axis1) - ';')",
+							"target_property_name": "#axis1"
+						},
+						{
+							/* mirror the gate: single mode → 'VIS1' (panel shown), pool mode → 'VIS0' (should hide) */
+							"binding_type": "view",
+							"source_property_name": "(((#axis1 = '') and 'VIS1') or 'VIS0')",
+							"target_property_name": "#vis_str"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('AX1=[' + #axis1 + '] ' + #vis_str)",
+							"target_property_name": "#dbg_text"
+						}
+					]
+				}
+			},
 			{
 				"buttons_collection": {
 					"type": "collection_panel",

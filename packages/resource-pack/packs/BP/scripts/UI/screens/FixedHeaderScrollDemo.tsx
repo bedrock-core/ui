@@ -18,20 +18,18 @@ export function FixedHeaderScrollDemo(): JSX.Element {
   const exit = useExit();
 
   return (
-    <Panel flexDirection={'column'} width={'100%'} height={'100%'} gap={4}>
-      <Scroll height={30}>
-        <Panel
-          flexDirection={'row'}
-          justifyContent={'space-between'}
-          alignItems={'center'}
-          padding={6}
-          background={'textures/ui/recipe_book_group_expanded'}
-        >
-          <Text font={'minecraftTen'}>{'§dFixed Header'}</Text>
-          <Button variant={'secondary'} onPress={exit}>{'§7Close'}</Button>
-        </Panel>
-      </Scroll>
-
+    <Panel flexDirection={'column'} width={'100%'} height={'100%'}>
+      <Panel
+        height={30}
+        flexDirection={'row'}
+        justifyContent={'space-between'}
+        alignItems={'center'}
+        padding={6}
+        background={'textures/ui/recipe_book_group_expanded'}
+      >
+        <Text font={'minecraftTen'}>{'§dFixed Header'}</Text>
+        <Button variant={'secondary'} onPress={exit}>{'§7Close'}</Button>
+      </Panel>
       <Scroll>
         <Panel flexDirection={'column'} gap={4} padding={6} background={'textures/ui/recipe_book_group_expanded'}>
           {Array.from({ length: 30 }, (_, i) => (

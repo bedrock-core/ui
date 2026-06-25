@@ -22,8 +22,8 @@ export function DualScrollDemo(): JSX.Element {
   const right = Array.from({ length: 30 }, (_, i) => `§bRight ${String(i + 1)}`);
 
   return (
-    <Panel flexDirection={'row'} width={'100%'} height={'100%'} gap={4}>
-      <Scroll>
+    <Panel flexDirection={'row'} width={'100%'} height={'100%'}>
+      <Scroll width={'30%'}>
         <Panel flexDirection={'column'} gap={4} padding={6} background={'textures/ui/recipe_book_group_expanded'}>
           {[
             <Panel flexDirection={'row'} justifyContent={'space-between'} alignItems={'center'}>
