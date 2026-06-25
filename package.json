@@ -1,6 +1,6 @@
 {
   "name": "@bedrock-core/ui",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "Customizable UI system for Minecraft Bedrock server forms cross-addon compatible.",
   "keywords": [
     "ui",
@@ -71,10 +71,10 @@
     "coverage": "yarn workspaces foreach -ptA run coverage"
   },
   "dependencies": {
-    "@bedrock-core/flexbox": "^0.8.1",
-    "@bedrock-core/navigation": "^0.8.1",
-    "@bedrock-core/ore-styled": "^0.8.1",
-    "@bedrock-core/ui-runtime": "^0.8.1"
+    "@bedrock-core/flexbox": "^0.8.2",
+    "@bedrock-core/navigation": "^0.8.2",
+    "@bedrock-core/ore-styled": "^0.8.2",
+    "@bedrock-core/ui-runtime": "^0.8.2"
   },
   "devDependencies": {
     "@eslint/css": "^1.2.0",
