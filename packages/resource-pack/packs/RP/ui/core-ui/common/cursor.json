@@ -1,0 +1,46 @@
+{
+	"namespace": "core_ui_cursor",
+
+	// Visual cursor image — follows the physical cursor/pointer position.
+	// #gamepad_cursor_visible is a global engine binding; true when the gamepad
+	// cursor is active (analog stick moved, touch not in use).
+	"gamepad_cursor_image": {
+		"type": "image",
+		"texture": "textures/ui/pointer",
+		"size": [ 14, 14 ],
+		"layer": 60,
+		"follows_cursor": true,
+		"bindings": [
+			{
+				"binding_name": "#gamepad_cursor_visible",
+				"binding_name_override": "#visible",
+				"binding_condition": "always"
+			}
+		]
+	},
+
+	// Invisible interaction shell that carries the cursor images and tracks
+	// pointer position. Mirrors vanilla's common.gamepad_cursor_button pattern:
+	// the button itself is not drawn (visible: false) so it doesn't occlude
+	// clicks; the state controls (default/hover/pressed) each hold the image,
+	// and the image's own #gamepad_cursor_visible binding gates rendering.
+	"gamepad_cursor_button": {
+		"type": "button",
+		"visible": false,
+		"anchor_from": "center",
+		"anchor_to": "center",
+		"locked_control": "",
+		"default_control": "default",
+		"hover_control": "hover",
+		"pressed_control": "pressed",
+		"layer": -10,
+		"size": [ 16, 16 ],
+		"follows_cursor": true,
+		"always_handle_pointer": true,
+		"controls": [
+			{ "default@core_ui_cursor.gamepad_cursor_image": {} },
+			{ "pressed@core_ui_cursor.gamepad_cursor_image": {} },
+			{ "hover@core_ui_cursor.gamepad_cursor_image": {} }
+		]
+	}
+}

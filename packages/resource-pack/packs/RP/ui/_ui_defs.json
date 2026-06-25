@@ -8,6 +8,7 @@
 		"ui/core-ui/common/screen_container.json",
 		"ui/core-ui/common/label_router.json",
 		"ui/core-ui/common/button_router.json",
+		"ui/core-ui/common/cursor.json",
 		// -----------------------------------------------
 		// After the initial reserved bytes for the common, rest of bytes 
 		// after 1024 for its own use and 

@@ -4,7 +4,11 @@
 		"$screen_animations": [
 			"@core_ui_animations.screen_enter_animation",
 			"@core_ui_animations.screen_exit_animation"
-		]
+		],
+		// Enable the engine's gamepad virtual-cursor system so the analog stick
+		// moves a cursor, #gamepad_cursor_visible fires, and scroll views under
+		// the cursor receive pointer/scroll events.
+		"gamepad_cursor": true
 	},
 	"long_form": {
 		"$protocol_header": "bcuiv0007",
@@ -50,6 +54,9 @@
 								}
 							}
 						}
+					},
+					{
+						"gamepad_cursor@core_ui_cursor.gamepad_cursor_button": {}
 					}
 				]
 			},
