@@ -1,6 +1,6 @@
 {
   "name": "@bedrock-core/navigation",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "@bedrock-core/ui navigation system",
   "keywords": [
     "ui",
@@ -38,7 +38,7 @@
     "lint": "eslint ."
   },
   "devDependencies": {
-    "@bedrock-core/ui-runtime": "^0.7.0",
+    "@bedrock-core/ui-runtime": "^0.8.0",
     "typescript": "^6.0.3"
   },
   "peerDependencies": {
