@@ -25,13 +25,15 @@
 		],
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
-		/* Root scroll (index 0): present ONLY in single-scroll mode (no custom <Scroll>s).
-		   When pool mode is active (≥1 custom scroll → block 1 present → #axis1 not empty),
-		   this scroll_view is hidden; the scroll_pool's pool_content takes over region-0 rendering
-		   at full 328px × 100% size with no offset, matching the pool's coordinate space. */
-		"visible": "#not_pool_mode",
+		/* Root scroll (index 0): present ONLY in single-scroll mode (no custom <Scroll>s). In pool
+		   mode (≥1 custom scroll → block 1 present → #axis1 not empty) this hides and scroll_pool's
+		   pool_content owns region-0 rendering. NOTE: the `visible` field only honors a binding to
+		   the property literally named `#visible` — a custom name (e.g. #not_pool_mode) is silently
+		   ignored, which is why scroll_pool (uses #visible) worked but this didn't until renamed. */
+		"visible": "#visible",
 		"property_bag": {
-			"#axis1": ""
+			"#axis1": "",
+			"#visible": true
 		},
 		"bindings": [
 			{
@@ -69,10 +71,10 @@
 				"target_property_name": "#axis1"
 			},
 			{
-				/* hidden in pool mode (axis1 not empty = custom scrolls present) */
+				/* visible only in single mode (axis1 empty = no custom scrolls) */
 				"binding_type": "view",
 				"source_property_name": "(#axis1 = '')",
-				"target_property_name": "#not_pool_mode"
+				"target_property_name": "#visible"
 			}
 		],
 		"scroll_speed": 15,
@@ -141,13 +143,11 @@
 		],
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
-		/* Gate the region-0 content on THIS inner panel — the verified analog of
-		   scroll_pool.pool_content. A plain panel directly wrapping the collection honors visible
-		   and propagates it to the collection (proven: scroll_pool→pool_content→collection hides
-		   in single mode). Gating ABOVE the scroll_view (its own visible, or a wrapper panel) does
-		   NOT reach the collection — the scroll_view renders its content regardless (binary search
-		   confirmed scroll_root as the duplicate source). #title_text is already proven to evaluate
-		   here (the extent binding below reads it). Hidden in pool mode → pool_content owns region 0. */
+		/* In single mode this collection renders region-0; in pool mode scroll_pool.pool_content
+		   does, so hide it here to avoid a duplicate. The gate MUST bind the property literally
+		   named `#visible` — the `visible` field ignores any other name (the earlier #not_pool_mode
+		   bound nothing, so this never hid → the "duplicated header"). The parent scroll_view's gate
+		   also hides this, but gating here too is harmless and keeps the rule obvious. */
 		"visible": "#visible",
 		"property_bag": {
 			"#size_binding_y": 0.0,
@@ -218,81 +218,6 @@
 			}
 		],
 		"controls": [
-			{
-				/* DEBUG: prints the decoded axis1 (mode flag) at the top of the region-0 content.
-				   Shows only while scroll_content is visible — if you see the duplicated header but
-				   NOT this label, the collection is rendering despite its parent being hidden. */
-				"debug_axis_label": {
-					"type": "label",
-					"size": [
-						"100%",
-						"default"
-					],
-					"offset": [
-						0,
-						0
-					],
-					"anchor_from": "top_left",
-					"anchor_to": "top_left",
-					"layer": 100,
-					"color": [
-						1,
-						0,
-						0
-					],
-					"text": "#dbg_text",
-					"property_bag": {
-						"#axis1": "",
-						"#dbg_text": ""
-					},
-					"bindings": [
-						{
-							"binding_name": "#title_text"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.9s' * #title_text)",
-							"target_property_name": "#protocol_header"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(#title_text - #protocol_header)",
-							"target_property_name": "#rem_after_header"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.581s' * #rem_after_header)",
-							"target_property_name": "#pre_axis1"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(#rem_after_header - #pre_axis1)",
-							"target_property_name": "#at_axis1"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.83s' * #at_axis1)",
-							"target_property_name": "#raw_axis1"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(('%.82s' * #raw_axis1) - ('%.2s' * #raw_axis1) - ';')",
-							"target_property_name": "#axis1"
-						},
-						{
-							/* mirror the gate: single mode → 'VIS1' (panel shown), pool mode → 'VIS0' (should hide) */
-							"binding_type": "view",
-							"source_property_name": "(((#axis1 = '') and 'VIS1') or 'VIS0')",
-							"target_property_name": "#vis_str"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('AX1=[' + #axis1 + '] ' + #vis_str)",
-							"target_property_name": "#dbg_text"
-						}
-					]
-				}
-			},
 			{
 				"buttons_collection": {
 					"type": "collection_panel",
