@@ -27,6 +27,11 @@ export async function present(
   // is the root scroll). Fall back to a single full-screen vertical scroll if the tree
   // produced nothing usable, so the RP always receives at least the root scroll.
   const rawScrolls = tree.props.jsonUIScrolls;
+  const rawHeight = tree.props.jsonUIHeight;
+
+  delete (tree.props as Record<string, unknown>).jsonUIScrolls;
+  delete (tree.props as Record<string, unknown>).jsonUIHeight;
+
   const scrollsSource: ScrollMetrics[] = Array.isArray(rawScrolls) && rawScrolls.length > 0
     ? rawScrolls
     : [{
@@ -35,7 +40,7 @@ export async function present(
         y: 0,
         width: CANONICAL_SCREEN.width,
         height: CANONICAL_SCREEN.height,
-        extent: sane(tree.props.jsonUIHeight, CANONICAL_SCREEN.height),
+        extent: sane(rawHeight, CANONICAL_SCREEN.height),
       }];
 
   const scrolls: ScrollMetrics[] = scrollsSource.map(scroll => ({
