@@ -22,12 +22,12 @@
 				"button@core_ui_components.button": {
 					"$region_filter": "$region_filter"
 				}
+			},
+			{
+				"item_renderer@core_ui_components.item_renderer": {
+					"$region_filter": "$region_filter"
+				}
 			}
-			// {
-			// 	"item_renderer@core_ui_components.item_renderer": {
-			// 		"$region_filter": "$region_filter"
-			// 	}
-			// }
 		]
 	},
 	// Per-region router variants. A factory's control_ids cannot forward the

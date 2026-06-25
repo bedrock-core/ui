@@ -319,7 +319,7 @@ function scrollFlexStyle(slot: JSX.Element): FlexStyle {
 
   const positioned = style.position === 'absolute';
   const sized = style.width !== undefined || style.height !== undefined;
-  const grows = style.flexGrow !== undefined || style.flexBasis !== undefined;
+  const grows = style.flex !== undefined || style.flexGrow !== undefined || style.flexShrink !== undefined || style.flexBasis !== undefined;
 
   if (!positioned && !sized && !grows) {
     style.flexGrow = 1;
