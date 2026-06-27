@@ -8,7 +8,7 @@ export { RadioGroup, Radio } from './Radio';
 export type { RadioGroupProps, RadioProps } from './Radio';
 
 export { Card } from './Card';
-export type { CardProps } from './Card';
+export type { CardProps, CardVariant } from './Card';
 
 export { Toggle } from './Toggle';
 export type { ToggleProps } from './Toggle';

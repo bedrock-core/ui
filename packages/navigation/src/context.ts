@@ -28,16 +28,24 @@ export function NavigationContainer({
   initialState,
 }: {
   children: JSX.Node;
-  initialState?: NavigationState;
+  initialState?: Partial<NavigationState>;
 }): JSX.Element {
   const placeholder: NavigationContextValue = {
-    state: initialState ?? {
+    state: {
       type: 'stack',
       key: 'stack-placeholder',
       routeNames: [],
       routes: [],
       index: 0,
       stale: true,
+      ...(initialState != null
+        ? {
+            key: 'stack-initial',
+            routes: (initialState.routes ?? []).map(r => ({ key: r.name, name: r.name, params: r.params })),
+            index: initialState.index ?? Math.max(0, (initialState.routes ?? []).length - 1),
+            stale: false,
+          }
+        : {}),
     },
     dispatch: (): void => {},
     helpers: buildNoopHelpers(),

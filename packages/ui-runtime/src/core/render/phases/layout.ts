@@ -9,6 +9,9 @@ import { isElement } from '../../guards';
 import { ScrollLimitError } from '../../types';
 import { ellipsizeText, measureText, wrapText } from '../../../util/textMetrics';
 
+// Set to true to log every element's computed x/y/w/h after layout.
+const DEBUG_LAYOUT = false;
+
 // ─── Transparent element types that don't participate in layout ────────────────
 
 function isTransparent(el: JSX.Element): boolean {
@@ -401,6 +404,46 @@ function layoutScrollContent(slot: JSX.Element, axis: ScrollAxis, viewportWidth:
   return extent;
 }
 
+// ─── Debug dump ────────────────────────────────────────────────────────────────
+
+function dumpLayoutTree(element: JSX.Node, depth = 0): void {
+  if (!isElement(element)) {
+    return;
+  }
+
+  const p = element.props;
+  const indent = '  '.repeat(depth);
+  const type = typeof element.type === 'string' ? element.type : element.type.name;
+  const text = typeof p.value === 'string' ? ` "${p.value.slice(0, 20)}"` : '';
+
+  console.warn(`${indent}[${type}${text}] x=${p.jsonUIx} y=${p.jsonUIy} w=${p.jsonUIWidth} h=${p.jsonUIHeight}`);
+
+  const ch = p.children;
+
+  if (Array.isArray(ch)) {
+    ch.forEach((c: JSX.Node) => dumpLayoutTree(c, depth + 1));
+  } else if (isElement(ch)) {
+    dumpLayoutTree(ch, depth + 1);
+  }
+}
+
+function dumpLayoutNode(node: LayoutNode, depth = 0): void {
+  const indent = '  '.repeat(depth);
+  const s = node.style;
+  const styleHints = [
+    s.flexDirection ? `dir=${s.flexDirection}` : '',
+    s.wrap ? `wrap=${s.wrap}` : '',
+    s.width !== undefined ? `sw=${s.width}` : '',
+    s.height !== undefined ? `sh=${s.height}` : '',
+  ].filter(Boolean).join(' ');
+
+  console.warn(`${indent}node [${styleHints}] → x=${node.layout.x} y=${node.layout.y} w=${node.layout.width} h=${node.layout.height}`);
+
+  for (const child of node.children) {
+    dumpLayoutNode(child, depth + 1);
+  }
+}
+
 // ─── Phase 2 entry point ────────────────────────────────────────────────────────
 
 /**
@@ -436,6 +479,10 @@ export function computeLayout(tree: JSX.Element): JSX.Element {
   const root = buildNode(concreteTree, CANONICAL_SCREEN.width);
 
   flexComputeLayout(root);
+
+  if (DEBUG_LAYOUT) {
+    dumpLayoutNode(root);
+  }
 
   concreteTree.props.jsonUIx = root.layout.x;
   concreteTree.props.jsonUIy = root.layout.y;
@@ -484,6 +531,10 @@ export function computeLayout(tree: JSX.Element): JSX.Element {
 
   tree.props.jsonUIScrolls = scrolls;
   tree.props.jsonUIHeight = scrolls[0].height;
+
+  if (DEBUG_LAYOUT) {
+    dumpLayoutTree(tree);
+  }
 
   return tree;
 }

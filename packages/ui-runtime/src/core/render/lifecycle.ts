@@ -1,7 +1,7 @@
 import type { Player } from '@minecraft/server';
 import { registerNativeComponents } from '../../components';
 import type { FunctionComponent, JSX } from '../../jsx';
-import { Logger, startInputLock } from '../../util';
+import { startInputLock } from '../../util';
 import { present } from './presenter';
 import { setBuildRunner, setPlayerRoot, triggerCleanup } from './session';
 import { buildTree } from './tree';
@@ -32,7 +32,7 @@ export function render(
     try {
       tree = buildTree(rootElement, player);
     } catch (err: unknown) {
-      Logger.error(`[ui-runtime] buildTree error: ${String(err)}`);
+      console.error(`[ui-runtime] buildTree error: ${String(err)}`);
 
       return;
     }
@@ -49,7 +49,7 @@ export function render(
         }
       })
       .catch((err: unknown) => {
-        Logger.error(`[ui-runtime] present error: ${String(err)}`);
+        console.error(`[ui-runtime] present error: ${String(err)}`);
       });
   };
 

@@ -1,7 +1,7 @@
 import type { Player } from '@minecraft/server';
 import { uiManager } from '@minecraft/server-ui';
 import type { JSX } from '../../jsx';
-import { Logger, stopInputLock } from '../../util';
+import { stopInputLock } from '../../util';
 import { getFibersForPlayer } from '../fabric';
 import { cleanupComponentTree } from './tree';
 
@@ -115,7 +115,7 @@ export function scheduleLogicPass(player: Player): void {
       state.runBuild();
     } catch (err: unknown) {
       // Swallow errors to avoid destabilizing runtime during background passes.
-      Logger.warn(`[ui-runtime] background build error: ${String(err)}`);
+      console.warn(`[ui-runtime] background build error: ${String(err)}`);
     }
   });
 }

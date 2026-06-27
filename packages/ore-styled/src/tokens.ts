@@ -1,4 +1,6 @@
 import type { TextFont } from '@bedrock-core/ui-runtime';
+import { ButtonVariant } from './Button';
+import { CardVariant } from './Card';
 
 const BASE = 'textures/ui/ore-styled' as const;
 
@@ -9,9 +11,13 @@ export interface ButtonTextStyle {
   disabledColor: string;
 }
 
-export interface ButtonVariant {
+export interface ButtonDef {
   textures: { default: string; hover: string; pressed: string; disabled: string };
   textStyle: ButtonTextStyle;
+}
+
+export interface CardDef {
+  textures: { background: string };
 }
 
 export interface Theme {
@@ -22,12 +28,12 @@ export interface Theme {
   components: {
     button: {
       padding: { x: number; y: number };
-      variants: Record<'primary' | 'secondary' | 'contrast' | 'danger' | 'realm' | 'hero', ButtonVariant>;
+      variants: Record<ButtonVariant, ButtonDef>;
     };
     card: {
-      textures: { background: string };
       padding: number;
       gap: number;
+      variants: Record<CardVariant, CardDef>;
     };
     checkbox: {
       size: number;
@@ -130,12 +136,20 @@ const oreTheme: Theme = {
         danger: { textures: { default: `${BASE}/button/danger/background`, hover: `${BASE}/button/danger/background_hover`, pressed: `${BASE}/button/danger/background_pressed`, disabled: `${BASE}/button/disabled/background` }, textStyle: { font: 'mojangles', scale: 1, color: '§f', disabledColor: '§8' } },
         realm: { textures: { default: `${BASE}/button/realm/background`, hover: `${BASE}/button/realm/background_hover`, pressed: `${BASE}/button/realm/background_pressed`, disabled: `${BASE}/button/disabled/background` }, textStyle: { font: 'mojangles', scale: 1, color: '§f', disabledColor: '§8' } },
         hero: { textures: { default: `${BASE}/button/primary/background`, hover: `${BASE}/button/primary/background_hover`, pressed: `${BASE}/button/primary/background_pressed`, disabled: `${BASE}/button/disabled/background` }, textStyle: { font: 'minecraftTen', scale: 1, color: '§f', disabledColor: '§8' } },
+        transparent: { textures: { default: `${BASE}/button/transparent/background`, hover: `${BASE}/button/transparent/background`, pressed: `${BASE}/button/transparent/background`, disabled: `${BASE}/button/transparent/background` }, textStyle: { font: 'mojangles', scale: 1, color: '§f', disabledColor: '§8' } },
       },
     },
     card: {
-      textures: { background: `${BASE}/card/background` },
       padding: 8,
       gap: 4,
+      variants: {
+        'default': { textures: { background: `${BASE}/card/default/background` } },
+        'light': { textures: { background: `${BASE}/card/light/background` } },
+        'dark': { textures: { background: `${BASE}/card/dark/background` } },
+        'raised': { textures: { background: `${BASE}/card/raised/background` } },
+        'raised-light': { textures: { background: `${BASE}/card/raised-light/background` } },
+        'raised-dark': { textures: { background: `${BASE}/card/raised-dark/background` } },
+      },
     },
     checkbox: {
       size: 12,

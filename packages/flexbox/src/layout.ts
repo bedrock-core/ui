@@ -361,10 +361,22 @@ export function computeLayout(
       }
 
       // Height
+      const isWrapMainRow = mainAxis(s) === 'row' && (s.wrap ?? 'nowrap') !== 'nowrap';
+
       if (typeof s.height === 'number') {
         node.layout.height = s.height;
       } else if (isPercent(s.height)) {
         node.layout.height = 0; // deferred to pass 3
+      } else if (isWrapMainRow && iteration === 0) {
+        // A row-wrap container's height comes from simulating line breaks, which
+        // needs the container's *stretched* width to know how many lines form.
+        // In iteration 0 the width is still min-content (the widest single child),
+        // so the simulation would break every child onto its own line and report
+        // a wildly inflated height. Worse, the Math.max growth rule below would
+        // then lock that bad value in forever. The real width only lands after
+        // this iteration's cross-stretch step, so leave height at 0 here and let
+        // iterations ≥ 1 derive it from the correct width.
+        node.layout.height = 0;
       } else {
         const derived = deriveSize(node, 'height', pW);
 

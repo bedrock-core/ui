@@ -2,7 +2,7 @@ import type { JSX, ButtonProps as PrimitiveButtonProps } from '@bedrock-core/ui-
 import { Button as PrimitiveButton, Text } from '@bedrock-core/ui-runtime';
 import { theme } from './tokens';
 
-export type ButtonVariant = 'hero' | 'primary' | 'secondary' | 'contrast' | 'danger' | 'realm';
+export type ButtonVariant = 'hero' | 'primary' | 'secondary' | 'contrast' | 'danger' | 'realm' | 'transparent';
 
 export interface ButtonProps extends PrimitiveButtonProps {
   variant?: ButtonVariant;

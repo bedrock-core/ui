@@ -156,7 +156,7 @@ export function FlexLayout(): JSX.Element {
         <Text>{'§7expect: 10% of parent width as padding'}</Text>
       </Section>
 
-      <Section title={'9. nested: row → column'}>
+      <Section title={'9. nested: row -> column'}>
         <Panel flexDirection={'row'} width={300} gap={6} background={'textures/ui/recipe_book_button_borderless_lightpressednohover'}>
           <Panel flexDirection={'column'} flexGrow={1} gap={2}>
             <Box label={'§aL1'} height={12} />
