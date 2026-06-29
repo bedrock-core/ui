@@ -1,0 +1,33 @@
+import type { ModalFormData } from '@minecraft/server-ui';
+
+/**
+ * Host `type` strings for the native modal controls. Each is registered with its own
+ * writer (co-located with its component, like `buttonWriter`/`panelWriter`). They are
+ * only valid inside a `<Form>`; the restriction pass rejects them elsewhere.
+ */
+export const MODAL_TOGGLE_SLOT_TYPE = 'modal-toggle';
+export const MODAL_SLIDER_SLOT_TYPE = 'modal-slider';
+export const MODAL_DROPDOWN_SLOT_TYPE = 'modal-dropdown';
+export const MODAL_INPUT_SLOT_TYPE = 'modal-input';
+
+/** All modal-only control host types, used by the restriction pass. */
+export const MODAL_CONTROL_SLOT_TYPES = [
+  MODAL_TOGGLE_SLOT_TYPE,
+  MODAL_SLIDER_SLOT_TYPE,
+  MODAL_DROPDOWN_SLOT_TYPE,
+  MODAL_INPUT_SLOT_TYPE,
+] as const;
+
+/**
+ * The function prop a modal control attaches to its host element. `build` performs
+ * the typed `ModalFormData.toggle()/.slider()/…` call and owns the native arguments
+ * (label, min/max, options, defaultValue, …) so non-primitive args like an options
+ * array never pass through the serializer's primitive payload channel.
+ *
+ * There is no per-control value callback: the native modal is atomic and returns
+ * every value at once on submit, which the presenter re-keys by `name` and hands to
+ * `Form.onSubmit`. Controls are pure field declarations.
+ */
+export interface ModalControlBuild {
+  build: (form: ModalFormData) => void;
+}

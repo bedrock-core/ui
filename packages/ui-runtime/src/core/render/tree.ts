@@ -3,6 +3,7 @@ import type { JSX } from '../../jsx';
 import { deleteFiber, getFibersForPlayer } from '../fabric';
 import { applyInheritance, expandAndResolveContexts, computeLayout } from './phases';
 import { createInitialContext, createRootContext, type TraversalContext } from './traversal';
+import { validateForm } from './validateForm';
 
 /**
  * Build the complete JSX element tree by running all transformation phases.
@@ -51,6 +52,11 @@ export function buildTree(element: JSX.Element, player: Player): JSX.Element {
   const rootContext = createRootContext(context);
 
   result = applyInheritance(result, rootContext);
+
+  // Enforce form restrictions (modal vs ActionForm) on the fully-expanded tree, so
+  // dynamically-built or type-escaped trees fail loud before the presenter picks a
+  // backend.
+  validateForm(result);
 
   return result;
 }

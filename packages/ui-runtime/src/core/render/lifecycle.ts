@@ -2,7 +2,7 @@ import type { Player } from '@minecraft/server';
 import { registerNativeComponents } from '../../components';
 import type { FunctionComponent, JSX } from '../../jsx';
 import { startInputLock } from '../../util';
-import { present } from './presenter';
+import { present } from './presenters';
 import { setBuildRunner, setPlayerRoot, triggerCleanup } from './session';
 import { buildTree } from './tree';
 

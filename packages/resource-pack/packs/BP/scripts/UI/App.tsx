@@ -22,6 +22,7 @@ import { ScrollDemo } from './screens/ScrollDemo';
 import { DualScrollDemo } from './screens/DualScrollDemo';
 import { TripleScrollDemo } from './screens/TripleScrollDemo';
 import { FixedHeaderScrollDemo } from './screens/FixedHeaderScrollDemo';
+import { ModalFormDemo } from './screens/ModalFormDemo';
 
 // ─── Route map ────────────────────────────────────────────────────────────────
 
@@ -31,6 +32,7 @@ type AppRoutes = {
   FlexLayout: undefined;
   FontMetrics: undefined;
   FormDemo: undefined;
+  ModalFormDemo: undefined;
   OreStyled: undefined;
   ScrollDemo: undefined;
   DualScrollDemo: undefined;
@@ -70,6 +72,9 @@ function HomeScreen({ navigation }: AppScreen<'Home'>): JSX.Element {
       </Button>
       <Button variant={'secondary'} onPress={(): void => navigation.navigate('FormDemo')}>
         {'§6Form Inputs'}
+      </Button>
+      <Button variant={'secondary'} onPress={(): void => navigation.navigate('ModalFormDemo')}>
+        {'§6Native Modal Form'}
       </Button>
 
       <Divider variant={'light'} />
@@ -137,6 +142,14 @@ function FormDemoScreen(): JSX.Element {
   );
 }
 
+// Native modal form — renders a <Form> directly. The navigator only renders the
+// active screen and everything above it (container/navigator) is a transparent
+// context-provider, so the rendered tree is a clean modal tree (no stray buttons).
+// No BackBar wrapper: a modal can't contain buttons; submit/cancel call goBack().
+function ModalFormDemoScreen({ navigation }: AppScreen<'ModalFormDemo'>): JSX.Element {
+  return <ModalFormDemo back={(): void => navigation.goBack()} />;
+}
+
 // Scrolling item demo — renders its own scroll layout with a Close button.
 function ScrollDemoScreen(): JSX.Element {
   return <ScrollDemo />;
@@ -167,6 +180,7 @@ const Stack = createStackNavigator<AppRoutes>({
     FlexLayout: FlexLayoutScreen,
     FontMetrics: FontMetricsScreen,
     FormDemo: FormDemoScreen,
+    ModalFormDemo: ModalFormDemoScreen,
     OreStyled: OreStyledScreen,
     ScrollDemo: ScrollDemoScreen,
     DualScrollDemo: DualScrollDemoScreen,

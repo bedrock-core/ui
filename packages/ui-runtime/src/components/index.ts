@@ -12,6 +12,12 @@ export {
 // Components
 export { Button, buttonWriter, type ButtonProps } from './Button';
 export { Dropdown, type DropdownProps } from './Dropdown';
+export {
+  Form, ModalContext, MODAL_FORM_SLOT_TYPE,
+  type FormConfig, type FormProps, type FormValues,
+  type FormDropdownProps, type FormInputProps,
+  type FormSliderProps, type FormToggleProps,
+} from './Form';
 export { Fragment, type FragmentProps } from './Fragment';
 export { Image, imageWriter, type ImageProps } from './Image';
 export { Input, type InputProps } from './Input';
@@ -23,6 +29,12 @@ export { Text, textWriter, type TextFont, type TextOverflow, type TextProps, typ
 
 import { registerComponent } from '../core/componentRegistry';
 import { buttonWriter } from './Button';
+import {
+  MODAL_FORM_SLOT_TYPE,
+  MODAL_TOGGLE_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE,
+  MODAL_DROPDOWN_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE,
+  formToggleWriter, formSliderWriter, formDropdownWriter, formInputWriter,
+} from './Form';
 import { imageWriter } from './Image';
 import { itemRendererWriter } from './ItemRenderer';
 import { panelWriter } from './Panel';
@@ -54,4 +66,15 @@ export function registerNativeComponents(): void {
   // Scroll wrapper: emits no payload; the layout pass treats each as an independent
   // layout root (its own viewport) and tags its descendants with its scroll index.
   registerComponent(SCROLL_SLOT_TYPE, { transparent: true });
+
+  // Modal form: transparent marker; the presenter detects it on the built tree and
+  // switches to the native ModalFormData backend. Its children are walked normally.
+  registerComponent(MODAL_FORM_SLOT_TYPE, { transparent: true });
+
+  // Native modal controls — each writer (co-located with its Form.* component) calls
+  // the component-supplied `build` against the ModalFormData.
+  registerComponent(MODAL_TOGGLE_SLOT_TYPE, { writer: formToggleWriter });
+  registerComponent(MODAL_SLIDER_SLOT_TYPE, { writer: formSliderWriter });
+  registerComponent(MODAL_DROPDOWN_SLOT_TYPE, { writer: formDropdownWriter });
+  registerComponent(MODAL_INPUT_SLOT_TYPE, { writer: formInputWriter });
 }

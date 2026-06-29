@@ -1,8 +1,7 @@
-import { ActionFormData } from '@minecraft/server-ui';
 import { JSX } from '../jsx';
 import { getComponentDescriptor, getRegisteredTypes, isTransparentType } from './componentRegistry';
 import { isElement, isFunction, isSerializablePrimitive } from './guards';
-import { SerializablePrimitive, SerializableProps, SerializationContext, SerializationError } from './types';
+import { FormTarget, SerializablePrimitive, SerializableProps, SerializationContext, SerializationError } from './types';
 
 /**
  * This makes each full field substring unique even when two field values & padding are identical.
@@ -126,7 +125,7 @@ function padToByteLength(str: string, length: number): string {
  * @param form - Form data to populate
  * @param context - Serialization context for collecting button callbacks
  */
-export function serialize({ type, props: { children, ...rest } }: JSX.Element, form: ActionFormData, context: SerializationContext): void {
+export function serialize({ type, props: { children, ...rest } }: JSX.Element, form: FormTarget, context: SerializationContext): void {
   // Function components should have been resolved by buildTree()
   // If we see one here, it's a bug
   if (typeof type === 'function') {
