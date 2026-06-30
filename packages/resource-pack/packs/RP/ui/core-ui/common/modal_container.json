@@ -100,7 +100,7 @@
 		],
 		"controls": [
 			{
-				"viewport": {
+				"scrolling_view_port": {
 					"type": "panel",
 					"size": [
 						"100%",
@@ -193,7 +193,7 @@
 					],
 					"offset": [
 						"-50%",
-						"-25%"
+						"-50%"
 					],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",

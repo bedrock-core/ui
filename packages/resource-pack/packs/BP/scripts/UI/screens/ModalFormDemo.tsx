@@ -33,12 +33,40 @@ export function ModalFormDemo({ back }: { back: () => void }): JSX.Element {
       onSubmit={handleSubmit}
       onCancel={back}
     >
-      <Panel flexDirection={'row'}>
+      <Panel flexDirection={'row'} gap={2} padding={4} background={'textures/ui/recipe_book_group_expanded'}>
         <Form.Toggle name={'toggle_a'} label={'§fToggle A'} defaultValue={true} />
         <Form.Toggle name={'toggle_b'} label={'§fToggle B'} defaultValue={false} />
         <Form.Toggle name={'toggle_c'} label={'§fToggle C'} defaultValue={true} />
       </Panel>
-    </Form>
+      <Panel flexDirection={'column'} gap={2} padding={4} background={'textures/ui/recipe_book_group_expanded'}>
+        <Form.Toggle name={'toggle_d'} label={'§fToggle D'} defaultValue={true} />
+        <Form.Toggle name={'toggle_e'} label={'§fToggle E'} defaultValue={false} />
+        <Form.Toggle name={'toggle_f'} label={'§fToggle F'} defaultValue={true} />
 
+        <Form.Toggle name={'toggle_g'} label={'§fToggle G'} defaultValue={true} />
+        <Form.Toggle name={'toggle_h'} label={'§fToggle H'} defaultValue={false} />
+        <Form.Toggle name={'toggle_i'} label={'§fToggle I'} defaultValue={true} />
+
+        <Form.Toggle name={'toggle_j'} label={'§fToggle J'} defaultValue={true} />
+        <Form.Toggle name={'toggle_k'} label={'§fToggle K'} defaultValue={false} />
+        <Form.Toggle name={'toggle_l'} label={'§fToggle L'} defaultValue={true} />
+
+        <Form.Toggle name={'toggle_m'} label={'§fToggle M'} defaultValue={true} />
+        <Form.Toggle name={'toggle_n'} label={'§fToggle N'} defaultValue={false} />
+        <Form.Toggle name={'toggle_o'} label={'§fToggle O'} defaultValue={true} />
+
+        <Form.Toggle name={'toggle_p'} label={'§fToggle P'} defaultValue={true} />
+        <Form.Toggle name={'toggle_q'} label={'§fToggle Q'} defaultValue={false} />
+        <Form.Toggle name={'toggle_r'} label={'§fToggle R'} defaultValue={true} />
+
+        <Form.Toggle name={'toggle_s'} label={'§fToggle S'} defaultValue={true} />
+        <Form.Toggle name={'toggle_t'} label={'§fToggle T'} defaultValue={false} />
+        <Form.Toggle name={'toggle_u'} label={'§fToggle U'} defaultValue={true} />
+
+        <Form.Toggle name={'toggle_v'} label={'§fToggle V'} defaultValue={true} />
+        <Form.Toggle name={'toggle_w'} label={'§fToggle W'} defaultValue={false} />
+        <Form.Toggle name={'toggle_x'} label={'§fToggle X'} defaultValue={true} />
+      </Panel>
+    </Form>
   );
 }
