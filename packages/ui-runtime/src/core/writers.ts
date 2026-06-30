@@ -86,21 +86,30 @@ export function emitLabel(payload: string, form: FormTarget): void {
  * so there is no per-control callback here — values come back only at submit, all at
  * once, and the presenter dispatches them to `Form.onSubmit`.
  *
+ * The `payload` is the control element's OWN serialized encoding — the full control
+ * block (type + layout-computed width/height/x/y/visible/enabled/region + styling),
+ * produced by the same serialize+layout pass as ActionForm components. It is handed to
+ * `build` to use as the native control's label string, so the RP decodes real geometry
+ * and styling from it (`use_anchored_offset` + `#size_binding_*`), exactly like the
+ * ActionForm `button`/`label` slots.
+ *
  * @param form - Target modal form.
  * @param ctx - Serialization context tracking the modal ordinal → name registry.
  * @param name - Result key for this control (its `name` prop).
- * @param build - Performs the typed `ModalFormData` control call.
+ * @param payload - The control's serialized control-block payload (label channel).
+ * @param build - Performs the typed `ModalFormData` control call with `payload` as label.
  */
 export function emitModalControl(
   form: ModalFormData,
   ctx: SerializationContext | undefined,
   name: string,
-  build: (form: ModalFormData) => void,
+  payload: string,
+  build: (form: ModalFormData, payload: string) => void,
 ): void {
   if (ctx && isModalContext(ctx)) {
     ctx.modalControls.set(ctx.modalControlIndex, { name });
     ctx.modalControlIndex++;
   }
 
-  build(form);
+  build(form, payload);
 }

@@ -3,6 +3,10 @@ import { CANONICAL_SCREEN, createNode, computeLayout as flexComputeLayout } from
 import { TextFont, TextOverflow, TextWordBreak } from '@bedrock-core/ui/components/Text';
 import type { JSX } from '../../../jsx';
 import { MAX_SCROLLS, SCROLL_SLOT_TYPE, type ScrollAxis } from '../../../components/Scroll';
+import {
+  MODAL_DROPDOWN_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE,
+  MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
+} from '../../../components/Form';
 import type { ScrollMetrics } from '../../serializer';
 import { isTransparentType } from '../../componentRegistry';
 import { isElement } from '../../guards';
@@ -106,11 +110,46 @@ function getHorizontalPadding(style: FlexStyle): number {
   return (Number(style.padding) || 0) * 2;
 }
 
+/**
+ * Default intrinsic height (px) for each native modal control row, matching the vanilla
+ * `option_*` widget heights. A modal control has no measurable content of its own (the
+ * native widget owns its size), so without this it would collapse to 0 and every control
+ * would stack at y=0. Width defaults to the parent's available content width (full row).
+ * Any explicit `width`/`height` the user passes still wins.
+ */
+const MODAL_CONTROL_DEFAULT_HEIGHT: Record<string, number> = {
+  [MODAL_TOGGLE_SLOT_TYPE]: 24,
+  [MODAL_SLIDER_SLOT_TYPE]: 32,
+  [MODAL_DROPDOWN_SLOT_TYPE]: 24,
+  [MODAL_INPUT_SLOT_TYPE]: 24,
+};
+
 function withIntrinsicSize(
   element: JSX.Element,
   style: FlexStyle,
   availableWidth?: number,
 ): FlexStyle {
+  // Native modal controls have a fixed intrinsic row size owned by the vanilla widget;
+  // give them a sensible default (full-width row, native row height) so they flow with
+  // real heights instead of collapsing to 0. Explicit width/height still win.
+  const modalDefaultHeight = typeof element.type === 'string'
+    ? MODAL_CONTROL_DEFAULT_HEIGHT[element.type]
+    : undefined;
+
+  if (modalDefaultHeight !== undefined) {
+    const next: FlexStyle = { ...style };
+
+    if (next.height === undefined) {
+      next.height = modalDefaultHeight;
+    }
+
+    if (next.width === undefined && availableWidth !== undefined && availableWidth > 0) {
+      next.width = availableWidth;
+    }
+
+    return next;
+  }
+
   if (element.type !== 'text') {
     return style;
   }
@@ -474,37 +513,71 @@ export function computeLayout(tree: JSX.Element): JSX.Element {
 
   // ── Main pass (index 0): whole tree, <Scroll>s as leaf boxes ────────────────────
   const concreteRoots = collectConcrete(tree);
-  const concreteTree = concreteRoots[0] ?? tree;
 
-  const root = buildNode(concreteTree, CANONICAL_SCREEN.width);
+  // Content height of the main pass — drives the root scroll's extent (below). Set by
+  // whichever branch runs.
+  let mainContentHeight: number;
 
-  flexComputeLayout(root);
+  if (concreteRoots.length > 1) {
+    // The tree's top is transparent (e.g. a `<Form>` whose modal-form marker holds the
+    // controls directly, with no wrapping container). Lay the concrete roots out as a
+    // single implicit COLUMN so they stack with real positions instead of all sharing the
+    // parent origin — mirrors how a screen with a single root container flows its children.
+    const root = createNode(
+      { flexDirection: 'column', width: CANONICAL_SCREEN.width },
+      concreteRoots.map(c => buildNode(c, CANONICAL_SCREEN.width)),
+    );
 
-  if (DEBUG_LAYOUT) {
-    dumpLayoutNode(root);
-  }
+    flexComputeLayout(root);
 
-  concreteTree.props.jsonUIx = root.layout.x;
-  concreteTree.props.jsonUIy = root.layout.y;
-  concreteTree.props.jsonUIWidth = root.layout.width;
-  concreteTree.props.jsonUIHeight = root.layout.height;
+    if (DEBUG_LAYOUT) {
+      dumpLayoutNode(root);
+    }
 
-  if (concreteTree !== tree) {
-    tree.props.jsonUIx = root.layout.x;
-    tree.props.jsonUIy = root.layout.y;
+    tree.props.jsonUIx = 0;
+    tree.props.jsonUIy = 0;
     tree.props.jsonUIWidth = root.layout.width;
     tree.props.jsonUIHeight = root.layout.height;
-  }
+    mainContentHeight = root.layout.height;
 
-  const ch = concreteTree.props.children;
-  const cursor = { index: 0 };
+    const rootCursor = { index: 0 };
 
-  if (Array.isArray(ch)) {
-    ch.filter(isElement).forEach((c) => {
-      applyToTree(c, root, cursor, 0);
-    });
-  } else if (isElement(ch)) {
-    applyToTree(ch, root, cursor, 0);
+    concreteRoots.forEach(c => applyToTree(c, root, rootCursor, 0));
+  } else {
+    const concreteTree = concreteRoots[0] ?? tree;
+
+    const root = buildNode(concreteTree, CANONICAL_SCREEN.width);
+
+    flexComputeLayout(root);
+
+    if (DEBUG_LAYOUT) {
+      dumpLayoutNode(root);
+    }
+
+    mainContentHeight = root.layout.height;
+
+    concreteTree.props.jsonUIx = root.layout.x;
+    concreteTree.props.jsonUIy = root.layout.y;
+    concreteTree.props.jsonUIWidth = root.layout.width;
+    concreteTree.props.jsonUIHeight = root.layout.height;
+
+    if (concreteTree !== tree) {
+      tree.props.jsonUIx = root.layout.x;
+      tree.props.jsonUIy = root.layout.y;
+      tree.props.jsonUIWidth = root.layout.width;
+      tree.props.jsonUIHeight = root.layout.height;
+    }
+
+    const ch = concreteTree.props.children;
+    const cursor = { index: 0 };
+
+    if (Array.isArray(ch)) {
+      ch.filter(isElement).forEach((c) => {
+        applyToTree(c, root, cursor, 0);
+      });
+    } else if (isElement(ch)) {
+      applyToTree(ch, root, cursor, 0);
+    }
   }
 
   const scrolls: ScrollMetrics[] = [{
@@ -513,7 +586,7 @@ export function computeLayout(tree: JSX.Element): JSX.Element {
     y: 0,
     width: CANONICAL_SCREEN.width,
     height: CANONICAL_SCREEN.height,
-    extent: root.layout.height,
+    extent: mainContentHeight,
   }];
 
   // ── Per-scroll passes (index 1+): each <Scroll>'s content, region-local ──────────

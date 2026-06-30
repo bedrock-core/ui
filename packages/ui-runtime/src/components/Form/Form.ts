@@ -22,11 +22,9 @@ export type FormValues = Record<string, ModalValue>;
  * the children.
  */
 export interface FormConfig {
-  /** Modal title (native `ModalFormData.title`). */
-  title?: string;
-  /** Descriptive text rendered as a leading label above the controls. */
-  body?: string;
-  /** Confirm-button text (native `ModalFormData.submitButton`). */
+  /**
+   * Confirm-button text (native `ModalFormData.submitButton`).
+   */
   submitLabel?: string;
   /**
    * Called once when the player submits, with every control's value keyed by its
@@ -67,10 +65,12 @@ interface FormComponent extends FunctionComponent<FormProps> {
  * / dropdown / text-field fields with hardcoded submit + esc) instead of the
  * all-buttons ActionForm. Values arrive once, on submit, via {@link FormConfig.onSubmit}.
  *
- * Field declarations are the `Form.*` members:
+ * Field declarations are the `Form.*` members; a heading is authored as a `<Text>`
+ * (the modal has no `title`/`body` prop — see {@link FormConfig.submitLabel}):
  *
  * ```tsx
- * <Form title="Settings" onSubmit={v => { v.sound; v.volume; }}>
+ * <Form onSubmit={v => { v.sound; v.volume; }}>
+ *   <Text>Settings</Text>
  *   <Form.Toggle   name="sound"  label="Sound"  defaultValue={true} />
  *   <Form.Slider   name="volume" label="Volume" min={0} max={10} />
  *   <Form.Dropdown name="mode"   options={['A', 'B']} />
@@ -84,14 +84,12 @@ interface FormComponent extends FunctionComponent<FormProps> {
  * calls (e.g. via navigation), never nested.
  */
 const FormRoot: FunctionComponent<FormProps> = ({
-  title,
-  body,
   submitLabel,
   onSubmit,
   onCancel,
   children,
 }: FormProps): JSX.Element => {
-  const config: FormConfig = { title, body, submitLabel, onSubmit, onCancel };
+  const config: FormConfig = { submitLabel, onSubmit, onCancel };
 
   // Provide the config to descendants (so the restriction pass sees the modal scope)
   // and emit the transparent `modal-form` marker the presenter detects. The marker

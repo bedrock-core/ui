@@ -2,9 +2,9 @@ import { type Player } from '@minecraft/server';
 import { ModalFormData } from '@minecraft/server-ui';
 import type { FormConfig, FormValues } from '../../../components/Form';
 import type { JSX } from '../../../jsx';
-import { serialize } from '../../serializer';
+import { serialize, serializeScrollMetadata } from '../../serializer';
 import type { ModalSerializationContext } from '../../types';
-import { runInteractiveCallback, type PresentResult } from './shared';
+import { resolveScrolls, runInteractiveCallback, type PresentResult } from './shared';
 
 /**
  * Present one snapshot of a modal `<Form>` tree as a native `ModalFormData`.
@@ -32,14 +32,10 @@ export async function presentModal(
   const context: ModalSerializationContext = { mode: 'modal', modalControls: new Map(), modalControlIndex: 0 };
   const form = new ModalFormData();
 
-  if (config.title !== undefined) {
-    form.title(config.title);
-  }
-
-  if (config.body !== undefined) {
-    // ModalFormData has no body(); a leading label acts as descriptive text.
-    form.label(config.body);
-  }
+  // The native modal has no user-facing title — its title channel is repurposed to carry
+  // the SAME v0007 scroll-geometry metadata as the ActionForm, so a label-only modal sizes
+  // identically to a label-only ActionForm. A heading is authored as a `<Text>` child.
+  form.title(serializeScrollMetadata(resolveScrolls(tree)));
 
   // Walk the tree: control writers add native controls (recording name-by-ordinal);
   // decorative nodes emit label slots; the modal-form marker is transparent.

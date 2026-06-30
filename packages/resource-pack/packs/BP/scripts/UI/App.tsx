@@ -1,5 +1,5 @@
 import translationKeys from '@bedrock-core/generated/translation-keys';
-import { Panel, Text, TranslationKeysContext, type JSX } from '@bedrock-core/ui';
+import { Panel, Text, TranslationKeysContext, useExit, type JSX } from '@bedrock-core/ui';
 import {
   Button,
   Card,
@@ -146,8 +146,10 @@ function FormDemoScreen(): JSX.Element {
 // active screen and everything above it (container/navigator) is a transparent
 // context-provider, so the rendered tree is a clean modal tree (no stray buttons).
 // No BackBar wrapper: a modal can't contain buttons; submit/cancel call goBack().
-function ModalFormDemoScreen({ navigation }: AppScreen<'ModalFormDemo'>): JSX.Element {
-  return <ModalFormDemo back={(): void => navigation.goBack()} />;
+function ModalFormDemoScreen(): JSX.Element {
+  const exit = useExit();
+
+  return <ModalFormDemo back={(): void => exit()} />;
 }
 
 // Scrolling item demo — renders its own scroll layout with a Close button.

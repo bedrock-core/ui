@@ -1,6 +1,4 @@
-import { Form, usePlayer, type FormValues, type JSX } from '@bedrock-core/ui';
-
-const DIFFICULTIES = ['Peaceful', 'Easy', 'Normal', 'Hard'];
+import { Form, Panel, usePlayer, type FormValues, type JSX } from '@bedrock-core/ui';
 
 /**
  * Native modal-form demo, rendered as a normal navigation screen.
@@ -21,28 +19,26 @@ export function ModalFormDemo({ back }: { back: () => void }): JSX.Element {
   const player = usePlayer();
 
   const handleSubmit = (values: FormValues): void => {
-    const difficultyIndex = Number(values.difficulty ?? 0);
-
     player.sendMessage('§a[Modal Form] submitted:');
-    player.sendMessage(`§7  name: §f${String(values.name ?? '')}`);
-    player.sendMessage(`§7  notifications: §f${String(values.notifications ?? false)}`);
-    player.sendMessage(`§7  difficulty: §f${DIFFICULTIES[difficultyIndex] ?? '?'}`);
-    player.sendMessage(`§7  volume: §f${String(values.volume ?? 0)}%`);
+    player.sendMessage(`§7  toggle_a: §f${String(values.toggle_a ?? false)}`);
+    player.sendMessage(`§7  toggle_b: §f${String(values.toggle_b ?? false)}`);
+    player.sendMessage(`§7  toggle_c: §f${String(values.toggle_c ?? false)}`);
 
     back();
   };
 
   return (
     <Form
-      title={'Native Modal Form'}
       submitLabel={'Save'}
       onSubmit={handleSubmit}
       onCancel={back}
     >
-      <Form.Input name={'name'} label={'§fName'} placeholder={'type your name'} />
-      <Form.Toggle name={'notifications'} label={'§fEnable notifications'} defaultValue={true} />
-      <Form.Dropdown name={'difficulty'} label={'§fDifficulty'} options={DIFFICULTIES} defaultValue={'Normal'} />
-      <Form.Slider name={'volume'} label={'§fVolume'} min={0} max={100} step={5} defaultValue={50} />
+      <Panel flexDirection={'row'}>
+        <Form.Toggle name={'toggle_a'} label={'§fToggle A'} defaultValue={true} />
+        <Form.Toggle name={'toggle_b'} label={'§fToggle B'} defaultValue={false} />
+        <Form.Toggle name={'toggle_c'} label={'§fToggle C'} defaultValue={true} />
+      </Panel>
     </Form>
+
   );
 }
