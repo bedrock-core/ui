@@ -1,6 +1,6 @@
 import { render } from '@bedrock-core/ui';
 import { ButtonPushAfterEvent, Player, world } from '@minecraft/server';
-import { ActionFormData } from '@minecraft/server-ui';
+import { ActionFormData, ModalFormData } from '@minecraft/server-ui';
 import { MinecraftBlockTypes, MinecraftEntityTypes } from '@minecraft/vanilla-data';
 import { App } from './UI/App';
 
@@ -26,5 +26,26 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
     form.button('Button 3');
 
     form.show(source);
+  }
+
+  if (block.typeId === MinecraftBlockTypes.BirchButton) {
+    // Birch button → vanilla modal form reference (one of each field type)
+    const form = new ModalFormData();
+
+    form.title('Vanilla Modal Form');
+    form.textField('Text', 'type here', { defaultValue: '' });
+    form.toggle('Toggle', { defaultValue: false });
+    form.slider('Slider', 0, 10, { valueStep: 1, defaultValue: 5 });
+    form.dropdown('Dropdown', ['Easy', 'Normal', 'Hard'], { defaultValueIndex: 1 });
+
+    form.show(source).then((response) => {
+      if (response.canceled || !response.formValues) {
+        return;
+      }
+
+      const [text, toggle, slider, dropdown] = response.formValues;
+
+      source.sendMessage(`§a[Vanilla Modal] text=§f${String(text)}§a toggle=§f${String(toggle)}§a slider=§f${String(slider)}§a dropdown=§f${String(dropdown)}`);
+    });
   }
 });

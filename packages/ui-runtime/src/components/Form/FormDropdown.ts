@@ -4,7 +4,8 @@ import { isModalForm } from '../../core/guards';
 import { ModalFormError, type Writer } from '../../core/types';
 import { emitModalControl } from '../../core/writers';
 import { FunctionComponent, JSX } from '../../jsx';
-import { controlPayloadProps } from './controlPayload';
+import { resolveStateBackgrounds, UNSTYLED_TEXTURE, withControl, type StateBackgroundProps } from '../control';
+import { labelFontFields, type LabelFont } from './controlPayload';
 import { MODAL_DROPDOWN_SLOT_TYPE } from './modalControls';
 import { FormControlBase } from './shared';
 
@@ -19,7 +20,7 @@ const POPUP_CHROME = 9;
 /** Popup height cap: half the canonical screen — longer lists get the scrollbar. */
 const POPUP_MAX_HEIGHT = CANONICAL_SCREEN.height / 2;
 
-export interface FormDropdownProps extends FormControlBase {
+export interface FormDropdownProps extends FormControlBase, StateBackgroundProps {
   /** Selectable options. */
   options: string[];
   /**
@@ -27,27 +28,30 @@ export interface FormDropdownProps extends FormControlBase {
    * option. `Form.onSubmit` reports the selected option's INDEX (native behavior).
    */
   defaultValue?: string;
-  /**
-   * Closed-box hover-state texture. Mirrors `Button`'s state textures — the default
-   * texture is the base `background` prop; these three swap on interaction. Default
-   * `''` (RP falls back to the default `background`).
-   */
-  backgroundHover?: string;
-  /** Closed-box pressed-state texture. Default `''`. */
-  backgroundPressed?: string;
-  /** Closed-box locked/disabled-state texture. Default `''`. */
-  backgroundLocked?: string;
+  // Closed-box textures come from StateBackgroundProps (same shape as `Button`):
+  // background/backgroundHover/backgroundPressed/backgroundLocked, resolved by the
+  // shared `state ?? base ?? unstyled` rule.
   /**
    * Popup container background texture — the surface behind the option list when the
-   * dropdown is open. Default `''` (container renders without a background).
+   * dropdown is open. Defaults to the unstyled placeholder texture.
    */
   popupBackground?: string;
-  /** Per-option row background texture (idle). Default `''`. */
+  /** Per-option row background texture (idle). Defaults to the unstyled placeholder. */
   optionBackground?: string;
-  /** Per-option row hover-state texture. Default `''`. */
+  /** Per-option row hover-state texture. Defaults to the resolved option background. */
   optionHover?: string;
-  /** Per-option row selected-state texture. Default `''`. */
+  /** Per-option row selected-state texture. Defaults to the resolved option background. */
   optionSelected?: string;
+  /** Option label font family (popup rows). Defaults to `'mojangles'`. */
+  optionFont?: LabelFont;
+  /** Option label scale multiplier relative to the standard glyph size. Default `1.0`. */
+  optionScale?: number;
+  /**
+   * Option label horizontal alignment inside its row (the label box is inset 4px on
+   * each side). Default `'left'`. (Free-form label offsets are NOT supported: anchored
+   * offsets are engine-dead inside the dropdown popup chunk, in-game verified.)
+   */
+  optionAlign?: 'left' | 'center' | 'right';
 }
 
 /**
@@ -58,42 +62,47 @@ export interface FormDropdownProps extends FormControlBase {
  * position/style the native widget.
  */
 export const FormDropdown: FunctionComponent<FormDropdownProps> = ({
-  name, label, tooltip, options, defaultValue, font, scale,
+  name, options, defaultValue,
   backgroundHover, backgroundPressed, backgroundLocked, popupBackground,
-  optionBackground, optionHover, optionSelected, ...layout
+  optionBackground, optionHover, optionSelected,
+  optionFont, optionScale, optionAlign, ...layout
 }: FormDropdownProps): JSX.Element => {
   const defaultIndex = defaultValue !== undefined ? Math.max(0, options.indexOf(defaultValue)) : 0;
-
-  // Split the payload props so the closed-box state textures land at the SAME byte
-  // offsets as `Button`'s ([1024-1272], right after the reserved block). The RP
-  // closed-box faces are literal copies of the button's state decode blocks, so the
-  // dropdown payload must match the button field layout there; the label styling tail
-  // moves after them.
-  const { value, fontType, fontScaleFactor, ...controlBlock } = controlPayloadProps(layout, label ?? '', { font, scale });
+  const optionLabelFont = labelFontFields({ font: optionFont, scale: optionScale });
+  // Closed box mirrors Button: the shared `state ?? base ?? unstyled` rule.
+  const closedBox = resolveStateBackgrounds({ background: layout.background, backgroundHover, backgroundPressed, backgroundLocked });
+  // Option rows follow the same rule against their own base.
+  const optionBase = optionBackground ?? UNSTYLED_TEXTURE;
 
   return {
     type: MODAL_DROPDOWN_SLOT_TYPE,
     props: {
-      ...controlBlock,
-      backgroundHover: backgroundHover ?? '', // [1024-1106] like Button
-      backgroundPressed: backgroundPressed ?? '', // [1107-1189]
-      backgroundLocked: backgroundLocked ?? '', // [1190-1272]
-      popupBackground: popupBackground ?? '', // [1273-1355] dropdown-specific
-      optionBackground: optionBackground ?? '', // [1356-1438]
-      optionHover: optionHover ?? '', // [1439-1521]
-      optionSelected: optionSelected ?? '', // [1522-1604]
+      // Control block first so the closed-box state textures land at the SAME byte
+      // offsets as `Button`'s ([1024-1272], right after the reserved block) — the RP
+      // closed-box faces are literal copies of the button's state decode blocks.
+      ...withControl({ ...layout, background: closedBox.background }),
+      backgroundHover: closedBox.backgroundHover, // [1024-1106] like Button
+      backgroundPressed: closedBox.backgroundPressed, // [1107-1189]
+      backgroundLocked: closedBox.backgroundLocked, // [1190-1272]
+      popupBackground: popupBackground ?? UNSTYLED_TEXTURE, // [1273-1355] dropdown-specific
+      optionBackground: optionBase, // [1356-1438]
+      optionHover: optionHover ?? optionBase, // [1439-1521]
+      optionSelected: optionSelected ?? optionBase, // [1522-1604]
       // [1605-1687] computed popup height (px): hug the option list, cap at half the
-      // screen. The RP decodes it into popup_card's #size_binding_y and derives the
-      // centering offset (-height/2) from it.
+      // screen. The RP decodes it into popup_shift's #size_binding_y; the centering
+      // (half above / half below the pinned middle line) is done geometrically by
+      // popup_card's bottom_left→left_middle anchoring.
       popupHeight: Math.min(options.length * POPUP_ROW_HEIGHT + POPUP_CHROME, POPUP_MAX_HEIGHT),
-      value,
-      fontType,
-      fontScaleFactor,
+      // Option-label styling block (Step 5): decoded by the three alignment-gated
+      // option_label_* variants in modal_dropdown.json — offsets are the contract.
+      optionFontType: optionLabelFont.fontType, // [1688-1770]
+      optionFontScaleFactor: optionLabelFont.fontScaleFactor, // [1771-1853]
+      optionAlign: optionAlign ?? 'left', // [1854-1936] selects the visible label variant
       name,
       // Option text stays raw for now — per-option decode is a follow-up once the
       // label path is proven in-game.
       build: (form: ModalFormData, payload: string): void => {
-        form.dropdown(payload, options, { defaultValueIndex: defaultIndex, tooltip });
+        form.dropdown(payload, options, { defaultValueIndex: defaultIndex });
       },
     },
   };

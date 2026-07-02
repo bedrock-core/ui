@@ -276,76 +276,324 @@
 			{
 				"checked": {
 					"type": "image",
-					"size": [ 30, 16 ],
+					"size": [
+						30,
+						16
+					],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
-					"texture": "textures/ui/toggle_on"
+					"texture": "#texture",
+					"bindings": [
+						{
+							/* texture field at absolute payload offset [1273] */
+							"binding_name": "#custom_text",
+							"binding_type": "collection",
+							"binding_collection_name": "custom_form"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.1273s' * #custom_text)",
+							"target_property_name": "#skip_chk"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_text - #skip_chk)",
+							"target_property_name": "#rem_chk"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_chk)",
+							"target_property_name": "#raw_chk"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_chk) - ('%.2s' * #raw_chk) - ';')",
+							"target_property_name": "#texture"
+						}
+					]
 				}
 			},
 			{
 				"unchecked": {
 					"type": "image",
-					"size": [ 30, 16 ],
+					"size": [
+						30,
+						16
+					],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
-					"texture": "textures/ui/toggle_off"
+					"texture": "#texture",
+					"bindings": [
+						{
+							/* texture field at absolute payload offset [440] */
+							"binding_name": "#custom_text",
+							"binding_type": "collection",
+							"binding_collection_name": "custom_form"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.440s' * #custom_text)",
+							"target_property_name": "#skip_bg"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_text - #skip_bg)",
+							"target_property_name": "#rem_bg"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_bg)",
+							"target_property_name": "#raw_bg"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_bg) - ('%.2s' * #raw_bg) - ';')",
+							"target_property_name": "#texture"
+						}
+					]
 				}
 			},
 			{
 				"checked_hover": {
 					"type": "image",
-					"size": [ 30, 16 ],
+					"size": [
+						30,
+						16
+					],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
-					"texture": "textures/ui/toggle_on_hover"
+					"texture": "#texture",
+					"bindings": [
+						{
+							/* texture field at absolute payload offset [1356] */
+							"binding_name": "#custom_text",
+							"binding_type": "collection",
+							"binding_collection_name": "custom_form"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.1356s' * #custom_text)",
+							"target_property_name": "#skip_chkhov"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_text - #skip_chkhov)",
+							"target_property_name": "#rem_chkhov"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_chkhov)",
+							"target_property_name": "#raw_chkhov"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_chkhov) - ('%.2s' * #raw_chkhov) - ';')",
+							"target_property_name": "#texture"
+						}
+					]
 				}
 			},
 			{
 				"unchecked_hover": {
 					"type": "image",
-					"size": [ 30, 16 ],
+					"size": [
+						30,
+						16
+					],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
-					"texture": "textures/ui/toggle_off_hover"
+					"texture": "#texture",
+					"bindings": [
+						{
+							/* texture field at absolute payload offset [1024] */
+							"binding_name": "#custom_text",
+							"binding_type": "collection",
+							"binding_collection_name": "custom_form"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.1024s' * #custom_text)",
+							"target_property_name": "#skip_hov"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_text - #skip_hov)",
+							"target_property_name": "#rem_hov"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_hov)",
+							"target_property_name": "#raw_hov"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_hov) - ('%.2s' * #raw_hov) - ';')",
+							"target_property_name": "#texture"
+						}
+					]
 				}
 			},
 			{
 				"checked_locked": {
 					"type": "image",
-					"size": [ 30, 16 ],
+					"size": [
+						30,
+						16
+					],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
-					"texture": "textures/ui/toggle_on",
+					"texture": "#texture",
+					"bindings": [
+						{
+							/* texture field at absolute payload offset [1439] */
+							"binding_name": "#custom_text",
+							"binding_type": "collection",
+							"binding_collection_name": "custom_form"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.1439s' * #custom_text)",
+							"target_property_name": "#skip_chklock"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_text - #skip_chklock)",
+							"target_property_name": "#rem_chklock"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_chklock)",
+							"target_property_name": "#raw_chklock"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_chklock) - ('%.2s' * #raw_chklock) - ';')",
+							"target_property_name": "#texture"
+						}
+					],
 					"alpha": 0.5
 				}
 			},
 			{
 				"unchecked_locked": {
 					"type": "image",
-					"size": [ 30, 16 ],
+					"size": [
+						30,
+						16
+					],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
-					"texture": "textures/ui/toggle_off",
+					"texture": "#texture",
+					"bindings": [
+						{
+							/* texture field at absolute payload offset [1190] */
+							"binding_name": "#custom_text",
+							"binding_type": "collection",
+							"binding_collection_name": "custom_form"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.1190s' * #custom_text)",
+							"target_property_name": "#skip_lock"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_text - #skip_lock)",
+							"target_property_name": "#rem_lock"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_lock)",
+							"target_property_name": "#raw_lock"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_lock) - ('%.2s' * #raw_lock) - ';')",
+							"target_property_name": "#texture"
+						}
+					],
 					"alpha": 0.5
 				}
 			},
 			{
 				"checked_locked_hover": {
 					"type": "image",
-					"size": [ 30, 16 ],
+					"size": [
+						30,
+						16
+					],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
-					"texture": "textures/ui/toggle_on",
+					"texture": "#texture",
+					"bindings": [
+						{
+							/* texture field at absolute payload offset [1439] */
+							"binding_name": "#custom_text",
+							"binding_type": "collection",
+							"binding_collection_name": "custom_form"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.1439s' * #custom_text)",
+							"target_property_name": "#skip_chklock"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_text - #skip_chklock)",
+							"target_property_name": "#rem_chklock"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_chklock)",
+							"target_property_name": "#raw_chklock"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_chklock) - ('%.2s' * #raw_chklock) - ';')",
+							"target_property_name": "#texture"
+						}
+					],
 					"alpha": 0.5
 				}
 			},
 			{
 				"unchecked_locked_hover": {
 					"type": "image",
-					"size": [ 30, 16 ],
+					"size": [
+						30,
+						16
+					],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
-					"texture": "textures/ui/toggle_off",
+					"texture": "#texture",
+					"bindings": [
+						{
+							/* texture field at absolute payload offset [1190] */
+							"binding_name": "#custom_text",
+							"binding_type": "collection",
+							"binding_collection_name": "custom_form"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.1190s' * #custom_text)",
+							"target_property_name": "#skip_lock"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_text - #skip_lock)",
+							"target_property_name": "#rem_lock"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_lock)",
+							"target_property_name": "#raw_lock"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_lock) - ('%.2s' * #raw_lock) - ';')",
+							"target_property_name": "#texture"
+						}
+					],
 					"alpha": 0.5
 				}
 			}

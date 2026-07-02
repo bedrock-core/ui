@@ -1,17 +1,17 @@
 import type { FlexStyle, LayoutNode } from '@bedrock-core/flexbox';
 import { CANONICAL_SCREEN, createNode, computeLayout as flexComputeLayout } from '@bedrock-core/flexbox';
 import { TextFont, TextOverflow, TextWordBreak } from '@bedrock-core/ui/components/Text';
-import type { JSX } from '../../../jsx';
-import { MAX_SCROLLS, SCROLL_SLOT_TYPE, type ScrollAxis } from '../../../components/Scroll';
 import {
   MODAL_DROPDOWN_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE,
   MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
 } from '../../../components/Form';
-import type { ScrollMetrics } from '../../serializer';
+import { MAX_SCROLLS, SCROLL_SLOT_TYPE, type ScrollAxis } from '../../../components/Scroll';
+import type { JSX } from '../../../jsx';
+import { ellipsizeText, measureText, wrapText } from '../../../util/textMetrics';
 import { isTransparentType } from '../../componentRegistry';
 import { isElement } from '../../guards';
+import type { ScrollMetrics } from '../../serializer';
 import { ScrollLimitError } from '../../types';
-import { ellipsizeText, measureText, wrapText } from '../../../util/textMetrics';
 
 // Set to true to log every element's computed x/y/w/h after layout.
 const DEBUG_LAYOUT = false;
@@ -483,6 +483,39 @@ function dumpLayoutNode(node: LayoutNode, depth = 0): void {
   }
 }
 
+// ─── Post-layout derived props ──────────────────────────────────────────────────
+
+/**
+ * Fill props that depend on the COMPUTED layout, after the flex pass wrote
+ * `jsonUIWidth` (in-place mutation, like the region tagging). Currently only the
+ * modal slider's `travelWidth`: the RP wraps the interactive slider in a panel of
+ * this width to bound the thumb's travel. The engine moves the thumb CENTER across
+ * exactly the slider control's width (in-game calibrated with the fill-everything
+ * unstyled nineslice: travel = width put the center at the track ends), so
+ * `width − thumbWidth` makes the visual thumb's EDGE meet the full-width track's
+ * ends at min/max, for any thumb width.
+ */
+function resolveDerivedProps(element: JSX.Node): void {
+  if (Array.isArray(element)) {
+    element.forEach(resolveDerivedProps);
+
+    return;
+  }
+
+  if (!isElement(element)) {
+    return;
+  }
+
+  if (element.type === MODAL_SLIDER_SLOT_TYPE) {
+    const width = asNumber(element.props.jsonUIWidth) ?? 0;
+    const thumbWidth = asNumber(element.props.thumbWidth) ?? 0;
+
+    element.props.travelWidth = Math.max(0, width - thumbWidth);
+  }
+
+  resolveDerivedProps(element.props.children);
+}
+
 // ─── Phase 2 entry point ────────────────────────────────────────────────────────
 
 /**
@@ -604,6 +637,9 @@ export function computeLayout(tree: JSX.Element): JSX.Element {
 
   tree.props.jsonUIScrolls = scrolls;
   tree.props.jsonUIHeight = scrolls[0].height;
+
+  // Derived props that need the computed geometry (e.g. slider travelWidth).
+  resolveDerivedProps(tree);
 
   if (DEBUG_LAYOUT) {
     dumpLayoutTree(tree);

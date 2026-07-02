@@ -83,10 +83,10 @@ describe('modal control serialization', () => {
       type: 'fragment',
       props: {
         children: [
-          el(Form.Toggle({ name: 'sound', label: 'Sound', defaultValue: true })),
-          el(Form.Slider({ name: 'volume', label: 'Volume', min: 0, max: 10, defaultValue: 7 })),
+          el(Form.Toggle({ name: 'sound', defaultValue: true })),
+          el(Form.Slider({ name: 'volume', min: 0, max: 10, defaultValue: 7 })),
           el(Form.Dropdown({ name: 'mode', options: ['A', 'B'], defaultValue: 'B' })),
-          el(Form.Input({ name: 'nick', label: 'Name', defaultValue: 'x' })),
+          el(Form.Input({ name: 'nick', defaultValue: 'x' })),
         ],
       },
     };
@@ -99,38 +99,36 @@ describe('modal control serialization', () => {
   it('passes native args through each control build callback', () => {
     const form = new FakeModalForm();
 
-    serialize(el(Form.Slider({ name: 'v', label: 'Vol', min: 1, max: 9, step: 2, defaultValue: 5 })), asModalForm(form), modalCtx());
+    serialize(el(Form.Slider({ name: 'v', min: 1, max: 9, step: 2, defaultValue: 5 })), asModalForm(form), modalCtx());
 
     const slider = form.calls.find(c => c.kind === 'slider');
 
-    // The native label carries the control's own serialized payload (decoded RP-side),
-    // not the raw label string: protocol header + its slot type + the label text.
-    // Range/step/default still pass through verbatim as native args.
+    // The native label carries the control's own serialized payload (decoded RP-side):
+    // protocol header + its slot type. Range/step/default pass through verbatim as
+    // native args.
     const sliderLabel = slider?.args[0];
 
     expect(typeof sliderLabel).toBe('string');
     expect(sliderLabel).toContain(PROTOCOL_HEADER);
     expect(sliderLabel).toContain(`s:${MODAL_SLIDER_SLOT_TYPE}`);
-    expect(sliderLabel).toContain('s:Vol');
     expect(slider?.args[1]).toBe(1);
     expect(slider?.args[2]).toBe(9);
     expect(slider?.args[3]).toMatchObject({ defaultValue: 5, valueStep: 2 });
   });
 
-  it('encodes the control label under its OWN control type for per-type RP decode', () => {
+  it('encodes the control payload under its OWN control type for per-type RP decode', () => {
     const form = new FakeModalForm();
 
-    serialize(el(Form.Toggle({ name: 't', label: 'Sound' })), asModalForm(form), modalCtx());
+    serialize(el(Form.Toggle({ name: 't' })), asModalForm(form), modalCtx());
 
     const label = form.calls.find(c => c.kind === 'toggle')?.args[0];
 
     // Carries the protocol header (so RP gates on it) and encodes the control's own
-    // type tag + label text — RP dispatches its decoder on this type, like the
-    // ActionForm components gate on `(#type = 'image'|'text'|'panel')`.
+    // type tag — RP dispatches its decoder on this type, like the ActionForm
+    // components gate on `(#type = 'image'|'text'|'panel')`.
     expect(typeof label).toBe('string');
     expect(label).toContain(PROTOCOL_HEADER);
     expect(label).toContain(`s:${MODAL_TOGGLE_SLOT_TYPE}`);
-    expect(label).toContain('s:Sound');
   });
 
   it('maps dropdown defaultValue option to its index', () => {
@@ -181,6 +179,9 @@ describe('modal control serialization', () => {
         optionBackground: 'textures/ui/opt_bg',
         optionHover: 'textures/ui/opt_hover',
         optionSelected: 'textures/ui/opt_selected',
+        optionFont: 'minecraftTen',
+        optionScale: 1.5,
+        optionAlign: 'center',
       })),
       asModalForm(form),
       modalCtx(),
@@ -198,6 +199,117 @@ describe('modal control serialization', () => {
     expect(label.indexOf('s:textures/ui/opt_selected')).toBe(1522);
     // popupHeight [1605]: 2 options × 17px + 9px chrome = 43, hugging the list.
     expect(label.indexOf('n:43')).toBe(1605);
+    // Option-label styling block (Step 5): decoded by the option_label_* variants.
+    expect(label.indexOf('s:MinecraftTen')).toBe(1688);
+    expect(label.indexOf('n:3')).toBe(1771); // 1.5 scale / 0.5 base
+    expect(label.indexOf('s:center')).toBe(1854);
+  });
+
+  // Toggle textures: button-identical common block ([440] base=unchecked, [1024]
+  // hover, [1107] pressed-reserved, [1190] locked) + checked side at [1273-1521].
+  // Exact offsets are the RP decode contract (modal_toggle.json).
+  it('places the toggle textures at the contracted payload offsets', () => {
+    const form = new FakeModalForm();
+
+    serialize(
+      el(Form.Toggle({
+        name: 't',
+        background: 'textures/ui/t_off',
+        backgroundHover: 'textures/ui/t_off_hov',
+        backgroundPressed: 'textures/ui/t_prs',
+        backgroundLocked: 'textures/ui/t_off_lock',
+        checkedBackground: 'textures/ui/t_on',
+        checkedHover: 'textures/ui/t_on_hov',
+        checkedLocked: 'textures/ui/t_on_lock',
+      })),
+      asModalForm(form),
+      modalCtx(),
+    );
+
+    const label = form.calls.find(c => c.kind === 'toggle')?.args[0] as string;
+
+    expect(label.indexOf('s:textures/ui/t_off')).toBe(440);
+    expect(label.indexOf('s:textures/ui/t_off_hov')).toBe(1024);
+    expect(label.indexOf('s:textures/ui/t_prs')).toBe(1107);
+    expect(label.indexOf('s:textures/ui/t_off_lock')).toBe(1190);
+    expect(label.indexOf('s:textures/ui/t_on')).toBe(1273);
+    expect(label.indexOf('s:textures/ui/t_on_hov')).toBe(1356);
+    expect(label.indexOf('s:textures/ui/t_on_lock')).toBe(1439);
+  });
+
+  // Slider textures: track in the common block, then progress [1273-1438] and the
+  // four thumb states [1439-1770]. Exact offsets are the RP decode contract
+  // (modal_slider.json).
+  it('places the slider textures at the contracted payload offsets', () => {
+    const form = new FakeModalForm();
+
+    serialize(
+      el(Form.Slider({
+        name: 's',
+        min: 0,
+        max: 10,
+        background: 'textures/ui/s_track',
+        backgroundHover: 'textures/ui/s_track_hov',
+        backgroundPressed: 'textures/ui/s_prs',
+        backgroundLocked: 'textures/ui/s_lock',
+        progress: 'textures/ui/s_prog',
+        progressHover: 'textures/ui/s_prog_hov',
+        thumb: 'textures/ui/s_thumb',
+        thumbHover: 'textures/ui/s_thumb_hov',
+        thumbPressed: 'textures/ui/s_thumb_prs',
+        thumbLocked: 'textures/ui/s_thumb_lock',
+        trackHeight: 6,
+        thumbWidth: 20,
+        thumbHeight: 12,
+      })),
+      asModalForm(form),
+      modalCtx(),
+    );
+
+    const label = form.calls.find(c => c.kind === 'slider')?.args[0] as string;
+
+    expect(label.indexOf('s:textures/ui/s_track')).toBe(440);
+    expect(label.indexOf('s:textures/ui/s_track_hov')).toBe(1024);
+    expect(label.indexOf('s:textures/ui/s_prs')).toBe(1107);
+    expect(label.indexOf('s:textures/ui/s_lock')).toBe(1190);
+    expect(label.indexOf('s:textures/ui/s_prog')).toBe(1273);
+    expect(label.indexOf('s:textures/ui/s_prog_hov')).toBe(1356);
+    expect(label.indexOf('s:textures/ui/s_thumb')).toBe(1439);
+    expect(label.indexOf('s:textures/ui/s_thumb_hov')).toBe(1522);
+    expect(label.indexOf('s:textures/ui/s_thumb_prs')).toBe(1605);
+    expect(label.indexOf('s:textures/ui/s_thumb_lock')).toBe(1688);
+    // Geometry block after the textures.
+    expect(label.indexOf('n:6')).toBe(1771); // trackHeight
+    expect(label.indexOf('n:20')).toBe(1854); // thumbWidth
+    expect(label.indexOf('n:12')).toBe(1937); // thumbHeight
+    // travelWidth [2020]: placeholder 0 on the serialize-only path; the layout
+    // phase fills it in-place (width - thumbWidth) in the real pipeline.
+    expect(label.slice(2020, 2024)).toBe('n:0;');
+  });
+
+  // Input textures: pure button-identical block ([440]/[1024]/[1107]/[1190]).
+  // Exact offsets are the RP decode contract (modal_input.json).
+  it('places the input textures at the contracted payload offsets', () => {
+    const form = new FakeModalForm();
+
+    serialize(
+      el(Form.Input({
+        name: 'i',
+        background: 'textures/ui/i_bg',
+        backgroundHover: 'textures/ui/i_hov',
+        backgroundPressed: 'textures/ui/i_prs',
+        backgroundLocked: 'textures/ui/i_lock',
+      })),
+      asModalForm(form),
+      modalCtx(),
+    );
+
+    const label = form.calls.find(c => c.kind === 'textField')?.args[0] as string;
+
+    expect(label.indexOf('s:textures/ui/i_bg')).toBe(440);
+    expect(label.indexOf('s:textures/ui/i_hov')).toBe(1024);
+    expect(label.indexOf('s:textures/ui/i_prs')).toBe(1107);
+    expect(label.indexOf('s:textures/ui/i_lock')).toBe(1190);
   });
 
   // popupHeight caps at half the canonical screen (210/2 = 105) so long lists scroll.

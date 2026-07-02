@@ -218,10 +218,15 @@
 			{
 				"text_area": {
 					"type": "panel",
+					// Above the payload-decoded state backgrounds (their bg images sit at
+					// layer 1 inside LATER siblings — same effective layer + later tree
+					// order painted them over the text once the input gained textures).
+					"layer": 5,
 					"size": [
 						"100% - 6px",
 						"100% - 4px"
 					],
+					"offset": ["8px", 0],
 					"anchor_from": "left_middle",
 					"anchor_to": "left_middle",
 					"clips_children": true,
@@ -231,14 +236,25 @@
 								"type": "label",
 								"localize": false,
 								"text": "#item_name",
-								"color": [ 1, 1, 1, 1 ],
+								"color": [
+									1,
+									1,
+									1,
+									1
+								],
 								"locked_alpha": 0.5,
 								"font_size": "normal",
 								"text_alignment": "left",
 								"anchor_from": "left_middle",
 								"anchor_to": "left_middle",
-								"size": [ "default", "default" ],
-								"min_size": [ "100%", 0 ],
+								"size": [
+									"default",
+									"default"
+								],
+								"min_size": [
+									"100%",
+									0
+								],
 								"layer": 1,
 								"property_bag": {
 									"#property_field": "#item_name"
@@ -257,21 +273,35 @@
 						{
 							"place_holder_visibility": {
 								"type": "panel",
-								"size": [ "100%", "100%" ],
+								"size": [
+									"100%",
+									"100%"
+								],
 								"controls": [
 									{
 										"place_holder_control": {
 											"type": "label",
 											"localize": false,
 											"text": "#placeholder",
-											"color": [ 0.7, 0.7, 0.7, 1 ],
+											"color": [
+												0.7,
+												0.7,
+												0.7,
+												1
+											],
 											"locked_alpha": 0.5,
 											"font_size": "normal",
 											"text_alignment": "left",
 											"anchor_from": "left_middle",
 											"anchor_to": "left_middle",
-											"size": [ "default", "default" ],
-											"min_size": [ "100%", 0 ],
+											"size": [
+												"default",
+												"default"
+											],
+											"min_size": [
+												"100%",
+												0
+											],
 											"layer": 1,
 											"bindings": [
 												{
@@ -300,30 +330,206 @@
 				}
 			},
 			{
-				/* Textureless background states: bare panels (no texture). Ore-styled adds
-				   textures later via the payload-decode path; vanilla edit boxes draw an
-				   indent nineslice here. */
+				/* Payload-decoded background states: each panel's bg image reads its texture
+				   from the button-identical field block (default [440], hover [1024],
+				   pressed [1107], locked [1190]). */
 				"default": {
 					"type": "panel",
-					"size": [ "100%", "100%" ]
+					"size": [
+						"100%",
+						"100%"
+					],
+					"controls": [
+						{
+							"bg": {
+								"type": "image",
+								"size": [
+									"100%",
+									"100%"
+								],
+								"layer": 1,
+								"texture": "#texture",
+								"bindings": [
+									{
+										/* texture field at absolute payload offset [440] */
+										"binding_name": "#custom_text",
+										"binding_type": "collection",
+										"binding_collection_name": "custom_form"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.440s' * #custom_text)",
+										"target_property_name": "#skip_bg"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#custom_text - #skip_bg)",
+										"target_property_name": "#rem_bg"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #rem_bg)",
+										"target_property_name": "#raw_bg"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(('%.82s' * #raw_bg) - ('%.2s' * #raw_bg) - ';')",
+										"target_property_name": "#texture"
+									}
+								]
+							}
+						}
+					]
 				}
 			},
 			{
 				"hover": {
 					"type": "panel",
-					"size": [ "100%", "100%" ]
+					"size": [
+						"100%",
+						"100%"
+					],
+					"controls": [
+						{
+							"bg": {
+								"type": "image",
+								"size": [
+									"100%",
+									"100%"
+								],
+								"layer": 1,
+								"texture": "#texture",
+								"bindings": [
+									{
+										/* texture field at absolute payload offset [1024] */
+										"binding_name": "#custom_text",
+										"binding_type": "collection",
+										"binding_collection_name": "custom_form"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.1024s' * #custom_text)",
+										"target_property_name": "#skip_hov"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#custom_text - #skip_hov)",
+										"target_property_name": "#rem_hov"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #rem_hov)",
+										"target_property_name": "#raw_hov"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(('%.82s' * #raw_hov) - ('%.2s' * #raw_hov) - ';')",
+										"target_property_name": "#texture"
+									}
+								]
+							}
+						}
+					]
 				}
 			},
 			{
 				"pressed": {
 					"type": "panel",
-					"size": [ "100%", "100%" ]
+					"size": [
+						"100%",
+						"100%"
+					],
+					"controls": [
+						{
+							"bg": {
+								"type": "image",
+								"size": [
+									"100%",
+									"100%"
+								],
+								"layer": 1,
+								"texture": "#texture",
+								"bindings": [
+									{
+										/* texture field at absolute payload offset [1107] */
+										"binding_name": "#custom_text",
+										"binding_type": "collection",
+										"binding_collection_name": "custom_form"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.1107s' * #custom_text)",
+										"target_property_name": "#skip_prs"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#custom_text - #skip_prs)",
+										"target_property_name": "#rem_prs"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #rem_prs)",
+										"target_property_name": "#raw_prs"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(('%.82s' * #raw_prs) - ('%.2s' * #raw_prs) - ';')",
+										"target_property_name": "#texture"
+									}
+								]
+							}
+						}
+					]
 				}
 			},
 			{
 				"locked": {
 					"type": "panel",
-					"size": [ "100%", "100%" ]
+					"size": [
+						"100%",
+						"100%"
+					],
+					"controls": [
+						{
+							"bg": {
+								"type": "image",
+								"size": [
+									"100%",
+									"100%"
+								],
+								"layer": 1,
+								"texture": "#texture",
+								"bindings": [
+									{
+										/* texture field at absolute payload offset [1190] */
+										"binding_name": "#custom_text",
+										"binding_type": "collection",
+										"binding_collection_name": "custom_form"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.1190s' * #custom_text)",
+										"target_property_name": "#skip_lock"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#custom_text - #skip_lock)",
+										"target_property_name": "#rem_lock"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #rem_lock)",
+										"target_property_name": "#raw_lock"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(('%.82s' * #raw_lock) - ('%.2s' * #raw_lock) - ';')",
+										"target_property_name": "#texture"
+									}
+								]
+							}
+						}
+					]
 				}
 			}
 		]

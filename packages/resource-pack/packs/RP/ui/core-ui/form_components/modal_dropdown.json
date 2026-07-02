@@ -1,31 +1,6 @@
 {
+	// yeah do not ask me how this one works, ask about the rest --drav0011
 	"namespace": "core_ui_form_components",
-	// ---------------------------------------------------------------------------
-	// Local copies of the vanilla controls this file referenced directly, so we
-	// own the top layer and can modify them freely.
-	//
-	// STEP 1 (this pass): each control below is copied VERBATIM from vanilla. Their
-	// internal @extends / control-name references STILL point at vanilla (e.g. the
-	// local `toggle` extends `common.toggle_visuals`); a later pass will copy those
-	// deeper dependencies down too once adjustments are settled.
-	//
-	// `common.scrolling_panel` (used by dropdown_custom below) is deliberately NOT
-	// copied and keeps referencing vanilla, per the current plan.
-	// ---------------------------------------------------------------------------
-	// NOTE: these copies are prefixed `vanilla_` because this namespace
-	// (core_ui_form_components) is SHARED with modal_toggle/input/slider — a bare
-	// name like `toggle` collides with modal_toggle.json's own `toggle` decode
-	// panel and silently overwrites it, breaking toggle_router.
-	// --- copied from common.empty_panel (ui_common.json:8-10) ---
-	"vanilla_empty_panel": {
-		"type": "panel"
-	},
-	// --- copied from common.dropdown_background (ui_common.json:1097-1101) ---
-	"vanilla_dropdown_background": {
-		"layer": 1,
-		"type": "image",
-		"texture": "textures/ui/dropdown_background"
-	},
 	// --- copied from common.toggle (ui_common.json:366-557) ---
 	// Still extends vanilla common.toggle_visuals for now.
 	// TTS and focus properties/bindings stripped out (nuked for now).
@@ -77,7 +52,7 @@
 		"$toggle_binding_type|default": "global",
 		"$toggle_state_binding_name|default": "#toggle_state",
 		"$toggle_grid_collection_name|default": "",
-		// radio_toggle_group MUST stay a $var: vanilla_radio_toggle overrides it to
+		// radio_toggle_group MUST stay a $var: option-row toggles override it to
 		// true. Hardcoding it to false made the option-list radios instantiate as
 		// non-radio toggles inside a radio-group factory, which hard-crashes the game
 		// (no log) on screen open. The toggle_group_* fields ride along with it.
@@ -135,40 +110,6 @@
 			}
 		]
 	},
-	// --- copied from common.checkbox (ui_common.json:571-583) ---
-	// Extends the LOCAL toggle above; its $..._control values still point at
-	// vanilla common.checkbox_*_state textures for now.
-	"vanilla_checkbox@core_ui_form_components.vanilla_toggle": {
-		"$unchecked_control": "core_ui_form_components.vanilla_checkbox_unchecked_state",
-		"$checked_control": "core_ui_form_components.vanilla_checkbox_checked_state",
-		"$unchecked_hover_control": "core_ui_form_components.vanilla_checkbox_unchecked_hover_state",
-		"$checked_hover_control": "core_ui_form_components.vanilla_checkbox_checked_hover_state",
-		"$unchecked_locked_control": "core_ui_form_components.vanilla_checkbox_unchecked_locked_state",
-		"$unchecked_locked_hover_control": "core_ui_form_components.vanilla_checkbox_unchecked_locked_state",
-		"$checked_locked_control": "core_ui_form_components.vanilla_checkbox_checked_locked_state",
-		"$checked_locked_hover_control": "core_ui_form_components.vanilla_checkbox_checked_locked_state"
-	},
-	// --- copied from settings_common.radio_with_label (settings_common.json:1060-1070) ---
-	// Inner radio_with_label_core still extends vanilla settings_common.
-	"vanilla_radio_with_label": {
-		"type": "panel",
-		"anchor_from": "top_left",
-		"anchor_to": "top_left",
-		"size": [
-			"100%",
-			"17px"
-		],
-		"offset": [
-			3,
-			0
-		],
-		"$enabled|default": true,
-		"controls": [
-			{
-				"radio_with_label_core@core_ui_form_components.vanilla_radio_with_label_core": {}
-			}
-		]
-	},
 	// --- copied from settings_common.option_radio_dropdown_group (settings_common.json:1723-1741) ---
 	// Inner radio_control_group still extends vanilla settings_common.
 	"vanilla_option_radio_dropdown_group": {
@@ -204,226 +145,6 @@
 				}
 			}
 		]
-	},
-	// ---------------------------------------------------------------------------
-	// STEP 2: second-level vanilla deps, copied down. These are what the STEP 1
-	// copies above extended/referenced. Their OWN remaining @extends / control
-	// references (common.toggle_visuals's children are inline; radio_with_label_core
-	// still extends common.radio_toggle and points at settings_common.radio_visuals_*;
-	// the checkbox states extend common.toggle_state_template) are the NEXT level and
-	// stay vanilla for now.
-	// ---------------------------------------------------------------------------
-	// --- copied from common.checkbox_*_state (ui_common.json:659-681) ---
-	// Now fully local: base states extend vanilla_toggle_state_template (copied below).
-	"vanilla_checkbox_checked_state@core_ui_form_components.vanilla_toggle_state_template": {
-		"texture": "textures/ui/checkbox_check"
-	},
-	"vanilla_checkbox_unchecked_state@core_ui_form_components.vanilla_toggle_state_template": {
-		"texture": "textures/ui/checkbox_space"
-	},
-	"vanilla_checkbox_checked_hover_state@core_ui_form_components.vanilla_checkbox_checked_state": {
-		"texture": "textures/ui/checkbox_checkHover"
-	},
-	"vanilla_checkbox_unchecked_hover_state@core_ui_form_components.vanilla_checkbox_unchecked_state": {
-		"texture": "textures/ui/checkbox_spaceHover"
-	},
-	"vanilla_checkbox_checked_locked_state@core_ui_form_components.vanilla_checkbox_checked_state": {
-		"texture": "textures/ui/checkbox_checkDisabled"
-	},
-	"vanilla_checkbox_unchecked_locked_state@core_ui_form_components.vanilla_toggle_state_template": {
-		"texture": "textures/ui/checkbox_spaceDisabled"
-	},
-	// --- copied from settings_common.radio_with_label_core (settings_common.json:1006-1029) ---
-	// Now fully local: extends vanilla_radio_toggle and points at local
-	// vanilla_radio_visuals_* textures (all copied below).
-	"vanilla_radio_with_label_core@common.radio_toggle": {
-		"$unchecked_control|default": "settings_common.radio_visuals_unchecked",
-		"$checked_control|default": "settings_common.radio_visuals_checked",
-		"$unchecked_hover_control|default": "settings_common.radio_visuals_unchecked_hover",
-		"$checked_hover_control|default": "settings_common.radio_visuals_checked_hover",
-		"$unchecked_locked_control|default": "settings_common.radio_visuals_unchecked_locked",
-		"$unchecked_locked_hover_control|default": "settings_common.radio_visuals_unchecked_locked",
-		"$checked_locked_control|default": "settings_common.radio_visuals_checked_locked",
-		"$checked_locked_hover_control|default": "settings_common.radio_visuals_checked_locked",
-		"$radio_toggle_group": true,
-		"size": [
-			"100%",
-			"100%c"
-		],
-		"$toggle_name|default": "$toggle_state_binding_name",
-		"$toggle_enabled_binding_name": "$option_enabled_binding_name",
-		"enabled": "$enabled",
-		"$toggle_enabled_binding_type": "global",
-		"variables": [
-			{
-				"requires": "(not $option_enabled_binding_name or not $enabled)",
-				"$toggle_enabled_binding_name": "#not_data_bound",
-				"$toggle_enabled_binding_type": "none"
-			}
-		]
-	},
-	// ---------------------------------------------------------------------------
-	// STEP 3 (final, excluding scroll): bottom of the tree. After this, the ONLY
-	// vanilla reference left in this file is common.scrolling_panel.
-	//   - vanilla_radio_toggle re-points its @extends to the already-local
-	//     vanilla_toggle (no second toggle copy) per the re-entry dedup decision.
-	//   - shared leaves (toggle_state_template, checkbox states) are copied ONCE and
-	//     reused by both the checkbox and radio_toggle state families.
-	//   - TTS stripped from radio_visuals to match the rest of this file.
-	// ---------------------------------------------------------------------------
-	// --- copied from common.toggle_state_template (ui_common.json:639-648) ---
-	"vanilla_toggle_state_template": {
-		"$checkbox_alignment|default": "center",
-		"anchor_from": "$checkbox_alignment",
-		"anchor_to": "$checkbox_alignment",
-		"offset": "$checkbox_offset",
-		"$checkbox_offset|default": [
-			0,
-			0
-		],
-		"type": "image",
-		"layer": 2,
-		"size": [
-			10,
-			10
-		]
-	},
-	// --- copied from common.radio_toggle (ui_common.json:559-569) ---
-	// @extends re-pointed to the local vanilla_toggle (was common.toggle); state
-	// refs point at the local vanilla_radio_toggle_*_state family below.
-	"vanilla_radio_toggle@core_ui_form_components.vanilla_toggle": {
-		"$unchecked_control|default": "core_ui_form_components.vanilla_radio_toggle_unchecked_state",
-		"$checked_control|default": "core_ui_form_components.vanilla_radio_toggle_checked_state",
-		"$unchecked_hover_control|default": "core_ui_form_components.vanilla_radio_toggle_unchecked_hover_state",
-		"$checked_hover_control|default": "core_ui_form_components.vanilla_radio_toggle_checked_hover_state",
-		"$unchecked_locked_control|default": "core_ui_form_components.vanilla_radio_toggle_unchecked_locked_state",
-		"$unchecked_locked_hover_control|default": "core_ui_form_components.vanilla_radio_toggle_unchecked_locked_state",
-		"$checked_locked_control|default": "core_ui_form_components.vanilla_radio_toggle_checked_locked_state",
-		"$checked_locked_hover_control|default": "core_ui_form_components.vanilla_radio_toggle_checked_locked_state",
-		"$radio_toggle_group": true
-	},
-	// --- copied from common.radio_toggle_*_state (ui_common.json:683-699) ---
-	// Reuse the already-local vanilla_checkbox_* base states + vanilla_toggle_state_template.
-	"vanilla_radio_toggle_checked_state@core_ui_form_components.vanilla_checkbox_unchecked_state": {
-		"texture": "textures/ui/checkbox_filled"
-	},
-	"vanilla_radio_toggle_unchecked_state@core_ui_form_components.vanilla_checkbox_unchecked_state": {},
-	"vanilla_radio_toggle_checked_hover_state@core_ui_form_components.vanilla_toggle_state_template": {
-		"texture": "textures/ui/checkbox_filled_hover"
-	},
-	"vanilla_radio_toggle_unchecked_hover_state@core_ui_form_components.vanilla_checkbox_unchecked_hover_state": {},
-	"vanilla_radio_toggle_checked_locked_state@core_ui_form_components.vanilla_toggle_state_template": {
-		"texture": "textures/ui/checkbox_filled_disabled"
-	},
-	"vanilla_radio_toggle_unchecked_locked_state@core_ui_form_components.vanilla_checkbox_unchecked_locked_state": {},
-	// --- copied from settings_common.radio_visuals (settings_common.json:939-1004) ---
-	// Terminal (only inline children). TTS stripped.
-	"vanilla_radio_visuals": {
-		"type": "panel",
-		"size": [
-			"100%",
-			16
-		],
-		"$alpha|default": 1.0,
-		"$radio_label_bindings|default": [],
-		"$radio_label_color|default": "$main_header_text_color",
-		"$radio_label_font_type|default": "default",
-		"$no_label|default": false,
-		"$selected|default": false,
-		"$hovered|default": false,
-		"variables": [
-			{
-				"requires": "$selected",
-				"$highlight_image": "textures/ui/dropDownSelectBG"
-			},
-			{
-				"requires": "$hovered",
-				"$highlight_image": "textures/ui/dropDownHoverBG"
-			}
-		],
-		"controls": [
-			{
-				"radio_image": {
-					"type": "image",
-					"texture": "$radio_texture",
-					"alpha": "$alpha",
-					"anchor_from": "left_middle",
-					"anchor_to": "left_middle",
-					"size": [
-						10,
-						10
-					],
-					"layer": 2
-				}
-			},
-			{
-				"radio_label": {
-					"ignored": "($no_label)",
-					"type": "label",
-					"anchor_from": "left_middle",
-					"anchor_to": "left_middle",
-					"text": "$radio_label_text",
-					"font_type": "$radio_label_font_type",
-					"color": "$radio_label_color",
-					"offset": [
-						16,
-						0.5
-					],
-					"size": [
-						"100% - 16px",
-						"default"
-					],
-					"alpha": "$alpha",
-					"bindings": "$radio_label_bindings",
-					"layer": 2
-				}
-			},
-			{
-				"accessibility_selection_highlight": {
-					"type": "image",
-					"$selection_highlight_size|default": [
-						"100% + 4px",
-						"100% + 2px"
-					],
-					"size": "$selection_highlight_size",
-					"$selection_highlight_offset|default": [
-						0,
-						0
-					],
-					"offset": "$selection_highlight_offset",
-					"ignored": "(not $selected and not $hovered)",
-					"$highlight_image|default": "",
-					"texture": "$highlight_image",
-					"tiled": true,
-					"layer": 1
-				}
-			}
-		]
-	},
-	// --- copied from settings_common.radio_visuals_* (settings_common.json:909-937) ---
-	"vanilla_radio_visuals_unchecked@core_ui_form_components.vanilla_radio_visuals": {
-		"$radio_texture": "textures/ui/radio_off"
-	},
-	"vanilla_radio_visuals_checked@core_ui_form_components.vanilla_radio_visuals": {
-		"$radio_texture": "textures/ui/radio_on",
-		"$selected": true
-	},
-	"vanilla_radio_visuals_unchecked_locked@core_ui_form_components.vanilla_radio_visuals": {
-		"$radio_texture": "textures/ui/radio_off",
-		"$alpha": 0.5
-	},
-	"vanilla_radio_visuals_checked_locked@core_ui_form_components.vanilla_radio_visuals": {
-		"$radio_texture": "textures/ui/radio_on",
-		"$alpha": 0.5,
-		"$selected": true
-	},
-	"vanilla_radio_visuals_unchecked_hover@core_ui_form_components.vanilla_radio_visuals": {
-		"$radio_texture": "textures/ui/radio_off_hover",
-		"$hovered": true
-	},
-	"vanilla_radio_visuals_checked_hover@core_ui_form_components.vanilla_radio_visuals": {
-		"$radio_texture": "textures/ui/radio_on_hover",
-		"$hovered": true
 	},
 	"dropdown_router": {
 		"type": "panel",
@@ -942,7 +663,7 @@
 			}
 		]
 	},
-	// Popup container background (Step 3): replaces vanilla_dropdown_background as the
+	// Popup container background (Step 3): replaces the vanilla dropdown_background copy (deleted in Step 6) as the
 	// scrolling panel's $scroll_background_image_control. Same self-decode block as the
 	// closed-box faces (button pattern), reading the dropdown-specific popupBackground
 	// payload field at [1273-1355]. Layer 1 matches the vanilla dropdown_background it
@@ -1112,8 +833,14 @@
 				}
 			},
 			{
-				// Basic option text (placement/styling becomes payload-driven in Step 5).
-				"option_label": {
+				// Option text (Step 5): three alignment variants, identical except text_alignment,
+				// gated by the decoded optionAlign [1854] - text_alignment is NOT bindable, so the
+				// payload selects a variant instead. Font/scale bind directly (the text component's
+				// proven shape); the label box is the row inset 4px per side, anchors centered, and
+				// free-form label offsets were CUT (anchored offsets are engine-dead in the whole
+				// popup chunk, option rows included - in-game verified). NOTE: this control mixes TWO
+				// collections (custom_dropdown text + custom_form styling) on one label.
+				"option_label_left": {
 					"type": "label",
 					"text": "#custom_radio_text",
 					"color": [
@@ -1122,27 +849,304 @@
 						1,
 						1
 					],
-					"font_size": "normal",
+					"font_size": "small",
+					"backup_font_type": "UIFont",
+					"font_scale_factor": "#font_scale_factor",
 					"text_alignment": "left",
-					"anchor_from": "left_middle",
-					"anchor_to": "left_middle",
-					"offset": [
-						4,
-						0
-					],
+					"anchor_from": "center",
+					"anchor_to": "center",
 					"size": [
 						"100% - 8px",
 						"default"
 					],
+					"visible": "#visible",
 					"layer": 10,
 					"bindings": [
 						{
+							/* option text: engine-provided per option row */
 							"binding_name": "#custom_radio_text",
 							"binding_type": "collection",
 							"binding_collection_name": "custom_dropdown"
 						},
 						{
 							"binding_type": "collection_details"
+						},
+						{
+							/* dropdown cell payload: uniform option-label styling (Step 5) */
+							"binding_name": "#custom_text",
+							"binding_type": "collection",
+							"binding_collection_name": "custom_form"
+						},
+						{
+							/* --- optionFontType [1688] --- */
+							"binding_type": "view",
+							"source_property_name": "('%.1688s' * #custom_text)",
+							"target_property_name": "#skip_to_opt_font"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_text - #skip_to_opt_font)",
+							"target_property_name": "#rem_at_opt_font"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_opt_font)",
+							"target_property_name": "#raw_opt_font"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_opt_font) - ('%.2s' * #raw_opt_font) - ';')",
+							"target_property_name": "#font_type"
+						},
+						{
+							/* --- optionFontScaleFactor [1771] (string form, like components/text.json) --- */
+							"binding_type": "view",
+							"source_property_name": "('%.1771s' * #custom_text)",
+							"target_property_name": "#skip_to_opt_scale"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_text - #skip_to_opt_scale)",
+							"target_property_name": "#rem_at_opt_scale"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_opt_scale)",
+							"target_property_name": "#raw_opt_scale"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_opt_scale) - ('%.2s' * #raw_opt_scale) - ';')",
+							"target_property_name": "#font_scale_factor"
+						},
+						{
+							/* --- optionAlign [1854] gates WHICH variant renders --- */
+							"binding_type": "view",
+							"source_property_name": "('%.1854s' * #custom_text)",
+							"target_property_name": "#skip_to_opt_align"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_text - #skip_to_opt_align)",
+							"target_property_name": "#rem_at_opt_align"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_opt_align)",
+							"target_property_name": "#raw_opt_align"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "((('%.82s' * #raw_opt_align) - ('%.2s' * #raw_opt_align) - ';') = 'left')",
+							"target_property_name": "#visible"
+						}
+					]
+				}
+			},
+			{
+				"option_label_center": {
+					"type": "label",
+					"text": "#custom_radio_text",
+					"color": [
+						1,
+						1,
+						1,
+						1
+					],
+					"font_size": "small",
+					"backup_font_type": "UIFont",
+					"font_scale_factor": "#font_scale_factor",
+					"text_alignment": "center",
+					"anchor_from": "center",
+					"anchor_to": "center",
+					"size": [
+						"100% - 8px",
+						"default"
+					],
+					"visible": "#visible",
+					"layer": 10,
+					"bindings": [
+						{
+							/* option text: engine-provided per option row */
+							"binding_name": "#custom_radio_text",
+							"binding_type": "collection",
+							"binding_collection_name": "custom_dropdown"
+						},
+						{
+							"binding_type": "collection_details"
+						},
+						{
+							/* dropdown cell payload: uniform option-label styling (Step 5) */
+							"binding_name": "#custom_text",
+							"binding_type": "collection",
+							"binding_collection_name": "custom_form"
+						},
+						{
+							/* --- optionFontType [1688] --- */
+							"binding_type": "view",
+							"source_property_name": "('%.1688s' * #custom_text)",
+							"target_property_name": "#skip_to_opt_font"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_text - #skip_to_opt_font)",
+							"target_property_name": "#rem_at_opt_font"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_opt_font)",
+							"target_property_name": "#raw_opt_font"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_opt_font) - ('%.2s' * #raw_opt_font) - ';')",
+							"target_property_name": "#font_type"
+						},
+						{
+							/* --- optionFontScaleFactor [1771] (string form, like components/text.json) --- */
+							"binding_type": "view",
+							"source_property_name": "('%.1771s' * #custom_text)",
+							"target_property_name": "#skip_to_opt_scale"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_text - #skip_to_opt_scale)",
+							"target_property_name": "#rem_at_opt_scale"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_opt_scale)",
+							"target_property_name": "#raw_opt_scale"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_opt_scale) - ('%.2s' * #raw_opt_scale) - ';')",
+							"target_property_name": "#font_scale_factor"
+						},
+						{
+							/* --- optionAlign [1854] gates WHICH variant renders --- */
+							"binding_type": "view",
+							"source_property_name": "('%.1854s' * #custom_text)",
+							"target_property_name": "#skip_to_opt_align"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_text - #skip_to_opt_align)",
+							"target_property_name": "#rem_at_opt_align"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_opt_align)",
+							"target_property_name": "#raw_opt_align"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "((('%.82s' * #raw_opt_align) - ('%.2s' * #raw_opt_align) - ';') = 'center')",
+							"target_property_name": "#visible"
+						}
+					]
+				}
+			},
+			{
+				"option_label_right": {
+					"type": "label",
+					"text": "#custom_radio_text",
+					"color": [
+						1,
+						1,
+						1,
+						1
+					],
+					"font_size": "small",
+					"backup_font_type": "UIFont",
+					"font_scale_factor": "#font_scale_factor",
+					"text_alignment": "right",
+					"anchor_from": "center",
+					"anchor_to": "center",
+					"size": [
+						"100% - 8px",
+						"default"
+					],
+					"visible": "#visible",
+					"layer": 10,
+					"bindings": [
+						{
+							/* option text: engine-provided per option row */
+							"binding_name": "#custom_radio_text",
+							"binding_type": "collection",
+							"binding_collection_name": "custom_dropdown"
+						},
+						{
+							"binding_type": "collection_details"
+						},
+						{
+							/* dropdown cell payload: uniform option-label styling (Step 5) */
+							"binding_name": "#custom_text",
+							"binding_type": "collection",
+							"binding_collection_name": "custom_form"
+						},
+						{
+							/* --- optionFontType [1688] --- */
+							"binding_type": "view",
+							"source_property_name": "('%.1688s' * #custom_text)",
+							"target_property_name": "#skip_to_opt_font"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_text - #skip_to_opt_font)",
+							"target_property_name": "#rem_at_opt_font"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_opt_font)",
+							"target_property_name": "#raw_opt_font"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_opt_font) - ('%.2s' * #raw_opt_font) - ';')",
+							"target_property_name": "#font_type"
+						},
+						{
+							/* --- optionFontScaleFactor [1771] (string form, like components/text.json) --- */
+							"binding_type": "view",
+							"source_property_name": "('%.1771s' * #custom_text)",
+							"target_property_name": "#skip_to_opt_scale"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_text - #skip_to_opt_scale)",
+							"target_property_name": "#rem_at_opt_scale"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_opt_scale)",
+							"target_property_name": "#raw_opt_scale"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_opt_scale) - ('%.2s' * #raw_opt_scale) - ';')",
+							"target_property_name": "#font_scale_factor"
+						},
+						{
+							/* --- optionAlign [1854] gates WHICH variant renders --- */
+							"binding_type": "view",
+							"source_property_name": "('%.1854s' * #custom_text)",
+							"target_property_name": "#skip_to_opt_align"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_text - #skip_to_opt_align)",
+							"target_property_name": "#rem_at_opt_align"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_opt_align)",
+							"target_property_name": "#raw_opt_align"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "((('%.82s' * #raw_opt_align) - ('%.2s' * #raw_opt_align) - ';') = 'right')",
+							"target_property_name": "#visible"
 						}
 					]
 				}
@@ -1339,8 +1343,6 @@
 	},
 	"dropdown_custom": {
 		"type": "panel",
-		"$dropdown_content|default": "core_ui_form_components.vanilla_empty_panel",
-		"$dropdown_toggle|default": "core_ui_form_components.vanilla_checkbox",
 		"$dropdown_name|default": "dropdown_control",
 		"$dropdown_scroll_content_size|default": [
 			"100%",

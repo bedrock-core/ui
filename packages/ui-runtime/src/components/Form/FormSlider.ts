@@ -3,11 +3,11 @@ import { isModalForm } from '../../core/guards';
 import { ModalFormError, type Writer } from '../../core/types';
 import { emitModalControl } from '../../core/writers';
 import { FunctionComponent, JSX } from '../../jsx';
-import { controlPayloadProps } from './controlPayload';
+import { resolveStateBackgrounds, withControl, type StateBackgroundProps } from '../control';
 import { MODAL_SLIDER_SLOT_TYPE } from './modalControls';
 import { FormControlBase } from './shared';
 
-export interface FormSliderProps extends FormControlBase {
+export interface FormSliderProps extends FormControlBase, StateBackgroundProps {
   /** Minimum selectable value. */
   min: number;
   /** Maximum selectable value. */
@@ -16,7 +16,36 @@ export interface FormSliderProps extends FormControlBase {
   step?: number;
   /** Initial value. Defaults to `min`. */
   defaultValue?: number;
+  // StateBackgroundProps styles the TRACK (bar frame + inner track): background +
+  // backgroundHover are shown; pressed/locked are carried for the shared
+  // button-identical block but the slider RP has no bar states for them.
+  /** Progress-fill texture (left of the thumb). Defaults to the resolved track base. */
+  progress?: string;
+  /** Progress-fill hover texture. Defaults to the resolved progress texture. */
+  progressHover?: string;
+  /** Thumb (draggable handle) texture. Defaults to the resolved track base. */
+  thumb?: string;
+  /** Thumb hover texture. Defaults to the resolved thumb texture. */
+  thumbHover?: string;
+  /** Thumb pressed/dragged (indent) texture. Defaults to the resolved thumb texture. */
+  thumbPressed?: string;
+  /** Thumb locked/disabled texture. Defaults to the resolved thumb texture. */
+  thumbLocked?: string;
+  /**
+   * Track (and progress fill) height in px. The track always spans the full control
+   * width and is vertically centered; this sets how tall it draws. Default `10`.
+   */
+  trackHeight?: number;
+  /** Thumb (draggable handle) width in px. Default `10`. */
+  thumbWidth?: number;
+  /** Thumb (draggable handle) height in px. Default `16`. */
+  thumbHeight?: number;
 }
+
+/** RP defaults for the slider geometry — must match modal_slider.json's fallbacks. */
+const DEFAULT_TRACK_HEIGHT = 10;
+const DEFAULT_THUMB_WIDTH = 10;
+const DEFAULT_THUMB_HEIGHT = 16;
 
 /**
  * Numeric slider field → `ModalFormData.slider`. Result (`Form.onSubmit`): `number`.
@@ -25,17 +54,53 @@ export interface FormSliderProps extends FormControlBase {
  * payload for the RP to position/style the native widget.
  */
 export const FormSlider: FunctionComponent<FormSliderProps> = ({
-  name, label, tooltip, min, max, step, defaultValue, font, scale, ...layout
-}: FormSliderProps): JSX.Element => ({
-  type: MODAL_SLIDER_SLOT_TYPE,
-  props: {
-    ...controlPayloadProps(layout, label ?? '', { font, scale }),
-    name,
-    build: (form: ModalFormData, payload: string): void => {
-      form.slider(payload, min, max, { defaultValue: defaultValue ?? min, valueStep: step, tooltip });
+  name, min, max, step, defaultValue,
+  backgroundHover, backgroundPressed, backgroundLocked,
+  progress, progressHover, thumb, thumbHover, thumbPressed, thumbLocked,
+  trackHeight, thumbWidth, thumbHeight, ...layout
+}: FormSliderProps): JSX.Element => {
+  // Track mirrors Button; progress and thumb follow the same rule against their own
+  // bases (a single `background` styles the whole slider when nothing else is given).
+  const track = resolveStateBackgrounds({ background: layout.background, backgroundHover, backgroundPressed, backgroundLocked });
+  const progressBase = progress ?? track.background;
+  const thumbBase = thumb ?? track.background;
+
+  return {
+    type: MODAL_SLIDER_SLOT_TYPE,
+    props: {
+      // Control block first so the state textures land at BUTTON-IDENTICAL byte
+      // offsets ([1024-1272] right after the reserved block), slider-specific
+      // fields after. `name` is appended LAST so it survives to the writer without
+      // disturbing the RP-read offsets; `build` is a function → routed to
+      // callbacks, not encoded. Default width to '100%' so the track fills whatever
+      // container wraps it regardless of the wrapper's flex direction (a bare
+      // <Panel> defaults to `row`, which would otherwise leave the slider at its
+      // content width instead of stretching).
+      ...withControl({ width: '100%', ...layout, background: track.background }),
+      backgroundHover: track.backgroundHover, // [1024-1106] like Button
+      backgroundPressed: track.backgroundPressed, // [1107-1189] reserved (no bar state)
+      backgroundLocked: track.backgroundLocked, // [1190-1272] reserved (no bar state)
+      progress: progressBase, // [1273-1355] slider-specific
+      progressHover: progressHover ?? progressBase, // [1356-1438]
+      thumb: thumbBase, // [1439-1521]
+      thumbHover: thumbHover ?? thumbBase, // [1522-1604]
+      thumbPressed: thumbPressed ?? thumbBase, // [1605-1687] engine "indent" state
+      thumbLocked: thumbLocked ?? thumbBase, // [1688-1770]
+      // Geometry: track spans the full control width (RP), these size the rest.
+      trackHeight: trackHeight ?? DEFAULT_TRACK_HEIGHT, // [1771-1853]
+      thumbWidth: thumbWidth ?? DEFAULT_THUMB_WIDTH, // [1854-1936]
+      thumbHeight: thumbHeight ?? DEFAULT_THUMB_HEIGHT, // [1937-2019]
+      // [2020-2102] thumb-travel width = control width - thumbWidth, so the thumb's
+      // EDGE (not center) meets the track ends at min/max. Placeholder here; the
+      // layout phase fills it in-place once jsonUIWidth is known (like `region`).
+      travelWidth: 0,
+      name,
+      build: (form: ModalFormData, payload: string): void => {
+        form.slider(payload, min, max, { defaultValue: defaultValue ?? min, valueStep: step });
+      },
     },
-  },
-});
+  };
+};
 
 /** Serializes a `modal-slider` into the native modal slider control. */
 export const formSliderWriter: Writer = (payload, form, ctx, callbacks, props) => {

@@ -36,41 +36,61 @@ export function ModalFormDemo({ back }: { back: () => void }): JSX.Element {
       onSubmit={handleSubmit}
       onCancel={back}
     >
-      <Panel flexDirection={'column'} gap={2} padding={4} background={'textures/ui/recipe_book_group_expanded'}>
+      <Panel flexDirection={'column'} gap={2} padding={4} background={'textures/ui/ore-styled/card/dark/background'}>
+        {/* Fully default-styled: every surface falls back to textures/ui/unstyled. */}
         <Form.Dropdown
           name={'asdsa'}
-          label={'§fMode'}
           options={['Easy', 'Normal', 'Hard']}
           defaultValue={'Normal'}
-          background={'textures/ui/ore-styled/button/primary/background'}
-          backgroundHover={'textures/ui/ore-styled/button/primary/background_hover'}
-          backgroundPressed={'textures/ui/ore-styled/button/primary/background_pressed'}
-          backgroundLocked={'textures/ui/ore-styled/button/primary/background_selected'}
-          popupBackground={'textures/ui/ore-styled/card/light/background'}
-          optionBackground={'textures/ui/ore-styled/button/secondary/background'}
-          optionHover={'textures/ui/ore-styled/button/secondary/background_hover'}
-          optionSelected={'textures/ui/ore-styled/button/secondary/background_selected'}
+          optionAlign={'center'}
         />
-        <Form.Toggle name={'toggle_a'} label={'§fToggle A'} defaultValue={true} />
-        <Form.Toggle name={'toggle_b'} label={'§fToggle B'} defaultValue={false} />
-        <Form.Toggle name={'toggle_c'} label={'§fToggle C'} defaultValue={true} />
+        <Form.Toggle name={'toggle_a'} defaultValue={true} />
+        {/* Styled via payload: ore's purpose-built toggle set; toggle_a/c stay unstyled. */}
+        <Form.Toggle
+          name={'toggle_b'}
+          defaultValue={false}
+          background={'textures/ui/ore-styled/toggle/off'}
+          backgroundHover={'textures/ui/ore-styled/toggle/off_hover'}
+          backgroundLocked={'textures/ui/ore-styled/toggle/off_disabled'}
+          checkedBackground={'textures/ui/ore-styled/toggle/on'}
+          checkedHover={'textures/ui/ore-styled/toggle/on_hover'}
+          checkedLocked={'textures/ui/ore-styled/toggle/on_disabled'}
+        />
+        <Form.Toggle name={'toggle_c'} defaultValue={true} />
       </Panel>
-      <Panel flexDirection={'column'} gap={2} padding={4} background={'textures/ui/recipe_book_group_expanded'}>
-        <Form.Input name={'nickname'} label={'§fNickname'} placeholder={'§7type here'} />
-        <Form.Slider name={'volume'} label={'§fVolume'} min={0} max={10} defaultValue={5} />
+      <Panel flexDirection={'column'} gap={2} padding={4} background={'textures/ui/ore-styled/card/dark/background'}>
+        {/* Styled via payload: ore's field + slider sets. */}
+        <Form.Input
+          name={'nickname'}
+          placeholder={'§7type here'}
+          // background={'textures/ui/ore-styled/field/background'}
+          // backgroundHover={'textures/ui/ore-styled/field/background_hover'}
+          // backgroundLocked={'textures/ui/ore-styled/field/background_disabled'}
+        />
+        <Panel width={'50%'} background={'textures/ui/recipe_book_group_expanded'}>
+          {/* Custom geometry probe: tall track + wide short thumb (defaults are 10/10x16). */}
+          <Form.Slider
+            name={'volume'}
+            min={0}
+            max={10}
+            defaultValue={5}
+            trackHeight={6}
+            thumbWidth={16}
+            thumbHeight={16}
+            background={'textures/ui/ore-styled/slider/track'}
+            progress={'textures/ui/ore-styled/slider/progress'}
+            thumb={'textures/ui/ore-styled/slider/thumb'}
+            thumbHover={'textures/ui/ore-styled/slider/thumb_hover'}
+            thumbLocked={'textures/ui/ore-styled/slider/thumb_disabled'}
+          />
+        </Panel>
+        {/* Fully default-styled: every surface falls back to textures/ui/unstyled. */}
         <Form.Dropdown
           name={'mode'}
-          label={'§fMode'}
           options={['Easy', 'Normal', 'Hard', 'Expert', 'Insane', 'Nightmare', 'Ultra', 'Custom']}
           defaultValue={'Normal'}
-          background={'textures/ui/ore-styled/button/primary/background'}
-          backgroundHover={'textures/ui/ore-styled/button/primary/background_hover'}
-          backgroundPressed={'textures/ui/ore-styled/button/primary/background_pressed'}
-          backgroundLocked={'textures/ui/ore-styled/button/primary/background_selected'}
-          popupBackground={'textures/ui/ore-styled/card/dark/background'}
-          optionBackground={'textures/ui/ore-styled/button/contrast/background'}
-          optionHover={'textures/ui/ore-styled/button/contrast/background_hover'}
-          optionSelected={'textures/ui/ore-styled/button/contrast/background_selected'}
+          optionFont={'minecraftTen'}
+          optionScale={0.8}
         />
       </Panel>
     </Form>

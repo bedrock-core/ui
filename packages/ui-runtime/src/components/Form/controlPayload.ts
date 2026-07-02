@@ -1,19 +1,8 @@
-import { withControl, type ControlProps } from '../control';
-import { JSX } from '../../jsx';
-
 /**
- * Build the host-element props for a modal control so the serializer + layout pass
- * produce a geometry-correct control-block payload — the SAME field layout (and the
- * SAME computed width/height/x/y from the flexbox engine) as an ActionForm component
- * like `Text`. The encoded `type` is the control's own slot type, so the RP modal
- * decoder gates on it; the styling tail (text/fontType/fontScaleFactor) carries the
- * label appearance. The resulting `payload` is what the writer hands to the native
- * control's label channel, where the RP decodes geometry + styling exactly like the
- * ActionForm `button`/`label` slots.
- *
- * `withControl` is applied so the modal control accepts the SAME control + layout props
- * as any other component (visible/enabled/background + width/height/flex/margin/…), and
- * the layout phase fills in `jsonUIWidth/Height/x/y` before serialization.
+ * Label-font mapping shared by payload-driven text surfaces (currently the
+ * dropdown's option labels). Mirrors the `Text` component's semantics: labels
+ * render with `font_size: small` and a bound `font_scale_factor`, so a 1.0 scale
+ * maps to factor 2 (1 / 0.5 base).
  */
 
 /** Mirrors `Text`'s `FONT_SIZE_BASE`: `font_size: small` renders at 0.5× base. */
@@ -34,30 +23,12 @@ export interface LabelStyle {
 }
 
 /**
- * JSON UI feeds a label's `text` through a numeric string-format path, so a value
- * starting with a digit (or `-`) renders blank/garbled. A zero-width `§r` shifts the
- * leading character off the digit without changing what's shown. Mirrors `Text`'s
- * `safeLabelText` — see [[jsonui-text-leading-digit]].
+ * Map a `LabelStyle` to the serialized font fields the RP label controls bind
+ * (`font_type` + `font_scale_factor`, with `font_size: small` at 0.5× base — the
+ * `text` component's exact shape).
  */
-function safeLabelText(text: string): string {
-  return /^[\d-]/.test(text) ? `§r${text}` : text;
-}
-
-/**
- * Assemble the serializable host-element props for a modal control's label payload.
- * Spreads `withControl` (canonical control + layout field order, geometry filled by the
- * layout phase) then the text-styling tail, matching the `text` component's encoded
- * layout so the RP modal decoders reuse its offsets.
- *
- * @param layout - Control/layout props the user passed to the `Form.*` control.
- * @param label - Display text (empty string when the control has no label).
- * @param style - Optional font/scale styling, matching `Text`.
- * @returns Props for the host element; the serializer encodes these into the payload.
- */
-export function controlPayloadProps(layout: ControlProps, label: string, style: LabelStyle = {}): JSX.Props {
+export function labelFontFields(style: LabelStyle = {}): { fontType: string; fontScaleFactor: number } {
   return {
-    ...withControl({ ...layout }),
-    value: safeLabelText(label),
     fontType: FONT_TYPE_MAP[style.font ?? 'mojangles'],
     fontScaleFactor: (style.scale ?? 1.0) / FONT_SIZE_BASE,
   };

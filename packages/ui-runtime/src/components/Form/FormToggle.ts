@@ -3,13 +3,22 @@ import { isModalForm } from '../../core/guards';
 import { ModalFormError, type Writer } from '../../core/types';
 import { emitModalControl } from '../../core/writers';
 import { FunctionComponent, JSX } from '../../jsx';
-import { controlPayloadProps } from './controlPayload';
+import { resolveStateBackgrounds, withControl, type StateBackgroundProps } from '../control';
 import { MODAL_TOGGLE_SLOT_TYPE } from './modalControls';
 import { FormControlBase } from './shared';
 
-export interface FormToggleProps extends FormControlBase {
+export interface FormToggleProps extends FormControlBase, StateBackgroundProps {
   /** Initial on/off state. Defaults to `false`. */
   defaultValue?: boolean;
+  // The StateBackgroundProps surfaces style the UNCHECKED (off) side; the checked
+  // side has its own set below. `backgroundPressed` is carried for the shared
+  // button-identical field block but the toggle RP has no pressed state to show it.
+  /** Checked (on) base texture. Defaults to the resolved unchecked base. */
+  checkedBackground?: string;
+  /** Checked hover texture. Defaults to the resolved checked base. */
+  checkedHover?: string;
+  /** Checked locked texture. Defaults to the resolved checked base. */
+  checkedLocked?: string;
 }
 
 /**
@@ -19,21 +28,37 @@ export interface FormToggleProps extends FormControlBase {
  * payload for the RP to position/style the native widget.
  */
 export const FormToggle: FunctionComponent<FormToggleProps> = ({
-  name, label, tooltip, defaultValue, font, scale, ...layout
-}: FormToggleProps): JSX.Element => ({
-  type: MODAL_TOGGLE_SLOT_TYPE,
-  props: {
-    // Serializable control-block + styling fields (geometry filled by the layout pass);
-    // `name` is appended LAST so it survives to the writer without disturbing the
-    // RP-read field offsets (the decoder stops at the styling tail). `build` is a
-    // function → routed to callbacks, not encoded.
-    ...controlPayloadProps(layout, label ?? '', { font, scale }),
-    name,
-    build: (form: ModalFormData, payload: string): void => {
-      form.toggle(payload, { defaultValue: defaultValue ?? false, tooltip });
+  name, defaultValue,
+  backgroundHover, backgroundPressed, backgroundLocked,
+  checkedBackground, checkedHover, checkedLocked, ...layout
+}: FormToggleProps): JSX.Element => {
+  // Unchecked side mirrors Button; checked side follows the same rule against its
+  // own base (single `background` styles both sides when nothing else is given).
+  const unchecked = resolveStateBackgrounds({ background: layout.background, backgroundHover, backgroundPressed, backgroundLocked });
+  const checkedBase = checkedBackground ?? unchecked.background;
+
+  return {
+    type: MODAL_TOGGLE_SLOT_TYPE,
+    props: {
+      // Control block first so the state textures land at BUTTON-IDENTICAL byte
+      // offsets ([1024-1272] right after the reserved block), toggle-specific
+      // fields after. `name` is appended LAST so it survives to the writer without
+      // disturbing the RP-read offsets; `build` is a function → routed to
+      // callbacks, not encoded.
+      ...withControl({ ...layout, background: unchecked.background }),
+      backgroundHover: unchecked.backgroundHover, // [1024-1106] like Button
+      backgroundPressed: unchecked.backgroundPressed, // [1107-1189] reserved (no pressed state)
+      backgroundLocked: unchecked.backgroundLocked, // [1190-1272]
+      checkedBackground: checkedBase, // [1273-1355] toggle-specific
+      checkedHover: checkedHover ?? checkedBase, // [1356-1438]
+      checkedLocked: checkedLocked ?? checkedBase, // [1439-1521]
+      name,
+      build: (form: ModalFormData, payload: string): void => {
+        form.toggle(payload, { defaultValue: defaultValue ?? false });
+      },
     },
-  },
-});
+  };
+};
 
 /** Serializes a `modal-toggle` into the native modal toggle control. */
 export const formToggleWriter: Writer = (payload, form, ctx, callbacks, props) => {
