@@ -1,8 +1,8 @@
 import { type Player } from '@minecraft/server';
 import { ModalFormData } from '@minecraft/server-ui';
-import type { FormConfig, FormValues } from '../../../components/Form';
+import { collectFormButtons, formButtonTitleFields, type FormConfig, type FormValues } from '../../../components/Form';
 import type { JSX } from '../../../jsx';
-import { serialize, serializeScrollMetadata } from '../../serializer';
+import { serialize, serializeModalTitle } from '../../serializer';
 import type { ModalSerializationContext } from '../../types';
 import { resolveScrolls, runInteractiveCallback, type PresentResult } from './shared';
 
@@ -32,18 +32,22 @@ export async function presentModal(
   const context: ModalSerializationContext = { mode: 'modal', modalControls: new Map(), modalControlIndex: 0 };
   const form = new ModalFormData();
 
-  // The native modal has no user-facing title — its title channel is repurposed to carry
-  // the SAME v0007 scroll-geometry metadata as the ActionForm, so a label-only modal sizes
-  // identically to a label-only ActionForm. A heading is authored as a `<Text>` child.
-  form.title(serializeScrollMetadata(resolveScrolls(tree)));
+  // The native modal has no user-facing title — its title channel carries the v0007
+  // scroll-geometry metadata (like the ActionForm) plus the two Form.Button blocks
+  // (submit required, exit optional), collected from the laid-out tree: the buttons
+  // are NOT native controls (no formValues slot), the RP renders them from the title.
+  // Field shape/defaults/cardinality are owned by FormButton.ts (component module);
+  // this just composes. A heading is authored as a `<Text>` child.
+  const { submit, exit } = collectFormButtons(tree);
+
+  form.title(serializeModalTitle(resolveScrolls(tree), {
+    ...formButtonTitleFields('submit', submit),
+    ...formButtonTitleFields('exit', exit),
+  }));
 
   // Walk the tree: control writers add native controls (recording name-by-ordinal);
   // decorative nodes emit label slots; the modal-form marker is transparent.
   serialize(tree, form, context);
-
-  if (config.submitLabel !== undefined) {
-    form.submitButton(config.submitLabel);
-  }
 
   return form.show(player).then((response) => {
     if (response.canceled) {

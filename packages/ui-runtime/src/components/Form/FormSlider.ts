@@ -78,10 +78,16 @@ export const FormSlider: FunctionComponent<FormSliderProps> = ({
       // fields after. `name` is appended LAST so it survives to the writer without
       // disturbing the RP-read offsets; `build` is a function → routed to
       // callbacks, not encoded. Default width to '100%' so the track fills whatever
-      // container wraps it regardless of the wrapper's flex direction (a bare
-      // <Panel> defaults to `row`, which would otherwise leave the slider at its
-      // content width instead of stretching).
-      ...withControl({ width: '100%', ...layout, background: track.background }),
+      // container wraps it regardless of the wrapper's flex direction — but ONLY
+      // when the caller gave no sizing (explicit width or flex sizing must win).
+      ...withControl({
+        ...(layout.width !== undefined || layout.flex !== undefined
+          || layout.flexGrow !== undefined || layout.flexBasis !== undefined
+          ? {}
+          : { width: '100%' }),
+        ...layout,
+        background: track.background,
+      }),
       backgroundHover: track.backgroundHover, // [1024-1106] like Button
       backgroundPressed: track.backgroundPressed, // [1107-1189] reserved (no bar state)
       backgroundLocked: track.backgroundLocked, // [1190-1272] reserved (no bar state)

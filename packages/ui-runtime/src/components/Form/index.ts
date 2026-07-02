@@ -7,9 +7,13 @@ export { formToggleWriter, type FormToggleProps } from './FormToggle';
 export { formSliderWriter, type FormSliderProps } from './FormSlider';
 export { formDropdownWriter, type FormDropdownProps } from './FormDropdown';
 export { formInputWriter, type FormInputProps } from './FormInput';
+export {
+  collectFormButtons, formButtonTitleFields, formButtonWriter,
+  type FormButtonKind, type FormButtonProps,
+} from './FormButton';
 
 export {
   MODAL_CONTROL_SLOT_TYPES, MODAL_TOGGLE_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE,
-  MODAL_DROPDOWN_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE,
+  MODAL_DROPDOWN_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE, MODAL_FORM_BUTTON_SLOT_TYPE,
   type ModalControlBuild,
 } from './modalControls';

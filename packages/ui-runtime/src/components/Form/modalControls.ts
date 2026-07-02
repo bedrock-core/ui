@@ -9,6 +9,11 @@ export const MODAL_TOGGLE_SLOT_TYPE = 'modal-toggle';
 export const MODAL_SLIDER_SLOT_TYPE = 'modal-slider';
 export const MODAL_DROPDOWN_SLOT_TYPE = 'modal-dropdown';
 export const MODAL_INPUT_SLOT_TYPE = 'modal-input';
+/**
+ * `Form.Button` — NOT a native control: it consumes no `formValues` slot; its
+ * payload rides the form TITLE (assembled by the presenter post-layout).
+ */
+export const MODAL_FORM_BUTTON_SLOT_TYPE = 'modal-form-button';
 
 /** All modal-only control host types, used by the restriction pass. */
 export const MODAL_CONTROL_SLOT_TYPES = [
@@ -16,6 +21,7 @@ export const MODAL_CONTROL_SLOT_TYPES = [
   MODAL_SLIDER_SLOT_TYPE,
   MODAL_DROPDOWN_SLOT_TYPE,
   MODAL_INPUT_SLOT_TYPE,
+  MODAL_FORM_BUTTON_SLOT_TYPE,
 ] as const;
 
 /**

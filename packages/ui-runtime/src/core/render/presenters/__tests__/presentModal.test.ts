@@ -17,11 +17,17 @@ afterEach(() => {
 // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- minimal Player stub; only id is used
 const player = { id: 'modal-presenter' } as unknown as Player;
 
-/** Build the marker tree the presenter sees after buildTree, with the given config + controls. */
-function modalTree(config: FormConfig, children: JSX.Node): JSX.Element {
+/**
+ * Build the marker tree the presenter sees after buildTree, with the given config +
+ * controls. A submit `Form.Button` is appended — a modal requires exactly one.
+ */
+function modalTree(config: FormConfig, children: JSX.Element[]): JSX.Element {
   return {
     type: MODAL_FORM_SLOT_TYPE,
-    props: { __formConfig: config, children },
+    props: {
+      __formConfig: config,
+      children: [...children, Form.Button({ type: 'submit', label: 'Save' })],
+    },
   };
 }
 

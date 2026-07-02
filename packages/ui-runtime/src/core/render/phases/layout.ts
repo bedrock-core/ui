@@ -2,7 +2,7 @@ import type { FlexStyle, LayoutNode } from '@bedrock-core/flexbox';
 import { CANONICAL_SCREEN, createNode, computeLayout as flexComputeLayout } from '@bedrock-core/flexbox';
 import { TextFont, TextOverflow, TextWordBreak } from '@bedrock-core/ui/components/Text';
 import {
-  MODAL_DROPDOWN_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE,
+  MODAL_DROPDOWN_SLOT_TYPE, MODAL_FORM_BUTTON_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE,
   MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
 } from '../../../components/Form';
 import { MAX_SCROLLS, SCROLL_SLOT_TYPE, type ScrollAxis } from '../../../components/Scroll';
@@ -122,6 +122,7 @@ const MODAL_CONTROL_DEFAULT_HEIGHT: Record<string, number> = {
   [MODAL_SLIDER_SLOT_TYPE]: 32,
   [MODAL_DROPDOWN_SLOT_TYPE]: 24,
   [MODAL_INPUT_SLOT_TYPE]: 24,
+  [MODAL_FORM_BUTTON_SLOT_TYPE]: 24,
 };
 
 function withIntrinsicSize(
@@ -143,7 +144,12 @@ function withIntrinsicSize(
       next.height = modalDefaultHeight;
     }
 
-    if (next.width === undefined && availableWidth !== undefined && availableWidth > 0) {
+    // Full-row width default — but only when the control has NO sizing of its own:
+    // an explicit width or any flex sizing must win, otherwise the default pins the
+    // flex-basis and breaks flex distribution inside row panels.
+    const flexSized = next.flex !== undefined || next.flexGrow !== undefined || next.flexBasis !== undefined;
+
+    if (next.width === undefined && !flexSized && availableWidth !== undefined && availableWidth > 0) {
       next.width = availableWidth;
     }
 

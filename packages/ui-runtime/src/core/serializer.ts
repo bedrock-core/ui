@@ -1,7 +1,7 @@
 import { JSX } from '../jsx';
 import { getComponentDescriptor, getRegisteredTypes, isTransparentType } from './componentRegistry';
 import { isElement, isFunction, isSerializablePrimitive } from './guards';
-import { FormTarget, SerializablePrimitive, SerializableProps, SerializationContext, SerializationError } from './types';
+import { FormTarget, ModalFormError, SerializablePrimitive, SerializableProps, SerializationContext, SerializationError } from './types';
 
 /**
  * This makes each full field substring unique even when two field values & padding are identical.
@@ -316,6 +316,45 @@ export function serializeScrollMetadata(scrolls: readonly ScrollMetrics[]): stri
   });
 
   const [payload] = serializeProps({ type: 'scrolls', ...fields });
+
+  return payload;
+}
+
+/**
+ * Serialize the modal form's title: the scroll metadata (identical layout to
+ * {@link serializeScrollMetadata} — a modal always has EXACTLY the root scroll, so
+ * its block ends at a fixed offset [590]) followed by any extra fields, appended in
+ * insertion order. The serializer is a pure encoder: the extra fields arrive fully
+ * resolved from their owning component modules (e.g. `formButtonTitleFields` — see
+ * FormButton.ts for the Form.Button byte-offset contract).
+ *
+ * @param scrolls - Scroll viewports; a modal must pass exactly one (the root).
+ * @param extraFields - Resolved fields appended after the scroll block.
+ * @returns Full title string for `form.title()`.
+ */
+export function serializeModalTitle(
+  scrolls: readonly ScrollMetrics[],
+  extraFields: SerializableProps,
+): string {
+  if (scrolls.length !== 1) {
+    throw new ModalFormError(
+      `A modal <Form> must have exactly the root scroll (got ${scrolls.length}). `
+      + '<Scroll> regions are ActionForm-only; the title field offsets depend on a '
+      + 'single scroll block.',
+    );
+  }
+
+  const [scroll] = scrolls;
+  const [payload] = serializeProps({
+    type: 'scrolls',
+    axis0: scroll.axis,
+    x0: Math.round(scroll.x),
+    y0: Math.round(scroll.y),
+    width0: Math.round(scroll.width),
+    height0: Math.round(scroll.height),
+    extent0: Math.round(scroll.extent),
+    ...extraFields,
+  });
 
   return payload;
 }

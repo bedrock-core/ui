@@ -11,8 +11,9 @@ import { computeLayout } from '../render/phases/layout';
 import { createInitialContext } from '../render/traversal';
 import { PROTOCOL_HEADER } from '../serializer';
 import type { JSX } from '../../jsx';
-import { serialize } from '../serializer';
-import type { ModalSerializationContext } from '../types';
+import { serialize, serializeModalTitle } from '../serializer';
+import { collectFormButtons, formButtonTitleFields } from '../../components/Form';
+import { ModalFormError, type ModalSerializationContext } from '../types';
 
 beforeAll(() => {
   registerNativeComponents();
@@ -310,6 +311,95 @@ describe('modal control serialization', () => {
     expect(label.indexOf('s:textures/ui/i_hov')).toBe(1024);
     expect(label.indexOf('s:textures/ui/i_prs')).toBe(1107);
     expect(label.indexOf('s:textures/ui/i_lock')).toBe(1190);
+  });
+
+  // Form.Button blocks ride the TITLE payload after the single scroll block. Exact
+  // offsets are the RP decode contract (modal_container.json flow_submit/flow_exit) —
+  // if this test breaks, those decode offsets MUST be updated in lockstep.
+  it('places the Form.Button blocks at the contracted title offsets', () => {
+    const scroll = { axis: 'y' as const, x: 0, y: 0, width: 320, height: 210, extent: 400 };
+    const submit: JSX.Element = {
+      type: 'modal-form-button',
+      props: {
+        buttonKind: 'submit', label: 'Save',
+        jsonUIWidth: 100, jsonUIHeight: 24, jsonUIx: 4, jsonUIy: 300,
+        background: 'textures/ui/sb', backgroundHover: 'textures/ui/sbh',
+        backgroundPressed: 'textures/ui/sbp', backgroundLocked: 'textures/ui/sbl',
+      },
+    };
+    const exit: JSX.Element = {
+      type: 'modal-form-button',
+      props: {
+        buttonKind: 'exit', label: 'Close',
+        jsonUIWidth: 80, jsonUIHeight: 22, jsonUIx: 6, jsonUIy: 330,
+        background: 'textures/ui/eb', backgroundHover: 'textures/ui/ebh',
+        backgroundPressed: 'textures/ui/ebp', backgroundLocked: 'textures/ui/ebl',
+      },
+    };
+
+    const title = serializeModalTitle([scroll], {
+      ...formButtonTitleFields('submit', submit),
+      ...formButtonTitleFields('exit', exit),
+    });
+
+    expect(title.startsWith(PROTOCOL_HEADER)).toBe(true);
+    // submit block
+    expect(title.indexOf('n:100')).toBe(590); // width
+    expect(title.indexOf('n:24')).toBe(673); // height
+    expect(title.indexOf('n:4;')).toBe(756); // x
+    expect(title.indexOf('n:300')).toBe(839); // y
+    expect(title.slice(922, 928)).toBe('b:true'); // visible
+    expect(title.slice(930, 936)).toBe('b:true'); // enabled
+    expect(title.indexOf('s:Save')).toBe(938);
+    expect(title.indexOf('s:textures/ui/sb')).toBe(1021);
+    expect(title.indexOf('s:textures/ui/sbh')).toBe(1104);
+    expect(title.indexOf('s:textures/ui/sbp')).toBe(1187);
+    expect(title.indexOf('s:textures/ui/sbl')).toBe(1270);
+    // exit block
+    expect(title.indexOf('n:80')).toBe(1353);
+    expect(title.indexOf('n:22')).toBe(1436);
+    expect(title.indexOf('n:6;')).toBe(1519);
+    expect(title.indexOf('n:330')).toBe(1602);
+    expect(title.slice(1685, 1691)).toBe('b:true');
+    expect(title.slice(1693, 1699)).toBe('b:true');
+    expect(title.indexOf('s:Close')).toBe(1701);
+    expect(title.indexOf('s:textures/ui/eb')).toBe(1784);
+    expect(title.indexOf('s:textures/ui/ebh')).toBe(1867);
+    expect(title.indexOf('s:textures/ui/ebp')).toBe(1950);
+    expect(title.indexOf('s:textures/ui/ebl')).toBe(2033);
+  });
+
+  // An undeclared exit serializes as its absent-state defaults (hidden, zeros) at
+  // the same offsets, keeping the contract fixed.
+  it('serializes an undeclared exit button as a hidden block at the same offsets', () => {
+    const scroll = { axis: 'y' as const, x: 0, y: 0, width: 320, height: 210, extent: 400 };
+    const submit: JSX.Element = {
+      type: 'modal-form-button',
+      props: { buttonKind: 'submit', label: 'Save', jsonUIWidth: 100, jsonUIHeight: 24, jsonUIx: 4, jsonUIy: 300 },
+    };
+
+    const title = serializeModalTitle([scroll], {
+      ...formButtonTitleFields('submit', submit),
+      ...formButtonTitleFields('exit', undefined),
+    });
+
+    expect(title.slice(1685, 1692)).toBe('b:false'); // exit hidden
+    expect(title.slice(1353, 1357)).toBe('n:0;'); // zero geometry
+  });
+
+  it('requires exactly one submit Form.Button and at most one exit', () => {
+    const btn = (kind: string): JSX.Element => ({
+      type: 'modal-form-button',
+      props: { buttonKind: kind, label: 'B', jsonUIWidth: 10, jsonUIHeight: 10, jsonUIx: 0, jsonUIy: 0 },
+    });
+    const tree = (children: JSX.Element[]): JSX.Element => ({ type: 'panel', props: { children } });
+
+    expect(() => collectFormButtons(tree([]))).toThrow(ModalFormError);
+    expect(() => collectFormButtons(tree([btn('submit'), btn('submit')]))).toThrow(ModalFormError);
+    expect(() => collectFormButtons(tree([btn('submit'), btn('exit'), btn('exit')]))).toThrow(ModalFormError);
+    expect(collectFormButtons(tree([btn('submit'), btn('exit')])).exit).toBeDefined();
+    expect(collectFormButtons(tree([btn('submit')])).exit).toBeUndefined();
+    expect(collectFormButtons(tree([btn('submit')])).submit.props.label).toBe('B');
   });
 
   // popupHeight caps at half the canonical screen (210/2 = 105) so long lists scroll.

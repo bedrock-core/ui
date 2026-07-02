@@ -1,6 +1,7 @@
 import { createContext } from '../../core/fabric/context';
 import { ModalValue } from '../../core/types';
 import { FunctionComponent, JSX } from '../../jsx';
+import { FormButton, type FormButtonProps } from './FormButton';
 import { FormDropdown, type FormDropdownProps } from './FormDropdown';
 import { FormInput, type FormInputProps } from './FormInput';
 import { FormSlider, type FormSliderProps } from './FormSlider';
@@ -23,15 +24,11 @@ export type FormValues = Record<string, ModalValue>;
  */
 export interface FormConfig {
   /**
-   * Confirm-button text (native `ModalFormData.submitButton`).
-   */
-  submitLabel?: string;
-  /**
    * Called once when the player submits, with every control's value keyed by its
    * `name`. The native modal is atomic — this is the only place values arrive.
    */
   onSubmit?: (values: FormValues) => void;
-  /** Called when the player dismisses the modal (X / Esc). */
+  /** Called when the player dismisses the modal (X / Esc / a `Form.Button` exit). */
   onCancel?: () => void;
 }
 
@@ -45,9 +42,10 @@ export const ModalContext = createContext<FormConfig | null>(null);
 export interface FormProps extends FormConfig {
   /**
    * Modal contents: the field declarations (`Form.Toggle` / `Form.Slider` /
-   * `Form.Dropdown` / `Form.Input`) and decorative nodes (`Image` / `Panel` / `Text`).
-   * A regular `Button` is rejected — the only buttons a modal has are the hardcoded
-   * submit + esc, surfaced as {@link FormConfig.onSubmit} / {@link FormConfig.onCancel}.
+   * `Form.Dropdown` / `Form.Input`), decorative nodes (`Image` / `Panel` / `Text`),
+   * and the form's action buttons — exactly ONE `Form.Button type="submit"` (required)
+   * and optionally one `Form.Button type="exit"`, positioned anywhere in the flow.
+   * A regular `Button` is rejected.
    */
   children?: JSX.Node;
 }
@@ -57,6 +55,7 @@ interface FormComponent extends FunctionComponent<FormProps> {
   Slider: FunctionComponent<FormSliderProps>;
   Dropdown: FunctionComponent<FormDropdownProps>;
   Input: FunctionComponent<FormInputProps>;
+  Button: FunctionComponent<FormButtonProps>;
 }
 
 /**
@@ -66,15 +65,17 @@ interface FormComponent extends FunctionComponent<FormProps> {
  * all-buttons ActionForm. Values arrive once, on submit, via {@link FormConfig.onSubmit}.
  *
  * Field declarations are the `Form.*` members; a heading is authored as a `<Text>`
- * (the modal has no `title`/`body` prop — see {@link FormConfig.submitLabel}):
+ * (the modal has no `title`/`body` prop). Exactly one `Form.Button type="submit"` is
+ * required (and at most one `type="exit"`), positioned anywhere in the flow:
  *
  * ```tsx
  * <Form onSubmit={v => { v.sound; v.volume; }}>
  *   <Text>Settings</Text>
- *   <Form.Toggle   name="sound"  label="Sound"  defaultValue={true} />
- *   <Form.Slider   name="volume" label="Volume" min={0} max={10} />
+ *   <Form.Toggle   name="sound"  defaultValue={true} />
+ *   <Form.Slider   name="volume" min={0} max={10} />
  *   <Form.Dropdown name="mode"   options={['A', 'B']} />
- *   <Form.Input    name="nick"   label="Name" />
+ *   <Form.Input    name="nick" />
+ *   <Form.Button   type="submit" label="Save" />
  * </Form>
  * ```
  *
@@ -84,12 +85,11 @@ interface FormComponent extends FunctionComponent<FormProps> {
  * calls (e.g. via navigation), never nested.
  */
 const FormRoot: FunctionComponent<FormProps> = ({
-  submitLabel,
   onSubmit,
   onCancel,
   children,
 }: FormProps): JSX.Element => {
-  const config: FormConfig = { submitLabel, onSubmit, onCancel };
+  const config: FormConfig = { onSubmit, onCancel };
 
   // Provide the config to descendants (so the restriction pass sees the modal scope)
   // and emit the transparent `modal-form` marker the presenter detects. The marker
@@ -116,4 +116,5 @@ export const Form: FormComponent = Object.assign(FormRoot, {
   Slider: FormSlider,
   Dropdown: FormDropdown,
   Input: FormInput,
+  Button: FormButton,
 });

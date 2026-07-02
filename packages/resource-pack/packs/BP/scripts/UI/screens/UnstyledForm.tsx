@@ -31,7 +31,6 @@ export function UnstyledForm({ back }: { back: () => void }): JSX.Element {
 
   return (
     <Form
-      submitLabel={'Save'}
       onSubmit={handleSubmit}
       onCancel={back}
     >
@@ -62,6 +61,12 @@ export function UnstyledForm({ back }: { back: () => void }): JSX.Element {
           options={['Easy', 'Normal', 'Hard', 'Expert', 'Insane', 'Nightmare', 'Ultra', 'Custom']}
           defaultValue={'Normal'}
         />
+      </Panel>
+      {/* Action buttons live IN the flow like any row: one submit (required, presses
+          the native submit) and one exit (closes like Esc → onCancel). */}
+      <Panel flexDirection={'row'} gap={4} padding={4}>
+        <Form.Button type={'submit'} label={'Save'} flex={2} />
+        <Form.Button type={'exit'} label={'Cancel'} flex={1} />
       </Panel>
     </Form>
   );

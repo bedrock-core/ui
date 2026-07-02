@@ -32,8 +32,8 @@ import { buttonWriter } from './Button';
 import {
   MODAL_FORM_SLOT_TYPE,
   MODAL_TOGGLE_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE,
-  MODAL_DROPDOWN_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE,
-  formToggleWriter, formSliderWriter, formDropdownWriter, formInputWriter,
+  MODAL_DROPDOWN_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE, MODAL_FORM_BUTTON_SLOT_TYPE,
+  formToggleWriter, formSliderWriter, formDropdownWriter, formInputWriter, formButtonWriter,
 } from './Form';
 import { imageWriter } from './Image';
 import { itemRendererWriter } from './ItemRenderer';
@@ -77,4 +77,7 @@ export function registerNativeComponents(): void {
   registerComponent(MODAL_SLIDER_SLOT_TYPE, { writer: formSliderWriter });
   registerComponent(MODAL_DROPDOWN_SLOT_TYPE, { writer: formDropdownWriter });
   registerComponent(MODAL_INPUT_SLOT_TYPE, { writer: formInputWriter });
+  // Form action button: participates in layout but consumes NO ModalFormData entry —
+  // the presenter encodes it into the form TITLE payload (see FormButton).
+  registerComponent(MODAL_FORM_BUTTON_SLOT_TYPE, { writer: formButtonWriter });
 }
