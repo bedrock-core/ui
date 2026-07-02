@@ -2,6 +2,12 @@
 	"namespace": "core_ui_components",
 	"image": {
 		"type": "image",
+		/* Payload source — defaults serve the ActionForm (form_buttons); the modal
+		   label_router overrides these to custom_form + #custom_text and enables the
+		   per-cell collection_details context. */
+		"$payload_collection|default": "form_buttons",
+		"$payload_binding|default": "#form_button_text",
+		"$cell_details_binding_type|default": "none",
 		"texture": "#texture",
 		"size": [
 			0,
@@ -23,19 +29,24 @@
 		"$region_filter|default": 0,
 		"bindings": [
 			{
-				"binding_name": "#form_button_text",
+				"binding_type": "$cell_details_binding_type",
+				"binding_collection_name": "$payload_collection"
+			},
+			{
+				"binding_name": "$payload_binding",
 				"binding_type": "collection",
-				"binding_collection_name": "form_buttons"
+				"binding_collection_name": "$payload_collection",
+				"binding_name_override": "#payload"
 			},
 			{
 				/* --- strip protocol header (9 chars) --- */
 				"binding_type": "view", // protocol header size
-				"source_property_name": "('%.9s' * #form_button_text)",
+				"source_property_name": "('%.9s' * #payload)",
 				"target_property_name": "#protocol_header"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(#form_button_text - #protocol_header)",
+				"source_property_name": "(#payload - #protocol_header)",
 				"target_property_name": "#rem_after_header"
 			},
 			{

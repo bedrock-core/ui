@@ -27,6 +27,7 @@
 		"ui/core-ui/form_components/toggle.json",
 		"ui/core-ui/form_components/input.json",
 		"ui/core-ui/form_components/slider.json",
-		"ui/core-ui/form_components/dropdown.json"
+		"ui/core-ui/form_components/dropdown.json",
+		"ui/core-ui/form_components/label.json"
 	]
 }

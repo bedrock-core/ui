@@ -199,7 +199,10 @@
 					"factory": {
 						"name": "buttons",
 						"control_ids": {
-							"label": "@core_ui_common.unused",
+							/* Decorative elements (text/image/panel — cards etc.) ride the
+							   label slot on both backends; the modal label_router re-points
+							   the shared client components at custom_form/#custom_text. */
+							"label": "@core_ui_form_components.label_router",
 							"toggle": "@core_ui_form_components.toggle_router",
 							"slider": "@core_ui_form_components.slider_router",
 							"step_slider": "@core_ui_form_components.slider_router",

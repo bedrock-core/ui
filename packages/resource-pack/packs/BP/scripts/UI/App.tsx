@@ -22,7 +22,9 @@ import { ScrollDemo } from './screens/ScrollDemo';
 import { DualScrollDemo } from './screens/DualScrollDemo';
 import { TripleScrollDemo } from './screens/TripleScrollDemo';
 import { FixedHeaderScrollDemo } from './screens/FixedHeaderScrollDemo';
-import { ModalFormDemo } from './screens/ModalFormDemo';
+import { UnstyledPrimitives } from './screens/UnstyledPrimitives';
+import { UnstyledForm } from './screens/UnstyledForm';
+import { OreStyledForm } from './screens/OreStyledForm';
 
 // ─── Route map ────────────────────────────────────────────────────────────────
 
@@ -32,7 +34,9 @@ type AppRoutes = {
   FlexLayout: undefined;
   FontMetrics: undefined;
   FormDemo: undefined;
-  ModalFormDemo: undefined;
+  UnstyledPrimitives: undefined;
+  UnstyledForm: undefined;
+  OreStyledForm: undefined;
   OreStyled: undefined;
   ScrollDemo: undefined;
   DualScrollDemo: undefined;
@@ -67,14 +71,26 @@ function HomeScreen({ navigation }: AppScreen<'Home'>): JSX.Element {
       <Button variant={'secondary'} onPress={(): void => navigation.navigate('FontMetrics')}>
         {'§eFont Metrics'}
       </Button>
+
+      <Divider />
+
+      <Button variant={'secondary'} onPress={(): void => navigation.navigate('UnstyledPrimitives')}>
+        {'§fUnstyled Primitives'}
+      </Button>
       <Button variant={'secondary'} onPress={(): void => navigation.navigate('OreStyled')}>
         {'§dOre-Styled Components'}
       </Button>
+      <Button variant={'secondary'} onPress={(): void => navigation.navigate('UnstyledForm')}>
+        {'§fUnstyled Form'}
+      </Button>
+      <Button variant={'secondary'} onPress={(): void => navigation.navigate('OreStyledForm')}>
+        {'§dOre-Styled Form'}
+      </Button>
+
+      <Divider />
+
       <Button variant={'secondary'} onPress={(): void => navigation.navigate('FormDemo')}>
         {'§6Form Inputs'}
-      </Button>
-      <Button variant={'secondary'} onPress={(): void => navigation.navigate('ModalFormDemo')}>
-        {'§6Native Modal Form'}
       </Button>
 
       <Divider variant={'light'} />
@@ -142,14 +158,32 @@ function FormDemoScreen(): JSX.Element {
   );
 }
 
+function UnstyledPrimitivesScreen(): JSX.Element {
+  return (
+    <Panel flexDirection={'column'} gap={spacing.sm}>
+      <BackBar title={'Unstyled Primitives'} />
+      <UnstyledPrimitives />
+    </Panel>
+  );
+}
+
 // Native modal form — renders a <Form> directly. The navigator only renders the
 // active screen and everything above it (container/navigator) is a transparent
 // context-provider, so the rendered tree is a clean modal tree (no stray buttons).
-// No BackBar wrapper: a modal can't contain buttons; submit/cancel call goBack().
-function ModalFormDemoScreen(): JSX.Element {
+// No BackBar wrapper: a modal can't contain buttons; submit/cancel call exit().
+function UnstyledFormScreen(): JSX.Element {
   const exit = useExit();
 
-  return <ModalFormDemo back={(): void => exit()} />;
+  return <UnstyledForm back={(): void => exit()} />;
+}
+
+function OreStyledFormScreen(): JSX.Element {
+  return (
+    <Panel flexDirection={'column'} gap={spacing.sm}>
+      <BackBar title={'Ore-Styled Form'} />
+      <OreStyledForm />
+    </Panel>
+  );
 }
 
 // Scrolling item demo — renders its own scroll layout with a Close button.
@@ -182,7 +216,9 @@ const Stack = createStackNavigator<AppRoutes>({
     FlexLayout: FlexLayoutScreen,
     FontMetrics: FontMetricsScreen,
     FormDemo: FormDemoScreen,
-    ModalFormDemo: ModalFormDemoScreen,
+    UnstyledPrimitives: UnstyledPrimitivesScreen,
+    UnstyledForm: UnstyledFormScreen,
+    OreStyledForm: OreStyledFormScreen,
     OreStyled: OreStyledScreen,
     ScrollDemo: ScrollDemoScreen,
     DualScrollDemo: DualScrollDemoScreen,
