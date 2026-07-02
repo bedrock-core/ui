@@ -1,0 +1,1604 @@
+{
+	"namespace": "core_ui_form_components",
+	// ---------------------------------------------------------------------------
+	// Local copies of the vanilla controls this file referenced directly, so we
+	// own the top layer and can modify them freely.
+	//
+	// STEP 1 (this pass): each control below is copied VERBATIM from vanilla. Their
+	// internal @extends / control-name references STILL point at vanilla (e.g. the
+	// local `toggle` extends `common.toggle_visuals`); a later pass will copy those
+	// deeper dependencies down too once adjustments are settled.
+	//
+	// `common.scrolling_panel` (used by dropdown_custom below) is deliberately NOT
+	// copied and keeps referencing vanilla, per the current plan.
+	// ---------------------------------------------------------------------------
+	// NOTE: these copies are prefixed `vanilla_` because this namespace
+	// (core_ui_form_components) is SHARED with modal_toggle/input/slider — a bare
+	// name like `toggle` collides with modal_toggle.json's own `toggle` decode
+	// panel and silently overwrites it, breaking toggle_router.
+	// --- copied from common.empty_panel (ui_common.json:8-10) ---
+	"vanilla_empty_panel": {
+		"type": "panel"
+	},
+	// --- copied from common.dropdown_background (ui_common.json:1097-1101) ---
+	"vanilla_dropdown_background": {
+		"layer": 1,
+		"type": "image",
+		"texture": "textures/ui/dropdown_background"
+	},
+	// --- copied from common.toggle (ui_common.json:366-557) ---
+	// Still extends vanilla common.toggle_visuals for now.
+	// TTS and focus properties/bindings stripped out (nuked for now).
+	// Only the variables that downstream consumers actually override are kept as
+	// $vars: $toggle_binding_type / $toggle_grid_collection_name (dropdown_control),
+	// $toggle_name / $toggle_state_binding_name (set at instantiation). Everything
+	// else was single-valued and has been hardcoded.
+	"vanilla_toggle": {
+		"type": "toggle",
+		// the 8 state children (was common.toggle_visuals, inlined — single use)
+		"controls": [
+			{
+				"unchecked@$unchecked_control": {}
+			},
+			{
+				"checked@$checked_control": {}
+			},
+			{
+				"unchecked_hover@$unchecked_hover_control": {}
+			},
+			{
+				"checked_hover@$checked_hover_control": {}
+			},
+			{
+				"unchecked_locked@$unchecked_locked_control": {}
+			},
+			{
+				"checked_locked@$checked_locked_control": {}
+			},
+			{
+				"unchecked_locked_hover@$unchecked_locked_hover_control": {}
+			},
+			{
+				"checked_locked_hover@$checked_locked_hover_control": {}
+			}
+		],
+		"layer": 1,
+		"sound_name": "random.click",
+		"sound_volume": 1.0,
+		"sound_pitch": 1.0,
+		"checked_control": "checked",
+		"unchecked_control": "unchecked",
+		"checked_hover_control": "checked_hover",
+		"unchecked_hover_control": "unchecked_hover",
+		"checked_locked_control": "checked_locked",
+		"unchecked_locked_control": "unchecked_locked",
+		"checked_locked_hover_control": "checked_locked_hover",
+		"unchecked_locked_hover_control": "unchecked_locked_hover",
+		"$toggle_binding_type|default": "global",
+		"$toggle_state_binding_name|default": "#toggle_state",
+		"$toggle_grid_collection_name|default": "",
+		// radio_toggle_group MUST stay a $var: vanilla_radio_toggle overrides it to
+		// true. Hardcoding it to false made the option-list radios instantiate as
+		// non-radio toggles inside a radio-group factory, which hard-crashes the game
+		// (no log) on screen open. The toggle_group_* fields ride along with it.
+		"$radio_toggle_group|default": false,
+		"$toggle_group_forced_index|default": -1,
+		"$toggle_group_default_selected|default": 0,
+		"radio_toggle_group": "$radio_toggle_group",
+		"toggle_name": "$toggle_name",
+		"toggle_default_state": false,
+		"toggle_group_forced_index": "$toggle_group_forced_index",
+		"toggle_group_default_selected": "$toggle_group_default_selected",
+		"toggle_grid_collection_name": "$toggle_grid_collection_name",
+		"enable_directional_toggling": false,
+		"toggle_on_button": "toggle.toggle_on",
+		"toggle_off_button": "toggle.toggle_off",
+		"button_mappings": [
+			{
+				"from_button_id": "button.menu_select",
+				"to_button_id": "button.menu_select",
+				"mapping_type": "pressed"
+			},
+			{
+				"from_button_id": "button.menu_ok",
+				"to_button_id": "button.menu_ok",
+				"mapping_type": "focused"
+			},
+			{
+				"from_button_id": "button.controller_back",
+				"to_button_id": "button.controller_back",
+				"mapping_type": "focused",
+				"ignored": true
+			}
+		],
+		"property_bag": {
+			"#toggle_state": true
+		},
+		"bindings": [
+			{
+				"binding_type": "$toggle_binding_type",
+				"binding_condition": "visible",
+				"binding_collection_name": "$toggle_grid_collection_name",
+				"binding_name": "$toggle_state_binding_name",
+				"binding_name_override": "#toggle_state"
+			},
+			{
+				"binding_type": "none",
+				"binding_condition": "visible",
+				"binding_collection_name": "$toggle_grid_collection_name",
+				"binding_name": "#toggle_enabled",
+				"binding_name_override": "#enabled"
+			},
+			{
+				"binding_type": "none",
+				"binding_collection_name": ""
+			}
+		]
+	},
+	// --- copied from common.checkbox (ui_common.json:571-583) ---
+	// Extends the LOCAL toggle above; its $..._control values still point at
+	// vanilla common.checkbox_*_state textures for now.
+	"vanilla_checkbox@core_ui_form_components.vanilla_toggle": {
+		"$unchecked_control": "core_ui_form_components.vanilla_checkbox_unchecked_state",
+		"$checked_control": "core_ui_form_components.vanilla_checkbox_checked_state",
+		"$unchecked_hover_control": "core_ui_form_components.vanilla_checkbox_unchecked_hover_state",
+		"$checked_hover_control": "core_ui_form_components.vanilla_checkbox_checked_hover_state",
+		"$unchecked_locked_control": "core_ui_form_components.vanilla_checkbox_unchecked_locked_state",
+		"$unchecked_locked_hover_control": "core_ui_form_components.vanilla_checkbox_unchecked_locked_state",
+		"$checked_locked_control": "core_ui_form_components.vanilla_checkbox_checked_locked_state",
+		"$checked_locked_hover_control": "core_ui_form_components.vanilla_checkbox_checked_locked_state"
+	},
+	// --- copied from settings_common.radio_with_label (settings_common.json:1060-1070) ---
+	// Inner radio_with_label_core still extends vanilla settings_common.
+	"vanilla_radio_with_label": {
+		"type": "panel",
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"size": [
+			"100%",
+			"17px"
+		],
+		"offset": [
+			3,
+			0
+		],
+		"$enabled|default": true,
+		"controls": [
+			{
+				"radio_with_label_core@core_ui_form_components.vanilla_radio_with_label_core": {}
+			}
+		]
+	},
+	// --- copied from settings_common.option_radio_dropdown_group (settings_common.json:1723-1741) ---
+	// Inner radio_control_group still extends vanilla settings_common.
+	"vanilla_option_radio_dropdown_group": {
+		"type": "panel",
+		"size": [
+			"100% - 4px",
+			"100%c + 4px"
+		],
+		"offset": [
+			2,
+			1
+		],
+		"controls": [
+			{
+				// was vanilla_option_radio_group_control (settings_common.option_radio_group_control), inlined — single use
+				"radio_control_group": {
+					"type": "stack_panel",
+					"size": [
+						"100%",
+						"100%c"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"controls": "$radio_buttons",
+					"$radio_factory|default": {
+						"name": "empty"
+					},
+					"$radio_collection_name|default": "",
+					"$radio_bindings|default": [],
+					"factory": "$radio_factory",
+					"collection_name": "$radio_collection_name",
+					"bindings": "$radio_bindings"
+				}
+			}
+		]
+	},
+	// ---------------------------------------------------------------------------
+	// STEP 2: second-level vanilla deps, copied down. These are what the STEP 1
+	// copies above extended/referenced. Their OWN remaining @extends / control
+	// references (common.toggle_visuals's children are inline; radio_with_label_core
+	// still extends common.radio_toggle and points at settings_common.radio_visuals_*;
+	// the checkbox states extend common.toggle_state_template) are the NEXT level and
+	// stay vanilla for now.
+	// ---------------------------------------------------------------------------
+	// --- copied from common.checkbox_*_state (ui_common.json:659-681) ---
+	// Now fully local: base states extend vanilla_toggle_state_template (copied below).
+	"vanilla_checkbox_checked_state@core_ui_form_components.vanilla_toggle_state_template": {
+		"texture": "textures/ui/checkbox_check"
+	},
+	"vanilla_checkbox_unchecked_state@core_ui_form_components.vanilla_toggle_state_template": {
+		"texture": "textures/ui/checkbox_space"
+	},
+	"vanilla_checkbox_checked_hover_state@core_ui_form_components.vanilla_checkbox_checked_state": {
+		"texture": "textures/ui/checkbox_checkHover"
+	},
+	"vanilla_checkbox_unchecked_hover_state@core_ui_form_components.vanilla_checkbox_unchecked_state": {
+		"texture": "textures/ui/checkbox_spaceHover"
+	},
+	"vanilla_checkbox_checked_locked_state@core_ui_form_components.vanilla_checkbox_checked_state": {
+		"texture": "textures/ui/checkbox_checkDisabled"
+	},
+	"vanilla_checkbox_unchecked_locked_state@core_ui_form_components.vanilla_toggle_state_template": {
+		"texture": "textures/ui/checkbox_spaceDisabled"
+	},
+	// --- copied from settings_common.radio_with_label_core (settings_common.json:1006-1029) ---
+	// Now fully local: extends vanilla_radio_toggle and points at local
+	// vanilla_radio_visuals_* textures (all copied below).
+	"vanilla_radio_with_label_core@common.radio_toggle": {
+		"$unchecked_control|default": "settings_common.radio_visuals_unchecked",
+		"$checked_control|default": "settings_common.radio_visuals_checked",
+		"$unchecked_hover_control|default": "settings_common.radio_visuals_unchecked_hover",
+		"$checked_hover_control|default": "settings_common.radio_visuals_checked_hover",
+		"$unchecked_locked_control|default": "settings_common.radio_visuals_unchecked_locked",
+		"$unchecked_locked_hover_control|default": "settings_common.radio_visuals_unchecked_locked",
+		"$checked_locked_control|default": "settings_common.radio_visuals_checked_locked",
+		"$checked_locked_hover_control|default": "settings_common.radio_visuals_checked_locked",
+		"$radio_toggle_group": true,
+		"size": [
+			"100%",
+			"100%c"
+		],
+		"$toggle_name|default": "$toggle_state_binding_name",
+		"$toggle_enabled_binding_name": "$option_enabled_binding_name",
+		"enabled": "$enabled",
+		"$toggle_enabled_binding_type": "global",
+		"variables": [
+			{
+				"requires": "(not $option_enabled_binding_name or not $enabled)",
+				"$toggle_enabled_binding_name": "#not_data_bound",
+				"$toggle_enabled_binding_type": "none"
+			}
+		]
+	},
+	// ---------------------------------------------------------------------------
+	// STEP 3 (final, excluding scroll): bottom of the tree. After this, the ONLY
+	// vanilla reference left in this file is common.scrolling_panel.
+	//   - vanilla_radio_toggle re-points its @extends to the already-local
+	//     vanilla_toggle (no second toggle copy) per the re-entry dedup decision.
+	//   - shared leaves (toggle_state_template, checkbox states) are copied ONCE and
+	//     reused by both the checkbox and radio_toggle state families.
+	//   - TTS stripped from radio_visuals to match the rest of this file.
+	// ---------------------------------------------------------------------------
+	// --- copied from common.toggle_state_template (ui_common.json:639-648) ---
+	"vanilla_toggle_state_template": {
+		"$checkbox_alignment|default": "center",
+		"anchor_from": "$checkbox_alignment",
+		"anchor_to": "$checkbox_alignment",
+		"offset": "$checkbox_offset",
+		"$checkbox_offset|default": [
+			0,
+			0
+		],
+		"type": "image",
+		"layer": 2,
+		"size": [
+			10,
+			10
+		]
+	},
+	// --- copied from common.radio_toggle (ui_common.json:559-569) ---
+	// @extends re-pointed to the local vanilla_toggle (was common.toggle); state
+	// refs point at the local vanilla_radio_toggle_*_state family below.
+	"vanilla_radio_toggle@core_ui_form_components.vanilla_toggle": {
+		"$unchecked_control|default": "core_ui_form_components.vanilla_radio_toggle_unchecked_state",
+		"$checked_control|default": "core_ui_form_components.vanilla_radio_toggle_checked_state",
+		"$unchecked_hover_control|default": "core_ui_form_components.vanilla_radio_toggle_unchecked_hover_state",
+		"$checked_hover_control|default": "core_ui_form_components.vanilla_radio_toggle_checked_hover_state",
+		"$unchecked_locked_control|default": "core_ui_form_components.vanilla_radio_toggle_unchecked_locked_state",
+		"$unchecked_locked_hover_control|default": "core_ui_form_components.vanilla_radio_toggle_unchecked_locked_state",
+		"$checked_locked_control|default": "core_ui_form_components.vanilla_radio_toggle_checked_locked_state",
+		"$checked_locked_hover_control|default": "core_ui_form_components.vanilla_radio_toggle_checked_locked_state",
+		"$radio_toggle_group": true
+	},
+	// --- copied from common.radio_toggle_*_state (ui_common.json:683-699) ---
+	// Reuse the already-local vanilla_checkbox_* base states + vanilla_toggle_state_template.
+	"vanilla_radio_toggle_checked_state@core_ui_form_components.vanilla_checkbox_unchecked_state": {
+		"texture": "textures/ui/checkbox_filled"
+	},
+	"vanilla_radio_toggle_unchecked_state@core_ui_form_components.vanilla_checkbox_unchecked_state": {},
+	"vanilla_radio_toggle_checked_hover_state@core_ui_form_components.vanilla_toggle_state_template": {
+		"texture": "textures/ui/checkbox_filled_hover"
+	},
+	"vanilla_radio_toggle_unchecked_hover_state@core_ui_form_components.vanilla_checkbox_unchecked_hover_state": {},
+	"vanilla_radio_toggle_checked_locked_state@core_ui_form_components.vanilla_toggle_state_template": {
+		"texture": "textures/ui/checkbox_filled_disabled"
+	},
+	"vanilla_radio_toggle_unchecked_locked_state@core_ui_form_components.vanilla_checkbox_unchecked_locked_state": {},
+	// --- copied from settings_common.radio_visuals (settings_common.json:939-1004) ---
+	// Terminal (only inline children). TTS stripped.
+	"vanilla_radio_visuals": {
+		"type": "panel",
+		"size": [
+			"100%",
+			16
+		],
+		"$alpha|default": 1.0,
+		"$radio_label_bindings|default": [],
+		"$radio_label_color|default": "$main_header_text_color",
+		"$radio_label_font_type|default": "default",
+		"$no_label|default": false,
+		"$selected|default": false,
+		"$hovered|default": false,
+		"variables": [
+			{
+				"requires": "$selected",
+				"$highlight_image": "textures/ui/dropDownSelectBG"
+			},
+			{
+				"requires": "$hovered",
+				"$highlight_image": "textures/ui/dropDownHoverBG"
+			}
+		],
+		"controls": [
+			{
+				"radio_image": {
+					"type": "image",
+					"texture": "$radio_texture",
+					"alpha": "$alpha",
+					"anchor_from": "left_middle",
+					"anchor_to": "left_middle",
+					"size": [
+						10,
+						10
+					],
+					"layer": 2
+				}
+			},
+			{
+				"radio_label": {
+					"ignored": "($no_label)",
+					"type": "label",
+					"anchor_from": "left_middle",
+					"anchor_to": "left_middle",
+					"text": "$radio_label_text",
+					"font_type": "$radio_label_font_type",
+					"color": "$radio_label_color",
+					"offset": [
+						16,
+						0.5
+					],
+					"size": [
+						"100% - 16px",
+						"default"
+					],
+					"alpha": "$alpha",
+					"bindings": "$radio_label_bindings",
+					"layer": 2
+				}
+			},
+			{
+				"accessibility_selection_highlight": {
+					"type": "image",
+					"$selection_highlight_size|default": [
+						"100% + 4px",
+						"100% + 2px"
+					],
+					"size": "$selection_highlight_size",
+					"$selection_highlight_offset|default": [
+						0,
+						0
+					],
+					"offset": "$selection_highlight_offset",
+					"ignored": "(not $selected and not $hovered)",
+					"$highlight_image|default": "",
+					"texture": "$highlight_image",
+					"tiled": true,
+					"layer": 1
+				}
+			}
+		]
+	},
+	// --- copied from settings_common.radio_visuals_* (settings_common.json:909-937) ---
+	"vanilla_radio_visuals_unchecked@core_ui_form_components.vanilla_radio_visuals": {
+		"$radio_texture": "textures/ui/radio_off"
+	},
+	"vanilla_radio_visuals_checked@core_ui_form_components.vanilla_radio_visuals": {
+		"$radio_texture": "textures/ui/radio_on",
+		"$selected": true
+	},
+	"vanilla_radio_visuals_unchecked_locked@core_ui_form_components.vanilla_radio_visuals": {
+		"$radio_texture": "textures/ui/radio_off",
+		"$alpha": 0.5
+	},
+	"vanilla_radio_visuals_checked_locked@core_ui_form_components.vanilla_radio_visuals": {
+		"$radio_texture": "textures/ui/radio_on",
+		"$alpha": 0.5,
+		"$selected": true
+	},
+	"vanilla_radio_visuals_unchecked_hover@core_ui_form_components.vanilla_radio_visuals": {
+		"$radio_texture": "textures/ui/radio_off_hover",
+		"$hovered": true
+	},
+	"vanilla_radio_visuals_checked_hover@core_ui_form_components.vanilla_radio_visuals": {
+		"$radio_texture": "textures/ui/radio_on_hover",
+		"$hovered": true
+	},
+	"dropdown_router": {
+		"type": "panel",
+		// Components must be inside a panel with size [1,1] so size_binding values map 1:1 to pixels.
+		"size": [
+			1,
+			1
+		],
+		"controls": [
+			{
+				"dropdown@core_ui_form_components.dropdown": {}
+			}
+		]
+	},
+	"dropdown": {
+		"type": "panel",
+		"size": [
+			0,
+			0
+		],
+		"layer": 50,
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"use_anchored_offset": true,
+		"property_bag": {
+			"#size_binding_x": 0.0,
+			"#size_binding_y": 0.0,
+			"#anchored_offset_value_x": 0.0,
+			"#anchored_offset_value_y": 0.0
+		},
+		"visible": "#visible",
+		"enabled": "#enabled",
+		"$normalize": 1.0,
+		"bindings": [
+			{
+				/* Per-cell collection context so #custom_text resolves to THIS row. */
+				"binding_type": "collection_details",
+				"binding_collection_name": "custom_form"
+			},
+			{
+				"binding_name": "#custom_text",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form"
+			},
+			{
+				/* --- strip protocol header (9 chars) --- */
+				"binding_type": "view",
+				"source_property_name": "('%.9s' * #custom_text)",
+				"target_property_name": "#protocol_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#custom_text - #protocol_header)",
+				"target_property_name": "#rem_after_header"
+			},
+			{
+				/* --- type (string) - field 0 --- */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_header)",
+				"target_property_name": "#raw_type"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_header - #raw_type)",
+				"target_property_name": "#rem_after_type"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_type) - ('%.2s' * #raw_type) - ';')",
+				"target_property_name": "#type"
+			},
+			{
+				/* --- width (int) - field 1 --- */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_type)",
+				"target_property_name": "#raw_width"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_type - #raw_width)",
+				"target_property_name": "#rem_after_width"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_width) - ('%.2s' * #raw_width) - ';')",
+				"target_property_name": "#size_binding_x"
+			},
+			{
+				/* --- height (int) - field 2 --- */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_width)",
+				"target_property_name": "#raw_height"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_width - #raw_height)",
+				"target_property_name": "#rem_after_height"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_height) - ('%.2s' * #raw_height) - ';')",
+				"target_property_name": "#size_binding_y"
+			},
+			{
+				/* --- x (int) - field 3 --- */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_height)",
+				"target_property_name": "#raw_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_height - #raw_x)",
+				"target_property_name": "#rem_after_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_x) - ('%.2s' * #raw_x) - ';') * $normalize)",
+				"target_property_name": "#anchored_offset_value_x"
+			},
+			{
+				/* --- y (float) - field 4 --- */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_x)",
+				"target_property_name": "#raw_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_x - #raw_y)",
+				"target_property_name": "#rem_after_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_y) - ('%.2s' * #raw_y) - ';') * $normalize)",
+				"target_property_name": "#anchored_offset_value_y"
+			},
+			{
+				/* --- visible (boolean) - field 5 --- */
+				"binding_type": "view",
+				"source_property_name": "('%.8s' * #rem_after_y)",
+				"target_property_name": "#raw_visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_y - #raw_visible)",
+				"target_property_name": "#rem_after_visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.7s' * #raw_visible) - ('%.2s' * #raw_visible) - ';')",
+				"target_property_name": "#pre_visible"
+			},
+			{
+				/* --- enabled (boolean) - field 6 --- */
+				"binding_type": "view",
+				"source_property_name": "('%.8s' * #rem_after_visible)",
+				"target_property_name": "#raw_enabled"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_visible - #raw_enabled)",
+				"target_property_name": "#rem_after_enabled"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.7s' * #raw_enabled) - ('%.2s' * #raw_enabled) - ';')",
+				"target_property_name": "#enabled"
+			},
+			{
+				/* Per-type visibility gate: only render the dropdown on dropdown cells. */
+				"binding_type": "view",
+				"source_property_name": "(#pre_visible and (#type = 'modal-dropdown'))",
+				"target_property_name": "#visible"
+			}
+		],
+		"controls": [
+			{
+				/* common.dropdown is self-contained: it instantiates BOTH the closed-box
+				   toggle AND the popup (dropdown_content) as its own two children. */
+				"dropdown_control@core_ui_form_components.dropdown_control": {}
+			}
+		]
+	},
+	// REWRITTEN to extend vanilla's PROVEN dropdown machinery instead of hand-flattening
+	// it: the hand-built version froze the game on open (a button_mapping conflict
+	// between the closed box and the popup that vanilla's own wiring doesn't have).
+	// `dropdown_control` extends `common.dropdown` (ui_common.json:1103-1130) — its
+	// closed-box toggle, button_mappings, focus/modal handling come from vanilla
+	// verbatim via $dropdown_toggle, instead of being reconstructed by hand. We only
+	// override the collection-binding variables, mirroring server_form.custom_dropdown's
+	// own overrides (server_form.json:434-456) exactly, so write-back uses the SAME
+	// vanilla-proven path the real settings dropdown uses, just pointed at our
+	// custom_form/custom_dropdown collections instead of vanilla's settings ones.
+	"dropdown_control@core_ui_form_components.dropdown_custom": {
+		"size": [
+			"100%",
+			"100%"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"layer": 2,
+		// $enabled / $option_enabled_binding_name normally come from the option_generic
+		// wrapper (settings_common.json:190,229) that vanilla's full option_dropdown row
+		// sits inside; we skip that wrapper (no settings-row label/layout), so supply
+		// them directly.
+		"$enabled": true,
+		"$option_enabled_binding_name": "",
+		"$dropdown_name": "custom_dropdown",
+		// STEP 1 (custom backgrounds): closed box is now OUR OWN minimal control
+		// (core_ui_form_components.dropdown_closed_box), not vanilla's
+		// options_dropdown_toggle_control. type:"dropdown" (set below common.dropdown's
+		// own instantiation, ui_common.json:1116) still owns ALL the native interactive
+		// machinery (open/close, button_mappings, focus) — that's what avoided the
+		// freeze last time — we only swap the VISUAL children it wraps.
+		"$dropdown_toggle": "core_ui_form_components.dropdown_closed_box",
+		"$dropdown_content": "core_ui_form_components.dropdown_options",
+		"$dropdown_area": "inside_header_panel",
+		// Tall box: the engine pins the box's TOP at the screen middle and it only
+		// grows DOWNWARD; 1000% of the button (~240px) covers the popup card's full
+		// lower half on any list (input region + render safety). The card itself is
+		// sized/centered independently (popup_shift/popup_card).
+		"$dropdown_scroll_content_size": [
+			"100%",
+			"1000%"
+		],
+		"$toggle_binding_type": "collection",
+		"$toggle_grid_collection_name": "custom_form"
+	},
+	// Our own closed-box visuals, replacing vanilla's options_dropdown_toggle_control.
+	// EXTENDS common.toggle (ui_common.json:366-557) — the SAME proven ancestor our
+	// hand-built toggle_control (modal_toggle.json) uses — so it inherits
+	// button_mappings/focus_enabled/sound_name etc. for free. common.dropdown's own
+	// instantiation still overrides `type` to "dropdown" (ui_common.json:1116), which is
+	// the actual native engine type that owns open/close; extending common.toggle here
+	// is ONLY to pick up its non-visual properties, not to make this a real toggle.
+	// (A bare type:"panel" version showed correct hover visuals but never registered
+	// clicks — turned out `type:"dropdown"` still needs the toggle-family
+	// button_mappings/focus properties, which only common.toggle's own ancestry
+	// supplies; overriding just `checked_control`/`unchecked_control` as literal
+	// properties bypassed the $variable-driven child generation those need too.)
+	// #dropdown_option_text is set natively by the engine (the currently selected
+	// option's text) — no collection binding needed here, unlike our other controls.
+	"dropdown_closed_box@core_ui_form_components.vanilla_toggle": {
+		"size": [
+			"100%",
+			"100%"
+		],
+		// Step 2: each toggle state maps to a decoded texture prop. idle→#background,
+		// hover→#background_hover, open (checked)→#background_pressed, any locked→
+		// #background_locked. Empty props fall back to #background in the face below.
+		"$unchecked_control": "core_ui_form_components.dropdown_closed_box_face_default",
+		"$unchecked_hover_control": "core_ui_form_components.dropdown_closed_box_face_hover",
+		"$checked_control": "core_ui_form_components.dropdown_closed_box_face_pressed",
+		"$checked_hover_control": "core_ui_form_components.dropdown_closed_box_face_pressed",
+		"$unchecked_locked_control": "core_ui_form_components.dropdown_closed_box_face_locked",
+		"$checked_locked_control": "core_ui_form_components.dropdown_closed_box_face_locked",
+		"$unchecked_locked_hover_control": "core_ui_form_components.dropdown_closed_box_face_locked",
+		"$checked_locked_hover_control": "core_ui_form_components.dropdown_closed_box_face_locked"
+	},
+	// Per-state faces: LITERAL copies of the normal button's state blocks
+	// (core_ui_components.button, components/button.json:302-545). Each state's bg image
+	// self-decodes its texture from the collection string at the same absolute offsets
+	// as the button — the TS side emits the dropdown's state textures at button-identical
+	// offsets ([1024-1272], right after the reserved block). The ONLY differences from
+	// the button blocks are the collection binding (custom_form / #custom_text instead
+	// of form_buttons / #form_button_text). No @extends, no $vars — copied whole, per
+	// the working button pattern.
+	"dropdown_closed_box_face_default": {
+		"type": "panel",
+		"size": [
+			"100%",
+			"100%"
+		],
+		"anchor_to": "center",
+		"anchor_from": "center",
+		"controls": [
+			{
+				"bg": {
+					"type": "image",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"offset": [
+						0,
+						0
+					],
+					"fill": false,
+					"anchor_to": "center",
+					"anchor_from": "center",
+					"texture": "#texture",
+					"visible": "#visible",
+					"alpha": 1,
+					"bindings": [
+						{
+							/* decode background[440] directly */
+							"binding_name": "#custom_text",
+							"binding_type": "collection",
+							"binding_collection_name": "custom_form"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.440s' * #custom_text)",
+							"target_property_name": "#skip_to_bg"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_text - #skip_to_bg)",
+							"target_property_name": "#rem_at_bg"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_bg)",
+							"target_property_name": "#raw_bg"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_bg) - ('%.2s' * #raw_bg) - ';')",
+							"target_property_name": "#texture"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(not (#texture = ''))",
+							"target_property_name": "#visible"
+						}
+					]
+				}
+			}
+		]
+	},
+	"dropdown_closed_box_face_hover": {
+		"type": "panel",
+		"size": [
+			"100%",
+			"100%"
+		],
+		"anchor_to": "center",
+		"anchor_from": "center",
+		"controls": [
+			{
+				"bg": {
+					"type": "image",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"offset": [
+						0,
+						0
+					],
+					"fill": false,
+					"anchor_to": "center",
+					"anchor_from": "center",
+					"texture": "#texture",
+					"visible": "#visible",
+					"alpha": 1,
+					"bindings": [
+						{
+							/* decode backgroundHover[1024] directly */
+							"binding_name": "#custom_text",
+							"binding_type": "collection",
+							"binding_collection_name": "custom_form"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.1024s' * #custom_text)",
+							"target_property_name": "#skip_to_bg_hover"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_text - #skip_to_bg_hover)",
+							"target_property_name": "#rem_at_bg_hover"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_bg_hover)",
+							"target_property_name": "#raw_bg_hover"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_bg_hover) - ('%.2s' * #raw_bg_hover) - ';')",
+							"target_property_name": "#texture"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(not (#texture = ''))",
+							"target_property_name": "#visible"
+						}
+					]
+				}
+			}
+		]
+	},
+	"dropdown_closed_box_face_pressed": {
+		"type": "panel",
+		"size": [
+			"100%",
+			"100%"
+		],
+		"anchor_to": "center",
+		"anchor_from": "center",
+		"controls": [
+			{
+				"bg": {
+					"type": "image",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"offset": [
+						0,
+						0
+					],
+					"fill": false,
+					"anchor_to": "center",
+					"anchor_from": "center",
+					"texture": "#texture",
+					"visible": "#visible",
+					"alpha": 1,
+					"bindings": [
+						{
+							/* decode backgroundPressed[1107] directly */
+							"binding_name": "#custom_text",
+							"binding_type": "collection",
+							"binding_collection_name": "custom_form"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.1107s' * #custom_text)",
+							"target_property_name": "#skip_to_bg_pressed"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_text - #skip_to_bg_pressed)",
+							"target_property_name": "#rem_at_bg_pressed"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_bg_pressed)",
+							"target_property_name": "#raw_bg_pressed"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_bg_pressed) - ('%.2s' * #raw_bg_pressed) - ';')",
+							"target_property_name": "#texture"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(not (#texture = ''))",
+							"target_property_name": "#visible"
+						}
+					]
+				}
+			}
+		]
+	},
+	"dropdown_closed_box_face_locked": {
+		"type": "panel",
+		"size": [
+			"100%",
+			"100%"
+		],
+		"anchor_to": "center",
+		"anchor_from": "center",
+		"controls": [
+			{
+				"bg": {
+					"type": "image",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"offset": [
+						0,
+						0
+					],
+					"fill": false,
+					"anchor_to": "center",
+					"anchor_from": "center",
+					"texture": "#texture",
+					"visible": "#visible",
+					"alpha": 1,
+					"bindings": [
+						{
+							/* decode backgroundLocked[1190] directly */
+							"binding_name": "#custom_text",
+							"binding_type": "collection",
+							"binding_collection_name": "custom_form"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.1190s' * #custom_text)",
+							"target_property_name": "#skip_to_bg_locked"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_text - #skip_to_bg_locked)",
+							"target_property_name": "#rem_at_bg_locked"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_bg_locked)",
+							"target_property_name": "#raw_bg_locked"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_bg_locked) - ('%.2s' * #raw_bg_locked) - ';')",
+							"target_property_name": "#texture"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(not (#texture = ''))",
+							"target_property_name": "#visible"
+						}
+					]
+				}
+			}
+		]
+	},
+	// Popup container background (Step 3): replaces vanilla_dropdown_background as the
+	// scrolling panel's $scroll_background_image_control. Same self-decode block as the
+	// closed-box faces (button pattern), reading the dropdown-specific popupBackground
+	// payload field at [1273-1355]. Layer 1 matches the vanilla dropdown_background it
+	// replaces; size comes from the scrolling panel's $background_size.
+	// Popup container background (Step 3, in-game verified): self-decodes the
+	// popupBackground payload field at [1273] from the dropdown's custom_form cell —
+	// collection cell scope reaches inside the popup (proven via debug probe). An empty
+	// texture draws nothing (the scroll's background@ instance forces visible true).
+	"dropdown_popup_background": {
+		"type": "image",
+		"layer": 1,
+		"texture": "#texture",
+		"bindings": [
+			{
+				/* decode popupBackground[1273] directly (visibility is forced true by the
+				   scroll's background@ instance override — empty texture just draws nothing) */
+				"binding_name": "#custom_text",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.1273s' * #custom_text)",
+				"target_property_name": "#skip_to_popup_bg"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#custom_text - #skip_to_popup_bg)",
+				"target_property_name": "#rem_at_popup_bg"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_at_popup_bg)",
+				"target_property_name": "#raw_popup_bg"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_popup_bg) - ('%.2s' * #raw_popup_bg) - ';')",
+				"target_property_name": "#texture"
+			}
+		]
+	},
+	// Popup option list content, extending vanilla's OWN radio-dropdown group +
+	// factory wiring (settings_common.option_radio_dropdown_group /
+	// option_radio_group_control, settings_sections/settings_common.json:1723-1741,
+	// 1031-1058) instead of a hand-built stack_panel + factory — same reasoning as
+	// dropdown_control above: reuse vanilla's proven button/focus handling.
+	"dropdown_options@core_ui_form_components.vanilla_option_radio_dropdown_group": {
+		// option_radio_group_control's literal $radio_buttons array is unused when a
+		// factory drives the list, but the variable must still be declared (vanilla's
+		// own custom_dropdown_content sets it to [] too — server_form.json:462).
+		"$radio_buttons": [],
+		"$radio_factory": {
+			"name": "buttons",
+			"control_name": "core_ui_form_components.dropdown_option_radio"
+		},
+		"$radio_collection_name": "custom_dropdown",
+		"$radio_bindings": [
+			{
+				"binding_name": "#custom_dropdown_length",
+				"binding_type": "collection",
+				"binding_name_override": "#collection_length",
+				"binding_collection_name": "custom_form"
+			}
+		]
+	},
+	// One option row per item in the NESTED "custom_dropdown" collection (Step 4:
+	// FULLY CUSTOM — replaces the vanilla radio_with_label/radio_toggle subtree).
+	// Flattened from the vanilla chain the same way modal_toggle.json's toggle_control
+	// was: type:"toggle" with radio semantics owns the interactivity; the visual states
+	// are our own self-decoding faces (button pattern). The probe proved custom_form
+	// collection bindings inside these nested rows walk UP to the dropdown's own cell,
+	// so each face decodes the dropdown's option styles directly.
+	// Write-back wiring mirrors vanilla's radio exactly: state binding (custom_dropdown
+	// #custom_radio_toggled) + empty-name collection_details on the SAME toggle, plus
+	// toggle_grid_collection_name as a real property — the vanilla-proven selection path.
+	"dropdown_option_radio": {
+		"type": "panel",
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"size": [
+			"100%",
+			"17px"
+		],
+		"controls": [
+			{
+				"option_toggle": {
+					"type": "toggle",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"layer": 1,
+					"sound_name": "random.click",
+					"sound_volume": 1.0,
+					"sound_pitch": 1.0,
+					"focus_enabled": true,
+					"focus_magnet_enabled": true,
+					"radio_toggle_group": true,
+					"toggle_name": "custom_dropdown_radio_toggle",
+					"toggle_default_state": false,
+					"toggle_group_forced_index": -1,
+					"toggle_group_default_selected": 0,
+					"toggle_grid_collection_name": "custom_dropdown",
+					"checked_control": "checked",
+					"unchecked_control": "unchecked",
+					"checked_hover_control": "checked_hover",
+					"unchecked_hover_control": "unchecked_hover",
+					"checked_locked_control": "checked_locked",
+					"unchecked_locked_control": "unchecked_locked",
+					"checked_locked_hover_control": "checked_locked_hover",
+					"unchecked_locked_hover_control": "unchecked_locked_hover",
+					"property_bag": {
+						"#toggle_state": true
+					},
+					"button_mappings": [
+						{
+							"from_button_id": "button.menu_select",
+							"to_button_id": "button.menu_select",
+							"mapping_type": "pressed"
+						},
+						{
+							"from_button_id": "button.menu_ok",
+							"to_button_id": "button.menu_ok",
+							"mapping_type": "focused"
+						}
+					],
+					"bindings": [
+						{
+							"binding_type": "collection",
+							"binding_condition": "visible",
+							"binding_collection_name": "custom_dropdown",
+							"binding_name": "#custom_radio_toggled",
+							"binding_name_override": "#toggle_state"
+						},
+						{
+							"binding_type": "collection_details",
+							"binding_collection_name": ""
+						}
+					],
+					"controls": [
+						{
+							"unchecked@core_ui_form_components.dropdown_option_face_default": {}
+						},
+						{
+							"checked@core_ui_form_components.dropdown_option_face_selected": {}
+						},
+						{
+							"unchecked_hover@core_ui_form_components.dropdown_option_face_hover": {}
+						},
+						{
+							"checked_hover@core_ui_form_components.dropdown_option_face_selected": {}
+						},
+						{
+							"unchecked_locked@core_ui_form_components.dropdown_option_face_default": {}
+						},
+						{
+							"checked_locked@core_ui_form_components.dropdown_option_face_selected": {}
+						},
+						{
+							"unchecked_locked_hover@core_ui_form_components.dropdown_option_face_default": {}
+						},
+						{
+							"checked_locked_hover@core_ui_form_components.dropdown_option_face_selected": {}
+						}
+					]
+				}
+			},
+			{
+				// Basic option text (placement/styling becomes payload-driven in Step 5).
+				"option_label": {
+					"type": "label",
+					"text": "#custom_radio_text",
+					"color": [
+						1,
+						1,
+						1,
+						1
+					],
+					"font_size": "normal",
+					"text_alignment": "left",
+					"anchor_from": "left_middle",
+					"anchor_to": "left_middle",
+					"offset": [
+						4,
+						0
+					],
+					"size": [
+						"100% - 8px",
+						"default"
+					],
+					"layer": 10,
+					"bindings": [
+						{
+							"binding_name": "#custom_radio_text",
+							"binding_type": "collection",
+							"binding_collection_name": "custom_dropdown"
+						},
+						{
+							"binding_type": "collection_details"
+						}
+					]
+				}
+			}
+		]
+	},
+	// Option-row state faces: same button-pattern self-decode as the closed-box faces,
+	// reading the dropdown's option-style payload fields:
+	//   optionBackground [1356], optionHover [1439], optionSelected [1522].
+	// (checked/hovered-while-checked/locked-checked all map to the selected face;
+	// locked-unchecked maps to the default face.)
+	"dropdown_option_face_default": {
+		"type": "panel",
+		"size": [
+			"100%",
+			"100%"
+		],
+		"controls": [
+			{
+				"bg": {
+					"type": "image",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"offset": [
+						0,
+						0
+					],
+					"fill": false,
+					"anchor_to": "center",
+					"anchor_from": "center",
+					"texture": "#texture",
+					"visible": "#visible",
+					"alpha": 1,
+					"bindings": [
+						{
+							/* decode optionBackground[1356] directly */
+							"binding_name": "#custom_text",
+							"binding_type": "collection",
+							"binding_collection_name": "custom_form"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.1356s' * #custom_text)",
+							"target_property_name": "#skip_to_opt_bg"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_text - #skip_to_opt_bg)",
+							"target_property_name": "#rem_at_opt_bg"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_opt_bg)",
+							"target_property_name": "#raw_opt_bg"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_opt_bg) - ('%.2s' * #raw_opt_bg) - ';')",
+							"target_property_name": "#texture"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(not (#texture = ''))",
+							"target_property_name": "#visible"
+						}
+					]
+				}
+			}
+		]
+	},
+	"dropdown_option_face_hover": {
+		"type": "panel",
+		"size": [
+			"100%",
+			"100%"
+		],
+		"controls": [
+			{
+				"bg": {
+					"type": "image",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"offset": [
+						0,
+						0
+					],
+					"fill": false,
+					"anchor_to": "center",
+					"anchor_from": "center",
+					"texture": "#texture",
+					"visible": "#visible",
+					"alpha": 1,
+					"bindings": [
+						{
+							/* decode optionHover[1439] directly */
+							"binding_name": "#custom_text",
+							"binding_type": "collection",
+							"binding_collection_name": "custom_form"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.1439s' * #custom_text)",
+							"target_property_name": "#skip_to_opt_hover"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_text - #skip_to_opt_hover)",
+							"target_property_name": "#rem_at_opt_hover"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_opt_hover)",
+							"target_property_name": "#raw_opt_hover"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_opt_hover) - ('%.2s' * #raw_opt_hover) - ';')",
+							"target_property_name": "#texture"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(not (#texture = ''))",
+							"target_property_name": "#visible"
+						}
+					]
+				}
+			}
+		]
+	},
+	"dropdown_option_face_selected": {
+		"type": "panel",
+		"size": [
+			"100%",
+			"100%"
+		],
+		"controls": [
+			{
+				"bg": {
+					"type": "image",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"offset": [
+						0,
+						0
+					],
+					"fill": false,
+					"anchor_to": "center",
+					"anchor_from": "center",
+					"texture": "#texture",
+					"visible": "#visible",
+					"alpha": 1,
+					"bindings": [
+						{
+							/* decode optionSelected[1522] directly */
+							"binding_name": "#custom_text",
+							"binding_type": "collection",
+							"binding_collection_name": "custom_form"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.1522s' * #custom_text)",
+							"target_property_name": "#skip_to_opt_sel"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_text - #skip_to_opt_sel)",
+							"target_property_name": "#rem_at_opt_sel"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_opt_sel)",
+							"target_property_name": "#raw_opt_sel"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_opt_sel) - ('%.2s' * #raw_opt_sel) - ';')",
+							"target_property_name": "#texture"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(not (#texture = ''))",
+							"target_property_name": "#visible"
+						}
+					]
+				}
+			}
+		]
+	},
+	"dropdown_custom": {
+		"type": "panel",
+		"$dropdown_content|default": "core_ui_form_components.vanilla_empty_panel",
+		"$dropdown_toggle|default": "core_ui_form_components.vanilla_checkbox",
+		"$dropdown_name|default": "dropdown_control",
+		"$dropdown_scroll_content_size|default": [
+			"100%",
+			"500%"
+		],
+		"controls": [
+			{
+				"$dropdown_name@$dropdown_toggle": {
+					"type": "dropdown",
+					"$toggle_view_binding_name": "$dropdown_name",
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"dropdown_name": "$dropdown_name",
+					"dropdown_content_control": "dropdown_content",
+					"dropdown_area": "$dropdown_area",
+					"$toggle_name": "$dropdown_name",
+					"$toggle_state_binding_name": "('#' + $dropdown_name)"
+				}
+			},
+			{
+				"dropdown_content": {
+					"type": "input_panel",
+					// we really want this on top of everything: the form's component rows
+					// (decode panels) sit at layer 50+, so 42 sorted the popup BEHIND the
+					// form scroll content. 200 clears everything on the modal screen.
+					"layer": 200,
+					"size": "$dropdown_scroll_content_size",
+					// GEOMETRY: the engine pins this box's placement itself (dropdown_area
+					// lookup fails in our screen — no control named "inside_header_panel" —
+					// so the box's TOP edge lands at the screen's vertical middle, same for
+					// every dropdown; the box's own anchors AND offset are IGNORED there,
+					// probe-verified). We treat that pinned top edge as a stable reference
+					// line and position the ACTUAL popup (popup_card below) relative to it.
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"modal": true,
+					"property_bag": {
+						"#is_dropdown": true
+					},
+					"controls": [
+						{
+							// The real popup surface: hangs on the box's pinned top edge
+							// (= screen middle) and shifts up by HALF its own height, so it
+							// renders centered on the middle line (50% up / 50% down).
+							// Upward overflow past the box is NOT clipped (in-game verified).
+							// #size_binding values scale by the PARENT size, so the card must
+							// sit inside a [1,1] panel to map 1:1 to pixels (the router
+							// pattern; without it the 60px height rendered as 60×48=2880).
+							// Width therefore ALSO decodes from the payload (control width,
+							// field 1 [92]); height decodes from popupHeight [1605] (TS:
+							// items×17px + 9px chrome, capped at 105px), and the centering
+							// offset is derived from it (-height/2) via anchored offset.
+							"popup_anchor": {
+								"type": "panel",
+								"size": [
+									1,
+									1
+								],
+								"anchor_from": "top_left",
+								"anchor_to": "top_left",
+								"controls": [
+									{
+										// CENTERING with PROVEN mechanics only (fractional string multiplies and
+										// formula-on-formula both silently yield 0 — probe-verified: decode text showed
+										// "n:105" while the bound height stayed 0). popup_shift decodes width [92] and
+										// popupHeight [1605] with plain "* 1" (the verified pattern) inside the [1,1]
+										// anchor, becoming a w×h px panel hanging DOWN from the box's pinned top edge
+										// (= screen middle). popup_card is pure statics: 100%×100% of the shift, with
+										// its BOTTOM anchored to the shift's vertical MIDDLE (bottom_left→left_middle),
+										// so it spans exactly h/2 above and h/2 below the middle line. No offsets, no
+										// arithmetic beyond the proven coercion.
+										"popup_shift": {
+											"type": "panel",
+											"size": [
+												1,
+												0
+											],
+											"anchor_from": "top_left",
+											"anchor_to": "top_left",
+											"property_bag": {
+												"#size_binding_x": 0.0,
+												"#size_binding_y": 0.0
+											},
+											"bindings": [
+												{
+													"binding_name": "#custom_text",
+													"binding_type": "collection",
+													"binding_collection_name": "custom_form"
+												},
+												{
+													/* --- width from the control block (field 1, [92]); parent is the [1,1]
+   anchor so the value maps 1:1 to px --- */
+													"binding_type": "view",
+													"source_property_name": "('%.92s' * #custom_text)",
+													"target_property_name": "#skip_to_popup_w"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "(#custom_text - #skip_to_popup_w)",
+													"target_property_name": "#rem_at_popup_w"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "('%.83s' * #rem_at_popup_w)",
+													"target_property_name": "#raw_popup_w"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "((('%.82s' * #raw_popup_w) - ('%.2s' * #raw_popup_w) - ';') * 1)",
+													"target_property_name": "#size_binding_x"
+												},
+												{
+													/* --- FULL popupHeight [1605], proven "* 1" coercion; the halving is done
+   														geometrically by popup_card's bottom_left→left_middle anchoring --- */
+													"binding_type": "view",
+													"source_property_name": "('%.1605s' * #custom_text)",
+													"target_property_name": "#skip_to_popup_h"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "(#custom_text - #skip_to_popup_h)",
+													"target_property_name": "#rem_at_popup_h"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "('%.83s' * #rem_at_popup_h)",
+													"target_property_name": "#raw_popup_h"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "((('%.82s' * #raw_popup_h) - ('%.2s' * #raw_popup_h) - ';') * 1)",
+													"target_property_name": "#size_binding_y"
+												}
+											],
+											"controls": [
+												{
+													"popup_card": {
+														"type": "panel",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"anchor_from": "bottom_left",
+														"anchor_to": "left_middle",
+														"controls": [
+															{
+																"scroll@common.scrolling_panel": {
+																	"layer": 2,
+																	"$allow_scrolling_even_when_content_fits": false,
+																	"size": [
+																		"100%",
+																		"100%"
+																	],
+																	"$scrolling_pane_size": [
+																		"100%",
+																		"100%"
+																	],
+																	"$scrolling_content": "$dropdown_content",
+																	"$scroll_view_port_size": [
+																		"100% - 4px",
+																		"100% - 4px"
+																	],
+																	"$scroll_view_port_size_touch": [
+																		"100% - 4px",
+																		"100% - 4px"
+																	],
+																	"$scroll_view_port_offset": [
+																		2,
+																		2
+																	],
+																	"$scroll_view_port_offset_touch": [
+																		2,
+																		2
+																	],
+																	"$scroll_size": [
+																		5,
+																		"100%-2px"
+																	],
+																	"$scroll_size_touch": [
+																		5,
+																		"100%-2px"
+																	],
+																	"$scroll_background_image_control": "core_ui_form_components.dropdown_popup_background",
+																	"$background_size": [
+																		"100%",
+																		"100%"
+																	],
+																	"$background_size_touch": [
+																		"100%",
+																		"100%"
+																	],
+																	"$show_background": true,
+																	"$scroll_bar_contained": true,
+																	"$scroll_bar_contained_touch": true
+																}
+															}
+														]
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						}
+					],
+					"bindings": [
+						{
+							"binding_type": "view",
+							"source_control_name": "($dropdown_name)",
+							"source_property_name": "#toggle_state",
+							"target_property_name": "#visible",
+							"resolve_sibling_scope": true
+						}
+					],
+					"button_mappings": [
+						{
+							"from_button_id": "button.menu_cancel",
+							"to_button_id": "button.dropdown_exit",
+							"mapping_type": "global"
+						},
+						{
+							"from_button_id": "button.menu_ok",
+							"to_button_id": "button.dropdown_exit",
+							"mapping_type": "global"
+						},
+						{
+							"from_button_id": "button.menu_select",
+							"to_button_id": "button.dropdown_exit",
+							"mapping_type": "global"
+						},
+						{
+							"from_button_id": "button.menu_up",
+							"to_button_id": "button.menu_up",
+							"mapping_type": "global",
+							"scope": "view"
+						},
+						{
+							"from_button_id": "button.menu_down",
+							"to_button_id": "button.menu_down",
+							"mapping_type": "global",
+							"scope": "view"
+						},
+						{
+							"from_button_id": "button.menu_left",
+							"to_button_id": "button.menu_left",
+							"mapping_type": "global",
+							"scope": "view"
+						},
+						{
+							"from_button_id": "button.menu_right",
+							"to_button_id": "button.menu_right",
+							"mapping_type": "global",
+							"scope": "view"
+						}
+					]
+				}
+			}
+		]
+	}
+}

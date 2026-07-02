@@ -66,10 +66,23 @@ export function emitButton(
  * Emit a static (label-slot) control. `label()` exists on both `ActionFormData`
  * and `ModalFormData`, so decorative nodes share this writer across both backends.
  *
+ * On the native modal, `form.label()` ALSO consumes a `response.formValues` slot
+ * (the engine returns `null` there) — confirmed empirically: a form with decorative
+ * `<Panel>` wrappers among its fields returned a `formValues` array 1 entry longer
+ * per label, with every later control's value shifted by that many slots. So a modal
+ * label must advance `modalControlIndex` WITHOUT registering a `ModalControlEntry`
+ * (an empty name skips it in `collectValues`'s re-keying) to keep every later
+ * control's recorded ordinal aligned with its real position in `formValues`.
+ *
  * @param payload - Serialized component payload.
  * @param form - Target form.
+ * @param ctx - Serialization context; advances the modal ordinal when present.
  */
-export function emitLabel(payload: string, form: FormTarget): void {
+export function emitLabel(payload: string, form: FormTarget, ctx?: SerializationContext): void {
+  if (ctx && isModalContext(ctx)) {
+    ctx.modalControlIndex++;
+  }
+
   form.label(payload);
 }
 

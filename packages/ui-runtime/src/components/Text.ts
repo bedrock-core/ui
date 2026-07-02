@@ -151,6 +151,6 @@ export const Text: FunctionComponent<TextProps> = ({
 };
 
 /** Serializes a `text` into the static (label) slot. */
-export const textWriter: Writer = (payload, form) => {
-  emitLabel(payload, form);
+export const textWriter: Writer = (payload, form, ctx) => {
+  emitLabel(payload, form, ctx);
 };

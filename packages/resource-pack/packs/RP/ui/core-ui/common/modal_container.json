@@ -1,16 +1,15 @@
 {
 	// ─────────────────────────────────────────────────────────────────────────────
-	// MINIMAL ISOLATION BUILD — TOGGLE ONLY.
+	// Native ModalForm custom_form renderer. The factory below maps each custom_form
+	// entry's type to its component router (toggle / slider / input / dropdown wired;
+	// header/divider still routed to core_ui_common.unused pending their pass).
 	//
-	// Everything except `toggle` is routed to core_ui_common.unused so we can debug the
-	// positioning of a single native control without the noise of every other type.
-	// Once toggle positions correctly from its decoded geometry, the other controls get
-	// re-added the same way.
-	//
-	// The native modal's custom_form renders here (server_form.main_screen_content factory
-	// maps `custom_form` → modal_container). Toggle geometry is decoded from #custom_text
-	// (header 9 → type 83 → width 83 → height 83 → x 83 → y 83) into the property_bag the
-	// engine maps to size + anchored offset (use_anchored_offset).
+	// Each component decodes its own geometry from #custom_text (header 9 → type 83 →
+	// width 83 → height 83 → x 83 → y 83) into the property_bag the engine maps to size +
+	// anchored offset (use_anchored_offset), and self-hides unless the decoded #type
+	// matches its slot type (modal-toggle / modal-slider / modal-input / modal-dropdown).
+	// Per-cell state read + write-back go through each native element's
+	// *_grid/collection_name hook.
 	// ─────────────────────────────────────────────────────────────────────────────
 	"namespace": "core_ui_common",
 	"modal_container": {
@@ -202,10 +201,10 @@
 						"control_ids": {
 							"label": "@core_ui_common.unused",
 							"toggle": "@core_ui_form_components.toggle_router",
-							"slider": "@core_ui_common.unused",
-							"step_slider": "@core_ui_common.unused",
-							"dropdown": "@core_ui_common.unused",
-							"input": "@core_ui_common.unused",
+							"slider": "@core_ui_form_components.slider_router",
+							"step_slider": "@core_ui_form_components.slider_router",
+							"dropdown": "@core_ui_form_components.dropdown_router",
+							"input": "@core_ui_form_components.input_router",
 							"header": "@core_ui_common.unused",
 							"divider": "@core_ui_common.unused"
 						}

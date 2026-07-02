@@ -153,9 +153,13 @@
 				"target_property_name": "#pre_visible"
 			},
 			{
+				/* Per-type visibility gate: each control's decode panel runs for EVERY
+				   collection cell, so it must self-hide unless THIS cell's encoded type
+				   matches. #type decodes to the slot type (s: prefix stripped) =
+				   'modal-toggle'. Without this every cell would render a toggle. */
 				"binding_type": "view",
-				"source_property_name": "(#pre_visible and (#type = 'text'))",
-				"target_property_name": "#visible_pre_region"
+				"source_property_name": "(#pre_visible and (#type = 'modal-toggle'))",
+				"target_property_name": "#visible"
 			},
 			{
 				/* --- enabled (boolean) - field 6 --- */

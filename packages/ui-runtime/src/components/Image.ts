@@ -22,6 +22,6 @@ export const Image: FunctionComponent<ImageProps> = ({ texture, ...rest }: Image
 });
 
 /** Serializes an `image` into the static (label) slot. */
-export const imageWriter: Writer = (payload, form) => {
-  emitLabel(payload, form);
+export const imageWriter: Writer = (payload, form, ctx) => {
+  emitLabel(payload, form, ctx);
 };

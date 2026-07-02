@@ -23,6 +23,9 @@ export function ModalFormDemo({ back }: { back: () => void }): JSX.Element {
     player.sendMessage(`§7  toggle_a: §f${String(values.toggle_a ?? false)}`);
     player.sendMessage(`§7  toggle_b: §f${String(values.toggle_b ?? false)}`);
     player.sendMessage(`§7  toggle_c: §f${String(values.toggle_c ?? false)}`);
+    player.sendMessage(`§7  nickname: §f${String(values.nickname ?? '')}`);
+    player.sendMessage(`§7  volume: §f${String(values.volume ?? 0)}`);
+    player.sendMessage(`§7  mode: §f${String(values.mode ?? '')}`);
 
     back();
   };
@@ -33,39 +36,42 @@ export function ModalFormDemo({ back }: { back: () => void }): JSX.Element {
       onSubmit={handleSubmit}
       onCancel={back}
     >
-      <Panel flexDirection={'row'} gap={2} padding={4} background={'textures/ui/recipe_book_group_expanded'}>
+      <Panel flexDirection={'column'} gap={2} padding={4} background={'textures/ui/recipe_book_group_expanded'}>
+        <Form.Dropdown
+          name={'asdsa'}
+          label={'§fMode'}
+          options={['Easy', 'Normal', 'Hard']}
+          defaultValue={'Normal'}
+          background={'textures/ui/ore-styled/button/primary/background'}
+          backgroundHover={'textures/ui/ore-styled/button/primary/background_hover'}
+          backgroundPressed={'textures/ui/ore-styled/button/primary/background_pressed'}
+          backgroundLocked={'textures/ui/ore-styled/button/primary/background_selected'}
+          popupBackground={'textures/ui/ore-styled/card/light/background'}
+          optionBackground={'textures/ui/ore-styled/button/secondary/background'}
+          optionHover={'textures/ui/ore-styled/button/secondary/background_hover'}
+          optionSelected={'textures/ui/ore-styled/button/secondary/background_selected'}
+        />
         <Form.Toggle name={'toggle_a'} label={'§fToggle A'} defaultValue={true} />
         <Form.Toggle name={'toggle_b'} label={'§fToggle B'} defaultValue={false} />
         <Form.Toggle name={'toggle_c'} label={'§fToggle C'} defaultValue={true} />
       </Panel>
       <Panel flexDirection={'column'} gap={2} padding={4} background={'textures/ui/recipe_book_group_expanded'}>
-        <Form.Toggle name={'toggle_d'} label={'§fToggle D'} defaultValue={true} />
-        <Form.Toggle name={'toggle_e'} label={'§fToggle E'} defaultValue={false} />
-        <Form.Toggle name={'toggle_f'} label={'§fToggle F'} defaultValue={true} />
-
-        <Form.Toggle name={'toggle_g'} label={'§fToggle G'} defaultValue={true} />
-        <Form.Toggle name={'toggle_h'} label={'§fToggle H'} defaultValue={false} />
-        <Form.Toggle name={'toggle_i'} label={'§fToggle I'} defaultValue={true} />
-
-        <Form.Toggle name={'toggle_j'} label={'§fToggle J'} defaultValue={true} />
-        <Form.Toggle name={'toggle_k'} label={'§fToggle K'} defaultValue={false} />
-        <Form.Toggle name={'toggle_l'} label={'§fToggle L'} defaultValue={true} />
-
-        <Form.Toggle name={'toggle_m'} label={'§fToggle M'} defaultValue={true} />
-        <Form.Toggle name={'toggle_n'} label={'§fToggle N'} defaultValue={false} />
-        <Form.Toggle name={'toggle_o'} label={'§fToggle O'} defaultValue={true} />
-
-        <Form.Toggle name={'toggle_p'} label={'§fToggle P'} defaultValue={true} />
-        <Form.Toggle name={'toggle_q'} label={'§fToggle Q'} defaultValue={false} />
-        <Form.Toggle name={'toggle_r'} label={'§fToggle R'} defaultValue={true} />
-
-        <Form.Toggle name={'toggle_s'} label={'§fToggle S'} defaultValue={true} />
-        <Form.Toggle name={'toggle_t'} label={'§fToggle T'} defaultValue={false} />
-        <Form.Toggle name={'toggle_u'} label={'§fToggle U'} defaultValue={true} />
-
-        <Form.Toggle name={'toggle_v'} label={'§fToggle V'} defaultValue={true} />
-        <Form.Toggle name={'toggle_w'} label={'§fToggle W'} defaultValue={false} />
-        <Form.Toggle name={'toggle_x'} label={'§fToggle X'} defaultValue={true} />
+        <Form.Input name={'nickname'} label={'§fNickname'} placeholder={'§7type here'} />
+        <Form.Slider name={'volume'} label={'§fVolume'} min={0} max={10} defaultValue={5} />
+        <Form.Dropdown
+          name={'mode'}
+          label={'§fMode'}
+          options={['Easy', 'Normal', 'Hard', 'Expert', 'Insane', 'Nightmare', 'Ultra', 'Custom']}
+          defaultValue={'Normal'}
+          background={'textures/ui/ore-styled/button/primary/background'}
+          backgroundHover={'textures/ui/ore-styled/button/primary/background_hover'}
+          backgroundPressed={'textures/ui/ore-styled/button/primary/background_pressed'}
+          backgroundLocked={'textures/ui/ore-styled/button/primary/background_selected'}
+          popupBackground={'textures/ui/ore-styled/card/dark/background'}
+          optionBackground={'textures/ui/ore-styled/button/contrast/background'}
+          optionHover={'textures/ui/ore-styled/button/contrast/background_hover'}
+          optionSelected={'textures/ui/ore-styled/button/contrast/background_selected'}
+        />
       </Panel>
     </Form>
   );

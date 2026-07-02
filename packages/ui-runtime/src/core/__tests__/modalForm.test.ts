@@ -4,6 +4,7 @@ import type { ModalFormData } from '@minecraft/server-ui';
 import { registerNativeComponents } from '../../components';
 import { Form } from '../../components/Form';
 import { MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE } from '../../components/Form';
+import { Panel } from '../../components/Panel';
 import { isElement } from '../guards';
 import { expandAndResolveContexts } from '../render/phases/expand';
 import { computeLayout } from '../render/phases/layout';
@@ -142,6 +143,75 @@ describe('modal control serialization', () => {
     expect(dropdown?.args[2]).toMatchObject({ defaultValueIndex: 2 });
   });
 
+  // Step 1: the closed-box texture is now payload-driven. The `background` prop (from
+  // ControlProps → withControl, field 7) must reach the serialized dropdown label so
+  // the RP decode can bind it to the closed box.
+  it('carries the closed-box background texture in the dropdown payload', () => {
+    const form = new FakeModalForm();
+
+    serialize(
+      el(Form.Dropdown({ name: 'm', options: ['A', 'B'], background: 'textures/ui/my_closed_box' })),
+      asModalForm(form),
+      modalCtx(),
+    );
+
+    const label = form.calls.find(c => c.kind === 'dropdown')?.args[0];
+
+    expect(typeof label).toBe('string');
+    expect(label).toContain('s:textures/ui/my_closed_box');
+  });
+
+  // Step 2: closed-box state textures sit at BUTTON-IDENTICAL byte offsets
+  // ([440] background, [1024] hover, [1107] pressed, [1190] locked) because the RP
+  // closed-box faces are literal copies of the button's state decode blocks
+  // (modal_dropdown.json ↔ components/button.json). Exact offsets are the contract —
+  // if this test breaks, those RP decode offsets MUST be updated in lockstep.
+  it('places the closed-box state textures at button-identical payload offsets', () => {
+    const form = new FakeModalForm();
+
+    serialize(
+      el(Form.Dropdown({
+        name: 'm',
+        options: ['A', 'B'],
+        background: 'textures/ui/cb_default',
+        backgroundHover: 'textures/ui/cb_hover',
+        backgroundPressed: 'textures/ui/cb_pressed',
+        backgroundLocked: 'textures/ui/cb_locked',
+        popupBackground: 'textures/ui/popup_bg',
+        optionBackground: 'textures/ui/opt_bg',
+        optionHover: 'textures/ui/opt_hover',
+        optionSelected: 'textures/ui/opt_selected',
+      })),
+      asModalForm(form),
+      modalCtx(),
+    );
+
+    const label = form.calls.find(c => c.kind === 'dropdown')?.args[0] as string;
+
+    expect(label.indexOf('s:textures/ui/cb_default')).toBe(440);
+    expect(label.indexOf('s:textures/ui/cb_hover')).toBe(1024);
+    expect(label.indexOf('s:textures/ui/cb_pressed')).toBe(1107);
+    expect(label.indexOf('s:textures/ui/cb_locked')).toBe(1190);
+    expect(label.indexOf('s:textures/ui/popup_bg')).toBe(1273);
+    expect(label.indexOf('s:textures/ui/opt_bg')).toBe(1356);
+    expect(label.indexOf('s:textures/ui/opt_hover')).toBe(1439);
+    expect(label.indexOf('s:textures/ui/opt_selected')).toBe(1522);
+    // popupHeight [1605]: 2 options × 17px + 9px chrome = 43, hugging the list.
+    expect(label.indexOf('n:43')).toBe(1605);
+  });
+
+  // popupHeight caps at half the canonical screen (210/2 = 105) so long lists scroll.
+  it('caps the computed popup height at half the screen', () => {
+    const form = new FakeModalForm();
+    const options = Array.from({ length: 20 }, (_, i) => `opt${i}`);
+
+    serialize(el(Form.Dropdown({ name: 'm', options })), asModalForm(form), modalCtx());
+
+    const label = form.calls.find(c => c.kind === 'dropdown')?.args[0] as string;
+
+    expect(label.indexOf('n:105')).toBe(1605);
+  });
+
   it('records each control name against its ordinal', () => {
     const form = new FakeModalForm();
     const ctx = modalCtx();
@@ -161,6 +231,43 @@ describe('modal control serialization', () => {
     expect(ctx.modalControls.get(0)).toEqual({ name: 'sound' });
     expect(ctx.modalControls.get(1)).toEqual({ name: 'volume' });
     expect(ctx.modalControlIndex).toBe(2);
+  });
+
+  it('keeps ordinals aligned with formValues when a decorative label sits between controls', () => {
+    // The native modal's form.label() ALSO consumes a response.formValues slot
+    // (confirmed in-game: the engine returns `null` there). A `<Panel>`/`<Image>`/
+    // `<Text>` among Form.* fields must therefore advance modalControlIndex too, or
+    // every later control's recorded ordinal points at the wrong formValues index.
+    const form = new FakeModalForm();
+    const ctx = modalCtx();
+
+    const tree: JSX.Element = {
+      type: 'fragment',
+      props: {
+        children: [
+          el(Panel({ children: [] })), // decorative — consumes formValues[0] = null engine-side
+          el(Form.Toggle({ name: 'sound' })),
+          el(Form.Slider({ name: 'volume', min: 0, max: 1 })),
+        ],
+      },
+    };
+
+    serialize(tree, asModalForm(form), ctx);
+
+    expect(form.labels).toHaveLength(1);
+    expect(ctx.modalControls.get(1)).toEqual({ name: 'sound' });
+    expect(ctx.modalControls.get(2)).toEqual({ name: 'volume' });
+    expect(ctx.modalControlIndex).toBe(3);
+
+    // End-to-end: a formValues array shaped like the real engine's (null for the
+    // label, then real values) re-keys correctly.
+    const values: Record<string, unknown> = {};
+
+    for (const [ordinal, entry] of ctx.modalControls) {
+      values[entry.name] = [null, true, 1][ordinal];
+    }
+
+    expect(values).toEqual({ sound: true, volume: 1 });
   });
 
   it('lays out modal controls with non-zero, increasing y (not all stacked at the top)', () => {
