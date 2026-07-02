@@ -24,9 +24,9 @@
 		"ui/core-ui/components/image.json",
 		"ui/core-ui/components/item_renderer.json",
 		// Form components
-		"ui/core-ui/form_components/modal_toggle.json",
-		"ui/core-ui/form_components/modal_input.json",
-		"ui/core-ui/form_components/modal_slider.json",
-		"ui/core-ui/form_components/modal_dropdown.json"
+		"ui/core-ui/form_components/toggle.json",
+		"ui/core-ui/form_components/input.json",
+		"ui/core-ui/form_components/slider.json",
+		"ui/core-ui/form_components/dropdown.json"
 	]
 }

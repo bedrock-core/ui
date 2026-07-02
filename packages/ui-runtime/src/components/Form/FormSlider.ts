@@ -36,15 +36,20 @@ export interface FormSliderProps extends FormControlBase, StateBackgroundProps {
    * width and is vertically centered; this sets how tall it draws. Default `10`.
    */
   trackHeight?: number;
-  /** Thumb (draggable handle) width in px. Default `10`. */
+  /** Thumb (draggable handle) width in px. Default `16`. */
   thumbWidth?: number;
   /** Thumb (draggable handle) height in px. Default `16`. */
   thumbHeight?: number;
 }
 
-/** RP defaults for the slider geometry — must match modal_slider.json's fallbacks. */
+/**
+ * RP defaults for the slider geometry. The thumb default matches the STATIC 16×16
+ * `slider_box` hitbox in slider.json (the hitbox can't be payload-driven — every
+ * dynamic-size mechanism is dead on `type: slider_box`, in-game verified), so the
+ * default visual thumb and its interactive core coincide exactly.
+ */
 const DEFAULT_TRACK_HEIGHT = 10;
-const DEFAULT_THUMB_WIDTH = 10;
+const DEFAULT_THUMB_WIDTH = 16;
 const DEFAULT_THUMB_HEIGHT = 16;
 
 /**

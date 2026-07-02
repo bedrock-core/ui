@@ -205,6 +205,61 @@
 		"pressed_control": "pressed",
 		"locked_control": "locked",
 		"focus_enabled": true,
+		/* Selection state machinery, copied from vanilla common.text_edit_box
+		   (ui_common.json:1636-1685) with its $var defaults hardcoded. Without these
+		   the edit box never enters its SELECTED state: no cursor, the placeholder
+		   never hides, and typing only works through hover capture. */
+		"button_mappings": [
+			{
+				"from_button_id": "button.menu_select",
+				"to_button_id": "button.text_edit_box_selected",
+				"handle_select": true,
+				"handle_deselect": false,
+				"mapping_type": "pressed"
+			},
+			{
+				"from_button_id": "button.menu_select",
+				"to_button_id": "button.text_edit_box_selected",
+				"handle_select": false,
+				"handle_deselect": true,
+				"mapping_type": "global",
+				/* deselect the textbox and allow selecting another control with the
+				   same mouse press (vanilla comment) */
+				"consume_event": false
+			},
+			{
+				"from_button_id": "button.menu_ok",
+				"to_button_id": "button.text_edit_box_selected",
+				"handle_select": true,
+				"handle_deselect": true,
+				"mapping_type": "pressed"
+			},
+			{
+				"from_button_id": "button.menu_ok",
+				"to_button_id": "button.text_edit_box_selected",
+				"handle_select": false,
+				"handle_deselect": true,
+				"mapping_type": "global"
+			},
+			{
+				"from_button_id": "button.menu_cancel",
+				"to_button_id": "button.text_edit_box_deselected",
+				"handle_select": false,
+				"handle_deselect": true,
+				"mapping_type": "global"
+			},
+			{
+				"to_button_id": "button.text_edit_box_hovered",
+				"mapping_type": "pressed"
+			},
+			{
+				"from_button_id": "button.menu_clear",
+				"to_button_id": "button.text_edit_box_clear",
+				"handle_select": false,
+				"handle_deselect": false,
+				"mapping_type": "focused"
+			}
+		],
 		"bindings": [
 			{
 				/* enabled state for this cell */

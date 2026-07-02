@@ -1,0 +1,1019 @@
+{
+	"namespace": "core_ui_form_components",
+	"slider_router": {
+		"type": "panel",
+		// Components must be inside a panel with size [1,1] so size_binding values map 1:1 to pixels.
+		"size": [
+			1,
+			1
+		],
+		"controls": [
+			{
+				"slider@core_ui_form_components.slider": {}
+			}
+		]
+	},
+	"slider": {
+		"type": "panel",
+		"size": [
+			0,
+			0
+		],
+		"layer": 50,
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"use_anchored_offset": true,
+		"property_bag": {
+			"#size_binding_x": 0.0,
+			"#size_binding_y": 0.0,
+			"#anchored_offset_value_x": 0.0,
+			"#anchored_offset_value_y": 0.0
+		},
+		"visible": "#visible",
+		"enabled": "#enabled",
+		"$normalize": 1.0,
+		"bindings": [
+			{
+				/* Per-cell collection context so #custom_text resolves to THIS row. */
+				"binding_type": "collection_details",
+				"binding_collection_name": "custom_form"
+			},
+			{
+				"binding_name": "#custom_text",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form"
+			},
+			{
+				/* --- strip protocol header (9 chars) --- */
+				"binding_type": "view",
+				"source_property_name": "('%.9s' * #custom_text)",
+				"target_property_name": "#protocol_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#custom_text - #protocol_header)",
+				"target_property_name": "#rem_after_header"
+			},
+			{
+				/* --- type (string) - field 0 --- */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_header)",
+				"target_property_name": "#raw_type"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_header - #raw_type)",
+				"target_property_name": "#rem_after_type"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_type) - ('%.2s' * #raw_type) - ';')",
+				"target_property_name": "#type"
+			},
+			{
+				/* --- width (int) - field 1 --- */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_type)",
+				"target_property_name": "#raw_width"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_type - #raw_width)",
+				"target_property_name": "#rem_after_width"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_width) - ('%.2s' * #raw_width) - ';')",
+				"target_property_name": "#size_binding_x"
+			},
+			{
+				/* --- height (int) - field 2 --- */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_width)",
+				"target_property_name": "#raw_height"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_width - #raw_height)",
+				"target_property_name": "#rem_after_height"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_height) - ('%.2s' * #raw_height) - ';')",
+				"target_property_name": "#size_binding_y"
+			},
+			{
+				/* --- x (int) - field 3 --- */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_height)",
+				"target_property_name": "#raw_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_height - #raw_x)",
+				"target_property_name": "#rem_after_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_x) - ('%.2s' * #raw_x) - ';') * $normalize)",
+				"target_property_name": "#anchored_offset_value_x"
+			},
+			{
+				/* --- y (float) - field 4 --- */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_x)",
+				"target_property_name": "#raw_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_x - #raw_y)",
+				"target_property_name": "#rem_after_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_y) - ('%.2s' * #raw_y) - ';') * $normalize)",
+				"target_property_name": "#anchored_offset_value_y"
+			},
+			{
+				/* --- visible (boolean) - field 5 --- */
+				"binding_type": "view",
+				"source_property_name": "('%.8s' * #rem_after_y)",
+				"target_property_name": "#raw_visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_y - #raw_visible)",
+				"target_property_name": "#rem_after_visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.7s' * #raw_visible) - ('%.2s' * #raw_visible) - ';')",
+				"target_property_name": "#pre_visible"
+			},
+			{
+				/* --- enabled (boolean) - field 6 --- */
+				"binding_type": "view",
+				"source_property_name": "('%.8s' * #rem_after_visible)",
+				"target_property_name": "#raw_enabled"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_visible - #raw_enabled)",
+				"target_property_name": "#rem_after_enabled"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.7s' * #raw_enabled) - ('%.2s' * #raw_enabled) - ';')",
+				"target_property_name": "#enabled"
+			},
+			{
+				/* Per-type visibility gate: only render the slider on slider cells. */
+				"binding_type": "view",
+				"source_property_name": "(#pre_visible and (#type = 'modal-slider'))",
+				"target_property_name": "#visible"
+			}
+		],
+		"controls": [
+			{
+				/* Travel inset: the engine bounds the thumb's CENTER travel to the slider
+				   control's width, so the control lives in a size-carrier panel that is
+				   travelWidth = width - thumbWidth + hitbox(10) (post-layout in TS, field
+				   [2020]) — at min/max the thumb EDGE aligns with the full-width track
+				   ends. Track visuals overflow the narrow control symmetrically. */
+				"travel_anchor": {
+					"type": "panel",
+					"size": [
+						1,
+						1
+					],
+					"anchor_from": "center",
+					"anchor_to": "center",
+					"controls": [
+						{
+							"travel_area": {
+								"type": "panel",
+								"size": [
+									1,
+									0
+								],
+								"anchor_from": "center",
+								"anchor_to": "center",
+								"property_bag": {
+									"#size_binding_x": 0.0,
+									"#size_binding_y": 0.0
+								},
+								"bindings": [
+									{
+										"binding_name": "#custom_text",
+										"binding_type": "collection",
+										"binding_collection_name": "custom_form"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.2020s' * #custom_text)",
+										"target_property_name": "#skip_travelw"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#custom_text - #skip_travelw)",
+										"target_property_name": "#rem_travelw"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #rem_travelw)",
+										"target_property_name": "#raw_travelw"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "((('%.82s' * #raw_travelw) - ('%.2s' * #raw_travelw) - ';') * 1)",
+										"target_property_name": "#size_binding_x"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.175s' * #custom_text)",
+										"target_property_name": "#skip_travelh"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#custom_text - #skip_travelh)",
+										"target_property_name": "#rem_travelh"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #rem_travelh)",
+										"target_property_name": "#raw_travelh"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "((('%.82s' * #raw_travelh) - ('%.2s' * #raw_travelh) - ';') * 1)",
+										"target_property_name": "#size_binding_y"
+									}
+								],
+								"controls": [
+									{
+										"slider@core_ui_form_components.slider_control": {}
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		]
+	},
+	"slider_control": {
+		"type": "slider",
+		// Fills the decoded container (the parent `slider` panel is sized by
+		// #size_binding_x/y from the control's computed width/height). The track spans
+		// this full width; track height + thumb size come from the geometry payload
+		// fields decoded below.
+		"size": [
+			"100%",
+			"100%"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"layer": 2,
+		"enabled": "#enabled",
+		"slider_name": "custom_slider",
+		"slider_track_button": "custom_slider",
+		"slider_direction": "horizontal",
+		"slider_collection_name": "custom_form",
+		"slider_box_control": "slider_box",
+		"default_control": "bar_default_anchor",
+		"background_control": "slider_background",
+		"background_hover_control": "slider_background_hover",
+		"progress_control": "slider_progress",
+		"progress_hover_control": "slider_progress_hover",
+		"hover_control": "bar_hover_anchor",
+		"slider_small_decrease_button": "slider.small_decrease",
+		"slider_small_increase_button": "slider.small_increase",
+		"slider_selected_button": "slider.selected",
+		"slider_deselected_button": "slider.deselected",
+		"always_listen_to_input": false,
+		"always_handle_pointer": true,
+		"focus_enabled": true,
+		"default_focus_precedence": 0,
+		"property_bag": {
+			"#slider_steps": 1,
+			"#slider_value": 0
+		},
+		"button_mappings": [
+			{
+				"from_button_id": "button.menu_select",
+				"to_button_id": "custom_slider",
+				"mapping_type": "pressed",
+				"button_up_right_of_first_refusal": true
+			},
+			{
+				"from_button_id": "button.menu_ok",
+				"to_button_id": "slider.selected",
+				"mapping_type": "focused"
+			}
+		],
+		"bindings": [
+			{
+				/* number of discrete steps for THIS cell */
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form",
+				"binding_name": "#custom_slider_steps",
+				"binding_name_override": "#slider_steps"
+			},
+			{
+				/* current value for THIS cell (read + write-back) */
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form",
+				"binding_name": "#custom_slider_value",
+				"binding_name_override": "#slider_value"
+			},
+			{
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form",
+				"binding_name": "#custom_slider_enabled",
+				"binding_name_override": "#enabled"
+			}
+		],
+		"controls": [
+			{
+				/* bar_default: [1,1] anchor → SIZE-CARRIER PANEL (w = control width [92],
+				   h = trackHeight [1771]; #size_binding only works on panels, written
+				   via bindings — probe-verified) → texture image fills it. */
+				"bar_default_anchor": {
+					"type": "panel",
+					"size": [
+						1,
+						1
+					],
+					"anchor_from": "center",
+					"anchor_to": "center",
+					"controls": [
+						{
+							"bar_default_size": {
+								"type": "panel",
+								"size": [
+									1,
+									0
+								],
+								"anchor_from": "center",
+								"anchor_to": "center",
+								"property_bag": {
+									"#size_binding_x": 0.0,
+									"#size_binding_y": 0.0
+								},
+								"bindings": [
+									{
+										"binding_name": "#custom_text",
+										"binding_type": "collection",
+										"binding_collection_name": "custom_form"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.92s' * #custom_text)",
+										"target_property_name": "#skip_bar_default_szw"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#custom_text - #skip_bar_default_szw)",
+										"target_property_name": "#rem_bar_default_szw"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #rem_bar_default_szw)",
+										"target_property_name": "#raw_bar_default_szw"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "((('%.82s' * #raw_bar_default_szw) - ('%.2s' * #raw_bar_default_szw) - ';') * 1)",
+										"target_property_name": "#size_binding_x"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.1771s' * #custom_text)",
+										"target_property_name": "#skip_bar_default_szh"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#custom_text - #skip_bar_default_szh)",
+										"target_property_name": "#rem_bar_default_szh"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #rem_bar_default_szh)",
+										"target_property_name": "#raw_bar_default_szh"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "((('%.82s' * #raw_bar_default_szh) - ('%.2s' * #raw_bar_default_szh) - ';') * 1)",
+										"target_property_name": "#size_binding_y"
+									}
+								],
+								"controls": [
+									{
+										"bar_default": {
+											"type": "image",
+											"size": [
+												"100%",
+												"100%"
+											],
+											"layer": 1,
+											"texture": "#texture",
+											"bindings": [
+												{
+													"binding_name": "#custom_text",
+													"binding_type": "collection",
+													"binding_collection_name": "custom_form"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "('%.440s' * #custom_text)",
+													"target_property_name": "#skip_bar_default_tex"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "(#custom_text - #skip_bar_default_tex)",
+													"target_property_name": "#rem_bar_default_tex"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "('%.83s' * #rem_bar_default_tex)",
+													"target_property_name": "#raw_bar_default_tex"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "(('%.82s' * #raw_bar_default_tex) - ('%.2s' * #raw_bar_default_tex) - ';')",
+													"target_property_name": "#texture"
+												}
+											],
+											"controls": [
+												{
+													"sizing_panel": {
+														"type": "panel",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"anchor_from": "center",
+														"anchor_to": "center",
+														"controls": [
+															{
+																"slider_background": {
+																	"type": "image",
+																	"size": [
+																		"100%",
+																		"100%"
+																	],
+																	"layer": 1,
+																	"texture": "#texture",
+																	"bindings": [
+																		{
+																			"binding_name": "#custom_text",
+																			"binding_type": "collection",
+																			"binding_collection_name": "custom_form"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "('%.440s' * #custom_text)",
+																			"target_property_name": "#skip_bar_default_trk"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "(#custom_text - #skip_bar_default_trk)",
+																			"target_property_name": "#rem_bar_default_trk"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "('%.83s' * #rem_bar_default_trk)",
+																			"target_property_name": "#raw_bar_default_trk"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "(('%.82s' * #raw_bar_default_trk) - ('%.2s' * #raw_bar_default_trk) - ';')",
+																			"target_property_name": "#texture"
+																		}
+																	]
+																}
+															},
+															{
+																"slider_progress": {
+																	"type": "image",
+																	"size": [
+																		"100%",
+																		"100%"
+																	],
+																	"layer": 3,
+																	"texture": "#texture",
+																	"bindings": [
+																		{
+																			"binding_name": "#custom_text",
+																			"binding_type": "collection",
+																			"binding_collection_name": "custom_form"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "('%.1273s' * #custom_text)",
+																			"target_property_name": "#skip_bar_default_prog"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "(#custom_text - #skip_bar_default_prog)",
+																			"target_property_name": "#rem_bar_default_prog"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "('%.83s' * #rem_bar_default_prog)",
+																			"target_property_name": "#raw_bar_default_prog"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "(('%.82s' * #raw_bar_default_prog) - ('%.2s' * #raw_bar_default_prog) - ';')",
+																			"target_property_name": "#texture"
+																		}
+																	],
+																	"clip_direction": "left",
+																	"clip_pixelperfect": false
+																}
+															}
+														]
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				/* bar_hover: [1,1] anchor → SIZE-CARRIER PANEL (w = control width [92],
+				   h = trackHeight [1771]; #size_binding only works on panels, written
+				   via bindings — probe-verified) → texture image fills it. */
+				"bar_hover_anchor": {
+					"type": "panel",
+					"size": [
+						1,
+						1
+					],
+					"anchor_from": "center",
+					"anchor_to": "center",
+					"visible": false,
+					"controls": [
+						{
+							"bar_hover_size": {
+								"type": "panel",
+								"size": [
+									1,
+									0
+								],
+								"anchor_from": "center",
+								"anchor_to": "center",
+								"property_bag": {
+									"#size_binding_x": 0.0,
+									"#size_binding_y": 0.0
+								},
+								"bindings": [
+									{
+										"binding_name": "#custom_text",
+										"binding_type": "collection",
+										"binding_collection_name": "custom_form"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.92s' * #custom_text)",
+										"target_property_name": "#skip_bar_hover_szw"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#custom_text - #skip_bar_hover_szw)",
+										"target_property_name": "#rem_bar_hover_szw"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #rem_bar_hover_szw)",
+										"target_property_name": "#raw_bar_hover_szw"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "((('%.82s' * #raw_bar_hover_szw) - ('%.2s' * #raw_bar_hover_szw) - ';') * 1)",
+										"target_property_name": "#size_binding_x"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.1771s' * #custom_text)",
+										"target_property_name": "#skip_bar_hover_szh"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#custom_text - #skip_bar_hover_szh)",
+										"target_property_name": "#rem_bar_hover_szh"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #rem_bar_hover_szh)",
+										"target_property_name": "#raw_bar_hover_szh"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "((('%.82s' * #raw_bar_hover_szh) - ('%.2s' * #raw_bar_hover_szh) - ';') * 1)",
+										"target_property_name": "#size_binding_y"
+									}
+								],
+								"controls": [
+									{
+										"bar_hover": {
+											"type": "image",
+											"size": [
+												"100%",
+												"100%"
+											],
+											"layer": 1,
+											"texture": "#texture",
+											"bindings": [
+												{
+													"binding_name": "#custom_text",
+													"binding_type": "collection",
+													"binding_collection_name": "custom_form"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "('%.1024s' * #custom_text)",
+													"target_property_name": "#skip_bar_hover_tex"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "(#custom_text - #skip_bar_hover_tex)",
+													"target_property_name": "#rem_bar_hover_tex"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "('%.83s' * #rem_bar_hover_tex)",
+													"target_property_name": "#raw_bar_hover_tex"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "(('%.82s' * #raw_bar_hover_tex) - ('%.2s' * #raw_bar_hover_tex) - ';')",
+													"target_property_name": "#texture"
+												}
+											],
+											"controls": [
+												{
+													"sizing_panel": {
+														"type": "panel",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"anchor_from": "center",
+														"anchor_to": "center",
+														"controls": [
+															{
+																"slider_background_hover": {
+																	"type": "image",
+																	"size": [
+																		"100%",
+																		"100%"
+																	],
+																	"layer": 1,
+																	"texture": "#texture",
+																	"bindings": [
+																		{
+																			"binding_name": "#custom_text",
+																			"binding_type": "collection",
+																			"binding_collection_name": "custom_form"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "('%.1024s' * #custom_text)",
+																			"target_property_name": "#skip_bar_hover_trk"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "(#custom_text - #skip_bar_hover_trk)",
+																			"target_property_name": "#rem_bar_hover_trk"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "('%.83s' * #rem_bar_hover_trk)",
+																			"target_property_name": "#raw_bar_hover_trk"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "(('%.82s' * #raw_bar_hover_trk) - ('%.2s' * #raw_bar_hover_trk) - ';')",
+																			"target_property_name": "#texture"
+																		}
+																	]
+																}
+															},
+															{
+																"slider_progress_hover": {
+																	"type": "image",
+																	"size": [
+																		"100%",
+																		"100%"
+																	],
+																	"layer": 3,
+																	"texture": "#texture",
+																	"bindings": [
+																		{
+																			"binding_name": "#custom_text",
+																			"binding_type": "collection",
+																			"binding_collection_name": "custom_form"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "('%.1356s' * #custom_text)",
+																			"target_property_name": "#skip_bar_hover_prog"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "(#custom_text - #skip_bar_hover_prog)",
+																			"target_property_name": "#rem_bar_hover_prog"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "('%.83s' * #rem_bar_hover_prog)",
+																			"target_property_name": "#raw_bar_hover_prog"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "(('%.82s' * #raw_bar_hover_prog) - ('%.2s' * #raw_bar_hover_prog) - ';')",
+																			"target_property_name": "#texture"
+																		}
+																	],
+																	"clip_direction": "left",
+																	"clip_pixelperfect": false
+																}
+															}
+														]
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				/* draggable handle: slider_box must be a DIRECT child for the engine to move it
+				   (a carrier parent froze it, in-game verified), and its OWN size cannot be
+				   payload-driven: #size_binding is panels-only and %c only reads children's
+				   STATIC sizes (bound carrier => collapsed to 0, in-game verified). So the
+				   HITBOX is a fixed compromise (16x16, matching the TS default thumb) while the
+				   VISUAL thumb is the bound thumb_size carrier inside (thumbWidth [1854] x
+				   thumbHeight [1937]) — exact payload size, moving with the box. */
+				"slider_box": {
+					"type": "slider_box",
+					"size": [
+						16,
+						16
+					],
+					"anchor_from": "center",
+					"anchor_to": "center",
+					"layer": 4,
+					"default_control": "default",
+					"hover_control": "hover",
+					"locked_control": "locked",
+					"indent_control": "indent",
+					"controls": [
+						{
+							/* [1,1] anchor: #size_binding maps 1:1 to px ONLY against a [1,1]
+							   parent — directly inside the 16x16 box the bound values were
+							   multiplied by the box dims (in-game: enormous thumb). */
+							"thumb_anchor": {
+								"type": "panel",
+								"size": [
+									1,
+									1
+								],
+								"anchor_from": "center",
+								"anchor_to": "center",
+								"controls": [
+									{
+										"thumb_size": {
+											"type": "panel",
+											"size": [
+												1,
+												0
+											],
+											"anchor_from": "center",
+											"anchor_to": "center",
+											"property_bag": {
+												"#size_binding_x": 0.0,
+												"#size_binding_y": 0.0
+											},
+											"bindings": [
+												{
+													"binding_name": "#custom_text",
+													"binding_type": "collection",
+													"binding_collection_name": "custom_form"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "('%.1854s' * #custom_text)",
+													"target_property_name": "#skip_boxw"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "(#custom_text - #skip_boxw)",
+													"target_property_name": "#rem_boxw"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "('%.83s' * #rem_boxw)",
+													"target_property_name": "#raw_boxw"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "((('%.82s' * #raw_boxw) - ('%.2s' * #raw_boxw) - ';') * 1)",
+													"target_property_name": "#size_binding_x"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "('%.1937s' * #custom_text)",
+													"target_property_name": "#skip_boxh"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "(#custom_text - #skip_boxh)",
+													"target_property_name": "#rem_boxh"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "('%.83s' * #rem_boxh)",
+													"target_property_name": "#raw_boxh"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "((('%.82s' * #raw_boxh) - ('%.2s' * #raw_boxh) - ';') * 1)",
+													"target_property_name": "#size_binding_y"
+												}
+											],
+											"controls": [
+												{
+													"default": {
+														"type": "image",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"layer": 2,
+														"texture": "#texture",
+														"bindings": [
+															{
+																"binding_name": "#custom_text",
+																"binding_type": "collection",
+																"binding_collection_name": "custom_form"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "('%.1439s' * #custom_text)",
+																"target_property_name": "#skip_th"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "(#custom_text - #skip_th)",
+																"target_property_name": "#rem_th"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "('%.83s' * #rem_th)",
+																"target_property_name": "#raw_th"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "(('%.82s' * #raw_th) - ('%.2s' * #raw_th) - ';')",
+																"target_property_name": "#texture"
+															}
+														]
+													}
+												},
+												{
+													"hover": {
+														"type": "image",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"layer": 2,
+														"texture": "#texture",
+														"bindings": [
+															{
+																"binding_name": "#custom_text",
+																"binding_type": "collection",
+																"binding_collection_name": "custom_form"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "('%.1522s' * #custom_text)",
+																"target_property_name": "#skip_thh"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "(#custom_text - #skip_thh)",
+																"target_property_name": "#rem_thh"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "('%.83s' * #rem_thh)",
+																"target_property_name": "#raw_thh"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "(('%.82s' * #raw_thh) - ('%.2s' * #raw_thh) - ';')",
+																"target_property_name": "#texture"
+															}
+														]
+													}
+												},
+												{
+													"locked": {
+														"type": "image",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"layer": 2,
+														"texture": "#texture",
+														"bindings": [
+															{
+																"binding_name": "#custom_text",
+																"binding_type": "collection",
+																"binding_collection_name": "custom_form"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "('%.1688s' * #custom_text)",
+																"target_property_name": "#skip_thl"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "(#custom_text - #skip_thl)",
+																"target_property_name": "#rem_thl"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "('%.83s' * #rem_thl)",
+																"target_property_name": "#raw_thl"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "(('%.82s' * #raw_thl) - ('%.2s' * #raw_thl) - ';')",
+																"target_property_name": "#texture"
+															}
+														]
+													}
+												},
+												{
+													"indent": {
+														"type": "image",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"layer": 2,
+														"texture": "#texture",
+														"bindings": [
+															{
+																"binding_name": "#custom_text",
+																"binding_type": "collection",
+																"binding_collection_name": "custom_form"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "('%.1605s' * #custom_text)",
+																"target_property_name": "#skip_thp"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "(#custom_text - #skip_thp)",
+																"target_property_name": "#rem_thp"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "('%.83s' * #rem_thp)",
+																"target_property_name": "#raw_thp"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "(('%.82s' * #raw_thp) - ('%.2s' * #raw_thp) - ';')",
+																"target_property_name": "#texture"
+															}
+														]
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		]
+	}
+}
