@@ -75,6 +75,24 @@ function el(node: JSX.Element): JSX.Element {
   return node;
 }
 
+/** The native `label` payload (arg 0) for the first control of `kind`, narrowed to string. */
+function labelArg(form: FakeModalForm, kind: string): string {
+  const arg = form.calls.find(c => c.kind === kind)?.args[0];
+
+  expect(typeof arg).toBe('string');
+
+  return typeof arg === 'string' ? arg : '';
+}
+
+/** The native `items` array (arg 1) for the first control of `kind`, narrowed to string[]. */
+function itemsArg(form: FakeModalForm, kind: string): string[] {
+  const arg = form.calls.find(c => c.kind === kind)?.args[1];
+
+  expect(Array.isArray(arg)).toBe(true);
+
+  return Array.isArray(arg) ? arg.filter((v): v is string => typeof v === 'string') : [];
+}
+
 describe('modal control serialization', () => {
   it('emits one native control per Form.* child, in declaration order', () => {
     const form = new FakeModalForm();
@@ -165,7 +183,11 @@ describe('modal control serialization', () => {
   // closed-box faces are literal copies of the button's state decode blocks
   // (modal_dropdown.json ↔ components/button.json). Exact offsets are the contract —
   // if this test breaks, those RP decode offsets MUST be updated in lockstep.
-  it('places the closed-box state textures at button-identical payload offsets', () => {
+  //
+  // Per-option styling (optionBackground/hover/selected, font, scale, align, height) is NO
+  // LONGER in this cell payload — it rides each option's own blob (see the per-option test
+  // below). So the cell payload now ends at popupBackground [1273] + popupHeight [1356].
+  it('places the closed-box + popup textures at their payload offsets', () => {
     const form = new FakeModalForm();
 
     serialize(
@@ -177,33 +199,71 @@ describe('modal control serialization', () => {
         backgroundPressed: 'textures/ui/cb_pressed',
         backgroundLocked: 'textures/ui/cb_locked',
         popupBackground: 'textures/ui/popup_bg',
-        optionBackground: 'textures/ui/opt_bg',
-        optionHover: 'textures/ui/opt_hover',
-        optionSelected: 'textures/ui/opt_selected',
-        optionFont: 'minecraftTen',
-        optionScale: 1.5,
-        optionAlign: 'center',
       })),
       asModalForm(form),
       modalCtx(),
     );
 
-    const label = form.calls.find(c => c.kind === 'dropdown')?.args[0] as string;
+    const label = labelArg(form, 'dropdown');
 
     expect(label.indexOf('s:textures/ui/cb_default')).toBe(440);
     expect(label.indexOf('s:textures/ui/cb_hover')).toBe(1024);
     expect(label.indexOf('s:textures/ui/cb_pressed')).toBe(1107);
     expect(label.indexOf('s:textures/ui/cb_locked')).toBe(1190);
     expect(label.indexOf('s:textures/ui/popup_bg')).toBe(1273);
-    expect(label.indexOf('s:textures/ui/opt_bg')).toBe(1356);
-    expect(label.indexOf('s:textures/ui/opt_hover')).toBe(1439);
-    expect(label.indexOf('s:textures/ui/opt_selected')).toBe(1522);
-    // popupHeight [1605]: 2 options × 17px + 9px chrome = 43, hugging the list.
-    expect(label.indexOf('n:43')).toBe(1605);
-    // Option-label styling block (Step 5): decoded by the option_label_* variants.
-    expect(label.indexOf('s:MinecraftTen')).toBe(1688);
-    expect(label.indexOf('n:3')).toBe(1771); // 1.5 scale / 0.5 base
-    expect(label.indexOf('s:center')).toBe(1854);
+    // popupHeight [1356]: 2 options × 17px + 9px chrome = 43, hugging the list. (Moved up
+    // from [1605] now that the uniform option-style block left this payload.)
+    expect(label.indexOf('n:43')).toBe(1356);
+  });
+
+  // Per-option payload: each option string handed to the native dropdown is a full
+  // `dropdown-option` blob carrying text + row height + background states + font/scale/align,
+  // decoded per-row RP-side from #custom_radio_text. Field ORDER is the RP decode contract.
+  it('encodes each option as its own styled payload blob', () => {
+    const form = new FakeModalForm();
+
+    serialize(
+      el(Form.Dropdown({
+        name: 'm',
+        options: ['Alpha', 'Beta'],
+        optionBackground: 'textures/ui/opt_bg',
+        optionHover: 'textures/ui/opt_hover',
+        optionSelected: 'textures/ui/opt_selected',
+        optionFont: 'minecraftTen',
+        optionScale: 1.5,
+        optionAlign: 'center',
+        optionHeight: 21,
+      })),
+      asModalForm(form),
+      modalCtx(),
+    );
+
+    const items = itemsArg(form, 'dropdown');
+
+    expect(items).toHaveLength(2);
+
+    // Each entry is its own protocol-headed blob (not raw text).
+    for (const blob of items) {
+      expect(blob.startsWith(PROTOCOL_HEADER)).toBe(true);
+      expect(blob).toContain('s:dropdown-option');
+    }
+
+    const [alpha] = items;
+
+    // Fixed field layout: type [9], text [92], height [175], bg [258], hover [341],
+    // selected [424], fontType [507], fontScale [590], align [673].
+    expect(alpha.indexOf('s:dropdown-option')).toBe(9);
+    expect(alpha.indexOf('s:Alpha')).toBe(92);
+    expect(alpha.indexOf('n:21')).toBe(175); // row height
+    expect(alpha.indexOf('s:textures/ui/opt_bg')).toBe(258);
+    expect(alpha.indexOf('s:textures/ui/opt_hover')).toBe(341);
+    expect(alpha.indexOf('s:textures/ui/opt_selected')).toBe(424);
+    expect(alpha.indexOf('s:MinecraftTen')).toBe(507);
+    expect(alpha.indexOf('n:3')).toBe(590); // 1.5 scale / 0.5 base
+    expect(alpha.indexOf('s:center')).toBe(673);
+
+    // The second option carries the SAME style but its own text.
+    expect(items[1].indexOf('s:Beta')).toBe(92);
   });
 
   // Toggle textures: button-identical common block ([440] base=unchecked, [1024]
@@ -227,7 +287,7 @@ describe('modal control serialization', () => {
       modalCtx(),
     );
 
-    const label = form.calls.find(c => c.kind === 'toggle')?.args[0] as string;
+    const label = labelArg(form, 'toggle');
 
     expect(label.indexOf('s:textures/ui/t_off')).toBe(440);
     expect(label.indexOf('s:textures/ui/t_off_hov')).toBe(1024);
@@ -267,7 +327,7 @@ describe('modal control serialization', () => {
       modalCtx(),
     );
 
-    const label = form.calls.find(c => c.kind === 'slider')?.args[0] as string;
+    const label = labelArg(form, 'slider');
 
     expect(label.indexOf('s:textures/ui/s_track')).toBe(440);
     expect(label.indexOf('s:textures/ui/s_track_hov')).toBe(1024);
@@ -305,7 +365,7 @@ describe('modal control serialization', () => {
       modalCtx(),
     );
 
-    const label = form.calls.find(c => c.kind === 'textField')?.args[0] as string;
+    const label = labelArg(form, 'textField');
 
     expect(label.indexOf('s:textures/ui/i_bg')).toBe(440);
     expect(label.indexOf('s:textures/ui/i_hov')).toBe(1024);
@@ -409,9 +469,11 @@ describe('modal control serialization', () => {
 
     serialize(el(Form.Dropdown({ name: 'm', options })), asModalForm(form), modalCtx());
 
-    const label = form.calls.find(c => c.kind === 'dropdown')?.args[0] as string;
+    const label = labelArg(form, 'dropdown');
 
-    expect(label.indexOf('n:105')).toBe(1605);
+    // popupHeight now sits at [1356] (right after popupBackground) — the uniform option-style
+    // block that used to precede it moved into each option's own blob.
+    expect(label.indexOf('n:105')).toBe(1356);
   });
 
   it('records each control name against its ordinal', () => {

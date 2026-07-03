@@ -130,10 +130,25 @@ export function UnstyledForm({ back }: { back: () => void }): JSX.Element {
           <Form.Slider name={'m_sld2'} min={0} max={100} defaultValue={50} flex={1} />
         </Panel>
 
-        {/* Slider + dropdown in one row. */}
-        <Panel flexDirection={'row'} gap={4} alignItems={'center'}>
-          <Form.Dropdown name={'m_dd1'} options={['One', 'Two', 'Three']} defaultValue={'Two'} flex={1} />
-          <Form.Dropdown name={'m_dd2'} options={['X', 'Y', 'Z']} defaultValue={'Y'} flex={1} />
+        {/* Two dropdowns proving the per-option encoding is DATA-DRIVEN: left one has
+            CENTER-aligned option labels, right one RIGHT-aligned. Each option carries its own
+            encoded blob (text + bg + font/scale + align), decoded per-row by the RP — so the
+            alignment differs per dropdown (and per option, once the override API lands). */}
+        <Panel flexDirection={'row'} gap={4} alignItems={'flex-start'}>
+          <Form.Dropdown
+            name={'m_dd1'}
+            options={['One', 'Two', 'Three']}
+            defaultValue={'Two'}
+            optionAlign={'center'}
+            flex={1}
+          />
+          <Form.Dropdown
+            name={'m_dd2'}
+            options={['X', 'Y', 'Z']}
+            defaultValue={'Y'}
+            optionAlign={'right'}
+            flex={1}
+          />
         </Panel>
       </Panel>
 

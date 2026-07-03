@@ -268,9 +268,9 @@ const oreTheme: Theme = {
         arrow: `${BASE}/dropdown/arrow`,
         arrowDisabled: `${BASE}/dropdown/arrow_disabled`,
         popup: `${BASE}/dropdown/popup`,
-        option: `${BASE}/dropdown/background`,
-        optionHover: `${BASE}/dropdown/background_hover`,
-        optionSelected: `${BASE}/dropdown/background_selected`,
+        option: `${BASE}/dropdown/option/background`,
+        optionHover: `${BASE}/dropdown/option/background_hover`,
+        optionSelected: `${BASE}/dropdown/option/background_selected`,
       },
     },
     form: {

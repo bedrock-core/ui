@@ -195,12 +195,6 @@
 			}
 		]
 	},
-	// Hardcoded rebuild of the vanilla server_form.custom_toggle interactive widget.
-	// Flattened from the vanilla chain (option_toggle -> ... -> common.toggle ->
-	// toggle_visuals) down to the irreducible interactive core, so this file pulls in
-	// no vanilla/settings_common controls. Full 8 visual states, each a dedicated image
-	// using the vanilla toggle textures (locked = base art at 0.5 alpha, matching
-	// vanilla option_toggle_on_locked / option_toggle_off_locked).
 	"toggle_control": {
 		"type": "toggle",
 		"size": [
@@ -470,8 +464,7 @@
 							"source_property_name": "(('%.82s' * #raw_chklock) - ('%.2s' * #raw_chklock) - ';')",
 							"target_property_name": "#texture"
 						}
-					],
-					"alpha": 0.5
+					]
 				}
 			},
 			{
@@ -511,8 +504,7 @@
 							"source_property_name": "(('%.82s' * #raw_lock) - ('%.2s' * #raw_lock) - ';')",
 							"target_property_name": "#texture"
 						}
-					],
-					"alpha": 0.5
+					]
 				}
 			},
 			{
@@ -552,8 +544,7 @@
 							"source_property_name": "(('%.82s' * #raw_chklock) - ('%.2s' * #raw_chklock) - ';')",
 							"target_property_name": "#texture"
 						}
-					],
-					"alpha": 0.5
+					]
 				}
 			},
 			{
@@ -593,8 +584,7 @@
 							"source_property_name": "(('%.82s' * #raw_lock) - ('%.2s' * #raw_lock) - ';')",
 							"target_property_name": "#texture"
 						}
-					],
-					"alpha": 0.5
+					]
 				}
 			}
 		]

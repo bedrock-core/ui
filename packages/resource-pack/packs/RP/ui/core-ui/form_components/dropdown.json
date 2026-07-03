@@ -832,38 +832,28 @@
 					]
 				}
 			},
+			// Option text: three alignment variants (text_alignment is NOT bindable; the
+			// per-option align field [673] gates which one renders). Each decodes text [92],
+			// fontScaleFactor [590], align [673] from the option's OWN blob (#custom_radio_text).
 			{
-				// Option text (Step 5): three alignment variants, identical except text_alignment,
-				// gated by the decoded optionAlign [1854] - text_alignment is NOT bindable, so the
-				// payload selects a variant instead. Font/scale bind directly (the text component's
-				// proven shape); the label box is the row inset 4px per side, anchors centered, and
-				// free-form label offsets were CUT (anchored offsets are engine-dead in the whole
-				// popup chunk, option rows included - in-game verified). NOTE: this control mixes TWO
-				// collections (custom_dropdown text + custom_form styling) on one label.
 				"option_label_left": {
 					"type": "label",
-					"text": "#custom_radio_text",
-					"color": [
-						1,
-						1,
-						1,
-						1
-					],
+					"text": "#text",
+					"color": [ 1, 1, 1, 1 ],
 					"font_size": "small",
 					"backup_font_type": "UIFont",
 					"font_scale_factor": "#font_scale_factor",
 					"text_alignment": "left",
 					"anchor_from": "center",
 					"anchor_to": "center",
-					"size": [
-						"100% - 8px",
-						"default"
-					],
+					"size": [ "100% - 8px", "default" ],
 					"visible": "#visible",
 					"layer": 10,
 					"bindings": [
 						{
-							/* option text: engine-provided per option row */
+							/* the option's OWN blob. collection_details is REQUIRED: a
+							   custom_dropdown binding without it hard-crashes the game with
+							   no logs (bisected in-game). */
 							"binding_name": "#custom_radio_text",
 							"binding_type": "collection",
 							"binding_collection_name": "custom_dropdown"
@@ -872,41 +862,35 @@
 							"binding_type": "collection_details"
 						},
 						{
-							/* dropdown cell payload: uniform option-label styling (Step 5) */
-							"binding_name": "#custom_text",
-							"binding_type": "collection",
-							"binding_collection_name": "custom_form"
-						},
-						{
-							/* --- optionFontType [1688] --- */
+							/* --- text [92] -> visible label --- */
 							"binding_type": "view",
-							"source_property_name": "('%.1688s' * #custom_text)",
-							"target_property_name": "#skip_to_opt_font"
+							"source_property_name": "('%.92s' * #custom_radio_text)",
+							"target_property_name": "#skip_to_text"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(#custom_text - #skip_to_opt_font)",
-							"target_property_name": "#rem_at_opt_font"
+							"source_property_name": "(#custom_radio_text - #skip_to_text)",
+							"target_property_name": "#rem_at_text"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_at_opt_font)",
-							"target_property_name": "#raw_opt_font"
+							"source_property_name": "('%.83s' * #rem_at_text)",
+							"target_property_name": "#raw_text"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(('%.82s' * #raw_opt_font) - ('%.2s' * #raw_opt_font) - ';')",
-							"target_property_name": "#font_type"
+							"source_property_name": "(('%.82s' * #raw_text) - ('%.2s' * #raw_text) - ';')",
+							"target_property_name": "#text"
 						},
 						{
-							/* --- optionFontScaleFactor [1771] (string form, like components/text.json) --- */
+							/* --- fontScaleFactor [590] (string form, like components/text.json) --- */
 							"binding_type": "view",
-							"source_property_name": "('%.1771s' * #custom_text)",
+							"source_property_name": "('%.590s' * #custom_radio_text)",
 							"target_property_name": "#skip_to_opt_scale"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(#custom_text - #skip_to_opt_scale)",
+							"source_property_name": "(#custom_radio_text - #skip_to_opt_scale)",
 							"target_property_name": "#rem_at_opt_scale"
 						},
 						{
@@ -920,14 +904,14 @@
 							"target_property_name": "#font_scale_factor"
 						},
 						{
-							/* --- optionAlign [1854] gates WHICH variant renders --- */
+							/* --- align [673] gates WHICH variant renders --- */
 							"binding_type": "view",
-							"source_property_name": "('%.1854s' * #custom_text)",
+							"source_property_name": "('%.673s' * #custom_radio_text)",
 							"target_property_name": "#skip_to_opt_align"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(#custom_text - #skip_to_opt_align)",
+							"source_property_name": "(#custom_radio_text - #skip_to_opt_align)",
 							"target_property_name": "#rem_at_opt_align"
 						},
 						{
@@ -942,32 +926,27 @@
 						}
 					]
 				}
-			},
+			}
+			,
 			{
 				"option_label_center": {
 					"type": "label",
-					"text": "#custom_radio_text",
-					"color": [
-						1,
-						1,
-						1,
-						1
-					],
+					"text": "#text",
+					"color": [ 1, 1, 1, 1 ],
 					"font_size": "small",
 					"backup_font_type": "UIFont",
 					"font_scale_factor": "#font_scale_factor",
 					"text_alignment": "center",
 					"anchor_from": "center",
 					"anchor_to": "center",
-					"size": [
-						"100% - 8px",
-						"default"
-					],
+					"size": [ "100% - 8px", "default" ],
 					"visible": "#visible",
 					"layer": 10,
 					"bindings": [
 						{
-							/* option text: engine-provided per option row */
+							/* the option's OWN blob. collection_details is REQUIRED: a
+							   custom_dropdown binding without it hard-crashes the game with
+							   no logs (bisected in-game). */
 							"binding_name": "#custom_radio_text",
 							"binding_type": "collection",
 							"binding_collection_name": "custom_dropdown"
@@ -976,41 +955,35 @@
 							"binding_type": "collection_details"
 						},
 						{
-							/* dropdown cell payload: uniform option-label styling (Step 5) */
-							"binding_name": "#custom_text",
-							"binding_type": "collection",
-							"binding_collection_name": "custom_form"
-						},
-						{
-							/* --- optionFontType [1688] --- */
+							/* --- text [92] -> visible label --- */
 							"binding_type": "view",
-							"source_property_name": "('%.1688s' * #custom_text)",
-							"target_property_name": "#skip_to_opt_font"
+							"source_property_name": "('%.92s' * #custom_radio_text)",
+							"target_property_name": "#skip_to_text"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(#custom_text - #skip_to_opt_font)",
-							"target_property_name": "#rem_at_opt_font"
+							"source_property_name": "(#custom_radio_text - #skip_to_text)",
+							"target_property_name": "#rem_at_text"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_at_opt_font)",
-							"target_property_name": "#raw_opt_font"
+							"source_property_name": "('%.83s' * #rem_at_text)",
+							"target_property_name": "#raw_text"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(('%.82s' * #raw_opt_font) - ('%.2s' * #raw_opt_font) - ';')",
-							"target_property_name": "#font_type"
+							"source_property_name": "(('%.82s' * #raw_text) - ('%.2s' * #raw_text) - ';')",
+							"target_property_name": "#text"
 						},
 						{
-							/* --- optionFontScaleFactor [1771] (string form, like components/text.json) --- */
+							/* --- fontScaleFactor [590] (string form, like components/text.json) --- */
 							"binding_type": "view",
-							"source_property_name": "('%.1771s' * #custom_text)",
+							"source_property_name": "('%.590s' * #custom_radio_text)",
 							"target_property_name": "#skip_to_opt_scale"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(#custom_text - #skip_to_opt_scale)",
+							"source_property_name": "(#custom_radio_text - #skip_to_opt_scale)",
 							"target_property_name": "#rem_at_opt_scale"
 						},
 						{
@@ -1024,14 +997,14 @@
 							"target_property_name": "#font_scale_factor"
 						},
 						{
-							/* --- optionAlign [1854] gates WHICH variant renders --- */
+							/* --- align [673] gates WHICH variant renders --- */
 							"binding_type": "view",
-							"source_property_name": "('%.1854s' * #custom_text)",
+							"source_property_name": "('%.673s' * #custom_radio_text)",
 							"target_property_name": "#skip_to_opt_align"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(#custom_text - #skip_to_opt_align)",
+							"source_property_name": "(#custom_radio_text - #skip_to_opt_align)",
 							"target_property_name": "#rem_at_opt_align"
 						},
 						{
@@ -1046,32 +1019,27 @@
 						}
 					]
 				}
-			},
+			}
+			,
 			{
 				"option_label_right": {
 					"type": "label",
-					"text": "#custom_radio_text",
-					"color": [
-						1,
-						1,
-						1,
-						1
-					],
+					"text": "#text",
+					"color": [ 1, 1, 1, 1 ],
 					"font_size": "small",
 					"backup_font_type": "UIFont",
 					"font_scale_factor": "#font_scale_factor",
 					"text_alignment": "right",
 					"anchor_from": "center",
 					"anchor_to": "center",
-					"size": [
-						"100% - 8px",
-						"default"
-					],
+					"size": [ "100% - 8px", "default" ],
 					"visible": "#visible",
 					"layer": 10,
 					"bindings": [
 						{
-							/* option text: engine-provided per option row */
+							/* the option's OWN blob. collection_details is REQUIRED: a
+							   custom_dropdown binding without it hard-crashes the game with
+							   no logs (bisected in-game). */
 							"binding_name": "#custom_radio_text",
 							"binding_type": "collection",
 							"binding_collection_name": "custom_dropdown"
@@ -1080,41 +1048,35 @@
 							"binding_type": "collection_details"
 						},
 						{
-							/* dropdown cell payload: uniform option-label styling (Step 5) */
-							"binding_name": "#custom_text",
-							"binding_type": "collection",
-							"binding_collection_name": "custom_form"
-						},
-						{
-							/* --- optionFontType [1688] --- */
+							/* --- text [92] -> visible label --- */
 							"binding_type": "view",
-							"source_property_name": "('%.1688s' * #custom_text)",
-							"target_property_name": "#skip_to_opt_font"
+							"source_property_name": "('%.92s' * #custom_radio_text)",
+							"target_property_name": "#skip_to_text"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(#custom_text - #skip_to_opt_font)",
-							"target_property_name": "#rem_at_opt_font"
+							"source_property_name": "(#custom_radio_text - #skip_to_text)",
+							"target_property_name": "#rem_at_text"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_at_opt_font)",
-							"target_property_name": "#raw_opt_font"
+							"source_property_name": "('%.83s' * #rem_at_text)",
+							"target_property_name": "#raw_text"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(('%.82s' * #raw_opt_font) - ('%.2s' * #raw_opt_font) - ';')",
-							"target_property_name": "#font_type"
+							"source_property_name": "(('%.82s' * #raw_text) - ('%.2s' * #raw_text) - ';')",
+							"target_property_name": "#text"
 						},
 						{
-							/* --- optionFontScaleFactor [1771] (string form, like components/text.json) --- */
+							/* --- fontScaleFactor [590] (string form, like components/text.json) --- */
 							"binding_type": "view",
-							"source_property_name": "('%.1771s' * #custom_text)",
+							"source_property_name": "('%.590s' * #custom_radio_text)",
 							"target_property_name": "#skip_to_opt_scale"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(#custom_text - #skip_to_opt_scale)",
+							"source_property_name": "(#custom_radio_text - #skip_to_opt_scale)",
 							"target_property_name": "#rem_at_opt_scale"
 						},
 						{
@@ -1128,14 +1090,14 @@
 							"target_property_name": "#font_scale_factor"
 						},
 						{
-							/* --- optionAlign [1854] gates WHICH variant renders --- */
+							/* --- align [673] gates WHICH variant renders --- */
 							"binding_type": "view",
-							"source_property_name": "('%.1854s' * #custom_text)",
+							"source_property_name": "('%.673s' * #custom_radio_text)",
 							"target_property_name": "#skip_to_opt_align"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(#custom_text - #skip_to_opt_align)",
+							"source_property_name": "(#custom_radio_text - #skip_to_opt_align)",
 							"target_property_name": "#rem_at_opt_align"
 						},
 						{
@@ -1153,29 +1115,18 @@
 			}
 		]
 	},
-	// Option-row state faces: same button-pattern self-decode as the closed-box faces,
-	// reading the dropdown's option-style payload fields:
-	//   optionBackground [1356], optionHover [1439], optionSelected [1522].
-	// (checked/hovered-while-checked/locked-checked all map to the selected face;
-	// locked-unchecked maps to the default face.)
+	// Option-row state faces: per-option textures decoded from the option's OWN blob
+	// (#custom_radio_text): background [258] / backgroundHover [341] / backgroundSelected [424].
+	// (checked / hovered-while-checked / locked-checked map to selected; locked-unchecked to default.)
 	"dropdown_option_face_default": {
 		"type": "panel",
-		"size": [
-			"100%",
-			"100%"
-		],
+		"size": [ "100%", "100%" ],
 		"controls": [
 			{
 				"bg": {
 					"type": "image",
-					"size": [
-						"100%",
-						"100%"
-					],
-					"offset": [
-						0,
-						0
-					],
+					"size": [ "100%", "100%" ],
+					"offset": [ 0, 0 ],
 					"fill": false,
 					"anchor_to": "center",
 					"anchor_from": "center",
@@ -1184,19 +1135,24 @@
 					"alpha": 1,
 					"bindings": [
 						{
-							/* decode optionBackground[1356] directly */
-							"binding_name": "#custom_text",
+							/* background [258] from the option's OWN blob. collection_details is
+							   REQUIRED: a custom_dropdown binding without it hard-crashes the
+							   game with no logs (bisected in-game). */
+							"binding_name": "#custom_radio_text",
 							"binding_type": "collection",
-							"binding_collection_name": "custom_form"
+							"binding_collection_name": "custom_dropdown"
+						},
+						{
+							"binding_type": "collection_details"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "('%.1356s' * #custom_text)",
+							"source_property_name": "('%.258s' * #custom_radio_text)",
 							"target_property_name": "#skip_to_opt_bg"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(#custom_text - #skip_to_opt_bg)",
+							"source_property_name": "(#custom_radio_text - #skip_to_opt_bg)",
 							"target_property_name": "#rem_at_opt_bg"
 						},
 						{
@@ -1221,22 +1177,13 @@
 	},
 	"dropdown_option_face_hover": {
 		"type": "panel",
-		"size": [
-			"100%",
-			"100%"
-		],
+		"size": [ "100%", "100%" ],
 		"controls": [
 			{
 				"bg": {
 					"type": "image",
-					"size": [
-						"100%",
-						"100%"
-					],
-					"offset": [
-						0,
-						0
-					],
+					"size": [ "100%", "100%" ],
+					"offset": [ 0, 0 ],
 					"fill": false,
 					"anchor_to": "center",
 					"anchor_from": "center",
@@ -1245,29 +1192,34 @@
 					"alpha": 1,
 					"bindings": [
 						{
-							/* decode optionHover[1439] directly */
-							"binding_name": "#custom_text",
+							/* backgroundHover [341] from the option's OWN blob. collection_details is
+							   REQUIRED: a custom_dropdown binding without it hard-crashes the
+							   game with no logs (bisected in-game). */
+							"binding_name": "#custom_radio_text",
 							"binding_type": "collection",
-							"binding_collection_name": "custom_form"
+							"binding_collection_name": "custom_dropdown"
+						},
+						{
+							"binding_type": "collection_details"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "('%.1439s' * #custom_text)",
-							"target_property_name": "#skip_to_opt_hover"
+							"source_property_name": "('%.341s' * #custom_radio_text)",
+							"target_property_name": "#skip_to_opt_bg"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(#custom_text - #skip_to_opt_hover)",
-							"target_property_name": "#rem_at_opt_hover"
+							"source_property_name": "(#custom_radio_text - #skip_to_opt_bg)",
+							"target_property_name": "#rem_at_opt_bg"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_at_opt_hover)",
-							"target_property_name": "#raw_opt_hover"
+							"source_property_name": "('%.83s' * #rem_at_opt_bg)",
+							"target_property_name": "#raw_opt_bg"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(('%.82s' * #raw_opt_hover) - ('%.2s' * #raw_opt_hover) - ';')",
+							"source_property_name": "(('%.82s' * #raw_opt_bg) - ('%.2s' * #raw_opt_bg) - ';')",
 							"target_property_name": "#texture"
 						},
 						{
@@ -1282,22 +1234,13 @@
 	},
 	"dropdown_option_face_selected": {
 		"type": "panel",
-		"size": [
-			"100%",
-			"100%"
-		],
+		"size": [ "100%", "100%" ],
 		"controls": [
 			{
 				"bg": {
 					"type": "image",
-					"size": [
-						"100%",
-						"100%"
-					],
-					"offset": [
-						0,
-						0
-					],
+					"size": [ "100%", "100%" ],
+					"offset": [ 0, 0 ],
 					"fill": false,
 					"anchor_to": "center",
 					"anchor_from": "center",
@@ -1306,29 +1249,34 @@
 					"alpha": 1,
 					"bindings": [
 						{
-							/* decode optionSelected[1522] directly */
-							"binding_name": "#custom_text",
+							/* backgroundSelected [424] from the option's OWN blob. collection_details is
+							   REQUIRED: a custom_dropdown binding without it hard-crashes the
+							   game with no logs (bisected in-game). */
+							"binding_name": "#custom_radio_text",
 							"binding_type": "collection",
-							"binding_collection_name": "custom_form"
+							"binding_collection_name": "custom_dropdown"
+						},
+						{
+							"binding_type": "collection_details"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "('%.1522s' * #custom_text)",
-							"target_property_name": "#skip_to_opt_sel"
+							"source_property_name": "('%.424s' * #custom_radio_text)",
+							"target_property_name": "#skip_to_opt_bg"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(#custom_text - #skip_to_opt_sel)",
-							"target_property_name": "#rem_at_opt_sel"
+							"source_property_name": "(#custom_radio_text - #skip_to_opt_bg)",
+							"target_property_name": "#rem_at_opt_bg"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_at_opt_sel)",
-							"target_property_name": "#raw_opt_sel"
+							"source_property_name": "('%.83s' * #rem_at_opt_bg)",
+							"target_property_name": "#raw_opt_bg"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(('%.82s' * #raw_opt_sel) - ('%.2s' * #raw_opt_sel) - ';')",
+							"source_property_name": "(('%.82s' * #raw_opt_bg) - ('%.2s' * #raw_opt_bg) - ';')",
 							"target_property_name": "#texture"
 						},
 						{
@@ -1458,7 +1406,7 @@
 													/* --- FULL popupHeight [1605], proven "* 1" coercion; the halving is done
    														geometrically by popup_card's bottom_left→left_middle anchoring --- */
 													"binding_type": "view",
-													"source_property_name": "('%.1605s' * #custom_text)",
+													"source_property_name": "('%.1356s' * #custom_text)",
 													"target_property_name": "#skip_to_popup_h"
 												},
 												{
