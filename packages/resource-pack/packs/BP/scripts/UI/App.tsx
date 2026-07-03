@@ -178,12 +178,9 @@ function UnstyledFormScreen(): JSX.Element {
 }
 
 function OreStyledFormScreen(): JSX.Element {
-  return (
-    <Panel flexDirection={'column'} gap={spacing.sm}>
-      <BackBar title={'Ore-Styled Form'} />
-      <OreStyledForm />
-    </Panel>
-  );
+  const exit = useExit();
+
+  return <OreStyledForm back={(): void => exit()} />;
 }
 
 // Scrolling item demo — renders its own scroll layout with a Close button.

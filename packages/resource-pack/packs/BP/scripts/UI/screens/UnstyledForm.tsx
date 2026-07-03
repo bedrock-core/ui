@@ -25,6 +25,18 @@ export function UnstyledForm({ back }: { back: () => void }): JSX.Element {
     player.sendMessage(`§7  volume: §f${String(values.volume ?? 0)}`);
     player.sendMessage(`§7  mode: §f${String(values.mode ?? '')}`);
     player.sendMessage(`§7  difficulty: §f${String(values.difficulty ?? '')}`);
+    player.sendMessage(`§7  mute: §f${String(values.mute ?? false)}`);
+    // control matrix
+    player.sendMessage(`§7  m_tog1: §f${String(values.m_tog1 ?? false)}`);
+    player.sendMessage(`§7  m_tog2: §f${String(values.m_tog2 ?? false)}`);
+    player.sendMessage(`§7  m_tog3: §f${String(values.m_tog3 ?? false)}`);
+    player.sendMessage(`§7  m_tog4: §f${String(values.m_tog4 ?? false)}`);
+    player.sendMessage(`§7  m_in1: §f${String(values.m_in1 ?? '')}`);
+    player.sendMessage(`§7  m_in2: §f${String(values.m_in2 ?? '')}`);
+    player.sendMessage(`§7  m_sld1: §f${String(values.m_sld1 ?? 0)}`);
+    player.sendMessage(`§7  m_sld2: §f${String(values.m_sld2 ?? 0)}`);
+    player.sendMessage(`§7  m_dd1: §f${String(values.m_dd1 ?? '')}`);
+    player.sendMessage(`§7  m_dd2: §f${String(values.m_dd2 ?? '')}`);
 
     back();
   };
@@ -62,6 +74,69 @@ export function UnstyledForm({ back }: { back: () => void }): JSX.Element {
           defaultValue={'Normal'}
         />
       </Panel>
+      {/* --- responsiveness test: multi-element rows + flex + decorative-beside-native --- */}
+      <Panel flexDirection={'column'} gap={2} padding={4}>
+        <Text>{'§e§lResponsiveness'}</Text>
+
+        {/* Multiple decorative elements in one row. */}
+        <Panel flexDirection={'row'} gap={4} alignItems={'center'}>
+          <Text>{'§7left'}</Text>
+          <Image width={16} height={16} />
+          <Text>{'§7right'}</Text>
+        </Panel>
+
+        {/* Flex distribution 1 : 2 in a row. */}
+        <Panel flexDirection={'row'} gap={4}>
+          <Panel flex={1}><Text>{'§7flex 1'}</Text></Panel>
+          <Panel flex={2}><Text>{'§7flex 2'}</Text></Panel>
+        </Panel>
+
+        {/* Decorative element beside a native control in the SAME row: does the native
+            control share the row or force its own? */}
+        <Panel flexDirection={'row'} gap={4} alignItems={'center'}>
+          <Text>{'§7Mute'}</Text>
+          <Form.Toggle name={'mute'} defaultValue={false} />
+        </Panel>
+      </Panel>
+
+      {/* --- control matrix: every native control packed into multi-column rows to see
+          how they behave side-by-side in-game (do they share a row / size / align?). --- */}
+      <Panel flexDirection={'column'} gap={2} padding={4}>
+        <Text>{'§e§lControl matrix'}</Text>
+
+        {/* Two toggles in one row. */}
+        <Panel flexDirection={'row'} gap={4} alignItems={'center'}>
+          <Form.Toggle name={'m_tog1'} defaultValue={true} />
+          <Form.Toggle name={'m_tog2'} defaultValue={false} />
+        </Panel>
+
+        {/* Three toggles, each labeled, in one row. */}
+        <Panel flexDirection={'row'} gap={4} alignItems={'center'}>
+          <Text>{'§7A'}</Text>
+          <Form.Toggle name={'m_tog3'} defaultValue={true} />
+          <Text>{'§7B'}</Text>
+          <Form.Toggle name={'m_tog4'} defaultValue={false} />
+        </Panel>
+
+        {/* Two inputs side by side, flex 1 : 1. */}
+        <Panel flexDirection={'row'} gap={4}>
+          <Form.Input name={'m_in1'} placeholder={'§7first'} flex={1} />
+          <Form.Input name={'m_in2'} placeholder={'§7second'} flex={1} />
+        </Panel>
+
+        {/* Two sliders side by side. */}
+        <Panel flexDirection={'row'} gap={4} alignItems={'center'}>
+          <Form.Slider name={'m_sld1'} min={0} max={10} defaultValue={3} flex={1} />
+          <Form.Slider name={'m_sld2'} min={0} max={100} defaultValue={50} flex={1} />
+        </Panel>
+
+        {/* Slider + dropdown in one row. */}
+        <Panel flexDirection={'row'} gap={4} alignItems={'center'}>
+          <Form.Dropdown name={'m_dd1'} options={['One', 'Two', 'Three']} defaultValue={'Two'} flex={1} />
+          <Form.Dropdown name={'m_dd2'} options={['X', 'Y', 'Z']} defaultValue={'Y'} flex={1} />
+        </Panel>
+      </Panel>
+
       {/* Action buttons live IN the flow like any row: one submit (required, presses
           the native submit) and one exit (closes like Esc → onCancel). */}
       <Panel flexDirection={'row'} gap={4} padding={4}>

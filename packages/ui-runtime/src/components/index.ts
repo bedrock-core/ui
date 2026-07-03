@@ -15,6 +15,7 @@ export { Dropdown, type DropdownProps } from './Dropdown';
 export {
   Form, ModalContext, MODAL_FORM_SLOT_TYPE,
   type FormConfig, type FormProps, type FormValues,
+  type FormButtonKind, type FormButtonProps,
   type FormDropdownProps, type FormInputProps,
   type FormSliderProps, type FormToggleProps,
 } from './Form';

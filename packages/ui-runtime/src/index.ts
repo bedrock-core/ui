@@ -25,6 +25,8 @@ export type {
   FlexDirection,
   FlexSize,
   FlexWrap,
+  FormButtonKind,
+  FormButtonProps,
   FormConfig,
   FormDropdownProps,
   FormInputProps,

@@ -104,7 +104,13 @@ export interface Theme {
       textures: {
         background: string; backgroundHover: string; backgroundDisabled: string;
         arrow: string; arrowDisabled: string;
+        popup: string; option: string; optionHover: string; optionSelected: string;
       };
+    };
+    form: {
+      /** Gap between a field's label and its control (labels live in this layer — the modal primitives are label-free). */
+      labelGap: number;
+      labelStyle: { font: TextFont; scale: number; color: string; disabledColor: string };
     };
     slider: {
       height: number;
@@ -261,7 +267,15 @@ const oreTheme: Theme = {
         backgroundDisabled: `${BASE}/dropdown/background_disabled`,
         arrow: `${BASE}/dropdown/arrow`,
         arrowDisabled: `${BASE}/dropdown/arrow_disabled`,
+        popup: `${BASE}/dropdown/popup`,
+        option: `${BASE}/dropdown/background`,
+        optionHover: `${BASE}/dropdown/background_hover`,
+        optionSelected: `${BASE}/dropdown/background_selected`,
       },
+    },
+    form: {
+      labelGap: 2,
+      labelStyle: { font: 'mojangles', scale: 1, color: '§f', disabledColor: '§8' },
     },
     slider: {
       height: 20,
