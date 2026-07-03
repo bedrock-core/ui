@@ -97,7 +97,7 @@ describe('modal control serialization', () => {
     expect(form.calls.map(c => c.kind)).toEqual(['toggle', 'slider', 'dropdown', 'textField']);
   });
 
-  it('passes native args through each control build callback', () => {
+  it('passes native args through each control emitter', () => {
     const form = new FakeModalForm();
 
     serialize(el(Form.Slider({ name: 'v', min: 1, max: 9, step: 2, defaultValue: 5 })), asModalForm(form), modalCtx());
@@ -105,8 +105,8 @@ describe('modal control serialization', () => {
     const slider = form.calls.find(c => c.kind === 'slider');
 
     // The native label carries the control's own serialized payload (decoded RP-side):
-    // protocol header + its slot type. Range/step/default pass through verbatim as
-    // native args.
+    // protocol header + its slot type. Range/step/default reach the native call as
+    // direct args via emitSlider (read from the control's serialized props).
     const sliderLabel = slider?.args[0];
 
     expect(typeof sliderLabel).toBe('string');

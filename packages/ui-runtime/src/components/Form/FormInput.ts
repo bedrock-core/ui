@@ -1,7 +1,6 @@
-import type { ModalFormData } from '@minecraft/server-ui';
 import { isModalForm } from '../../core/guards';
 import { ModalFormError, type Writer } from '../../core/types';
-import { emitModalControl } from '../../core/writers';
+import { emitInput } from '../../core/writers';
 import { FunctionComponent, JSX } from '../../jsx';
 import { resolveStateBackgrounds, withControl, type StateBackgroundProps } from '../control';
 import { MODAL_INPUT_SLOT_TYPE } from './modalControls';
@@ -32,35 +31,32 @@ export const FormInput: FunctionComponent<FormInputProps> = ({
     type: MODAL_INPUT_SLOT_TYPE,
     props: {
       // Control block first so the state textures land at BUTTON-IDENTICAL byte
-      // offsets ([1024-1272] right after the reserved block). `name` is appended
-      // LAST so it survives to the writer without disturbing the RP-read offsets;
-      // `build` is a function → routed to callbacks, not encoded.
+      // offsets ([1024-1272] right after the reserved block). The native-arg props
+      // (`name`, `placeholder`, `defaultValue`) are appended LAST so they survive to
+      // the writer without disturbing the RP-read offsets. The writer calls
+      // `form.textField()` directly from these plain props (no `build` closure).
       ...withControl({ ...layout, background: box.background }),
       backgroundHover: box.backgroundHover, // [1024-1106] like Button
       backgroundPressed: box.backgroundPressed, // [1107-1189] focused/pressed box
       backgroundLocked: box.backgroundLocked, // [1190-1272]
+      // Native args (past the RP-read region). The placeholder/defaultValue stay raw —
+      // they render inside the native edit box, where decode styling does not apply.
       name,
-      // The placeholder stays raw — it renders inside the native edit box, where decode
-      // styling does not apply.
-      build: (form: ModalFormData, payload: string): void => {
-        form.textField(payload, placeholder ?? '', { defaultValue: defaultValue ?? '' });
-      },
+      placeholder: placeholder ?? '',
+      defaultValue: defaultValue ?? '',
     },
   };
 };
 
 /** Serializes a `modal-input` into the native modal text field control. */
-export const formInputWriter: Writer = (payload, form, ctx, callbacks, props) => {
+export const formInputWriter: Writer = (payload, form, ctx, _callbacks, props) => {
   if (!isModalForm(form)) {
     throw new ModalFormError('Form.Input must be rendered inside a `<Form>`.');
   }
 
-  const build = callbacks.build as ((f: ModalFormData, p: string) => void) | undefined;
   const name = typeof props?.name === 'string' ? props.name : '';
+  const placeholder = typeof props?.placeholder === 'string' ? props.placeholder : '';
+  const defaultValue = typeof props?.defaultValue === 'string' ? props.defaultValue : '';
 
-  if (!build) {
-    return;
-  }
-
-  emitModalControl(form, ctx, name, payload, build);
+  emitInput(payload, form, ctx, name, placeholder, defaultValue);
 };

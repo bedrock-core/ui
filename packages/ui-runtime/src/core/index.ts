@@ -27,7 +27,7 @@ export {
 export type { ComponentDescriptor } from './componentRegistry';
 
 // Writer slot helpers (for custom component writers)
-export { emitButton, emitLabel, emitModalControl } from './writers';
+export { emitButton, emitDropdown, emitInput, emitLabel, emitSlider, emitToggle } from './writers';
 
 // Types
 export type {

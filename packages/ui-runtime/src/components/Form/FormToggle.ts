@@ -1,7 +1,6 @@
-import type { ModalFormData } from '@minecraft/server-ui';
 import { isModalForm } from '../../core/guards';
 import { ModalFormError, type Writer } from '../../core/types';
-import { emitModalControl } from '../../core/writers';
+import { emitToggle } from '../../core/writers';
 import { FunctionComponent, JSX } from '../../jsx';
 import { resolveStateBackgrounds, withControl, type StateBackgroundProps } from '../control';
 import { MODAL_TOGGLE_SLOT_TYPE } from './modalControls';
@@ -42,9 +41,10 @@ export const FormToggle: FunctionComponent<FormToggleProps> = ({
     props: {
       // Control block first so the state textures land at BUTTON-IDENTICAL byte
       // offsets ([1024-1272] right after the reserved block), toggle-specific
-      // fields after. `name` is appended LAST so it survives to the writer without
-      // disturbing the RP-read offsets; `build` is a function → routed to
-      // callbacks, not encoded.
+      // fields after. The native-arg props (`name`, `defaultValue`) are appended
+      // LAST so they survive to the writer without disturbing the RP-read offsets —
+      // the RP decode only reads up to the styling block above. The writer calls
+      // `form.toggle()` directly from these plain props (no `build` closure).
       ...withControl({ ...layout, background: unchecked.background }),
       backgroundHover: unchecked.backgroundHover, // [1024-1106] like Button
       backgroundPressed: unchecked.backgroundPressed, // [1107-1189] reserved (no pressed state)
@@ -52,26 +52,21 @@ export const FormToggle: FunctionComponent<FormToggleProps> = ({
       checkedBackground: checkedBase, // [1273-1355] toggle-specific
       checkedHover: checkedHover ?? checkedBase, // [1356-1438]
       checkedLocked: checkedLocked ?? checkedBase, // [1439-1521]
+      // Native args (past the RP-read region): read by the writer, not decoded RP-side.
       name,
-      build: (form: ModalFormData, payload: string): void => {
-        form.toggle(payload, { defaultValue: defaultValue ?? false });
-      },
+      defaultValue: defaultValue ?? false,
     },
   };
 };
 
 /** Serializes a `modal-toggle` into the native modal toggle control. */
-export const formToggleWriter: Writer = (payload, form, ctx, callbacks, props) => {
+export const formToggleWriter: Writer = (payload, form, ctx, _callbacks, props) => {
   if (!isModalForm(form)) {
     throw new ModalFormError('Form.Toggle must be rendered inside a `<Form>`.');
   }
 
-  const build = callbacks.build as ((f: ModalFormData, p: string) => void) | undefined;
   const name = typeof props?.name === 'string' ? props.name : '';
+  const defaultValue = props?.defaultValue === true;
 
-  if (!build) {
-    return;
-  }
-
-  emitModalControl(form, ctx, name, payload, build);
+  emitToggle(payload, form, ctx, name, defaultValue);
 };

@@ -1,8 +1,7 @@
-import type { ModalFormData } from '@minecraft/server-ui';
 import { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
 import { isModalForm } from '../../core/guards';
 import { ModalFormError, type Writer } from '../../core/types';
-import { emitModalControl } from '../../core/writers';
+import { emitDropdown } from '../../core/writers';
 import { FunctionComponent, JSX } from '../../jsx';
 import { resolveStateBackgrounds, UNSTYLED_TEXTURE, withControl, type StateBackgroundProps } from '../control';
 import { labelFontFields, type LabelFont } from './controlPayload';
@@ -98,28 +97,39 @@ export const FormDropdown: FunctionComponent<FormDropdownProps> = ({
       optionFontType: optionLabelFont.fontType, // [1688-1770]
       optionFontScaleFactor: optionLabelFont.fontScaleFactor, // [1771-1853]
       optionAlign: optionAlign ?? 'left', // [1854-1936] selects the visible label variant
+      // Native args (past the RP-read region): read by the writer, not decoded RP-side.
+      // `defaultValueIndex` is resolved here from the `defaultValue` option value so the
+      // writer stays a pure reader. The `options` array is serialized as one primitive
+      // string field per option (`option0`, `option1`, …) plus `optionCount` — the same
+      // primitive payload channel every other prop uses. The writer rebuilds the array
+      // from them. (In-game verified: the native dropdown has no practical option-count or
+      // label-length cap, so per-option fields carry it fine.)
       name,
-      // Option text stays raw for now — per-option decode is a follow-up once the
-      // label path is proven in-game.
-      build: (form: ModalFormData, payload: string): void => {
-        form.dropdown(payload, options, { defaultValueIndex: defaultIndex });
-      },
+      defaultValueIndex: defaultIndex,
+      optionCount: options.length,
+      ...Object.fromEntries(options.map((option, i) => [`option${i}`, option])),
     },
   };
 };
 
 /** Serializes a `modal-dropdown` into the native modal dropdown control. */
-export const formDropdownWriter: Writer = (payload, form, ctx, callbacks, props) => {
+export const formDropdownWriter: Writer = (payload, form, ctx, _callbacks, props) => {
   if (!isModalForm(form)) {
     throw new ModalFormError('Form.Dropdown must be rendered inside a `<Form>`.');
   }
 
-  const build = callbacks.build as ((f: ModalFormData, p: string) => void) | undefined;
   const name = typeof props?.name === 'string' ? props.name : '';
+  const defaultValueIndex = typeof props?.defaultValueIndex === 'number' ? props.defaultValueIndex : 0;
+  // Rebuild the options array from the per-option primitive fields (`optionCount` +
+  // `option0`, `option1`, …) the component serialized.
+  const count = typeof props?.optionCount === 'number' ? props.optionCount : 0;
+  const options: string[] = [];
 
-  if (!build) {
-    return;
+  for (let i = 0; i < count; i++) {
+    const option = props?.[`option${i}`];
+
+    options.push(typeof option === 'string' ? option : '');
   }
 
-  emitModalControl(form, ctx, name, payload, build);
+  emitDropdown(payload, form, ctx, name, options, defaultValueIndex);
 };

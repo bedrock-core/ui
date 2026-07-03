@@ -1,7 +1,6 @@
-import type { ModalFormData } from '@minecraft/server-ui';
 import { isModalForm } from '../../core/guards';
 import { ModalFormError, type Writer } from '../../core/types';
-import { emitModalControl } from '../../core/writers';
+import { emitSlider } from '../../core/writers';
 import { FunctionComponent, JSX } from '../../jsx';
 import { resolveStateBackgrounds, withControl, type StateBackgroundProps } from '../control';
 import { MODAL_SLIDER_SLOT_TYPE } from './modalControls';
@@ -105,26 +104,29 @@ export const FormSlider: FunctionComponent<FormSliderProps> = ({
       // EDGE (not center) meets the track ends at min/max. Placeholder here; the
       // layout phase fills it in-place once jsonUIWidth is known (like `region`).
       travelWidth: 0,
+      // Native args (past the RP-read region): read by the writer, not decoded RP-side.
+      // `defaultValue` resolves `?? min` here so the writer stays a pure prop reader.
       name,
-      build: (form: ModalFormData, payload: string): void => {
-        form.slider(payload, min, max, { defaultValue: defaultValue ?? min, valueStep: step });
-      },
+      min,
+      max,
+      step: step ?? 0, // 0 → "no step" (native valueStep undefined); see writer.
+      defaultValue: defaultValue ?? min,
     },
   };
 };
 
 /** Serializes a `modal-slider` into the native modal slider control. */
-export const formSliderWriter: Writer = (payload, form, ctx, callbacks, props) => {
+export const formSliderWriter: Writer = (payload, form, ctx, _callbacks, props) => {
   if (!isModalForm(form)) {
     throw new ModalFormError('Form.Slider must be rendered inside a `<Form>`.');
   }
 
-  const build = callbacks.build as ((f: ModalFormData, p: string) => void) | undefined;
   const name = typeof props?.name === 'string' ? props.name : '';
+  const min = typeof props?.min === 'number' ? props.min : 0;
+  const max = typeof props?.max === 'number' ? props.max : 0;
+  const step = typeof props?.step === 'number' ? props.step : 0;
+  const defaultValue = typeof props?.defaultValue === 'number' ? props.defaultValue : min;
 
-  if (!build) {
-    return;
-  }
-
-  emitModalControl(form, ctx, name, payload, build);
+  // step 0 is the sentinel for "unset" → let the native default (1) apply.
+  emitSlider(payload, form, ctx, name, min, max, defaultValue, step === 0 ? undefined : step);
 };

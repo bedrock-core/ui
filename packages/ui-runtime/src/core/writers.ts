@@ -14,10 +14,15 @@ import { ModalFormError, type FormTarget, type SerializationContext } from './ty
  * (built-in or custom) stays consistent with the presenter's selection mapping.
  *
  * Modal forms reuse the same serialize walk but emit through `ModalFormData`'s
- * typed controls instead. `emitModalControl` owns the parallel ordinal /
- * `onChange` bookkeeping the presenter uses to fan `response.formValues` back out.
- * Decorative nodes (image/panel) keep using `emitLabel`, which works on both
- * form types — only the logic controls differ between the two backends.
+ * typed controls. Each native control has its OWN emitter here — `emitToggle`,
+ * `emitSlider`, `emitDropdown`, `emitInput` — exactly like `emitButton`/`emitLabel`
+ * own the ActionForm slots. Each emitter owns the ordinal → `name` bookkeeping (so the
+ * presenter can fan `response.formValues` back out) AND makes the typed native call,
+ * taking its native args (min/max/options/…) as direct function arguments — so a
+ * non-primitive like the dropdown's `options` array never has to pass through the
+ * serializer's primitive-only payload channel. Decorative nodes (image/panel) keep using
+ * `emitLabel`, which works on both form types — only the logic controls differ between
+ * the two backends.
  */
 
 type Callbacks = Record<string, (...args: unknown[]) => void>;
@@ -87,42 +92,131 @@ export function emitLabel(payload: string, form: FormTarget, ctx?: Serialization
 }
 
 /**
- * Emit a native modal control (`ModalFormData` only): toggle, slider, dropdown or
- * text field. Records the control's `name` against its ordinal so the presenter can
- * re-key the positional `response.formValues[ordinal]` into the named result after
- * submit, then advances the ordinal counter. The `build` callback performs the actual
- * typed `form.toggle()/.slider()/…` call so each component supplies its own native
- * arguments (min/max/options/…) — including non-primitive ones like an options array,
- * which never have to pass through the serializer's primitive-only payload channel.
+ * Record a native modal control's `name` against its ordinal, then advance the ordinal
+ * counter. Shared bookkeeping for the four modal-control emitters below: it lets the
+ * presenter re-key the positional `response.formValues[ordinal]` into the named result
+ * after submit.
  *
- * Modal controls are field DECLARATIONS: the native form fires no per-control events,
- * so there is no per-control callback here — values come back only at submit, all at
- * once, and the presenter dispatches them to `Form.onSubmit`.
+ * Modal controls are field DECLARATIONS: the native form fires no per-control events, so
+ * there is no per-control callback — values come back only at submit, all at once, and the
+ * presenter dispatches them to `Form.onSubmit`.
  *
- * The `payload` is the control element's OWN serialized encoding — the full control
- * block (type + layout-computed width/height/x/y/visible/enabled/region + styling),
- * produced by the same serialize+layout pass as ActionForm components. It is handed to
- * `build` to use as the native control's label string, so the RP decodes real geometry
- * and styling from it (`use_anchored_offset` + `#size_binding_*`), exactly like the
- * ActionForm `button`/`label` slots.
- *
- * @param form - Target modal form.
- * @param ctx - Serialization context tracking the modal ordinal → name registry.
- * @param name - Result key for this control (its `name` prop).
- * @param payload - The control's serialized control-block payload (label channel).
- * @param build - Performs the typed `ModalFormData` control call with `payload` as label.
+ * The `payload` passed to each emitter is the control's OWN serialized encoding — the full
+ * control block (type + layout-computed width/height/x/y/visible/enabled/region + styling)
+ * produced by the same serialize+layout pass as ActionForm components. It becomes the
+ * native control's label string, so the RP decodes real geometry and styling from it
+ * (`use_anchored_offset` + `#size_binding_*`), exactly like the ActionForm slots.
  */
-export function emitModalControl(
-  form: ModalFormData,
-  ctx: SerializationContext | undefined,
-  name: string,
-  payload: string,
-  build: (form: ModalFormData, payload: string) => void,
-): void {
+function recordModalOrdinal(ctx: SerializationContext | undefined, name: string): void {
   if (ctx && isModalContext(ctx)) {
     ctx.modalControls.set(ctx.modalControlIndex, { name });
     ctx.modalControlIndex++;
   }
+}
 
-  build(form, payload);
+/**
+ * Emit a native modal toggle → `ModalFormData.toggle`. Records the ordinal, then makes
+ * the typed call.
+ *
+ * Parameter order mirrors {@link emitButton} (`payload, form, ctx, …`), then this
+ * control's own args.
+ *
+ * @param payload - The control's serialized control-block payload (native label channel).
+ * @param form - Target modal form.
+ * @param ctx - Serialization context tracking the modal ordinal → name registry.
+ * @param name - Result key for this control (its `name` prop).
+ * @param defaultValue - Initial on/off state.
+ */
+export function emitToggle(
+  payload: string,
+  form: ModalFormData,
+  ctx: SerializationContext | undefined,
+  name: string,
+  defaultValue: boolean,
+): void {
+  recordModalOrdinal(ctx, name);
+  form.toggle(payload, { defaultValue });
+}
+
+/**
+ * Emit a native modal slider → `ModalFormData.slider`. Records the ordinal, then makes
+ * the typed call.
+ *
+ * Parameter order mirrors {@link emitButton} (`payload, form, ctx, …`), then this
+ * control's own args.
+ *
+ * @param payload - The control's serialized control-block payload (native label channel).
+ * @param form - Target modal form.
+ * @param ctx - Serialization context tracking the modal ordinal → name registry.
+ * @param name - Result key for this control (its `name` prop).
+ * @param min - Minimum selectable value.
+ * @param max - Maximum selectable value.
+ * @param defaultValue - Initial value.
+ * @param valueStep - Increment between values, or `undefined` for the native default.
+ */
+export function emitSlider(
+  payload: string,
+  form: ModalFormData,
+  ctx: SerializationContext | undefined,
+  name: string,
+  min: number,
+  max: number,
+  defaultValue: number,
+  valueStep: number | undefined,
+): void {
+  recordModalOrdinal(ctx, name);
+  form.slider(payload, min, max, { defaultValue, valueStep });
+}
+
+/**
+ * Emit a native modal dropdown → `ModalFormData.dropdown`. Records the ordinal, then makes
+ * the typed call. `options` (a non-primitive array) arrives as a direct argument, so it
+ * never passes through the serializer's primitive-only payload channel.
+ *
+ * Parameter order mirrors {@link emitButton} (`payload, form, ctx, …`), then this
+ * control's own args.
+ *
+ * @param payload - The control's serialized control-block payload (native label channel).
+ * @param form - Target modal form.
+ * @param ctx - Serialization context tracking the modal ordinal → name registry.
+ * @param name - Result key for this control (its `name` prop).
+ * @param options - Selectable option values.
+ * @param defaultValueIndex - Initial selection as an index into `options`.
+ */
+export function emitDropdown(
+  payload: string,
+  form: ModalFormData,
+  ctx: SerializationContext | undefined,
+  name: string,
+  options: string[],
+  defaultValueIndex: number,
+): void {
+  recordModalOrdinal(ctx, name);
+  form.dropdown(payload, options, { defaultValueIndex });
+}
+
+/**
+ * Emit a native modal text field → `ModalFormData.textField`. Records the ordinal, then
+ * makes the typed call.
+ *
+ * Parameter order mirrors {@link emitButton} (`payload, form, ctx, …`), then this
+ * control's own args.
+ *
+ * @param payload - The control's serialized control-block payload (native label channel).
+ * @param form - Target modal form.
+ * @param ctx - Serialization context tracking the modal ordinal → name registry.
+ * @param name - Result key for this control (its `name` prop).
+ * @param placeholder - Text shown when the field is empty.
+ * @param defaultValue - Initial text.
+ */
+export function emitInput(
+  payload: string,
+  form: ModalFormData,
+  ctx: SerializationContext | undefined,
+  name: string,
+  placeholder: string,
+  defaultValue: string,
+): void {
+  recordModalOrdinal(ctx, name);
+  form.textField(payload, placeholder, { defaultValue });
 }

@@ -67,8 +67,11 @@ export {
 export {
   createContext,
   emitButton,
+  emitDropdown,
+  emitInput,
   emitLabel,
-  emitModalControl,
+  emitSlider,
+  emitToggle,
   getRegisteredTypes,
   isActionForm,
   isModalForm,
