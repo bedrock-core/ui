@@ -5,6 +5,7 @@ import { Fragment as FragmentComponent } from '../components/Fragment';
 export interface NativeNode<P extends JSX.Props = JSX.Props> {
   type: string | FunctionComponent<P>;
   props: P;
+  nativeArgs?: Record<string, unknown>;
 }
 
 export namespace JSX {

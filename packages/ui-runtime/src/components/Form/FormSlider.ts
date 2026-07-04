@@ -103,9 +103,13 @@ export const FormSlider: FunctionComponent<FormSliderProps> = ({
       // [2020-2102] thumb-travel width = control width - thumbWidth, so the thumb's
       // EDGE (not center) meets the track ends at min/max. Placeholder here; the
       // layout phase fills it in-place once jsonUIWidth is known (like `region`).
+      // This MUST stay the last SERIALIZED field — the RP decodes it at [2020].
       travelWidth: 0,
-      // Native args (past the RP-read region): read by the writer, not decoded RP-side.
-      // `defaultValue` resolves `?? min` here so the writer stays a pure prop reader.
+    },
+    // Native args ride the writer-only side channel: never serialized, so they cost no
+    // payload bytes and (crucially) leave travelWidth as the last field at [2020].
+    // `defaultValue` resolves `?? min` here so the writer stays a pure reader.
+    nativeArgs: {
       name,
       min,
       max,
@@ -116,16 +120,16 @@ export const FormSlider: FunctionComponent<FormSliderProps> = ({
 };
 
 /** Serializes a `modal-slider` into the native modal slider control. */
-export const formSliderWriter: Writer = (payload, form, ctx, _callbacks, props) => {
+export const formSliderWriter: Writer = (payload, form, ctx, _callbacks, _props, nativeArgs) => {
   if (!isModalForm(form)) {
     throw new ModalFormError('Form.Slider must be rendered inside a `<Form>`.');
   }
 
-  const name = typeof props?.name === 'string' ? props.name : '';
-  const min = typeof props?.min === 'number' ? props.min : 0;
-  const max = typeof props?.max === 'number' ? props.max : 0;
-  const step = typeof props?.step === 'number' ? props.step : 0;
-  const defaultValue = typeof props?.defaultValue === 'number' ? props.defaultValue : min;
+  const name = typeof nativeArgs?.name === 'string' ? nativeArgs.name : '';
+  const min = typeof nativeArgs?.min === 'number' ? nativeArgs.min : 0;
+  const max = typeof nativeArgs?.max === 'number' ? nativeArgs.max : 0;
+  const step = typeof nativeArgs?.step === 'number' ? nativeArgs.step : 0;
+  const defaultValue = typeof nativeArgs?.defaultValue === 'number' ? nativeArgs.defaultValue : min;
 
   // step 0 is the sentinel for "unset" → let the native default (1) apply.
   emitSlider(payload, form, ctx, name, min, max, defaultValue, step === 0 ? undefined : step);

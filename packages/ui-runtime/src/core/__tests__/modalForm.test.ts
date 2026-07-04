@@ -579,6 +579,59 @@ describe('modal control serialization', () => {
 
     expect(heights.every(h => h > 0)).toBe(true);
   });
+
+  // The writer-only `nativeArgs` side channel must survive the render phases (expand +
+  // layout rebuild nodes with fresh props; a dropped side channel would strip the native
+  // args and the writer would emit an empty control). Drive the real pipeline, then
+  // serialize the surviving node and assert the native call got its args.
+  it('carries native args through the render pipeline to the writer', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- minimal Player stub; only identity is used by the pipeline
+    const player = { id: 'modal-nativeargs' } as unknown as Player;
+
+    const tree: JSX.Element = {
+      type: Form,
+      props: {
+        children: [
+          Form.Input({ name: 'nick', placeholder: 'type…', defaultValue: 'seed' }),
+          Form.Dropdown({ name: 'mode', options: ['A', 'B', 'C'], defaultValue: 'C' }),
+        ],
+      },
+    };
+
+    const expanded = expandAndResolveContexts(tree, createInitialContext(), player);
+
+    computeLayout(expanded);
+
+    // The side channel is intact on the post-pipeline nodes.
+    const inputs: JSX.Element[] = [];
+
+    collect(expanded, 'modal-input', inputs);
+    expect(inputs).toHaveLength(1);
+    expect(inputs[0].nativeArgs).toMatchObject({ name: 'nick', placeholder: 'type…', defaultValue: 'seed' });
+
+    // …and it reaches the writer: serialize the survived nodes and inspect the native calls.
+    const form = new FakeModalForm();
+    const ctx = modalCtx();
+
+    serialize(inputs[0], asModalForm(form), ctx);
+
+    const dropdowns: JSX.Element[] = [];
+
+    collect(expanded, 'modal-dropdown', dropdowns);
+    serialize(dropdowns[0], asModalForm(form), ctx);
+
+    const textField = form.calls.find(c => c.kind === 'textField');
+
+    expect(textField?.args[1]).toBe('type…'); // placeholder
+    expect(textField?.args[2]).toMatchObject({ defaultValue: 'seed' });
+
+    const dropdown = form.calls.find(c => c.kind === 'dropdown');
+
+    // options resolve to blobs (arg 1) and defaultValue 'C' → index 2 (arg 2).
+    expect(Array.isArray(dropdown?.args[1])).toBe(true);
+    expect((dropdown?.args[1] as string[]).length).toBe(3);
+    expect(dropdown?.args[2]).toMatchObject({ defaultValueIndex: 2 });
+  });
 });
 
 /** Collect concrete (string-typed) elements of a given host type from a built tree. */

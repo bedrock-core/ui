@@ -41,10 +41,8 @@ export const FormToggle: FunctionComponent<FormToggleProps> = ({
     props: {
       // Control block first so the state textures land at BUTTON-IDENTICAL byte
       // offsets ([1024-1272] right after the reserved block), toggle-specific
-      // fields after. The native-arg props (`name`, `defaultValue`) are appended
-      // LAST so they survive to the writer without disturbing the RP-read offsets —
-      // the RP decode only reads up to the styling block above. The writer calls
-      // `form.toggle()` directly from these plain props (no `build` closure).
+      // fields after. The writer calls `form.toggle()` directly from `nativeArgs`
+      // (no `build` closure).
       ...withControl({ ...layout, background: unchecked.background }),
       backgroundHover: unchecked.backgroundHover, // [1024-1106] like Button
       backgroundPressed: unchecked.backgroundPressed, // [1107-1189] reserved (no pressed state)
@@ -52,7 +50,10 @@ export const FormToggle: FunctionComponent<FormToggleProps> = ({
       checkedBackground: checkedBase, // [1273-1355] toggle-specific
       checkedHover: checkedHover ?? checkedBase, // [1356-1438]
       checkedLocked: checkedLocked ?? checkedBase, // [1439-1521]
-      // Native args (past the RP-read region): read by the writer, not decoded RP-side.
+    },
+    // Native args ride the writer-only side channel: never serialized, so they cost no
+    // payload bytes and can't shift RP-read offsets.
+    nativeArgs: {
       name,
       defaultValue: defaultValue ?? false,
     },
@@ -60,13 +61,13 @@ export const FormToggle: FunctionComponent<FormToggleProps> = ({
 };
 
 /** Serializes a `modal-toggle` into the native modal toggle control. */
-export const formToggleWriter: Writer = (payload, form, ctx, _callbacks, props) => {
+export const formToggleWriter: Writer = (payload, form, ctx, _callbacks, _props, nativeArgs) => {
   if (!isModalForm(form)) {
     throw new ModalFormError('Form.Toggle must be rendered inside a `<Form>`.');
   }
 
-  const name = typeof props?.name === 'string' ? props.name : '';
-  const defaultValue = props?.defaultValue === true;
+  const name = typeof nativeArgs?.name === 'string' ? nativeArgs.name : '';
+  const defaultValue = nativeArgs?.defaultValue === true;
 
   emitToggle(payload, form, ctx, name, defaultValue);
 };

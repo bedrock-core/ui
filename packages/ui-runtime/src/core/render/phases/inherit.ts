@@ -57,6 +57,7 @@ export function applyInheritance(element: JSX.Element, context: TraversalContext
 
     return {
       type: element.type,
+      nativeArgs: element.nativeArgs,
       props: newProps,
     };
   }
@@ -118,6 +119,7 @@ export function applyInheritance(element: JSX.Element, context: TraversalContext
 
   return {
     type: element.type,
+    nativeArgs: element.nativeArgs,
     props: newProps,
   };
 }

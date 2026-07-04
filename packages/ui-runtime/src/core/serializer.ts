@@ -125,7 +125,7 @@ function padToByteLength(str: string, length: number): string {
  * @param form - Form data to populate
  * @param context - Serialization context for collecting button callbacks
  */
-export function serialize({ type, props: { children, ...rest } }: JSX.Element, form: FormTarget, context: SerializationContext): void {
+export function serialize({ type, props: { children, ...rest }, nativeArgs }: JSX.Element, form: FormTarget, context: SerializationContext): void {
   // Function components should have been resolved by buildTree()
   // If we see one here, it's a bug
   if (typeof type === 'function') {
@@ -199,7 +199,7 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
     throw new SerializationError(`Unknown native component type: ${type}. Known types: ${known}`);
   }
 
-  descriptor.writer(payload, form, context, callbacks, serializableProps);
+  descriptor.writer(payload, form, context, callbacks, serializableProps, nativeArgs);
 
   // Recursively handle children
   if (children) {

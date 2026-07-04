@@ -324,6 +324,18 @@
 				/* common.dropdown is self-contained: it instantiates BOTH the closed-box
 				   toggle AND the popup (dropdown_content) as its own two children. */
 				"dropdown_control@core_ui_form_components.dropdown_control": {}
+			},
+			{
+				/* Live current-value display: the engine sets #dropdown_option_text to the
+				   CURRENTLY selected option (collection custom_form), so this updates as the
+				   player picks — exactly how vanilla's closed-box label works. Color/font/
+				   scale are decoded from the CELL payload (the TS component's current* props),
+				   so the styled layer drives the look through the API, not $vars. The text is
+				   inset a fixed 8px (see dropdown_current_label). Layer 20 sits above the
+				   closed box + its state faces (layer ≤2). */
+				"dropdown_current_label@core_ui_form_components.dropdown_current_label": {
+					"layer": 20
+				}
 			}
 		]
 	},
@@ -371,6 +383,169 @@
 		],
 		"$toggle_binding_type": "collection",
 		"$toggle_grid_collection_name": "custom_form"
+	},
+	// Live current-value label overlaid on the closed box. TWO custom_form channels:
+	//   • #dropdown_option_text — the engine keeps it in sync with the SELECTED option
+	//     (same mechanism as vanilla's options_dropdown_toggle_control), but for us its
+	//     value is that option's whole bcuiv0007 blob, so we decode field 1 (text, [92])
+	//     out of it exactly like the popup rows decode #custom_radio_text. This is what
+	//     live-updates as the player picks.
+	//   • #custom_text — the dropdown CELL payload, carrying the current-value label STYLE
+	//     the TS component appended after popupHeight: currentColor [1439] (a §-code prefix,
+	//     system convention — there is no bindable label `color` decode; color rides the
+	//     text), currentFontType [1522], currentFontScale [1605]. Position is NOT payload-
+	//     driven: the text_area wrapper insets the label a fixed 8px (see below).
+	// Rendered text = currentColor prefix + decoded option text.
+	// Current-value text inset the SAME way input.json insets its display text: a `text_area`
+	// panel with a plain literal `offset: ["8px", 0]` (left_middle) and the label inside it,
+	// left-aligned. No use_anchored_offset, no bound inset — the per-instance currentInset*
+	// props are ignored here (fixed 8px, matching the input box's text inset). clips_children
+	// keeps a long value from spilling past the box.
+	"dropdown_current_label": {
+		"type": "panel",
+		"layer": 20,
+		"size": [ "100%", "100%" ],
+		"controls": [
+			{
+				"text_area": {
+					"type": "panel",
+					"size": [ "100% - 6px", "100% - 4px" ],
+					"offset": ["8px", 0],
+					"anchor_from": "left_middle",
+					"anchor_to": "left_middle",
+					"clips_children": true,
+					"controls": [
+						{
+							"display_text@core_ui_form_components.dropdown_current_value_text": {}
+						}
+					]
+				}
+			}
+		]
+	},
+	// The actual current-value text — left-aligned, inside the offset text_area above. All the
+	// text/color/font decode lives here (unchanged); the inset is purely the text_area's
+	// literal 8px offset now.
+	"dropdown_current_value_text": {
+		"type": "label",
+		"text": "#text",
+		"font_size": "small",
+		/* NO literal "font_type" property: the engine resolves it as a font ALIAS at screen
+		   load (before bindings run) → "FontHandle.cpp Could not find font alias #font_type"
+		   spam. Bind into the CANONICAL #font_type below; backup_font_type is the pre-binding
+		   fallback. (Same shape as components/text.json + the option labels.) */
+		"backup_font_type": "UIFont",
+		"font_scale_factor": "#font_scale_factor",
+		"text_alignment": "left",
+		"size": [ "default", "default" ],
+		"max_size": [ "100%", "100%" ],
+		"anchor_from": "left_middle",
+		"anchor_to": "left_middle",
+		"$normalize": 1.0,
+		"bindings": [
+			{
+				/* --- CHANNEL 1: selected option blob → visible text --- */
+				"binding_name": "#dropdown_option_text",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form"
+			},
+			{
+				/* text [92] out of the option blob (same slice the popup rows use) */
+				"binding_type": "view",
+				"source_property_name": "('%.92s' * #dropdown_option_text)",
+				"target_property_name": "#skip_to_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#dropdown_option_text - #skip_to_text)",
+				"target_property_name": "#rem_at_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_at_text)",
+				"target_property_name": "#raw_opt_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_opt_text) - ('%.2s' * #raw_opt_text) - ';')",
+				"target_property_name": "#opt_text"
+			},
+			{
+				/* --- CHANNEL 2: dropdown CELL payload → label style --- */
+				"binding_name": "#custom_text",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form"
+			},
+			{
+				/* currentColor [1439] (§-code prefix) */
+				"binding_type": "view",
+				"source_property_name": "('%.1439s' * #custom_text)",
+				"target_property_name": "#skip_to_color"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#custom_text - #skip_to_color)",
+				"target_property_name": "#rem_at_color"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_at_color)",
+				"target_property_name": "#raw_color"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_color) - ('%.2s' * #raw_color) - ';')",
+				"target_property_name": "#color_prefix"
+			},
+			{
+				/* rendered text = color prefix + option text */
+				"binding_type": "view",
+				"source_property_name": "(#color_prefix + #opt_text)",
+				"target_property_name": "#text"
+			},
+			{
+				/* currentFontType [1522] */
+				"binding_type": "view",
+				"source_property_name": "('%.1522s' * #custom_text)",
+				"target_property_name": "#skip_to_font_type"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#custom_text - #skip_to_font_type)",
+				"target_property_name": "#rem_at_font_type"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_at_font_type)",
+				"target_property_name": "#raw_font_type"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_font_type) - ('%.2s' * #raw_font_type) - ';')",
+				"target_property_name": "#font_type"
+			},
+			{
+				/* currentFontScale [1605] */
+				"binding_type": "view",
+				"source_property_name": "('%.1605s' * #custom_text)",
+				"target_property_name": "#skip_to_font_scale"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#custom_text - #skip_to_font_scale)",
+				"target_property_name": "#rem_at_font_scale"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_at_font_scale)",
+				"target_property_name": "#raw_font_scale"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_font_scale) - ('%.2s' * #raw_font_scale) - ';')",
+				"target_property_name": "#font_scale_factor"
+			}
+		]
 	},
 	// Our own closed-box visuals, replacing vanilla's options_dropdown_toggle_control.
 	// EXTENDS common.toggle (ui_common.json:366-557) — the SAME proven ancestor our

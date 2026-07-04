@@ -116,4 +116,5 @@ export type Writer = (
   ctx: SerializationContext | undefined,
   callbacks: Record<string, (...args: unknown[]) => void>,
   props?: SerializableProps,
+  nativeArgs?: Record<string, unknown>,
 ) => void;

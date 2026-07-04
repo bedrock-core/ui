@@ -1,13 +1,14 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import type { FormDropdownProps as PrimitiveFormDropdownProps, JSX } from '@bedrock-core/ui-runtime';
-import { Form as PrimitiveForm, Image, Panel, Text } from '@bedrock-core/ui-runtime';
+import { Form as PrimitiveForm, Image, Panel } from '@bedrock-core/ui-runtime';
 import { theme } from '../tokens';
 import { labeledColumn, rowSizing } from './label';
 
 export interface FormDropdownProps extends Omit<PrimitiveFormDropdownProps,
   'background' | 'backgroundHover' | 'backgroundPressed' | 'backgroundLocked'
   | 'popupBackground' | 'optionBackground' | 'optionHover' | 'optionSelected'
-  | 'optionFont' | 'optionScale' | 'optionAlign'> {
+  | 'optionFont' | 'optionScale' | 'optionAlign'
+  | 'currentColor' | 'currentFont' | 'currentScale'> {
   /** Caption rendered above the closed box. */
   label?: string;
 }
@@ -17,16 +18,16 @@ export interface FormDropdownProps extends Omit<PrimitiveFormDropdownProps,
  * (popup container + option default/hover/selected) on the native `Form.Dropdown`.
  * Option labels use the theme dropdown text style, left-aligned.
  *
- * The closed-box face (selected value left, arrow right — same look as the
- * ActionForm `Dropdown`) is plain JSX overlaid on the control via the modal's
- * decorative label slots. KNOWN LIMIT: the native modal is atomic (no re-render on
- * interaction), so the value text shows the INITIAL selection and does not
- * live-update when the player picks another option.
+ * The closed-box face shows the selected value on the left and the arrow on the
+ * right (same look as the ActionForm `Dropdown`). The value text is rendered
+ * NATIVELY by the RP closed box (reading `#dropdown_option_text`), so it live-updates
+ * as the player picks — just like vanilla. Its color/font/scale are passed to the
+ * primitive as `current*` props (from the theme dropdown text style); the text is
+ * inset a fixed 8px in the RP (matching the input box). Only the arrow is a JSX overlay
+ * here (static, pinned right).
  */
 export function FormDropdown({ label, name, options, defaultValue, enabled = true, ...layout }: FormDropdownProps): JSX.Element {
   const d = theme.components.dropdown;
-  const color = enabled ? d.textStyle.value : d.textStyle.disabled;
-  const current = defaultValue ?? options[0] ?? '';
 
   const control = (
     <Panel {...(label === undefined ? { ...rowSizing(layout), ...layout } : { width: '100%' })}>
@@ -47,6 +48,9 @@ export function FormDropdown({ label, name, options, defaultValue, enabled = tru
         optionFont={d.textStyle.font}
         optionScale={d.textStyle.scale}
         optionAlign={'left'}
+        currentColor={enabled ? d.textStyle.value : d.textStyle.disabled}
+        currentFont={d.textStyle.font}
+        currentScale={d.textStyle.scale}
       />
       <Panel
         position={'absolute'}
@@ -56,11 +60,9 @@ export function FormDropdown({ label, name, options, defaultValue, enabled = tru
         height={'100%'}
         flexDirection={'row'}
         alignItems={'center'}
-        gap={theme.components.field.gap}
-        paddingLeft={d.padding.x}
+        justifyContent={'flex-end'}
         paddingRight={d.padding.x}
       >
-        <Text font={d.textStyle.font} scale={d.textStyle.scale} flexGrow={1}>{`${color}${current}`}</Text>
         <Image
           texture={enabled ? d.textures.arrow : d.textures.arrowDisabled}
           width={d.arrow.width}

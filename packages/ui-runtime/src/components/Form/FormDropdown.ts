@@ -62,6 +62,19 @@ export interface FormDropdownProps extends FormControlBase, StateBackgroundProps
   optionAlign?: 'left' | 'center' | 'right';
   /** Option row height (px). Default `17`. Applies to every option row. */
   optionHeight?: number;
+  // --- Closed-box current-value label (live-updates via native #dropdown_option_text) ---
+  /**
+   * Color code prefix for the closed-box current-value text (e.g. `'§0'`). Prepended to
+   * the decoded option text RP-side, so styling matches the rest of the system's `§`-code
+   * convention. Default `''` (renders the label's own white).
+   */
+  currentColor?: string;
+  /** Current-value label font family. Defaults to `'mojangles'`. */
+  currentFont?: LabelFont;
+  /** Current-value label scale multiplier relative to the standard glyph size. Default `1.0`. */
+  currentScale?: number;
+  // Note: the closed-box text is inset a fixed 8px in the RP (matching the input box's
+  // text_area), so there are no current-value inset props — position is not configurable.
 }
 
 /**
@@ -77,6 +90,29 @@ interface OptionStyle {
   fontType: string;
   fontScaleFactor: number;
   align: 'left' | 'center' | 'right';
+}
+
+/**
+ * Runtime type guard for the `optionStyle` carried on the dropdown's `nativeArgs`.
+ * Uses `in`-operator narrowing so no unsafe assertion is needed to index `value`.
+ */
+function isOptionStyle(value: unknown): value is OptionStyle {
+  return (
+    typeof value === 'object'
+    && value !== null
+    && 'height' in value && typeof value.height === 'number'
+    && 'background' in value && typeof value.background === 'string'
+    && 'backgroundHover' in value && typeof value.backgroundHover === 'string'
+    && 'backgroundSelected' in value && typeof value.backgroundSelected === 'string'
+    && 'fontType' in value && typeof value.fontType === 'string'
+    && 'fontScaleFactor' in value && typeof value.fontScaleFactor === 'number'
+    && 'align' in value && (value.align === 'left' || value.align === 'center' || value.align === 'right')
+  );
+}
+
+/** Runtime type guard for a `string[]` (the raw option list on `nativeArgs`). */
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every(v => typeof v === 'string');
 }
 
 /**
@@ -120,10 +156,14 @@ export const FormDropdown: FunctionComponent<FormDropdownProps> = ({
   name, options, defaultValue,
   backgroundHover, backgroundPressed, backgroundLocked, popupBackground,
   optionBackground, optionHover, optionSelected,
-  optionFont, optionScale, optionAlign, optionHeight, ...layout
+  optionFont, optionScale, optionAlign, optionHeight,
+  currentColor, currentFont, currentScale, ...layout
 }: FormDropdownProps): JSX.Element => {
   const defaultIndex = defaultValue !== undefined ? Math.max(0, options.indexOf(defaultValue)) : 0;
   const optionLabelFont = labelFontFields({ font: optionFont, scale: optionScale });
+  // Closed-box current-value label style (rides the CELL payload, not the option blob —
+  // it decorates #dropdown_option_text after the RP decodes the option text out of it).
+  const currentLabelFont = labelFontFields({ font: currentFont, scale: currentScale });
   // Closed box mirrors Button: the shared `state ?? base ?? unstyled` rule.
   const closedBox = resolveStateBackgrounds({ background: layout.background, backgroundHover, backgroundPressed, backgroundLocked });
   // Option rows follow the same rule against their own base.
@@ -161,54 +201,54 @@ export const FormDropdown: FunctionComponent<FormDropdownProps> = ({
       // moved into each option's own blob, so the popupHeight field shifts up to [1356]. Uses
       // the FIXED row height since the RP stacks fixed-height rows.)
       popupHeight: Math.min(options.length * OPTION_ROW_HEIGHT + POPUP_CHROME, POPUP_MAX_HEIGHT),
-      // Native args (past the RP-read region): read by the writer, not decoded RP-side. The
-      // writer encodes one blob per option from the raw option text + the option style below,
-      // then passes the blob array to the native `dropdown()` call. Raw option text rides
-      // `option0..optionN` primitive fields (≤80 bytes each); `optionCount` bounds the loop.
+      // Closed-box current-value label fields (RP-decoded, appended right after popupHeight so
+      // they keep FIXED offsets: currentColor [1439], currentFontType [1522], currentFontScale
+      // [1605]). The RP decodes the selected option TEXT out of #dropdown_option_text, then
+      // styles it with these cell-level fields — color rides as a §-code prefix (system
+      // convention) and font/scale drive the label. Position is a fixed 8px inset in the RP.
+      currentColor: currentColor ?? '',
+      currentFontType: currentLabelFont.fontType,
+      currentFontScale: currentLabelFont.fontScaleFactor,
+    },
+    // Native args ride the writer-only side channel: never serialized, so they cost no
+    // payload bytes and can't shift the RP-read offsets above. The writer encodes one blob
+    // per option from the raw `options` + the resolved `optionStyle`, then hands the blob
+    // array to the native `dropdown()` call. Because these bypass the serializer entirely,
+    // option text is not subject to the 80-byte primitive-field cap.
+    nativeArgs: {
       name,
       defaultValueIndex: defaultIndex,
-      optHeight: optionStyle.height,
-      optBackground: optionStyle.background,
-      optBackgroundHover: optionStyle.backgroundHover,
-      optBackgroundSelected: optionStyle.backgroundSelected,
-      optFontType: optionStyle.fontType,
-      optFontScaleFactor: optionStyle.fontScaleFactor,
-      optAlign: optionStyle.align,
-      optionCount: options.length,
-      ...Object.fromEntries(options.map((option, i) => [`option${i}`, option])),
+      options,
+      optionStyle,
     },
   };
 };
 
 /** Serializes a `modal-dropdown` into the native modal dropdown control. */
-export const formDropdownWriter: Writer = (payload, form, ctx, _callbacks, props) => {
+export const formDropdownWriter: Writer = (payload, form, ctx, _callbacks, _props, nativeArgs) => {
   if (!isModalForm(form)) {
     throw new ModalFormError('Form.Dropdown must be rendered inside a `<Form>`.');
   }
 
-  const name = typeof props?.name === 'string' ? props.name : '';
-  const defaultValueIndex = typeof props?.defaultValueIndex === 'number' ? props.defaultValueIndex : 0;
+  const name = typeof nativeArgs?.name === 'string' ? nativeArgs.name : '';
+  const defaultValueIndex = typeof nativeArgs?.defaultValueIndex === 'number' ? nativeArgs.defaultValueIndex : 0;
+  const options = isStringArray(nativeArgs?.options) ? nativeArgs.options : [];
 
-  // Reconstruct the per-option style the component resolved, then encode one payload blob per
-  // option from its raw text + that style. The blobs become the native option strings.
-  const style: OptionStyle = {
-    height: typeof props?.optHeight === 'number' ? props.optHeight : OPTION_ROW_HEIGHT,
-    background: typeof props?.optBackground === 'string' ? props.optBackground : UNSTYLED_TEXTURE,
-    backgroundHover: typeof props?.optBackgroundHover === 'string' ? props.optBackgroundHover : UNSTYLED_TEXTURE,
-    backgroundSelected: typeof props?.optBackgroundSelected === 'string' ? props.optBackgroundSelected : UNSTYLED_TEXTURE,
-    fontType: typeof props?.optFontType === 'string' ? props.optFontType : 'default',
-    fontScaleFactor: typeof props?.optFontScaleFactor === 'number' ? props.optFontScaleFactor : 2,
-    align: props?.optAlign === 'center' || props?.optAlign === 'right' ? props.optAlign : 'left',
-  };
+  // Encode one payload blob per option from its raw text + the resolved option style; the
+  // blobs become the native option strings.
+  const resolvedStyle: OptionStyle = isOptionStyle(nativeArgs?.optionStyle)
+    ? nativeArgs.optionStyle
+    : {
+        height: OPTION_ROW_HEIGHT,
+        background: UNSTYLED_TEXTURE,
+        backgroundHover: UNSTYLED_TEXTURE,
+        backgroundSelected: UNSTYLED_TEXTURE,
+        fontType: 'default',
+        fontScaleFactor: 2,
+        align: 'left',
+      };
 
-  const count = typeof props?.optionCount === 'number' ? props.optionCount : 0;
-  const encodedOptions: string[] = [];
-
-  for (let i = 0; i < count; i++) {
-    const text = props?.[`option${i}`];
-
-    encodedOptions.push(serializeDropdownOption(typeof text === 'string' ? text : '', style));
-  }
+  const encodedOptions = options.map(option => serializeDropdownOption(option, resolvedStyle));
 
   emitDropdown(payload, form, ctx, name, encodedOptions, defaultValueIndex);
 };
