@@ -8,6 +8,13 @@ import type { ModalFormData } from '@minecraft/server-ui';
 export const MODAL_TOGGLE_SLOT_TYPE = 'modal-toggle';
 export const MODAL_SLIDER_SLOT_TYPE = 'modal-slider';
 export const MODAL_DROPDOWN_SLOT_TYPE = 'modal-dropdown';
+/**
+ * Inline single-select (radio group / toggle-button group) → native `ModalFormData.dropdown`,
+ * but the RP renders its option collection INLINE in the form flow (all options always visible)
+ * instead of behind the dropdown popup. One type serves both skins; a payload `orientation`
+ * field (`'vertical'` = radio stack, `'horizontal'` = segment strip) selects the look.
+ */
+export const MODAL_INLINE_SELECT_SLOT_TYPE = 'modal-inline-select';
 export const MODAL_INPUT_SLOT_TYPE = 'modal-input';
 /**
  * `Form.Button` — NOT a native control: it consumes no `formValues` slot; its
@@ -20,6 +27,7 @@ export const MODAL_CONTROL_SLOT_TYPES = [
   MODAL_TOGGLE_SLOT_TYPE,
   MODAL_SLIDER_SLOT_TYPE,
   MODAL_DROPDOWN_SLOT_TYPE,
+  MODAL_INLINE_SELECT_SLOT_TYPE,
   MODAL_INPUT_SLOT_TYPE,
   MODAL_FORM_BUTTON_SLOT_TYPE,
 ] as const;

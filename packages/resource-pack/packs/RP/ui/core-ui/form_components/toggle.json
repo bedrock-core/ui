@@ -198,8 +198,8 @@
 	"toggle_control": {
 		"type": "toggle",
 		"size": [
-			30,
-			16
+			"100%",
+			"100%"
 		],
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
@@ -215,7 +215,6 @@
 		"toggle_default_state": false,
 		"toggle_group_forced_index": -1,
 		"toggle_group_default_selected": 0,
-		"radio_toggle_group": false,
 		"enable_directional_toggling": false,
 		"sound_name": "random.click",
 		"sound_volume": 1.0,
@@ -271,8 +270,8 @@
 				"checked": {
 					"type": "image",
 					"size": [
-						30,
-						16
+						"100%",
+						"100%"
 					],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
@@ -311,8 +310,8 @@
 				"unchecked": {
 					"type": "image",
 					"size": [
-						30,
-						16
+						"100%",
+						"100%"
 					],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
@@ -351,8 +350,8 @@
 				"checked_hover": {
 					"type": "image",
 					"size": [
-						30,
-						16
+						"100%",
+						"100%"
 					],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
@@ -391,8 +390,8 @@
 				"unchecked_hover": {
 					"type": "image",
 					"size": [
-						30,
-						16
+						"100%",
+						"100%"
 					],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
@@ -431,8 +430,8 @@
 				"checked_locked": {
 					"type": "image",
 					"size": [
-						30,
-						16
+						"100%",
+						"100%"
 					],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
@@ -471,8 +470,8 @@
 				"unchecked_locked": {
 					"type": "image",
 					"size": [
-						30,
-						16
+						"100%",
+						"100%"
 					],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
@@ -511,8 +510,8 @@
 				"checked_locked_hover": {
 					"type": "image",
 					"size": [
-						30,
-						16
+						"100%",
+						"100%"
 					],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
@@ -551,8 +550,8 @@
 				"unchecked_locked_hover": {
 					"type": "image",
 					"size": [
-						30,
-						16
+						"100%",
+						"100%"
 					],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",

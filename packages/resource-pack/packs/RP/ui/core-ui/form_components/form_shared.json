@@ -1,0 +1,334 @@
+{
+	// Shared form-component bases + option-row faces used by BOTH the dropdown primitive and
+	// the inline-select primitive. vanilla_toggle / vanilla_option_radio_dropdown_group are the
+	// vanilla-derived bases; dropdown_option_face_* self-decode per-option background states from
+	// the option blob (#custom_radio_text) and carry the required collection_details.
+	"namespace": "core_ui_form_components",
+	// --- copied from common.toggle (ui_common.json:366-557) ---
+	// Still extends vanilla common.toggle_visuals for now.
+	// TTS and focus properties/bindings stripped out (nuked for now).
+	// Only the variables that downstream consumers actually override are kept as
+	// $vars: $toggle_binding_type / $toggle_grid_collection_name (dropdown_control),
+	// $toggle_name / $toggle_state_binding_name (set at instantiation). Everything
+	// else was single-valued and has been hardcoded.
+	"vanilla_toggle": {
+		"type": "toggle",
+		// the 8 state children (was common.toggle_visuals, inlined — single use)
+		"controls": [
+			{
+				"unchecked@$unchecked_control": {}
+			},
+			{
+				"checked@$checked_control": {}
+			},
+			{
+				"unchecked_hover@$unchecked_hover_control": {}
+			},
+			{
+				"checked_hover@$checked_hover_control": {}
+			},
+			{
+				"unchecked_locked@$unchecked_locked_control": {}
+			},
+			{
+				"checked_locked@$checked_locked_control": {}
+			},
+			{
+				"unchecked_locked_hover@$unchecked_locked_hover_control": {}
+			},
+			{
+				"checked_locked_hover@$checked_locked_hover_control": {}
+			}
+		],
+		"layer": 1,
+		"sound_name": "random.click",
+		"sound_volume": 1.0,
+		"sound_pitch": 1.0,
+		"checked_control": "checked",
+		"unchecked_control": "unchecked",
+		"checked_hover_control": "checked_hover",
+		"unchecked_hover_control": "unchecked_hover",
+		"checked_locked_control": "checked_locked",
+		"unchecked_locked_control": "unchecked_locked",
+		"checked_locked_hover_control": "checked_locked_hover",
+		"unchecked_locked_hover_control": "unchecked_locked_hover",
+		"$toggle_binding_type|default": "global",
+		"$toggle_state_binding_name|default": "#toggle_state",
+		"$toggle_grid_collection_name|default": "",
+		// radio_toggle_group MUST stay a $var: option-row toggles override it to
+		// true. Hardcoding it to false made the option-list radios instantiate as
+		// non-radio toggles inside a radio-group factory, which hard-crashes the game
+		// (no log) on screen open. The toggle_group_* fields ride along with it.
+		"$radio_toggle_group|default": false,
+		"$toggle_group_forced_index|default": -1,
+		"$toggle_group_default_selected|default": 0,
+		"radio_toggle_group": "$radio_toggle_group",
+		"toggle_name": "$toggle_name",
+		"toggle_default_state": false,
+		"toggle_group_forced_index": "$toggle_group_forced_index",
+		"toggle_group_default_selected": "$toggle_group_default_selected",
+		"toggle_grid_collection_name": "$toggle_grid_collection_name",
+		"enable_directional_toggling": false,
+		"toggle_on_button": "toggle.toggle_on",
+		"toggle_off_button": "toggle.toggle_off",
+		"button_mappings": [
+			{
+				"from_button_id": "button.menu_select",
+				"to_button_id": "button.menu_select",
+				"mapping_type": "pressed"
+			},
+			{
+				"from_button_id": "button.menu_ok",
+				"to_button_id": "button.menu_ok",
+				"mapping_type": "focused"
+			},
+			{
+				"from_button_id": "button.controller_back",
+				"to_button_id": "button.controller_back",
+				"mapping_type": "focused",
+				"ignored": true
+			}
+		],
+		"property_bag": {
+			"#toggle_state": true
+		},
+		"bindings": [
+			{
+				"binding_type": "$toggle_binding_type",
+				"binding_condition": "visible",
+				"binding_collection_name": "$toggle_grid_collection_name",
+				"binding_name": "$toggle_state_binding_name",
+				"binding_name_override": "#toggle_state"
+			},
+			{
+				"binding_type": "none",
+				"binding_condition": "visible",
+				"binding_collection_name": "$toggle_grid_collection_name",
+				"binding_name": "#toggle_enabled",
+				"binding_name_override": "#enabled"
+			},
+			{
+				"binding_type": "none",
+				"binding_collection_name": ""
+			}
+		]
+	},
+	// --- copied from settings_common.option_radio_dropdown_group (settings_common.json:1723-1741) ---
+	// Inner radio_control_group still extends vanilla settings_common.
+	"vanilla_option_radio_dropdown_group": {
+		"type": "panel",
+		"size": [
+			"100% - 4px",
+			"100%c + 4px"
+		],
+		"offset": [
+			2,
+			1
+		],
+		"controls": [
+			{
+				// was vanilla_option_radio_group_control (settings_common.option_radio_group_control), inlined — single use
+				"radio_control_group": {
+					"type": "stack_panel",
+					// $radio_group_orientation drives vertical (radio stack) vs horizontal
+					// (segment strip). It's a LITERAL stack_panel property (orientation is not
+					// bindable), so the inline_select cell picks the variant by #orientation gate.
+					"$radio_group_orientation|default": "vertical",
+					"orientation": "$radio_group_orientation",
+					"size": [
+						"100%",
+						"100%c"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"controls": "$radio_buttons",
+					"$radio_factory|default": {
+						"name": "empty"
+					},
+					"$radio_collection_name|default": "",
+					"$radio_bindings|default": [],
+					"factory": "$radio_factory",
+					"collection_name": "$radio_collection_name",
+					"bindings": "$radio_bindings"
+				}
+			}
+		]
+	},
+	// Option-row state faces: per-option textures decoded from the option's OWN blob
+	// (#custom_radio_text): background [258] / backgroundHover [341] / backgroundSelected [424].
+	// (checked / hovered-while-checked / locked-checked map to selected; locked-unchecked to default.)
+	"dropdown_option_face_default": {
+		"type": "panel",
+		"size": [ "100%", "100%" ],
+		"controls": [
+			{
+				"bg": {
+					"type": "image",
+					"size": [ "100%", "100%" ],
+					"offset": [ 0, 0 ],
+					"fill": false,
+					"anchor_to": "center",
+					"anchor_from": "center",
+					"texture": "#texture",
+					"visible": "#visible",
+					"alpha": 1,
+					"bindings": [
+						{
+							/* background [258] from the option's OWN blob. collection_details is
+							   REQUIRED: a custom_dropdown binding without it hard-crashes the
+							   game with no logs (bisected in-game). */
+							"binding_name": "#custom_radio_text",
+							"binding_type": "collection",
+							"binding_condition": "always",
+							"binding_collection_name": "custom_dropdown"
+						},
+						{
+							"binding_type": "collection_details"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.258s' * #custom_radio_text)",
+							"target_property_name": "#skip_to_opt_bg"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_radio_text - #skip_to_opt_bg)",
+							"target_property_name": "#rem_at_opt_bg"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_opt_bg)",
+							"target_property_name": "#raw_opt_bg"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_opt_bg) - ('%.2s' * #raw_opt_bg) - ';')",
+							"target_property_name": "#texture"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(not (#texture = ''))",
+							"target_property_name": "#visible"
+						}
+					]
+				}
+			}
+		]
+	},
+	"dropdown_option_face_hover": {
+		"type": "panel",
+		"size": [ "100%", "100%" ],
+		"controls": [
+			{
+				"bg": {
+					"type": "image",
+					"size": [ "100%", "100%" ],
+					"offset": [ 0, 0 ],
+					"fill": false,
+					"anchor_to": "center",
+					"anchor_from": "center",
+					"texture": "#texture",
+					"visible": "#visible",
+					"alpha": 1,
+					"bindings": [
+						{
+							/* backgroundHover [341] from the option's OWN blob. collection_details is
+							   REQUIRED: a custom_dropdown binding without it hard-crashes the
+							   game with no logs (bisected in-game). */
+							"binding_name": "#custom_radio_text",
+							"binding_type": "collection",
+							"binding_condition": "always",
+							"binding_collection_name": "custom_dropdown"
+						},
+						{
+							"binding_type": "collection_details"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.341s' * #custom_radio_text)",
+							"target_property_name": "#skip_to_opt_bg"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_radio_text - #skip_to_opt_bg)",
+							"target_property_name": "#rem_at_opt_bg"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_opt_bg)",
+							"target_property_name": "#raw_opt_bg"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_opt_bg) - ('%.2s' * #raw_opt_bg) - ';')",
+							"target_property_name": "#texture"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(not (#texture = ''))",
+							"target_property_name": "#visible"
+						}
+					]
+				}
+			}
+		]
+	},
+	"dropdown_option_face_selected": {
+		"type": "panel",
+		"size": [ "100%", "100%" ],
+		"controls": [
+			{
+				"bg": {
+					"type": "image",
+					"size": [ "100%", "100%" ],
+					"offset": [ 0, 0 ],
+					"fill": false,
+					"anchor_to": "center",
+					"anchor_from": "center",
+					"texture": "#texture",
+					"visible": "#visible",
+					"alpha": 1,
+					"bindings": [
+						{
+							/* backgroundSelected [424] from the option's OWN blob. collection_details is
+							   REQUIRED: a custom_dropdown binding without it hard-crashes the
+							   game with no logs (bisected in-game). */
+							"binding_name": "#custom_radio_text",
+							"binding_type": "collection",
+							"binding_condition": "always",
+							"binding_collection_name": "custom_dropdown"
+						},
+						{
+							"binding_type": "collection_details"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.424s' * #custom_radio_text)",
+							"target_property_name": "#skip_to_opt_bg"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_radio_text - #skip_to_opt_bg)",
+							"target_property_name": "#rem_at_opt_bg"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_opt_bg)",
+							"target_property_name": "#raw_opt_bg"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_opt_bg) - ('%.2s' * #raw_opt_bg) - ';')",
+							"target_property_name": "#texture"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(not (#texture = ''))",
+							"target_property_name": "#visible"
+						}
+					]
+				}
+			}
+		]
+	}
+}

@@ -266,6 +266,47 @@ describe('modal control serialization', () => {
     expect(items[1].indexOf('s:Beta')).toBe(92);
   });
 
+  // Inline-select (radio / toggle-button) reuses the native dropdown() call + the same
+  // per-option blob, so its options carry the SAME field layout PLUS the two appended bullet
+  // fields (bulletTexture [756], bulletSelectedTexture [839]). The cell payload is minimal:
+  // control block + the single `orientation` string field at [1024].
+  it('emits an inline-select as a native dropdown with orientation + bullet fields', () => {
+    const form = new FakeModalForm();
+
+    serialize(
+      el(Form.InlineSelect({
+        name: 'team',
+        options: ['Red', 'Blue'],
+        defaultValue: 'Blue',
+        orientation: 'vertical',
+        bullet: 'textures/ui/radio_off',
+        bulletSelected: 'textures/ui/radio_on',
+        optionBackground: '',
+        optionHeight: 17,
+      })),
+      asModalForm(form),
+      modalCtx(),
+    );
+
+    // Reuses the native dropdown value channel (selected index on submit).
+    const dropdown = form.calls.find(c => c.kind === 'dropdown');
+
+    expect(dropdown?.args[2]).toMatchObject({ defaultValueIndex: 1 });
+
+    // Cell payload: own slot type + orientation string at [1024] (first component field).
+    const label = labelArg(form, 'dropdown');
+
+    expect(label).toContain('s:modal-inline-select');
+    expect(label.indexOf('s:vertical')).toBe(1024);
+
+    // Per-option blob carries the bullet pair after align [673]: [756] / [839].
+    const [red] = itemsArg(form, 'dropdown');
+
+    expect(red.indexOf('s:Red')).toBe(92);
+    expect(red.indexOf('s:textures/ui/radio_off')).toBe(756);
+    expect(red.indexOf('s:textures/ui/radio_on')).toBe(839);
+  });
+
   // Toggle textures: button-identical common block ([440] base=unchecked, [1024]
   // hover, [1107] pressed-reserved, [1190] locked) + checked side at [1273-1521].
   // Exact offsets are the RP decode contract (modal_toggle.json).

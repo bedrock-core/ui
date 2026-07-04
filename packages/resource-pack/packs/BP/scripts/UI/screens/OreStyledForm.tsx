@@ -35,6 +35,11 @@ export function OreStyledForm({ back }: { back: () => void }): JSX.Element {
     player.sendMessage(`§7  m_sld2: §f${String(values.m_sld2 ?? 0)}`);
     player.sendMessage(`§7  m_dd1: §f${String(values.m_dd1 ?? '')}`);
     player.sendMessage(`§7  m_dd2: §f${String(values.m_dd2 ?? '')}`);
+    // new controls (checkbox → boolean; radio / toggle-button → selected index)
+    player.sendMessage(`§7  agree: §f${String(values.agree ?? false)}`);
+    player.sendMessage(`§7  news: §f${String(values.news ?? false)}`);
+    player.sendMessage(`§7  team: §f${String(values.team ?? 0)}`);
+    player.sendMessage(`§7  view: §f${String(values.view ?? 0)}`);
 
     back();
   };
@@ -46,6 +51,23 @@ export function OreStyledForm({ back }: { back: () => void }): JSX.Element {
       onSubmit={handleSubmit}
       onCancel={back}
     >
+
+      {/* --- new controls: checkbox (boolean toggle skin), radio group + toggle-button
+          group (single-select over the native dropdown slot, return selected index). --- */}
+      <Panel flexDirection={'column'} gap={sm} padding={sm}>
+        <Text>{'§e§lNew controls'}</Text>
+
+        {/* Checkboxes: box-left / caption-right, boolean value. */}
+        <Form.Checkbox label={'I agree to the terms'} name={'agree'} defaultValue={false} />
+        <Form.Checkbox label={'Subscribe to news'} name={'news'} defaultValue={true} />
+        <Form.Checkbox label={'Locked checkbox'} name={'cb_locked'} enabled={false} />
+
+        {/* Radio group + toggle-button group, side by side (both single-select). */}
+        <Panel flexDirection={'row'} gap={sm} alignItems={'flex-start'}>
+          <Form.Radio label={'Team'} name={'team'} options={['Red', 'Blue', 'Green']} defaultValue={'Blue'} flex={1} />
+          <Form.ToggleButton label={'View'} name={'view'} options={['List', 'Grid', 'Compact']} defaultValue={'Grid'} flex={1} />
+        </Panel>
+      </Panel>
       <Panel flexDirection={'column'} gap={2} padding={sm}>
         <Text font={'minecraftTen'} scale={1.5}>{'Ore-Styled Form'}</Text>
         <Text>{'§7Same modal as the unstyled twin, dressed by the ore theme.'}</Text>

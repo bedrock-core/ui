@@ -27,7 +27,12 @@
 		"ui/core-ui/form_components/toggle.json",
 		"ui/core-ui/form_components/input.json",
 		"ui/core-ui/form_components/slider.json",
+		// Shared bases + option faces used by the dropdown + inline-select primitives.
+		"ui/core-ui/form_components/form_shared.json",
+		// Router for native-dropdown cells (fans #type → dropdown popup | inline radio/toggle-button).
+		"ui/core-ui/form_components/dropdown_router.json",
 		"ui/core-ui/form_components/dropdown.json",
+		"ui/core-ui/form_components/inline_select.json",
 		"ui/core-ui/form_components/label.json"
 	]
 }

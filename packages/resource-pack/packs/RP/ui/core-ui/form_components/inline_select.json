@@ -1,0 +1,824 @@
+{
+	// Inline-select primitive (radio group / toggle-button group): the native dropdown() option
+	// collection rendered INLINE (no popup). A hidden type:"dropdown" host (inline_dropdown_host)
+	// owns the custom_dropdown collection + applies the default; the option groups render inline,
+	// gated vertical/horizontal by the orientation payload field. Reuses form_shared bases.
+	"namespace": "core_ui_form_components",
+	// The cell decode panel — fork of `dropdown`. Control-block decode chain is VERBATIM
+	// from `dropdown` (header→type→width→height→x→y→visible→enabled); the gate is changed to
+	// 'modal-inline-select' and one extra block decodes orientation [1024]. #size_binding_y is
+	// the FULL inline list height (the component emitted it as the control's real height), so
+	// this panel occupies the whole list's flow space — later controls flow below it.
+	"inline_select": {
+		"type": "panel",
+		"size": [
+			0,
+			0
+		],
+		"layer": 50,
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"use_anchored_offset": true,
+		"property_bag": {
+			"#size_binding_x": 0.0,
+			"#size_binding_y": 0.0,
+			"#anchored_offset_value_x": 0.0,
+			"#anchored_offset_value_y": 0.0,
+			"#orientation": ""
+		},
+		"visible": "#visible",
+		"enabled": "#enabled",
+		"$normalize": 1.0,
+		"bindings": [
+			{
+				"binding_type": "collection_details",
+				"binding_collection_name": "custom_form"
+			},
+			{
+				"binding_name": "#custom_text",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.9s' * #custom_text)",
+				"target_property_name": "#protocol_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#custom_text - #protocol_header)",
+				"target_property_name": "#rem_after_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_header)",
+				"target_property_name": "#raw_type"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_header - #raw_type)",
+				"target_property_name": "#rem_after_type"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_type) - ('%.2s' * #raw_type) - ';')",
+				"target_property_name": "#type"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_type)",
+				"target_property_name": "#raw_width"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_type - #raw_width)",
+				"target_property_name": "#rem_after_width"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_width) - ('%.2s' * #raw_width) - ';')",
+				"target_property_name": "#size_binding_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_width)",
+				"target_property_name": "#raw_height"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_width - #raw_height)",
+				"target_property_name": "#rem_after_height"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_height) - ('%.2s' * #raw_height) - ';')",
+				"target_property_name": "#size_binding_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_height)",
+				"target_property_name": "#raw_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_height - #raw_x)",
+				"target_property_name": "#rem_after_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_x) - ('%.2s' * #raw_x) - ';') * $normalize)",
+				"target_property_name": "#anchored_offset_value_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_x)",
+				"target_property_name": "#raw_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_x - #raw_y)",
+				"target_property_name": "#rem_after_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_y) - ('%.2s' * #raw_y) - ';') * $normalize)",
+				"target_property_name": "#anchored_offset_value_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.8s' * #rem_after_y)",
+				"target_property_name": "#raw_visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_y - #raw_visible)",
+				"target_property_name": "#rem_after_visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.7s' * #raw_visible) - ('%.2s' * #raw_visible) - ';')",
+				"target_property_name": "#pre_visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.8s' * #rem_after_visible)",
+				"target_property_name": "#raw_enabled"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_visible - #raw_enabled)",
+				"target_property_name": "#rem_after_enabled"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.7s' * #raw_enabled) - ('%.2s' * #raw_enabled) - ';')",
+				"target_property_name": "#enabled"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#pre_visible and (#type = 'modal-inline-select'))",
+				"target_property_name": "#visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.1024s' * #custom_text)",
+				"target_property_name": "#skip_to_orientation"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#custom_text - #skip_to_orientation)",
+				"target_property_name": "#rem_at_orientation"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_at_orientation)",
+				"target_property_name": "#raw_orientation"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_orientation) - ('%.2s' * #raw_orientation) - ';')",
+				"target_property_name": "#orientation"
+			}
+		],
+		"controls": [
+			{
+				"inline_host@core_ui_form_components.inline_dropdown_host": {}
+			}
+		]
+	},
+	// Collection-owner widget for the inline list: a type:"dropdown" control populates the
+	// custom_dropdown collection (option blobs) + applies the default selection at init. Chrome
+	// hidden (zero invisible closed box); content = the inline option groups, always visible.
+	"inline_dropdown_host": {
+		"type": "panel",
+		"size": [ "100%", "100%" ],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"$dropdown_name|default": "custom_dropdown",
+		"controls": [
+			{
+				"inline_dd@core_ui_form_components.inline_dropdown_toggle_stub": {
+					"type": "dropdown",
+					"$toggle_view_binding_name": "$dropdown_name",
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"dropdown_name": "$dropdown_name",
+					"dropdown_content_control": "inline_content",
+					"dropdown_area": "inside_header_panel",
+					"$toggle_name": "$dropdown_name",
+					"$toggle_state_binding_name": "('#' + $dropdown_name)"
+				}
+			},
+			{
+				// Content is ALWAYS visible and inline (no #toggle_state gate, no input_panel/popup).
+				"inline_content": {
+					"type": "panel",
+					"size": [ "100%", "100%" ],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"controls": [
+						{
+							"inline_options_v@core_ui_form_components.inline_options_v": {
+								"bindings": [
+									{
+										"binding_type": "view",
+										"source_property_name": "(#orientation = 'vertical')",
+										"target_property_name": "#visible"
+									}
+								]
+							}
+						},
+						{
+							"inline_options_h@core_ui_form_components.inline_options_h": {
+								"bindings": [
+									{
+										"binding_type": "view",
+										"source_property_name": "(#orientation = 'horizontal')",
+										"target_property_name": "#visible"
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		]
+	},
+	// Invisible zero closed-box stub for the host widget (we do not want a closed box; the
+	// type:"dropdown" widget still needs a $dropdown_toggle control to attach to).
+	"inline_dropdown_toggle_stub": {
+		"type": "panel",
+		"size": [ 0, 0 ],
+		"visible": false
+	},
+	"inline_options_v@core_ui_form_components.vanilla_option_radio_dropdown_group": {
+		"visible": "#visible",
+		"$radio_group_orientation": "vertical",
+		"$radio_buttons": [],
+		"$radio_factory": {
+			"name": "buttons",
+			"control_name": "core_ui_form_components.inline_option_row_v"
+		},
+		"$radio_collection_name": "custom_dropdown",
+		"$radio_bindings": [
+			{
+				"binding_name": "#custom_text",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.1024s' * #custom_text)",
+				"target_property_name": "#ori_skip"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#custom_text - #ori_skip)",
+				"target_property_name": "#ori_rem"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #ori_rem)",
+				"target_property_name": "#ori_raw"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #ori_raw) - ('%.2s' * #ori_raw) - ';')",
+				"target_property_name": "#ori"
+			},
+			{
+				"binding_name": "#custom_dropdown_length",
+				"binding_type": "collection",
+				"binding_name_override": "#raw_dd_len",
+				"binding_collection_name": "custom_form"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#raw_dd_len * (#ori = 'vertical'))",
+				"target_property_name": "#collection_length"
+			}
+		]
+	},
+	"inline_options_h@core_ui_form_components.vanilla_option_radio_dropdown_group": {
+		"visible": "#visible",
+		"size": [ "100%", "36px" ],
+		"offset": [ 0, 0 ],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"$radio_group_orientation": "horizontal",
+		"$radio_buttons": [],
+		"$radio_factory": {
+			"name": "buttons",
+			"control_name": "core_ui_form_components.inline_option_row_h"
+		},
+		"$radio_collection_name": "custom_dropdown",
+		"$radio_bindings": [
+			{
+				"binding_name": "#custom_text",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.1024s' * #custom_text)",
+				"target_property_name": "#ori_skip"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#custom_text - #ori_skip)",
+				"target_property_name": "#ori_rem"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #ori_rem)",
+				"target_property_name": "#ori_raw"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #ori_raw) - ('%.2s' * #ori_raw) - ';')",
+				"target_property_name": "#ori"
+			},
+			{
+				"binding_name": "#custom_dropdown_length",
+				"binding_type": "collection",
+				"binding_name_override": "#raw_dd_len",
+				"binding_collection_name": "custom_form"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#raw_dd_len * (#ori = 'horizontal'))",
+				"target_property_name": "#collection_length"
+			}
+		]
+	},
+	"inline_option_row_base": {
+		"type": "panel",
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"$row_size|default": [ "100%", "17px" ],
+		"size": "$row_size",
+		"controls": [
+			{
+				"option_toggle": {
+					"type": "toggle",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"layer": 1,
+					"sound_name": "random.click",
+					"sound_volume": 1.0,
+					"sound_pitch": 1.0,
+					"focus_enabled": true,
+					"focus_magnet_enabled": true,
+					"radio_toggle_group": true,
+					"toggle_name": "custom_dropdown_radio_toggle",
+					"toggle_default_state": false,
+					"toggle_group_forced_index": -1,
+					"toggle_group_default_selected": 0,
+					"toggle_grid_collection_name": "custom_dropdown",
+					"checked_control": "checked",
+					"unchecked_control": "unchecked",
+					"checked_hover_control": "checked_hover",
+					"unchecked_hover_control": "unchecked_hover",
+					"checked_locked_control": "checked_locked",
+					"unchecked_locked_control": "unchecked_locked",
+					"checked_locked_hover_control": "checked_locked_hover",
+					"unchecked_locked_hover_control": "unchecked_locked_hover",
+					"property_bag": {
+						"#toggle_state": true
+					},
+					"button_mappings": [
+						{
+							"from_button_id": "button.menu_select",
+							"to_button_id": "button.menu_select",
+							"mapping_type": "pressed"
+						},
+						{
+							"from_button_id": "button.menu_ok",
+							"to_button_id": "button.menu_ok",
+							"mapping_type": "focused"
+						}
+					],
+					"bindings": [
+						{
+							"binding_type": "collection",
+							"binding_condition": "always",
+							"binding_collection_name": "custom_dropdown",
+							"binding_name": "#custom_radio_toggled",
+							"binding_name_override": "#toggle_state"
+						},
+						{
+							"binding_type": "collection_details",
+							"binding_collection_name": ""
+						}
+					],
+					"controls": [
+						{
+							"unchecked@core_ui_form_components.dropdown_option_face_default": {}
+						},
+						{
+							"checked@core_ui_form_components.dropdown_option_face_selected": {}
+						},
+						{
+							"unchecked_hover@core_ui_form_components.dropdown_option_face_hover": {}
+						},
+						{
+							"checked_hover@core_ui_form_components.dropdown_option_face_selected": {}
+						},
+						{
+							"unchecked_locked@core_ui_form_components.dropdown_option_face_default": {}
+						},
+						{
+							"checked_locked@core_ui_form_components.dropdown_option_face_selected": {}
+						},
+						{
+							"unchecked_locked_hover@core_ui_form_components.dropdown_option_face_default": {}
+						},
+						{
+							"checked_locked_hover@core_ui_form_components.dropdown_option_face_selected": {}
+						}
+					]
+				}
+			},
+			{
+				"bullet_unselected@core_ui_form_components.inline_bullet_default": {}
+			},
+			{
+				"bullet_selected@core_ui_form_components.inline_bullet_selected": {}
+			},
+			{
+				"option_label_left": {
+					"type": "label",
+					"text": "#text",
+					"color": [ 1, 1, 1, 1 ],
+					"font_size": "small",
+					"backup_font_type": "UIFont",
+					"font_scale_factor": "#font_scale_factor",
+					"text_alignment": "left",
+					"anchor_from": "left_middle",
+					"anchor_to": "left_middle",
+					"offset": [ 16, 0 ],
+					"size": [ "100% - 16px", "default" ],
+					"visible": "#visible",
+					"layer": 10,
+					"bindings": [
+						{
+							"binding_name": "#custom_radio_text",
+							"binding_type": "collection",
+							"binding_condition": "always",
+							"binding_collection_name": "custom_dropdown"
+						},
+						{
+							"binding_type": "collection_details"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.92s' * #custom_radio_text)",
+							"target_property_name": "#skip_to_text"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_radio_text - #skip_to_text)",
+							"target_property_name": "#rem_at_text"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_text)",
+							"target_property_name": "#raw_text"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_text) - ('%.2s' * #raw_text) - ';')",
+							"target_property_name": "#text"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.590s' * #custom_radio_text)",
+							"target_property_name": "#skip_to_opt_scale"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_radio_text - #skip_to_opt_scale)",
+							"target_property_name": "#rem_at_opt_scale"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_opt_scale)",
+							"target_property_name": "#raw_opt_scale"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_opt_scale) - ('%.2s' * #raw_opt_scale) - ';')",
+							"target_property_name": "#font_scale_factor"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.673s' * #custom_radio_text)",
+							"target_property_name": "#skip_to_opt_align"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_radio_text - #skip_to_opt_align)",
+							"target_property_name": "#rem_at_opt_align"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_opt_align)",
+							"target_property_name": "#raw_opt_align"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "((('%.82s' * #raw_opt_align) - ('%.2s' * #raw_opt_align) - ';') = 'left')",
+							"target_property_name": "#visible"
+						}
+					]
+				}
+			},
+			{
+				"option_label_center": {
+					"type": "label",
+					"text": "#text",
+					"color": [ 1, 1, 1, 1 ],
+					"font_size": "small",
+					"backup_font_type": "UIFont",
+					"font_scale_factor": "#font_scale_factor",
+					"text_alignment": "center",
+					"anchor_from": "center",
+					"anchor_to": "center",
+					"size": [ "100% - 8px", "default" ],
+					"visible": "#visible",
+					"layer": 10,
+					"bindings": [
+						{
+							"binding_name": "#custom_radio_text",
+							"binding_type": "collection",
+							"binding_condition": "always",
+							"binding_collection_name": "custom_dropdown"
+						},
+						{
+							"binding_type": "collection_details"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.92s' * #custom_radio_text)",
+							"target_property_name": "#skip_to_text"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_radio_text - #skip_to_text)",
+							"target_property_name": "#rem_at_text"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_text)",
+							"target_property_name": "#raw_text"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_text) - ('%.2s' * #raw_text) - ';')",
+							"target_property_name": "#text"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.590s' * #custom_radio_text)",
+							"target_property_name": "#skip_to_opt_scale"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_radio_text - #skip_to_opt_scale)",
+							"target_property_name": "#rem_at_opt_scale"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_opt_scale)",
+							"target_property_name": "#raw_opt_scale"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_opt_scale) - ('%.2s' * #raw_opt_scale) - ';')",
+							"target_property_name": "#font_scale_factor"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.673s' * #custom_radio_text)",
+							"target_property_name": "#skip_to_opt_align"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_radio_text - #skip_to_opt_align)",
+							"target_property_name": "#rem_at_opt_align"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_opt_align)",
+							"target_property_name": "#raw_opt_align"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "((('%.82s' * #raw_opt_align) - ('%.2s' * #raw_opt_align) - ';') = 'center')",
+							"target_property_name": "#visible"
+						}
+					]
+				}
+			},
+			{
+				"option_label_right": {
+					"type": "label",
+					"text": "#text",
+					"color": [ 1, 1, 1, 1 ],
+					"font_size": "small",
+					"backup_font_type": "UIFont",
+					"font_scale_factor": "#font_scale_factor",
+					"text_alignment": "right",
+					"anchor_from": "center",
+					"anchor_to": "center",
+					"size": [ "100% - 8px", "default" ],
+					"visible": "#visible",
+					"layer": 10,
+					"bindings": [
+						{
+							"binding_name": "#custom_radio_text",
+							"binding_type": "collection",
+							"binding_condition": "always",
+							"binding_collection_name": "custom_dropdown"
+						},
+						{
+							"binding_type": "collection_details"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.92s' * #custom_radio_text)",
+							"target_property_name": "#skip_to_text"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_radio_text - #skip_to_text)",
+							"target_property_name": "#rem_at_text"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_text)",
+							"target_property_name": "#raw_text"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_text) - ('%.2s' * #raw_text) - ';')",
+							"target_property_name": "#text"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.590s' * #custom_radio_text)",
+							"target_property_name": "#skip_to_opt_scale"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_radio_text - #skip_to_opt_scale)",
+							"target_property_name": "#rem_at_opt_scale"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_opt_scale)",
+							"target_property_name": "#raw_opt_scale"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_opt_scale) - ('%.2s' * #raw_opt_scale) - ';')",
+							"target_property_name": "#font_scale_factor"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.673s' * #custom_radio_text)",
+							"target_property_name": "#skip_to_opt_align"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#custom_radio_text - #skip_to_opt_align)",
+							"target_property_name": "#rem_at_opt_align"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_opt_align)",
+							"target_property_name": "#raw_opt_align"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "((('%.82s' * #raw_opt_align) - ('%.2s' * #raw_opt_align) - ';') = 'right')",
+							"target_property_name": "#visible"
+						}
+					]
+				}
+			}
+		]
+	},
+	"inline_option_row_v@core_ui_form_components.inline_option_row_base": {
+		"$row_size": [ "100%", "17px" ]
+	},
+	"inline_option_row_h@core_ui_form_components.inline_option_row_base": {
+		"$row_size": [ "80px", "36px" ]
+	},
+	"inline_bullet_default": {
+		"type": "image",
+		"size": [ 12, 12 ],
+		"anchor_from": "left_middle",
+		"anchor_to": "left_middle",
+		"offset": [ 0, 0 ],
+		"layer": 11,
+		"texture": "#texture",
+		"visible": "#visible",
+		"bindings": [
+			{
+				"binding_name": "#custom_radio_text",
+				"binding_type": "collection",
+				"binding_condition": "always",
+				"binding_collection_name": "custom_dropdown"
+			},
+			{
+				"binding_type": "collection_details"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.756s' * #custom_radio_text)",
+				"target_property_name": "#skip_to_bullet"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#custom_radio_text - #skip_to_bullet)",
+				"target_property_name": "#rem_at_bullet"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_at_bullet)",
+				"target_property_name": "#raw_bullet"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_bullet) - ('%.2s' * #raw_bullet) - ';')",
+				"target_property_name": "#texture"
+			},
+			{
+				"binding_type": "collection",
+				"binding_collection_name": "custom_dropdown",
+				"binding_name": "#custom_radio_toggled",
+				"binding_name_override": "#toggle_state"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((not (#texture = '')) and (not #toggle_state))",
+				"target_property_name": "#visible"
+			}
+		]
+	},
+	"inline_bullet_selected": {
+		"type": "image",
+		"size": [ 12, 12 ],
+		"anchor_from": "left_middle",
+		"anchor_to": "left_middle",
+		"offset": [ 0, 0 ],
+		"layer": 11,
+		"texture": "#texture",
+		"visible": "#visible",
+		"bindings": [
+			{
+				"binding_name": "#custom_radio_text",
+				"binding_type": "collection",
+				"binding_condition": "always",
+				"binding_collection_name": "custom_dropdown"
+			},
+			{
+				"binding_type": "collection_details"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.839s' * #custom_radio_text)",
+				"target_property_name": "#skip_to_bullet_sel"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#custom_radio_text - #skip_to_bullet_sel)",
+				"target_property_name": "#rem_at_bullet_sel"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_at_bullet_sel)",
+				"target_property_name": "#raw_bullet_sel"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_bullet_sel) - ('%.2s' * #raw_bullet_sel) - ';')",
+				"target_property_name": "#texture"
+			},
+			{
+				"binding_type": "collection",
+				"binding_collection_name": "custom_dropdown",
+				"binding_name": "#custom_radio_toggled",
+				"binding_name_override": "#toggle_state"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((not (#texture = '')) and #toggle_state)",
+				"target_property_name": "#visible"
+			}
+		]
+	}
+}

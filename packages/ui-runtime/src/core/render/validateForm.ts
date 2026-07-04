@@ -88,6 +88,7 @@ function describe(type: string): string {
     case 'modal-toggle': return 'Form.Toggle';
     case 'modal-slider': return 'Form.Slider';
     case 'modal-dropdown': return 'Form.Dropdown';
+    case 'modal-inline-select': return 'Form.Radio / Form.ToggleButton';
     case 'modal-input': return 'Form.Input';
     case 'modal-form-button': return 'Form.Button';
     default: return type;

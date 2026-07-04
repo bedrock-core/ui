@@ -31,6 +31,9 @@ export type { ToggleButtonGroupProps, ToggleButtonItemProps } from './ToggleButt
 export { Form } from './Form/Form';
 export type { FormProps } from './Form/Form';
 export type { FormToggleProps } from './Form/FormToggle';
+export type { FormCheckboxProps } from './Form/FormCheckbox';
+export type { FormRadioProps } from './Form/FormRadio';
+export type { FormToggleButtonProps } from './Form/FormToggleButton';
 export type { FormSliderProps } from './Form/FormSlider';
 export type { FormDropdownProps } from './Form/FormDropdown';
 export type { FormInputProps } from './Form/FormInput';

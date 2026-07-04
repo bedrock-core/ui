@@ -1,12 +1,12 @@
 import { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
 import { isModalForm } from '../../core/guards';
-import { serializeProps } from '../../core/serializer';
 import { ModalFormError, type Writer } from '../../core/types';
 import { emitDropdown } from '../../core/writers';
 import { FunctionComponent, JSX } from '../../jsx';
 import { resolveStateBackgrounds, UNSTYLED_TEXTURE, withControl, type StateBackgroundProps } from '../control';
 import { labelFontFields, type LabelFont } from './controlPayload';
 import { MODAL_DROPDOWN_SLOT_TYPE } from './modalControls';
+import { isOptionStyle, isStringArray, serializeSelectOption, type OptionStyle } from './optionPayload';
 import { FormControlBase } from './shared';
 
 /**
@@ -24,9 +24,6 @@ const OPTION_ROW_HEIGHT = 17;
 const POPUP_CHROME = 9;
 /** Popup height cap: half the canonical screen — longer lists get the scrollbar. */
 const POPUP_MAX_HEIGHT = CANONICAL_SCREEN.height / 2;
-
-/** Host `type` tag for a per-option payload blob (decoded per-row by the RP option controls). */
-const DROPDOWN_OPTION_TYPE = 'dropdown-option';
 
 export interface FormDropdownProps extends FormControlBase, StateBackgroundProps {
   /** Selectable options. */
@@ -78,70 +75,6 @@ export interface FormDropdownProps extends FormControlBase, StateBackgroundProps
 }
 
 /**
- * The per-option styling every option row is encoded with. Currently uniform (all options
- * share the dropdown-level values), but it rides EACH option's own payload blob, so per-option
- * overrides are a purely additive follow-up.
- */
-interface OptionStyle {
-  height: number;
-  background: string;
-  backgroundHover: string;
-  backgroundSelected: string;
-  fontType: string;
-  fontScaleFactor: number;
-  align: 'left' | 'center' | 'right';
-}
-
-/**
- * Runtime type guard for the `optionStyle` carried on the dropdown's `nativeArgs`.
- * Uses `in`-operator narrowing so no unsafe assertion is needed to index `value`.
- */
-function isOptionStyle(value: unknown): value is OptionStyle {
-  return (
-    typeof value === 'object'
-    && value !== null
-    && 'height' in value && typeof value.height === 'number'
-    && 'background' in value && typeof value.background === 'string'
-    && 'backgroundHover' in value && typeof value.backgroundHover === 'string'
-    && 'backgroundSelected' in value && typeof value.backgroundSelected === 'string'
-    && 'fontType' in value && typeof value.fontType === 'string'
-    && 'fontScaleFactor' in value && typeof value.fontScaleFactor === 'number'
-    && 'align' in value && (value.align === 'left' || value.align === 'center' || value.align === 'right')
-  );
-}
-
-/** Runtime type guard for a `string[]` (the raw option list on `nativeArgs`). */
-function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every(v => typeof v === 'string');
-}
-
-/**
- * Encode one option into its own `bcuiv0007` payload blob — the string handed to the native
- * `ModalFormData.dropdown` as this option's entry. The engine surfaces it per-row as
- * `#custom_radio_text`, and the RP `dropdown_option_radio` decodes text + row height +
- * background states + font/scale/align from it via the shared `'%.Ns'` slicing grammar
- * (exactly like main-form cells decode their `#custom_text`). Because each option gets its
- * OWN payload, the 64-field marker budget resets per option, and — since `options[]` bypasses
- * the serializer's primitive prop channel — option text is not subject to the 80-byte field
- * cap here. Field ORDER is the RP decode contract.
- */
-function serializeDropdownOption(text: string, style: OptionStyle): string {
-  const [payload] = serializeProps({
-    type: DROPDOWN_OPTION_TYPE,
-    text, // field 1 → #custom_radio_text (visible label)
-    height: style.height, // field 2 → row #size_binding_y (px)
-    background: style.background, // field 3 → idle option face
-    backgroundHover: style.backgroundHover, // field 4
-    backgroundSelected: style.backgroundSelected, // field 5
-    fontType: style.fontType, // field 6
-    fontScaleFactor: style.fontScaleFactor, // field 7
-    align: style.align, // field 8 → gates option_label_left/center/right
-  });
-
-  return payload;
-}
-
-/**
  * Option dropdown field → `ModalFormData.dropdown`. Result (`Form.onSubmit`): the
  * selected option's `index` (number, native behavior). Modal-only; render inside a
  * `<Form>`. Accepts the same control/layout props as any component; geometry is
@@ -181,6 +114,9 @@ export const FormDropdown: FunctionComponent<FormDropdownProps> = ({
     fontType: optionLabelFont.fontType,
     fontScaleFactor: optionLabelFont.fontScaleFactor,
     align: optionAlign ?? 'left',
+    // Dropdown popup rows draw no bullet glyph — empty textures self-hide the bullet images.
+    bulletTexture: '',
+    bulletSelectedTexture: '',
   };
 
   return {
@@ -246,9 +182,11 @@ export const formDropdownWriter: Writer = (payload, form, ctx, _callbacks, _prop
         fontType: 'default',
         fontScaleFactor: 2,
         align: 'left',
+        bulletTexture: '',
+        bulletSelectedTexture: '',
       };
 
-  const encodedOptions = options.map(option => serializeDropdownOption(option, resolvedStyle));
+  const encodedOptions = options.map(option => serializeSelectOption(option, resolvedStyle));
 
   emitDropdown(payload, form, ctx, name, encodedOptions, defaultValueIndex);
 };

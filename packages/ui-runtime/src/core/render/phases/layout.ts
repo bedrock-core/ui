@@ -2,8 +2,8 @@ import type { FlexStyle, LayoutNode } from '@bedrock-core/flexbox';
 import { CANONICAL_SCREEN, createNode, computeLayout as flexComputeLayout } from '@bedrock-core/flexbox';
 import { TextFont, TextOverflow, TextWordBreak } from '@bedrock-core/ui/components/Text';
 import {
-  MODAL_DROPDOWN_SLOT_TYPE, MODAL_FORM_BUTTON_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE,
-  MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
+  MODAL_DROPDOWN_SLOT_TYPE, MODAL_FORM_BUTTON_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE,
+  MODAL_INPUT_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
 } from '../../../components/Form';
 import { MAX_SCROLLS, SCROLL_SLOT_TYPE, type ScrollAxis } from '../../../components/Scroll';
 import type { JSX } from '../../../jsx';
@@ -121,6 +121,9 @@ const MODAL_CONTROL_DEFAULT_HEIGHT: Record<string, number> = {
   [MODAL_TOGGLE_SLOT_TYPE]: 24,
   [MODAL_SLIDER_SLOT_TYPE]: 32,
   [MODAL_DROPDOWN_SLOT_TYPE]: 24,
+  // Inline select is content-sized: the component sets an explicit height (rows × row height +
+  // chrome), so this is only a one-row floor for a degenerate empty-option list.
+  [MODAL_INLINE_SELECT_SLOT_TYPE]: 17,
   [MODAL_INPUT_SLOT_TYPE]: 24,
   [MODAL_FORM_BUTTON_SLOT_TYPE]: 24,
 };

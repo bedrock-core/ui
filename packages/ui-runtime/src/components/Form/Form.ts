@@ -3,6 +3,7 @@ import { ModalValue } from '../../core/types';
 import { FunctionComponent, JSX } from '../../jsx';
 import { FormButton, type FormButtonProps } from './FormButton';
 import { FormDropdown, type FormDropdownProps } from './FormDropdown';
+import { FormInlineSelect, type FormInlineSelectProps } from './FormInlineSelect';
 import { FormInput, type FormInputProps } from './FormInput';
 import { FormSlider, type FormSliderProps } from './FormSlider';
 import { FormToggle, type FormToggleProps } from './FormToggle';
@@ -54,6 +55,7 @@ interface FormComponent extends FunctionComponent<FormProps> {
   Toggle: FunctionComponent<FormToggleProps>;
   Slider: FunctionComponent<FormSliderProps>;
   Dropdown: FunctionComponent<FormDropdownProps>;
+  InlineSelect: FunctionComponent<FormInlineSelectProps>;
   Input: FunctionComponent<FormInputProps>;
   Button: FunctionComponent<FormButtonProps>;
 }
@@ -115,6 +117,7 @@ export const Form: FormComponent = Object.assign(FormRoot, {
   Toggle: FormToggle,
   Slider: FormSlider,
   Dropdown: FormDropdown,
+  InlineSelect: FormInlineSelect,
   Input: FormInput,
   Button: FormButton,
 });

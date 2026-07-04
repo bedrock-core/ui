@@ -16,8 +16,8 @@ export {
   Form, ModalContext, MODAL_FORM_SLOT_TYPE,
   type FormConfig, type FormProps, type FormValues,
   type FormButtonKind, type FormButtonProps,
-  type FormDropdownProps, type FormInputProps,
-  type FormSliderProps, type FormToggleProps,
+  type FormDropdownProps, type FormInlineSelectProps, type InlineSelectOrientation,
+  type FormInputProps, type FormSliderProps, type FormToggleProps,
 } from './Form';
 export { Fragment, type FragmentProps } from './Fragment';
 export { Image, imageWriter, type ImageProps } from './Image';
@@ -33,8 +33,10 @@ import { buttonWriter } from './Button';
 import {
   MODAL_FORM_SLOT_TYPE,
   MODAL_TOGGLE_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE,
-  MODAL_DROPDOWN_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE, MODAL_FORM_BUTTON_SLOT_TYPE,
-  formToggleWriter, formSliderWriter, formDropdownWriter, formInputWriter, formButtonWriter,
+  MODAL_DROPDOWN_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE,
+  MODAL_FORM_BUTTON_SLOT_TYPE,
+  formToggleWriter, formSliderWriter, formDropdownWriter, formInlineSelectWriter,
+  formInputWriter, formButtonWriter,
 } from './Form';
 import { imageWriter } from './Image';
 import { itemRendererWriter } from './ItemRenderer';
@@ -77,6 +79,7 @@ export function registerNativeComponents(): void {
   registerComponent(MODAL_TOGGLE_SLOT_TYPE, { writer: formToggleWriter });
   registerComponent(MODAL_SLIDER_SLOT_TYPE, { writer: formSliderWriter });
   registerComponent(MODAL_DROPDOWN_SLOT_TYPE, { writer: formDropdownWriter });
+  registerComponent(MODAL_INLINE_SELECT_SLOT_TYPE, { writer: formInlineSelectWriter });
   registerComponent(MODAL_INPUT_SLOT_TYPE, { writer: formInputWriter });
   // Form action button: participates in layout but consumes NO ModalFormData entry —
   // the presenter encodes it into the form TITLE payload (see FormButton).

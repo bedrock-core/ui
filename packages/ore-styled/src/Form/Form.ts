@@ -1,10 +1,13 @@
 import type { FormProps, JSX } from '@bedrock-core/ui-runtime';
 import { Form as PrimitiveForm } from '@bedrock-core/ui-runtime';
 import { FormButton } from './FormButton';
+import { FormCheckbox } from './FormCheckbox';
 import { FormDropdown } from './FormDropdown';
 import { FormInput } from './FormInput';
+import { FormRadio } from './FormRadio';
 import { FormSlider } from './FormSlider';
 import { FormToggle } from './FormToggle';
+import { FormToggleButton } from './FormToggleButton';
 
 /**
  * Ore-styled native modal form: the runtime `<Form>` root (unchanged — config,
@@ -19,6 +22,9 @@ function FormRoot(props: FormProps): JSX.Element {
 
 export const Form = Object.assign(FormRoot, {
   Toggle: FormToggle,
+  Checkbox: FormCheckbox,
+  Radio: FormRadio,
+  ToggleButton: FormToggleButton,
   Slider: FormSlider,
   Dropdown: FormDropdown,
   Input: FormInput,
