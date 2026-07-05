@@ -70,8 +70,8 @@ Custom JSX-driven UI system for Minecraft Bedrock. Components serialize into com
 
 ### 🚧 Beta 0.X.0 - More core components (Planned)
 
-- Entity render(?)
-- Structure render(?)
+- Entity render(?) (Render items using entities holding the current item?)
+- Structure render
 
 
 ### 👀 Beta 0.X.0 - [REDACTED] (Planned)

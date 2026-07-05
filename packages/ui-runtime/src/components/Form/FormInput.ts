@@ -3,6 +3,7 @@ import { ModalFormError, type Writer } from '../../core/types';
 import { emitInput } from '../../core/writers';
 import { FunctionComponent, JSX } from '../../jsx';
 import { resolveStateBackgrounds, withControl, type StateBackgroundProps } from '../control';
+import { labelFontFields, type LabelFont } from './controlPayload';
 import { MODAL_INPUT_SLOT_TYPE } from './modalControls';
 import { FormControlBase } from './shared';
 
@@ -11,6 +12,10 @@ export interface FormInputProps extends FormControlBase, StateBackgroundProps {
   placeholder?: string;
   /** Initial text. Defaults to `''`. */
   defaultValue?: string;
+  /** Field text font family (typed value + placeholder). Defaults to `'mojangles'`. */
+  font?: LabelFont;
+  /** Field text scale multiplier relative to the standard glyph size. Default `1.0`. */
+  scale?: number;
   // StateBackgroundProps styles the edit box: background + hover + pressed (focused)
   // + locked, at the button-identical payload offsets.
 }
@@ -22,10 +27,12 @@ export interface FormInputProps extends FormControlBase, StateBackgroundProps {
  * payload for the RP to position/style the native widget.
  */
 export const FormInput: FunctionComponent<FormInputProps> = ({
-  name, placeholder, defaultValue,
+  name, placeholder, defaultValue, font, scale,
   backgroundHover, backgroundPressed, backgroundLocked, ...layout
 }: FormInputProps): JSX.Element => {
   const box = resolveStateBackgrounds({ background: layout.background, backgroundHover, backgroundPressed, backgroundLocked });
+  // Field-text font pair — decoded by the RP display/placeholder labels (label_base).
+  const fieldFont = labelFontFields({ font, scale });
 
   return {
     type: MODAL_INPUT_SLOT_TYPE,
@@ -37,6 +44,8 @@ export const FormInput: FunctionComponent<FormInputProps> = ({
       backgroundHover: box.backgroundHover, // [1024-1106] like Button
       backgroundPressed: box.backgroundPressed, // [1107-1189] focused/pressed box
       backgroundLocked: box.backgroundLocked, // [1190-1272]
+      fontType: fieldFont.fontType, // [1273-1355] field-text font (display + placeholder)
+      fontScale: fieldFont.fontScaleFactor, // [1356-1438]
     },
     // Native args ride the writer-only side channel: never serialized, so they cost no
     // payload bytes and can't shift RP-read offsets. placeholder/defaultValue stay raw —

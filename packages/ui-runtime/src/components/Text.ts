@@ -4,8 +4,10 @@ import { TranslationKeysContext } from '../data/TranslationKeys';
 import { TranslationKeysError, type Writer } from '../core/types';
 import { emitLabel } from '../core/writers';
 import { ControlProps, withControl } from './control';
+import { labelFontFields, type LabelFont } from './Form/controlPayload';
 
-export type TextFont = 'mojangles' | 'minecraftTen';
+/** Public alias of the shared label font union (single source: controlPayload). */
+export type TextFont = LabelFont;
 
 export type TextWordBreak = 'normal' | 'break-word';
 export type TextOverflow = 'ellipsis';
@@ -67,15 +69,6 @@ export interface TextProps extends ControlProps {
   maxLines?: number;
 }
 
-const FONT_TYPE_MAP: Record<TextFont, string> = {
-  mojangles: 'default',
-  minecraftTen: 'MinecraftTen',
-};
-
-// font_size: small is hardcoded in text.json (0.5× base render).
-// All metric calculations must account for this factor.
-const FONT_SIZE_BASE = 0.5;
-
 /**
  * Make raw text safe to render as a Bedrock JSON UI label. JSON UI feeds a
  * label's `text` through a numeric string-format path, so a value that starts
@@ -99,6 +92,8 @@ export const Text: FunctionComponent<TextProps> = ({
   ...rest
 }: TextProps): JSX.Element => {
   const resolvedScale = scale ?? 1.0;
+  // Shared mapping (controlPayload): font alias + scale over the font_size:small 0.5× base.
+  const labelFont = labelFontFields({ font, scale });
   const isKey = localizationKey !== undefined;
 
   let resolvedText: string;
@@ -134,8 +129,8 @@ export const Text: FunctionComponent<TextProps> = ({
       // Keys pass through — we send the key, not the resolved string, so a
       // digit-leading .lang entry is guarded there; raw text uses safeLabelText.
       value: isKey ? localizationKey : safeLabelText(resolvedText),
-      fontType: FONT_TYPE_MAP[font ?? 'mojangles'],
-      fontScaleFactor: resolvedScale / FONT_SIZE_BASE,
+      fontType: labelFont.fontType,
+      fontScaleFactor: labelFont.fontScaleFactor,
       __textMetrics: {
         font,
         fontSize: resolvedScale,

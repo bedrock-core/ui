@@ -202,7 +202,7 @@ export const formInlineSelectWriter: Writer = (payload, form, ctx, _callbacks, p
     : {
         background: UNSTYLED_TEXTURE, backgroundHover: UNSTYLED_TEXTURE, backgroundSelected: UNSTYLED_TEXTURE,
         bulletTexture: '', bulletSelectedTexture: '', bulletWidth: 12, bulletHeight: 12,
-        fontType: 'default', fontScaleFactor: 2, align: 'left',
+        ...labelFontFields(), align: 'left',
       };
 
   // The group cell's own layout box — option geometry is encoded relative to it.

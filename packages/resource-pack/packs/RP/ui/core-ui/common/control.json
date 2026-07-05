@@ -324,6 +324,143 @@
 			}
 		]
 	},
+	// THE shared text base: the visual properties every payload-styled label repeats
+	// (text/#text, white, font_size small, the backup_font_type font-alias guard, the
+	// #font_scale_factor hook) AND the shared single-source decode, parameterized by
+	// whole-expression skip vars (same pattern as $type_gate/$face_skip): text → #text,
+	// fontType → #font_type (canonical alias binding), fontScaleFactor →
+	// #font_scale_factor. Defaults match the text component ([1024]/[1107]/[1190] of the
+	// cell payload); the option labels re-point source + offsets via the $vars; the input
+	// labels replace the bindings with their native edit-box set + a font decode. A
+	// consumer whose decode does NOT fit this shape (the dropdown's two-channel
+	// current-value label) declares its OWN bindings array — it wholesale-replaces this
+	// one, which is the supported opt-out (arrays never merge on derivation).
+	// The align chain always decodes (harmlessly, into #raw_al) but only writes #visible
+	// when a consumer points $align_gate_target at "#visible" (default target is a
+	// throwaway var, so plain labels stay visible). text_alignment is NOT bindable
+	// (in-game bisected — resolved at parse, like font_type), so it rides the
+	// $label_alignment var; multi-alignment consumers gate 2-3 static variants.
+	// The payload binding uses condition "always" (needed by the option rows; static
+	// payloads make it behavior-equal elsewhere).
+	// NOT extending this: the modal submit/exit button labels (no scale binding — a
+	// #font_scale_factor reference would dangle).
+	"label_base": {
+		"type": "label",
+		"text": "#text",
+		"color": [1, 1, 1, 1],
+		"font_size": "small",
+		"backup_font_type": "UIFont",
+		"font_scale_factor": "#font_scale_factor",
+		"$label_alignment|default": "left",
+		"text_alignment": "$label_alignment",
+		"size": ["default", "default"],
+		"$payload_collection|default": "form_buttons",
+		"$payload_binding|default": "#form_button_text",
+		"$cell_details_binding_type|default": "none",
+		"$text_skip|default": "('%.1024s' * #payload)",
+		"$font_type_skip|default": "('%.1107s' * #payload)",
+		"$font_scale_skip|default": "('%.1190s' * #payload)",
+		"$align_skip|default": "('%.673s' * #payload)",
+		"$align_gate|default": "((('%.82s' * #raw_al) - ('%.2s' * #raw_al) - ';') = 'left')",
+		"$align_gate_target|default": "#label_align_unused",
+		"bindings": [
+			{
+				"binding_type": "$cell_details_binding_type",
+				"binding_collection_name": "$payload_collection"
+			},
+			{
+				"binding_name": "$payload_binding",
+				"binding_type": "collection",
+				"binding_condition": "always",
+				"binding_collection_name": "$payload_collection",
+				"binding_name_override": "#payload"
+			},
+			{
+				/* --- text --- */
+				"binding_type": "view",
+				"source_property_name": "$text_skip",
+				"target_property_name": "#skip_to_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#payload - #skip_to_text)",
+				"target_property_name": "#rem_at_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_at_text)",
+				"target_property_name": "#raw_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_text) - ('%.2s' * #raw_text) - ';')",
+				"target_property_name": "#text"
+			},
+			{
+				/* --- fontType --- */
+				"binding_type": "view",
+				"source_property_name": "$font_type_skip",
+				"target_property_name": "#skip_to_font_type"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#payload - #skip_to_font_type)",
+				"target_property_name": "#rem_at_font_type"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_at_font_type)",
+				"target_property_name": "#raw_font_type"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_font_type) - ('%.2s' * #raw_font_type) - ';')",
+				"target_property_name": "#font_type"
+			},
+			{
+				/* --- fontScaleFactor --- */
+				"binding_type": "view",
+				"source_property_name": "$font_scale_skip",
+				"target_property_name": "#skip_to_font_scale"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#payload - #skip_to_font_scale)",
+				"target_property_name": "#rem_at_font_scale"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_at_font_scale)",
+				"target_property_name": "#raw_font_scale"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_font_scale) - ('%.2s' * #raw_font_scale) - ';')",
+				"target_property_name": "#font_scale_factor"
+			},
+			{
+				/* --- align (only gates when $align_gate_target = "#visible") --- */
+				"binding_type": "view",
+				"source_property_name": "$align_skip",
+				"target_property_name": "#skip_al"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#payload - #skip_al)",
+				"target_property_name": "#rem_al"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_al)",
+				"target_property_name": "#raw_al"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "$align_gate",
+				"target_property_name": "$align_gate_target"
+			}
+		]
+	},
 	"unused": {
 		"type": "panel",
 		"size": [

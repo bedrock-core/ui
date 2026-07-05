@@ -5,7 +5,8 @@ import { theme } from '../tokens';
 import { labeledColumn } from './label';
 
 export interface FormInputProps extends Omit<PrimitiveFormInputProps,
-  'background' | 'backgroundHover' | 'backgroundPressed' | 'backgroundLocked'> {
+  'background' | 'backgroundHover' | 'backgroundPressed' | 'backgroundLocked'
+  | 'font' | 'scale'> {
   /** Caption rendered above the field. */
   label?: string;
 }
@@ -17,6 +18,7 @@ export interface FormInputProps extends Omit<PrimitiveFormInputProps,
  */
 export function FormInput({ label, name, placeholder, defaultValue, enabled = true, ...layout }: FormInputProps): JSX.Element {
   const t = theme.components.field.textures;
+  const ts = theme.components.field.textStyle;
 
   const control = (
     <PrimitiveForm.Input
@@ -28,6 +30,8 @@ export function FormInput({ label, name, placeholder, defaultValue, enabled = tr
       backgroundHover={t.backgroundHover}
       backgroundPressed={t.backgroundHover}
       backgroundLocked={t.backgroundDisabled}
+      font={ts.font}
+      scale={ts.scale}
       {...(label === undefined ? layout : { width: '100%' })}
     />
   );

@@ -12,98 +12,18 @@
 		"$type_gate": "(#pre_visible and (#type = 'text'))",
 		"controls": [
 			{
-				"txt": {
-					"type": "label",
+				/* Extends the shared text base (core_ui_control.label_base): text/#text, white,
+				   font_size small, backup_font_type (font-alias guard) and the
+				   #font_scale_factor hook come from there — only the decode + geometry live
+				   here. */
+				"txt@core_ui_control.label_base": {
 					"size": [
 						"100%",
 						"100%"
 					],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
-					"text": "#text",
-					/* NO literal "font_type" property: the engine resolves it as a font ALIAS at
-					   screen load (before bindings run) → "Could not find font alias" spam. Bind
-					   into the CANONICAL #font_type below; backup_font_type is the pre-binding
-					   fallback. */
-					"backup_font_type": "UIFont",
-					"font_scale_factor": "#font_scale_factor",
-					"font_size": "small",
-					"localize": true,
-					"bindings": [
-						{
-							"binding_type": "$cell_details_binding_type",
-							"binding_collection_name": "$payload_collection"
-						},
-						{
-							"binding_name": "$payload_binding",
-							"binding_type": "collection",
-							"binding_collection_name": "$payload_collection",
-							"binding_name_override": "#payload"
-						},
-						{
-							/* text — component field 1, absolute [1024] */
-							"binding_type": "view",
-							"source_property_name": "('%.1024s' * #payload)",
-							"target_property_name": "#skip_to_text"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(#payload - #skip_to_text)",
-							"target_property_name": "#rem_at_text"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_at_text)",
-							"target_property_name": "#raw_text"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(('%.82s' * #raw_text) - ('%.2s' * #raw_text) - ';')",
-							"target_property_name": "#text"
-						},
-						{
-							/* fontType — component field 2, absolute [1107] */
-							"binding_type": "view",
-							"source_property_name": "('%.1107s' * #payload)",
-							"target_property_name": "#skip_to_font_type"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(#payload - #skip_to_font_type)",
-							"target_property_name": "#rem_at_font_type"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_at_font_type)",
-							"target_property_name": "#raw_font_type"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(('%.82s' * #raw_font_type) - ('%.2s' * #raw_font_type) - ';')",
-							"target_property_name": "#font_type"
-						},
-						{
-							/* fontScaleFactor — component field 3, absolute [1190] */
-							"binding_type": "view",
-							"source_property_name": "('%.1190s' * #payload)",
-							"target_property_name": "#skip_to_font_scale"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(#payload - #skip_to_font_scale)",
-							"target_property_name": "#rem_at_font_scale"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_at_font_scale)",
-							"target_property_name": "#raw_font_scale"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(('%.82s' * #raw_font_scale) - ('%.2s' * #raw_font_scale) - ';')",
-							"target_property_name": "#font_scale_factor"
-						}
-					]
+					"localize": true
 				}
 			}
 		]
