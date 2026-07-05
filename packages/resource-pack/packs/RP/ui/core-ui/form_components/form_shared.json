@@ -1,181 +1,22 @@
 {
-	// Shared form-component bases + option-row faces used by BOTH the dropdown primitive and
-	// the inline-select primitive. vanilla_toggle / vanilla_option_radio_dropdown_group are the
-	// vanilla-derived bases; dropdown_option_face_* self-decode per-option background states from
-	// the option blob (#custom_radio_text) and carry the required collection_details.
+	// Shared option-ROW machinery used by BOTH the dropdown popup rows and the inline
+	// select rows: the per-option state face (bg + optional bullet), the shared radio
+	// option_toggle, and the label frame + label.
 	"namespace": "core_ui_form_components",
-	// --- copied from common.toggle (ui_common.json:366-557) ---
-	// Still extends vanilla common.toggle_visuals for now.
-	// TTS and focus properties/bindings stripped out (nuked for now).
-	// Only the variables that downstream consumers actually override are kept as
-	// $vars: $toggle_binding_type / $toggle_grid_collection_name (dropdown_control),
-	// $toggle_name / $toggle_state_binding_name (set at instantiation). Everything
-	// else was single-valued and has been hardcoded.
-	"vanilla_toggle": {
-		"type": "toggle",
-		// the 8 state children (was common.toggle_visuals, inlined — single use)
-		"controls": [
-			{
-				"unchecked@$unchecked_control": {}
-			},
-			{
-				"checked@$checked_control": {}
-			},
-			{
-				"unchecked_hover@$unchecked_hover_control": {}
-			},
-			{
-				"checked_hover@$checked_hover_control": {}
-			},
-			{
-				"unchecked_locked@$unchecked_locked_control": {}
-			},
-			{
-				"checked_locked@$checked_locked_control": {}
-			},
-			{
-				"unchecked_locked_hover@$unchecked_locked_hover_control": {}
-			},
-			{
-				"checked_locked_hover@$checked_locked_hover_control": {}
-			}
-		],
-		"layer": 1,
-		"sound_name": "random.click",
-		"sound_volume": 1.0,
-		"sound_pitch": 1.0,
-		"checked_control": "checked",
-		"unchecked_control": "unchecked",
-		"checked_hover_control": "checked_hover",
-		"unchecked_hover_control": "unchecked_hover",
-		"checked_locked_control": "checked_locked",
-		"unchecked_locked_control": "unchecked_locked",
-		"checked_locked_hover_control": "checked_locked_hover",
-		"unchecked_locked_hover_control": "unchecked_locked_hover",
-		"$toggle_binding_type|default": "global",
-		"$toggle_state_binding_name|default": "#toggle_state",
-		"$toggle_grid_collection_name|default": "",
-		// radio_toggle_group MUST stay a $var: option-row toggles override it to
-		// true. Hardcoding it to false made the option-list radios instantiate as
-		// non-radio toggles inside a radio-group factory, which hard-crashes the game
-		// (no log) on screen open. The toggle_group_* fields ride along with it.
-		"$radio_toggle_group|default": false,
-		"$toggle_group_forced_index|default": -1,
-		"$toggle_group_default_selected|default": 0,
-		"radio_toggle_group": "$radio_toggle_group",
-		"toggle_name": "$toggle_name",
-		"toggle_default_state": false,
-		"toggle_group_forced_index": "$toggle_group_forced_index",
-		"toggle_group_default_selected": "$toggle_group_default_selected",
-		"toggle_grid_collection_name": "$toggle_grid_collection_name",
-		"enable_directional_toggling": false,
-		"toggle_on_button": "toggle.toggle_on",
-		"toggle_off_button": "toggle.toggle_off",
-		"button_mappings": [
-			{
-				"from_button_id": "button.menu_select",
-				"to_button_id": "button.menu_select",
-				"mapping_type": "pressed"
-			},
-			{
-				"from_button_id": "button.menu_ok",
-				"to_button_id": "button.menu_ok",
-				"mapping_type": "focused"
-			},
-			{
-				"from_button_id": "button.controller_back",
-				"to_button_id": "button.controller_back",
-				"mapping_type": "focused",
-				"ignored": true
-			}
-		],
-		"property_bag": {
-			"#toggle_state": true
-		},
-		"bindings": [
-			{
-				"binding_type": "$toggle_binding_type",
-				"binding_condition": "visible",
-				"binding_collection_name": "$toggle_grid_collection_name",
-				"binding_name": "$toggle_state_binding_name",
-				"binding_name_override": "#toggle_state"
-			},
-			{
-				"binding_type": "none",
-				"binding_condition": "visible",
-				"binding_collection_name": "$toggle_grid_collection_name",
-				"binding_name": "#toggle_enabled",
-				"binding_name_override": "#enabled"
-			},
-			{
-				"binding_type": "none",
-				"binding_collection_name": ""
-			}
-		]
-	},
-	// --- copied from settings_common.option_radio_dropdown_group (settings_common.json:1723-1741) ---
-	// Inner radio_control_group still extends vanilla settings_common.
-	"vanilla_option_radio_dropdown_group": {
-		"type": "panel",
-		"size": [
-			"100% - 4px",
-			"100%c + 4px"
-		],
-		"offset": [
-			2,
-			1
-		],
-		"controls": [
-			{
-				// was vanilla_option_radio_group_control (settings_common.option_radio_group_control), inlined — single use
-				"radio_control_group": {
-					"type": "stack_panel",
-					// $radio_group_orientation drives vertical (radio stack) vs horizontal
-					// (segment strip). It's a LITERAL stack_panel property (orientation is not
-					// bindable), so the inline_select cell picks the variant by #orientation gate.
-					"$radio_group_orientation|default": "vertical",
-					"orientation": "$radio_group_orientation",
-					"size": [
-						"100%",
-						"100%c"
-					],
-					"anchor_from": "top_left",
-					"anchor_to": "top_left",
-					"controls": "$radio_buttons",
-					"$radio_factory|default": {
-						"name": "empty"
-					},
-					"$radio_collection_name|default": "",
-					"$radio_bindings|default": [],
-					"factory": "$radio_factory",
-					"collection_name": "$radio_collection_name",
-					"bindings": "$radio_bindings"
-				}
-			}
-		]
-	},
-	// Option-row state faces: per-option textures decoded from the option's OWN blob
-	// (#custom_radio_text): background [590] / backgroundHover [673] / backgroundSelected [756].
-	// (checked / hovered-while-checked / locked-checked map to selected; locked-unchecked to default.)
-	// One shared option-row face: bg image self-decoding its texture from the option's
-	// OWN blob (#custom_radio_text, engine-owned custom_dropdown collection) at $face_skip.
-	// Kept separate from core_ui_common.state_face on purpose: this shape needs the
-	// custom_dropdown collection + binding_condition "always" + collection_details ON THE
-	// SAME control (a custom_dropdown binding WITHOUT details hard-crashes the game with
-	// zero logs — bisected in-game). Offsets: background [590], hover [673], selected [756].
+	// One shared face: bg image self-decoding its texture from the option's OWN blob
+	// (#custom_radio_text, engine-owned custom_dropdown collection) at $face_skip.
+	// Kept separate from core_ui_common.state_face ON PURPOSE: this fetch shape needs the
+	// custom_dropdown collection + binding_condition "always" + collection_details on the
+	// SAME control (a custom_dropdown binding WITHOUT details hard-crashes, zero logs).
+	// Blob offsets — faces: background[590] hover[673] selected[756]; bullets:
+	// unselected[839] selected[922] unselectedHover[1503] selectedHover[1586].
 	"option_face": {
 		"type": "panel",
-		"size": [
-			"100%",
-			"100%"
-		],
+		"size": ["100%", "100%"],
 		"$face_skip|default": "('%.590s' * #custom_radio_text)",
-		// Optional per-state bullet glyph, rendered as a SECOND child of the face (not a
-		// controls-override) so a derived face only sets $bullet_skip (a property that MERGES)
-		// instead of replacing this controls array (which would wipe `bg`). $bullet_skip|default
-		// points at the unselected-bullet offset [839]; dropdown/toggle-button blobs encode an
-		// empty texture there, so the glyph self-hides everywhere except the inline radio faces
-		// (which override $bullet_skip to the state's own offset).
+		// Bullet rides as a SECOND child gated by $bullet_skip (a property — MERGES on
+		// derivation; a controls-override here would wipe `bg`). Dropdown/toggle-button
+		// blobs encode '' at the bullet offsets, so the glyph self-hides for them.
 		"$bullet_skip|default": "('%.839s' * #custom_radio_text)",
 		"controls": [
 			{
@@ -196,60 +37,58 @@
 							"binding_condition": "always",
 							"binding_collection_name": "custom_dropdown"
 						},
-						{
-							"binding_type": "collection_details"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "$face_skip",
-							"target_property_name": "#skip_to_opt_bg"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(#custom_radio_text - #skip_to_opt_bg)",
-							"target_property_name": "#rem_at_opt_bg"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_at_opt_bg)",
-							"target_property_name": "#raw_opt_bg"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(('%.82s' * #raw_opt_bg) - ('%.2s' * #raw_opt_bg) - ';')",
-							"target_property_name": "#texture"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(not (#texture = ''))",
-							"target_property_name": "#visible"
-						}
+						{ "binding_type": "collection_details" },
+						{ "binding_type": "view", "source_property_name": "$face_skip", "target_property_name": "#skip_to_opt_bg" },
+						{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_to_opt_bg)", "target_property_name": "#rem_at_opt_bg" },
+						{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_at_opt_bg)", "target_property_name": "#raw_opt_bg" },
+						{ "binding_type": "view", "source_property_name": "(('%.82s' * #raw_opt_bg) - ('%.2s' * #raw_opt_bg) - ';')", "target_property_name": "#texture" },
+						{ "binding_type": "view", "source_property_name": "(not (#texture = ''))", "target_property_name": "#visible" }
 					]
 				}
 			},
-			{
-				"bullet@core_ui_form_components.inline_bullet": {
-					"$bullet_skip": "$bullet_skip"
-				}
-			}
+			{ "bullet@core_ui_form_components.inline_bullet": { "$bullet_skip": "$bullet_skip" } }
 		]
 	},
-	"dropdown_option_face_default@core_ui_form_components.option_face": {
-		"$face_skip": "('%.590s' * #custom_radio_text)"
+	// ── THE shared option-row toggle (popup + inline) ───────────────────────────────
+	// Radio semantics + custom_dropdown write-back on toggle_base. Its 8 state children
+	// are option_face instances with the per-state face/bullet offsets inline; the BLOB
+	// decides bullet visibility (dropdown/toggle-button blobs encode empty bullets), so
+	// one mapping serves popup rows and inline radios alike. Inline rows pass
+	// $toggle_binding_condition "always" (their proven shape); popup rows use the
+	// "visible" default.
+	"option_toggle@core_ui_form_components.toggle_base": {
+		"size": ["100%", "100%"],
+		"$radio_toggle_group": true,
+		"$toggle_name": "custom_dropdown_radio_toggle",
+		"$toggle_binding_type": "collection",
+		"$toggle_grid_collection_name": "custom_dropdown",
+		"$toggle_state_binding_name": "#custom_radio_toggled",
+		"$toggle_details_binding_type": "collection_details",
+		"controls": [
+			{ "unchecked@core_ui_form_components.option_face": { "$face_skip": "('%.590s' * #custom_radio_text)", "$bullet_skip": "('%.839s' * #custom_radio_text)" } },
+			{ "checked@core_ui_form_components.option_face": { "$face_skip": "('%.756s' * #custom_radio_text)", "$bullet_skip": "('%.922s' * #custom_radio_text)" } },
+			{ "unchecked_hover@core_ui_form_components.option_face": { "$face_skip": "('%.673s' * #custom_radio_text)", "$bullet_skip": "('%.1503s' * #custom_radio_text)" } },
+			{ "checked_hover@core_ui_form_components.option_face": { "$face_skip": "('%.756s' * #custom_radio_text)", "$bullet_skip": "('%.1586s' * #custom_radio_text)" } },
+			{ "unchecked_locked@core_ui_form_components.option_face": { "$face_skip": "('%.590s' * #custom_radio_text)", "$bullet_skip": "('%.839s' * #custom_radio_text)" } },
+			{ "checked_locked@core_ui_form_components.option_face": { "$face_skip": "('%.756s' * #custom_radio_text)", "$bullet_skip": "('%.922s' * #custom_radio_text)" } },
+			{ "unchecked_locked_hover@core_ui_form_components.option_face": { "$face_skip": "('%.590s' * #custom_radio_text)", "$bullet_skip": "('%.839s' * #custom_radio_text)" } },
+			{ "checked_locked_hover@core_ui_form_components.option_face": { "$face_skip": "('%.756s' * #custom_radio_text)", "$bullet_skip": "('%.922s' * #custom_radio_text)" } }
+		]
 	},
-	"dropdown_option_face_hover@core_ui_form_components.option_face": {
-		"$face_skip": "('%.673s' * #custom_radio_text)"
+	// [1,1] frame at the row's top-left; option_label offsets from it by the TS-computed
+	// labelX/labelY (alignment is TS-side).
+	"option_label_frame": {
+		"type": "panel",
+		"size": [1, 1],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"controls": [ { "option_label@core_ui_form_components.option_label": {} } ]
 	},
-	"dropdown_option_face_selected@core_ui_form_components.option_face": {
-		"$face_skip": "('%.756s' * #custom_radio_text)"
-	},
-	// THE option-row label — pure label, ZERO bespoke bindings: the option blob
-	// leads with the standard label GROUP (text [92], fontType [175], fontScale [258],
-	// labelX [341], labelY [424]), so the base's sequential group decode does all the
-	// work from one $label_skip. Alignment is TS-computed into labelX/labelY
-	// (optionLabelPosition); per-option fonts now decode too (group slot 2). Fetch
-	// safety: label's fetch is the custom_dropdown-PROVEN shape (collection first,
-	// details second with empty name). Host inside a [1,1] frame at the row's top-left.
+	// THE option-row label — pure label, zero bespoke bindings: the blob leads with the
+	// standard label GROUP (text[92] fontType[175] fontScale[258] labelX[341] labelY[424]),
+	// so core_ui_components.label's sequential group decode does all the work from one
+	// $label_skip. Fetch is the custom_dropdown-PROVEN shape (collection first, details
+	// second, empty name).
 	"option_label@core_ui_components.label": {
 		"layer": 10,
 		"$payload_collection": "custom_dropdown",

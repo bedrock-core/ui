@@ -202,766 +202,449 @@
 				}
 			},
 			{
-				/* Form.Button submit: geometry/styling decoded from the TITLE payload block
-					   (submit block base [590]) — the button is NOT a factory cell; it sits in
-					   the scroll flow at layout-computed x/y and presses button.submit_custom_form. */
-				"flow_submit_anchor": {
-					"type": "panel",
-					"size": [
-						1,
-						1
-					],
-					"anchor_from": "top_left",
-					"anchor_to": "top_left",
-					"controls": [
-						{
-							"flow_submit": {
-								"type": "panel",
-								"size": [
-									1,
-									1
-								],
-								"layer": 50,
-								"anchor_from": "top_left",
-								"anchor_to": "top_left",
-								"use_anchored_offset": true,
-								"property_bag": {
-									"#size_binding_x": 0.0,
-									"#size_binding_y": 0.0,
-									"#anchored_offset_value_x": 0.0,
-									"#anchored_offset_value_y": 0.0
-								},
-								"visible": "#visible",
-								"enabled": "#enabled",
-								"bindings": [
-									{
-										"binding_name": "#title_text"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.590s' * #title_text)",
-										"target_property_name": "#skip_submit_w"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(#title_text - #skip_submit_w)",
-										"target_property_name": "#rem_submit_w"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.83s' * #rem_submit_w)",
-										"target_property_name": "#raw_submit_w"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "((('%.82s' * #raw_submit_w) - ('%.2s' * #raw_submit_w) - ';') * 1)",
-										"target_property_name": "#size_binding_x"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.673s' * #title_text)",
-										"target_property_name": "#skip_submit_h"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(#title_text - #skip_submit_h)",
-										"target_property_name": "#rem_submit_h"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.83s' * #rem_submit_h)",
-										"target_property_name": "#raw_submit_h"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "((('%.82s' * #raw_submit_h) - ('%.2s' * #raw_submit_h) - ';') * 1)",
-										"target_property_name": "#size_binding_y"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.756s' * #title_text)",
-										"target_property_name": "#skip_submit_x"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(#title_text - #skip_submit_x)",
-										"target_property_name": "#rem_submit_x"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.83s' * #rem_submit_x)",
-										"target_property_name": "#raw_submit_x"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "((('%.82s' * #raw_submit_x) - ('%.2s' * #raw_submit_x) - ';') * 1)",
-										"target_property_name": "#anchored_offset_value_x"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.839s' * #title_text)",
-										"target_property_name": "#skip_submit_y"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(#title_text - #skip_submit_y)",
-										"target_property_name": "#rem_submit_y"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.83s' * #rem_submit_y)",
-										"target_property_name": "#raw_submit_y"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "((('%.82s' * #raw_submit_y) - ('%.2s' * #raw_submit_y) - ';') * 1)",
-										"target_property_name": "#anchored_offset_value_y"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.922s' * #title_text)",
-										"target_property_name": "#skip_submit_vis"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(#title_text - #skip_submit_vis)",
-										"target_property_name": "#rem_submit_vis"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.8s' * #rem_submit_vis)",
-										"target_property_name": "#raw_submit_vis"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(('%.7s' * #raw_submit_vis) - ('%.2s' * #raw_submit_vis) - ';')",
-										"target_property_name": "#visible"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.930s' * #title_text)",
-										"target_property_name": "#skip_submit_en"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(#title_text - #skip_submit_en)",
-										"target_property_name": "#rem_submit_en"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.8s' * #rem_submit_en)",
-										"target_property_name": "#raw_submit_en"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(('%.7s' * #raw_submit_en) - ('%.2s' * #raw_submit_en) - ';')",
-										"target_property_name": "#enabled"
-									}
-								],
-								"controls": [
-									{
-										"flow_submit_button": {
-											"type": "button",
-											"size": [
-												"100%",
-												"100%"
-											],
-											"layer": 2,
-											"focus_enabled": true,
-											"focus_magnet_enabled": true,
-											"default_focus_precedence": 0,
-											"sound_name": "random.click",
-											"sound_volume": 1.0,
-											"sound_pitch": 1.0,
-											"locked_control": "locked",
-											"default_control": "default",
-											"hover_control": "hover",
-											"pressed_control": "pressed",
-											"button_mappings": [
-												{
-													"from_button_id": "button.menu_select",
-													"to_button_id": "button.submit_custom_form",
-													"mapping_type": "pressed"
-												},
-												{
-													"from_button_id": "button.menu_ok",
-													"to_button_id": "button.submit_custom_form",
-													"mapping_type": "focused"
-												}
-											],
-											"controls": [
-												{
-													"default": {
-														"type": "image",
-														"size": [
-															"100%",
-															"100%"
-														],
-														"layer": 2,
-														"texture": "#texture",
-														"bindings": [
-															{
-																"binding_name": "#title_text"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "('%.1021s' * #title_text)",
-																"target_property_name": "#skip_submit_bg"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "(#title_text - #skip_submit_bg)",
-																"target_property_name": "#rem_submit_bg"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "('%.83s' * #rem_submit_bg)",
-																"target_property_name": "#raw_submit_bg"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "(('%.82s' * #raw_submit_bg) - ('%.2s' * #raw_submit_bg) - ';')",
-																"target_property_name": "#texture"
-															}
-														]
-													}
-												},
-												{
-													"hover": {
-														"type": "image",
-														"size": [
-															"100%",
-															"100%"
-														],
-														"layer": 2,
-														"texture": "#texture",
-														"bindings": [
-															{
-																"binding_name": "#title_text"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "('%.1104s' * #title_text)",
-																"target_property_name": "#skip_submit_hov"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "(#title_text - #skip_submit_hov)",
-																"target_property_name": "#rem_submit_hov"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "('%.83s' * #rem_submit_hov)",
-																"target_property_name": "#raw_submit_hov"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "(('%.82s' * #raw_submit_hov) - ('%.2s' * #raw_submit_hov) - ';')",
-																"target_property_name": "#texture"
-															}
-														]
-													}
-												},
-												{
-													"pressed": {
-														"type": "image",
-														"size": [
-															"100%",
-															"100%"
-														],
-														"layer": 2,
-														"texture": "#texture",
-														"bindings": [
-															{
-																"binding_name": "#title_text"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "('%.1187s' * #title_text)",
-																"target_property_name": "#skip_submit_prs"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "(#title_text - #skip_submit_prs)",
-																"target_property_name": "#rem_submit_prs"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "('%.83s' * #rem_submit_prs)",
-																"target_property_name": "#raw_submit_prs"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "(('%.82s' * #raw_submit_prs) - ('%.2s' * #raw_submit_prs) - ';')",
-																"target_property_name": "#texture"
-															}
-														]
-													}
-												},
-												{
-													"locked": {
-														"type": "image",
-														"size": [
-															"100%",
-															"100%"
-														],
-														"layer": 2,
-														"texture": "#texture",
-														"bindings": [
-															{
-																"binding_name": "#title_text"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "('%.1270s' * #title_text)",
-																"target_property_name": "#skip_submit_lock"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "(#title_text - #skip_submit_lock)",
-																"target_property_name": "#rem_submit_lock"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "('%.83s' * #rem_submit_lock)",
-																"target_property_name": "#raw_submit_lock"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "(('%.82s' * #raw_submit_lock) - ('%.2s' * #raw_submit_lock) - ';')",
-																"target_property_name": "#texture"
-															}
-														]
-													}
-												},
-												{
-													"label": {
-														"type": "label",
-														"text": "#text",
-														"color": [
-															1,
-															1,
-															1,
-															1
-														],
-														"layer": 5,
-														"backup_font_type": "UIFont",
-														"text_alignment": "center",
-														"anchor_from": "center",
-														"anchor_to": "center",
-														"bindings": [
-															{
-																"binding_name": "#title_text"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "('%.938s' * #title_text)",
-																"target_property_name": "#skip_submit_lbl"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "(#title_text - #skip_submit_lbl)",
-																"target_property_name": "#rem_submit_lbl"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "('%.83s' * #rem_submit_lbl)",
-																"target_property_name": "#raw_submit_lbl"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "(('%.82s' * #raw_submit_lbl) - ('%.2s' * #raw_submit_lbl) - ';')",
-																"target_property_name": "#text"
-															}
-														]
-													}
-												}
-											]
-										}
-									}
-								]
-							}
-						}
-					]
+				/* Form.Button submit — geometry/styling from the TITLE block @590; presses submit_custom_form. */
+				"flow_submit_anchor@core_ui_common.flow_button_anchor": {
+					"$block_skip": 590,
+					"$button_action": "button.submit_custom_form"
 				}
 			},
 			{
-				/* Form.Button exit: geometry/styling decoded from the TITLE payload block
-					   (exit block base [1353]) — the button is NOT a factory cell; it sits in
-					   the scroll flow at layout-computed x/y and presses button.menu_exit. */
-				"flow_exit_anchor": {
-					"type": "panel",
+				/* Form.Button exit — geometry/styling from the TITLE block @1353; presses menu_exit. */
+				"flow_exit_anchor@core_ui_common.flow_button_anchor": {
+					"$block_skip": 1353,
+					"$button_action": "button.menu_exit"
+				}
+			}
+		]
+	},
+	"flow_button_anchor": {
+		"type": "panel",
+		"size": [
+			1,
+			1
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"$block_skip|default": 590,
+		"$button_action|default": "button.submit_custom_form",
+		"controls": [
+			{
+				"flow_button@core_ui_common.flow_button": {
+					"$block_skip": "$block_skip",
+					"$button_action": "$button_action"
+				}
+			}
+		]
+	},
+	"flow_button": {
+		"type": "panel",
+		"size": [
+			1,
+			1
+		],
+		"layer": 50,
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"use_anchored_offset": true,
+		"$block_skip|default": 590,
+		"$button_action|default": "button.submit_custom_form",
+		"property_bag": {
+			"#size_binding_x": 0,
+			"#size_binding_y": 0,
+			"#anchored_offset_value_x": 0,
+			"#anchored_offset_value_y": 0
+		},
+		"visible": "#visible",
+		"enabled": "#enabled",
+		"bindings": [
+			{
+				"binding_name": "#title_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.' + $block_skip + 's') * #title_text)",
+				"target_property_name": "#pre_block"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#title_text - #pre_block)",
+				"target_property_name": "#at_block"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_block)",
+				"target_property_name": "#raw_w"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_w) - ('%.2s' * #raw_w) - ';') * 1)",
+				"target_property_name": "#size_binding_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_block)",
+				"target_property_name": "#pre_h"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#at_block - #pre_h)",
+				"target_property_name": "#at_h"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_h)",
+				"target_property_name": "#raw_h"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_h) - ('%.2s' * #raw_h) - ';') * 1)",
+				"target_property_name": "#size_binding_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.166s' * #at_block)",
+				"target_property_name": "#pre_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#at_block - #pre_x)",
+				"target_property_name": "#at_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_x)",
+				"target_property_name": "#raw_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_x) - ('%.2s' * #raw_x) - ';') * 1)",
+				"target_property_name": "#anchored_offset_value_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.249s' * #at_block)",
+				"target_property_name": "#pre_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#at_block - #pre_y)",
+				"target_property_name": "#at_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_y)",
+				"target_property_name": "#raw_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_y) - ('%.2s' * #raw_y) - ';') * 1)",
+				"target_property_name": "#anchored_offset_value_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.332s' * #at_block)",
+				"target_property_name": "#pre_vis"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#at_block - #pre_vis)",
+				"target_property_name": "#at_vis"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.8s' * #at_vis)",
+				"target_property_name": "#raw_vis"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.7s' * #raw_vis) - ('%.2s' * #raw_vis) - ';')",
+				"target_property_name": "#visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.340s' * #at_block)",
+				"target_property_name": "#pre_en"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#at_block - #pre_en)",
+				"target_property_name": "#at_en"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.8s' * #at_en)",
+				"target_property_name": "#raw_en"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.7s' * #raw_en) - ('%.2s' * #raw_en) - ';')",
+				"target_property_name": "#enabled"
+			}
+		],
+		"controls": [
+			{
+				"flow_button_inner": {
+					"type": "button",
 					"size": [
-						1,
-						1
+						"100%",
+						"100%"
 					],
-					"anchor_from": "top_left",
-					"anchor_to": "top_left",
+					"layer": 2,
+					"focus_enabled": true,
+					"focus_magnet_enabled": true,
+					"default_focus_precedence": 0,
+					"sound_name": "random.click",
+					"sound_volume": 1,
+					"sound_pitch": 1,
+					"locked_control": "locked",
+					"default_control": "default",
+					"hover_control": "hover",
+					"pressed_control": "pressed",
+					"button_mappings": [
+						{
+							"from_button_id": "button.menu_select",
+							"to_button_id": "$button_action",
+							"mapping_type": "pressed"
+						},
+						{
+							"from_button_id": "button.menu_ok",
+							"to_button_id": "$button_action",
+							"mapping_type": "focused"
+						}
+					],
 					"controls": [
 						{
-							"flow_exit": {
-								"type": "panel",
+							"default": {
+								"type": "image",
 								"size": [
-									1,
-									1
+									"100%",
+									"100%"
 								],
-								"layer": 50,
-								"anchor_from": "top_left",
-								"anchor_to": "top_left",
-								"use_anchored_offset": true,
-								"property_bag": {
-									"#size_binding_x": 0.0,
-									"#size_binding_y": 0.0,
-									"#anchored_offset_value_x": 0.0,
-									"#anchored_offset_value_y": 0.0
-								},
-								"visible": "#visible",
-								"enabled": "#enabled",
+								"layer": 2,
+								"texture": "#texture",
 								"bindings": [
 									{
 										"binding_name": "#title_text"
 									},
 									{
 										"binding_type": "view",
-										"source_property_name": "('%.1353s' * #title_text)",
-										"target_property_name": "#skip_exit_w"
+										"source_property_name": "(('%.' + $block_skip + 's') * #title_text)",
+										"target_property_name": "#pre_block"
 									},
 									{
 										"binding_type": "view",
-										"source_property_name": "(#title_text - #skip_exit_w)",
-										"target_property_name": "#rem_exit_w"
+										"source_property_name": "(#title_text - #pre_block)",
+										"target_property_name": "#at_block"
 									},
 									{
 										"binding_type": "view",
-										"source_property_name": "('%.83s' * #rem_exit_w)",
-										"target_property_name": "#raw_exit_w"
+										"source_property_name": "('%.431s' * #at_block)",
+										"target_property_name": "#pre_default"
 									},
 									{
 										"binding_type": "view",
-										"source_property_name": "((('%.82s' * #raw_exit_w) - ('%.2s' * #raw_exit_w) - ';') * 1)",
-										"target_property_name": "#size_binding_x"
+										"source_property_name": "(#at_block - #pre_default)",
+										"target_property_name": "#at_default"
 									},
 									{
 										"binding_type": "view",
-										"source_property_name": "('%.1436s' * #title_text)",
-										"target_property_name": "#skip_exit_h"
+										"source_property_name": "('%.83s' * #at_default)",
+										"target_property_name": "#raw_default"
 									},
 									{
 										"binding_type": "view",
-										"source_property_name": "(#title_text - #skip_exit_h)",
-										"target_property_name": "#rem_exit_h"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.83s' * #rem_exit_h)",
-										"target_property_name": "#raw_exit_h"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "((('%.82s' * #raw_exit_h) - ('%.2s' * #raw_exit_h) - ';') * 1)",
-										"target_property_name": "#size_binding_y"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.1519s' * #title_text)",
-										"target_property_name": "#skip_exit_x"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(#title_text - #skip_exit_x)",
-										"target_property_name": "#rem_exit_x"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.83s' * #rem_exit_x)",
-										"target_property_name": "#raw_exit_x"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "((('%.82s' * #raw_exit_x) - ('%.2s' * #raw_exit_x) - ';') * 1)",
-										"target_property_name": "#anchored_offset_value_x"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.1602s' * #title_text)",
-										"target_property_name": "#skip_exit_y"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(#title_text - #skip_exit_y)",
-										"target_property_name": "#rem_exit_y"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.83s' * #rem_exit_y)",
-										"target_property_name": "#raw_exit_y"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "((('%.82s' * #raw_exit_y) - ('%.2s' * #raw_exit_y) - ';') * 1)",
-										"target_property_name": "#anchored_offset_value_y"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.1685s' * #title_text)",
-										"target_property_name": "#skip_exit_vis"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(#title_text - #skip_exit_vis)",
-										"target_property_name": "#rem_exit_vis"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.8s' * #rem_exit_vis)",
-										"target_property_name": "#raw_exit_vis"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(('%.7s' * #raw_exit_vis) - ('%.2s' * #raw_exit_vis) - ';')",
-										"target_property_name": "#visible"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.1693s' * #title_text)",
-										"target_property_name": "#skip_exit_en"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(#title_text - #skip_exit_en)",
-										"target_property_name": "#rem_exit_en"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.8s' * #rem_exit_en)",
-										"target_property_name": "#raw_exit_en"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(('%.7s' * #raw_exit_en) - ('%.2s' * #raw_exit_en) - ';')",
-										"target_property_name": "#enabled"
+										"source_property_name": "(('%.82s' * #raw_default) - ('%.2s' * #raw_default) - ';')",
+										"target_property_name": "#texture"
 									}
+								]
+							}
+						},
+						{
+							"hover": {
+								"type": "image",
+								"size": [
+									"100%",
+									"100%"
 								],
-								"controls": [
+								"layer": 2,
+								"texture": "#texture",
+								"bindings": [
 									{
-										"flow_exit_button": {
-											"type": "button",
-											"size": [
-												"100%",
-												"100%"
-											],
-											"layer": 2,
-											"focus_enabled": true,
-											"focus_magnet_enabled": true,
-											"default_focus_precedence": 0,
-											"sound_name": "random.click",
-											"sound_volume": 1.0,
-											"sound_pitch": 1.0,
-											"locked_control": "locked",
-											"default_control": "default",
-											"hover_control": "hover",
-											"pressed_control": "pressed",
-											"button_mappings": [
-												{
-													"from_button_id": "button.menu_select",
-													"to_button_id": "button.menu_exit",
-													"mapping_type": "pressed"
-												},
-												{
-													"from_button_id": "button.menu_ok",
-													"to_button_id": "button.menu_exit",
-													"mapping_type": "focused"
-												}
-											],
-											"controls": [
-												{
-													"default": {
-														"type": "image",
-														"size": [
-															"100%",
-															"100%"
-														],
-														"layer": 2,
-														"texture": "#texture",
-														"bindings": [
-															{
-																"binding_name": "#title_text"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "('%.1784s' * #title_text)",
-																"target_property_name": "#skip_exit_bg"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "(#title_text - #skip_exit_bg)",
-																"target_property_name": "#rem_exit_bg"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "('%.83s' * #rem_exit_bg)",
-																"target_property_name": "#raw_exit_bg"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "(('%.82s' * #raw_exit_bg) - ('%.2s' * #raw_exit_bg) - ';')",
-																"target_property_name": "#texture"
-															}
-														]
-													}
-												},
-												{
-													"hover": {
-														"type": "image",
-														"size": [
-															"100%",
-															"100%"
-														],
-														"layer": 2,
-														"texture": "#texture",
-														"bindings": [
-															{
-																"binding_name": "#title_text"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "('%.1867s' * #title_text)",
-																"target_property_name": "#skip_exit_hov"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "(#title_text - #skip_exit_hov)",
-																"target_property_name": "#rem_exit_hov"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "('%.83s' * #rem_exit_hov)",
-																"target_property_name": "#raw_exit_hov"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "(('%.82s' * #raw_exit_hov) - ('%.2s' * #raw_exit_hov) - ';')",
-																"target_property_name": "#texture"
-															}
-														]
-													}
-												},
-												{
-													"pressed": {
-														"type": "image",
-														"size": [
-															"100%",
-															"100%"
-														],
-														"layer": 2,
-														"texture": "#texture",
-														"bindings": [
-															{
-																"binding_name": "#title_text"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "('%.1950s' * #title_text)",
-																"target_property_name": "#skip_exit_prs"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "(#title_text - #skip_exit_prs)",
-																"target_property_name": "#rem_exit_prs"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "('%.83s' * #rem_exit_prs)",
-																"target_property_name": "#raw_exit_prs"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "(('%.82s' * #raw_exit_prs) - ('%.2s' * #raw_exit_prs) - ';')",
-																"target_property_name": "#texture"
-															}
-														]
-													}
-												},
-												{
-													"locked": {
-														"type": "image",
-														"size": [
-															"100%",
-															"100%"
-														],
-														"layer": 2,
-														"texture": "#texture",
-														"bindings": [
-															{
-																"binding_name": "#title_text"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "('%.2033s' * #title_text)",
-																"target_property_name": "#skip_exit_lock"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "(#title_text - #skip_exit_lock)",
-																"target_property_name": "#rem_exit_lock"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "('%.83s' * #rem_exit_lock)",
-																"target_property_name": "#raw_exit_lock"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "(('%.82s' * #raw_exit_lock) - ('%.2s' * #raw_exit_lock) - ';')",
-																"target_property_name": "#texture"
-															}
-														]
-													}
-												},
-												{
-													"label": {
-														"type": "label",
-														"text": "#text",
-														"color": [
-															1,
-															1,
-															1,
-															1
-														],
-														"layer": 5,
-														"backup_font_type": "UIFont",
-														"text_alignment": "center",
-														"anchor_from": "center",
-														"anchor_to": "center",
-														"bindings": [
-															{
-																"binding_name": "#title_text"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "('%.1701s' * #title_text)",
-																"target_property_name": "#skip_exit_lbl"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "(#title_text - #skip_exit_lbl)",
-																"target_property_name": "#rem_exit_lbl"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "('%.83s' * #rem_exit_lbl)",
-																"target_property_name": "#raw_exit_lbl"
-															},
-															{
-																"binding_type": "view",
-																"source_property_name": "(('%.82s' * #raw_exit_lbl) - ('%.2s' * #raw_exit_lbl) - ';')",
-																"target_property_name": "#text"
-															}
-														]
-													}
-												}
-											]
-										}
+										"binding_name": "#title_text"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(('%.' + $block_skip + 's') * #title_text)",
+										"target_property_name": "#pre_block"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#title_text - #pre_block)",
+										"target_property_name": "#at_block"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.514s' * #at_block)",
+										"target_property_name": "#pre_hover"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#at_block - #pre_hover)",
+										"target_property_name": "#at_hover"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #at_hover)",
+										"target_property_name": "#raw_hover"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(('%.82s' * #raw_hover) - ('%.2s' * #raw_hover) - ';')",
+										"target_property_name": "#texture"
+									}
+								]
+							}
+						},
+						{
+							"pressed": {
+								"type": "image",
+								"size": [
+									"100%",
+									"100%"
+								],
+								"layer": 2,
+								"texture": "#texture",
+								"bindings": [
+									{
+										"binding_name": "#title_text"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(('%.' + $block_skip + 's') * #title_text)",
+										"target_property_name": "#pre_block"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#title_text - #pre_block)",
+										"target_property_name": "#at_block"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.597s' * #at_block)",
+										"target_property_name": "#pre_pressed"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#at_block - #pre_pressed)",
+										"target_property_name": "#at_pressed"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #at_pressed)",
+										"target_property_name": "#raw_pressed"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(('%.82s' * #raw_pressed) - ('%.2s' * #raw_pressed) - ';')",
+										"target_property_name": "#texture"
+									}
+								]
+							}
+						},
+						{
+							"locked": {
+								"type": "image",
+								"size": [
+									"100%",
+									"100%"
+								],
+								"layer": 2,
+								"texture": "#texture",
+								"bindings": [
+									{
+										"binding_name": "#title_text"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(('%.' + $block_skip + 's') * #title_text)",
+										"target_property_name": "#pre_block"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#title_text - #pre_block)",
+										"target_property_name": "#at_block"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.680s' * #at_block)",
+										"target_property_name": "#pre_locked"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#at_block - #pre_locked)",
+										"target_property_name": "#at_locked"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #at_locked)",
+										"target_property_name": "#raw_locked"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(('%.82s' * #raw_locked) - ('%.2s' * #raw_locked) - ';')",
+										"target_property_name": "#texture"
+									}
+								]
+							}
+						},
+						{
+							"label": {
+								"type": "label",
+								"text": "#text",
+								"color": [
+									1,
+									1,
+									1,
+									1
+								],
+								"layer": 5,
+								"backup_font_type": "UIFont",
+								"text_alignment": "center",
+								"anchor_from": "center",
+								"anchor_to": "center",
+								"bindings": [
+									{
+										"binding_name": "#title_text"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(('%.' + $block_skip + 's') * #title_text)",
+										"target_property_name": "#pre_block"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#title_text - #pre_block)",
+										"target_property_name": "#at_block"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.348s' * #at_block)",
+										"target_property_name": "#pre_lbl"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#at_block - #pre_lbl)",
+										"target_property_name": "#at_lbl"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #at_lbl)",
+										"target_property_name": "#raw_lbl"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(('%.82s' * #raw_lbl) - ('%.2s' * #raw_lbl) - ';')",
+										"target_property_name": "#text"
 									}
 								]
 							}
