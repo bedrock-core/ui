@@ -2,8 +2,8 @@
 	// Dropdown primitive (popup): closed box + floating option popup. Reuses form_shared bases
 	// (vanilla_toggle, vanilla_option_radio_dropdown_group, dropdown_option_face_*).
 	"namespace": "core_ui_form_components",
-	"dropdown@core_ui_control.control": {
-		// Extends the shared base (core_ui_control.control): the base owns the whole generic
+	"dropdown@core_ui_common.control": {
+		// Extends the shared base (core_ui_common.control): the base owns the whole generic
 		// control-block decode; this modal cell just points it at the modal payload
 		// (custom_form / #custom_text / per-cell collection_details) and supplies its type
 		// gate. The base additionally decodes #background + #region and gates on
@@ -122,10 +122,10 @@
 	// The actual current-value text — left-aligned, inside the offset text_area above. All the
 	// text/color/font decode lives here (unchanged); the inset is purely the text_area's
 	// literal 8px offset now.
-	/* Extends the shared text base (core_ui_control.label_base) — text/color/font props
+	/* Extends the shared text base (core_ui_components.label) — text/color/font props
 	   come from there (left alignment + default sizing are the base defaults); only the
 	   two-channel decode and the closed-box geometry live here. */
-	"dropdown_current_value_text@core_ui_control.label_base": {
+	"dropdown_current_value_text@core_ui_components.label": {
 		"bindings": [
 			{
 				/* --- CHANNEL 1: selected option blob → visible text --- */
@@ -275,11 +275,11 @@
 	},
 	// Our own closed-box visuals, replacing vanilla's options_dropdown_toggle_control.
 	// EXTENDS common.toggle (ui_common.json:366-557) — the SAME proven ancestor our
-	// hand-built toggle_control (modal_toggle.json) uses — so it inherits
-	// button_mappings/focus_enabled/sound_name etc. for free. common.dropdown's own
-	// instantiation still overrides `type` to "dropdown" (ui_common.json:1116), which is
-	// the actual native engine type that owns open/close; extending common.toggle here
-	// is ONLY to pick up its non-visual properties, not to make this a real toggle.
+	// hand-built toggle_control uses — so it inherits button_mappings/sound_name etc.
+	// common.dropdown's own instantiation still overrides `type` to "dropdown"
+	// (ui_common.json:1116), which is the actual native engine type that owns open/close;
+	// extending common.toggle here is ONLY to pick up its non-visual properties, not to
+	// make this a real toggle.
 	// (A bare type:"panel" version showed correct hover visuals but never registered
 	// clicks — turned out `type:"dropdown"` still needs the toggle-family
 	// button_mappings/focus properties, which only common.toggle's own ancestry
@@ -287,11 +287,20 @@
 	// properties bypassed the $variable-driven child generation those need too.)
 	// #dropdown_option_text is set natively by the engine (the currently selected
 	// option's text) — no collection binding needed here, unlike our other controls.
+	// FOCUS: common.toggle carries NO focus properties (verified against vanilla), so
+	// the closed box was un-selectable with controller/keyboard while every other modal
+	// control worked. Vanilla's real dropdown toggle (options_dropdown_toggle_control →
+	// light_template_toggle) sets focus_enabled/magnet/wrap; our proven toggle_control
+	// sets the same trio. Add them here so the closed box joins the focus ring.
 	"dropdown_closed_box@core_ui_form_components.vanilla_toggle": {
 		"size": [
 			"100%",
 			"100%"
 		],
+		"focus_enabled": true,
+		"focus_magnet_enabled": true,
+		"focus_wrap_enabled": true,
+		"default_focus_precedence": 0,
 		// Step 2: each toggle state maps to a decoded texture prop. idle→#background,
 		// hover→#background_hover, open (checked)→#background_pressed, any locked→
 		// #background_locked. Empty props fall back to #background in the face below.
@@ -304,19 +313,19 @@
 		"$unchecked_locked_hover_control": "core_ui_form_components.dropdown_closed_box_face_locked",
 		"$checked_locked_hover_control": "core_ui_form_components.dropdown_closed_box_face_locked"
 	},
-	// Per-state faces: shared core_ui_control.modal_state_face (custom_form payload),
+	// Per-state faces: shared core_ui_common.modal_state_face (custom_form payload),
 	// one $face_skip per state at the button-identical offsets: background [440],
 	// hover [1024], pressed [1107], locked [1190].
-	"dropdown_closed_box_face_default@core_ui_control.modal_state_face": {
+	"dropdown_closed_box_face_default@core_ui_common.modal_state_face": {
 		"$face_skip": "('%.440s' * #payload)"
 	},
-	"dropdown_closed_box_face_hover@core_ui_control.modal_state_face": {
+	"dropdown_closed_box_face_hover@core_ui_common.modal_state_face": {
 		"$face_skip": "('%.1024s' * #payload)"
 	},
-	"dropdown_closed_box_face_pressed@core_ui_control.modal_state_face": {
+	"dropdown_closed_box_face_pressed@core_ui_common.modal_state_face": {
 		"$face_skip": "('%.1107s' * #payload)"
 	},
-	"dropdown_closed_box_face_locked@core_ui_control.modal_state_face": {
+	"dropdown_closed_box_face_locked@core_ui_common.modal_state_face": {
 		"$face_skip": "('%.1190s' * #payload)"
 	},
 	// Popup container background (Step 3): replaces the vanilla dropdown_background copy (deleted in Step 6) as the

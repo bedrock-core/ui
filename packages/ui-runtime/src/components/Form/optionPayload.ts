@@ -33,6 +33,10 @@ export interface OptionStyle {
   bulletWidth: number;
   /** Bullet glyph height (px). */
   bulletHeight: number;
+  /** Unselected bullet glyph shown on hover. Empty falls back to `bulletTexture`. */
+  bulletHoverTexture: string;
+  /** Selected bullet glyph shown on hover. Empty falls back to `bulletSelectedTexture`. */
+  bulletSelectedHoverTexture: string;
 }
 
 /**
@@ -76,6 +80,8 @@ export function isOptionStyle(value: unknown): value is OptionStyle {
     && 'bulletSelectedTexture' in value && typeof value.bulletSelectedTexture === 'string'
     && 'bulletWidth' in value && typeof value.bulletWidth === 'number'
     && 'bulletHeight' in value && typeof value.bulletHeight === 'number'
+    && 'bulletHoverTexture' in value && typeof value.bulletHoverTexture === 'string'
+    && 'bulletSelectedHoverTexture' in value && typeof value.bulletSelectedHoverTexture === 'string'
   );
 }
 
@@ -96,6 +102,8 @@ export interface GroupOptionDefaults {
   bulletSelectedTexture: string;
   bulletWidth: number;
   bulletHeight: number;
+  bulletHoverTexture: string;
+  bulletSelectedHoverTexture: string;
   fontType: string;
   fontScaleFactor: number;
   align: 'left' | 'center' | 'right';
@@ -164,6 +172,8 @@ export function readOption(el: JSX.Element, defaults: GroupOptionDefaults, group
       bulletSelectedTexture: readString(p.bulletSelected, defaults.bulletSelectedTexture),
       bulletWidth: readNumber(p.bulletWidth, defaults.bulletWidth),
       bulletHeight: readNumber(p.bulletHeight, defaults.bulletHeight),
+      bulletHoverTexture: readString(p.bulletHover, defaults.bulletHoverTexture),
+      bulletSelectedHoverTexture: readString(p.bulletSelectedHover, defaults.bulletSelectedHoverTexture),
     },
     geometry: {
       x: readNumber(p.jsonUIx) - groupX,
@@ -179,6 +189,7 @@ export function fallbackGroupDefaults(): GroupOptionDefaults {
   return {
     background: '', backgroundHover: '', backgroundSelected: '',
     bulletTexture: '', bulletSelectedTexture: '', bulletWidth: 12, bulletHeight: 12,
+    bulletHoverTexture: '', bulletSelectedHoverTexture: '',
     ...labelFontFields(), align: 'left',
   };
 }
@@ -218,11 +229,12 @@ export function optionLabelPosition(
  * text is not subject to the 80-byte field cap here.
  *
  * Field ORDER is the RP decode contract. The LABEL GROUP leads (text [92], fontType [175],
- * fontScale [258], labelX [341], labelY [424]) so the RP `option_label` reuses label_base's
+ * fontScale [258], labelX [341], labelY [424]) so the RP `option_label` reuses label's
  * sequential group decode with just `$label_skip` = [92] — no bespoke bindings. Then:
  * height [507] (legacy), background [590], backgroundHover [673], backgroundSelected [756],
  * bulletTexture [839], bulletSelectedTexture [922], optionX [1005], optionY [1088],
- * optionWidth [1171], optionHeight [1254], bulletWidth [1337], bulletHeight [1420].
+ * optionWidth [1171], optionHeight [1254], bulletWidth [1337], bulletHeight [1420],
+ * bulletHoverTexture [1503], bulletSelectedHoverTexture [1586].
  */
 export function serializeSelectOption(
   text: string,
@@ -232,7 +244,7 @@ export function serializeSelectOption(
 ): string {
   const [payload] = serializeProps({
     type: DROPDOWN_OPTION_TYPE,
-    // --- the label GROUP (label_base contract): text, fontType, fontScale, x, y ---
+    // --- the label GROUP (label contract): text, fontType, fontScale, x, y ---
     text, // [92] → #custom_radio_text (visible label)
     fontType: style.fontType, // [175]
     fontScaleFactor: style.fontScaleFactor, // [258]
@@ -253,6 +265,8 @@ export function serializeSelectOption(
     optionHeight: geometry.height, // [1254] → row #size_binding_y
     bulletWidth: style.bulletWidth, // [1337] bullet glyph width px
     bulletHeight: style.bulletHeight, // [1420] bullet glyph height px
+    bulletHoverTexture: style.bulletHoverTexture, // [1503] unselected bullet on hover
+    bulletSelectedHoverTexture: style.bulletSelectedHoverTexture, // [1586] selected bullet on hover
   });
 
   return payload;

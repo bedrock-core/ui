@@ -35,6 +35,10 @@ export interface FormInlineSelectProps extends FormControlBase {
   bullet?: string;
   /** Default selected bullet glyph (radio). */
   bulletSelected?: string;
+  /** Default unselected bullet glyph shown on hover. Falls back to `bullet`. */
+  bulletHover?: string;
+  /** Default selected bullet glyph shown on hover. Falls back to `bulletSelected`. */
+  bulletSelectedHover?: string;
   /** Default bullet glyph width (px). Default `12`. */
   bulletWidth?: number;
   /** Default bullet glyph height (px). Default `12`. */
@@ -69,7 +73,7 @@ export interface FormInlineSelectProps extends FormControlBase {
 export const FormInlineSelect: FunctionComponent<FormInlineSelectProps> = ({
   name, defaultValue,
   optionBackground, optionHover, optionSelected,
-  bullet, bulletSelected, bulletWidth, bulletHeight,
+  bullet, bulletSelected, bulletHover, bulletSelectedHover, bulletWidth, bulletHeight,
   optionFont, optionScale, optionAlign,
   children, ...layout
 }: FormInlineSelectProps): JSX.Element => {
@@ -83,6 +87,8 @@ export const FormInlineSelect: FunctionComponent<FormInlineSelectProps> = ({
     backgroundSelected: optionSelected ?? optionBase,
     bulletTexture: bullet ?? '',
     bulletSelectedTexture: bulletSelected ?? '',
+    bulletHoverTexture: bulletHover ?? bullet ?? '',
+    bulletSelectedHoverTexture: bulletSelectedHover ?? bulletSelected ?? '',
     bulletWidth: bulletWidth ?? 12,
     bulletHeight: bulletHeight ?? 12,
     fontType: groupFont.fontType,

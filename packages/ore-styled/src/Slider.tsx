@@ -5,6 +5,10 @@ import { theme } from './tokens';
 
 export interface SliderProps extends Omit<PrimitiveSliderProps, 'face'> {}
 
+/**
+ * @deprecated Ore wrapper over the legacy modal-field `Slider` (one modal per field).
+ * Prefer `Form.Slider` from `@bedrock-core/ore-styled`'s `Form` inside a `<Form>`.
+ */
 export function Slider({
   min,
   max,

@@ -1,34 +1,180 @@
 {
 	"namespace": "core_ui_components",
-	// Extends the shared base (core_ui_control.control). The base owns the generic
+	// Extends the shared base (core_ui_common.control). The base owns the generic
 	// control-block decode; the text/font fields (component fields 1-3: text [1024],
 	// fontType [1107], fontScaleFactor [1190]) are decoded by the label CHILD (computed
 	// bindings don't propagate to children, and a derived `bindings` array would REPLACE
 	// the base's — so component decode lives on children, same as panel_bg and the modal
 	// dropdown's current-value label, both in-game proven). Payload-source $vars pass
 	// through instantiation into both the base bindings and the child.
-	"text@core_ui_control.control": {
+	"text@core_ui_common.control": {
 		"layer": 100,
 		"$type_gate": "(#pre_visible and (#type = 'text'))",
 		"controls": [
 			{
 				/* [1,1] positioning frame (px-mapping rule): the label inside offsets from
 				   the cell's top-left by the group x/y ([1273]/[1356], Text offsetX/offsetY,
-				   default 0,0). All text/font decode is label_base's — the group default
+				   default 0,0). All text/font decode is label's — the group default
 				   offset [1024] IS this component's layout. */
 				"txt_frame": {
 					"type": "panel",
-					"size": [1, 1],
+					"size": [
+						1,
+						1
+					],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
 					"controls": [
 						{
-							"txt@core_ui_control.label_base": {
+							"txt@core_ui_components.label": {
 								"localize": true
 							}
 						}
 					]
 				}
+			}
+		]
+	},
+	"label": {
+		"type": "label",
+		"text": "#text",
+		"color": [
+			1,
+			1,
+			1,
+			1
+		],
+		"font_size": "small",
+		"backup_font_type": "UIFont",
+		"font_scale_factor": "#font_scale_factor",
+		"$label_alignment|default": "left",
+		"text_alignment": "$label_alignment",
+		"size": [
+			"default",
+			"default"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"use_anchored_offset": true,
+		"property_bag": {
+			"#anchored_offset_value_x": 0.0,
+			"#anchored_offset_value_y": 0.0
+		},
+		"$payload_collection|default": "form_buttons",
+		"$payload_binding|default": "#form_button_text",
+		"$cell_details_binding_type|default": "none",
+		"$details_collection|default": "",
+		"$label_skip|default": "('%.1024s' * #payload)",
+		"$native_binding|default": "#form_button_text",
+		"$native_target|default": "#label_native_unused",
+		"bindings": [
+			{
+				/* fetch shape is the custom_dropdown-PROVEN one: collection binding FIRST,
+				   details second with an EMPTY name (the toggle-proven form) — a details
+				   binding NAMED custom_dropdown, placed first, hard-crashed the ore form. */
+				"binding_name": "$payload_binding",
+				"binding_type": "collection",
+				"binding_condition": "always",
+				"binding_collection_name": "$payload_collection",
+				"binding_name_override": "#payload"
+			},
+			{
+				"binding_type": "$cell_details_binding_type",
+				"binding_collection_name": "$details_collection"
+			},
+			{
+				/* optional native text channel (no-op by default) */
+				"binding_name": "$native_binding",
+				"binding_type": "collection",
+				"binding_condition": "always",
+				"binding_collection_name": "$payload_collection",
+				"binding_name_override": "$native_target"
+			},
+			{
+				/* label group, decoded sequentially from $label_skip */
+				"binding_type": "view",
+				"source_property_name": "$label_skip",
+				"target_property_name": "#skip_to_label"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#payload - #skip_to_label)",
+				"target_property_name": "#label_rem0"
+			},
+			{
+				/* group slot 1: text */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #label_rem0)",
+				"target_property_name": "#raw_label_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_label_text) - ('%.2s' * #raw_label_text) - ';')",
+				"target_property_name": "#text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#label_rem0 - #raw_label_text)",
+				"target_property_name": "#label_rem1"
+			},
+			{
+				/* group slot 2: fontType (canonical #font_type alias) */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #label_rem1)",
+				"target_property_name": "#raw_label_font"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_label_font) - ('%.2s' * #raw_label_font) - ';')",
+				"target_property_name": "#font_type"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#label_rem1 - #raw_label_font)",
+				"target_property_name": "#label_rem2"
+			},
+			{
+				/* group slot 3: fontScaleFactor */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #label_rem2)",
+				"target_property_name": "#raw_label_scale"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_label_scale) - ('%.2s' * #raw_label_scale) - ';')",
+				"target_property_name": "#font_scale_factor"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#label_rem2 - #raw_label_scale)",
+				"target_property_name": "#label_rem3"
+			},
+			{
+				/* group slot 4: x -> anchored X (needs the [1,1] host frame) */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #label_rem3)",
+				"target_property_name": "#raw_label_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_label_x) - ('%.2s' * #raw_label_x) - ';') * 1)",
+				"target_property_name": "#anchored_offset_value_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#label_rem3 - #raw_label_x)",
+				"target_property_name": "#label_rem4"
+			},
+			{
+				/* group slot 5: y -> anchored Y */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #label_rem4)",
+				"target_property_name": "#raw_label_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_label_y) - ('%.2s' * #raw_label_y) - ';') * 1)",
+				"target_property_name": "#anchored_offset_value_y"
 			}
 		]
 	}

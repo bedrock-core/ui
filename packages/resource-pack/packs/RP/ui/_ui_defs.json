@@ -3,9 +3,11 @@
 		"ui/server_form.json",
 		// Animations
 		"ui/core-ui/animations/screen_events.json",
-		// Base control, all components should extend this
-		// Control [0,1023] 1024 bytes
+		// Shared bases every component extends (all namespace core_ui_common):
+		//   control    — the generic control-block decode (position/size/visible/region)
+		//   state.json — state_face / modal_state_face (self-decoding bg faces)
 		"ui/core-ui/common/control.json",
+		"ui/core-ui/common/state.json",
 		"ui/core-ui/common/action_container.json",
 		"ui/core-ui/common/modal_container.json",
 		"ui/core-ui/common/label_router.json",

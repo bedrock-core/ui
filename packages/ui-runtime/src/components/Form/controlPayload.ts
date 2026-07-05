@@ -47,7 +47,7 @@ export interface LabelGroupOptions extends LabelStyle {
 /**
  * THE serialized label group — the single field layout every payload-styled label uses:
  * `[<prefix>Text, <prefix>FontType, <prefix>FontScale, <prefix>X, <prefix>Y]`, five
- * contiguous fields (5 × 83 bytes). The RP `core_ui_control.label_base` decodes the whole
+ * contiguous fields (5 × 83 bytes). The RP `core_ui_components.label` decodes the whole
  * group SEQUENTIALLY from one start offset (`$label_skip`), so a consumer only ever passes
  * where the group starts — never per-field offsets. The `prefix` keeps keys unique when one
  * payload carries several groups (e.g. the input's value + placeholder).

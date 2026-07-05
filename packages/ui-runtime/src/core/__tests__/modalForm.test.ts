@@ -254,7 +254,7 @@ describe('modal control serialization', () => {
 
     const [alpha] = items;
 
-    // Fixed field layout — the LABEL GROUP leads (label_base contract): text [92],
+    // Fixed field layout — the LABEL GROUP leads (label contract): text [92],
     // fontType [175], fontScale [258], labelX [341], labelY [424]; then height [507]
     // (legacy, always 0), bg [590], hover [673], selected [756]. Alignment is
     // TS-computed into labelX/labelY (optionLabelPosition).

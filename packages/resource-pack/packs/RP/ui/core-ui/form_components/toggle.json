@@ -13,8 +13,8 @@
 			}
 		]
 	},
-	"toggle@core_ui_control.control": {
-		// Extends the shared base (core_ui_control.control): the base owns the whole generic
+	"toggle@core_ui_common.control": {
+		// Extends the shared base (core_ui_common.control): the base owns the whole generic
 		// control-block decode; this modal cell just points it at the modal payload
 		// (custom_form / #custom_text / per-cell collection_details) and supplies its type
 		// gate. The base additionally decodes #background + #region and gates on
@@ -103,47 +103,47 @@
 				"binding_name_override": "#enabled"
 			}
 		],
-		// State faces: shared core_ui_control.modal_state_face (custom_form payload).
+		// State faces: shared core_ui_common.modal_state_face (custom_form payload).
 		// Offsets: unchecked(background)[440], uncheckedHover[1024], uncheckedLocked[1190],
 		// checked[1273], checkedHover[1356], checkedLocked[1439]; locked_hover reuses locked.
 		"controls": [
 			{
-				"checked@core_ui_control.modal_state_face": {
+				"checked@core_ui_common.modal_state_face": {
 					"$face_skip": "('%.1273s' * #payload)"
 				}
 			},
 			{
-				"unchecked@core_ui_control.modal_state_face": {
+				"unchecked@core_ui_common.modal_state_face": {
 					"$face_skip": "('%.440s' * #payload)"
 				}
 			},
 			{
-				"checked_hover@core_ui_control.modal_state_face": {
+				"checked_hover@core_ui_common.modal_state_face": {
 					"$face_skip": "('%.1356s' * #payload)"
 				}
 			},
 			{
-				"unchecked_hover@core_ui_control.modal_state_face": {
+				"unchecked_hover@core_ui_common.modal_state_face": {
 					"$face_skip": "('%.1024s' * #payload)"
 				}
 			},
 			{
-				"checked_locked@core_ui_control.modal_state_face": {
+				"checked_locked@core_ui_common.modal_state_face": {
 					"$face_skip": "('%.1439s' * #payload)"
 				}
 			},
 			{
-				"unchecked_locked@core_ui_control.modal_state_face": {
+				"unchecked_locked@core_ui_common.modal_state_face": {
 					"$face_skip": "('%.1190s' * #payload)"
 				}
 			},
 			{
-				"checked_locked_hover@core_ui_control.modal_state_face": {
+				"checked_locked_hover@core_ui_common.modal_state_face": {
 					"$face_skip": "('%.1439s' * #payload)"
 				}
 			},
 			{
-				"unchecked_locked_hover@core_ui_control.modal_state_face": {
+				"unchecked_locked_hover@core_ui_common.modal_state_face": {
 					"$face_skip": "('%.1190s' * #payload)"
 				}
 			}

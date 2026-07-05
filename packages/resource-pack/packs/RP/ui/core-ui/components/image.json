@@ -1,12 +1,12 @@
 {
 	"namespace": "core_ui_components",
-	// Extends the shared base (core_ui_control.control). The base owns the generic
+	// Extends the shared base (core_ui_common.control). The base owns the generic
 	// control-block decode; the texture (component field 1, [1024-1106]) is decoded by the
 	// img CHILD (computed bindings don't propagate to children, and a derived `bindings`
 	// array would REPLACE the base's — so component decode lives on children, same as
 	// panel_bg / the button state faces). Payload-source $vars pass through instantiation
 	// into both the base bindings and the child (modal label_router overrides them).
-	"image@core_ui_control.control": {
+	"image@core_ui_common.control": {
 		"layer": 80,
 		"$type_gate": "(#pre_visible and (#type = 'image'))",
 		"controls": [

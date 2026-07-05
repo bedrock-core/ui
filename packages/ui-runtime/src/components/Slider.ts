@@ -6,6 +6,7 @@ import { Button } from './Button';
 import { ModalFieldProps } from './modalField';
 import { Text } from './Text';
 
+/** @deprecated Prefer `Form.Slider` inside a `<Form>`. See {@link ModalFieldProps}. */
 export interface SliderProps extends ModalFieldProps {
   /** Minimum selectable value. */
   min: number;
@@ -40,6 +41,9 @@ export interface SliderProps extends ModalFieldProps {
  *
  * This is the unstyled runtime primitive (a peer of the base `Button`); supply a
  * `background` or compose a styled wrapper for a field-like appearance.
+ *
+ * @deprecated One-modal-per-field legacy. Use `Form.Slider` inside a `<Form>` — all
+ * controls share a single modal. Kept for existing screens; slated for removal.
  */
 export const Slider: FunctionComponent<SliderProps> = ({
   min,

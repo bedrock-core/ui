@@ -60,6 +60,8 @@ export function FormRadio({
       optionSelected={''}
       bullet={r.textures.unselected}
       bulletSelected={r.textures.selected}
+      bulletHover={r.textures.unselectedHover}
+      bulletSelectedHover={r.textures.selectedHover}
       bulletWidth={r.size}
       bulletHeight={r.size}
       optionFont={s.font}

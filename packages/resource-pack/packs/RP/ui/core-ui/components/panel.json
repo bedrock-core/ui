@@ -1,13 +1,13 @@
 {
 	"namespace": "core_ui_components",
-	// FIRST component converted to the shared base (core_ui_control.control owns the
+	// FIRST component converted to the shared base (core_ui_common.control owns the
 	// entire generic control-block decode — size/position/visible/enabled/region). This
 	// control only supplies its type gate + its own children. Payload-source $vars
 	// ($payload_collection / $payload_binding / $cell_details_binding_type) pass through
 	// instantiation into the base's bindings, so the modal label_router overrides still
 	// work unchanged. If this proves out in-game, convert text/image/button/... the same
 	// way and delete their copy/pasted decode blocks.
-	"panel@core_ui_control.control": {
+	"panel@core_ui_common.control": {
 		"$type_gate": "(#pre_visible and (#type = 'panel'))",
 		"controls": [
 			{

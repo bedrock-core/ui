@@ -135,7 +135,7 @@ export const Text: FunctionComponent<TextProps> = ({
       ...withControl(rest),
       // Keys pass through — we send the key, not the resolved string, so a
       // digit-leading .lang entry is guarded there; raw text uses safeLabelText.
-      // The label GROUP contract (label_base decodes it sequentially from [1024]):
+      // The label GROUP contract (label decodes it sequentially from [1024]):
       // text, fontType, fontScale, x, y — `value` is the group's text slot (kept named
       // `value` for the key pass-through semantics; field ORDER is what the RP reads).
       value: isKey ? localizationKey : safeLabelText(resolvedText),

@@ -1,13 +1,13 @@
 {
 	"namespace": "core_ui_components",
-	// Extends the shared base (core_ui_control.control). The base owns the generic
+	// Extends the shared base (core_ui_common.control). The base owns the generic
 	// control-block decode; the four state faces below SELF-decode their textures at the
 	// button's fixed offsets (background [440], hover [1024], pressed [1107], locked
 	// [1190]) — the old root-level state decode into property_bag was dead weight
 	// (computed bindings never propagated to the children anyway) and is gone.
 	// $cell_details_binding_type is REQUIRED here (unlike panel): the per-cell collection
 	// index is what routes button.form_button_click to the right form button.
-	"button@core_ui_control.control": {
+	"button@core_ui_common.control": {
 		"type": "button",
 		"layer": 50,
 		"$type_gate": "(#pre_visible and (#type = 'button'))",
@@ -50,26 +50,26 @@
 				"mapping_type": "focused"
 			}
 		],
-		// The four state faces are ONE shared control (core_ui_control.state_face) — only
+		// The four state faces are ONE shared control (core_ui_common.state_face) — only
 		// the skip offset differs per state, passed as a whole expression via $face_skip:
 		// background [440], backgroundHover [1024], backgroundPressed [1107],
 		// backgroundLocked [1190]. Payload source defaults inside state_face already serve
 		// the ActionForm (form_buttons / #form_button_text).
 		"controls": [
 			{
-				"default@core_ui_control.state_face": {
+				"default@core_ui_common.state_face": {
 					"$face_skip": "('%.440s' * #payload)",
 					"$default_state": true
 				}
 			},
 			{
-				"hover@core_ui_control.state_face": {
+				"hover@core_ui_common.state_face": {
 					"$face_skip": "('%.1024s' * #payload)",
 					"$hover_state": true
 				}
 			},
 			{
-				"pressed@core_ui_control.state_face": {
+				"pressed@core_ui_common.state_face": {
 					"$face_skip": "('%.1107s' * #payload)",
 					"$pressed_state": true,
 					"$button_offset|default": [
@@ -79,7 +79,7 @@
 				}
 			},
 			{
-				"locked@core_ui_control.state_face": {
+				"locked@core_ui_common.state_face": {
 					"$face_skip": "('%.1190s' * #payload)"
 				}
 			}

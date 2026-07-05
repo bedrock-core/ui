@@ -76,7 +76,7 @@
 						}
 					},
 					{
-						"gamepad_cursor@core_ui_cursor.gamepad_cursor_button": {}
+						"gamepad_cursor@core_ui_common.gamepad_cursor_button": {}
 					}
 				]
 			},

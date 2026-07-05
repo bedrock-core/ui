@@ -159,7 +159,7 @@
 	// (checked / hovered-while-checked / locked-checked map to selected; locked-unchecked to default.)
 	// One shared option-row face: bg image self-decoding its texture from the option's
 	// OWN blob (#custom_radio_text, engine-owned custom_dropdown collection) at $face_skip.
-	// Kept separate from core_ui_control.state_face on purpose: this shape needs the
+	// Kept separate from core_ui_common.state_face on purpose: this shape needs the
 	// custom_dropdown collection + binding_condition "always" + collection_details ON THE
 	// SAME control (a custom_dropdown binding WITHOUT details hard-crashes the game with
 	// zero logs — bisected in-game). Offsets: background [590], hover [673], selected [756].
@@ -170,6 +170,13 @@
 			"100%"
 		],
 		"$face_skip|default": "('%.590s' * #custom_radio_text)",
+		// Optional per-state bullet glyph, rendered as a SECOND child of the face (not a
+		// controls-override) so a derived face only sets $bullet_skip (a property that MERGES)
+		// instead of replacing this controls array (which would wipe `bg`). $bullet_skip|default
+		// points at the unselected-bullet offset [839]; dropdown/toggle-button blobs encode an
+		// empty texture there, so the glyph self-hides everywhere except the inline radio faces
+		// (which override $bullet_skip to the state's own offset).
+		"$bullet_skip|default": "('%.839s' * #custom_radio_text)",
 		"controls": [
 			{
 				"bg": {
@@ -219,6 +226,11 @@
 						}
 					]
 				}
+			},
+			{
+				"bullet@core_ui_form_components.inline_bullet": {
+					"$bullet_skip": "$bullet_skip"
+				}
 			}
 		]
 	},
@@ -231,14 +243,14 @@
 	"dropdown_option_face_selected@core_ui_form_components.option_face": {
 		"$face_skip": "('%.756s' * #custom_radio_text)"
 	},
-	// THE option-row label — pure label_base, ZERO bespoke bindings: the option blob
+	// THE option-row label — pure label, ZERO bespoke bindings: the option blob
 	// leads with the standard label GROUP (text [92], fontType [175], fontScale [258],
 	// labelX [341], labelY [424]), so the base's sequential group decode does all the
 	// work from one $label_skip. Alignment is TS-computed into labelX/labelY
 	// (optionLabelPosition); per-option fonts now decode too (group slot 2). Fetch
-	// safety: label_base's fetch is the custom_dropdown-PROVEN shape (collection first,
+	// safety: label's fetch is the custom_dropdown-PROVEN shape (collection first,
 	// details second with empty name). Host inside a [1,1] frame at the row's top-left.
-	"option_label@core_ui_control.label_base": {
+	"option_label@core_ui_components.label": {
 		"layer": 10,
 		"$payload_collection": "custom_dropdown",
 		"$payload_binding": "#custom_radio_text",

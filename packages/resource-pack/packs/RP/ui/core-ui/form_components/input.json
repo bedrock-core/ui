@@ -13,8 +13,8 @@
 			}
 		]
 	},
-	"input@core_ui_control.control": {
-		// Extends the shared base (core_ui_control.control): the base owns the whole generic
+	"input@core_ui_common.control": {
+		// Extends the shared base (core_ui_common.control): the base owns the whole generic
 		// control-block decode; this modal cell just points it at the modal payload
 		// (custom_form / #custom_text / per-cell collection_details) and supplies its type
 		// gate. The base additionally decodes #background + #region and gates on
@@ -148,7 +148,7 @@
 								"anchor_to": "left_middle",
 								"controls": [
 									{
-										"display_text@core_ui_control.label_base": {
+										"display_text@core_ui_components.label": {
 											"localize": false,
 											"text": "#item_name",
 											"layer": 1,
@@ -181,7 +181,7 @@
 											"anchor_to": "left_middle",
 											"controls": [
 												{
-													"place_holder_control@core_ui_control.label_base": {
+													"place_holder_control@core_ui_components.label": {
 														"localize": false,
 														"text": "#placeholder",
 														"color": [0.7, 0.7, 0.7, 1],
@@ -219,25 +219,25 @@
 				}
 			},
 			{
-				/* Payload-decoded background states: shared core_ui_control.modal_state_face,
+				/* Payload-decoded background states: shared core_ui_common.modal_state_face,
 				   one $face_skip per state at the button-identical offsets (default [440],
 				   hover [1024], pressed [1107], locked [1190]). */
-				"default@core_ui_control.modal_state_face": {
+				"default@core_ui_common.modal_state_face": {
 					"$face_skip": "('%.440s' * #payload)"
 				}
 			},
 			{
-				"hover@core_ui_control.modal_state_face": {
+				"hover@core_ui_common.modal_state_face": {
 					"$face_skip": "('%.1024s' * #payload)"
 				}
 			},
 			{
-				"pressed@core_ui_control.modal_state_face": {
+				"pressed@core_ui_common.modal_state_face": {
 					"$face_skip": "('%.1107s' * #payload)"
 				}
 			},
 			{
-				"locked@core_ui_control.modal_state_face": {
+				"locked@core_ui_common.modal_state_face": {
 					"$face_skip": "('%.1190s' * #payload)"
 				}
 			}

@@ -117,6 +117,8 @@ export const FormDropdown: FunctionComponent<FormDropdownProps> = ({
     backgroundSelected: optionSelected ?? optionBase,
     bulletTexture: '',
     bulletSelectedTexture: '',
+    bulletHoverTexture: '',
+    bulletSelectedHoverTexture: '',
     bulletWidth: 12,
     bulletHeight: 12,
     fontType: optionLabelFont.fontType,

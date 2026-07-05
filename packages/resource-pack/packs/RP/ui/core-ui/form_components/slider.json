@@ -13,8 +13,8 @@
 			}
 		]
 	},
-	"slider@core_ui_control.control": {
-		// Extends the shared base (core_ui_control.control): the base owns the whole generic
+	"slider@core_ui_common.control": {
+		// Extends the shared base (core_ui_common.control): the base owns the whole generic
 		// control-block decode; this modal cell just points it at the modal payload
 		// (custom_form / #custom_text / per-cell collection_details) and supplies its type
 		// gate. The base additionally decodes #background + #region and gates on

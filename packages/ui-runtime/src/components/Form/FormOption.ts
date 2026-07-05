@@ -38,6 +38,10 @@ export interface FormOptionProps extends ControlProps {
   bullet?: string;
   /** Selected bullet glyph texture (radio). Falls back to the group's `bulletSelected`. */
   bulletSelected?: string;
+  /** Unselected bullet glyph on hover. Falls back to the group's `bulletHover`. */
+  bulletHover?: string;
+  /** Selected bullet glyph on hover. Falls back to the group's `bulletSelectedHover`. */
+  bulletSelectedHover?: string;
   /** Bullet glyph width (px). Falls back to the group's `bulletWidth`. */
   bulletWidth?: number;
   /** Bullet glyph height (px). Falls back to the group's `bulletHeight`. */
@@ -58,7 +62,8 @@ export interface FormOptionProps extends ControlProps {
  */
 export const FormOption: FunctionComponent<FormOptionProps> = ({
   value, label, background, backgroundHover, backgroundSelected,
-  bullet, bulletSelected, bulletWidth, bulletHeight, font, scale, align, ...layout
+  bullet, bulletSelected, bulletHover, bulletSelectedHover, bulletWidth, bulletHeight,
+  font, scale, align, ...layout
 }: FormOptionProps): JSX.Element => {
   // Pre-resolve the font fields here (the writer wants fontType/fontScaleFactor, not the raw
   // LabelFont), only when the caller set them — otherwise the group's resolved values are used.
@@ -81,6 +86,8 @@ export const FormOption: FunctionComponent<FormOptionProps> = ({
       backgroundSelected,
       bullet,
       bulletSelected,
+      bulletHover,
+      bulletSelectedHover,
       bulletWidth,
       bulletHeight,
       align,

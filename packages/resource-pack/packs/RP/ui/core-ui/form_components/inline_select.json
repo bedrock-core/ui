@@ -1,7 +1,7 @@
 {
 	"namespace": "core_ui_form_components",
-	"inline_select@core_ui_control.control": {
-		// Extends the shared base (core_ui_control.control): the base owns the whole generic
+	"inline_select@core_ui_common.control": {
+		// Extends the shared base (core_ui_common.control): the base owns the whole generic
 		// control-block decode; this modal cell just points it at the modal payload
 		// (custom_form / #custom_text / per-cell collection_details) and supplies its type
 		// gate. The base additionally decodes #background + #region and gates on
@@ -281,37 +281,31 @@
 					],
 					"controls": [
 						{
-							"unchecked@core_ui_form_components.dropdown_option_face_default": {}
+							"unchecked@core_ui_form_components.inline_face_bullet_unselected": {}
 						},
 						{
-							"checked@core_ui_form_components.dropdown_option_face_selected": {}
+							"checked@core_ui_form_components.inline_face_bullet_selected": {}
 						},
 						{
-							"unchecked_hover@core_ui_form_components.dropdown_option_face_hover": {}
+							"unchecked_hover@core_ui_form_components.inline_face_bullet_unselected_hover": {}
 						},
 						{
-							"checked_hover@core_ui_form_components.dropdown_option_face_selected": {}
+							"checked_hover@core_ui_form_components.inline_face_bullet_selected_hover": {}
 						},
 						{
-							"unchecked_locked@core_ui_form_components.dropdown_option_face_default": {}
+							"unchecked_locked@core_ui_form_components.inline_face_bullet_unselected": {}
 						},
 						{
-							"checked_locked@core_ui_form_components.dropdown_option_face_selected": {}
+							"checked_locked@core_ui_form_components.inline_face_bullet_selected": {}
 						},
 						{
-							"unchecked_locked_hover@core_ui_form_components.dropdown_option_face_default": {}
+							"unchecked_locked_hover@core_ui_form_components.inline_face_bullet_unselected": {}
 						},
 						{
-							"checked_locked_hover@core_ui_form_components.dropdown_option_face_selected": {}
+							"checked_locked_hover@core_ui_form_components.inline_face_bullet_selected": {}
 						}
 					]
 				}
-			},
-			{
-				"bullet_unselected@core_ui_form_components.inline_bullet_default": {}
-			},
-			{
-				"bullet_selected@core_ui_form_components.inline_bullet_selected": {}
 			},
 			{
 				/* [1,1] frame at the row's top-left: the single option_label offsets from
@@ -330,55 +324,55 @@
 			}
 		]
 	},
-	// Bullet glyph, DYNAMICALLY sized from the option blob: bulletWidth [1337] and
-	// bulletHeight [1420] (appended after the geometry block, so no earlier offset moves).
-	// Three-level structure per the [1,1] rule: a 1px frame (so the box's #size_binding_*
-	// map 1:1 to px — same as inline_option_row), a box the decode sizes, and the image
-	// filling it. The frame pins the bullet to the row's left-middle, like the old
-	// hardcoded 12×12 image did.
-	"inline_bullet_default": {
+
+	// ── Radio bullet, now rendered INSIDE the toggle's state faces so hover/selected/locked
+	// all come from the toggle (siblings couldn't see hover). Each inline_face_bullet_*
+	// extends the matching dropdown_option_face_* (which owns the row BACKGROUND at $face_skip)
+	// and only overrides $bullet_skip — a PROPERTY that merges, so the base's `bg` + optional
+	// `bullet` children survive (an earlier controls-override wiped the background). Bullet
+	// texture offsets: unselected [839] / selected [922] / unselected-hover [1503] /
+	// selected-hover [1586]. An empty texture self-hides (dropdown popup / segmented toggle-button).
+	"inline_face_bullet_unselected@core_ui_form_components.dropdown_option_face_default": {
+		"$bullet_skip": "('%.839s' * #custom_radio_text)"
+	},
+	"inline_face_bullet_selected@core_ui_form_components.dropdown_option_face_selected": {
+		"$bullet_skip": "('%.922s' * #custom_radio_text)"
+	},
+	"inline_face_bullet_unselected_hover@core_ui_form_components.dropdown_option_face_hover": {
+		"$bullet_skip": "('%.1503s' * #custom_radio_text)"
+	},
+	"inline_face_bullet_selected_hover@core_ui_form_components.dropdown_option_face_selected": {
+		"$bullet_skip": "('%.1586s' * #custom_radio_text)"
+	},
+	// Bullet: a [1,1] frame at the face's left-middle → a box sized from the blob
+	// (bulletWidth [1337] / bulletHeight [1420]) → the glyph image at $bullet_skip. Referenced
+	// as an optional second child of the SHARED option_face (form_shared.json), so every face
+	// carries it but only the inline radio faces point $bullet_skip at a real texture offset.
+	// No visibility gate — the parent toggle face already shows only the active state; an
+	// empty texture self-hides so unstyled/segmented rows draw nothing.
+	"inline_bullet": {
 		"type": "panel",
-		"size": [
-			1,
-			1
-		],
+		"size": [ 1, 1 ],
 		"anchor_from": "left_middle",
 		"anchor_to": "left_middle",
 		"layer": 11,
+		"$bullet_skip|default": "('%.839s' * #custom_radio_text)",
 		"controls": [
 			{
 				"bullet_box@core_ui_form_components.inline_bullet_box": {
-					"$bullet_img": "core_ui_form_components.inline_bullet_img_default"
+					"$bullet_skip": "$bullet_skip"
 				}
 			}
 		]
 	},
-	"inline_bullet_selected": {
-		"type": "panel",
-		"size": [
-			1,
-			1
-		],
-		"anchor_from": "left_middle",
-		"anchor_to": "left_middle",
-		"layer": 11,
-		"controls": [
-			{
-				"bullet_box@core_ui_form_components.inline_bullet_box": {
-					"$bullet_img": "core_ui_form_components.inline_bullet_img_selected"
-				}
-			}
-		]
-	},
-	// The blob-sized bullet box (shared by both states — only the image inside differs).
+	// The blob-sized bullet box: width [1337] / height [1420] via #size_binding_*, glyph
+	// texture at the passed $bullet_skip.
 	"inline_bullet_box": {
 		"type": "panel",
-		"size": [
-			0,
-			0
-		],
+		"size": [ 0, 0 ],
 		"anchor_from": "left_middle",
 		"anchor_to": "left_middle",
+		"$bullet_skip|default": "('%.839s' * #custom_radio_text)",
 		"property_bag": {
 			"#size_binding_x": 0,
 			"#size_binding_y": 0
@@ -436,22 +430,17 @@
 		],
 		"controls": [
 			{
-				"img@$bullet_img": {}
+				"img@core_ui_form_components.inline_bullet_img": {
+					"$bullet_skip": "$bullet_skip"
+				}
 			}
 		]
 	},
-	// One shared bullet glyph image: texture from the option blob at $bullet_skip
-	// (unselected [839] / selected [922]), shown per $bullet_visible (toggle-state
-	// polarity; empty texture always hides). Both state variants are thin derivations —
-	// the bullet_box $bullet_img name var picks one.
+	// The glyph image: texture from the blob at $bullet_skip; empty self-hides.
 	"inline_bullet_img": {
 		"type": "image",
-		"size": [
-			"100%",
-			"100%"
-		],
+		"size": [ "100%", "100%" ],
 		"$bullet_skip|default": "('%.839s' * #custom_radio_text)",
-		"$bullet_visible|default": "((not (#texture = '')) and (not #toggle_state))",
 		"texture": "#texture",
 		"visible": "#visible",
 		"bindings": [
@@ -485,24 +474,10 @@
 				"target_property_name": "#texture"
 			},
 			{
-				"binding_type": "collection",
-				"binding_collection_name": "custom_dropdown",
-				"binding_name": "#custom_radio_toggled",
-				"binding_name_override": "#toggle_state"
-			},
-			{
 				"binding_type": "view",
-				"source_property_name": "$bullet_visible",
+				"source_property_name": "(not (#texture = ''))",
 				"target_property_name": "#visible"
 			}
 		]
-	},
-	"inline_bullet_img_default@core_ui_form_components.inline_bullet_img": {
-		"$bullet_skip": "('%.839s' * #custom_radio_text)",
-		"$bullet_visible": "((not (#texture = '')) and (not #toggle_state))"
-	},
-	"inline_bullet_img_selected@core_ui_form_components.inline_bullet_img": {
-		"$bullet_skip": "('%.922s' * #custom_radio_text)",
-		"$bullet_visible": "((not (#texture = '')) and #toggle_state)"
 	}
 }
