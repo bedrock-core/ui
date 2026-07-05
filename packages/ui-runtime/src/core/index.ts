@@ -27,10 +27,16 @@ export {
 export type { ComponentDescriptor } from './componentRegistry';
 
 // Writer slot helpers (for custom component writers)
-export { emitButton, emitLabel } from './writers';
+export { emitButton, emitDropdown, emitInput, emitLabel, emitSlider, emitToggle } from './writers';
 
 // Types
 export type {
+  ActionSerializationContext,
+  FormMode,
+  FormTarget,
+  ModalControlEntry,
+  ModalSerializationContext,
+  ModalValue,
   ReservedBytes,
   SerializablePrimitive,
   SerializableProps,
@@ -39,10 +45,14 @@ export type {
   TranslationKeysError,
   ItemAuxError,
   ScrollLimitError,
+  ModalFormError,
   Writer,
 } from './types';
 
-export { isFunction, isElement, isNode } from './guards';
+export {
+  isFunction, isElement, isNode,
+  isActionForm, isModalForm, isActionContext, isModalContext,
+} from './guards';
 
 export {
   getCurrentFiber,

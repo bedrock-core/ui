@@ -1,0 +1,249 @@
+{
+	"namespace": "core_ui_form_components",
+	"input_router": {
+		"type": "panel",
+		// Components must be inside a panel with size [1,1] so size_binding values map 1:1 to pixels.
+		"size": [
+			1,
+			1
+		],
+		"controls": [
+			{
+				"input@core_ui_form_components.input": {}
+			}
+		]
+	},
+	"input@core_ui_common.control": {
+		// Extends the shared base (core_ui_common.control): the base owns the whole generic
+		// control-block decode; this modal cell just points it at the modal payload
+		// (custom_form / #custom_text / per-cell collection_details) and supplies its type
+		// gate. The base additionally decodes #background + #region and gates on
+		// $region_filter (default 0) — modal cells always encode region 0, so the region
+		// gate passes; the bg decode is unused here (harmless).
+		"layer": 50,
+		"$payload_collection": "custom_form",
+		"$payload_binding": "#custom_text",
+		"$cell_details_binding_type": "collection_details",
+		"$type_gate": "(#pre_visible and (#type = 'modal-input'))",
+		"controls": [
+			{
+				"input@core_ui_form_components.input_control": {}
+			}
+		]
+	},
+	// Textureless native text field, flattened from vanilla common.text_edit_box.
+	// READ: #custom_input_text (content) / #custom_placeholder_text / #custom_input_enabled,
+	// all collection bindings on custom_form. WRITE-BACK: the engine writes the typed text
+	// to the current row via text_edit_box_grid_collection_name:"custom_form" (the edit_box
+	// analogue of the toggle's toggle_grid_collection_name).
+	"input_control": {
+		"type": "edit_box",
+		"size": [
+			"100%",
+			"100%"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"layer": 2,
+		"enabled": "#enabled",
+		"text_box_name": "custom_input",
+		"text_edit_box_grid_collection_name": "custom_form",
+		"max_length": 100,
+		"text_type": "ExtendedASCII",
+		"text_control": "display_text",
+		"place_holder_control": "place_holder_control",
+		"default_control": "default",
+		"hover_control": "hover",
+		"pressed_control": "pressed",
+		"locked_control": "locked",
+		"focus_enabled": true,
+		/* Selection state machinery, copied from vanilla common.text_edit_box
+		   (ui_common.json:1636-1685) with its $var defaults hardcoded. Without these
+		   the edit box never enters its SELECTED state: no cursor, the placeholder
+		   never hides, and typing only works through hover capture. */
+		"button_mappings": [
+			{
+				"from_button_id": "button.menu_select",
+				"to_button_id": "button.text_edit_box_selected",
+				"handle_select": true,
+				"handle_deselect": false,
+				"mapping_type": "pressed"
+			},
+			{
+				"from_button_id": "button.menu_select",
+				"to_button_id": "button.text_edit_box_selected",
+				"handle_select": false,
+				"handle_deselect": true,
+				"mapping_type": "global",
+				/* deselect the textbox and allow selecting another control with the
+				   same mouse press (vanilla comment) */
+				"consume_event": false
+			},
+			{
+				"from_button_id": "button.menu_ok",
+				"to_button_id": "button.text_edit_box_selected",
+				"handle_select": true,
+				"handle_deselect": true,
+				"mapping_type": "pressed"
+			},
+			{
+				"from_button_id": "button.menu_ok",
+				"to_button_id": "button.text_edit_box_selected",
+				"handle_select": false,
+				"handle_deselect": true,
+				"mapping_type": "global"
+			},
+			{
+				"from_button_id": "button.menu_cancel",
+				"to_button_id": "button.text_edit_box_deselected",
+				"handle_select": false,
+				"handle_deselect": true,
+				"mapping_type": "global"
+			},
+			{
+				"to_button_id": "button.text_edit_box_hovered",
+				"mapping_type": "pressed"
+			},
+			{
+				"from_button_id": "button.menu_clear",
+				"to_button_id": "button.text_edit_box_clear",
+				"handle_select": false,
+				"handle_deselect": false,
+				"mapping_type": "focused"
+			}
+		],
+		"bindings": [
+			{
+				/* enabled state for this cell */
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form",
+				"binding_name": "#custom_input_enabled",
+				"binding_name_override": "#enabled"
+			}
+		],
+		"controls": [
+			{
+				"text_area": {
+					"type": "panel",
+					// Clip bounds for the field text (was also the 8px offset host — the inset now
+					// rides the label GROUP x/y from the payload; TS defaults x=8, y=centered).
+					"layer": 5,
+					"size": [
+						"100% - 4px",
+						"100%"
+					],
+					"anchor_from": "left_middle",
+					"anchor_to": "left_middle",
+					"clips_children": true,
+					"controls": [
+						{
+							/* value label — the edit_box's text_control. It reads text from the native
+							   edit-box channel ($native_* slot); font/scale decode from the group at
+							   [1273]. The value GROUP's x/y are ignored here (see below): the 8px inset
+							   is a fixed offset and vertical centering comes from left_middle anchoring.
+							   OVERFLOW-SCROLL: because this IS the text_control, on SELECT the engine
+							   scrolls the label to keep the caret visible. That only works with vanilla's
+							   text_edit_box_label recipe — sit DIRECTLY in the full-size clip (not a
+							   [1,1] frame, whose min_size 100% would collapse to 1px), size ["default"]
+							   so it auto-grows past the box, min_size ["100%",0] so short text still
+							   fills the box, and NO use_anchored_offset (a fixed anchored X fights the
+							   engine scroll → short text got yanked left out of the clip). */
+							"display_text@core_ui_components.label": {
+								"localize": false,
+								"text": "#item_name",
+								"layer": 1,
+								"use_anchored_offset": false,
+								"size": ["default", "default"],
+								"min_size": ["100%", 0],
+								"offset": [8, 0],
+								"anchor_from": "left_middle",
+								"anchor_to": "left_middle",
+								"property_bag": {
+									"#property_field": "#item_name",
+									"#anchored_offset_value_x": 0.0,
+									"#anchored_offset_value_y": 0.0
+								},
+								"$payload_collection": "custom_form",
+								"$payload_binding": "#custom_text",
+								"$label_skip": "('%.1273s' * #payload)",
+								"$native_binding": "#custom_input_text",
+								"$native_target": "#item_name"
+							}
+						},
+						{
+							"place_holder_visibility": {
+								"type": "panel",
+								"size": ["100%", "100%"],
+								"controls": [
+									{
+										/* placeholder label: own GROUP at [1688] (x/y at [1937]/[2020]) */
+										"placeholder_frame": {
+											"type": "panel",
+											"size": [1, 1],
+											"anchor_from": "left_middle",
+											"anchor_to": "left_middle",
+											"controls": [
+												{
+													"place_holder_control@core_ui_components.label": {
+														"localize": false,
+														"text": "#placeholder",
+														"color": [0.7, 0.7, 0.7, 1],
+														"layer": 1,
+														"$payload_collection": "custom_form",
+														"$payload_binding": "#custom_text",
+														"$label_skip": "('%.1688s' * #payload)",
+														"$native_binding": "#custom_placeholder_text",
+														"$native_target": "#placeholder"
+													}
+												}
+											]
+										}
+									}
+								],
+								"bindings": [
+									{
+										/* show placeholder only while the field is empty — gate directly on the
+										   live typed-content channel (no sibling lookup: the old
+										   source_control_name gate broke once display_text moved into a frame). */
+										"binding_type": "collection",
+										"binding_condition": "always",
+										"binding_collection_name": "custom_form",
+										"binding_name": "#custom_input_text"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#custom_input_text = '')",
+										"target_property_name": "#visible"
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				/* Payload-decoded background states: shared core_ui_common.modal_state_face,
+				   one $face_skip per state at the button-identical offsets (default [440],
+				   hover [1024], pressed [1107], locked [1190]). */
+				"default@core_ui_common.modal_state_face": {
+					"$face_skip": "('%.440s' * #payload)"
+				}
+			},
+			{
+				"hover@core_ui_common.modal_state_face": {
+					"$face_skip": "('%.1024s' * #payload)"
+				}
+			},
+			{
+				"pressed@core_ui_common.modal_state_face": {
+					"$face_skip": "('%.1107s' * #payload)"
+				}
+			},
+			{
+				"locked@core_ui_common.modal_state_face": {
+					"$face_skip": "('%.1190s' * #payload)"
+				}
+			}
+		]
+	}
+}

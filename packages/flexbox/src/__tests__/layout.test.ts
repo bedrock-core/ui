@@ -860,6 +860,64 @@ describe('wrap layout', () => {
     // Row height = 60 + 8 + 40 = 108 (no exponential bloat)
     expect(row.layout.height).toBe(108);
   });
+
+  it('REPRO: implicit w/h cards (text content) in wrap row do not bloat parent column', () => {
+    // Faithful reproduction of the OreStyled CardSection bug. Cards have NO
+    // explicit width OR height — both derive from their two text children.
+    // This is the difference from the tests above (which fix width+height).
+    //
+    //   content column (width=304, padding=8, gap=4, dir=column)
+    //   ├── label text (h=10)
+    //   ├── wrap row 1 (dir=row, wrap, gap=4)
+    //   │     ├── card "default" (dir=col, pad=8, gap=4) → 2 texts w38,w38 h10
+    //   │     ├── card "light"   (dir=col, pad=8, gap=4) → 2 texts w22,w24 h10
+    //   │     └── card "dark"    (dir=col, pad=8, gap=4) → 2 texts w24,w24 h10
+    //   └── wrap row 2 (dir=row, wrap, gap=4)
+    //         ├── card "raised"       → 2 texts w32,w32 h10
+    //         └── card "raised-light" → 2 texts w60,w61 h10
+    //
+    // Each card height = pad8 + text10 + gap4 + text10 + pad8 = 40.
+    // All cards in a row fit on one line (widths ≪ 304) → each row height = 40.
+    // Expected column height: 10 + 4 + 40 + 4 + 40 = 98 (NOT 290).
+    const card = (w1: number, w2: number): ReturnType<typeof createNode> =>
+      createNode({ flexDirection: 'column', padding: 8, gap: 4 }, [
+        createNode({ width: w1, height: 10 }),
+        createNode({ width: w2, height: 10 }),
+      ]);
+
+    // Wrap the section column in an outer root so the root-height floor (which
+    // forces the top-level node to the canonical viewport) applies to the root,
+    // not the section we are measuring — matching the real nested screen.
+    const column = createNode({ width: 304, flexDirection: 'column', gap: 4 }, [
+      createNode({ width: 167, height: 10 }), // label
+      createNode({ flexDirection: 'row', wrap: 'wrap', gap: 4 }, [
+        card(38, 38), // default
+        card(22, 24), // light
+        card(24, 24), // dark
+      ]),
+      createNode({ flexDirection: 'row', wrap: 'wrap', gap: 4 }, [
+        card(32, 32), // raised
+        card(60, 61), // raised-light
+      ]),
+    ]);
+    const root = createNode({ width: 320, flexDirection: 'column' }, [column]);
+
+    computeLayout(root);
+
+    const row1 = column.children[1];
+    const row2 = column.children[2];
+
+    // Each row should be a single line of 40px-tall cards.
+    expect(row1.layout.height).toBe(40);
+    expect(row2.layout.height).toBe(40);
+
+    // y positions: label at 0, row1 at 10+4=14, row2 at 14+40+4=58
+    expect(row1.layout.y).toBe(14);
+    expect(row2.layout.y).toBe(58);
+
+    // Column height: 10 + 4 + 40 + 4 + 40 = 98
+    expect(column.layout.height).toBe(98);
+  });
 });
 
 // ─── zIndex ───────────────────────────────────────────────────────────────────

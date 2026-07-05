@@ -14,7 +14,7 @@ import {
   ToggleButtonItem,
 } from '@bedrock-core/ore-styled';
 import type { JSX } from '@bedrock-core/ui';
-import { Fragment, Image, Panel, Text, useState } from '@bedrock-core/ui';
+import { Fragment, Panel, Text, useState } from '@bedrock-core/ui';
 
 function SectionLabel({ children }: { children: string }): JSX.Element {
   return <Text>{`§e§l${children}`}</Text>;
@@ -37,6 +37,7 @@ function ButtonsSection(): JSX.Element {
           <Button variant={'danger'}>{'Danger'}</Button>
           <Button variant={'contrast'}>{'Contrast'}</Button>
           <Button variant={'realm'}>{'Realm'}</Button>
+          <Button variant={'transparent'}>{'Transparent'}</Button>
         </Fragment>
       </Panel>
       <Panel flexDirection={'row'} gap={theme.tokens.spacing.sm}>
@@ -46,6 +47,7 @@ function ButtonsSection(): JSX.Element {
           <Button variant={'danger'} enabled={false}>{'Danger'}</Button>
           <Button variant={'contrast'} enabled={false}>{'Contrast'}</Button>
           <Button variant={'realm'} enabled={false}>{'Realm'}</Button>
+          <Button variant={'transparent'} enabled={false}>{'Transparent'}</Button>
         </Fragment>
       </Panel>
     </Panel>
@@ -180,19 +182,54 @@ function CardSection(): JSX.Element {
   return (
     <Panel flexDirection={'column'} gap={theme.tokens.spacing.sm}>
       <SectionLabel>{'Card'}</SectionLabel>
-      <Panel flexDirection={'row'} gap={theme.tokens.spacing.md} wrap={'wrap'}>
-        <Card>
-          <Text>{`${theme.tokens.fontColor.default}Card with text child very long so it is only 1 line card`}</Text>
-        </Card>
-        <Card>
-          <Text>{`${theme.tokens.fontColor.default}Card with`}</Text>
-          <Text>{`${theme.tokens.fontColor.muted}multiple children`}</Text>
-        </Card>
-        <Card>
-          <Image width={48} height={48} texture={'textures/ui/cartography_table_copy'} />
-        </Card>
-        <Card />
+      <Panel flexDirection={'row'} gap={theme.tokens.spacing.sm} wrap={'wrap'}>
+        <Fragment>
+          <Card variant={'default'}>
+            <Text>{`${theme.tokens.fontColor.muted}default`}</Text>
+            <Text>{`${theme.tokens.fontColor.default}Default`}</Text>
+          </Card>
+          <Card variant={'light'}>
+            <Text>{`${theme.tokens.fontColor.muted}light`}</Text>
+            <Text>{`${theme.tokens.fontColor.default}Light`}</Text>
+          </Card>
+          <Card variant={'dark'}>
+            <Text>{`${theme.tokens.fontColor.muted}dark`}</Text>
+            <Text>{`${theme.tokens.fontColor.default}Dark`}</Text>
+          </Card>
+        </Fragment>
       </Panel>
+      <Panel flexDirection={'row'} gap={theme.tokens.spacing.sm} wrap={'wrap'}>
+        <Fragment>
+          <Card variant={'raised'}>
+            <Text>{`${theme.tokens.fontColor.muted}raised`}</Text>
+            <Text>{`${theme.tokens.fontColor.default}Raised`}</Text>
+          </Card>
+          <Card variant={'raised-light'}>
+            <Text>{`${theme.tokens.fontColor.muted}raised-light`}</Text>
+            <Text>{`${theme.tokens.fontColor.default}Raised Light`}</Text>
+          </Card>
+          <Card variant={'raised-dark'}>
+            <Text>{`${theme.tokens.fontColor.muted}raised-dark`}</Text>
+            <Text>{`${theme.tokens.fontColor.default}Raised Dark`}</Text>
+          </Card>
+        </Fragment>
+      </Panel>
+      <Card variant={'raised'}>
+        <Text>{`${theme.tokens.fontColor.default}§lNested cards`}</Text>
+        <Panel flexDirection={'row'} gap={theme.tokens.spacing.sm}>
+          <Fragment>
+            <Card variant={'default'} flex={1}>
+              <Text>{`${theme.tokens.fontColor.muted}inner default`}</Text>
+            </Card>
+            <Card variant={'light'} flex={1}>
+              <Text>{`${theme.tokens.fontColor.muted}inner light`}</Text>
+            </Card>
+            <Card variant={'dark'} flex={1}>
+              <Text>{`${theme.tokens.fontColor.muted}inner dark`}</Text>
+            </Card>
+          </Fragment>
+        </Panel>
+      </Card>
     </Panel>
   );
 }
@@ -223,7 +260,7 @@ function DividerSection(): JSX.Element {
 
 export function OreStyled(): JSX.Element {
   return (
-    <Panel flexDirection={'column'} padding={theme.tokens.spacing.md} gap={theme.tokens.spacing.lg} background={'textures/ui/ore-styled/card/background'}>
+    <Panel flexDirection={'column'} padding={theme.tokens.spacing.md} gap={theme.tokens.spacing.lg} background={'textures/ui/ore-styled/card/default/background'}>
       <Text>{`§f§lore-styled component demo`}</Text>
       <ButtonsSection />
       <CheckboxSection />

@@ -1,4 +1,5 @@
 import translationKeys from '@bedrock-core/generated/translation-keys';
+import { world } from '@minecraft/server';
 import {
   createStackNavigator,
   NavigationContainer,
@@ -9,6 +10,7 @@ import {
   Card,
   Checkbox,
   Divider,
+  Form,
   Radio,
   RadioGroup,
   theme,
@@ -21,6 +23,7 @@ import { Fragment, type JSX, Panel, Text, TranslationKeysContext, useState } fro
 type AppRoutes = {
   Home: undefined;
   Settings: { plan: string };
+  ProfileForm: undefined;
 };
 
 type Screen<K extends keyof AppRoutes> = ScreenProps<AppRoutes, K>;
@@ -67,7 +70,34 @@ function HomeScreen({ navigation }: Screen<'Home'>): JSX.Element {
       <Button onPress={(): void => navigation.navigate('Settings', { plan })}>
         {`${fontColor.default}Go to Settings →`}
       </Button>
+
+      <Button variant={'secondary'} onPress={(): void => navigation.navigate('ProfileForm')}>
+        {`${fontColor.default}Open Profile Form →`}
+      </Button>
     </Panel>
+  );
+}
+
+// A native modal form (ModalFormData-backed): every field's value arrives once, in
+// onSubmit, keyed by its `name`. Exactly one Form.Button type="submit" is required.
+function ProfileFormScreen({ navigation }: Screen<'ProfileForm'>): JSX.Element {
+  return (
+    <Form
+      onSubmit={(values): void => {
+        // values.nick / values.difficulty / values.volume / values.notify
+        world.sendMessage(`§aSaved profile: ${String(values.nick)}`);
+        navigation.goBack();
+      }}
+      onCancel={(): void => navigation.goBack()}
+    >
+      <Text>{'§lProfile'}</Text>
+      <Form.Input name={'nick'} label={'Nickname'} placeholder={'Steve'} />
+      <Form.Dropdown name={'difficulty'} label={'Difficulty'} options={['Peaceful', 'Easy', 'Normal', 'Hard']} />
+      <Form.Slider name={'volume'} label={'Volume'} min={0} max={10} defaultValue={7} />
+      <Form.Toggle name={'notify'} label={'Notifications'} defaultValue={true} />
+      <Form.Button type={'submit'} label={'Save'} />
+      <Form.Button type={'exit'} label={'Cancel'} />
+    </Form>
   );
 }
 
@@ -98,6 +128,7 @@ const Stack = createStackNavigator<AppRoutes>({
   screens: {
     Home: HomeScreen,
     Settings: SettingsScreen,
+    ProfileForm: ProfileFormScreen,
   },
 });
 

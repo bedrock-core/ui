@@ -1,0 +1,201 @@
+{
+	// Inline select (radio group / toggle-button group): reuses the native dropdown()
+	// machinery but renders the options INLINE (no popup); rows self-position from the
+	// flex geometry packed into each option blob.
+	"namespace": "core_ui_form_components",
+	"inline_select@core_ui_common.control": {
+		// core_ui_common.control owns the whole control-block decode; this just points it
+		// at the modal payload and supplies the type gate.
+		"layer": 50,
+		"$payload_collection": "custom_form",
+		"$payload_binding": "#custom_text",
+		"$cell_details_binding_type": "collection_details",
+		"$type_gate": "(#pre_visible and (#type = 'modal-inline-select'))",
+		"controls": [ { "inline_host@core_ui_form_components.inline_dropdown_host": {} } ]
+	},
+	// A type:"dropdown" stub wires the native selection machinery (selected index on
+	// submit) while the actual option rows render inline in inline_content.
+	"inline_dropdown_host": {
+		"type": "panel",
+		"size": ["100%", "100%"],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"$dropdown_name|default": "custom_dropdown",
+		"controls": [
+			{
+				"inline_dd@core_ui_form_components.inline_dropdown_toggle_stub": {
+					"type": "dropdown",
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"dropdown_name": "$dropdown_name",
+					"dropdown_content_control": "inline_content",
+					/* Deliberately NONEXISTENT area name: inside_header_panel is now a REAL
+					   host at the modal content root (for popup dropdowns) — pointing there
+					   would re-host the inline rows into it. The no-host fallback keeps
+					   inline_content rendering in place (this stub never opens a popup). */
+					"dropdown_area": "inline_offscreen_area"
+				}
+			},
+			{
+				"inline_content": {
+					"type": "panel",
+					"size": ["100%", "100%"],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"controls": [ { "inline_options@core_ui_form_components.inline_options": {} } ]
+				}
+			}
+		]
+	},
+	"inline_dropdown_toggle_stub": {
+		"type": "panel",
+		"size": [0, 0],
+		"visible": false
+	},
+	// Factory host for the inline rows — the PROVEN main-form pattern (a collection_panel
+	// generating one row frame per option), NOT the popup's stack_panel radio group.
+	// TRAP: inline rows SELF-POSITION from blob geometry, so each row needs its own [1,1]
+	// frame; a full-size stack ancestor scales #size_binding/#anchored_offset by ITS box
+	// (in-game: width 156 became 156×156; a 100%c stack collapsed to 0 → rows overlaid).
+	"inline_options": {
+		"type": "collection_panel",
+		"size": ["100%", "100%"],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"factory": {
+			"name": "buttons",
+			"control_name": "core_ui_form_components.inline_option_row"
+		},
+		"collection_name": "custom_dropdown",
+		"bindings": [
+			{
+				"binding_name": "#custom_dropdown_length",
+				"binding_type": "collection",
+				"binding_name_override": "#collection_length",
+				"binding_collection_name": "custom_form"
+			}
+		]
+	},
+	// The [1,1] positioning frame each factory row lives in: #size_binding_* and
+	// #anchored_offset_value_* scale by the PARENT box, so a [1,1] parent maps them 1:1 to
+	// pixels. Pinned top_left — blob geometry is group-RELATIVE px (writer subtracts the
+	// group's own x/y).
+	"inline_option_row": {
+		"type": "panel",
+		"size": [1, 1],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"controls": [ { "row@core_ui_form_components.inline_option_row_impl": {} } ]
+	},
+	// Decodes this row's geometry from its option blob: x[1005] y[1088] w[1171] h[1254].
+	"inline_option_row_impl": {
+		"type": "panel",
+		"size": [0, 0],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"use_anchored_offset": true,
+		"property_bag": {
+			"#size_binding_x": 0,
+			"#size_binding_y": 0,
+			"#anchored_offset_value_x": 0,
+			"#anchored_offset_value_y": 0
+		},
+		"$normalize": 1,
+		"bindings": [
+			{
+				"binding_name": "#custom_radio_text",
+				"binding_type": "collection",
+				"binding_condition": "always",
+				"binding_collection_name": "custom_dropdown"
+			},
+			{ "binding_type": "collection_details" },
+			{ "binding_type": "view", "source_property_name": "('%.1005s' * #custom_radio_text)", "target_property_name": "#skip_anchored_offset_value_x" },
+			{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_anchored_offset_value_x)", "target_property_name": "#rem_anchored_offset_value_x" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_anchored_offset_value_x)", "target_property_name": "#raw_anchored_offset_value_x" },
+			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_anchored_offset_value_x) - ('%.2s' * #raw_anchored_offset_value_x) - ';') * $normalize)", "target_property_name": "#anchored_offset_value_x" },
+			{ "binding_type": "view", "source_property_name": "('%.1088s' * #custom_radio_text)", "target_property_name": "#skip_anchored_offset_value_y" },
+			{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_anchored_offset_value_y)", "target_property_name": "#rem_anchored_offset_value_y" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_anchored_offset_value_y)", "target_property_name": "#raw_anchored_offset_value_y" },
+			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_anchored_offset_value_y) - ('%.2s' * #raw_anchored_offset_value_y) - ';') * $normalize)", "target_property_name": "#anchored_offset_value_y" },
+			{ "binding_type": "view", "source_property_name": "('%.1171s' * #custom_radio_text)", "target_property_name": "#skip_size_binding_x" },
+			{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_size_binding_x)", "target_property_name": "#rem_size_binding_x" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_size_binding_x)", "target_property_name": "#raw_size_binding_x" },
+			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_size_binding_x) - ('%.2s' * #raw_size_binding_x) - ';') * 1)", "target_property_name": "#size_binding_x" },
+			{ "binding_type": "view", "source_property_name": "('%.1254s' * #custom_radio_text)", "target_property_name": "#skip_size_binding_y" },
+			{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_size_binding_y)", "target_property_name": "#rem_size_binding_y" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_size_binding_y)", "target_property_name": "#raw_size_binding_y" },
+			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_size_binding_y) - ('%.2s' * #raw_size_binding_y) - ';') * 1)", "target_property_name": "#size_binding_y" }
+		],
+		// Shared row pieces (form_shared.json): the radio option_toggle (its option_face
+		// children carry the per-state face+bullet offsets) + the label frame. "always" is
+		// this row's proven state-binding condition.
+		"controls": [
+			{ "option_toggle@core_ui_form_components.option_toggle": { "$toggle_binding_condition": "always" } },
+			{ "label_frame@core_ui_form_components.option_label_frame": {} }
+		]
+	},
+	// ── Bullet machinery (referenced by the shared option_face) ─────────────────────
+	// A [1,1] frame at the face's left-middle → a box sized from the blob
+	// (bulletWidth[1337]/bulletHeight[1420]) → the glyph image at $bullet_skip. No
+	// visibility gate: the toggle shows only the active state's face, and an empty
+	// texture self-hides (dropdown popup / toggle-button segments draw nothing).
+	"inline_bullet": {
+		"type": "panel",
+		"size": [1, 1],
+		"anchor_from": "left_middle",
+		"anchor_to": "left_middle",
+		"layer": 11,
+		"$bullet_skip|default": "('%.839s' * #custom_radio_text)",
+		"controls": [ { "bullet_box@core_ui_form_components.inline_bullet_box": { "$bullet_skip": "$bullet_skip" } } ]
+	},
+	"inline_bullet_box": {
+		"type": "panel",
+		"size": [0, 0],
+		"anchor_from": "left_middle",
+		"anchor_to": "left_middle",
+		"$bullet_skip|default": "('%.839s' * #custom_radio_text)",
+		"property_bag": {
+			"#size_binding_x": 0,
+			"#size_binding_y": 0
+		},
+		"bindings": [
+			{
+				"binding_name": "#custom_radio_text",
+				"binding_type": "collection",
+				"binding_condition": "always",
+				"binding_collection_name": "custom_dropdown"
+			},
+			{ "binding_type": "collection_details" },
+			{ "binding_type": "view", "source_property_name": "('%.1337s' * #custom_radio_text)", "target_property_name": "#skip_bullet_w" },
+			{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_bullet_w)", "target_property_name": "#rem_bullet_w" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_bullet_w)", "target_property_name": "#raw_bullet_w" },
+			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_bullet_w) - ('%.2s' * #raw_bullet_w) - ';') * 1)", "target_property_name": "#size_binding_x" },
+			{ "binding_type": "view", "source_property_name": "('%.1420s' * #custom_radio_text)", "target_property_name": "#skip_bullet_h" },
+			{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_bullet_h)", "target_property_name": "#rem_bullet_h" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_bullet_h)", "target_property_name": "#raw_bullet_h" },
+			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_bullet_h) - ('%.2s' * #raw_bullet_h) - ';') * 1)", "target_property_name": "#size_binding_y" }
+		],
+		"controls": [ { "img@core_ui_form_components.inline_bullet_img": { "$bullet_skip": "$bullet_skip" } } ]
+	},
+	"inline_bullet_img": {
+		"type": "image",
+		"size": ["100%", "100%"],
+		"$bullet_skip|default": "('%.839s' * #custom_radio_text)",
+		"texture": "#texture",
+		"visible": "#visible",
+		"bindings": [
+			{
+				"binding_name": "#custom_radio_text",
+				"binding_type": "collection",
+				"binding_condition": "always",
+				"binding_collection_name": "custom_dropdown"
+			},
+			{ "binding_type": "collection_details" },
+			{ "binding_type": "view", "source_property_name": "$bullet_skip", "target_property_name": "#skip_texture" },
+			{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_texture)", "target_property_name": "#rem_texture" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_texture)", "target_property_name": "#raw_texture" },
+			{ "binding_type": "view", "source_property_name": "(('%.82s' * #raw_texture) - ('%.2s' * #raw_texture) - ';')", "target_property_name": "#texture" },
+			{ "binding_type": "view", "source_property_name": "(not (#texture = ''))", "target_property_name": "#visible" }
+		]
+	}
+}

@@ -3,26 +3,39 @@
 		"ui/server_form.json",
 		// Animations
 		"ui/core-ui/animations/screen_events.json",
-		// Base control, all components should extend this
-		// Control [0,1023] 1024 bytes
-		"ui/core-ui/common/screen_container.json",
+		// Shared bases every component extends (all namespace core_ui_common):
+		//   control    — the generic control-block decode (position/size/visible/region)
+		//   state.json — state_face / modal_state_face (self-decoding bg faces)
+		"ui/core-ui/common/control.json",
+		"ui/core-ui/common/state.json",
+		"ui/core-ui/common/action_container.json",
+		"ui/core-ui/common/modal_container.json",
 		"ui/core-ui/common/label_router.json",
 		"ui/core-ui/common/button_router.json",
+		"ui/core-ui/common/dropdown_router.json",
 		"ui/core-ui/common/cursor.json",
 		// -----------------------------------------------
 		// After the initial reserved bytes for the common, rest of bytes 
 		// after 1024 for its own use and 
 		// available in #serialized_data binding
-		// Main scroll (index 0): wraps region-0 content; the only scroll on single-scroll screens.
+		// Scrolls
 		"ui/core-ui/screens/scroll.json",
-		// Generic scroll pool: scroll_1..N of one parameterized control (data-driven geometry),
-		// mounted as a sibling of the main scroll for multi-scroll screens.
 		"ui/core-ui/screens/scroll_pool.json",
 		// Components 
 		"ui/core-ui/components/button.json",
 		"ui/core-ui/components/panel.json",
 		"ui/core-ui/components/text.json",
 		"ui/core-ui/components/image.json",
-		"ui/core-ui/components/item_renderer.json"
+		"ui/core-ui/components/item_renderer.json",
+		// Form components
+		"ui/core-ui/form_components/toggle.json",
+		"ui/core-ui/form_components/input.json",
+		"ui/core-ui/form_components/slider.json",
+		// Shared bases + option faces used by the dropdown + inline-select primitives.
+		"ui/core-ui/form_components/form_shared.json",
+		// Router for native-dropdown cells (fans #type → dropdown popup | inline radio/toggle-button).
+		"ui/core-ui/form_components/dropdown.json",
+		"ui/core-ui/form_components/inline_select.json",
+		"ui/core-ui/form_components/label.json"
 	]
 }

@@ -1,11 +1,21 @@
 import { JSX } from '../jsx/jsx-runtime';
 import type { LayoutProps } from './layout';
 
+/**
+ * Blank-canvas placeholder texture (3×3 nineslice, 1px borders) — the default look
+ * of every primitive surface the user hasn't styled.
+ */
+export const UNSTYLED_TEXTURE = 'textures/ui/unstyled';
+
 export interface ControlProps extends LayoutProps {
   visible?: boolean;
   enabled?: boolean;
   background?: string;
 }
+
+// StateBackgroundProps + resolveStateBackgrounds moved to ./stateBackground; re-exported
+// here so existing `from '../control'` imports keep working.
+export { resolveStateBackgrounds, type StateBackgroundProps } from './stateBackground';
 
 /**
  * Combines both layout and control props, applying defaults to any missing values.

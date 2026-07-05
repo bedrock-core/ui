@@ -1,0 +1,26 @@
+{
+	// Router for native-dropdown cells. The modal factory maps the native kind "dropdown" here;
+	// both children render for every such cell and self-gate on #type (dropdown popup vs inline
+	// radio/toggle-button), so exactly one is visible per cell.
+	"namespace": "core_ui_common",
+	"dropdown_router": {
+		"type": "panel",
+		// Components must be inside a panel with size [1,1] so size_binding values map 1:1 to pixels.
+		"size": [
+			1,
+			1
+		],
+		// BOTH children render for every native-dropdown cell; each self-gates on its own #type
+		// (dropdown → 'modal-dropdown' popup; inline_select → 'modal-inline-select' inline list),
+		// so exactly one is visible per cell. The factory key is the native kind ('dropdown'), so
+		// there is no separate 'radio' key — the router fans the two #types apart here.
+		"controls": [
+			{
+				"dropdown@core_ui_form_components.dropdown": {}
+			},
+			{
+				"inline_select@core_ui_form_components.inline_select": {}
+			}
+		]
+	}
+}

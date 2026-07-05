@@ -135,6 +135,7 @@ export function expandAndResolveContexts(
 
     return {
       type: element.type,
+      nativeArgs: element.nativeArgs,
       props: {
         ...element.props,
         children: processedChildren,
@@ -148,6 +149,7 @@ export function expandAndResolveContexts(
 
     return {
       type: element.type,
+      nativeArgs: element.nativeArgs,
       props: {
         ...element.props,
         children: [processed], // normalize to array
@@ -158,6 +160,7 @@ export function expandAndResolveContexts(
   // Normalize null/undefined or non-element children to empty array
   return {
     type: element.type,
+    nativeArgs: element.nativeArgs,
     props: {
       ...element.props,
       children: [],

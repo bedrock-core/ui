@@ -47,13 +47,14 @@ The system uses a routing architecture to handle different component types:
 4. Each component JSON file (e.g., `panel.json`) uses conditional bindings: `(#type = 'panel') and #visible` to determine if it should render
 5. Only the matching component type renders, others remain invisible
 
-**For Native Form Components** (not yet implemented):
+**For Native Form Components** (`Form` and its `Form.*` fields — shipped in 0.9):
 
-- These will bypass the router and use their dedicated factory control IDs
-- `"toggle": "@server_form.custom_toggle"`, `"input": "@server_form.custom_input"`, etc.
-- They will still use the same serialization protocol for consistency
+- A `<Form>` on the tree switches the renderer from the all-buttons ActionForm backend to a native `ModalFormData` build (one atomic submit)
+- Field controls (`Form.Toggle`, `Form.Slider`, `Form.Dropdown`, `Form.InlineSelect`, `Form.Input`) map to the native modal control factory (`toggle` / `slider` / `dropdown` / `input`) instead of the label router
+- They still use the same serialization protocol, so the RP decoders share the field-slicing machinery; values arrive once, on submit, keyed by each control's `name`
+- `Form.Button` is NOT a native control — it consumes no `formValues` slot; its geometry + styling ride the form **title** payload (assembled post-layout) and wire to the engine's submit / close button ids
 
-This "label-as-entry-point" system allows unlimited custom components while leveraging Minecraft's native form factory system for future interactive elements.
+This "label-as-entry-point" system allows unlimited custom client components, while the modal backend leverages Minecraft's native form factory for interactive fields.
 
 ## 🧩 Component Pattern
 

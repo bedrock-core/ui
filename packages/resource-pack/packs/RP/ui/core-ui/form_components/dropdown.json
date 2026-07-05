@@ -1,0 +1,349 @@
+{
+	// Dropdown primitive (popup): closed box + floating option popup.
+	"namespace": "core_ui_form_components",
+	"dropdown@core_ui_common.control": {
+		// core_ui_common.control owns the whole control-block decode; this just points it
+		// at the modal payload and supplies the type gate.
+		"layer": 50,
+		"$payload_collection": "custom_form",
+		"$payload_binding": "#custom_text",
+		"$cell_details_binding_type": "collection_details",
+		"$type_gate": "(#pre_visible and (#type = 'modal-dropdown'))",
+		"controls": [
+			{ "dropdown_control@core_ui_form_components.dropdown_control": {} },
+			{
+				// Live current-value overlay (the engine keeps #dropdown_option_text in sync
+				// with the selected option). Layer 20 clears the closed box + faces (≤2).
+				"dropdown_current_label@core_ui_form_components.dropdown_current_label": { "layer": 20 }
+			}
+		]
+	},
+	// The dropdown assembly: closed-box toggle instance + popup content panel.
+	// TRAP: type:"dropdown" owns ALL the native open/close machinery — a hand-built
+	// rewiring froze the game on open; the native type must drive it, we only swap visuals.
+	// TRAP: dropdown_area "inside_header_panel" resolves nowhere in our screen, so the
+	// engine pins the popup box's TOP edge at the screen's vertical middle (the box's own
+	// anchors/offset are IGNORED there — probe-verified); popup_shift/popup_card position
+	// the card around that line. Naming ANY control "inside_header_panel" would hijack
+	// popup hosting to its z-position.
+	"dropdown_control": {
+		"type": "panel",
+		"size": ["100%", "100%"],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"layer": 2,
+		"controls": [
+			{
+				"custom_dropdown@core_ui_form_components.dropdown_closed_box": {
+					"type": "dropdown",
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"dropdown_name": "custom_dropdown",
+					"dropdown_content_control": "dropdown_content",
+					"dropdown_area": "inside_header_panel",
+					"$toggle_name": "custom_dropdown",
+					"$toggle_state_binding_name": "#custom_dropdown"
+				}
+			},
+			{
+				/* INVISIBLE input shield — the engine's own popup box. It keeps what the
+				   native machinery does well (open/close state + the dropdown_exit
+				   mappings, all mapping_type "global") but draws NOTHING: the VISUAL popup
+				   renders in the root-level popup_overlay (modal_container's
+				   inside_header_panel), OUTSIDE the scroll, gated by that row's open-state.
+				   TRAP: "modal": true must NOT be set here — a modal input panel routes ALL
+				   input to its OWN subtree, and the visuals live outside it, so every click
+				   on the popup died and only the global exit fired ("closes as if clicked
+				   outside"); wheel never reached the popup scroll either. Without modal,
+				   hit-testing routes input to the front-most control (the overlay, layer
+				   300). The box itself stays cell-relative (toggle-anchored, %-of-toggle
+				   sized) — irrelevant now that nothing renders in it. */
+				"dropdown_content": {
+					"type": "input_panel",
+					"layer": 200,
+					"size": ["100%", "1000%"],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"property_bag": { "#is_dropdown": true },
+					"bindings": [
+						{
+							"binding_type": "view",
+							"source_control_name": "custom_dropdown",
+							"source_property_name": "#toggle_state",
+							"target_property_name": "#visible",
+							"resolve_sibling_scope": true
+						}
+					],
+					"button_mappings": [
+						{ "from_button_id": "button.menu_cancel", "to_button_id": "button.dropdown_exit", "mapping_type": "global" },
+						{ "from_button_id": "button.menu_ok", "to_button_id": "button.dropdown_exit", "mapping_type": "global" },
+						{ "from_button_id": "button.menu_select", "to_button_id": "button.dropdown_exit", "mapping_type": "global" },
+						{ "from_button_id": "button.menu_up", "to_button_id": "button.menu_up", "mapping_type": "global", "scope": "view" },
+						{ "from_button_id": "button.menu_down", "to_button_id": "button.menu_down", "mapping_type": "global", "scope": "view" },
+						{ "from_button_id": "button.menu_left", "to_button_id": "button.menu_left", "mapping_type": "global", "scope": "view" },
+						{ "from_button_id": "button.menu_right", "to_button_id": "button.menu_right", "mapping_type": "global", "scope": "view" }
+					]
+				}
+			}
+		]
+	},
+	// ── Root-overlay popup router — one per custom_form row (factory cell of the
+	// popup_overlay collection in modal_container's inside_header_panel). Shows ONLY when
+	// its row is an OPEN dropdown: #type decoded from the cell payload + the row's
+	// #custom_dropdown open-state (the closed box's collection-type toggle binding writes
+	// it — vanilla server_form wiring). Cell context comes from collection_details, so all
+	// the popup chrome children (shift/bg/option rows) resolve their custom_form /
+	// custom_dropdown fetches exactly like the inline select's rows do outside any popup.
+	"dropdown_popup_router": {
+		"type": "panel",
+		"size": ["100%", "100%"],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"visible": "#visible",
+		"property_bag": { "#visible": false },
+		"bindings": [
+			{
+				"binding_type": "collection_details",
+				"binding_collection_name": "custom_form"
+			},
+			{
+				"binding_name": "#custom_text",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form"
+			},
+			{ "binding_type": "view", "source_property_name": "('%.9s' * #custom_text)", "target_property_name": "#pr_header" },
+			{ "binding_type": "view", "source_property_name": "(#custom_text - #pr_header)", "target_property_name": "#rem_hdr" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_hdr)", "target_property_name": "#raw_type" },
+			{ "binding_type": "view", "source_property_name": "(('%.82s' * #raw_type) - ('%.2s' * #raw_type) - ';')", "target_property_name": "#type" },
+			{
+				"binding_name": "#custom_dropdown",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form"
+			},
+			{ "binding_type": "view", "source_property_name": "((#type = 'modal-dropdown') and #custom_dropdown)", "target_property_name": "#visible" }
+		],
+		"controls": [
+			{
+				/* [1,1] point at the HOST's exact center: the card anchors center→center on
+				   it, so ANY decoded height (20% or the 50% cap) stays dead-centered —
+				   h/2 above, h/2 below, symmetric by construction. The old engine-popup
+				   shift+straddle trick is gone: this is a normal tree, plain anchors work.
+				   TRAP: do NOT add an input_panel backdrop here — even at a LOWER layer
+				   than the card it ate ALL pointer input in its rect (input routing ignores
+				   layer for input_panels), killing option-row clicks. Click-outside-close
+				   doesn't need one: the invisible shield's GLOBAL menu_select→dropdown_exit
+				   mapping closes on any click. */
+				"popup_center": {
+					"type": "panel",
+					"size": [1, 1],
+					"anchor_from": "center",
+					"anchor_to": "center",
+					"controls": [ { "popup_card@core_ui_form_components.dropdown_popup_card": {} } ]
+				}
+			}
+		]
+	},
+	// The popup surface: 318px (10px narrower than the form → the popup scrollbar clears
+	// the form's own scrollbar; centered → symmetric 5px gutters). Height decodes
+	// popupHeight[1356] with plain "* 1" (the ONLY proven string→number coercion —
+	// fractional multiplies silently yield 0), TS caps it at half the canonical screen.
+	// Size-carrier panel inside a [1,1] parent ⇒ value = raw px; anchored center→center on
+	// that [1,1] point ⇒ always centered whatever the height. Literal-x + bound-y is the
+	// proven modal_scroll_content shape.
+	"dropdown_popup_card": {
+		"type": "panel",
+		"size": ["318px", 0],
+		"anchor_from": "center",
+		"anchor_to": "center",
+		"property_bag": { "#size_binding_y": 0.0 },
+		"bindings": [
+			{
+				"binding_name": "#custom_text",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form"
+			},
+			{ "binding_type": "view", "source_property_name": "('%.1356s' * #custom_text)", "target_property_name": "#skip_to_popup_h" },
+			{ "binding_type": "view", "source_property_name": "(#custom_text - #skip_to_popup_h)", "target_property_name": "#rem_at_popup_h" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_at_popup_h)", "target_property_name": "#raw_popup_h" },
+			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_popup_h) - ('%.2s' * #raw_popup_h) - ';') * 1)", "target_property_name": "#size_binding_y" }
+		],
+		"controls": [
+			{
+				"scroll@common.scrolling_panel": {
+					"layer": 2,
+					/* GLOBAL wheel claim ($var reaches scroll_view_control down the chain):
+					   while this popup is open (the only time this control exists — router
+					   gate), the wheel scrolls the POPUP no matter where the pointer is;
+					   pointer-position routing alone never delivered wheel to the overlay
+					   (the shield's modal input state gates it). The MAIN scroll must keep
+					   always_handle_scrolling FALSE or it wins the contention back. */
+					"$always_handle_scrolling": true,
+					"$allow_scrolling_even_when_content_fits": false,
+					"size": ["100%", "100%"],
+					"$scrolling_pane_size": ["100%", "100%"],
+					"$scrolling_content": "core_ui_form_components.dropdown_options",
+					"$scroll_view_port_size": ["100% - 4px", "100% - 4px"],
+					"$scroll_view_port_size_touch": ["100% - 4px", "100% - 4px"],
+					"$scroll_view_port_offset": [2, 2],
+					"$scroll_view_port_offset_touch": [2, 2],
+					"$scroll_size": [5, "100%-2px"],
+					"$scroll_size_touch": [5, "100%-2px"],
+					"$scroll_background_image_control": "core_ui_form_components.dropdown_popup_background",
+					"$background_size": ["100%", "100%"],
+					"$background_size_touch": ["100%", "100%"],
+					"$show_background": true,
+					"$scroll_bar_contained": true,
+					"$scroll_bar_contained_touch": true
+				}
+			}
+		]
+	},
+	// Closed-box current-value host: a [1,1] frame at the box's left-middle; the value
+	// label offsets from it by the payload currentX[1688]/currentY[1771] (TS defaults
+	// x=8, y=centered).
+	"dropdown_current_label": {
+		"type": "panel",
+		"layer": 20,
+		"size": ["100%", "100%"],
+		"controls": [
+			{
+				"value_frame": {
+					"type": "panel",
+					"size": [1, 1],
+					"anchor_from": "left_middle",
+					"anchor_to": "left_middle",
+					"controls": [ { "display_text@core_ui_form_components.dropdown_current_value_text": {} } ]
+				}
+			}
+		]
+	},
+	// Current-value text on the shared label base. TWO custom_form channels:
+	//   #dropdown_option_text — engine-synced SELECTED option; its value is that option's
+	//     whole blob, so decode text[92] out of it (same slice the popup rows use).
+	//   #custom_text — the dropdown CELL payload: currentColor[1439] (a §-code PREFIX —
+	//     label color isn't bindable, color rides the text), currentFontType[1522],
+	//     currentFontScale[1605], currentX[1688], currentY[1771].
+	// Rendered text = color prefix + decoded option text.
+	"dropdown_current_value_text@core_ui_components.label": {
+		"bindings": [
+			{
+				"binding_name": "#dropdown_option_text",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form"
+			},
+			{ "binding_type": "view", "source_property_name": "('%.92s' * #dropdown_option_text)", "target_property_name": "#skip_to_text" },
+			{ "binding_type": "view", "source_property_name": "(#dropdown_option_text - #skip_to_text)", "target_property_name": "#rem_at_text" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_at_text)", "target_property_name": "#raw_opt_text" },
+			{ "binding_type": "view", "source_property_name": "(('%.82s' * #raw_opt_text) - ('%.2s' * #raw_opt_text) - ';')", "target_property_name": "#opt_text" },
+			{
+				"binding_name": "#custom_text",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form"
+			},
+			{ "binding_type": "view", "source_property_name": "('%.1439s' * #custom_text)", "target_property_name": "#skip_to_color" },
+			{ "binding_type": "view", "source_property_name": "(#custom_text - #skip_to_color)", "target_property_name": "#rem_at_color" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_at_color)", "target_property_name": "#raw_color" },
+			{ "binding_type": "view", "source_property_name": "(('%.82s' * #raw_color) - ('%.2s' * #raw_color) - ';')", "target_property_name": "#color_prefix" },
+			{ "binding_type": "view", "source_property_name": "(#color_prefix + #opt_text)", "target_property_name": "#text" },
+			{ "binding_type": "view", "source_property_name": "('%.1522s' * #custom_text)", "target_property_name": "#skip_to_font_type" },
+			{ "binding_type": "view", "source_property_name": "(#custom_text - #skip_to_font_type)", "target_property_name": "#rem_at_font_type" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_at_font_type)", "target_property_name": "#raw_font_type" },
+			{ "binding_type": "view", "source_property_name": "(('%.82s' * #raw_font_type) - ('%.2s' * #raw_font_type) - ';')", "target_property_name": "#font_type" },
+			{ "binding_type": "view", "source_property_name": "('%.1605s' * #custom_text)", "target_property_name": "#skip_to_font_scale" },
+			{ "binding_type": "view", "source_property_name": "(#custom_text - #skip_to_font_scale)", "target_property_name": "#rem_at_font_scale" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_at_font_scale)", "target_property_name": "#raw_font_scale" },
+			{ "binding_type": "view", "source_property_name": "(('%.82s' * #raw_font_scale) - ('%.2s' * #raw_font_scale) - ';')", "target_property_name": "#font_scale_factor" },
+			{ "binding_type": "view", "source_property_name": "('%.1688s' * #custom_text)", "target_property_name": "#skip_to_cur_x" },
+			{ "binding_type": "view", "source_property_name": "(#custom_text - #skip_to_cur_x)", "target_property_name": "#rem_at_cur_x" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_at_cur_x)", "target_property_name": "#raw_cur_x" },
+			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_cur_x) - ('%.2s' * #raw_cur_x) - ';') * 1)", "target_property_name": "#anchored_offset_value_x" },
+			{ "binding_type": "view", "source_property_name": "('%.1771s' * #custom_text)", "target_property_name": "#skip_to_cur_y" },
+			{ "binding_type": "view", "source_property_name": "(#custom_text - #skip_to_cur_y)", "target_property_name": "#rem_at_cur_y" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_at_cur_y)", "target_property_name": "#raw_cur_y" },
+			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_cur_y) - ('%.2s' * #raw_cur_y) - ';') * 1)", "target_property_name": "#anchored_offset_value_y" }
+		]
+	},
+	// Closed-box visuals on toggle_base. The instantiation above overrides type to
+	// "dropdown" (the native engine type that owns open/close); toggle_base's toggle-family
+	// props/mappings are still required for clicks to register.
+	// TRAP: vanilla common.toggle has NO focus props — the base carries the trio, wrap is
+	// added here (without them the closed box was un-selectable by controller/keyboard).
+	"dropdown_closed_box@core_ui_form_components.toggle_base": {
+		"size": ["100%", "100%"],
+		"focus_wrap_enabled": true,
+		"$toggle_binding_type": "collection",
+		"$toggle_grid_collection_name": "custom_form",
+		// State faces: shared modal_state_face at the button-identical offsets —
+		// idle[440], hover[1024], open/pressed[1107], locked[1190].
+		"controls": [
+			{ "unchecked@core_ui_common.modal_state_face": { "$face_skip": "('%.440s' * #payload)" } },
+			{ "checked@core_ui_common.modal_state_face": { "$face_skip": "('%.1107s' * #payload)" } },
+			{ "unchecked_hover@core_ui_common.modal_state_face": { "$face_skip": "('%.1024s' * #payload)" } },
+			{ "checked_hover@core_ui_common.modal_state_face": { "$face_skip": "('%.1107s' * #payload)" } },
+			{ "unchecked_locked@core_ui_common.modal_state_face": { "$face_skip": "('%.1190s' * #payload)" } },
+			{ "checked_locked@core_ui_common.modal_state_face": { "$face_skip": "('%.1190s' * #payload)" } },
+			{ "unchecked_locked_hover@core_ui_common.modal_state_face": { "$face_skip": "('%.1190s' * #payload)" } },
+			{ "checked_locked_hover@core_ui_common.modal_state_face": { "$face_skip": "('%.1190s' * #payload)" } }
+		]
+	},
+	// Popup container background: self-decodes popupBackground[1273] from the dropdown's
+	// custom_form cell (collection cell scope reaches inside the popup — probe-verified).
+	// Empty texture draws nothing (the scroll's background@ instance forces visible true).
+	"dropdown_popup_background": {
+		"type": "image",
+		"layer": 1,
+		"texture": "#texture",
+		"bindings": [
+			{
+				"binding_name": "#custom_text",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form"
+			},
+			{ "binding_type": "view", "source_property_name": "('%.1273s' * #custom_text)", "target_property_name": "#skip_to_popup_bg" },
+			{ "binding_type": "view", "source_property_name": "(#custom_text - #skip_to_popup_bg)", "target_property_name": "#rem_at_popup_bg" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_at_popup_bg)", "target_property_name": "#raw_popup_bg" },
+			{ "binding_type": "view", "source_property_name": "(('%.82s' * #raw_popup_bg) - ('%.2s' * #raw_popup_bg) - ';')", "target_property_name": "#texture" }
+		]
+	},
+	// Popup option list: stack of factory-generated rows (one per custom_dropdown entry).
+	"dropdown_options": {
+		"type": "panel",
+		"size": ["100% - 4px", "100%c + 4px"],
+		"offset": [2, 1],
+		"controls": [
+			{
+				"radio_control_group": {
+					"type": "stack_panel",
+					"orientation": "vertical",
+					"size": ["100%", "100%c"],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"factory": {
+						"name": "buttons",
+						"control_name": "core_ui_form_components.dropdown_option_radio"
+					},
+					"collection_name": "custom_dropdown",
+					"bindings": [
+						{
+							"binding_name": "#custom_dropdown_length",
+							"binding_type": "collection",
+							"binding_name_override": "#collection_length",
+							"binding_collection_name": "custom_form"
+						}
+					]
+				}
+			}
+		]
+	},
+	// One popup row: fixed 17px flow height; the shared option_toggle + label do the rest.
+	"dropdown_option_radio": {
+		"type": "panel",
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"size": ["100%", "17px"],
+		"controls": [
+			{ "option_toggle@core_ui_form_components.option_toggle": {} },
+			{ "label_frame@core_ui_form_components.option_label_frame": {} }
+		]
+	}
+}

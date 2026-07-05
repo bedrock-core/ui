@@ -64,14 +64,17 @@ Custom JSX-driven UI system for Minecraft Bedrock. Components serialize into com
 - ✅ `<Scroll>` component — declare up to 4 independent scroll regions per render (pool protocol v0007)
 - ✅ Gamepad cursor support — analog-stick virtual cursor with hover-to-scroll for all custom screens
 
-### 🚧 Beta 0.X.0 - Forms (Planned)
+### ✅ Beta 0.9.0 - Native Forms
 
-- Form submission and validation helpers
+- ✅ `<Form>` component — a native `ModalFormData`-backed form with an atomic single-submit lifecycle (`onSubmit`/`onCancel`)
+- ✅ Form field primitives in `@bedrock-core/ui`: `Form.Toggle`, `Form.Slider`, `Form.Dropdown`, `Form.InlineSelect`, `Form.Input`, `Form.Option`
+- ✅ `Form.Button` — in-flow submit / exit action buttons, positioned anywhere in the form
+- ✅ Ore-Styled form fields in `@bedrock-core/ore-styled`: `Form.Toggle`, `Form.Checkbox`, `Form.Radio`, `Form.ToggleButton`, `Form.Slider`, `Form.Dropdown`, `Form.Input`, `Form.Button`
 
 ### 🚧 Beta 0.X.0 - More core components (Planned)
 
-- Entity render(?)
-- Structure render(?)
+- Entity render(?) (Render items using entities holding the current item? Render ItemStack entity?)
+- Structure render
 
 
 ### 👀 Beta 0.X.0 - [REDACTED] (Planned)

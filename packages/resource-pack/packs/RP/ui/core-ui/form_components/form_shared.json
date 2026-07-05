@@ -1,0 +1,99 @@
+{
+	// Shared option-ROW machinery used by BOTH the dropdown popup rows and the inline
+	// select rows: the per-option state face (bg + optional bullet), the shared radio
+	// option_toggle, and the label frame + label.
+	"namespace": "core_ui_form_components",
+	// One shared face: bg image self-decoding its texture from the option's OWN blob
+	// (#custom_radio_text, engine-owned custom_dropdown collection) at $face_skip.
+	// Kept separate from core_ui_common.state_face ON PURPOSE: this fetch shape needs the
+	// custom_dropdown collection + binding_condition "always" + collection_details on the
+	// SAME control (a custom_dropdown binding WITHOUT details hard-crashes, zero logs).
+	// Blob offsets — faces: background[590] hover[673] selected[756]; bullets:
+	// unselected[839] selected[922] unselectedHover[1503] selectedHover[1586].
+	"option_face": {
+		"type": "panel",
+		"size": ["100%", "100%"],
+		"$face_skip|default": "('%.590s' * #custom_radio_text)",
+		// Bullet rides as a SECOND child gated by $bullet_skip (a property — MERGES on
+		// derivation; a controls-override here would wipe `bg`). Dropdown/toggle-button
+		// blobs encode '' at the bullet offsets, so the glyph self-hides for them.
+		"$bullet_skip|default": "('%.839s' * #custom_radio_text)",
+		"controls": [
+			{
+				"bg": {
+					"type": "image",
+					"size": ["100%", "100%"],
+					"offset": [0, 0],
+					"fill": false,
+					"anchor_to": "center",
+					"anchor_from": "center",
+					"texture": "#texture",
+					"visible": "#visible",
+					"alpha": 1,
+					"bindings": [
+						{
+							"binding_name": "#custom_radio_text",
+							"binding_type": "collection",
+							"binding_condition": "always",
+							"binding_collection_name": "custom_dropdown"
+						},
+						{ "binding_type": "collection_details" },
+						{ "binding_type": "view", "source_property_name": "$face_skip", "target_property_name": "#skip_to_opt_bg" },
+						{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_to_opt_bg)", "target_property_name": "#rem_at_opt_bg" },
+						{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_at_opt_bg)", "target_property_name": "#raw_opt_bg" },
+						{ "binding_type": "view", "source_property_name": "(('%.82s' * #raw_opt_bg) - ('%.2s' * #raw_opt_bg) - ';')", "target_property_name": "#texture" },
+						{ "binding_type": "view", "source_property_name": "(not (#texture = ''))", "target_property_name": "#visible" }
+					]
+				}
+			},
+			{ "bullet@core_ui_form_components.inline_bullet": { "$bullet_skip": "$bullet_skip" } }
+		]
+	},
+	// ── THE shared option-row toggle (popup + inline) ───────────────────────────────
+	// Radio semantics + custom_dropdown write-back on toggle_base. Its 8 state children
+	// are option_face instances with the per-state face/bullet offsets inline; the BLOB
+	// decides bullet visibility (dropdown/toggle-button blobs encode empty bullets), so
+	// one mapping serves popup rows and inline radios alike. Inline rows pass
+	// $toggle_binding_condition "always" (their proven shape); popup rows use the
+	// "visible" default.
+	"option_toggle@core_ui_form_components.toggle_base": {
+		"size": ["100%", "100%"],
+		"$radio_toggle_group": true,
+		"$toggle_name": "custom_dropdown_radio_toggle",
+		"$toggle_binding_type": "collection",
+		"$toggle_grid_collection_name": "custom_dropdown",
+		"$toggle_state_binding_name": "#custom_radio_toggled",
+		"$toggle_details_binding_type": "collection_details",
+		"controls": [
+			{ "unchecked@core_ui_form_components.option_face": { "$face_skip": "('%.590s' * #custom_radio_text)", "$bullet_skip": "('%.839s' * #custom_radio_text)" } },
+			{ "checked@core_ui_form_components.option_face": { "$face_skip": "('%.756s' * #custom_radio_text)", "$bullet_skip": "('%.922s' * #custom_radio_text)" } },
+			{ "unchecked_hover@core_ui_form_components.option_face": { "$face_skip": "('%.673s' * #custom_radio_text)", "$bullet_skip": "('%.1503s' * #custom_radio_text)" } },
+			{ "checked_hover@core_ui_form_components.option_face": { "$face_skip": "('%.756s' * #custom_radio_text)", "$bullet_skip": "('%.1586s' * #custom_radio_text)" } },
+			{ "unchecked_locked@core_ui_form_components.option_face": { "$face_skip": "('%.590s' * #custom_radio_text)", "$bullet_skip": "('%.839s' * #custom_radio_text)" } },
+			{ "checked_locked@core_ui_form_components.option_face": { "$face_skip": "('%.756s' * #custom_radio_text)", "$bullet_skip": "('%.922s' * #custom_radio_text)" } },
+			{ "unchecked_locked_hover@core_ui_form_components.option_face": { "$face_skip": "('%.590s' * #custom_radio_text)", "$bullet_skip": "('%.839s' * #custom_radio_text)" } },
+			{ "checked_locked_hover@core_ui_form_components.option_face": { "$face_skip": "('%.756s' * #custom_radio_text)", "$bullet_skip": "('%.922s' * #custom_radio_text)" } }
+		]
+	},
+	// [1,1] frame at the row's top-left; option_label offsets from it by the TS-computed
+	// labelX/labelY (alignment is TS-side).
+	"option_label_frame": {
+		"type": "panel",
+		"size": [1, 1],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"controls": [ { "option_label@core_ui_form_components.option_label": {} } ]
+	},
+	// THE option-row label — pure label, zero bespoke bindings: the blob leads with the
+	// standard label GROUP (text[92] fontType[175] fontScale[258] labelX[341] labelY[424]),
+	// so core_ui_components.label's sequential group decode does all the work from one
+	// $label_skip. Fetch is the custom_dropdown-PROVEN shape (collection first, details
+	// second, empty name).
+	"option_label@core_ui_components.label": {
+		"layer": 10,
+		"$payload_collection": "custom_dropdown",
+		"$payload_binding": "#custom_radio_text",
+		"$cell_details_binding_type": "collection_details",
+		"$label_skip": "('%.92s' * #payload)"
+	}
+}

@@ -1,5 +1,5 @@
 {
-	"namespace": "core_ui_cursor",
+	"namespace": "core_ui_common",
 
 	// Visual cursor image — follows the physical cursor/pointer position.
 	// #gamepad_cursor_visible is a global engine binding; true when the gamepad
@@ -38,9 +38,9 @@
 		"follows_cursor": true,
 		"always_handle_pointer": true,
 		"controls": [
-			{ "default@core_ui_cursor.gamepad_cursor_image": {} },
-			{ "pressed@core_ui_cursor.gamepad_cursor_image": {} },
-			{ "hover@core_ui_cursor.gamepad_cursor_image": {} }
+			{ "default@core_ui_common.gamepad_cursor_image": {} },
+			{ "pressed@core_ui_common.gamepad_cursor_image": {} },
+			{ "hover@core_ui_common.gamepad_cursor_image": {} }
 		]
 	}
 }

@@ -81,8 +81,8 @@
     "@eslint/js": "^10.0.1",
     "@eslint/json": "^1.2.0",
     "@eslint/markdown": "^8.0.1",
-    "@minecraft/server": "^2.7.0",
-    "@minecraft/server-ui": "^2.0.0",
+    "@minecraft/server": "^2.8.0",
+    "@minecraft/server-ui": "^2.1.0",
     "@stylistic/eslint-plugin": "^5.10.0",
     "@vitest/coverage-v8": "^4.1.5",
     "concurrently": "^9.2.1",
@@ -97,7 +97,7 @@
     "@minecraft/server-ui": "*"
   },
   "resolutions": {
-    "@minecraft/server": "2.7.0",
-    "@minecraft/server-ui": "2.0.0"
+    "@minecraft/server": "2.8.0",
+    "@minecraft/server-ui": "2.1.0"
   }
 }

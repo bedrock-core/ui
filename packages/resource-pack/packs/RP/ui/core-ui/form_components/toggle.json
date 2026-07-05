@@ -1,0 +1,143 @@
+{
+	"namespace": "core_ui_form_components",
+	// ── THE toggle base ─────────────────────────────────────────────────────────────
+	// One parameterized type:"toggle" every toggle-family control extends (modal toggle,
+	// dropdown closed box, popup/inline option radios). Derived from vanilla common.toggle:
+	// sounds, state-control names, toggle_on/off buttons, button_mappings — PLUS the focus
+	// trio vanilla common.toggle LACKS (focus is never inherited; wrap is per-user).
+	// State children are NOT declared here: each user declares its own 8 (controls arrays
+	// REPLACE on derivation, so a shared set couldn't be overridden piecemeal anyway).
+	//
+	// Bindings are the parameterized 3-slot shape (state / inert-enabled / details).
+	// TRAP: a collection binding needs collection_details on the SAME control, collection
+	// FIRST — radios set $toggle_details_binding_type to "collection_details" for this.
+	// TRAP: $radio_toggle_group must stay a var — hardcoding false crashed radios inside a
+	// radio-group factory (no log). toggle_grid_collection_name must be a real PROPERTY —
+	// without it every click writes row 0.
+	// A user with a different bindings shape overrides the whole array (the modal
+	// toggle_control does — its write-back shape was bisected in-game; keep verbatim).
+	"toggle_base": {
+		"type": "toggle",
+		"layer": 1,
+		"sound_name": "random.click",
+		"sound_volume": 1.0,
+		"sound_pitch": 1.0,
+		"focus_enabled": true,
+		"focus_magnet_enabled": true,
+		"default_focus_precedence": 0,
+		"checked_control": "checked",
+		"unchecked_control": "unchecked",
+		"checked_hover_control": "checked_hover",
+		"unchecked_hover_control": "unchecked_hover",
+		"checked_locked_control": "checked_locked",
+		"unchecked_locked_control": "unchecked_locked",
+		"checked_locked_hover_control": "checked_locked_hover",
+		"unchecked_locked_hover_control": "unchecked_locked_hover",
+		"$toggle_name|default": "toggle",
+		"$toggle_binding_type|default": "global",
+		"$toggle_binding_condition|default": "visible",
+		"$toggle_state_binding_name|default": "#toggle_state",
+		"$toggle_grid_collection_name|default": "",
+		"$toggle_details_binding_type|default": "none",
+		"$radio_toggle_group|default": false,
+		"$toggle_group_forced_index|default": -1,
+		"$toggle_group_default_selected|default": 0,
+		"radio_toggle_group": "$radio_toggle_group",
+		"toggle_name": "$toggle_name",
+		"toggle_default_state": false,
+		"toggle_group_forced_index": "$toggle_group_forced_index",
+		"toggle_group_default_selected": "$toggle_group_default_selected",
+		"toggle_grid_collection_name": "$toggle_grid_collection_name",
+		"enable_directional_toggling": false,
+		"toggle_on_button": "toggle.toggle_on",
+		"toggle_off_button": "toggle.toggle_off",
+		"button_mappings": [
+			{ "from_button_id": "button.menu_select", "to_button_id": "button.menu_select", "mapping_type": "pressed" },
+			{ "from_button_id": "button.menu_ok", "to_button_id": "button.menu_ok", "mapping_type": "focused" },
+			{ "from_button_id": "button.controller_back", "to_button_id": "button.controller_back", "mapping_type": "focused", "ignored": true }
+		],
+		"property_bag": { "#toggle_state": true },
+		"bindings": [
+			{
+				"binding_type": "$toggle_binding_type",
+				"binding_condition": "$toggle_binding_condition",
+				"binding_collection_name": "$toggle_grid_collection_name",
+				"binding_name": "$toggle_state_binding_name",
+				"binding_name_override": "#toggle_state"
+			},
+			{
+				"binding_type": "none",
+				"binding_condition": "visible",
+				"binding_collection_name": "$toggle_grid_collection_name",
+				"binding_name": "#toggle_enabled",
+				"binding_name_override": "#enabled"
+			},
+			{
+				"binding_type": "$toggle_details_binding_type",
+				"binding_collection_name": ""
+			}
+		]
+	},
+	// ── Modal toggle cell ───────────────────────────────────────────────────────────
+	"toggle_router": {
+		"type": "panel",
+		// [1,1] so the cell's size_binding values map 1:1 to pixels.
+		"size": [1, 1],
+		"controls": [ { "toggle@core_ui_form_components.toggle": {} } ]
+	},
+	"toggle@core_ui_common.control": {
+		// core_ui_common.control owns the whole control-block decode; this just points it
+		// at the modal payload and supplies the type gate.
+		"layer": 50,
+		"$payload_collection": "custom_form",
+		"$payload_binding": "#custom_text",
+		"$cell_details_binding_type": "collection_details",
+		"$type_gate": "(#pre_visible and (#type = 'modal-toggle'))",
+		"controls": [ { "toggle@core_ui_form_components.toggle_control": {} } ]
+	},
+	"toggle_control@core_ui_form_components.toggle_base": {
+		"size": ["100%", "100%"],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"layer": 2,
+		"enabled": "#enabled",
+		// Focus: the base carries the trio, but be explicit + add wrap (like the dropdown
+		// closed box) so the modal scroll can land controller/keyboard focus on the toggle.
+		"focus_enabled": true,
+		"focus_magnet_enabled": true,
+		"focus_wrap_enabled": true,
+		"default_focus_precedence": 0,
+		"$toggle_name": "custom_toggle",
+		"$toggle_grid_collection_name": "custom_form",
+		/* OWN bindings (replaces the base's): the modal write-back shape was bisected
+		   in-game — state binding on the toggle CHILD, per-cell collection_details on the
+		   PARENT cell (details on the same control routed clicks to row 0). Keep verbatim. */
+		"bindings": [
+			{
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form",
+				"binding_name": "#custom_toggle_state",
+				"binding_name_override": "#toggle_state"
+			},
+			{
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form",
+				"binding_name": "#custom_toggle_enabled",
+				"binding_name_override": "#enabled"
+			}
+		],
+		// State faces: shared modal_state_face (custom_form payload). unchecked[440],
+		// uncheckedHover[1024], uncheckedLocked[1190], checked[1273], checkedHover[1356],
+		// checkedLocked[1439]; locked_hover reuses locked.
+		"controls": [
+			{ "unchecked@core_ui_common.modal_state_face": { "$face_skip": "('%.440s' * #payload)" } },
+			{ "checked@core_ui_common.modal_state_face": { "$face_skip": "('%.1273s' * #payload)" } },
+			{ "unchecked_hover@core_ui_common.modal_state_face": { "$face_skip": "('%.1024s' * #payload)" } },
+			{ "checked_hover@core_ui_common.modal_state_face": { "$face_skip": "('%.1356s' * #payload)" } },
+			{ "unchecked_locked@core_ui_common.modal_state_face": { "$face_skip": "('%.1190s' * #payload)" } },
+			{ "checked_locked@core_ui_common.modal_state_face": { "$face_skip": "('%.1439s' * #payload)" } },
+			{ "unchecked_locked_hover@core_ui_common.modal_state_face": { "$face_skip": "('%.1190s' * #payload)" } },
+			{ "checked_locked_hover@core_ui_common.modal_state_face": { "$face_skip": "('%.1439s' * #payload)" } }
+		]
+	}
+}

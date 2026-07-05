@@ -1,8 +1,8 @@
-import { ActionFormData } from '@minecraft/server-ui';
+import { MODAL_OPTION_SLOT_TYPE } from '../components/Form/FormOption';
 import { JSX } from '../jsx';
 import { getComponentDescriptor, getRegisteredTypes, isTransparentType } from './componentRegistry';
 import { isElement, isFunction, isSerializablePrimitive } from './guards';
-import { SerializablePrimitive, SerializableProps, SerializationContext, SerializationError } from './types';
+import { FormTarget, ModalFormError, SerializablePrimitive, SerializableProps, SerializationContext, SerializationError } from './types';
 
 /**
  * This makes each full field substring unique even when two field values & padding are identical.
@@ -126,7 +126,7 @@ function padToByteLength(str: string, length: number): string {
  * @param form - Form data to populate
  * @param context - Serialization context for collecting button callbacks
  */
-export function serialize({ type, props: { children, ...rest } }: JSX.Element, form: ActionFormData, context: SerializationContext): void {
+export function serialize({ type, props: { children, ...rest }, nativeArgs }: JSX.Element, form: FormTarget, context: SerializationContext): void {
   // Function components should have been resolved by buildTree()
   // If we see one here, it's a bug
   if (typeof type === 'function') {
@@ -144,6 +144,13 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
   // about: fewer items per generator. Default visible is `true`, so only an explicit
   // `visible={false}` triggers this.
   if (rest.visible === false) {
+    return;
+  }
+
+  // Layout-only option node (`Form.Option`): the flex engine already laid it out (its geometry
+  // was read by the parent inline-select writer and packed into the native option blob), so it is
+  // NOT a native control and emits nothing here. Drop it and its label children.
+  if (type === MODAL_OPTION_SLOT_TYPE) {
     return;
   }
 
@@ -200,9 +207,11 @@ export function serialize({ type, props: { children, ...rest } }: JSX.Element, f
     throw new SerializationError(`Unknown native component type: ${type}. Known types: ${known}`);
   }
 
-  descriptor.writer(payload, form, context, callbacks, serializableProps);
+  descriptor.writer(payload, form, context, callbacks, serializableProps, nativeArgs, children);
 
-  // Recursively handle children
+  // Recursively handle children. `Form.Option` children of an inline-select are consumed by its
+  // writer above (their geometry packed into option blobs) and self-skip in the recursion (the
+  // `MODAL_OPTION_SLOT_TYPE` guard at the top), so no double-processing.
   if (children) {
     const childArray = Array.isArray(children) ? children : [children];
 
@@ -317,6 +326,45 @@ export function serializeScrollMetadata(scrolls: readonly ScrollMetrics[]): stri
   });
 
   const [payload] = serializeProps({ type: 'scrolls', ...fields });
+
+  return payload;
+}
+
+/**
+ * Serialize the modal form's title: the scroll metadata (identical layout to
+ * {@link serializeScrollMetadata} — a modal always has EXACTLY the root scroll, so
+ * its block ends at a fixed offset [590]) followed by any extra fields, appended in
+ * insertion order. The serializer is a pure encoder: the extra fields arrive fully
+ * resolved from their owning component modules (e.g. `formButtonTitleFields` — see
+ * FormButton.ts for the Form.Button byte-offset contract).
+ *
+ * @param scrolls - Scroll viewports; a modal must pass exactly one (the root).
+ * @param extraFields - Resolved fields appended after the scroll block.
+ * @returns Full title string for `form.title()`.
+ */
+export function serializeModalTitle(
+  scrolls: readonly ScrollMetrics[],
+  extraFields: SerializableProps,
+): string {
+  if (scrolls.length !== 1) {
+    throw new ModalFormError(
+      `A modal <Form> must have exactly the root scroll (got ${scrolls.length}). `
+      + '<Scroll> regions are ActionForm-only; the title field offsets depend on a '
+      + 'single scroll block.',
+    );
+  }
+
+  const [scroll] = scrolls;
+  const [payload] = serializeProps({
+    type: 'scrolls',
+    axis0: scroll.axis,
+    x0: Math.round(scroll.x),
+    y0: Math.round(scroll.y),
+    width0: Math.round(scroll.width),
+    height0: Math.round(scroll.height),
+    extent0: Math.round(scroll.extent),
+    ...extraFields,
+  });
 
   return payload;
 }

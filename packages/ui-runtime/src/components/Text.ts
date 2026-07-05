@@ -4,8 +4,10 @@ import { TranslationKeysContext } from '../data/TranslationKeys';
 import { TranslationKeysError, type Writer } from '../core/types';
 import { emitLabel } from '../core/writers';
 import { ControlProps, withControl } from './control';
+import { labelFontFields, type LabelFont } from './Form/controlPayload';
 
-export type TextFont = 'mojangles' | 'minecraftTen';
+/** Public alias of the shared label font union (single source: controlPayload). */
+export type TextFont = LabelFont;
 
 export type TextWordBreak = 'normal' | 'break-word';
 export type TextOverflow = 'ellipsis';
@@ -65,16 +67,12 @@ export interface TextProps extends ControlProps {
    * Limit rendered text to N lines. The last line is always ellipsized.
    */
   maxLines?: number;
+
+  /** Fine-tune X nudge (px) of the rendered label inside its layout box. Default `0`. */
+  offsetX?: number;
+  /** Fine-tune Y nudge (px) of the rendered label inside its layout box. Default `0`. */
+  offsetY?: number;
 }
-
-const FONT_TYPE_MAP: Record<TextFont, string> = {
-  mojangles: 'default',
-  minecraftTen: 'MinecraftTen',
-};
-
-// font_size: small is hardcoded in text.json (0.5× base render).
-// All metric calculations must account for this factor.
-const FONT_SIZE_BASE = 0.5;
 
 /**
  * Make raw text safe to render as a Bedrock JSON UI label. JSON UI feeds a
@@ -96,9 +94,13 @@ export const Text: FunctionComponent<TextProps> = ({
   wordBreak,
   overflow,
   maxLines,
+  offsetX,
+  offsetY,
   ...rest
 }: TextProps): JSX.Element => {
   const resolvedScale = scale ?? 1.0;
+  // Shared mapping (controlPayload): font alias + scale over the font_size:small 0.5× base.
+  const labelFont = labelFontFields({ font, scale });
   const isKey = localizationKey !== undefined;
 
   let resolvedText: string;
@@ -133,9 +135,14 @@ export const Text: FunctionComponent<TextProps> = ({
       ...withControl(rest),
       // Keys pass through — we send the key, not the resolved string, so a
       // digit-leading .lang entry is guarded there; raw text uses safeLabelText.
+      // The label GROUP contract (label decodes it sequentially from [1024]):
+      // text, fontType, fontScale, x, y — `value` is the group's text slot (kept named
+      // `value` for the key pass-through semantics; field ORDER is what the RP reads).
       value: isKey ? localizationKey : safeLabelText(resolvedText),
-      fontType: FONT_TYPE_MAP[font ?? 'mojangles'],
-      fontScaleFactor: resolvedScale / FONT_SIZE_BASE,
+      fontType: labelFont.fontType,
+      fontScaleFactor: labelFont.fontScaleFactor,
+      labelX: offsetX ?? 0, // [1273] → label anchored X offset
+      labelY: offsetY ?? 0, // [1356] → label anchored Y offset
       __textMetrics: {
         font,
         fontSize: resolvedScale,
@@ -151,6 +158,6 @@ export const Text: FunctionComponent<TextProps> = ({
 };
 
 /** Serializes a `text` into the static (label) slot. */
-export const textWriter: Writer = (payload, form) => {
-  emitLabel(payload, form);
+export const textWriter: Writer = (payload, form, ctx) => {
+  emitLabel(payload, form, ctx);
 };

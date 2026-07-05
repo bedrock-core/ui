@@ -14,6 +14,6 @@ export const Panel: FunctionComponent<PanelProps> = ({ children, ...rest }: Pane
 });
 
 /** Serializes a `panel` into the static (label) slot. */
-export const panelWriter: Writer = (payload, form) => {
-  emitLabel(payload, form);
+export const panelWriter: Writer = (payload, form, ctx) => {
+  emitLabel(payload, form, ctx);
 };

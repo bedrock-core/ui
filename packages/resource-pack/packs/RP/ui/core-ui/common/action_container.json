@@ -5,7 +5,7 @@
 	//    scrolls (scroll_pool, gated on ≥2 scrolls) renders as a sibling over the content area.
 	// Both are 328px-wide, centred by the literal 50% - 164px offset.
 	"namespace": "core_ui_common",
-	"screen_container": {
+	"action_container": {
 		"type": "panel",
 		"size": [
 			"100%",
@@ -36,13 +36,6 @@
 			{
 				"scroll_pool@core_ui_screens.scroll_pool": {}
 			}
-		]
-	},
-	"unused": {
-		"type": "panel",
-		"size": [
-			0,
-			0
 		]
 	}
 }

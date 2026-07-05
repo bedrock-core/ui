@@ -5,6 +5,10 @@ import { theme } from './tokens';
 
 export interface InputProps extends Omit<PrimitiveInputProps, 'face'> {}
 
+/**
+ * @deprecated Ore wrapper over the legacy modal-field `Input` (one modal per field).
+ * Prefer `Form.Input` from `@bedrock-core/ore-styled`'s `Form` inside a `<Form>`.
+ */
 export function Input({
   value,
   defaultValue,

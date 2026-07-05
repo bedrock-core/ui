@@ -24,6 +24,7 @@ npm install @bedrock-core/ore-styled
 - `Tabs` / `TabList` / `Tab` / `TabPanel` — tabbed navigation
 - `Toggle` — switch-style boolean input
 - `ToggleButtonGroup` / `ToggleButtonItem` — multi-button selector
+- `Form` — native modal form with styled fields (see below)
 - `Divider` — horizontal/vertical separator
 - `ItemSlot` — single inventory slot rendering an `ItemStack` with optional overlay texture
 - `ItemContainer` — grid of `ItemSlot` components covering a `Container`'s slots
@@ -49,6 +50,39 @@ export const Settings = () => {
   );
 };
 ```
+
+## Forms
+
+`Form` is a native `ModalFormData`-backed modal with an atomic, single-submit lifecycle: every field's value arrives once, in `onSubmit`, keyed by its `name`. Field members mirror the runtime's `Form` namespace but come pre-styled, and each takes a `label` (composed here — the runtime primitives are label-free):
+
+- `Form.Toggle` — settings-row switch
+- `Form.Checkbox` — boolean with on/off textures
+- `Form.Radio` — single-select group from `options`
+- `Form.ToggleButton` — multi-button selector from `options`
+- `Form.Slider` — track + thumb, label above
+- `Form.Dropdown` — native modal dropdown, label above
+- `Form.Input` — text field, label above
+- `Form.Button` — submit / exit action button (variant defaults to `primary` for submit, `secondary` for exit)
+
+A form must declare exactly one `Form.Button type="submit"` (and at most one `type="exit"`), placed anywhere in the flow.
+
+```tsx
+import { Form } from '@bedrock-core/ore-styled';
+import { Text } from '@bedrock-core/ui';
+
+export const Settings = () => (
+  <Form onSubmit={(v) => { v.sound; v.volume; v.mode; }}>
+    <Text>{'§lSettings'}</Text>
+    <Form.Toggle   name={'sound'}  label={'Sound'} defaultValue={true} />
+    <Form.Slider   name={'volume'} label={'Volume'} min={0} max={10} />
+    <Form.Dropdown name={'mode'}   label={'Mode'} options={['Easy', 'Hard']} />
+    <Form.Input    name={'nick'}   label={'Nickname'} />
+    <Form.Button   type={'submit'} label={'Save'} />
+  </Form>
+);
+```
+
+Mix a modal `<Form>` and an ActionForm-style screen across separate `render()` calls (e.g. via navigation) — never nested.
 
 ## Resource pack
 

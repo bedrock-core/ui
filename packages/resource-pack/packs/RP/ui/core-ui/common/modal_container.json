@@ -1,0 +1,710 @@
+{
+	// ─────────────────────────────────────────────────────────────────────────────
+	// Native ModalForm custom_form renderer. The factory below maps each custom_form
+	// entry's type to its component router (toggle / slider / input / dropdown wired;
+	// header/divider still routed to core_ui_common.unused pending their pass).
+	//
+	// Each component decodes its own geometry from #custom_text (header 9 → type 83 →
+	// width 83 → height 83 → x 83 → y 83) into the property_bag the engine maps to size +
+	// anchored offset (use_anchored_offset), and self-hides unless the decoded #type
+	// matches its slot type (modal-toggle / modal-slider / modal-input / modal-dropdown).
+	// Per-cell state read + write-back go through each native element's
+	// *_grid/collection_name hook.
+	// ─────────────────────────────────────────────────────────────────────────────
+	"namespace": "core_ui_common",
+	"modal_container": {
+		"type": "panel",
+		"size": [
+			"100%",
+			"100%"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"offset": [
+			"50% - 164px",
+			"0%"
+		],
+		"$protocol_header": "bcuiv0007",
+		"bindings": [
+			{
+				"binding_name": "#title_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(not ((#title_text - $protocol_header) = #title_text))",
+				"target_property_name": "#visible"
+			}
+		],
+		"controls": [
+			{
+				"modal_content@core_ui_common.modal_scroll": {}
+			},
+			{
+				/* Dropdown popup OVERLAY at the content root — OUTSIDE the scroll, so an open
+				   popup never scrolls with the form and is always form-wide/host-anchored
+				   (the engine's own popup box is cell-relative: a 50%-wide dropdown got a
+				   50%-wide, toggle-anchored, scrolled popup). The name doubles as the
+				   dropdown_area host ("inside_header_panel", the vanilla server-form name) so
+				   the engine's now-INVISIBLE input shield adopts this layer. The collection
+				   panel generates one popup router per custom_form row; each router shows
+				   only when its row is an OPEN dropdown (type gate + the row's
+				   #custom_dropdown open-state, which the closed box writes via its
+				   collection-type toggle binding — vanilla's own wiring). */
+				"inside_header_panel": {
+					"type": "panel",
+					"size": [
+						"328px",
+						"100%"
+					],
+					"offset": [
+						0,
+						"1%"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"layer": 300,
+					"controls": [
+						{
+							"popup_overlay": {
+								"type": "collection_panel",
+								"size": [
+									"100%",
+									"100%"
+								],
+								"anchor_from": "top_left",
+								"anchor_to": "top_left",
+								"factory": {
+									"name": "buttons",
+									"control_name": "core_ui_form_components.dropdown_popup_router"
+								},
+								"collection_name": "custom_form",
+								"bindings": [
+									{
+										"binding_name": "#custom_form_length",
+										"binding_name_override": "#collection_length"
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		]
+	},
+	// ── Modal content scaffold ─────────────────────────────────────────────────────
+	// viewport(clips) → size_anchor[1,1] → modal_content_panel(328px × decoded-height) →
+	// modal_generated_contents(collection overlay). Mirrors the ActionForm scroll exactly:
+	// scrolling_view_port → size_anchor[1,1] → scroll_content[328px,decoded] → buttons_collection.
+	"modal_scroll": {
+		"type": "scroll_view",
+		"size": [
+			"328px",
+			"100%"
+		],
+		"offset": [
+			0,
+			"1%"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"scroll_speed": 15,
+		"scrollbar_track_button": "button.scrollbar_skip_track",
+		"scrollbar_touch_button": "button.scrollbar_touch",
+		"always_listen_to_input": true,
+		"always_handle_pointer": true,
+		/* MUST stay false (vanilla server_form leaves it false too): true is a GLOBAL
+		   wheel grab that keeps scrolling THIS scroll while a dropdown popup is open —
+		   with false, the wheel routes by pointer position, so the popup's own
+		   scrolling_panel gets it when hovered. */
+		"always_handle_scrolling": false,
+		"scroll_content": "scrolling_content",
+		"scroll_view_port": "scrolling_view_port",
+		"scrollbar_track": "track",
+		"scrollbar_box": "box",
+		"scroll_box_and_track_panel": "bar_and_track",
+		"button_mappings": [
+			{
+				"from_button_id": "button.menu_select",
+				"to_button_id": "button.scrollbar_touch",
+				"mapping_type": "pressed",
+				"button_up_right_of_first_refusal": true
+			}
+		],
+		"controls": [
+			{
+				"scrolling_view_port": {
+					"type": "panel",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"clips_children": true,
+					"controls": [
+						{
+							"size_anchor": {
+								"type": "panel",
+								"size": [
+									1,
+									1
+								],
+								"anchor_from": "top_left",
+								"anchor_to": "top_left",
+								"controls": [
+									{
+										"scrolling_content@core_ui_common.modal_scroll_content": {
+											"anchor_from": "top_left",
+											"anchor_to": "top_left"
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"bar_and_track@core_ui_screens.scrollbar": {}
+			}
+		]
+	},
+	"modal_scroll_content": {
+		"type": "panel",
+		"size": [
+			"328px",
+			0
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"property_bag": {
+			"#size_binding_y": 0.0
+		},
+		"bindings": [
+			{
+				"binding_name": "#title_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.9s' * #title_text)",
+				"target_property_name": "#protocol_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#title_text - #protocol_header)",
+				"target_property_name": "#rem_after_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.498s' * #rem_after_header)",
+				"target_property_name": "#pre_extent"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_header - #pre_extent)",
+				"target_property_name": "#at_extent"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_extent)",
+				"target_property_name": "#raw_extent"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_extent) - ('%.2s' * #raw_extent) - ';') * 1)",
+				"target_property_name": "#size_binding_y"
+			}
+		],
+		"controls": [
+			{
+				"modal_collection": {
+					"type": "collection_panel",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"offset": [
+						"-50%",
+						"-50%"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"factory": {
+						"name": "buttons",
+						"control_ids": {
+							/* Decorative elements (text/image/panel — cards etc.) ride the
+							   label slot on both backends; the modal label_router re-points
+							   the shared client components at custom_form/#custom_text. */
+							"label": "@core_ui_form_components.label_router",
+							"toggle": "@core_ui_form_components.toggle_router",
+							"slider": "@core_ui_form_components.slider_router",
+							"step_slider": "@core_ui_form_components.slider_router",
+							"dropdown": "@core_ui_common.dropdown_router",
+							"input": "@core_ui_form_components.input_router",
+							"header": "@core_ui_common.unused",
+							"divider": "@core_ui_common.unused"
+						}
+					},
+					"collection_name": "custom_form",
+					"bindings": [
+						{
+							"binding_name": "#custom_form_length",
+							"binding_name_override": "#collection_length"
+						}
+					]
+				}
+			},
+			{
+				/* Form.Button submit — geometry/styling from the TITLE block @590; presses submit_custom_form. */
+				"flow_submit_anchor@core_ui_common.flow_button_anchor": {
+					"$block_skip": 590,
+					"$button_action": "button.submit_custom_form"
+				}
+			},
+			{
+				/* Form.Button exit — geometry/styling from the TITLE block @1353; presses menu_exit. */
+				"flow_exit_anchor@core_ui_common.flow_button_anchor": {
+					"$block_skip": 1353,
+					"$button_action": "button.menu_exit"
+				}
+			}
+		]
+	},
+	"flow_button_anchor": {
+		"type": "panel",
+		"size": [
+			1,
+			1
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"$block_skip|default": 590,
+		"$button_action|default": "button.submit_custom_form",
+		"controls": [
+			{
+				"flow_button@core_ui_common.flow_button": {
+					"$block_skip": "$block_skip",
+					"$button_action": "$button_action"
+				}
+			}
+		]
+	},
+	"flow_button": {
+		"type": "panel",
+		"size": [
+			1,
+			1
+		],
+		"layer": 50,
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"use_anchored_offset": true,
+		"$block_skip|default": 590,
+		"$button_action|default": "button.submit_custom_form",
+		"property_bag": {
+			"#size_binding_x": 0,
+			"#size_binding_y": 0,
+			"#anchored_offset_value_x": 0,
+			"#anchored_offset_value_y": 0
+		},
+		"visible": "#visible",
+		"enabled": "#enabled",
+		"bindings": [
+			{
+				"binding_name": "#title_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.' + $block_skip + 's') * #title_text)",
+				"target_property_name": "#pre_block"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#title_text - #pre_block)",
+				"target_property_name": "#at_block"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_block)",
+				"target_property_name": "#raw_w"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_w) - ('%.2s' * #raw_w) - ';') * 1)",
+				"target_property_name": "#size_binding_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_block)",
+				"target_property_name": "#pre_h"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#at_block - #pre_h)",
+				"target_property_name": "#at_h"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_h)",
+				"target_property_name": "#raw_h"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_h) - ('%.2s' * #raw_h) - ';') * 1)",
+				"target_property_name": "#size_binding_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.166s' * #at_block)",
+				"target_property_name": "#pre_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#at_block - #pre_x)",
+				"target_property_name": "#at_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_x)",
+				"target_property_name": "#raw_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_x) - ('%.2s' * #raw_x) - ';') * 1)",
+				"target_property_name": "#anchored_offset_value_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.249s' * #at_block)",
+				"target_property_name": "#pre_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#at_block - #pre_y)",
+				"target_property_name": "#at_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_y)",
+				"target_property_name": "#raw_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_y) - ('%.2s' * #raw_y) - ';') * 1)",
+				"target_property_name": "#anchored_offset_value_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.332s' * #at_block)",
+				"target_property_name": "#pre_vis"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#at_block - #pre_vis)",
+				"target_property_name": "#at_vis"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.8s' * #at_vis)",
+				"target_property_name": "#raw_vis"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.7s' * #raw_vis) - ('%.2s' * #raw_vis) - ';')",
+				"target_property_name": "#visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.340s' * #at_block)",
+				"target_property_name": "#pre_en"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#at_block - #pre_en)",
+				"target_property_name": "#at_en"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.8s' * #at_en)",
+				"target_property_name": "#raw_en"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.7s' * #raw_en) - ('%.2s' * #raw_en) - ';')",
+				"target_property_name": "#enabled"
+			}
+		],
+		"controls": [
+			{
+				"flow_button_inner": {
+					"type": "button",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"layer": 2,
+					"focus_enabled": true,
+					"focus_magnet_enabled": true,
+					"default_focus_precedence": 0,
+					"sound_name": "random.click",
+					"sound_volume": 1,
+					"sound_pitch": 1,
+					"locked_control": "locked",
+					"default_control": "default",
+					"hover_control": "hover",
+					"pressed_control": "pressed",
+					"button_mappings": [
+						{
+							"from_button_id": "button.menu_select",
+							"to_button_id": "$button_action",
+							"mapping_type": "pressed"
+						},
+						{
+							"from_button_id": "button.menu_ok",
+							"to_button_id": "$button_action",
+							"mapping_type": "focused"
+						}
+					],
+					"controls": [
+						{
+							"default": {
+								"type": "image",
+								"size": [
+									"100%",
+									"100%"
+								],
+								"layer": 2,
+								"texture": "#texture",
+								"bindings": [
+									{
+										"binding_name": "#title_text"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(('%.' + $block_skip + 's') * #title_text)",
+										"target_property_name": "#pre_block"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#title_text - #pre_block)",
+										"target_property_name": "#at_block"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.431s' * #at_block)",
+										"target_property_name": "#pre_default"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#at_block - #pre_default)",
+										"target_property_name": "#at_default"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #at_default)",
+										"target_property_name": "#raw_default"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(('%.82s' * #raw_default) - ('%.2s' * #raw_default) - ';')",
+										"target_property_name": "#texture"
+									}
+								]
+							}
+						},
+						{
+							"hover": {
+								"type": "image",
+								"size": [
+									"100%",
+									"100%"
+								],
+								"layer": 2,
+								"texture": "#texture",
+								"bindings": [
+									{
+										"binding_name": "#title_text"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(('%.' + $block_skip + 's') * #title_text)",
+										"target_property_name": "#pre_block"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#title_text - #pre_block)",
+										"target_property_name": "#at_block"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.514s' * #at_block)",
+										"target_property_name": "#pre_hover"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#at_block - #pre_hover)",
+										"target_property_name": "#at_hover"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #at_hover)",
+										"target_property_name": "#raw_hover"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(('%.82s' * #raw_hover) - ('%.2s' * #raw_hover) - ';')",
+										"target_property_name": "#texture"
+									}
+								]
+							}
+						},
+						{
+							"pressed": {
+								"type": "image",
+								"size": [
+									"100%",
+									"100%"
+								],
+								"layer": 2,
+								"texture": "#texture",
+								"bindings": [
+									{
+										"binding_name": "#title_text"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(('%.' + $block_skip + 's') * #title_text)",
+										"target_property_name": "#pre_block"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#title_text - #pre_block)",
+										"target_property_name": "#at_block"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.597s' * #at_block)",
+										"target_property_name": "#pre_pressed"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#at_block - #pre_pressed)",
+										"target_property_name": "#at_pressed"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #at_pressed)",
+										"target_property_name": "#raw_pressed"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(('%.82s' * #raw_pressed) - ('%.2s' * #raw_pressed) - ';')",
+										"target_property_name": "#texture"
+									}
+								]
+							}
+						},
+						{
+							"locked": {
+								"type": "image",
+								"size": [
+									"100%",
+									"100%"
+								],
+								"layer": 2,
+								"texture": "#texture",
+								"bindings": [
+									{
+										"binding_name": "#title_text"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(('%.' + $block_skip + 's') * #title_text)",
+										"target_property_name": "#pre_block"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#title_text - #pre_block)",
+										"target_property_name": "#at_block"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.680s' * #at_block)",
+										"target_property_name": "#pre_locked"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#at_block - #pre_locked)",
+										"target_property_name": "#at_locked"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #at_locked)",
+										"target_property_name": "#raw_locked"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(('%.82s' * #raw_locked) - ('%.2s' * #raw_locked) - ';')",
+										"target_property_name": "#texture"
+									}
+								]
+							}
+						},
+						{
+							"label": {
+								"type": "label",
+								"text": "#text",
+								"color": [
+									1,
+									1,
+									1,
+									1
+								],
+								"layer": 5,
+								"backup_font_type": "UIFont",
+								"text_alignment": "center",
+								"anchor_from": "center",
+								"anchor_to": "center",
+								"bindings": [
+									{
+										"binding_name": "#title_text"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(('%.' + $block_skip + 's') * #title_text)",
+										"target_property_name": "#pre_block"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#title_text - #pre_block)",
+										"target_property_name": "#at_block"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.348s' * #at_block)",
+										"target_property_name": "#pre_lbl"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#at_block - #pre_lbl)",
+										"target_property_name": "#at_lbl"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #at_lbl)",
+										"target_property_name": "#raw_lbl"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(('%.82s' * #raw_lbl) - ('%.2s' * #raw_lbl) - ';')",
+										"target_property_name": "#text"
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		]
+	}
+}

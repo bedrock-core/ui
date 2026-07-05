@@ -13,9 +13,9 @@
 	},
 	"dependencies": {
 		"@bedrock-core/ui": "^0.8.2",
-		"@minecraft/server": "2.7.0",
-		"@minecraft/server-ui": "2.0.0",
-		"@minecraft/vanilla-data": "1.26.21"
+		"@minecraft/server": "2.8.0",
+		"@minecraft/server-ui": "2.1.0",
+		"@minecraft/vanilla-data": "1.26.32"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",

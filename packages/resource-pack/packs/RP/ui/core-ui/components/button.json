@@ -1,266 +1,17 @@
 {
 	"namespace": "core_ui_components",
-	"button": {
+	// Extends the shared base (core_ui_common.control). The base owns the generic
+	// control-block decode; the four state faces below SELF-decode their textures at the
+	// button's fixed offsets (background [440], hover [1024], pressed [1107], locked
+	// [1190]) — the old root-level state decode into property_bag was dead weight
+	// (computed bindings never propagated to the children anyway) and is gone.
+	// $cell_details_binding_type is REQUIRED here (unlike panel): the per-cell collection
+	// index is what routes button.form_button_click to the right form button.
+	"button@core_ui_common.control": {
 		"type": "button",
-		"size": [
-			0,
-			0
-		],
 		"layer": 50,
-		"anchor_from": "top_left",
-		"anchor_to": "top_left",
-		"use_anchored_offset": true,
-		"property_bag": {
-			"#size_binding_x": 0.0,
-			"#size_binding_y": 0.0,
-			"#anchored_offset_value_x": 0.0,
-			"#anchored_offset_value_y": 0.0,
-			"#background": "",
-			"#background_hover": "",
-			"#background_pressed": "",
-			"#background_locked": "",
-			"#bg_visible": false
-		},
-		"visible": "#visible",
-		"enabled": "#enabled",
-		"$normalize": 1.0,
-		"$region_filter|default": 0,
-		"bindings": [
-			{
-				"binding_type": "collection_details",
-				"binding_collection_name": "form_buttons"
-			},
-			{
-				"binding_name": "#form_button_text",
-				"binding_type": "collection",
-				"binding_collection_name": "form_buttons"
-			},
-			{
-				/* --- strip protocol header (9 chars) --- */
-				"binding_type": "view", // protocol header size
-				"source_property_name": "('%.9s' * #form_button_text)",
-				"target_property_name": "#protocol_header"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#form_button_text - #protocol_header)",
-				"target_property_name": "#rem_after_header"
-			},
-			{
-				/* --- type (string) - field 0 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.83s' * #rem_after_header)",
-				"target_property_name": "#raw_type"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_header - #raw_type)",
-				"target_property_name": "#rem_after_type"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.82s' * #raw_type) - ('%.2s' * #raw_type) - ';')",
-				"target_property_name": "#type"
-			},
-			{
-				/* --- width (int) - field 1 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.83s' * #rem_after_type)",
-				"target_property_name": "#raw_width"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_type - #raw_width)",
-				"target_property_name": "#rem_after_width"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.82s' * #raw_width) - ('%.2s' * #raw_width) - ';')",
-				"target_property_name": "#size_binding_x"
-			},
-			{
-				/* --- height (int) - field 2 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.83s' * #rem_after_width)",
-				"target_property_name": "#raw_height"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_width - #raw_height)",
-				"target_property_name": "#rem_after_height"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.82s' * #raw_height) - ('%.2s' * #raw_height) - ';')",
-				"target_property_name": "#size_binding_y"
-			},
-			{
-				/* --- x (int) - field 3 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.83s' * #rem_after_height)",
-				"target_property_name": "#raw_x"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_height - #raw_x)",
-				"target_property_name": "#rem_after_x"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "((('%.82s' * #raw_x) - ('%.2s' * #raw_x) - ';') * $normalize)",
-				"target_property_name": "#anchored_offset_value_x"
-			},
-			{
-				/* --- y (float) - field 4 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.83s' * #rem_after_x)",
-				"target_property_name": "#raw_y"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_x - #raw_y)",
-				"target_property_name": "#rem_after_y"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "((('%.82s' * #raw_y) - ('%.2s' * #raw_y) - ';') * $normalize)",
-				"target_property_name": "#anchored_offset_value_y"
-			},
-			{
-				/* --- visible (boolean) - field 5 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.8s' * #rem_after_y)",
-				"target_property_name": "#raw_visible"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_y - #raw_visible)",
-				"target_property_name": "#rem_after_visible"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width (s:) - padding_char (;)
-				"source_property_name": "(('%.7s' * #raw_visible) - ('%.2s' * #raw_visible) - ';')",
-				"target_property_name": "#pre_visible"
-			},
-			{
-				/* --- enabled (boolean) - field 6 --- */
-				"binding_type": "view", // full_width
-				"source_property_name": "('%.8s' * #rem_after_visible)",
-				"target_property_name": "#raw_enabled"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_visible - #raw_enabled)",
-				"target_property_name": "#rem_after_enabled"
-			},
-			{
-				"binding_type": "view", // (full_width - marker_width) - prefix_width - padding_char (;)
-				"source_property_name": "(('%.7s' * #raw_enabled) - ('%.2s' * #raw_enabled) - ';')",
-				"target_property_name": "#enabled"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#pre_visible and (#type = 'button'))",
-				"target_property_name": "#visible_pre_region"
-			},
-			{
-				/* --- background (string, 83 bytes) - field 7 [440-522] --- */
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_after_enabled)",
-				"target_property_name": "#raw_background"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_enabled - #raw_background)",
-				"target_property_name": "#rem_after_background"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #raw_background) - ('%.2s' * #raw_background) - ';')",
-				"target_property_name": "#background"
-			},
-			{
-				/* --- region (number, 83 bytes) - field 8 [523-605] --- */
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_after_background)",
-				"target_property_name": "#raw_region"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_background - #raw_region)",
-				"target_property_name": "#rem_after_region"
-			},
-			{
-				"binding_type": "view", // ((full_width - marker) - prefix (n:) - padding (;)) * 1 to coerce to number
-				"source_property_name": "((('%.82s' * #raw_region) - ('%.2s' * #raw_region) - ';') * 1)",
-				"target_property_name": "#region"
-			},
-			{
-				/* --- skip $reserved (418 bytes) - field 9 [606-1023] --- */
-				"binding_type": "view",
-				"source_property_name": "('%.418s' * #rem_after_region)",
-				"target_property_name": "#raw_reserved"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_region - #raw_reserved)",
-				"target_property_name": "#rem_after_reserved"
-			},
-			{
-				/* --- backgroundHover (string, 83 bytes) - component field 1 [1024-1106] --- */
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_after_reserved)",
-				"target_property_name": "#raw_bg_hover"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_reserved - #raw_bg_hover)",
-				"target_property_name": "#rem_after_bg_hover"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #raw_bg_hover) - ('%.2s' * #raw_bg_hover) - ';')",
-				"target_property_name": "#background_hover"
-			},
-			{
-				/* --- backgroundPressed (string, 83 bytes) - component field 2 [1107-1189] --- */
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_after_bg_hover)",
-				"target_property_name": "#raw_bg_pressed"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_bg_hover - #raw_bg_pressed)",
-				"target_property_name": "#rem_after_bg_pressed"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #raw_bg_pressed) - ('%.2s' * #raw_bg_pressed) - ';')",
-				"target_property_name": "#background_pressed"
-			},
-			{
-				/* --- backgroundLocked (string, 83 bytes) - component field 3 [1190-1272] --- */
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_after_bg_pressed)",
-				"target_property_name": "#raw_bg_locked"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #raw_bg_locked) - ('%.2s' * #raw_bg_locked) - ';')",
-				"target_property_name": "#background_locked"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(not (#background = ''))",
-				"target_property_name": "#bg_visible"
-			},
-			{
-				/* Gate on the active scroll region: $region_filter is substituted per scroll instance */
-				"binding_type": "view",
-				"source_property_name": "(#visible_pre_region and (#region = $region_filter))",
-				"target_property_name": "#visible"
-			}
-		],
+		"$type_gate": "(#pre_visible and (#type = 'button'))",
+		"$cell_details_binding_type": "collection_details",
 		// === Base button functionality (from vanilla_button) ===
 		"$focus_id|default": "",
 		"$focus_override_down|default": "",
@@ -299,184 +50,27 @@
 				"mapping_type": "focused"
 			}
 		],
+		// The four state faces are ONE shared control (core_ui_common.state_face) — only
+		// the skip offset differs per state, passed as a whole expression via $face_skip:
+		// background [440], backgroundHover [1024], backgroundPressed [1107],
+		// backgroundLocked [1190]. Payload source defaults inside state_face already serve
+		// the ActionForm (form_buttons / #form_button_text).
 		"controls": [
 			{
-				"default": {
-					"type": "panel",
-					"size": [
-						"100%",
-						"100%"
-					],
-					"anchor_to": "center",
-					"anchor_from": "center",
-					"controls": [
-						{
-							"bg": {
-								"type": "image",
-								"size": ["100%", "100%"],
-								"offset": [0, 0],
-								"fill": false,
-								"anchor_to": "center",
-								"anchor_from": "center",
-								"texture": "#texture",
-								"visible": "#visible",
-								"alpha": 1,
-								"bindings": [
-									{
-										/* decode background[440] directly */
-										"binding_name": "#form_button_text",
-										"binding_type": "collection",
-										"binding_collection_name": "form_buttons"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.440s' * #form_button_text)",
-										"target_property_name": "#skip_to_bg"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(#form_button_text - #skip_to_bg)",
-										"target_property_name": "#rem_at_bg"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.83s' * #rem_at_bg)",
-										"target_property_name": "#raw_bg"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(('%.82s' * #raw_bg) - ('%.2s' * #raw_bg) - ';')",
-										"target_property_name": "#texture"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(not (#texture = ''))",
-										"target_property_name": "#visible"
-									}
-								]
-							}
-						}
-					],
+				"default@core_ui_common.state_face": {
+					"$face_skip": "('%.440s' * #payload)",
 					"$default_state": true
 				}
 			},
 			{
-				"hover": {
-					"type": "panel",
-					"size": [
-						"100%",
-						"100%"
-					],
-					"anchor_to": "center",
-					"anchor_from": "center",
-					"controls": [
-						{
-							"bg": {
-								"type": "image",
-								"size": ["100%", "100%"],
-								"offset": [0, 0],
-								"fill": false,
-								"anchor_to": "center",
-								"anchor_from": "center",
-								"texture": "#texture",
-								"visible": "#visible",
-								"alpha": 1,
-								"bindings": [
-									{
-										/* decode backgroundHover[1024] directly */
-										"binding_name": "#form_button_text",
-										"binding_type": "collection",
-										"binding_collection_name": "form_buttons"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.1024s' * #form_button_text)",
-										"target_property_name": "#skip_to_bg_hover"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(#form_button_text - #skip_to_bg_hover)",
-										"target_property_name": "#rem_at_bg_hover"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.83s' * #rem_at_bg_hover)",
-										"target_property_name": "#raw_bg_hover"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(('%.82s' * #raw_bg_hover) - ('%.2s' * #raw_bg_hover) - ';')",
-										"target_property_name": "#texture"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(not (#texture = ''))",
-										"target_property_name": "#visible"
-									}
-								]
-							}
-						}
-					],
+				"hover@core_ui_common.state_face": {
+					"$face_skip": "('%.1024s' * #payload)",
 					"$hover_state": true
 				}
 			},
 			{
-				"pressed": {
-					"type": "panel",
-					"size": [
-						"100%",
-						"100%"
-					],
-					"anchor_to": "center",
-					"anchor_from": "center",
-					"controls": [
-						{
-							"bg": {
-								"type": "image",
-								"size": ["100%", "100%"],
-								"offset": [0, 0],
-								"fill": false,
-								"anchor_to": "center",
-								"anchor_from": "center",
-								"texture": "#texture",
-								"visible": "#visible",
-								"alpha": 1,
-								"bindings": [
-									{
-										/* decode backgroundPressed[1107] directly */
-										"binding_name": "#form_button_text",
-										"binding_type": "collection",
-										"binding_collection_name": "form_buttons"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.1107s' * #form_button_text)",
-										"target_property_name": "#skip_to_bg_pressed"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(#form_button_text - #skip_to_bg_pressed)",
-										"target_property_name": "#rem_at_bg_pressed"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.83s' * #rem_at_bg_pressed)",
-										"target_property_name": "#raw_bg_pressed"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(('%.82s' * #raw_bg_pressed) - ('%.2s' * #raw_bg_pressed) - ';')",
-										"target_property_name": "#texture"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(not (#texture = ''))",
-										"target_property_name": "#visible"
-									}
-								]
-							}
-						}
-					],
+				"pressed@core_ui_common.state_face": {
+					"$face_skip": "('%.1107s' * #payload)",
 					"$pressed_state": true,
 					"$button_offset|default": [
 						0,
@@ -485,62 +79,8 @@
 				}
 			},
 			{
-				"locked": {
-					"type": "panel",
-					"size": [
-						"100%",
-						"100%"
-					],
-					"anchor_to": "center",
-					"anchor_from": "center",
-					"controls": [
-						{
-							"bg": {
-								"type": "image",
-								"size": ["100%", "100%"],
-								"offset": [0, 0],
-								"fill": false,
-								"anchor_to": "center",
-								"anchor_from": "center",
-								"texture": "#texture",
-								"visible": "#visible",
-								"alpha": 1,
-								"bindings": [
-									{
-										/* decode backgroundLocked[1190] directly */
-										"binding_name": "#form_button_text",
-										"binding_type": "collection",
-										"binding_collection_name": "form_buttons"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.1190s' * #form_button_text)",
-										"target_property_name": "#skip_to_bg_locked"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(#form_button_text - #skip_to_bg_locked)",
-										"target_property_name": "#rem_at_bg_locked"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.83s' * #rem_at_bg_locked)",
-										"target_property_name": "#raw_bg_locked"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(('%.82s' * #raw_bg_locked) - ('%.2s' * #raw_bg_locked) - ';')",
-										"target_property_name": "#texture"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(not (#texture = ''))",
-										"target_property_name": "#visible"
-									}
-								]
-							}
-						}
-					]
+				"locked@core_ui_common.state_face": {
+					"$face_skip": "('%.1190s' * #payload)"
 				}
 			}
 		]

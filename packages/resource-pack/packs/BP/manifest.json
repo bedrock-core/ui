@@ -12,8 +12,8 @@
 		],
 		"min_engine_version": [
 			1,
-			21,
-			132
+			26,
+			30
 		]
 	},
 	"modules": [
@@ -43,17 +43,17 @@
 			"uuid": "761ecd37-ad1c-4a64-862a-d6cc38767426",
 			"version": [
 				1,
-				6,
+				9,
 				0
 			]
 		},
 		{
 			"module_name": "@minecraft/server",
-			"version": "2.7.0"
+			"version": "2.8.0"
 		},
 		{
 			"module_name": "@minecraft/server-ui",
-			"version": "2.0.0"
+			"version": "2.1.0"
 		}
 	],
 	"metadata": {

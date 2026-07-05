@@ -5,6 +5,10 @@ import { theme } from './tokens';
 
 export interface DropdownProps extends Omit<PrimitiveDropdownProps, 'face'> {}
 
+/**
+ * @deprecated Ore wrapper over the legacy modal-field `Dropdown` (one modal per field).
+ * Prefer `Form.Dropdown` from `@bedrock-core/ore-styled`'s `Form` inside a `<Form>`.
+ */
 export function Dropdown({
   options,
   value,

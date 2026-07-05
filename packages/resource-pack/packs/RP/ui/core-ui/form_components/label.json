@@ -1,0 +1,42 @@
+{
+	// Modal label router: renders the DECORATIVE elements (text / image / panel —
+	// and everything composed from them, e.g. cards) inside a native ModalForm.
+	// The TS side emits them through `form.label()` (the label slot works on both
+	// backends); this router reuses the SAME client components as the ActionForm's
+	// core_ui_common.label_router, re-pointed at the modal payload via their
+	// $payload_* parameters: collection custom_form, binding #custom_text, plus the
+	// per-cell collection_details context every modal cell needs. Buttons stay
+	// modal-forbidden (the TS restriction pass throws before anything reaches here).
+	"namespace": "core_ui_form_components",
+	"label_router": {
+		"type": "panel",
+		// Components must be inside a panel with size [1,1] so size_binding values map 1:1 to pixels.
+		"size": [
+			1,
+			1
+		],
+		"controls": [
+			{
+				"panel@core_ui_components.panel": {
+					"$payload_collection": "custom_form",
+					"$payload_binding": "#custom_text",
+					"$cell_details_binding_type": "collection_details"
+				}
+			},
+			{
+				"text@core_ui_components.text": {
+					"$payload_collection": "custom_form",
+					"$payload_binding": "#custom_text",
+					"$cell_details_binding_type": "collection_details"
+				}
+			},
+			{
+				"image@core_ui_components.image": {
+					"$payload_collection": "custom_form",
+					"$payload_binding": "#custom_text",
+					"$cell_details_binding_type": "collection_details"
+				}
+			}
+		]
+	}
+}

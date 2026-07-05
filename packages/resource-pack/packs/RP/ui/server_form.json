@@ -29,6 +29,25 @@
 			}
 		]
 	},
+	"custom_form": {
+		"$protocol_header": "bcuiv0007",
+		"modifications": [
+			{
+				"array_name": "bindings",
+				"operation": "insert_back",
+				"value": [
+					{
+						"binding_name": "#title_text"
+					},
+					{
+						"binding_type": "view",
+						"source_property_name": "((#title_text - $protocol_header) = #title_text)",
+						"target_property_name": "#visible"
+					}
+				]
+			}
+		]
+	},
 	"main_screen_content": {
 		"$protocol_header": "bcuiv0007",
 		"size": [
@@ -50,13 +69,14 @@
 							"factory": {
 								"name": "server_form_factory",
 								"control_ids": {
-									"long_form": "@core_ui_common.screen_container"
+									"long_form": "@core_ui_common.action_container",
+									"custom_form": "@core_ui_common.modal_container"
 								}
 							}
 						}
 					},
 					{
-						"gamepad_cursor@core_ui_cursor.gamepad_cursor_button": {}
+						"gamepad_cursor@core_ui_common.gamepad_cursor_button": {}
 					}
 				]
 			},

@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { ActionFormData } from '@minecraft/server-ui';
 import type { JSX } from '../../jsx';
-import type { SerializationContext } from '../types';
+import type { ActionSerializationContext } from '../types';
 import { withControl } from '../../components/control';
 import { registerNativeComponents } from '../../components';
 import { serialize } from '../serializer';
@@ -34,8 +34,8 @@ function asForm(form: FakeForm): ActionFormData {
   return form as unknown as ActionFormData;
 }
 
-function ctx(): SerializationContext {
-  return { buttonCallbacks: new Map(), buttonIndex: 0 };
+function ctx(): ActionSerializationContext {
+  return { mode: 'action', buttonCallbacks: new Map(), buttonIndex: 0 };
 }
 
 function panel(children: JSX.Node, extra: Record<string, unknown> = {}): JSX.Element {

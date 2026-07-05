@@ -6,7 +6,7 @@
 		"uuid": "{{RP_HEADER_UUID}}",
 		"pack_scope": "world",
 		"version": [1, 0, 0],
-		"min_engine_version": [1, 21, 120]
+		"min_engine_version": [1, 26, 30]
 	},
 	"modules": [
 		{
