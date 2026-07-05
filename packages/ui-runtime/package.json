@@ -49,8 +49,8 @@
     "coverage": "vitest run --coverage"
   },
   "devDependencies": {
-    "@minecraft/server": "^2.7.0",
-    "@minecraft/server-ui": "^2.0.0",
+    "@minecraft/server": "^2.8.0",
+    "@minecraft/server-ui": "^2.1.0",
     "@vitest/coverage-v8": "^4.1.5",
     "opentype.js": "^1.3.4",
     "typescript": "^6.0.3",
