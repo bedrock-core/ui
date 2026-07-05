@@ -1,4 +1,6 @@
 import { serializeProps } from '../../core/serializer';
+import { measureText } from '../../util/textMetrics';
+import type { LabelFont } from './controlPayload';
 
 /** Host `type` tag for a per-option payload blob (decoded per-row by the RP option controls). */
 export const DROPDOWN_OPTION_TYPE = 'dropdown-option';
@@ -73,18 +75,57 @@ export function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every(v => typeof v === 'string');
 }
 
+/** The computed position of an option's label inside its row (px, from row top-left). */
+export interface OptionLabelPosition {
+  x: number;
+  y: number;
+}
+
+/**
+ * Compute where an option's label sits inside its row — ALIGNMENT IS TS-SIDE now: the RP
+ * has one position-driven `option_label` (no left/center/right variants, no align gating);
+ * this measures the text with the real font metrics and turns the requested `align` into a
+ * concrete x, plus vertical centering into y. `leftInset` is the left-aligned start (callers
+ * pass bulletWidth + gap when a radio bullet occupies the row's left edge).
+ */
+export function optionLabelPosition(
+  text: string,
+  style: OptionStyle,
+  rowWidth: number,
+  rowHeight: number,
+  leftInset: number,
+): OptionLabelPosition {
+  // Invert the serialized fields back to measurement inputs (fontScaleFactor = scale / 0.5).
+  const font: LabelFont = style.fontType === 'MinecraftTen' ? 'minecraftTen' : 'mojangles';
+  const m = measureText({ text, font, fontSize: style.fontScaleFactor * 0.5 });
+
+  const x = style.align === 'center'
+    ? Math.round((rowWidth - m.width) / 2)
+    : style.align === 'right'
+      ? Math.round(rowWidth - 4 - m.width)
+      : leftInset;
+
+  return { x, y: Math.round((rowHeight - m.height) / 2) };
+}
+
 /**
  * Encode one option into its own `bcuiv0007` payload blob — the string handed to the native
  * `ModalFormData.dropdown` as this option's entry. The engine surfaces it per-row as
  * `#custom_radio_text`, and the RP option rows decode text + row height + background states +
- * font/scale/align (+ the two bullet textures) from it via the shared `'%.Ns'` slicing grammar
+ * font/scale (+ the two bullet textures) from it via the shared `'%.Ns'` slicing grammar
  * (exactly like main-form cells decode their `#custom_text`). Because each option gets its OWN
  * payload, the 64-field marker budget resets per option, and — since `options[]` bypasses the
  * serializer's primitive prop channel — option text is not subject to the 80-byte field cap
- * here. Field ORDER is the RP decode contract; the two bullet fields append AFTER `align` so
- * the dropdown popup's existing offsets are unchanged.
+ * here. Field ORDER is the RP decode contract. `label` carries the TS-COMPUTED label position
+ * (see {@link optionLabelPosition}): labelX occupies the old align field slot [673] and labelY
+ * appends at the end, so every other offset is unchanged.
  */
-export function serializeSelectOption(text: string, style: OptionStyle, geometry: OptionGeometry = NO_OPTION_GEOMETRY): string {
+export function serializeSelectOption(
+  text: string,
+  style: OptionStyle,
+  geometry: OptionGeometry = NO_OPTION_GEOMETRY,
+  label: OptionLabelPosition = { x: 4, y: 0 },
+): string {
   const [payload] = serializeProps({
     type: DROPDOWN_OPTION_TYPE,
     text, // field 1 → #custom_radio_text (visible label), offset [92]
@@ -94,7 +135,7 @@ export function serializeSelectOption(text: string, style: OptionStyle, geometry
     backgroundSelected: style.backgroundSelected, // field 5, [424]
     fontType: style.fontType, // field 6, [507]
     fontScaleFactor: style.fontScaleFactor, // field 7, [590]
-    align: style.align, // field 8 → gates option_label_left/center/right, [673]
+    labelX: label.x, // field 8 → option_label anchored X (was the align gate slot), [673]
     bulletTexture: style.bulletTexture, // field 9 → unselected bullet glyph, [756]
     bulletSelectedTexture: style.bulletSelectedTexture, // field 10 → selected bullet glyph, [839]
     // Per-option flex geometry (px) — the inline row self-positions from these via
@@ -105,6 +146,7 @@ export function serializeSelectOption(text: string, style: OptionStyle, geometry
     optionHeight: geometry.height, // field 14 → #size_binding_y, [1171]
     bulletWidth: style.bulletWidth, // field 15 → bullet glyph width px, [1254]
     bulletHeight: style.bulletHeight, // field 16 → bullet glyph height px, [1337]
+    labelY: label.y, // field 17 → option_label anchored Y, [1420]
   });
 
   return payload;

@@ -7,7 +7,7 @@ import { measureText } from '../../util/textMetrics';
 import { resolveStateBackgrounds, UNSTYLED_TEXTURE, withControl, type StateBackgroundProps } from '../control';
 import { labelFontFields, type LabelFont } from './controlPayload';
 import { MODAL_DROPDOWN_SLOT_TYPE } from './modalControls';
-import { isOptionStyle, isStringArray, serializeSelectOption, type OptionStyle } from './optionPayload';
+import { isOptionStyle, isStringArray, optionLabelPosition, serializeSelectOption, type OptionStyle } from './optionPayload';
 import { FormControlBase } from './shared';
 
 /**
@@ -170,7 +170,7 @@ export const FormDropdown: FunctionComponent<FormDropdownProps> = ({
 };
 
 /** Serializes a `modal-dropdown` into the native modal dropdown control. */
-export const formDropdownWriter: Writer = (payload, form, ctx, _callbacks, _props, nativeArgs) => {
+export const formDropdownWriter: Writer = (payload, form, ctx, _callbacks, props, nativeArgs) => {
   if (!isModalForm(form)) {
     throw new ModalFormError('Form.Dropdown must be rendered inside a `<Form>`.');
   }
@@ -196,7 +196,16 @@ export const formDropdownWriter: Writer = (payload, form, ctx, _callbacks, _prop
         bulletHeight: 12,
       };
 
-  const encodedOptions = options.map(option => serializeSelectOption(option, resolvedStyle));
+  // Label position is TS-COMPUTED (alignment left the RP): popup rows are as wide as the
+  // closed box (the cell) and stack at the FIXED row height; left inset 4 matches the old
+  // "100% - 8px" centered label box.
+  const rowWidth = typeof props?.jsonUIWidth === 'number' ? props.jsonUIWidth : 0;
+  const encodedOptions = options.map(option => serializeSelectOption(
+    option,
+    resolvedStyle,
+    undefined,
+    optionLabelPosition(option, resolvedStyle, rowWidth, OPTION_ROW_HEIGHT, 4),
+  ));
 
   emitDropdown(payload, form, ctx, name, encodedOptions, defaultValueIndex);
 };

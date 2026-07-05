@@ -260,7 +260,11 @@ describe('modal control serialization', () => {
     expect(alpha.indexOf('s:textures/ui/opt_selected')).toBe(424);
     expect(alpha.indexOf('s:MinecraftTen')).toBe(507);
     expect(alpha.indexOf('n:3')).toBe(590); // 1.5 scale / 0.5 base
-    expect(alpha.indexOf('s:center')).toBe(673);
+    // labelX [673] is a NUMBER now: the requested alignment is TS-computed into x/y
+    // (optionLabelPosition) and the align string no longer rides the blob; labelY
+    // appends at [1420] after bulletHeight.
+    expect(alpha.slice(673, 675)).toBe('n:');
+    expect(alpha.slice(1420, 1422)).toBe('n:');
 
     // The second option carries the SAME style but its own text.
     expect(items[1].indexOf('s:Beta')).toBe(92);

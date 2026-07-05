@@ -8,7 +8,9 @@ export interface FormDropdownProps extends Omit<PrimitiveFormDropdownProps,
   'background' | 'backgroundHover' | 'backgroundPressed' | 'backgroundLocked'
   | 'popupBackground' | 'optionBackground' | 'optionHover' | 'optionSelected'
   | 'optionFont' | 'optionScale' | 'optionAlign'
-  | 'currentColor' | 'currentFont' | 'currentScale' | 'currentInsetX' | 'currentInsetY'> {
+  | 'currentColor' | 'currentFont' | 'currentScale'> {
+  // currentInsetX/currentInsetY stay exposed: position is a per-instance layout knob
+  // (unlike the theme-owned colors/fonts). Defaults (8, centered) come from the primitive.
   /** Caption rendered above the closed box. */
   label?: string;
 }
@@ -26,7 +28,7 @@ export interface FormDropdownProps extends Omit<PrimitiveFormDropdownProps,
  * inset a fixed 8px in the RP (matching the input box). Only the arrow is a JSX overlay
  * here (static, pinned right).
  */
-export function FormDropdown({ label, name, options, defaultValue, enabled = true, ...layout }: FormDropdownProps): JSX.Element {
+export function FormDropdown({ label, name, options, defaultValue, enabled = true, currentInsetX, currentInsetY, ...layout }: FormDropdownProps): JSX.Element {
   const d = theme.components.dropdown;
 
   const control = (
@@ -51,6 +53,8 @@ export function FormDropdown({ label, name, options, defaultValue, enabled = tru
         currentColor={enabled ? d.textStyle.value : d.textStyle.disabled}
         currentFont={d.textStyle.font}
         currentScale={d.textStyle.scale}
+        currentInsetX={currentInsetX}
+        currentInsetY={currentInsetY}
       />
       <Panel
         position={'absolute'}

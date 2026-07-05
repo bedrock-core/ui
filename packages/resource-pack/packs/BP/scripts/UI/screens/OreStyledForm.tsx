@@ -101,12 +101,15 @@ export function OreStyledForm({ back }: { back: () => void }): JSX.Element {
         <Text>{'§e§lDetails'}</Text>
         <Form.Input label={'Nickname'} name={'nickname'} placeholder={'§7type here'} />
         <Form.Slider label={'Volume'} name={'volume'} min={0} max={10} defaultValue={5} />
-        {/* Long list: exercises the popup height cap + scrollbar with ore skins. */}
+        {/* Long list: exercises the popup height cap + scrollbar with ore skins.
+            OFFSET VERIFICATION: currentInsetX 48 = default 8 + 40 → this closed-box
+            value should sit OBVIOUSLY ~40px right of the Mode dropdown's. */}
         <Form.Dropdown
           label={'Difficulty'}
           name={'difficulty'}
           options={['Easy', 'Normal', 'Hard', 'Expert', 'Insane', 'Nightmare', 'Ultra', 'Custom']}
           defaultValue={'Normal'}
+          currentInsetX={48}
         />
       </Panel>
       {/* --- responsiveness test: multi-element rows + flex + decorative-beside-native --- */}

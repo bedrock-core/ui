@@ -231,38 +231,18 @@
 	"dropdown_option_face_selected@core_ui_form_components.option_face": {
 		"$face_skip": "('%.424s' * #custom_radio_text)"
 	},
-	// One shared option-row LABEL: text [92] + fontScaleFactor [590] decoded from the
-	// option's OWN blob (#custom_radio_text), plus the align field [673] gating WHICH of
-	// the three alignment variants renders (text_alignment is NOT bindable, so alignment
-	// is a static per-variant property and the blob's align value picks the visible one
-	// via $align_gate — a whole expression, same pattern as $type_gate/$face_skip).
-	// Replaces the six identical copies the dropdown popup rows and inline rows carried.
-	// binding_condition "always" unified from the inline variant (text is static per row,
-	// so this is behavior-equal for the popup rows). collection_details is REQUIRED with
-	// custom_dropdown bindings on the same control (hard-crash otherwise).
-	// Extends the shared text base (core_ui_control.label_base): type/text/color/font
-	// props come from there; this control adds the option-row geometry + the decode.
+	// THE option-row label — ONE control, position-driven: alignment left the RP
+	// entirely (text_alignment is not bindable, and the old left/center/right variant
+	// gating is gone). The TS writers compute the label's x/y per option with the real
+	// font metrics (optionLabelPosition) and pack them into the blob: labelX [673] (the
+	// old align slot) and labelY [1420]. The label extends label_base for the visual
+	// props + top_left/use_anchored_offset positioning, but declares its OWN bindings
+	// (wholesale-replace opt-out) with the in-game-PROVEN fetch shape: collection
+	// (always) FIRST, BARE collection_details second — the base's parameterized fetch
+	// (details named custom_dropdown, reordered) hard-crashed the ore form (zero logs).
+	// Host inside a [1,1] frame at the row's top-left (px-mapping rule).
 	"option_label@core_ui_control.label_base": {
-		// The base positions via top_left + use_anchored_offset; this label centers in its
-		// row instead (own anchors below) — keep anchored offset OFF (center + anchored
-		// offset is the unproven combo).
-		"use_anchored_offset": false,
-		"$align_gate|default": "((('%.82s' * #raw_al) - ('%.2s' * #raw_al) - ';') = 'left')",
-		"anchor_from": "center",
-		"anchor_to": "center",
-		"size": ["100% - 8px", "default"],
-		"visible": "#visible",
 		"layer": 10,
-		// OWN bindings (wholesale-replace of label_base's — the documented opt-out):
-		// the base's parameterized fetch names custom_dropdown on the collection_details
-		// binding and reorders it BEFORE the collection binding — that shape hard-crashed
-		// the ore form at open (zero logs, the custom_dropdown/details crash family; the
-		// unstyled form survived only because popup rows aren't created until a dropdown
-		// opens). This array is byte-identical to the pre-refactor, in-game-proven set:
-		// collection (always) FIRST, BARE collection_details second, then the decode
-		// chains — text [92], fontScaleFactor [590], align [673] → $align_gate → #visible.
-		// (No fontType [507] chain — the old labels never decoded it; backup_font_type
-		// covers the font, same as before.)
 		"bindings": [
 			{
 				"binding_name": "#custom_radio_text",
@@ -274,6 +254,7 @@
 				"binding_type": "collection_details"
 			},
 			{
+				/* text [92] */
 				"binding_type": "view",
 				"source_property_name": "('%.92s' * #custom_radio_text)",
 				"target_property_name": "#skip_to_text"
@@ -294,6 +275,7 @@
 				"target_property_name": "#text"
 			},
 			{
+				/* fontScaleFactor [590] */
 				"binding_type": "view",
 				"source_property_name": "('%.590s' * #custom_radio_text)",
 				"target_property_name": "#skip_to_scale"
@@ -314,37 +296,47 @@
 				"target_property_name": "#font_scale_factor"
 			},
 			{
+				/* labelX [673] -> anchored X */
 				"binding_type": "view",
 				"source_property_name": "('%.673s' * #custom_radio_text)",
-				"target_property_name": "#skip_al"
+				"target_property_name": "#skip_to_lx"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(#custom_radio_text - #skip_al)",
-				"target_property_name": "#rem_al"
+				"source_property_name": "(#custom_radio_text - #skip_to_lx)",
+				"target_property_name": "#rem_at_lx"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_al)",
-				"target_property_name": "#raw_al"
+				"source_property_name": "('%.83s' * #rem_at_lx)",
+				"target_property_name": "#raw_lx"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "$align_gate",
-				"target_property_name": "#visible"
+				"source_property_name": "((('%.82s' * #raw_lx) - ('%.2s' * #raw_lx) - ';') * 1)",
+				"target_property_name": "#anchored_offset_value_x"
+			},
+			{
+				/* labelY [1420] -> anchored Y */
+				"binding_type": "view",
+				"source_property_name": "('%.1420s' * #custom_radio_text)",
+				"target_property_name": "#skip_to_ly"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#custom_radio_text - #skip_to_ly)",
+				"target_property_name": "#rem_at_ly"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_at_ly)",
+				"target_property_name": "#raw_ly"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_ly) - ('%.2s' * #raw_ly) - ';') * 1)",
+				"target_property_name": "#anchored_offset_value_y"
 			}
 		]
-	},
-	"option_label_left@core_ui_form_components.option_label": {
-		"$label_alignment": "left",
-		"$align_gate": "((('%.82s' * #raw_al) - ('%.2s' * #raw_al) - ';') = 'left')"
-	},
-	"option_label_center@core_ui_form_components.option_label": {
-		"$label_alignment": "center",
-		"$align_gate": "((('%.82s' * #raw_al) - ('%.2s' * #raw_al) - ';') = 'center')"
-	},
-	"option_label_right@core_ui_form_components.option_label": {
-		"$label_alignment": "right",
-		"$align_gate": "((('%.82s' * #raw_al) - ('%.2s' * #raw_al) - ';') = 'right')"
 	}
 }

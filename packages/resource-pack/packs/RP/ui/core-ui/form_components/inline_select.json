@@ -313,16 +313,20 @@
 			{
 				"bullet_selected@core_ui_form_components.inline_bullet_selected": {}
 			},
-			// Option text: the three shared alignment variants (form_shared.option_label_*).
-			// The per-option align field [673] gates which one renders.
 			{
-				"option_label_left@core_ui_form_components.option_label_left": {}
-			},
-			{
-				"option_label_center@core_ui_form_components.option_label_center": {}
-			},
-			{
-				"option_label_right@core_ui_form_components.option_label_right": {}
+				/* [1,1] frame at the row's top-left: the single option_label offsets from
+				   it by the TS-computed labelX/labelY (alignment is TS-side now). */
+				"label_frame": {
+					"type": "panel",
+					"size": [1, 1],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"controls": [
+						{
+							"option_label@core_ui_form_components.option_label": {}
+						}
+					]
+				}
 			}
 		]
 	},

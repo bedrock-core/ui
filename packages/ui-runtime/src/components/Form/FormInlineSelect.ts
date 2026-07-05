@@ -5,7 +5,7 @@ import { FunctionComponent, JSX } from '../../jsx';
 import { UNSTYLED_TEXTURE, withControl } from '../control';
 import { labelFontFields, type LabelFont } from './controlPayload';
 import { MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_OPTION_SLOT_TYPE } from './modalControls';
-import { serializeSelectOption, type OptionGeometry, type OptionStyle } from './optionPayload';
+import { optionLabelPosition, serializeSelectOption, type OptionGeometry, type OptionStyle } from './optionPayload';
 import { FormControlBase } from './shared';
 
 export interface FormInlineSelectProps extends FormControlBase {
@@ -217,7 +217,21 @@ export const formInlineSelectWriter: Writer = (payload, form, ctx, _callbacks, p
 
   // One blob per option, carrying its style + flex geometry; the blobs are the native option
   // strings the RP inline rows self-decode + self-position from.
-  const encodedOptions = opts.map(o => serializeSelectOption(o.text, o.style, o.geometry));
+  // Label position is TS-COMPUTED (alignment left the RP): each option's label places
+  // inside ITS OWN row box. A radio bullet occupies the row's left edge, so left-aligned
+  // labels start past it (bulletWidth + 4px gap) — the bullet-dependent label offset.
+  const encodedOptions = opts.map(o => serializeSelectOption(
+    o.text,
+    o.style,
+    o.geometry,
+    optionLabelPosition(
+      o.text,
+      o.style,
+      o.geometry.width,
+      o.geometry.height,
+      o.style.bulletTexture !== '' ? o.style.bulletWidth + 4 : 4,
+    ),
+  ));
 
   emitDropdown(payload, form, ctx, name, encodedOptions, defaultIndex);
 };
