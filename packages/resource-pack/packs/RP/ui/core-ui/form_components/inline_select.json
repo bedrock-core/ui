@@ -1,155 +1,17 @@
 {
 	"namespace": "core_ui_form_components",
-	"inline_select": {
-		"type": "panel",
-		"size": [
-			0,
-			0
-		],
+	"inline_select@core_ui_control.control": {
+		// Extends the shared base (core_ui_control.control): the base owns the whole generic
+		// control-block decode; this modal cell just points it at the modal payload
+		// (custom_form / #custom_text / per-cell collection_details) and supplies its type
+		// gate. The base additionally decodes #background + #region and gates on
+		// $region_filter (default 0) — modal cells always encode region 0, so the region
+		// gate passes; the bg decode is unused here (harmless).
 		"layer": 50,
-		"anchor_from": "top_left",
-		"anchor_to": "top_left",
-		"use_anchored_offset": true,
-		"property_bag": {
-			"#size_binding_x": 0,
-			"#size_binding_y": 0,
-			"#anchored_offset_value_x": 0,
-			"#anchored_offset_value_y": 0
-		},
-		"visible": "#visible",
-		"enabled": "#enabled",
-		"$normalize": 1,
-		"bindings": [
-			{
-				"binding_type": "collection_details",
-				"binding_collection_name": "custom_form"
-			},
-			{
-				"binding_name": "#custom_text",
-				"binding_type": "collection",
-				"binding_collection_name": "custom_form"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.9s' * #custom_text)",
-				"target_property_name": "#protocol_header"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#custom_text - #protocol_header)",
-				"target_property_name": "#rem_after_header"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_after_header)",
-				"target_property_name": "#raw_type"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_header - #raw_type)",
-				"target_property_name": "#rem_after_type"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #raw_type) - ('%.2s' * #raw_type) - ';')",
-				"target_property_name": "#type"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_after_type)",
-				"target_property_name": "#raw_width"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_type - #raw_width)",
-				"target_property_name": "#rem_after_width"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #raw_width) - ('%.2s' * #raw_width) - ';')",
-				"target_property_name": "#size_binding_x"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_after_width)",
-				"target_property_name": "#raw_height"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_width - #raw_height)",
-				"target_property_name": "#rem_after_height"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #raw_height) - ('%.2s' * #raw_height) - ';')",
-				"target_property_name": "#size_binding_y"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_after_height)",
-				"target_property_name": "#raw_x"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_height - #raw_x)",
-				"target_property_name": "#rem_after_x"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "((('%.82s' * #raw_x) - ('%.2s' * #raw_x) - ';') * $normalize)",
-				"target_property_name": "#anchored_offset_value_x"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_after_x)",
-				"target_property_name": "#raw_y"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_x - #raw_y)",
-				"target_property_name": "#rem_after_y"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "((('%.82s' * #raw_y) - ('%.2s' * #raw_y) - ';') * $normalize)",
-				"target_property_name": "#anchored_offset_value_y"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.8s' * #rem_after_y)",
-				"target_property_name": "#raw_visible"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_y - #raw_visible)",
-				"target_property_name": "#rem_after_visible"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(('%.7s' * #raw_visible) - ('%.2s' * #raw_visible) - ';')",
-				"target_property_name": "#pre_visible"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.8s' * #rem_after_visible)",
-				"target_property_name": "#raw_enabled"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_visible - #raw_enabled)",
-				"target_property_name": "#rem_after_enabled"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(('%.7s' * #raw_enabled) - ('%.2s' * #raw_enabled) - ';')",
-				"target_property_name": "#enabled"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#pre_visible and (#type = 'modal-inline-select'))",
-				"target_property_name": "#visible"
-			}
-		],
+		"$payload_collection": "custom_form",
+		"$payload_binding": "#custom_text",
+		"$cell_details_binding_type": "collection_details",
+		"$type_gate": "(#pre_visible and (#type = 'modal-inline-select'))",
 		"controls": [
 			{
 				"inline_host@core_ui_form_components.inline_dropdown_host": {}
