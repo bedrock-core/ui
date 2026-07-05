@@ -137,34 +137,37 @@
 					"clips_children": true,
 					"controls": [
 						{
-							/* value label: [1,1] frame at the box's left-middle; the label offsets
-							   from it by the value GROUP x/y ([1522]/[1605]). Text is the native
-							   edit-box channel via the base's $native_* slot; font/scale decode from
-							   the group at [1273]. */
-							"display_frame": {
-								"type": "panel",
-								"size": [1, 1],
+							/* value label — the edit_box's text_control. It reads text from the native
+							   edit-box channel ($native_* slot); font/scale decode from the group at
+							   [1273]. The value GROUP's x/y are ignored here (see below): the 8px inset
+							   is a fixed offset and vertical centering comes from left_middle anchoring.
+							   OVERFLOW-SCROLL: because this IS the text_control, on SELECT the engine
+							   scrolls the label to keep the caret visible. That only works with vanilla's
+							   text_edit_box_label recipe — sit DIRECTLY in the full-size clip (not a
+							   [1,1] frame, whose min_size 100% would collapse to 1px), size ["default"]
+							   so it auto-grows past the box, min_size ["100%",0] so short text still
+							   fills the box, and NO use_anchored_offset (a fixed anchored X fights the
+							   engine scroll → short text got yanked left out of the clip). */
+							"display_text@core_ui_components.label": {
+								"localize": false,
+								"text": "#item_name",
+								"layer": 1,
+								"use_anchored_offset": false,
+								"size": ["default", "default"],
+								"min_size": ["100%", 0],
+								"offset": [8, 0],
 								"anchor_from": "left_middle",
 								"anchor_to": "left_middle",
-								"controls": [
-									{
-										"display_text@core_ui_components.label": {
-											"localize": false,
-											"text": "#item_name",
-											"layer": 1,
-											"property_bag": {
-												"#property_field": "#item_name",
-												"#anchored_offset_value_x": 0.0,
-												"#anchored_offset_value_y": 0.0
-											},
-											"$payload_collection": "custom_form",
-											"$payload_binding": "#custom_text",
-											"$label_skip": "('%.1273s' * #payload)",
-											"$native_binding": "#custom_input_text",
-											"$native_target": "#item_name"
-										}
-									}
-								]
+								"property_bag": {
+									"#property_field": "#item_name",
+									"#anchored_offset_value_x": 0.0,
+									"#anchored_offset_value_y": 0.0
+								},
+								"$payload_collection": "custom_form",
+								"$payload_binding": "#custom_text",
+								"$label_skip": "('%.1273s' * #payload)",
+								"$native_binding": "#custom_input_text",
+								"$native_target": "#item_name"
 							}
 						},
 						{

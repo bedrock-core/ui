@@ -101,6 +101,12 @@
 		"anchor_to": "top_left",
 		"layer": 2,
 		"enabled": "#enabled",
+		// Focus: the base carries the trio, but be explicit + add wrap (like the dropdown
+		// closed box) so the modal scroll can land controller/keyboard focus on the toggle.
+		"focus_enabled": true,
+		"focus_magnet_enabled": true,
+		"focus_wrap_enabled": true,
+		"default_focus_precedence": 0,
 		"$toggle_name": "custom_toggle",
 		"$toggle_grid_collection_name": "custom_form",
 		/* OWN bindings (replaces the base's): the modal write-back shape was bisected

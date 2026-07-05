@@ -129,7 +129,9 @@
 		"enabled": "#enabled",
 		"slider_name": "custom_slider",
 		"slider_track_button": "custom_slider",
-		"slider_direction": "horizontal",
+		// var-driven so the step mappings' direction guards (below) can read it.
+		"$slider_direction|default": "horizontal",
+		"slider_direction": "$slider_direction",
 		"slider_collection_name": "custom_form",
 		"slider_box_control": "slider_box",
 		"default_control": "bar_default_anchor",
@@ -150,6 +152,13 @@
 			"#slider_steps": 1,
 			"#slider_value": 0
 		},
+		/* Mappings copied from vanilla common.slider (ui_common.json:1025-1069). The
+		   menu_left/right → small_decrease/increase pair is what gives d-pad discrete
+		   steps once selected (we had only select + ok, so the pad did nothing). The
+		   vertical up/down variants are kept behind vanilla's direction guard even though
+		   we're always horizontal — harmless and matches vanilla verbatim. `ignore_input_scope`
+		   lets the step fire while the slider is the focused/selected control.
+		   menu_cancel → deselected mirrors vanilla so the pad can exit the selected state. */
 		"button_mappings": [
 			{
 				"from_button_id": "button.menu_select",
@@ -161,6 +170,39 @@
 				"from_button_id": "button.menu_ok",
 				"to_button_id": "slider.selected",
 				"mapping_type": "focused"
+			},
+			{
+				"from_button_id": "button.menu_cancel",
+				"to_button_id": "slider.deselected",
+				"mapping_type": "focused"
+			},
+			{
+				"ignored": "($slider_direction = 'vertical')",
+				"from_button_id": "button.menu_left",
+				"to_button_id": "slider.small_decrease",
+				"mapping_type": "pressed",
+				"ignore_input_scope": true
+			},
+			{
+				"ignored": "($slider_direction = 'horizontal')",
+				"from_button_id": "button.menu_up",
+				"to_button_id": "slider.small_decrease",
+				"mapping_type": "pressed",
+				"ignore_input_scope": true
+			},
+			{
+				"ignored": "($slider_direction = 'vertical')",
+				"from_button_id": "button.menu_right",
+				"to_button_id": "slider.small_increase",
+				"mapping_type": "pressed",
+				"ignore_input_scope": true
+			},
+			{
+				"ignored": "($slider_direction = 'horizontal')",
+				"from_button_id": "button.menu_down",
+				"to_button_id": "slider.small_increase",
+				"mapping_type": "pressed",
+				"ignore_input_scope": true
 			}
 		],
 		"bindings": [
