@@ -5,6 +5,7 @@
 		"ui/core-ui/animations/screen_events.json",
 		// Base control, all components should extend this
 		// Control [0,1023] 1024 bytes
+		"ui/core-ui/common/control.json",
 		"ui/core-ui/common/action_container.json",
 		"ui/core-ui/common/modal_container.json",
 		"ui/core-ui/common/label_router.json",

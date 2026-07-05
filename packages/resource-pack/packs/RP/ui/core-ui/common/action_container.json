@@ -37,12 +37,5 @@
 				"scroll_pool@core_ui_screens.scroll_pool": {}
 			}
 		]
-	},
-	"unused": {
-		"type": "panel",
-		"size": [
-			0,
-			0
-		]
 	}
 }

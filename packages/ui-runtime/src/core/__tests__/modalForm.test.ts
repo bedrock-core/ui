@@ -671,6 +671,7 @@ describe('modal control serialization', () => {
 
     // options resolve to blobs (arg 1) and defaultValue 'C' → index 2 (arg 2).
     expect(Array.isArray(dropdown?.args[1])).toBe(true);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
     expect((dropdown?.args[1] as string[]).length).toBe(3);
     expect(dropdown?.args[2]).toMatchObject({ defaultValueIndex: 2 });
   });
