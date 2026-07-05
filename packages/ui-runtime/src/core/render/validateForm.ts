@@ -1,4 +1,8 @@
-import { MODAL_FORM_SLOT_TYPE, MODAL_CONTROL_SLOT_TYPES } from '../../components/Form';
+import {
+  MODAL_FORM_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE,
+  MODAL_DROPDOWN_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE,
+  MODAL_FORM_BUTTON_SLOT_TYPE,
+} from '../../components/Form';
 import { isElement } from '../guards';
 import type { JSX } from '../../jsx';
 import { ModalFormError } from '../types';
@@ -6,7 +10,15 @@ import { ModalFormError } from '../types';
 /** ActionForm-only interactive host types — illegal inside a modal `<Form>`. */
 const ACTION_ONLY_INTERACTIVE_TYPES = new Set<string>(['button', 'item_renderer']);
 
-const MODAL_CONTROL_TYPE_SET = new Set<string>(MODAL_CONTROL_SLOT_TYPES);
+/** All modal-only control host types — the restriction set this pass enforces. */
+const MODAL_CONTROL_TYPE_SET = new Set<string>([
+  MODAL_TOGGLE_SLOT_TYPE,
+  MODAL_SLIDER_SLOT_TYPE,
+  MODAL_DROPDOWN_SLOT_TYPE,
+  MODAL_INLINE_SELECT_SLOT_TYPE,
+  MODAL_INPUT_SLOT_TYPE,
+  MODAL_FORM_BUTTON_SLOT_TYPE,
+]);
 
 /**
  * Enforce the modal-form restrictions on a built tree. This is the runtime backstop

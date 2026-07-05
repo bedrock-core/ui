@@ -1,23 +1,39 @@
 import { FunctionComponent, JSX } from '../../jsx';
 import { withControl, type ControlProps } from '../control';
 import { labelFontFields, type LabelFont } from './controlPayload';
-import { MODAL_OPTION_SLOT_TYPE } from './modalControls';
+
+/**
+ * Host type for `Form.Option` — LAYOUT-ONLY: the flex engine lays it out (so it gets
+ * computed x/y/w/h like any element), but the serializer does NOT emit it as a native
+ * control — its data + geometry are read by the parent select's writer and packed into
+ * the native option blob. Skipped by the serialize walk (see serializer.ts).
+ */
+export const MODAL_OPTION_SLOT_TYPE = 'modal-option';
 
 export interface FormOptionProps extends ControlProps {
   /**
-   * The option's value. `Form.Radio` / `Form.ToggleButton` report the SELECTED option's
-   * INDEX on submit (native dropdown behavior); `value` is what a `defaultValue` match tests
-   * against and is the caller's stable identifier for the option.
+   * The option's value. `Form.Dropdown` / `Form.Radio` / `Form.ToggleButton` report the
+   * SELECTED option's INDEX on submit (native dropdown behavior); `value` is what a
+   * `defaultValue` match tests against and is the caller's stable identifier.
    */
   value: string;
+  // --- label props, in the serialized label-group order (text, font, scale, position) ---
   /** Option label text. Rendered by the RP option row (decoded from the option blob). */
   label: string;
+  /** Label font family. Falls back to the group's `optionFont`. */
+  font?: LabelFont;
+  /** Label scale. Falls back to the group's `optionScale`. */
+  scale?: number;
+  /** Label alignment — TS-computed into the label-group x/y. Falls back to the group's `optionAlign`. */
+  align?: 'left' | 'center' | 'right';
+  // --- row faces ---
   /** Per-option idle row/segment background texture. Falls back to the group's `optionBackground`. */
   background?: string;
   /** Per-option hover background. Falls back to the group's `optionHover`. */
   backgroundHover?: string;
   /** Per-option selected background. Falls back to the group's `optionSelected`. */
   backgroundSelected?: string;
+  // --- radio bullet ---
   /** Unselected bullet glyph texture (radio). Falls back to the group's `bullet`. */
   bullet?: string;
   /** Selected bullet glyph texture (radio). Falls back to the group's `bulletSelected`. */
@@ -26,12 +42,6 @@ export interface FormOptionProps extends ControlProps {
   bulletWidth?: number;
   /** Bullet glyph height (px). Falls back to the group's `bulletHeight`. */
   bulletHeight?: number;
-  /** Label font family. Falls back to the group's `optionFont`. */
-  font?: LabelFont;
-  /** Label scale. Falls back to the group's `optionScale`. */
-  scale?: number;
-  /** Label alignment inside the option. Falls back to the group's `optionAlign`. */
-  align?: 'left' | 'center' | 'right';
 }
 
 /**

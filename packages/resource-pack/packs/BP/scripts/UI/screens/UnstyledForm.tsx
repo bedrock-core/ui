@@ -55,11 +55,12 @@ export function UnstyledForm({ back }: { back: () => void }): JSX.Element {
       </Panel>
       <Panel flexDirection={'column'} gap={2} padding={4}>
         <Text>{'§e§lChoices'}</Text>
-        <Form.Dropdown
-          name={'mode'}
-          options={['Easy', 'Normal', 'Hard']}
-          defaultValue={'Normal'}
-        />
+        {/* Options are Form.Option children (same authoring shape as Radio/ToggleButton). */}
+        <Form.Dropdown name={'mode'} defaultValue={'Normal'}>
+          <Form.Option value={'Easy'} label={'Easy'} />
+          <Form.Option value={'Normal'} label={'Normal'} />
+          <Form.Option value={'Hard'} label={'Hard'} />
+        </Form.Dropdown>
         <Form.Toggle name={'toggle_a'} defaultValue={true} />
         <Form.Toggle name={'toggle_b'} defaultValue={false} />
       </Panel>
@@ -68,11 +69,11 @@ export function UnstyledForm({ back }: { back: () => void }): JSX.Element {
         <Form.Input name={'nickname'} placeholder={'§7type here'} />
         <Form.Slider name={'volume'} min={0} max={10} defaultValue={5} />
         {/* Long list: exercises the popup height cap + scrollbar. */}
-        <Form.Dropdown
-          name={'difficulty'}
-          options={['Easy', 'Normal', 'Hard', 'Expert', 'Insane', 'Nightmare', 'Ultra', 'Custom']}
-          defaultValue={'Normal'}
-        />
+        <Form.Dropdown name={'difficulty'} defaultValue={'Normal'}>
+          {['Easy', 'Normal', 'Hard', 'Expert', 'Insane', 'Nightmare', 'Ultra', 'Custom'].map(o => (
+            <Form.Option value={o} label={o} />
+          ))}
+        </Form.Dropdown>
       </Panel>
       {/* --- responsiveness test: multi-element rows + flex + decorative-beside-native --- */}
       <Panel flexDirection={'column'} gap={2} padding={4}>
@@ -135,20 +136,17 @@ export function UnstyledForm({ back }: { back: () => void }): JSX.Element {
             encoded blob (text + bg + font/scale + align), decoded per-row by the RP — so the
             alignment differs per dropdown (and per option, once the override API lands). */}
         <Panel flexDirection={'row'} gap={4} alignItems={'flex-start'}>
-          <Form.Dropdown
-            name={'m_dd1'}
-            options={['One', 'Two', 'Three']}
-            defaultValue={'Two'}
-            optionAlign={'center'}
-            flex={1}
-          />
-          <Form.Dropdown
-            name={'m_dd2'}
-            options={['X', 'Y', 'Z']}
-            defaultValue={'Y'}
-            optionAlign={'right'}
-            flex={1}
-          />
+          <Form.Dropdown name={'m_dd1'} defaultValue={'Two'} optionAlign={'center'} flex={1}>
+            <Form.Option value={'One'} label={'One'} />
+            <Form.Option value={'Two'} label={'Two'} />
+            {/* Per-option override: this one right-aligns while the group centers. */}
+            <Form.Option value={'Three'} label={'Three'} align={'right'} />
+          </Form.Dropdown>
+          <Form.Dropdown name={'m_dd2'} defaultValue={'Y'} optionAlign={'right'} flex={1}>
+            <Form.Option value={'X'} label={'X'} />
+            <Form.Option value={'Y'} label={'Y'} />
+            <Form.Option value={'Z'} label={'Z'} />
+          </Form.Dropdown>
         </Panel>
       </Panel>
 

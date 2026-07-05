@@ -5,8 +5,10 @@ import { FunctionComponent, JSX } from '../../jsx';
 import { measureText } from '../../util/textMetrics';
 import { resolveStateBackgrounds, withControl, type StateBackgroundProps } from '../control';
 import { labelPayloadFields, type LabelFont } from './controlPayload';
-import { MODAL_INPUT_SLOT_TYPE } from './modalControls';
 import { FormControlBase } from './shared';
+
+/** Host type for the native modal text-field slot (modal-only). */
+export const MODAL_INPUT_SLOT_TYPE = 'modal-input';
 
 /** Default left inset (px) of the field text from the box edge (the old text_area inset). */
 const FIELD_TEXT_INSET_X = 8;

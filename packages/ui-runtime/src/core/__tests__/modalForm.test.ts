@@ -75,6 +75,11 @@ function el(node: JSX.Element): JSX.Element {
   return node;
 }
 
+/** Build `Form.Option` children for a dropdown from plain strings (value = label). */
+function ddOpts(values: string[]): JSX.Element[] {
+  return values.map(v => Form.Option({ value: v, label: v }));
+}
+
 /** The native `label` payload (arg 0) for the first control of `kind`, narrowed to string. */
 function labelArg(form: FakeModalForm, kind: string): string {
   const arg = form.calls.find(c => c.kind === kind)?.args[0];
@@ -104,7 +109,7 @@ describe('modal control serialization', () => {
         children: [
           el(Form.Toggle({ name: 'sound', defaultValue: true })),
           el(Form.Slider({ name: 'volume', min: 0, max: 10, defaultValue: 7 })),
-          el(Form.Dropdown({ name: 'mode', options: ['A', 'B'], defaultValue: 'B' })),
+          el(Form.Dropdown({ name: 'mode', children: ddOpts(['A', 'B']), defaultValue: 'B' })),
           el(Form.Input({ name: 'nick', defaultValue: 'x' })),
         ],
       },
@@ -153,7 +158,7 @@ describe('modal control serialization', () => {
   it('maps dropdown defaultValue option to its index', () => {
     const form = new FakeModalForm();
 
-    serialize(el(Form.Dropdown({ name: 'm', options: ['A', 'B', 'C'], defaultValue: 'C' })), asModalForm(form), modalCtx());
+    serialize(el(Form.Dropdown({ name: 'm', children: ddOpts(['A', 'B', 'C']), defaultValue: 'C' })), asModalForm(form), modalCtx());
 
     const dropdown = form.calls.find(c => c.kind === 'dropdown');
 
@@ -167,7 +172,7 @@ describe('modal control serialization', () => {
     const form = new FakeModalForm();
 
     serialize(
-      el(Form.Dropdown({ name: 'm', options: ['A', 'B'], background: 'textures/ui/my_closed_box' })),
+      el(Form.Dropdown({ name: 'm', children: ddOpts(['A', 'B']), background: 'textures/ui/my_closed_box' })),
       asModalForm(form),
       modalCtx(),
     );
@@ -193,7 +198,7 @@ describe('modal control serialization', () => {
     serialize(
       el(Form.Dropdown({
         name: 'm',
-        options: ['A', 'B'],
+        children: ddOpts(['A', 'B']),
         background: 'textures/ui/cb_default',
         backgroundHover: 'textures/ui/cb_hover',
         backgroundPressed: 'textures/ui/cb_pressed',
@@ -225,14 +230,13 @@ describe('modal control serialization', () => {
     serialize(
       el(Form.Dropdown({
         name: 'm',
-        options: ['Alpha', 'Beta'],
+        children: ddOpts(['Alpha', 'Beta']),
         optionBackground: 'textures/ui/opt_bg',
         optionHover: 'textures/ui/opt_hover',
         optionSelected: 'textures/ui/opt_selected',
         optionFont: 'minecraftTen',
         optionScale: 1.5,
         optionAlign: 'center',
-        optionHeight: 21,
       })),
       asModalForm(form),
       modalCtx(),
@@ -250,21 +254,20 @@ describe('modal control serialization', () => {
 
     const [alpha] = items;
 
-    // Fixed field layout: type [9], text [92], height [175], bg [258], hover [341],
-    // selected [424], fontType [507], fontScale [590], align [673].
+    // Fixed field layout — the LABEL GROUP leads (label_base contract): text [92],
+    // fontType [175], fontScale [258], labelX [341], labelY [424]; then height [507]
+    // (legacy, always 0), bg [590], hover [673], selected [756]. Alignment is
+    // TS-computed into labelX/labelY (optionLabelPosition).
     expect(alpha.indexOf('s:dropdown-option')).toBe(9);
     expect(alpha.indexOf('s:Alpha')).toBe(92);
-    expect(alpha.indexOf('n:21')).toBe(175); // row height
-    expect(alpha.indexOf('s:textures/ui/opt_bg')).toBe(258);
-    expect(alpha.indexOf('s:textures/ui/opt_hover')).toBe(341);
-    expect(alpha.indexOf('s:textures/ui/opt_selected')).toBe(424);
-    expect(alpha.indexOf('s:MinecraftTen')).toBe(507);
-    expect(alpha.indexOf('n:3')).toBe(590); // 1.5 scale / 0.5 base
-    // labelX [673] is a NUMBER now: the requested alignment is TS-computed into x/y
-    // (optionLabelPosition) and the align string no longer rides the blob; labelY
-    // appends at [1420] after bulletHeight.
-    expect(alpha.slice(673, 675)).toBe('n:');
-    expect(alpha.slice(1420, 1422)).toBe('n:');
+    expect(alpha.indexOf('s:MinecraftTen')).toBe(175);
+    expect(alpha.indexOf('n:3')).toBe(258); // 1.5 scale / 0.5 base
+    expect(alpha.slice(341, 343)).toBe('n:'); // labelX
+    expect(alpha.slice(424, 426)).toBe('n:'); // labelY
+    expect(alpha.slice(507, 510)).toBe('n:0'); // legacy height slot
+    expect(alpha.indexOf('s:textures/ui/opt_bg')).toBe(590);
+    expect(alpha.indexOf('s:textures/ui/opt_hover')).toBe(673);
+    expect(alpha.indexOf('s:textures/ui/opt_selected')).toBe(756);
 
     // The second option carries the SAME style but its own text.
     expect(items[1].indexOf('s:Beta')).toBe(92);
@@ -273,7 +276,7 @@ describe('modal control serialization', () => {
   // Inline-select (radio / toggle-button) reuses the native dropdown() call. Options are now
   // `Form.Option` CHILDREN whose flex geometry (filled by the layout phase — simulated here by
   // setting jsonUI* on the built option element) is packed into each blob AFTER the bullet fields:
-  // bullet[756]/bulletSel[839] then optionX[922]/optionY[1005]/optionWidth[1088]/optionHeight[1171].
+  // bullet[839]/bulletSel[922] then optionX[1005]/optionY[1088]/optionWidth[1171]/optionHeight[1254].
   it('emits an inline-select as a native dropdown, packing each Form.Option geometry into its blob', () => {
     const form = new FakeModalForm();
 
@@ -297,19 +300,19 @@ describe('modal control serialization', () => {
     // Cell payload is its own slot type (positioning of the group cell rides the control block).
     expect(labelArg(form, 'dropdown')).toContain('s:modal-inline-select');
 
-    // First option blob: text[92], bullets[756]/[839], geometry[922]/[1005]/[1088]/[1171].
+    // First option blob: text[92], bullets[839]/[922], geometry[1005]/[1088]/[1171]/[1254].
     const [redBlob] = itemsArg(form, 'dropdown');
 
     expect(redBlob.indexOf('s:Red')).toBe(92);
-    expect(redBlob.indexOf('s:textures/ui/radio_off')).toBe(756);
-    expect(redBlob.indexOf('s:textures/ui/radio_on')).toBe(839);
-    expect(redBlob.indexOf('n:41')).toBe(922); // optionX
-    expect(redBlob.indexOf('n:42')).toBe(1005); // optionY
-    expect(redBlob.indexOf('n:43')).toBe(1088); // optionWidth
-    expect(redBlob.indexOf('n:44')).toBe(1171); // optionHeight
+    expect(redBlob.indexOf('s:textures/ui/radio_off')).toBe(839);
+    expect(redBlob.indexOf('s:textures/ui/radio_on')).toBe(922);
+    expect(redBlob.indexOf('n:41')).toBe(1005); // optionX
+    expect(redBlob.indexOf('n:42')).toBe(1088); // optionY
+    expect(redBlob.indexOf('n:43')).toBe(1171); // optionWidth
+    expect(redBlob.indexOf('n:44')).toBe(1254); // optionHeight
 
     // Second option carries its own geometry (genuinely per-option).
-    expect(itemsArg(form, 'dropdown')[1].indexOf('n:52')).toBe(1005); // optionY
+    expect(itemsArg(form, 'dropdown')[1].indexOf('n:52')).toBe(1088); // optionY
   });
 
   // Toggle textures: button-identical common block ([440] base=unchecked, [1024]
@@ -513,7 +516,7 @@ describe('modal control serialization', () => {
     const form = new FakeModalForm();
     const options = Array.from({ length: 20 }, (_, i) => `opt${i}`);
 
-    serialize(el(Form.Dropdown({ name: 'm', options })), asModalForm(form), modalCtx());
+    serialize(el(Form.Dropdown({ name: 'm', children: ddOpts(options) })), asModalForm(form), modalCtx());
 
     const label = labelArg(form, 'dropdown');
 
@@ -639,7 +642,7 @@ describe('modal control serialization', () => {
       props: {
         children: [
           Form.Input({ name: 'nick', placeholder: 'type…', defaultValue: 'seed' }),
-          Form.Dropdown({ name: 'mode', options: ['A', 'B', 'C'], defaultValue: 'C' }),
+          Form.Dropdown({ name: 'mode', children: ddOpts(['A', 'B', 'C']), defaultValue: 'C' }),
         ],
       },
     };

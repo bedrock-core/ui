@@ -144,7 +144,7 @@
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "('%.922s' * #custom_radio_text)",
+				"source_property_name": "('%.1005s' * #custom_radio_text)",
 				"target_property_name": "#skip_anchored_offset_value_x"
 			},
 			{
@@ -164,7 +164,7 @@
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "('%.1005s' * #custom_radio_text)",
+				"source_property_name": "('%.1088s' * #custom_radio_text)",
 				"target_property_name": "#skip_anchored_offset_value_y"
 			},
 			{
@@ -184,7 +184,7 @@
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "('%.1088s' * #custom_radio_text)",
+				"source_property_name": "('%.1171s' * #custom_radio_text)",
 				"target_property_name": "#skip_size_binding_x"
 			},
 			{
@@ -204,7 +204,7 @@
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "('%.1171s' * #custom_radio_text)",
+				"source_property_name": "('%.1254s' * #custom_radio_text)",
 				"target_property_name": "#skip_size_binding_y"
 			},
 			{
@@ -330,8 +330,8 @@
 			}
 		]
 	},
-	// Bullet glyph, DYNAMICALLY sized from the option blob: bulletWidth [1254] and
-	// bulletHeight [1337] (appended after the geometry block, so no earlier offset moves).
+	// Bullet glyph, DYNAMICALLY sized from the option blob: bulletWidth [1337] and
+	// bulletHeight [1420] (appended after the geometry block, so no earlier offset moves).
 	// Three-level structure per the [1,1] rule: a 1px frame (so the box's #size_binding_*
 	// map 1:1 to px — same as inline_option_row), a box the decode sizes, and the image
 	// filling it. The frame pins the bullet to the row's left-middle, like the old
@@ -395,7 +395,7 @@
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "('%.1254s' * #custom_radio_text)",
+				"source_property_name": "('%.1337s' * #custom_radio_text)",
 				"target_property_name": "#skip_bullet_w"
 			},
 			{
@@ -415,7 +415,7 @@
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "('%.1337s' * #custom_radio_text)",
+				"source_property_name": "('%.1420s' * #custom_radio_text)",
 				"target_property_name": "#skip_bullet_h"
 			},
 			{
@@ -441,7 +441,7 @@
 		]
 	},
 	// One shared bullet glyph image: texture from the option blob at $bullet_skip
-	// (unselected [756] / selected [839]), shown per $bullet_visible (toggle-state
+	// (unselected [839] / selected [922]), shown per $bullet_visible (toggle-state
 	// polarity; empty texture always hides). Both state variants are thin derivations —
 	// the bullet_box $bullet_img name var picks one.
 	"inline_bullet_img": {
@@ -450,7 +450,7 @@
 			"100%",
 			"100%"
 		],
-		"$bullet_skip|default": "('%.756s' * #custom_radio_text)",
+		"$bullet_skip|default": "('%.839s' * #custom_radio_text)",
 		"$bullet_visible|default": "((not (#texture = '')) and (not #toggle_state))",
 		"texture": "#texture",
 		"visible": "#visible",
@@ -498,11 +498,11 @@
 		]
 	},
 	"inline_bullet_img_default@core_ui_form_components.inline_bullet_img": {
-		"$bullet_skip": "('%.756s' * #custom_radio_text)",
+		"$bullet_skip": "('%.839s' * #custom_radio_text)",
 		"$bullet_visible": "((not (#texture = '')) and (not #toggle_state))"
 	},
 	"inline_bullet_img_selected@core_ui_form_components.inline_bullet_img": {
-		"$bullet_skip": "('%.839s' * #custom_radio_text)",
+		"$bullet_skip": "('%.922s' * #custom_radio_text)",
 		"$bullet_visible": "((not (#texture = '')) and #toggle_state)"
 	}
 }

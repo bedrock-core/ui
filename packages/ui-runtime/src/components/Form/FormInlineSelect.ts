@@ -4,9 +4,19 @@ import { emitDropdown } from '../../core/writers';
 import { FunctionComponent, JSX } from '../../jsx';
 import { UNSTYLED_TEXTURE, withControl } from '../control';
 import { labelFontFields, type LabelFont } from './controlPayload';
-import { MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_OPTION_SLOT_TYPE } from './modalControls';
-import { optionLabelPosition, serializeSelectOption, type OptionGeometry, type OptionStyle } from './optionPayload';
+import {
+  fallbackGroupDefaults, isGroupDefaults, optionElements, optionLabelPosition, readOption,
+  serializeSelectOption, type GroupOptionDefaults,
+} from './optionPayload';
 import { FormControlBase } from './shared';
+
+/**
+ * Host type for the inline single-select slot (radio group / toggle-button group) →
+ * native `ModalFormData.dropdown`, but the RP renders its option collection INLINE in
+ * the form flow (all options always visible) instead of behind the dropdown popup.
+ * Modal-only.
+ */
+export const MODAL_INLINE_SELECT_SLOT_TYPE = 'modal-inline-select';
 
 export interface FormInlineSelectProps extends FormControlBase {
   /**
@@ -33,7 +43,7 @@ export interface FormInlineSelectProps extends FormControlBase {
   optionFont?: LabelFont;
   /** Default option label scale. */
   optionScale?: number;
-  /** Default option label alignment. */
+  /** Default option label alignment (TS-computed into the label position). */
   optionAlign?: 'left' | 'center' | 'right';
   /**
    * The `Form.Option` children — each is flex-laid-out by our layout system (position them with
@@ -41,20 +51,6 @@ export interface FormInlineSelectProps extends FormControlBase {
    * the RP option row self-positions. The single submitted value is the selected option's index.
    */
   children?: JSX.Node;
-}
-
-/** The resolved group-level defaults the writer applies to any option field an option didn't set. */
-interface GroupOptionDefaults {
-  background: string;
-  backgroundHover: string;
-  backgroundSelected: string;
-  bulletTexture: string;
-  bulletSelectedTexture: string;
-  bulletWidth: number;
-  bulletHeight: number;
-  fontType: string;
-  fontScaleFactor: number;
-  align: 'left' | 'center' | 'right';
 }
 
 /**
@@ -117,78 +113,11 @@ export const FormInlineSelect: FunctionComponent<FormInlineSelectProps> = ({
 
 // ── Writer ──────────────────────────────────────────────────────────────────────
 
-/** Narrow a built child element to a `Form.Option` and read its post-layout data + geometry. */
-interface OptionData {
-  value: string;
-  text: string;
-  style: OptionStyle;
-  geometry: OptionGeometry;
-}
-
-function readNumber(v: unknown, fallback = 0): number {
-  return typeof v === 'number' ? v : fallback;
-}
-
-function readString(v: unknown, fallback: string): string {
-  return typeof v === 'string' ? v : fallback;
-}
-
-function readAlign(v: unknown, fallback: 'left' | 'center' | 'right'): 'left' | 'center' | 'right' {
-  return v === 'left' || v === 'center' || v === 'right' ? v : fallback;
-}
-
-/**
- * Extract one option's value/text/style/geometry from its (post-layout) `Form.Option` element.
- * Geometry is encoded RELATIVE to the group cell's own box (`groupX`/`groupY`): the layout phase
- * computes ABSOLUTE screen coords for every node, but the RP option row anchors inside the group
- * box (which is already placed at the cell's screen position), so absolute coords would be
- * double-offset (verified via pipeline dump: option y = group y + local y).
- */
-function readOption(el: JSX.Element, defaults: GroupOptionDefaults, groupX: number, groupY: number): OptionData {
-  const p = el.props;
-
-  return {
-    value: readString(p.value, ''),
-    text: readString(p.label, ''),
-    style: {
-      // Legacy flow-height field [175] is UNUSED inline (the row sizes from geometry width/height
-      // at [1088]/[1171]); keep it 0 so it doesn't shadow the real per-option height.
-      height: 0,
-      background: readString(p.background, defaults.background),
-      backgroundHover: readString(p.backgroundHover, defaults.backgroundHover),
-      backgroundSelected: readString(p.backgroundSelected, defaults.backgroundSelected),
-      fontType: readString(p.__optionFontType, defaults.fontType),
-      fontScaleFactor: readNumber(p.__optionFontScale, defaults.fontScaleFactor),
-      align: readAlign(p.align, defaults.align),
-      bulletTexture: readString(p.bullet, defaults.bulletTexture),
-      bulletSelectedTexture: readString(p.bulletSelected, defaults.bulletSelectedTexture),
-      bulletWidth: readNumber(p.bulletWidth, defaults.bulletWidth),
-      bulletHeight: readNumber(p.bulletHeight, defaults.bulletHeight),
-    },
-    geometry: {
-      x: readNumber(p.jsonUIx) - groupX,
-      y: readNumber(p.jsonUIy) - groupY,
-      width: readNumber(p.jsonUIWidth),
-      height: readNumber(p.jsonUIHeight),
-    },
-  };
-}
-
-function isGroupDefaults(v: unknown): v is GroupOptionDefaults {
-  return typeof v === 'object' && v !== null && 'background' in v && 'fontType' in v;
-}
-
-function isOptionElement(node: unknown): node is JSX.Element {
-  return (
-    typeof node === 'object' && node !== null && 'type' in node
-    && (node).type === MODAL_OPTION_SLOT_TYPE
-  );
-}
-
 /**
  * Serialize a `modal-inline-select` into the native modal dropdown, reading each laid-out
- * `Form.Option` child's geometry + data. Same native `dropdown()` call as the popup dropdown —
- * only the per-option blobs (now carrying flex geometry) and the RP inline decode differ.
+ * `Form.Option` child's geometry + data (all option handling lives in optionPayload). Same
+ * native `dropdown()` call as the popup dropdown — only the per-option blobs (carrying flex
+ * geometry) and the RP inline decode differ.
  */
 export const formInlineSelectWriter: Writer = (payload, form, ctx, _callbacks, props, nativeArgs, children) => {
   if (!isModalForm(form)) {
@@ -199,27 +128,18 @@ export const formInlineSelectWriter: Writer = (payload, form, ctx, _callbacks, p
   const defaultValue = typeof nativeArgs?.defaultValue === 'string' ? nativeArgs.defaultValue : '';
   const defaults: GroupOptionDefaults = isGroupDefaults(nativeArgs?.groupDefaults)
     ? nativeArgs.groupDefaults
-    : {
-        background: UNSTYLED_TEXTURE, backgroundHover: UNSTYLED_TEXTURE, backgroundSelected: UNSTYLED_TEXTURE,
-        bulletTexture: '', bulletSelectedTexture: '', bulletWidth: 12, bulletHeight: 12,
-        ...labelFontFields(), align: 'left',
-      };
+    : { ...fallbackGroupDefaults(), background: UNSTYLED_TEXTURE, backgroundHover: UNSTYLED_TEXTURE, backgroundSelected: UNSTYLED_TEXTURE };
 
   // The group cell's own layout box — option geometry is encoded relative to it.
-  const groupX = readNumber(props?.jsonUIx);
-  const groupY = readNumber(props?.jsonUIy);
+  const groupX = typeof props?.jsonUIx === 'number' ? props.jsonUIx : 0;
+  const groupY = typeof props?.jsonUIy === 'number' ? props.jsonUIy : 0;
 
-  const childArray = Array.isArray(children) ? children : children === undefined ? [] : [children];
-  const optionEls = childArray.filter(isOptionElement);
-  const opts = optionEls.map(el => readOption(el, defaults, groupX, groupY));
-
+  const opts = optionElements(children).map(el => readOption(el, defaults, groupX, groupY));
   const defaultIndex = Math.max(0, opts.findIndex(o => o.value === defaultValue));
 
-  // One blob per option, carrying its style + flex geometry; the blobs are the native option
-  // strings the RP inline rows self-decode + self-position from.
-  // Label position is TS-COMPUTED (alignment left the RP): each option's label places
-  // inside ITS OWN row box. A radio bullet occupies the row's left edge, so left-aligned
-  // labels start past it (bulletWidth + 4px gap) — the bullet-dependent label offset.
+  // One blob per option: style + flex geometry + the TS-COMPUTED label position (alignment
+  // left the RP). Left-aligned labels start past a radio bullet (bulletWidth + 4px gap) —
+  // the bullet-dependent label offset.
   const encodedOptions = opts.map(o => serializeSelectOption(
     o.text,
     o.style,

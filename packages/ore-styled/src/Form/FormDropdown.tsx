@@ -8,11 +8,16 @@ export interface FormDropdownProps extends Omit<PrimitiveFormDropdownProps,
   'background' | 'backgroundHover' | 'backgroundPressed' | 'backgroundLocked'
   | 'popupBackground' | 'optionBackground' | 'optionHover' | 'optionSelected'
   | 'optionFont' | 'optionScale' | 'optionAlign'
-  | 'currentColor' | 'currentFont' | 'currentScale'> {
+  | 'currentColor' | 'currentFont' | 'currentScale' | 'children'> {
   // currentInsetX/currentInsetY stay exposed: position is a per-instance layout knob
   // (unlike the theme-owned colors/fonts). Defaults (8, centered) come from the primitive.
   /** Caption rendered above the closed box. */
   label?: string;
+  /**
+   * Selectable options — the ore layer keeps the simple string-array API and maps each
+   * entry to a primitive `Form.Option` child (value = label = the string).
+   */
+  options: string[];
 }
 
 /**
@@ -35,7 +40,6 @@ export function FormDropdown({ label, name, options, defaultValue, enabled = tru
     <Panel {...(label === undefined ? { ...rowSizing(layout), ...layout } : { width: '100%' })}>
       <PrimitiveForm.Dropdown
         name={name}
-        options={options}
         defaultValue={defaultValue}
         enabled={enabled}
         width={'100%'}
@@ -55,7 +59,11 @@ export function FormDropdown({ label, name, options, defaultValue, enabled = tru
         currentScale={d.textStyle.scale}
         currentInsetX={currentInsetX}
         currentInsetY={currentInsetY}
-      />
+      >
+        {options.map(o => (
+          <PrimitiveForm.Option value={o} label={o} />
+        ))}
+      </PrimitiveForm.Dropdown>
       <Panel
         position={'absolute'}
         top={0}

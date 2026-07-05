@@ -155,21 +155,21 @@
 		]
 	},
 	// Option-row state faces: per-option textures decoded from the option's OWN blob
-	// (#custom_radio_text): background [258] / backgroundHover [341] / backgroundSelected [424].
+	// (#custom_radio_text): background [590] / backgroundHover [673] / backgroundSelected [756].
 	// (checked / hovered-while-checked / locked-checked map to selected; locked-unchecked to default.)
 	// One shared option-row face: bg image self-decoding its texture from the option's
 	// OWN blob (#custom_radio_text, engine-owned custom_dropdown collection) at $face_skip.
 	// Kept separate from core_ui_control.state_face on purpose: this shape needs the
 	// custom_dropdown collection + binding_condition "always" + collection_details ON THE
 	// SAME control (a custom_dropdown binding WITHOUT details hard-crashes the game with
-	// zero logs — bisected in-game). Offsets: background [258], hover [341], selected [424].
+	// zero logs — bisected in-game). Offsets: background [590], hover [673], selected [756].
 	"option_face": {
 		"type": "panel",
 		"size": [
 			"100%",
 			"100%"
 		],
-		"$face_skip|default": "('%.258s' * #custom_radio_text)",
+		"$face_skip|default": "('%.590s' * #custom_radio_text)",
 		"controls": [
 			{
 				"bg": {
@@ -223,120 +223,26 @@
 		]
 	},
 	"dropdown_option_face_default@core_ui_form_components.option_face": {
-		"$face_skip": "('%.258s' * #custom_radio_text)"
+		"$face_skip": "('%.590s' * #custom_radio_text)"
 	},
 	"dropdown_option_face_hover@core_ui_form_components.option_face": {
-		"$face_skip": "('%.341s' * #custom_radio_text)"
+		"$face_skip": "('%.673s' * #custom_radio_text)"
 	},
 	"dropdown_option_face_selected@core_ui_form_components.option_face": {
-		"$face_skip": "('%.424s' * #custom_radio_text)"
+		"$face_skip": "('%.756s' * #custom_radio_text)"
 	},
-	// THE option-row label — ONE control, position-driven: alignment left the RP
-	// entirely (text_alignment is not bindable, and the old left/center/right variant
-	// gating is gone). The TS writers compute the label's x/y per option with the real
-	// font metrics (optionLabelPosition) and pack them into the blob: labelX [673] (the
-	// old align slot) and labelY [1420]. The label extends label_base for the visual
-	// props + top_left/use_anchored_offset positioning, but declares its OWN bindings
-	// (wholesale-replace opt-out) with the in-game-PROVEN fetch shape: collection
-	// (always) FIRST, BARE collection_details second — the base's parameterized fetch
-	// (details named custom_dropdown, reordered) hard-crashed the ore form (zero logs).
-	// Host inside a [1,1] frame at the row's top-left (px-mapping rule).
+	// THE option-row label — pure label_base, ZERO bespoke bindings: the option blob
+	// leads with the standard label GROUP (text [92], fontType [175], fontScale [258],
+	// labelX [341], labelY [424]), so the base's sequential group decode does all the
+	// work from one $label_skip. Alignment is TS-computed into labelX/labelY
+	// (optionLabelPosition); per-option fonts now decode too (group slot 2). Fetch
+	// safety: label_base's fetch is the custom_dropdown-PROVEN shape (collection first,
+	// details second with empty name). Host inside a [1,1] frame at the row's top-left.
 	"option_label@core_ui_control.label_base": {
 		"layer": 10,
-		"bindings": [
-			{
-				"binding_name": "#custom_radio_text",
-				"binding_type": "collection",
-				"binding_condition": "always",
-				"binding_collection_name": "custom_dropdown"
-			},
-			{
-				"binding_type": "collection_details"
-			},
-			{
-				/* text [92] */
-				"binding_type": "view",
-				"source_property_name": "('%.92s' * #custom_radio_text)",
-				"target_property_name": "#skip_to_text"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#custom_radio_text - #skip_to_text)",
-				"target_property_name": "#rem_at_text"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_at_text)",
-				"target_property_name": "#raw_text"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #raw_text) - ('%.2s' * #raw_text) - ';')",
-				"target_property_name": "#text"
-			},
-			{
-				/* fontScaleFactor [590] */
-				"binding_type": "view",
-				"source_property_name": "('%.590s' * #custom_radio_text)",
-				"target_property_name": "#skip_to_scale"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#custom_radio_text - #skip_to_scale)",
-				"target_property_name": "#rem_at_scale"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_at_scale)",
-				"target_property_name": "#raw_scale"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #raw_scale) - ('%.2s' * #raw_scale) - ';')",
-				"target_property_name": "#font_scale_factor"
-			},
-			{
-				/* labelX [673] -> anchored X */
-				"binding_type": "view",
-				"source_property_name": "('%.673s' * #custom_radio_text)",
-				"target_property_name": "#skip_to_lx"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#custom_radio_text - #skip_to_lx)",
-				"target_property_name": "#rem_at_lx"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_at_lx)",
-				"target_property_name": "#raw_lx"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "((('%.82s' * #raw_lx) - ('%.2s' * #raw_lx) - ';') * 1)",
-				"target_property_name": "#anchored_offset_value_x"
-			},
-			{
-				/* labelY [1420] -> anchored Y */
-				"binding_type": "view",
-				"source_property_name": "('%.1420s' * #custom_radio_text)",
-				"target_property_name": "#skip_to_ly"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#custom_radio_text - #skip_to_ly)",
-				"target_property_name": "#rem_at_ly"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_at_ly)",
-				"target_property_name": "#raw_ly"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "((('%.82s' * #raw_ly) - ('%.2s' * #raw_ly) - ';') * 1)",
-				"target_property_name": "#anchored_offset_value_y"
-			}
-		]
+		"$payload_collection": "custom_dropdown",
+		"$payload_binding": "#custom_radio_text",
+		"$cell_details_binding_type": "collection_details",
+		"$label_skip": "('%.92s' * #payload)"
 	}
 }

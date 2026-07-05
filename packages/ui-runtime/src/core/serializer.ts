@@ -1,4 +1,4 @@
-import { MODAL_OPTION_SLOT_TYPE } from '../components/Form/modalControls';
+import { MODAL_OPTION_SLOT_TYPE } from '../components/Form/FormOption';
 import { JSX } from '../jsx';
 import { getComponentDescriptor, getRegisteredTypes, isTransparentType } from './componentRegistry';
 import { isElement, isFunction, isSerializablePrimitive } from './guards';

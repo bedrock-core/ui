@@ -37,7 +37,7 @@ describe('presentModal', () => {
     const tree = modalTree({ onSubmit }, [
       Form.Toggle({ name: 'sound', defaultValue: false }),
       Form.Slider({ name: 'volume', min: 0, max: 10 }),
-      Form.Dropdown({ name: 'mode', options: ['A', 'B'] }),
+      Form.Dropdown({ name: 'mode', children: [Form.Option({ value: 'A', label: 'A' }), Form.Option({ value: 'B', label: 'B' })] }),
       Form.Input({ name: 'nick' }),
     ]);
 

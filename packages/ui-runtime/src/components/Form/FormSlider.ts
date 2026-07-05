@@ -3,8 +3,10 @@ import { ModalFormError, type Writer } from '../../core/types';
 import { emitSlider } from '../../core/writers';
 import { FunctionComponent, JSX } from '../../jsx';
 import { resolveStateBackgrounds, withControl, type StateBackgroundProps } from '../control';
-import { MODAL_SLIDER_SLOT_TYPE } from './modalControls';
 import { FormControlBase } from './shared';
+
+/** Host type for the native modal slider slot (modal-only). */
+export const MODAL_SLIDER_SLOT_TYPE = 'modal-slider';
 
 export interface FormSliderProps extends FormControlBase, StateBackgroundProps {
   /** Minimum selectable value. */

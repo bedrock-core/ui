@@ -3,8 +3,10 @@ import { ModalFormError, type Writer } from '../../core/types';
 import { emitToggle } from '../../core/writers';
 import { FunctionComponent, JSX } from '../../jsx';
 import { resolveStateBackgrounds, withControl, type StateBackgroundProps } from '../control';
-import { MODAL_TOGGLE_SLOT_TYPE } from './modalControls';
 import { FormControlBase } from './shared';
+
+/** Host type for the native modal toggle slot (modal-only; the restriction pass rejects it elsewhere). */
+export const MODAL_TOGGLE_SLOT_TYPE = 'modal-toggle';
 
 export interface FormToggleProps extends FormControlBase, StateBackgroundProps {
   /** Initial on/off state. Defaults to `false`. */

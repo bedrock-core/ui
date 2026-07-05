@@ -2,9 +2,14 @@ import { FunctionComponent, JSX } from '../../jsx';
 import { isElement } from '../../core/guards';
 import { ModalFormError, type SerializableProps, type Writer } from '../../core/types';
 import { resolveStateBackgrounds, withControl, type ControlProps, type StateBackgroundProps } from '../control';
-import { MODAL_FORM_BUTTON_SLOT_TYPE } from './modalControls';
 
 /** Which form action the button triggers. */
+/**
+ * Host type for `Form.Button` — NOT a native control: it consumes no `formValues` slot;
+ * its payload rides the form TITLE (assembled by the presenter post-layout).
+ */
+export const MODAL_FORM_BUTTON_SLOT_TYPE = 'modal-form-button';
+
 export type FormButtonKind = 'submit' | 'exit';
 
 export interface FormButtonProps extends ControlProps, StateBackgroundProps {

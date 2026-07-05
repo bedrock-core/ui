@@ -1,27 +1,30 @@
 import { serializeProps } from '../../core/serializer';
+import { JSX } from '../../jsx';
 import { measureText } from '../../util/textMetrics';
-import type { LabelFont } from './controlPayload';
+import { labelFontFields, type LabelFont } from './controlPayload';
+import { MODAL_OPTION_SLOT_TYPE } from './FormOption';
 
 /** Host `type` tag for a per-option payload blob (decoded per-row by the RP option controls). */
 export const DROPDOWN_OPTION_TYPE = 'dropdown-option';
 
 /**
- * The per-option styling an option row is encoded with — shared by the dropdown popup rows AND
+ * The per-option styling an option is encoded with — shared by the dropdown popup rows AND
  * the inline radio / toggle-button rows (both ride the native `options[]` collection strings,
- * decoded per-row by the RP). For the dropdown popup this is uniform across options; for inline
- * selects each `Form.Option` supplies its own (styling is genuinely per-option).
- *
- * The two `bullet*` fields are the radio glyph pair (empty for the dropdown popup and for the
- * segmented toggle-button skin — an empty texture self-hides the bullet image RP-side).
+ * decoded per-row by the RP). Field order mirrors the serialized blob: the LABEL pair first
+ * (the blob's label group), then the row/face fields, then the bullet pair.
  */
 export interface OptionStyle {
+  /** Label font (serialized `font_type` value — the label group's second slot). */
+  fontType: string;
+  /** Label scale factor (the group's third slot). */
+  fontScaleFactor: number;
+  /** Requested alignment — consumed TS-SIDE by {@link optionLabelPosition}, never serialized. */
+  align: 'left' | 'center' | 'right';
+  /** Legacy flow row height (unused by the RP; kept for the blob layout). */
   height: number;
   background: string;
   backgroundHover: string;
   backgroundSelected: string;
-  fontType: string;
-  fontScaleFactor: number;
-  align: 'left' | 'center' | 'right';
   /** Unselected radio bullet glyph texture. Empty = no bullet (dropdown / segmented). */
   bulletTexture: string;
   /** Selected radio bullet glyph texture. Empty = no bullet. */
@@ -35,8 +38,8 @@ export interface OptionStyle {
 /**
  * Per-option flex geometry (px) computed by the layout phase for a `Form.Option`. Packed into the
  * option blob AFTER the style fields so the RP option row SELF-POSITIONS via `use_anchored_offset`
- * (x/y) at its flex-computed size (width/height) — exactly the control-block positioning pattern,
- * applied at the option level. The dropdown popup passes all zeros (its rows still flow).
+ * (x/y) at its flex-computed size (width/height). The dropdown popup passes all zeros (its rows
+ * still flow at the fixed row height).
  */
 export interface OptionGeometry {
   x: number;
@@ -48,6 +51,12 @@ export interface OptionGeometry {
 /** Zero geometry — the dropdown popup rows flow (engine-positioned), so they encode no offsets. */
 export const NO_OPTION_GEOMETRY: OptionGeometry = { x: 0, y: 0, width: 0, height: 0 };
 
+/** The computed position of an option's label inside its row (px, from row top-left). */
+export interface OptionLabelPosition {
+  x: number;
+  y: number;
+}
+
 /**
  * Runtime type guard for the `optionStyle` carried on a control's `nativeArgs`.
  * Uses `in`-operator narrowing so no unsafe assertion is needed to index `value`.
@@ -56,13 +65,13 @@ export function isOptionStyle(value: unknown): value is OptionStyle {
   return (
     typeof value === 'object'
     && value !== null
+    && 'fontType' in value && typeof value.fontType === 'string'
+    && 'fontScaleFactor' in value && typeof value.fontScaleFactor === 'number'
+    && 'align' in value && (value.align === 'left' || value.align === 'center' || value.align === 'right')
     && 'height' in value && typeof value.height === 'number'
     && 'background' in value && typeof value.background === 'string'
     && 'backgroundHover' in value && typeof value.backgroundHover === 'string'
     && 'backgroundSelected' in value && typeof value.backgroundSelected === 'string'
-    && 'fontType' in value && typeof value.fontType === 'string'
-    && 'fontScaleFactor' in value && typeof value.fontScaleFactor === 'number'
-    && 'align' in value && (value.align === 'left' || value.align === 'center' || value.align === 'right')
     && 'bulletTexture' in value && typeof value.bulletTexture === 'string'
     && 'bulletSelectedTexture' in value && typeof value.bulletSelectedTexture === 'string'
     && 'bulletWidth' in value && typeof value.bulletWidth === 'number'
@@ -70,23 +79,115 @@ export function isOptionStyle(value: unknown): value is OptionStyle {
   );
 }
 
-/** Runtime type guard for a `string[]` (the raw option list on `nativeArgs`). */
+/** Runtime type guard for a `string[]` (a raw option list on `nativeArgs`). */
 export function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every(v => typeof v === 'string');
 }
 
-/** The computed position of an option's label inside its row (px, from row top-left). */
-export interface OptionLabelPosition {
-  x: number;
-  y: number;
+/**
+ * Group-level option style defaults a `Form.Dropdown` / `Form.Radio` / `Form.ToggleButton`
+ * resolves; every `Form.Option` child inherits any field it doesn't override.
+ */
+export interface GroupOptionDefaults {
+  background: string;
+  backgroundHover: string;
+  backgroundSelected: string;
+  bulletTexture: string;
+  bulletSelectedTexture: string;
+  bulletWidth: number;
+  bulletHeight: number;
+  fontType: string;
+  fontScaleFactor: number;
+  align: 'left' | 'center' | 'right';
+}
+
+export function isGroupDefaults(v: unknown): v is GroupOptionDefaults {
+  return typeof v === 'object' && v !== null && 'background' in v && 'fontType' in v;
+}
+
+/** One option's resolved data, read off its (post-layout) `Form.Option` element. */
+export interface OptionData {
+  value: string;
+  text: string;
+  style: OptionStyle;
+  geometry: OptionGeometry;
+}
+
+function readNumber(v: unknown, fallback = 0): number {
+  return typeof v === 'number' ? v : fallback;
+}
+
+function readString(v: unknown, fallback: string): string {
+  return typeof v === 'string' ? v : fallback;
+}
+
+function readAlign(v: unknown, fallback: 'left' | 'center' | 'right'): 'left' | 'center' | 'right' {
+  return v === 'left' || v === 'center' || v === 'right' ? v : fallback;
+}
+
+/** Narrow a built child node to a `Form.Option` element. */
+export function isOptionElement(node: unknown): node is JSX.Element {
+  return (
+    typeof node === 'object' && node !== null && 'type' in node
+    && (node).type === MODAL_OPTION_SLOT_TYPE
+  );
+}
+
+/** The `Form.Option` elements among a writer's `children` argument. */
+export function optionElements(children: unknown): JSX.Element[] {
+  const arr = Array.isArray(children) ? children : children === undefined ? [] : [children];
+
+  return arr.filter(isOptionElement);
 }
 
 /**
- * Compute where an option's label sits inside its row — ALIGNMENT IS TS-SIDE now: the RP
- * has one position-driven `option_label` (no left/center/right variants, no align gating);
- * this measures the text with the real font metrics and turns the requested `align` into a
- * concrete x, plus vertical centering into y. `leftInset` is the left-aligned start (callers
- * pass bulletWidth + gap when a radio bullet occupies the row's left edge).
+ * Extract one option's value/text/style/geometry from its (post-layout) `Form.Option` element.
+ * Geometry is RELATIVE to the group cell's own box (`groupX`/`groupY`): the layout phase
+ * computes ABSOLUTE screen coords, but the RP option row anchors inside the group box.
+ */
+export function readOption(el: JSX.Element, defaults: GroupOptionDefaults, groupX = 0, groupY = 0): OptionData {
+  const p = el.props;
+
+  return {
+    value: readString(p.value, ''),
+    text: readString(p.label, ''),
+    style: {
+      fontType: readString(p.__optionFontType, defaults.fontType),
+      fontScaleFactor: readNumber(p.__optionFontScale, defaults.fontScaleFactor),
+      align: readAlign(p.align, defaults.align),
+      // Legacy flow-height slot is unused (rows size from geometry / the fixed popup row).
+      height: 0,
+      background: readString(p.background, defaults.background),
+      backgroundHover: readString(p.backgroundHover, defaults.backgroundHover),
+      backgroundSelected: readString(p.backgroundSelected, defaults.backgroundSelected),
+      bulletTexture: readString(p.bullet, defaults.bulletTexture),
+      bulletSelectedTexture: readString(p.bulletSelected, defaults.bulletSelectedTexture),
+      bulletWidth: readNumber(p.bulletWidth, defaults.bulletWidth),
+      bulletHeight: readNumber(p.bulletHeight, defaults.bulletHeight),
+    },
+    geometry: {
+      x: readNumber(p.jsonUIx) - groupX,
+      y: readNumber(p.jsonUIy) - groupY,
+      width: readNumber(p.jsonUIWidth),
+      height: readNumber(p.jsonUIHeight),
+    },
+  };
+}
+
+/** The fallback group defaults a writer uses when `nativeArgs` arrive malformed. */
+export function fallbackGroupDefaults(): GroupOptionDefaults {
+  return {
+    background: '', backgroundHover: '', backgroundSelected: '',
+    bulletTexture: '', bulletSelectedTexture: '', bulletWidth: 12, bulletHeight: 12,
+    ...labelFontFields(), align: 'left',
+  };
+}
+
+/**
+ * Compute where an option's label sits inside its row — ALIGNMENT IS TS-SIDE: the RP has one
+ * position-driven `option_label`; this measures the text with the real font metrics and turns
+ * the requested `align` into a concrete x, plus vertical centering into y. `leftInset` is the
+ * left-aligned start (pass bulletWidth + gap when a radio bullet occupies the row's left edge).
  */
 export function optionLabelPosition(
   text: string,
@@ -111,14 +212,17 @@ export function optionLabelPosition(
 /**
  * Encode one option into its own `bcuiv0007` payload blob — the string handed to the native
  * `ModalFormData.dropdown` as this option's entry. The engine surfaces it per-row as
- * `#custom_radio_text`, and the RP option rows decode text + row height + background states +
- * font/scale (+ the two bullet textures) from it via the shared `'%.Ns'` slicing grammar
- * (exactly like main-form cells decode their `#custom_text`). Because each option gets its OWN
- * payload, the 64-field marker budget resets per option, and — since `options[]` bypasses the
- * serializer's primitive prop channel — option text is not subject to the 80-byte field cap
- * here. Field ORDER is the RP decode contract. `label` carries the TS-COMPUTED label position
- * (see {@link optionLabelPosition}): labelX occupies the old align field slot [673] and labelY
- * appends at the end, so every other offset is unchanged.
+ * `#custom_radio_text`, and the RP option controls decode it via the shared `'%.Ns'` slicing
+ * grammar. Because each option gets its OWN payload, the 64-field marker budget resets per
+ * option, and — since `options[]` bypasses the serializer's primitive prop channel — option
+ * text is not subject to the 80-byte field cap here.
+ *
+ * Field ORDER is the RP decode contract. The LABEL GROUP leads (text [92], fontType [175],
+ * fontScale [258], labelX [341], labelY [424]) so the RP `option_label` reuses label_base's
+ * sequential group decode with just `$label_skip` = [92] — no bespoke bindings. Then:
+ * height [507] (legacy), background [590], backgroundHover [673], backgroundSelected [756],
+ * bulletTexture [839], bulletSelectedTexture [922], optionX [1005], optionY [1088],
+ * optionWidth [1171], optionHeight [1254], bulletWidth [1337], bulletHeight [1420].
  */
 export function serializeSelectOption(
   text: string,
@@ -128,25 +232,27 @@ export function serializeSelectOption(
 ): string {
   const [payload] = serializeProps({
     type: DROPDOWN_OPTION_TYPE,
-    text, // field 1 → #custom_radio_text (visible label), offset [92]
-    height: style.height, // field 2 → (legacy flow row height), [175]
-    background: style.background, // field 3 → idle option face, [258]
-    backgroundHover: style.backgroundHover, // field 4, [341]
-    backgroundSelected: style.backgroundSelected, // field 5, [424]
-    fontType: style.fontType, // field 6, [507]
-    fontScaleFactor: style.fontScaleFactor, // field 7, [590]
-    labelX: label.x, // field 8 → option_label anchored X (was the align gate slot), [673]
-    bulletTexture: style.bulletTexture, // field 9 → unselected bullet glyph, [756]
-    bulletSelectedTexture: style.bulletSelectedTexture, // field 10 → selected bullet glyph, [839]
+    // --- the label GROUP (label_base contract): text, fontType, fontScale, x, y ---
+    text, // [92] → #custom_radio_text (visible label)
+    fontType: style.fontType, // [175]
+    fontScaleFactor: style.fontScaleFactor, // [258]
+    labelX: label.x, // [341] → option_label anchored X (TS-computed alignment)
+    labelY: label.y, // [424] → option_label anchored Y (vertical centering)
+    // --- row fields ---
+    height: style.height, // [507] (legacy flow row height, unused)
+    background: style.background, // [590] idle option face
+    backgroundHover: style.backgroundHover, // [673]
+    backgroundSelected: style.backgroundSelected, // [756]
+    bulletTexture: style.bulletTexture, // [839] unselected bullet glyph
+    bulletSelectedTexture: style.bulletSelectedTexture, // [922] selected bullet glyph
     // Per-option flex geometry (px) — the inline row self-positions from these via
-    // use_anchored_offset (x/y) at this size (w/h). Dropdown popup rows pass zeros (they flow).
-    optionX: geometry.x, // field 11 → #anchored_offset_value_x, [922]
-    optionY: geometry.y, // field 12 → #anchored_offset_value_y, [1005]
-    optionWidth: geometry.width, // field 13 → #size_binding_x, [1088]
-    optionHeight: geometry.height, // field 14 → #size_binding_y, [1171]
-    bulletWidth: style.bulletWidth, // field 15 → bullet glyph width px, [1254]
-    bulletHeight: style.bulletHeight, // field 16 → bullet glyph height px, [1337]
-    labelY: label.y, // field 17 → option_label anchored Y, [1420]
+    // use_anchored_offset (x/y) at this size (w/h). Dropdown popup rows pass zeros.
+    optionX: geometry.x, // [1005] → row #anchored_offset_value_x
+    optionY: geometry.y, // [1088] → row #anchored_offset_value_y
+    optionWidth: geometry.width, // [1171] → row #size_binding_x
+    optionHeight: geometry.height, // [1254] → row #size_binding_y
+    bulletWidth: style.bulletWidth, // [1337] bullet glyph width px
+    bulletHeight: style.bulletHeight, // [1420] bullet glyph height px
   });
 
   return payload;
