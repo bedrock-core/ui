@@ -29,7 +29,11 @@
 					"anchor_to": "top_left",
 					"dropdown_name": "$dropdown_name",
 					"dropdown_content_control": "inline_content",
-					"dropdown_area": "inside_header_panel"
+					/* Deliberately NONEXISTENT area name: inside_header_panel is now a REAL
+					   host at the modal content root (for popup dropdowns) — pointing there
+					   would re-host the inline rows into it. The no-host fallback keeps
+					   inline_content rendering in place (this stub never opens a popup). */
+					"dropdown_area": "inline_offscreen_area"
 				}
 			},
 			{

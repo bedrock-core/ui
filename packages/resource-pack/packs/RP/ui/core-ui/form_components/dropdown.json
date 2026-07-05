@@ -46,92 +46,25 @@
 				}
 			},
 			{
+				/* INVISIBLE input shield — the engine's own popup box. It keeps what the
+				   native machinery does well (open/close state + the dropdown_exit
+				   mappings, all mapping_type "global") but draws NOTHING: the VISUAL popup
+				   renders in the root-level popup_overlay (modal_container's
+				   inside_header_panel), OUTSIDE the scroll, gated by that row's open-state.
+				   TRAP: "modal": true must NOT be set here — a modal input panel routes ALL
+				   input to its OWN subtree, and the visuals live outside it, so every click
+				   on the popup died and only the global exit fired ("closes as if clicked
+				   outside"); wheel never reached the popup scroll either. Without modal,
+				   hit-testing routes input to the front-most control (the overlay, layer
+				   300). The box itself stays cell-relative (toggle-anchored, %-of-toggle
+				   sized) — irrelevant now that nothing renders in it. */
 				"dropdown_content": {
 					"type": "input_panel",
-					// Form rows sit at layer 50+; 200 clears everything on the modal screen.
 					"layer": 200,
-					// Tall box: the pinned top edge only grows DOWNWARD; 1000% covers the
-					// card's lower half on any list.
 					"size": ["100%", "1000%"],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
-					"modal": true,
 					"property_bag": { "#is_dropdown": true },
-					"controls": [
-						{
-							// [1,1] anchor: #size_binding scales by the PARENT box, so decoded
-							// px only map 1:1 inside a [1,1] panel.
-							"popup_anchor": {
-								"type": "panel",
-								"size": [1, 1],
-								"anchor_from": "top_left",
-								"anchor_to": "top_left",
-								"controls": [
-									{
-										// Decodes width[92] + popupHeight[1356] with plain "* 1" (the ONLY
-										// proven string→number coercion — fractional multiplies silently
-										// yield 0) and hangs them below the pinned line; popup_card centers
-										// on it geometrically via bottom_left→left_middle (h/2 up, h/2 down).
-										"popup_shift": {
-											"type": "panel",
-											"size": [1, 0],
-											"anchor_from": "top_left",
-											"anchor_to": "top_left",
-											"property_bag": { "#size_binding_x": 0.0, "#size_binding_y": 0.0 },
-											"bindings": [
-												{
-													"binding_name": "#custom_text",
-													"binding_type": "collection",
-													"binding_collection_name": "custom_form"
-												},
-												{ "binding_type": "view", "source_property_name": "('%.92s' * #custom_text)", "target_property_name": "#skip_to_popup_w" },
-												{ "binding_type": "view", "source_property_name": "(#custom_text - #skip_to_popup_w)", "target_property_name": "#rem_at_popup_w" },
-												{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_at_popup_w)", "target_property_name": "#raw_popup_w" },
-												{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_popup_w) - ('%.2s' * #raw_popup_w) - ';') * 1)", "target_property_name": "#size_binding_x" },
-												{ "binding_type": "view", "source_property_name": "('%.1356s' * #custom_text)", "target_property_name": "#skip_to_popup_h" },
-												{ "binding_type": "view", "source_property_name": "(#custom_text - #skip_to_popup_h)", "target_property_name": "#rem_at_popup_h" },
-												{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_at_popup_h)", "target_property_name": "#raw_popup_h" },
-												{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_popup_h) - ('%.2s' * #raw_popup_h) - ';') * 1)", "target_property_name": "#size_binding_y" }
-											],
-											"controls": [
-												{
-													"popup_card": {
-														"type": "panel",
-														"size": ["100%", "100%"],
-														"anchor_from": "bottom_left",
-														"anchor_to": "left_middle",
-														"controls": [
-															{
-																"scroll@common.scrolling_panel": {
-																	"layer": 2,
-																	"$allow_scrolling_even_when_content_fits": false,
-																	"size": ["100%", "100%"],
-																	"$scrolling_pane_size": ["100%", "100%"],
-																	"$scrolling_content": "core_ui_form_components.dropdown_options",
-																	"$scroll_view_port_size": ["100% - 4px", "100% - 4px"],
-																	"$scroll_view_port_size_touch": ["100% - 4px", "100% - 4px"],
-																	"$scroll_view_port_offset": [2, 2],
-																	"$scroll_view_port_offset_touch": [2, 2],
-																	"$scroll_size": [5, "100%-2px"],
-																	"$scroll_size_touch": [5, "100%-2px"],
-																	"$scroll_background_image_control": "core_ui_form_components.dropdown_popup_background",
-																	"$background_size": ["100%", "100%"],
-																	"$background_size_touch": ["100%", "100%"],
-																	"$show_background": true,
-																	"$scroll_bar_contained": true,
-																	"$scroll_bar_contained_touch": true
-																}
-															}
-														]
-													}
-												}
-											]
-										}
-									}
-								]
-							}
-						}
-					],
 					"bindings": [
 						{
 							"binding_type": "view",
@@ -150,6 +83,117 @@
 						{ "from_button_id": "button.menu_left", "to_button_id": "button.menu_left", "mapping_type": "global", "scope": "view" },
 						{ "from_button_id": "button.menu_right", "to_button_id": "button.menu_right", "mapping_type": "global", "scope": "view" }
 					]
+				}
+			}
+		]
+	},
+	// ── Root-overlay popup router — one per custom_form row (factory cell of the
+	// popup_overlay collection in modal_container's inside_header_panel). Shows ONLY when
+	// its row is an OPEN dropdown: #type decoded from the cell payload + the row's
+	// #custom_dropdown open-state (the closed box's collection-type toggle binding writes
+	// it — vanilla server_form wiring). Cell context comes from collection_details, so all
+	// the popup chrome children (shift/bg/option rows) resolve their custom_form /
+	// custom_dropdown fetches exactly like the inline select's rows do outside any popup.
+	"dropdown_popup_router": {
+		"type": "panel",
+		"size": ["100%", "100%"],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"visible": "#visible",
+		"property_bag": { "#visible": false },
+		"bindings": [
+			{
+				"binding_type": "collection_details",
+				"binding_collection_name": "custom_form"
+			},
+			{
+				"binding_name": "#custom_text",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form"
+			},
+			{ "binding_type": "view", "source_property_name": "('%.9s' * #custom_text)", "target_property_name": "#pr_header" },
+			{ "binding_type": "view", "source_property_name": "(#custom_text - #pr_header)", "target_property_name": "#rem_hdr" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_hdr)", "target_property_name": "#raw_type" },
+			{ "binding_type": "view", "source_property_name": "(('%.82s' * #raw_type) - ('%.2s' * #raw_type) - ';')", "target_property_name": "#type" },
+			{
+				"binding_name": "#custom_dropdown",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form"
+			},
+			{ "binding_type": "view", "source_property_name": "((#type = 'modal-dropdown') and #custom_dropdown)", "target_property_name": "#visible" }
+		],
+		"controls": [
+			{
+				/* [1,1] point at the HOST's exact center: the card anchors center→center on
+				   it, so ANY decoded height (20% or the 50% cap) stays dead-centered —
+				   h/2 above, h/2 below, symmetric by construction. The old engine-popup
+				   shift+straddle trick is gone: this is a normal tree, plain anchors work.
+				   TRAP: do NOT add an input_panel backdrop here — even at a LOWER layer
+				   than the card it ate ALL pointer input in its rect (input routing ignores
+				   layer for input_panels), killing option-row clicks. Click-outside-close
+				   doesn't need one: the invisible shield's GLOBAL menu_select→dropdown_exit
+				   mapping closes on any click. */
+				"popup_center": {
+					"type": "panel",
+					"size": [1, 1],
+					"anchor_from": "center",
+					"anchor_to": "center",
+					"controls": [ { "popup_card@core_ui_form_components.dropdown_popup_card": {} } ]
+				}
+			}
+		]
+	},
+	// The popup surface: 318px (10px narrower than the form → the popup scrollbar clears
+	// the form's own scrollbar; centered → symmetric 5px gutters). Height decodes
+	// popupHeight[1356] with plain "* 1" (the ONLY proven string→number coercion —
+	// fractional multiplies silently yield 0), TS caps it at half the canonical screen.
+	// Size-carrier panel inside a [1,1] parent ⇒ value = raw px; anchored center→center on
+	// that [1,1] point ⇒ always centered whatever the height. Literal-x + bound-y is the
+	// proven modal_scroll_content shape.
+	"dropdown_popup_card": {
+		"type": "panel",
+		"size": ["318px", 0],
+		"anchor_from": "center",
+		"anchor_to": "center",
+		"property_bag": { "#size_binding_y": 0.0 },
+		"bindings": [
+			{
+				"binding_name": "#custom_text",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form"
+			},
+			{ "binding_type": "view", "source_property_name": "('%.1356s' * #custom_text)", "target_property_name": "#skip_to_popup_h" },
+			{ "binding_type": "view", "source_property_name": "(#custom_text - #skip_to_popup_h)", "target_property_name": "#rem_at_popup_h" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_at_popup_h)", "target_property_name": "#raw_popup_h" },
+			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_popup_h) - ('%.2s' * #raw_popup_h) - ';') * 1)", "target_property_name": "#size_binding_y" }
+		],
+		"controls": [
+			{
+				"scroll@common.scrolling_panel": {
+					"layer": 2,
+					/* GLOBAL wheel claim ($var reaches scroll_view_control down the chain):
+					   while this popup is open (the only time this control exists — router
+					   gate), the wheel scrolls the POPUP no matter where the pointer is;
+					   pointer-position routing alone never delivered wheel to the overlay
+					   (the shield's modal input state gates it). The MAIN scroll must keep
+					   always_handle_scrolling FALSE or it wins the contention back. */
+					"$always_handle_scrolling": true,
+					"$allow_scrolling_even_when_content_fits": false,
+					"size": ["100%", "100%"],
+					"$scrolling_pane_size": ["100%", "100%"],
+					"$scrolling_content": "core_ui_form_components.dropdown_options",
+					"$scroll_view_port_size": ["100% - 4px", "100% - 4px"],
+					"$scroll_view_port_size_touch": ["100% - 4px", "100% - 4px"],
+					"$scroll_view_port_offset": [2, 2],
+					"$scroll_view_port_offset_touch": [2, 2],
+					"$scroll_size": [5, "100%-2px"],
+					"$scroll_size_touch": [5, "100%-2px"],
+					"$scroll_background_image_control": "core_ui_form_components.dropdown_popup_background",
+					"$background_size": ["100%", "100%"],
+					"$background_size_touch": ["100%", "100%"],
+					"$show_background": true,
+					"$scroll_bar_contained": true,
+					"$scroll_bar_contained_touch": true
 				}
 			}
 		]

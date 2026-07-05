@@ -2,7 +2,7 @@ import { serializeProps } from '../../core/serializer';
 import { JSX } from '../../jsx';
 import { measureText } from '../../util/textMetrics';
 import { labelFontFields, type LabelFont } from './controlPayload';
-import { MODAL_OPTION_SLOT_TYPE } from './FormOption';
+import { FormOption, MODAL_OPTION_SLOT_TYPE } from './FormOption';
 
 /** Host `type` tag for a per-option payload blob (decoded per-row by the RP option controls). */
 export const DROPDOWN_OPTION_TYPE = 'dropdown-option';
@@ -133,17 +133,25 @@ function readAlign(v: unknown, fallback: 'left' | 'center' | 'right'): 'left' | 
   return v === 'left' || v === 'center' || v === 'right' ? v : fallback;
 }
 
-/** Narrow a built child node to a `Form.Option` element. */
+/**
+ * Narrow a child node to a `Form.Option` element. Matches BOTH forms the lazy JSX
+ * runtime produces: the un-invoked element (`type` === the `FormOption` function —
+ * what a COMPONENT sees in its `children` prop, since buildTree invokes function
+ * components later) and the invoked slot element (`type` === 'modal-option' — what a
+ * WRITER sees post-walk). FormDropdown counts options at component time for
+ * popupHeight; matching only the invoked form counted 0 there (popup rendered at the
+ * 9px chrome height).
+ */
 export function isOptionElement(node: unknown): node is JSX.Element {
   return (
     typeof node === 'object' && node !== null && 'type' in node
-    && (node).type === MODAL_OPTION_SLOT_TYPE
+    && ((node).type === MODAL_OPTION_SLOT_TYPE || (node).type === FormOption)
   );
 }
 
-/** The `Form.Option` elements among a writer's `children` argument. */
+/** The `Form.Option` elements among a `children` value (nested arrays flattened). */
 export function optionElements(children: unknown): JSX.Element[] {
-  const arr = Array.isArray(children) ? children : children === undefined ? [] : [children];
+  const arr = Array.isArray(children) ? children.flat(Infinity) : children === undefined ? [] : [children];
 
   return arr.filter(isOptionElement);
 }

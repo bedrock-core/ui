@@ -13,8 +13,7 @@
 	// ─────────────────────────────────────────────────────────────────────────────
 	"namespace": "core_ui_common",
 	"modal_container": {
-		"type": "stack_panel",
-		"orientation": "vertical",
+		"type": "panel",
 		"size": [
 			"100%",
 			"100%"
@@ -39,6 +38,56 @@
 		"controls": [
 			{
 				"modal_content@core_ui_common.modal_scroll": {}
+			},
+			{
+				/* Dropdown popup OVERLAY at the content root — OUTSIDE the scroll, so an open
+				   popup never scrolls with the form and is always form-wide/host-anchored
+				   (the engine's own popup box is cell-relative: a 50%-wide dropdown got a
+				   50%-wide, toggle-anchored, scrolled popup). The name doubles as the
+				   dropdown_area host ("inside_header_panel", the vanilla server-form name) so
+				   the engine's now-INVISIBLE input shield adopts this layer. The collection
+				   panel generates one popup router per custom_form row; each router shows
+				   only when its row is an OPEN dropdown (type gate + the row's
+				   #custom_dropdown open-state, which the closed box writes via its
+				   collection-type toggle binding — vanilla's own wiring). */
+				"inside_header_panel": {
+					"type": "panel",
+					"size": [
+						"328px",
+						"100%"
+					],
+					"offset": [
+						0,
+						"1%"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"layer": 300,
+					"controls": [
+						{
+							"popup_overlay": {
+								"type": "collection_panel",
+								"size": [
+									"100%",
+									"100%"
+								],
+								"anchor_from": "top_left",
+								"anchor_to": "top_left",
+								"factory": {
+									"name": "buttons",
+									"control_name": "core_ui_form_components.dropdown_popup_router"
+								},
+								"collection_name": "custom_form",
+								"bindings": [
+									{
+										"binding_name": "#custom_form_length",
+										"binding_name_override": "#collection_length"
+									}
+								]
+							}
+						}
+					]
+				}
 			}
 		]
 	},
@@ -63,7 +112,11 @@
 		"scrollbar_touch_button": "button.scrollbar_touch",
 		"always_listen_to_input": true,
 		"always_handle_pointer": true,
-		"always_handle_scrolling": true,
+		/* MUST stay false (vanilla server_form leaves it false too): true is a GLOBAL
+		   wheel grab that keeps scrolling THIS scroll while a dropdown popup is open —
+		   with false, the wheel routes by pointer position, so the popup's own
+		   scrolling_panel gets it when hovered. */
+		"always_handle_scrolling": false,
 		"scroll_content": "scrolling_content",
 		"scroll_view_port": "scrolling_view_port",
 		"scrollbar_track": "track",
