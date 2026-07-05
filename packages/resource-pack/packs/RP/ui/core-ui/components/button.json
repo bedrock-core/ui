@@ -50,184 +50,27 @@
 				"mapping_type": "focused"
 			}
 		],
+		// The four state faces are ONE shared control (core_ui_control.state_face) — only
+		// the skip offset differs per state, passed as a whole expression via $face_skip:
+		// background [440], backgroundHover [1024], backgroundPressed [1107],
+		// backgroundLocked [1190]. Payload source defaults inside state_face already serve
+		// the ActionForm (form_buttons / #form_button_text).
 		"controls": [
 			{
-				"default": {
-					"type": "panel",
-					"size": [
-						"100%",
-						"100%"
-					],
-					"anchor_to": "center",
-					"anchor_from": "center",
-					"controls": [
-						{
-							"bg": {
-								"type": "image",
-								"size": ["100%", "100%"],
-								"offset": [0, 0],
-								"fill": false,
-								"anchor_to": "center",
-								"anchor_from": "center",
-								"texture": "#texture",
-								"visible": "#visible",
-								"alpha": 1,
-								"bindings": [
-									{
-										/* decode background[440] directly */
-										"binding_name": "#form_button_text",
-										"binding_type": "collection",
-										"binding_collection_name": "form_buttons"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.440s' * #form_button_text)",
-										"target_property_name": "#skip_to_bg"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(#form_button_text - #skip_to_bg)",
-										"target_property_name": "#rem_at_bg"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.83s' * #rem_at_bg)",
-										"target_property_name": "#raw_bg"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(('%.82s' * #raw_bg) - ('%.2s' * #raw_bg) - ';')",
-										"target_property_name": "#texture"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(not (#texture = ''))",
-										"target_property_name": "#visible"
-									}
-								]
-							}
-						}
-					],
+				"default@core_ui_control.state_face": {
+					"$face_skip": "('%.440s' * #payload)",
 					"$default_state": true
 				}
 			},
 			{
-				"hover": {
-					"type": "panel",
-					"size": [
-						"100%",
-						"100%"
-					],
-					"anchor_to": "center",
-					"anchor_from": "center",
-					"controls": [
-						{
-							"bg": {
-								"type": "image",
-								"size": ["100%", "100%"],
-								"offset": [0, 0],
-								"fill": false,
-								"anchor_to": "center",
-								"anchor_from": "center",
-								"texture": "#texture",
-								"visible": "#visible",
-								"alpha": 1,
-								"bindings": [
-									{
-										/* decode backgroundHover[1024] directly */
-										"binding_name": "#form_button_text",
-										"binding_type": "collection",
-										"binding_collection_name": "form_buttons"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.1024s' * #form_button_text)",
-										"target_property_name": "#skip_to_bg_hover"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(#form_button_text - #skip_to_bg_hover)",
-										"target_property_name": "#rem_at_bg_hover"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.83s' * #rem_at_bg_hover)",
-										"target_property_name": "#raw_bg_hover"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(('%.82s' * #raw_bg_hover) - ('%.2s' * #raw_bg_hover) - ';')",
-										"target_property_name": "#texture"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(not (#texture = ''))",
-										"target_property_name": "#visible"
-									}
-								]
-							}
-						}
-					],
+				"hover@core_ui_control.state_face": {
+					"$face_skip": "('%.1024s' * #payload)",
 					"$hover_state": true
 				}
 			},
 			{
-				"pressed": {
-					"type": "panel",
-					"size": [
-						"100%",
-						"100%"
-					],
-					"anchor_to": "center",
-					"anchor_from": "center",
-					"controls": [
-						{
-							"bg": {
-								"type": "image",
-								"size": ["100%", "100%"],
-								"offset": [0, 0],
-								"fill": false,
-								"anchor_to": "center",
-								"anchor_from": "center",
-								"texture": "#texture",
-								"visible": "#visible",
-								"alpha": 1,
-								"bindings": [
-									{
-										/* decode backgroundPressed[1107] directly */
-										"binding_name": "#form_button_text",
-										"binding_type": "collection",
-										"binding_collection_name": "form_buttons"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.1107s' * #form_button_text)",
-										"target_property_name": "#skip_to_bg_pressed"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(#form_button_text - #skip_to_bg_pressed)",
-										"target_property_name": "#rem_at_bg_pressed"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.83s' * #rem_at_bg_pressed)",
-										"target_property_name": "#raw_bg_pressed"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(('%.82s' * #raw_bg_pressed) - ('%.2s' * #raw_bg_pressed) - ';')",
-										"target_property_name": "#texture"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(not (#texture = ''))",
-										"target_property_name": "#visible"
-									}
-								]
-							}
-						}
-					],
+				"pressed@core_ui_control.state_face": {
+					"$face_skip": "('%.1107s' * #payload)",
 					"$pressed_state": true,
 					"$button_offset|default": [
 						0,
@@ -236,62 +79,8 @@
 				}
 			},
 			{
-				"locked": {
-					"type": "panel",
-					"size": [
-						"100%",
-						"100%"
-					],
-					"anchor_to": "center",
-					"anchor_from": "center",
-					"controls": [
-						{
-							"bg": {
-								"type": "image",
-								"size": ["100%", "100%"],
-								"offset": [0, 0],
-								"fill": false,
-								"anchor_to": "center",
-								"anchor_from": "center",
-								"texture": "#texture",
-								"visible": "#visible",
-								"alpha": 1,
-								"bindings": [
-									{
-										/* decode backgroundLocked[1190] directly */
-										"binding_name": "#form_button_text",
-										"binding_type": "collection",
-										"binding_collection_name": "form_buttons"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.1190s' * #form_button_text)",
-										"target_property_name": "#skip_to_bg_locked"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(#form_button_text - #skip_to_bg_locked)",
-										"target_property_name": "#rem_at_bg_locked"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.83s' * #rem_at_bg_locked)",
-										"target_property_name": "#raw_bg_locked"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(('%.82s' * #raw_bg_locked) - ('%.2s' * #raw_bg_locked) - ';')",
-										"target_property_name": "#texture"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(not (#texture = ''))",
-										"target_property_name": "#visible"
-									}
-								]
-							}
-						}
-					]
+				"locked@core_ui_control.state_face": {
+					"$face_skip": "('%.1190s' * #payload)"
 				}
 			}
 		]

@@ -710,12 +710,18 @@
 			}
 		]
 	},
-	"inline_bullet_img_default": {
+	// One shared bullet glyph image: texture from the option blob at $bullet_skip
+	// (unselected [756] / selected [839]), shown per $bullet_visible (toggle-state
+	// polarity; empty texture always hides). Both state variants are thin derivations —
+	// the bullet_box $bullet_img name var picks one.
+	"inline_bullet_img": {
 		"type": "image",
 		"size": [
 			"100%",
 			"100%"
 		],
+		"$bullet_skip|default": "('%.756s' * #custom_radio_text)",
+		"$bullet_visible|default": "((not (#texture = '')) and (not #toggle_state))",
 		"texture": "#texture",
 		"visible": "#visible",
 		"bindings": [
@@ -730,7 +736,7 @@
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "('%.756s' * #custom_radio_text)",
+				"source_property_name": "$bullet_skip",
 				"target_property_name": "#skip_texture"
 			},
 			{
@@ -745,7 +751,7 @@
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "((('%.82s' * #raw_texture) - ('%.2s' * #raw_texture) - ';'))",
+				"source_property_name": "(('%.82s' * #raw_texture) - ('%.2s' * #raw_texture) - ';')",
 				"target_property_name": "#texture"
 			},
 			{
@@ -756,60 +762,17 @@
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "((not (#texture = '')) and (not #toggle_state))",
+				"source_property_name": "$bullet_visible",
 				"target_property_name": "#visible"
 			}
 		]
 	},
-	"inline_bullet_img_selected": {
-		"type": "image",
-		"size": [
-			"100%",
-			"100%"
-		],
-		"texture": "#texture",
-		"visible": "#visible",
-		"bindings": [
-			{
-				"binding_name": "#custom_radio_text",
-				"binding_type": "collection",
-				"binding_condition": "always",
-				"binding_collection_name": "custom_dropdown"
-			},
-			{
-				"binding_type": "collection_details"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.839s' * #custom_radio_text)",
-				"target_property_name": "#skip_texture"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#custom_radio_text - #skip_texture)",
-				"target_property_name": "#rem_texture"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_texture)",
-				"target_property_name": "#raw_texture"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "((('%.82s' * #raw_texture) - ('%.2s' * #raw_texture) - ';'))",
-				"target_property_name": "#texture"
-			},
-			{
-				"binding_type": "collection",
-				"binding_collection_name": "custom_dropdown",
-				"binding_name": "#custom_radio_toggled",
-				"binding_name_override": "#toggle_state"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "((not (#texture = '')) and #toggle_state)",
-				"target_property_name": "#visible"
-			}
-		]
+	"inline_bullet_img_default@core_ui_form_components.inline_bullet_img": {
+		"$bullet_skip": "('%.756s' * #custom_radio_text)",
+		"$bullet_visible": "((not (#texture = '')) and (not #toggle_state))"
+	},
+	"inline_bullet_img_selected@core_ui_form_components.inline_bullet_img": {
+		"$bullet_skip": "('%.839s' * #custom_radio_text)",
+		"$bullet_visible": "((not (#texture = '')) and #toggle_state)"
 	}
 }

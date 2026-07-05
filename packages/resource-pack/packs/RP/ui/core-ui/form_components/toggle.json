@@ -103,325 +103,48 @@
 				"binding_name_override": "#enabled"
 			}
 		],
+		// State faces: shared core_ui_control.modal_state_face (custom_form payload).
+		// Offsets: unchecked(background)[440], uncheckedHover[1024], uncheckedLocked[1190],
+		// checked[1273], checkedHover[1356], checkedLocked[1439]; locked_hover reuses locked.
 		"controls": [
 			{
-				"checked": {
-					"type": "image",
-					"size": [
-						"100%",
-						"100%"
-					],
-					"anchor_from": "top_left",
-					"anchor_to": "top_left",
-					"texture": "#texture",
-					"bindings": [
-						{
-							/* texture field at absolute payload offset [1273] */
-							"binding_name": "#custom_text",
-							"binding_type": "collection",
-							"binding_collection_name": "custom_form"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.1273s' * #custom_text)",
-							"target_property_name": "#skip_chk"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(#custom_text - #skip_chk)",
-							"target_property_name": "#rem_chk"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_chk)",
-							"target_property_name": "#raw_chk"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(('%.82s' * #raw_chk) - ('%.2s' * #raw_chk) - ';')",
-							"target_property_name": "#texture"
-						}
-					]
+				"checked@core_ui_control.modal_state_face": {
+					"$face_skip": "('%.1273s' * #payload)"
 				}
 			},
 			{
-				"unchecked": {
-					"type": "image",
-					"size": [
-						"100%",
-						"100%"
-					],
-					"anchor_from": "top_left",
-					"anchor_to": "top_left",
-					"texture": "#texture",
-					"bindings": [
-						{
-							/* texture field at absolute payload offset [440] */
-							"binding_name": "#custom_text",
-							"binding_type": "collection",
-							"binding_collection_name": "custom_form"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.440s' * #custom_text)",
-							"target_property_name": "#skip_bg"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(#custom_text - #skip_bg)",
-							"target_property_name": "#rem_bg"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_bg)",
-							"target_property_name": "#raw_bg"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(('%.82s' * #raw_bg) - ('%.2s' * #raw_bg) - ';')",
-							"target_property_name": "#texture"
-						}
-					]
+				"unchecked@core_ui_control.modal_state_face": {
+					"$face_skip": "('%.440s' * #payload)"
 				}
 			},
 			{
-				"checked_hover": {
-					"type": "image",
-					"size": [
-						"100%",
-						"100%"
-					],
-					"anchor_from": "top_left",
-					"anchor_to": "top_left",
-					"texture": "#texture",
-					"bindings": [
-						{
-							/* texture field at absolute payload offset [1356] */
-							"binding_name": "#custom_text",
-							"binding_type": "collection",
-							"binding_collection_name": "custom_form"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.1356s' * #custom_text)",
-							"target_property_name": "#skip_chkhov"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(#custom_text - #skip_chkhov)",
-							"target_property_name": "#rem_chkhov"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_chkhov)",
-							"target_property_name": "#raw_chkhov"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(('%.82s' * #raw_chkhov) - ('%.2s' * #raw_chkhov) - ';')",
-							"target_property_name": "#texture"
-						}
-					]
+				"checked_hover@core_ui_control.modal_state_face": {
+					"$face_skip": "('%.1356s' * #payload)"
 				}
 			},
 			{
-				"unchecked_hover": {
-					"type": "image",
-					"size": [
-						"100%",
-						"100%"
-					],
-					"anchor_from": "top_left",
-					"anchor_to": "top_left",
-					"texture": "#texture",
-					"bindings": [
-						{
-							/* texture field at absolute payload offset [1024] */
-							"binding_name": "#custom_text",
-							"binding_type": "collection",
-							"binding_collection_name": "custom_form"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.1024s' * #custom_text)",
-							"target_property_name": "#skip_hov"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(#custom_text - #skip_hov)",
-							"target_property_name": "#rem_hov"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_hov)",
-							"target_property_name": "#raw_hov"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(('%.82s' * #raw_hov) - ('%.2s' * #raw_hov) - ';')",
-							"target_property_name": "#texture"
-						}
-					]
+				"unchecked_hover@core_ui_control.modal_state_face": {
+					"$face_skip": "('%.1024s' * #payload)"
 				}
 			},
 			{
-				"checked_locked": {
-					"type": "image",
-					"size": [
-						"100%",
-						"100%"
-					],
-					"anchor_from": "top_left",
-					"anchor_to": "top_left",
-					"texture": "#texture",
-					"bindings": [
-						{
-							/* texture field at absolute payload offset [1439] */
-							"binding_name": "#custom_text",
-							"binding_type": "collection",
-							"binding_collection_name": "custom_form"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.1439s' * #custom_text)",
-							"target_property_name": "#skip_chklock"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(#custom_text - #skip_chklock)",
-							"target_property_name": "#rem_chklock"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_chklock)",
-							"target_property_name": "#raw_chklock"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(('%.82s' * #raw_chklock) - ('%.2s' * #raw_chklock) - ';')",
-							"target_property_name": "#texture"
-						}
-					]
+				"checked_locked@core_ui_control.modal_state_face": {
+					"$face_skip": "('%.1439s' * #payload)"
 				}
 			},
 			{
-				"unchecked_locked": {
-					"type": "image",
-					"size": [
-						"100%",
-						"100%"
-					],
-					"anchor_from": "top_left",
-					"anchor_to": "top_left",
-					"texture": "#texture",
-					"bindings": [
-						{
-							/* texture field at absolute payload offset [1190] */
-							"binding_name": "#custom_text",
-							"binding_type": "collection",
-							"binding_collection_name": "custom_form"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.1190s' * #custom_text)",
-							"target_property_name": "#skip_lock"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(#custom_text - #skip_lock)",
-							"target_property_name": "#rem_lock"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_lock)",
-							"target_property_name": "#raw_lock"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(('%.82s' * #raw_lock) - ('%.2s' * #raw_lock) - ';')",
-							"target_property_name": "#texture"
-						}
-					]
+				"unchecked_locked@core_ui_control.modal_state_face": {
+					"$face_skip": "('%.1190s' * #payload)"
 				}
 			},
 			{
-				"checked_locked_hover": {
-					"type": "image",
-					"size": [
-						"100%",
-						"100%"
-					],
-					"anchor_from": "top_left",
-					"anchor_to": "top_left",
-					"texture": "#texture",
-					"bindings": [
-						{
-							/* texture field at absolute payload offset [1439] */
-							"binding_name": "#custom_text",
-							"binding_type": "collection",
-							"binding_collection_name": "custom_form"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.1439s' * #custom_text)",
-							"target_property_name": "#skip_chklock"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(#custom_text - #skip_chklock)",
-							"target_property_name": "#rem_chklock"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_chklock)",
-							"target_property_name": "#raw_chklock"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(('%.82s' * #raw_chklock) - ('%.2s' * #raw_chklock) - ';')",
-							"target_property_name": "#texture"
-						}
-					]
+				"checked_locked_hover@core_ui_control.modal_state_face": {
+					"$face_skip": "('%.1439s' * #payload)"
 				}
 			},
 			{
-				"unchecked_locked_hover": {
-					"type": "image",
-					"size": [
-						"100%",
-						"100%"
-					],
-					"anchor_from": "top_left",
-					"anchor_to": "top_left",
-					"texture": "#texture",
-					"bindings": [
-						{
-							/* texture field at absolute payload offset [1190] */
-							"binding_name": "#custom_text",
-							"binding_type": "collection",
-							"binding_collection_name": "custom_form"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.1190s' * #custom_text)",
-							"target_property_name": "#skip_lock"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(#custom_text - #skip_lock)",
-							"target_property_name": "#rem_lock"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_lock)",
-							"target_property_name": "#raw_lock"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(('%.82s' * #raw_lock) - ('%.2s' * #raw_lock) - ';')",
-							"target_property_name": "#texture"
-						}
-					]
+				"unchecked_locked_hover@core_ui_control.modal_state_face": {
+					"$face_skip": "('%.1190s' * #payload)"
 				}
 			}
 		]
