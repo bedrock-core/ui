@@ -12,18 +12,22 @@
 		"$type_gate": "(#pre_visible and (#type = 'text'))",
 		"controls": [
 			{
-				/* Extends the shared text base (core_ui_control.label_base): text/#text, white,
-				   font_size small, backup_font_type (font-alias guard) and the
-				   #font_scale_factor hook come from there — only the decode + geometry live
-				   here. */
-				"txt@core_ui_control.label_base": {
-					"size": [
-						"100%",
-						"100%"
-					],
+				/* [1,1] positioning frame (px-mapping rule): the label inside offsets from
+				   the cell's top-left by the group x/y ([1273]/[1356], Text offsetX/offsetY,
+				   default 0,0). All text/font decode is label_base's — the group default
+				   offset [1024] IS this component's layout. */
+				"txt_frame": {
+					"type": "panel",
+					"size": [1, 1],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
-					"localize": true
+					"controls": [
+						{
+							"txt@core_ui_control.label_base": {
+								"localize": true
+							}
+						}
+					]
 				}
 			}
 		]

@@ -8,7 +8,7 @@ export interface FormDropdownProps extends Omit<PrimitiveFormDropdownProps,
   'background' | 'backgroundHover' | 'backgroundPressed' | 'backgroundLocked'
   | 'popupBackground' | 'optionBackground' | 'optionHover' | 'optionSelected'
   | 'optionFont' | 'optionScale' | 'optionAlign'
-  | 'currentColor' | 'currentFont' | 'currentScale'> {
+  | 'currentColor' | 'currentFont' | 'currentScale' | 'currentInsetX' | 'currentInsetY'> {
   /** Caption rendered above the closed box. */
   label?: string;
 }

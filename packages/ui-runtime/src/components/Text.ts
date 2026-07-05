@@ -67,6 +67,11 @@ export interface TextProps extends ControlProps {
    * Limit rendered text to N lines. The last line is always ellipsized.
    */
   maxLines?: number;
+
+  /** Fine-tune X nudge (px) of the rendered label inside its layout box. Default `0`. */
+  offsetX?: number;
+  /** Fine-tune Y nudge (px) of the rendered label inside its layout box. Default `0`. */
+  offsetY?: number;
 }
 
 /**
@@ -89,6 +94,8 @@ export const Text: FunctionComponent<TextProps> = ({
   wordBreak,
   overflow,
   maxLines,
+  offsetX,
+  offsetY,
   ...rest
 }: TextProps): JSX.Element => {
   const resolvedScale = scale ?? 1.0;
@@ -128,9 +135,14 @@ export const Text: FunctionComponent<TextProps> = ({
       ...withControl(rest),
       // Keys pass through — we send the key, not the resolved string, so a
       // digit-leading .lang entry is guarded there; raw text uses safeLabelText.
+      // The label GROUP contract (label_base decodes it sequentially from [1024]):
+      // text, fontType, fontScale, x, y — `value` is the group's text slot (kept named
+      // `value` for the key pass-through semantics; field ORDER is what the RP reads).
       value: isKey ? localizationKey : safeLabelText(resolvedText),
       fontType: labelFont.fontType,
       fontScaleFactor: labelFont.fontScaleFactor,
+      labelX: offsetX ?? 0, // [1273] → label anchored X offset
+      labelY: offsetY ?? 0, // [1356] → label anchored Y offset
       __textMetrics: {
         font,
         fontSize: resolvedScale,

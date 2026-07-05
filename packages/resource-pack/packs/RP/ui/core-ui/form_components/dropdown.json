@@ -96,19 +96,20 @@
 	// left-aligned. No use_anchored_offset, no bound inset — the per-instance currentInset*
 	// props are ignored here (fixed 8px, matching the input box's text inset). clips_children
 	// keeps a long value from spilling past the box.
+	// Current-value host: a [1,1] frame at the closed box's left-middle; the value
+	// label offsets from it by the payload x/y (currentX [1688] / currentY [1771];
+	// TS defaults x=8, y=centered — same look as the old fixed text_area inset).
 	"dropdown_current_label": {
 		"type": "panel",
 		"layer": 20,
 		"size": [ "100%", "100%" ],
 		"controls": [
 			{
-				"text_area": {
+				"value_frame": {
 					"type": "panel",
-					"size": [ "100% - 6px", "100% - 4px" ],
-					"offset": ["8px", 0],
+					"size": [1, 1],
 					"anchor_from": "left_middle",
 					"anchor_to": "left_middle",
-					"clips_children": true,
 					"controls": [
 						{
 							"display_text@core_ui_form_components.dropdown_current_value_text": {}
@@ -125,10 +126,6 @@
 	   come from there (left alignment + default sizing are the base defaults); only the
 	   two-channel decode and the closed-box geometry live here. */
 	"dropdown_current_value_text@core_ui_control.label_base": {
-		"max_size": [ "100%", "100%" ],
-		"anchor_from": "left_middle",
-		"anchor_to": "left_middle",
-		"$normalize": 1.0,
 		"bindings": [
 			{
 				/* --- CHANNEL 1: selected option blob → visible text --- */
@@ -231,6 +228,48 @@
 				"binding_type": "view",
 				"source_property_name": "(('%.82s' * #raw_font_scale) - ('%.2s' * #raw_font_scale) - ';')",
 				"target_property_name": "#font_scale_factor"
+			},
+			{
+				/* currentX [1688] → anchored X from the left-middle frame */
+				"binding_type": "view",
+				"source_property_name": "('%.1688s' * #custom_text)",
+				"target_property_name": "#skip_to_cur_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#custom_text - #skip_to_cur_x)",
+				"target_property_name": "#rem_at_cur_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_at_cur_x)",
+				"target_property_name": "#raw_cur_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_cur_x) - ('%.2s' * #raw_cur_x) - ';') * 1)",
+				"target_property_name": "#anchored_offset_value_x"
+			},
+			{
+				/* currentY [1771] → anchored Y */
+				"binding_type": "view",
+				"source_property_name": "('%.1771s' * #custom_text)",
+				"target_property_name": "#skip_to_cur_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#custom_text - #skip_to_cur_y)",
+				"target_property_name": "#rem_at_cur_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_at_cur_y)",
+				"target_property_name": "#raw_cur_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_cur_y) - ('%.2s' * #raw_cur_y) - ';') * 1)",
+				"target_property_name": "#anchored_offset_value_y"
 			}
 		]
 	},

@@ -3,6 +3,7 @@ import { isModalForm } from '../../core/guards';
 import { ModalFormError, type Writer } from '../../core/types';
 import { emitDropdown } from '../../core/writers';
 import { FunctionComponent, JSX } from '../../jsx';
+import { measureText } from '../../util/textMetrics';
 import { resolveStateBackgrounds, UNSTYLED_TEXTURE, withControl, type StateBackgroundProps } from '../control';
 import { labelFontFields, type LabelFont } from './controlPayload';
 import { MODAL_DROPDOWN_SLOT_TYPE } from './modalControls';
@@ -70,8 +71,10 @@ export interface FormDropdownProps extends FormControlBase, StateBackgroundProps
   currentFont?: LabelFont;
   /** Current-value label scale multiplier relative to the standard glyph size. Default `1.0`. */
   currentScale?: number;
-  // Note: the closed-box text is inset a fixed 8px in the RP (matching the input box's
-  // text_area), so there are no current-value inset props — position is not configurable.
+  /** Current-value X offset (px) from the closed box's left-middle frame. Default `8`. */
+  currentInsetX?: number;
+  /** Current-value Y offset (px). Default: vertically centered (−lineHeight/2). */
+  currentInsetY?: number;
 }
 
 /**
@@ -90,7 +93,7 @@ export const FormDropdown: FunctionComponent<FormDropdownProps> = ({
   backgroundHover, backgroundPressed, backgroundLocked, popupBackground,
   optionBackground, optionHover, optionSelected,
   optionFont, optionScale, optionAlign, optionHeight,
-  currentColor, currentFont, currentScale, ...layout
+  currentColor, currentFont, currentScale, currentInsetX, currentInsetY, ...layout
 }: FormDropdownProps): JSX.Element => {
   const defaultIndex = defaultValue !== undefined ? Math.max(0, options.indexOf(defaultValue)) : 0;
   const optionLabelFont = labelFontFields({ font: optionFont, scale: optionScale });
@@ -142,12 +145,15 @@ export const FormDropdown: FunctionComponent<FormDropdownProps> = ({
       popupHeight: Math.min(options.length * OPTION_ROW_HEIGHT + POPUP_CHROME, POPUP_MAX_HEIGHT),
       // Closed-box current-value label fields (RP-decoded, appended right after popupHeight so
       // they keep FIXED offsets: currentColor [1439], currentFontType [1522], currentFontScale
-      // [1605]). The RP decodes the selected option TEXT out of #dropdown_option_text, then
-      // styles it with these cell-level fields — color rides as a §-code prefix (system
-      // convention) and font/scale drive the label. Position is a fixed 8px inset in the RP.
+      // [1605], currentX [1688], currentY [1771]). The RP decodes the selected option TEXT out
+      // of #dropdown_option_text, then styles it with these cell-level fields — color rides as
+      // a §-code prefix (system convention), font/scale drive the label, and x/y position it
+      // from the closed box's left-middle frame ([1,1] + top_left anchored offset).
       currentColor: currentColor ?? '',
       currentFontType: currentLabelFont.fontType,
       currentFontScale: currentLabelFont.fontScaleFactor,
+      currentX: currentInsetX ?? 8,
+      currentY: currentInsetY ?? -Math.round(measureText({ text: 'Ag', font: currentFont, fontSize: currentScale ?? 1.0 }).height / 2),
     },
     // Native args ride the writer-only side channel: never serialized, so they cost no
     // payload bytes and can't shift the RP-read offsets above. The writer encodes one blob

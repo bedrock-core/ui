@@ -186,7 +186,7 @@
 							"toggle": "@core_ui_form_components.toggle_router",
 							"slider": "@core_ui_form_components.slider_router",
 							"step_slider": "@core_ui_form_components.slider_router",
-							"dropdown": "@core_ui_form_components.dropdown_router",
+							"dropdown": "@core_ui_common.dropdown_router",
 							"input": "@core_ui_form_components.input_router",
 							"header": "@core_ui_common.unused",
 							"divider": "@core_ui_common.unused"

@@ -243,6 +243,10 @@
 	// Extends the shared text base (core_ui_control.label_base): type/text/color/font
 	// props come from there; this control adds the option-row geometry + the decode.
 	"option_label@core_ui_control.label_base": {
+		// The base positions via top_left + use_anchored_offset; this label centers in its
+		// row instead (own anchors below) — keep anchored offset OFF (center + anchored
+		// offset is the unproven combo).
+		"use_anchored_offset": false,
 		"$align_gate|default": "((('%.82s' * #raw_al) - ('%.2s' * #raw_al) - ';') = 'left')",
 		"anchor_from": "center",
 		"anchor_to": "center",

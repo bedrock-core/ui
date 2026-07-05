@@ -324,26 +324,25 @@
 			}
 		]
 	},
-	// THE shared text base: the visual properties every payload-styled label repeats
-	// (text/#text, white, font_size small, the backup_font_type font-alias guard, the
-	// #font_scale_factor hook) AND the shared single-source decode, parameterized by
-	// whole-expression skip vars (same pattern as $type_gate/$face_skip): text → #text,
-	// fontType → #font_type (canonical alias binding), fontScaleFactor →
-	// #font_scale_factor. Defaults match the text component ([1024]/[1107]/[1190] of the
-	// cell payload); the option labels re-point source + offsets via the $vars; the input
-	// labels replace the bindings with their native edit-box set + a font decode. A
-	// consumer whose decode does NOT fit this shape (the dropdown's two-channel
-	// current-value label) declares its OWN bindings array — it wholesale-replaces this
-	// one, which is the supported opt-out (arrays never merge on derivation).
-	// The align chain always decodes (harmlessly, into #raw_al) but only writes #visible
-	// when a consumer points $align_gate_target at "#visible" (default target is a
-	// throwaway var, so plain labels stay visible). text_alignment is NOT bindable
-	// (in-game bisected — resolved at parse, like font_type), so it rides the
-	// $label_alignment var; multi-alignment consumers gate 2-3 static variants.
-	// The payload binding uses condition "always" (needed by the option rows; static
-	// payloads make it behavior-equal elsewhere).
-	// NOT extending this: the modal submit/exit button labels (no scale binding — a
-	// #font_scale_factor reference would dangle).
+	// THE shared text base. Owns: the visual label properties (white, font_size small,
+	// the backup_font_type font-alias guard) AND the whole decode + positioning:
+	//   • ONE offset: $label_skip points at the start of the serialized label GROUP
+	//     (TS labelPayloadFields): [text, fontType, fontScale, x, y] — five contiguous
+	//     83-byte fields decoded SEQUENTIALLY, so consumers never pass per-field offsets.
+	//     Defaults match the text component (group at [1024]).
+	//   • $native_binding/$native_target: an optional second collection channel for
+	//     labels whose TEXT is native (input value/placeholder). Defaults are a no-op
+	//     (binds the payload again into a throwaway var). Such labels override the
+	//     text property to the native name; the group text slot decodes unused.
+	//   • POSITION: the group x/y feed #anchored_offset_value_* with top_left anchors —
+	//     the ONLY proven anchored-offset combo. Host every label_base instance inside a
+	//     [1,1] frame (the px-mapping rule); pin the frame wherever the offset should
+	//     originate (cell top-left, box left-middle, …).
+	// text_alignment is NOT bindable (in-game bisected) → $label_alignment var; consumers
+	// needing data-driven alignment gate static variants and declare their OWN bindings
+	// (wholesale-replace is the supported opt-out — see form_shared.option_label and the
+	// dropdown current-value label). Payload binding condition is "always".
+	// NOT extending this: the modal submit/exit button labels (no scale binding).
 	"label_base": {
 		"type": "label",
 		"text": "#text",
@@ -354,15 +353,19 @@
 		"$label_alignment|default": "left",
 		"text_alignment": "$label_alignment",
 		"size": ["default", "default"],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"use_anchored_offset": true,
+		"property_bag": {
+			"#anchored_offset_value_x": 0.0,
+			"#anchored_offset_value_y": 0.0
+		},
 		"$payload_collection|default": "form_buttons",
 		"$payload_binding|default": "#form_button_text",
 		"$cell_details_binding_type|default": "none",
-		"$text_skip|default": "('%.1024s' * #payload)",
-		"$font_type_skip|default": "('%.1107s' * #payload)",
-		"$font_scale_skip|default": "('%.1190s' * #payload)",
-		"$align_skip|default": "('%.673s' * #payload)",
-		"$align_gate|default": "((('%.82s' * #raw_al) - ('%.2s' * #raw_al) - ';') = 'left')",
-		"$align_gate_target|default": "#label_align_unused",
+		"$label_skip|default": "('%.1024s' * #payload)",
+		"$native_binding|default": "#form_button_text",
+		"$native_target|default": "#label_native_unused",
 		"bindings": [
 			{
 				"binding_type": "$cell_details_binding_type",
@@ -376,88 +379,98 @@
 				"binding_name_override": "#payload"
 			},
 			{
-				/* --- text --- */
+				/* optional native text channel (no-op by default) */
+				"binding_name": "$native_binding",
+				"binding_type": "collection",
+				"binding_condition": "always",
+				"binding_collection_name": "$payload_collection",
+				"binding_name_override": "$native_target"
+			},
+			{
+				/* label group, decoded sequentially from $label_skip */
 				"binding_type": "view",
-				"source_property_name": "$text_skip",
-				"target_property_name": "#skip_to_text"
+				"source_property_name": "$label_skip",
+				"target_property_name": "#skip_to_label"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(#payload - #skip_to_text)",
-				"target_property_name": "#rem_at_text"
+				"source_property_name": "(#payload - #skip_to_label)",
+				"target_property_name": "#label_rem0"
+			},
+			{
+				/* group slot 1: text */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #label_rem0)",
+				"target_property_name": "#raw_label_text"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_at_text)",
-				"target_property_name": "#raw_text"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #raw_text) - ('%.2s' * #raw_text) - ';')",
+				"source_property_name": "(('%.82s' * #raw_label_text) - ('%.2s' * #raw_label_text) - ';')",
 				"target_property_name": "#text"
 			},
 			{
-				/* --- fontType --- */
 				"binding_type": "view",
-				"source_property_name": "$font_type_skip",
-				"target_property_name": "#skip_to_font_type"
+				"source_property_name": "(#label_rem0 - #raw_label_text)",
+				"target_property_name": "#label_rem1"
+			},
+			{
+				/* group slot 2: fontType (canonical #font_type alias) */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #label_rem1)",
+				"target_property_name": "#raw_label_font"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(#payload - #skip_to_font_type)",
-				"target_property_name": "#rem_at_font_type"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_at_font_type)",
-				"target_property_name": "#raw_font_type"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #raw_font_type) - ('%.2s' * #raw_font_type) - ';')",
+				"source_property_name": "(('%.82s' * #raw_label_font) - ('%.2s' * #raw_label_font) - ';')",
 				"target_property_name": "#font_type"
 			},
 			{
-				/* --- fontScaleFactor --- */
 				"binding_type": "view",
-				"source_property_name": "$font_scale_skip",
-				"target_property_name": "#skip_to_font_scale"
+				"source_property_name": "(#label_rem1 - #raw_label_font)",
+				"target_property_name": "#label_rem2"
+			},
+			{
+				/* group slot 3: fontScaleFactor */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #label_rem2)",
+				"target_property_name": "#raw_label_scale"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(#payload - #skip_to_font_scale)",
-				"target_property_name": "#rem_at_font_scale"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_at_font_scale)",
-				"target_property_name": "#raw_font_scale"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #raw_font_scale) - ('%.2s' * #raw_font_scale) - ';')",
+				"source_property_name": "(('%.82s' * #raw_label_scale) - ('%.2s' * #raw_label_scale) - ';')",
 				"target_property_name": "#font_scale_factor"
 			},
 			{
-				/* --- align (only gates when $align_gate_target = "#visible") --- */
 				"binding_type": "view",
-				"source_property_name": "$align_skip",
-				"target_property_name": "#skip_al"
+				"source_property_name": "(#label_rem2 - #raw_label_scale)",
+				"target_property_name": "#label_rem3"
+			},
+			{
+				/* group slot 4: x -> anchored X (needs the [1,1] host frame) */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #label_rem3)",
+				"target_property_name": "#raw_label_x"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(#payload - #skip_al)",
-				"target_property_name": "#rem_al"
+				"source_property_name": "((('%.82s' * #raw_label_x) - ('%.2s' * #raw_label_x) - ';') * 1)",
+				"target_property_name": "#anchored_offset_value_x"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_al)",
-				"target_property_name": "#raw_al"
+				"source_property_name": "(#label_rem3 - #raw_label_x)",
+				"target_property_name": "#label_rem4"
+			},
+			{
+				/* group slot 5: y -> anchored Y */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #label_rem4)",
+				"target_property_name": "#raw_label_y"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "$align_gate",
-				"target_property_name": "$align_gate_target"
+				"source_property_name": "((('%.82s' * #raw_label_y) - ('%.2s' * #raw_label_y) - ';') * 1)",
+				"target_property_name": "#anchored_offset_value_y"
 			}
 		]
 	},

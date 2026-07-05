@@ -10,6 +10,7 @@
 		"ui/core-ui/common/modal_container.json",
 		"ui/core-ui/common/label_router.json",
 		"ui/core-ui/common/button_router.json",
+		"ui/core-ui/common/dropdown_router.json",
 		"ui/core-ui/common/cursor.json",
 		// -----------------------------------------------
 		// After the initial reserved bytes for the common, rest of bytes 
@@ -31,7 +32,6 @@
 		// Shared bases + option faces used by the dropdown + inline-select primitives.
 		"ui/core-ui/form_components/form_shared.json",
 		// Router for native-dropdown cells (fans #type → dropdown popup | inline radio/toggle-button).
-		"ui/core-ui/form_components/dropdown_router.json",
 		"ui/core-ui/form_components/dropdown.json",
 		"ui/core-ui/form_components/inline_select.json",
 		"ui/core-ui/form_components/label.json"

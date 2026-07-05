@@ -125,93 +125,44 @@
 			{
 				"text_area": {
 					"type": "panel",
-					// Above the payload-decoded state backgrounds (their bg images sit at
-					// layer 1 inside LATER siblings — same effective layer + later tree
-					// order painted them over the text once the input gained textures).
+					// Clip bounds for the field text (was also the 8px offset host — the inset now
+					// rides the label GROUP x/y from the payload; TS defaults x=8, y=centered).
 					"layer": 5,
 					"size": [
-						"100% - 14px",
-						"100% - 4px"
+						"100% - 4px",
+						"100%"
 					],
-					"offset": ["8px", 0],
 					"anchor_from": "left_middle",
 					"anchor_to": "left_middle",
 					"clips_children": true,
 					"controls": [
 						{
-							/* Extends the shared text base (font_size small everywhere; the payload
-							   fontType [1273] + fontScaleFactor [1356] drive the look — TS defaults
-							   mojangles ×1 render identically to the old font_size:normal). Own
-							   bindings replace the base decode: the TEXT is the native edit-box
-							   channel, only the font pair decodes from the cell payload. */
-							"display_text@core_ui_control.label_base": {
-								"localize": false,
-								"text": "#item_name",
+							/* value label: [1,1] frame at the box's left-middle; the label offsets
+							   from it by the value GROUP x/y ([1522]/[1605]). Text is the native
+							   edit-box channel via the base's $native_* slot; font/scale decode from
+							   the group at [1273]. */
+							"display_frame": {
+								"type": "panel",
+								"size": [1, 1],
 								"anchor_from": "left_middle",
 								"anchor_to": "left_middle",
-								"min_size": [
-									"100%",
-									0
-								],
-								"layer": 1,
-								"property_bag": {
-									"#property_field": "#item_name"
-								},
-								"bindings": [
+								"controls": [
 									{
-										/* the typed content for THIS cell */
-										"binding_type": "collection",
-										"binding_collection_name": "custom_form",
-										"binding_name": "#custom_input_text",
-										"binding_name_override": "#item_name"
-									},
-									{
-										/* fontType — input payload field [1273] (after backgroundLocked) */
-										"binding_name": "#custom_text",
-										"binding_type": "collection",
-										"binding_collection_name": "custom_form",
-										"binding_name_override": "#payload"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.1273s' * #payload)",
-										"target_property_name": "#skip_to_font_type"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(#payload - #skip_to_font_type)",
-										"target_property_name": "#rem_at_font_type"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.83s' * #rem_at_font_type)",
-										"target_property_name": "#raw_font_type"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(('%.82s' * #raw_font_type) - ('%.2s' * #raw_font_type) - ';')",
-										"target_property_name": "#font_type"
-									},
-									{
-										/* fontScaleFactor — input payload field [1356] */
-										"binding_type": "view",
-										"source_property_name": "('%.1356s' * #payload)",
-										"target_property_name": "#skip_to_font_scale"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(#payload - #skip_to_font_scale)",
-										"target_property_name": "#rem_at_font_scale"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "('%.83s' * #rem_at_font_scale)",
-										"target_property_name": "#raw_font_scale"
-									},
-									{
-										"binding_type": "view",
-										"source_property_name": "(('%.82s' * #raw_font_scale) - ('%.2s' * #raw_font_scale) - ';')",
-										"target_property_name": "#font_scale_factor"
+										"display_text@core_ui_control.label_base": {
+											"localize": false,
+											"text": "#item_name",
+											"layer": 1,
+											"property_bag": {
+												"#property_field": "#item_name",
+												"#anchored_offset_value_x": 0.0,
+												"#anchored_offset_value_y": 0.0
+											},
+											"$payload_collection": "custom_form",
+											"$payload_binding": "#custom_text",
+											"$label_skip": "('%.1273s' * #payload)",
+											"$native_binding": "#custom_input_text",
+											"$native_target": "#item_name"
+										}
 									}
 								]
 							}
@@ -219,95 +170,47 @@
 						{
 							"place_holder_visibility": {
 								"type": "panel",
-								"size": [
-									"100%",
-									"100%"
-								],
+								"size": ["100%", "100%"],
 								"controls": [
 									{
-										"place_holder_control@core_ui_control.label_base": {
-											"localize": false,
-											"text": "#placeholder",
-											"color": [
-												0.7,
-												0.7,
-												0.7,
-												1
-											],
+										/* placeholder label: own GROUP at [1688] (x/y at [1937]/[2020]) */
+										"placeholder_frame": {
+											"type": "panel",
+											"size": [1, 1],
 											"anchor_from": "left_middle",
 											"anchor_to": "left_middle",
-											"min_size": [
-												"100%",
-												0
-											],
-											"layer": 1,
-											"bindings": [
-													{
-														"binding_type": "collection",
-														"binding_collection_name": "custom_form",
-														"binding_name": "#custom_placeholder_text",
-														"binding_name_override": "#placeholder"
-													},
-													{
-														/* fontType — input payload field [1273] */
-														"binding_name": "#custom_text",
-														"binding_type": "collection",
-														"binding_collection_name": "custom_form",
-														"binding_name_override": "#payload"
-													},
-													{
-														"binding_type": "view",
-														"source_property_name": "('%.1273s' * #payload)",
-														"target_property_name": "#skip_to_font_type"
-													},
-													{
-														"binding_type": "view",
-														"source_property_name": "(#payload - #skip_to_font_type)",
-														"target_property_name": "#rem_at_font_type"
-													},
-													{
-														"binding_type": "view",
-														"source_property_name": "('%.83s' * #rem_at_font_type)",
-														"target_property_name": "#raw_font_type"
-													},
-													{
-														"binding_type": "view",
-														"source_property_name": "(('%.82s' * #raw_font_type) - ('%.2s' * #raw_font_type) - ';')",
-														"target_property_name": "#font_type"
-													},
-													{
-														/* fontScaleFactor — input payload field [1356] */
-														"binding_type": "view",
-														"source_property_name": "('%.1356s' * #payload)",
-														"target_property_name": "#skip_to_font_scale"
-													},
-													{
-														"binding_type": "view",
-														"source_property_name": "(#payload - #skip_to_font_scale)",
-														"target_property_name": "#rem_at_font_scale"
-													},
-													{
-														"binding_type": "view",
-														"source_property_name": "('%.83s' * #rem_at_font_scale)",
-														"target_property_name": "#raw_font_scale"
-													},
-													{
-														"binding_type": "view",
-														"source_property_name": "(('%.82s' * #raw_font_scale) - ('%.2s' * #raw_font_scale) - ';')",
-														"target_property_name": "#font_scale_factor"
+											"controls": [
+												{
+													"place_holder_control@core_ui_control.label_base": {
+														"localize": false,
+														"text": "#placeholder",
+														"color": [0.7, 0.7, 0.7, 1],
+														"layer": 1,
+														"$payload_collection": "custom_form",
+														"$payload_binding": "#custom_text",
+														"$label_skip": "('%.1688s' * #payload)",
+														"$native_binding": "#custom_placeholder_text",
+														"$native_target": "#placeholder"
 													}
+												}
 											]
 										}
 									}
 								],
 								"bindings": [
 									{
-										/* show placeholder only while the field is empty */
+										/* show placeholder only while the field is empty — gate directly on the
+										   live typed-content channel (no sibling lookup: the old
+										   source_control_name gate broke once display_text moved into a frame). */
+										"binding_type": "collection",
+										"binding_condition": "always",
+										"binding_collection_name": "custom_form",
+										"binding_name": "#custom_input_text"
+									},
+									{
 										"binding_type": "view",
-										"source_control_name": "display_text",
-										"source_property_name": "(#item_name = '')",
-										"target_property_name": "#visible",
-										"resolve_sibling_scope": true
+										"source_property_name": "(#custom_input_text = '')",
+										"target_property_name": "#visible"
 									}
 								]
 							}
