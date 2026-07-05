@@ -128,6 +128,14 @@ const MODAL_CONTROL_DEFAULT_HEIGHT: Record<string, number> = {
   [MODAL_FORM_BUTTON_SLOT_TYPE]: 24,
 };
 
+/** Whether the element carries at least one child ELEMENT (not just text/undefined). */
+function hasChildElements(element: JSX.Element): boolean {
+  const kids = element.props.children;
+  const arr = Array.isArray(kids) ? kids : kids === undefined ? [] : [kids];
+
+  return arr.some(k => typeof k === 'object' && k !== null && 'type' in k);
+}
+
 function withIntrinsicSize(
   element: JSX.Element,
   style: FlexStyle,
@@ -143,7 +151,15 @@ function withIntrinsicSize(
   if (modalDefaultHeight !== undefined) {
     const next: FlexStyle = { ...style };
 
-    if (next.height === undefined) {
+    // The inline select is a real flex CONTAINER — its Form.Option children are laid out by
+    // our engine, so when it HAS options its height must come from content flow (auto), not
+    // the native-row default. Defaulting it pinned the group at 17px and flex-SHRANK a column
+    // of 17px rows into it (in-game: 3 radio rows squashed to ~5px each; a row-direction
+    // toggle-button group was unaffected because height is its cross axis). The default
+    // remains only as the degenerate optionless floor, per its original intent.
+    const contentSized = element.type === MODAL_INLINE_SELECT_SLOT_TYPE && hasChildElements(element);
+
+    if (next.height === undefined && !contentSized) {
       next.height = modalDefaultHeight;
     }
 

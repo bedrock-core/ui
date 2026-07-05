@@ -114,9 +114,12 @@ export const FormDropdown: FunctionComponent<FormDropdownProps> = ({
     fontType: optionLabelFont.fontType,
     fontScaleFactor: optionLabelFont.fontScaleFactor,
     align: optionAlign ?? 'left',
-    // Dropdown popup rows draw no bullet glyph — empty textures self-hide the bullet images.
+    // Dropdown popup rows draw no bullet glyph — empty textures self-hide the bullet images
+    // (the size fields are then inert; encoded anyway to keep the shared blob layout).
     bulletTexture: '',
     bulletSelectedTexture: '',
+    bulletWidth: 12,
+    bulletHeight: 12,
   };
 
   return {
@@ -184,6 +187,8 @@ export const formDropdownWriter: Writer = (payload, form, ctx, _callbacks, _prop
         align: 'left',
         bulletTexture: '',
         bulletSelectedTexture: '',
+        bulletWidth: 12,
+        bulletHeight: 12,
       };
 
   const encodedOptions = options.map(option => serializeSelectOption(option, resolvedStyle));

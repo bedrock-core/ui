@@ -117,4 +117,9 @@ export type Writer = (
   callbacks: Record<string, (...args: unknown[]) => void>,
   props?: SerializableProps,
   nativeArgs?: Record<string, unknown>,
+  // The element's built children (post-layout). Only writers that read child geometry rather
+  // than have the walk serialize them use it — e.g. `Form.Radio`/`Form.ToggleButton` reading each
+  // laid-out `Form.Option`'s x/y/w/h. Typed `unknown` to avoid a JSX import here; the writer
+  // narrows it. Most writers ignore it (children are serialized by the walk in `serialize`).
+  children?: unknown,
 ) => void;

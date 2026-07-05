@@ -278,7 +278,7 @@
 					// order painted them over the text once the input gained textures).
 					"layer": 5,
 					"size": [
-						"100% - 6px",
+						"100% - 14px",
 						"100% - 4px"
 					],
 					"offset": ["8px", 0],

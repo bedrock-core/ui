@@ -1,3 +1,4 @@
+import { MODAL_OPTION_SLOT_TYPE } from '../components/Form/modalControls';
 import { JSX } from '../jsx';
 import { getComponentDescriptor, getRegisteredTypes, isTransparentType } from './componentRegistry';
 import { isElement, isFunction, isSerializablePrimitive } from './guards';
@@ -146,6 +147,13 @@ export function serialize({ type, props: { children, ...rest }, nativeArgs }: JS
     return;
   }
 
+  // Layout-only option node (`Form.Option`): the flex engine already laid it out (its geometry
+  // was read by the parent inline-select writer and packed into the native option blob), so it is
+  // NOT a native control and emits nothing here. Drop it and its label children.
+  if (type === MODAL_OPTION_SLOT_TYPE) {
+    return;
+  }
+
   // Transparent components: do not emit payload, serialize children only
   if (isTransparentType(type)) {
     if (children) {
@@ -199,9 +207,11 @@ export function serialize({ type, props: { children, ...rest }, nativeArgs }: JS
     throw new SerializationError(`Unknown native component type: ${type}. Known types: ${known}`);
   }
 
-  descriptor.writer(payload, form, context, callbacks, serializableProps, nativeArgs);
+  descriptor.writer(payload, form, context, callbacks, serializableProps, nativeArgs, children);
 
-  // Recursively handle children
+  // Recursively handle children. `Form.Option` children of an inline-select are consumed by its
+  // writer above (their geometry packed into option blobs) and self-skip in the recursion (the
+  // `MODAL_OPTION_SLOT_TYPE` guard at the top), so no double-processing.
   if (children) {
     const childArray = Array.isArray(children) ? children : [children];
 

@@ -266,45 +266,46 @@ describe('modal control serialization', () => {
     expect(items[1].indexOf('s:Beta')).toBe(92);
   });
 
-  // Inline-select (radio / toggle-button) reuses the native dropdown() call + the same
-  // per-option blob, so its options carry the SAME field layout PLUS the two appended bullet
-  // fields (bulletTexture [756], bulletSelectedTexture [839]). The cell payload is minimal:
-  // control block + the single `orientation` string field at [1024].
-  it('emits an inline-select as a native dropdown with orientation + bullet fields', () => {
+  // Inline-select (radio / toggle-button) reuses the native dropdown() call. Options are now
+  // `Form.Option` CHILDREN whose flex geometry (filled by the layout phase — simulated here by
+  // setting jsonUI* on the built option element) is packed into each blob AFTER the bullet fields:
+  // bullet[756]/bulletSel[839] then optionX[922]/optionY[1005]/optionWidth[1088]/optionHeight[1171].
+  it('emits an inline-select as a native dropdown, packing each Form.Option geometry into its blob', () => {
     const form = new FakeModalForm();
 
-    serialize(
-      el(Form.InlineSelect({
-        name: 'team',
-        options: ['Red', 'Blue'],
-        defaultValue: 'Blue',
-        orientation: 'vertical',
-        bullet: 'textures/ui/radio_off',
-        bulletSelected: 'textures/ui/radio_on',
-        optionBackground: '',
-        optionHeight: 17,
-      })),
-      asModalForm(form),
-      modalCtx(),
-    );
+    // Build the two option children and stamp post-layout geometry (as computeLayout would).
+    const red = el(Form.Option({ value: 'red', label: 'Red', bullet: 'textures/ui/radio_off', bulletSelected: 'textures/ui/radio_on' }));
+    const blue = el(Form.Option({ value: 'blue', label: 'Blue', bullet: 'textures/ui/radio_off', bulletSelected: 'textures/ui/radio_on' }));
 
-    // Reuses the native dropdown value channel (selected index on submit).
+    // Distinct values per field so indexOf can't collide with an earlier identical number.
+    Object.assign(red.props, { jsonUIx: 41, jsonUIy: 42, jsonUIWidth: 43, jsonUIHeight: 44 });
+    Object.assign(blue.props, { jsonUIx: 51, jsonUIy: 52, jsonUIWidth: 53, jsonUIHeight: 54 });
+
+    const group = el(Form.InlineSelect({ name: 'team', defaultValue: 'blue', children: [red, blue] }));
+
+    serialize(group, asModalForm(form), modalCtx());
+
+    // Reuses the native dropdown value channel: default 'blue' → index 1.
     const dropdown = form.calls.find(c => c.kind === 'dropdown');
 
     expect(dropdown?.args[2]).toMatchObject({ defaultValueIndex: 1 });
 
-    // Cell payload: own slot type + orientation string at [1024] (first component field).
-    const label = labelArg(form, 'dropdown');
+    // Cell payload is its own slot type (positioning of the group cell rides the control block).
+    expect(labelArg(form, 'dropdown')).toContain('s:modal-inline-select');
 
-    expect(label).toContain('s:modal-inline-select');
-    expect(label.indexOf('s:vertical')).toBe(1024);
+    // First option blob: text[92], bullets[756]/[839], geometry[922]/[1005]/[1088]/[1171].
+    const [redBlob] = itemsArg(form, 'dropdown');
 
-    // Per-option blob carries the bullet pair after align [673]: [756] / [839].
-    const [red] = itemsArg(form, 'dropdown');
+    expect(redBlob.indexOf('s:Red')).toBe(92);
+    expect(redBlob.indexOf('s:textures/ui/radio_off')).toBe(756);
+    expect(redBlob.indexOf('s:textures/ui/radio_on')).toBe(839);
+    expect(redBlob.indexOf('n:41')).toBe(922); // optionX
+    expect(redBlob.indexOf('n:42')).toBe(1005); // optionY
+    expect(redBlob.indexOf('n:43')).toBe(1088); // optionWidth
+    expect(redBlob.indexOf('n:44')).toBe(1171); // optionHeight
 
-    expect(red.indexOf('s:Red')).toBe(92);
-    expect(red.indexOf('s:textures/ui/radio_off')).toBe(756);
-    expect(red.indexOf('s:textures/ui/radio_on')).toBe(839);
+    // Second option carries its own geometry (genuinely per-option).
+    expect(itemsArg(form, 'dropdown')[1].indexOf('n:52')).toBe(1005); // optionY
   });
 
   // Toggle textures: button-identical common block ([440] base=unchecked, [1024]

@@ -16,7 +16,7 @@ export {
   Form, ModalContext, MODAL_FORM_SLOT_TYPE,
   type FormConfig, type FormProps, type FormValues,
   type FormButtonKind, type FormButtonProps,
-  type FormDropdownProps, type FormInlineSelectProps, type InlineSelectOrientation,
+  type FormDropdownProps, type FormInlineSelectProps, type FormOptionProps,
   type FormInputProps, type FormSliderProps, type FormToggleProps,
 } from './Form';
 export { Fragment, type FragmentProps } from './Fragment';

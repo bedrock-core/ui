@@ -4,10 +4,10 @@ import { serializeProps } from '../../core/serializer';
 export const DROPDOWN_OPTION_TYPE = 'dropdown-option';
 
 /**
- * The per-option styling every option row is encoded with — shared by the dropdown popup
- * rows AND the inline radio / toggle-button rows (both ride the native `options[]` collection
- * strings, decoded per-row by the RP). Currently uniform across a control's options, but it
- * rides EACH option's own payload blob, so per-option overrides are a purely additive follow-up.
+ * The per-option styling an option row is encoded with — shared by the dropdown popup rows AND
+ * the inline radio / toggle-button rows (both ride the native `options[]` collection strings,
+ * decoded per-row by the RP). For the dropdown popup this is uniform across options; for inline
+ * selects each `Form.Option` supplies its own (styling is genuinely per-option).
  *
  * The two `bullet*` fields are the radio glyph pair (empty for the dropdown popup and for the
  * segmented toggle-button skin — an empty texture self-hides the bullet image RP-side).
@@ -24,7 +24,27 @@ export interface OptionStyle {
   bulletTexture: string;
   /** Selected radio bullet glyph texture. Empty = no bullet. */
   bulletSelectedTexture: string;
+  /** Bullet glyph width (px). */
+  bulletWidth: number;
+  /** Bullet glyph height (px). */
+  bulletHeight: number;
 }
+
+/**
+ * Per-option flex geometry (px) computed by the layout phase for a `Form.Option`. Packed into the
+ * option blob AFTER the style fields so the RP option row SELF-POSITIONS via `use_anchored_offset`
+ * (x/y) at its flex-computed size (width/height) — exactly the control-block positioning pattern,
+ * applied at the option level. The dropdown popup passes all zeros (its rows still flow).
+ */
+export interface OptionGeometry {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** Zero geometry — the dropdown popup rows flow (engine-positioned), so they encode no offsets. */
+export const NO_OPTION_GEOMETRY: OptionGeometry = { x: 0, y: 0, width: 0, height: 0 };
 
 /**
  * Runtime type guard for the `optionStyle` carried on a control's `nativeArgs`.
@@ -43,6 +63,8 @@ export function isOptionStyle(value: unknown): value is OptionStyle {
     && 'align' in value && (value.align === 'left' || value.align === 'center' || value.align === 'right')
     && 'bulletTexture' in value && typeof value.bulletTexture === 'string'
     && 'bulletSelectedTexture' in value && typeof value.bulletSelectedTexture === 'string'
+    && 'bulletWidth' in value && typeof value.bulletWidth === 'number'
+    && 'bulletHeight' in value && typeof value.bulletHeight === 'number'
   );
 }
 
@@ -62,11 +84,11 @@ export function isStringArray(value: unknown): value is string[] {
  * here. Field ORDER is the RP decode contract; the two bullet fields append AFTER `align` so
  * the dropdown popup's existing offsets are unchanged.
  */
-export function serializeSelectOption(text: string, style: OptionStyle): string {
+export function serializeSelectOption(text: string, style: OptionStyle, geometry: OptionGeometry = NO_OPTION_GEOMETRY): string {
   const [payload] = serializeProps({
     type: DROPDOWN_OPTION_TYPE,
     text, // field 1 → #custom_radio_text (visible label), offset [92]
-    height: style.height, // field 2 → row #size_binding_y (px), [175]
+    height: style.height, // field 2 → (legacy flow row height), [175]
     background: style.background, // field 3 → idle option face, [258]
     backgroundHover: style.backgroundHover, // field 4, [341]
     backgroundSelected: style.backgroundSelected, // field 5, [424]
@@ -75,6 +97,14 @@ export function serializeSelectOption(text: string, style: OptionStyle): string 
     align: style.align, // field 8 → gates option_label_left/center/right, [673]
     bulletTexture: style.bulletTexture, // field 9 → unselected bullet glyph, [756]
     bulletSelectedTexture: style.bulletSelectedTexture, // field 10 → selected bullet glyph, [839]
+    // Per-option flex geometry (px) — the inline row self-positions from these via
+    // use_anchored_offset (x/y) at this size (w/h). Dropdown popup rows pass zeros (they flow).
+    optionX: geometry.x, // field 11 → #anchored_offset_value_x, [922]
+    optionY: geometry.y, // field 12 → #anchored_offset_value_y, [1005]
+    optionWidth: geometry.width, // field 13 → #size_binding_x, [1088]
+    optionHeight: geometry.height, // field 14 → #size_binding_y, [1171]
+    bulletWidth: style.bulletWidth, // field 15 → bullet glyph width px, [1254]
+    bulletHeight: style.bulletHeight, // field 16 → bullet glyph height px, [1337]
   });
 
   return payload;

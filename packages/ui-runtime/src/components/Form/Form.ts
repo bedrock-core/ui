@@ -5,6 +5,7 @@ import { FormButton, type FormButtonProps } from './FormButton';
 import { FormDropdown, type FormDropdownProps } from './FormDropdown';
 import { FormInlineSelect, type FormInlineSelectProps } from './FormInlineSelect';
 import { FormInput, type FormInputProps } from './FormInput';
+import { FormOption, type FormOptionProps } from './FormOption';
 import { FormSlider, type FormSliderProps } from './FormSlider';
 import { FormToggle, type FormToggleProps } from './FormToggle';
 
@@ -56,6 +57,7 @@ interface FormComponent extends FunctionComponent<FormProps> {
   Slider: FunctionComponent<FormSliderProps>;
   Dropdown: FunctionComponent<FormDropdownProps>;
   InlineSelect: FunctionComponent<FormInlineSelectProps>;
+  Option: FunctionComponent<FormOptionProps>;
   Input: FunctionComponent<FormInputProps>;
   Button: FunctionComponent<FormButtonProps>;
 }
@@ -118,6 +120,7 @@ export const Form: FormComponent = Object.assign(FormRoot, {
   Slider: FormSlider,
   Dropdown: FormDropdown,
   InlineSelect: FormInlineSelect,
+  Option: FormOption,
   Input: FormInput,
   Button: FormButton,
 });

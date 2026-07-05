@@ -1,14 +1,5 @@
 {
-	// Inline-select primitive (radio group / toggle-button group): the native dropdown() option
-	// collection rendered INLINE (no popup). A hidden type:"dropdown" host (inline_dropdown_host)
-	// owns the custom_dropdown collection + applies the default; the option groups render inline,
-	// gated vertical/horizontal by the orientation payload field. Reuses form_shared bases.
 	"namespace": "core_ui_form_components",
-	// The cell decode panel — fork of `dropdown`. Control-block decode chain is VERBATIM
-	// from `dropdown` (header→type→width→height→x→y→visible→enabled); the gate is changed to
-	// 'modal-inline-select' and one extra block decodes orientation [1024]. #size_binding_y is
-	// the FULL inline list height (the component emitted it as the control's real height), so
-	// this panel occupies the whole list's flow space — later controls flow below it.
 	"inline_select": {
 		"type": "panel",
 		"size": [
@@ -20,15 +11,14 @@
 		"anchor_to": "top_left",
 		"use_anchored_offset": true,
 		"property_bag": {
-			"#size_binding_x": 0.0,
-			"#size_binding_y": 0.0,
-			"#anchored_offset_value_x": 0.0,
-			"#anchored_offset_value_y": 0.0,
-			"#orientation": ""
+			"#size_binding_x": 0,
+			"#size_binding_y": 0,
+			"#anchored_offset_value_x": 0,
+			"#anchored_offset_value_y": 0
 		},
 		"visible": "#visible",
 		"enabled": "#enabled",
-		"$normalize": 1.0,
+		"$normalize": 1,
 		"bindings": [
 			{
 				"binding_type": "collection_details",
@@ -158,26 +148,6 @@
 				"binding_type": "view",
 				"source_property_name": "(#pre_visible and (#type = 'modal-inline-select'))",
 				"target_property_name": "#visible"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.1024s' * #custom_text)",
-				"target_property_name": "#skip_to_orientation"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#custom_text - #skip_to_orientation)",
-				"target_property_name": "#rem_at_orientation"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_at_orientation)",
-				"target_property_name": "#raw_orientation"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #raw_orientation) - ('%.2s' * #raw_orientation) - ';')",
-				"target_property_name": "#orientation"
 			}
 		],
 		"controls": [
@@ -186,12 +156,12 @@
 			}
 		]
 	},
-	// Collection-owner widget for the inline list: a type:"dropdown" control populates the
-	// custom_dropdown collection (option blobs) + applies the default selection at init. Chrome
-	// hidden (zero invisible closed box); content = the inline option groups, always visible.
 	"inline_dropdown_host": {
 		"type": "panel",
-		"size": [ "100%", "100%" ],
+		"size": [
+			"100%",
+			"100%"
+		],
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
 		"$dropdown_name|default": "custom_dropdown",
@@ -210,153 +180,187 @@
 				}
 			},
 			{
-				// Content is ALWAYS visible and inline (no #toggle_state gate, no input_panel/popup).
 				"inline_content": {
 					"type": "panel",
-					"size": [ "100%", "100%" ],
+					"size": [
+						"100%",
+						"100%"
+					],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
 					"controls": [
 						{
-							"inline_options_v@core_ui_form_components.inline_options_v": {
-								"bindings": [
-									{
-										"binding_type": "view",
-										"source_property_name": "(#orientation = 'vertical')",
-										"target_property_name": "#visible"
-									}
-								]
-							}
-						},
-						{
-							"inline_options_h@core_ui_form_components.inline_options_h": {
-								"bindings": [
-									{
-										"binding_type": "view",
-										"source_property_name": "(#orientation = 'horizontal')",
-										"target_property_name": "#visible"
-									}
-								]
-							}
+							"inline_options@core_ui_form_components.inline_options": {}
 						}
 					]
 				}
 			}
 		]
 	},
-	// Invisible zero closed-box stub for the host widget (we do not want a closed box; the
-	// type:"dropdown" widget still needs a $dropdown_toggle control to attach to).
 	"inline_dropdown_toggle_stub": {
 		"type": "panel",
-		"size": [ 0, 0 ],
+		"size": [
+			0,
+			0
+		],
 		"visible": false
 	},
-	"inline_options_v@core_ui_form_components.vanilla_option_radio_dropdown_group": {
-		"visible": "#visible",
-		"$radio_group_orientation": "vertical",
-		"$radio_buttons": [],
-		"$radio_factory": {
-			"name": "buttons",
-			"control_name": "core_ui_form_components.inline_option_row_v"
-		},
-		"$radio_collection_name": "custom_dropdown",
-		"$radio_bindings": [
-			{
-				"binding_name": "#custom_text",
-				"binding_type": "collection",
-				"binding_collection_name": "custom_form"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.1024s' * #custom_text)",
-				"target_property_name": "#ori_skip"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#custom_text - #ori_skip)",
-				"target_property_name": "#ori_rem"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #ori_rem)",
-				"target_property_name": "#ori_raw"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #ori_raw) - ('%.2s' * #ori_raw) - ';')",
-				"target_property_name": "#ori"
-			},
-			{
-				"binding_name": "#custom_dropdown_length",
-				"binding_type": "collection",
-				"binding_name_override": "#raw_dd_len",
-				"binding_collection_name": "custom_form"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#raw_dd_len * (#ori = 'vertical'))",
-				"target_property_name": "#collection_length"
-			}
-		]
-	},
-	"inline_options_h@core_ui_form_components.vanilla_option_radio_dropdown_group": {
-		"visible": "#visible",
-		"size": [ "100%", "36px" ],
-		"offset": [ 0, 0 ],
+	// Factory host for the inline option rows — the PROVEN main-form pattern
+	// (modal_container.json `modal_collection`): a collection_panel generating one row
+	// frame per option, NOT the popup's vanilla stack_panel radio group. The popup group
+	// flow-stacks rows (engine layout); inline rows SELF-POSITION from their blob geometry,
+	// which requires each row to sit in its own [1,1] frame (see inline_option_row) — a
+	// full-size stack ancestor scales #size_binding/#anchored_offset by ITS box instead
+	// (in-game: width 156 became 156×156=24336; the stack's 100%c height collapsed to 0 so
+	// every y-offset ×0 → all rows overlaid at the same spot).
+	"inline_options": {
+		"type": "collection_panel",
+		"size": [
+			"100%",
+			"100%"
+		],
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
-		"$radio_group_orientation": "horizontal",
-		"$radio_buttons": [],
-		"$radio_factory": {
+		"factory": {
 			"name": "buttons",
-			"control_name": "core_ui_form_components.inline_option_row_h"
+			"control_name": "core_ui_form_components.inline_option_row"
 		},
-		"$radio_collection_name": "custom_dropdown",
-		"$radio_bindings": [
-			{
-				"binding_name": "#custom_text",
-				"binding_type": "collection",
-				"binding_collection_name": "custom_form"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.1024s' * #custom_text)",
-				"target_property_name": "#ori_skip"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#custom_text - #ori_skip)",
-				"target_property_name": "#ori_rem"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #ori_rem)",
-				"target_property_name": "#ori_raw"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #ori_raw) - ('%.2s' * #ori_raw) - ';')",
-				"target_property_name": "#ori"
-			},
+		"collection_name": "custom_dropdown",
+		"bindings": [
 			{
 				"binding_name": "#custom_dropdown_length",
 				"binding_type": "collection",
-				"binding_name_override": "#raw_dd_len",
+				"binding_name_override": "#collection_length",
 				"binding_collection_name": "custom_form"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#raw_dd_len * (#ori = 'horizontal'))",
-				"target_property_name": "#collection_length"
 			}
 		]
 	},
-	"inline_option_row_base": {
+	// The 1px positioning frame each factory row lives in: #size_binding_* and
+	// #anchored_offset_value_* on the impl inside scale by the PARENT box, so a [1,1]
+	// parent maps them 1:1 to pixels (the same rule as dropdown_router / the main-form
+	// cell routers). Pinned top_left so every row's origin is the group box's top-left —
+	// the blob geometry is group-RELATIVE px (the writer subtracts the group's own x/y).
+	"inline_option_row": {
 		"type": "panel",
+		"size": [
+			1,
+			1
+		],
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
-		"$row_size|default": [ "100%", "17px" ],
-		"size": "$row_size",
+		"controls": [
+			{
+				"row@core_ui_form_components.inline_option_row_impl": {}
+			}
+		]
+	},
+	"inline_option_row_impl": {
+		"type": "panel",
+		"size": [
+			0,
+			0
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"use_anchored_offset": true,
+		"property_bag": {
+			"#size_binding_x": 0,
+			"#size_binding_y": 0,
+			"#anchored_offset_value_x": 0,
+			"#anchored_offset_value_y": 0
+		},
+		"$normalize": 1,
+		"bindings": [
+			{
+				"binding_name": "#custom_radio_text",
+				"binding_type": "collection",
+				"binding_condition": "always",
+				"binding_collection_name": "custom_dropdown"
+			},
+			{
+				"binding_type": "collection_details"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.922s' * #custom_radio_text)",
+				"target_property_name": "#skip_anchored_offset_value_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#custom_radio_text - #skip_anchored_offset_value_x)",
+				"target_property_name": "#rem_anchored_offset_value_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_anchored_offset_value_x)",
+				"target_property_name": "#raw_anchored_offset_value_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_anchored_offset_value_x) - ('%.2s' * #raw_anchored_offset_value_x) - ';') * $normalize)",
+				"target_property_name": "#anchored_offset_value_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.1005s' * #custom_radio_text)",
+				"target_property_name": "#skip_anchored_offset_value_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#custom_radio_text - #skip_anchored_offset_value_y)",
+				"target_property_name": "#rem_anchored_offset_value_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_anchored_offset_value_y)",
+				"target_property_name": "#raw_anchored_offset_value_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_anchored_offset_value_y) - ('%.2s' * #raw_anchored_offset_value_y) - ';') * $normalize)",
+				"target_property_name": "#anchored_offset_value_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.1088s' * #custom_radio_text)",
+				"target_property_name": "#skip_size_binding_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#custom_radio_text - #skip_size_binding_x)",
+				"target_property_name": "#rem_size_binding_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_size_binding_x)",
+				"target_property_name": "#raw_size_binding_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_size_binding_x) - ('%.2s' * #raw_size_binding_x) - ';') * 1)",
+				"target_property_name": "#size_binding_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.1171s' * #custom_radio_text)",
+				"target_property_name": "#skip_size_binding_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#custom_radio_text - #skip_size_binding_y)",
+				"target_property_name": "#rem_size_binding_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_size_binding_y)",
+				"target_property_name": "#raw_size_binding_y"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_size_binding_y) - ('%.2s' * #raw_size_binding_y) - ';') * 1)",
+				"target_property_name": "#size_binding_y"
+			}
+		],
 		"controls": [
 			{
 				"option_toggle": {
@@ -367,8 +371,8 @@
 					],
 					"layer": 1,
 					"sound_name": "random.click",
-					"sound_volume": 1.0,
-					"sound_pitch": 1.0,
+					"sound_volume": 1,
+					"sound_pitch": 1,
 					"focus_enabled": true,
 					"focus_magnet_enabled": true,
 					"radio_toggle_group": true,
@@ -451,15 +455,22 @@
 				"option_label_left": {
 					"type": "label",
 					"text": "#text",
-					"color": [ 1, 1, 1, 1 ],
+					"color": [
+						1,
+						1,
+						1,
+						1
+					],
 					"font_size": "small",
 					"backup_font_type": "UIFont",
 					"font_scale_factor": "#font_scale_factor",
 					"text_alignment": "left",
-					"anchor_from": "left_middle",
-					"anchor_to": "left_middle",
-					"offset": [ 16, 0 ],
-					"size": [ "100% - 16px", "default" ],
+					"anchor_from": "center",
+					"anchor_to": "center",
+					"size": [
+						"100% - 8px",
+						"default"
+					],
 					"visible": "#visible",
 					"layer": 10,
 					"bindings": [
@@ -475,61 +486,61 @@
 						{
 							"binding_type": "view",
 							"source_property_name": "('%.92s' * #custom_radio_text)",
-							"target_property_name": "#skip_to_text"
+							"target_property_name": "#skip_text"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(#custom_radio_text - #skip_to_text)",
-							"target_property_name": "#rem_at_text"
+							"source_property_name": "(#custom_radio_text - #skip_text)",
+							"target_property_name": "#rem_text"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_at_text)",
+							"source_property_name": "('%.83s' * #rem_text)",
 							"target_property_name": "#raw_text"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(('%.82s' * #raw_text) - ('%.2s' * #raw_text) - ';')",
+							"source_property_name": "((('%.82s' * #raw_text) - ('%.2s' * #raw_text) - ';'))",
 							"target_property_name": "#text"
 						},
 						{
 							"binding_type": "view",
 							"source_property_name": "('%.590s' * #custom_radio_text)",
-							"target_property_name": "#skip_to_opt_scale"
+							"target_property_name": "#skip_font_scale_factor"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(#custom_radio_text - #skip_to_opt_scale)",
-							"target_property_name": "#rem_at_opt_scale"
+							"source_property_name": "(#custom_radio_text - #skip_font_scale_factor)",
+							"target_property_name": "#rem_font_scale_factor"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_at_opt_scale)",
-							"target_property_name": "#raw_opt_scale"
+							"source_property_name": "('%.83s' * #rem_font_scale_factor)",
+							"target_property_name": "#raw_font_scale_factor"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(('%.82s' * #raw_opt_scale) - ('%.2s' * #raw_opt_scale) - ';')",
+							"source_property_name": "((('%.82s' * #raw_font_scale_factor) - ('%.2s' * #raw_font_scale_factor) - ';'))",
 							"target_property_name": "#font_scale_factor"
 						},
 						{
 							"binding_type": "view",
 							"source_property_name": "('%.673s' * #custom_radio_text)",
-							"target_property_name": "#skip_to_opt_align"
+							"target_property_name": "#skip_al"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(#custom_radio_text - #skip_to_opt_align)",
-							"target_property_name": "#rem_at_opt_align"
+							"source_property_name": "(#custom_radio_text - #skip_al)",
+							"target_property_name": "#rem_al"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_at_opt_align)",
-							"target_property_name": "#raw_opt_align"
+							"source_property_name": "('%.83s' * #rem_al)",
+							"target_property_name": "#raw_al"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "((('%.82s' * #raw_opt_align) - ('%.2s' * #raw_opt_align) - ';') = 'left')",
+							"source_property_name": "((('%.82s' * #raw_al) - ('%.2s' * #raw_al) - ';') = 'left')",
 							"target_property_name": "#visible"
 						}
 					]
@@ -539,14 +550,22 @@
 				"option_label_center": {
 					"type": "label",
 					"text": "#text",
-					"color": [ 1, 1, 1, 1 ],
+					"color": [
+						1,
+						1,
+						1,
+						1
+					],
 					"font_size": "small",
 					"backup_font_type": "UIFont",
 					"font_scale_factor": "#font_scale_factor",
 					"text_alignment": "center",
 					"anchor_from": "center",
 					"anchor_to": "center",
-					"size": [ "100% - 8px", "default" ],
+					"size": [
+						"100% - 8px",
+						"default"
+					],
 					"visible": "#visible",
 					"layer": 10,
 					"bindings": [
@@ -562,61 +581,61 @@
 						{
 							"binding_type": "view",
 							"source_property_name": "('%.92s' * #custom_radio_text)",
-							"target_property_name": "#skip_to_text"
+							"target_property_name": "#skip_text"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(#custom_radio_text - #skip_to_text)",
-							"target_property_name": "#rem_at_text"
+							"source_property_name": "(#custom_radio_text - #skip_text)",
+							"target_property_name": "#rem_text"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_at_text)",
+							"source_property_name": "('%.83s' * #rem_text)",
 							"target_property_name": "#raw_text"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(('%.82s' * #raw_text) - ('%.2s' * #raw_text) - ';')",
+							"source_property_name": "((('%.82s' * #raw_text) - ('%.2s' * #raw_text) - ';'))",
 							"target_property_name": "#text"
 						},
 						{
 							"binding_type": "view",
 							"source_property_name": "('%.590s' * #custom_radio_text)",
-							"target_property_name": "#skip_to_opt_scale"
+							"target_property_name": "#skip_font_scale_factor"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(#custom_radio_text - #skip_to_opt_scale)",
-							"target_property_name": "#rem_at_opt_scale"
+							"source_property_name": "(#custom_radio_text - #skip_font_scale_factor)",
+							"target_property_name": "#rem_font_scale_factor"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_at_opt_scale)",
-							"target_property_name": "#raw_opt_scale"
+							"source_property_name": "('%.83s' * #rem_font_scale_factor)",
+							"target_property_name": "#raw_font_scale_factor"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(('%.82s' * #raw_opt_scale) - ('%.2s' * #raw_opt_scale) - ';')",
+							"source_property_name": "((('%.82s' * #raw_font_scale_factor) - ('%.2s' * #raw_font_scale_factor) - ';'))",
 							"target_property_name": "#font_scale_factor"
 						},
 						{
 							"binding_type": "view",
 							"source_property_name": "('%.673s' * #custom_radio_text)",
-							"target_property_name": "#skip_to_opt_align"
+							"target_property_name": "#skip_al"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(#custom_radio_text - #skip_to_opt_align)",
-							"target_property_name": "#rem_at_opt_align"
+							"source_property_name": "(#custom_radio_text - #skip_al)",
+							"target_property_name": "#rem_al"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_at_opt_align)",
-							"target_property_name": "#raw_opt_align"
+							"source_property_name": "('%.83s' * #rem_al)",
+							"target_property_name": "#raw_al"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "((('%.82s' * #raw_opt_align) - ('%.2s' * #raw_opt_align) - ';') = 'center')",
+							"source_property_name": "((('%.82s' * #raw_al) - ('%.2s' * #raw_al) - ';') = 'center')",
 							"target_property_name": "#visible"
 						}
 					]
@@ -626,14 +645,22 @@
 				"option_label_right": {
 					"type": "label",
 					"text": "#text",
-					"color": [ 1, 1, 1, 1 ],
+					"color": [
+						1,
+						1,
+						1,
+						1
+					],
 					"font_size": "small",
 					"backup_font_type": "UIFont",
 					"font_scale_factor": "#font_scale_factor",
 					"text_alignment": "right",
 					"anchor_from": "center",
 					"anchor_to": "center",
-					"size": [ "100% - 8px", "default" ],
+					"size": [
+						"100% - 8px",
+						"default"
+					],
 					"visible": "#visible",
 					"layer": 10,
 					"bindings": [
@@ -649,61 +676,61 @@
 						{
 							"binding_type": "view",
 							"source_property_name": "('%.92s' * #custom_radio_text)",
-							"target_property_name": "#skip_to_text"
+							"target_property_name": "#skip_text"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(#custom_radio_text - #skip_to_text)",
-							"target_property_name": "#rem_at_text"
+							"source_property_name": "(#custom_radio_text - #skip_text)",
+							"target_property_name": "#rem_text"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_at_text)",
+							"source_property_name": "('%.83s' * #rem_text)",
 							"target_property_name": "#raw_text"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(('%.82s' * #raw_text) - ('%.2s' * #raw_text) - ';')",
+							"source_property_name": "((('%.82s' * #raw_text) - ('%.2s' * #raw_text) - ';'))",
 							"target_property_name": "#text"
 						},
 						{
 							"binding_type": "view",
 							"source_property_name": "('%.590s' * #custom_radio_text)",
-							"target_property_name": "#skip_to_opt_scale"
+							"target_property_name": "#skip_font_scale_factor"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(#custom_radio_text - #skip_to_opt_scale)",
-							"target_property_name": "#rem_at_opt_scale"
+							"source_property_name": "(#custom_radio_text - #skip_font_scale_factor)",
+							"target_property_name": "#rem_font_scale_factor"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_at_opt_scale)",
-							"target_property_name": "#raw_opt_scale"
+							"source_property_name": "('%.83s' * #rem_font_scale_factor)",
+							"target_property_name": "#raw_font_scale_factor"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(('%.82s' * #raw_opt_scale) - ('%.2s' * #raw_opt_scale) - ';')",
+							"source_property_name": "((('%.82s' * #raw_font_scale_factor) - ('%.2s' * #raw_font_scale_factor) - ';'))",
 							"target_property_name": "#font_scale_factor"
 						},
 						{
 							"binding_type": "view",
 							"source_property_name": "('%.673s' * #custom_radio_text)",
-							"target_property_name": "#skip_to_opt_align"
+							"target_property_name": "#skip_al"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "(#custom_radio_text - #skip_to_opt_align)",
-							"target_property_name": "#rem_at_opt_align"
+							"source_property_name": "(#custom_radio_text - #skip_al)",
+							"target_property_name": "#rem_al"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_at_opt_align)",
-							"target_property_name": "#raw_opt_align"
+							"source_property_name": "('%.83s' * #rem_al)",
+							"target_property_name": "#raw_al"
 						},
 						{
 							"binding_type": "view",
-							"source_property_name": "((('%.82s' * #raw_opt_align) - ('%.2s' * #raw_opt_align) - ';') = 'right')",
+							"source_property_name": "((('%.82s' * #raw_al) - ('%.2s' * #raw_al) - ';') = 'right')",
 							"target_property_name": "#visible"
 						}
 					]
@@ -711,19 +738,122 @@
 			}
 		]
 	},
-	"inline_option_row_v@core_ui_form_components.inline_option_row_base": {
-		"$row_size": [ "100%", "17px" ]
-	},
-	"inline_option_row_h@core_ui_form_components.inline_option_row_base": {
-		"$row_size": [ "80px", "36px" ]
-	},
+	// Bullet glyph, DYNAMICALLY sized from the option blob: bulletWidth [1254] and
+	// bulletHeight [1337] (appended after the geometry block, so no earlier offset moves).
+	// Three-level structure per the [1,1] rule: a 1px frame (so the box's #size_binding_*
+	// map 1:1 to px — same as inline_option_row), a box the decode sizes, and the image
+	// filling it. The frame pins the bullet to the row's left-middle, like the old
+	// hardcoded 12×12 image did.
 	"inline_bullet_default": {
-		"type": "image",
-		"size": [ 12, 12 ],
+		"type": "panel",
+		"size": [
+			1,
+			1
+		],
 		"anchor_from": "left_middle",
 		"anchor_to": "left_middle",
-		"offset": [ 0, 0 ],
 		"layer": 11,
+		"controls": [
+			{
+				"bullet_box@core_ui_form_components.inline_bullet_box": {
+					"$bullet_img": "core_ui_form_components.inline_bullet_img_default"
+				}
+			}
+		]
+	},
+	"inline_bullet_selected": {
+		"type": "panel",
+		"size": [
+			1,
+			1
+		],
+		"anchor_from": "left_middle",
+		"anchor_to": "left_middle",
+		"layer": 11,
+		"controls": [
+			{
+				"bullet_box@core_ui_form_components.inline_bullet_box": {
+					"$bullet_img": "core_ui_form_components.inline_bullet_img_selected"
+				}
+			}
+		]
+	},
+	// The blob-sized bullet box (shared by both states — only the image inside differs).
+	"inline_bullet_box": {
+		"type": "panel",
+		"size": [
+			0,
+			0
+		],
+		"anchor_from": "left_middle",
+		"anchor_to": "left_middle",
+		"property_bag": {
+			"#size_binding_x": 0,
+			"#size_binding_y": 0
+		},
+		"bindings": [
+			{
+				"binding_name": "#custom_radio_text",
+				"binding_type": "collection",
+				"binding_condition": "always",
+				"binding_collection_name": "custom_dropdown"
+			},
+			{
+				"binding_type": "collection_details"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.1254s' * #custom_radio_text)",
+				"target_property_name": "#skip_bullet_w"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#custom_radio_text - #skip_bullet_w)",
+				"target_property_name": "#rem_bullet_w"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_bullet_w)",
+				"target_property_name": "#raw_bullet_w"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_bullet_w) - ('%.2s' * #raw_bullet_w) - ';') * 1)",
+				"target_property_name": "#size_binding_x"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.1337s' * #custom_radio_text)",
+				"target_property_name": "#skip_bullet_h"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#custom_radio_text - #skip_bullet_h)",
+				"target_property_name": "#rem_bullet_h"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_bullet_h)",
+				"target_property_name": "#raw_bullet_h"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_bullet_h) - ('%.2s' * #raw_bullet_h) - ';') * 1)",
+				"target_property_name": "#size_binding_y"
+			}
+		],
+		"controls": [
+			{
+				"img@$bullet_img": {}
+			}
+		]
+	},
+	"inline_bullet_img_default": {
+		"type": "image",
+		"size": [
+			"100%",
+			"100%"
+		],
 		"texture": "#texture",
 		"visible": "#visible",
 		"bindings": [
@@ -739,21 +869,21 @@
 			{
 				"binding_type": "view",
 				"source_property_name": "('%.756s' * #custom_radio_text)",
-				"target_property_name": "#skip_to_bullet"
+				"target_property_name": "#skip_texture"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(#custom_radio_text - #skip_to_bullet)",
-				"target_property_name": "#rem_at_bullet"
+				"source_property_name": "(#custom_radio_text - #skip_texture)",
+				"target_property_name": "#rem_texture"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_at_bullet)",
-				"target_property_name": "#raw_bullet"
+				"source_property_name": "('%.83s' * #rem_texture)",
+				"target_property_name": "#raw_texture"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #raw_bullet) - ('%.2s' * #raw_bullet) - ';')",
+				"source_property_name": "((('%.82s' * #raw_texture) - ('%.2s' * #raw_texture) - ';'))",
 				"target_property_name": "#texture"
 			},
 			{
@@ -769,13 +899,12 @@
 			}
 		]
 	},
-	"inline_bullet_selected": {
+	"inline_bullet_img_selected": {
 		"type": "image",
-		"size": [ 12, 12 ],
-		"anchor_from": "left_middle",
-		"anchor_to": "left_middle",
-		"offset": [ 0, 0 ],
-		"layer": 11,
+		"size": [
+			"100%",
+			"100%"
+		],
 		"texture": "#texture",
 		"visible": "#visible",
 		"bindings": [
@@ -791,21 +920,21 @@
 			{
 				"binding_type": "view",
 				"source_property_name": "('%.839s' * #custom_radio_text)",
-				"target_property_name": "#skip_to_bullet_sel"
+				"target_property_name": "#skip_texture"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(#custom_radio_text - #skip_to_bullet_sel)",
-				"target_property_name": "#rem_at_bullet_sel"
+				"source_property_name": "(#custom_radio_text - #skip_texture)",
+				"target_property_name": "#rem_texture"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_at_bullet_sel)",
-				"target_property_name": "#raw_bullet_sel"
+				"source_property_name": "('%.83s' * #rem_texture)",
+				"target_property_name": "#raw_texture"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #raw_bullet_sel) - ('%.2s' * #raw_bullet_sel) - ';')",
+				"source_property_name": "((('%.82s' * #raw_texture) - ('%.2s' * #raw_texture) - ';'))",
 				"target_property_name": "#texture"
 			},
 			{

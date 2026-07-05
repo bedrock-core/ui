@@ -1,49 +1,71 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import type { FormInlineSelectProps as PrimitiveInlineSelectProps, JSX } from '@bedrock-core/ui-runtime';
+import type { FlexSize, JSX } from '@bedrock-core/ui-runtime';
 import { Form as PrimitiveForm } from '@bedrock-core/ui-runtime';
 import { theme } from '../tokens';
 import { labeledColumn } from './label';
 
-export interface FormToggleButtonProps extends Omit<PrimitiveInlineSelectProps,
-  'orientation' | 'optionBackground' | 'optionHover' | 'optionSelected'
-  | 'bullet' | 'bulletSelected' | 'optionFont' | 'optionScale' | 'optionAlign' | 'optionHeight'> {
+/** One segment: a stable `value` + its shown `label`. */
+export interface FormToggleButtonOption {
+  value: string;
+  label: string;
+}
+
+export interface FormToggleButtonProps {
+  /** Result key — the selected option's INDEX arrives at `values[name]` in `Form.onSubmit`. */
+  name: string;
+  /** The segments, left to right. */
+  options: FormToggleButtonOption[];
+  /** Initial selected value (matched to its index). Defaults to the first option. */
+  defaultValue?: string;
+  /** Whether the group is interactive. */
+  enabled?: boolean;
   /** Caption rendered above the group. */
   label?: string;
+  /** Segment height (px). */
+  segmentHeight?: number;
+  /** Layout props for the group container. */
+  flex?: number;
+  width?: FlexSize;
 }
 
 /**
- * Ore-styled modal toggle-button group: a single-select over `options`, rendered INLINE as
- * side-by-side segments on the native inline-select control — the same look as the ActionForm
- * `ToggleButtonGroup`. Each segment sizes to its label + padding; the selected segment uses the
- * pressed face. `onSubmit` reports the selected option's INDEX (native behavior).
+ * Ore-styled modal toggle-button group: a single-select rendered INLINE as side-by-side segments —
+ * the same look as the ActionForm `ToggleButtonGroup`. `onSubmit` reports the selected option's
+ * INDEX. The selected segment uses the pressed face.
  *
- * Segment labels ride each option's native blob (fixed per option), centered, in the theme's
- * segmented text style.
+ * Segments are laid out by OUR flex system as `Form.Option` children with `flexGrow:1` (equal
+ * width) and `gap:-1` (1px overlap) — exactly the non-form control's row. Change the flex here and
+ * the in-game layout follows with no JSON-UI edit.
  */
-export function FormToggleButton({ label, name, options, defaultValue, enabled = true, ...layout }: FormToggleButtonProps): JSX.Element {
+export function FormToggleButton({
+  name, options, defaultValue, enabled = true, label,
+  segmentHeight = theme.components.toggleButton.height, flex, width,
+}: FormToggleButtonProps): JSX.Element {
   const tb = theme.components.toggleButton;
   const ts = tb.textStyle.selected;
 
   const control = (
     <PrimitiveForm.InlineSelect
       name={name}
-      options={options}
       defaultValue={defaultValue}
       enabled={enabled}
-      orientation={'horizontal'}
-      optionHeight={tb.height}
-      optionAlign={'center'}
+      flexDirection={'row'}
+      gap={-1}
+      {...(label === undefined ? { flex, width } : { width: '100%' })}
       optionBackground={tb.textures.normal}
       optionHover={tb.textures.hover}
       optionSelected={tb.textures.pressed}
-      // Segmented skin draws no bullet — the segment face is the whole visual.
       bullet={''}
       bulletSelected={''}
       optionFont={ts.font}
       optionScale={ts.scale}
-      {...(label === undefined ? layout : {})}
-    />
+      optionAlign={'center'}
+    >
+      {options.map(o => (
+        <PrimitiveForm.Option value={o.value} label={o.label} flexGrow={1} flexShrink={1} height={segmentHeight} />
+      ))}
+    </PrimitiveForm.InlineSelect>
   );
 
-  return labeledColumn(label, enabled, layout, control);
+  return labeledColumn(label, enabled, { flex, width }, control);
 }

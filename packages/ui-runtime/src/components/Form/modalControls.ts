@@ -11,10 +11,18 @@ export const MODAL_DROPDOWN_SLOT_TYPE = 'modal-dropdown';
 /**
  * Inline single-select (radio group / toggle-button group) → native `ModalFormData.dropdown`,
  * but the RP renders its option collection INLINE in the form flow (all options always visible)
- * instead of behind the dropdown popup. One type serves both skins; a payload `orientation`
- * field (`'vertical'` = radio stack, `'horizontal'` = segment strip) selects the look.
+ * instead of behind the dropdown popup. Each option is a `Form.Option` child laid out by OUR
+ * flex system; the writer packs every option's computed geometry (x/y/w/h) into its blob so the
+ * RP option row self-positions via `use_anchored_offset` — no engine flow layout.
  */
 export const MODAL_INLINE_SELECT_SLOT_TYPE = 'modal-inline-select';
+/**
+ * `Form.Option` — a single inline-select option. LAYOUT-ONLY: the flex engine lays it out (so it
+ * gets computed x/y/w/h like any element), but the serializer does NOT emit it as a native
+ * control — its geometry + text are read by the inline-select writer and packed into the native
+ * option blob. Skipped by the serialize walk (see serializer.ts).
+ */
+export const MODAL_OPTION_SLOT_TYPE = 'modal-option';
 export const MODAL_INPUT_SLOT_TYPE = 'modal-input';
 /**
  * `Form.Button` — NOT a native control: it consumes no `formValues` slot; its

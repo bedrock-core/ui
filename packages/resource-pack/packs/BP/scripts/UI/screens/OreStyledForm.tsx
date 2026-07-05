@@ -62,10 +62,23 @@ export function OreStyledForm({ back }: { back: () => void }): JSX.Element {
         <Form.Checkbox label={'Subscribe to news'} name={'news'} defaultValue={true} />
         <Form.Checkbox label={'Locked checkbox'} name={'cb_locked'} enabled={false} />
 
-        {/* Radio group + toggle-button group, side by side (both single-select). */}
+        {/* Radio group + toggle-button group, side by side (both single-select). Options are now
+            flex-laid-out Form.Option children under the hood → full per-option layout control. */}
         <Panel flexDirection={'row'} gap={sm} alignItems={'flex-start'}>
-          <Form.Radio label={'Team'} name={'team'} options={['Red', 'Blue', 'Green']} defaultValue={'Blue'} flex={1} />
-          <Form.ToggleButton label={'View'} name={'view'} options={['List', 'Grid', 'Compact']} defaultValue={'Grid'} flex={1} />
+          <Form.Radio
+            label={'Team'}
+            name={'team'}
+            options={[{ value: 'red', label: 'Red' }, { value: 'blue', label: 'Blue' }, { value: 'green', label: 'Green' }]}
+            defaultValue={'blue'}
+            flex={1}
+          />
+          <Form.ToggleButton
+            label={'View'}
+            name={'view'}
+            options={[{ value: 'list', label: 'List' }, { value: 'grid', label: 'Grid' }, { value: 'compact', label: 'Compact' }]}
+            defaultValue={'grid'}
+            flex={1}
+          />
         </Panel>
       </Panel>
       <Panel flexDirection={'column'} gap={2} padding={sm}>
