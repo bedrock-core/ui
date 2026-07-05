@@ -1,6 +1,6 @@
 import type { TextFont } from '@bedrock-core/ui-runtime';
-import { ButtonVariant } from './Button';
-import { CardVariant } from './Card';
+import type { ButtonVariant } from './Button';
+import type { CardVariant } from './Card';
 
 const BASE = 'textures/ui/ore-styled' as const;
 
