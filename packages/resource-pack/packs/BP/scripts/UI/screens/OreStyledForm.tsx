@@ -1,5 +1,5 @@
 import { Form, theme } from '@bedrock-core/ore-styled';
-import { Image, Panel, Text, usePlayer, type FormValues, type JSX } from '@bedrock-core/ui';
+import { Background, Image, Panel, Text, usePlayer, type FormValues, type JSX } from '@bedrock-core/ui';
 
 /**
  * The UnstyledForm's twin, rendered through the ore-styled `Form` layer: same
@@ -51,6 +51,8 @@ export function OreStyledForm({ back }: { back: () => void }): JSX.Element {
       onSubmit={handleSubmit}
       onCancel={back}
     >
+      {/* Full-screen backdrop test: rides the title's fixed 2573 slot, drawn behind everything. */}
+      <Background texture={'textures/ui/dialog_background_hollow_4_thin'} />
 
       {/* --- new controls: checkbox (boolean toggle skin), radio group + toggle-button
           group (single-select over the native dropdown slot, return selected index). --- */}

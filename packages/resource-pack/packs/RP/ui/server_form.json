@@ -60,6 +60,18 @@
 		},
 		"modifications": [
 			{
+				/* Full-screen <Background> backdrop — BEFORE the factory so it sits behind
+				   both containers; decodes its texture from the title's fixed 2573 slot and
+				   self-hides when absent (see core_ui_common.form_background). */
+				"array_name": "controls",
+				"operation": "insert_front",
+				"value": [
+					{
+						"form_background@core_ui_common.form_background": {}
+					}
+				]
+			},
+			{
 				"array_name": "controls",
 				"operation": "insert_back",
 				"value": [

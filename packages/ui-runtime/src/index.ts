@@ -1,4 +1,5 @@
 export {
+  Background,
   Button,
   Dropdown,
   Form,
@@ -18,6 +19,7 @@ export type {
   AlignContent,
   AlignItems,
   AlignSelf,
+  BackgroundProps,
   ButtonProps,
   ControlProps,
   Display,

@@ -10,6 +10,7 @@ export {
 } from './layout';
 
 // Components
+export { Background, BACKGROUND_SLOT_TYPE, type BackgroundProps } from './Background';
 export { Button, buttonWriter, type ButtonProps } from './Button';
 export { Dropdown, type DropdownProps } from './Dropdown';
 export {
@@ -29,6 +30,7 @@ export { Scroll, SCROLL_SLOT_TYPE, MAX_SCROLLS, type ScrollAxis, type ScrollProp
 export { Text, textWriter, type TextFont, type TextOverflow, type TextProps, type TextStyle, type TextWordBreak } from './Text';
 
 import { registerComponent } from '../core/componentRegistry';
+import { BACKGROUND_SLOT_TYPE } from './Background';
 import { buttonWriter } from './Button';
 import {
   MODAL_FORM_SLOT_TYPE,
@@ -73,6 +75,10 @@ export function registerNativeComponents(): void {
   // Modal form: transparent marker; the presenter detects it on the built tree and
   // switches to the native ModalFormData backend. Its children are walked normally.
   registerComponent(MODAL_FORM_SLOT_TYPE, { transparent: true });
+
+  // Full-screen backdrop: transparent marker with no children/box; the presenters
+  // find it and append its texture to the form-title metadata (see Background).
+  registerComponent(BACKGROUND_SLOT_TYPE, { transparent: true });
 
   // Native modal controls — each writer (co-located with its Form.* component) calls
   // the component-supplied `build` against the ModalFormData.

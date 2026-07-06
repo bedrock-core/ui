@@ -496,6 +496,30 @@ describe('modal control serialization', () => {
     expect(title.slice(1353, 1357)).toBe('n:0;'); // zero geometry
   });
 
+  // The optional <Background> field sits at the SAME fixed offset as on ActionForm
+  // titles (BACKGROUND_TITLE_SKIP = 2573 after the header, 2582 absolute): the gap
+  // after the exit block is padded with reserved bytes so the single static
+  // core_ui_common.form_background serves both backends. Omitted when undeclared.
+  it('appends the background field at the contracted title offset', () => {
+    const scroll = { axis: 'y' as const, x: 0, y: 0, width: 320, height: 210, extent: 400 };
+    const submit: JSX.Element = {
+      type: 'modal-form-button',
+      props: { buttonKind: 'submit', label: 'Save', jsonUIWidth: 100, jsonUIHeight: 24, jsonUIx: 4, jsonUIy: 300 },
+    };
+    const fields = (): ReturnType<typeof formButtonTitleFields> => ({
+      ...formButtonTitleFields('submit', submit),
+      ...formButtonTitleFields('exit', undefined),
+    });
+
+    const plain = serializeModalTitle([scroll], fields());
+    const withBg = serializeModalTitle([scroll], fields(), 'textures/ui/my_bg');
+
+    expect(serializeModalTitle([scroll], fields(), '')).toBe(plain); // empty = omitted
+    // pad (2573 - 2107 = 466 bytes) + bg field (83)
+    expect(withBg).toHaveLength(plain.length + 466 + 83);
+    expect(withBg.indexOf('s:textures/ui/my_bg')).toBe(9 + 2573);
+  });
+
   it('requires exactly one submit Form.Button and at most one exit', () => {
     const btn = (kind: string): JSX.Element => ({
       type: 'modal-form-button',
