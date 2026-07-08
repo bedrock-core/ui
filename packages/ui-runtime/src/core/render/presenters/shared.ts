@@ -1,5 +1,6 @@
 import { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
 import { type Player } from '@minecraft/server';
+import { BACKGROUND_SLOT_TYPE } from '../../../components/Background';
 import { MODAL_FORM_SLOT_TYPE, type FormConfig } from '../../../components/Form';
 import type { JSX } from '../../../jsx';
 import type { ScrollMetrics } from '../../serializer';
@@ -47,6 +48,40 @@ export function findModalConfig(node: JSX.Node): FormConfig | undefined {
   }
 
   return undefined;
+}
+
+/**
+ * Find the first `<Background>` marker on the built tree and return its texture
+ * path, or `''` when the tree declares none. Mirrors {@link findModalConfig}: the
+ * marker is transparent and may sit anywhere (ActionForm root level or inside a
+ * `<Form>`), so walk the whole tree depth-first — first one wins.
+ *
+ * @param node - Tree node to search from (typically the built root).
+ * @returns The backdrop texture path, or `''`.
+ */
+export function findBackground(node: JSX.Node): string {
+  if (!isElement(node)) {
+    return '';
+  }
+
+  if (node.type === BACKGROUND_SLOT_TYPE) {
+    const texture = node.props.__background;
+
+    return typeof texture === 'string' ? texture : '';
+  }
+
+  const { children } = node.props;
+  const childArray = Array.isArray(children) ? children : [children];
+
+  for (const child of childArray) {
+    const found = findBackground(child);
+
+    if (found !== '') {
+      return found;
+    }
+  }
+
+  return '';
 }
 
 /**

@@ -143,16 +143,12 @@
 			}
 		]
 	},
-	// The popup surface: 318px (10px narrower than the form → the popup scrollbar clears
-	// the form's own scrollbar; centered → symmetric 5px gutters). Height decodes
-	// popupHeight[1356] with plain "* 1" (the ONLY proven string→number coercion —
-	// fractional multiplies silently yield 0), TS caps it at half the canonical screen.
-	// Size-carrier panel inside a [1,1] parent ⇒ value = raw px; anchored center→center on
-	// that [1,1] point ⇒ always centered whatever the height. Literal-x + bound-y is the
-	// proven modal_scroll_content shape.
+	// The popup surface: 312px (16px narrower than the form → the popup scrollbar clears
+	// the form's own scrollbar)
 	"dropdown_popup_card": {
 		"type": "panel",
-		"size": ["318px", 0],
+		"size": ["312px", 0],
+		"offset": [-4.5, 0],
 		"anchor_from": "center",
 		"anchor_to": "center",
 		"property_bag": { "#size_binding_y": 0.0 },
@@ -169,33 +165,72 @@
 		],
 		"controls": [
 			{
-				"scroll@common.scrolling_panel": {
-					"layer": 2,
-					/* GLOBAL wheel claim ($var reaches scroll_view_control down the chain):
-					   while this popup is open (the only time this control exists — router
-					   gate), the wheel scrolls the POPUP no matter where the pointer is;
-					   pointer-position routing alone never delivered wheel to the overlay
-					   (the shield's modal input state gates it). The MAIN scroll must keep
-					   always_handle_scrolling FALSE or it wins the contention back. */
-					"$always_handle_scrolling": true,
-					"$allow_scrolling_even_when_content_fits": false,
-					"size": ["100%", "100%"],
-					"$scrolling_pane_size": ["100%", "100%"],
-					"$scrolling_content": "core_ui_form_components.dropdown_options",
-					"$scroll_view_port_size": ["100% - 4px", "100% - 4px"],
-					"$scroll_view_port_size_touch": ["100% - 4px", "100% - 4px"],
-					"$scroll_view_port_offset": [2, 2],
-					"$scroll_view_port_offset_touch": [2, 2],
-					"$scroll_size": [5, "100%-2px"],
-					"$scroll_size_touch": [5, "100%-2px"],
-					"$scroll_background_image_control": "core_ui_form_components.dropdown_popup_background",
-					"$background_size": ["100%", "100%"],
-					"$background_size_touch": ["100%", "100%"],
-					"$show_background": true,
-					"$scroll_bar_contained": true,
-					"$scroll_bar_contained_touch": true
-				}
+				/* Popup surface bg: a direct child of the card (NOT scroll chrome), so it
+				   fills the card exactly regardless of what the scroll does. */
+				"background@core_ui_form_components.dropdown_popup_background": {}
+			},
+			{ "popup_scroll@core_ui_form_components.dropdown_popup_scroll": {} }
+		]
+	},
+	// ── Popup scroll: OUR scroll_view (the proven core_ui_screens.scroll shape), NOT
+	// vanilla common.scrolling_panel — the vanilla wrapper's nested stack/padding chrome
+	// offset the popup content by amounts we don't control. Everything here is top_left +
+	// 100%, so content starts exactly at the card origin and the ONLY spacing is
+	// dropdown_options' own 1px padding (mirrored in the TS popupHeight).
+	"dropdown_popup_scroll": {
+		"type": "scroll_view",
+		"size": ["100%", "100%"],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"layer": 2,
+		"scroll_speed": 15,
+		/* GLOBAL wheel claim: while this popup is open (the only time this control exists —
+		   router gate), the wheel scrolls the POPUP no matter where the pointer is;
+		   pointer-position routing alone never delivered wheel to the overlay (the shield's
+		   modal input state gates it). The MAIN scroll must keep always_handle_scrolling
+		   FALSE or it wins the contention back. */
+		"always_handle_scrolling": true,
+		/* Engine name has no "-ing": don't rubber-band when the options fit. */
+		"allow_scroll_even_when_content_fits": false,
+		"scrollbar_track_button": "button.scrollbar_skip_track",
+		"scrollbar_touch_button": "button.scrollbar_touch",
+		"always_listen_to_input": true,
+		"always_handle_pointer": true,
+		"scroll_content": "scrolling_content",
+		"scroll_view_port": "scrolling_view_port",
+		"scrollbar_track": "track",
+		"scrollbar_box": "box",
+		"scroll_box_and_track_panel": "bar_and_track",
+		"button_mappings": [
+			{
+				"from_button_id": "button.menu_select",
+				"to_button_id": "button.scrollbar_touch",
+				"mapping_type": "pressed",
+				"button_up_right_of_first_refusal": true
 			}
+		],
+		"controls": [
+			{
+				"scrolling_view_port": {
+					"type": "panel",
+					"size": ["100%", "100%"],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"clips_children": true,
+					"controls": [
+						{
+							/* dropdown_options is 100%c (content-sized), so it can be the
+							   scroll content DIRECTLY — no [1,1] size_anchor trick needed
+							   (that exists only for #size_binding-driven content). */
+							"scrolling_content@core_ui_form_components.dropdown_options": {
+								"anchor_from": "top_left",
+								"anchor_to": "top_left"
+							}
+						}
+					]
+				}
+			},
+			{ "bar_and_track@core_ui_screens.scrollbar": {} }
 		]
 	},
 	// Closed-box current-value host: a [1,1] frame at the box's left-middle; the value
@@ -288,11 +323,14 @@
 	},
 	// Popup container background: self-decodes popupBackground[1273] from the dropdown's
 	// custom_form cell (collection cell scope reaches inside the popup — probe-verified).
-	// Empty texture draws nothing (the scroll's background@ instance forces visible true).
+	// An empty texture self-hides via the #visible binding.
 	"dropdown_popup_background": {
 		"type": "image",
 		"layer": 1,
+		"size": ["100%", "100%"],
 		"texture": "#texture",
+		"visible": "#visible",
+		"property_bag": { "#visible": true },
 		"bindings": [
 			{
 				"binding_name": "#custom_text",
@@ -308,41 +346,61 @@
 	// Popup option list: stack of factory-generated rows (one per custom_dropdown entry).
 	"dropdown_options": {
 		"type": "panel",
-		"size": ["100% - 4px", "100%c + 4px"],
-		"offset": [2, 1],
+		"size": ["100%", "100%c"],
 		"controls": [
 			{
-				"radio_control_group": {
-					"type": "stack_panel",
-					"orientation": "vertical",
-					"size": ["100%", "100%c"],
-					"anchor_from": "top_left",
-					"anchor_to": "top_left",
-					"factory": {
-						"name": "buttons",
-						"control_name": "core_ui_form_components.dropdown_option_radio"
-					},
-					"collection_name": "custom_dropdown",
-					"bindings": [
+				"options_inset": {
+					"type": "panel",
+					"size": ["100%-2px", "100%c"],
+					"offset": [0, 1],
+					"anchor_from": "top_middle",
+					"anchor_to": "top_middle",
+					"controls": [
 						{
-							"binding_name": "#custom_dropdown_length",
-							"binding_type": "collection",
-							"binding_name_override": "#collection_length",
-							"binding_collection_name": "custom_form"
+							"radio_control_group": {
+								"type": "stack_panel",
+								"orientation": "vertical",
+								"size": ["100%", "100%c"],
+								"anchor_from": "top_left",
+								"anchor_to": "top_left",
+								"factory": {
+									"name": "buttons",
+									"control_name": "core_ui_form_components.dropdown_option_radio"
+								},
+								"collection_name": "custom_dropdown",
+								"bindings": [
+									{
+										"binding_name": "#custom_dropdown_length",
+										"binding_type": "collection",
+										"binding_name_override": "#collection_length",
+										"binding_collection_name": "custom_form"
+									}
+								]
+							}
 						}
 					]
 				}
 			}
 		]
 	},
-	// One popup row: fixed 17px flow height; the shared option_toggle + label do the rest.
+	// One popup row: fixed 17px FLOW height, 18px face anchored to the row top — the face
+	// overshoots 1px into the next row so adjacent 1px texture borders FUSE into a single
+	// line (OPTION_ROW_OVERLAP in FormDropdown.ts, which also centers the label in the
+	// 18px face). The later sibling's top border draws over the previous row's bottom
+	// border — same border color across states keeps the seam invisible.
 	"dropdown_option_radio": {
 		"type": "panel",
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
 		"size": ["100%", "17px"],
 		"controls": [
-			{ "option_toggle@core_ui_form_components.option_toggle": {} },
+			{
+				"option_toggle@core_ui_form_components.option_toggle": {
+					"size": ["100%", "100%+1px"],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left"
+				}
+			},
 			{ "label_frame@core_ui_form_components.option_label_frame": {} }
 		]
 	}

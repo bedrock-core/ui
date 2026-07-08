@@ -26,6 +26,11 @@
 				}
 			},
 			{
+				"text_shadow@core_ui_components.text_shadow": {
+					"$region_filter": "$region_filter"
+				}
+			},
+			{
 				"image@core_ui_components.image": {
 					"$region_filter": "$region_filter"
 				}

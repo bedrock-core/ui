@@ -4,7 +4,7 @@ import { collectFormButtons, formButtonTitleFields, type FormConfig, type FormVa
 import type { JSX } from '../../../jsx';
 import { serialize, serializeModalTitle } from '../../serializer';
 import type { ModalSerializationContext } from '../../types';
-import { resolveScrolls, runInteractiveCallback, type PresentResult } from './shared';
+import { findBackground, resolveScrolls, runInteractiveCallback, type PresentResult } from './shared';
 
 /**
  * Present one snapshot of a modal `<Form>` tree as a native `ModalFormData`.
@@ -43,7 +43,7 @@ export async function presentModal(
   form.title(serializeModalTitle(resolveScrolls(tree), {
     ...formButtonTitleFields('submit', submit),
     ...formButtonTitleFields('exit', exit),
-  }));
+  }, findBackground(tree)));
 
   // Walk the tree: control writers add native controls (recording name-by-ordinal);
   // decorative nodes emit label slots; the modal-form marker is transparent.

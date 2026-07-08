@@ -9,7 +9,14 @@
 	// through instantiation into both the base bindings and the child.
 	"text@core_ui_common.control": {
 		"layer": 100,
-		"$type_gate": "(#pre_visible and (#type = 'text'))",
+		/* The #type token this component matches. text_shadow derives text and overrides
+		   ONLY this |default var (the label_router_r1/$region_filter-proven override shape) —
+		   re-stating the whole $type_gate there would be a hard-over-hard $var override at
+		   derivation depth 2, which nothing in this pack has proven in-game. $var-inside-
+		   expression is the control.json $region_filter shape; a $var value holding another
+		   $var is the vanilla common_panel/$custom_background shape. */
+		"$text_type|default": "text",
+		"$type_gate": "(#pre_visible and (#type = $text_type))",
 		"controls": [
 			{
 				/* [1,1] positioning frame (px-mapping rule): the label inside offsets from
@@ -35,6 +42,14 @@
 			}
 		]
 	},
+	/* Shadowed text. `shadow` is a LOAD-TIME label property (not bindable — vanilla only
+	   ever sets a literal or $variable), so the TS side routes it through the element TYPE:
+	   `<Text shadow>` serializes `type: 'text_shadow'` and this variant rides the standard
+	   type gate with a literal $shadow for the label. Same payload contract as `text`. */
+	"text_shadow@core_ui_components.text": {
+		"$text_type": "text_shadow",
+		"$shadow": true
+	},
 	"label": {
 		"type": "label",
 		"text": "#text",
@@ -47,8 +62,13 @@
 		"font_size": "small",
 		"backup_font_type": "UIFont",
 		"font_scale_factor": "#font_scale_factor",
-		"$label_alignment|default": "left",
-		"text_alignment": "$label_alignment",
+		/* `shadow` is NOT runtime-bindable — the engine resolves it at load time (vanilla only
+		   ever sets it to a literal or a $variable, never a #binding). So it is a COMPILE-TIME
+		   $variable; shadowed text arrives as its own element type (`text_shadow` above),
+		   which sets $shadow: true through the type-gated variant. */
+		"$shadow|default": false,
+		"shadow": "$shadow",
+		"text_alignment": "left",
 		"size": [
 			"default",
 			"default"

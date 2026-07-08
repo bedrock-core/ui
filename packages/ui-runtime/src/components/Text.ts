@@ -9,6 +9,15 @@ import { labelFontFields, type LabelFont } from './Form/controlPayload';
 /** Public alias of the shared label font union (single source: controlPayload). */
 export type TextFont = LabelFont;
 
+/**
+ * Element type emitted for `<Text shadow>`. JSON UI's label `shadow` is a load-time
+ * property (not bindable), so shadow is routed at serialize time through a separate
+ * component type: the RP mounts `text_shadow` as a sibling of `text` in both label
+ * routers, gated by the standard `(#type = '…')` type gate, with a literal
+ * `$shadow: true` on its label. Same writer, same payload contract as `text`.
+ */
+export const TEXT_SHADOW_TYPE = 'text_shadow';
+
 export type TextWordBreak = 'normal' | 'break-word';
 export type TextOverflow = 'ellipsis';
 
@@ -72,6 +81,13 @@ export interface TextProps extends ControlProps {
   offsetX?: number;
   /** Fine-tune Y nudge (px) of the rendered label inside its layout box. Default `0`. */
   offsetY?: number;
+
+  /**
+   * Drop shadow behind the glyphs (JSON UI `shadow`). Default `false`.
+   * Resolved at serialize time: shadowed text emits the `text_shadow` element type,
+   * which the RP routes to a label variant with a literal `shadow: true`.
+   */
+  shadow?: boolean;
 }
 
 /**
@@ -96,6 +112,7 @@ export const Text: FunctionComponent<TextProps> = ({
   maxLines,
   offsetX,
   offsetY,
+  shadow,
   ...rest
 }: TextProps): JSX.Element => {
   const resolvedScale = scale ?? 1.0;
@@ -130,14 +147,16 @@ export const Text: FunctionComponent<TextProps> = ({
   }
 
   return {
-    type: 'text',
+    // Shadow picks the component TYPE (see TEXT_SHADOW_TYPE): both types share this
+    // writer and payload; the RP routers gate them apart with the standard type gate.
+    type: shadow ? TEXT_SHADOW_TYPE : 'text',
     props: {
       ...withControl(rest),
       // Keys pass through — we send the key, not the resolved string, so a
       // digit-leading .lang entry is guarded there; raw text uses safeLabelText.
       // The label GROUP contract (label decodes it sequentially from [1024]):
-      // text, fontType, fontScale, x, y — `value` is the group's text slot (kept named
-      // `value` for the key pass-through semantics; field ORDER is what the RP reads).
+      // text, fontType, fontScale, x, y — `value` is the group's text slot (kept
+      // named `value` for the key pass-through semantics; field ORDER is what the RP reads).
       value: isKey ? localizationKey : safeLabelText(resolvedText),
       fontType: labelFont.fontType,
       fontScaleFactor: labelFont.fontScaleFactor,
@@ -157,7 +176,7 @@ export const Text: FunctionComponent<TextProps> = ({
   };
 };
 
-/** Serializes a `text` into the static (label) slot. */
+/** Serializes a `text` or `text_shadow` into the static (label) slot. */
 export const textWriter: Writer = (payload, form, ctx) => {
   emitLabel(payload, form, ctx);
 };

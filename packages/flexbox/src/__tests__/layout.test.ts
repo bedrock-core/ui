@@ -161,6 +161,47 @@ describe('flex distribution', () => {
     expect(root.children[0].layout.width).toBe(100);
     expect(root.children[1].layout.width).toBe(200);
   });
+
+  it('flex:1 means basis 0 — equal siblings stay equal despite different content widths', () => {
+    // CSS `flex: 1` is `flex: 1 1 0%`: grown items start from basis 0, so two flex:1
+    // siblings split the row EQUALLY even when one has wider content (e.g. two labeled
+    // form fields whose captions differ). Regression: labeled ore inputs came out 152 vs
+    // 164 because each grew from its own content width instead of from 0.
+    const root = createNode({ width: 320, height: 100, flexDirection: 'row' }, [
+      createNode({ flex: 1, width: 24, height: 50 }),
+      createNode({ flex: 1, width: 60, height: 50 }),
+    ]);
+
+    computeLayout(root);
+    expect(root.children[0].layout.width).toBe(160);
+    expect(root.children[1].layout.width).toBe(160);
+  });
+
+  it('numeric flexBasis is the grow floor', () => {
+    // basis 40 + basis 0, one flex:1 each → free = 200 - 40 = 160, split by grow weight
+    // (equal) → 40+80=120 and 0+80=80.
+    const root = createNode({ width: 200, height: 100, flexDirection: 'row' }, [
+      createNode({ flex: 1, flexBasis: 40, width: 100, height: 50 }),
+      createNode({ flex: 1, width: 100, height: 50 }),
+    ]);
+
+    computeLayout(root);
+    expect(root.children[0].layout.width).toBe(120);
+    expect(root.children[1].layout.width).toBe(80);
+  });
+
+  it('flexBasis auto keeps the measured size as the floor', () => {
+    // `flex-basis: auto` → grow from the item's own width. free = 300-50-50 = 200, one
+    // grow weight → the flex child ends 50+200 = 250, the fixed one stays 50.
+    const root = createNode({ width: 300, height: 100, flexDirection: 'row' }, [
+      createNode({ width: 50, height: 50 }),
+      createNode({ flex: 1, flexBasis: 'auto', width: 50, height: 50 }),
+    ]);
+
+    computeLayout(root);
+    expect(root.children[0].layout.width).toBe(50);
+    expect(root.children[1].layout.width).toBe(250);
+  });
 });
 
 // ─── justifyContent ───────────────────────────────────────────────────────────

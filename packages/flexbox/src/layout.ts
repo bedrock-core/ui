@@ -4,6 +4,7 @@ import {
   isPercent,
   resolveAlignSelf,
   resolveColumnGap,
+  resolveFlexBasisMain,
   resolveFlexGrow,
   resolveFlexShrink,
   resolveMargin,
@@ -548,7 +549,20 @@ export function computeLayout(
         const flex = resolveFlexGrow(child.style);
         const shrink = resolveFlexShrink(child.style);
         const childMargin = dir === 'row' ? cm.left + cm.right : cm.top + cm.bottom;
-        const childBasis = dir === 'row' ? child.layout.width : child.layout.height;
+        // Collapse the child's main size to its flex BASIS up front (CSS `flex: 1` ⇒
+        // basis 0), so the free-space math and the grow/shrink steps below all read the
+        // same basis from child.layout. Without this, a grown item keeps its content
+        // size as a floor and equal-grow siblings stay unequal.
+        const measuredMain = dir === 'row' ? child.layout.width : child.layout.height;
+        const childBasis = resolveFlexBasisMain(child.style, measuredMain);
+
+        if (childBasis !== measuredMain) {
+          if (dir === 'row') {
+            child.layout.width = childBasis;
+          } else {
+            child.layout.height = childBasis;
+          }
+        }
 
         flowCount++;
         usedMain += childBasis + childMargin;

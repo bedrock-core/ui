@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { serializeProps, serializeScrollMetadata, type ScrollMetrics, FIELD_MARKERS, FULL_WIDTH, PAD_CHAR, PROTOCOL_HEADER, PROTOCOL_HEADER_LENGTH } from '../serializer';
+import { serializeProps, serializeScrollMetadata, type ScrollMetrics, BACKGROUND_TITLE_SKIP, FIELD_MARKERS, FULL_WIDTH, PAD_CHAR, PROTOCOL_HEADER, PROTOCOL_HEADER_LENGTH } from '../serializer';
+import { Text, TEXT_SHADOW_TYPE } from '../../components/Text';
 
 describe('serializeProps — text font field', () => {
   it('serializes mojangles font as "default"', () => {
@@ -43,6 +44,43 @@ describe('serializeProps — text font field', () => {
     const [, bytesWith] = serializeProps({ type: 'text', value: 'Hi', fontType: 'default' });
 
     expect(bytesWith - bytesWithout).toBe(FULL_WIDTH.s);
+  });
+});
+
+describe('Text shadow prop', () => {
+  // JSON UI `shadow` is a load-time label property (not bindable), so shadow routes
+  // through the element TYPE: the RP mounts `text_shadow` next to `text` in both label
+  // routers and gates them apart with the standard `(#type = '…')` type gate.
+  it('defaults to the plain text element type', () => {
+    const el = Text({ children: 'Hi' });
+
+    expect(el.type).toBe('text');
+  });
+
+  it('shadow:true emits the text_shadow element type', () => {
+    const el = Text({ children: 'Hi', shadow: true });
+
+    expect(el.type).toBe(TEXT_SHADOW_TYPE);
+  });
+
+  it('shadow changes ONLY the type — the label group stays five slots with identical keys', () => {
+    // The RP `core_ui_components.label` decodes the group sequentially from $label_skip:
+    // value, fontType, fontScale, labelX, labelY. Both types share the decode contract.
+    const plain = Text({ children: 'Hi' });
+    const shadowed = Text({ children: 'Hi', shadow: true });
+
+    expect(Object.keys(shadowed.props)).toEqual(Object.keys(plain.props));
+    expect('labelShadow' in shadowed.props).toBe(false);
+  });
+
+  it('text_shadow serializes byte-identically to text except the type token', () => {
+    const [plain, bytesPlain] = serializeProps({ type: 'text', value: 'Hi' });
+    const [shadowed, bytesShadowed] = serializeProps({ type: TEXT_SHADOW_TYPE, value: 'Hi' });
+
+    expect(shadowed).toContain('s:text_shadow');
+    expect(bytesShadowed).toBe(bytesPlain); // type is one padded string field either way
+    // Identical past the type field — the label group offsets are unchanged.
+    expect(shadowed.slice(PROTOCOL_HEADER_LENGTH + FULL_WIDTH.s)).toBe(plain.slice(PROTOCOL_HEADER_LENGTH + FULL_WIDTH.s));
   });
 });
 
@@ -91,5 +129,39 @@ describe('serializeScrollMetadata', () => {
 
     expect(payload).toContain('n:100'); // extent rounded up
     expect(payload).toContain('n:99;'); // height rounded down
+  });
+
+  it('omits the background field when empty — title stays byte-identical', () => {
+    expect(serializeScrollMetadata([root], '')).toBe(serializeScrollMetadata([root]));
+  });
+
+  // The RP decode contract of core_ui_common.form_background: the bg field sits at the
+  // FIXED BACKGROUND_TITLE_SKIP (2573 after the header), regardless of scroll count —
+  // the gap of unused scroll slots is padded with reserved ';' bytes (which decode '').
+  it('pads the scroll slots and places the background at the fixed offset', () => {
+    expect(BACKGROUND_TITLE_SKIP).toBe(2573);
+
+    const payload = serializeScrollMetadata([root], 'textures/ui/my_bg');
+
+    expect(payload).toHaveLength(PROTOCOL_HEADER_LENGTH + BACKGROUND_TITLE_SKIP + FULL_WIDTH.s);
+
+    const bgStart = PROTOCOL_HEADER_LENGTH + BACKGROUND_TITLE_SKIP;
+
+    // pad = FIELD_MARKERS[7] (one reserved segment), bg = FIELD_MARKERS[8]
+    expect(payload.slice(bgStart, bgStart + FULL_WIDTH.s))
+      .toBe(`s:textures/ui/my_bg${PAD_CHAR.repeat(80 - 'textures/ui/my_bg'.length)}${FIELD_MARKERS[8]}`);
+    // the padded gap is pure pad chars (+ its trailing marker)
+    const gap = payload.slice(PROTOCOL_HEADER_LENGTH + FULL_WIDTH.s + blockBytes, bgStart);
+
+    expect(gap).toBe(PAD_CHAR.repeat(4 * blockBytes - 1) + FIELD_MARKERS[7]);
+  });
+
+  it('keeps the background at the same fixed offset with multiple scrolls', () => {
+    const second: ScrollMetrics = { axis: 'x', x: 10, y: 20, width: 200, height: 40, extent: 500 };
+    const payload = serializeScrollMetadata([root, second], 'textures/ui/my_bg');
+
+    const bgStart = PROTOCOL_HEADER_LENGTH + BACKGROUND_TITLE_SKIP;
+
+    expect(payload.slice(bgStart, bgStart + 's:textures/ui/my_bg'.length)).toBe('s:textures/ui/my_bg');
   });
 });

@@ -1,0 +1,73 @@
+{
+	"namespace": "core_ui_common",
+	// ─────────────────────────────────────────────────────────────────────────────
+	// Full-screen form backdrop (<Background texture="..."/>). ONE optional string
+	// field at the FIXED offset 2573 after the header (83 type + 5·498 scroll slots):
+	// when a background is set, the TS serializer pads the title out to the full
+	// scroll complement (ActionForm) or past the Form.Button blocks (modal) with
+	// reserved ';' bytes, so BOTH backends put the texture at the same offset and
+	// this single static control decodes it. Padding decodes '' everywhere, so all
+	// other title decoders are unaffected; without a <Background> nothing is emitted
+	// and the title stays byte-identical to plain v0007.
+	//
+	// Hosted once in server_form.main_screen_content (screen-sized, protocol-gated
+	// via its #size_binding), NOT in the shifted containers — 100% × 100%, no offset.
+	// layer -2 keeps it under all form content. Update 2573 in lockstep with
+	// BACKGROUND_TITLE_SKIP (serializer.ts) if the scroll pool ever grows.
+	// ─────────────────────────────────────────────────────────────────────────────
+	"form_background": {
+		"type": "image",
+		"size": [
+			"100%",
+			"100%"
+		],
+		"layer": -2,
+		"texture": "#texture",
+		"visible": "#visible",
+		"property_bag": {
+			"#texture": "",
+			"#visible": false
+		},
+		"bindings": [
+			{
+				"binding_name": "#title_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.9s' * #title_text)",
+				"target_property_name": "#protocol_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#title_text - #protocol_header)",
+				"target_property_name": "#rem_after_header"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.2573s' * #rem_after_header)",
+				"target_property_name": "#pre_bg"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#rem_after_header - #pre_bg)",
+				"target_property_name": "#at_bg"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_bg)",
+				"target_property_name": "#raw_bg"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_bg) - ('%.2s' * #raw_bg) - ';')",
+				"target_property_name": "#texture"
+			},
+			{
+				/* shorter/plain titles decode '' here → hidden */
+				"binding_type": "view",
+				"source_property_name": "(not (#texture = ''))",
+				"target_property_name": "#visible"
+			}
+		]
+	}
+}

@@ -10,6 +10,7 @@
 		"ui/core-ui/common/state.json",
 		"ui/core-ui/common/action_container.json",
 		"ui/core-ui/common/modal_container.json",
+		"ui/core-ui/common/form_background.json",
 		"ui/core-ui/common/label_router.json",
 		"ui/core-ui/common/button_router.json",
 		"ui/core-ui/common/dropdown_router.json",

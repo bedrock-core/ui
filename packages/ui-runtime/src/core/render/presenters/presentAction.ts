@@ -3,7 +3,7 @@ import { ActionFormData } from '@minecraft/server-ui';
 import type { JSX } from '../../../jsx';
 import { serialize, serializeScrollMetadata } from '../../serializer';
 import type { ActionSerializationContext } from '../../types';
-import { resolveScrolls, runInteractiveCallback, type PresentResult } from './shared';
+import { findBackground, resolveScrolls, runInteractiveCallback, type PresentResult } from './shared';
 
 /**
  * Present one snapshot of an ordinary (ActionForm) tree.
@@ -24,7 +24,7 @@ export async function presentAction(
   const context: ActionSerializationContext = { mode: 'action', buttonCallbacks: new Map(), buttonIndex: 0 };
   const form: ActionFormData = new ActionFormData();
 
-  form.title(serializeScrollMetadata(resolveScrolls(tree)));
+  form.title(serializeScrollMetadata(resolveScrolls(tree), findBackground(tree)));
 
   serialize(tree, form, context);
 

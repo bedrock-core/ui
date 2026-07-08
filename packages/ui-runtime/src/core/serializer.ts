@@ -1,4 +1,5 @@
 import { MODAL_OPTION_SLOT_TYPE } from '../components/Form/FormOption';
+import { MAX_SCROLLS } from '../components/Scroll';
 import { JSX } from '../jsx';
 import { getComponentDescriptor, getRegisteredTypes, isTransparentType } from './componentRegistry';
 import { isElement, isFunction, isSerializablePrimitive } from './guards';
@@ -295,6 +296,23 @@ export interface ScrollMetrics {
 /** Per-scroll title field count: axis + x + y + width + height + extent. */
 export const SCROLL_FIELD_COUNT = 6;
 
+/** Bytes of one scroll block in the title. */
+const SCROLL_BLOCK_BYTES = SCROLL_FIELD_COUNT * FULL_WIDTH.n;
+
+/** Bytes of one Form.Button title block: w/h/x/y (n) + visible/enabled (b) + label/bg/hover/pressed/locked (s). */
+const FLOW_BUTTON_BLOCK_BYTES = 4 * FULL_WIDTH.n + 2 * FULL_WIDTH.b + 5 * FULL_WIDTH.s;
+
+/**
+ * Fixed byte offset (after the header) of the optional `<Background>` texture field —
+ * the RP decode contract of `core_ui_common.form_background`. The field always sits
+ * after a FULL complement of scroll blocks (root + {@link MAX_SCROLLS}): when a
+ * background is set, both title serializers pad the gap with reserved `;` bytes so
+ * this offset never moves, regardless of scroll count or backend. Unused scroll slots
+ * decode to `''`, exactly like absent blocks, so all existing decoders are unaffected.
+ * 83 + 5·498 = 2573.
+ */
+export const BACKGROUND_TITLE_SKIP = FULL_WIDTH.s + (MAX_SCROLLS + 1) * SCROLL_BLOCK_BYTES;
+
 /**
  * Serialize the form title metadata: a flat list of scroll viewports.
  *
@@ -310,10 +328,17 @@ export const SCROLL_FIELD_COUNT = 6;
  * `#size_binding_*` (viewport size); the content panel uses the `[1,1]` size_anchor trick to
  * overflow only the scroll axis by `extent`.
  *
+ * A non-empty `background` pads the scroll list out to the full root+{@link MAX_SCROLLS}
+ * complement with reserved `;` bytes (unused slots decode `''`, same as absent blocks)
+ * and appends ONE string field at the fixed {@link BACKGROUND_TITLE_SKIP}, where the
+ * single static `core_ui_common.form_background` decodes it. When empty, nothing is
+ * emitted — a background-less title stays byte-identical to the plain v0007 layout.
+ *
  * @param scrolls - Scroll viewports in index order (index 0 is the root scroll)
+ * @param background - Optional full-screen backdrop texture path ('' = none)
  * @returns Full title string for form.title()
  */
-export function serializeScrollMetadata(scrolls: readonly ScrollMetrics[]): string {
+export function serializeScrollMetadata(scrolls: readonly ScrollMetrics[], background = ''): string {
   const fields: SerializableProps = {};
 
   scrolls.forEach((scroll, index) => {
@@ -324,6 +349,16 @@ export function serializeScrollMetadata(scrolls: readonly ScrollMetrics[]): stri
     fields[`height${index}`] = Math.round(scroll.height);
     fields[`extent${index}`] = Math.round(scroll.extent);
   });
+
+  if (background !== '') {
+    const emptySlots = MAX_SCROLLS + 1 - scrolls.length;
+
+    if (emptySlots > 0) {
+      fields.pad = { bytes: emptySlots * SCROLL_BLOCK_BYTES };
+    }
+
+    fields.bg = background;
+  }
 
   const [payload] = serializeProps({ type: 'scrolls', ...fields });
 
@@ -338,13 +373,21 @@ export function serializeScrollMetadata(scrolls: readonly ScrollMetrics[]): stri
  * resolved from their owning component modules (e.g. `formButtonTitleFields` — see
  * FormButton.ts for the Form.Button byte-offset contract).
  *
+ * A non-empty `background` pads past the fixed modal layout (scroll block + submit
+ * block [590 abs] + exit block [1353 abs], 763 bytes each, ending 2107 after the
+ * header) with reserved `;` bytes and appends ONE string field at the same fixed
+ * {@link BACKGROUND_TITLE_SKIP} the ActionForm title uses, so the single static
+ * `core_ui_common.form_background` serves both backends. Omitted entirely when empty.
+ *
  * @param scrolls - Scroll viewports; a modal must pass exactly one (the root).
  * @param extraFields - Resolved fields appended after the scroll block.
+ * @param background - Optional full-screen backdrop texture path ('' = none).
  * @returns Full title string for `form.title()`.
  */
 export function serializeModalTitle(
   scrolls: readonly ScrollMetrics[],
   extraFields: SerializableProps,
+  background = '',
 ): string {
   if (scrolls.length !== 1) {
     throw new ModalFormError(
@@ -353,6 +396,12 @@ export function serializeModalTitle(
       + 'single scroll block.',
     );
   }
+
+  // Pad from the end of the fixed modal fields up to the shared background offset.
+  const modalFieldsEnd = FULL_WIDTH.s + SCROLL_BLOCK_BYTES + 2 * FLOW_BUTTON_BLOCK_BYTES;
+  const backgroundFields: SerializableProps = background !== ''
+    ? { pad: { bytes: BACKGROUND_TITLE_SKIP - modalFieldsEnd }, bg: background }
+    : {};
 
   const [scroll] = scrolls;
   const [payload] = serializeProps({
@@ -364,6 +413,7 @@ export function serializeModalTitle(
     height0: Math.round(scroll.height),
     extent0: Math.round(scroll.extent),
     ...extraFields,
+    ...backgroundFields,
   });
 
   return payload;

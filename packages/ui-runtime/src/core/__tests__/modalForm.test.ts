@@ -216,9 +216,10 @@ describe('modal control serialization', () => {
     expect(label.indexOf('s:textures/ui/cb_pressed')).toBe(1107);
     expect(label.indexOf('s:textures/ui/cb_locked')).toBe(1190);
     expect(label.indexOf('s:textures/ui/popup_bg')).toBe(1273);
-    // popupHeight [1356]: 2 options × 17px + 9px chrome = 43, hugging the list. (Moved up
-    // from [1605] now that the uniform option-style block left this payload.)
-    expect(label.indexOf('n:43')).toBe(1356);
+    // popupHeight [1356]: 2 options × 17px + 1px fused-border overlap + 2px padding
+    // (top + bottom) = 37, hugging the list. (Moved up from [1605] now that the uniform
+    // option-style block left this payload.)
+    expect(label.indexOf('n:37')).toBe(1356);
   });
 
   // Per-option payload: each option string handed to the native dropdown is a full
@@ -496,6 +497,30 @@ describe('modal control serialization', () => {
     expect(title.slice(1353, 1357)).toBe('n:0;'); // zero geometry
   });
 
+  // The optional <Background> field sits at the SAME fixed offset as on ActionForm
+  // titles (BACKGROUND_TITLE_SKIP = 2573 after the header, 2582 absolute): the gap
+  // after the exit block is padded with reserved bytes so the single static
+  // core_ui_common.form_background serves both backends. Omitted when undeclared.
+  it('appends the background field at the contracted title offset', () => {
+    const scroll = { axis: 'y' as const, x: 0, y: 0, width: 320, height: 210, extent: 400 };
+    const submit: JSX.Element = {
+      type: 'modal-form-button',
+      props: { buttonKind: 'submit', label: 'Save', jsonUIWidth: 100, jsonUIHeight: 24, jsonUIx: 4, jsonUIy: 300 },
+    };
+    const fields = (): ReturnType<typeof formButtonTitleFields> => ({
+      ...formButtonTitleFields('submit', submit),
+      ...formButtonTitleFields('exit', undefined),
+    });
+
+    const plain = serializeModalTitle([scroll], fields());
+    const withBg = serializeModalTitle([scroll], fields(), 'textures/ui/my_bg');
+
+    expect(serializeModalTitle([scroll], fields(), '')).toBe(plain); // empty = omitted
+    // pad (2573 - 2107 = 466 bytes) + bg field (83)
+    expect(withBg).toHaveLength(plain.length + 466 + 83);
+    expect(withBg.indexOf('s:textures/ui/my_bg')).toBe(9 + 2573);
+  });
+
   it('requires exactly one submit Form.Button and at most one exit', () => {
     const btn = (kind: string): JSX.Element => ({
       type: 'modal-form-button',
@@ -511,7 +536,8 @@ describe('modal control serialization', () => {
     expect(collectFormButtons(tree([btn('submit')])).submit.props.label).toBe('B');
   });
 
-  // popupHeight caps at half the canonical screen (210/2 = 105) so long lists scroll.
+  // popupHeight caps at half the canonical screen (210/2 = 105, + 2px top/bottom padding)
+  // so long lists scroll.
   it('caps the computed popup height at half the screen', () => {
     const form = new FakeModalForm();
     const options = Array.from({ length: 20 }, (_, i) => `opt${i}`);
@@ -522,7 +548,7 @@ describe('modal control serialization', () => {
 
     // popupHeight now sits at [1356] (right after popupBackground) — the uniform option-style
     // block that used to precede it moved into each option's own blob.
-    expect(label.indexOf('n:105')).toBe(1356);
+    expect(label.indexOf('n:107')).toBe(1356);
   });
 
   it('records each control name against its ordinal', () => {

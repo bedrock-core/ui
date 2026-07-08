@@ -10,7 +10,7 @@
 	//
 	// Each pooled scroll decodes its FULL viewport geometry (x, y, width, height) from its own
 	// title block and applies it via #size_binding (size) + use_anchored_offset (position):
-	// decoded pixels × $normalize (1/320 x/width) / $normalize_y (1/210 y/height) → fraction of
+	// decoded pixels × $normalize (1/320 x/width) / $normalize_y (1/210+ε y/height) → fraction of
 	// the FIXED 328×210 canonical pool panel (must equal the layout's CANONICAL_SCREEN so a
 	// fraction maps back to the exact canonical px). Content sizing stays in the [1,1] size_anchor
 	// (#size_binding × 1, pixel-exact). A scroll whose block is absent decodes to 0 → collapses.
@@ -212,7 +212,14 @@
 			"divider": "@core_ui_common.unused"
 		},
 		"$normalize|default": 0.003125,
-		"$normalize_y|default": 0.0047619,
+		/* 1/210 + epsilon (×210 = 1.000020, not 0.999999). The layout pass FLOORS a fitting
+		   scroll's extent to exactly the viewport height, and content applies pixel-exact
+		   (extent × 1) while the viewport is height × $normalize_y × 210. With a truncated
+		   1/210 (0.0047619 × 210 = 0.999999) the viewport comes out fractionally SMALLER than
+		   the content, so the engine sees ~1e-6 overflow and shows the scrollbar on every
+		   fitting scroll. Overshooting keeps viewport ≥ content when it fits (bar auto-hides);
+		   a real ≥1px overflow still dwarfs the ~0.004px bias and shows the bar. */
+		"$normalize_y|default": 0.004762,
 		"property_bag": {
 			"#size_binding_x": 0.0,
 			"#size_binding_y": 0.0,
