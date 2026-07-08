@@ -31,6 +31,13 @@
 				}
 			},
 			{
+				"text_shadow@core_ui_components.text_shadow": {
+					"$payload_collection": "custom_form",
+					"$payload_binding": "#custom_text",
+					"$cell_details_binding_type": "collection_details"
+				}
+			},
+			{
 				"image@core_ui_components.image": {
 					"$payload_collection": "custom_form",
 					"$payload_binding": "#custom_text",

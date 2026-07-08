@@ -54,7 +54,7 @@
 					"type": "panel",
 					"size": [
 						"328px",
-						"100%"
+						"98%"
 					],
 					"offset": [
 						0,
@@ -99,7 +99,7 @@
 		"type": "scroll_view",
 		"size": [
 			"328px",
-			"100%"
+			"98%"
 		],
 		"offset": [
 			0,

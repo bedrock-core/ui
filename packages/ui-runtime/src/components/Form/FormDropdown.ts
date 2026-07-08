@@ -19,11 +19,18 @@ import { FormControlBase } from './shared';
  */
 const OPTION_ROW_HEIGHT = 17;
 /**
- * Popup chrome (px): the option group's own "+4px" padding + the scroll viewport's
- * insets (2px top + 2px bottom) + 1px rounding slack — must match the RP scroll
- * block in modal_dropdown.json.
+ * Adjacent option rows FUSE their 1px texture borders: each face renders 1px taller than
+ * its flow slot (`"100%+1px"` in RP `dropdown_option_radio`), so its bottom border and the
+ * next row's top border coincide — a single 1px line between elements instead of
+ * border + gap + border. The fused column is therefore rows × height + 1px tall.
  */
-const POPUP_CHROME = 9;
+const OPTION_ROW_OVERLAP = 1;
+/**
+ * Padding (px) between the option list and the popup card edges. The RP mirrors the
+ * left/top/right (`dropdown_options` offset `[1,1]` + `"100%-2px"` width); `popupHeight`
+ * adds it for BOTH the top and bottom edges.
+ */
+const POPUP_PADDING = 1;
 /** Popup height cap: half the canonical screen — longer lists get the scrollbar. */
 const POPUP_MAX_HEIGHT = CANONICAL_SCREEN.height / 2;
 
@@ -139,11 +146,12 @@ export const FormDropdown: FunctionComponent<FormDropdownProps> = ({
       backgroundPressed: closedBox.backgroundPressed, // [1107-1189]
       backgroundLocked: closedBox.backgroundLocked, // [1190-1272]
       popupBackground: popupBackground ?? UNSTYLED_TEXTURE, // [1273-1355] dropdown-specific
-      // [1356-1438] computed popup height (px): rows × fixed row height + chrome, cap at half
-      // the screen. The RP decodes it into popup_shift's #size_binding_y; the centering (half
-      // above / half below the pinned middle line) is done geometrically by popup_card's
-      // bottom_left→left_middle anchoring.
-      popupHeight: Math.min(optionCount * OPTION_ROW_HEIGHT + POPUP_CHROME, POPUP_MAX_HEIGHT),
+      // [1356-1438] computed popup height (px): the fused option column (rows × height +
+      // the 1px border overlap, cap at half the screen) + top and bottom padding. The RP
+      // decodes it into popup_shift's #size_binding_y; the centering (half above / half below
+      // the pinned middle line) is done geometrically by popup_card's bottom_left→left_middle
+      // anchoring.
+      popupHeight: Math.min(optionCount * OPTION_ROW_HEIGHT + OPTION_ROW_OVERLAP, POPUP_MAX_HEIGHT) + 2 * POPUP_PADDING,
       // Closed-box current-value label fields (RP-decoded, appended right after popupHeight so
       // they keep FIXED offsets: currentColor [1439], currentFontType [1522], currentFontScale
       // [1605], currentX [1688], currentY [1771]). The RP decodes the selected option TEXT out
@@ -194,7 +202,9 @@ export const formDropdownWriter: Writer = (payload, form, ctx, _callbacks, props
     o.text,
     o.style,
     NO_OPTION_GEOMETRY,
-    optionLabelPosition(o.text, o.style, rowWidth, OPTION_ROW_HEIGHT, 4),
+    // Center the label in the VISIBLE face (flow slot + the 1px border overlap): the face
+    // center is also the center of the interior between the two shared border lines.
+    optionLabelPosition(o.text, o.style, rowWidth, OPTION_ROW_HEIGHT + OPTION_ROW_OVERLAP, 4),
   ));
 
   emitDropdown(payload, form, ctx, name, encodedOptions, defaultIndex);

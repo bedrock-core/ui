@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { serializeProps, serializeScrollMetadata, type ScrollMetrics, BACKGROUND_TITLE_SKIP, FIELD_MARKERS, FULL_WIDTH, PAD_CHAR, PROTOCOL_HEADER, PROTOCOL_HEADER_LENGTH } from '../serializer';
+import { Text, TEXT_SHADOW_TYPE } from '../../components/Text';
 
 describe('serializeProps — text font field', () => {
   it('serializes mojangles font as "default"', () => {
@@ -43,6 +44,43 @@ describe('serializeProps — text font field', () => {
     const [, bytesWith] = serializeProps({ type: 'text', value: 'Hi', fontType: 'default' });
 
     expect(bytesWith - bytesWithout).toBe(FULL_WIDTH.s);
+  });
+});
+
+describe('Text shadow prop', () => {
+  // JSON UI `shadow` is a load-time label property (not bindable), so shadow routes
+  // through the element TYPE: the RP mounts `text_shadow` next to `text` in both label
+  // routers and gates them apart with the standard `(#type = '…')` type gate.
+  it('defaults to the plain text element type', () => {
+    const el = Text({ children: 'Hi' });
+
+    expect(el.type).toBe('text');
+  });
+
+  it('shadow:true emits the text_shadow element type', () => {
+    const el = Text({ children: 'Hi', shadow: true });
+
+    expect(el.type).toBe(TEXT_SHADOW_TYPE);
+  });
+
+  it('shadow changes ONLY the type — the label group stays five slots with identical keys', () => {
+    // The RP `core_ui_components.label` decodes the group sequentially from $label_skip:
+    // value, fontType, fontScale, labelX, labelY. Both types share the decode contract.
+    const plain = Text({ children: 'Hi' });
+    const shadowed = Text({ children: 'Hi', shadow: true });
+
+    expect(Object.keys(shadowed.props)).toEqual(Object.keys(plain.props));
+    expect('labelShadow' in shadowed.props).toBe(false);
+  });
+
+  it('text_shadow serializes byte-identically to text except the type token', () => {
+    const [plain, bytesPlain] = serializeProps({ type: 'text', value: 'Hi' });
+    const [shadowed, bytesShadowed] = serializeProps({ type: TEXT_SHADOW_TYPE, value: 'Hi' });
+
+    expect(shadowed).toContain('s:text_shadow');
+    expect(bytesShadowed).toBe(bytesPlain); // type is one padded string field either way
+    // Identical past the type field — the label group offsets are unchanged.
+    expect(shadowed.slice(PROTOCOL_HEADER_LENGTH + FULL_WIDTH.s)).toBe(plain.slice(PROTOCOL_HEADER_LENGTH + FULL_WIDTH.s));
   });
 });
 

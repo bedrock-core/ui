@@ -128,6 +128,35 @@ export function resolveFlexShrink(style: FlexStyle): number {
 }
 
 /**
+ * The main-axis BASIS (px) a flex item grows/shrinks from — the floor the parent
+ * reserves before distributing free space. `measuredMain` is the item's already-laid-out
+ * main-axis size (its content/explicit size).
+ *
+ * CSS `flex: 1` is shorthand for `flex: 1 1 0%` — a grown item starts from basis 0, so
+ * equal-grow siblings end EQUAL regardless of their content width. Without this, two
+ * `flex: 1` items grow from their own content sizes and stay unequal (e.g. two labeled
+ * form fields whose captions differ in width). So: an item with an explicit grow and no
+ * explicit `flexBasis` gets basis 0; an explicit numeric `flexBasis` wins; otherwise the
+ * basis is the measured size (`flex-basis: auto`).
+ */
+export function resolveFlexBasisMain(style: FlexStyle, measuredMain: number): number {
+  if (typeof style.flexBasis === 'number') {
+    return style.flexBasis;
+  }
+
+  // 'auto' (or a percent basis we don't resolve here) falls back to the measured size.
+  if (style.flexBasis !== undefined && style.flexBasis !== 'auto') {
+    return measuredMain;
+  }
+
+  if (style.flexBasis === undefined && resolveFlexGrow(style) > 0) {
+    return 0;
+  }
+
+  return measuredMain;
+}
+
+/**
  * Return the effective alignment for a child, respecting `alignSelf` override.
  * Falls back to the parent's `alignItems` when alignSelf is 'auto' or not set.
  */

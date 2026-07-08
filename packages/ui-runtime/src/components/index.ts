@@ -27,7 +27,7 @@ export { Slider, type SliderProps } from './Slider';
 export { ItemRenderer, itemRendererWriter, type ItemRendererProps } from './ItemRenderer';
 export { Panel, panelWriter, type PanelProps } from './Panel';
 export { Scroll, SCROLL_SLOT_TYPE, MAX_SCROLLS, type ScrollAxis, type ScrollProps } from './Scroll';
-export { Text, textWriter, type TextFont, type TextOverflow, type TextProps, type TextStyle, type TextWordBreak } from './Text';
+export { Text, textWriter, TEXT_SHADOW_TYPE, type TextFont, type TextOverflow, type TextProps, type TextStyle, type TextWordBreak } from './Text';
 
 import { registerComponent } from '../core/componentRegistry';
 import { BACKGROUND_SLOT_TYPE } from './Background';
@@ -44,7 +44,7 @@ import { imageWriter } from './Image';
 import { itemRendererWriter } from './ItemRenderer';
 import { panelWriter } from './Panel';
 import { SCROLL_SLOT_TYPE } from './Scroll';
-import { textWriter } from './Text';
+import { TEXT_SHADOW_TYPE, textWriter } from './Text';
 
 let registered = false;
 
@@ -64,6 +64,9 @@ export function registerNativeComponents(): void {
   registerComponent('button', { writer: buttonWriter });
   registerComponent('panel', { writer: panelWriter });
   registerComponent('text', { writer: textWriter });
+  // Shadowed text: same writer/payload as `text`; the type routes it to the RP label
+  // variant with a literal `shadow: true` (JSON UI `shadow` is load-time, not bindable).
+  registerComponent(TEXT_SHADOW_TYPE, { writer: textWriter });
   registerComponent('image', { writer: imageWriter });
   registerComponent('item_renderer', { writer: itemRendererWriter });
   registerComponent('fragment', { transparent: true });

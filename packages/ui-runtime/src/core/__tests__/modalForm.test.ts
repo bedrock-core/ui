@@ -216,9 +216,10 @@ describe('modal control serialization', () => {
     expect(label.indexOf('s:textures/ui/cb_pressed')).toBe(1107);
     expect(label.indexOf('s:textures/ui/cb_locked')).toBe(1190);
     expect(label.indexOf('s:textures/ui/popup_bg')).toBe(1273);
-    // popupHeight [1356]: 2 options × 17px + 9px chrome = 43, hugging the list. (Moved up
-    // from [1605] now that the uniform option-style block left this payload.)
-    expect(label.indexOf('n:43')).toBe(1356);
+    // popupHeight [1356]: 2 options × 17px + 1px fused-border overlap + 2px padding
+    // (top + bottom) = 37, hugging the list. (Moved up from [1605] now that the uniform
+    // option-style block left this payload.)
+    expect(label.indexOf('n:37')).toBe(1356);
   });
 
   // Per-option payload: each option string handed to the native dropdown is a full
@@ -535,7 +536,8 @@ describe('modal control serialization', () => {
     expect(collectFormButtons(tree([btn('submit')])).submit.props.label).toBe('B');
   });
 
-  // popupHeight caps at half the canonical screen (210/2 = 105) so long lists scroll.
+  // popupHeight caps at half the canonical screen (210/2 = 105, + 2px top/bottom padding)
+  // so long lists scroll.
   it('caps the computed popup height at half the screen', () => {
     const form = new FakeModalForm();
     const options = Array.from({ length: 20 }, (_, i) => `opt${i}`);
@@ -546,7 +548,7 @@ describe('modal control serialization', () => {
 
     // popupHeight now sits at [1356] (right after popupBackground) — the uniform option-style
     // block that used to precede it moved into each option's own blob.
-    expect(label.indexOf('n:105')).toBe(1356);
+    expect(label.indexOf('n:107')).toBe(1356);
   });
 
   it('records each control name against its ordinal', () => {

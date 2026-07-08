@@ -84,8 +84,13 @@ export function OreStyledForm({ back }: { back: () => void }): JSX.Element {
         </Panel>
       </Panel>
       <Panel flexDirection={'column'} gap={2} padding={sm}>
-        <Text font={'minecraftTen'} scale={1.5}>{'Ore-Styled Form'}</Text>
+        <Text font={'minecraftTen'} scale={1.5} shadow={true}>{'Ore-Styled Form'}</Text>
         <Text>{'§7Same modal as the unstyled twin, dressed by the ore theme.'}</Text>
+        {/* shadow prop A/B: the first title has shadow, this pair proves the toggle. */}
+        <Panel flexDirection={'row'} gap={sm}>
+          <Text shadow={true}>{'§fshadow on'}</Text>
+          <Text shadow={false}>{'§fshadow off'}</Text>
+        </Panel>
       </Panel>
       <Panel flexDirection={'column'} gap={sm} padding={sm}>
         <Text>{'§e§lChoices'}</Text>
