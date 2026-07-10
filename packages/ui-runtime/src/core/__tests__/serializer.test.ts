@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { serializeProps, serializeScrollMetadata, type ScrollMetrics, BACKGROUND_TITLE_SKIP, FIELD_MARKERS, FULL_WIDTH, PAD_CHAR, PROTOCOL_HEADER, PROTOCOL_HEADER_LENGTH } from '../serializer';
-import { Text, TEXT_SHADOW_TYPE } from '../../components/Text';
+import { isTextElementType, Text, TEXT_SHADOW_TYPE, TEXT_SHADOW_WRAP_TYPE, TEXT_WRAP_TYPE } from '../../components/Text';
 
 describe('serializeProps — text font field', () => {
   it('serializes mojangles font as "default"', () => {
@@ -71,6 +71,21 @@ describe('Text shadow prop', () => {
 
     expect(Object.keys(shadowed.props)).toEqual(Object.keys(plain.props));
     expect('labelShadow' in shadowed.props).toBe(false);
+  });
+
+  it('raw overflow text keeps the plain types — it is pre-wrapped at layout, not by the RP', () => {
+    // Only LOCALIZED overflow text routes to the *_wrap types (the key cannot be
+    // pre-broken build-side); raw text gets its \n baked in by the layout phase.
+    expect(Text({ children: 'Hi', wordBreak: 'break-word' }).type).toBe('text');
+    expect(Text({ children: 'Hi', wordBreak: 'break-word', shadow: true }).type).toBe(TEXT_SHADOW_TYPE);
+  });
+
+  it('isTextElementType covers all four label-rendered types', () => {
+    for (const type of ['text', TEXT_SHADOW_TYPE, TEXT_WRAP_TYPE, TEXT_SHADOW_WRAP_TYPE]) {
+      expect(isTextElementType(type)).toBe(true);
+    }
+
+    expect(isTextElementType('panel')).toBe(false);
   });
 
   it('text_shadow serializes byte-identically to text except the type token', () => {

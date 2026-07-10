@@ -50,6 +50,181 @@
 		"$text_type": "text_shadow",
 		"$shadow": true
 	},
+	/* Box-wrapped text, for LOCALIZED overflow text (wordBreak/ellipsis/maxLines on a
+	   localizationKey). The build side cannot pre-break a key — props.value must stay
+	   the key and the RP resolves it at render — so wrapping must come from the label
+	   itself: a width-constrained label wraps its text natively (the vanilla server_form
+	   body-label behavior). Structure: a txt_box panel sized to the control box via
+	   #size_binding (the base-control-proven mechanism, px-exact inside the [1,1] frame)
+	   hosts a ["100%", "default"] label. The glyph nudge (label group x/y) moves to
+	   txt_box so it keeps the [1,1] px mapping. clips_children bounds overflow lines,
+	   which approximates maxLines for keys (box height = N measured lines).
+	   Raw (non-key) text NEVER routes here — it arrives pre-wrapped as `text`. */
+	"text_wrap@core_ui_components.text": {
+		"$text_type": "text_wrap",
+		"controls": [
+			{
+				"txt_frame@core_ui_components.text_wrap_frame": {}
+			}
+		]
+	},
+	/* Shadowed variant. Derives `text` directly (NOT text_wrap) so $text_type is only
+	   overridden once per chain — same depth as the proven text_shadow shape; a second
+	   hard $var override at depth 3 is unproven in-game (see the $text_type note above). */
+	"text_shadow_wrap@core_ui_components.text": {
+		"$text_type": "text_shadow_wrap",
+		"$shadow": true,
+		"controls": [
+			{
+				"txt_frame@core_ui_components.text_wrap_frame": {}
+			}
+		]
+	},
+	/* Shared frame for the *_wrap variants: [1,1] so txt_box's #size_binding and
+	   anchored offset both map 1:1 to pixels (same rule as the routers). */
+	"text_wrap_frame": {
+		"type": "panel",
+		"size": [
+			1,
+			1
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"controls": [
+			{
+				/* The control box: sized to the decoded control width/height (fields 1/2),
+				   nudged by the label group x/y ([1273]/[1356], Text offsetX/offsetY).
+				   Decode lives HERE (computed bindings don't propagate to children). */
+				"txt_box": {
+					"type": "panel",
+					"size": [
+						0,
+						0
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"use_anchored_offset": true,
+					"clips_children": true,
+					"property_bag": {
+						"#size_binding_x": 0.0,
+						"#size_binding_y": 0.0,
+						"#anchored_offset_value_x": 0.0,
+						"#anchored_offset_value_y": 0.0
+					},
+					"$payload_collection|default": "form_buttons",
+					"$payload_binding|default": "#form_button_text",
+					"$cell_details_binding_type|default": "none",
+					"$details_collection|default": "",
+					"bindings": [
+						{
+							/* fetch shape is the custom_dropdown-PROVEN one (see the label below) */
+							"binding_name": "$payload_binding",
+							"binding_type": "collection",
+							"binding_condition": "always",
+							"binding_collection_name": "$payload_collection",
+							"binding_name_override": "#payload"
+						},
+						{
+							"binding_type": "$cell_details_binding_type",
+							"binding_collection_name": "$details_collection"
+						},
+						{
+							/* --- control width (field 1 [92-174]) -> box width --- */
+							"binding_type": "view",
+							"source_property_name": "('%.92s' * #payload)",
+							"target_property_name": "#skip_to_width"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#payload - #skip_to_width)",
+							"target_property_name": "#rem_at_width"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_width)",
+							"target_property_name": "#raw_width"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_width) - ('%.2s' * #raw_width) - ';')",
+							"target_property_name": "#size_binding_x"
+						},
+						{
+							/* --- control height (field 2 [175-257]) -> box height --- */
+							"binding_type": "view",
+							"source_property_name": "(#rem_at_width - #raw_width)",
+							"target_property_name": "#rem_at_height"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_height)",
+							"target_property_name": "#raw_height"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_height) - ('%.2s' * #raw_height) - ';')",
+							"target_property_name": "#size_binding_y"
+						},
+						{
+							/* --- label group x ([1273]) -> anchored X (skip 1024 + 3×83) --- */
+							"binding_type": "view",
+							"source_property_name": "('%.1273s' * #payload)",
+							"target_property_name": "#skip_to_label_x"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#payload - #skip_to_label_x)",
+							"target_property_name": "#rem_at_label_x"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_label_x)",
+							"target_property_name": "#raw_label_x"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "((('%.82s' * #raw_label_x) - ('%.2s' * #raw_label_x) - ';') * 1)",
+							"target_property_name": "#anchored_offset_value_x"
+						},
+						{
+							/* --- label group y ([1356]) -> anchored Y --- */
+							"binding_type": "view",
+							"source_property_name": "(#rem_at_label_x - #raw_label_x)",
+							"target_property_name": "#rem_at_label_y"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_label_y)",
+							"target_property_name": "#raw_label_y"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "((('%.82s' * #raw_label_y) - ('%.2s' * #raw_label_y) - ';') * 1)",
+							"target_property_name": "#anchored_offset_value_y"
+						}
+					],
+					"controls": [
+						{
+							"txt@core_ui_components.label_wrap": {
+								"localize": true
+							}
+						}
+					]
+				}
+			}
+		]
+	},
+	/* Label variant for the *_wrap types: width-constrained to the txt_box so Bedrock
+	   wraps the (localized) string natively; height stays content-sized. The glyph
+	   nudge is applied by txt_box, so the inherited anchored-offset decode (label
+	   group slots 4/5) goes inert here. Text/font/scale decode is inherited as-is. */
+	"label_wrap@core_ui_components.label": {
+		"size": [
+			"100%",
+			"default"
+		],
+		"use_anchored_offset": false
+	},
 	"label": {
 		"type": "label",
 		"text": "#text",

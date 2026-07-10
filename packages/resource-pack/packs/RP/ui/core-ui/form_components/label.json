@@ -38,6 +38,20 @@
 				}
 			},
 			{
+				"text_wrap@core_ui_components.text_wrap": {
+					"$payload_collection": "custom_form",
+					"$payload_binding": "#custom_text",
+					"$cell_details_binding_type": "collection_details"
+				}
+			},
+			{
+				"text_shadow_wrap@core_ui_components.text_shadow_wrap": {
+					"$payload_collection": "custom_form",
+					"$payload_binding": "#custom_text",
+					"$cell_details_binding_type": "collection_details"
+				}
+			},
+			{
 				"image@core_ui_components.image": {
 					"$payload_collection": "custom_form",
 					"$payload_binding": "#custom_text",

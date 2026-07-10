@@ -31,6 +31,16 @@
 				}
 			},
 			{
+				"text_wrap@core_ui_components.text_wrap": {
+					"$region_filter": "$region_filter"
+				}
+			},
+			{
+				"text_shadow_wrap@core_ui_components.text_shadow_wrap": {
+					"$region_filter": "$region_filter"
+				}
+			},
+			{
 				"image@core_ui_components.image": {
 					"$region_filter": "$region_filter"
 				}

@@ -1,5 +1,5 @@
 import { CANONICAL_SCREEN } from './constants';
-import type { FlexStyle, LayoutNode } from './types';
+import type { FlexStyle, LayoutNode, MeasuredSize } from './types';
 import {
   isPercent,
   resolveAlignSelf,
@@ -29,6 +29,35 @@ function mainAxis(style: FlexStyle): 'row' | 'column' {
   const d = style.flexDirection ?? 'column';
 
   return d === 'row' || d === 'row-reverse' ? 'row' : 'column';
+}
+
+/**
+ * Transfer the definite axis through `style.aspectRatio` (width ∕ height) onto
+ * the auto axis. Driver: explicit `style.width` → width; explicit `style.height`
+ * → height; both auto → width (the parent-driven axis in columns / absolute
+ * left+right insets, the flex-grown axis in rows). No-op when both axes are
+ * explicit (CSS behavior) or the node is content-measured (wrapping text) —
+ * the measure cache owns both dimensions there.
+ */
+function applyAspectRatio(node: LayoutNode): void {
+  const ratio = node.style.aspectRatio;
+
+  if (ratio === undefined || ratio <= 0 || node.measure) {
+    return;
+  }
+
+  const widthDefinite = node.style.width !== undefined;
+  const heightDefinite = node.style.height !== undefined;
+
+  if (widthDefinite && heightDefinite) {
+    return;
+  }
+
+  if (heightDefinite) {
+    node.layout.width = node.layout.height * ratio;
+  } else {
+    node.layout.height = node.layout.width / ratio;
+  }
 }
 
 /** Clamp a node's width/height to its min/max constraints (texels or % of parent). */
@@ -272,13 +301,31 @@ function applyCrossAlign(
 // ─── Main entry point ───────────────────────────────────────────────────────────
 
 /**
+ * How many re-measure → re-solve rounds `computeLayout()` runs after the initial
+ * solve. Measuring changes a leaf's HEIGHT (wrapping), and heights almost never
+ * feed back into widths, so round 1 converges in practice; the cap only guards
+ * pathological measure functions.
+ */
+const MAX_MEASURE_ROUNDS = 2;
+
+/** Collect measured leaves and seed the size cache with max-content (`measure(∞)`). */
+function collectMeasured(node: LayoutNode, out: Map<LayoutNode, MeasuredSize>): void {
+  if (node.measure) {
+    out.set(node, node.measure(Number.POSITIVE_INFINITY));
+  }
+
+  for (const child of node.children) {
+    collectMeasured(child, out);
+  }
+}
+
+/**
  * Compute absolute texel positions and sizes for all nodes in the tree.
- * https://tchayen.com/how-to-write-a-flexbox-layout-engine
  *
- * Uses a 3-pass algorithm:
- *  Pass 1 (BFS top-down)  — build level-order list and parent map.
- *  Pass 2 (reverse BFS)   — resolve sizes driven by content / explicit values.
- *  Pass 3 (BFS top-down)  — resolve % sizes, distribute flex, position children.
+ * Runs the 3-pass solve, then — when measured leaves exist (`node.measure`,
+ * e.g. wrapping text) — re-measures each leaf at the width the solve granted
+ * it and re-solves until sizes settle (bounded fixpoint, see
+ * MAX_MEASURE_ROUNDS). Trees without measured leaves solve exactly once.
  *
  * After this call every `node.layout` holds absolute texel values:
  *  - `x`, `y`       — top-left corner from screen origin (0,0)
@@ -293,6 +340,56 @@ export function computeLayout(
   root: LayoutNode,
   refWidth: number = CANONICAL_SCREEN.width,
   refHeight: number = CANONICAL_SCREEN.height,
+): void {
+  const measured = new Map<LayoutNode, MeasuredSize>();
+
+  collectMeasured(root, measured);
+
+  solve(root, refWidth, refHeight, measured);
+
+  for (let round = 0; round < MAX_MEASURE_ROUNDS && measured.size > 0; round++) {
+    let dirty = false;
+
+    for (const [node, size] of measured) {
+      const granted = node.layout.width;
+
+      // Collapsed/hidden leaf: keep the seed rather than measuring at 0.
+      if (granted <= 0) {
+        continue;
+      }
+
+      const next = node.measure!(granted);
+
+      if (next.width !== size.width || next.height !== size.height) {
+        measured.set(node, next);
+        dirty = true;
+      }
+    }
+
+    if (!dirty) {
+      break;
+    }
+
+    solve(root, refWidth, refHeight, measured);
+  }
+}
+
+/**
+ * Single layout solve. https://tchayen.com/how-to-write-a-flexbox-layout-engine
+ *
+ * Uses a 3-pass algorithm:
+ *  Pass 1 (BFS top-down)  — build level-order list and parent map.
+ *  Pass 2 (reverse BFS)   — resolve sizes driven by content / explicit values.
+ *  Pass 3 (BFS top-down)  — resolve % sizes, distribute flex, position children.
+ *
+ * `measured` carries the current intrinsic size of each measured leaf (seeded
+ * max-content, refined by `computeLayout`'s re-measure rounds).
+ */
+function solve(
+  root: LayoutNode,
+  refWidth: number,
+  refHeight: number,
+  measured: ReadonlyMap<LayoutNode, MeasuredSize>,
 ): void {
   // ── Root initialisation ─────────────────────────────────────────────────────
   const explicitRootWidth = resolveSize(root.style.width, refWidth);
@@ -353,6 +450,11 @@ export function computeLayout(
         node.layout.width = s.width;
       } else if (isPercent(s.width)) {
         node.layout.width = 0; // deferred to pass 3
+      } else if (node.measure) {
+        // Measured leaf: intrinsic size comes from the measure cache (max-content
+        // on the first solve, granted-width result on re-solves). Always overwrite —
+        // the Math.max growth rule below would lock in the max-content-era size.
+        node.layout.width = measured.get(node)?.width ?? 0;
       } else {
         const derived = deriveSize(node, 'width', pW);
 
@@ -368,6 +470,9 @@ export function computeLayout(
         node.layout.height = s.height;
       } else if (isPercent(s.height)) {
         node.layout.height = 0; // deferred to pass 3
+      } else if (node.measure) {
+        // Measured leaf: see the width branch above.
+        node.layout.height = measured.get(node)?.height ?? 0;
       } else if (isWrapMainRow && iteration === 0) {
         // A row-wrap container's height comes from simulating line breaks, which
         // needs the container's *stretched* width to know how many lines form.
@@ -386,6 +491,7 @@ export function computeLayout(
           : Math.max(node.layout.height, derived);
       }
 
+      applyAspectRatio(node);
       clamp(node, pW, pH);
     }
 
@@ -468,6 +574,7 @@ export function computeLayout(
       node.layout.height = (parseFloat(s.height) / 100) * contentPH;
     }
 
+    applyAspectRatio(node);
     clamp(node, pW, pH);
 
     // Inherit zIndex from parent
@@ -508,6 +615,17 @@ export function computeLayout(
         child.layout.height = (parseFloat(child.style.height) / 100) * contentH;
       }
 
+      // Fit-content cap for measured leaves: min(max-content, available). Without
+      // it, a non-stretched measured leaf (e.g. under alignItems 'center') keeps
+      // its max-content width and never receives a wrapping constraint. Stretch /
+      // flex below still override with the exact grant.
+      if (child.measure !== undefined && child.style.width === undefined) {
+        const cm = resolveMargin(child.style, node.layout.width);
+
+        child.layout.width = Math.min(child.layout.width, Math.max(0, contentW - cm.left - cm.right));
+      }
+
+      applyAspectRatio(child);
       clamp(child, node.layout.width, node.layout.height);
     }
 
@@ -740,6 +858,12 @@ export function computeLayout(
         }
       }
 
+      // Re-derive aspect-ratio axes now that stretch / flex / Bresenham have
+      // finalized the driving axis (e.g. a flex-grown row child's width).
+      for (const child of relKids) {
+        applyAspectRatio(child);
+      }
+
       // ── Position relative children (single line) ──────────────────────────
       for (const child of relKids) {
         const cm = resolveMargin(child.style, node.layout.width);
@@ -940,10 +1064,26 @@ export function computeLayout(
         child.layout.x = node.layout.x + node.layout.width - cs.right - child.layout.width - cm.right;
       }
 
+      // Inset-resolved width (left+right) drives the aspect-ratio height before
+      // the vertical pass positions with it (e.g. a bottom-anchored 16:9 banner).
+      applyAspectRatio(child);
+
       // Vertical
       if (cs.top !== undefined && cs.bottom !== undefined && cs.height === undefined) {
         child.layout.y = node.layout.y + cs.top;
         child.layout.height = node.layout.height - cs.top - cs.bottom;
+
+        // The one case where the HEIGHT drives: top+bottom insets define it and
+        // width has no definite source of its own. Re-anchor a right-pinned box
+        // with the derived width.
+        if (cs.aspectRatio !== undefined && cs.aspectRatio > 0
+          && cs.width === undefined && !(cs.left !== undefined && cs.right !== undefined)) {
+          child.layout.width = child.layout.height * cs.aspectRatio;
+
+          if (cs.right !== undefined && cs.left === undefined) {
+            child.layout.x = node.layout.x + node.layout.width - cs.right - child.layout.width - cm.right;
+          }
+        }
       } else if (cs.top !== undefined) {
         child.layout.y = node.layout.y + cs.top + cm.top;
       } else if (cs.bottom !== undefined) {

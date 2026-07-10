@@ -1,7 +1,7 @@
 import { useContext } from '../hooks';
 import { FunctionComponent, JSX } from '../jsx';
 import { TranslationKeysContext } from '../data/TranslationKeys';
-import { TranslationKeysError, type Writer } from '../core/types';
+import { type Writer } from '../core/types';
 import { emitLabel } from '../core/writers';
 import { ControlProps, withControl } from './control';
 import { labelFontFields, type LabelFont } from './Form/controlPayload';
@@ -17,6 +17,23 @@ export type TextFont = LabelFont;
  * `$shadow: true` on its label. Same writer, same payload contract as `text`.
  */
 export const TEXT_SHADOW_TYPE = 'text_shadow';
+
+/**
+ * Element types for LOCALIZED overflow text (wordBreak/ellipsis/maxLines on a
+ * `localizationKey`). The build side cannot pre-process a key — `props.value`
+ * must stay the key and the RP resolves it at render — so these route to an RP
+ * label variant whose width is bound to the control box, making Bedrock wrap
+ * the resolved string natively. Raw text never uses them (it is pre-wrapped at
+ * layout time and emitted as `text` / `text_shadow`).
+ */
+export const TEXT_WRAP_TYPE = 'text_wrap';
+export const TEXT_SHADOW_WRAP_TYPE = 'text_shadow_wrap';
+
+/** Whether an element type is one of the label-rendered text types. */
+export function isTextElementType(type: unknown): boolean {
+  return type === 'text' || type === TEXT_SHADOW_TYPE
+    || type === TEXT_WRAP_TYPE || type === TEXT_SHADOW_WRAP_TYPE;
+}
 
 export type TextWordBreak = 'normal' | 'break-word';
 export type TextOverflow = 'ellipsis';
@@ -44,9 +61,10 @@ export interface TextProps extends ControlProps {
   /**
    * Minecraft translation key (e.g. `"ui.myscreen.title"`).
    *
-   * Requires the `translation-keys` Regolith filter: the key must exist in
-   * your pack's .lang files so the filter can resolve it, and the generated
-   * keys must be provided at the root of the UI via `TranslationKeysContext`:
+   * For correct layout metrics (word-wrap, ellipsis), the key should resolve through
+   * the `translation-keys` Regolith filter: the key must exist in your pack's .lang
+   * files, and the generated keys must be provided at the root of the UI via
+   * `TranslationKeysContext`:
    *
    * ```tsx
    * import translationKeys from '@bedrock-core/generated/translation-keys';
@@ -56,7 +74,13 @@ export interface TextProps extends ControlProps {
    * </TranslationKeysContext>
    * ```
    *
-   * Without the filter and provider, rendering throws a `TranslationKeysError`.
+   * A key missing from the map (another pack's key, plain text, or no provider at
+   * all) measures as the literal key string — mirroring Bedrock, which renders an
+   * unmatched key as-is. Plain-text values therefore render fine; only their wrap
+   * metrics are approximate. To resolve another bedrock-core addon's keys, publish
+   * them via `core.translations.provide(...)` and pass `core.translations.all()`
+   * as the context value.
+   *
    * Takes priority over `children` when both are provided.
    */
   localizationKey?: string;
@@ -98,7 +122,7 @@ export interface TextProps extends ControlProps {
  * what's shown — the section code is consumed by the renderer and the text
  * metrics already treat `§x` as zero-width, so width/layout are unaffected.
  */
-function safeLabelText(text: string): string {
+export function safeLabelText(text: string): string {
   return /^[\d-]/.test(text) ? `§r${text}` : text;
 }
 
@@ -125,31 +149,26 @@ export const Text: FunctionComponent<TextProps> = ({
   if (isKey) {
     const translationKeys = useContext(TranslationKeysContext);
 
-    if (translationKeys === null) {
-      throw new TranslationKeysError(
-        `localizationKey requires translation keys, but no TranslationKeysContext is provided. `
-        + `Install the 'translation-keys' Regolith filter, then wrap your UI root: `
-        + `import translationKeys from '@bedrock-core/generated/translation-keys'; `
-        + `<TranslationKeysContext value={translationKeys}>...</TranslationKeysContext>`,
-      );
-    }
-
-    if (!(localizationKey in translationKeys)) {
-      throw new TranslationKeysError(
-        `Cannot calculate layout for localizationKey "${localizationKey}" — no resolved string found. `
-        + `Run the 'translation-keys' Regolith filter and verify the key exists in your .lang files.`,
-      );
-    }
-
-    resolvedText = translationKeys[localizationKey];
+    // A key missing from the map (another pack's key, plain text, or no provider at
+    // all) measures as the literal key string — mirroring Bedrock, which renders an
+    // unmatched key as-is. Wrap/ellipsis metrics are approximate for such strings.
+    resolvedText = translationKeys?.[localizationKey] ?? localizationKey;
   } else {
     resolvedText = children ?? '';
   }
 
+  // Localized overflow text routes to the *_wrap types (see TEXT_WRAP_TYPE): the
+  // RP wraps the resolved string in a box-sized label, since the key cannot be
+  // pre-broken build-side. Raw overflow text is pre-wrapped at layout time instead.
+  const rpWraps = isKey
+    && (wordBreak === 'break-word' || overflow === 'ellipsis' || maxLines !== undefined);
+
   return {
-    // Shadow picks the component TYPE (see TEXT_SHADOW_TYPE): both types share this
+    // Shadow picks the component TYPE (see TEXT_SHADOW_TYPE): all types share this
     // writer and payload; the RP routers gate them apart with the standard type gate.
-    type: shadow ? TEXT_SHADOW_TYPE : 'text',
+    type: shadow
+      ? (rpWraps ? TEXT_SHADOW_WRAP_TYPE : TEXT_SHADOW_TYPE)
+      : (rpWraps ? TEXT_WRAP_TYPE : 'text'),
     props: {
       ...withControl(rest),
       // Keys pass through — we send the key, not the resolved string, so a
@@ -171,6 +190,12 @@ export const Text: FunctionComponent<TextProps> = ({
         // Resolved display string used by the layout phase for metrics.
         // For raw text this equals value; for keys it's the full translated string.
         resolvedText,
+        // True only for localizationKey texts: props.value holds the KEY (RP
+        // resolves it at render), so the layout phase must never rewrite it
+        // with processed display text. Raw text (isKey false) DOES get its
+        // wrapped/truncated string committed — a JSON UI label is content-sized
+        // and never wraps on its own, so the `\n`s must be in the string.
+        isKey,
       },
     },
   };

@@ -52,6 +52,8 @@ export interface FlexStyle {
   minHeight?: FlexSize;
   maxHeight?: FlexSize;
 
+  aspectRatio?: number;
+
   // ── Flex container ─────────────────────────────────────────────────────────
   flexDirection?: FlexDirection;
   /** Alias for flexWrap */
@@ -104,9 +106,32 @@ export interface ComputedLayout {
   zIndex: number;
 }
 
+/** Size returned by a {@link MeasureFunc}, in texels. */
+export interface MeasuredSize {
+  width: number;
+  height: number;
+}
+
+/**
+ * Content measure callback for LEAF nodes whose intrinsic size depends on the
+ * width the layout grants them (e.g. wrapping text: narrower box → more lines
+ * → taller). `computeLayout()` drives it:
+ *
+ *  - once with `Infinity` to seed the max-content size (CSS auto flex-basis
+ *    semantics), and
+ *  - after each solve with the node's granted `layout.width`, re-solving when
+ *    the returned size changed (bounded fixpoint — heights almost never feed
+ *    back into widths, so one re-solve converges in practice).
+ *
+ * Explicit `style.width`/`style.height` always win over the measured size.
+ */
+export type MeasureFunc = (availableWidth: number) => MeasuredSize;
+
 /** A node in the layout tree, mirrors the component hierarchy. */
 export interface LayoutNode {
   style: FlexStyle;
   children: LayoutNode[];
   layout: ComputedLayout;
+  /** Width-dependent content sizing for leaves (see {@link MeasureFunc}). Takes precedence over child-derived sizing. */
+  measure?: MeasureFunc;
 }

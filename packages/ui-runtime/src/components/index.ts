@@ -27,7 +27,11 @@ export { Slider, type SliderProps } from './Slider';
 export { ItemRenderer, itemRendererWriter, type ItemRendererProps } from './ItemRenderer';
 export { Panel, panelWriter, type PanelProps } from './Panel';
 export { Scroll, SCROLL_SLOT_TYPE, MAX_SCROLLS, type ScrollAxis, type ScrollProps } from './Scroll';
-export { Text, textWriter, TEXT_SHADOW_TYPE, type TextFont, type TextOverflow, type TextProps, type TextStyle, type TextWordBreak } from './Text';
+export {
+  Text, textWriter, isTextElementType,
+  TEXT_SHADOW_TYPE, TEXT_WRAP_TYPE, TEXT_SHADOW_WRAP_TYPE,
+  type TextFont, type TextOverflow, type TextProps, type TextStyle, type TextWordBreak,
+} from './Text';
 
 import { registerComponent } from '../core/componentRegistry';
 import { BACKGROUND_SLOT_TYPE } from './Background';
@@ -44,7 +48,7 @@ import { imageWriter } from './Image';
 import { itemRendererWriter } from './ItemRenderer';
 import { panelWriter } from './Panel';
 import { SCROLL_SLOT_TYPE } from './Scroll';
-import { TEXT_SHADOW_TYPE, textWriter } from './Text';
+import { TEXT_SHADOW_TYPE, TEXT_SHADOW_WRAP_TYPE, TEXT_WRAP_TYPE, textWriter } from './Text';
 
 let registered = false;
 
@@ -67,6 +71,11 @@ export function registerNativeComponents(): void {
   // Shadowed text: same writer/payload as `text`; the type routes it to the RP label
   // variant with a literal `shadow: true` (JSON UI `shadow` is load-time, not bindable).
   registerComponent(TEXT_SHADOW_TYPE, { writer: textWriter });
+  // Localized overflow text: same writer/payload; the type routes it to the RP label
+  // variant whose width is bound to the control box, so Bedrock wraps the resolved
+  // string natively (a localization key cannot be pre-wrapped build-side).
+  registerComponent(TEXT_WRAP_TYPE, { writer: textWriter });
+  registerComponent(TEXT_SHADOW_WRAP_TYPE, { writer: textWriter });
   registerComponent('image', { writer: imageWriter });
   registerComponent('item_renderer', { writer: itemRendererWriter });
   registerComponent('fragment', { transparent: true });
