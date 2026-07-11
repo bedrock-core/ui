@@ -38,6 +38,14 @@ function mainAxis(style: FlexStyle): 'row' | 'column' {
  * left+right insets, the flex-grown axis in rows). No-op when both axes are
  * explicit (CSS behavior) or the node is content-measured (wrapping text) —
  * the measure cache owns both dimensions there.
+ *
+ * PERCENT sizes are deferred in Pass 2 (`layout` parked at 0 until Pass 3
+ * resolves them against the parent), so a percent axis only counts as DEFINITE
+ * once it holds a resolved value — otherwise the ratio would derive the other
+ * axis from 0 and clobber its content-derived / stretch-driven size, and the
+ * parent's Pass-2 `deriveSize` would under-count this node. The explicit axis
+ * still owns the DRIVER role while unresolved: the transfer is skipped rather
+ * than handed to the other axis.
  */
 function applyAspectRatio(node: LayoutNode): void {
   const ratio = node.style.aspectRatio;
@@ -46,18 +54,32 @@ function applyAspectRatio(node: LayoutNode): void {
     return;
   }
 
-  const widthDefinite = node.style.width !== undefined;
-  const heightDefinite = node.style.height !== undefined;
+  const widthExplicit = node.style.width !== undefined;
+  const heightExplicit = node.style.height !== undefined;
 
-  if (widthDefinite && heightDefinite) {
+  if (widthExplicit && heightExplicit) {
     return;
   }
 
-  if (heightDefinite) {
-    node.layout.width = node.layout.height * ratio;
-  } else {
-    node.layout.height = node.layout.width / ratio;
+  const widthDefinite = typeof node.style.width === 'number'
+    || (isPercent(node.style.width) && node.layout.width > 0);
+  const heightDefinite = typeof node.style.height === 'number'
+    || (isPercent(node.style.height) && node.layout.height > 0);
+
+  if (heightExplicit) {
+    if (heightDefinite) {
+      node.layout.width = node.layout.height * ratio;
+    }
+
+    return;
   }
+
+  if (widthExplicit && !widthDefinite) {
+    return;
+  }
+
+  // Width drives: explicit and resolved, or both-auto (content-/parent-driven).
+  node.layout.height = node.layout.width / ratio;
 }
 
 /** Clamp a node's width/height to its min/max constraints (texels or % of parent). */
