@@ -38,11 +38,11 @@
 							"binding_collection_name": "custom_dropdown"
 						},
 						{ "binding_type": "collection_details" },
-						{ "binding_type": "view", "source_property_name": "$face_skip", "target_property_name": "#skip_to_opt_bg" },
-						{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_to_opt_bg)", "target_property_name": "#rem_at_opt_bg" },
-						{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_at_opt_bg)", "target_property_name": "#raw_opt_bg" },
-						{ "binding_type": "view", "source_property_name": "(('%.82s' * #raw_opt_bg) - ('%.2s' * #raw_opt_bg) - ';')", "target_property_name": "#texture" },
-						{ "binding_type": "view", "source_property_name": "(not (#texture = ''))", "target_property_name": "#visible" }
+						{ "binding_type": "view", "source_property_name": "$face_skip", "target_property_name": "#skip_to_opt_bg", "binding_condition": "visible" },
+						{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_to_opt_bg)", "target_property_name": "#rem_at_opt_bg", "binding_condition": "visible" },
+						{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_at_opt_bg)", "target_property_name": "#raw_opt_bg", "binding_condition": "visible" },
+						{ "binding_type": "view", "source_property_name": "(('%.82s' * #raw_opt_bg) - ('%.2s' * #raw_opt_bg) - ';')", "target_property_name": "#texture", "binding_condition": "visible" },
+						{ "binding_type": "view", "source_property_name": "(not (#texture = ''))", "target_property_name": "#visible", "binding_condition": "visible" }
 					]
 				}
 			},

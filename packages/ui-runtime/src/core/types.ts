@@ -75,6 +75,10 @@ export class SerializationError extends Error {
   }
 }
 
+/**
+ * @deprecated No longer thrown: a `localizationKey` missing from the map measures as the
+ * literal key string (mirroring Bedrock's unmatched-key rendering). Kept for API compat.
+ */
 export class TranslationKeysError extends Error {
   constructor(message: string) {
     super(message);

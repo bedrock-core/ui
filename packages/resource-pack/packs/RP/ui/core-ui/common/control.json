@@ -1,10 +1,25 @@
 {
 	"namespace": "core_ui_common",
-	// THE base cell control every component extends: it owns the ENTIRE generic
-	// control-block decode ([0-1023]: header, type, width→#size_binding_x,
-	// height→#size_binding_y, x/y→#anchored_offset_value_*, visible, enabled,
-	// background, region) plus the region gate — so components never copy/paste the
-	// location decode again.
+	// THE base cell control every component extends: it owns the generic control-block
+	// decode ([0-1023]: header, type, width→#size_binding_x, height→#size_binding_y,
+	// x/y→#anchored_offset_value_*, visible, enabled) — so components never copy/paste
+	// the location decode again.
+	//
+	// PERF SHAPE (Stage 1, in-game proven by the S1/S2 spikes):
+	//   • The GATE chain (payload fetch → type → pre_visible → $type_gate) is
+	//     `binding_condition: "once"` — the payload is CONSTANT for the lifetime of an
+	//     open screen (each form.show creates a fresh screen instance), so it fires at
+	//     creation with collection data present (S1-verified) and never again.
+	//   • Geometry + enabled are `binding_condition: "visible"` — only the ONE variant
+	//     the gate leaves visible pays for them; the 5 hidden siblings skip them
+	//     (S2-verified condition semantics). Same pattern in every leaf decode.
+	//   • Fields after the sequential w/h/x/y run are reached by DIRECT absolute-offset
+	//     slices ('%.424s' visible, '%.432s' enabled) instead of walking the remainder
+	//     chain — fewer bindings, no dirty cascade.
+	//   • The REGION gate moved UP into label_router/button_router: a wrong-region cell
+	//     is rejected once at the router instead of separately inside every variant.
+	//     The base therefore no longer decodes region ([523-605]) or background
+	//     ([440-522] — consumed by nothing here; panel_bg/state_face self-decode it).
 	//
 	// WHY extension works here and the old copy/paste didn't: JSON UI does NOT merge
 	// arrays on derivation — a derived control that declares its own `bindings` REPLACES
@@ -17,7 +32,6 @@
 	//   • $payload_collection / $payload_binding / $cell_details_binding_type — payload
 	//                      source; defaults serve the ActionForm (form_buttons), the modal
 	//                      label_router overrides to custom_form + #custom_text.
-	//   • $region_filter  — scroll region gate (substituted per scroll instance).
 	// Derived controls may set `type`, `layer`, and their OWN `controls` children (the
 	// base declares none, so a derived `controls` array replaces nothing).
 	//
@@ -29,7 +43,6 @@
 		"$payload_collection|default": "form_buttons",
 		"$payload_binding|default": "#form_button_text",
 		"$cell_details_binding_type|default": "none",
-		"$region_filter|default": 0,
 		"$normalize": 1.0,
 		"size": [
 			0,
@@ -43,7 +56,12 @@
 			"#size_binding_x": 0.0,
 			"#size_binding_y": 0.0,
 			"#anchored_offset_value_x": 0.0,
-			"#anchored_offset_value_y": 0.0
+			"#anchored_offset_value_y": 0.0,
+			/* start VISIBLE so the once-gate chain always runs at creation; it flips
+			   #visible false for non-matching variants, after which every
+			   `visible`-conditioned binding (geometry/enabled here, all leaf decodes)
+			   is skipped for them — hidden variants pay only the ~11-binding gate. */
+			"#visible": true
 		},
 		"visible": "#visible",
 		"enabled": "#enabled",
@@ -62,174 +80,167 @@
 				/* --- strip protocol header (9 chars) --- */
 				"binding_type": "view",
 				"source_property_name": "('%.9s' * #payload)",
-				"target_property_name": "#protocol_header"
+				"target_property_name": "#protocol_header",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(#payload - #protocol_header)",
-				"target_property_name": "#rem_after_header"
+				"target_property_name": "#rem_after_header",
+				"binding_condition": "once"
 			},
 			{
-				/* --- type (string) - field 0 --- */
+				/* --- type (string) - field 0 [9-91] --- */
 				"binding_type": "view",
 				"source_property_name": "('%.83s' * #rem_after_header)",
-				"target_property_name": "#raw_type"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_header - #raw_type)",
-				"target_property_name": "#rem_after_type"
+				"target_property_name": "#raw_type",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(('%.82s' * #raw_type) - ('%.2s' * #raw_type) - ';')",
-				"target_property_name": "#type"
+				"target_property_name": "#type",
+				"binding_condition": "once"
 			},
 			{
-				/* --- width (int) - field 1 --- */
+				/* --- visible (boolean) - field 5, DIRECT slice at [424-431] --- */
 				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_after_type)",
-				"target_property_name": "#raw_width"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_type - #raw_width)",
-				"target_property_name": "#rem_after_width"
+				"source_property_name": "('%.424s' * #payload)",
+				"target_property_name": "#skip_to_vis",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #raw_width) - ('%.2s' * #raw_width) - ';')",
-				"target_property_name": "#size_binding_x"
-			},
-			{
-				/* --- height (int) - field 2 --- */
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_after_width)",
-				"target_property_name": "#raw_height"
+				"source_property_name": "(#payload - #skip_to_vis)",
+				"target_property_name": "#rem_at_vis",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(#rem_after_width - #raw_height)",
-				"target_property_name": "#rem_after_height"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #raw_height) - ('%.2s' * #raw_height) - ';')",
-				"target_property_name": "#size_binding_y"
-			},
-			{
-				/* --- x (int) - field 3 --- */
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_after_height)",
-				"target_property_name": "#raw_x"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_height - #raw_x)",
-				"target_property_name": "#rem_after_x"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "((('%.82s' * #raw_x) - ('%.2s' * #raw_x) - ';') * $normalize)",
-				"target_property_name": "#anchored_offset_value_x"
-			},
-			{
-				/* --- y (float) - field 4 --- */
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_after_x)",
-				"target_property_name": "#raw_y"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_x - #raw_y)",
-				"target_property_name": "#rem_after_y"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "((('%.82s' * #raw_y) - ('%.2s' * #raw_y) - ';') * $normalize)",
-				"target_property_name": "#anchored_offset_value_y"
-			},
-			{
-				/* --- visible (boolean) - field 5 --- */
-				"binding_type": "view",
-				"source_property_name": "('%.8s' * #rem_after_y)",
-				"target_property_name": "#raw_visible"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_y - #raw_visible)",
-				"target_property_name": "#rem_after_visible"
+				"source_property_name": "('%.8s' * #rem_at_vis)",
+				"target_property_name": "#raw_visible",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(('%.7s' * #raw_visible) - ('%.2s' * #raw_visible) - ';')",
-				"target_property_name": "#pre_visible"
+				"target_property_name": "#pre_visible",
+				"binding_condition": "once"
 			},
 			{
 				/* Per-component type gate — the ONLY component-specific token in this whole
 				   decode, injected as a full expression via $type_gate. */
 				"binding_type": "view",
 				"source_property_name": "$type_gate",
-				"target_property_name": "#visible_pre_region"
+				"target_property_name": "#visible",
+				"binding_condition": "once"
 			},
 			{
-				/* --- enabled (boolean) - field 6 --- */
+				/* --- width (int) - field 1 [92-174] --- */
 				"binding_type": "view",
-				"source_property_name": "('%.8s' * #rem_after_visible)",
-				"target_property_name": "#raw_enabled"
+				"source_property_name": "('%.92s' * #payload)",
+				"target_property_name": "#skip_to_width",
+				"binding_condition": "visible"
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(#rem_after_visible - #raw_enabled)",
-				"target_property_name": "#rem_after_enabled"
+				"source_property_name": "(#payload - #skip_to_width)",
+				"target_property_name": "#rem_at_width",
+				"binding_condition": "visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_at_width)",
+				"target_property_name": "#raw_width",
+				"binding_condition": "visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_width) - ('%.2s' * #raw_width) - ';')",
+				"target_property_name": "#size_binding_x",
+				"binding_condition": "visible"
+			},
+			{
+				/* --- height (int) - field 2 [175-257], sequential from width --- */
+				"binding_type": "view",
+				"source_property_name": "(#rem_at_width - #raw_width)",
+				"target_property_name": "#rem_at_height",
+				"binding_condition": "visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_at_height)",
+				"target_property_name": "#raw_height",
+				"binding_condition": "visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_height) - ('%.2s' * #raw_height) - ';')",
+				"target_property_name": "#size_binding_y",
+				"binding_condition": "visible"
+			},
+			{
+				/* --- x (int) - field 3 [258-340] --- */
+				"binding_type": "view",
+				"source_property_name": "(#rem_at_height - #raw_height)",
+				"target_property_name": "#rem_at_x",
+				"binding_condition": "visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_at_x)",
+				"target_property_name": "#raw_x",
+				"binding_condition": "visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_x) - ('%.2s' * #raw_x) - ';') * $normalize)",
+				"target_property_name": "#anchored_offset_value_x",
+				"binding_condition": "visible"
+			},
+			{
+				/* --- y (float) - field 4 [341-423] --- */
+				"binding_type": "view",
+				"source_property_name": "(#rem_at_x - #raw_x)",
+				"target_property_name": "#rem_at_y",
+				"binding_condition": "visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_at_y)",
+				"target_property_name": "#raw_y",
+				"binding_condition": "visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_y) - ('%.2s' * #raw_y) - ';') * $normalize)",
+				"target_property_name": "#anchored_offset_value_y",
+				"binding_condition": "visible"
+			},
+			{
+				/* --- enabled (boolean) - field 6, DIRECT slice at [432-439] --- */
+				"binding_type": "view",
+				"source_property_name": "('%.432s' * #payload)",
+				"target_property_name": "#skip_to_enabled",
+				"binding_condition": "visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#payload - #skip_to_enabled)",
+				"target_property_name": "#rem_at_enabled",
+				"binding_condition": "visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.8s' * #rem_at_enabled)",
+				"target_property_name": "#raw_enabled",
+				"binding_condition": "visible"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(('%.7s' * #raw_enabled) - ('%.2s' * #raw_enabled) - ';')",
-				"target_property_name": "#enabled"
-			},
-			{
-				/* --- background (string, 83 bytes) - field 7 [440-522] --- */
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_after_enabled)",
-				"target_property_name": "#raw_background"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #raw_background) - ('%.2s' * #raw_background) - ';')",
-				"target_property_name": "#background"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(not (#background = ''))",
-				"target_property_name": "#bg_visible"
-			},
-			{
-				/* --- region (number) - field 8 [523-605]: skip background (83) to reach it --- */
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_after_enabled)",
-				"target_property_name": "#skip_bg_for_region"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#rem_after_enabled - #skip_bg_for_region)",
-				"target_property_name": "#rem_at_region"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #rem_at_region)",
-				"target_property_name": "#raw_region"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "((('%.82s' * #raw_region) - ('%.2s' * #raw_region) - ';') * 1)",
-				"target_property_name": "#region"
-			},
-			{
-				/* Gate on the active scroll region: $region_filter is substituted per scroll instance */
-				"binding_type": "view",
-				"source_property_name": "(#visible_pre_region and (#region = $region_filter))",
-				"target_property_name": "#visible"
+				"target_property_name": "#enabled",
+				"binding_condition": "visible"
 			}
 		]
 	},

@@ -8,12 +8,25 @@ export const SCROLL_SLOT_TYPE = 'scroll-slot';
 export type ScrollAxis = 'x' | 'y';
 
 /**
- * Maximum number of custom `<Scroll>`s per render. The RP ships a fixed pool of 4 pooled
- * scroll controls (indices 1–4) on top of the implicit root scroll (index 0). A render with
- * more than this many `<Scroll>`s throws in the layout phase — the extras would otherwise
- * silently not render.
+ * TITLE-FORMAT constant: how many custom scroll blocks the title reserves space for.
+ * Do NOT change — the fixed background offset (BACKGROUND_TITLE_SKIP) and the modal
+ * flow-button blocks are laid out against this padding on both backends.
  */
 export const MAX_SCROLLS = 4;
+
+/**
+ * RUNTIME limit: how many custom `<Scroll>`s a render may actually use. The RP mounts
+ * a fixed pool of pooled scroll controls (indices 1..MAX_POOLED_SCROLLS) on top of the
+ * implicit root scroll (index 0), and every mounted slot re-instantiates the FULL
+ * form_buttons collection — the dominant engine-side cost on big screens — so the pool
+ * is kept as small as real layouts need. A render with more `<Scroll>`s throws in the
+ * layout phase (the extras would otherwise silently not render).
+ *
+ * To grow the pool: raise this constant AND re-add the RP side — a `scroll_N` slot in
+ * scroll_pool.json (block_skip 83 + 498·N) plus `label_router_rN` / `button_router_rN` /
+ * `header_router_rN` variants. The title format already carries up to {@link MAX_SCROLLS}.
+ */
+export const MAX_POOLED_SCROLLS = 2;
 
 /**
  * `<Scroll>` — one independent scroll region. Each `<Scroll>` in a render becomes its own

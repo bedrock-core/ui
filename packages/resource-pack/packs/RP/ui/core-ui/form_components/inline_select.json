@@ -109,22 +109,22 @@
 				"binding_collection_name": "custom_dropdown"
 			},
 			{ "binding_type": "collection_details" },
-			{ "binding_type": "view", "source_property_name": "('%.1005s' * #custom_radio_text)", "target_property_name": "#skip_anchored_offset_value_x" },
-			{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_anchored_offset_value_x)", "target_property_name": "#rem_anchored_offset_value_x" },
-			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_anchored_offset_value_x)", "target_property_name": "#raw_anchored_offset_value_x" },
-			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_anchored_offset_value_x) - ('%.2s' * #raw_anchored_offset_value_x) - ';') * $normalize)", "target_property_name": "#anchored_offset_value_x" },
-			{ "binding_type": "view", "source_property_name": "('%.1088s' * #custom_radio_text)", "target_property_name": "#skip_anchored_offset_value_y" },
-			{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_anchored_offset_value_y)", "target_property_name": "#rem_anchored_offset_value_y" },
-			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_anchored_offset_value_y)", "target_property_name": "#raw_anchored_offset_value_y" },
-			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_anchored_offset_value_y) - ('%.2s' * #raw_anchored_offset_value_y) - ';') * $normalize)", "target_property_name": "#anchored_offset_value_y" },
-			{ "binding_type": "view", "source_property_name": "('%.1171s' * #custom_radio_text)", "target_property_name": "#skip_size_binding_x" },
-			{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_size_binding_x)", "target_property_name": "#rem_size_binding_x" },
-			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_size_binding_x)", "target_property_name": "#raw_size_binding_x" },
-			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_size_binding_x) - ('%.2s' * #raw_size_binding_x) - ';') * 1)", "target_property_name": "#size_binding_x" },
-			{ "binding_type": "view", "source_property_name": "('%.1254s' * #custom_radio_text)", "target_property_name": "#skip_size_binding_y" },
-			{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_size_binding_y)", "target_property_name": "#rem_size_binding_y" },
-			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_size_binding_y)", "target_property_name": "#raw_size_binding_y" },
-			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_size_binding_y) - ('%.2s' * #raw_size_binding_y) - ';') * 1)", "target_property_name": "#size_binding_y" }
+			{ "binding_type": "view", "source_property_name": "('%.1005s' * #custom_radio_text)", "target_property_name": "#skip_anchored_offset_value_x", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_anchored_offset_value_x)", "target_property_name": "#rem_anchored_offset_value_x", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_anchored_offset_value_x)", "target_property_name": "#raw_anchored_offset_value_x", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_anchored_offset_value_x) - ('%.2s' * #raw_anchored_offset_value_x) - ';') * $normalize)", "target_property_name": "#anchored_offset_value_x", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "('%.1088s' * #custom_radio_text)", "target_property_name": "#skip_anchored_offset_value_y", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_anchored_offset_value_y)", "target_property_name": "#rem_anchored_offset_value_y", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_anchored_offset_value_y)", "target_property_name": "#raw_anchored_offset_value_y", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_anchored_offset_value_y) - ('%.2s' * #raw_anchored_offset_value_y) - ';') * $normalize)", "target_property_name": "#anchored_offset_value_y", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "('%.1171s' * #custom_radio_text)", "target_property_name": "#skip_size_binding_x", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_size_binding_x)", "target_property_name": "#rem_size_binding_x", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_size_binding_x)", "target_property_name": "#raw_size_binding_x", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_size_binding_x) - ('%.2s' * #raw_size_binding_x) - ';') * 1)", "target_property_name": "#size_binding_x", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "('%.1254s' * #custom_radio_text)", "target_property_name": "#skip_size_binding_y", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_size_binding_y)", "target_property_name": "#rem_size_binding_y", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_size_binding_y)", "target_property_name": "#raw_size_binding_y", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_size_binding_y) - ('%.2s' * #raw_size_binding_y) - ';') * 1)", "target_property_name": "#size_binding_y", "binding_condition": "visible" }
 		],
 		// Shared row pieces (form_shared.json): the radio option_toggle (its option_face
 		// children carry the per-state face+bullet offsets) + the label frame. "always" is
@@ -166,14 +166,14 @@
 				"binding_collection_name": "custom_dropdown"
 			},
 			{ "binding_type": "collection_details" },
-			{ "binding_type": "view", "source_property_name": "('%.1337s' * #custom_radio_text)", "target_property_name": "#skip_bullet_w" },
-			{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_bullet_w)", "target_property_name": "#rem_bullet_w" },
-			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_bullet_w)", "target_property_name": "#raw_bullet_w" },
-			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_bullet_w) - ('%.2s' * #raw_bullet_w) - ';') * 1)", "target_property_name": "#size_binding_x" },
-			{ "binding_type": "view", "source_property_name": "('%.1420s' * #custom_radio_text)", "target_property_name": "#skip_bullet_h" },
-			{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_bullet_h)", "target_property_name": "#rem_bullet_h" },
-			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_bullet_h)", "target_property_name": "#raw_bullet_h" },
-			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_bullet_h) - ('%.2s' * #raw_bullet_h) - ';') * 1)", "target_property_name": "#size_binding_y" }
+			{ "binding_type": "view", "source_property_name": "('%.1337s' * #custom_radio_text)", "target_property_name": "#skip_bullet_w", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_bullet_w)", "target_property_name": "#rem_bullet_w", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_bullet_w)", "target_property_name": "#raw_bullet_w", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_bullet_w) - ('%.2s' * #raw_bullet_w) - ';') * 1)", "target_property_name": "#size_binding_x", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "('%.1420s' * #custom_radio_text)", "target_property_name": "#skip_bullet_h", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_bullet_h)", "target_property_name": "#rem_bullet_h", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_bullet_h)", "target_property_name": "#raw_bullet_h", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_bullet_h) - ('%.2s' * #raw_bullet_h) - ';') * 1)", "target_property_name": "#size_binding_y", "binding_condition": "visible" }
 		],
 		"controls": [ { "img@core_ui_form_components.inline_bullet_img": { "$bullet_skip": "$bullet_skip" } } ]
 	},
@@ -191,11 +191,11 @@
 				"binding_collection_name": "custom_dropdown"
 			},
 			{ "binding_type": "collection_details" },
-			{ "binding_type": "view", "source_property_name": "$bullet_skip", "target_property_name": "#skip_texture" },
-			{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_texture)", "target_property_name": "#rem_texture" },
-			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_texture)", "target_property_name": "#raw_texture" },
-			{ "binding_type": "view", "source_property_name": "(('%.82s' * #raw_texture) - ('%.2s' * #raw_texture) - ';')", "target_property_name": "#texture" },
-			{ "binding_type": "view", "source_property_name": "(not (#texture = ''))", "target_property_name": "#visible" }
+			{ "binding_type": "view", "source_property_name": "$bullet_skip", "target_property_name": "#skip_texture", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_texture)", "target_property_name": "#rem_texture", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_texture)", "target_property_name": "#raw_texture", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "(('%.82s' * #raw_texture) - ('%.2s' * #raw_texture) - ';')", "target_property_name": "#texture", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "(not (#texture = ''))", "target_property_name": "#visible", "binding_condition": "visible" }
 		]
 	}
 }

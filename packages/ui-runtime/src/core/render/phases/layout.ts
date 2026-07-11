@@ -1,11 +1,11 @@
-import type { FlexStyle, LayoutNode } from '@bedrock-core/flexbox';
+import type { FlexStyle, LayoutNode, MeasureFunc } from '@bedrock-core/flexbox';
 import { CANONICAL_SCREEN, createNode, computeLayout as flexComputeLayout } from '@bedrock-core/flexbox';
-import { TEXT_SHADOW_TYPE, type TextFont, type TextOverflow, type TextWordBreak } from '../../../components/Text';
+import { isTextElementType, safeLabelText, type TextFont, type TextOverflow, type TextWordBreak } from '../../../components/Text';
 import {
   MODAL_DROPDOWN_SLOT_TYPE, MODAL_FORM_BUTTON_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE,
   MODAL_INPUT_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
 } from '../../../components/Form';
-import { MAX_SCROLLS, SCROLL_SLOT_TYPE, type ScrollAxis } from '../../../components/Scroll';
+import { MAX_POOLED_SCROLLS, SCROLL_SLOT_TYPE, type ScrollAxis } from '../../../components/Scroll';
 import type { JSX } from '../../../jsx';
 import { ellipsizeText, measureText, wrapText } from '../../../util/textMetrics';
 import { isTransparentType } from '../../componentRegistry';
@@ -100,14 +100,82 @@ function extractTextMetrics(props: JSX.Props): TextMetricsData {
   };
 }
 
-// ─── Available-width helpers ───────────────────────────────────────────────────
+// ─── Text overflow processing ───────────────────────────────────────────────────
 
-function getHorizontalPadding(style: FlexStyle): number {
-  if (style.paddingLeft !== undefined || style.paddingRight !== undefined) {
-    return (Number(style.paddingLeft) || 0) + (Number(style.paddingRight) || 0);
+function hasOverflowProps(td: TextMetricsData): boolean {
+  return td.wordBreak === 'break-word' || td.overflow === 'ellipsis' || td.maxLines !== undefined;
+}
+
+/**
+ * Apply the text's overflow behavior (wordBreak / maxLines / ellipsis) at the
+ * given available width and return the processed display string. A non-finite
+ * or non-positive width (the engine's max-content probe) returns the raw text.
+ */
+function processOverflowText(td: TextMetricsData, availableWidth: number): string {
+  let displayText = td.text;
+
+  if (!Number.isFinite(availableWidth) || availableWidth <= 0) {
+    return displayText;
   }
 
-  return (Number(style.padding) || 0) * 2;
+  if (td.wordBreak === 'break-word') {
+    displayText = wrapText(displayText, availableWidth, td.font, td.scale);
+  }
+
+  if (td.maxLines !== undefined) {
+    const lines = displayText.split('\n');
+
+    if (lines.length > td.maxLines) {
+      const kept = lines.slice(0, td.maxLines);
+
+      // Always ellipsize last line when truncating — clip is unreliable because
+      // the serialized string may exceed 80 bytes and Bedrock adds its own ellipsis anyway.
+      kept[kept.length - 1] = ellipsizeText(
+        kept[kept.length - 1],
+        availableWidth,
+        td.font,
+        td.scale,
+      );
+
+      displayText = kept.join('\n');
+    }
+  } else if (td.overflow === 'ellipsis' && td.wordBreak !== 'break-word') {
+    displayText = ellipsizeText(displayText, availableWidth, td.font, td.scale);
+  }
+
+  return displayText;
+}
+
+/**
+ * Measure closure for a text element with overflow behavior: the flex engine
+ * calls it with the width it grants the node (max-content probe first, then the
+ * real grant), and the returned size reflects the wrapped/truncated content.
+ * Texts with BOTH dimensions explicit need no measurement; texts without
+ * overflow props are constraint-independent and get explicit intrinsic sizes in
+ * `withIntrinsicSize` instead.
+ */
+function makeTextMeasure(element: JSX.Element): MeasureFunc | undefined {
+  if (!isTextElementType(element.type)) {
+    return undefined;
+  }
+
+  const style = (element.props.__layout ?? {}) as FlexStyle;
+
+  if (typeof style.width === 'number' && typeof style.height === 'number') {
+    return undefined;
+  }
+
+  const td = extractTextMetrics(element.props);
+
+  if (!hasOverflowProps(td)) {
+    return undefined;
+  }
+
+  return availableWidth => measureText({
+    text: processOverflowText(td, availableWidth),
+    font: td.font,
+    fontSize: td.scale,
+  });
 }
 
 /**
@@ -136,11 +204,7 @@ function hasChildElements(element: JSX.Element): boolean {
   return arr.some(k => typeof k === 'object' && k !== null && 'type' in k);
 }
 
-function withIntrinsicSize(
-  element: JSX.Element,
-  style: FlexStyle,
-  availableWidth?: number,
-): FlexStyle {
+function withIntrinsicSize(element: JSX.Element, style: FlexStyle): FlexStyle {
   // Native modal controls have a fixed intrinsic row size owned by the vanilla widget;
   // give them a sensible default (full-width row, native row height) so they flow with
   // real heights instead of collapsing to 0. Explicit width/height still win.
@@ -168,14 +232,14 @@ function withIntrinsicSize(
     // flex-basis and breaks flex distribution inside row panels.
     const flexSized = next.flex !== undefined || next.flexGrow !== undefined || next.flexBasis !== undefined;
 
-    if (next.width === undefined && !flexSized && availableWidth !== undefined && availableWidth > 0) {
-      next.width = availableWidth;
+    if (next.width === undefined && !flexSized) {
+      next.width = '100%';
     }
 
     return next;
   }
 
-  if (element.type !== 'text' && element.type !== TEXT_SHADOW_TYPE) {
+  if (!isTextElementType(element.type)) {
     return style;
   }
 
@@ -184,50 +248,16 @@ function withIntrinsicSize(
   }
 
   const td = extractTextMetrics(element.props);
-  const hasOverflowProps = td.wordBreak === 'break-word' || td.overflow === 'ellipsis' || td.maxLines !== undefined;
 
-  let displayText = td.text;
-
-  if (hasOverflowProps && availableWidth !== undefined && availableWidth > 0) {
-    // Apply wrapping / overflow inline using the parent's available width
-    if (td.wordBreak === 'break-word') {
-      displayText = wrapText(displayText, availableWidth, td.font, td.scale);
-    }
-
-    if (td.maxLines !== undefined) {
-      const lines = displayText.split('\n');
-
-      if (lines.length > td.maxLines) {
-        const kept = lines.slice(0, td.maxLines);
-
-        // Always ellipsize last line when truncating — clip is unreliable because
-        // the serialized string may exceed 80 bytes and Bedrock adds its own ellipsis anyway.
-        kept[kept.length - 1] = ellipsizeText(
-          kept[kept.length - 1],
-          availableWidth,
-          td.font,
-          td.scale,
-        );
-
-        displayText = kept.join('\n');
-      }
-    } else if (td.overflow === 'ellipsis' && td.wordBreak !== 'break-word') {
-      displayText = ellipsizeText(displayText, availableWidth, td.font, td.scale);
-    }
-
-    // Mutate props.value so the serializer sees the processed text.
-    // Skip for localization keys — props.value must stay as the key for RP lookup.
-    const metrics = element.props.__textMetrics;
-    const isLocalizationKey = metrics && typeof metrics === 'object' && !Array.isArray(metrics)
-      && typeof Reflect.get(metrics, 'resolvedText') === 'string';
-
-    if (!isLocalizationKey) {
-      element.props.value = displayText;
-    }
+  // Overflow-capable text is sized by the ENGINE via its measure closure
+  // (makeTextMeasure) — the wrap width is only knowable once flex has granted
+  // the node its box, so no intrinsic size is pinned here.
+  if (hasOverflowProps(td)) {
+    return style;
   }
 
   const dims = measureText({
-    text: displayText,
+    text: td.text,
     font: td.font,
     fontSize: td.scale,
   });
@@ -246,33 +276,18 @@ function withIntrinsicSize(
 }
 
 /**
- * Recursively build a LayoutNode tree, propagating the parent's available
- * content width top-down so text elements can apply word-wrap / overflow
- * before the flexbox engine computes their heights.
+ * Recursively build a LayoutNode tree. Overflow-capable text elements carry a
+ * measure closure so the flexbox engine wraps/truncates them against the width
+ * it actually grants (see makeTextMeasure).
  */
-function buildNode(element: JSX.Element, availableWidth?: number): LayoutNode {
+function buildNode(element: JSX.Element): LayoutNode {
   // A <Scroll> lays out as a leaf flex box; its viewport rect comes from the parent flow.
   if (element.type === SCROLL_SLOT_TYPE) {
     return createNode(scrollFlexStyle(element), []);
   }
 
   const baseStyle = (element.props.__layout ?? {}) as FlexStyle;
-  const style = withIntrinsicSize(element, baseStyle, availableWidth);
-
-  // Compute the content width available for children of this container.
-  // Use the resolved width if explicit, otherwise pass through the parent's
-  // available content width minus our own padding.
-  let childAvailWidth: number | undefined;
-
-  if (typeof style.width === 'number') {
-    childAvailWidth = style.width - getHorizontalPadding(style);
-  } else if (availableWidth !== undefined) {
-    childAvailWidth = availableWidth - getHorizontalPadding(style);
-  }
-
-  if (childAvailWidth !== undefined && childAvailWidth < 0) {
-    childAvailWidth = 0;
-  }
+  const style = withIntrinsicSize(element, baseStyle);
 
   const rawChildren = element.props.children;
   let childElements: JSX.Element[] = [];
@@ -283,7 +298,7 @@ function buildNode(element: JSX.Element, availableWidth?: number): LayoutNode {
     childElements = collectConcrete(rawChildren);
   }
 
-  return createNode(style, childElements.map(c => buildNode(c, childAvailWidth)));
+  return createNode(style, childElements.map(c => buildNode(c)), makeTextMeasure(element));
 }
 
 // ─── Apply LayoutNode results back to JSX element tree ─────────────────────────
@@ -450,7 +465,7 @@ function layoutScrollContent(slot: JSX.Element, axis: ScrollAxis, viewportWidth:
     // percentages / stretch / text-wrap resolve against the real column. The flex
     // engine floors the root height to refHeight — pass the viewport height so the
     // extent floors to the viewport (not the canonical 210), then grows with content.
-    const childNodes = roots.map(r => buildNode(r, viewportWidth));
+    const childNodes = roots.map(r => buildNode(r));
 
     syntheticRoot = createNode({ flexDirection: 'column', width: viewportWidth }, childNodes);
 
@@ -512,13 +527,17 @@ function dumpLayoutNode(node: LayoutNode, depth = 0): void {
 
 /**
  * Fill props that depend on the COMPUTED layout, after the flex pass wrote
- * `jsonUIWidth` (in-place mutation, like the region tagging). Currently only the
- * modal slider's `travelWidth`: the RP wraps the interactive slider in a panel of
- * this width to bound the thumb's travel. The engine moves the thumb CENTER across
- * exactly the slider control's width (in-game calibrated with the fill-everything
- * unstyled nineslice: travel = width put the center at the track ends), so
- * `width − thumbWidth` makes the visual thumb's EDGE meet the full-width track's
- * ends at min/max, for any thumb width.
+ * `jsonUIWidth` (in-place mutation, like the region tagging).
+ *
+ * - Modal slider `travelWidth`: the RP wraps the interactive slider in a panel of
+ *   this width to bound the thumb's travel. The engine moves the thumb CENTER across
+ *   exactly the slider control's width (in-game calibrated with the fill-everything
+ *   unstyled nineslice: travel = width put the center at the track ends), so
+ *   `width − thumbWidth` makes the visual thumb's EDGE meet the full-width track's
+ *   ends at min/max, for any thumb width.
+ * - Overflow text commit: re-derive the wrapped/truncated display string at the
+ *   node's FINAL granted width (the same width its measure closure last saw) so
+ *   the serializer emits the processed text.
  */
 function resolveDerivedProps(element: JSX.Node): void {
   if (Array.isArray(element)) {
@@ -536,6 +555,25 @@ function resolveDerivedProps(element: JSX.Node): void {
     const thumbWidth = asNumber(element.props.thumbWidth) ?? 0;
 
     element.props.travelWidth = Math.max(0, width - thumbWidth);
+  }
+
+  if (isTextElementType(element.type)) {
+    const td = extractTextMetrics(element.props);
+    const width = asNumber(element.props.jsonUIWidth) ?? 0;
+
+    if (hasOverflowProps(td) && width > 0) {
+      // Mutate props.value so the serializer sees the processed text — a JSON UI
+      // label is content-sized and never wraps on its own, so the line breaks
+      // MUST be baked into the emitted string.
+      // Skip for localization keys — props.value must stay as the key for RP lookup.
+      const metrics = element.props.__textMetrics;
+      const isLocalizationKey = metrics && typeof metrics === 'object' && !Array.isArray(metrics)
+        && Reflect.get(metrics, 'isKey') === true;
+
+      if (!isLocalizationKey) {
+        element.props.value = safeLabelText(processOverflowText(td, width));
+      }
+    }
   }
 
   resolveDerivedProps(element.props.children);
@@ -560,12 +598,14 @@ export function computeLayout(tree: JSX.Element): JSX.Element {
 
   findScrolls(tree, slots);
 
-  // Fail loudly rather than silently dropping scrolls: the RP only pools MAX_SCROLLS
-  // custom viewports (indices 1..MAX_SCROLLS), so any beyond that would never render.
-  if (slots.length > MAX_SCROLLS) {
+  // Fail loudly rather than silently dropping scrolls: the RP only pools
+  // MAX_POOLED_SCROLLS custom viewports (indices 1..MAX_POOLED_SCROLLS, a deliberate
+  // perf cap — every mounted slot re-instantiates the full collection), so any beyond
+  // that would never render.
+  if (slots.length > MAX_POOLED_SCROLLS) {
     throw new ScrollLimitError(
-      `Too many <Scroll>s: found ${slots.length}, but a render supports at most ${MAX_SCROLLS} `
-      + `(plus the implicit root scroll). Scrolls beyond the ${MAX_SCROLLS}th would not render.`,
+      `Too many <Scroll>s: found ${slots.length}, but a render supports at most ${MAX_POOLED_SCROLLS} `
+      + `(plus the implicit root scroll). Scrolls beyond the ${MAX_POOLED_SCROLLS}th would not render.`,
     );
   }
 
@@ -583,7 +623,7 @@ export function computeLayout(tree: JSX.Element): JSX.Element {
     // parent origin — mirrors how a screen with a single root container flows its children.
     const root = createNode(
       { flexDirection: 'column', width: CANONICAL_SCREEN.width },
-      concreteRoots.map(c => buildNode(c, CANONICAL_SCREEN.width)),
+      concreteRoots.map(c => buildNode(c)),
     );
 
     flexComputeLayout(root);
@@ -604,7 +644,7 @@ export function computeLayout(tree: JSX.Element): JSX.Element {
   } else {
     const concreteTree = concreteRoots[0] ?? tree;
 
-    const root = buildNode(concreteTree, CANONICAL_SCREEN.width);
+    const root = buildNode(concreteTree);
 
     flexComputeLayout(root);
 

@@ -92,6 +92,25 @@ export function emitLabel(payload: string, form: FormTarget, ctx?: Serialization
 }
 
 /**
+ * Emit a static control through the ActionForm HEADER slot. The native factory routes
+ * header entries to their own control_id, so a header-slot cell instantiates ONLY the
+ * slim `header_router` (one component variant) instead of the full label_router variant
+ * fan-out — engine-level type routing, no `#type` gating cost at all. Used for `image`.
+ *
+ * On the modal backend this falls back to the label slot: modal headers' payload
+ * channel + formValues behavior are unproven, while modal labels are (see emitLabel).
+ */
+export function emitHeader(payload: string, form: FormTarget, ctx?: SerializationContext): void {
+  if (!isActionForm(form)) {
+    emitLabel(payload, form, ctx);
+
+    return;
+  }
+
+  form.header(payload);
+}
+
+/**
  * Record a native modal control's `name` against its ordinal, then advance the ordinal
  * counter. Shared bookkeeping for the four modal-control emitters below: it lets the
  * presenter re-key the positional `response.formValues[ordinal]` into the named result

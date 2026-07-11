@@ -584,7 +584,10 @@ describe('modal control serialization', () => {
       type: 'fragment',
       props: {
         children: [
-          el(Panel({ children: [] })), // decorative — consumes formValues[0] = null engine-side
+          // decorative — consumes formValues[0] = null engine-side. Needs a background:
+          // a background-less panel cell renders nothing and is skipped by serialize()
+          // entirely (no label emitted, no formValues slot consumed).
+          el(Panel({ children: [], background: 'textures/ui/unstyled' })),
           el(Form.Toggle({ name: 'sound' })),
           el(Form.Slider({ name: 'volume', min: 0, max: 1 })),
         ],

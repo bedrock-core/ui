@@ -22,9 +22,10 @@ export type TranslationKeysMap = Record<string, string>;
  * </TranslationKeysContext>
  * ```
  *
- * Projects that never use `localizationKey` need neither the filter nor this
- * context. Rendering a `localizationKey` without a provider throws a
- * `TranslationKeysError`.
+ * Both the filter and this context are OPTIONAL: a `localizationKey` missing
+ * from the map (another pack's key, plain text, or no provider at all)
+ * measures as the literal key string — mirroring Bedrock, which renders an
+ * unmatched key as-is.
  *
  * The context can also be nested to override keys for a subtree
  * (e.g. a different language or custom strings).

@@ -3,7 +3,7 @@ import type { JSX } from '../../jsx';
 import type { ScrollMetrics } from '../serializer';
 import { withControl } from '../../components/control';
 import { registerNativeComponents } from '../../components';
-import { MAX_SCROLLS, Scroll } from '../../components/Scroll';
+import { MAX_POOLED_SCROLLS, Scroll } from '../../components/Scroll';
 import { ScrollLimitError } from '../types';
 import { computeLayout } from '../render/phases/layout';
 
@@ -162,14 +162,14 @@ describe('computeLayout — scroll limit', () => {
     return box(320, 210, 'row', Array.from({ length: n }, () => Scroll({ children: panel(10, 10) })));
   }
 
-  it(`accepts exactly MAX_SCROLLS (${MAX_SCROLLS}) custom scrolls`, () => {
-    const tree = nScrolls(MAX_SCROLLS);
+  it(`accepts exactly MAX_POOLED_SCROLLS (${MAX_POOLED_SCROLLS}) custom scrolls`, () => {
+    const tree = nScrolls(MAX_POOLED_SCROLLS);
 
     expect(() => computeLayout(tree)).not.toThrow();
-    expect(scrolls(tree)).toHaveLength(MAX_SCROLLS + 1); // + root
+    expect(scrolls(tree)).toHaveLength(MAX_POOLED_SCROLLS + 1); // + root
   });
 
-  it('throws a ScrollLimitError when there are more than MAX_SCROLLS', () => {
-    expect(() => computeLayout(nScrolls(MAX_SCROLLS + 1))).toThrow(ScrollLimitError);
+  it('throws a ScrollLimitError when there are more than MAX_POOLED_SCROLLS', () => {
+    expect(() => computeLayout(nScrolls(MAX_POOLED_SCROLLS + 1))).toThrow(ScrollLimitError);
   });
 });

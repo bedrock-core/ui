@@ -1,36 +1,98 @@
 {
 	"namespace": "core_ui_components",
-	// Extends the shared base (core_ui_common.control). The base owns the generic
-	// control-block decode; the text/font fields (component fields 1-3: text [1024],
-	// fontType [1107], fontScaleFactor [1190]) are decoded by the label CHILD (computed
-	// bindings don't propagate to children, and a derived `bindings` array would REPLACE
-	// the base's — so component decode lives on children, same as panel_bg and the modal
-	// dropdown's current-value label, both in-game proven). Payload-source $vars pass
-	// through instantiation into both the base bindings and the child.
-	"text@core_ui_common.control": {
-		"layer": 100,
-		/* The #type token this component matches. text_shadow derives text and overrides
-		   ONLY this |default var (the label_router_r1/$region_filter-proven override shape) —
-		   re-stating the whole $type_gate there would be a hard-over-hard $var override at
-		   derivation depth 2, which nothing in this pack has proven in-game. $var-inside-
-		   expression is the control.json $region_filter shape; a $var value holding another
-		   $var is the vanilla common_panel/$custom_background shape. */
-		"$text_type|default": "text",
-		"$type_gate": "(#pre_visible and (#type = $text_type))",
+	// ─── MERGED LABEL CELL ──────────────────────────────────────────────────────────
+	// ONE base control serves every label-slot element type (panel, text, text_shadow,
+	// text_wrap, text_shadow_wrap). The old model mounted 5 sibling VARIANTS per cell,
+	// each re-running the full control-block decode and only then hiding itself; here
+	// the cell runs the base decode ONCE and small self-gating LEAVES pick the visuals:
+	//   • cell_bg      — background image from the common [440] field. No type gate:
+	//                    any cell type may carry a background (panel cells ARE just a
+	//                    background; folded Panel+Text cells carry one too). Self-hides
+	//                    on the empty default.
+	//   • plain/shadow frames — [1,1] px-mapping frames gated on #type, hosting the
+	//                    label leaf ($shadow is a LOAD-TIME label property, hence two
+	//                    frames — see the label's own comment).
+	//   • wrap frames  — same, for the LOCALIZED overflow types (see wrap_box).
+	// Controls per label cell: 12 vs 19 in the variant model, and ONE 28-binding base
+	// decode instead of five.
+	//
+	// Layer parity with the old variant model: the cell sits at layer 0 and cell_bg
+	// with it (old panel variant), the text frames at 100 (old text variant) — so a
+	// Card panel's bg still renders beneath its children's text cells.
+	//
+	// NOTE: computed #bindings do NOT propagate to children — every leaf that needs
+	// payload fields binds + decodes them itself. Payload-source $vars
+	// ($payload_collection / $payload_binding / $cell_details_binding_type) pass
+	// through instantiation into the whole subtree (the modal label router overrides
+	// them to custom_form / #custom_text / collection_details).
+	"label_cell@core_ui_common.control": {
+		"layer": 0,
+		/* every label-slot type renders through this cell — the only gate is the
+		   serialized visible flag; the leaves route the type. */
+		"$type_gate": "#pre_visible",
 		"controls": [
 			{
-				/* [1,1] positioning frame (px-mapping rule): the label inside offsets from
-				   the cell's top-left by the group x/y ([1273]/[1356], Text offsetX/offsetY,
-				   default 0,0). All text/font decode is label's — the group default
-				   offset [1024] IS this component's layout. */
-				"txt_frame": {
-					"type": "panel",
+				/* Background surface — common field [440], any cell type. Self-hides on
+				   the empty default; decode skipped entirely while hidden (`visible`). */
+				"cell_bg": {
+					"type": "image",
 					"size": [
-						1,
-						1
+						"100%",
+						"100%"
 					],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
+					"fill": true,
+					"texture": "#texture",
+					"visible": "#visible",
+					"bindings": [
+						{
+							"binding_type": "$cell_details_binding_type",
+							"binding_collection_name": "$payload_collection"
+						},
+						{
+							"binding_name": "$payload_binding",
+							"binding_type": "collection",
+							"binding_collection_name": "$payload_collection",
+							"binding_name_override": "#payload"
+						},
+						{
+							/* skip 440 bytes: header(9)+type(83)+width(83)+height(83)+x(83)+y(83)+visible(8)+enabled(8) */
+							"binding_type": "view",
+							"source_property_name": "('%.440s' * #payload)",
+							"target_property_name": "#skip_to_bg",
+							"binding_condition": "visible"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(#payload - #skip_to_bg)",
+							"target_property_name": "#rem_at_bg",
+							"binding_condition": "visible"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "('%.83s' * #rem_at_bg)",
+							"target_property_name": "#raw_bg",
+							"binding_condition": "visible"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(('%.82s' * #raw_bg) - ('%.2s' * #raw_bg) - ';')",
+							"target_property_name": "#texture",
+							"binding_condition": "visible"
+						},
+						{
+							"binding_type": "view",
+							"source_property_name": "(not (#texture = ''))",
+							"target_property_name": "#visible",
+							"binding_condition": "visible"
+						}
+					]
+				}
+			},
+			{
+				"plain_frame@core_ui_components.cell_type_frame": {
+					"$frame_type": "text",
 					"controls": [
 						{
 							"txt@core_ui_components.label": {
@@ -39,16 +101,260 @@
 						}
 					]
 				}
+			},
+			{
+				"shadow_frame@core_ui_components.cell_type_frame": {
+					"$frame_type": "text_shadow",
+					"$shadow": true,
+					"controls": [
+						{
+							"txt@core_ui_components.label": {
+								"localize": true
+							}
+						}
+					]
+				}
+			},
+			{
+				"wrap_frame@core_ui_components.cell_type_frame": {
+					"$frame_type": "text_wrap",
+					"controls": [
+						{
+							"box@core_ui_components.wrap_box": {}
+						}
+					]
+				}
+			},
+			{
+				"shadow_wrap_frame@core_ui_components.cell_type_frame": {
+					"$frame_type": "text_shadow_wrap",
+					"$shadow": true,
+					"controls": [
+						{
+							"box@core_ui_components.wrap_box": {}
+						}
+					]
+				}
 			}
 		]
 	},
-	/* Shadowed text. `shadow` is a LOAD-TIME label property (not bindable — vanilla only
-	   ever sets a literal or $variable), so the TS side routes it through the element TYPE:
-	   `<Text shadow>` serializes `type: 'text_shadow'` and this variant rides the standard
-	   type gate with a literal $shadow for the label. Same payload contract as `text`. */
-	"text_shadow@core_ui_components.text": {
-		"$text_type": "text_shadow",
-		"$shadow": true
+	// ─── Shared type-gate frame ─────────────────────────────────────────────────────
+	// A [1,1] px-mapping frame (size_binding/anchored-offset values inside map 1:1 to
+	// pixels) that shows itself only when the cell's #type matches $frame_type. String
+	// $vars compare UNQUOTED in expressions (vanilla-proven). Gate is `once` (payload
+	// is screen-constant); everything the hosted leaf decodes is `visible`-conditioned,
+	// so a non-matching frame costs only these ~7 bindings.
+	"cell_type_frame": {
+		"type": "panel",
+		"size": [
+			1,
+			1
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"layer": 100,
+		"$frame_type|default": "text",
+		"$payload_collection|default": "form_buttons",
+		"$payload_binding|default": "#form_button_text",
+		"$cell_details_binding_type|default": "none",
+		"visible": "#visible",
+		"property_bag": {
+			"#visible": true
+		},
+		"bindings": [
+			{
+				"binding_type": "$cell_details_binding_type",
+				"binding_collection_name": "$payload_collection"
+			},
+			{
+				"binding_name": "$payload_binding",
+				"binding_type": "collection",
+				"binding_collection_name": "$payload_collection",
+				"binding_name_override": "#payload"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.9s' * #payload)",
+				"target_property_name": "#protocol_header",
+				"binding_condition": "once"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#payload - #protocol_header)",
+				"target_property_name": "#rem_after_header",
+				"binding_condition": "once"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_after_header)",
+				"target_property_name": "#raw_type",
+				"binding_condition": "once"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_type) - ('%.2s' * #raw_type) - ';')",
+				"target_property_name": "#type",
+				"binding_condition": "once"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#type = $frame_type)",
+				"target_property_name": "#visible",
+				"binding_condition": "once"
+			}
+		]
+	},
+	// ─── Wrap box (LOCALIZED overflow text) ─────────────────────────────────────────
+	// For wordBreak/ellipsis/maxLines on a localizationKey: the build side cannot
+	// pre-break a key — props.value stays the key and the RP resolves it at render —
+	// so wrapping must come from the label itself: a width-constrained label wraps its
+	// text natively (the vanilla server_form body-label behavior). The box is sized to
+	// the decoded control width/height (fields 1/2) and nudged by the label group x/y
+	// ([1273]/[1356]); clips_children approximates maxLines for keys (box height =
+	// N measured lines). Raw (non-key) text NEVER routes here — it arrives pre-wrapped
+	// as `text`. Decode lives HERE (computed bindings don't propagate to children).
+	"wrap_box": {
+		"type": "panel",
+		"size": [
+			0,
+			0
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"use_anchored_offset": true,
+		"clips_children": true,
+		"property_bag": {
+			"#size_binding_x": 0.0,
+			"#size_binding_y": 0.0,
+			"#anchored_offset_value_x": 0.0,
+			"#anchored_offset_value_y": 0.0
+		},
+		"$payload_collection|default": "form_buttons",
+		"$payload_binding|default": "#form_button_text",
+		"$cell_details_binding_type|default": "none",
+		"$details_collection|default": "",
+		"bindings": [
+			{
+				/* fetch shape is the custom_dropdown-PROVEN one (see the label below) */
+				"binding_name": "$payload_binding",
+				"binding_type": "collection",
+				"binding_condition": "always",
+				"binding_collection_name": "$payload_collection",
+				"binding_name_override": "#payload"
+			},
+			{
+				"binding_type": "$cell_details_binding_type",
+				"binding_collection_name": "$details_collection"
+			},
+			{
+				/* --- control width (field 1 [92-174]) -> box width ---
+				   All view decodes below are `visible`: skipped when the owning frame is
+				   gated off, run once when visible (payload is screen-constant). */
+				"binding_type": "view",
+				"source_property_name": "('%.92s' * #payload)",
+				"target_property_name": "#skip_to_width",
+				"binding_condition": "visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#payload - #skip_to_width)",
+				"target_property_name": "#rem_at_width",
+				"binding_condition": "visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_at_width)",
+				"target_property_name": "#raw_width",
+				"binding_condition": "visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_width) - ('%.2s' * #raw_width) - ';')",
+				"target_property_name": "#size_binding_x",
+				"binding_condition": "visible"
+			},
+			{
+				/* --- control height (field 2 [175-257]) -> box height --- */
+				"binding_type": "view",
+				"source_property_name": "(#rem_at_width - #raw_width)",
+				"target_property_name": "#rem_at_height",
+				"binding_condition": "visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_at_height)",
+				"target_property_name": "#raw_height",
+				"binding_condition": "visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_height) - ('%.2s' * #raw_height) - ';')",
+				"target_property_name": "#size_binding_y",
+				"binding_condition": "visible"
+			},
+			{
+				/* --- label group x ([1273]) -> anchored X (skip 1024 + 3×83) --- */
+				"binding_type": "view",
+				"source_property_name": "('%.1273s' * #payload)",
+				"target_property_name": "#skip_to_label_x",
+				"binding_condition": "visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#payload - #skip_to_label_x)",
+				"target_property_name": "#rem_at_label_x",
+				"binding_condition": "visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_at_label_x)",
+				"target_property_name": "#raw_label_x",
+				"binding_condition": "visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_label_x) - ('%.2s' * #raw_label_x) - ';') * 1)",
+				"target_property_name": "#anchored_offset_value_x",
+				"binding_condition": "visible"
+			},
+			{
+				/* --- label group y ([1356]) -> anchored Y --- */
+				"binding_type": "view",
+				"source_property_name": "(#rem_at_label_x - #raw_label_x)",
+				"target_property_name": "#rem_at_label_y",
+				"binding_condition": "visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_at_label_y)",
+				"target_property_name": "#raw_label_y",
+				"binding_condition": "visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_label_y) - ('%.2s' * #raw_label_y) - ';') * 1)",
+				"target_property_name": "#anchored_offset_value_y",
+				"binding_condition": "visible"
+			}
+		],
+		"controls": [
+			{
+				"txt@core_ui_components.label_wrap": {
+					"localize": true
+				}
+			}
+		]
+	},
+	/* Label variant for the wrap frames: width-constrained to the wrap_box so Bedrock
+	   wraps the (localized) string natively; height stays content-sized. The glyph
+	   nudge is applied by wrap_box, so the inherited anchored-offset decode (label
+	   group slots 4/5) goes inert here. Text/font/scale decode is inherited as-is. */
+	"label_wrap@core_ui_components.label": {
+		"size": [
+			"100%",
+			"default"
+		],
+		"use_anchored_offset": false
 	},
 	"label": {
 		"type": "label",
@@ -64,8 +370,8 @@
 		"font_scale_factor": "#font_scale_factor",
 		/* `shadow` is NOT runtime-bindable — the engine resolves it at load time (vanilla only
 		   ever sets it to a literal or a $variable, never a #binding). So it is a COMPILE-TIME
-		   $variable; shadowed text arrives as its own element type (`text_shadow` above),
-		   which sets $shadow: true through the type-gated variant. */
+		   $variable; shadowed text arrives as its own element TYPE and the shadow_frame /
+		   shadow_wrap_frame instantiations set $shadow: true. */
 		"$shadow|default": false,
 		"shadow": "$shadow",
 		"text_alignment": "left",
@@ -111,90 +417,109 @@
 				"binding_name_override": "$native_target"
 			},
 			{
-				/* label group, decoded sequentially from $label_skip */
+				/* label group, decoded sequentially from $label_skip.
+				   All `visible`: skipped when the owning frame is gated off, run once when
+				   visible (payload is screen-constant). Live text (modal option rows etc.)
+				   rides the native channel above, NOT this decode. */
 				"binding_type": "view",
 				"source_property_name": "$label_skip",
-				"target_property_name": "#skip_to_label"
+				"target_property_name": "#skip_to_label",
+				"binding_condition": "visible"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(#payload - #skip_to_label)",
-				"target_property_name": "#label_rem0"
+				"target_property_name": "#label_rem0",
+				"binding_condition": "visible"
 			},
 			{
 				/* group slot 1: text */
 				"binding_type": "view",
 				"source_property_name": "('%.83s' * #label_rem0)",
-				"target_property_name": "#raw_label_text"
+				"target_property_name": "#raw_label_text",
+				"binding_condition": "visible"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(('%.82s' * #raw_label_text) - ('%.2s' * #raw_label_text) - ';')",
-				"target_property_name": "#text"
+				"target_property_name": "#text",
+				"binding_condition": "visible"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(#label_rem0 - #raw_label_text)",
-				"target_property_name": "#label_rem1"
+				"target_property_name": "#label_rem1",
+				"binding_condition": "visible"
 			},
 			{
 				/* group slot 2: fontType (canonical #font_type alias) */
 				"binding_type": "view",
 				"source_property_name": "('%.83s' * #label_rem1)",
-				"target_property_name": "#raw_label_font"
+				"target_property_name": "#raw_label_font",
+				"binding_condition": "visible"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(('%.82s' * #raw_label_font) - ('%.2s' * #raw_label_font) - ';')",
-				"target_property_name": "#font_type"
+				"target_property_name": "#font_type",
+				"binding_condition": "visible"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(#label_rem1 - #raw_label_font)",
-				"target_property_name": "#label_rem2"
+				"target_property_name": "#label_rem2",
+				"binding_condition": "visible"
 			},
 			{
 				/* group slot 3: fontScaleFactor */
 				"binding_type": "view",
 				"source_property_name": "('%.83s' * #label_rem2)",
-				"target_property_name": "#raw_label_scale"
+				"target_property_name": "#raw_label_scale",
+				"binding_condition": "visible"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(('%.82s' * #raw_label_scale) - ('%.2s' * #raw_label_scale) - ';')",
-				"target_property_name": "#font_scale_factor"
+				"target_property_name": "#font_scale_factor",
+				"binding_condition": "visible"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(#label_rem2 - #raw_label_scale)",
-				"target_property_name": "#label_rem3"
+				"target_property_name": "#label_rem3",
+				"binding_condition": "visible"
 			},
 			{
 				/* group slot 4: x -> anchored X (needs the [1,1] host frame) */
 				"binding_type": "view",
 				"source_property_name": "('%.83s' * #label_rem3)",
-				"target_property_name": "#raw_label_x"
+				"target_property_name": "#raw_label_x",
+				"binding_condition": "visible"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "((('%.82s' * #raw_label_x) - ('%.2s' * #raw_label_x) - ';') * 1)",
-				"target_property_name": "#anchored_offset_value_x"
+				"target_property_name": "#anchored_offset_value_x",
+				"binding_condition": "visible"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(#label_rem3 - #raw_label_x)",
-				"target_property_name": "#label_rem4"
+				"target_property_name": "#label_rem4",
+				"binding_condition": "visible"
 			},
 			{
 				/* group slot 5: y -> anchored Y */
 				"binding_type": "view",
 				"source_property_name": "('%.83s' * #label_rem4)",
-				"target_property_name": "#raw_label_y"
+				"target_property_name": "#raw_label_y",
+				"binding_condition": "visible"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "((('%.82s' * #raw_label_y) - ('%.2s' * #raw_label_y) - ';') * 1)",
-				"target_property_name": "#anchored_offset_value_y"
+				"target_property_name": "#anchored_offset_value_y",
+				"binding_condition": "visible"
 			}
 		]
 	}

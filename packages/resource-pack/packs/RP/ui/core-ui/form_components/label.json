@@ -2,11 +2,14 @@
 	// Modal label router: renders the DECORATIVE elements (text / image / panel —
 	// and everything composed from them, e.g. cards) inside a native ModalForm.
 	// The TS side emits them through `form.label()` (the label slot works on both
-	// backends); this router reuses the SAME client components as the ActionForm's
-	// core_ui_common.label_router, re-pointed at the modal payload via their
+	// backends); this router reuses the SAME merged label cell as the ActionForm's
+	// core_ui_common.label_router, re-pointed at the modal payload via its
 	// $payload_* parameters: collection custom_form, binding #custom_text, plus the
-	// per-cell collection_details context every modal cell needs. Buttons stay
-	// modal-forbidden (the TS restriction pass throws before anything reaches here).
+	// per-cell collection_details context every modal cell needs. Unlike the action
+	// router, IMAGE stays here: modal images ride the label slot (the modal header
+	// slot's payload channel is unproven), so the image component mounts as a
+	// sibling variant. Buttons stay modal-forbidden (the TS restriction pass throws
+	// before anything reaches here).
 	"namespace": "core_ui_form_components",
 	"label_router": {
 		"type": "panel",
@@ -17,21 +20,7 @@
 		],
 		"controls": [
 			{
-				"panel@core_ui_components.panel": {
-					"$payload_collection": "custom_form",
-					"$payload_binding": "#custom_text",
-					"$cell_details_binding_type": "collection_details"
-				}
-			},
-			{
-				"text@core_ui_components.text": {
-					"$payload_collection": "custom_form",
-					"$payload_binding": "#custom_text",
-					"$cell_details_binding_type": "collection_details"
-				}
-			},
-			{
-				"text_shadow@core_ui_components.text_shadow": {
+				"cell@core_ui_components.label_cell": {
 					"$payload_collection": "custom_form",
 					"$payload_binding": "#custom_text",
 					"$cell_details_binding_type": "collection_details"

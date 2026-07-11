@@ -2,9 +2,13 @@
 	// Routes label-type factory entries to the appropriate client component.
 	// Parallel to button_router which handles button-type entries.
 	//
-	// Region filtering: see button_router. A single parameterized router serves every
-	// region; $region_filter is set by the region's collection_panel and forwarded to
-	// each component via a direct @ref. Region 0 is the default.
+	// REGION GATE LIVES HERE (Stage 1 perf shape): the router decodes the cell's region
+	// field once ([523-605], direct absolute slice) and hides itself when it doesn't
+	// match $region_filter — so a wrong-region cell costs ~6 once-bindings TOTAL instead
+	// of a full control-block decode inside every one of the 6 variants below. The base
+	// control (core_ui_common.control) no longer knows about regions at all.
+	// Region 0 is the default; each pooled scroll points its factory at the _rN variant
+	// matching its scroll index (a factory's control_ids cannot forward $variables).
 	"namespace": "core_ui_common",
 	"label_router": {
 		"type": "panel",
@@ -14,42 +18,67 @@
 			1
 		],
 		"$region_filter|default": 0,
+		"visible": "#visible",
+		"property_bag": {
+			"#visible": true
+		},
+		"bindings": [
+			{
+				"binding_name": "#form_button_text",
+				"binding_type": "collection",
+				"binding_collection_name": "form_buttons",
+				"binding_name_override": "#payload"
+			},
+			{
+				/* region (number) - field 8, DIRECT slice at [523-605] */
+				"binding_type": "view",
+				"source_property_name": "('%.523s' * #payload)",
+				"target_property_name": "#skip_to_region",
+				"binding_condition": "once"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#payload - #skip_to_region)",
+				"target_property_name": "#rem_at_region",
+				"binding_condition": "once"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_at_region)",
+				"target_property_name": "#raw_region",
+				"binding_condition": "once"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "((('%.82s' * #raw_region) - ('%.2s' * #raw_region) - ';') * 1)",
+				"target_property_name": "#region",
+				"binding_condition": "once"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#region = $region_filter)",
+				"target_property_name": "#visible",
+				"binding_condition": "once"
+			}
+		],
 		"controls": [
 			{
-				"panel@core_ui_components.panel": {
-					"$region_filter": "$region_filter"
-				}
-			},
-			{
-				"text@core_ui_components.text": {
-					"$region_filter": "$region_filter"
-				}
-			},
-			{
-				"text_shadow@core_ui_components.text_shadow": {
-					"$region_filter": "$region_filter"
-				}
-			},
-			{
-				"image@core_ui_components.image": {
-					"$region_filter": "$region_filter"
-				}
+				/* ONE merged cell serves every label-slot type (panel, text, text_shadow,
+				   text_wrap, text_shadow_wrap) — one base decode + self-gating leaves,
+				   replacing the old 5-variant fan-out. NO image here: ActionForm images
+				   ride the HEADER slot (header_router) — engine-level type routing. The
+				   MODAL label router (form_components/label.json) keeps its own image. */
+				"cell@core_ui_components.label_cell": {}
 			}
 		]
 	},
 	// Per-region router variants (see button_router for the rationale): a factory's
 	// control_ids cannot forward $region_filter, so each pooled scroll points its factory
-	// at the variant matching its scroll index. Append label_router_r5… to grow the pool.
+	// at the variant matching its scroll index. The pool is capped at 2 slots; add _r3 here when growing it.
 	"label_router_r1@label_router": {
 		"$region_filter": 1
 	},
 	"label_router_r2@label_router": {
 		"$region_filter": 2
-	},
-	"label_router_r3@label_router": {
-		"$region_filter": 3
-	},
-	"label_router_r4@label_router": {
-		"$region_filter": 4
 	}
 }

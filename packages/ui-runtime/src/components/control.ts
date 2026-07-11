@@ -87,6 +87,7 @@ export function withControl(props: JSX.Props): JSX.Props {
     minHeight,
     maxWidth,
     maxHeight,
+    aspectRatio,
     // Positioning
     position,
     top,
@@ -146,6 +147,7 @@ export function withControl(props: JSX.Props): JSX.Props {
       minHeight,
       maxWidth,
       maxHeight,
+      aspectRatio,
       position,
       top,
       right,
