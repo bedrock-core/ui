@@ -16,14 +16,15 @@
 	// (#size_binding × 1, pixel-exact). A scroll whose block is absent decodes to 0 → collapses.
 	//
 	// The only per-instance values are $block_skip (a NUMBER = where this scroll's block
-	// starts: 83 + 498·i → 581, 1079, 1577, 2075) and $factory_ids (the WHOLE factory
-	// control_ids object, pointing at the per-region router variants button_router_rN /
-	// label_router_rN). A factory's control_ids cannot forward the collection_panel's
-	// $region_filter into the controls it instantiates, so the region is baked into the
-	// router refs instead. The slice spec is BUILT at runtime: ('%.' + $block_skip + 's').
-	// Within a block the field offsets are fixed for every scroll: axis@0, x@83, y@166,
-	// width@249, height@332, extent@415. Append scroll_5@…{ $block_skip: 2573,
-	// $factory_ids: { button: @…button_router_r5, … } } (+ button/label_router_r5) to grow.
+	// starts: 83 + 498·i → 581, 1079) and $factory_ids (the WHOLE factory control_ids
+	// object, pointing at the per-region router variants button_router_rN /
+	// label_router_rN / header_router_rN). A factory's control_ids cannot forward the
+	// collection_panel's $region_filter into the controls it instantiates, so the region
+	// is baked into the router refs instead. The slice spec is BUILT at runtime:
+	// ('%.' + $block_skip + 's'). Within a block the field offsets are fixed for every
+	// scroll: axis@0, x@83, y@166, width@249, height@332, extent@415.
+	// THE POOL IS CAPPED AT 2 SLOTS on purpose — every mounted slot re-instantiates the
+	// full form_buttons collection (see the scroll_2 comment for how to grow it).
 	// ─────────────────────────────────────────────────────────────────────────────
 	"namespace": "core_ui_screens",
 	/* Flat region-0 generator for pool mode. Renders all region-0 items (panels, images, text,
@@ -57,11 +58,15 @@
 						"control_ids": {
 							"button": "@core_ui_common.button_router",
 							"label": "@core_ui_common.label_router",
-							"header": "@core_ui_common.unused",
+							"header": "@core_ui_common.header_router",
 							"divider": "@core_ui_common.unused"
 						}
 					},
 					"collection_name": "form_buttons",
+					/* #collection_length ONLY accepts a direct binding_name_override — S4 spike
+					   PROVED (two rounds, incl. the clean `* 1` shape) that a view-computed value
+					   silently yields length 0. Per-panel data-driven cell counts are impossible;
+					   instantiation reduction must come from lighter cells, not shorter pools. */
 					"bindings": [
 						{
 							"binding_name": "#form_button_contents",
@@ -107,38 +112,45 @@
 			{
 				"binding_type": "view",
 				"source_property_name": "('%.9s' * #title_text)",
-				"target_property_name": "#protocol_header"
+				"target_property_name": "#protocol_header",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(#title_text - #protocol_header)",
-				"target_property_name": "#rem_after_header"
+				"target_property_name": "#rem_after_header",
+				"binding_condition": "once"
 			},
 			{
 				/* block 1 axis @ 581 — present only when there are ≥2 scrolls */
 				"binding_type": "view",
 				"source_property_name": "('%.581s' * #rem_after_header)",
-				"target_property_name": "#pre_axis1"
+				"target_property_name": "#pre_axis1",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(#rem_after_header - #pre_axis1)",
-				"target_property_name": "#at_axis1"
+				"target_property_name": "#at_axis1",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "('%.83s' * #at_axis1)",
-				"target_property_name": "#raw_axis1"
+				"target_property_name": "#raw_axis1",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(('%.82s' * #raw_axis1) - ('%.2s' * #raw_axis1) - ';')",
-				"target_property_name": "#axis1"
+				"target_property_name": "#axis1",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(not (#axis1 = ''))",
-				"target_property_name": "#visible"
+				"target_property_name": "#visible",
+				"binding_condition": "once"
 			}
 		],
 		"controls": [
@@ -152,40 +164,28 @@
 					"$factory_ids": {
 						"button": "@core_ui_common.button_router_r1",
 						"label": "@core_ui_common.label_router_r1",
-						"header": "@core_ui_common.unused",
+						"header": "@core_ui_common.header_router_r1",
 						"divider": "@core_ui_common.unused"
 					}
 				}
 			},
 			{
+				/* THE POOL IS DELIBERATELY CAPPED AT 2 SLOTS: every mounted slot
+				   instantiates the FULL form_buttons collection (one router subtree per
+				   cell — the dominant engine cost), parse-time removal is the ONLY
+				   mechanism that prevents that instantiation (#collection_length cannot
+				   be view-computed; visibility does not stop instantiation), and real
+				   layouts rarely need more than 2 simultaneous scrolls. To grow the
+				   pool: add scroll_3 here ($block_skip 83 + 498·3 = 1577, factory ids
+				   *_r3), add label/button/header_router_r3 variants, and raise
+				   MAX_POOLED_SCROLLS in ui-runtime's Scroll.ts (the title format
+				   already carries up to 4 blocks). */
 				"scroll_2@core_ui_screens.pooled_scroll": {
 					"$block_skip": 1079,
 					"$factory_ids": {
 						"button": "@core_ui_common.button_router_r2",
 						"label": "@core_ui_common.label_router_r2",
-						"header": "@core_ui_common.unused",
-						"divider": "@core_ui_common.unused"
-					}
-				}
-			},
-			{
-				"scroll_3@core_ui_screens.pooled_scroll": {
-					"$block_skip": 1577,
-					"$factory_ids": {
-						"button": "@core_ui_common.button_router_r3",
-						"label": "@core_ui_common.label_router_r3",
-						"header": "@core_ui_common.unused",
-						"divider": "@core_ui_common.unused"
-					}
-				}
-			},
-			{
-				"scroll_4@core_ui_screens.pooled_scroll": {
-					"$block_skip": 2075,
-					"$factory_ids": {
-						"button": "@core_ui_common.button_router_r4",
-						"label": "@core_ui_common.label_router_r4",
-						"header": "@core_ui_common.unused",
+						"header": "@core_ui_common.header_router_r2",
 						"divider": "@core_ui_common.unused"
 					}
 				}
@@ -208,7 +208,7 @@
 		"$factory_ids|default": {
 			"button": "@core_ui_common.button_router",
 			"label": "@core_ui_common.label_router",
-			"header": "@core_ui_common.unused",
+			"header": "@core_ui_common.header_router",
 			"divider": "@core_ui_common.unused"
 		},
 		"$normalize|default": 0.003125,
@@ -225,9 +225,16 @@
 			"#size_binding_y": 0.0,
 			"#anchored_offset_value_x": 0.0,
 			"#anchored_offset_value_y": 0.0,
-			"#axis": ""
+			"#axis": "",
+			"#visible": true
 		},
-		"visible": true,
+		/* SPIKE S5: self-gate on the axis field (empty = block absent = slot unused).
+		   An unused slot previously collapsed to 0×0 but still ran its geometry decode
+		   AND its full pooled_scroll_content cell decode. Now it hides itself after the
+		   ~7-binding axis probe; the geometry chain below is `visible`-conditioned. The
+		   bet: descendants (content + all L cells) of a hidden scroll_view stop
+		   evaluating → measurable open-time drop on StressDemo (3 of 4 slots used). */
+		"visible": "#visible",
 		"scroll_speed": 15,
 		"scrollbar_track_button": "button.scrollbar_skip_track",
 		"scrollbar_touch_button": "button.scrollbar_touch",
@@ -273,88 +280,120 @@
 				"target_property_name": "#at_block"
 			},
 			{
+				/* axis @ 0 — the gate probe: empty = block absent = slot unused → hide */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #at_block)",
+				"target_property_name": "#raw_axis"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.82s' * #raw_axis) - ('%.2s' * #raw_axis) - ';')",
+				"target_property_name": "#axis"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(not (#axis = ''))",
+				"target_property_name": "#visible"
+			},
+			{
 				/* x @ 83 -> anchored offset x (× $normalize) */
 				"binding_type": "view",
 				"source_property_name": "('%.83s' * #at_block)",
-				"target_property_name": "#pre_x"
+				"target_property_name": "#pre_x",
+				"binding_condition": "visible"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(#at_block - #pre_x)",
-				"target_property_name": "#at_x"
+				"target_property_name": "#at_x",
+				"binding_condition": "visible"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "('%.83s' * #at_x)",
-				"target_property_name": "#raw_x"
+				"target_property_name": "#raw_x",
+				"binding_condition": "visible"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "((('%.82s' * #raw_x) - ('%.2s' * #raw_x) - ';') * $normalize)",
-				"target_property_name": "#anchored_offset_value_x"
+				"target_property_name": "#anchored_offset_value_x",
+				"binding_condition": "visible"
 			},
 			{
 				/* y @ 166 -> anchored offset y (× $normalize_y) */
 				"binding_type": "view",
 				"source_property_name": "('%.166s' * #at_block)",
-				"target_property_name": "#pre_y"
+				"target_property_name": "#pre_y",
+				"binding_condition": "visible"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(#at_block - #pre_y)",
-				"target_property_name": "#at_y"
+				"target_property_name": "#at_y",
+				"binding_condition": "visible"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "('%.83s' * #at_y)",
-				"target_property_name": "#raw_y"
+				"target_property_name": "#raw_y",
+				"binding_condition": "visible"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "((('%.82s' * #raw_y) - ('%.2s' * #raw_y) - ';') * $normalize_y)",
-				"target_property_name": "#anchored_offset_value_y"
+				"target_property_name": "#anchored_offset_value_y",
+				"binding_condition": "visible"
 			},
 			{
 				/* width @ 249 -> size_binding x (× $normalize) */
 				"binding_type": "view",
 				"source_property_name": "('%.249s' * #at_block)",
-				"target_property_name": "#pre_w"
+				"target_property_name": "#pre_w",
+				"binding_condition": "visible"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(#at_block - #pre_w)",
-				"target_property_name": "#at_w"
+				"target_property_name": "#at_w",
+				"binding_condition": "visible"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "('%.83s' * #at_w)",
-				"target_property_name": "#raw_w"
+				"target_property_name": "#raw_w",
+				"binding_condition": "visible"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "((('%.82s' * #raw_w) - ('%.2s' * #raw_w) - ';') * $normalize)",
-				"target_property_name": "#size_binding_x"
+				"target_property_name": "#size_binding_x",
+				"binding_condition": "visible"
 			},
 			{
 				/* height @ 332 -> size_binding y (× $normalize_y) */
 				"binding_type": "view",
 				"source_property_name": "('%.332s' * #at_block)",
-				"target_property_name": "#pre_h"
+				"target_property_name": "#pre_h",
+				"binding_condition": "visible"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(#at_block - #pre_h)",
-				"target_property_name": "#at_h"
+				"target_property_name": "#at_h",
+				"binding_condition": "visible"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "('%.83s' * #at_h)",
-				"target_property_name": "#raw_h"
+				"target_property_name": "#raw_h",
+				"binding_condition": "visible"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "((('%.82s' * #raw_h) - ('%.2s' * #raw_h) - ';') * $normalize_y)",
-				"target_property_name": "#size_binding_y"
+				"target_property_name": "#size_binding_y",
+				"binding_condition": "visible"
 			}
 		],
 		"controls": [
@@ -419,7 +458,7 @@
 		"$factory_ids|default": {
 			"button": "@core_ui_common.button_router",
 			"label": "@core_ui_common.label_router",
-			"header": "@core_ui_common.unused",
+			"header": "@core_ui_common.header_router",
 			"divider": "@core_ui_common.unused"
 		},
 		"property_bag": {
@@ -432,43 +471,51 @@
 			{
 				"binding_type": "view",
 				"source_property_name": "('%.9s' * #title_text)",
-				"target_property_name": "#protocol_header"
+				"target_property_name": "#protocol_header",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(#title_text - #protocol_header)",
-				"target_property_name": "#rem_after_header"
+				"target_property_name": "#rem_after_header",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(('%.' + $block_skip + 's') * #rem_after_header)",
-				"target_property_name": "#pre_block"
+				"target_property_name": "#pre_block",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(#rem_after_header - #pre_block)",
-				"target_property_name": "#at_block"
+				"target_property_name": "#at_block",
+				"binding_condition": "once"
 			},
 			{
 				/* extent @ 415 -> content height (scrollable length) */
 				"binding_type": "view",
 				"source_property_name": "('%.415s' * #at_block)",
-				"target_property_name": "#pre_e"
+				"target_property_name": "#pre_e",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(#at_block - #pre_e)",
-				"target_property_name": "#at_e"
+				"target_property_name": "#at_e",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "('%.83s' * #at_e)",
-				"target_property_name": "#raw_e"
+				"target_property_name": "#raw_e",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "((('%.82s' * #raw_e) - ('%.2s' * #raw_e) - ';') * 1)",
-				"target_property_name": "#size_binding_y"
+				"target_property_name": "#size_binding_y",
+				"binding_condition": "once"
 			}
 		],
 		"controls": [

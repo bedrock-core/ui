@@ -21,6 +21,9 @@
 					"anchor_to": "top_left",
 					"texture": "#texture",
 					"visible": "#visible",
+					/* Decode is `visible` (S2-proven semantics): skipped when the image variant is
+					   gated off; when visible it runs once (payload is screen-constant) and
+					   self-hides on an empty texture. */
 					"bindings": [
 						{
 							"binding_type": "$cell_details_binding_type",
@@ -38,27 +41,32 @@
 							   reserved 418 = 1024) */
 							"binding_type": "view",
 							"source_property_name": "('%.1024s' * #payload)",
-							"target_property_name": "#skip_to_texture"
+							"target_property_name": "#skip_to_texture",
+							"binding_condition": "visible"
 						},
 						{
 							"binding_type": "view",
 							"source_property_name": "(#payload - #skip_to_texture)",
-							"target_property_name": "#rem_at_texture"
+							"target_property_name": "#rem_at_texture",
+							"binding_condition": "visible"
 						},
 						{
 							"binding_type": "view",
 							"source_property_name": "('%.83s' * #rem_at_texture)",
-							"target_property_name": "#raw_texture"
+							"target_property_name": "#raw_texture",
+							"binding_condition": "visible"
 						},
 						{
 							"binding_type": "view",
 							"source_property_name": "(('%.82s' * #raw_texture) - ('%.2s' * #raw_texture) - ';')",
-							"target_property_name": "#texture"
+							"target_property_name": "#texture",
+							"binding_condition": "visible"
 						},
 						{
 							"binding_type": "view",
 							"source_property_name": "(not (#texture = ''))",
-							"target_property_name": "#visible"
+							"target_property_name": "#visible",
+							"binding_condition": "visible"
 						}
 					]
 				}

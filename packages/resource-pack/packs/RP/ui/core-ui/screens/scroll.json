@@ -42,39 +42,46 @@
 			{
 				"binding_type": "view",
 				"source_property_name": "('%.9s' * #title_text)",
-				"target_property_name": "#protocol_header"
+				"target_property_name": "#protocol_header",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(#title_text - #protocol_header)",
-				"target_property_name": "#rem_after_header"
+				"target_property_name": "#rem_after_header",
+				"binding_condition": "once"
 			},
 			{
 				/* block 1 axis at offset 581 — present when there are ≥1 custom scrolls */
 				"binding_type": "view",
 				"source_property_name": "('%.581s' * #rem_after_header)",
-				"target_property_name": "#pre_axis1"
+				"target_property_name": "#pre_axis1",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(#rem_after_header - #pre_axis1)",
-				"target_property_name": "#at_axis1"
+				"target_property_name": "#at_axis1",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "('%.83s' * #at_axis1)",
-				"target_property_name": "#raw_axis1"
+				"target_property_name": "#raw_axis1",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(('%.82s' * #raw_axis1) - ('%.2s' * #raw_axis1) - ';')",
-				"target_property_name": "#axis1"
+				"target_property_name": "#axis1",
+				"binding_condition": "once"
 			},
 			{
 				/* visible only in single mode (axis1 empty = no custom scrolls) */
 				"binding_type": "view",
 				"source_property_name": "(#axis1 = '')",
-				"target_property_name": "#visible"
+				"target_property_name": "#visible",
+				"binding_condition": "once"
 			}
 		],
 		"scroll_speed": 15,
@@ -161,60 +168,71 @@
 			{
 				"binding_type": "view",
 				"source_property_name": "('%.9s' * #title_text)",
-				"target_property_name": "#protocol_header"
+				"target_property_name": "#protocol_header",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(#title_text - #protocol_header)",
-				"target_property_name": "#rem_after_header"
+				"target_property_name": "#rem_after_header",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "('%.498s' * #rem_after_header)",
-				"target_property_name": "#pre_extent"
+				"target_property_name": "#pre_extent",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(#rem_after_header - #pre_extent)",
-				"target_property_name": "#at_extent"
+				"target_property_name": "#at_extent",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "('%.83s' * #at_extent)",
-				"target_property_name": "#raw_extent"
+				"target_property_name": "#raw_extent",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "((('%.82s' * #raw_extent) - ('%.2s' * #raw_extent) - ';') * 1)",
-				"target_property_name": "#size_binding_y"
+				"target_property_name": "#size_binding_y",
+				"binding_condition": "once"
 			},
 			{
 				/* block 1 axis @ 581 — present when there are ≥1 custom scrolls (pool mode) */
 				"binding_type": "view",
 				"source_property_name": "('%.581s' * #rem_after_header)",
-				"target_property_name": "#pre_axis1"
+				"target_property_name": "#pre_axis1",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(#rem_after_header - #pre_axis1)",
-				"target_property_name": "#at_axis1"
+				"target_property_name": "#at_axis1",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "('%.83s' * #at_axis1)",
-				"target_property_name": "#raw_axis1"
+				"target_property_name": "#raw_axis1",
+				"binding_condition": "once"
 			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(('%.82s' * #raw_axis1) - ('%.2s' * #raw_axis1) - ';')",
-				"target_property_name": "#axis1"
+				"target_property_name": "#axis1",
+				"binding_condition": "once"
 			},
 			{
 				/* single mode → visible; pool mode (axis1 not empty) → hidden. Uses the
 				   conventional #visible property name that every component binds its visibility to. */
 				"binding_type": "view",
 				"source_property_name": "(#axis1 = '')",
-				"target_property_name": "#visible"
+				"target_property_name": "#visible",
+				"binding_condition": "once"
 			}
 		],
 		"controls": [
@@ -236,7 +254,7 @@
 						"control_ids": {
 							"button": "@core_ui_common.button_router",
 							"label": "@core_ui_common.label_router",
-							"header": "@core_ui_common.unused",
+							"header": "@core_ui_common.header_router",
 							"divider": "@core_ui_common.unused"
 						}
 					},

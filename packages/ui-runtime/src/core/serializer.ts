@@ -1,5 +1,6 @@
 import { MODAL_OPTION_SLOT_TYPE } from '../components/Form/FormOption';
 import { MAX_SCROLLS } from '../components/Scroll';
+import { TEXT_SHADOW_TYPE } from '../components/Text';
 import { JSX } from '../jsx';
 import { getComponentDescriptor, getRegisteredTypes, isTransparentType } from './componentRegistry';
 import { isElement, isFunction, isSerializablePrimitive } from './guards';
@@ -166,6 +167,68 @@ export function serialize({ type, props: { children, ...rest }, nativeArgs }: JS
     }
 
     return;
+  }
+
+  // ─── Cell-count optimizations ────────────────────────────────────────────────
+  // The RP renders every emitted element as a pooled cell subtree (~19 controls
+  // across the router variants, multiplied by the always-mounted scroll-pool
+  // clones), so each cell that is never emitted is a large engine-side saving.
+  if (type === 'panel') {
+    const childElements = (Array.isArray(children) ? children : children !== undefined ? [children] : [])
+      .filter(isElement);
+    const panelBackground = rest.background;
+
+    // A background-less panel cell renders NOTHING in the RP — the background at
+    // [440] is a panel's only visual output, and children are independent cells
+    // (absolutely positioned, own region field). Skip the cell, keep the children.
+    // (On the modal backend this also skips the engine's per-label formValues slot;
+    // ordinal bookkeeping stays consistent because emitLabel is simply never called.)
+    if (typeof panelBackground !== 'string' || panelBackground === '') {
+      childElements.forEach((child) => {
+        serialize(child, form, context);
+      });
+
+      return;
+    }
+
+    // Fold `Panel(background) + single Text` into ONE text cell: the RP text variant
+    // renders the background itself (`txt_bg` child, same [440] field), the cell takes
+    // the panel's geometry, and the label offset absorbs the child's position inside
+    // the panel. Wrap variants are excluded (their box math is tied to the cell size).
+    if (childElements.length === 1) {
+      const [child] = childElements;
+      const childProps = child.props;
+
+      if (
+        (child.type === 'text' || child.type === TEXT_SHADOW_TYPE)
+        && childProps.visible !== false
+        && (childProps.background === undefined || childProps.background === '')
+        && typeof childProps.jsonUIx === 'number' && typeof childProps.jsonUIy === 'number'
+        && typeof rest.jsonUIx === 'number' && typeof rest.jsonUIy === 'number'
+      ) {
+        // Spread keeps the child's canonical key order; overrides replace values in place.
+        const { children: _textContent, ...childRest } = childProps;
+        const merged: JSX.Element = {
+          type: child.type,
+          props: {
+            ...childRest,
+            jsonUIWidth: rest.jsonUIWidth,
+            jsonUIHeight: rest.jsonUIHeight,
+            jsonUIx: rest.jsonUIx,
+            jsonUIy: rest.jsonUIy,
+            background: panelBackground,
+            labelX: (typeof childProps.labelX === 'number' ? childProps.labelX : 0)
+              + childProps.jsonUIx - rest.jsonUIx,
+            labelY: (typeof childProps.labelY === 'number' ? childProps.labelY : 0)
+              + childProps.jsonUIy - rest.jsonUIy,
+          },
+        };
+
+        serialize(merged, form, context);
+
+        return;
+      }
+    }
   }
 
   // Validate and filter props - ensure all props (except children) are serializable

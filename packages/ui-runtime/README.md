@@ -37,15 +37,26 @@ yarn add @bedrock-core/ui-runtime
 
 ### 🔄 Component Routing System
 
-The system uses a routing architecture to handle different component types:
+The system routes components through the native form factory's typed slots — the
+engine itself dispatches each entry to the matching RP control, which is the cheapest
+routing available (no per-entry `#type` gating for the slot decision):
 
 **For Client-Only Components** (`Panel`, `Text`, `Image`, `Fragment`):
 
-1. All serialized data gets injected via `form.label()` calls
-2. The `screen_container.json` factory maps `"label"` entries to `@core_ui_common.component_router`
-3. The `component_router` acts as a dispatcher containing all possible component types
-4. Each component JSON file (e.g., `panel.json`) uses conditional bindings: `(#type = 'panel') and #visible` to determine if it should render
-5. Only the matching component type renders, others remain invisible
+1. `Panel`/`Text` serialize via `form.label()` → `label_router`; `Image` serializes via
+   `form.header()` → the slim `header_router` (engine-level type routing; on the modal
+   backend images fall back to the label slot)
+2. `label_router` decodes the cell's scroll-region field once, then mounts **one merged
+   `label_cell`**: a single control-block decode plus small self-gating leaves — a
+   background image (the common `[440]` field, which also serves `panel` cells and folded
+   `Panel`+`Text` pairs) and per-type `[1,1]` label frames gated on `#type`
+3. **Serializer cell elision**: a background-less `<Panel>` emits nothing (its children
+   are independent absolutely-positioned cells), and a `Panel(background)` wrapping a
+   single `<Text>` folds into one text cell — both cut the engine's per-cell
+   instantiation cost, the dominant cost on large screens
+4. Decode bindings carry `binding_condition`: gate chains are `once` (the payload is
+   constant per screen instance) and everything downstream is `visible`, so a
+   non-matching leaf costs only its ~7-binding gate and nothing re-evaluates per frame
 
 **For Native Form Components** (`Form` and its `Form.*` fields — shipped in 0.9):
 
@@ -55,6 +66,30 @@ The system uses a routing architecture to handle different component types:
 - `Form.Button` is NOT a native control — it consumes no `formValues` slot; its geometry + styling ride the form **title** payload (assembled post-layout) and wire to the engine's submit / close button ids
 
 This "label-as-entry-point" system allows unlimited custom client components, while the modal backend leverages Minecraft's native form factory for interactive fields.
+
+### ⚡ Performance Principles
+
+JSON UI cost is dominated by **how many controls the engine instantiates** and how many
+bindings it evaluates at screen creation — not by payload string length (measured: +10KB
+per element made no difference) and not by re-evaluation once conditions are set. The
+architecture therefore follows these rules (established with in-game measurements):
+
+1. **Fewer cells beats everything.** Every emitted form entry instantiates a router
+   subtree in *every* mounted scroll-pool slot. The serializer skips no-op cells
+   (background-less panels) and folds `Panel`+`Text` pairs before anything reaches the
+   engine.
+2. **One decode per cell.** The merged `label_cell` runs the control-block decode once;
+   type-specific visuals are cheap self-gating leaves, not sibling full-decode variants.
+3. **`binding_condition` on everything.** Gate chains (`#type`, region) are `once` —
+   the payload is constant for the lifetime of a screen instance. All other decode
+   chains are `visible`, so gated-off leaves skip their work. Only genuinely live
+   channels (toggle state, dropdown open state/selection, typed text) stay unconditioned.
+   Never condition a binding that a hidden control needs to compute its own visibility.
+4. **Instantiation is parse-time.** `visible: false` does NOT prevent instantiation and
+   `#collection_length` can NOT be view-computed (both probe-verified) — the only real
+   levers are emitting fewer entries and mounting fewer pool slots. That is why the
+   scroll pool is capped at **2** pooled scrolls (`MAX_POOLED_SCROLLS`); growing it means
+   re-adding the RP slot + router variants and accepting the per-slot cost.
 
 ## 🧩 Component Pattern
 

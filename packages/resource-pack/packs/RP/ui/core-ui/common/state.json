@@ -61,30 +61,39 @@
 							"binding_name_override": "#payload"
 						},
 						{
+							/* SPIKE S2: faces flip visibility on hover/press — `visible` should
+							   re-evaluate the chain each time the face becomes visible and skip it
+							   while hidden (3 of 4 faces at any moment). Verify hover/pressed/locked
+							   textures still swap correctly and never show stale/blank. */
 							/* skip to this face's texture field — the offset lives in $face_skip */
 							"binding_type": "view",
 							"source_property_name": "$face_skip",
-							"target_property_name": "#skip_to_face"
+							"target_property_name": "#skip_to_face",
+							"binding_condition": "visible"
 						},
 						{
 							"binding_type": "view",
 							"source_property_name": "(#payload - #skip_to_face)",
-							"target_property_name": "#rem_at_face"
+							"target_property_name": "#rem_at_face",
+							"binding_condition": "visible"
 						},
 						{
 							"binding_type": "view",
 							"source_property_name": "('%.83s' * #rem_at_face)",
-							"target_property_name": "#raw_face"
+							"target_property_name": "#raw_face",
+							"binding_condition": "visible"
 						},
 						{
 							"binding_type": "view",
 							"source_property_name": "(('%.82s' * #raw_face) - ('%.2s' * #raw_face) - ';')",
-							"target_property_name": "#texture"
+							"target_property_name": "#texture",
+							"binding_condition": "visible"
 						},
 						{
 							"binding_type": "view",
 							"source_property_name": "(not (#texture = ''))",
-							"target_property_name": "#visible"
+							"target_property_name": "#visible",
+							"binding_condition": "visible"
 						}
 					]
 				}

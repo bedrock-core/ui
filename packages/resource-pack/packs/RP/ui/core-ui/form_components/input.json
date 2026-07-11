@@ -17,9 +17,8 @@
 		// Extends the shared base (core_ui_common.control): the base owns the whole generic
 		// control-block decode; this modal cell just points it at the modal payload
 		// (custom_form / #custom_text / per-cell collection_details) and supplies its type
-		// gate. The base additionally decodes #background + #region and gates on
-		// $region_filter (default 0) — modal cells always encode region 0, so the region
-		// gate passes; the bg decode is unused here (harmless).
+		// gate. (Regions are an ActionForm/scroll concept — the region gate lives in the
+		// ActionForm routers, so modal cells like this one never see it.)
 		"layer": 50,
 		"$payload_collection": "custom_form",
 		"$payload_binding": "#custom_text",

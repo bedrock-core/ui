@@ -72,6 +72,7 @@ export {
   createContext,
   emitButton,
   emitDropdown,
+  emitHeader,
   emitInput,
   emitLabel,
   emitSlider,

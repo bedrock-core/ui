@@ -20,8 +20,8 @@ import { FormDemo } from './screens/FormDemo';
 import { OreStyled } from './screens/OreStyled';
 import { ScrollDemo } from './screens/ScrollDemo';
 import { DualScrollDemo } from './screens/DualScrollDemo';
-import { TripleScrollDemo } from './screens/TripleScrollDemo';
 import { FixedHeaderScrollDemo } from './screens/FixedHeaderScrollDemo';
+import { StressDemo, StressDemoFlat } from './screens/StressDemo';
 import { UnstyledPrimitives } from './screens/UnstyledPrimitives';
 import { UnstyledForm } from './screens/UnstyledForm';
 import { OreStyledForm } from './screens/OreStyledForm';
@@ -40,8 +40,9 @@ type AppRoutes = {
   OreStyled: undefined;
   ScrollDemo: undefined;
   DualScrollDemo: undefined;
-  TripleScrollDemo: undefined;
   FixedHeaderScrollDemo: undefined;
+  StressDemo: undefined;
+  StressDemoFlat: undefined;
 };
 
 type AppScreen<K extends keyof AppRoutes> = ScreenProps<AppRoutes, K>;
@@ -101,11 +102,17 @@ function HomeScreen({ navigation }: AppScreen<'Home'>): JSX.Element {
       <Button variant={'contrast'} onPress={(): void => navigation.navigate('DualScrollDemo')}>
         {'§dDual Scroll Screen'}
       </Button>
-      <Button variant={'contrast'} onPress={(): void => navigation.navigate('TripleScrollDemo')}>
-        {'§aTriple Scroll Screen'}
-      </Button>
       <Button variant={'contrast'} onPress={(): void => navigation.navigate('FixedHeaderScrollDemo')}>
         {'§6Fixed Header + Scroll'}
+      </Button>
+
+      <Divider />
+
+      <Button variant={'contrast'} onPress={(): void => navigation.navigate('StressDemo')}>
+        {'§cStress (2 scrolls)'}
+      </Button>
+      <Button variant={'contrast'} onPress={(): void => navigation.navigate('StressDemoFlat')}>
+        {'§cStress (no scrolls)'}
       </Button>
     </Card>
   );
@@ -195,12 +202,17 @@ function DualScrollDemoScreen(): JSX.Element {
 }
 
 // Region demos — each renders its own multi-region layout directly.
-function TripleScrollDemoScreen(): JSX.Element {
-  return <TripleScrollDemo />;
-}
-
 function FixedHeaderScrollDemoScreen(): JSX.Element {
   return <FixedHeaderScrollDemo />;
+}
+
+// Perf benchmark screens — deterministic payloads, see StressDemo.tsx.
+function StressDemoScreen(): JSX.Element {
+  return <StressDemo />;
+}
+
+function StressDemoFlatScreen(): JSX.Element {
+  return <StressDemoFlat />;
 }
 
 // ─── Navigator ────────────────────────────────────────────────────────────────
@@ -219,8 +231,9 @@ const Stack = createStackNavigator<AppRoutes>({
     OreStyled: OreStyledScreen,
     ScrollDemo: ScrollDemoScreen,
     DualScrollDemo: DualScrollDemoScreen,
-    TripleScrollDemo: TripleScrollDemoScreen,
     FixedHeaderScrollDemo: FixedHeaderScrollDemoScreen,
+    StressDemo: StressDemoScreen,
+    StressDemoFlat: StressDemoFlatScreen,
   },
 });
 

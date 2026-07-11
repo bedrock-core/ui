@@ -71,6 +71,13 @@ Custom JSX-driven UI system for Minecraft Bedrock. Components serialize into com
 - ✅ `Form.Button` — in-flow submit / exit action buttons, positioned anywhere in the form
 - ✅ Ore-Styled form fields in `@bedrock-core/ore-styled`: `Form.Toggle`, `Form.Checkbox`, `Form.Radio`, `Form.ToggleButton`, `Form.Slider`, `Form.Dropdown`, `Form.Input`, `Form.Button`
 
+### ✅ Beta 0.9.2 - Performance Overhaul
+
+- ✅ Engine-side JSON UI cost cut dramatically (in-game verified): one merged `label_cell` decode per cell instead of a 5-variant fan-out, `binding_condition: once/visible` across every screen-constant decode chain, and a region gate hoisted into the routers
+- ✅ Serializer cell elision — background-less `<Panel>`s emit nothing; `Panel(background)` + single `<Text>` pairs fold into one cell
+- ✅ `<Image>` routed through the native `header` factory slot (engine-level type routing on ActionForms)
+- ✅ ⚠️ `<Scroll>` cap lowered from 4 to **2** per render (`MAX_POOLED_SCROLLS`) — every mounted pool slot re-instantiates the full collection, so the pool stays as small as real layouts need; see `scroll_pool.json` for how to grow it back
+
 ### 🚧 Beta 0.X.0 - More core components (Planned)
 
 - Entity render(?) (Render items using entities holding the current item? Render ItemStack entity?)

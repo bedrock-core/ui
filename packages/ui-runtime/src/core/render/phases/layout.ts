@@ -5,7 +5,7 @@ import {
   MODAL_DROPDOWN_SLOT_TYPE, MODAL_FORM_BUTTON_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE,
   MODAL_INPUT_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
 } from '../../../components/Form';
-import { MAX_SCROLLS, SCROLL_SLOT_TYPE, type ScrollAxis } from '../../../components/Scroll';
+import { MAX_POOLED_SCROLLS, SCROLL_SLOT_TYPE, type ScrollAxis } from '../../../components/Scroll';
 import type { JSX } from '../../../jsx';
 import { ellipsizeText, measureText, wrapText } from '../../../util/textMetrics';
 import { isTransparentType } from '../../componentRegistry';
@@ -598,12 +598,14 @@ export function computeLayout(tree: JSX.Element): JSX.Element {
 
   findScrolls(tree, slots);
 
-  // Fail loudly rather than silently dropping scrolls: the RP only pools MAX_SCROLLS
-  // custom viewports (indices 1..MAX_SCROLLS), so any beyond that would never render.
-  if (slots.length > MAX_SCROLLS) {
+  // Fail loudly rather than silently dropping scrolls: the RP only pools
+  // MAX_POOLED_SCROLLS custom viewports (indices 1..MAX_POOLED_SCROLLS, a deliberate
+  // perf cap — every mounted slot re-instantiates the full collection), so any beyond
+  // that would never render.
+  if (slots.length > MAX_POOLED_SCROLLS) {
     throw new ScrollLimitError(
-      `Too many <Scroll>s: found ${slots.length}, but a render supports at most ${MAX_SCROLLS} `
-      + `(plus the implicit root scroll). Scrolls beyond the ${MAX_SCROLLS}th would not render.`,
+      `Too many <Scroll>s: found ${slots.length}, but a render supports at most ${MAX_POOLED_SCROLLS} `
+      + `(plus the implicit root scroll). Scrolls beyond the ${MAX_POOLED_SCROLLS}th would not render.`,
     );
   }
 

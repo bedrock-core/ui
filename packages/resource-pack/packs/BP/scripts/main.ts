@@ -28,7 +28,9 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
     const form = new ActionFormData();
 
     form.title('Vanilla Form');
+    form.header('Test Header');
     form.button('Button 1');
+    form.header('Test Header 2');
     form.button('Button 2');
     form.button('Button 3');
 

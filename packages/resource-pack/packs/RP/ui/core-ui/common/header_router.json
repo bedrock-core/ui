@@ -1,14 +1,19 @@
 {
-	// Routes button-type factory entries to the appropriate interactive component.
-	// Parallel to label_router which handles label-type entries.
+	// Routes HEADER-slot factory entries. The TS side emits `<Image>` cells through
+	// `form.header(payload)` on ActionForms (see emitHeader): the native factory routes
+	// header entries to this control_id directly, so an image cell instantiates ONLY
+	// this slim router + one component — engine-level type routing with none of the
+	// 6-variant label_router fan-out or `#type` gating cost.
 	//
-	// REGION GATE LIVES HERE (Stage 1 perf shape, see label_router): the router decodes
-	// the cell's region field once and hides itself on a mismatch, so wrong-region cells
-	// never run the button/item_renderer decodes. The base control no longer decodes
-	// region. Region 0 is the default; pooled scrolls point their factories at the _rN
-	// variants below.
+	// Region gate: same shape as label_router/button_router — the router decodes the
+	// cell's region field once ([523-605], direct absolute slice) and hides itself on a
+	// mismatch. Headers expose the same `#form_button_text` payload channel as labels
+	// (both are custom elements of the form_buttons collection).
+	//
+	// Modal images do NOT come through here — the modal backend emits them through the
+	// label slot (form_components/label.json keeps its image variant).
 	"namespace": "core_ui_common",
-	"button_router": {
+	"header_router": {
 		"type": "panel",
 		// Components must be inside a panel with size [1,1] so size_binding values map 1:1 to pixels.
 		"size": [
@@ -61,21 +66,15 @@
 		],
 		"controls": [
 			{
-				"button@core_ui_components.button": {}
-			},
-			{
-				"item_renderer@core_ui_components.item_renderer": {}
+				"image@core_ui_components.image": {}
 			}
 		]
 	},
-	// Per-region router variants. A factory's control_ids cannot forward the
-	// collection_panel's $region_filter into the controls it instantiates, so each pooled
-	// scroll points its factory at the variant whose $region_filter matches its scroll
-	// index. The pool is capped at 2 slots; add _r3 here when growing it.
-	"button_router_r1@button_router": {
+	// Per-region router variants, same pattern as label_router_rN / button_router_rN.
+	"header_router_r1@header_router": {
 		"$region_filter": 1
 	},
-	"button_router_r2@button_router": {
+	"header_router_r2@header_router": {
 		"$region_filter": 2
 	}
 }

@@ -26,7 +26,7 @@ export { Input, type InputProps } from './Input';
 export { Slider, type SliderProps } from './Slider';
 export { ItemRenderer, itemRendererWriter, type ItemRendererProps } from './ItemRenderer';
 export { Panel, panelWriter, type PanelProps } from './Panel';
-export { Scroll, SCROLL_SLOT_TYPE, MAX_SCROLLS, type ScrollAxis, type ScrollProps } from './Scroll';
+export { Scroll, SCROLL_SLOT_TYPE, MAX_SCROLLS, MAX_POOLED_SCROLLS, type ScrollAxis, type ScrollProps } from './Scroll';
 export {
   Text, textWriter, isTextElementType,
   TEXT_SHADOW_TYPE, TEXT_WRAP_TYPE, TEXT_SHADOW_WRAP_TYPE,
