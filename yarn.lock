@@ -75,6 +75,22 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@bedrock-core/guides@npm:^0.9.1, @bedrock-core/guides@workspace:*, @bedrock-core/guides@workspace:packages/guides":
+  version: 0.0.0-use.local
+  resolution: "@bedrock-core/guides@workspace:packages/guides"
+  dependencies:
+    "@bedrock-core/navigation": "npm:^0.9.1"
+    "@bedrock-core/ore-styled": "npm:^0.9.1"
+    "@bedrock-core/ui-runtime": "npm:^0.9.1"
+    typescript: "npm:^6.0.3"
+    vitest: "npm:^4.1.5"
+  peerDependencies:
+    "@bedrock-core/navigation": "*"
+    "@bedrock-core/ore-styled": "*"
+    "@bedrock-core/ui-runtime": "*"
+  languageName: unknown
+  linkType: soft
+
 "@bedrock-core/navigation@npm:^0.9.1, @bedrock-core/navigation@workspace:*, @bedrock-core/navigation@workspace:packages/navigation":
   version: 0.0.0-use.local
   resolution: "@bedrock-core/navigation@workspace:packages/navigation"
@@ -102,6 +118,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bedrock-core/ui-resource-pack@workspace:packages/resource-pack"
   dependencies:
+    "@bedrock-core/guides": "workspace:*"
     "@bedrock-core/navigation": "workspace:*"
     "@bedrock-core/ore-styled": "workspace:*"
     "@bedrock-core/ui": "workspace:*"
@@ -142,6 +159,7 @@ __metadata:
   resolution: "@bedrock-core/ui@workspace:."
   dependencies:
     "@bedrock-core/flexbox": "npm:^0.9.1"
+    "@bedrock-core/guides": "npm:^0.9.1"
     "@bedrock-core/navigation": "npm:^0.9.1"
     "@bedrock-core/ore-styled": "npm:^0.9.1"
     "@bedrock-core/ui-runtime": "npm:^0.9.1"

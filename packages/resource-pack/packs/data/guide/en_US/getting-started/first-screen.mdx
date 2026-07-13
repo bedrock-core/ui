@@ -1,0 +1,26 @@
+---
+sidebar_position: 2
+---
+
+# Your First Screen
+
+Rendering the whole guide is one line:
+
+```tsx
+render(<GuideApp manifest={guides} />, player);
+```
+
+## Embedding
+
+- Merge `GuideRoutes` into your route map
+- Spread `createGuideScreens(...)` into the stack screens
+  - The screens plug into any existing navigator
+- Navigate to `GuideContents` from anywhere
+
+:::info
+MDX components ride the IR as `cmp` nodes — an unregistered one renders a placeholder:
+:::
+
+<GuideDemoButton label="Try me" />
+
+Back to [Installation](./installation.mdx) or the [Introduction](../intro.mdx).

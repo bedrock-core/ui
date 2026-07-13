@@ -1,0 +1,29 @@
+---
+title: Installation
+sidebar_position: 1
+---
+
+Install the library and wire the regolith filters:
+
+```bash
+yarn add @bedrock-core/ui
+regolith install guides
+```
+
+## Project setup
+
+1. Create `packs/data/guide/en_US/` and drop your `.mdx` files inside
+2. Add the `guides` filter **before** `translation-keys` in your profiles
+3. Import the manifest from `@bedrock-core/generated/guides`
+
+:::tip
+Guides support ~~boring~~ **rich** *formatting*, `inline code`, lists, images, and
+internal links — all compiled to localization keys.
+:::
+
+:::warning[Filter order matters]
+The guides filter must run before `translation-keys`, or text metrics will not include
+your guide keys.
+:::
+
+Continue with [your first screen](./first-screen.mdx).

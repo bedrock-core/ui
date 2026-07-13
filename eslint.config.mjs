@@ -113,6 +113,7 @@ export default defineConfig([
       ],
       // @stylistic
       '@stylistic/jsx-curly-brace-presence': ["warn", "always"],
+      "@stylistic/max-statements-per-line": "off",
       // eslint
       'arrow-body-style': ['error', 'as-needed'],
       'curly': 'warn',

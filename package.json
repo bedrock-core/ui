@@ -34,6 +34,10 @@
       "types": "./src/ore-styled.ts",
       "import": "./src/ore-styled.ts"
     },
+    "./guides": {
+      "types": "./src/guides.ts",
+      "import": "./src/guides.ts"
+    },
     "./flexbox": {
       "types": "./src/flexbox.ts",
       "import": "./src/flexbox.ts"
@@ -57,6 +61,7 @@
     "packages/ui-runtime",
     "packages/navigation",
     "packages/ore-styled",
+    "packages/guides",
     "packages/resource-pack",
     "packages/cli",
     "packages/flexbox"
@@ -72,6 +77,7 @@
   },
   "dependencies": {
     "@bedrock-core/flexbox": "^0.9.1",
+    "@bedrock-core/guides": "^0.9.1",
     "@bedrock-core/navigation": "^0.9.1",
     "@bedrock-core/ore-styled": "^0.9.1",
     "@bedrock-core/ui-runtime": "^0.9.1"

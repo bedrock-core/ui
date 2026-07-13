@@ -1,0 +1,29 @@
+---
+title: Instalación
+sidebar_position: 1
+---
+
+Instala la librería y configura los filtros de regolith:
+
+```bash
+yarn add @bedrock-core/ui
+regolith install guides
+```
+
+## Configuración del proyecto
+
+1. Crea `packs/data/guide/en_US/` y coloca tus archivos `.mdx` dentro
+2. Añade el filtro `guides` **antes** de `translation-keys` en tus perfiles
+3. Importa el manifiesto desde `@bedrock-core/generated/guides`
+
+:::tip
+Las guías soportan formato ~~aburrido~~ **rico** *con estilo*, `código en línea`, listas,
+imágenes y enlaces internos — todo compilado a claves de localización.
+:::
+
+:::warning[El orden de los filtros importa]
+El filtro guides debe ejecutarse antes de `translation-keys`, o las métricas de texto no
+incluirán tus claves.
+:::
+
+Continúa con [tu primera pantalla](./first-screen.mdx).

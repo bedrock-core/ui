@@ -217,8 +217,11 @@ export function wrapText(
       flushPending();
       const spaceAdv = glyphAdv(32);
 
-      if (lineWidth === 0) {
-        // skip leading space on a fresh line
+      if (lineWidth === 0 && result.endsWith('\n')) {
+        // skip a leading space on a line that JUST wrapped — but not a
+        // leading space on the untouched input (e.g. a paragraph split into
+        // independently-wrapped runs at a link boundary: a run genuinely
+        // starting with " " is a real word-separator, not wrap indentation).
       } else if (lineWidth + spaceAdv <= scaledMax) {
         result += ' ';
         lineWidth += spaceAdv;

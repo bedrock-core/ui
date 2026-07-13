@@ -1,0 +1,47 @@
+{
+	"name": "@bedrock-core/guides",
+	"version": "0.9.1",
+	"description": "In-game guide screens for @bedrock-core/ui — renders MDX guides compiled by the guides regolith filter",
+	"keywords": [
+		"ui",
+		"minecraft",
+		"bedrock",
+		"guides",
+		"mdx",
+		"docs"
+	],
+	"license": "MIT",
+	"author": "DrAv0011",
+	"repository": "github:bedrock-core/ui",
+	"type": "module",
+	"main": "src/index.ts",
+	"types": "src/index.ts",
+	"exports": {
+		".": {
+			"types": "./src/index.ts",
+			"import": "./src/index.ts"
+		}
+	},
+	"files": [
+		"src",
+		"tsconfig.json"
+	],
+	"sideEffects": false,
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"test": "vitest run",
+		"lint": "eslint ."
+	},
+	"devDependencies": {
+		"@bedrock-core/navigation": "^0.9.1",
+		"@bedrock-core/ore-styled": "^0.9.1",
+		"@bedrock-core/ui-runtime": "^0.9.1",
+		"typescript": "^6.0.3",
+		"vitest": "^4.1.5"
+	},
+	"peerDependencies": {
+		"@bedrock-core/navigation": "*",
+		"@bedrock-core/ore-styled": "*",
+		"@bedrock-core/ui-runtime": "*"
+	}
+}

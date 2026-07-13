@@ -24,6 +24,9 @@
 			],
 			"@bedrock-core/generated/translation-keys": [
 				"./packs/data/translation-keys/translationKeys.generated.json"
+			],
+			"@bedrock-core/generated/guides": [
+				"./packs/data/guides/guides.generated.json"
 			]
 		}
 	},

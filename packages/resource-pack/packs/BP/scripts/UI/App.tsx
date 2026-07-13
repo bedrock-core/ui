@@ -1,3 +1,4 @@
+import guidesManifest from '@bedrock-core/generated/guides';
 import translationKeys from '@bedrock-core/generated/translation-keys';
 import { Panel, Text, TranslationKeysContext, useExit, type JSX } from '@bedrock-core/ui';
 import {
@@ -6,6 +7,7 @@ import {
   Divider,
   theme,
 } from '@bedrock-core/ore-styled';
+import { createGuideScreens, staticGuideSource, type GuideRoutes } from '@bedrock-core/guides';
 import {
   createStackNavigator,
   NavigationContainer,
@@ -13,6 +15,7 @@ import {
 } from '@bedrock-core/navigation';
 
 import { BackBar } from './components/BackBar';
+import { GuideDemoButton } from './components/GuideDemoButton';
 import { HooksDemo } from './screens/HooksDemo';
 import { FlexLayout } from './screens/FlexLayout';
 import { FontMetrics } from './screens/FontMetrics';
@@ -43,7 +46,7 @@ type AppRoutes = {
   FixedHeaderScrollDemo: undefined;
   StressDemo: undefined;
   StressDemoFlat: undefined;
-};
+} & GuideRoutes;
 
 type AppScreen<K extends keyof AppRoutes> = ScreenProps<AppRoutes, K>;
 
@@ -92,6 +95,12 @@ function HomeScreen({ navigation }: AppScreen<'Home'>): JSX.Element {
 
       <Button variant={'secondary'} onPress={(): void => navigation.navigate('FormDemo')}>
         {'§6Form Inputs'}
+      </Button>
+
+      <Divider />
+
+      <Button variant={'secondary'} onPress={(): void => navigation.navigate('GuideContents')}>
+        {'§dGuide Demo (MDX)'}
       </Button>
 
       <Divider variant={'light'} />
@@ -234,6 +243,11 @@ const Stack = createStackNavigator<AppRoutes>({
     FixedHeaderScrollDemo: FixedHeaderScrollDemoScreen,
     StressDemo: StressDemoScreen,
     StressDemoFlat: StressDemoFlatScreen,
+    // MDX guide demo — content compiled from packs/data/guide/** by the guides filter.
+    ...createGuideScreens<AppRoutes>(staticGuideSource(guidesManifest), {
+      title: 'Guide Demo',
+      components: { GuideDemoButton },
+    }),
   },
 });
 

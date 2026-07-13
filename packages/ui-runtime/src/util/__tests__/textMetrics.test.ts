@@ -86,6 +86,14 @@ describe('wrapText', () => {
     expect(result).not.toMatch(/^ /m);
   });
 
+  it('preserves a genuine leading space on unwrapped text', () => {
+    // A paragraph split into independently-wrapped runs at a link boundary can
+    // produce a run that legitimately starts with a word-separator space (e.g.
+    // " or the " between two link runs) — that space must survive, unlike a
+    // space that leads a line ONLY because a wrap just inserted a newline there.
+    expect(wrapText(' or the ', 100)).toBe(' or the ');
+  });
+
   it('inserts hyphen for mid-word break', () => {
     // 'ABCDE' = 5×6=30px. maxWidth=18: fits A,B,C (18px) then D pushes over with hyphen
     // A=6, B=6, C=6 → 18, then D=6 + hyphen=6 > 18 → break after C
