@@ -19,8 +19,8 @@
 				"script": "../../../regolith-filters/guides/main.js"
 			},
 			"translation-keys": {
-				"url": "github.com/bedrock-core/regolith-filters",
-				"version": "1.1.0"
+				"runWith": "nodejs",
+				"script": "../../../regolith-filters/translation-keys/main.js"
 			}
 		},
 		"formatVersion": "1.4.0",

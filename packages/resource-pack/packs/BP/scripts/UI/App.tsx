@@ -1,6 +1,6 @@
 import guidesManifest from '@bedrock-core/generated/guides';
 import translationKeys from '@bedrock-core/generated/translation-keys';
-import { Panel, Text, TranslationKeysContext, useExit, type JSX } from '@bedrock-core/ui';
+import { Panel, resolveTranslationKeysForPlayer, Text, TranslationKeysContext, useExit, usePlayer, type JSX } from '@bedrock-core/ui';
 import {
   Button,
   Card,
@@ -254,8 +254,10 @@ const Stack = createStackNavigator<AppRoutes>({
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
 export function App(): JSX.Element {
+  const player = usePlayer();
+
   return (
-    <TranslationKeysContext value={translationKeys}>
+    <TranslationKeysContext value={resolveTranslationKeysForPlayer(translationKeys, player) ?? null}>
       <NavigationContainer>
         <Stack.Navigator />
       </NavigationContainer>

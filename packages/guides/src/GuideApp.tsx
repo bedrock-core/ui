@@ -1,6 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { createStackNavigator, NavigationContainer, type NavigationState } from '@bedrock-core/navigation';
-import { TranslationKeysContext, useRef, type JSX } from '@bedrock-core/ui-runtime';
+import { TranslationKeysContext, type TranslationKeysMap, useRef, type JSX } from '@bedrock-core/ui-runtime';
 import { createGuideScreens } from './createGuideScreens';
 import type { GuideScreenOptions } from './screens/GuideContents';
 import { staticGuideSource } from './source';
@@ -16,10 +16,12 @@ export interface GuideAppProps {
   /** Component registry for MDX `cmp` blocks. */
   components?: GuideComponents;
   /**
-   * Translation key map for text metrics (`translationKeys.generated.json`).
+   * Translation key map for text metrics — ONE locale's flat map, already
+   * resolved for the current player (the generated module is nested by
+   * locale: `resolveTranslationKeysForPlayer(translationKeys, player)`).
    * Omit when a `TranslationKeysContext` provider already wraps this app.
    */
-  translationKeys?: Record<string, string>;
+  translationKeys?: TranslationKeysMap;
 }
 
 type GuideStack = ReturnType<typeof createStackNavigator<GuideRoutes>>;
@@ -29,8 +31,10 @@ type GuideStack = ReturnType<typeof createStackNavigator<GuideRoutes>>;
  *
  * ```tsx
  * import guides from '@bedrock-core/generated/guides';
- * import translationKeys from '@bedrock-core/generated/translation-keys';
+ * import allTranslationKeys from '@bedrock-core/generated/translation-keys';
+ * import { resolveTranslationKeysForPlayer } from '@bedrock-core/ui';
  *
+ * const translationKeys = resolveTranslationKeysForPlayer(allTranslationKeys, player);
  * render(<GuideApp manifest={guides} translationKeys={translationKeys} />, player);
  * ```
  *

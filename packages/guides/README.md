@@ -18,10 +18,11 @@ packs/data/guide/<locale>/**.mdx
 
 ```tsx
 import guides from '@bedrock-core/generated/guides';
-import translationKeys from '@bedrock-core/generated/translation-keys';
+import allTranslationKeys from '@bedrock-core/generated/translation-keys';
 import { GuideApp } from '@bedrock-core/guides';
-import { render } from '@bedrock-core/ui';
+import { render, resolveTranslationKeysForPlayer } from '@bedrock-core/ui';
 
+const translationKeys = resolveTranslationKeysForPlayer(allTranslationKeys, player);
 render(<GuideApp manifest={guides} translationKeys={translationKeys} />, player);
 ```
 
@@ -50,9 +51,9 @@ const Stack = createStackNavigator<AppRoutes>({
 | IR block | Renders as |
 | --- | --- |
 | headings | `Text` (`minecraftTen` for h1, scaled `mojangles` below) |
-| paragraphs | wrapping localized `Text` + a row of link buttons for internal links |
-| lists | bullet/numbered rows, one nesting level indented |
-| images | `Image` at full width with compile-time-sniffed aspect ratio |
+| paragraphs | one wrapping row of runs — plain text as `Text`, internal links as an inline transparent `Button` woven into the sentence |
+| lists | bullet/numbered rows (same run-wrapping as paragraphs), one nesting level indented |
+| images | `Image` height-capped and aspect-ratio-derived from compile-time-sniffed dimensions |
 | admonitions | dark `Card` with a colored, localized title |
 | code | dark `Card` of raw `§7` lines (pre-wrapped by the filter) |
 | `<Component />` | looked up in the `components` registry passed via options; placeholder otherwise |

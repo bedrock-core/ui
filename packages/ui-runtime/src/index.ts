@@ -106,5 +106,5 @@ export type {
 export { ItemAuxContext } from './data/ItemAux';
 export type { ItemAuxMap } from './data/ItemAux';
 
-export { TranslationKeysContext } from './data/TranslationKeys';
-export type { TranslationKeysMap } from './data/TranslationKeys';
+export { resolveTranslationKeysForPlayer, TranslationKeysContext } from './data/TranslationKeys';
+export type { TranslationKeysByLocale, TranslationKeysMap } from './data/TranslationKeys';

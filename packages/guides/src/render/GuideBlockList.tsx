@@ -42,7 +42,7 @@ function renderBlock(block: GuideBlock, ctx: RenderCtx): JSX.Element {
   switch (block.t) {
     case 'h':
       return block.l === 1
-        ? <Text font={'minecraftTen'} scale={1} shadow={true} wordBreak={'break-word'} marginTop={spacing.sm} localizationKey={block.k} />
+        ? <Text font={'minecraftTen'} scale={4} shadow={false} wordBreak={'break-word'} marginTop={spacing.sm} localizationKey={block.k} />
         : <Text font={'mojangles'} scale={block.l === 2 ? 1.5 : 1.25} shadow={true} wordBreak={'break-word'} marginTop={spacing.sm} localizationKey={block.k} />;
 
     case 'p':
