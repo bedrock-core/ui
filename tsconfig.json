@@ -50,6 +50,18 @@
 			],
 			"@bedrock-core/ore-styled/*": [
 				"./packages/ore-styled/src/*"
+			],
+			"@bedrock-core/config": [
+				"./packages/config/src/index.tsx"
+			],
+			"@bedrock-core/config/*": [
+				"./packages/config/src/*"
+			],
+			"@bedrock-core/server-runtime": [
+				"../server-public/packages/server-runtime/src/index.ts"
+			],
+			"@bedrock-core/sync": [
+				"../server-public/packages/sync/src/index.ts"
 			]
 		}
 	},

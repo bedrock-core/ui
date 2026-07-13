@@ -38,6 +38,10 @@
       "types": "./src/guides.ts",
       "import": "./src/guides.ts"
     },
+    "./config": {
+      "types": "./src/config.ts",
+      "import": "./src/config.ts"
+    },
     "./flexbox": {
       "types": "./src/flexbox.ts",
       "import": "./src/flexbox.ts"
@@ -62,6 +66,7 @@
     "packages/navigation",
     "packages/ore-styled",
     "packages/guides",
+    "packages/config",
     "packages/resource-pack",
     "packages/cli",
     "packages/flexbox"
@@ -104,6 +109,8 @@
   },
   "resolutions": {
     "@minecraft/server": "2.8.0",
-    "@minecraft/server-ui": "2.1.0"
+    "@minecraft/server-ui": "2.1.0",
+    "@bedrock-core/server-runtime": "portal:../server-public/packages/server-runtime",
+    "@bedrock-core/sync": "portal:../server-public/packages/sync"
   }
 }

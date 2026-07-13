@@ -7,6 +7,7 @@ import type { GuideSource } from '../source';
 import type { GuideRoutes, GuideTreeNode, PageId } from '../types';
 
 const { spacing } = theme.tokens;
+const optionTextures = theme.components.dropdown.textures;
 
 export interface GuideScreenOptions {
   /** Header title (raw text, colorable). Defaults to 'Guide'. */
@@ -70,7 +71,18 @@ export function GuideContentsScreen({ navigation, route, source, options }: Guid
     for (const node of nodes) {
       if (node.t === 'page') {
         rows.push(
-          <Button paddingTop={spacing.md} paddingBottom={spacing.md} paddingLeft={spacing.sm} paddingRight={spacing.sm} width={'100%'} justifyContent={'flex-start'} onPress={(): void => openPage(node.id)}>
+          <Button
+            background={optionTextures.option}
+            backgroundHover={optionTextures.optionHover}
+            backgroundPressed={optionTextures.optionHover}
+            paddingTop={spacing.md}
+            paddingBottom={spacing.md}
+            paddingLeft={spacing.sm}
+            paddingRight={spacing.sm}
+            width={'100%'}
+            justifyContent={'flex-start'}
+            onPress={(): void => openPage(node.id)}
+          >
             <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.xs} paddingLeft={depth * spacing.md}>
               <Text localizationKey={node.titleK} />
             </Panel>
@@ -82,7 +94,18 @@ export function GuideContentsScreen({ navigation, route, source, options }: Guid
       const isCollapsed = collapsed.includes(node.id);
 
       rows.push(
-        <Button paddingTop={spacing.md} paddingBottom={spacing.md} paddingLeft={spacing.sm} paddingRight={spacing.sm} width={'100%'} justifyContent={'flex-start'} onPress={(): void => toggle(node.id)}>
+        <Button
+          background={optionTextures.option}
+          backgroundHover={optionTextures.optionHover}
+          backgroundPressed={optionTextures.optionHover}
+          paddingTop={spacing.md}
+          paddingBottom={spacing.md}
+          paddingLeft={spacing.sm}
+          paddingRight={spacing.sm}
+          width={'100%'}
+          justifyContent={'flex-start'}
+          onPress={(): void => toggle(node.id)}
+        >
           <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.xs} paddingLeft={depth * spacing.md}>
             <Text>{isCollapsed ? '§8+' : '§8-'}</Text>
             <Text shadow={true} localizationKey={node.labelK} />
