@@ -1,3 +1,4 @@
+/** @jsxImportSource @bedrock-core/ui-runtime */
 import { Button, Dropdown, Image, Input, Panel, Slider, Text, useState, type JSX } from '@bedrock-core/ui';
 
 const MODES = ['Easy', 'Normal', 'Hard', 'Expert'];

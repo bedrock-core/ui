@@ -1,3 +1,4 @@
+/** @jsxImportSource @bedrock-core/ui-runtime */
 /**
  * `@bedrock-core/config` — the addon list + config + guide UI every bedrock-core
  * addon mounts with one line:

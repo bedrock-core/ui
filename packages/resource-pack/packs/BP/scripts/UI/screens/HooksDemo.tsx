@@ -1,3 +1,4 @@
+/** @jsxImportSource @bedrock-core/ui-runtime */
 import { Button, Card, Divider, theme } from '@bedrock-core/ore-styled';
 import { Panel, Text, useState, type JSX } from '@bedrock-core/ui';
 import {

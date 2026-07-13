@@ -1,3 +1,4 @@
+/** @jsxImportSource @bedrock-core/ui-runtime */
 import { theme } from '@bedrock-core/ore-styled';
 import { Fragment, JSX, Panel, Text } from '@bedrock-core/ui';
 import type { TextFont } from '@bedrock-core/ui/components/Text';

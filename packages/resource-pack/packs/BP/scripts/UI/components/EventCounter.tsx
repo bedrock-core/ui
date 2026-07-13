@@ -1,3 +1,4 @@
+/** @jsxImportSource @bedrock-core/ui-runtime */
 import { JSX, Panel, Text, FunctionComponent, useState, useEvent } from '@bedrock-core/ui';
 import { system } from '@minecraft/server';
 

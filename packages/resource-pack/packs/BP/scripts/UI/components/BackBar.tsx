@@ -1,3 +1,4 @@
+/** @jsxImportSource @bedrock-core/ui-runtime */
 import { Panel, Text, type JSX } from '@bedrock-core/ui';
 import { Button } from '@bedrock-core/ore-styled';
 import { useNavigation } from '@bedrock-core/navigation';

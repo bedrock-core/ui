@@ -1,3 +1,4 @@
+/** @jsxImportSource @bedrock-core/ui-runtime */
 import guidesManifest from '@bedrock-core/generated/guides';
 import translationKeys from '@bedrock-core/generated/translation-keys';
 import { Panel, resolveTranslationKeysForPlayer, Text, TranslationKeysContext, useExit, usePlayer, type JSX } from '@bedrock-core/ui';

@@ -1,3 +1,4 @@
+/** @jsxImportSource @bedrock-core/ui-runtime */
 import { JSX, Panel, Text, FunctionComponent, useExit, usePlayer } from '@bedrock-core/ui';
 import { Button } from '@bedrock-core/ore-styled';
 

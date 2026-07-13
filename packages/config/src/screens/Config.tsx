@@ -1,3 +1,4 @@
+/** @jsxImportSource @bedrock-core/ui-runtime */
 import { Button, Card, Form, theme } from '@bedrock-core/ore-styled';
 import { Fragment, Panel, Text, type FormValues, type JSX } from '@bedrock-core/ui-runtime';
 import { useCore } from '../CoreContext';

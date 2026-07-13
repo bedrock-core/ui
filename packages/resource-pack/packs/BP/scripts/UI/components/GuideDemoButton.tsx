@@ -1,3 +1,4 @@
+/** @jsxImportSource @bedrock-core/ui-runtime */
 import { Button } from '@bedrock-core/ore-styled';
 import { type JSX } from '@bedrock-core/ui';
 

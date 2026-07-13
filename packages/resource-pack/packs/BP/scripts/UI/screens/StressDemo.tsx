@@ -1,3 +1,4 @@
+/** @jsxImportSource @bedrock-core/ui-runtime */
 import { Button, Image, Panel, Scroll, Text, useExit, type JSX } from '@bedrock-core/ui';
 
 /**

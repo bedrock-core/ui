@@ -1,3 +1,4 @@
+/** @jsxImportSource @bedrock-core/ui-runtime */
 import { createContext } from '@bedrock-core/ui';
 
 /**

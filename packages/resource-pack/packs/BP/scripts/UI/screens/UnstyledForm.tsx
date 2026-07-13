@@ -1,3 +1,4 @@
+/** @jsxImportSource @bedrock-core/ui-runtime */
 import { Form, Image, Panel, Text, usePlayer, type FormValues, type JSX } from '@bedrock-core/ui';
 
 /**

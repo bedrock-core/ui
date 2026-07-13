@@ -1,3 +1,4 @@
+/** @jsxImportSource @bedrock-core/ui-runtime */
 import { JSX, Panel, Text, FunctionComponent, useContext } from '@bedrock-core/ui';
 import { SettingsContext, type Settings } from '../contexts';
 

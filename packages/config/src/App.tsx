@@ -1,3 +1,4 @@
+/** @jsxImportSource @bedrock-core/ui-runtime */
 import { TranslationKeysContext, useRef, type JSX } from '@bedrock-core/ui-runtime';
 import { createStackNavigator, NavigationContainer } from '@bedrock-core/navigation';
 import type { Runtime } from '@bedrock-core/server-runtime';
