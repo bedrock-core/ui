@@ -8,10 +8,12 @@
 
 declare module '@bedrock-core/generated/guides' {
   const manifest: import('@bedrock-core/server-runtime').GuideManifest;
+
   export default manifest;
 }
 
 declare module '*/guides.generated.json' {
   const manifest: import('@bedrock-core/server-runtime').GuideManifest;
+
   export default manifest;
 }

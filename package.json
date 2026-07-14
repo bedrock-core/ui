@@ -81,11 +81,12 @@
     "coverage": "yarn workspaces foreach -ptA run coverage"
   },
   "dependencies": {
-    "@bedrock-core/flexbox": "^0.9.1",
-    "@bedrock-core/guides": "^0.9.1",
-    "@bedrock-core/navigation": "^0.9.1",
-    "@bedrock-core/ore-styled": "^0.9.1",
-    "@bedrock-core/ui-runtime": "^0.9.1"
+    "@bedrock-core/config": "workspace:*",
+    "@bedrock-core/flexbox": "workspace:*",
+    "@bedrock-core/guides": "workspace:*",
+    "@bedrock-core/navigation": "workspace:*",
+    "@bedrock-core/ore-styled": "workspace:*",
+    "@bedrock-core/ui-runtime": "workspace:*"
   },
   "devDependencies": {
     "@eslint/css": "^1.2.0",

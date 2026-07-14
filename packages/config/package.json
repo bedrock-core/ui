@@ -1,6 +1,6 @@
 {
 	"name": "@bedrock-core/config",
-	"version": "0.1.0",
+	"version": "0.9.1",
 	"description": "The bedrock-core addon list + config + guide UI: one realm serves it for every registered addon",
 	"keywords": [
 		"minecraft",
@@ -21,6 +21,8 @@
 	],
 	"repository": "github:bedrock-core/ui",
 	"type": "module",
+	"main": "src/index.tsx",
+	"types": "src/index.tsx",
 	"exports": {
 		".": {
 			"types": "./src/index.tsx",
@@ -28,23 +30,29 @@
 		}
 	},
 	"files": [
-		"src/**/*"
+		"src",
+		"tsconfig.json"
 	],
+	"sideEffects": false,
 	"scripts": {
+		"build": "tsc -p tsconfig.json",
 		"lint": "eslint ."
 	},
 	"devDependencies": {
+		"@bedrock-core/guides": "workspace:*",
+		"@bedrock-core/navigation": "workspace:*",
+		"@bedrock-core/ore-styled": "workspace:*",
 		"@bedrock-core/server-runtime": "^0.1.0",
-		"@bedrock-core/ui": "workspace:*",
-		"@minecraft/server": "2.8.0",
-		"@stylistic/eslint-plugin": "^5.10.0",
-		"eslint": "^10.5.0",
-		"typescript": "^6.0.3",
-		"typescript-eslint": "^8.62.0"
+		"@bedrock-core/ui-runtime": "workspace:*",
+		"@minecraft/server": "^2.8.0",
+		"typescript": "^6.0.3"
 	},
 	"peerDependencies": {
+		"@bedrock-core/guides": "*",
+		"@bedrock-core/navigation": "*",
+		"@bedrock-core/ore-styled": "*",
 		"@bedrock-core/server-runtime": "*",
-		"@bedrock-core/ui": "*",
-		"@minecraft/server": ">=2.8.0"
+		"@bedrock-core/ui-runtime": "*",
+		"@minecraft/server": "*"
 	}
 }

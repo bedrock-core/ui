@@ -38,7 +38,7 @@
     "lint": "eslint ."
   },
   "devDependencies": {
-    "@bedrock-core/ui-runtime": "^0.9.1",
+    "@bedrock-core/ui-runtime": "workspace:*",
     "typescript": "^6.0.3"
   },
   "peerDependencies": {

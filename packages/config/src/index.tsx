@@ -7,9 +7,7 @@
  * import { core } from '@bedrock-core/server-runtime';
  * import { ui } from '@bedrock-core/config';
  *
- * core.register({ ... });
- * core.translations.provide(translationKeys);
- * core.guide(guides);               // optional
+ * core.register({ ..., translations: translationKeys, guide: guides });
  * ui(core);                         // registers the commands, first-wins across realms
  * ```
  *

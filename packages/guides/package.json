@@ -12,6 +12,13 @@
 	],
 	"license": "MIT",
 	"author": "DrAv0011",
+	"contributors": [
+		{
+			"name": "DrAv0011",
+			"email": "contact@drav.dev",
+			"url": "https://drav.dev"
+		}
+	],
 	"repository": "github:bedrock-core/ui",
 	"type": "module",
 	"main": "src/index.ts",
@@ -33,10 +40,10 @@
 		"lint": "eslint ."
 	},
 	"devDependencies": {
-		"@bedrock-core/navigation": "^0.9.1",
-		"@bedrock-core/ore-styled": "^0.9.1",
+		"@bedrock-core/navigation": "workspace:*",
+		"@bedrock-core/ore-styled": "workspace:*",
 		"@bedrock-core/server-runtime": "^0.1.0",
-		"@bedrock-core/ui-runtime": "^0.9.1",
+		"@bedrock-core/ui-runtime": "workspace:*",
 		"typescript": "^6.0.3",
 		"vitest": "^4.1.5"
 	},

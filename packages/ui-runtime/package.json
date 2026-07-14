@@ -61,6 +61,6 @@
     "@minecraft/server-ui": "*"
   },
   "dependencies": {
-    "@bedrock-core/flexbox": "^0.9.1"
+    "@bedrock-core/flexbox": "workspace:*"
   }
 }

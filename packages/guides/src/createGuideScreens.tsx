@@ -26,6 +26,7 @@ import type { GuideRoutes } from './types';
  * root has exactly one container — this plugs guides into an existing stack.
  * For an addon with no UI of its own, use {@link GuideApp} instead.
  */
+
 export function createGuideScreens<TRoutes extends GuideRoutes = GuideRoutes>(
   source: GuideSource,
   options: GuideScreenOptions = {},
@@ -41,10 +42,24 @@ export function createGuideScreens<TRoutes extends GuideRoutes = GuideRoutes>(
     return <GuidePageScreen navigation={navigation} route={route} source={source} options={options} />;
   }
 
-  // The screens only use the GuideRoutes subset of the host's route map, so
-  // narrowing the navigation prop from TRoutes to GuideRoutes is safe.
-  return { GuideContents, GuidePage } as unknown as {
-    GuideContents: ScreenComponent<TRoutes & GuideRoutes, 'GuideContents'>;
-    GuidePage: ScreenComponent<TRoutes & GuideRoutes, 'GuidePage'>;
+  return {
+    GuideContents: forHostRoutes<TRoutes, 'GuideContents'>(GuideContents),
+    GuidePage: forHostRoutes<TRoutes, 'GuidePage'>(GuidePage),
   };
+}
+
+/**
+ * Re-tag a screen authored against {@link GuideRoutes} for a host route map that
+ * merely *contains* those routes. Sound at runtime — the navigator only invokes
+ * the screen for its guide route, so the `navigation`/`route` it receives are
+ * always the guide-typed ones the component was written for. The compiler can't
+ * infer it because {@link NavigationHelpers} is invariant in `TRoutes` (its
+ * `reset` uses `TRoutes` in an array position), so the widening is stated here,
+ * in one guarded place, instead of leaking `as` casts into the factory body.
+ */
+function forHostRoutes<TRoutes extends GuideRoutes, K extends Extract<keyof GuideRoutes, string>>(
+  screen: ScreenComponent<GuideRoutes, K>,
+): ScreenComponent<TRoutes & GuideRoutes, K> {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- widening a GuideRoutes-typed screen to the host's superset; sound because the navigator only ever invokes it for its guide route, but unprovable since NavigationHelpers is invariant in TRoutes (see the JSDoc)
+  return screen as ScreenComponent<TRoutes & GuideRoutes, K>;
 }

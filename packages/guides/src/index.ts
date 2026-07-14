@@ -10,7 +10,7 @@ export type { GuideBlockListProps } from './render/GuideBlockList';
 
 export type { GuideScreenOptions } from './screens/GuideContents';
 
-export { ADMONITION_COLORS, defaultAdmonitionTitleKey } from './admonitions';
+export { defaultAdmonitionTitleKey } from './admonitions';
 
 export type {
   AdmonitionKind,

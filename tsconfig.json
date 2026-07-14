@@ -51,6 +51,18 @@
 			"@bedrock-core/ore-styled/*": [
 				"./packages/ore-styled/src/*"
 			],
+			"@bedrock-core/guides": [
+				"./packages/guides/src/index.ts"
+			],
+			"@bedrock-core/guides/*": [
+				"./packages/guides/src/*"
+			],
+			"@bedrock-core/flexbox": [
+				"./packages/flexbox/src/index.ts"
+			],
+			"@bedrock-core/flexbox/*": [
+				"./packages/flexbox/src/*"
+			],
 			"@bedrock-core/config": [
 				"./packages/config/src/index.tsx"
 			],
