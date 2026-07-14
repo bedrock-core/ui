@@ -1,14 +1,16 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Button as OreButton, theme } from '@bedrock-core/ore-styled';
 import type { NavigationHelpers, RouteObject } from '@bedrock-core/navigation';
-import { Panel, Scroll, Text, useEffect, useExit, useState, type JSX } from '@bedrock-core/ui-runtime';
+import { Image, Panel, Scroll, Text, useEffect, useExit, useState, type JSX } from '@bedrock-core/ui-runtime';
 import { GuideBlockList } from '../render/GuideBlockList';
 import { GuideHeader, type BreadcrumbSegment } from '../render/GuideHeader';
 import type { GuideSource } from '../source';
 import type { GuidePageData, GuideRoutes, GuideTreeNode, PageId } from '../types';
-import type { GuideScreenOptions } from './GuideContents';
+import type { GuideScreenOptions } from './GuideHome';
 
 const { spacing } = theme.tokens;
+
+const ICON_HOME = 'textures/ui/config/home';
 
 /** Category labels (DFS ancestry) leading to `pageId`, or `[]` if not found in the tree. */
 function breadcrumbPath(tree: GuideTreeNode[], pageId: PageId): BreadcrumbSegment[] {
@@ -38,7 +40,7 @@ export interface GuidePageScreenProps {
   options: GuideScreenOptions;
 }
 
-/** One guide page: title, rendered blocks, prev/contents/next footer. */
+/** One guide page: title, rendered blocks, prev/home/next footer. */
 export function GuidePageScreen({ navigation, route, source, options }: GuidePageScreenProps): JSX.Element {
   const { pageId, addonId } = route.params;
   const manifest = source.get(addonId);
@@ -74,8 +76,8 @@ export function GuidePageScreen({ navigation, route, source, options }: GuidePag
     navigation.navigate('GuidePage', { pageId: id, addonId });
   };
 
-  const openContents = (): void => {
-    navigation.navigate('GuideContents', { addonId });
+  const openHome = (): void => {
+    navigation.navigate('GuideHome', { addonId });
   };
 
   const prevPage = page?.prev !== undefined ? manifest?.pages[page.prev] : undefined;
@@ -98,7 +100,7 @@ export function GuidePageScreen({ navigation, route, source, options }: GuidePag
               : page
                 ? (
                     <Panel flexDirection={'column'} gap={spacing.md}>
-                      <Text font={'minecraftTen'} scale={1} shadow={true} wordBreak={'break-word'} localizationKey={page.titleK} />
+                      <Text font={'minecraftTen'} scale={2} shadow={true} wordBreak={'break-word'} localizationKey={page.titleK} />
                       <GuideBlockList blocks={page.blocks} ns={manifest?.ns ?? ''} onNavigate={goTo} components={options.components} />
                     </Panel>
                   )
@@ -117,8 +119,8 @@ export function GuidePageScreen({ navigation, route, source, options }: GuidePag
               </OreButton>
             )
           : <Panel flexGrow={1} />}
-        <OreButton variant={'contrast'} paddingTop={spacing.sm} paddingBottom={spacing.sm} onPress={openContents}>
-          {'Contents'}
+        <OreButton variant={'contrast'} paddingTop={spacing.sm} paddingBottom={spacing.sm} onPress={openHome}>
+          <Image width={12} height={12} texture={ICON_HOME} />
         </OreButton>
         {page?.next !== undefined && nextPage
           ? (

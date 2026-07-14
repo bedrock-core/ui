@@ -100,7 +100,7 @@ function HomeScreen({ navigation }: AppScreen<'Home'>): JSX.Element {
 
       <Divider />
 
-      <Button variant={'secondary'} onPress={(): void => navigation.navigate('GuideContents')}>
+      <Button variant={'secondary'} onPress={(): void => navigation.navigate('GuideHome')}>
         {'§dGuide Demo (MDX)'}
       </Button>
 

@@ -139,8 +139,16 @@ function processOverflowText(td: TextMetricsData, availableWidth: number): strin
 
       displayText = kept.join('\n');
     }
-  } else if (td.overflow === 'ellipsis' && td.wordBreak !== 'break-word') {
-    displayText = ellipsizeText(displayText, availableWidth, td.font, td.scale);
+  }
+
+  if (td.overflow === 'ellipsis' && td.wordBreak !== 'break-word') {
+    // Runs even when maxLines is set: the maxLines cut only fires on line COUNT,
+    // so a single line that overflows horizontally (e.g. `maxLines={1}` header
+    // trails) still needs the ellipsis. Per line — ellipsizeText is single-line.
+    displayText = displayText
+      .split('\n')
+      .map(line => ellipsizeText(line, availableWidth, td.font, td.scale))
+      .join('\n');
   }
 
   return displayText;

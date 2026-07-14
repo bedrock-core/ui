@@ -29,7 +29,7 @@ describe('createGuideScreens', () => {
   it('returns both screen components', () => {
     const screens = createGuideScreens(staticGuideSource(manifest));
 
-    expect(typeof screens.GuideContents).toBe('function');
+    expect(typeof screens.GuideHome).toBe('function');
     expect(typeof screens.GuidePage).toBe('function');
   });
 });

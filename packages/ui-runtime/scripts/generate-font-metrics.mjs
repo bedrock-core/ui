@@ -16,11 +16,19 @@ const DEFAULT_CONFIG = {
     lineHeight: 10,
     fallbackWidth: 6,
   },
+  // MinecraftTen renders at the same em size as mojangles (advances anchored at
+  // pxPerEm 10), but its glyphs are TALLER: hhea ascender-descender is 1.24em,
+  // so a line occupies ~12.4px where mojangles occupies 10. Underestimating this
+  // clipped the bottom of wrap_box'd headings (the box height IS the measured
+  // height and clips_children).
+  minecraftTen: {
+    lineHeight: 12.4,
+    fallbackWidth: 6,
+    pxPerEm: 10,
+  },
   // Fonts that share glyph metrics with another profile (no separate .ttf needed).
   // key = font name used in TextFont, value = profile name whose metrics to reuse.
-  aliases: {
-    minecraftTen: 'mojangles',
-  },
+  aliases: {},
 };
 
 function parseArgs(argv) {
@@ -67,12 +75,13 @@ async function readFontList(fontListPath) {
   const content = await fs.readFile(fontListPath, 'utf8');
   const lines = content.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
 
-  if (lines.length < 1) {
-    throw new Error(`Expected at least one font path in ${fontListPath}`);
+  if (lines.length < 2) {
+    throw new Error(`Expected two font paths (mojangles, minecraftTen) in ${fontListPath}`);
   }
 
   return {
     mojangles: lines[0],
+    minecraftTen: lines[1],
   };
 }
 
@@ -89,13 +98,13 @@ function resolveAdvance(font, cp, pxPerEm, fallbackWidth) {
   return Math.max(1, Math.round(advance));
 }
 
-function extractProfile(font, lineHeight, fallbackWidth) {
+function extractProfile(font, lineHeight, fallbackWidth, pxPerEm = lineHeight) {
   const codepoints = buildCodepointList();
   const glyphWidths = {};
 
-  // In Bedrock UI our runtime line-height baseline is profile-specific.
-  // Use it as the scale anchor so extracted advances are already in UI texels.
-  const pxPerEm = lineHeight;
+  // The advance anchor (px per em) and the line height are separate: Bedrock
+  // renders every font at the same em size (10px at scale 1), but a font's
+  // glyphs may occupy more vertical space than that em (MinecraftTen: 1.24em).
 
   for (const cp of codepoints) {
     glyphWidths[String(cp)] = resolveAdvance(font, cp, pxPerEm, fallbackWidth);
@@ -137,9 +146,16 @@ async function main() {
       lineHeight: Number(args.mojanglesLineHeight ?? DEFAULT_CONFIG.mojangles.lineHeight),
       fallbackWidth: Number(args.mojanglesFallbackWidth ?? DEFAULT_CONFIG.mojangles.fallbackWidth),
     },
+    minecraftTen: {
+      path: path.resolve(args.minecraftTen ?? defaultPaths.minecraftTen),
+      lineHeight: Number(args.minecraftTenLineHeight ?? DEFAULT_CONFIG.minecraftTen.lineHeight),
+      fallbackWidth: Number(args.minecraftTenFallbackWidth ?? DEFAULT_CONFIG.minecraftTen.fallbackWidth),
+      pxPerEm: DEFAULT_CONFIG.minecraftTen.pxPerEm,
+    },
   };
 
   const mojanglesFont = await loadFont(config.mojangles.path);
+  const minecraftTenFont = await loadFont(config.minecraftTen.path);
 
   const output = {
     generatedAt: new Date().toISOString(),
@@ -149,6 +165,12 @@ async function main() {
         mojanglesFont,
         config.mojangles.lineHeight,
         config.mojangles.fallbackWidth,
+      ),
+      minecraftTen: extractProfile(
+        minecraftTenFont,
+        config.minecraftTen.lineHeight,
+        config.minecraftTen.fallbackWidth,
+        config.minecraftTen.pxPerEm,
       ),
     },
   };

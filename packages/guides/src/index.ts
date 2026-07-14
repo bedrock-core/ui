@@ -1,6 +1,4 @@
 export { createGuideScreens } from './createGuideScreens';
-export { GuideApp } from './GuideApp';
-export type { GuideAppProps } from './GuideApp';
 
 export { staticGuideSource } from './source';
 export type { GuideEntry, GuideSource } from './source';
@@ -8,7 +6,7 @@ export type { GuideEntry, GuideSource } from './source';
 export { GuideBlockList } from './render/GuideBlockList';
 export type { GuideBlockListProps } from './render/GuideBlockList';
 
-export type { GuideScreenOptions } from './screens/GuideContents';
+export type { GuideScreenOptions } from './screens/GuideHome';
 
 export { defaultAdmonitionTitleKey } from './admonitions';
 

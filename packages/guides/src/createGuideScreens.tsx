@@ -1,7 +1,7 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import type { ScreenComponent, ScreenProps } from '@bedrock-core/navigation';
 import type { JSX } from '@bedrock-core/ui-runtime';
-import { GuideContentsScreen, type GuideScreenOptions } from './screens/GuideContents';
+import { GuideHomeScreen, type GuideScreenOptions } from './screens/GuideHome';
 import { GuidePageScreen } from './screens/GuidePage';
 import type { GuideSource } from './source';
 import type { GuideRoutes } from './types';
@@ -24,18 +24,17 @@ import type { GuideRoutes } from './types';
  *
  * A factory (instead of a self-contained NavigationContainer) because a render
  * root has exactly one container — this plugs guides into an existing stack.
- * For an addon with no UI of its own, use {@link GuideApp} instead.
  */
 
 export function createGuideScreens<TRoutes extends GuideRoutes = GuideRoutes>(
   source: GuideSource,
   options: GuideScreenOptions = {},
 ): {
-  GuideContents: ScreenComponent<TRoutes & GuideRoutes, 'GuideContents'>;
+  GuideHome: ScreenComponent<TRoutes & GuideRoutes, 'GuideHome'>;
   GuidePage: ScreenComponent<TRoutes & GuideRoutes, 'GuidePage'>;
 } {
-  function GuideContents({ navigation, route }: ScreenProps<GuideRoutes, 'GuideContents'>): JSX.Element {
-    return <GuideContentsScreen navigation={navigation} route={route} source={source} options={options} />;
+  function GuideHome({ navigation, route }: ScreenProps<GuideRoutes, 'GuideHome'>): JSX.Element {
+    return <GuideHomeScreen navigation={navigation} route={route} source={source} options={options} />;
   }
 
   function GuidePage({ navigation, route }: ScreenProps<GuideRoutes, 'GuidePage'>): JSX.Element {
@@ -43,7 +42,7 @@ export function createGuideScreens<TRoutes extends GuideRoutes = GuideRoutes>(
   }
 
   return {
-    GuideContents: forHostRoutes<TRoutes, 'GuideContents'>(GuideContents),
+    GuideHome: forHostRoutes<TRoutes, 'GuideHome'>(GuideHome),
     GuidePage: forHostRoutes<TRoutes, 'GuidePage'>(GuidePage),
   };
 }

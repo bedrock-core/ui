@@ -16,9 +16,9 @@ export interface GuideScreenOptions {
   components?: import('../types').GuideComponents;
 }
 
-export interface GuideContentsScreenProps {
+export interface GuideHomeScreenProps {
   navigation: NavigationHelpers<GuideRoutes>;
-  route: RouteObject<GuideRoutes['GuideContents']>;
+  route: RouteObject<GuideRoutes['GuideHome']>;
   source: GuideSource;
   options: GuideScreenOptions;
 }
@@ -42,8 +42,8 @@ function initialCollapsed(tree: GuideTreeNode[]): string[] {
   return ids;
 }
 
-/** Sidebar tree — the guide's table of contents. */
-export function GuideContentsScreen({ navigation, route, source, options }: GuideContentsScreenProps): JSX.Element {
+/** Guide home — the guide's table of contents tree. */
+export function GuideHomeScreen({ navigation, route, source, options }: GuideHomeScreenProps): JSX.Element {
   const addonId = route.params?.addonId;
   const manifest = source.get(addonId);
   const exit = useExit();

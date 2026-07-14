@@ -17,7 +17,7 @@ interface GeneratedProfileMetrics extends FontMetrics {
   glyphWidths: Record<string, number>;
 }
 
-type ProfileName = 'mojangles';
+type ProfileName = 'mojangles' | 'minecraftTen';
 
 interface GeneratedFontMetrics {
   generatedAt: string;
@@ -30,8 +30,14 @@ const typedFontMetrics = fontMetrics as unknown as GeneratedFontMetrics;
 const BASE_METRICS = typedFontMetrics.profiles;
 const FONT_ALIASES = typedFontMetrics.aliases;
 
+function isProfileName(name: string): name is ProfileName {
+  return name in BASE_METRICS;
+}
+
 function normalizeFont(font?: TextFont): ProfileName {
   const name: string = font ?? 'mojangles';
+
+  if (isProfileName(name)) { return name; }
 
   return FONT_ALIASES[name] ?? 'mojangles';
 }

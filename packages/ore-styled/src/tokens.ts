@@ -142,7 +142,7 @@ const oreTheme: Theme = {
         danger: { textures: { default: `${BASE}/button/danger/background`, hover: `${BASE}/button/danger/background_hover`, pressed: `${BASE}/button/danger/background_pressed`, disabled: `${BASE}/button/disabled/background` }, textStyle: { font: 'mojangles', scale: 1, color: '§f', disabledColor: '§8' } },
         realm: { textures: { default: `${BASE}/button/realm/background`, hover: `${BASE}/button/realm/background_hover`, pressed: `${BASE}/button/realm/background_pressed`, disabled: `${BASE}/button/disabled/background` }, textStyle: { font: 'mojangles', scale: 1, color: '§f', disabledColor: '§8' } },
         hero: { textures: { default: `${BASE}/button/primary/background`, hover: `${BASE}/button/primary/background_hover`, pressed: `${BASE}/button/primary/background_pressed`, disabled: `${BASE}/button/disabled/background` }, textStyle: { font: 'minecraftTen', scale: 1, color: '§f', disabledColor: '§8' } },
-        transparent: { textures: { default: `${BASE}/button/transparent/background`, hover: `${BASE}/button/transparent/background`, pressed: `${BASE}/button/transparent/background`, disabled: `${BASE}/button/transparent/background` }, textStyle: { font: 'mojangles', scale: 1, color: '§f', disabledColor: '§8' } },
+        transparent: { textures: { default: `${BASE}/button/transparent/background`, hover: `${BASE}/button/transparent/background_hover`, pressed: `${BASE}/button/transparent/background_pressed`, disabled: `${BASE}/button/transparent/background` }, textStyle: { font: 'mojangles', scale: 1, color: '§f', disabledColor: '§8' } },
       },
     },
     card: {

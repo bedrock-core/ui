@@ -104,7 +104,7 @@ function AddonDetails({ core, addon, navigation }: { core: Runtime; addon: Displ
   const hasGuide = core.guides.has(addon.id);
 
   function openGuide(): void {
-    navigation.navigate('GuideContents', { addonId: addon.id });
+    navigation.navigate('GuideHome', { addonId: addon.id });
   }
 
   return (

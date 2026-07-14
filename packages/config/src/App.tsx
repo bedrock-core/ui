@@ -25,9 +25,9 @@ export interface AppProps {
 type AppStack = ReturnType<typeof createStackNavigator<AppRoutes>>;
 
 export function App({ core, player, target }: AppProps): JSX.Element {
-  // The navigator is created once per mount (mirrors GuideApp) — the guide source
-  // closes over `core`, and recreating the navigator on re-render would discard
-  // screen identity while navigation state lives in the container.
+  // The navigator is created once per mount — the guide source closes over
+  // `core`, and recreating the navigator on re-render would discard screen
+  // identity while navigation state lives in the container.
   const stackRef = useRef<AppStack | null>(null);
   let Stack = stackRef.current;
 

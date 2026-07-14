@@ -23,7 +23,7 @@ export type {
  * app's routes: `type AppRoutes = { ... } & GuideRoutes`.
  */
 export type GuideRoutes = {
-  GuideContents: { addonId?: string } | undefined;
+  GuideHome: { addonId?: string } | undefined;
   GuidePage: { pageId: PageId; addonId?: string };
 };
 

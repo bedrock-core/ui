@@ -1,1 +1,2 @@
-C:\Program Files\WindowsApps\MICROSOFT.MINECRAFTUWP_1.26.2004.0_x64__8wekyb3d8bbwe\data\fonts\Mojangles.ttf
+C:\Users\av\AppData\Local\Microsoft\Windows\Fonts\Mojangles.ttf
+C:\Users\av\AppData\Local\Microsoft\Windows\Fonts\minecraft-ten.ttf

@@ -4,10 +4,10 @@ sidebar_position: 2
 
 # Your First Screen
 
-Rendering the whole guide is one line:
+The guide is two screens you spread into your navigator:
 
 ```tsx
-render(<GuideApp manifest={guides} />, player);
+...createGuideScreens(staticGuideSource(guides))
 ```
 
 ## Embedding
@@ -15,7 +15,7 @@ render(<GuideApp manifest={guides} />, player);
 - Merge `GuideRoutes` into your route map
 - Spread `createGuideScreens(...)` into the stack screens
   - The screens plug into any existing navigator
-- Navigate to `GuideContents` from anywhere
+- Navigate to `GuideHome` from anywhere
 
 :::info
 MDX components ride the IR as `cmp` nodes — an unregistered one renders a placeholder:

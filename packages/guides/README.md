@@ -11,22 +11,10 @@ packs/data/guide/<locale>/**.mdx
       └─→ @bedrock-core/generated/guides    (guide IR manifest: sidebar tree, pages, prev/next)
                 │
                 ▼  this package
-      GuideContents / GuidePage screens
+      GuideHome / GuidePage screens
 ```
 
-## Standalone
-
-```tsx
-import guides from '@bedrock-core/generated/guides';
-import allTranslationKeys from '@bedrock-core/generated/translation-keys';
-import { GuideApp } from '@bedrock-core/guides';
-import { render, resolveTranslationKeysForPlayer } from '@bedrock-core/ui';
-
-const translationKeys = resolveTranslationKeysForPlayer(allTranslationKeys, player);
-render(<GuideApp manifest={guides} translationKeys={translationKeys} />, player);
-```
-
-## Embedded in an existing navigator
+## Usage
 
 ```tsx
 import { createGuideScreens, staticGuideSource, type GuideRoutes } from '@bedrock-core/guides';
@@ -43,7 +31,7 @@ const Stack = createStackNavigator<AppRoutes>({
   },
 });
 
-// anywhere: navigation.navigate('GuideContents');
+// anywhere: navigation.navigate('GuideHome');
 ```
 
 ## What renders how
@@ -65,8 +53,6 @@ so guide keys are in the metrics map.
 
 ## API
 
-- `GuideApp({ manifest, initialPageId?, title?, components?, translationKeys? })` — standalone app
-  owning its `NavigationContainer`; `initialPageId` deep-links with contents beneath it.
 - `createGuideScreens<TRoutes>(source, { title?, components? })` — the two screens for a host stack.
 - `staticGuideSource(manifest)` — wraps the build-time manifest as a `GuideSource`.
 - `GuideSource.getPage` (optional) — async page fetch hook for cross-addon sources; the page

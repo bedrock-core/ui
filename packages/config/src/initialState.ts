@@ -23,7 +23,7 @@ export function buildInitialState(target: OpenTarget): Partial<NavigationState> 
     return {
       routes: [
         { key: 'List', name: 'List' },
-        { key: 'GuideContents', name: 'GuideContents', params: { addonId: target.addonId } },
+        { key: 'GuideHome', name: 'GuideHome', params: { addonId: target.addonId } },
       ],
       index: 1,
     };
