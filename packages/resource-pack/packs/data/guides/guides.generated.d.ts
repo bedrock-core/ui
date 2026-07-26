@@ -1,5 +1,6 @@
 // Ambient types for the guides filter output. Copied verbatim into the addon's
-// packs/data/guides/ by regolith (the filter writes the sibling .json manifest).
+// packs/data/guides/ by regolith — the same folder that holds the authored <locale>/**.mdx
+// content and where the filter writes the sibling .json manifest.
 //
 // The guide IR type is owned by @bedrock-core/server-runtime (the framework types + stores +
 // syncs guide data, like config); this file only declares the generated import path and points

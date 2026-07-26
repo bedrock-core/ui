@@ -14,6 +14,15 @@ export default defineConfig([
       ".yarn/**",
       "dist/**",
       "node_modules/**",
+      // Tests are not linted. Test bodies legitimately reach past the public API
+      // (casts onto internal shapes to assert on them), which the type-aware
+      // rules — no-unsafe-type-assertion above all — flag as errors. `vitest.config.ts`
+      // sits outside each package's tsconfig project, so the typed parser can't
+      // resolve it at all.
+      "**/__tests__/**",
+      "**/*.test.ts",
+      "**/*.test.tsx",
+      "**/vitest.config.ts",
     ],
   },
 

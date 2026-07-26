@@ -5,34 +5,37 @@ with the [`guides` regolith filter](https://github.com/bedrock-core/regolith-fil
 as server forms with this package.
 
 ```
-packs/data/guide/<locale>/**.mdx
+packs/data/guides/<locale>/**.mdx
       │  guides regolith filter
       ├─→ RP/texts/<locale>.lang            (auto-localized prose — client resolves per player language)
       └─→ @bedrock-core/generated/guides    (guide IR manifest: sidebar tree, pages, prev/next)
                 │
                 ▼  this package
-      GuideHome / GuidePage screens
+      createGuide(manifest) → self-contained <Guide/>
 ```
 
 ## Usage
 
+`createGuide(manifest)` returns a self-contained component that owns its own
+home ⇆ page navigation (a page is not a host route). Host it behind a single
+screen and let it drive itself:
+
 ```tsx
-import { createGuideScreens, staticGuideSource, type GuideRoutes } from '@bedrock-core/guides';
+import { createGuide } from '@bedrock-core/guides';
 
-type AppRoutes = {
-  Home: undefined;
-} & GuideRoutes;
+// Build ONCE per manifest and cache it — the returned component holds the
+// open-page state, so recreating it each render resets the guide to its home.
+const Guide = createGuide(guides, { title: 'My Addon' });
 
-const Stack = createStackNavigator<AppRoutes>({
-  initialRouteName: 'Home',
-  screens: {
-    Home: HomeScreen,
-    ...createGuideScreens<AppRoutes>(staticGuideSource(guides)),
-  },
-});
-
-// anywhere: navigation.navigate('GuideHome');
+function GuideScreen({ navigation }: AppScreenProps<'Guide'>) {
+  return <Guide onExit={() => navigation.goBack()} />;
+}
 ```
+
+`onExit` fires when the user leaves from the guide's home screen (wire it to the
+host's `navigation.goBack()`); the header's × button closes the whole UI via
+`useExit`. Serving several addons? Call `createGuide` once per manifest, cache
+each by addon id, and render the one your route's param selects.
 
 ## What renders how
 
@@ -51,11 +54,26 @@ and wraps natively. Text *measurement* (ellipsis/`maxLines`) uses the host's
 `TranslationKeysContext` (default-locale strings); run the filter **before** `translation-keys`
 so guide keys are in the metrics map.
 
+## Home (the index)
+
+The guide home is a visual table of contents: categories render as `minecraftTen` section headers
+with a divider rule; pages render as icon-menu rows — a thumbnail, the title, an optional one-line
+subtitle, and a `›` chevron. Both the thumbnail and subtitle are optional per entry, so an
+unannotated guide degrades to a clean text list.
+
+Feed them from page frontmatter (and `_category_.json` for a section's `icon`):
+
+```yaml
+---
+title: Installation
+icon: textures/ui/config/config   # RP texture path (≤80 chars); the pack must ship it
+description: Add the pack and wire the filters.   # localized subtitle — keep it short
+---
+```
+
 ## API
 
-- `createGuideScreens<TRoutes>(source, { title?, components? })` — the two screens for a host stack.
-- `staticGuideSource(manifest)` — wraps the build-time manifest as a `GuideSource`.
-- `GuideSource.getPage` (optional) — async page fetch hook for cross-addon sources; the page
-  screen shows a loading state while it settles.
+- `createGuide(manifest, { title?, components? })` — a self-contained `(props: { onExit? }) => Element`
+  guide component for one manifest.
 - `GuideBlockList({ blocks, ns, onNavigate?, components? })` — the raw IR renderer, exported for
   custom layouts.

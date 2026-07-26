@@ -46,7 +46,7 @@ export function GuideHeader({ title, breadcrumbs, onBack, onClose }: GuideHeader
         ? <Button width={15} height={15} background={ICON_BACK} backgroundHover={ICON_BACK_HOVER} backgroundPressed={ICON_BACK_PRESSED} onPress={onBack} />
         : <Panel width={15} height={15} />}
       <Panel flexGrow={1} flexShrink={1} justifyContent={'center'} alignItems={'center'}>
-        <Text font={'minecraftTen'} scale={1.2} overflow={'ellipsis'} maxLines={1}>
+        <Text font={'minecraftTen'} scale={1.2} maxLines={1}>
           {trail ? `§0${title}§8 > §0${trail}` : `§0${title}`}
         </Text>
       </Panel>

@@ -8,7 +8,7 @@ import {
   Divider,
   theme,
 } from '@bedrock-core/ore-styled';
-import { createGuideScreens, staticGuideSource, type GuideRoutes } from '@bedrock-core/guides';
+import { createGuide } from '@bedrock-core/guides';
 import {
   createStackNavigator,
   NavigationContainer,
@@ -47,9 +47,17 @@ type AppRoutes = {
   FixedHeaderScrollDemo: undefined;
   StressDemo: undefined;
   StressDemoFlat: undefined;
-} & GuideRoutes;
+  Guide: undefined;
+};
 
 type AppScreen<K extends keyof AppRoutes> = ScreenProps<AppRoutes, K>;
+
+// MDX guide demo — content compiled from packs/data/guides/** by the guides filter.
+// Built once so its open-page state survives re-renders (see createGuide).
+const DemoGuide = createGuide(guidesManifest, {
+  title: 'Guide Demo',
+  components: { GuideDemoButton },
+});
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -100,7 +108,7 @@ function HomeScreen({ navigation }: AppScreen<'Home'>): JSX.Element {
 
       <Divider />
 
-      <Button variant={'secondary'} onPress={(): void => navigation.navigate('GuideHome')}>
+      <Button variant={'secondary'} onPress={(): void => navigation.navigate('Guide')}>
         {'§dGuide Demo (MDX)'}
       </Button>
 
@@ -225,6 +233,11 @@ function StressDemoFlatScreen(): JSX.Element {
   return <StressDemoFlat />;
 }
 
+// The guide drives its own home ⇆ page navigation; `onExit` pops back to the demo hub.
+function GuideScreen({ navigation }: AppScreen<'Guide'>): JSX.Element {
+  return <DemoGuide onExit={(): void => navigation.goBack()} />;
+}
+
 // ─── Navigator ────────────────────────────────────────────────────────────────
 
 const Stack = createStackNavigator<AppRoutes>({
@@ -244,11 +257,7 @@ const Stack = createStackNavigator<AppRoutes>({
     FixedHeaderScrollDemo: FixedHeaderScrollDemoScreen,
     StressDemo: StressDemoScreen,
     StressDemoFlat: StressDemoFlatScreen,
-    // MDX guide demo — content compiled from packs/data/guide/** by the guides filter.
-    ...createGuideScreens<AppRoutes>(staticGuideSource(guidesManifest), {
-      title: 'Guide Demo',
-      components: { GuideDemoButton },
-    }),
+    Guide: GuideScreen,
   },
 });
 

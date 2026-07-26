@@ -1,10 +1,11 @@
 import type { ScreenProps } from '@bedrock-core/navigation';
-import type { GuideRoutes } from '@bedrock-core/guides';
 import type { ConfigScope, EntrySchema } from './configUtils';
 
 export type AppRoutes = {
   List: { selectedId?: string } | undefined;
   ConfigScope: { addonId: string };
+  /** One addon's guide — a self-contained `createGuide` component picked by `addonId`. */
+  Guide: { addonId: string };
   EntityList: {
     addonId: string;
     scope: 'dimension' | 'player';
@@ -29,7 +30,7 @@ export type AppRoutes = {
     /** Current effective values — fetched by the navigating screen BEFORE pushing this one. */
     values: Record<string, unknown>;
   };
-} & GuideRoutes;
+};
 
 export type AppScreen<K extends keyof AppRoutes> = ScreenProps<AppRoutes, K>;
 

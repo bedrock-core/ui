@@ -46,6 +46,19 @@ function isColorCode(code: string): boolean {
   return /^[0-9a-f]$/i.test(code);
 }
 
+/**
+ * Fit tolerance (scaled px) for `wrapText`/`ellipsizeText` budget comparisons.
+ *
+ * `measureText` reports a width of `round(unscaledWidth * fontSize)`, so a text
+ * leaf sized to its own intrinsic width can be re-measured against that rounded
+ * budget (the flex fit-content cap does exactly this for a non-stretched leaf).
+ * Dividing the budget straight back — `round(W * s) / s` — can come out below the
+ * true unscaled width `W` (when `W * s` rounded down), which would drop the last
+ * glyph even though the string is measured to fit. A half-pixel of slack makes a
+ * string always fit its own measured width without letting content visibly spill.
+ */
+const FIT_TOLERANCE = 0.5;
+
 function baseGlyphWidth(codePoint: number, profile: ProfileName): number {
   const metrics = BASE_METRICS[profile];
   const width = metrics.glyphWidths[String(codePoint)];
@@ -65,7 +78,7 @@ export function ellipsizeText(
 ): string {
   const profile = normalizeFont(font);
   const metrics = BASE_METRICS[profile];
-  const scaledMax = maxWidth / fontSize;
+  const scaledMax = (maxWidth + FIT_TOLERANCE) / fontSize;
   const ELLIPSIS = '...';
 
   // Measure ellipsis width (unscaled)
@@ -131,7 +144,7 @@ export function wrapText(
 ): string {
   const profile = normalizeFont(font);
   const metrics = BASE_METRICS[profile];
-  const scaledMax = maxWidth / fontSize;
+  const scaledMax = (maxWidth + FIT_TOLERANCE) / fontSize;
 
   let result = '';
   let lineWidth = 0;

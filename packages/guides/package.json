@@ -52,5 +52,10 @@
 		"@bedrock-core/ore-styled": "*",
 		"@bedrock-core/server-runtime": "*",
 		"@bedrock-core/ui-runtime": "*"
+	},
+	"peerDependenciesMeta": {
+		"@bedrock-core/server-runtime": {
+			"optional": true
+		}
 	}
 }

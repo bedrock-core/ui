@@ -1,0 +1,29 @@
+---
+sidebar_position: 2
+icon: textures/ui/config/home
+description: Host the guide behind one screen.
+---
+
+# Your First Screen
+
+The guide is one self-contained component you host behind a single screen:
+
+```tsx
+const Guide = createGuide(guides, { title: 'My Addon' });
+// <Guide onExit={() => navigation.goBack()} />
+```
+
+## Embedding
+
+- Add one `Guide` route to your route map
+- Build `createGuide(manifest)` once and cache it
+  - It drives its own home and page navigation
+- Navigate to `Guide` from anywhere
+
+:::info
+MDX components ride the IR as `cmp` nodes — an unregistered one renders a placeholder:
+:::
+
+<GuideDemoButton label="Try me" />
+
+Back to [Installation](./installation.mdx) or the [Introduction](../intro.mdx).

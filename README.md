@@ -3,8 +3,6 @@
 ![Logo](./assets/logo/title.png)
 
 > ⚠️ Beta Status: Active development. Breaking changes may occur until 1.0.0. Pin exact versions for stability.
->
-> This is not ready for production use.
 
 Custom JSX-driven UI system for Minecraft Bedrock. Components serialize into compact strings decoded by a companion resource pack to render rich layouts beyond native `@minecraft/server-ui` limitations.
 
@@ -14,77 +12,56 @@ Custom JSX-driven UI system for Minecraft Bedrock. Components serialize into com
 
 ---
 
-## 🗺 Development Roadmap
+## ✨ Features
 
-### ✅ Beta 0.1.0 - Core Foundation
+### Core
 
-- ✅ Serialization protocol with UTF-8 safety
-- ✅ JSX runtime with custom component system
-- ✅ Base components (`Panel`, `Text`, `Image`, `Fragment`)
-- ✅ JSON UI resource pack decoder
-- ✅ TypeScript library with proper exports
+- JSX runtime with a custom component system and a TypeScript library with proper exports
+- Serialization protocol with UTF-8 safety, decoded by the companion JSON UI resource pack
+- Hooks: `useState`, `useReducer`, `useRef`, `useEffect`, `useContext`, `useEvent`, `usePlayer`, `useExit`
+- Event system with `Button` click handling
+- Custom native component API — register your own native JSON UI components compatible with `@bedrock-core/ui`
 
-### ✅ Beta 0.2.0 - State & Button
+### Components
 
-- ✅ Component: `Button` with click events
-- ✅ State management hooks
-- ✅ Event system
+- Base components: `Panel`, `Text`, `Image`, `Fragment`, `Button`
+- `Background` — a screen-level background texture
+- `<Scroll>` — up to **2** independent scroll regions per render (`MAX_POOLED_SCROLLS`, pool protocol v0007); every mounted pool slot re-instantiates the full collection, so the pool stays as small as real layouts need — see `scroll_pool.json` for how to grow it
+- `ItemRenderer` (⚠️ experimental) — render item icons inside layouts; needs a manual `ItemAuxContext.Provider`
+- Modal-backed standalone primitives: `Input`, `Dropdown`, `Slider`
 
-### ✅ Beta 0.3.0
+### Layout & Styling
 
-- No features, just fixes to workflows and automated releases.
+- Flexbox layout engine — flex, margins, paddings, spacing, alignment ([@bedrock-core/flexbox](./packages/flexbox/README.md))
+- Component theming system via [@bedrock-core/ore-styled](./packages/ore-styled/README.md), plus prebuilt Ore-UI styled components (`Button`, `Card`, `Toggle`, `Divider`, `Input`, `Dropdown`, `Slider`, `Checkbox`, `Radio`, `ToggleButton`)
+- Ore-Styled item components: `ItemSlot`, `ItemContainer`, `EquipmentSlots`
 
-### ✅ Beta 0.4.0 - Styling
+### Navigation
 
-- ✅ Flex, margins, paddings, spacing...
+- Stack-based multi-screen navigation with screen parameters and typed route state ([@bedrock-core/navigation](./packages/navigation/README.md))
+- `NavigationContainer`, `createStackNavigator`, `Screen`
+- Navigation hooks: `useNavigation()`, `useRoute()`
 
-### ✅ Beta 0.5.0 - Theming
+### Forms
 
-- ✅ Component theming system → shipped via [@bedrock-core/ore-styled](./packages/ore-styled/README.md)
+- `<Form>` — a native `ModalFormData`-backed form with an atomic single-submit lifecycle (`onSubmit` / `onCancel`)
+- Form field primitives: `Form.Toggle`, `Form.Slider`, `Form.Dropdown`, `Form.InlineSelect`, `Form.Input`, `Form.Option`
+- `Form.Button` — in-flow submit / exit action buttons, positioned anywhere in the form
+- Ore-Styled form fields: `Form.Toggle`, `Form.Checkbox`, `Form.Radio`, `Form.ToggleButton`, `Form.Slider`, `Form.Dropdown`, `Form.Input`, `Form.Button`
 
-### ✅ Beta 0.6.0 - Navigation & Item Rendering
+### Guides & Config
 
-- ✅ Stack-based multi-screen navigation system
-- ✅ Screen parameters and typed route state
-- ✅ Navigation hooks: `useNavigation()`, `useRoute()`
-- ✅ `NavigationContainer`, `createStackNavigator`, `Screen`
-- ✅ `ItemRenderer` component — render item icons inside layouts
-- ✅ `useSetScreen` hook — override screen layout per build
-- ✅ Ore-Styled item components: `ItemSlot`, `ItemContainer`, `EquipmentSlots`
+- In-game guides authored in MDX ([@bedrock-core/guides](./packages/guides/README.md)) — the `guides` regolith filter compiles `packs/data/guides/<locale>/**.mdx` into a guide manifest plus `.lang` files, and `createGuide(manifest)` renders it as a self-contained guide with its own home ⇆ page navigation, prose localized per player language
+- Shared addon list + config + guide UI ([@bedrock-core/config](./packages/config/README.md)) — `ui(core)` mounts the `core:list` / `core:config` / `core:guide` commands, so one realm serves the config and guide screens for every registered addon
 
-### ✅ Beta 0.7.0 - Interactive Components & Custom Natives
+## 🗺 Roadmap
 
-- ✅ Custom native component API — register your own native JSON UI components compatible with @bedrock-core/ui
-- ✅ Modal-backed form primitives in `@bedrock-core/ui`: `Input`, `Dropdown`, `Slider`  (v0)
-- ✅ Ore-Styled form fields in `@bedrock-core/ore-styled`: `Input`, `Dropdown`, `Slider`
-- ✅ Scroll fixes — corrected scroll sizing and removed the fixed screen layout
-
-### ✅ Beta 0.8.0 - Multi-Scroll & Layout Polish
-
-- ✅ `<Scroll>` component — declare up to 4 independent scroll regions per render (pool protocol v0007)
-- ✅ Gamepad cursor support — analog-stick virtual cursor with hover-to-scroll for all custom screens
-
-### ✅ Beta 0.9.0 - Native Forms
-
-- ✅ `<Form>` component — a native `ModalFormData`-backed form with an atomic single-submit lifecycle (`onSubmit`/`onCancel`)
-- ✅ Form field primitives in `@bedrock-core/ui`: `Form.Toggle`, `Form.Slider`, `Form.Dropdown`, `Form.InlineSelect`, `Form.Input`, `Form.Option`
-- ✅ `Form.Button` — in-flow submit / exit action buttons, positioned anywhere in the form
-- ✅ Ore-Styled form fields in `@bedrock-core/ore-styled`: `Form.Toggle`, `Form.Checkbox`, `Form.Radio`, `Form.ToggleButton`, `Form.Slider`, `Form.Dropdown`, `Form.Input`, `Form.Button`
-
-### ✅ Beta 0.9.2 - Performance Overhaul
-
-- ✅ Engine-side JSON UI cost cut dramatically (in-game verified): one merged `label_cell` decode per cell instead of a 5-variant fan-out, `binding_condition: once/visible` across every screen-constant decode chain, and a region gate hoisted into the routers
-- ✅ Serializer cell elision — background-less `<Panel>`s emit nothing; `Panel(background)` + single `<Text>` pairs fold into one cell
-- ✅ `<Image>` routed through the native `header` factory slot (engine-level type routing on ActionForms)
-- ✅ ⚠️ `<Scroll>` cap lowered from 4 to **2** per render (`MAX_POOLED_SCROLLS`) — every mounted pool slot re-instantiates the full collection, so the pool stays as small as real layouts need; see `scroll_pool.json` for how to grow it back
-
-### 🚧 Beta 0.X.0 - More core components (Planned)
+### 🚧 More core components (Planned)
 
 - Entity render(?) (Render items using entities holding the current item? Render ItemStack entity?)
 - Structure render
 
-
-### 👀 Beta 0.X.0 - [REDACTED] (Planned)
+### 👀 [REDACTED] (Planned)
 
 - ?
 - ?
@@ -125,3 +102,7 @@ For technical documentation and implementation details, see:
 Common web behaviour is one web has a single or multiple theme but all controlled by the same team/person.
 
 Here in Minecraft we may have multiple addons each with their own UI, styling...
+
+## 📄 License
+
+MIT

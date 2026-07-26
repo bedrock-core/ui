@@ -1,48 +1,41 @@
 name: Publish Release
 
+# Manual, no-input release. Author changesets during development (`yarn changeset`);
+# when you're ready, run this workflow on the branch you want to release from.
+# It versions + publishes exactly the packages that changed, tags each one, and —
+# when the @bedrock-core/ui meta package bumps — attaches the demo .mcpack.
 on:
   workflow_dispatch:
-    inputs:
-      level:
-        description: 'Semver level to bump (major, minor, patch)'
-        required: true
-        type: choice
-        options:
-          - patch
-          - minor
-          - major
-      notes:
-        description: 'Release notes (optional)'
-        required: false
-        type: string
 
 permissions:
-  id-token: write
   contents: write
-  packages: read
 
 jobs:
   publish-release:
-    name: Build & Publish to npm
+    name: Version, publish & tag changed packages
     runs-on: ubuntu-latest
     env:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Get latest tag
-        id: get-latest-tag
-        uses: actions-ecosystem/action-get-latest-tag@v1
-
-      - name: Bump semver
-        id: bump-semver
-        uses: actions-ecosystem/action-bump-semver@v1
-        with:
-          current_version: ${{ steps.get-latest-tag.outputs.tag }}
-          level: ${{ inputs.level }}
+      # ── PREREQUISITE: @bedrock-core/server-runtime ────────────────────────────
+      # `guides` + `config` depend on @bedrock-core/server-runtime, resolved
+      # locally via `resolutions` → portal:../server-public. That package is NOT
+      # yet on npm and the sibling repo is absent in CI, so `yarn install` below
+      # FAILS until one of these is done:
+      #   (1) Publish @bedrock-core/server-runtime (+ sync) to npm and drop the
+      #       two portal: entries from the root package.json "resolutions".
+      #   (2) Check out server-public alongside this repo. The portal is
+      #       `../server-public` (a sibling ABOVE the workspace), so both repos
+      #       must share a parent: change the checkout above to `path: ui`, add a
+      #       second `actions/checkout` with `path: server-public`, and set
+      #       `working-directory: ui` on every step below.
+      # This workflow cannot go green until the blocker is resolved.
 
       - name: Enable Corepack
         run: corepack enable
@@ -58,19 +51,81 @@ jobs:
       - name: Install deps
         run: yarn install --immutable
 
-      - name: Bump version of all packages
+      - name: Detect pending changesets
+        id: detect
         run: |
-          VER=${{ steps.bump-semver.outputs.new_version }}
-          npm version $VER --no-git-tag-version
-          npm version $VER --no-git-tag-version --prefix packages/ui-runtime
-          npm version $VER --no-git-tag-version --prefix packages/flexbox
-          npm version $VER --no-git-tag-version --prefix packages/navigation
-          npm version $VER --no-git-tag-version --prefix packages/ore-styled
-          npm version $VER --no-git-tag-version --prefix packages/cli
-          # Keep the CLI starter template's @bedrock-core/ui dependency in sync
-          npm pkg set dependencies["@bedrock-core/ui"]="^$VER" --prefix packages/cli/templates/ore-styled
+          shopt -s nullglob
+          pending=()
+          for f in .changeset/*.md; do
+            [[ "$(basename "$f")" == "README.md" ]] && continue
+            pending+=("$f")
+          done
+          if [[ ${#pending[@]} -eq 0 ]]; then
+            echo "No pending changesets — nothing to release."
+            echo "has=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Found ${#pending[@]} pending changeset(s)."
+            echo "has=true" >> "$GITHUB_OUTPUT"
+          fi
 
+      - name: Capture current meta version
+        if: steps.detect.outputs.has == 'true'
+        id: prev
+        run: echo "ui=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Version packages
+        if: steps.detect.outputs.has == 'true'
+        run: yarn version-packages
+
+      - name: Refresh lockfile
+        if: steps.detect.outputs.has == 'true'
+        run: yarn install --mode update-lockfile
+
+      - name: Lint
+        if: steps.detect.outputs.has == 'true'
+        run: yarn lint
+
+      - name: Build libraries
+        if: steps.detect.outputs.has == 'true'
+        run: yarn build:libs
+
+      - name: Commit version bumps
+        if: steps.detect.outputs.has == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore(release): version packages"
+
+      - name: Publish sub-packages
+        if: steps.detect.outputs.has == 'true'
+        run: yarn changeset publish
+
+      - name: Publish & tag meta package
+        if: steps.detect.outputs.has == 'true'
+        id: meta
+        run: |
+          NEXT=$(node -p "require('./package.json').version")
+          echo "ui=$NEXT" >> "$GITHUB_OUTPUT"
+          if [[ "$NEXT" != "${{ steps.prev.outputs.ui }}" ]]; then
+            echo "Meta bumped ${{ steps.prev.outputs.ui }} → $NEXT — publishing."
+            yarn workspace @bedrock-core/ui npm publish --tolerate-republish
+            git tag "@bedrock-core/ui@$NEXT"
+            echo "bumped=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Meta unchanged ($NEXT) — not publishing."
+            echo "bumped=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Push commit & tags
+        if: steps.detect.outputs.has == 'true'
+        run: |
+          git push
+          git push --tags
+
+      # ── .mcpack demo — only when the @bedrock-core/ui meta package was released ──
       - name: Set up Regolith
+        if: steps.meta.outputs.bumped == 'true'
         uses: bedrock-core/setup-regolith@1.0.1
         with:
           regolith-version: '1.8.0'
@@ -78,105 +133,26 @@ jobs:
             github.com/bedrock-core/regolith-filters
 
       - name: Install Regolith filters
+        if: steps.meta.outputs.bumped == 'true'
         run: yarn regolith-install
 
-      - name: Lint
-        run: yarn lint
-
-      - name: Build dist
-        run: yarn build
+      - name: Build resource pack
+        if: steps.meta.outputs.bumped == 'true'
+        run: yarn workspace @bedrock-core/ui-resource-pack build
 
       - name: Package Resource Pack (.mcpack)
+        if: steps.meta.outputs.bumped == 'true'
         env:
-          TAG: ${{ steps.bump-semver.outputs.new_version }}
+          TAG: ${{ steps.meta.outputs.ui }}
         working-directory: packages/resource-pack/build/@bedrock-core_ui_rp
         run: zip -r "$GITHUB_WORKSPACE/core-ui-${TAG}.mcpack" .
 
-      # ── Publish in topological order ───────────────────────────────────────────
-
-      - name: Publish @bedrock-core/flexbox
-        working-directory: packages/flexbox
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public || npm view @bedrock-core/flexbox@${{ steps.bump-semver.outputs.new_version }} version
-
-      - name: Rewrite workspace deps → @bedrock-core/ui-runtime
-        run: npm pkg set dependencies["@bedrock-core/flexbox"]="^${{ steps.bump-semver.outputs.new_version }}" --prefix packages/ui-runtime
-
-      - name: Publish @bedrock-core/ui-runtime
-        working-directory: packages/ui-runtime
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public || npm view @bedrock-core/ui-runtime@${{ steps.bump-semver.outputs.new_version }} version
-
-      - name: Rewrite workspace deps → @bedrock-core/navigation
-        run: npm pkg set devDependencies["@bedrock-core/ui-runtime"]="^${{ steps.bump-semver.outputs.new_version }}" --prefix packages/navigation
-
-      - name: Publish @bedrock-core/navigation
-        working-directory: packages/navigation
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public || npm view @bedrock-core/navigation@${{ steps.bump-semver.outputs.new_version }} version
-
-      - name: Rewrite workspace deps → @bedrock-core/ore-styled
-        run: npm pkg set devDependencies["@bedrock-core/ui-runtime"]="^${{ steps.bump-semver.outputs.new_version }}" --prefix packages/ore-styled
-
-      - name: Publish @bedrock-core/ore-styled
-        working-directory: packages/ore-styled
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public || npm view @bedrock-core/ore-styled@${{ steps.bump-semver.outputs.new_version }} version
-
-      - name: Publish @bedrock-core/cli
-        working-directory: packages/cli
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public || npm view @bedrock-core/cli@${{ steps.bump-semver.outputs.new_version }} version
-
-      - name: Rewrite workspace deps → @bedrock-core/ui (meta)
-        run: |
-          VER=${{ steps.bump-semver.outputs.new_version }}
-          npm pkg set dependencies["@bedrock-core/ui-runtime"]="^$VER"
-          npm pkg set dependencies["@bedrock-core/navigation"]="^$VER"
-          npm pkg set dependencies["@bedrock-core/ore-styled"]="^$VER"
-          npm pkg set dependencies["@bedrock-core/flexbox"]="^$VER"
-
-      - name: Publish @bedrock-core/ui
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public || npm view @bedrock-core/ui@${{ steps.bump-semver.outputs.new_version }} version
-
-      # ── Commit, tag, release ───────────────────────────────────────────────────
-
-      - name: Commit version bumps
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add \
-            package.json \
-            packages/ui-runtime/package.json \
-            packages/flexbox/package.json \
-            packages/navigation/package.json \
-            packages/ore-styled/package.json \
-            packages/cli/package.json \
-            packages/cli/templates/ore-styled/package.json
-          git commit -m "bump-version: bump version to '${{ steps.bump-semver.outputs.new_version }}'"
-          git push
-
-      - name: Push tag
-        uses: actions-ecosystem/action-push-tag@v1
-        with:
-          tag: ${{ steps.bump-semver.outputs.new_version }}
-          message: 'Release ${{ steps.bump-semver.outputs.new_version }}'
-
-      - name: Create GitHub Release
+      - name: Create @bedrock-core/ui GitHub Release
+        if: steps.meta.outputs.bumped == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.bump-semver.outputs.new_version }}
-          name: ${{ steps.bump-semver.outputs.new_version }}
-          body: ${{ inputs.notes || format('Automated release {0}', steps.bump-semver.outputs.new_version) }}
+          tag_name: '@bedrock-core/ui@${{ steps.meta.outputs.ui }}'
+          name: '@bedrock-core/ui@${{ steps.meta.outputs.ui }}'
           generate_release_notes: true
           files: |
-            core-ui-${{ steps.bump-semver.outputs.new_version }}.mcpack
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            core-ui-${{ steps.meta.outputs.ui }}.mcpack

@@ -2,12 +2,10 @@
 import { TranslationKeysContext, useRef, type JSX } from '@bedrock-core/ui-runtime';
 import { createStackNavigator, NavigationContainer } from '@bedrock-core/navigation';
 import type { Runtime } from '@bedrock-core/server-runtime';
-import { createGuideScreens } from '@bedrock-core/guides';
 import type { Player } from '@minecraft/server';
 import type { OpenTarget } from './commands';
 import { CoreContext } from './CoreContext';
 import { PlayerContext } from './PlayerContext';
-import { createConfigUiGuideSource } from './guideSource';
 import { buildInitialState } from './initialState';
 import type { AppRoutes } from './routes';
 import { List } from './screens/List';
@@ -15,6 +13,7 @@ import { ConfigScope as ConfigScopeScreen } from './screens/ConfigScope';
 import { EntityList } from './screens/EntityList';
 import { Config } from './screens/Config';
 import { ConfigList } from './screens/ConfigList';
+import { Guide } from './screens/Guide';
 
 export interface AppProps {
   core: Runtime;
@@ -40,7 +39,7 @@ export function App({ core, player, target }: AppProps): JSX.Element {
         EntityList,
         Config,
         ConfigList,
-        ...createGuideScreens<AppRoutes>(createConfigUiGuideSource(core), { title: '§0Guide' }),
+        Guide,
       },
     });
     stackRef.current = Stack;

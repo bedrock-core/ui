@@ -1,5 +1,5 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Form, theme } from '@bedrock-core/ore-styled';
+import { Card, Divider, Form, theme } from '@bedrock-core/ore-styled';
 import { Background, Image, Panel, Text, usePlayer, type FormValues, type JSX } from '@bedrock-core/ui';
 
 /**
@@ -8,6 +8,11 @@ import { Background, Image, Panel, Text, usePlayer, type FormValues, type JSX } 
  * track/thumb, dropdown closed box + popup, action buttons) comes from the ore
  * theme, and every field carries a composed label (label-free primitives — the
  * captions live in this layer).
+ *
+ * Also doubles as a style gallery: sections alternate between `Card` variants,
+ * a raw `background` texture on a plain `Panel`, and an untouched section, with
+ * horizontal/vertical `Divider`s and a themed `Image` woven in — proof that
+ * every surface here is independently reskinnable, not just the form fields.
  *
  * No BackBar: a modal can't contain buttons; submit/cancel both leave the screen.
  *
@@ -56,8 +61,9 @@ export function OreStyledForm({ back }: { back: () => void }): JSX.Element {
       <Background texture={'textures/ui/dialog_background_hollow_4_thin'} />
 
       {/* --- new controls: checkbox (boolean toggle skin), radio group + toggle-button
-          group (single-select over the native dropdown slot, return selected index). --- */}
-      <Panel flexDirection={'column'} gap={sm} padding={sm}>
+          group (single-select over the native dropdown slot, return selected index).
+          Wrapped in a `dark` Card to show the card variants work as section chrome. --- */}
+      <Card variant={'dark'}>
         <Text>{'§e§lNew controls'}</Text>
 
         {/* Checkboxes: box-left / caption-right, boolean value. */}
@@ -83,17 +89,37 @@ export function OreStyledForm({ back }: { back: () => void }): JSX.Element {
             flex={1}
           />
         </Panel>
-      </Panel>
-      <Panel flexDirection={'column'} gap={2} padding={sm}>
-        <Text font={'minecraftTen'} scale={1.5} shadow={true}>{'Ore-Styled Form'}</Text>
-        <Text>{'§7Same modal as the unstyled twin, dressed by the ore theme.'}</Text>
-        {/* shadow prop A/B: the first title has shadow, this pair proves the toggle. */}
-        <Panel flexDirection={'row'} gap={sm}>
-          <Text shadow={true}>{'§fshadow on'}</Text>
-          <Text shadow={false}>{'§fshadow off'}</Text>
+      </Card>
+
+      <Divider />
+
+      {/* Header, styled with a raw `background` texture straight off the ore theme
+          tokens instead of the `Card` component — proves a plain Panel can carry the
+          exact same surfaces. A themed Image + a vertical Divider ride along too. */}
+      <Panel
+        flexDirection={'row'}
+        gap={sm}
+        padding={sm}
+        alignItems={'center'}
+        background={theme.components.card.variants.light.textures.background}
+      >
+        <Image width={24} height={24} texture={'textures/blocks/diamond_ore'} />
+        <Panel flexDirection={'column'} gap={2} flex={1}>
+          <Text font={'minecraftTen'} scale={1.5} shadow={true}>{'Ore-Styled Form'}</Text>
+          <Text>{'§7Same modal as the unstyled twin, dressed by the ore theme.'}</Text>
+          {/* shadow prop A/B: the first title has shadow, this pair proves the toggle.
+              Also doubles as the vertical-Divider example, laid out beside it. */}
+          <Panel flexDirection={'row'} gap={sm} alignItems={'center'} height={16}>
+            <Text shadow={true}>{'§fshadow on'}</Text>
+            <Divider orientation={'vertical'} variant={'light'} />
+            <Text shadow={false}>{'§fshadow off'}</Text>
+          </Panel>
         </Panel>
       </Panel>
-      <Panel flexDirection={'column'} gap={sm} padding={sm}>
+
+      <Divider variant={'light'} />
+
+      <Card variant={'raised-light'}>
         <Text>{'§e§lChoices'}</Text>
         <Form.Dropdown
           label={'Mode'}
@@ -104,8 +130,8 @@ export function OreStyledForm({ back }: { back: () => void }): JSX.Element {
         <Form.Toggle label={'Music'} name={'music'} defaultValue={true} />
         <Form.Toggle label={'Show hints'} name={'hints'} defaultValue={false} />
         <Form.Toggle label={'Locked option'} name={'locked'} enabled={false} />
-      </Panel>
-      <Panel flexDirection={'column'} gap={sm} padding={sm}>
+      </Card>
+      <Card variant={'default'}>
         <Text>{'§e§lDetails'}</Text>
         <Form.Input label={'Nickname'} name={'nickname'} placeholder={'§7type here'} />
         <Form.Slider label={'Volume'} name={'volume'} min={0} max={10} defaultValue={5} />
@@ -119,8 +145,13 @@ export function OreStyledForm({ back }: { back: () => void }): JSX.Element {
           defaultValue={'Normal'}
           currentInsetX={48}
         />
-      </Panel>
-      {/* --- responsiveness test: multi-element rows + flex + decorative-beside-native --- */}
+      </Card>
+
+      <Divider variant={'dark'} />
+
+      {/* --- responsiveness test: multi-element rows + flex + decorative-beside-native.
+          Left deliberately unstyled — no Card, no background — as the plain control
+          against every reskinned section around it. --- */}
       <Panel flexDirection={'column'} gap={sm} padding={sm}>
         <Text>{'§e§lResponsiveness'}</Text>
 
@@ -145,9 +176,12 @@ export function OreStyledForm({ back }: { back: () => void }): JSX.Element {
         </Panel>
       </Panel>
 
+      <Divider />
+
       {/* --- control matrix: every ore control packed into multi-column rows to see how
-          the labeled variants behave side-by-side in-game. --- */}
-      <Panel flexDirection={'column'} gap={sm} padding={sm}>
+          the labeled variants behave side-by-side in-game. Wrapped in a `raised` Card,
+          the same variant used for standalone panels elsewhere in the theme. --- */}
+      <Card variant={'raised'}>
         <Text>{'§e§lControl matrix'}</Text>
 
         {/* Two unlabeled toggles in one row. */}
@@ -179,7 +213,9 @@ export function OreStyledForm({ back }: { back: () => void }): JSX.Element {
           <Form.Dropdown label={'Set 1'} name={'m_dd1'} options={['One', 'Two', 'Three']} defaultValue={'Two'} flex={1} />
           <Form.Dropdown label={'Set 2'} name={'m_dd2'} options={['X', 'Y', 'Z']} defaultValue={'Y'} flex={1} />
         </Panel>
-      </Panel>
+      </Card>
+
+      <Divider />
 
       <Panel flexDirection={'row'} gap={sm} padding={sm}>
         <Form.Button type={'submit'} label={'Save'} flex={2} />

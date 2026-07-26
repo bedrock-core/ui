@@ -19,13 +19,10 @@ function GlyphRows({ prefix, font, scale }: { prefix: string; font: TextFont; sc
   );
 }
 
-export function FontMetrics(): JSX.Element {
-  const font: TextFont = 'mojangles';
-
+function FontMetricsSection({ font, label }: { font: TextFont; label: string }): JSX.Element {
   return (
-    <Panel flexDirection={'column'} padding={theme.tokens.spacing.md} gap={theme.tokens.spacing.lg} background={theme.components.card.variants.default.textures.background}>
-
-      <Text>{`§e§l=== glyphs ===`}</Text>
+    <Fragment>
+      <Text>{`§e§l=== ${label}: glyphs ===`}</Text>
 
       <Text>{'§7scale=0.5'}</Text>
       <GlyphRows font={font} scale={0.5} prefix={''} />
@@ -45,10 +42,10 @@ export function FontMetrics(): JSX.Element {
       <GlyphRows font={font} scale={4} prefix={''} />
       <GlyphRows font={font} scale={4} prefix={'§l'} />
 
-      <Text>{`§e§l=== localizationKey ===`}</Text>
+      <Text>{`§e§l=== ${label}: localizationKey ===`}</Text>
 
       <Text>{'§7plain (no wrap)'}</Text>
-      <Text localizationKey={'test.longstring'} />
+      <Text font={font} localizationKey={'test.longstring'} />
 
       <Text>{'§7word-wrap'}</Text>
       <Text font={font} localizationKey={'test.longstring'} wordBreak={'break-word'} />
@@ -73,7 +70,15 @@ export function FontMetrics(): JSX.Element {
 
       <Text>{'§7scale=2 maxLines=2 ellipsis'}</Text>
       <Text font={font} scale={2} localizationKey={'test.multiline'} wordBreak={'break-word'} overflow={'ellipsis'} maxLines={2} />
+    </Fragment>
+  );
+}
 
+export function FontMetrics(): JSX.Element {
+  return (
+    <Panel flexDirection={'column'} padding={theme.tokens.spacing.md} gap={theme.tokens.spacing.lg} background={theme.components.card.variants.default.textures.background}>
+      <FontMetricsSection font={'mojangles'} label={'mojangles'} />
+      <FontMetricsSection font={'minecraftTen'} label={'minecraftTen'} />
     </Panel>
   );
 }

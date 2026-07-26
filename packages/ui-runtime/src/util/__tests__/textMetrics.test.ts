@@ -158,4 +158,32 @@ describe('ellipsizeText', () => {
     // 'AB' = 12px. '...' = 6px. total = 18. If maxWidth=18 exactly, AB fits without truncation.
     expect(ellipsizeText('AB', 18)).toBe('AB');
   });
+
+  it('does not truncate a scaled string against its own measured width', () => {
+    // Regression: the guide header title '§0Guide' (minecraftTen, scale 1.2) is a
+    // non-stretched leaf, so the flex fit-content cap sizes it to its own measured
+    // width and re-ellipsizes at that width. measureText rounds 27 * 1.2 = 32.4 down
+    // to 32; 32 / 1.2 = 26.667 < 27 dropped the last glyph → 'GUI...' in-game.
+    const width = measureText({ text: '§0Guide', font: 'minecraftTen', fontSize: 1.2 }).width;
+
+    expect(width).toBe(32);
+    expect(ellipsizeText('§0Guide', width, 'minecraftTen', 1.2)).toBe('§0Guide');
+  });
+
+  it('a string always fits its own measured width across fonts and scales', () => {
+    const cases: { text: string; font?: 'mojangles' | 'minecraftTen'; scale: number }[] = [
+      { text: 'Guide', font: 'minecraftTen', scale: 1.2 },
+      { text: 'Settings', font: 'minecraftTen', scale: 1.2 },
+      { text: 'Hello world', scale: 1.0 },
+      { text: 'ABCDEFG', font: 'minecraftTen', scale: 1.5 },
+      { text: 'Xy', scale: 1.3 },
+    ];
+
+    for (const { text, font, scale } of cases) {
+      const width = measureText({ text, font, fontSize: scale }).width;
+
+      expect(ellipsizeText(text, width, font, scale)).toBe(text);
+      expect(wrapText(text, width, font, scale)).toBe(text);
+    }
+  });
 });

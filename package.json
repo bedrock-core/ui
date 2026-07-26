@@ -74,11 +74,15 @@
   "scripts": {
     "regolith-install": "yarn workspaces foreach -i -A --topological --jobs=1 run regolith-install",
     "build": "yarn workspaces foreach -ptA run build",
-    "prepack": "yarn build",
+    "build:libs": "yarn workspaces foreach -A -pt --no-private --exclude '@bedrock-core/ui' run build",
+    "prepack": "yarn build:libs",
     "watch": "concurrently \"nodemon\"",
     "lint": "yarn workspaces foreach -ptA run lint",
     "test": "yarn workspaces foreach -ptA run test",
-    "coverage": "yarn workspaces foreach -ptA run coverage"
+    "coverage": "yarn workspaces foreach -ptA run coverage",
+    "changeset": "changeset",
+    "version-packages": "changeset version && node scripts/bump-meta.mjs && node scripts/sync-cli-template.mjs",
+    "release": "yarn build:libs && changeset publish"
   },
   "dependencies": {
     "@bedrock-core/config": "workspace:*",
@@ -89,6 +93,8 @@
     "@bedrock-core/ui-runtime": "workspace:*"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^0.7.0",
+    "@changesets/cli": "^2.31.0",
     "@eslint/css": "^1.2.0",
     "@eslint/js": "^10.0.1",
     "@eslint/json": "^1.2.0",

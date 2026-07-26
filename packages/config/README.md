@@ -31,7 +31,7 @@ imports the runtime it needs and renders with `@bedrock-core/ui-runtime`.
 | `ConfigScope` | pick world / dimension / player scope for an addon |
 | `EntityList` | pick a dimension or player to configure |
 | `Config` / `ConfigList` | the addon's config fields for the chosen scope |
-| `GuideHome` / `GuidePage` | the addon's guide (via `@bedrock-core/guides`) |
+| `Guide` | the addon's self-contained guide (via `@bedrock-core/guides` `createGuide`) |
 
 ## License
 

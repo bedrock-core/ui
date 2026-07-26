@@ -1,5 +1,4 @@
 import type { FunctionComponent } from '@bedrock-core/ui-runtime';
-import type { PageId } from '@bedrock-core/server-runtime';
 
 /**
  * The guide IR (the manifest shape the `guides` Regolith filter emits) is owned by the server
@@ -17,15 +16,6 @@ export type {
   GuidePageData,
   GuideManifest,
 } from '@bedrock-core/server-runtime';
-
-/**
- * Route map contributed by {@link createGuideScreens}. Merge into the host
- * app's routes: `type AppRoutes = { ... } & GuideRoutes`.
- */
-export type GuideRoutes = {
-  GuideHome: { addonId?: string } | undefined;
-  GuidePage: { pageId: PageId; addonId?: string };
-};
 
 /**
  * Component registry for MDX `cmp` blocks (`<ItemRenderer … />` in a guide).

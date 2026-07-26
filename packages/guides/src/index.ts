@@ -1,25 +1,4 @@
-export { createGuideScreens } from './createGuideScreens';
+export { createGuide } from './createGuide';
+export type { GuideOptions, GuideProps } from './createGuide';
 
-export { staticGuideSource } from './source';
-export type { GuideEntry, GuideSource } from './source';
-
-export { GuideBlockList } from './render/GuideBlockList';
-export type { GuideBlockListProps } from './render/GuideBlockList';
-
-export type { GuideScreenOptions } from './screens/GuideHome';
-
-export { defaultAdmonitionTitleKey } from './admonitions';
-
-export type {
-  AdmonitionKind,
-  GuideBlock,
-  GuideComponents,
-  GuideListItem,
-  GuideManifest,
-  GuidePageData,
-  GuideRoutes,
-  GuideRun,
-  GuideTreeNode,
-  LangKey,
-  PageId,
-} from './types';
+export type { GuideComponents, GuideManifest } from './types';
