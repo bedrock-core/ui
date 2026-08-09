@@ -1,7 +1,7 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, theme } from '@bedrock-core/ore-styled';
 import { Button, Text, type JSX } from '@bedrock-core/ui-runtime';
-import { createGuide, type GuideManifest, type GuideProps } from '@bedrock-core/guides';
+import { createGuide, isGuideManifest, type GuideManifest, type GuideProps } from '@bedrock-core/guides';
 import { useCore } from '../CoreContext';
 import type { AppScreen } from '../routes';
 
@@ -32,7 +32,12 @@ function guideFor(manifest: GuideManifest, addonId: string, title: string): (pro
 export function Guide({ navigation, route }: AppScreen<'Guide'>): JSX.Element {
   const core = useCore();
   const { addonId } = route.params;
-  const manifest = core.guides.of(addonId);
+  // The runtime replicates manifests without inspecting them, so what comes back is the
+  // framework's opaque envelope. Narrowing here is the point where the payload becomes a
+  // document — a peer publishing something malformed degrades to the empty state below
+  // rather than crashing this screen.
+  const stored = core.guides.of(addonId);
+  const manifest = isGuideManifest(stored) ? stored : undefined;
 
   if (!manifest) {
     return (

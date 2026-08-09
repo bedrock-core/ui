@@ -1,5 +1,5 @@
 import type { NavigationState } from '@bedrock-core/navigation';
-import type { OpenTarget } from './commands';
+import type { OpenTarget } from './openTarget';
 
 /**
  * Build the navigator's initial state from a command's {@link OpenTarget}, so a

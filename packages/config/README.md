@@ -19,7 +19,6 @@ imports the runtime it needs and renders with `@bedrock-core/ui-runtime`.
 ## API
 
 - `ui(core)` — mount the shared config UI on a runtime. Call once, after `core.register()`.
-  (`setupConfigUI` is a back-compat alias.)
 - `App({ core, player, target })` — the root screen component, exported for custom mounts; owns its
   `NavigationContainer` and stacks the list / config / guide screens.
 

@@ -42,7 +42,6 @@
 	"devDependencies": {
 		"@bedrock-core/navigation": "workspace:*",
 		"@bedrock-core/ore-styled": "workspace:*",
-		"@bedrock-core/server-runtime": "^0.1.0",
 		"@bedrock-core/ui-runtime": "workspace:*",
 		"typescript": "^6.0.3",
 		"vitest": "^4.1.5"
@@ -50,12 +49,6 @@
 	"peerDependencies": {
 		"@bedrock-core/navigation": "*",
 		"@bedrock-core/ore-styled": "*",
-		"@bedrock-core/server-runtime": "*",
 		"@bedrock-core/ui-runtime": "*"
-	},
-	"peerDependenciesMeta": {
-		"@bedrock-core/server-runtime": {
-			"optional": true
-		}
 	}
 }

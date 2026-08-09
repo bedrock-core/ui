@@ -1,34 +1,33 @@
 import { system, CustomCommandParamType, CustomCommandStatus, CommandPermissionLevel, Player } from '@minecraft/server';
-import type { ConfigScope } from './routes';
 
-/** Where a command wants the UI to open. */
-export type OpenTarget
-  = | { kind: 'list'; addonId?: string }
-    | { kind: 'guide'; addonId?: string }
-    | { kind: 'config'; addonId?: string; scope?: ConfigScope; scopeId?: string };
+/** The three commands this UI owns. Sent to the host verbatim so it decides what each means. */
+export type OpenCommand = 'core:list' | 'core:guide' | 'core:config';
 
-type OpenCallback = (player: Player, target: OpenTarget) => void;
-
-function resolveScope(scope: string | undefined): ConfigScope | undefined {
-  if (scope === 'server' || scope === 'dimension' || scope === 'player') {
-    return scope;
-  }
-
-  return undefined;
-}
+/**
+ * Receives a fired command completely uninterpreted: who ran it, which command, and the raw
+ * optional parameters in declaration order. Interpreting `args` is deliberately NOT done here
+ * — see `index.tsx` for why the realm that owns the commands stays this dumb.
+ */
+type OpenCallback = (player: Player, command: OpenCommand, args: (string | undefined)[]) => void;
 
 /**
  * Register the `core:list`, `core:guide`, and `core:config` commands — first realm wins.
  *
  * Every bedrock-core addon mounts this UI, but Bedrock's custom-command registry is
  * world-global and duplicate identifiers throw. The first pack to load registers the
- * commands and its realm serves the UI for EVERY addon (the UI reads registry, config,
- * translations, and guides over sync state, so any single realm can render it all).
- * Later realms catch the duplicate error on the FIRST registration and stand down
- * without attempting the other two, so hosting is all-or-nothing (no split ownership).
- * Which addon's copy serves is load-order dependent, so addons built against different
- * config versions may serve an older UI — acceptable, since the data contract flows
- * over sync.
+ * commands; later realms catch the duplicate error on the FIRST registration and stand down
+ * without attempting the other two, so ownership is all-or-nothing (no split ownership).
+ * There is no unregister API and registration only happens during the startup event, so
+ * whoever wins keeps the command names for the life of the world.
+ *
+ * Winning the commands does NOT mean serving the UI. `onOpen` hands the raw command and args
+ * to `index.tsx`, which forwards them to whichever realm currently wins the host election.
+ * Load order decides who *receives* a command; runtime version decides who *answers* it.
+ *
+ * This file is the one part that genuinely cannot be fixed by installing a newer addon: the
+ * command NAMES and their PARAMETER LISTS are frozen at whatever the winning realm declared.
+ * Adding a parameter in a later version therefore needs care — the host must keep working
+ * when an older realm forwards a shorter `args` array.
  */
 export function registerRuntimeCommands(onOpen: OpenCallback): void {
   system.beforeEvents.startup.subscribe((ev) => {
@@ -55,18 +54,18 @@ export function registerRuntimeCommands(onOpen: OpenCallback): void {
 
           const player = origin.sourceEntity;
 
-          system.run(() => onOpen(player, { kind: 'config', addonId, scope: resolveScope(scope), scopeId }));
+          system.run(() => onOpen(player, 'core:config', [addonId, scope, scopeId]));
 
           return { status: CustomCommandStatus.Success };
         },
       );
     } catch {
-      console.info('[config] core:config is already registered by another addon - this realm will not serve the config UI');
+      console.info('[config] core:config is already registered by another addon - this realm will not own the commands');
 
       return;
     }
 
-    // First registration succeeded, so this realm owns the UI: register the rest.
+    // First registration succeeded, so this realm owns the commands: register the rest.
     reg.registerCommand(
       {
         name: 'core:list',
@@ -83,7 +82,7 @@ export function registerRuntimeCommands(onOpen: OpenCallback): void {
 
         const player = origin.sourceEntity;
 
-        system.run(() => onOpen(player, { kind: 'list', addonId }));
+        system.run(() => onOpen(player, 'core:list', [addonId]));
 
         return { status: CustomCommandStatus.Success };
       },
@@ -105,7 +104,7 @@ export function registerRuntimeCommands(onOpen: OpenCallback): void {
 
         const player = origin.sourceEntity;
 
-        system.run(() => onOpen(player, { kind: 'guide', addonId }));
+        system.run(() => onOpen(player, 'core:guide', [addonId]));
 
         return { status: CustomCommandStatus.Success };
       },

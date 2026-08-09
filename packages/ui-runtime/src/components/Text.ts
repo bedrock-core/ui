@@ -78,8 +78,8 @@ export interface TextProps extends ControlProps {
    * all) measures as the literal key string — mirroring Bedrock, which renders an
    * unmatched key as-is. Plain-text values therefore render fine; only their wrap
    * metrics are approximate. To resolve another bedrock-core addon's keys, publish
-   * them via `core.translations.provide(...)` and pass `core.translations.all()`
-   * as the context value.
+   * them via `core.translations.provide(...)` and pass
+   * `core.translations.forPlayer(player)` as the context value.
    *
    * Takes priority over `children` when both are provided.
    */

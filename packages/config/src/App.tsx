@@ -3,7 +3,7 @@ import { TranslationKeysContext, useRef, type JSX } from '@bedrock-core/ui-runti
 import { createStackNavigator, NavigationContainer } from '@bedrock-core/navigation';
 import type { Runtime } from '@bedrock-core/server-runtime';
 import type { Player } from '@minecraft/server';
-import type { OpenTarget } from './commands';
+import type { OpenTarget } from './openTarget';
 import { CoreContext } from './CoreContext';
 import { PlayerContext } from './PlayerContext';
 import { buildInitialState } from './initialState';

@@ -54,10 +54,5 @@
 		"@bedrock-core/server-runtime": "*",
 		"@bedrock-core/ui-runtime": "*",
 		"@minecraft/server": "*"
-	},
-	"peerDependenciesMeta": {
-		"@bedrock-core/server-runtime": {
-			"optional": true
-		}
 	}
 }
