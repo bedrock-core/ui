@@ -4,7 +4,8 @@
 
 > ⚠️ Beta Status: Active development. Breaking changes may occur until 1.0.0. Pin exact versions for stability.
 
-Custom JSX-driven UI system for Minecraft Bedrock. Components serialize into compact strings decoded by a companion resource pack to render rich layouts beyond native `@minecraft/server-ui` limitations.
+Custom JSX-driven UI system for Minecraft Bedrock. 
+Components serialize into compact strings decoded by a companion resource pack to render rich layouts beyond native `@minecraft/server-ui` limitations.
 
 📘 Full documentation & guides: https://bedrock-core.drav.dev/
 
@@ -26,15 +27,14 @@ Custom JSX-driven UI system for Minecraft Bedrock. Components serialize into com
 
 - Base components: `Panel`, `Text`, `Image`, `Fragment`, `Button`
 - `Background` — a screen-level background texture
-- `<Scroll>` — up to **2** independent scroll regions per render (`MAX_POOLED_SCROLLS`, pool protocol v0007); every mounted pool slot re-instantiates the full collection, so the pool stays as small as real layouts need — see `scroll_pool.json` for how to grow it
-- `ItemRenderer` (⚠️ experimental) — render item icons inside layouts; needs a manual `ItemAuxContext.Provider`
+- `Scroll` — up to **2** independent scroll regions per render 
 - Modal-backed standalone primitives: `Input`, `Dropdown`, `Slider`
 
 ### Layout & Styling
 
 - Flexbox layout engine — flex, margins, paddings, spacing, alignment ([@bedrock-core/flexbox](./packages/flexbox/README.md))
 - Component theming system via [@bedrock-core/ore-styled](./packages/ore-styled/README.md), plus prebuilt Ore-UI styled components (`Button`, `Card`, `Toggle`, `Divider`, `Input`, `Dropdown`, `Slider`, `Checkbox`, `Radio`, `ToggleButton`)
-- Ore-Styled item components: `ItemSlot`, `ItemContainer`, `EquipmentSlots`
+
 
 ### Navigation
 
@@ -54,19 +54,6 @@ Custom JSX-driven UI system for Minecraft Bedrock. Components serialize into com
 - In-game guides authored in MDX ([@bedrock-core/guides](./packages/guides/README.md)) — the `guides` regolith filter compiles `packs/data/guides/<locale>/**.mdx` into a guide manifest plus `.lang` files, and `createGuide(manifest)` renders it as a self-contained guide with its own home ⇆ page navigation, prose localized per player language
 - Shared addon list + config + guide UI ([@bedrock-core/config](./packages/config/README.md)) — `ui(core)` mounts the `core:list` / `core:config` / `core:guide` commands, so one realm serves the config and guide screens for every registered addon
 
-## 🗺 Roadmap
-
-### 🚧 More core components (Planned)
-
-- Entity render(?) (Render items using entities holding the current item? Render ItemStack entity?)
-- Structure render
-
-### 👀 [REDACTED] (Planned)
-
-- ?
-- ?
-- ?
-
 ### 🚀 Future Considerations
 
 - Compound components (tabs, menus, dialogs)
@@ -75,6 +62,8 @@ Custom JSX-driven UI system for Minecraft Bedrock. Components serialize into com
 - Reactive data binding (if feasible)
 - Export feature for "non-form" JSON UI
 - Support for translations params (key:string, with: string[]) in SerializableString
+- Entity render
+- Structure render
 
 ## 🤝 Contributing
 

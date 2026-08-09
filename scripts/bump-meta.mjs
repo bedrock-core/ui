@@ -14,6 +14,10 @@
  *   else any patched → meta patch
  *   else            → no-op (nothing changed)
  *
+ * The result is then clamped to {@link MAX_BUMP}: individual packages reach 1.0.0
+ * on their own schedule, but the meta version is what people read as "is the
+ * framework stable?", so it only leaves 0.x deliberately.
+ *
  * The meta's `workspace:*` dependency ranges are left untouched; `yarn npm
  * publish` resolves them to concrete versions at pack time.
  */
@@ -32,6 +36,14 @@ const META_DEP_DIRS = [
 
 const RANK = { none: 0, patch: 1, minor: 2, major: 3 };
 const LEVEL = ['none', 'patch', 'minor', 'major'];
+
+/**
+ * Highest bump the meta may take. Set to `'minor'` while `@bedrock-core/ui` is in
+ * beta so a dependency reaching 1.0.0 (e.g. `flexbox`) doesn't drag the whole
+ * framework to 1.0.0 with it. Raise to `'major'` when the meta is ready to ship
+ * 1.0.0 — that release is a deliberate, one-off call, not a derived one.
+ */
+const MAX_BUMP = 'minor';
 
 const readVersion = (json) => JSON.parse(json).version;
 
@@ -66,7 +78,12 @@ if (maxRank === RANK.none) {
 	process.exit(0);
 }
 
-const level = LEVEL[maxRank];
+const cappedRank = Math.min(maxRank, RANK[MAX_BUMP]);
+if (cappedRank !== maxRank) {
+	console.log(`bump-meta: capping ${LEVEL[maxRank]} → ${LEVEL[cappedRank]} (MAX_BUMP).`);
+}
+
+const level = LEVEL[cappedRank];
 execSync(`npm version ${level} --no-git-tag-version`, { stdio: 'inherit' });
 const next = readVersion(readFileSync('package.json', 'utf8'));
 console.log(`bump-meta: @bedrock-core/ui bumped (${level}) → ${next}`);
