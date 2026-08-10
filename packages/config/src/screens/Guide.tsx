@@ -2,8 +2,8 @@
 import { Card, theme } from '@bedrock-core/ore-styled';
 import { Button, Text, type JSX } from '@bedrock-core/ui-runtime';
 import { createGuide, isGuideManifest, type GuideManifest, type GuideProps } from '@bedrock-core/guides';
-import { useCore } from '../CoreContext';
-import type { AppScreen } from '../routes';
+import { useCore } from '../context';
+import type { AppScreen } from '../navigation/routes';
 
 const { spacing } = theme.tokens;
 

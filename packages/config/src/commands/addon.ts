@@ -1,0 +1,321 @@
+/**
+ * Every command this UI registers, all under the addon's own namespace:
+ * `bt_gc_graves:config`, `:configat`, `:guide`, `:list`.
+ *
+ * ## Why there is no shared `core:*` surface
+ *
+ * Bedrock permits a pack exactly ONE command-enum namespace and forbids two packs from sharing
+ * one. A shared `core:` surface would therefore have to own the enum namespace of whichever
+ * realm registered it first, locking every other addon out of enums entirely — and that realm's
+ * command names, parameter lists and enum values would be frozen for the life of the world,
+ * unpatchable by installing anything newer.
+ *
+ * Per-addon namespaces dissolve all of it. Nothing is contended, nothing is elected, nothing is
+ * frozen: an addon owns its own names and updating the addon updates them on the next world
+ * load. The cost is one command set per installed addon rather than one per world, which is
+ * what `/{namespace}:` autocompletion is for.
+ *
+ * ## Shape
+ *
+ * ```
+ * :config                                    open the UI
+ * :config get <setting>                      your own settings
+ * :config set <setting> <value>
+ * :configat get <scope.setting> [target]     any scope
+ * :configat set <scope.setting> <value> [target]
+ * ```
+ *
+ * The scope rides in the KEY (`server.pricing.tax_rate`) rather than as its own argument, and
+ * that is what makes the whole thing work. A separate scope token would push the setting to
+ * position 3 or 4 depending on whether the scope takes a target — and a parameter list is flat
+ * and positional, with no branching, so a setting that moves cannot be an `Enum`. Prefixing
+ * pins it, and pinning it is what keeps every setting autocompleting.
+ *
+ * Arity is dispatched on the verb, which is read before anything else is interpreted: for `get`
+ * the third argument is the target, for `set` it is the value and the fourth is the target.
+ *
+ * ## Permissions
+ *
+ * Two commands rather than one, because one command means one enum and one permission level.
+ * `:config` is `Any` and its enum holds only the runner's own player-scope settings, so a normal
+ * player cannot autocomplete — or reach — anything else. `:configat` is `Admin`, which keeps it
+ * out of their command list entirely, and `withOperator` re-checks inside the callback (see
+ * `origin.ts` for why that is not redundant).
+ *
+ * `cheatsRequired` is `false` throughout. Opening a config screen or reading your own settings
+ * is not a cheat, and gating it on a world toggle would make the UI unreachable on exactly the
+ * survival worlds it is most useful on. Authority comes from the permission level instead.
+ */
+import { CommandPermissionLevel, CustomCommandParamType, system } from '@minecraft/server';
+import type {
+  CustomCommandOrigin,
+  CustomCommandRegistry,
+  CustomCommandResult,
+  Player,
+} from '@minecraft/server';
+import type { Runtime } from '@bedrock-core/server-runtime';
+import { CONFIG_SCOPES, type FlatSchemaLike } from '../types';
+import { buildNestedPatch } from '../config/nested';
+import type { OpenCommand } from '../navigation/openTarget';
+import { failure, success, withOperator, withPlayer } from './origin';
+import { editableKeys, parseValue, splitScopedKey, type ScopedSchemas } from './parse';
+import { describe, read, resolveTarget, write } from './targets';
+
+/** Hands a fired command to whoever should answer it: `(player, what, args)`, uninterpreted. */
+export type OpenCallback = (player: Player, command: OpenCommand, args: (string | undefined)[]) => void;
+
+/** The two things a config command can do. Registered as an enum so both verbs autocomplete. */
+const VERBS = ['get', 'set'] as const;
+
+/**
+ * Register this addon's commands. Called by `ui(core)`.
+ *
+ * `onOpen` receives the request completely uninterpreted — who ran it, which kind, and the raw
+ * arguments — because interpreting it is the elected host's job, not this realm's. The host
+ * runs the newest installed code, so what an argument means stays patchable in the field.
+ *
+ * Enums are registered before the commands that reference them, and each group independently:
+ * a registration cannot be undone, so a rejected enum has to leave its commands unregistered
+ * rather than strand a command whose parameter names an enum that is not there.
+ */
+export function registerAddonCommands(core: Runtime, onOpen: OpenCallback): void {
+  system.beforeEvents.startup.subscribe((ev) => {
+    registerAll(ev.customCommandRegistry, core, core.id, onOpen);
+  });
+}
+
+function registerAll(reg: CustomCommandRegistry, core: Runtime, ns: string, onOpen: OpenCallback): void {
+  attempt(ns, `${ns}:guide`, () => {
+    reg.registerCommand(
+      {
+        name: `${ns}:guide`,
+        description: `Open this addon's guide. Usage: ${ns}:guide`,
+        permissionLevel: CommandPermissionLevel.Any,
+        cheatsRequired: false,
+      },
+      origin => forward(origin, onOpen, 'guide', [ns]),
+    );
+  });
+
+  attempt(ns, `${ns}:list`, () => {
+    reg.registerCommand(
+      {
+        name: `${ns}:list`,
+        description: `Open the list of installed addons. Usage: ${ns}:list`,
+        permissionLevel: CommandPermissionLevel.Any,
+        cheatsRequired: false,
+      },
+      // The full list, with this addon selected — it is the one the player named by typing
+      // this command, so it is the one worth showing first.
+      origin => forward(origin, onOpen, 'list', [ns]),
+    );
+  });
+
+  const local = core.config.local;
+  const scoped: ScopedSchemas | undefined = local && {
+    server: local.server.schema,
+    dimension: local.dimension.schema,
+    player: local.player.schema,
+  };
+
+  const ownKeys = scoped ? editableKeys(scoped.player) : [];
+  const allKeys = scoped ? CONFIG_SCOPES.flatMap(s => editableKeys(scoped[s]).map(key => `${s}.${key}`)) : [];
+
+  // Shared by both commands, so it is registered once and only when something will use it.
+  const verbEnum = `${ns}:verb`;
+  const verbs = (ownKeys.length > 0 || allKeys.length > 0)
+    && attempt(ns, verbEnum, () => { reg.registerEnum(verbEnum, [...VERBS]); });
+
+  registerConfig(reg, core, ns, verbs ? verbEnum : undefined, scoped?.player, ownKeys, onOpen);
+
+  if (verbs && allKeys.length > 0 && scoped) {
+    attempt(ns, `${ns}:configat`, () => { registerConfigAt(reg, core, ns, verbEnum, scoped, allKeys); });
+  }
+}
+
+/**
+ * `:config` — opens the UI bare, or reads and writes the runner's own player scope.
+ *
+ * Falls back to a no-parameter command when the addon has no player-scope settings, or when the
+ * enums it would need did not register: opening the UI is the one thing this command must
+ * always be able to do.
+ */
+function registerConfig(
+  reg: CustomCommandRegistry,
+  core: Runtime,
+  ns: string,
+  verbEnum: string | undefined,
+  schema: FlatSchemaLike | undefined,
+  ownKeys: string[],
+  onOpen: OpenCallback,
+): void {
+  const keyEnum = `${ns}:setting`;
+  const editable = verbEnum !== undefined
+    && ownKeys.length > 0
+    && schema !== undefined
+    // Player-scope settings only, so a normal player cannot even autocomplete a server one.
+    && attempt(ns, keyEnum, () => { reg.registerEnum(keyEnum, ownKeys); });
+
+  attempt(ns, `${ns}:config`, () => {
+    reg.registerCommand(
+      {
+        name: `${ns}:config`,
+        description: editable
+          ? `This addon's config. Usage: ${ns}:config | ${ns}:config get <setting> | ${ns}:config set <setting> <value>`
+          : `Open this addon's config. Usage: ${ns}:config`,
+        permissionLevel: CommandPermissionLevel.Any,
+        cheatsRequired: false,
+        optionalParameters: editable
+          ? [
+              { name: verbEnum, type: CustomCommandParamType.Enum },
+              { name: keyEnum, type: CustomCommandParamType.Enum },
+              { name: 'value', type: CustomCommandParamType.String },
+            ]
+          : [],
+      },
+      (origin: CustomCommandOrigin, verb?: string, key?: string, value?: string) => {
+        // No verb at all is the plain "open it" form, whatever else the shape allows.
+        if (verb === undefined) { return forward(origin, onOpen, 'config', [ns]); }
+
+        return withPlayer(origin, player => runOwn(core, ns, schema ?? {}, player, verb, key, value));
+      },
+    );
+  });
+}
+
+/** Read or write one of the runner's own settings. */
+function runOwn(
+  core: Runtime,
+  ns: string,
+  schema: FlatSchemaLike,
+  player: Player,
+  verb: string,
+  key: string | undefined,
+  value: string | undefined,
+): CustomCommandResult {
+  if (key === undefined) {
+    return failure(`Which setting? Usage: ${ns}:config ${verb} <setting>${verb === 'set' ? ' <value>' : ''}`);
+  }
+
+  const target = { ok: true, scope: 'player', player } as const;
+
+  if (verb === 'get') { return success(`${key} = ${describe(read(core, target), key)}`); }
+
+  if (value === undefined) { return failure(`Which value? Usage: ${ns}:config set ${key} <value>`); }
+
+  const parsed = parseValue(schema[key], value);
+
+  if (!parsed.ok) { return failure(parsed.message); }
+
+  // Validation is pure and can answer the player now; the write reaches dynamic properties and
+  // cannot run inside the command callback's restricted-execution context.
+  system.run(() => { write(core, target, buildNestedPatch({ [key]: parsed.value })); });
+
+  return success(`${key} = ${String(parsed.value)}`);
+}
+
+/**
+ * `:configat` — any scope, any target. Operators and command blocks only.
+ *
+ * `CommandPermissionLevel.Admin` is what keeps this out of a normal player's autocomplete: the
+ * engine filters the command list by tier, so they never see a command they would be refused.
+ */
+function registerConfigAt(
+  reg: CustomCommandRegistry,
+  core: Runtime,
+  ns: string,
+  verbEnum: string,
+  scoped: ScopedSchemas,
+  allKeys: string[],
+): void {
+  const keyEnum = `${ns}:scopedsetting`;
+
+  // Scope-prefixed (`server.pricing.tax_rate`), which disambiguates a name two scopes share and
+  // removes the need for a scope argument that would push the setting off a fixed position.
+  reg.registerEnum(keyEnum, allKeys);
+
+  reg.registerCommand(
+    {
+      name: `${ns}:configat`,
+      description: `Any setting, any scope. Usage: ${ns}:configat get <scope.setting> [target] | ${ns}:configat set <scope.setting> <value> [target]`,
+      permissionLevel: CommandPermissionLevel.Admin,
+      cheatsRequired: false,
+      mandatoryParameters: [
+        { name: verbEnum, type: CustomCommandParamType.Enum },
+        { name: keyEnum, type: CustomCommandParamType.Enum },
+      ],
+      // What these mean depends on the verb: `get` takes only a target, `set` takes the value
+      // first. A flat list cannot say that, so the callback dispatches on the verb it read.
+      optionalParameters: [
+        { name: 'value', type: CustomCommandParamType.String },
+        { name: 'target', type: CustomCommandParamType.String },
+      ],
+    },
+    (origin, verb: string, key: string, a?: string, b?: string) => withOperator(origin, (runner) => {
+      const [scope, path] = splitScopedKey(key);
+
+      if (verb === 'get') {
+        const target = resolveTarget(scope, a, runner);
+
+        if (!target.ok) { return failure(target.message); }
+
+        return success(`${key} = ${describe(read(core, target), path)}`);
+      }
+
+      if (a === undefined) { return failure(`Which value? Usage: ${ns}:configat set ${key} <value> [target]`); }
+
+      const parsed = parseValue(scoped[scope][path], a);
+
+      if (!parsed.ok) { return failure(parsed.message); }
+
+      const target = resolveTarget(scope, b, runner);
+
+      if (!target.ok) { return failure(target.message); }
+
+      const patch = buildNestedPatch({ [path]: parsed.value });
+
+      system.run(() => { write(core, target, patch); });
+
+      return success(`${key} = ${String(parsed.value)}`);
+    }),
+  );
+}
+
+/** Identify the acting player and hand the request on, one tick later. */
+function forward(
+  origin: CustomCommandOrigin,
+  onOpen: OpenCallback,
+  command: OpenCommand,
+  args: (string | undefined)[],
+): CustomCommandResult {
+  return withPlayer(origin, (player) => {
+    system.run(() => onOpen(player, command, args));
+
+    return success();
+  });
+}
+
+/**
+ * Run one registration group, reporting rather than throwing. Returns whether it landed.
+ *
+ * Nothing here is contended — the namespace is this addon's alone — so a failure means the
+ * engine rejected the shape. The overwhelmingly likely cause is a name outside `ns`, and
+ * Bedrock's own error names only the namespace that won, never the one that should have been
+ * used, so that is spelled out here. Saying which group was lost matters too: the others still
+ * registered, and a silent gap reads as a bug in the UI.
+ */
+function attempt(ns: string, label: string, register: () => void): boolean {
+  try {
+    register();
+
+    return true;
+  } catch (error: unknown) {
+    console.warn(
+      `[config] '${label}' was not registered: ${String(error)}\n`
+      + `  Every command and command enum this addon registers must sit under its own namespace, '${ns}'`
+      + ' — Bedrock allows a pack exactly one. Read it from `core.id`.',
+    );
+
+    return false;
+  }
+}

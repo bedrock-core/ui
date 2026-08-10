@@ -8,19 +8,92 @@ registry, config schemas, guides, and translation keys replicate over sync.
 import { core } from '@bedrock-core/server-runtime';
 import { ui } from '@bedrock-core/config';
 
-core.register({ /* ...identity, translations, guide, config... */ });
-ui(core);             // registers core:list / core:guide / core:config (first-wins across realms)
+core.register({ creator: 'bt', pack: 'gc_graves', /* ...translations, guide, config... */ });
+ui(core);             // registers bt_gc_graves:config, :configat, :guide, :list
 ```
 
-`ui(core)` registers the three custom commands (first-wins across realms — see `commands.ts`); the
-winning realm renders the UI for every addon. No runtime-side seam is involved: this package simply
-imports the runtime it needs and renders with `@bedrock-core/ui-runtime`.
+`ui(core)` registers this addon's commands **under its own namespace** and serves the open RPC,
+so whichever realm runs the newest runtime renders the UI for every addon. This package depends
+on `@bedrock-core/server-runtime` for **types only** — no value import, so the two build and
+version independently.
+
+## Layout
+
+| Path | What lives there |
+| --- | --- |
+| `mount.tsx` | `ui()`, command dispatch, and the host-side open funnel — start here |
+| `commands/` | `addon.ts` (every command), `origin.ts`, `parse.ts`, `targets.ts` |
+| `navigation/` | a fired command → a route stack: `openTarget.ts` → `initialState.ts`, `routes.ts` |
+| `config/` | the config domain: `schema.ts` shaping, `values.ts` transport, `nested.ts` paths |
+| `permissions.ts` | who may reach which scope — the caller-side half of authorization |
+| `context.ts` | `useCore` / `usePlayer`, provided once by `App` |
+| `types.ts` | `CONFIG_SCOPES`, `ConfigScope`, `EntrySchema`, `FlatSchemaLike` |
+| `screens/` | the screens themselves |
+
+## Commands
+
+Every command lives under the addon's own namespace — `core.id`, e.g. `bt_gc_graves`. There is
+no shared `core:*` surface.
+
+| Command | Who | What |
+| --- | --- | --- |
+| `<ns>:config` | anyone | open this addon's config UI |
+| `<ns>:config get <setting>` | anyone | read one of your own settings |
+| `<ns>:config set <setting> <value>` | anyone | change one of your own settings |
+| `<ns>:configat get <scope.setting> [target]` | operator | read any setting |
+| `<ns>:configat set <scope.setting> <value> [target]` | operator | change any setting |
+| `<ns>:guide` | anyone | this addon's guide, with the list under it |
+| `<ns>:list` | anyone | the addon list, with this addon selected |
+
+The verb and both setting enums are generated from the config schema, so `get`/`set` and every
+setting autocomplete.
+
+**The scope rides in the setting** (`server.pricing.tax_rate`), not as its own argument. A
+parameter list is flat and positional with no branching, so a separate scope token would push the
+setting to position 3 or 4 depending on whether that scope takes a target — and a setting that
+moves cannot be an `Enum`. Prefixing pins it, which is what keeps autocomplete. Arity is
+dispatched on the verb: for `get` the next argument is the target, for `set` it is the value and
+the one after is the target.
+
+**Two commands, not one,** because one command means one enum and one permission level.
+`:config` is `Any` and its enum holds only your own player-scope settings; `:configat` is `Admin`,
+which is what keeps it out of a non-operator's autocomplete entirely. `cheatsRequired` is `false`
+throughout — opening a config screen is not a cheat, and authority comes from the permission
+level instead.
+
+`target` is a plain string (a player name or a dimension id). It cannot be a `PlayerSelector`:
+one parameter has to serve both scopes, and optional parameters can only be omitted from the
+right, so a second one could never be reached.
+
+**Why per-addon and not shared.** Bedrock permits a pack exactly one command-enum namespace and
+forbids two packs from sharing one. A shared `core:*` surface would hand that namespace to
+whichever realm registered first, lock every other addon out of enums, and freeze that realm's
+command names and parameter lists for the life of the world. Per-addon namespaces mean nothing
+is contended, nothing is elected, and updating an addon updates its commands.
+
+Turn them off with `ui(core, { commands: false })` — that leaves the addon with no commands at
+all, since there is no shared surface to fall back on.
+
+## Permissions
+
+Non-operators reach their **own player scope only**. This is enforced twice, on purpose:
+
+- **Caller side** — `clampTarget` narrows a deep link before the first render, the scope pickers
+  hide what a player may not open, and `:config get`/`set` reach only the runner's own scope.
+- **Owner side** — every read and write made on a player's behalf carries an `actorId` the owning
+  addon checks (`authorization.ts` in `@bedrock-core/server-runtime`), so a realm that skipped the
+  caller-side rule still cannot write.
+
+Operator status is read from `playerPermissionLevel`, never `commandPermissionLevel` — the latter is
+writable by any script in the world.
 
 ## API
 
-- `ui(core)` — mount the shared config UI on a runtime. Call once, after `core.register()`.
-- `App({ core, player, target })` — the root screen component, exported for custom mounts; owns its
-  `NavigationContainer` and stacks the list / config / guide screens.
+- `ui(core, options?)` — mount the shared config UI on a runtime. Call once, after `core.register()`.
+- `App({ core, player, target, values? })` — the root screen component, exported for custom mounts;
+  owns its `NavigationContainer` and stacks the list / config / guide screens.
+- `registerAddonCommands(core, onOpen)` — this addon's commands on their own, for a custom mount.
+- `isOperator(player)` / `allowedScopes(player)` / `clampTarget(target, player)` — the permission rule.
 
 ## Screens
 

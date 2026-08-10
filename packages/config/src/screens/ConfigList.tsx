@@ -1,9 +1,11 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Button, Card, Form, theme } from '@bedrock-core/ore-styled';
 import { Fragment, Panel, Text, type FormValues, type JSX } from '@bedrock-core/ui-runtime';
-import { useCore } from '../CoreContext';
-import { buildNestedPatch, filterScope, getScopedSchema, patchScope, resolveInitialValue } from '../configUtils';
-import type { AppScreen } from '../routes';
+import { useCore, usePlayer } from '../context';
+import { buildNestedPatch, resolveInitialValue } from '../config/nested';
+import { filterScope, getScopedSchema } from '../config/schema';
+import { patchScope } from '../config/values';
+import type { AppScreen } from '../navigation/routes';
 
 const { spacing, fontColor } = theme.tokens;
 
@@ -19,8 +21,9 @@ const ADD_NONE = '- none -';
  */
 export function ConfigList({ navigation, route }: AppScreen<'ConfigList'>): JSX.Element {
   const core = useCore();
+  const player = usePlayer();
   const { addonId, scope, entityId, fieldKey, breadcrumb, values: currentValues } = route.params;
-  const accessor = core.config.of(addonId)!;
+  const accessor = core.config.of(addonId, { actorId: player.id })!;
   const entry = filterScope(getScopedSchema(accessor), scope)[fieldKey];
 
   if (!entry) {

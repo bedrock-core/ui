@@ -1,9 +1,13 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Button as OreButton, Card, theme } from '@bedrock-core/ore-styled';
 import { Button, Image, Panel, Scroll, Text, useExit, type JSX } from '@bedrock-core/ui-runtime';
-import { useCore } from '../CoreContext';
-import { buildNestedPatch, filterScope, getRoster, getScopedSchema, getScopeValues, patchScope, type FlatSchemaLike } from '../configUtils';
-import type { AppScreen } from '../routes';
+import { useCore, usePlayer } from '../context';
+import { allowedScopes, isOperator } from '../permissions';
+import { filterScope, getScopedSchema, schemaDefaultsPatch } from '../config/schema';
+import { getRoster, patchScope } from '../config/values';
+import { openConfig } from '../navigation/openConfig';
+import type { AppScreen } from '../navigation/routes';
+import { NoConfig } from './NoConfig';
 
 const { spacing, fontColor } = theme.tokens;
 
@@ -16,15 +20,6 @@ const ICON_CLOSE_HOVER = 'textures/ui/ore-styled/button/close/background_hover';
 const ICON_CLOSE_PRESSED = 'textures/ui/ore-styled/button/close/background_pressed';
 const ICON_RESET = 'textures/ui/config/reset';
 
-/** Flat patch of every entry's code (schema) default. */
-function schemaDefaultsPatch(schema: FlatSchemaLike): Record<string, unknown> {
-  const flat: Record<string, unknown> = {};
-
-  for (const [key, entry] of Object.entries(schema)) { flat[key] = entry.default; }
-
-  return buildNestedPatch(flat);
-}
-
 /**
  * Select list for a 'dimension' or 'player' scope: one row per known entity
  * (known dimensions, or currently online players), each with its own edit
@@ -33,37 +28,24 @@ function schemaDefaultsPatch(schema: FlatSchemaLike): Record<string, unknown> {
  */
 export function EntityList({ navigation, route }: AppScreen<'EntityList'>): JSX.Element {
   const core = useCore();
+  const player = usePlayer();
   const exit = useExit();
   const { addonId, scope, breadcrumb } = route.params;
-  const accessor = core.config.of(addonId);
+  const accessor = core.config.of(addonId, { actorId: player.id });
 
-  if (!accessor) {
-    return (
-      <Card flexDirection={'column'} padding={12} gap={spacing.sm}>
-        <Text>{'No published config for this addon.'}</Text>
-        <Button onPress={(): void => navigation.goBack()}>{'Back'}</Button>
-      </Card>
-    );
-  }
+  if (!accessor) { return <NoConfig onBack={(): void => navigation.goBack()} />; }
 
   const configAccessor = accessor;
   const schema = filterScope(getScopedSchema(configAccessor), scope);
-  const roster = getRoster(scope);
+  // A non-operator has no business seeing a roster of other players or of dimensions they
+  // cannot edit. `ConfigScope` already routes them past this screen; this keeps the list
+  // honest for any other way of arriving here.
+  const roster = allowedScopes(player).includes(scope)
+    ? getRoster(scope).filter(entry => isOperator(player) || entry.id === player.id)
+    : [];
 
-  // Values are fetched over RPC BEFORE navigating, so the Config screen renders
-  // complete on first paint. Returning the promise keeps the press's interactive
-  // transaction open until navigation happens, so the form re-presents ONCE on the new
-  // screen (a fire-and-forget fetch would re-present the old screen first — "press twice").
-  // On failure we stay on this screen and log.
-  const navigateToEntity = async (entityId: string, name: string): Promise<void> => {
-    try {
-      const values = await getScopeValues(configAccessor, scope, entityId);
-
-      navigation.navigate('Config', { addonId, scope, entityId, breadcrumb: `${breadcrumb} > ${name}`, values });
-    } catch (e: unknown) {
-      console.warn(`[bc-config] fetching '${addonId}' values failed: ${String(e)}`);
-    }
-  };
+  const navigateToEntity = async (entityId: string, name: string): Promise<void> =>
+    openConfig(navigation, configAccessor, { addonId, scope, entityId, breadcrumb: `${breadcrumb} > ${name}` });
 
   const resetEntity = (entityId: string): void => {
     patchScope(configAccessor, scope, entityId, schemaDefaultsPatch(schema));

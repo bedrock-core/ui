@@ -1,9 +1,13 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Button as OreButton, Card, theme } from '@bedrock-core/ore-styled';
 import { Button, Image, Panel, Scroll, Text, useExit, type JSX } from '@bedrock-core/ui-runtime';
-import { useCore } from '../CoreContext';
-import { buildNestedPatch, filterScope, getScopedSchema, getScopeValues, patchScope, type FlatSchemaLike } from '../configUtils';
-import type { AppScreen } from '../routes';
+import { useCore, usePlayer } from '../context';
+import { allowedScopes, isOperator } from '../permissions';
+import { filterScope, getScopedSchema, schemaDefaultsPatch } from '../config/schema';
+import { patchScope } from '../config/values';
+import { openConfig } from '../navigation/openConfig';
+import type { AppScreen } from '../navigation/routes';
+import { NoConfig } from './NoConfig';
 
 const { spacing } = theme.tokens;
 
@@ -16,15 +20,6 @@ const ICON_CLOSE_HOVER = 'textures/ui/ore-styled/button/close/background_hover';
 const ICON_CLOSE_PRESSED = 'textures/ui/ore-styled/button/close/background_pressed';
 const ICON_RESET = 'textures/ui/config/reset';
 
-/** Flat patch of every entry's code (schema) default. */
-function schemaDefaultsPatch(schema: FlatSchemaLike): Record<string, unknown> {
-  const flat: Record<string, unknown> = {};
-
-  for (const [key, entry] of Object.entries(schema)) { flat[key] = entry.default; }
-
-  return buildNestedPatch(flat);
-}
-
 /**
  * Scope picker for one addon: three rows — server, dimension, player. Server
  * jumps straight into the addon's server-wide settings. Dimension and player
@@ -34,49 +29,40 @@ function schemaDefaultsPatch(schema: FlatSchemaLike): Record<string, unknown> {
  */
 export function ConfigScope({ navigation, route }: AppScreen<'ConfigScope'>): JSX.Element {
   const core = useCore();
+  const player = usePlayer();
   const exit = useExit();
   const { addonId } = route.params;
-  const accessor = core.config.of(addonId);
+  const accessor = core.config.of(addonId, { actorId: player.id });
 
-  if (!accessor) {
-    return (
-      <Card flexDirection={'column'} padding={12} gap={spacing.sm}>
-        <Text>{'No published config for this addon.'}</Text>
-        <Button onPress={(): void => navigation.goBack()}>{'Back'}</Button>
-      </Card>
-    );
-  }
+  if (!accessor) { return <NoConfig onBack={(): void => navigation.goBack()} />; }
 
   const configAccessor = accessor;
-  const addonName = core.registry.get(addonId)?.name ?? addonId;
+  const addonName = core.registry.get(addonId)?.packName ?? addonId;
   const schema = getScopedSchema(configAccessor);
 
-  // Values are fetched over RPC BEFORE navigating, so the Config screen renders
-  // complete on first paint. Returning the promise keeps the press's interactive
-  // transaction open until navigation happens, so the form re-presents ONCE on the new
-  // screen (a fire-and-forget fetch would re-present the old screen first — "press twice").
-  // On failure we stay on this screen and log.
-  const navigateToServer = async (): Promise<void> => {
-    try {
-      const values = await getScopeValues(configAccessor, 'server', undefined);
-
-      navigation.navigate('Config', { addonId, scope: 'server', entityId: undefined, breadcrumb: `${addonName} > Server`, values });
-    } catch (e: unknown) {
-      console.warn(`[bc-config] fetching '${addonId}' values failed: ${String(e)}`);
-    }
-  };
+  const navigateToServer = async (): Promise<void> =>
+    openConfig(navigation, configAccessor, { addonId, scope: 'server', breadcrumb: `${addonName} > Server` });
 
   const navigateToEntityList = (scope: 'dimension' | 'player', label: string): void => {
     navigation.navigate('EntityList', { addonId, scope, breadcrumb: `${addonName} > ${label}` });
   };
 
+  /** A non-operator has exactly one player to pick, so the roster screen is skipped for them. */
+  const navigateToOwnPlayer = async (): Promise<void> =>
+    openConfig(navigation, configAccessor, { addonId, scope: 'player', entityId: player.id, breadcrumb: `${addonName} > ${player.name}` });
+
   const resetServerToSchemaDefaults = (): void => {
     patchScope(configAccessor, 'server', undefined, schemaDefaultsPatch(filterScope(schema, 'server')));
   };
 
-  const hasServer = Object.keys(filterScope(schema, 'server')).length > 0;
-  const hasDimension = Object.keys(filterScope(schema, 'dimension')).length > 0;
-  const hasPlayer = Object.keys(filterScope(schema, 'player')).length > 0;
+  // Reachable at all (the addon declares the scope) AND permitted (this player may open it).
+  // `clampTarget` already keeps a deep link from landing here, but a non-operator can still
+  // walk List → addon and arrive, so the gate has to live on the rows too.
+  const scopes = allowedScopes(player);
+  const canPickAnyPlayer = isOperator(player);
+  const hasServer = Object.keys(filterScope(schema, 'server')).length > 0 && scopes.includes('server');
+  const hasDimension = Object.keys(filterScope(schema, 'dimension')).length > 0 && scopes.includes('dimension');
+  const hasPlayer = Object.keys(filterScope(schema, 'player')).length > 0 && scopes.includes('player');
 
   return (
     <Card flexDirection={'column'} padding={0} gap={0}>
@@ -103,7 +89,9 @@ export function ConfigScope({ navigation, route }: AppScreen<'ConfigScope'>): JS
           <ScopeRow
             label={'Player'}
             enabled={hasPlayer}
-            onPress={(): void => navigateToEntityList('player', 'Player')}
+            onPress={canPickAnyPlayer
+              ? (): void => navigateToEntityList('player', 'Player')
+              : navigateToOwnPlayer}
           />
         </Panel>
       </Scroll>

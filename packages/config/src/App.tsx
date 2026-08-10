@@ -3,11 +3,11 @@ import { TranslationKeysContext, useRef, type JSX } from '@bedrock-core/ui-runti
 import { createStackNavigator, NavigationContainer } from '@bedrock-core/navigation';
 import type { Runtime } from '@bedrock-core/server-runtime';
 import type { Player } from '@minecraft/server';
-import type { OpenTarget } from './openTarget';
-import { CoreContext } from './CoreContext';
-import { PlayerContext } from './PlayerContext';
-import { buildInitialState } from './initialState';
-import type { AppRoutes } from './routes';
+import type { OpenTarget } from './navigation/openTarget';
+import { CoreContext, PlayerContext } from './context';
+import { buildInitialState } from './navigation/initialState';
+import { isOperator } from './permissions';
+import type { AppRoutes } from './navigation/routes';
 import { List } from './screens/List';
 import { ConfigScope as ConfigScopeScreen } from './screens/ConfigScope';
 import { EntityList } from './screens/EntityList';
@@ -19,11 +19,17 @@ export interface AppProps {
   core: Runtime;
   player: Player;
   target: OpenTarget;
+
+  /**
+   * Effective values for the scope `target` deep-links into, fetched before mounting. Omit for
+   * targets that stop short of a scope; `Config` cannot fetch its own (see `mount.tsx`).
+   */
+  values?: Record<string, unknown>;
 }
 
 type AppStack = ReturnType<typeof createStackNavigator<AppRoutes>>;
 
-export function App({ core, player, target }: AppProps): JSX.Element {
+export function App({ core, player, target, values }: AppProps): JSX.Element {
   // The navigator is created once per mount — the guide source closes over
   // `core`, and recreating the navigator on re-render would discard screen
   // identity while navigation state lives in the container.
@@ -52,7 +58,7 @@ export function App({ core, player, target }: AppProps): JSX.Element {
             keys (core.translations), resolved for THIS player's locale — so cross-addon
             registry fields measure correctly. */}
         <TranslationKeysContext value={core.translations.forPlayer(player)}>
-          <NavigationContainer initialState={buildInitialState(target)}>
+          <NavigationContainer initialState={buildInitialState(target, values, isOperator(player))}>
             <Stack.Navigator />
           </NavigationContainer>
         </TranslationKeysContext>

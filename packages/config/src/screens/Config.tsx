@@ -1,18 +1,12 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Button, Card, Form, theme } from '@bedrock-core/ore-styled';
 import { Fragment, Panel, Text, type FormValues, type JSX } from '@bedrock-core/ui-runtime';
-import { useCore } from '../CoreContext';
-import {
-  buildNestedPatch,
-  filterScope,
-  getScopedSchema,
-  groupByTopLevel,
-  patchScope,
-  resolveInitialValue,
-  splitScalarsAndLists,
-  type EntrySchema,
-} from '../configUtils';
-import type { AppScreen } from '../routes';
+import { useCore, usePlayer } from '../context';
+import { buildNestedPatch, resolveInitialValue } from '../config/nested';
+import { filterScope, getScopedSchema, groupByTopLevel, splitScalarsAndLists } from '../config/schema';
+import { patchScope } from '../config/values';
+import type { EntrySchema } from '../types';
+import type { AppScreen } from '../navigation/routes';
 
 const { spacing, fontColor } = theme.tokens;
 
@@ -28,8 +22,11 @@ const NUMBER_INLINE_MAX_RANGE = 100;
  */
 export function Config({ navigation, route }: AppScreen<'Config'>): JSX.Element {
   const core = useCore();
+  const player = usePlayer();
   const { addonId, scope, entityId, breadcrumb, values: currentValues } = route.params;
-  const accessor = core.config.of(addonId)!;
+  // Every read and write from this screen is made on the viewing player's behalf, so the
+  // owning addon can refuse what they may not touch even if this screen were reached wrongly.
+  const accessor = core.config.of(addonId, { actorId: player.id })!;
   const { scalars, lists } = splitScalarsAndLists(filterScope(getScopedSchema(accessor), scope));
 
   if (Object.keys(scalars).length === 0) {

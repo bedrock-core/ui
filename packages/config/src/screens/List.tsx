@@ -1,9 +1,12 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Divider, Button as OreButton, theme } from '@bedrock-core/ore-styled';
-import { RUNTIME_VERSION, type Runtime } from '@bedrock-core/server-runtime';
+import type { Runtime } from '@bedrock-core/server-runtime';
+import type { Player } from '@minecraft/server';
 import { Button, Image, Panel, Scroll, Text, useExit, useState, type JSX } from '@bedrock-core/ui-runtime';
-import { useCore } from '../CoreContext';
-import type { AppScreen } from '../routes';
+import { useCore, usePlayer } from '../context';
+import { isOperator } from '../permissions';
+import { openConfig } from '../navigation/openConfig';
+import type { AppScreen } from '../navigation/routes';
 
 const { spacing } = theme.tokens;
 const optionTextures = theme.components.dropdown.textures;
@@ -23,7 +26,7 @@ const THUMBNAIL_RATIO = 16 / 6;
 /** The registry fields the list renders — `RegisteredAddon` satisfies it structurally. */
 interface DisplayAddon {
   id: string;
-  name: string;
+  packName: string;
   version: string;
   creator: string;
   creatorName?: string;
@@ -32,22 +35,37 @@ interface DisplayAddon {
   thumbnail?: string;
 }
 
-// Synthetic row for the framework itself, pinned at the bottom of the list. It is not
-// in the registry (nothing registers it); name/description are plain text — Text
-// measures unmatched keys literally, and the description must stay under the 80-byte
-// serialization cap since the literal travels as the localization key.
-const FRAMEWORK_ADDON: DisplayAddon = {
-  id: 'bedrock_core:runtime',
-  name: '@bedrock-core',
-  version: RUNTIME_VERSION,
-  creator: 'DrAv0011',
-  description: 'The framework that powers every addon above.',
-  icon: 'textures/ui/bedrock_core/icon',
-};
+/**
+ * Synthetic row for the framework itself, pinned at the bottom of the list. It is not in the
+ * registry (nothing registers it); name/description are plain text — Text measures unmatched
+ * keys literally, and the description must stay under the 80-byte serialization cap since the
+ * literal travels as the localization key.
+ *
+ * The version is read back off this realm's own registry entry rather than imported from
+ * `@bedrock-core/server-runtime`: the registry already stamps `runtimeVersion` on the self
+ * entry with exactly that constant, and taking it from there is what keeps this package's
+ * dependency on the runtime type-only.
+ */
+function frameworkAddon(runtimeVersion: string): DisplayAddon {
+  return {
+    id: 'bedrock-core',
+    packName: '@bedrock-core',
+    version: runtimeVersion,
+    creator: 'drav0011',
+    creatorName: 'DrAv0011',
+    description: 'The framework that powers every addon above.',
+    icon: 'textures/ui/bedrock_core/icon',
+  };
+}
 
 export function List({ navigation, route }: AppScreen<'List'>): JSX.Element {
   const core = useCore();
-  const addons: DisplayAddon[] = [...core.registry.all(), FRAMEWORK_ADDON];
+  const player = usePlayer();
+  const registered = core.registry.all();
+  const addons: DisplayAddon[] = [
+    ...registered,
+    frameworkAddon(registered.find(addon => addon.self)?.runtimeVersion ?? 'unknown'),
+  ];
   const initialSel = route.params?.selectedId && addons.some(a => a.id === route.params!.selectedId)
     ? route.params.selectedId
     : addons[0]?.id;
@@ -81,7 +99,7 @@ export function List({ navigation, route }: AppScreen<'List'>): JSX.Element {
                   <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.sm}>
                     <Image width={20} height={20} texture={addon.icon ?? ICON_MISSING} />
                     <Panel flexDirection={'column'}>
-                      <Text font={'mojangles'} scale={1} localizationKey={addon.name} />
+                      <Text font={'mojangles'} scale={1} localizationKey={addon.packName} />
                       <Text font={'mojangles'} scale={1}>{`§7${addon.version}`}</Text>
                     </Panel>
                   </Panel>
@@ -92,20 +110,48 @@ export function List({ navigation, route }: AppScreen<'List'>): JSX.Element {
         </Panel>
         <Divider orientation={'vertical'} marginBottom={1} />
         <Panel flexGrow={1}>
-          {selected ? <AddonDetails core={core} addon={selected} navigation={navigation} /> : null}
+          {selected ? <AddonDetails core={core} addon={selected} player={player} navigation={navigation} /> : null}
         </Panel>
       </Panel>
     </Card>
   );
 }
 
-function AddonDetails({ core, addon, navigation }: { core: Runtime; addon: DisplayAddon; navigation: AppScreen<'List'>['navigation'] }): JSX.Element {
-  const hasConfig = core.config.of(addon.id) !== undefined;
+function AddonDetails({ core, addon, player, navigation }: {
+  core: Runtime;
+  addon: DisplayAddon;
+  player: Player;
+  navigation: AppScreen<'List'>['navigation'];
+}): JSX.Element {
+  const accessor = core.config.of(addon.id, { actorId: player.id });
+  const hasConfig = accessor !== undefined;
   const hasGuide = core.guides.has(addon.id);
 
   function openGuide(): void {
     navigation.navigate('Guide', { addonId: addon.id });
   }
+
+  /**
+   * An operator picks a scope; anyone else has exactly one they may open, so the picker would
+   * be a screen with a single enabled row. Same rule `clampTarget` applies to a command, applied
+   * to the press — a player should not reach a different place depending on how they got here.
+   */
+  const openConfigFor = async (): Promise<void> => {
+    if (!accessor) { return; }
+
+    if (isOperator(player)) {
+      navigation.navigate('ConfigScope', { addonId: addon.id });
+
+      return;
+    }
+
+    await openConfig(navigation, accessor, {
+      addonId: addon.id,
+      scope: 'player',
+      entityId: player.id,
+      breadcrumb: `${addon.packName} > ${player.name}`,
+    });
+  };
 
   return (
     <Panel flexGrow={1}>
@@ -117,7 +163,7 @@ function AddonDetails({ core, addon, navigation }: { core: Runtime; addon: Displ
           <Image width={40} height={40} texture={addon.icon ?? ICON_MISSING} />
         </Panel>
         <Panel flexDirection={'column'}>
-          <Text font={'mojangles'} scale={2} shadow={true} localizationKey={addon.name} />
+          <Text font={'mojangles'} scale={2} shadow={true} localizationKey={addon.packName} />
           <Text font={'mojangles'} scale={1}>{`§7Version: ${addon.version}`}</Text>
         </Panel>
         <Panel flexDirection={'row'} gap={spacing.sm}>
@@ -126,7 +172,7 @@ function AddonDetails({ core, addon, navigation }: { core: Runtime; addon: Displ
             paddingTop={2}
             paddingLeft={4}
             enabled={hasConfig}
-            onPress={(): void => navigation.navigate('ConfigScope', { addonId: addon.id })}
+            onPress={openConfigFor}
           >
             <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.sm}>
               <Image width={12} height={12} texture={ICON_CONFIG} />

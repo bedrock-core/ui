@@ -1,5 +1,11 @@
+/**
+ * The screen stack's route map: every screen this UI can be on, and what it needs to render.
+ *
+ * Params are the whole contract between screens — there is no shared mutable store — which is
+ * why `values` is carried rather than fetched: see `Config` and `mount.tsx`.
+ */
 import type { ScreenProps } from '@bedrock-core/navigation';
-import type { ConfigScope, EntrySchema } from './configUtils';
+import type { ConfigScope } from '../types';
 
 export type AppRoutes = {
   List: { selectedId?: string } | undefined;
@@ -33,5 +39,3 @@ export type AppRoutes = {
 };
 
 export type AppScreen<K extends keyof AppRoutes> = ScreenProps<AppRoutes, K>;
-
-export type { EntrySchema, ConfigScope };
