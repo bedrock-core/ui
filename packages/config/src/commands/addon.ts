@@ -34,6 +34,18 @@
  * Arity is dispatched on the verb, which is read before anything else is interpreted: for `get`
  * the third argument is the target, for `set` it is the value and the fourth is the target.
  *
+ * ## Every description starts with the namespace
+ *
+ * Bedrock gives the first pack to register a name an unqualified alias for it — the first
+ * `x:guide` in the world also becomes plain `/guide`, and later packs are told to use their full
+ * name. There is no way to opt out (`CustomCommand` has no alias field) and no way to detect it
+ * (`CustomCommandOrigin` carries no command name), so `/guide` silently means one arbitrary
+ * addon's guide and nothing in the callback can tell.
+ *
+ * What can be fixed is the player not knowing which. The command list shows the description, so
+ * every one of these leads with the namespace: `/guide` reads as "bt_gc_economy - open this
+ * addon's in-game guide", and the arbitrariness stops being a surprise.
+ *
  * ## Permissions
  *
  * Two commands rather than one, because one command means one enum and one permission level.
@@ -89,7 +101,7 @@ function registerAll(reg: CustomCommandRegistry, core: Runtime, ns: string, onOp
     reg.registerCommand(
       {
         name: `${ns}:guide`,
-        description: `Open this addon's guide. Usage: ${ns}:guide`,
+        description: `${ns} - open this addon's in-game guide.`,
         permissionLevel: CommandPermissionLevel.Any,
         cheatsRequired: false,
       },
@@ -101,7 +113,7 @@ function registerAll(reg: CustomCommandRegistry, core: Runtime, ns: string, onOp
     reg.registerCommand(
       {
         name: `${ns}:list`,
-        description: `Open the list of installed addons. Usage: ${ns}:list`,
+        description: `${ns} - open the addon list, with this addon selected.`,
         permissionLevel: CommandPermissionLevel.Any,
         cheatsRequired: false,
       },
@@ -161,8 +173,8 @@ function registerConfig(
       {
         name: `${ns}:config`,
         description: editable
-          ? `This addon's config. Usage: ${ns}:config | ${ns}:config get <setting> | ${ns}:config set <setting> <value>`
-          : `Open this addon's config. Usage: ${ns}:config`,
+          ? `${ns} - open this addon's config, or: get <setting> | set <setting> <value>`
+          : `${ns} - open this addon's config.`,
         permissionLevel: CommandPermissionLevel.Any,
         cheatsRequired: false,
         optionalParameters: editable
@@ -237,7 +249,7 @@ function registerConfigAt(
   reg.registerCommand(
     {
       name: `${ns}:configat`,
-      description: `Any setting, any scope. Usage: ${ns}:configat get <scope.setting> [target] | ${ns}:configat set <scope.setting> <value> [target]`,
+      description: `${ns} - any setting, any scope: get <scope.setting> [target] | set <scope.setting> <value> [target]`,
       permissionLevel: CommandPermissionLevel.Admin,
       cheatsRequired: false,
       mandatoryParameters: [

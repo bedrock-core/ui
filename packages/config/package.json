@@ -1,6 +1,6 @@
 {
 	"name": "@bedrock-core/config",
-	"version": "0.9.1",
+	"version": "0.0.0",
 	"description": "The bedrock-core addon list + config + guide UI: one realm serves it for every registered addon",
 	"keywords": [
 		"minecraft",

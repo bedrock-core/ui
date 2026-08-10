@@ -6,6 +6,7 @@ import { Button, Image, Panel, Scroll, Text, useExit, useState, type JSX } from 
 import { useCore, usePlayer } from '../context';
 import { isOperator } from '../permissions';
 import { openConfig } from '../navigation/openConfig';
+import { FRAMEWORK_ADDON_ID } from '../frameworkGuide';
 import type { AppScreen } from '../navigation/routes';
 
 const { spacing } = theme.tokens;
@@ -48,7 +49,7 @@ interface DisplayAddon {
  */
 function frameworkAddon(runtimeVersion: string): DisplayAddon {
   return {
-    id: 'bedrock-core',
+    id: FRAMEWORK_ADDON_ID,
     packName: '@bedrock-core',
     version: runtimeVersion,
     creator: 'drav0011',
@@ -125,7 +126,8 @@ function AddonDetails({ core, addon, player, navigation }: {
 }): JSX.Element {
   const accessor = core.config.of(addon.id, { actorId: player.id });
   const hasConfig = accessor !== undefined;
-  const hasGuide = core.guides.has(addon.id);
+  // The framework's own guide is built in rather than replicated — see `frameworkGuide.ts`.
+  const hasGuide = addon.id === FRAMEWORK_ADDON_ID || core.guides.has(addon.id);
 
   function openGuide(): void {
     navigation.navigate('Guide', { addonId: addon.id });

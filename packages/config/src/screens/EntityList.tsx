@@ -7,7 +7,7 @@ import { filterScope, getScopedSchema, schemaDefaultsPatch } from '../config/sch
 import { getRoster, patchScope } from '../config/values';
 import { openConfig } from '../navigation/openConfig';
 import type { AppScreen } from '../navigation/routes';
-import { NoConfig } from './NoConfig';
+import { Missing } from './Missing';
 
 const { spacing, fontColor } = theme.tokens;
 
@@ -33,7 +33,7 @@ export function EntityList({ navigation, route }: AppScreen<'EntityList'>): JSX.
   const { addonId, scope, breadcrumb } = route.params;
   const accessor = core.config.of(addonId, { actorId: player.id });
 
-  if (!accessor) { return <NoConfig onBack={(): void => navigation.goBack()} />; }
+  if (!accessor) { return <Missing navigation={navigation} addonId={addonId} />; }
 
   const configAccessor = accessor;
   const schema = filterScope(getScopedSchema(configAccessor), scope);

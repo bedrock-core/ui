@@ -65,6 +65,14 @@ level instead.
 one parameter has to serve both scopes, and optional parameters can only be omitted from the
 right, so a second one could never be reached.
 
+**Unqualified aliases.** Bedrock gives the first pack to register a name an alias without the
+namespace — the first `x:guide` in a world also answers to plain `/guide`, and later packs are
+told to use their full name. There is no way to opt out (`CustomCommand` has no alias field) and
+no way to detect it (`CustomCommandOrigin` carries no command name), so `/guide` means one
+arbitrary addon's guide and the callback cannot tell. Every description therefore leads with the
+namespace, so the command list reads `bt_gc_economy - open this addon's in-game guide` and the
+player can see which addon they are about to reach.
+
 **Why per-addon and not shared.** Bedrock permits a pack exactly one command-enum namespace and
 forbids two packs from sharing one. A shared `core:*` surface would hand that namespace to
 whichever realm registered first, lock every other addon out of enums, and freeze that realm's
