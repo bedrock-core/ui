@@ -7,7 +7,7 @@
  * the actor every config request is authorized against, and a screen that silently rendered
  * without it would be making unrestricted requests.
  */
-import { createContext, useContext } from '@bedrock-core/ui-runtime';
+import { TranslationKeysContext, createContext, useContext } from '@bedrock-core/ui-runtime';
 import type { Player } from '@minecraft/server';
 import type { Runtime } from '@bedrock-core/server-runtime';
 
@@ -39,4 +39,16 @@ export function usePlayer(): Player {
   if (!player) { throw new Error('usePlayer must be called within the config UI <App> (PlayerContext missing)'); }
 
   return player;
+}
+
+/**
+ * Resolve a localization key to this player's language, the same way `Text` does internally.
+ *
+ * Needed wherever a key has to become a STRING rather than stay a key: a breadcrumb trail is
+ * one label made of several parts, and a native modal's heading is raw text with no key at all.
+ * Rendering the key in those places is what put `drav0011.shop.name` on screen. Unknown keys
+ * fall back to the key itself, matching `Text`.
+ */
+export function useLocalized(key: string): string {
+  return useContext(TranslationKeysContext)?.[key] ?? key;
 }

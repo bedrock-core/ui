@@ -17,7 +17,12 @@ export interface MenuRowProps extends ControlProps {
   subtitle?: TextSource;
   /** Trailing `>` affordance. Default `true` — set `false` for rows that select rather than navigate. */
   chevron?: boolean;
-  /** Indent level; each step adds one `md` of left padding, for nested index rows. */
+  /**
+   * Indent level for nested index rows. Each step insets the row's whole BOX, not its
+   * contents — a child row is visibly narrower than its section header, which is what makes
+   * the nesting readable. Padding alone left every row the same width and the hierarchy
+   * disappeared as soon as two levels sat next to each other.
+   */
   depth?: number;
   onPress?: () => unknown | Promise<unknown>;
 }
@@ -72,13 +77,16 @@ export function MenuRow({
       backgroundPressed={row.textures.backgroundPressed}
       backgroundLocked={row.textures.background}
       padding={row.padding}
-      width={'100%'}
+      // Cross-axis stretch rather than `width: '100%'` — an explicit full width plus the
+      // indent margin would overflow its container by exactly the indent.
+      alignSelf={'stretch'}
+      marginLeft={depth * theme.tokens.spacing.lg}
       justifyContent={'flex-start'}
       enabled={enabled}
       onPress={onPress}
       {...layout}
     >
-      <Panel flexDirection={'row'} alignItems={'center'} gap={row.gap} width={'100%'} paddingLeft={depth * theme.tokens.spacing.md}>
+      <Panel flexDirection={'row'} alignItems={'center'} gap={row.gap} width={'100%'}>
         {children}
       </Panel>
     </Button>

@@ -1,6 +1,8 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Card, Divider, Form, Header, theme } from '@bedrock-core/ore-styled';
+import { Card, Form, Header, theme } from '@bedrock-core/ore-styled';
 import { Fragment, Panel, Text, useExit, type FormValues, type JSX } from '@bedrock-core/ui-runtime';
+import { splitBreadcrumb } from './breadcrumbs';
+import { FormHeader } from './FormHeader';
 import { useCore, usePlayer } from '../context';
 import { buildNestedPatch, resolveInitialValue } from '../config/nested';
 import { filterScope, getScopedSchema, groupByTopLevel, splitScalarsAndLists } from '../config/schema';
@@ -34,7 +36,7 @@ export function Config({ navigation, route }: AppScreen<'Config'>): JSX.Element 
   if (Object.keys(scalars).length === 0) {
     return (
       <Card flexDirection={'column'} padding={0} gap={0}>
-        <Header title={{ text: breadcrumb }} onBack={(): void => navigation.goBack()} onClose={exit} />
+        <Header {...splitBreadcrumb(breadcrumb)} onBack={(): void => navigation.goBack()} onClose={exit} />
         <Panel flexGrow={1} justifyContent={'center'} alignItems={'center'} padding={spacing.lg}>
           <Text wordBreak={'break-word'}>{`${fontColor.muted}This scope only has list settings.`}</Text>
         </Panel>
@@ -59,44 +61,47 @@ export function Config({ navigation, route }: AppScreen<'Config'>): JSX.Element 
 
   return (
     <Form onSubmit={handleSubmit} onCancel={(): void => navigation.goBack()}>
-      <Panel flexDirection={'column'} gap={spacing.xs} padding={spacing.sm}>
-        <Text font={'minecraftTen'} scale={1.5} shadow={true} wordBreak={'break-word'}>{breadcrumb}</Text>
-        <Divider />
-      </Panel>
-      <Fragment>
-        {[...groups.entries()].map(([groupName, entries]) => (
-          <Panel flexDirection={'column'} gap={spacing.md} padding={spacing.sm}>
-            {groupName !== ''
-              ? <SectionHeading label={`${groupName.charAt(0).toUpperCase()}${groupName.slice(1)}`} />
-              : null}
-            <Fragment>
-              {entries.map(([subKey, entry]) => {
-                const fullKey = groupName ? `${groupName}.${subKey}` : subKey;
+      {/* One card for the whole modal, header and actions included — the same window frame the
+          navigable screens wear. Splitting the body and the buttons across two boxes left the
+          Save/Back row floating on the bare dialog background. */}
+      <Card variant={'raised'} flexDirection={'column'} gap={0} padding={0} paddingTop={1} paddingBottom={4}>
+        <FormHeader title={breadcrumb} />
+        <Panel flexDirection={'column'} gap={spacing.md} padding={spacing.sm}>
+          <Fragment>
+            {[...groups.entries()].map(([groupName, entries]) => (
+              <Panel flexDirection={'column'} gap={spacing.md}>
+                {groupName !== ''
+                  ? <SectionHeading label={`${groupName.charAt(0).toUpperCase()}${groupName.slice(1)}`} />
+                  : null}
+                <Fragment>
+                  {entries.map(([subKey, entry]) => {
+                    const fullKey = groupName ? `${groupName}.${subKey}` : subKey;
 
-                return (
-                  <Panel flexDirection={'column'} gap={spacing.xs}>
-                    {renderField(fullKey, entry, resolveInitialValue(fullKey, entry, currentValues))}
-                    {entry.description
-                      ? <Text wordBreak={'break-word'}>{`${fontColor.muted}${entry.description}`}</Text>
-                      : null}
-                  </Panel>
-                );
-              })}
-            </Fragment>
+                    return (
+                      <Panel flexDirection={'column'} gap={spacing.xs}>
+                        {renderField(fullKey, entry, resolveInitialValue(fullKey, entry, currentValues))}
+                        {entry.description
+                          ? <Text wordBreak={'break-word'}>{`${fontColor.muted}${entry.description}`}</Text>
+                          : null}
+                      </Panel>
+                    );
+                  })}
+                </Fragment>
+              </Panel>
+            ))}
+          </Fragment>
+          {Object.keys(lists).length > 0
+            ? <Text wordBreak={'break-word'}>{`${fontColor.muted}List settings are edited from the previous screen.`}</Text>
+            : null}
+          {/* `Back`, not `Cancel`: the modal's dismiss IS `navigation.goBack()`, and every other
+              screen in this stack calls that control back. There is no third control to add — a
+              modal form's only buttons are its submit and its dismiss. */}
+          <Panel flexDirection={'row'} gap={spacing.sm}>
+            <Form.Button type={'submit'} label={'Save'} flex={2} />
+            <Form.Button type={'exit'} label={'Back'} variant={'contrast'} flex={1} />
           </Panel>
-        ))}
-      </Fragment>
-      {Object.keys(lists).length > 0
-        ? (
-            <Panel padding={spacing.sm}>
-              <Text wordBreak={'break-word'}>{`${fontColor.muted}List settings are edited from the previous screen.`}</Text>
-            </Panel>
-          )
-        : null}
-      <Panel flexDirection={'row'} gap={spacing.sm} padding={spacing.sm}>
-        <Form.Button type={'submit'} label={'Save'} flex={2} />
-        <Form.Button type={'exit'} label={'Cancel'} variant={'contrast'} flex={1} />
-      </Panel>
+        </Panel>
+      </Card>
     </Form>
   );
 }

@@ -1,11 +1,12 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Card, Divider, Form, Header, theme } from '@bedrock-core/ore-styled';
+import { Card, Form, Header, theme } from '@bedrock-core/ore-styled';
 import { Fragment, Panel, Text, useExit, type FormValues, type JSX } from '@bedrock-core/ui-runtime';
 import { useCore, usePlayer } from '../context';
 import { buildNestedPatch, resolveInitialValue } from '../config/nested';
 import { filterScope, getScopedSchema } from '../config/schema';
 import { patchScope } from '../config/values';
 import type { AppScreen } from '../navigation/routes';
+import { FormHeader } from './FormHeader';
 import { SectionHeading } from './SectionHeading';
 
 const { spacing, fontColor } = theme.tokens;
@@ -63,40 +64,42 @@ export function ConfigList({ navigation, route }: AppScreen<'ConfigList'>): JSX.
 
   return (
     <Form onSubmit={handleSubmit} onCancel={(): void => navigation.goBack()}>
-      <Panel flexDirection={'column'} gap={spacing.xs} padding={spacing.sm}>
-        <Text font={'minecraftTen'} scale={1.5} shadow={true} wordBreak={'break-word'}>{breadcrumb}</Text>
-        <Divider />
-        {entry.description
-          ? <Text wordBreak={'break-word'}>{`${fontColor.muted}${entry.description}`}</Text>
-          : null}
-      </Panel>
-      <Panel flexDirection={'column'} gap={spacing.sm} padding={spacing.sm}>
-        <SectionHeading label={'Items'} />
-        {items.length === 0
-          ? <Text>{`${fontColor.muted}No items yet.`}</Text>
-          : (
-              <Panel flexDirection={'column'} gap={spacing.xs}>
-                <Text>{`${fontColor.muted}Uncheck an item to remove it:`}</Text>
-                <Fragment>
-                  {items.map((item, index) => (
-                    <Form.Checkbox label={item} name={`keep.${String(index)}`} defaultValue={true} />
-                  ))}
-                </Fragment>
-              </Panel>
-            )}
-      </Panel>
-      <Panel flexDirection={'column'} gap={spacing.sm} padding={spacing.sm}>
-        <SectionHeading label={'Add'} />
-        {canAdd
-          ? (addOptions
-              ? <Form.Dropdown label={'Add item'} name={'add'} options={[ADD_NONE, ...addOptions]} defaultValue={ADD_NONE} />
-              : <Form.Input label={'Add item'} name={'add'} placeholder={`${fontColor.muted}Enter ${entry.label.toLowerCase()} entry`} />)
-          : <Text>{`${fontColor.muted}Maximum of ${String(entry.maxItems)} items reached.`}</Text>}
-      </Panel>
-      <Panel flexDirection={'row'} gap={spacing.sm} padding={spacing.sm}>
-        <Form.Button type={'submit'} label={'Save'} flex={2} />
-        <Form.Button type={'exit'} label={'Cancel'} variant={'contrast'} flex={1} />
-      </Panel>
+      {/* One card for the whole modal, header and actions included — see `Config`. */}
+      <Card variant={'raised'} flexDirection={'column'} gap={0} padding={0}>
+        <FormHeader title={breadcrumb} />
+        <Panel flexDirection={'column'} gap={spacing.md} padding={spacing.sm}>
+          {entry.description
+            ? <Text wordBreak={'break-word'}>{`${fontColor.muted}${entry.description}`}</Text>
+            : null}
+          <Panel flexDirection={'column'} gap={spacing.sm}>
+            <SectionHeading label={'Items'} />
+            {items.length === 0
+              ? <Text>{`${fontColor.muted}No items yet.`}</Text>
+              : (
+                  <Panel flexDirection={'column'} gap={spacing.xs}>
+                    <Text>{`${fontColor.muted}Uncheck an item to remove it:`}</Text>
+                    <Fragment>
+                      {items.map((item, index) => (
+                        <Form.Checkbox label={item} name={`keep.${String(index)}`} defaultValue={true} />
+                      ))}
+                    </Fragment>
+                  </Panel>
+                )}
+          </Panel>
+          <Panel flexDirection={'column'} gap={spacing.sm}>
+            <SectionHeading label={'Add'} />
+            {canAdd
+              ? (addOptions
+                  ? <Form.Dropdown label={'Add item'} name={'add'} options={[ADD_NONE, ...addOptions]} defaultValue={ADD_NONE} />
+                  : <Form.Input label={'Add item'} name={'add'} placeholder={`${fontColor.muted}Enter ${entry.label.toLowerCase()} entry`} />)
+              : <Text>{`${fontColor.muted}Maximum of ${String(entry.maxItems)} items reached.`}</Text>}
+          </Panel>
+          <Panel flexDirection={'row'} gap={spacing.sm}>
+            <Form.Button type={'submit'} label={'Save'} flex={2} />
+            <Form.Button type={'exit'} label={'Back'} variant={'contrast'} flex={1} />
+          </Panel>
+        </Panel>
+      </Card>
     </Form>
   );
 }

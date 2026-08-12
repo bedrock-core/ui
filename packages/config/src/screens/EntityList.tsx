@@ -1,6 +1,8 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Card, Header, MenuRow, Button as OreButton, theme } from '@bedrock-core/ore-styled';
-import { Image, Panel, Scroll, Text, useExit, type JSX } from '@bedrock-core/ui-runtime';
+import { Card, Header, MenuRow, theme } from '@bedrock-core/ore-styled';
+import { Panel, Scroll, Text, useExit, type JSX } from '@bedrock-core/ui-runtime';
+import { splitBreadcrumb } from './breadcrumbs';
+import { ResetButton } from './ConfigScope';
 import { useCore, usePlayer } from '../context';
 import { allowedScopes, isOperator } from '../permissions';
 import { filterScope, getScopedSchema, schemaDefaultsPatch } from '../config/schema';
@@ -10,8 +12,6 @@ import type { AppScreen } from '../navigation/routes';
 import { Missing } from './Missing';
 
 const { spacing, fontColor } = theme.tokens;
-
-const ICON_RESET = 'textures/ui/config/reset';
 
 /**
  * Select list for a 'dimension' or 'player' scope: one row per known entity
@@ -46,7 +46,7 @@ export function EntityList({ navigation, route }: AppScreen<'EntityList'>): JSX.
 
   return (
     <Card flexDirection={'column'} padding={0} gap={0}>
-      <Header title={{ text: breadcrumb }} onBack={(): void => navigation.goBack()} onClose={exit} />
+      <Header {...splitBreadcrumb(breadcrumb)} onBack={(): void => navigation.goBack()} onClose={exit} />
       <Panel flexGrow={1} padding={spacing.sm}>
         <Scroll>
           <Panel flexDirection={'column'} gap={spacing.xs}>
@@ -87,9 +87,7 @@ function EntityRow({
       <Panel flexGrow={1}>
         <MenuRow title={{ text: label }} onPress={onPress} />
       </Panel>
-      <OreButton variant={'secondary'} paddingLeft={spacing.sm} paddingRight={spacing.sm} paddingTop={0} paddingBottom={0} onPress={onReset}>
-        <Image width={10} height={10} texture={ICON_RESET} />
-      </OreButton>
+      <ResetButton onPress={onReset} />
     </Panel>
   );
 }

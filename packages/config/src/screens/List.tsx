@@ -177,9 +177,14 @@ function AddonDetails({ core, addon, player, navigation }: {
               owning addon's .lang values (a key can't carry a § prefix). */}
           <Text font={'mojangles'} scale={1} maxLines={4} wordBreak={'break-word'} localizationKey={addon.description ?? ''} />
         </Card>
-        <Panel flexDirection={'row'} gap={0}>
-          <Text shadow={true}>{'§7Author(s): '}</Text>
-          <Text font={'mojangles'} scale={1} localizationKey={addon.creatorName ?? addon.creator} />
+        {/* The label's own trailing space is dropped by the label control, so the gap is a real
+            one; the value takes the remaining width and wraps rather than running off the card —
+            a creator line is a free-form list ("DrAv0011, Bedrock Tweaks") with no length bound. */}
+        <Panel flexDirection={'row'} alignItems={'flex-start'} gap={spacing.xs}>
+          <Text shadow={true} flexShrink={0}>{'§7Author(s):'}</Text>
+          <Panel flexGrow={1} flexShrink={1}>
+            <Text font={'mojangles'} scale={1} maxLines={2} wordBreak={'break-word'} localizationKey={addon.creatorName ?? addon.creator} />
+          </Panel>
         </Panel>
       </Panel>
     </Panel>

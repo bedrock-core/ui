@@ -6,7 +6,7 @@ import type { GuideComponents, GuideManifest, GuideTreeNode, PageId } from '../t
 
 const { spacing } = theme.tokens;
 
-const ICON_HOME = 'textures/ui/config/home';
+const ICON_INDEX = 'textures/ui/config/menu';
 
 /** Category labels (DFS ancestry) leading to `pageId`, or `[]` if not found in the tree. */
 function breadcrumbPath(tree: GuideTreeNode[], pageId: PageId): BreadcrumbSegment[] {
@@ -80,7 +80,11 @@ export function GuidePageView({ manifest, pageId, title, components, onOpenPage,
           </Panel>
         </Scroll>
       </Panel>
-      <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.sm} padding={spacing.sm}>
+      {/* `stretch` + `height: '100%'`, so the index button takes whatever height the prev/next
+          labels give the row and `aspectRatio` squares the width against it. The percent height
+          is load-bearing: with both axes auto the ratio drives from WIDTH, which would size the
+          button to its 12px icon. */}
+      <Panel flexDirection={'row'} alignItems={'stretch'} gap={spacing.sm} padding={spacing.sm}>
         {page?.prev !== undefined && prevPage
           ? (
               <OreButton variant={'contrast'} flexGrow={1} paddingTop={spacing.sm} paddingBottom={spacing.sm} onPress={(): void => onOpenPage(prevPage.id)}>
@@ -93,8 +97,8 @@ export function GuidePageView({ manifest, pageId, title, components, onOpenPage,
           : <Panel flexGrow={1} />}
         {onHome
           ? (
-              <OreButton variant={'contrast'} padding={spacing.xs} onPress={onHome}>
-                <Image width={12} height={12} texture={ICON_HOME} />
+              <OreButton variant={'contrast'} height={'100%'} aspectRatio={1} paddingLeft={0} paddingRight={0} paddingTop={0} paddingBottom={0} onPress={onHome}>
+                <Image width={12} height={12} texture={ICON_INDEX} />
               </OreButton>
             )
           : null}
