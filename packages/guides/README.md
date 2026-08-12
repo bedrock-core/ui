@@ -71,6 +71,17 @@ description: Add the pack and wire the filters.   # localized subtitle — keep 
 ---
 ```
 
+### When the index is skipped
+
+An index is a choice between pages, so it earns its screen only when there is more than one.
+
+- **One page** — the guide *is* that page. It opens there and offers no index; back leaves the
+  guide rather than landing on a table of contents with a single row.
+- **`home` set** — the manifest names a page to open on instead of the index, for when the index
+  is not the introduction you would have written. The index stays one press away while there is
+  more than one page. Authors set it with `home: true` in that page's frontmatter (usually
+  alongside `hidden: true`); a `home` naming no page is ignored.
+
 ## API
 
 - `createGuide(manifest, { title?, components? })` — a self-contained `(props: { onExit? }) => Element`

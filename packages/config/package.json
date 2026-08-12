@@ -35,7 +35,7 @@
 	],
 	"sideEffects": false,
 	"scripts": {
-		"build": "tsc -p tsconfig.json",
+		"build": "node scripts/generate-framework-keys.mjs && tsc -p tsconfig.json",
 		"lint": "eslint ."
 	},
 	"devDependencies": {

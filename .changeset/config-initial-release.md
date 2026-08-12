@@ -39,7 +39,7 @@ Non-operators reach their own player scope only, enforced on both sides. Caller 
 ## Details
 
 - A request that names a scope fetches that scope's values before mounting, so it opens showing what is actually set rather than every field at its schema default — `Config` presents a native modal and cannot fetch its own without presenting twice.
-- bedrock-core has its own built-in guide covering the commands: the framework has a row in the list but no realm behind it, so nothing can publish one on its behalf.
+- bedrock-core has its own built-in guide covering the commands: the framework has a row in the list but no realm behind it, so nothing can publish one on its behalf. Its localization keys are mirrored into `TranslationKeysContext` from the resource pack's `.lang` at build time — the client resolves a key to paint it, but the layout engine resolves it to decide how big the box should be, and a key missing from the context measures as the key string, clipping the sentence painted into it. Addons never hit this: their keys reach the context through `register({ translations })`.
 - A screen opened for an addon whose config or guide has not replicated yet returns to the list with that addon selected, rather than showing a dead end.
 - A rejected command registration names the addon's namespace and points at `core.id`, because Bedrock's own error names only the namespace that won.
 - Every command description leads with the namespace. Bedrock gives the first pack to register a name an unqualified alias for it, with no way to opt out and no way to detect it in the callback, so plain `/guide` reaches one arbitrary addon — the description is what tells the player which.

@@ -76,6 +76,17 @@ export interface GuideManifest {
   locales: string[];
   tree: GuideTreeNode[];
   pages: Record<PageId, GuidePageData>;
+
+  /**
+   * The page the guide opens on, instead of the sidebar. Set it when the sidebar is not the
+   * introduction you would have written — a landing page can say what the addon is before
+   * offering a table of contents.
+   *
+   * The sidebar stays one press away whenever there is more than one page to choose between.
+   * With a single page there is nothing to choose, so it is dropped entirely and the guide is
+   * just that page. An id no page matches is ignored.
+   */
+  home?: PageId;
 }
 
 /**

@@ -6,6 +6,7 @@ import type { Player } from '@minecraft/server';
 import type { OpenTarget } from './navigation/openTarget';
 import { CoreContext, PlayerContext } from './context';
 import { buildInitialState } from './navigation/initialState';
+import { frameworkGuideKeys } from './frameworkGuideKeys';
 import { isOperator } from './permissions';
 import type { AppRoutes } from './navigation/routes';
 import { List } from './screens/List';
@@ -56,8 +57,13 @@ export function App({ core, player, target, values }: AppProps): JSX.Element {
       <PlayerContext value={player}>
         {/* Merged map: local vanilla + own keys, overlaid with every peer addon's published
             keys (core.translations), resolved for THIS player's locale — so cross-addon
-            registry fields measure correctly. */}
-        <TranslationKeysContext value={core.translations.forPlayer(player)}>
+            registry fields measure correctly.
+
+            bedrock-core's own keys go underneath. They are in an installed .lang, so the client
+            paints them, but no realm registers them — and a key the layout engine cannot resolve
+            measures as the key string, sizing the box for `bcg.x.y` and clipping the sentence
+            painted into it. Addon keys sit on top and win any collision. */}
+        <TranslationKeysContext value={{ ...frameworkGuideKeys, ...core.translations.forPlayer(player) }}>
           <NavigationContainer initialState={buildInitialState(target, values, isOperator(player))}>
             <Stack.Navigator />
           </NavigationContainer>

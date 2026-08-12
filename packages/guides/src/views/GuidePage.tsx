@@ -39,14 +39,25 @@ export interface GuidePageViewProps {
   components?: GuideComponents;
   /** A prev/next/link press — navigate to another page in place. */
   onOpenPage: (pageId: PageId) => void;
-  /** Back to the guide home (header back + footer home button). */
-  onHome: () => void;
+  /**
+   * Header back. Leaves this page for wherever the reader came from — the sidebar when there is
+   * one, otherwise out of the guide entirely. Absent hides the control, for a root guide with
+   * nowhere to go back to.
+   */
+  onBack?: () => void;
+
+  /**
+   * Footer index button. Set only when there IS an index: a single-page guide has no second page
+   * to choose between, so the button would either lead to a one-row table of contents or, worse,
+   * duplicate the back button while looking like something else.
+   */
+  onHome?: () => void;
   /** Close the whole UI (the header's × button). */
   onClose: () => void;
 }
 
 /** One guide page: title, rendered blocks, prev/home/next footer. */
-export function GuidePageView({ manifest, pageId, title, components, onOpenPage, onHome, onClose }: GuidePageViewProps): JSX.Element {
+export function GuidePageView({ manifest, pageId, title, components, onOpenPage, onBack, onHome, onClose }: GuidePageViewProps): JSX.Element {
   const page = manifest.pages[pageId];
 
   const prevPage = page?.prev !== undefined ? manifest.pages[page.prev] : undefined;
@@ -55,7 +66,7 @@ export function GuidePageView({ manifest, pageId, title, components, onOpenPage,
 
   return (
     <Card flexDirection={'column'} padding={0} gap={0}>
-      <GuideHeader title={title} breadcrumbs={breadcrumbs} onBack={onHome} onClose={onClose} />
+      <GuideHeader title={title} breadcrumbs={breadcrumbs} onBack={onBack} onClose={onClose} />
       <Panel flexGrow={1} padding={spacing.sm}>
         <Scroll marginRight={spacing.md}>
           <Panel flexDirection={'column'} gap={spacing.md} padding={spacing.sm}>
@@ -81,9 +92,13 @@ export function GuidePageView({ manifest, pageId, title, components, onOpenPage,
               </OreButton>
             )
           : <Panel flexGrow={1} />}
-        <OreButton variant={'contrast'} padding={spacing.xs} onPress={onHome}>
-          <Image width={12} height={12} texture={ICON_HOME} />
-        </OreButton>
+        {onHome
+          ? (
+              <OreButton variant={'contrast'} padding={spacing.xs} onPress={onHome}>
+                <Image width={12} height={12} texture={ICON_HOME} />
+              </OreButton>
+            )
+          : null}
         {page?.next !== undefined && nextPage
           ? (
               <OreButton variant={'contrast'} flexGrow={1} paddingTop={spacing.sm} paddingBottom={spacing.sm} onPress={(): void => onOpenPage(nextPage.id)}>

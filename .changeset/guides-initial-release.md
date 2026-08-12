@@ -25,5 +25,6 @@ Included:
 - **Blocks** — headings, paragraphs with inline links, ordered and unordered lists with one level of nesting, images, code, rules, and five kinds of admonition.
 - **Manifest IR** — owned here rather than by the server framework, which stores and replicates a manifest without ever reading inside one. `@bedrock-core/server-runtime` is deliberately not a dependency, so a guide renders without the framework.
 - **`isGuideManifest`** — narrows a replicated payload to a document, so a peer publishing something malformed degrades instead of crashing the screen hosting it.
+- **Landing page** — an index is a choice between pages, so it earns its screen only when there is more than one. A single-page guide opens on its page with no index at all, and `manifest.home` names a page to open on instead of the index when the index is not the introduction you would have written. Authors set it with `home: true` in frontmatter.
 
 A manifest does not have to be generated. Keys that match no `.lang` entry render literally, so a hand-written single-page manifest can carry its prose inline — which is how `@bedrock-core/config` ships bedrock-core's own guide, having no pack to ship `.lang` files with.

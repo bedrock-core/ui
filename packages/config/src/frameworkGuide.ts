@@ -5,10 +5,12 @@
  * `core.register()` on its behalf — so it can never publish a guide the way an addon does. This
  * manifest stands in, served locally by the `Guide` screen instead of read from replicated state.
  *
- * Its text is written as literal strings where an addon's guide would carry localization keys.
- * `Text` renders an unmatched key literally, so both work; a generated guide uses keys because
- * its `.lang` files ship with the pack, and this one has no pack to ship with. It also never
- * crosses the transport, so the size budget a replicated manifest lives under does not apply.
+ * Unlike an addon's guide it is hand-written rather than emitted by the guides filter, but it
+ * still points at real localization keys. Literal prose would not survive the trip: a key is sent
+ * to the client as a string and the form serializer caps those at 80 bytes, so anything longer
+ * than a short phrase has to resolve client-side instead. The values live in the bedrock-core
+ * resource pack (`@bedrock-core/ui-resource-pack`, `packs/RP/texts/*.lang`) under
+ * `bcg.bedrock_core.commands.*`, which is also what makes it translatable.
  */
 import type { GuideManifest } from '@bedrock-core/guides';
 
@@ -16,65 +18,49 @@ import type { GuideManifest } from '@bedrock-core/guides';
 export const FRAMEWORK_ADDON_ID = 'bedrock-core';
 
 const PAGE = 'commands';
+const K = 'bcg.bedrock_core.commands';
 
 export const frameworkGuide: GuideManifest = {
   v: 1,
   ns: 'bedrock_core',
   defaultLocale: 'en_US',
   locales: ['en_US'],
-  tree: [{ t: 'page', id: PAGE, titleK: 'Commands' }],
+  // Declared even though a single-page guide would open here anyway: it says the landing screen
+  // is deliberate, so adding a second page later does not silently move it behind a sidebar.
+  home: PAGE,
+  tree: [{ t: 'page', id: PAGE, titleK: `${K}.nav` }],
   pages: {
     [PAGE]: {
       id: PAGE,
-      titleK: 'bedrock-core',
+      titleK: ``,
       blocks: [
-        {
-          t: 'p',
-          runs: [{ k: 'Every addon built on bedrock-core shares this screen. The list on the left is every addon installed in this world; pick one to reach its settings or its own guide.' }],
-        },
-        { t: 'h', l: 2, k: 'Commands' },
-        {
-          t: 'p',
-          runs: [{ k: 'Each addon registers its own commands under its own namespace, written as creator_pack. An addon by "bt" called "gc_graves" answers to bt_gc_graves. Type a slash and the start of a namespace to see what it offers.' }],
-        },
+        // `w`/`h` are the DRAWN size, not the texture's 2042x266 — the renderer caps height and
+        // derives width from w/h, so passing the source dimensions would draw it 900 units wide.
+        { t: 'img', src: 'textures/ui/bedrock_core/title', w: 115, h: 15 },
+        { t: 'p', runs: [{ k: `${K}.intro` }] },
+        { t: 'p', runs: [{ k: `${K}.namespace` }] },
         {
           t: 'ul',
           items: [
-            { runs: [{ k: '§econfig§r - open this screen at that addon' }] },
-            { runs: [{ k: '§econfig get <setting>§r - read one of your own settings' }] },
-            { runs: [{ k: '§econfig set <setting> <value>§r - change one of your own settings' }] },
-            { runs: [{ k: '§eguide§r - open that addon\'s guide' }] },
-            { runs: [{ k: '§elist§r - open this list' }] },
+            { runs: [{ k: `${K}.cmd_config` }] },
+            { runs: [{ k: `${K}.cmd_get` }] },
+            { runs: [{ k: `${K}.cmd_set` }] },
+            { runs: [{ k: `${K}.cmd_guide` }] },
+            { runs: [{ k: `${K}.cmd_list` }] },
           ],
         },
-        {
-          t: 'p',
-          runs: [{ k: 'Settings autocomplete: the chat box offers the ones that addon actually has.' }],
-        },
-        { t: 'h', l: 2, k: 'Operators' },
-        {
-          t: 'p',
-          runs: [{ k: 'Anyone can read and change their own settings. Changing what applies to the whole server, to a dimension, or to another player needs operator, and those commands are hidden from everyone else.' }],
-        },
+        { t: 'p', runs: [{ k: `${K}.autocomplete` }] },
+        { t: 'h', l: 2, k: `${K}.h2` },
+        { t: 'p', runs: [{ k: `${K}.operators` }] },
         {
           t: 'ul',
           items: [
-            { runs: [{ k: '§econfigat get <scope.setting> [target]§r' }] },
-            { runs: [{ k: '§econfigat set <scope.setting> <value> [target]§r' }] },
+            { runs: [{ k: `${K}.cmd_getat` }] },
+            { runs: [{ k: `${K}.cmd_setat` }] },
           ],
         },
-        {
-          t: 'p',
-          runs: [{ k: 'The scope is part of the setting - server.pricing.tax_rate, player.allow_gifts. For a dimension or player setting, [target] names which one; leave it out to mean yourself, or the dimension you are standing in.' }],
-        },
-        {
-          t: 'adm',
-          kind: 'tip',
-          blocks: [{
-            t: 'p',
-            runs: [{ k: 'Command blocks can run configat, so server settings can be driven by redstone or a datapack-style setup.' }],
-          }],
-        },
+        { t: 'p', runs: [{ k: `${K}.scoped` }] },
+        { t: 'adm', kind: 'tip', blocks: [{ t: 'p', runs: [{ k: `${K}.tip` }] }] },
       ],
     },
   },
