@@ -1,8 +1,7 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Card, Button as OreButton, theme } from '@bedrock-core/ore-styled';
+import { Card, Header, Button as OreButton, theme, type BreadcrumbSegment } from '@bedrock-core/ore-styled';
 import { Image, Panel, Scroll, Text, type JSX } from '@bedrock-core/ui-runtime';
 import { GuideBlockList } from '../render/GuideBlockList';
-import { GuideHeader, type BreadcrumbSegment } from '../render/GuideHeader';
 import type { GuideComponents, GuideManifest, GuideTreeNode, PageId } from '../types';
 
 const { spacing } = theme.tokens;
@@ -66,7 +65,7 @@ export function GuidePageView({ manifest, pageId, title, components, onOpenPage,
 
   return (
     <Card flexDirection={'column'} padding={0} gap={0}>
-      <GuideHeader title={title} breadcrumbs={breadcrumbs} onBack={onBack} onClose={onClose} />
+      <Header title={title} breadcrumbs={breadcrumbs} onBack={onBack} onClose={onClose} />
       <Panel flexGrow={1} padding={spacing.sm}>
         <Scroll marginRight={spacing.md}>
           <Panel flexDirection={'column'} gap={spacing.md} padding={spacing.sm}>

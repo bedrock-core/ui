@@ -1,11 +1,12 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Button, Card, Form, theme } from '@bedrock-core/ore-styled';
-import { Fragment, Panel, Text, type FormValues, type JSX } from '@bedrock-core/ui-runtime';
+import { Card, Divider, Form, Header, theme } from '@bedrock-core/ore-styled';
+import { Fragment, Panel, Text, useExit, type FormValues, type JSX } from '@bedrock-core/ui-runtime';
 import { useCore, usePlayer } from '../context';
 import { buildNestedPatch, resolveInitialValue } from '../config/nested';
 import { filterScope, getScopedSchema } from '../config/schema';
 import { patchScope } from '../config/values';
 import type { AppScreen } from '../navigation/routes';
+import { SectionHeading } from './SectionHeading';
 
 const { spacing, fontColor } = theme.tokens;
 
@@ -22,15 +23,18 @@ const ADD_NONE = '- none -';
 export function ConfigList({ navigation, route }: AppScreen<'ConfigList'>): JSX.Element {
   const core = useCore();
   const player = usePlayer();
+  const exit = useExit();
   const { addonId, scope, entityId, fieldKey, breadcrumb, values: currentValues } = route.params;
   const accessor = core.config.of(addonId, { actorId: player.id })!;
   const entry = filterScope(getScopedSchema(accessor), scope)[fieldKey];
 
   if (!entry) {
     return (
-      <Card flexDirection={'column'} padding={12} gap={spacing.sm}>
-        <Text>{'Unknown list setting.'}</Text>
-        <Button onPress={(): void => navigation.goBack()}>{'Back'}</Button>
+      <Card flexDirection={'column'} padding={0} gap={0}>
+        <Header title={{ text: breadcrumb }} onBack={(): void => navigation.goBack()} onClose={exit} />
+        <Panel flexGrow={1} justifyContent={'center'} alignItems={'center'} padding={spacing.lg}>
+          <Text>{`${fontColor.muted}Unknown list setting.`}</Text>
+        </Panel>
       </Card>
     );
   }
@@ -59,11 +63,15 @@ export function ConfigList({ navigation, route }: AppScreen<'ConfigList'>): JSX.
 
   return (
     <Form onSubmit={handleSubmit} onCancel={(): void => navigation.goBack()}>
-      <Panel flexDirection={'column'} gap={2} padding={spacing.sm}>
-        <Text font={'minecraftTen'} scale={1.5}>{breadcrumb}</Text>
-        {entry.description ? <Text>{`${fontColor.muted}${entry.description}`}</Text> : null}
-      </Panel>
       <Panel flexDirection={'column'} gap={spacing.xs} padding={spacing.sm}>
+        <Text font={'minecraftTen'} scale={1.5} shadow={true} wordBreak={'break-word'}>{breadcrumb}</Text>
+        <Divider />
+        {entry.description
+          ? <Text wordBreak={'break-word'}>{`${fontColor.muted}${entry.description}`}</Text>
+          : null}
+      </Panel>
+      <Panel flexDirection={'column'} gap={spacing.sm} padding={spacing.sm}>
+        <SectionHeading label={'Items'} />
         {items.length === 0
           ? <Text>{`${fontColor.muted}No items yet.`}</Text>
           : (
@@ -77,16 +85,17 @@ export function ConfigList({ navigation, route }: AppScreen<'ConfigList'>): JSX.
               </Panel>
             )}
       </Panel>
-      <Panel flexDirection={'column'} gap={spacing.xs} padding={spacing.sm}>
+      <Panel flexDirection={'column'} gap={spacing.sm} padding={spacing.sm}>
+        <SectionHeading label={'Add'} />
         {canAdd
           ? (addOptions
               ? <Form.Dropdown label={'Add item'} name={'add'} options={[ADD_NONE, ...addOptions]} defaultValue={ADD_NONE} />
               : <Form.Input label={'Add item'} name={'add'} placeholder={`${fontColor.muted}Enter ${entry.label.toLowerCase()} entry`} />)
           : <Text>{`${fontColor.muted}Maximum of ${String(entry.maxItems)} items reached.`}</Text>}
       </Panel>
-      <Panel flexDirection={'row'} gap={spacing.xs} padding={spacing.sm}>
+      <Panel flexDirection={'row'} gap={spacing.sm} padding={spacing.sm}>
         <Form.Button type={'submit'} label={'Save'} flex={2} />
-        <Form.Button type={'exit'} label={'Cancel'} variant={'danger'} flex={1} />
+        <Form.Button type={'exit'} label={'Cancel'} variant={'contrast'} flex={1} />
       </Panel>
     </Form>
   );

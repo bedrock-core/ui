@@ -1,6 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Button as OreButton, Card, theme } from '@bedrock-core/ore-styled';
-import { Button, Image, Panel, Scroll, Text, useExit, type JSX } from '@bedrock-core/ui-runtime';
+import { Card, Header, MenuRow, Button as OreButton, theme } from '@bedrock-core/ore-styled';
+import { Image, Panel, Scroll, useExit, type JSX } from '@bedrock-core/ui-runtime';
 import { useCore, usePlayer } from '../context';
 import { allowedScopes, isOperator } from '../permissions';
 import { filterScope, getScopedSchema, schemaDefaultsPatch } from '../config/schema';
@@ -11,14 +11,14 @@ import { Missing } from './Missing';
 
 const { spacing } = theme.tokens;
 
-const HEADER_BG = 'textures/ui/ore-styled/header/background';
-const ICON_BACK = 'textures/ui/ore-styled/button/back/background';
-const ICON_BACK_HOVER = 'textures/ui/ore-styled/button/back/background_hover';
-const ICON_BACK_PRESSED = 'textures/ui/ore-styled/button/back/background_pressed';
-const ICON_CLOSE = 'textures/ui/ore-styled/button/close/background';
-const ICON_CLOSE_HOVER = 'textures/ui/ore-styled/button/close/background_hover';
-const ICON_CLOSE_PRESSED = 'textures/ui/ore-styled/button/close/background_pressed';
 const ICON_RESET = 'textures/ui/config/reset';
+
+/** Row subtitles. Raw `Text` is capped at 80 UTF-8 bytes, so these stay one short line. */
+const SCOPE_HINT = {
+  server: 'Shared by everyone on the realm.',
+  dimension: 'Overrides for one dimension.',
+  player: 'Overrides for one player.',
+} as const;
 
 /**
  * Scope picker for one addon: three rows — server, dimension, player. Server
@@ -66,47 +66,53 @@ export function ConfigScope({ navigation, route }: AppScreen<'ConfigScope'>): JS
 
   return (
     <Card flexDirection={'column'} padding={0} gap={0}>
-      <Panel flexDirection={'row'} alignItems={'center'} justifyContent={'space-between'} padding={spacing.sm} marginTop={1} marginLeft={1} marginRight={1} background={HEADER_BG}>
-        <Button width={15} height={15} background={ICON_BACK} backgroundHover={ICON_BACK_HOVER} backgroundPressed={ICON_BACK_PRESSED} onPress={(): void => navigation.goBack()} />
-        <Panel position={'absolute'} left={spacing.sm} right={spacing.sm} top={spacing.sm} bottom={spacing.sm} justifyContent={'center'} alignItems={'center'}>
-          <Text font={'minecraftTen'} scale={1} offsetY={-2} localizationKey={addonName} />
-        </Panel>
-        <Button width={15} height={15} background={ICON_CLOSE} backgroundHover={ICON_CLOSE_HOVER} backgroundPressed={ICON_CLOSE_PRESSED} onPress={exit} />
+      <Header
+        title={{ key: addonName }}
+        breadcrumbs={[{ text: 'Config' }]}
+        onBack={(): void => navigation.goBack()}
+        onClose={exit}
+      />
+      <Panel flexGrow={1} padding={spacing.sm}>
+        <Scroll>
+          <Panel flexDirection={'column'} gap={spacing.xs}>
+            <ScopeRow
+              label={'Server'}
+              hint={SCOPE_HINT.server}
+              enabled={hasServer}
+              onPress={navigateToServer}
+              onReset={resetServerToSchemaDefaults}
+            />
+            <ScopeRow
+              label={'Dimension'}
+              hint={SCOPE_HINT.dimension}
+              enabled={hasDimension}
+              onPress={(): void => navigateToEntityList('dimension', 'Dimension')}
+            />
+            <ScopeRow
+              label={'Player'}
+              hint={SCOPE_HINT.player}
+              enabled={hasPlayer}
+              onPress={canPickAnyPlayer
+                ? (): void => navigateToEntityList('player', 'Player')
+                : navigateToOwnPlayer}
+            />
+          </Panel>
+        </Scroll>
       </Panel>
-      <Scroll>
-        <Panel flexDirection={'column'} gap={spacing.sm} padding={spacing.sm}>
-          <ScopeRow
-            label={'Server'}
-            enabled={hasServer}
-            onPress={navigateToServer}
-            onReset={resetServerToSchemaDefaults}
-          />
-          <ScopeRow
-            label={'Dimension'}
-            enabled={hasDimension}
-            onPress={(): void => navigateToEntityList('dimension', 'Dimension')}
-          />
-          <ScopeRow
-            label={'Player'}
-            enabled={hasPlayer}
-            onPress={canPickAnyPlayer
-              ? (): void => navigateToEntityList('player', 'Player')
-              : navigateToOwnPlayer}
-          />
-        </Panel>
-      </Scroll>
     </Card>
   );
 }
 
-/** One grid row: a scope button with a transparent reset-icon button glued to its right. */
+/** One menu row for a scope, with a reset-icon button glued to its right when the scope resets in place. */
 function ScopeRow({
   label,
+  hint,
   enabled,
   onPress,
   onReset,
 }: {
   label: string;
+  hint: string;
   enabled: boolean;
   // Allow an async handler: the presenter awaits it, holding the press's transaction open
   // so navigation completes before the form re-presents.
@@ -114,14 +120,19 @@ function ScopeRow({
   onReset?: () => void;
 }): JSX.Element {
   return (
-    <Panel flexDirection={'row'} gap={spacing.xs}>
+    <Panel flexDirection={'row'} alignItems={'stretch'} gap={spacing.xs}>
       <Panel flexGrow={1}>
-        <OreButton variant={'primary'} enabled={enabled} onPress={onPress}>{label}</OreButton>
+        <MenuRow
+          title={{ text: label }}
+          subtitle={{ text: hint }}
+          enabled={enabled}
+          onPress={onPress}
+        />
       </Panel>
       {onReset
         ? (
-            <OreButton variant={'secondary'} paddingLeft={spacing.sm} paddingRight={spacing.sm} paddingTop={spacing.xs} paddingBottom={spacing.xs} enabled={enabled} onPress={onReset}>
-              <Image width={10} height={10} texture={ICON_RESET} marginBottom={spacing.xs} />
+            <OreButton variant={'secondary'} paddingLeft={spacing.sm} paddingRight={spacing.sm} paddingTop={0} paddingBottom={0} enabled={enabled} onPress={onReset}>
+              <Image width={10} height={10} texture={ICON_RESET} />
             </OreButton>
           )
         : null}

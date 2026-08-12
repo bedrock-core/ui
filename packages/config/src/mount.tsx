@@ -38,10 +38,10 @@ interface OpenRequest {
 
 /**
  * The RPC surface every realm that mounts this UI serves, since any of them may win the
- * election later. Namespaced like the runtime's own methods (`bc:config.*`).
+ * election later. Namespaced like the runtime's own methods (`core:config.*`).
  */
 interface HostUiRpc {
-  'bc:ui.open': (params: OpenRequest) => boolean;
+  'core:ui.open': (params: OpenRequest) => boolean;
 }
 
 /** Options for {@link ui}. */
@@ -66,12 +66,12 @@ export interface UiOptions {
  */
 export function ui(core: Runtime, options: UiOptions = {}): void {
   core.rpc.serve<HostUiRpc>({
-    'bc:ui.open': ({ playerId, command, args }) => {
+    'core:ui.open': ({ playerId, command, args }) => {
       const player = world.getPlayers().find(candidate => candidate.id === playerId);
 
       // Disconnected between typing the command and this request. Nothing the caller can do
       // about it, so reject rather than drop it silently.
-      if (!player) { throw new Error(`bc:ui.open: player '${playerId}' is not in the world`); }
+      if (!player) { throw new Error(`core:ui.open: player '${playerId}' is not in the world`); }
 
       open(core, player, openTargetFrom(command, args));
 
@@ -95,7 +95,7 @@ function dispatch(core: Runtime, player: Player, command: OpenCommand, args: (st
     return;
   }
 
-  core.rpc.typed<HostUiRpc>(core.host.hostId)['bc:ui.open']({ playerId: player.id, command, args })
+  core.rpc.typed<HostUiRpc>(core.host.hostId)['core:ui.open']({ playerId: player.id, command, args })
     .catch((error: unknown) => {
       // The host went down between the election and the request, or is wedged. Our own copy
       // may be older and buggier, but showing it beats the command doing nothing.
@@ -107,7 +107,7 @@ function dispatch(core: Runtime, player: Player, command: OpenCommand, args: (st
 
 /**
  * The single funnel every way of opening this UI passes through — the command callback above,
- * the `bc:ui.open` RPC, and the local fallback — which is why the permission clamp lives here
+ * the `core:ui.open` RPC, and the local fallback — which is why the permission clamp lives here
  * rather than in a screen. It also runs host-side, so the rule stays patchable in the field
  * even for a world whose command owner shipped a year ago.
  */

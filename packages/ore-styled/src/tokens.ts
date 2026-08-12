@@ -49,6 +49,27 @@ export interface Theme {
         vertical: { default: string; light: string; dark: string };
       };
     };
+    header: {
+      padding: number;
+      gap: number;
+      /** Edge of the square back/close controls (px). */
+      iconSize: number;
+      textStyle: { font: TextFont; scale: number; color: string; separator: string };
+      textures: {
+        background: string;
+        back: string; backHover: string; backPressed: string;
+        close: string; closeHover: string; closePressed: string;
+      };
+    };
+    /** Icon menu row — the list/guide-index row face, shared by every browse screen. */
+    menuRow: {
+      padding: number;
+      gap: number;
+      /** Edge of a row's leading thumbnail (px). */
+      iconSize: number;
+      textures: { background: string; backgroundHover: string; backgroundPressed: string };
+      textStyle: { font: TextFont; scale: number; color: string; disabledColor: string; muted: string; mutedDisabled: string };
+    };
     radio: {
       size: number;
       gap: number;
@@ -182,6 +203,34 @@ const oreTheme: Theme = {
           dark: `${BASE}/divider/vertical/dark`,
         },
       },
+    },
+    header: {
+      padding: 4,
+      gap: 4,
+      iconSize: 15,
+      textStyle: { font: 'minecraftTen', scale: 1.2, color: '§0', separator: '§8' },
+      textures: {
+        background: `${BASE}/header/background`,
+        back: `${BASE}/button/back/background`,
+        backHover: `${BASE}/button/back/background_hover`,
+        backPressed: `${BASE}/button/back/background_pressed`,
+        close: `${BASE}/button/close/background`,
+        closeHover: `${BASE}/button/close/background_hover`,
+        closePressed: `${BASE}/button/close/background_pressed`,
+      },
+    },
+    menuRow: {
+      padding: 4,
+      gap: 4,
+      iconSize: 16,
+      textures: {
+        background: `${BASE}/dropdown/option/background`,
+        backgroundHover: `${BASE}/dropdown/option/background_hover`,
+        backgroundPressed: `${BASE}/dropdown/option/background_hover`,
+      },
+      // Full scale for the subtitle too — a sub-1 scale lands on a fractional
+      // font_scale_factor and reads mushy in game; the §7 grey already separates it.
+      textStyle: { font: 'mojangles', scale: 1, color: '§f', disabledColor: '§8', muted: '§7', mutedDisabled: '§8' },
     },
     radio: {
       size: 12,

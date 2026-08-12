@@ -1,11 +1,9 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Card, Divider, theme } from '@bedrock-core/ore-styled';
+import { Card, Divider, Header, MenuRow, theme } from '@bedrock-core/ore-styled';
 import { Button, Image, Panel, Scroll, Text, useState, type JSX } from '@bedrock-core/ui-runtime';
-import { GuideHeader } from '../render/GuideHeader';
 import type { GuideManifest, GuideTreeNode, PageId } from '../types';
 
 const { spacing } = theme.tokens;
-const optionTextures = theme.components.dropdown.textures;
 const transparentTextures = theme.components.button.variants.transparent.textures;
 
 /** Row/section thumbnail edge (px) for authored `icon` textures. */
@@ -61,44 +59,15 @@ export function GuideHomeView({ manifest, title, onOpenPage, onExit, onClose }: 
 
   const rows: JSX.Element[] = [];
 
-  const pageRow = (node: Extract<GuideTreeNode, { t: 'page' }>, depth: number): JSX.Element => {
-    const label: JSX.Element[] = [
-      <Text shadow={true} maxLines={1} overflow={'ellipsis'} localizationKey={node.titleK} />,
-    ];
-
-    if (node.descK !== undefined) {
-      // Full scale, not a shrunk 0.9 — a sub-1 scale lands on a fractional
-      // font_scale_factor (0.9 / the 0.5 base = 1.8) and reads mushy in game. The
-      // subtitle already separates from the title by its baked-in §7 grey and the
-      // title's shadow, so it doesn't need to be smaller too.
-      label.push(<Text maxLines={1} overflow={'ellipsis'} localizationKey={node.descK} />);
-    }
-
-    const rowChildren: JSX.Element[] = [
-      ...iconSlot(node.icon),
-      <Panel flexDirection={'column'} flexGrow={1} flexShrink={1} justifyContent={'center'} gap={0}>{label}</Panel>,
-      <Text>{'§7>'}</Text>,
-    ];
-
-    return (
-      <Button
-        background={optionTextures.option}
-        backgroundHover={optionTextures.optionHover}
-        backgroundPressed={optionTextures.optionHover}
-        paddingTop={spacing.sm}
-        paddingBottom={spacing.sm}
-        paddingLeft={spacing.sm}
-        paddingRight={spacing.sm}
-        width={'100%'}
-        justifyContent={'flex-start'}
-        onPress={(): void => onOpenPage(node.id)}
-      >
-        <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.sm} width={'100%'} paddingLeft={depth * spacing.md}>
-          {rowChildren}
-        </Panel>
-      </Button>
-    );
-  };
+  const pageRow = (node: Extract<GuideTreeNode, { t: 'page' }>, depth: number): JSX.Element => (
+    <MenuRow
+      icon={node.icon}
+      title={{ key: node.titleK }}
+      subtitle={node.descK !== undefined ? { key: node.descK } : undefined}
+      depth={depth}
+      onPress={(): void => onOpenPage(node.id)}
+    />
+  );
 
   const sectionHeader = (node: Extract<GuideTreeNode, { t: 'cat' }>, depth: number, isCollapsed: boolean): JSX.Element => {
     const headerChildren: JSX.Element[] = [
@@ -148,7 +117,7 @@ export function GuideHomeView({ manifest, title, onOpenPage, onExit, onClose }: 
 
   return (
     <Card flexDirection={'column'} padding={0} gap={0}>
-      <GuideHeader title={title} onBack={onExit} onClose={onClose} />
+      <Header title={title} onBack={onExit} onClose={onClose} />
       <Panel flexGrow={1} padding={spacing.sm}>
         <Scroll>
           <Panel flexDirection={'column'} gap={spacing.xs}>

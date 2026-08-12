@@ -1,12 +1,13 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Button, Card, Form, theme } from '@bedrock-core/ore-styled';
-import { Fragment, Panel, Text, type FormValues, type JSX } from '@bedrock-core/ui-runtime';
+import { Card, Divider, Form, Header, theme } from '@bedrock-core/ore-styled';
+import { Fragment, Panel, Text, useExit, type FormValues, type JSX } from '@bedrock-core/ui-runtime';
 import { useCore, usePlayer } from '../context';
 import { buildNestedPatch, resolveInitialValue } from '../config/nested';
 import { filterScope, getScopedSchema, groupByTopLevel, splitScalarsAndLists } from '../config/schema';
 import { patchScope } from '../config/values';
 import type { EntrySchema } from '../types';
 import type { AppScreen } from '../navigation/routes';
+import { SectionHeading } from './SectionHeading';
 
 const { spacing, fontColor } = theme.tokens;
 
@@ -23,6 +24,7 @@ const NUMBER_INLINE_MAX_RANGE = 100;
 export function Config({ navigation, route }: AppScreen<'Config'>): JSX.Element {
   const core = useCore();
   const player = usePlayer();
+  const exit = useExit();
   const { addonId, scope, entityId, breadcrumb, values: currentValues } = route.params;
   // Every read and write from this screen is made on the viewing player's behalf, so the
   // owning addon can refuse what they may not touch even if this screen were reached wrongly.
@@ -31,10 +33,11 @@ export function Config({ navigation, route }: AppScreen<'Config'>): JSX.Element 
 
   if (Object.keys(scalars).length === 0) {
     return (
-      <Card flexDirection={'column'} padding={12} gap={spacing.sm}>
-        <Text font={'minecraftTen'} scale={1.5}>{breadcrumb}</Text>
-        <Text>{`${fontColor.muted}This scope only has list settings - pick one from the previous screen.`}</Text>
-        <Button onPress={(): void => navigation.goBack()}>{'Back'}</Button>
+      <Card flexDirection={'column'} padding={0} gap={0}>
+        <Header title={{ text: breadcrumb }} onBack={(): void => navigation.goBack()} onClose={exit} />
+        <Panel flexGrow={1} justifyContent={'center'} alignItems={'center'} padding={spacing.lg}>
+          <Text wordBreak={'break-word'}>{`${fontColor.muted}This scope only has list settings.`}</Text>
+        </Panel>
       </Card>
     );
   }
@@ -56,26 +59,27 @@ export function Config({ navigation, route }: AppScreen<'Config'>): JSX.Element 
 
   return (
     <Form onSubmit={handleSubmit} onCancel={(): void => navigation.goBack()}>
-      <Panel flexDirection={'column'} gap={2} padding={spacing.sm}>
-        <Text font={'minecraftTen'} scale={1.5}>{breadcrumb}</Text>
+      <Panel flexDirection={'column'} gap={spacing.xs} padding={spacing.sm}>
+        <Text font={'minecraftTen'} scale={1.5} shadow={true} wordBreak={'break-word'}>{breadcrumb}</Text>
+        <Divider />
       </Panel>
       <Fragment>
         {[...groups.entries()].map(([groupName, entries]) => (
-          <Panel flexDirection={'column'} gap={spacing.xs} padding={spacing.sm}>
+          <Panel flexDirection={'column'} gap={spacing.md} padding={spacing.sm}>
             {groupName !== ''
-              ? (
-                  <Text font={'minecraftTen'}>{`${fontColor.muted}${groupName.charAt(0).toUpperCase()}${groupName.slice(1)}`}</Text>
-                )
+              ? <SectionHeading label={`${groupName.charAt(0).toUpperCase()}${groupName.slice(1)}`} />
               : null}
             <Fragment>
               {entries.map(([subKey, entry]) => {
                 const fullKey = groupName ? `${groupName}.${subKey}` : subKey;
 
                 return (
-                  <Fragment>
+                  <Panel flexDirection={'column'} gap={spacing.xs}>
                     {renderField(fullKey, entry, resolveInitialValue(fullKey, entry, currentValues))}
-                    {entry.description ? <Text>{`${fontColor.muted}${entry.description}`}</Text> : null}
-                  </Fragment>
+                    {entry.description
+                      ? <Text wordBreak={'break-word'}>{`${fontColor.muted}${entry.description}`}</Text>
+                      : null}
+                  </Panel>
                 );
               })}
             </Fragment>
@@ -85,13 +89,13 @@ export function Config({ navigation, route }: AppScreen<'Config'>): JSX.Element 
       {Object.keys(lists).length > 0
         ? (
             <Panel padding={spacing.sm}>
-              <Text>{`${fontColor.muted}List settings are edited from the previous screen.`}</Text>
+              <Text wordBreak={'break-word'}>{`${fontColor.muted}List settings are edited from the previous screen.`}</Text>
             </Panel>
           )
         : null}
-      <Panel flexDirection={'row'} gap={spacing.xs} padding={spacing.sm}>
+      <Panel flexDirection={'row'} gap={spacing.sm} padding={spacing.sm}>
         <Form.Button type={'submit'} label={'Save'} flex={2} />
-        <Form.Button type={'exit'} label={'Cancel'} variant={'danger'} flex={1} />
+        <Form.Button type={'exit'} label={'Cancel'} variant={'contrast'} flex={1} />
       </Panel>
     </Form>
   );

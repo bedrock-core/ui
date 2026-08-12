@@ -1,8 +1,8 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Card, Divider, Button as OreButton, theme } from '@bedrock-core/ore-styled';
+import { Card, Divider, Header, MenuRow, Button as OreButton, theme } from '@bedrock-core/ore-styled';
 import type { Runtime } from '@bedrock-core/server-runtime';
 import type { Player } from '@minecraft/server';
-import { Button, Image, Panel, Scroll, Text, useExit, useState, type JSX } from '@bedrock-core/ui-runtime';
+import { Image, Panel, Scroll, Text, useExit, useState, type JSX } from '@bedrock-core/ui-runtime';
 import { useCore, usePlayer } from '../context';
 import { isOperator } from '../permissions';
 import { openConfig } from '../navigation/openConfig';
@@ -10,15 +10,13 @@ import { FRAMEWORK_ADDON_ID } from '../frameworkGuide';
 import type { AppScreen } from '../navigation/routes';
 
 const { spacing } = theme.tokens;
-const optionTextures = theme.components.dropdown.textures;
 
-const HEADER_BG = 'textures/ui/ore-styled/header/background';
-const ICON_CLOSE = 'textures/ui/ore-styled/button/close/background';
-const ICON_CLOSE_HOVER = 'textures/ui/ore-styled/button/close/background_hover';
-const ICON_CLOSE_PRESSED = 'textures/ui/ore-styled/button/close/background_pressed';
 const ICON_MISSING = 'pack_icon';
 const ICON_CONFIG = 'textures/ui/config/config';
 const ICON_GUIDE = 'textures/ui/config/guide';
+
+/** Addon thumbnail edge (px) in the picker column — larger than the theme's default row icon. */
+const ROW_ICON_SIZE = 20;
 
 // Thumbnail banner proportions (width / height) — the layout engine derives the
 // height from the panel's resolved width via `aspectRatio`.
@@ -77,34 +75,20 @@ export function List({ navigation, route }: AppScreen<'List'>): JSX.Element {
 
   return (
     <Card flexDirection={'column'} padding={0} gap={0}>
-      <Panel flexDirection={'row'} alignItems={'center'} justifyContent={'flex-end'} padding={spacing.sm} marginTop={1} marginLeft={1} marginRight={1} background={HEADER_BG}>
-        <Panel position={'absolute'} left={spacing.sm} right={spacing.sm} top={spacing.sm} bottom={spacing.sm} justifyContent={'center'} alignItems={'center'}>
-          <Text font={'minecraftTen'} scale={1} offsetY={-2}>{'§0Addons'}</Text>
-        </Panel>
-        <Button width={15} height={15} background={ICON_CLOSE} backgroundHover={ICON_CLOSE_HOVER} backgroundPressed={ICON_CLOSE_PRESSED} onPress={exit} />
-      </Panel>
+      <Header title={'Addons'} onClose={exit} />
       <Panel flexDirection={'row'} flexGrow={1}>
         <Panel width={'40%'} padding={spacing.sm}>
           <Scroll>
-            <Panel flexDirection={'column'}>
+            <Panel flexDirection={'column'} gap={spacing.xs}>
               {addons.map(addon => (
-                <Button
-                  background={optionTextures.option}
-                  backgroundHover={optionTextures.optionHover}
-                  backgroundPressed={optionTextures.optionHover}
-                  padding={spacing.sm}
-                  width={'100%'}
-                  justifyContent={'flex-start'}
+                <MenuRow
+                  icon={addon.icon ?? ICON_MISSING}
+                  iconSize={ROW_ICON_SIZE}
+                  title={{ key: addon.packName }}
+                  subtitle={{ text: addon.version }}
+                  chevron={false}
                   onPress={(): void => setSelectedId(addon.id)}
-                >
-                  <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.sm}>
-                    <Image width={20} height={20} texture={addon.icon ?? ICON_MISSING} />
-                    <Panel flexDirection={'column'}>
-                      <Text font={'mojangles'} scale={1} localizationKey={addon.packName} />
-                      <Text font={'mojangles'} scale={1}>{`§7${addon.version}`}</Text>
-                    </Panel>
-                  </Panel>
-                </Button>
+                />
               ))}
             </Panel>
           </Scroll>
