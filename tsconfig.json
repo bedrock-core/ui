@@ -70,7 +70,7 @@
 				"./packages/i18n/src/*"
 			],
 			"@bedrock-core/config": [
-				"./packages/config/src/index.tsx"
+				"./packages/config/src/index.ts"
 			],
 			"@bedrock-core/config/*": [
 				"./packages/config/src/*"

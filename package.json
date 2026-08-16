@@ -46,6 +46,10 @@
       "types": "./src/flexbox.ts",
       "import": "./src/flexbox.ts"
     },
+    "./i18n": {
+      "types": "./src/i18n.ts",
+      "import": "./src/i18n.ts"
+    },
     "./jsx-runtime": {
       "types": "./src/jsx/jsx-runtime.ts",
       "import": "./src/jsx/jsx-runtime.ts"
@@ -89,6 +93,7 @@
     "@bedrock-core/config": "workspace:*",
     "@bedrock-core/flexbox": "workspace:*",
     "@bedrock-core/guides": "workspace:*",
+    "@bedrock-core/i18n": "workspace:*",
     "@bedrock-core/navigation": "workspace:*",
     "@bedrock-core/ore-styled": "workspace:*",
     "@bedrock-core/ui-runtime": "workspace:*"
@@ -119,6 +124,7 @@
     "@minecraft/server": "2.8.0",
     "@minecraft/server-ui": "2.1.0",
     "@bedrock-core/server-runtime": "portal:../server-public/packages/server-runtime",
-    "@bedrock-core/sync": "portal:../server-public/packages/sync"
+    "@bedrock-core/sync": "portal:../server-public/packages/sync",
+    "@bedrock-core/i18n": "workspace:*"
   }
 }
