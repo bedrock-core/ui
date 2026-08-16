@@ -24,6 +24,9 @@
 		"paths": {
 			"@bedrock-core/generated/i18n": [
 				"./packs/data/i18n/i18n.generated.json"
+			],
+			"@bedrock-core/generated/guides": [
+				"./packs/data/guides/guides.generated.json"
 			]
 		}
 	},

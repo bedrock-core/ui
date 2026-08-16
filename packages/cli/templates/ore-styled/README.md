@@ -2,6 +2,10 @@
 
 {{DESCRIPTION}}
 
+A full-stack [bedrock-core](https://bedrock-core.drav.dev/) addon: custom UI,
+cross-addon registration, typed config, TS-first localization, in-game guides
+and JSON generation — all wired and ready.
+
 ## Getting Started
 
 1. **Install dependencies:**
@@ -42,22 +46,44 @@
    yarn watch
    ```
 
+## What's inside
+
+| Feature | Where | What it shows |
+|---------|-------|---------------|
+| **Registration** | `packs/BP/scripts/main.ts` | `core.register()` with i18n-keyed display fields, bundle, guide and config schema |
+| **Custom UI** | `packs/BP/scripts/UI/Example.tsx` | ore-styled screens, navigation, native forms |
+| **Config** | `packs/BP/scripts/config.ts` | Typed schema → widgets in the shared config UI, persisted values |
+| **i18n** | `packs/data/i18n/en_US.ts` | TS-first text: `t()` server-filled, `key()`/`raw()` client-resolved, plurals, interpolation |
+| **Guides** | `packs/data/guides/en_US/` | MDX pages compiled to an in-game guide, auto-localized |
+| **Generator** | `packs/BP/blocks/`, `packs/BP/entities/` | Single-file and multi-file `.ts` → `.json` templates |
+
+The Regolith pipeline runs **generator → guides → i18n → bundler**: JSON is
+generated from the `.ts` templates, guides compile to a manifest plus `.lang`
+entries, translations compile to `.lang` files, the typed runtime bundle and
+`.d.ts` autocompletion, and finally the scripts bundle into one `main.js`.
+
 ## Project Structure
 
 ```ts
 ├── packs/
-│   ├── BP/              # Behavior Pack
+│   ├── BP/                       # Behavior Pack
 │   │   ├── manifest.json
+│   │   ├── blocks/               # generator: multi-file template sample
+│   │   ├── entities/             # generator: single-file template sample
 │   │   ├── scripts/
-│   │   │   ├── main.ts           # Entry point
+│   │   │   ├── main.ts           # Entry point — core.register(), ui(core)
+│   │   │   ├── config.ts         # Config schema (typed accessors)
 │   │   │   └── UI/
-│   │   │       └── Example.tsx   # Example UI component
+│   │   │       ├── Example.tsx   # Example UI component
+│   │   │       └── i18n.ts       # The addon's i18n instance
 │   │   └── texts/
-│   └── RP/              # Resource Pack
-│       ├── manifest.json
-│       ├── ui/          # JSON UI decoders (pre-configured)
-│       └── texts/
-├── config.json          # Regolith configuration
+│   ├── RP/                       # Resource Pack
+│   │   ├── manifest.json
+│   │   └── texts/
+│   └── data/
+│       ├── i18n/                 # TS-first translations (en_US.ts is the contract)
+│       └── guides/               # MDX guide pages per locale
+├── config.json                   # Regolith configuration (filter pipeline)
 ├── package.json
 ├── tsconfig.json
 ├── eslint.config.mjs

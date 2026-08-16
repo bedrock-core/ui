@@ -15,8 +15,8 @@ import {
   theme,
   Toggle,
 } from '@bedrock-core/ore-styled';
-import { Fragment, type JSX, Panel, Text, useState } from '@bedrock-core/ui';
-import './i18n';
+import { Fragment, type JSX, Panel, Text, usePlayer, useState, useTranslation } from '@bedrock-core/ui';
+import { i18n } from './i18n';
 
 // ─── Route map ────────────────────────────────────────────────────────────────
 
@@ -35,13 +35,20 @@ const { fontColor, spacing } = theme.tokens;
 // ─── Screens ──────────────────────────────────────────────────────────────────
 
 function HomeScreen({ navigation }: Screen<'Home'>): JSX.Element {
+  const player = usePlayer();
   const [enabled, setEnabled] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const [plan, setPlan] = useState('basic');
 
+  // The typed verbs, bound to this player's language (./i18n.ts).
+  const { t, key } = useTranslation(i18n);
+
   return (
     <Panel flexDirection={'column'} padding={spacing.md} gap={spacing.md}>
-      <Text>{'§lOre-Styled Example'}</Text>
+      {/* A key() string as a child is auto-detected and resolved CLIENT-side. */}
+      <Text>{key($ => $.meta.name)}</Text>
+      {/* t() resolves + fills server-side in this player's language. */}
+      <Text>{`${fontColor.muted}${t($ => $.example.greeting, { name: player.name })}`}</Text>
 
       <Card>
         <Text>{'Preferences'}</Text>
@@ -135,7 +142,7 @@ const Stack = createStackNavigator<AppRoutes>({
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
 // No translation wiring needed: creating the i18n instance (./i18n.ts) registers the
-// default source, and <Text localizationKey={...} /> measures through it automatically.
+// default source, and localized <Text> children measure through it automatically.
 export function Example(): JSX.Element {
   return (
     <NavigationContainer>

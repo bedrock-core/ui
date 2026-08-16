@@ -11,6 +11,14 @@ function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+/**
+ * Sanitize free-form input (author, project name) into a Minecraft-safe
+ * identifier segment: lowercase alphanumerics joined by underscores.
+ */
+function toIdentifier(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'addon';
+}
+
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
 
@@ -68,8 +76,11 @@ async function copyTemplate(
     'packs/BP/texts/en_US.lang',
     'packs/BP/scripts/main.ts',
     'packs/BP/scripts/UI/Example.tsx',
+    'packs/BP/blocks/tutorial.block.ts',
+    'packs/BP/entities/training_dummy.entity.ts',
     'packs/RP/manifest.json',
     'packs/RP/texts/en_US.lang',
+    'packs/data/i18n/en_US.ts',
   ];
 
   spinner.text = 'Copying template files...';
@@ -290,11 +301,16 @@ export async function createProject(initialProjectName?: string): Promise<void> 
   // Generate UUIDs for manifests
   const uuids = generateManifestUUIDs();
 
-  // Prepare template variables
+  // Prepare template variables. CREATOR_ID / PACK_ID are the sanitized
+  // identifiers used for core.register(), the addon namespace
+  // (<creator>_<pack> — guides/i18n keys, config, state) and generated
+  // block/entity identifiers.
   const variables = {
     PROJECT_NAME: config.projectName,
     AUTHOR: config.author,
     DESCRIPTION: config.description,
+    CREATOR_ID: toIdentifier(config.author),
+    PACK_ID: toIdentifier(config.projectName),
     ...uuids,
   };
 

@@ -1,0 +1,16 @@
+---
+title: Welcome
+sidebar_position: 1
+---
+
+Welcome to your addon's in-game guide. Pages are MDX files under
+`packs/data/guides/<locale>/` — the guides filter compiles them into a manifest
+that `core.register()` publishes, and the shared config UI renders for every
+player. Each line of prose becomes a localized `.lang` entry automatically:
+add a `es_ES/` folder with the same file names to translate the whole guide.
+
+- Edit this page in `packs/data/guides/en_US/intro.mdx`
+- Group pages in folders with a `_category_.json`
+- Link between pages with relative links
+
+See [First Steps](./getting-started/first-steps.mdx) to begin.
