@@ -166,6 +166,18 @@ export function createI18n<B extends I18nBundle>(bundle: B, options: CreateI18nO
   const pathOf = (selector: SelectorLike): string =>
     typeof selector === 'function' ? selector(root)[PATH] : selector;
 
+  const PLURAL_SUFFIX_RE = /_(?:zero|one|two|few|many|other)$/;
+
+  /**
+   * Argument order for a path. A locale-only plural variant (a CLDR category
+   * the default locale never declares, e.g. Czech `few`) may have no recorded
+   * entry in a hand-built bundle — its group's `_other` order applies: plural
+   * variants share one argument set, enforced by the filter's parity checks.
+   */
+  const argsFor = (path: string): readonly string[] | undefined =>
+    bundle.args[path]
+      ?? (PLURAL_SUFFIX_RE.test(path) ? bundle.args[path.replace(PLURAL_SUFFIX_RE, '_other')] : undefined);
+
   const bound = new Map<string, BoundI18n<ResourcesOf<B>>>();
 
   function forLocale(locale: string): BoundI18n<ResourcesOf<B>> {
@@ -210,7 +222,7 @@ export function createI18n<B extends I18nBundle>(bundle: B, options: CreateI18nO
         return { translate, with: toWith(args) };
       }
 
-      const order = bundle.args[variant];
+      const order = argsFor(variant);
 
       if (args !== undefined && order !== undefined && order.length > 0) {
         return { translate, with: toWith(order.map(name => args[name])) };
@@ -242,7 +254,7 @@ export function createI18n<B extends I18nBundle>(bundle: B, options: CreateI18nO
       for (const path of candidates) {
         const template = table[path] ?? defaultTable[path];
 
-        if (template !== undefined) { return toPositional(template, bundle.args[path] ?? []); }
+        if (template !== undefined) { return toPositional(template, argsFor(path) ?? []); }
       }
 
       // Vanilla entries are stored under their branch, already client-form.

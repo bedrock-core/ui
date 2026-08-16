@@ -83,6 +83,18 @@ describe('raw()', () => {
       .toEqual({ translate: 'item.apple.name', with: ['x'] });
   });
 
+  it('keeps count in with for locale-only plural variants', () => {
+    expect(i18n.forLocale('cs_CZ').raw($ => $.shop.stock, { count: 2 }))
+      .toEqual({ translate: 'drav0011_economy.shop.stock_few', with: ['2'] });
+  });
+
+  it('borrows the _other argument order when a hand-built bundle omits variant args', () => {
+    const { 'shop.stock_few': _dropped, ...args } = bundle.args;
+    const handBuilt = createI18n({ ...bundle, args }, { asDefault: false });
+    expect(handBuilt.forLocale('cs_CZ').raw($ => $.shop.stock, { count: 2 }))
+      .toEqual({ translate: 'drav0011_economy.shop.stock_few', with: ['2'] });
+  });
+
   it('switches to rawtext parameters when an argument is itself a translate', () => {
     expect(i18n.raw($ => $.shop.bought, { item: i18n.raw($ => $.vanilla.item.apple.name), price: 5 }))
       .toEqual({

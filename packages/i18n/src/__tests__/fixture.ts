@@ -38,6 +38,7 @@ export const bundle: I18nBundle & { readonly resources?: Resources } = {
   args: {
     'core.addons.version': ['version'],
     'shop.bought': ['item', 'price'],
+    'shop.stock_few': ['count'],
     'shop.stock_one': ['count'],
     'shop.stock_other': ['count'],
   },
