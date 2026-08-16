@@ -12,6 +12,8 @@ export type {
   TranslateFn,
   TranslationResolver,
 } from './createI18n';
+export { resolveDisplay } from './display';
+export type { DisplayText } from './display';
 export { interpolate, templateVars, toPositional } from './interpolate';
 export { pickLocale } from './locale';
 export { pluralCategory } from './plural';
