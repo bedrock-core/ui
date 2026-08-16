@@ -11,7 +11,7 @@
 		"gamepad_cursor": true
 	},
 	"long_form": {
-		"$protocol_header": "bcuiv0007",
+		"$protocol_header": "bcuiv0008",
 		"modifications": [
 			{
 				"array_name": "bindings",
@@ -30,7 +30,7 @@
 		]
 	},
 	"custom_form": {
-		"$protocol_header": "bcuiv0007",
+		"$protocol_header": "bcuiv0008",
 		"modifications": [
 			{
 				"array_name": "bindings",
@@ -49,7 +49,7 @@
 		]
 	},
 	"main_screen_content": {
-		"$protocol_header": "bcuiv0007",
+		"$protocol_header": "bcuiv0008",
 		"size": [
 			"0px",
 			"0px"

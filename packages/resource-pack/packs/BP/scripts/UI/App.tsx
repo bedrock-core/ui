@@ -17,7 +17,7 @@ import {
 import { BackBar } from './components/BackBar';
 import { GuideDemoButton } from './components/GuideDemoButton';
 // Imported for its side effect too: creating the addon's i18n instance is what
-// registers the default translation source Text measures localizationKeys with.
+// registers the default translation source Text measures localized children with.
 import './i18n';
 import { HooksDemo } from './screens/HooksDemo';
 import { I18nDemo } from './screens/I18nDemo';
@@ -281,7 +281,7 @@ const Stack = createStackNavigator<AppRoutes>({
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
 // No translation wiring here — creating the i18n instance (./i18n) registered
-// the default source, and localizationKey measurement resolves through it.
+// the default source, and localized-text measurement resolves through it.
 export function App(): JSX.Element {
   return (
     <NavigationContainer>

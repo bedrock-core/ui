@@ -5,7 +5,7 @@
  * needed for the IDE to autocomplete.
  *
  * This call is also the measurement wiring: it registers itself as the addon's
- * default translation source, and `localizationKey` text resolves through it
+ * default translation source, and localized `Text` children resolve through it
  * automatically — no context, no tables, nothing at the App root.
  */
 import bundle from '@bedrock-core/generated/i18n';

@@ -96,7 +96,8 @@
 					"controls": [
 						{
 							"txt@core_ui_components.label": {
-								"localize": true
+								"localize": true,
+								"$text_source": "#label_rem4"
 							}
 						}
 					]
@@ -109,7 +110,8 @@
 					"controls": [
 						{
 							"txt@core_ui_components.label": {
-								"localize": true
+								"localize": true,
+								"$text_source": "#label_rem4"
 							}
 						}
 					]
@@ -210,7 +212,7 @@
 	// so wrapping must come from the label itself: a width-constrained label wraps its
 	// text natively (the vanilla server_form body-label behavior). The box is sized to
 	// the decoded control width/height (fields 1/2) and nudged by the label group x/y
-	// ([1273]/[1356]); clips_children approximates maxLines for keys (box height =
+	// ([1190]/[1273], v0008 order); clips_children approximates maxLines for keys (box height =
 	// N measured lines). Raw (non-key) text NEVER routes here — it arrives pre-wrapped
 	// as `text`. Decode lives HERE (computed bindings don't propagate to children).
 	"wrap_box": {
@@ -293,9 +295,9 @@
 				"binding_condition": "visible"
 			},
 			{
-				/* --- label group x ([1273]) -> anchored X (skip 1024 + 3×83) --- */
+				/* --- label group x ([1190]) -> anchored X (skip 1024 + 2×83, v0008 order) --- */
 				"binding_type": "view",
-				"source_property_name": "('%.1273s' * #payload)",
+				"source_property_name": "('%.1190s' * #payload)",
 				"target_property_name": "#skip_to_label_x",
 				"binding_condition": "visible"
 			},
@@ -318,7 +320,7 @@
 				"binding_condition": "visible"
 			},
 			{
-				/* --- label group y ([1356]) -> anchored Y --- */
+				/* --- label group y ([1273]) -> anchored Y --- */
 				"binding_type": "view",
 				"source_property_name": "(#rem_at_label_x - #raw_label_x)",
 				"target_property_name": "#rem_at_label_y",
@@ -340,7 +342,8 @@
 		"controls": [
 			{
 				"txt@core_ui_components.label_wrap": {
-					"localize": true
+					"localize": true,
+					"$text_source": "#label_rem4"
 				}
 			}
 		]
@@ -391,6 +394,7 @@
 		"$cell_details_binding_type|default": "none",
 		"$details_collection|default": "",
 		"$label_skip|default": "('%.1024s' * #payload)",
+		"$text_source|default": "(('%.82s' * #raw_label_text) - ('%.2s' * #raw_label_text) - ';')",
 		"$native_binding|default": "#form_button_text",
 		"$native_target|default": "#label_native_unused",
 		"bindings": [
@@ -433,28 +437,9 @@
 				"binding_condition": "visible"
 			},
 			{
-				/* group slot 1: text */
+				/* group slot 1 (v0008): fontType (canonical #font_type alias) */
 				"binding_type": "view",
 				"source_property_name": "('%.83s' * #label_rem0)",
-				"target_property_name": "#raw_label_text",
-				"binding_condition": "visible"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #raw_label_text) - ('%.2s' * #raw_label_text) - ';')",
-				"target_property_name": "#text",
-				"binding_condition": "visible"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(#label_rem0 - #raw_label_text)",
-				"target_property_name": "#label_rem1",
-				"binding_condition": "visible"
-			},
-			{
-				/* group slot 2: fontType (canonical #font_type alias) */
-				"binding_type": "view",
-				"source_property_name": "('%.83s' * #label_rem1)",
 				"target_property_name": "#raw_label_font",
 				"binding_condition": "visible"
 			},
@@ -466,14 +451,14 @@
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(#label_rem1 - #raw_label_font)",
-				"target_property_name": "#label_rem2",
+				"source_property_name": "(#label_rem0 - #raw_label_font)",
+				"target_property_name": "#label_rem1",
 				"binding_condition": "visible"
 			},
 			{
-				/* group slot 3: fontScaleFactor */
+				/* group slot 2: fontScaleFactor */
 				"binding_type": "view",
-				"source_property_name": "('%.83s' * #label_rem2)",
+				"source_property_name": "('%.83s' * #label_rem1)",
 				"target_property_name": "#raw_label_scale",
 				"binding_condition": "visible"
 			},
@@ -485,14 +470,14 @@
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(#label_rem2 - #raw_label_scale)",
-				"target_property_name": "#label_rem3",
+				"source_property_name": "(#label_rem1 - #raw_label_scale)",
+				"target_property_name": "#label_rem2",
 				"binding_condition": "visible"
 			},
 			{
-				/* group slot 4: x -> anchored X (needs the [1,1] host frame) */
+				/* group slot 3: x -> anchored X (needs the [1,1] host frame) */
 				"binding_type": "view",
-				"source_property_name": "('%.83s' * #label_rem3)",
+				"source_property_name": "('%.83s' * #label_rem2)",
 				"target_property_name": "#raw_label_x",
 				"binding_condition": "visible"
 			},
@@ -504,14 +489,14 @@
 			},
 			{
 				"binding_type": "view",
-				"source_property_name": "(#label_rem3 - #raw_label_x)",
-				"target_property_name": "#label_rem4",
+				"source_property_name": "(#label_rem2 - #raw_label_x)",
+				"target_property_name": "#label_rem3",
 				"binding_condition": "visible"
 			},
 			{
-				/* group slot 5: y -> anchored Y */
+				/* group slot 4: y -> anchored Y */
 				"binding_type": "view",
-				"source_property_name": "('%.83s' * #label_rem4)",
+				"source_property_name": "('%.83s' * #label_rem3)",
 				"target_property_name": "#raw_label_y",
 				"binding_condition": "visible"
 			},
@@ -519,6 +504,32 @@
 				"binding_type": "view",
 				"source_property_name": "((('%.82s' * #raw_label_y) - ('%.2s' * #raw_label_y) - ';') * 1)",
 				"target_property_name": "#anchored_offset_value_y",
+				"binding_condition": "visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#label_rem3 - #raw_label_y)",
+				"target_property_name": "#label_rem4",
+				"binding_condition": "visible"
+			},
+			{
+				/* group slot 5 (v0008): text. TERMINAL payloads (the Text cells) carry it
+				   as an UNPADDED, UNPREFIXED, UNCAPPED tail: $text_source overrides to
+				   `#label_rem4` and the raw cell candidate below goes inert. MID-PAYLOAD
+				   groups (options, form-control labels, input value/placeholder) keep the
+				   fixed 83-byte cell via the default. The tail is also where a client-side
+				   RawMessage resolves to: the form text is sent as
+				   { rawtext: [{ text: <fixed fields> }, { translate, with }] } and the
+				   client concatenates the RESOLVED translation into exactly this region. */
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #label_rem4)",
+				"target_property_name": "#raw_label_text",
+				"binding_condition": "visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "$text_source",
+				"target_property_name": "#text",
 				"binding_condition": "visible"
 			}
 		]

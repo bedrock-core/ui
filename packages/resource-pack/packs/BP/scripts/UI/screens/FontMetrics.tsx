@@ -45,34 +45,34 @@ function FontMetricsSection({ font, label }: { font: TextFont; label: string }):
       <GlyphRows font={font} scale={4} prefix={''} />
       <GlyphRows font={font} scale={4} prefix={'§l'} />
 
-      <Text>{`§e§l=== ${label}: localizationKey ===`}</Text>
+      <Text>{`§e§l=== ${label}: key children ===`}</Text>
 
       <Text>{'§7plain (no wrap)'}</Text>
-      <Text font={font} localizationKey={key($ => $.test.long)} />
+      <Text font={font}>{key($ => $.ui.test.long)}</Text>
 
       <Text>{'§7word-wrap'}</Text>
-      <Text font={font} localizationKey={key($ => $.test.long)} wordBreak={'break-word'} />
+      <Text font={font} wordBreak={'break-word'}>{key($ => $.ui.test.long)}</Text>
 
       <Text>{'§7bold word-wrap'}</Text>
-      <Text font={font} localizationKey={key($ => $.test.longBold)} wordBreak={'break-word'} />
+      <Text font={font} wordBreak={'break-word'}>{key($ => $.ui.test.longBold)}</Text>
 
       <Text>{'§7ellipsis'}</Text>
-      <Text font={font} localizationKey={key($ => $.test.long)} overflow={'ellipsis'} />
+      <Text font={font} overflow={'ellipsis'}>{key($ => $.ui.test.long)}</Text>
 
       <Text>{'§7scale=2 word-wrap'}</Text>
-      <Text font={font} scale={2} localizationKey={key($ => $.test.long)} wordBreak={'break-word'} />
+      <Text font={font} scale={2} wordBreak={'break-word'}>{key($ => $.ui.test.long)}</Text>
 
       <Text>{'§7scale=2 ellipsis'}</Text>
-      <Text font={font} scale={2} localizationKey={key($ => $.test.long)} overflow={'ellipsis'} />
+      <Text font={font} scale={2} overflow={'ellipsis'}>{key($ => $.ui.test.long)}</Text>
 
       <Text>{'§7maxLines=2 ellipsis'}</Text>
-      <Text font={font} localizationKey={key($ => $.test.multiline)} wordBreak={'break-word'} overflow={'ellipsis'} maxLines={2} />
+      <Text font={font} wordBreak={'break-word'} overflow={'ellipsis'} maxLines={2}>{key($ => $.ui.test.multiline)}</Text>
 
       <Text>{'§7maxLines=3'}</Text>
-      <Text font={font} localizationKey={key($ => $.test.multiline)} wordBreak={'break-word'} maxLines={3} />
+      <Text font={font} wordBreak={'break-word'} maxLines={3}>{key($ => $.ui.test.multiline)}</Text>
 
       <Text>{'§7scale=2 maxLines=2 ellipsis'}</Text>
-      <Text font={font} scale={2} localizationKey={key($ => $.test.multiline)} wordBreak={'break-word'} overflow={'ellipsis'} maxLines={2} />
+      <Text font={font} scale={2} wordBreak={'break-word'} overflow={'ellipsis'} maxLines={2}>{key($ => $.ui.test.multiline)}</Text>
     </Fragment>
   );
 }

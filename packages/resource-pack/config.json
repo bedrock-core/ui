@@ -35,13 +35,13 @@
 					{
 						"filter": "guides",
 						"settings": {
-							"keyPrefix": "bc_ui"
+							"namespace": "core"
 						}
 					},
 					{
 						"filter": "i18n",
 						"settings": {
-							"namespace": "bc_ui"
+							"namespace": "core"
 						}
 					},
 					{
@@ -62,13 +62,13 @@
 					{
 						"filter": "guides",
 						"settings": {
-							"keyPrefix": "bc_ui"
+							"namespace": "core"
 						}
 					},
 					{
 						"filter": "i18n",
 						"settings": {
-							"namespace": "bc_ui"
+							"namespace": "core"
 						}
 					},
 					{

@@ -24,7 +24,7 @@
 			"50% - 164px",
 			"0%"
 		],
-		"$protocol_header": "bcuiv0007",
+		"$protocol_header": "bcuiv0008",
 		"bindings": [
 			{
 				"binding_name": "#title_text"
