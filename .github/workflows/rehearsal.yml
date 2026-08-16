@@ -1,0 +1,47 @@
+# Release rehearsal: publish every package to a throwaway local registry and
+# install each one from a clean consumer, proving version ranges and tarball
+# dependencies resolve. Never touches registry.npmjs.org (reads are proxied,
+# writes stay on localhost).
+#
+# Manual-only for now: the ui repo's portal: resolutions require a sibling
+# server-public checkout, so this checks out bedrock-core/server alongside.
+# Once the cross-repo portals are dropped (post first release), this can gain
+# a pull_request trigger and lose the server checkout.
+name: Release rehearsal
+
+on:
+  workflow_dispatch:
+    inputs:
+      publisher:
+        description: Publish flow to rehearse
+        type: choice
+        options: [changeset, yarn]
+        default: changeset
+
+jobs:
+  rehearsal:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: ui
+
+      # Private until release; requires the repo to be public or a token with
+      # read access once branch protection/permissions demand it.
+      - uses: actions/checkout@v4
+        with:
+          repository: bedrock-core/server
+          path: server-public
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: corepack enable
+
+      - name: Run rehearsal
+        run: >
+          node ui/scripts/release-rehearsal.mjs
+          --ui-root "$GITHUB_WORKSPACE/ui"
+          --server-root "$GITHUB_WORKSPACE/server-public"
+          --publisher "${{ inputs.publisher }}"
