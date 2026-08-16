@@ -13,6 +13,7 @@ export default defineConfig([
   {
     ignores: [
       'node_modules/**',
+      '**/*.generated.*', // Filter-generated files (i18n bundle + declarations)
       '.*/**',
       '**/*.*js',
       'filters/**',

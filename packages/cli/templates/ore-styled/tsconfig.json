@@ -18,12 +18,12 @@
 		"noImplicitReturns": true,
 		"allowJs": true,
 		"resolveJsonModule": true,
-		"rootDir": "packs/BP/scripts",
+		"rootDir": ".",
 		"jsx": "react-jsx",
 		"jsxImportSource": "@bedrock-core/ui",
 		"paths": {
-			"@bedrock-core/generated/translation-keys": [
-				"./packs/data/translation-keys/translationKeys.generated.json"
+			"@bedrock-core/generated/i18n": [
+				"./packs/data/i18n/i18n.generated.json"
 			]
 		}
 	},

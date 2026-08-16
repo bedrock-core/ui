@@ -2,4 +2,4 @@
 '@bedrock-core/cli': patch
 ---
 
-Update the `ore-styled` template for per-locale translation keys: it now resolves the player's locale with `resolveTranslationKeysForPlayer` + `usePlayer` before providing `TranslationKeysContext`, and the generated `.d.ts` types the module as locale → keys.
+The `ore-styled` template scaffolds the `i18n` Regolith filter instead of `translation-keys`: typed resources in `packs/data/i18n/<locale>.ts`, a `createI18n` instance that registers the addon's default translation source (no context wiring at the root), and the `@bedrock-core/generated/i18n` alias with committed declarations.
