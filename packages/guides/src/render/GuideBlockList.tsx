@@ -21,7 +21,7 @@ export interface GuideBlockListProps {
 
 /**
  * Renders guide IR blocks with existing primitives. All prose renders through
- * `localizationKey` (the filter compiled it into .lang values), so the client
+ * a localized `Text` child (the filter compiled it into .lang values), so the client
  * resolves text per player language and wraps it natively.
  */
 export function GuideBlockList({ blocks, ns, onNavigate, components }: GuideBlockListProps): JSX.Element {
@@ -42,8 +42,8 @@ function renderBlock(block: GuideBlock, ctx: RenderCtx): JSX.Element {
   switch (block.t) {
     case 'h':
       return block.l === 1
-        ? <Text font={'minecraftTen'} scale={4} shadow={false} wordBreak={'break-word'} marginTop={spacing.sm} localizationKey={block.k} />
-        : <Text font={'mojangles'} scale={block.l === 2 ? 1.5 : 1.25} shadow={true} wordBreak={'break-word'} marginTop={spacing.sm} localizationKey={block.k} />;
+        ? <Text font={'minecraftTen'} scale={4} shadow={false} wordBreak={'break-word'} marginTop={spacing.sm}>{block.k}</Text>
+        : <Text font={'mojangles'} scale={block.l === 2 ? 1.5 : 1.25} shadow={true} wordBreak={'break-word'} marginTop={spacing.sm}>{block.k}</Text>;
 
     case 'p':
       return renderRuns(block.runs, ctx);
@@ -66,7 +66,7 @@ function renderBlock(block: GuideBlock, ctx: RenderCtx): JSX.Element {
     case 'adm':
       return (
         <Card variant={'dark'} flexDirection={'column'} gap={spacing.sm}>
-          <Text shadow={true} localizationKey={block.titleK ?? defaultAdmonitionTitleKey(ctx.ns, block.kind)} />
+          <Text shadow={true}>{block.titleK ?? defaultAdmonitionTitleKey(block.kind)}</Text>
           <GuideBlockList blocks={block.blocks} ns={ctx.ns} onNavigate={ctx.onNavigate} components={ctx.components} />
         </Card>
       );
@@ -125,10 +125,10 @@ function renderRuns(runs: GuideRun[], ctx: RenderCtx): JSX.Element {
                 paddingRight={-2}
                 onPress={(): void => ctx.onNavigate?.(to)}
               >
-                <Text shadow={true} wordBreak={'break-word'} localizationKey={run.k} />
+                <Text shadow={true} wordBreak={'break-word'}>{run.k}</Text>
               </OreButton>
             )
-          : <Text shadow={true} wordBreak={'break-word'} localizationKey={run.k} />;
+          : <Text shadow={true} wordBreak={'break-word'}>{run.k}</Text>;
       })}
     </Panel>
   );

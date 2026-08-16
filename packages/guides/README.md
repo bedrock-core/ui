@@ -49,7 +49,7 @@ each by addon id, and render the one your route's param selects.
 | code | dark `Card` of raw `§7` lines (pre-wrapped by the filter) |
 | `<Component />` | looked up in the `components` registry passed via options; placeholder otherwise |
 
-All prose renders through `localizationKey` — text is resolved client-side per player language
+All prose renders as localized `Text` children — text is resolved client-side per player language
 and wraps natively. Text *measurement* (ellipsis/`maxLines`) uses the host's
 `TranslationKeysContext` (default-locale strings); run the filter **before** `translation-keys`
 so guide keys are in the metrics map.

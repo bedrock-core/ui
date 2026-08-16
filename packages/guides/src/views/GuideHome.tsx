@@ -62,8 +62,8 @@ export function GuideHomeView({ manifest, title, onOpenPage, onExit, onClose }: 
   const pageRow = (node: Extract<GuideTreeNode, { t: 'page' }>, depth: number): JSX.Element => (
     <MenuRow
       icon={node.icon}
-      title={{ key: node.titleK }}
-      subtitle={node.descK !== undefined ? { key: node.descK } : undefined}
+      title={node.titleK}
+      subtitle={node.descK}
       depth={depth}
       onPress={(): void => onOpenPage(node.id)}
     />
@@ -72,7 +72,7 @@ export function GuideHomeView({ manifest, title, onOpenPage, onExit, onClose }: 
   const sectionHeader = (node: Extract<GuideTreeNode, { t: 'cat' }>, depth: number, isCollapsed: boolean): JSX.Element => {
     const headerChildren: JSX.Element[] = [
       ...iconSlot(node.icon),
-      <Text font={'minecraftTen'} shadow={true} maxLines={1} overflow={'ellipsis'} flexGrow={1} flexShrink={1} localizationKey={node.labelK} />,
+      <Text font={'minecraftTen'} shadow={true} maxLines={1} overflow={'ellipsis'} flexGrow={1} flexShrink={1}>{node.labelK}</Text>,
       <Text>{isCollapsed ? '§7+' : '§7-'}</Text>,
     ];
 

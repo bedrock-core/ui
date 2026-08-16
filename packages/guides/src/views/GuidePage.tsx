@@ -1,5 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Card, Header, Button as OreButton, theme, type BreadcrumbSegment } from '@bedrock-core/ore-styled';
+import { Card, Header, Button as OreButton, theme } from '@bedrock-core/ore-styled';
+import type { DisplayText } from '@bedrock-core/i18n';
 import { Image, Panel, Scroll, Text, type JSX } from '@bedrock-core/ui-runtime';
 import { GuideBlockList } from '../render/GuideBlockList';
 import type { GuideComponents, GuideManifest, GuideTreeNode, PageId } from '../types';
@@ -9,18 +10,18 @@ const { spacing } = theme.tokens;
 const ICON_INDEX = 'textures/ui/config/menu';
 
 /** Category labels (DFS ancestry) leading to `pageId`, or `[]` if not found in the tree. */
-function breadcrumbPath(tree: GuideTreeNode[], pageId: PageId): BreadcrumbSegment[] {
-  const walk = (nodes: GuideTreeNode[]): BreadcrumbSegment[] | undefined => {
+function breadcrumbPath(tree: GuideTreeNode[], pageId: PageId): DisplayText[] {
+  const walk = (nodes: GuideTreeNode[]): DisplayText[] | undefined => {
     for (const node of nodes) {
       if (node.t === 'page') {
-        if (node.id === pageId) { return [{ key: node.titleK }]; }
+        if (node.id === pageId) { return [node.titleK]; }
 
         continue;
       }
 
       const nested = walk(node.children);
 
-      if (nested) { return [{ key: node.labelK }, ...nested]; }
+      if (nested) { return [node.labelK, ...nested]; }
     }
 
     return undefined;
@@ -83,7 +84,7 @@ export function GuidePageView({ manifest, pageId, title, components, onOpenPage,
             {page
               ? (
                   <Panel flexDirection={'column'} gap={spacing.md}>
-                    <Text font={'minecraftTen'} scale={2} shadow={true} wordBreak={'break-word'} localizationKey={page.titleK} />
+                    <Text font={'minecraftTen'} scale={2} shadow={true} wordBreak={'break-word'}>{page.titleK}</Text>
                     <GuideBlockList blocks={page.blocks} ns={manifest.ns} onNavigate={onOpenPage} components={components} />
                   </Panel>
                 )
@@ -101,7 +102,7 @@ export function GuidePageView({ manifest, pageId, title, components, onOpenPage,
               <OreButton variant={'contrast'} flexGrow={1} paddingTop={spacing.sm} paddingBottom={spacing.sm} onPress={(): void => onOpenPage(prevPage.id)}>
                 <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.xs}>
                   <Text>{'§7<'}</Text>
-                  <Text localizationKey={prevPage.titleK} />
+                  <Text>{prevPage.titleK}</Text>
                 </Panel>
               </OreButton>
             )
@@ -117,7 +118,7 @@ export function GuidePageView({ manifest, pageId, title, components, onOpenPage,
           ? (
               <OreButton variant={'contrast'} flexGrow={1} paddingTop={spacing.sm} paddingBottom={spacing.sm} onPress={(): void => onOpenPage(nextPage.id)}>
                 <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.xs}>
-                  <Text localizationKey={nextPage.titleK} />
+                  <Text>{nextPage.titleK}</Text>
                   <Text>{'§7>'}</Text>
                 </Panel>
               </OreButton>

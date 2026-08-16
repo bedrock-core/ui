@@ -41,7 +41,7 @@ describe('GuideBlockList block mapping', () => {
 
     expect(h1.type).toBe(Text);
     expect(h1.props.font).toBe('minecraftTen');
-    expect(h1.props.localizationKey).toBe('k1');
+    expect(h1.props.children).toBe('k1');
     expect(h2.props.font).toBe('mojangles');
     expect(h2.props.scale).toBe(1.5);
     expect(h3.props.scale).toBe(1.25);
@@ -54,7 +54,7 @@ describe('GuideBlockList block mapping', () => {
     const [text] = childrenOf(p);
 
     expect(text.type).toBe(Text);
-    expect(text.props.localizationKey).toBe('body');
+    expect(text.props.children).toBe('body');
     expect(text.props.wordBreak).toBe('break-word');
   });
 
@@ -67,14 +67,14 @@ describe('GuideBlockList block mapping', () => {
     const [lead, button] = childrenOf(p);
 
     expect(lead.type).toBe(Text);
-    expect(lead.props.localizationKey).toBe('lead');
+    expect(lead.props.children).toBe('lead');
     expect(button.type).toBe(OreButton);
     expect(button.props.variant).toBe('transparent');
     expect(typeof button.props.onPress).toBe('function');
     const [label] = childrenOf(button);
 
     expect(label.type).toBe(Text);
-    expect(label.props.localizationKey).toBe('label');
+    expect(label.props.children).toBe('label');
   });
 
   it('renders unordered and ordered lists with bullets and numbering', () => {
@@ -120,7 +120,7 @@ describe('GuideBlockList block mapping', () => {
     expect(adm.props.variant).toBe('dark');
     const [title, body] = childrenOf(adm);
 
-    expect(title.props.localizationKey).toBe('bcg.demo._adm.tip');
+    expect(title.props.children).toBe('core.guides.adm.tip');
     expect(body.type).toBe(GuideBlockList);
   });
 
@@ -128,7 +128,7 @@ describe('GuideBlockList block mapping', () => {
     const [adm] = renderBlocks([{ t: 'adm', kind: 'warning', titleK: 'custom', blocks: [] }]);
     const [title] = childrenOf(adm);
 
-    expect(title.props.localizationKey).toBe('custom');
+    expect(title.props.children).toBe('custom');
   });
 
   it('renders code blocks as raw §7 lines in a dark card', () => {

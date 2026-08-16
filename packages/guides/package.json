@@ -27,6 +27,10 @@
 		".": {
 			"types": "./src/index.ts",
 			"import": "./src/index.ts"
+		},
+		"./i18n/*": {
+			"types": "./src/i18n/*.ts",
+			"import": "./src/i18n/*.ts"
 		}
 	},
 	"files": [
@@ -50,5 +54,11 @@
 		"@bedrock-core/navigation": "*",
 		"@bedrock-core/ore-styled": "*",
 		"@bedrock-core/ui-runtime": "*"
+	},
+	"bedrockCore": {
+		"i18n": {
+			"dir": "./src/i18n",
+			"namespace": "core"
+		}
 	}
 }
