@@ -69,7 +69,8 @@
     "packages/config",
     "packages/resource-pack",
     "packages/cli",
-    "packages/flexbox"
+    "packages/flexbox",
+    "packages/i18n"
   ],
   "scripts": {
     "regolith-install": "yarn workspaces foreach -i -A --topological --jobs=1 run regolith-install",

@@ -79,6 +79,7 @@ __metadata:
   resolution: "@bedrock-core/config@workspace:packages/config"
   dependencies:
     "@bedrock-core/guides": "workspace:*"
+    "@bedrock-core/i18n": "workspace:*"
     "@bedrock-core/navigation": "workspace:*"
     "@bedrock-core/ore-styled": "workspace:*"
     "@bedrock-core/server-runtime": "npm:^0.1.0"
@@ -87,6 +88,7 @@ __metadata:
     typescript: "npm:^6.0.3"
   peerDependencies:
     "@bedrock-core/guides": "*"
+    "@bedrock-core/i18n": "*"
     "@bedrock-core/navigation": "*"
     "@bedrock-core/ore-styled": "*"
     "@bedrock-core/server-runtime": "*"
@@ -99,6 +101,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bedrock-core/flexbox@workspace:packages/flexbox"
   dependencies:
+    typescript: "npm:^6.0.3"
     vitest: "npm:^4.1.5"
   languageName: unknown
   linkType: soft
@@ -116,6 +119,18 @@ __metadata:
     "@bedrock-core/navigation": "*"
     "@bedrock-core/ore-styled": "*"
     "@bedrock-core/ui-runtime": "*"
+  languageName: unknown
+  linkType: soft
+
+"@bedrock-core/i18n@npm:^0.0.0, @bedrock-core/i18n@workspace:*, @bedrock-core/i18n@workspace:packages/i18n":
+  version: 0.0.0-use.local
+  resolution: "@bedrock-core/i18n@workspace:packages/i18n"
+  dependencies:
+    "@minecraft/server": "npm:2.8.0"
+    typescript: "npm:^6.0.3"
+    vitest: "npm:^4.1.5"
+  peerDependencies:
+    "@minecraft/server": ">=2.8.0"
   languageName: unknown
   linkType: soft
 
@@ -146,6 +161,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bedrock-core/server-runtime@portal:../server-public/packages/server-runtime::locator=%40bedrock-core%2Fui%40workspace%3A."
   dependencies:
+    "@bedrock-core/i18n": "npm:^0.0.0"
     "@bedrock-core/sync": "workspace:^"
   peerDependencies:
     "@minecraft/server": ">=2.8.0"
@@ -165,6 +181,7 @@ __metadata:
   resolution: "@bedrock-core/ui-resource-pack@workspace:packages/resource-pack"
   dependencies:
     "@bedrock-core/guides": "workspace:*"
+    "@bedrock-core/i18n": "workspace:*"
     "@bedrock-core/navigation": "workspace:*"
     "@bedrock-core/ore-styled": "workspace:*"
     "@bedrock-core/ui": "workspace:*"
@@ -188,6 +205,7 @@ __metadata:
   resolution: "@bedrock-core/ui-runtime@workspace:packages/ui-runtime"
   dependencies:
     "@bedrock-core/flexbox": "workspace:*"
+    "@bedrock-core/i18n": "workspace:*"
     "@minecraft/server": "npm:^2.8.0"
     "@minecraft/server-ui": "npm:^2.1.0"
     "@vitest/coverage-v8": "npm:^4.1.5"

@@ -1,45 +1,46 @@
 {
-  "name": "@bedrock-core/flexbox",
-  "version": "0.9.2",
-  "description": "@bedrock-core/ui flexbox layout engine",
-  "keywords": [
-    "ui",
-    "flexbox",
-    "layout",
-    "minecraft",
-    "bedrock",
-    "typescript"
-  ],
-  "license": "MIT",
-  "author": "DrAv0011",
-  "contributors": [
-    {
-      "name": "DrAv0011",
-      "email": "contact@drav.dev",
-      "url": "https://drav.dev"
-    }
-  ],
-  "repository": "github:bedrock-core/ui",
-  "type": "module",
-  "main": "src/index.ts",
-  "types": "src/index.ts",
-  "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts"
-    }
-  },
-  "files": [
-    "src"
-  ],
-  "sideEffects": false,
-  "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "lint": "eslint .",
-    "test": "vitest run",
-    "coverage": "vitest run --coverage"
-  },
-  "devDependencies": {
-    "vitest": "^4.1.5"
-  }
+	"name": "@bedrock-core/flexbox",
+	"version": "0.9.2",
+	"description": "@bedrock-core/ui flexbox layout engine",
+	"keywords": [
+		"ui",
+		"flexbox",
+		"layout",
+		"minecraft",
+		"bedrock",
+		"typescript"
+	],
+	"license": "MIT",
+	"author": "DrAv0011",
+	"contributors": [
+		{
+			"name": "DrAv0011",
+			"email": "contact@drav.dev",
+			"url": "https://drav.dev"
+		}
+	],
+	"repository": "github:bedrock-core/ui",
+	"type": "module",
+	"main": "src/index.ts",
+	"types": "src/index.ts",
+	"exports": {
+		".": {
+			"types": "./src/index.ts",
+			"import": "./src/index.ts"
+		}
+	},
+	"files": [
+		"src"
+	],
+	"sideEffects": false,
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"lint": "eslint .",
+		"test": "vitest run",
+		"coverage": "vitest run --coverage"
+	},
+	"devDependencies": {
+		"typescript": "^6.0.3",
+		"vitest": "^4.1.5"
+	}
 }
