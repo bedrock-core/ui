@@ -149,7 +149,7 @@ function stopVerdaccio() {
 	verdaccio = null;
 }
 
-function prepareRepo(repoRoot) {
+function installRepo(repoRoot) {
 	// Point every npm-client operation in this clone at the local registry.
 	writeFileSync(join(repoRoot, '.npmrc'), [
 		`registry=${registry}/`,
@@ -162,9 +162,11 @@ function prepareRepo(repoRoot) {
 	changesetConfig.changelog = false;
 	writeFileSync(changesetConfigPath, JSON.stringify(changesetConfig, null, 2));
 	run('yarn', ['install'], { cwd: repoRoot, env: { YARN_ENABLE_IMMUTABLE_INSTALLS: 'false' } });
+}
+
+function versionRepo(repoRoot) {
 	run('yarn', ['version-packages'], { cwd: repoRoot });
 	run('yarn', ['install'], { cwd: repoRoot, env: { YARN_ENABLE_IMMUTABLE_INSTALLS: 'false' } });
-	run('yarn', ['build:libs'], { cwd: repoRoot });
 }
 
 function publishRepo(repoRoot) {
@@ -235,9 +237,16 @@ async function main() {
 	cloneRepo(uiRoot, uiClone);
 	if (serverClone) cloneRepo(serverRoot, serverClone);
 
-	log('installing, versioning (applying changesets), building');
-	prepareRepo(uiClone);
-	if (serverClone) prepareRepo(serverClone);
+	// Both repos must be fully installed before either versions or builds:
+	// the portal: resolutions make each repo type-check the other's sources,
+	// which needs the other side's node_modules in place.
+	const clones = [uiClone, serverClone].filter(Boolean);
+	log('installing');
+	for (const clone of clones) installRepo(clone);
+	log('versioning (applying changesets)');
+	for (const clone of clones) versionRepo(clone);
+	log('building');
+	for (const clone of clones) run('yarn', ['build:libs'], { cwd: clone });
 
 	log(`starting throwaway registry on ${registry}`);
 	startVerdaccio();

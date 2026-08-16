@@ -176,7 +176,7 @@ export function createI18n<B extends I18nBundle>(bundle: B, options: CreateI18nO
    */
   const argsFor = (path: string): readonly string[] | undefined =>
     bundle.args[path]
-      ?? (PLURAL_SUFFIX_RE.test(path) ? bundle.args[path.replace(PLURAL_SUFFIX_RE, '_other')] : undefined);
+    ?? (PLURAL_SUFFIX_RE.test(path) ? bundle.args[path.replace(PLURAL_SUFFIX_RE, '_other')] : undefined);
 
   const bound = new Map<string, BoundI18n<ResourcesOf<B>>>();
 
