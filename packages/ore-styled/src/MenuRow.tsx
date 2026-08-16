@@ -1,10 +1,8 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import type { ControlProps, JSX } from '@bedrock-core/ui-runtime';
-import { Button, Image, Panel, Text } from '@bedrock-core/ui-runtime';
+import type { DisplayText } from '@bedrock-core/i18n';
+import { Button, Image, Panel, Text, useTranslationResolver } from '@bedrock-core/ui-runtime';
 import { theme } from './tokens';
-
-/** Text that is either literal (colorable with §-codes) or a localization key. */
-export type TextSource = { text: string } | { key: string };
 
 export interface MenuRowProps extends ControlProps {
   /** Leading thumbnail texture. Omit for a text-only row. */
@@ -12,9 +10,9 @@ export interface MenuRowProps extends ControlProps {
   /** Thumbnail edge in px. Defaults to the theme's row icon size. */
   iconSize?: number;
   /** First line — the row's name. */
-  title: TextSource;
+  title: DisplayText;
   /** Second line, rendered muted. Omit for a single-line row. */
-  subtitle?: TextSource;
+  subtitle?: DisplayText;
   /** Trailing `>` affordance. Default `true` — set `false` for rows that select rather than navigate. */
   chevron?: boolean;
   /**
@@ -51,10 +49,20 @@ export function MenuRow({
   const titleColor = enabled ? row.textStyle.color : row.textStyle.disabledColor;
   const subtitleColor = enabled ? row.textStyle.muted : row.textStyle.mutedDisabled;
 
-  const line = (source: TextSource, color: string, shadow: boolean): JSX.Element =>
-    'key' in source
-      ? <Text font={font} scale={scale} shadow={shadow} maxLines={1} overflow={'ellipsis'} localizationKey={source.key} />
-      : <Text font={font} scale={scale} shadow={shadow} maxLines={1} overflow={'ellipsis'}>{`${color}${source.text}`}</Text>;
+  // Literal strings carry the row color as a §-prefix; localized content (a
+  // RawMessage, or a string the resolver knows as a key) passes through
+  // untouched — a color prefix would break key resolution.
+  const resolver = useTranslationResolver();
+
+  const line = (source: DisplayText, color: string, shadow: boolean): JSX.Element => {
+    const literal = typeof source === 'string' && (source === '' || resolver?.(source) === undefined);
+
+    return (
+      <Text font={font} scale={scale} shadow={shadow} maxLines={1} overflow={'ellipsis'}>
+        {literal ? `${color}${source}` : source}
+      </Text>
+    );
+  };
 
   const lines: JSX.Element[] = [line(title, titleColor, true)];
 

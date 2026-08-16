@@ -44,5 +44,8 @@
 	},
 	"peerDependencies": {
 		"@bedrock-core/ui-runtime": "*"
+	},
+	"dependencies": {
+		"@bedrock-core/i18n": "workspace:*"
 	}
 }

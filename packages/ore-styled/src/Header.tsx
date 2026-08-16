@@ -1,16 +1,14 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import type { ControlProps, JSX } from '@bedrock-core/ui-runtime';
-import { Button, Panel, Text, TranslationContext, useContext } from '@bedrock-core/ui-runtime';
+import { Button, Panel, Text, useTranslationResolver } from '@bedrock-core/ui-runtime';
+import { resolveDisplay, type DisplayText } from '@bedrock-core/i18n';
 import { theme } from './tokens';
-
-/** One label in the header trail — raw text (colorable) or a localization key. */
-export type BreadcrumbSegment = { text: string } | { key: string };
 
 export interface HeaderProps extends ControlProps {
   /** The screen's own name, first in the trail. */
-  title: string | BreadcrumbSegment;
+  title: DisplayText;
   /** Trail after the title, e.g. scope and entity labels: `title > … > …`. */
-  breadcrumbs?: BreadcrumbSegment[];
+  breadcrumbs?: DisplayText[];
   /** Omit to hide the back control (the slot keeps its width, so the title stays centered). */
   onBack?: () => void;
   /** Omit to hide the close control. */
@@ -28,14 +26,15 @@ export interface HeaderProps extends ControlProps {
  * back to the key itself.
  */
 export function Header({ title, breadcrumbs, onBack, onClose, ...layout }: HeaderProps): JSX.Element {
-  const resolveKey = useContext(TranslationContext);
+  const resolver = useTranslationResolver();
   const h = theme.components.header;
   const { color, separator } = h.textStyle;
 
-  const resolve = (segment: BreadcrumbSegment): string =>
-    'key' in segment ? (resolveKey?.(segment.key) ?? segment.key) : segment.text;
+  // resolveDisplay: literal strings pass through (resolver miss), key strings
+  // and RawMessages become their filled display strings.
+  const resolve = (segment: DisplayText): string => resolveDisplay(resolver, segment);
 
-  const head = typeof title === 'string' ? title : resolve(title);
+  const head = resolve(title);
   const trail = (breadcrumbs ?? []).map(resolve).join(`${separator} > ${color}`);
 
   return (

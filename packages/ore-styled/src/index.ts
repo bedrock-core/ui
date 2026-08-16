@@ -17,10 +17,10 @@ export { Divider } from './Divider';
 export type { DividerProps, DividerOrientation, DividerVariant } from './Divider';
 
 export { Header } from './Header';
-export type { HeaderProps, BreadcrumbSegment } from './Header';
+export type { HeaderProps } from './Header';
 
 export { MenuRow } from './MenuRow';
-export type { MenuRowProps, TextSource } from './MenuRow';
+export type { MenuRowProps } from './MenuRow';
 
 export { Input } from './Input';
 export type { InputProps } from './Input';
