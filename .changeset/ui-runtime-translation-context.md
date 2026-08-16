@@ -2,10 +2,13 @@
 '@bedrock-core/ui-runtime': minor
 ---
 
-Translation resolution is now `@bedrock-core/i18n`-native — lazy resolvers instead of materialized key maps.
+Translation resolution is now `@bedrock-core/i18n`-native — lazy resolvers instead of materialized key maps — and `Text` has ONE text channel.
 
-- **Zero wiring for the common case:** the addon's `createI18n(bundle)` call registers the default translation source, and `localizationKey` text measures through it automatically, per player. No context at the root, no tables.
+- **`children?: DisplayText` (`string | RawMessage`) is the only text channel** — the `localizationKey` prop is removed. Protocol v0008 made key and literal text the same wire format (an uncapped variable tail read by a `localize: true` label), so there is nothing to declare: a string child the active resolver knows is treated as a key (client-resolved, per player language); any other string paints literally — exactly what Bedrock does with an unmatched key. A `RawMessage` child (`raw()` output) is always localized; with arguments it rides the rawtext tail and the CLIENT resolves and fills it — no length cap, `score`/`selector` parts included.
+- **Zero wiring for the common case:** the addon's `createI18n(bundle)` call registers the default translation source, and localized children measure through it automatically, per player. No context at the root, no tables.
 - **`TranslationContext`** replaces `TranslationKeysContext`: it carries a `TranslationResolver` (`(key) => string | undefined`) and exists to OVERRIDE the default — hosts that resolve beyond their own bundle (`@bedrock-core/config` provides `core.translations.forPlayer(player)`, which chains every addon's published bundle) or subtrees pinned to custom data.
-- **`Text` accepts `raw()` output** (`RawMessage`) on `localizationKey`: without arguments it behaves exactly like the bare key (client-resolved); with arguments the string is resolved and filled server-side in the player's language — a `.lang` label has no client-side argument channel — with a console warning when the filled text crosses the 80-byte cap.
+- **`useTranslation(i18n)`** — THE translation hook, one home for what every addon was hand-rolling: pass the addon's `createI18n(bundle)` instance and get its fully-typed verbs (`t`, `key`, `raw`, `display`, `resolve`, `locale`) bound to the viewing player through the locale chain. Lives here (not in `@bedrock-core/i18n`) because binding needs the fiber's player — the i18n package stays hook-free for server-side code.
+- **Context is the one mechanism:** `render()` injects the default instance's resolver into `TranslationContext` at every root (re-derived each build pass, so `setLocale` overrides are picked up live); a provider in the tree shadows it for a subtree. `useTranslationResolver()` is sugar over `useContext(TranslationContext)` (`null` outside a fiber) for components that build display strings themselves.
+- **Protocol v0008:** the label payload group is reordered to `fontType, fontScale, x, y, text` with the text as an uncapped tail, and `RawMessage` tails are serialized as `{rawtext: [...]}` JSON for the client to resolve. Requires the v0008 resource pack (`bcuiv0008` headers).
 
-**Removed:** `resolveTranslationKeysForPlayer`, `TranslationKeysByLocale`, `TranslationKeysMap`, `TranslationKeysContext`.
+**Removed:** `Text.localizationKey`, `resolveTranslationKeysForPlayer`, `TranslationKeysByLocale`, `TranslationKeysMap`, `TranslationKeysContext`.

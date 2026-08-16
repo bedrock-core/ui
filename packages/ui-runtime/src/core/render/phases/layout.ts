@@ -65,14 +65,25 @@ interface TextMetricsData {
   maxLines?: number;
 }
 
+/** The string content of a `value` prop — plain, or inside a v0008 tail wrapper. */
+function valueText(value: unknown): string {
+  if (typeof value === 'string') { return value; }
+
+  if (typeof value === 'object' && value !== null && 'tail' in value) {
+    const tail = (value).tail;
+
+    return typeof tail === 'string' ? tail : '';
+  }
+
+  return '';
+}
+
 function extractTextMetrics(props: JSX.Props): TextMetricsData {
   const metrics = props.__textMetrics;
   const isMetricsObject = metrics && typeof metrics === 'object' && !Array.isArray(metrics);
 
   if (!isMetricsObject) {
-    const text = typeof props.value === 'string' ? props.value : '';
-
-    return { text };
+    return { text: valueText(props.value) };
   }
 
   // For localization keys, __textMetrics.resolvedText holds the translated string
@@ -80,9 +91,7 @@ function extractTextMetrics(props: JSX.Props): TextMetricsData {
   const resolvedText = Reflect.get(metrics, 'resolvedText');
   const text = typeof resolvedText === 'string'
     ? resolvedText
-    : typeof props.value === 'string'
-      ? props.value
-      : '';
+    : valueText(props.value);
 
   const font = Reflect.get(metrics, 'font');
   const scale = Reflect.get(metrics, 'fontSize');
@@ -501,7 +510,7 @@ function dumpLayoutTree(element: JSX.Node, depth = 0): void {
   const p = element.props;
   const indent = '  '.repeat(depth);
   const type = typeof element.type === 'string' ? element.type : element.type.name;
-  const text = typeof p.value === 'string' ? ` "${p.value.slice(0, 20)}"` : '';
+  const text = valueText(p.value) !== '' ? ` "${valueText(p.value).slice(0, 20)}"` : '';
 
   console.warn(`${indent}[${type}${text}] x=${p.jsonUIx} y=${p.jsonUIy} w=${p.jsonUIWidth} h=${p.jsonUIHeight}`);
 
@@ -579,7 +588,8 @@ function resolveDerivedProps(element: JSX.Node): void {
         && Reflect.get(metrics, 'isKey') === true;
 
       if (!isLocalizationKey) {
-        element.props.value = safeLabelText(processOverflowText(td, width));
+        // v0008: literal text lives in the payload's tail wrapper.
+        element.props.value = { tail: safeLabelText(processOverflowText(td, width)) };
       }
     }
   }

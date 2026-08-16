@@ -2,6 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { serializeProps, serializeScrollMetadata, type ScrollMetrics, BACKGROUND_TITLE_SKIP, FIELD_MARKERS, FULL_WIDTH, PAD_CHAR, PROTOCOL_HEADER, PROTOCOL_HEADER_LENGTH } from '../serializer';
 import { isTextElementType, Text, TEXT_SHADOW_TYPE, TEXT_SHADOW_WRAP_TYPE, TEXT_WRAP_TYPE } from '../../components/Text';
 
+/** Narrow a tail-free test payload to string (v0008: serializeProps may return RawMessage). */
+function str(payload: unknown): string {
+  if (typeof payload !== 'string') { throw new Error('expected a string payload'); }
+
+  return payload;
+}
+
 describe('serializeProps — text font field', () => {
   it('serializes mojangles font as "default"', () => {
     const [payload] = serializeProps({
@@ -32,8 +39,8 @@ describe('serializeProps — text font field', () => {
       fontType: 'default',
     });
 
-    const valuePos = payload.indexOf('s:AB');
-    const fontPos = payload.indexOf('s:default');
+    const valuePos = str(payload).indexOf('s:AB');
+    const fontPos = str(payload).indexOf('s:default');
 
     expect(valuePos).toBeGreaterThan(-1);
     expect(fontPos).toBeGreaterThan(valuePos);
@@ -95,7 +102,7 @@ describe('Text shadow prop', () => {
     expect(shadowed).toContain('s:text_shadow');
     expect(bytesShadowed).toBe(bytesPlain); // type is one padded string field either way
     // Identical past the type field — the label group offsets are unchanged.
-    expect(shadowed.slice(PROTOCOL_HEADER_LENGTH + FULL_WIDTH.s)).toBe(plain.slice(PROTOCOL_HEADER_LENGTH + FULL_WIDTH.s));
+    expect(str(shadowed).slice(PROTOCOL_HEADER_LENGTH + FULL_WIDTH.s)).toBe(str(plain).slice(PROTOCOL_HEADER_LENGTH + FULL_WIDTH.s));
   });
 });
 
@@ -178,5 +185,33 @@ describe('serializeScrollMetadata', () => {
     const bgStart = PROTOCOL_HEADER_LENGTH + BACKGROUND_TITLE_SKIP;
 
     expect(payload.slice(bgStart, bgStart + 's:textures/ui/my_bg'.length)).toBe('s:textures/ui/my_bg');
+  });
+});
+
+describe('v0008 payload tails', () => {
+  it('appends a string tail verbatim — no prefix, no padding, no marker', () => {
+    const long = 'x'.repeat(300);
+    const [payload] = serializeProps({ type: 'text', fontType: 'default', value: { tail: long } });
+
+    expect(str(payload).endsWith(long)).toBe(true);
+    // The fixed prefix before the tail is untouched (type + fontType fields).
+    expect(str(payload)).toContain('s:default');
+  });
+
+  it('composes a RawMessage tail as [fixed prefix, tail] rawtext', () => {
+    const tail = { translate: 'shop.bought', with: ['Apple', '5'] };
+    const [payload] = serializeProps({ type: 'text', fontType: 'default', value: { tail } });
+
+    expect(typeof payload).toBe('object');
+
+    const raw = payload as { rawtext: [{ text: string }, unknown] };
+
+    expect(raw.rawtext[0].text).toContain('s:default');
+    expect(raw.rawtext[1]).toBe(tail);
+  });
+
+  it('rejects a tail that is not the final field', () => {
+    expect(() => serializeProps({ type: 'text', value: { tail: 'x' }, fontType: 'default' }))
+      .toThrow(/last field/);
   });
 });

@@ -17,7 +17,7 @@ function el(type: string, layout: Record<string, unknown>, children?: JSX.Node):
 
 /**
  * Build a text element the way `<Text>` does: layout props through withControl,
- * text metrics on `__textMetrics`. Pass `key: true` to mimic a localizationKey
+ * text metrics on `__textMetrics`. Pass `key: true` to mimic key-child
  * text (props.value must stay the key — the commit path must not rewrite it).
  */
 function text(
@@ -134,8 +134,8 @@ describe('overflow text value commit', () => {
 
     computeLayout(tree);
 
-    expect(t.props.value).toBe(wrapText(DESC, asNum(t.props.jsonUIWidth), undefined, 1));
-    expect(t.props.value).toContain('\n');
+    expect(t.props.value).toEqual({ tail: wrapText(DESC, asNum(t.props.jsonUIWidth), undefined, 1) });
+    expect((t.props.value as { tail: string }).tail).toContain('\n');
   });
 
   it('keeps props.value untouched for localization keys (RP resolves the key)', () => {
@@ -159,7 +159,7 @@ describe('overflow text value commit', () => {
 
     computeLayout(tree);
 
-    expect(String(t.props.value).startsWith('§r')).toBe(true);
+    expect((t.props.value as { tail: string }).tail.startsWith('§r')).toBe(true);
   });
 
   it('ellipsizes to a single line at the granted width', () => {
@@ -170,7 +170,7 @@ describe('overflow text value commit', () => {
 
     expect(asNum(t.props.jsonUIHeight)).toBe(LINE_HEIGHT);
     expect(asNum(t.props.jsonUIWidth)).toBeLessThanOrEqual(100);
-    expect(String(t.props.value).endsWith('...')).toBe(true);
+    expect((t.props.value as { tail: string }).tail.endsWith('...')).toBe(true);
   });
 
   it('maxLines truncates the wrapped text to N lines', () => {
@@ -180,12 +180,12 @@ describe('overflow text value commit', () => {
     computeLayout(tree);
 
     expect(asNum(t.props.jsonUIHeight)).toBe(2 * LINE_HEIGHT);
-    expect(String(t.props.value).split('\n')).toHaveLength(2);
+    expect((t.props.value as { tail: string }).tail.split('\n')).toHaveLength(2);
 
     const kept = wrapText(DESC, asNum(t.props.jsonUIWidth), undefined, 1).split('\n').slice(0, 2);
 
     // A wrapped line fits by construction, so ellipsizeText leaves it unchanged.
-    expect(t.props.value).toBe(kept.join('\n'));
+    expect(t.props.value).toEqual({ tail: kept.join('\n') });
   });
 });
 

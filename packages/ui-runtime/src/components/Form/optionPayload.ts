@@ -236,8 +236,8 @@ export function optionLabelPosition(
  * option, and — since `options[]` bypasses the serializer's primitive prop channel — option
  * text is not subject to the 80-byte field cap here.
  *
- * Field ORDER is the RP decode contract. The LABEL GROUP leads (text [92], fontType [175],
- * fontScale [258], labelX [341], labelY [424]) so the RP `option_label` reuses label's
+ * Field ORDER is the RP decode contract. The LABEL GROUP leads (v0008 order: fontType [92],
+ * fontScale [175], labelX [258], labelY [341], text [424]) so the RP `option_label` reuses label's
  * sequential group decode with just `$label_skip` = [92] — no bespoke bindings. Then:
  * height [507] (legacy), background [590], backgroundHover [673], backgroundSelected [756],
  * bulletTexture [839], bulletSelectedTexture [922], optionX [1005], optionY [1088],
@@ -252,12 +252,12 @@ export function serializeSelectOption(
 ): string {
   const [payload] = serializeProps({
     type: DROPDOWN_OPTION_TYPE,
-    // --- the label GROUP (label contract): text, fontType, fontScale, x, y ---
-    text, // [92] → #custom_radio_text (visible label)
-    fontType: style.fontType, // [175]
-    fontScaleFactor: style.fontScaleFactor, // [258]
-    labelX: label.x, // [341] → option_label anchored X (TS-computed alignment)
-    labelY: label.y, // [424] → option_label anchored Y (vertical centering)
+    // --- the label GROUP (label contract, v0008 order): fontType, fontScale, x, y, text ---
+    fontType: style.fontType, // [92]
+    fontScaleFactor: style.fontScaleFactor, // [175]
+    labelX: label.x, // [258] → option_label anchored X (TS-computed alignment)
+    labelY: label.y, // [341] → option_label anchored Y (vertical centering)
+    text, // [424] → #custom_radio_text (visible label; fixed cell — mid-payload group)
     // --- row fields ---
     height: style.height, // [507] (legacy flow row height, unused)
     background: style.background, // [590] idle option face
@@ -276,6 +276,10 @@ export function serializeSelectOption(
     bulletHoverTexture: style.bulletHoverTexture, // [1503] unselected bullet on hover
     bulletSelectedHoverTexture: style.bulletSelectedHoverTexture, // [1586] selected bullet on hover
   });
+
+  if (typeof payload !== 'string') {
+    throw new Error('serializeSelectOption(): option payloads never carry tails');
+  }
 
   return payload;
 }

@@ -1,8 +1,18 @@
+import type { RawMessage } from '@minecraft/server';
 import { ActionFormData, ModalFormData } from '@minecraft/server-ui';
 
 export interface ReservedBytes { bytes: number }
 
-export type SerializablePrimitive = string | number | boolean | ReservedBytes;
+/**
+ * v0008: the LAST field of a payload may be a variable-length tail — unpadded,
+ * unprefixed, unmarked, uncapped. A string tail is appended verbatim; a
+ * RawMessage tail makes the whole form text a rawtext pair
+ * `[{ text: <fixed fields> }, <tail>]`, so the CLIENT resolves the tail (its
+ * own language, `with` parameters filled) into exactly the tail region.
+ */
+export type TailValue = { tail: string | RawMessage };
+
+export type SerializablePrimitive = string | number | boolean | ReservedBytes | TailValue;
 
 export type SerializableProps = Record<string, SerializablePrimitive>;
 
@@ -76,7 +86,7 @@ export class SerializationError extends Error {
 }
 
 /**
- * @deprecated No longer thrown: a `localizationKey` missing from the map measures as the
+ * @deprecated No longer thrown: a key missing from the resolver measures as the
  * literal key string (mirroring Bedrock's unmatched-key rendering). Kept for API compat.
  */
 export class TranslationKeysError extends Error {
@@ -115,7 +125,7 @@ export class ModalFormError extends Error {
 }
 
 export type Writer = (
-  payload: string,
+  payload: string | RawMessage,
   form: FormTarget,
   ctx: SerializationContext | undefined,
   callbacks: Record<string, (...args: unknown[]) => void>,

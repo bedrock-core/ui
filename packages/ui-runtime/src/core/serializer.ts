@@ -4,6 +4,7 @@ import { TEXT_SHADOW_TYPE } from '../components/Text';
 import { JSX } from '../jsx';
 import { getComponentDescriptor, getRegisteredTypes, isTransparentType } from './componentRegistry';
 import { isElement, isFunction, isSerializablePrimitive } from './guards';
+import type { RawMessage } from '@minecraft/server';
 import { FormTarget, ModalFormError, SerializablePrimitive, SerializableProps, SerializationContext, SerializationError } from './types';
 
 /**
@@ -24,7 +25,11 @@ export const PAD_CHAR = ';';
 // v0007: scroll-component model — the title carries a flat list of scroll viewports
 // (axis + geometry + content extent) instead of a screen type + per-region extents.
 // The component `region` field now holds the scroll index it belongs to.
-export const VERSION = 'v0007';
+// v0008: label group reordered to [fontType, fontScale, x, y, text], and the
+// text of TERMINAL payloads (Text cells) is a variable-length TAIL — unpadded,
+// unprefixed, uncapped. A RawMessage tail turns the form text into a rawtext
+// pair [{ text: <fixed fields> }, <tail>], resolved by the CLIENT.
+export const VERSION = 'v0008';
 export const PROTOCOL_HEADER = `bcui${VERSION}`;
 export const PROTOCOL_HEADER_LENGTH = 9; // bytes, all characters are single-byte ASCII
 
@@ -291,15 +296,33 @@ export function serialize({ type, props: { children, ...rest }, nativeArgs }: JS
  * @param component - Component type and props
  * @returns [serialized component string, total byte length]
  */
-export function serializeProps({ type, ...props }: SerializableProps & { type: string }): [string, number] {
+export function serializeProps({ type, ...props }: SerializableProps & { type: string }): [string | RawMessage, number] {
   let totalBytes = 0;
+  let rawTail: RawMessage | undefined;
 
-  const segments = Object.entries({ type, ...props }).map(([key, value]: [string, SerializablePrimitive], index: number): string => {
+  const entries = Object.entries({ type, ...props });
+  const segments = entries.map(([key, value]: [string, SerializablePrimitive], index: number): string => {
     let core: string;
     let widthBytes: number;
     let rawStr: string;
 
-    if (typeof value === 'boolean') {
+    if (typeof value === 'object' && value !== null && 'tail' in value) {
+      // Variable-length tail: MUST be the final field — everything before it
+      // decodes at fixed offsets, the tail is simply "the rest".
+      if (index !== entries.length - 1) {
+        throw new SerializationError(`serialize(): tail property "${key}" must be the last field of the payload`);
+      }
+
+      if (typeof value.tail === 'string') {
+        totalBytes += utf8ByteLength(value.tail);
+
+        return value.tail; // no prefix, no pad, no marker
+      }
+
+      rawTail = value.tail;
+
+      return ''; // composed after the fixed prefix below
+    } else if (typeof value === 'boolean') {
       rawStr = value ? 'true' : 'false';
       core = `${TYPE_PREFIX.b}:${padToByteLength(rawStr, TYPE_WIDTH.b)}`;
       widthBytes = FULL_WIDTH.b;
@@ -331,7 +354,23 @@ export function serializeProps({ type, ...props }: SerializableProps & { type: s
   const result = prefix + segments.join('');
   const finalBytes = totalBytes + utf8ByteLength(prefix);
 
+  if (rawTail !== undefined) {
+    // The client resolves the rawtext BEFORE the RP's bindings read the form
+    // text: fixed fields keep their byte offsets, the resolved translation
+    // (client language, `with` filled) lands in the tail region.
+    return [{ rawtext: [{ text: result }, rawTail] }, finalBytes];
+  }
+
   return [result, finalBytes];
+}
+
+/** Narrow a tail-free payload (titles, metadata blocks) back to a string. */
+function asStaticPayload(payload: string | RawMessage): string {
+  if (typeof payload !== 'string') {
+    throw new SerializationError('serialize(): tail payloads are not valid in title/metadata fields');
+  }
+
+  return payload;
 }
 
 /**
@@ -425,7 +464,7 @@ export function serializeScrollMetadata(scrolls: readonly ScrollMetrics[], backg
 
   const [payload] = serializeProps({ type: 'scrolls', ...fields });
 
-  return payload;
+  return asStaticPayload(payload);
 }
 
 /**
@@ -479,5 +518,5 @@ export function serializeModalTitle(
     ...backgroundFields,
   });
 
-  return payload;
+  return asStaticPayload(payload);
 }

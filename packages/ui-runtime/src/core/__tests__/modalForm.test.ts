@@ -255,23 +255,23 @@ describe('modal control serialization', () => {
 
     const [alpha] = items;
 
-    // Fixed field layout — the LABEL GROUP leads (label contract): text [92],
-    // fontType [175], fontScale [258], labelX [341], labelY [424]; then height [507]
-    // (legacy, always 0), bg [590], hover [673], selected [756]. Alignment is
-    // TS-computed into labelX/labelY (optionLabelPosition).
+    // Fixed field layout — the LABEL GROUP leads (label contract, v0008 order):
+    // fontType [92], fontScale [175], labelX [258], labelY [341], text [424];
+    // then height [507] (legacy, always 0), bg [590], hover [673], selected
+    // [756]. Alignment is TS-computed into labelX/labelY (optionLabelPosition).
     expect(alpha.indexOf('s:dropdown-option')).toBe(9);
-    expect(alpha.indexOf('s:Alpha')).toBe(92);
-    expect(alpha.indexOf('s:MinecraftTen')).toBe(175);
-    expect(alpha.indexOf('n:3')).toBe(258); // 1.5 scale / 0.5 base
-    expect(alpha.slice(341, 343)).toBe('n:'); // labelX
-    expect(alpha.slice(424, 426)).toBe('n:'); // labelY
+    expect(alpha.indexOf('s:Alpha')).toBe(424);
+    expect(alpha.indexOf('s:MinecraftTen')).toBe(92);
+    expect(alpha.indexOf('n:3')).toBe(175); // 1.5 scale / 0.5 base
+    expect(alpha.slice(258, 260)).toBe('n:'); // labelX
+    expect(alpha.slice(341, 343)).toBe('n:'); // labelY
     expect(alpha.slice(507, 510)).toBe('n:0'); // legacy height slot
     expect(alpha.indexOf('s:textures/ui/opt_bg')).toBe(590);
     expect(alpha.indexOf('s:textures/ui/opt_hover')).toBe(673);
     expect(alpha.indexOf('s:textures/ui/opt_selected')).toBe(756);
 
     // The second option carries the SAME style but its own text.
-    expect(items[1].indexOf('s:Beta')).toBe(92);
+    expect(items[1].indexOf('s:Beta')).toBe(424);
   });
 
   // Inline-select (radio / toggle-button) reuses the native dropdown() call. Options are now
@@ -304,7 +304,7 @@ describe('modal control serialization', () => {
     // First option blob: text[92], bullets[839]/[922], geometry[1005]/[1088]/[1171]/[1254].
     const [redBlob] = itemsArg(form, 'dropdown');
 
-    expect(redBlob.indexOf('s:Red')).toBe(92);
+    expect(redBlob.indexOf('s:Red')).toBe(424);
     expect(redBlob.indexOf('s:textures/ui/radio_off')).toBe(839);
     expect(redBlob.indexOf('s:textures/ui/radio_on')).toBe(922);
     expect(redBlob.indexOf('n:41')).toBe(1005); // optionX

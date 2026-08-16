@@ -1,6 +1,6 @@
-import { useContext } from '../hooks';
+import { interpolate, type DisplayText } from '@bedrock-core/i18n';
 import { FunctionComponent, JSX } from '../jsx';
-import { TranslationKeysContext } from '../data/TranslationKeys';
+import { useTranslationResolver } from '../data/Translation';
 import { type Writer } from '../core/types';
 import { emitLabel } from '../core/writers';
 import { ControlProps, withControl } from './control';
@@ -20,7 +20,7 @@ export const TEXT_SHADOW_TYPE = 'text_shadow';
 
 /**
  * Element types for LOCALIZED overflow text (wordBreak/ellipsis/maxLines on a
- * `localizationKey`). The build side cannot pre-process a key — `props.value`
+ * localized child). The build side cannot pre-process a key — `props.value`
  * must stay the key and the RP resolves it at render — so these route to an RP
  * label variant whose width is bound to the control box, making Bedrock wrap
  * the resolved string natively. Raw text never uses them (it is pre-wrapped at
@@ -53,37 +53,26 @@ export interface TextProps extends ControlProps {
   scale?: number;
 
   /**
-   * Raw text content to display. Max 80 UTF-8 bytes.
-   * For longer strings, use `localizationKey` instead.
+   * The ONE text channel — v0008 collapsed key and text into the same wire
+   * format (the payload's uncapped variable tail, read by a `localize: true`
+   * label), so there is nothing to declare:
+   *
+   * - a **string** is auto-detected: if the active resolver knows it as a key
+   *   (`key()` output, a registry display field, any published key), it is
+   *   localized — the client resolves it in its own language. Otherwise it
+   *   paints literally, exactly as Bedrock treats an unmatched key. The check
+   *   only steers layout metrics and wrap routing; what paints is always the
+   *   client's own resolution attempt.
+   * - a **`RawMessage`** (`raw()` output) is always localized; WITH arguments
+   *   it rides the rawtext tail and the CLIENT resolves and fills it — its
+   *   own language, no length cap, `score`/`selector` parts included.
+   *
+   * Layout metrics need no wiring: the addon's `createI18n(bundle)` call
+   * registers the default translation source; `TranslationContext` overrides
+   * it for hosts resolving beyond their own bundle (config provides
+   * `core.translations.forPlayer(player)`).
    */
-  children?: string;
-
-  /**
-   * Minecraft translation key (e.g. `"ui.myscreen.title"`).
-   *
-   * For correct layout metrics (word-wrap, ellipsis), the key should resolve through
-   * the `translation-keys` Regolith filter: the key must exist in your pack's .lang
-   * files, and the generated keys must be provided at the root of the UI via
-   * `TranslationKeysContext`:
-   *
-   * ```tsx
-   * import translationKeys from '@bedrock-core/generated/translation-keys';
-   *
-   * <TranslationKeysContext value={translationKeys}>
-   *   <MyScreen />
-   * </TranslationKeysContext>
-   * ```
-   *
-   * A key missing from the map (another pack's key, plain text, or no provider at
-   * all) measures as the literal key string — mirroring Bedrock, which renders an
-   * unmatched key as-is. Plain-text values therefore render fine; only their wrap
-   * metrics are approximate. To resolve another bedrock-core addon's keys, publish
-   * them via `core.translations.provide(...)` and pass
-   * `core.translations.forPlayer(player)` as the context value.
-   *
-   * Takes priority over `children` when both are provided.
-   */
-  localizationKey?: string;
+  children?: DisplayText;
 
   /**
    * 'break-word': automatically wrap at word boundaries, with hyphens for mid-word breaks.
@@ -128,7 +117,6 @@ export function safeLabelText(text: string): string {
 
 export const Text: FunctionComponent<TextProps> = ({
   children,
-  localizationKey,
   font,
   scale,
   wordBreak,
@@ -142,25 +130,75 @@ export const Text: FunctionComponent<TextProps> = ({
   const resolvedScale = scale ?? 1.0;
   // Shared mapping (controlPayload): font alias + scale over the font_size:small 0.5× base.
   const labelFont = labelFontFields({ font, scale });
-  const isKey = localizationKey !== undefined;
 
-  let resolvedText: string;
-
-  if (isKey) {
-    const translationKeys = useContext(TranslationKeysContext);
-
-    // A key missing from the map (another pack's key, plain text, or no provider at
-    // all) measures as the literal key string — mirroring Bedrock, which renders an
-    // unmatched key as-is. Wrap/ellipsis metrics are approximate for such strings.
-    resolvedText = translationKeys?.[localizationKey] ?? localizationKey;
-  } else {
-    resolvedText = children ?? '';
+  if (Array.isArray(children)) {
+    throw new Error('Text accepts a single string or RawMessage child — compose inside a RawMessage or use sibling <Text> elements.');
   }
 
+  const rawChild = typeof children === 'object' && children !== null ? children : undefined;
+  const stringChild = typeof children === 'string' ? children : undefined;
+
+  // TranslationContext — populated at every root by the runtime (the addon's
+  // default i18n instance, per player), shadowed by host providers. This
+  // resolution feeds LAYOUT METRICS and key detection — what the client
+  // paints is always its own resolution attempt (every tail goes through a
+  // localize:true label).
+  const resolver = useTranslationResolver();
+
+  const translateKey = rawChild?.translate;
+  const withArgs = rawChild?.with;
+  const hasArgs = withArgs !== undefined && !(Array.isArray(withArgs) && withArgs.length === 0);
+
+  let isLocalized: boolean;
+  let resolvedText: string;
+
+  if (rawChild !== undefined) {
+    isLocalized = true;
+    resolvedText = translateKey !== undefined
+      ? (resolver?.(translateKey) ?? translateKey)
+      : rawChild.text ?? '';
+
+    if (translateKey !== undefined && hasArgs && withArgs !== undefined) {
+      // Metrics fill: rawtext parameters resolve one translate level here;
+      // score/selector parts have no server value and measure as ''.
+      const params = Array.isArray(withArgs)
+        ? withArgs
+        : (withArgs.rawtext ?? []).map(param =>
+            param.text ?? (param.translate !== undefined ? (resolver?.(param.translate) ?? param.translate) : ''));
+
+      resolvedText = interpolate(resolvedText, params);
+    }
+  } else {
+    // String auto-detection: a resolver hit means it is a key this world
+    // publishes — localize it. A miss paints literally, which is ALSO what an
+    // unmatched key does client-side, so a foreign key the server has not
+    // seen still resolves on the client; only its wrap metrics approximate.
+    const candidate = stringChild ?? '';
+    const hit = candidate === '' ? undefined : resolver?.(candidate);
+
+    isLocalized = hit !== undefined;
+    resolvedText = hit ?? candidate;
+  }
+
+  // The payload's variable-length text tail (v0008) — uncapped:
+  //  - key strings (explicit or auto-detected): the key; the RP label resolves it.
+  //  - RawMessage: the message itself; the CLIENT resolves + fills it into the
+  //    tail region (a §r part guards digit-leading resolutions the same way
+  //    safeLabelText guards literal text). Argless translate collapses to its key.
+  //  - literal text: as-is, digit-guarded.
+  const tail: DisplayText = rawChild !== undefined
+    ? (translateKey !== undefined && !hasArgs
+        ? translateKey
+        : { rawtext: [{ text: '§r' }, rawChild] })
+    : isLocalized && stringChild !== undefined
+      ? stringChild
+      : safeLabelText(resolvedText);
+
   // Localized overflow text routes to the *_wrap types (see TEXT_WRAP_TYPE): the
-  // RP wraps the resolved string in a box-sized label, since the key cannot be
-  // pre-broken build-side. Raw overflow text is pre-wrapped at layout time instead.
-  const rpWraps = isKey
+  // RP wraps the resolved string in a box-sized label, since the text cannot be
+  // pre-broken build-side (keys and client-filled tails alike). Raw overflow
+  // text is pre-wrapped at layout time instead.
+  const rpWraps = isLocalized
     && (wordBreak === 'break-word' || overflow === 'ellipsis' || maxLines !== undefined);
 
   return {
@@ -171,16 +209,14 @@ export const Text: FunctionComponent<TextProps> = ({
       : (rpWraps ? TEXT_WRAP_TYPE : 'text'),
     props: {
       ...withControl(rest),
-      // Keys pass through — we send the key, not the resolved string, so a
-      // digit-leading .lang entry is guarded there; raw text uses safeLabelText.
-      // The label GROUP contract (label decodes it sequentially from [1024]):
-      // text, fontType, fontScale, x, y — `value` is the group's text slot (kept
-      // named `value` for the key pass-through semantics; field ORDER is what the RP reads).
-      value: isKey ? localizationKey : safeLabelText(resolvedText),
+      // The label GROUP contract (v0008, decoded sequentially from [1024]):
+      // fontType, fontScale, x, y, text — text LAST, as the payload's variable
+      // tail. Field ORDER is what the RP reads.
       fontType: labelFont.fontType,
       fontScaleFactor: labelFont.fontScaleFactor,
-      labelX: offsetX ?? 0, // [1273] → label anchored X offset
-      labelY: offsetY ?? 0, // [1356] → label anchored Y offset
+      labelX: offsetX ?? 0, // [1190] → label anchored X offset
+      labelY: offsetY ?? 0, // [1273] → label anchored Y offset
+      value: { tail },
       __textMetrics: {
         font,
         fontSize: resolvedScale,
@@ -188,14 +224,15 @@ export const Text: FunctionComponent<TextProps> = ({
         overflow,
         maxLines,
         // Resolved display string used by the layout phase for metrics.
-        // For raw text this equals value; for keys it's the full translated string.
+        // For raw text this equals the tail; for localized text it's the
+        // server-side resolution (the client paints its own).
         resolvedText,
-        // True only for localizationKey texts: props.value holds the KEY (RP
-        // resolves it at render), so the layout phase must never rewrite it
-        // with processed display text. Raw text (isKey false) DOES get its
-        // wrapped/truncated string committed — a JSON UI label is content-sized
-        // and never wraps on its own, so the `\n`s must be in the string.
-        isKey,
+        // True for localized texts: the tail holds a key or RawMessage the
+        // client resolves, so the layout phase must never rewrite it with
+        // processed display text. Raw text DOES get its wrapped/truncated
+        // string committed — a JSON UI label is content-sized and never wraps
+        // on its own, so the `\n`s must be in the string.
+        isKey: isLocalized,
       },
     },
   };

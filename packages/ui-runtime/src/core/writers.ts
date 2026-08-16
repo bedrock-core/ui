@@ -1,3 +1,4 @@
+import type { RawMessage } from '@minecraft/server';
 import type { ModalFormData } from '@minecraft/server-ui';
 import { isActionContext, isActionForm, isModalContext } from './guards';
 import { ModalFormError, type FormTarget, type SerializationContext } from './types';
@@ -38,7 +39,7 @@ type Callbacks = Record<string, (...args: unknown[]) => void>;
  * @param icon - Optional icon path passed to `form.button` (e.g. item aux id).
  */
 export function emitButton(
-  payload: string,
+  payload: string | RawMessage,
   form: FormTarget,
   ctx: SerializationContext | undefined,
   callbacks: Callbacks,
@@ -83,7 +84,7 @@ export function emitButton(
  * @param form - Target form.
  * @param ctx - Serialization context; advances the modal ordinal when present.
  */
-export function emitLabel(payload: string, form: FormTarget, ctx?: SerializationContext): void {
+export function emitLabel(payload: string | RawMessage, form: FormTarget, ctx?: SerializationContext): void {
   if (ctx && isModalContext(ctx)) {
     ctx.modalControlIndex++;
   }
@@ -100,7 +101,7 @@ export function emitLabel(payload: string, form: FormTarget, ctx?: Serialization
  * On the modal backend this falls back to the label slot: modal headers' payload
  * channel + formValues behavior are unproven, while modal labels are (see emitLabel).
  */
-export function emitHeader(payload: string, form: FormTarget, ctx?: SerializationContext): void {
+export function emitHeader(payload: string | RawMessage, form: FormTarget, ctx?: SerializationContext): void {
   if (!isActionForm(form)) {
     emitLabel(payload, form, ctx);
 
@@ -147,7 +148,7 @@ function recordModalOrdinal(ctx: SerializationContext | undefined, name: string)
  * @param defaultValue - Initial on/off state.
  */
 export function emitToggle(
-  payload: string,
+  payload: string | RawMessage,
   form: ModalFormData,
   ctx: SerializationContext | undefined,
   name: string,
@@ -174,7 +175,7 @@ export function emitToggle(
  * @param valueStep - Increment between values, or `undefined` for the native default.
  */
 export function emitSlider(
-  payload: string,
+  payload: string | RawMessage,
   form: ModalFormData,
   ctx: SerializationContext | undefined,
   name: string,
@@ -203,7 +204,7 @@ export function emitSlider(
  * @param defaultValueIndex - Initial selection as an index into `options`.
  */
 export function emitDropdown(
-  payload: string,
+  payload: string | RawMessage,
   form: ModalFormData,
   ctx: SerializationContext | undefined,
   name: string,
@@ -229,7 +230,7 @@ export function emitDropdown(
  * @param defaultValue - Initial text.
  */
 export function emitInput(
-  payload: string,
+  payload: string | RawMessage,
   form: ModalFormData,
   ctx: SerializationContext | undefined,
   name: string,

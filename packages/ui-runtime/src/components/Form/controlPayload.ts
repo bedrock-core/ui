@@ -45,21 +45,23 @@ export interface LabelGroupOptions extends LabelStyle {
 }
 
 /**
- * THE serialized label group — the single field layout every payload-styled label uses:
- * `[<prefix>Text, <prefix>FontType, <prefix>FontScale, <prefix>X, <prefix>Y]`, five
- * contiguous fields (5 × 83 bytes). The RP `core_ui_components.label` decodes the whole
- * group SEQUENTIALLY from one start offset (`$label_skip`), so a consumer only ever passes
- * where the group starts — never per-field offsets. The `prefix` keeps keys unique when one
- * payload carries several groups (e.g. the input's value + placeholder).
+ * THE serialized label group — the single field layout every payload-styled label uses
+ * (v0008 order): `[<prefix>FontType, <prefix>FontScale, <prefix>X, <prefix>Y,
+ * <prefix>Text]`, five contiguous fields (5 × 83 bytes; text LAST so terminal payloads
+ * can carry it as an uncapped variable tail instead). The RP `core_ui_components.label`
+ * decodes the whole group SEQUENTIALLY from one start offset (`$label_skip`), so a
+ * consumer only ever passes where the group starts — never per-field offsets. The
+ * `prefix` keeps keys unique when one payload carries several groups (e.g. the input's
+ * value + placeholder).
  */
 export function labelPayloadFields(prefix: string, opts: LabelGroupOptions = {}): Record<string, string | number> {
   const font = labelFontFields(opts);
 
   return {
-    [`${prefix}Text`]: opts.text ?? '',
     [`${prefix}FontType`]: font.fontType,
     [`${prefix}FontScale`]: font.fontScaleFactor,
     [`${prefix}X`]: opts.x ?? 0,
     [`${prefix}Y`]: opts.y ?? 0,
+    [`${prefix}Text`]: opts.text ?? '',
   };
 }

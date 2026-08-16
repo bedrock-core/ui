@@ -65,8 +65,8 @@ export function isSerializablePrimitive(value: unknown): value is SerializablePr
     return true;
   }
 
-  // Check for ReservedBytes object
-  if (typeof value === 'object' && value !== null && value !== undefined && 'bytes' in value) {
+  // Check for ReservedBytes / TailValue objects
+  if (typeof value === 'object' && value !== null && value !== undefined && ('bytes' in value || 'tail' in value)) {
     return true;
   }
 
