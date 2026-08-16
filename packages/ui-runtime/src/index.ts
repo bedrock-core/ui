@@ -106,5 +106,5 @@ export type {
 export { ItemAuxContext } from './data/ItemAux';
 export type { ItemAuxMap } from './data/ItemAux';
 
-export { resolveTranslationKeysForPlayer, TranslationKeysContext } from './data/TranslationKeys';
-export type { TranslationKeysByLocale, TranslationKeysMap } from './data/TranslationKeys';
+export { TranslationContext } from './data/Translation';
+export type { TranslationResolver } from '@bedrock-core/i18n';

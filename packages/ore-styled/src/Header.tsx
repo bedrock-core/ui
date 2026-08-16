@@ -1,6 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import type { ControlProps, JSX } from '@bedrock-core/ui-runtime';
-import { Button, Panel, Text, TranslationKeysContext, useContext } from '@bedrock-core/ui-runtime';
+import { Button, Panel, Text, TranslationContext, useContext } from '@bedrock-core/ui-runtime';
 import { theme } from './tokens';
 
 /** One label in the header trail — raw text (colorable) or a localization key. */
@@ -24,16 +24,16 @@ export interface HeaderProps extends ControlProps {
  * The trail is one raw string (not per-segment `Text`s) so a single `overflow: ellipsis`
  * can clip the whole thing — sibling label controls don't share a width budget, so
  * ellipsis-per-segment can't truncate the row as a unit. Keys resolve through
- * `TranslationKeysContext` up front, same as `Text` does internally; missing keys fall
+ * `TranslationContext` up front, same as `Text` does internally; missing keys fall
  * back to the key itself.
  */
 export function Header({ title, breadcrumbs, onBack, onClose, ...layout }: HeaderProps): JSX.Element {
-  const translationKeys = useContext(TranslationKeysContext);
+  const resolveKey = useContext(TranslationContext);
   const h = theme.components.header;
   const { color, separator } = h.textStyle;
 
   const resolve = (segment: BreadcrumbSegment): string =>
-    'key' in segment ? (translationKeys?.[segment.key] ?? segment.key) : segment.text;
+    'key' in segment ? (resolveKey?.(segment.key) ?? segment.key) : segment.text;
 
   const head = typeof title === 'string' ? title : resolve(title);
   const trail = (breadcrumbs ?? []).map(resolve).join(`${separator} > ${color}`);
