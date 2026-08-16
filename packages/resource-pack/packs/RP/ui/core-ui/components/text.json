@@ -97,7 +97,9 @@
 						{
 							"txt@core_ui_components.label": {
 								"localize": true,
-								"$text_source": "#label_rem4"
+								"$text_source": "#label_rem4",
+								/* mounts on every cell type — read the common font slot */
+								"$font_source": "(('%.82s' * #raw_common_font) - ('%.2s' * #raw_common_font) - ';')"
 							}
 						}
 					]
@@ -111,7 +113,8 @@
 						{
 							"txt@core_ui_components.label": {
 								"localize": true,
-								"$text_source": "#label_rem4"
+								"$text_source": "#label_rem4",
+								"$font_source": "(('%.82s' * #raw_common_font) - ('%.2s' * #raw_common_font) - ';')"
 							}
 						}
 					]
@@ -343,7 +346,9 @@
 			{
 				"txt@core_ui_components.label_wrap": {
 					"localize": true,
-					"$text_source": "#label_rem4"
+					"$text_source": "#label_rem4",
+					/* same cell-level mount as the plain/shadow leaves */
+					"$font_source": "(('%.82s' * #raw_common_font) - ('%.2s' * #raw_common_font) - ';')"
 				}
 			}
 		]
@@ -394,6 +399,21 @@
 		"$cell_details_binding_type|default": "none",
 		"$details_collection|default": "",
 		"$label_skip|default": "('%.1024s' * #payload)",
+		/* WHERE THE FONT COMES FROM. #font_type is an engine-reserved target: the alias is
+		   validated the moment it is written, and an unknown one logs "Could not find font
+		   alias" to NonAssertErrorLog (a Marketplace blocker) — `binding_condition` cannot
+		   suppress that, so the value has to be right for EVERY cell this label mounts on.
+		   Sub-element labels (option rows, input value/placeholder) sit inside a payload
+		   whose group slot 1 IS their own font, so they keep the default. The label-cell
+		   leaves mount on every cell type — image, button, toggle — where the group's first
+		   slot is a texture, so they read the COMMON [606-688] font slot instead.
+
+		   INVARIANT: only override $font_source on a control whose #payload is a full
+		   CONTROL BLOCK. Option blobs (#custom_radio_text / #dropdown_option_text) have no
+		   reserved block — their byte 606 lands mid-`background`, so the common-slot
+		   expression would feed a texture fragment straight back into #font_type. Today the
+		   only overriders are the three label-cell leaves. */
+		"$font_source|default": "(('%.82s' * #raw_label_font) - ('%.2s' * #raw_label_font) - ';')",
 		"$text_source|default": "(('%.82s' * #raw_label_text) - ('%.2s' * #raw_label_text) - ';')",
 		"$native_binding|default": "#form_button_text",
 		"$native_target|default": "#label_native_unused",
@@ -437,15 +457,36 @@
 				"binding_condition": "visible"
 			},
 			{
-				/* group slot 1 (v0008): fontType (canonical #font_type alias) */
+				/* group slot 1 (v0008): the group's own font cell. Consumed here to keep the
+				   sequential walk aligned; whether it REACHES #font_type is $font_source's
+				   call (see above). */
 				"binding_type": "view",
 				"source_property_name": "('%.83s' * #label_rem0)",
 				"target_property_name": "#raw_label_font",
 				"binding_condition": "visible"
 			},
 			{
+				/* common font slot [606-688] — a valid alias on every component type */
 				"binding_type": "view",
-				"source_property_name": "(('%.82s' * #raw_label_font) - ('%.2s' * #raw_label_font) - ';')",
+				"source_property_name": "('%.606s' * #payload)",
+				"target_property_name": "#skip_to_common_font",
+				"binding_condition": "visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(#payload - #skip_to_common_font)",
+				"target_property_name": "#rem_at_common_font",
+				"binding_condition": "visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "('%.83s' * #rem_at_common_font)",
+				"target_property_name": "#raw_common_font",
+				"binding_condition": "visible"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "$font_source",
 				"target_property_name": "#font_type",
 				"binding_condition": "visible"
 			},

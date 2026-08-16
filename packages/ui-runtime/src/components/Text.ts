@@ -209,10 +209,18 @@ export const Text: FunctionComponent<TextProps> = ({
       : (rpWraps ? TEXT_WRAP_TYPE : 'text'),
     props: {
       ...withControl(rest),
-      // The label GROUP contract (v0008, decoded sequentially from [1024]):
-      // fontType, fontScale, x, y, text — text LAST, as the payload's variable
-      // tail. Field ORDER is what the RP reads.
+      // The COMMON font slot at [606-688]. Assigning an existing key does not move
+      // it, so this overwrites withControl's 'default' in place rather than
+      // appending — the RP's label leaves read the font from here for every cell
+      // type, which is what keeps texture paths out of #font_type.
       fontType: labelFont.fontType,
+      // The label GROUP contract (v0008, decoded sequentially from [1024]):
+      // labelFontType, fontScale, x, y, text — text LAST, as the payload's variable
+      // tail. Field ORDER is what the RP reads. `labelFontType` is the group's
+      // original font slot; the cell label now sources [606] instead, but the slot
+      // stays so every later group offset (labelX [1190], labelY [1273], tail) and
+      // every sub-element group that still reads its own slot 1 are unchanged.
+      labelFontType: labelFont.fontType,
       fontScaleFactor: labelFont.fontScaleFactor,
       labelX: offsetX ?? 0, // [1190] → label anchored X offset
       labelY: offsetY ?? 0, // [1273] → label anchored Y offset

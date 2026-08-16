@@ -36,14 +36,24 @@ export { resolveStateBackgrounds, type StateBackgroundProps } from './stateBackg
  * [432-439]: Field 6: enabled (bool, 8 bytes) - interaction enabled state
  * [440-522]: Field 7: background (string, 83 bytes) - optional background texture path
  * [523-605]: Field 8: region (number, 83 bytes) - region/scroll index this element belongs to
- * [606-1023]: Reserved (418 bytes)
+ * [606-688]: Field 9: fontType (string, 83 bytes) - the cell's font alias
+ * [689-1023]: Reserved (335 bytes)
  *
- * The `region` field was carved from the reserved block (v0005: 501 → v0006: 418) so the
- * absolute offset of every component-specific field after the reserved block (e.g.
- * backgroundHover at [1024]) is unchanged.
+ * `region` (v0005: 501 → v0006: 418) and `fontType` (v0006: 418 → v0008: 335) were both
+ * carved from the reserved block so the absolute offset of every component-specific field
+ * after it (e.g. backgroundHover at [1024]) is unchanged.
  *
- * Reserved calculation: 1024 - 9 - 83 - (6 × 83) - (2 × 8) - 83 (background) - 83 (region) = 418 bytes
- * (up to 1024 bytes total reserved block for future expansion)
+ * WHY fontType is COMMON rather than a Text-only field: the merged label cell mounts for
+ * every cell type (core_ui_components.label_cell gates on #pre_visible alone), so its label
+ * decodes the font slot no matter what the cell actually is. Reading it from the
+ * component-specific region meant an image's `texture` or a button's `backgroundHover`
+ * landed in the engine's `#font_type`, which logs "Could not find font alias <path>" to
+ * NonAssertErrorLog (a Marketplace submission blocker). Every component now carries a
+ * VALID alias at a fixed offset — non-text components default to 'default' — so the label
+ * can decode it unconditionally and never see a texture path.
+ *
+ * Reserved calculation: 1024 - 9 - 83 - (6 × 83) - (2 × 8) - 83 (background) - 83 (region)
+ * - 83 (fontType) = 335 bytes (up to 1024 bytes total reserved block for future expansion)
  *
  * Component-specific properties are appended after the reserved block.
  *
@@ -115,7 +125,12 @@ export function withControl(props: JSX.Props): JSX.Props {
     // multi-region screens the region-propagation pass overwrites this in place
     // (keeping the canonical key order) with the nearest slot ancestor's index.
     region: 0,
-    $reserved: { bytes: 418 }, // Reserve space for future expansion (v0006: 418 bytes, carved 83 for region)
+    // [606-688] the cell's font alias, read by the merged label cell for EVERY cell
+    // type. Must always be a valid engine alias (see the byte map above); Text
+    // overwrites it IN PLACE — re-assigning an existing key keeps its position, so the
+    // value stays at [606] and never lands in the component-specific region.
+    fontType: 'default',
+    $reserved: { bytes: 335 }, // Reserve space for future expansion (v0008: 335 bytes, carved 83 for fontType)
 
     // Layout props (not serialized, used by layout phase) - stored with __ prefix
     __layout: {

@@ -38,7 +38,7 @@
 						{
 							/* texture — component field 1, absolute [1024] (header 9 + type 83 +
 							   w/h/x/y 4×83 + visible/enabled 2×8 + background 83 + region 83 +
-							   reserved 418 = 1024) */
+							   fontType 83 + reserved 335 = 1024) */
 							"binding_type": "view",
 							"source_property_name": "('%.1024s' * #payload)",
 							"target_property_name": "#skip_to_texture",
