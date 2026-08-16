@@ -63,9 +63,22 @@ export function createGuide(manifest: GuideManifest, options: GuideOptions = {})
   const { landing, hasSidebar } = resolveLanding(manifest);
 
   return function Guide({ onExit }: GuideProps): JSX.Element {
-    // `undefined` = the sidebar screen; a PageId = that page.
-    const [pageId, setPageId] = useState<PageId | undefined>(landing);
+    // `undefined` = the sidebar screen; a PageId = that page. The state is
+    // STAMPED with the manifest's namespace: hook state lives in the fiber's
+    // tree position, not in the component's identity, so when a different
+    // guide renders at the same position (the config Guide screen swaps one
+    // cached guide component per addon), it inherits this very slot. A stamp
+    // from another manifest — or a page id a re-published manifest no longer
+    // carries — resets to this guide's landing instead of rendering
+    // "Page not found" for a page that was never this guide's to begin with.
+    const [state, setState] = useState<{ ns: string; page: PageId | undefined }>({ ns: manifest.ns, page: landing });
     const close = useExit();
+
+    const pageId = state.ns === manifest.ns && (state.page === undefined || manifest.pages[state.page] !== undefined)
+      ? state.page
+      : landing;
+
+    const setPageId = (page: PageId | undefined): void => { setState({ ns: manifest.ns, page }); };
 
     if (pageId === undefined) {
       return (

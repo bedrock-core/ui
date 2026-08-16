@@ -59,6 +59,17 @@ export interface GuidePageViewProps {
 export function GuidePageView({ manifest, pageId, title, components, onOpenPage, onBack, onHome, onClose }: GuidePageViewProps): JSX.Element {
   const page = manifest.pages[pageId];
 
+  if (!page) {
+    // A silent fallback is undiagnosable in the field — name the miss in the
+    // content log: which id was asked for, which manifest, and what it carries.
+    // Reaching this means the id came from somewhere the manifest no longer
+    // backs: a stale open-page state across a live re-publish, or a link/tree
+    // entry whose page didn't compile (the guides filter warns at build time).
+    console.warn(
+      `[guides] page "${pageId}" not found in the "${manifest.ns}" manifest — it has: ${Object.keys(manifest.pages).join(', ') || '(no pages)'}`,
+    );
+  }
+
   const prevPage = page?.prev !== undefined ? manifest.pages[page.prev] : undefined;
   const nextPage = page?.next !== undefined ? manifest.pages[page.next] : undefined;
   const breadcrumbs = breadcrumbPath(manifest.tree, pageId);
