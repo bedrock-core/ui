@@ -1,8 +1,8 @@
 # @bedrock-core/guides
 
 Docusaurus-style **in-game guides** for `@bedrock-core/ui`: author MDX, compile it at build time
-with the [`guides` regolith filter](https://github.com/bedrock-core/regolith-filters), render it
-as server forms with this package.
+with the [`guides` regolith filter](https://github.com/bedrock-core/regolith-filters/tree/main/guides),
+render it as server forms with this package.
 
 ```
 packs/data/guides/<locale>/**.mdx
@@ -22,12 +22,15 @@ screen and let it drive itself:
 
 ```tsx
 import { createGuide } from '@bedrock-core/guides';
+import manifest from '@bedrock-core/generated/guides';
+import type { ScreenProps } from '@bedrock-core/navigation';
+import type { AppRoutes } from './routes'; // your own route map
 
 // Build ONCE per manifest and cache it — the returned component holds the
 // open-page state, so recreating it each render resets the guide to its home.
-const Guide = createGuide(guides, { title: 'My Addon' });
+const Guide = createGuide(manifest, { title: 'My Addon' });
 
-function GuideScreen({ navigation }: AppScreenProps<'Guide'>) {
+function GuideScreen({ navigation }: ScreenProps<AppRoutes, 'Guide'>) {
   return <Guide onExit={() => navigation.goBack()} />;
 }
 ```
@@ -50,9 +53,10 @@ each by addon id, and render the one your route's param selects.
 | `<Component />` | looked up in the `components` registry passed via options; placeholder otherwise |
 
 All prose renders as localized `Text` children — text is resolved client-side per player language
-and wraps natively. Text *measurement* (ellipsis/`maxLines`) uses the host's
-`TranslationKeysContext` (default-locale strings); run the filter **before** `translation-keys`
-so guide keys are in the metrics map.
+and wraps natively. Text *measurement* (ellipsis/`maxLines`) goes through the host's translation
+resolver (the addon's `createI18n(bundle)` instance, or whatever `TranslationContext` provides);
+run the `guides` filter **before** [`i18n`](https://github.com/bedrock-core/regolith-filters/tree/main/i18n)
+so the guide's generated keys land in the same `.lang` files and runtime bundle.
 
 ## Home (the index)
 
@@ -88,3 +92,10 @@ An index is a choice between pages, so it earns its screen only when there is mo
   guide component for one manifest.
 - `GuideBlockList({ blocks, ns, onNavigate?, components? })` — the raw IR renderer, exported for
   custom layouts.
+- `isGuideManifest(value)` — runtime guard for a manifest arriving over replicated state (or from
+  a peer addon) before you hand it to `createGuide`.
+
+The IR types are exported too — `GuideManifest`, `GuidePageData`, `GuideBlock`, `GuideTreeNode`,
+`GuideListItem`, `GuideRun`, `GuideComponents`, `AdmonitionKind`, `PageId`, `LangKey` — for code
+that builds or inspects a manifest without the filter (`@bedrock-core/config` hand-writes one for
+the framework's own guide).

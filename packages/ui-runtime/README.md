@@ -1,6 +1,6 @@
 # @bedrock-core/ui-runtime
 
-![Logo](../../assets/logo.svg)
+![Logo](https://raw.githubusercontent.com/bedrock-core/ui/main/assets/logo/title.png)
 
 > ⚠️ Beta Status: Active development. Breaking changes may occur until 1.0.0. Pin exact versions for stability.
 >
@@ -27,13 +27,15 @@ yarn add @bedrock-core/ui-runtime
 | Layer | Responsibility | Key Files |
 |-------|----------------|-----------|
 | JSX Runtime | Transforms JSX to `{ type, props }` elements | `src/jsx/jsx-runtime.ts` |
-| Component Functions | Pure functions returning `JSX.Element` objects | `src/core/components/*.ts` |
+| Component Functions | Pure functions returning `JSX.Element` objects | `src/components/*.ts` |
 | Serialization Protocol | UTF‑8 fixed-width, semicolon-padded segments | `src/core/serializer.ts` |
-| Runtime (Entry) | Orchestrates build → snapshot → show → response; owns effect loop | `src/core/runtime.ts` |
-| Renderer Adapter | Serializes UI tree to a form snapshot | `src/core/rendererAdapter.ts` |
-| Fiber Registry | Manages component instances and hook state | `src/core/fiber.ts` |
-| Context System | React-like context providers and consumers | `src/core/context.ts` |
-| Hooks System | State management and side effects | `src/core/hooks/*.ts` |
+| Runtime (Entry) | Orchestrates build → snapshot → show → response; owns effect loop | `src/core/render/lifecycle.ts` |
+| Layout Phase | Runs the flex engine over the built tree, tags scroll regions | `src/core/render/phases/layout.ts` |
+| Presenters | Serialize the laid-out tree into an ActionForm / ModalForm snapshot | `src/core/render/presenters/*.ts` |
+| Fiber Registry | Manages component instances and hook state | `src/core/fabric/registry.ts`, `src/core/fabric/fiber.ts` |
+| Context System | React-like context providers and consumers | `src/core/fabric/context.ts` |
+| Hooks System | State management and side effects | `src/hooks/*.ts` |
+| Translation Bridge | Per-player resolver used for text metrics and key detection | `src/data/Translation.ts` |
 
 ### 🔄 Component Routing System
 
@@ -96,8 +98,7 @@ architecture therefore follows these rules (established with in-game measurement
 Components are pure functions that return `JSX.Element` objects (using the custom JSX runtime):
 
 ```tsx
-import { FunctionComponent, JSX } from '@bedrock-core/ui';
-import { ControlProps, withControl } from './control';
+import { withControl, type ControlProps, type FunctionComponent, type JSX } from '@bedrock-core/ui';
 
 export interface PanelProps extends ControlProps {
   // Component-specific props go here
@@ -127,7 +128,7 @@ export const Panel: FunctionComponent<PanelProps> = ({ children, ...rest }: Pane
 
 Defined in `src/core/serializer.ts`.
 
-Payload always starts with a 9-character header: `bcui` + `vXXXX` (e.g., `bcuiv0005`). Decoders must skip these first 9 chars before field slicing.
+Payload always starts with a 9-character header: `bcui` + `vXXXX` — currently **`bcuiv0008`** (`VERSION = 'v0008'`). Decoders must skip these first 9 chars before field slicing.
 
 Each field is composed of three conceptual parts concatenated in this order:
 
@@ -135,14 +136,20 @@ Each field is composed of three conceptual parts concatenated in this order:
 2. Value (padded with semicolons `;` until defined byte length)
 3. Unique 1‑byte field marker (disambiguates otherwise identical full regions during JSON UI subtraction)
 
+The one exception is the **variable-length tail** (v0008): the final field of a terminal payload
+may be emitted raw — no prefix, no padding, no marker, no length cap — because everything before
+it decodes at fixed offsets and the tail is simply "the rest". Only `Text` uses it today, for its
+text channel.
+
 ### Field Widths (bytes)
 
 | Type     | Prefix | Prefix Width | Type Width | Marker Width | Full Width | Notes |
 |----------|--------|--------------|------------|--------------|------------|-------|
-| String   | `s:`   | 2            | 80         | 1            | 83         | Prefer to use translation keys when text larger than 32 characters is needed |
+| String   | `s:`   | 2            | 80         | 1            | 83         | Hard 80-byte cap — over that, `serializeProps()` throws. Use a translation key (or a `RawMessage`) for anything longer |
 | Number   | `n:`   | 2            | 80         | 1            | 83         | Expanded to match string width in v0003; unified field sizing since v0004 |
 | Boolean  | `b:`   | 2            | 5          | 1            | 8          | Serialized as `'true'` or `'false'` |
 | Reserved | `r:`   | 0            | variable   | 0            | variable   | No prefix/marker for easier JSON UI skipping |
+| Tail     | —      | 0            | variable   | 0            | variable   | Last field only, uncapped. A `RawMessage` tail turns the payload into `{ rawtext: [{ text: <fixed fields> }, <tail>] }`, resolved by the **client** |
 
 ### Markers
 
@@ -151,8 +158,11 @@ Index position = field order. Never reorder existing markers (backward decode of
 
 ### Encoding Example
 
+`serializeProps()` is internal to `src/core/serializer.ts` (the public entry point is `render()`),
+but it is the clearest way to read the wire format:
+
 ```ts
-import { serializeProps } from '@bedrock-core/ui-runtime';
+import { serializeProps } from '../core/serializer';
 
 const [encoded, bytes] = serializeProps({
   type: 'example',      // string → 83 bytes
@@ -201,43 +211,98 @@ Generic template (JSON UI binding entries) — copy & replace placeholders:
 
 ### Base Control Properties Deserialization Order
 
-All components inherit these base control properties, which are deserialized in this exact order after the 9-byte protocol header (`bcuiv0005`):
+Every component inherits the same **1024-byte control block**, applied by `withControl()`
+(`src/components/control.ts` — the authoritative byte map lives in its doc comment) and
+deserialized in this exact order after the 9-byte protocol header (`bcuiv0008`):
 
 ```text
-Field 0: type (string, 83 bytes)       - component type identifier
-Field 1: width (number, 83 bytes)      - element width
-Field 2: height (number, 83 bytes)     - element height
-Field 3: x (number, 83 bytes)          - horizontal position
-Field 4: y (number, 83 bytes)          - vertical position
-Field 5: visible (bool, 8 bytes)       - visibility state (default: true)
-Field 6: enabled (bool, 8 bytes)       - interaction enabled (default: true)
-Field 7: background (string, 83 bytes) - background texture path
-Field 8: $reserved (501 bytes)         - reserved for future expansion
+[0-8]     header                        - 9 bytes, 'bcuiv0008'
+[9-91]    Field 0: type      (string)   - component type identifier
+[92-174]  Field 1: width     (number)   - computed width from layout
+[175-257] Field 2: height    (number)   - computed height from layout
+[258-340] Field 3: x         (number)   - computed x position from layout
+[341-423] Field 4: y         (number)   - computed y position from layout
+[424-431] Field 5: visible   (bool)     - visibility state (default: true)
+[432-439] Field 6: enabled   (bool)     - interaction enabled (default: true)
+[440-522] Field 7: background(string)   - background texture path ('' = none)
+[523-605] Field 8: region    (number)   - scroll index this element belongs to
+[606-688] Field 9: fontType  (string)   - the cell's font alias (default: 'default')
+[689-1023] $reserved (335 bytes)        - reserved for future expansion
 
-Total control block: 1024 bytes (9 + 83 + (5×83) + (2×8) + 83 + 501)
+Total control block: 1024 bytes (9 header + 8×83 + 2×8 + 335 reserved)
 ```
 
-**Component-specific properties** are appended after the reserved block.
+**Component-specific properties** are appended after the reserved block, so the first one always
+starts at **[1024]** (e.g. a button's `backgroundHover`).
 
-### Title Metadata (Screen Selection)
+Both `region` (added in v0006) and `fontType` (added in v0008) were **carved out of the reserved
+block** — 501 → 418 → 335 bytes — precisely so that the absolute offset of every
+component-specific field stayed unchanged across those revisions.
 
-Two distinct payloads share the protocol. Each **form button label** carries a component's control block (above), while the **form title** (`#title_text`) carries screen-level metadata. The title is produced by `serializeTitleMetadata()` and selects which Resource Pack screen layout to mount:
+#### Why `fontType` is a common field
 
-| Field  | Type   | Bytes | Purpose |
-|--------|--------|-------|---------|
-| header | —      | 9     | `bcuiv0005` protocol header |
-| 0      | string | 83    | screen type: `scroll` (extensible — more types may be added) |
-| 1      | number | 83    | root content height (used to size the scroll container) |
+The RP mounts **one merged `label_cell`** for every emitted cell — `core_ui_components.label_cell`
+gates on `#pre_visible` alone — so its label decodes a font slot no matter what the cell actually
+is. When that slot was read from the component-specific region, an `Image`'s `texture` or a
+`Button`'s `backgroundHover` landed in the engine's `#font_type`, which logs
+`Could not find font alias <path>` to `NonAssertErrorLog`.
 
-Total: **175 bytes**. The screen type comes first because **every** screen reads it to route; the height comes second because only the scrolling layouts need it.
+Moving the slot into the common control block fixes it structurally: every component now carries a
+*valid* alias at a fixed offset (non-text components default to `'default'`), so the label can
+decode it unconditionally and can never see a texture path. `Text` overwrites the value **in
+place** — re-assigning an existing key keeps its position in the canonical order, so the value
+stays at `[606]` and never drifts into the component-specific region.
 
-Deserialization (`core-ui/common/screen_container.json`):
+#### The label group (`[1024]`, v0008)
 
-1. Bind `#title_text`, strip the 9-byte header → `#rem_after_header_sc`.
-2. Slice the 83-byte screen-type field and extract its value (drop the `s:` prefix + `;` padding) → `#screen_type`.
-3. Route by comparison on `#screen_type` (currently only `scroll`; the container mounts `core_ui_screens.scroll` when `#screen_type = 'scroll'`). The routing stays so new screen types can be added without protocol changes.
+Payload-styled labels share one field group, decoded **sequentially** by
+`core_ui_components.label` from a single start offset (`$label_skip`) — consumers pass where the
+group starts, never per-field offsets. For a `Text` cell the group is the first component-specific
+block, so it starts at `[1024]`:
 
-Scrolling layouts (`core_ui_screens.scroll`) additionally **skip** the screen-type field to reach the height field, then bind it to `#size_binding_y`. No protocol guard is needed inside `screen_container` — `server_form.json` only mounts it for forms whose title carries the header (it collapses the container to `0px` otherwise).
+```text
+[1024-1106] labelFontType    (string)   - the group's own font slot
+[1107-1189] fontScaleFactor  (number)   - scale over the font_size:small 0.5x base
+[1190-1272] labelX           (number)   - label X offset inside the cell box
+[1273-1355] labelY           (number)   - label Y offset inside the cell box
+[1356-…]    text             (tail)     - variable-length, unpadded, unprefixed, uncapped
+```
+
+Text is **last** so it can be the payload's variable tail. `labelFontType` is the group's original
+font slot; the cell label now sources `[606]` instead, but the slot stays so every later group
+offset and every sub-element group that still reads its own slot 1 are unchanged.
+See `src/components/Form/controlPayload.ts` (`labelPayloadFields`) for the shared writer.
+
+### Title Metadata (Scroll Viewports)
+
+Two distinct payloads share the protocol. Each **form entry label** carries a component's control
+block (above), while the **form title** (`#title_text`) carries screen-level metadata: a flat list
+of scroll viewports, plus an optional full-screen backdrop.
+
+Produced by `serializeScrollMetadata(scrolls, background?)` (ActionForm backend) and
+`serializeModalTitle(scrolls, extraFields, background?)` (modal backend).
+
+| Offset (after header) | Type   | Bytes | Purpose |
+|-----------------------|--------|-------|---------|
+| `[0-82]`              | string | 83    | fixed `'scrolls'` marker (field 0) — pins every block below to a predictable offset |
+| `[83 + i×498]`        | ×6     | 498   | scroll `i`'s block: `axis` (string) + `x`, `y`, `width`, `height`, `extent` (numbers) |
+
+Index 0 is always the implicit root scroll. A pooled scroll whose index is beyond the emitted list
+decodes an empty axis and hides itself, so no explicit count field is needed. Geometry is consumed
+RP-side via `use_anchored_offset` (viewport position) and `#size_binding_*` (viewport size); the
+content panel uses the `[1,1]` size_anchor trick to overflow only the scroll axis by `extent`.
+
+A non-empty `<Background>` texture is appended as ONE string field at the fixed offset
+`BACKGROUND_TITLE_SKIP` = `83 + 5×498` = **2573** bytes after the header, padding the gap with
+reserved `;` bytes. Both backends target the same offset so the single static
+`core_ui_common.form_background` serves both; when there is no background nothing is emitted at
+all. The modal title additionally carries the `Form.Button` submit/exit blocks (763 bytes each,
+see `src/components/Form/FormButton.ts` for that byte contract) between the scroll block and the
+background field.
+
+No protocol guard is needed inside the containers: `server_form.json` gates on its own
+`$protocol_header` (`bcuiv0008`) and collapses the screen to `0px` for any form whose title does
+not carry that header — so a foreign server form is left completely untouched.
 
 ### Decoding Rules & Tips
 
@@ -246,6 +311,27 @@ Scrolling layouts (`core_ui_screens.scroll`) additionally **skip** the screen-ty
 - Never assume a marker character appears only once globally—its uniqueness is only relative to its position
 - Protocol extension rule: append new fields (new markers) at the end; never reorder or shrink earlier core lengths
 - Reserved blocks are skipped entirely in deserialization—they create "gaps" in the payload that the JSON UI decoder jumps over
+- New **common** fields are carved from the front of `$reserved` (shrinking it by 83), which keeps every component-specific offset stable; new **component-specific** fields go after the reserved block
+
+## 🌍 Translations
+
+Localized text needs no wiring: the addon's `createI18n(bundle)` call
+([`@bedrock-core/i18n`](https://github.com/bedrock-core/ui/blob/main/packages/i18n/README.md))
+registers itself as the default translation source, and `render()` populates a
+`TranslationContext` at every root with that instance's resolver, bound to the viewing player and
+re-derived on each build pass.
+
+- **`TranslationContext`** – Context to *override* the default source for a subtree. Hosts that
+  resolve beyond their own bundle provide `core.translations.forPlayer(player)` here.
+- **`useTranslation()`** – Read the current `TranslationResolver` value from context.
+- **`useTranslationResolver()`** – The resolver actually in effect (context override, else the
+  registered default). This is what `Text` uses internally.
+- **`TranslationResolver`** – `(realKey: string) => string | undefined`, re-exported from
+  `@bedrock-core/i18n`.
+
+Server-side resolution here feeds **layout metrics and key detection only** — what the client
+paints is always its own resolution attempt, because every text tail goes through a
+`localize: true` label.
 
 ## 🪝 Hooks System
 
@@ -288,7 +374,7 @@ Mocks are located in `src/__mocks__/@minecraft/`.
 
 - **Never** modify `TYPE_WIDTH`, `PAD_CHAR`, or canonical field order
 - **Never** change the 9-char header format (`bcui` + version)
-- **Always** append new fields to end; use `reserveBytes()` for future space
+- **Always** append new fields to end; claim future space from the `$reserved` block in `withControl()` (there is no standalone `reserveBytes()` helper)
 - **Always** increment `VERSION` when making protocol-breaking changes (with migration docs)
 - **Test rigorously** – serialization format is frozen once clients decode it
 

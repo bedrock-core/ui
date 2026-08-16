@@ -2,7 +2,7 @@
 
 > Optional prebuilt Ore-UI styled compound components for [@bedrock-core/ui](https://github.com/bedrock-core/ui).
 
-Drop-in styled components that match Minecraft's modern Ore-UI look. Skip the styling boilerplate when you want consistent buttons, toggles, tabs, and cards in your addon UI.
+Drop-in styled components that match Minecraft's modern Ore-UI look. Skip the styling boilerplate when you want consistent buttons, toggles, menu rows, and cards in your addon UI.
 
 ## Install
 
@@ -21,15 +21,20 @@ npm install @bedrock-core/ore-styled
 - `Dropdown` — selector field with a chevron; pressing it opens the native modal dropdown
 - `Slider` — field drawn as a track + thumb (positioned by value); pressing it opens the native modal slider
 - `RadioGroup` / `Radio` — single-select group
-- `Tabs` / `TabList` / `Tab` / `TabPanel` — tabbed navigation
 - `Toggle` — switch-style boolean input
 - `ToggleButtonGroup` / `ToggleButtonItem` — multi-button selector
+- `Header` — screen chrome: back button, breadcrumb trail, close button
+- `MenuRow` — browse-list row: thumbnail, title, muted subtitle, `›` chevron, nesting depth
 - `Form` — native modal form with styled fields (see below)
 - `Divider` — horizontal/vertical separator
 - `ItemSlot` — single inventory slot rendering an `ItemStack` with optional overlay texture
 - `ItemContainer` — grid of `ItemSlot` components covering a `Container`'s slots
 - `EquipmentSlots` — vertical column of equipment slots (helmet → boots + offhand) from an `EntityEquippableComponent`
-- `theme` — design tokens for ad-hoc styling
+- `theme` — design tokens for ad-hoc styling (typed `OreTheme`, with `ButtonTextStyle` for button label styling)
+
+`Header` and `MenuRow` take `DisplayText` for their text (a literal string, a translation key, or a
+`RawMessage`), so they localize per player without any extra wiring — see
+[`@bedrock-core/i18n`](https://github.com/bedrock-core/ui/blob/main/packages/i18n/README.md).
 
 ## Usage
 

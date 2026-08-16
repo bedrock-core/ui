@@ -25,21 +25,26 @@ Components serialize into compact strings decoded by a companion resource pack t
 
 ### Components
 
-- Base components: `Panel`, `Text`, `Image`, `Fragment`, `Button`
+- Base components: `Panel`, `Text`, `Image`, `Fragment`, `Button`, `ItemRenderer`
 - `Background` — a screen-level background texture
 - `Scroll` — up to **2** independent scroll regions per render 
 - Modal-backed standalone primitives: `Input`, `Dropdown`, `Slider`
 
 ### Layout & Styling
 
-- Flexbox layout engine — flex, margins, paddings, spacing, alignment ([@bedrock-core/flexbox](./packages/flexbox/README.md))
-- Component theming system via [@bedrock-core/ore-styled](./packages/ore-styled/README.md), plus prebuilt Ore-UI styled components (`Button`, `Card`, `Toggle`, `Divider`, `Input`, `Dropdown`, `Slider`, `Checkbox`, `Radio`, `ToggleButton`)
+- Flexbox layout engine — flex, margins, paddings, spacing, alignment, aspect ratio, content measurement ([@bedrock-core/flexbox](./packages/flexbox/README.md))
+- Component theming system via [@bedrock-core/ore-styled](./packages/ore-styled/README.md), plus prebuilt Ore-UI styled components (`Button`, `Card`, `Toggle`, `Divider`, `Input`, `Dropdown`, `Slider`, `Checkbox`, `RadioGroup`/`Radio`, `ToggleButtonGroup`/`ToggleButtonItem`, `Header`, `MenuRow`, `ItemSlot`, `ItemContainer`, `EquipmentSlots`)
 
+### Localization
+
+- Typed keys, interpolation and plurals, resolved on the **client** in each player's own language ([@bedrock-core/i18n](./packages/i18n/README.md)) — nested TypeScript resources are the source of truth, and the `i18n` regolith filter generates the `.lang` files, the runtime bundle and the key types from them
+- `Text` takes a literal string, a translation key or a `RawMessage` interchangeably — no prop to declare, no wiring beyond the addon's one `createI18n(bundle)` call
+- Bundles replicate across addons, so one realm can render another's strings
 
 ### Navigation
 
 - Stack-based multi-screen navigation with screen parameters and typed route state ([@bedrock-core/navigation](./packages/navigation/README.md))
-- `NavigationContainer`, `createStackNavigator`, `Screen`
+- `NavigationContainer`, `createStackNavigator`, `stackReducer`
 - Navigation hooks: `useNavigation()`, `useRoute()`
 
 ### Forms
@@ -52,7 +57,7 @@ Components serialize into compact strings decoded by a companion resource pack t
 ### Guides & Config
 
 - In-game guides authored in MDX ([@bedrock-core/guides](./packages/guides/README.md)) — the `guides` regolith filter compiles `packs/data/guides/<locale>/**.mdx` into a guide manifest plus `.lang` files, and `createGuide(manifest)` renders it as a self-contained guide with its own home ⇆ page navigation, prose localized per player language
-- Shared addon list + config + guide UI ([@bedrock-core/config](./packages/config/README.md)) — `ui(core)` mounts `<namespace>:config` / `:guide` / `:list` under the addon's own namespace, and whichever realm runs the newest runtime serves the config and guide screens for every registered addon
+- Shared addon list + config + guide UI ([@bedrock-core/config](./packages/config/README.md)) — `ui(core)` mounts `<namespace>:config` / `:configat` / `:guide` / `:list` under the addon's own namespace, and whichever realm runs the newest runtime serves the config and guide screens for every registered addon
 
 ### 🚀 Future Considerations
 
@@ -61,7 +66,6 @@ Components serialize into compact strings decoded by a companion resource pack t
 - Resource pack builder automation
 - Reactive data binding (if feasible)
 - Export feature for "non-form" JSON UI
-- Support for translations params (key:string, with: string[]) in SerializableString
 - Entity render
 - Structure render
 
@@ -73,7 +77,11 @@ For technical documentation and implementation details, see:
 
 - [UI Runtime Package](./packages/ui-runtime/README.md) - Core framework internals
 - [Flexbox](./packages/flexbox/README.md) - Layout engine
+- [i18n](./packages/i18n/README.md) - Typed localization, interpolation and plurals
+- [Navigation](./packages/navigation/README.md) - Stack navigation
 - [Ore-Styled Components](./packages/ore-styled/README.md) - Optional prebuilt Ore-UI styled components
+- [Guides](./packages/guides/README.md) - MDX-authored in-game guides
+- [Config](./packages/config/README.md) - Shared addon list + config + guide UI
 - [Resource Pack](./packages/resource-pack/README.md) - Test addon and reference
 - [CLI Tool](./packages/cli/README.md) - Project scaffolding
 

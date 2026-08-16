@@ -1,6 +1,6 @@
 # @bedrock-core/flexbox
 
-![Logo](../../assets/logo.svg)
+![Logo](https://raw.githubusercontent.com/bedrock-core/ui/main/assets/logo/title.png)
 
 > ⚠️ Beta Status: Active development. Breaking changes may occur until 1.0.0. Pin exact versions for stability.
 
@@ -48,9 +48,10 @@ console.log(content.layout); // { x, y, width, height, zIndex }
 
 ## API
 
-### `createNode(style?, children?)`
+### `createNode(style?, children?, measure?)`
 
-Create a layout node with an optional style and pre-populated children.
+Create a layout node with an optional style, pre-populated children, and an optional content
+measure callback.
 
 ```typescript
 const node = createNode(
@@ -60,6 +61,27 @@ const node = createNode(
 ```
 
 The `layout` field is zeroed on creation and is filled only after `computeLayout()` runs.
+
+### `measure` — width-dependent leaves
+
+A **leaf** whose intrinsic size depends on the width it is granted (wrapping text: narrower box →
+more lines → taller) supplies a `MeasureFunc`:
+
+```typescript
+type MeasureFunc = (availableWidth: number) => MeasuredSize; // { width, height }
+
+const label = createNode({}, [], (available) => measureText(str, available));
+```
+
+`computeLayout()` drives it:
+
+1. once with `Infinity` to seed the max-content size (CSS `auto` flex-basis semantics), and
+2. after each solve with the node's granted `layout.width`, re-solving when the returned size
+   changed — a bounded fixpoint, since heights almost never feed back into widths.
+
+A measured size takes precedence over child-derived sizing, but an explicit `style.width` /
+`style.height` always wins over the measured size. A collapsed leaf (granted width ≤ 0) keeps its
+seed rather than measuring at 0.
 
 ### `computeLayout(root, refWidth?, refHeight?)`
 
@@ -97,6 +119,18 @@ SCREEN.DESKTOP // { width: 376, height: 250 }
 CANONICAL_SCREEN // same as SCREEN.POCKET
 ```
 
+### `isPercent(value)` / `resolveSize(value, parentSize)`
+
+Size-resolution helpers, exported for consumers that build their own layout logic (the
+ui-runtime bridge uses them):
+
+```typescript
+isPercent('50%')            // true — narrows to `Percent`
+resolveSize('50%', 200)     // 100
+resolveSize(80, 200)        // 80
+resolveSize('auto', 200)    // undefined — the caller decides the fallback
+```
+
 ## Supported Properties
 
 ### Display & Positioning
@@ -118,6 +152,14 @@ Sizes are **texels** (integer) or **percent strings** (`"50%"`) relative to the 
 | `maxWidth` | `number \| Percent` | — | Maximum width constraint |
 | `minHeight` | `number \| Percent` | — | Minimum height constraint |
 | `maxHeight` | `number \| Percent` | — | Maximum height constraint |
+| `aspectRatio` | `number` | — | `width ∕ height`; derives the auto axis from the definite one |
+
+**`aspectRatio`** transfers the definite axis onto the auto one. The driver is explicit
+`width` → width, explicit `height` → height, both auto → width (the parent-driven axis in
+columns and in absolute `left`+`right` insets, the flex-grown axis in rows). It is a no-op when
+both axes are explicit (matching CSS) or when the node is content-measured — the `measure`
+callback owns both dimensions there. A percent axis only counts as definite once it has been
+resolved against the parent, so the ratio never derives the other axis from a still-zero value.
 
 ### Flex Container
 

@@ -18,19 +18,20 @@ This is a stack-only navigator. It does **not** support:
 - **`createStackNavigator(config)`** – Factory that returns a `{ Navigator }` object. Register screens by passing a `{ screens: { [name]: component | { screen, initialParams } } }` config.
 - **`useNavigation<TRoutes>()`** – Hook returning a `NavigationHelpers<TRoutes>` object with: `navigate(name, params?)`, `push(name, params?)`, `goBack()`, `canGoBack()`, `reset(state)`, `setParams(name, params)`, `getState()`.
 - **`useRoute<TRoutes, K>()`** – Hook returning the current `RouteObject<TRoutes[K]>` with shape `{ key: string, name: K, params: TRoutes[K] }`. Must be called from within a screen component.
+- **`stackReducer(state, action)`** – The pure reducer behind the container, exported with its `StackAction` union and `ScreenDefaults` map for hosts that drive or seed the stack themselves (`@bedrock-core/config` builds an initial state from a fired command this way).
 
 ## Usage
 
 ```tsx
-import { NavigationContainer, createStackNavigator } from '@bedrock-core/navigation';
-import { useNavigation, useRoute } from '@bedrock-core/navigation';
+import { NavigationContainer, createStackNavigator, useNavigation, useRoute } from '@bedrock-core/navigation';
+import { Button, render, Text } from '@bedrock-core/ui';
 
 // Define screens
 function HomeScreen() {
   const navigation = useNavigation();
   return (
     <Button onPress={() => navigation.navigate('Profile', { userId: 42 })}>
-      Go to Profile
+      <Text>{'Go to Profile'}</Text>
     </Button>
   );
 }
@@ -41,8 +42,10 @@ function ProfileScreen() {
   const navigation = useNavigation();
   return (
     <>
-      <Text>Profile: {userId}</Text>
-      <Button onPress={() => navigation.goBack()}>Back</Button>
+      <Text>{`Profile: ${userId}`}</Text>
+      <Button onPress={() => navigation.goBack()}>
+        <Text>{'Back'}</Text>
+      </Button>
     </>
   );
 }
@@ -74,4 +77,4 @@ render(
 3. **Reuses present loop** – Button callbacks naturally trigger screen updates via the runtime's present cycle.
 4. **No nested renders** – Screen components must never call `render()` directly.
 
-See [comprehensive documentation](../../docs/) for more details.
+See the [full documentation & guides](https://bedrock-core.drav.dev/) for more details.

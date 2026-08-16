@@ -22,11 +22,14 @@ version independently.
 | Path | What lives there |
 | --- | --- |
 | `mount.tsx` | `ui()`, command dispatch, and the host-side open funnel — start here |
+| `App.tsx` | the root screen component: owns the `NavigationContainer` and the context providers |
 | `commands/` | `addon.ts` (every command), `origin.ts`, `parse.ts`, `targets.ts` |
-| `navigation/` | a fired command → a route stack: `openTarget.ts` → `initialState.ts`, `routes.ts` |
+| `navigation/` | a fired command → a route stack: `openTarget.ts` → `initialState.ts`, `routes.ts`, `openConfig.ts` |
 | `config/` | the config domain: `schema.ts` shaping, `values.ts` transport, `nested.ts` paths |
 | `permissions.ts` | who may reach which scope — the caller-side half of authorization |
 | `context.ts` | `useCore` / `usePlayer`, provided once by `App` |
+| `i18n/` | this package's own strings (`en_US.ts`), folded into your bundle under the `core` namespace |
+| `frameworkGuide.ts` | the built-in bedrock-core guide served alongside each addon's own |
 | `types.ts` | `CONFIG_SCOPES`, `ConfigScope`, `EntrySchema`, `FlatSchemaLike` |
 | `screens/` | the screens themselves |
 
@@ -102,6 +105,8 @@ writable by any script in the world.
   owns its `NavigationContainer` and stacks the list / config / guide screens.
 - `registerAddonCommands(core, onOpen)` — this addon's commands on their own, for a custom mount.
 - `isOperator(player)` / `allowedScopes(player)` / `clampTarget(target, player)` — the permission rule.
+- `CONFIG_SCOPES` — the three layers a setting can live at (`server`, `dimension`, `player`), with
+  the `ConfigScope`, `EntrySchema` and `FlatSchemaLike` types, for code that builds its own pickers.
 
 ## Screens
 

@@ -17,10 +17,16 @@ This will interactively prompt you for:
 And generate a complete addon structure with:
 
 - ✅ Behavior Pack with TypeScript setup
-- ✅ Resource Pack with JSON UI decoders
-- ✅ Regolith configuration
+- ✅ Resource Pack for your own textures and `.lang` files (the JSON UI decoders live in the companion pack below)
+- ✅ Regolith configuration — the `generator` → `guides` → `i18n` → `bundler` filter chain
+- ✅ Localization scaffolding (`packs/data/i18n/`) wired to [`@bedrock-core/i18n`](https://github.com/bedrock-core/ui/blob/main/packages/i18n/README.md)
+- ✅ An in-game guide scaffold (`packs/data/guides/`)
 - ✅ TypeScript, ESLint configs
-- ✅ Simple working example
+- ✅ Simple working example using `@bedrock-core/ore-styled`
+
+It also downloads the latest companion resource pack (`.mcpack`) from the
+[releases page](https://github.com/bedrock-core/ui/releases/latest) into the project — open it to
+import it into Minecraft. If the download fails the CLI tells you where to get it manually.
 
 ## After Generation
 
