@@ -80,18 +80,12 @@ export default {
   },
 
   framework: {
+    name: '@bedrock-core',
+    creator: 'DrAv0011',
     description: 'The framework that powers every addon above.',
   },
 
   guides: {
-    adm: {
-      note: '§7§lNote',
-      tip: '§a§lTip',
-      info: '§b§lInfo',
-      warning: '§6§lWarning',
-      danger: '§c§lDanger',
-    },
-
     commands: {
       nav: 'Commands',
       intro: 'Every addon built on bedrock-core shares this screen. The list on the left is every addon installed in this world; pick one to reach its settings or its own guide.',

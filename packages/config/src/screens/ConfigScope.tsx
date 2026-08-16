@@ -105,8 +105,8 @@ export function ConfigScope({ navigation, route }: AppScreen<'ConfigScope'>): JS
   return (
     <Card flexDirection={'column'} padding={0} gap={0}>
       <Header
-        title={{ text: addonName }}
-        breadcrumbs={[{ text: t($ => $.config.breadcrumb) }]}
+        title={addonName}
+        breadcrumbs={[t($ => $.config.breadcrumb)]}
         onBack={(): void => navigation.goBack()}
         onClose={exit}
       />
@@ -144,7 +144,7 @@ function ScopeRow({
   return (
     <Panel flexDirection={'row'} alignItems={'stretch'} gap={spacing.xs}>
       <Panel flexGrow={1}>
-        <MenuRow title={{ text: label }} subtitle={{ text: hint }} onPress={onPress} />
+        <MenuRow title={label} subtitle={hint} onPress={onPress} />
       </Panel>
       {onReset ? <ResetButton onPress={onReset} /> : null}
     </Panel>

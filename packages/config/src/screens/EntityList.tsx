@@ -87,7 +87,7 @@ function EntityRow({
   return (
     <Panel flexDirection={'row'} alignItems={'stretch'} gap={spacing.xs}>
       <Panel flexGrow={1}>
-        <MenuRow title={{ text: label }} onPress={onPress} />
+        <MenuRow title={label} onPress={onPress} />
       </Panel>
       <ResetButton onPress={onReset} />
     </Panel>

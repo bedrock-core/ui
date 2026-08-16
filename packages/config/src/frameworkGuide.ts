@@ -11,9 +11,8 @@
  * than a short phrase has to resolve client-side instead. The values are this package's own
  * TYPED resources (`src/i18n/en_US.ts`, `guides.commands.*` → real keys `core.guides.commands.*`):
  * the i18n filter folds them into every consuming realm's bundle and generated `.lang`, which is
- * what paints, measures, and translates them everywhere — admonition titles included, via the
- * manifest's per-block `titleK` pointing at the typed `core.guides.adm.*` keys (filter-generated
- * guides keep the renderer's derived `bcg.<ns>._adm.*` defaults).
+ * what paints, measures, and translates them everywhere. Admonition titles are
+ * `@bedrock-core/guides`' own typed resources (`core.guides.adm.*`), the renderer's default.
  */
 import type { GuideManifest } from '@bedrock-core/guides';
 
@@ -63,7 +62,7 @@ export const frameworkGuide: GuideManifest = {
           ],
         },
         { t: 'p', runs: [{ k: `${K}.scoped` }] },
-        { t: 'adm', kind: 'tip', titleK: 'core.guides.adm.tip', blocks: [{ t: 'p', runs: [{ k: `${K}.tip` }] }] },
+        { t: 'adm', kind: 'tip', blocks: [{ t: 'p', runs: [{ k: `${K}.tip` }] }] },
       ],
     },
   },

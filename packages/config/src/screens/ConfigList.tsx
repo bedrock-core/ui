@@ -34,7 +34,7 @@ export function ConfigList({ navigation, route }: AppScreen<'ConfigList'>): JSX.
   if (!entry) {
     return (
       <Card flexDirection={'column'} padding={0} gap={0}>
-        <Header title={{ text: breadcrumb }} onBack={(): void => navigation.goBack()} onClose={exit} />
+        <Header title={breadcrumb} onBack={(): void => navigation.goBack()} onClose={exit} />
         <Panel flexGrow={1} justifyContent={'center'} alignItems={'center'} padding={spacing.lg}>
           <Text>{`${fontColor.muted}${t($ => $.config.unknownList)}`}</Text>
         </Panel>

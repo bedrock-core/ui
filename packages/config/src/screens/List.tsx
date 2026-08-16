@@ -1,10 +1,11 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Divider, Header, MenuRow, Button as OreButton, theme } from '@bedrock-core/ore-styled';
-import type { Runtime } from '@bedrock-core/server-runtime';
+import type { RegisteredAddon, Runtime } from '@bedrock-core/server-runtime';
 import type { Player } from '@minecraft/server';
 import { Image, Panel, Scroll, Text, useExit, useState, type JSX } from '@bedrock-core/ui-runtime';
+import type { DisplayText } from '@bedrock-core/i18n';
 import { useCore, usePlayer } from '../context';
-import { useTranslation } from '../i18n';
+import { i18n, useTranslation } from '../i18n';
 import { isOperator } from '../permissions';
 import { openConfig } from '../navigation/openConfig';
 import { FRAMEWORK_ADDON_ID } from '../frameworkGuide';
@@ -23,23 +24,35 @@ const ROW_ICON_SIZE = 20;
 // height from the panel's resolved width via `aspectRatio`.
 const THUMBNAIL_RATIO = 16 / 6;
 
-/** The registry fields the list renders — `RegisteredAddon` satisfies it structurally. */
-interface DisplayAddon {
-  id: string;
-  packName: string;
-  version: string;
-  creator: string;
-  creatorName?: string;
-  description?: string;
-  icon?: string;
-  thumbnail?: string;
-}
+// key() is locale-independent for non-plural leaves — module level is fine.
+const { key } = i18n;
+
+/**
+ * What the list renders: `RegisteredAddon`, DERIVED not copied (field renames
+ * and type changes flow through), with two deltas —
+ *
+ * - registry-only fields (`pack`, `self`, `runtimeVersion`) become optional,
+ *   so the synthetic framework row (which no registry carries) satisfies it;
+ * - the textual display fields widen to `RawMessage` (`raw()` output), so a
+ *   synthetic row speaks the same i18n language as registered addons,
+ *   arguments included, filled per player by `Text`.
+ */
+type DisplayAddon
+  = Omit<RegisteredAddon, 'pack' | 'self' | 'runtimeVersion' | 'packName' | 'creatorName' | 'description'>
+    & Partial<Pick<RegisteredAddon, 'pack' | 'self' | 'runtimeVersion'>>
+    & {
+      packName: DisplayText;
+      creatorName?: DisplayText;
+      description?: DisplayText;
+    };
 
 /**
  * Synthetic row for the framework itself, pinned at the bottom of the list. It is not in the
- * registry (nothing registers it); name/description are plain text — Text measures unmatched
- * keys literally, and the description must stay under the 80-byte serialization cap since the
- * literal travels as the localization key.
+ * registry (nothing registers it) — but its description IS a real i18n key: this package's
+ * resources fold into every realm's bundle, so `key($ => $.framework.description)` resolves
+ * and measures exactly like a registered addon's display fields, per player language —
+ * name and creator included: proper nouns still get keys, so they stay consistent
+ * everywhere they render and translatable if ever needed.
  *
  * The version is read back off this realm's own registry entry rather than imported from
  * `@bedrock-core/server-runtime`: the registry already stamps `runtimeVersion` on the self
@@ -49,11 +62,11 @@ interface DisplayAddon {
 function frameworkAddon(runtimeVersion: string): DisplayAddon {
   return {
     id: FRAMEWORK_ADDON_ID,
-    packName: '@bedrock-core',
+    packName: key($ => $.framework.name),
     version: runtimeVersion,
     creator: 'drav0011',
-    creatorName: 'DrAv0011',
-    description: 'The framework that powers every addon above.',
+    creatorName: key($ => $.framework.creator),
+    description: key($ => $.framework.description),
     icon: 'textures/ui/bedrock_core/icon',
   };
 }
@@ -86,8 +99,8 @@ export function List({ navigation, route }: AppScreen<'List'>): JSX.Element {
                 <MenuRow
                   icon={addon.icon ?? ICON_MISSING}
                   iconSize={ROW_ICON_SIZE}
-                  title={{ key: addon.packName }}
-                  subtitle={{ text: addon.version }}
+                  title={addon.packName}
+                  subtitle={`${'§7'}${addon.version}`}
                   chevron={false}
                   onPress={(): void => setSelectedId(addon.id)}
                 />
@@ -110,7 +123,7 @@ function AddonDetails({ core, addon, player, navigation }: {
   player: Player;
   navigation: AppScreen<'List'>['navigation'];
 }): JSX.Element {
-  const { t } = useTranslation();
+  const { t, display } = useTranslation();
   const accessor = core.config.of(addon.id, { actorId: player.id });
   const hasConfig = accessor !== undefined;
   // The framework's own guide is built in rather than replicated — see `frameworkGuide.ts`.
@@ -138,7 +151,7 @@ function AddonDetails({ core, addon, player, navigation }: {
       addonId: addon.id,
       scope: 'player',
       entityId: player.id,
-      breadcrumb: `${addon.packName} > ${player.name}`,
+      breadcrumb: `${display(addon.packName)} > ${player.name}`,
     });
   };
 
@@ -152,7 +165,7 @@ function AddonDetails({ core, addon, player, navigation }: {
           <Image width={40} height={40} texture={addon.icon ?? ICON_MISSING} />
         </Panel>
         <Panel flexDirection={'column'}>
-          <Text font={'mojangles'} scale={2} shadow={true} localizationKey={addon.packName} />
+          <Text font={'mojangles'} scale={2} shadow={true}>{addon.packName}</Text>
           <Text font={'mojangles'} scale={1}>{`§7${t($ => $.addons.version, { version: addon.version })}`}</Text>
         </Panel>
         <Panel flexDirection={'row'} gap={spacing.sm}>
@@ -178,7 +191,7 @@ function AddonDetails({ core, addon, player, navigation }: {
         <Card variant={'dark'}>
           {/* Registry fields are translation keys — color/style codes live in the
               owning addon's .lang values (a key can't carry a § prefix). */}
-          <Text font={'mojangles'} scale={1} maxLines={4} wordBreak={'break-word'} localizationKey={addon.description ?? ''} />
+          <Text font={'mojangles'} scale={1} maxLines={4} wordBreak={'break-word'}>{addon.description ?? ''}</Text>
         </Card>
         {/* The label's own trailing space is dropped by the label control, so the gap is a real
             one; the value takes the remaining width and wraps rather than running off the card —
@@ -186,7 +199,7 @@ function AddonDetails({ core, addon, player, navigation }: {
         <Panel flexDirection={'row'} alignItems={'flex-start'} gap={spacing.xs}>
           <Text shadow={true} flexShrink={0}>{`§7${t($ => $.addons.authors)}`}</Text>
           <Panel flexGrow={1} flexShrink={1}>
-            <Text font={'mojangles'} scale={1} maxLines={2} wordBreak={'break-word'} localizationKey={addon.creatorName ?? addon.creator} />
+            <Text font={'mojangles'} scale={1} maxLines={2} wordBreak={'break-word'}>{addon.creatorName ?? addon.creator}</Text>
           </Panel>
         </Panel>
       </Panel>

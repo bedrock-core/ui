@@ -1,5 +1,3 @@
-import type { BreadcrumbSegment } from '@bedrock-core/ore-styled';
-
 /** How a trail is joined into the single `breadcrumb` route param the config screens carry. */
 const SEPARATOR = ' > ';
 
@@ -11,8 +9,8 @@ const SEPARATOR = ' > ';
  * `Header` split it again here so the trail renders with the muted separators every other screen
  * uses, rather than one flat run of text.
  */
-export function splitBreadcrumb(breadcrumb: string): { title: string; breadcrumbs: BreadcrumbSegment[] } {
+export function splitBreadcrumb(breadcrumb: string): { title: string; breadcrumbs: string[] } {
   const [head = breadcrumb, ...rest] = breadcrumb.split(SEPARATOR);
 
-  return { title: head, breadcrumbs: rest.map(text => ({ text })) };
+  return { title: head, breadcrumbs: rest };
 }
