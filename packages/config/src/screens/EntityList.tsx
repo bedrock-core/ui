@@ -6,8 +6,7 @@ import { ResetButton } from './ConfigScope';
 import { useCore, usePlayer } from '../context';
 import { useTranslation } from '../i18n';
 import { allowedScopes, isOperator } from '../permissions';
-import { filterScope, getScopedSchema, schemaDefaultsPatch } from '../config/schema';
-import { getRoster, patchScope } from '../config/values';
+import { getRoster } from '../config/values';
 import { openConfig } from '../navigation/openConfig';
 import type { AppScreen } from '../navigation/routes';
 import { Missing } from './Missing';
@@ -17,8 +16,8 @@ const { spacing, fontColor } = theme.tokens;
 /**
  * Select list for a 'dimension' or 'player' scope: one row per known entity
  * (known dimensions, or currently online players), each with its own edit
- * button (jumps into that entity's settings) and reset button (resets that
- * entity to the addon's code-defined defaults).
+ * button (jumps into that entity's settings) and reset button (asks first,
+ * then puts that entity back to the addon's code-defined defaults).
  */
 export function EntityList({ navigation, route }: AppScreen<'EntityList'>): JSX.Element {
   const core = useCore();
@@ -31,7 +30,6 @@ export function EntityList({ navigation, route }: AppScreen<'EntityList'>): JSX.
   if (!accessor) { return <Missing navigation={navigation} addonId={addonId} />; }
 
   const configAccessor = accessor;
-  const schema = filterScope(getScopedSchema(configAccessor), scope);
   // A non-operator has no business seeing a roster of other players or of dimensions they
   // cannot edit. `ConfigScope` already routes them past this screen; this keeps the list
   // honest for any other way of arriving here.
@@ -42,8 +40,9 @@ export function EntityList({ navigation, route }: AppScreen<'EntityList'>): JSX.
   const navigateToEntity = async (entityId: string, name: string): Promise<void> =>
     openConfig(navigation, configAccessor, { addonId, scope, entityId, breadcrumb: `${breadcrumb} > ${name}` });
 
-  const resetEntity = (entityId: string): void => {
-    patchScope(configAccessor, scope, entityId, schemaDefaultsPatch(schema));
+  /** The reset itself lives on `ConfirmReset` — pressing here only asks. */
+  const confirmEntityReset = (entityId: string, name: string): void => {
+    navigation.navigate('ConfirmReset', { addonId, scope, entityId, target: name, breadcrumb: `${breadcrumb} > ${name}` });
   };
 
   return (
@@ -62,7 +61,7 @@ export function EntityList({ navigation, route }: AppScreen<'EntityList'>): JSX.
                   <EntityRow
                     label={entity.name}
                     onPress={(): Promise<void> => navigateToEntity(entity.id, entity.name)}
-                    onReset={(): void => resetEntity(entity.id)}
+                    onReset={(): void => confirmEntityReset(entity.id, entity.name)}
                   />
                 ))}
           </Panel>

@@ -4,8 +4,7 @@ import { Fragment, Image, Panel, Scroll, Text, useExit, type JSX } from '@bedroc
 import { useCore, usePlayer } from '../context';
 import { useTranslation } from '../i18n';
 import { allowedScopes, isOperator } from '../permissions';
-import { filterScope, getScopedSchema, schemaDefaultsPatch } from '../config/schema';
-import { patchScope } from '../config/values';
+import { filterScope, getScopedSchema } from '../config/schema';
 import { openConfig } from '../navigation/openConfig';
 import type { AppScreen } from '../navigation/routes';
 import { Missing } from './Missing';
@@ -18,8 +17,8 @@ const ICON_RESET = 'textures/ui/config/reset';
  * Scope picker for one addon: a row per scope the addon actually declares — server, dimension,
  * player. Server jumps straight into the addon's world-wide settings. Dimension and player jump
  * into a select list of known dimensions / online players, each with its own edit and
- * reset-to-default entry. Every row's reset button resets that row's scope to the addon's
- * code-defined defaults.
+ * reset-to-default entry. Every row's reset button asks first (`ConfirmReset`), then puts that
+ * row's scope back to the addon's code-defined defaults.
  *
  * A scope the addon does not declare (or that this player may not open) is left OUT rather than
  * shown greyed: a permanently dead row is not information, and an addon with one scope should
@@ -54,8 +53,11 @@ export function ConfigScope({ navigation, route }: AppScreen<'ConfigScope'>): JS
   const navigateToOwnPlayer = async (): Promise<void> =>
     openConfig(navigation, configAccessor, { addonId, scope: 'player', entityId: player.id, breadcrumb: `${addonName} > ${player.name}` });
 
-  const resetServerToSchemaDefaults = (): void => {
-    patchScope(configAccessor, 'server', undefined, schemaDefaultsPatch(filterScope(schema, 'server')));
+  /** The reset itself lives on `ConfirmReset` — pressing here only asks. */
+  const confirmServerReset = (): void => {
+    const label = t($ => $.scope.server.label);
+
+    navigation.navigate('ConfirmReset', { addonId, scope: 'server', target: label, breadcrumb: `${addonName} > ${label}` });
   };
 
   // Declared by the addon AND permitted for this player. `clampTarget` already keeps a deep link
@@ -75,7 +77,7 @@ export function ConfigScope({ navigation, route }: AppScreen<'ConfigScope'>): JS
         label={t($ => $.scope.server.label)}
         hint={t($ => $.scope.server.hint)}
         onPress={navigateToServer}
-        onReset={resetServerToSchemaDefaults}
+        onReset={confirmServerReset}
       />,
     );
   }
@@ -152,8 +154,11 @@ function ScopeRow({
 }
 
 /**
- * The reset affordance: square at whatever height the row turns out to be, so it tracks a
- * one-line row and a two-line row alike.
+ * The reset affordance. It ASKS — every caller hands it a press that opens `ConfirmReset`, so
+ * nothing in this UI wipes a scope on one tap.
+ *
+ * Square at whatever height the row turns out to be, so it tracks a one-line row and a two-line
+ * row alike.
  *
  * `height: '100%'` is what makes that work, and it is not redundant with the row's `stretch`.
  * `aspectRatio` transfers the DEFINITE axis onto the auto one, and with both axes auto it treats

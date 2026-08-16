@@ -102,6 +102,7 @@ export function List({ navigation, route }: AppScreen<'List'>): JSX.Element {
                   title={addon.packName}
                   subtitle={`${'§7'}${addon.version}`}
                   chevron={false}
+                  selected={addon.id === selectedId}
                   onPress={(): void => setSelectedId(addon.id)}
                 />
               ))}

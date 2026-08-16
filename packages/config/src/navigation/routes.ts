@@ -36,6 +36,19 @@ export type AppRoutes = {
     /** Current effective values — fetched by the navigating screen BEFORE pushing this one. */
     values: Record<string, unknown>;
   };
+  ConfirmReset: {
+    addonId: string;
+    scope: ConfigScope;
+    entityId?: string;
+
+    /**
+     * What the question names — the scope's label, or the dimension/player being reset.
+     * Carried rather than derived: `entityId` is an id (a player's is a number), and the
+     * screen has no roster to look a name up in.
+     */
+    target: string;
+    breadcrumb: string;
+  };
 };
 
 export type AppScreen<K extends keyof AppRoutes> = ScreenProps<AppRoutes, K>;

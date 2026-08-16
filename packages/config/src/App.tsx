@@ -11,6 +11,7 @@ import { isOperator } from './permissions';
 import { Config } from './screens/Config';
 import { ConfigList } from './screens/ConfigList';
 import { ConfigScope as ConfigScopeScreen } from './screens/ConfigScope';
+import { ConfirmReset } from './screens/ConfirmReset';
 import { EntityList } from './screens/EntityList';
 import { Guide } from './screens/Guide';
 import { List } from './screens/List';
@@ -45,6 +46,7 @@ export function App({ core, player, target, values }: AppProps): JSX.Element {
         EntityList,
         Config,
         ConfigList,
+        ConfirmReset,
         Guide,
       },
     });

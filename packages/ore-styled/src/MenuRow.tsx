@@ -16,6 +16,13 @@ export interface MenuRowProps extends ControlProps {
   /** Trailing `>` affordance. Default `true` — set `false` for rows that select rather than navigate. */
   chevron?: boolean;
   /**
+   * Whether this row is the list's current selection. A selecting list (`chevron={false}`)
+   * leaves one row standing after the press, and without a face of its own that row was
+   * indistinguishable from the rest — the detail pane was the only thing saying which one it
+   * was showing. A navigating list never has one, so this defaults to `false`.
+   */
+  selected?: boolean;
+  /**
    * Indent level for nested index rows. Each step insets the row's whole BOX, not its
    * contents — a child row is visibly narrower than its section header, which is what makes
    * the nesting readable. Padding alone left every row the same width and the hierarchy
@@ -39,6 +46,7 @@ export function MenuRow({
   title,
   subtitle,
   chevron = true,
+  selected = false,
   depth = 0,
   enabled = true,
   onPress,
@@ -80,10 +88,14 @@ export function MenuRow({
 
   return (
     <Button
-      background={row.textures.background}
-      backgroundHover={row.textures.backgroundHover}
-      backgroundPressed={row.textures.backgroundPressed}
-      backgroundLocked={row.textures.background}
+      // A selected row wears the selected face in EVERY state, and `undefined` is how it does
+      // that: `resolveStateBackgrounds` fills each missing state from the base, so one texture
+      // covers hover, press and locked. Leaving the ordinary hover face on meant pointing at
+      // the current row washed the selection out — hover is LIGHTER than the selected fill.
+      background={selected ? row.textures.backgroundSelected : row.textures.background}
+      backgroundHover={selected ? undefined : row.textures.backgroundHover}
+      backgroundPressed={selected ? undefined : row.textures.backgroundPressed}
+      backgroundLocked={selected ? undefined : row.textures.background}
       padding={row.padding}
       // Cross-axis stretch rather than `width: '100%'` — an explicit full width plus the
       // indent margin would overflow its container by exactly the indent.

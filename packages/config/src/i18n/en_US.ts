@@ -59,9 +59,15 @@ export default {
     maxReached: 'Maximum of {{max}} items reached.',
   },
 
+  reset: {
+    question: 'Reset {{target}} to the defaults this addon ships with?',
+    warning: 'Every setting it carries goes back to its default value. This cannot be undone.',
+  },
+
   action: {
     save: 'Save',
     back: 'Back',
+    reset: 'Reset',
   },
 
   field: {

@@ -67,7 +67,7 @@ export interface Theme {
       gap: number;
       /** Edge of a row's leading thumbnail (px). */
       iconSize: number;
-      textures: { background: string; backgroundHover: string; backgroundPressed: string };
+      textures: { background: string; backgroundHover: string; backgroundPressed: string; backgroundSelected: string };
       textStyle: { font: TextFont; scale: number; color: string; disabledColor: string; muted: string; mutedDisabled: string };
     };
     radio: {
@@ -227,6 +227,7 @@ const oreTheme: Theme = {
         background: `${BASE}/dropdown/option/background`,
         backgroundHover: `${BASE}/dropdown/option/background_hover`,
         backgroundPressed: `${BASE}/dropdown/option/background_hover`,
+        backgroundSelected: `${BASE}/dropdown/option/background_selected`,
       },
       // Full scale for the subtitle too — a sub-1 scale lands on a fractional
       // font_scale_factor and reads mushy in game; the §7 grey already separates it.
