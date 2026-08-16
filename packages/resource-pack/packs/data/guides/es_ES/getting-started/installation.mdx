@@ -14,7 +14,7 @@ regolith install guides
 ## Configuración del proyecto
 
 1. Crea `packs/data/guides/en_US/` y coloca tus archivos `.mdx` dentro
-2. Añade el filtro `guides` **antes** de `translation-keys` en tus perfiles
+2. Añade el filtro `guides` **antes** de `i18n` en tus perfiles
 3. Importa el manifiesto desde `@bedrock-core/generated/guides`
 
 :::tip
@@ -23,7 +23,7 @@ imágenes y enlaces internos — todo compilado a claves de localización.
 :::
 
 :::warning[El orden de los filtros importa]
-El filtro guides debe ejecutarse antes de `translation-keys`, o las métricas de texto no
+El filtro guides debe ejecutarse antes de `i18n`, o las métricas de texto no
 incluirán tus claves.
 :::
 

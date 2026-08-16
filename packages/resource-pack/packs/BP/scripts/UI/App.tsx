@@ -1,7 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import guidesManifest from '@bedrock-core/generated/guides';
-import translationKeys from '@bedrock-core/generated/translation-keys';
-import { Panel, resolveTranslationKeysForPlayer, Text, TranslationKeysContext, useExit, usePlayer, type JSX } from '@bedrock-core/ui';
+import { Panel, Text, useExit, type JSX } from '@bedrock-core/ui';
 import {
   Button,
   Card,
@@ -17,7 +16,11 @@ import {
 
 import { BackBar } from './components/BackBar';
 import { GuideDemoButton } from './components/GuideDemoButton';
+// Imported for its side effect too: creating the addon's i18n instance is what
+// registers the default translation source Text measures localizationKeys with.
+import './i18n';
 import { HooksDemo } from './screens/HooksDemo';
+import { I18nDemo } from './screens/I18nDemo';
 import { FlexLayout } from './screens/FlexLayout';
 import { FontMetrics } from './screens/FontMetrics';
 import { FormDemo } from './screens/FormDemo';
@@ -35,6 +38,7 @@ import { OreStyledForm } from './screens/OreStyledForm';
 type AppRoutes = {
   Home: undefined;
   HooksDemo: undefined;
+  I18nDemo: undefined;
   FlexLayout: undefined;
   FontMetrics: undefined;
   FormDemo: undefined;
@@ -77,6 +81,9 @@ function HomeScreen({ navigation }: AppScreen<'Home'>): JSX.Element {
 
       <Button onPress={(): void => navigation.navigate('HooksDemo')}>
         {'§aHooks Demo'}
+      </Button>
+      <Button variant={'secondary'} onPress={(): void => navigation.navigate('I18nDemo')}>
+        {'§ai18n Demo'}
       </Button>
       <Button variant={'secondary'} onPress={(): void => navigation.navigate('FlexLayout')}>
         {'§bFlex Layout'}
@@ -143,6 +150,15 @@ function HooksDemoScreen(): JSX.Element {
     <Panel flexDirection={'column'} gap={spacing.sm}>
       <BackBar title={'Hooks Demo'} />
       <HooksDemo />
+    </Panel>
+  );
+}
+
+function I18nDemoScreen(): JSX.Element {
+  return (
+    <Panel flexDirection={'column'} gap={spacing.sm}>
+      <BackBar title={'i18n Demo'} />
+      <I18nDemo />
     </Panel>
   );
 }
@@ -245,6 +261,7 @@ const Stack = createStackNavigator<AppRoutes>({
   screens: {
     Home: HomeScreen,
     HooksDemo: HooksDemoScreen,
+    I18nDemo: I18nDemoScreen,
     FlexLayout: FlexLayoutScreen,
     FontMetrics: FontMetricsScreen,
     FormDemo: FormDemoScreen,
@@ -263,14 +280,12 @@ const Stack = createStackNavigator<AppRoutes>({
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
+// No translation wiring here — creating the i18n instance (./i18n) registered
+// the default source, and localizationKey measurement resolves through it.
 export function App(): JSX.Element {
-  const player = usePlayer();
-
   return (
-    <TranslationKeysContext value={resolveTranslationKeysForPlayer(translationKeys, player) ?? null}>
-      <NavigationContainer>
-        <Stack.Navigator />
-      </NavigationContainer>
-    </TranslationKeysContext>
+    <NavigationContainer>
+      <Stack.Navigator />
+    </NavigationContainer>
   );
 }

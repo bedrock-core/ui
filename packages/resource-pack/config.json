@@ -18,9 +18,9 @@
 				"runWith": "nodejs",
 				"script": "../../../regolith-filters/guides/main.js"
 			},
-			"translation-keys": {
+			"i18n": {
 				"runWith": "nodejs",
-				"script": "../../../regolith-filters/translation-keys/main.js"
+				"script": "../../../regolith-filters/i18n/main.js"
 			}
 		},
 		"formatVersion": "1.4.0",
@@ -39,7 +39,10 @@
 						}
 					},
 					{
-						"filter": "translation-keys"
+						"filter": "i18n",
+						"settings": {
+							"namespace": "bc_ui"
+						}
 					},
 					{
 						"filter": "bundler",
@@ -63,7 +66,10 @@
 						}
 					},
 					{
-						"filter": "translation-keys"
+						"filter": "i18n",
+						"settings": {
+							"namespace": "bc_ui"
+						}
 					},
 					{
 						"filter": "bundler",

@@ -42,6 +42,7 @@ export default defineConfig([
       ".*/**",           // Any directory starting with dot (.yarn, .vscode, .regolith, etc.)
       ".*",              // Any file starting with dot
       "node_modules/**",
+      "**/*.generated.*", // Filter-generated files (i18n bundle + declarations)
       "**/*.*js",        // Generated JS files
       "filters/**",      // The filters directory
       "build/**",        // Build output

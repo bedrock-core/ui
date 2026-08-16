@@ -58,6 +58,33 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
     });
   }
 
+  if (block.typeId === MinecraftBlockTypes.WarpedButton) {
+    // SPIKE — protocol v0008 groundwork: can a form label carry a RawMessage,
+    // and does the client resolve translate+with BEFORE the JSON UI's text
+    // binding reads it? Three probes, observed with the core-ui RP applied:
+    //   1. plain translate+with in a label      → does %s fill?
+    //   2. {text} prefix + translate rawtext    → does the RESOLVED concatenation
+    //      arrive as one string? (the "fixed prefix + variable tail" layout the
+    //      serializer would use to keep field offsets decodable)
+    //   3. nested translate as a with-parameter → full client-side composition?
+    // If all three paint correctly, the protocol can move the label text to a
+    // variable tail and raw() paints keys + params with NO 80-byte cap.
+    const form = new ActionFormData();
+
+    form.title({ rawtext: [{ text: 'SPIKE ' }, { translate: 'multiplayer.player.joined', with: ['TITLE'] }] });
+    form.label({ translate: 'multiplayer.player.joined', with: ['PROBE-1'] });
+    form.label({ rawtext: [{ text: 'PREFIX_' }, { translate: 'multiplayer.player.joined', with: ['PROBE-2'] }] });
+    form.label({
+      rawtext: [{
+        translate: 'multiplayer.player.joined',
+        with: { rawtext: [{ translate: 'item.apple.name' }] },
+      }],
+    });
+    form.button('OK');
+
+    form.show(source);
+  }
+
   if (block.typeId === MinecraftBlockTypes.CherryButton) {
     // Cherry button → vanilla CustomForm (DDUI): unlike ActionFormData/ModalFormData,
     // every control is backed by an Observable*, the form stays open while you interact

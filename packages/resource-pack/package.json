@@ -14,6 +14,7 @@
 	},
 	"dependencies": {
 		"@bedrock-core/guides": "workspace:*",
+		"@bedrock-core/i18n": "workspace:*",
 		"@bedrock-core/navigation": "workspace:*",
 		"@bedrock-core/ore-styled": "workspace:*",
 		"@bedrock-core/ui": "workspace:*",

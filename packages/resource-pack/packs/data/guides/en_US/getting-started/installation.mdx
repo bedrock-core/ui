@@ -15,7 +15,7 @@ regolith install guides
 ## Project setup
 
 1. Create `packs/data/guides/en_US/` and drop your `.mdx` files inside
-2. Add the `guides` filter **before** `translation-keys` in your profiles
+2. Add the `guides` filter **before** `i18n` in your profiles
 3. Import the manifest from `@bedrock-core/generated/guides`
 
 :::tip
@@ -24,7 +24,7 @@ internal links — all compiled to localization keys.
 :::
 
 :::warning[Filter order matters]
-The guides filter must run before `translation-keys`, or text metrics will not include
+The guides filter must run before `i18n`, or text metrics will not include
 your guide keys.
 :::
 

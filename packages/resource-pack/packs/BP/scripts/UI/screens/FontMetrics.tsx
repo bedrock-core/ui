@@ -1,7 +1,10 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { theme } from '@bedrock-core/ore-styled';
 import { Fragment, JSX, Panel, Text } from '@bedrock-core/ui';
+import { i18n } from '../i18n';
 import type { TextFont } from '@bedrock-core/ui/components/Text';
+
+const { key } = i18n;
 
 const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 const DIGITS = '(0123456789)';
@@ -45,31 +48,31 @@ function FontMetricsSection({ font, label }: { font: TextFont; label: string }):
       <Text>{`§e§l=== ${label}: localizationKey ===`}</Text>
 
       <Text>{'§7plain (no wrap)'}</Text>
-      <Text font={font} localizationKey={'test.longstring'} />
+      <Text font={font} localizationKey={key($ => $.test.long)} />
 
       <Text>{'§7word-wrap'}</Text>
-      <Text font={font} localizationKey={'test.longstring'} wordBreak={'break-word'} />
+      <Text font={font} localizationKey={key($ => $.test.long)} wordBreak={'break-word'} />
 
       <Text>{'§7bold word-wrap'}</Text>
-      <Text font={font} localizationKey={'test.longstring.bold'} wordBreak={'break-word'} />
+      <Text font={font} localizationKey={key($ => $.test.longBold)} wordBreak={'break-word'} />
 
       <Text>{'§7ellipsis'}</Text>
-      <Text font={font} localizationKey={'test.longstring'} overflow={'ellipsis'} />
+      <Text font={font} localizationKey={key($ => $.test.long)} overflow={'ellipsis'} />
 
       <Text>{'§7scale=2 word-wrap'}</Text>
-      <Text font={font} scale={2} localizationKey={'test.longstring'} wordBreak={'break-word'} />
+      <Text font={font} scale={2} localizationKey={key($ => $.test.long)} wordBreak={'break-word'} />
 
       <Text>{'§7scale=2 ellipsis'}</Text>
-      <Text font={font} scale={2} localizationKey={'test.longstring'} overflow={'ellipsis'} />
+      <Text font={font} scale={2} localizationKey={key($ => $.test.long)} overflow={'ellipsis'} />
 
       <Text>{'§7maxLines=2 ellipsis'}</Text>
-      <Text font={font} localizationKey={'test.multiline'} wordBreak={'break-word'} overflow={'ellipsis'} maxLines={2} />
+      <Text font={font} localizationKey={key($ => $.test.multiline)} wordBreak={'break-word'} overflow={'ellipsis'} maxLines={2} />
 
       <Text>{'§7maxLines=3'}</Text>
-      <Text font={font} localizationKey={'test.multiline'} wordBreak={'break-word'} maxLines={3} />
+      <Text font={font} localizationKey={key($ => $.test.multiline)} wordBreak={'break-word'} maxLines={3} />
 
       <Text>{'§7scale=2 maxLines=2 ellipsis'}</Text>
-      <Text font={font} scale={2} localizationKey={'test.multiline'} wordBreak={'break-word'} overflow={'ellipsis'} maxLines={2} />
+      <Text font={font} scale={2} localizationKey={key($ => $.test.multiline)} wordBreak={'break-word'} overflow={'ellipsis'} maxLines={2} />
     </Fragment>
   );
 }
