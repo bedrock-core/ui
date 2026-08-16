@@ -86,7 +86,7 @@
     "test": "yarn workspaces foreach -ptA run test",
     "coverage": "yarn workspaces foreach -ptA run coverage",
     "changeset": "changeset",
-    "version-packages": "changeset version && node scripts/bump-meta.mjs && node scripts/sync-cli-template.mjs",
+    "version-packages": "changeset version && node scripts/bump-meta.mjs && node scripts/sync-cli-template.mjs && node scripts/sync-pack-version.mjs",
     "release": "yarn build:libs && changeset publish"
   },
   "dependencies": {
