@@ -85,7 +85,7 @@
 		"controls": [ { "option_label@core_ui_form_components.option_label": {} } ]
 	},
 	// THE option-row label — pure label, zero bespoke bindings: the blob leads with the
-	// standard label GROUP (text[92] fontType[175] fontScale[258] labelX[341] labelY[424]),
+	// standard label GROUP (v0008 order: fontType[92] fontScale[175] labelX[258] labelY[341] text[424]),
 	// so core_ui_components.label's sequential group decode does all the work from one
 	// $label_skip. Fetch is the custom_dropdown-PROVEN shape (collection first, details
 	// second, empty name).
