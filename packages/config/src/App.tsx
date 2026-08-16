@@ -1,20 +1,19 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { TranslationKeysContext, useRef, type JSX } from '@bedrock-core/ui-runtime';
 import { createStackNavigator, NavigationContainer } from '@bedrock-core/navigation';
 import type { Runtime } from '@bedrock-core/server-runtime';
+import { TranslationContext, useRef, type JSX } from '@bedrock-core/ui-runtime';
 import type { Player } from '@minecraft/server';
-import type { OpenTarget } from './navigation/openTarget';
 import { CoreContext, PlayerContext } from './context';
 import { buildInitialState } from './navigation/initialState';
-import { frameworkGuideKeys } from './frameworkGuideKeys';
-import { isOperator } from './permissions';
+import type { OpenTarget } from './navigation/openTarget';
 import type { AppRoutes } from './navigation/routes';
-import { List } from './screens/List';
-import { ConfigScope as ConfigScopeScreen } from './screens/ConfigScope';
-import { EntityList } from './screens/EntityList';
+import { isOperator } from './permissions';
 import { Config } from './screens/Config';
 import { ConfigList } from './screens/ConfigList';
+import { ConfigScope as ConfigScopeScreen } from './screens/ConfigScope';
+import { EntityList } from './screens/EntityList';
 import { Guide } from './screens/Guide';
+import { List } from './screens/List';
 
 export interface AppProps {
   core: Runtime;
@@ -55,19 +54,11 @@ export function App({ core, player, target, values }: AppProps): JSX.Element {
   return (
     <CoreContext value={core}>
       <PlayerContext value={player}>
-        {/* Merged map: local vanilla + own keys, overlaid with every peer addon's published
-            keys (core.translations), resolved for THIS player's locale — so cross-addon
-            registry fields measure correctly.
-
-            bedrock-core's own keys go underneath. They are in an installed .lang, so the client
-            paints them, but no realm registers them — and a key the layout engine cannot resolve
-            measures as the key string, sizing the box for `bcg.x.y` and clipping the sentence
-            painted into it. Addon keys sit on top and win any collision. */}
-        <TranslationKeysContext value={{ ...frameworkGuideKeys, ...core.translations.forPlayer(player) }}>
+        <TranslationContext value={core.translations.forPlayer(player)}>
           <NavigationContainer initialState={buildInitialState(target, values, isOperator(player))}>
             <Stack.Navigator />
           </NavigationContainer>
-        </TranslationKeysContext>
+        </TranslationContext>
       </PlayerContext>
     </CoreContext>
   );

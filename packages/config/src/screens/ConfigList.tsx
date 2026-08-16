@@ -2,6 +2,7 @@
 import { Card, Form, Header, theme } from '@bedrock-core/ore-styled';
 import { Fragment, Panel, Text, useExit, type FormValues, type JSX } from '@bedrock-core/ui-runtime';
 import { useCore, usePlayer } from '../context';
+import { useTranslation } from '../i18n';
 import { buildNestedPatch, resolveInitialValue } from '../config/nested';
 import { filterScope, getScopedSchema } from '../config/schema';
 import { patchScope } from '../config/values';
@@ -25,6 +26,7 @@ export function ConfigList({ navigation, route }: AppScreen<'ConfigList'>): JSX.
   const core = useCore();
   const player = usePlayer();
   const exit = useExit();
+  const { t } = useTranslation();
   const { addonId, scope, entityId, fieldKey, breadcrumb, values: currentValues } = route.params;
   const accessor = core.config.of(addonId, { actorId: player.id })!;
   const entry = filterScope(getScopedSchema(accessor), scope)[fieldKey];
@@ -34,7 +36,7 @@ export function ConfigList({ navigation, route }: AppScreen<'ConfigList'>): JSX.
       <Card flexDirection={'column'} padding={0} gap={0}>
         <Header title={{ text: breadcrumb }} onBack={(): void => navigation.goBack()} onClose={exit} />
         <Panel flexGrow={1} justifyContent={'center'} alignItems={'center'} padding={spacing.lg}>
-          <Text>{`${fontColor.muted}Unknown list setting.`}</Text>
+          <Text>{`${fontColor.muted}${t($ => $.config.unknownList)}`}</Text>
         </Panel>
       </Card>
     );
@@ -72,12 +74,12 @@ export function ConfigList({ navigation, route }: AppScreen<'ConfigList'>): JSX.
             ? <Text wordBreak={'break-word'}>{`${fontColor.muted}${entry.description}`}</Text>
             : null}
           <Panel flexDirection={'column'} gap={spacing.sm}>
-            <SectionHeading label={'Items'} />
+            <SectionHeading label={t($ => $.list.items)} />
             {items.length === 0
-              ? <Text>{`${fontColor.muted}No items yet.`}</Text>
+              ? <Text>{`${fontColor.muted}${t($ => $.list.empty)}`}</Text>
               : (
                   <Panel flexDirection={'column'} gap={spacing.xs}>
-                    <Text>{`${fontColor.muted}Uncheck an item to remove it:`}</Text>
+                    <Text>{`${fontColor.muted}${t($ => $.list.uncheckToRemove)}`}</Text>
                     <Fragment>
                       {items.map((item, index) => (
                         <Form.Checkbox label={item} name={`keep.${String(index)}`} defaultValue={true} />
@@ -87,16 +89,16 @@ export function ConfigList({ navigation, route }: AppScreen<'ConfigList'>): JSX.
                 )}
           </Panel>
           <Panel flexDirection={'column'} gap={spacing.sm}>
-            <SectionHeading label={'Add'} />
+            <SectionHeading label={t($ => $.list.add)} />
             {canAdd
               ? (addOptions
-                  ? <Form.Dropdown label={'Add item'} name={'add'} options={[ADD_NONE, ...addOptions]} defaultValue={ADD_NONE} />
-                  : <Form.Input label={'Add item'} name={'add'} placeholder={`${fontColor.muted}Enter ${entry.label.toLowerCase()} entry`} />)
-              : <Text>{`${fontColor.muted}Maximum of ${String(entry.maxItems)} items reached.`}</Text>}
+                  ? <Form.Dropdown label={t($ => $.list.addItem)} name={'add'} options={[ADD_NONE, ...addOptions]} defaultValue={ADD_NONE} />
+                  : <Form.Input label={t($ => $.list.addItem)} name={'add'} placeholder={`${fontColor.muted}${t($ => $.list.addPlaceholder, { label: entry.label.toLowerCase() })}`} />)
+              : <Text>{`${fontColor.muted}${t($ => $.list.maxReached, { max: entry.maxItems ?? 0 })}`}</Text>}
           </Panel>
           <Panel flexDirection={'row'} gap={spacing.sm}>
-            <Form.Button type={'submit'} label={'Save'} flex={2} />
-            <Form.Button type={'exit'} label={'Back'} variant={'contrast'} flex={1} />
+            <Form.Button type={'submit'} label={t($ => $.action.save)} flex={2} />
+            <Form.Button type={'exit'} label={t($ => $.action.back)} variant={'contrast'} flex={1} />
           </Panel>
         </Panel>
       </Card>

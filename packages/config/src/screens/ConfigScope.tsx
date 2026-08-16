@@ -1,7 +1,8 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Header, MenuRow, Button as OreButton, theme } from '@bedrock-core/ore-styled';
 import { Fragment, Image, Panel, Scroll, Text, useExit, type JSX } from '@bedrock-core/ui-runtime';
-import { useCore, useLocalized, usePlayer } from '../context';
+import { useCore, usePlayer } from '../context';
+import { useTranslation } from '../i18n';
 import { allowedScopes, isOperator } from '../permissions';
 import { filterScope, getScopedSchema, schemaDefaultsPatch } from '../config/schema';
 import { patchScope } from '../config/values';
@@ -12,17 +13,6 @@ import { Missing } from './Missing';
 const { spacing, fontColor } = theme.tokens;
 
 const ICON_RESET = 'textures/ui/config/reset';
-
-/**
- * Row subtitles — what a scope MEANS, not how it is stored. A dimension setting is not "an
- * override of the server one", it is a setting that only ever applies inside a dimension.
- * Raw `Text` is capped at 80 UTF-8 bytes, so each stays one short line.
- */
-const SCOPE_HINT = {
-  server: 'Applies everywhere in the world.',
-  dimension: 'Applies only inside one dimension.',
-  player: 'Applies only to one player.',
-} as const;
 
 /**
  * Scope picker for one addon: a row per scope the addon actually declares — server, dimension,
@@ -39,11 +29,14 @@ export function ConfigScope({ navigation, route }: AppScreen<'ConfigScope'>): JS
   const core = useCore();
   const player = usePlayer();
   const exit = useExit();
+  const { t, resolve } = useTranslation();
   const { addonId } = route.params;
   const accessor = core.config.of(addonId, { actorId: player.id });
   // Resolved here, not passed down as a key: everything below builds breadcrumb STRINGS, and a
-  // key that never reaches a `Text` renders as `drav0011.shop.name`.
-  const addonName = useLocalized(core.registry.get(addonId)?.packName ?? addonId);
+  // key that never reaches a `Text` renders as `drav0011_shop.meta.name`. resolve() is the
+  // world resolver, so another addon's registry key becomes its display string.
+  const nameKey = core.registry.get(addonId)?.packName ?? addonId;
+  const addonName = resolve(nameKey) ?? nameKey;
 
   if (!accessor) { return <Missing navigation={navigation} addonId={addonId} />; }
 
@@ -51,7 +44,7 @@ export function ConfigScope({ navigation, route }: AppScreen<'ConfigScope'>): JS
   const schema = getScopedSchema(configAccessor);
 
   const navigateToServer = async (): Promise<void> =>
-    openConfig(navigation, configAccessor, { addonId, scope: 'server', breadcrumb: `${addonName} > Server` });
+    openConfig(navigation, configAccessor, { addonId, scope: 'server', breadcrumb: `${addonName} > ${t($ => $.scope.server.label)}` });
 
   const navigateToEntityList = (scope: 'dimension' | 'player', label: string): void => {
     navigation.navigate('EntityList', { addonId, scope, breadcrumb: `${addonName} > ${label}` });
@@ -79,8 +72,8 @@ export function ConfigScope({ navigation, route }: AppScreen<'ConfigScope'>): JS
   if (hasServer) {
     rows.push(
       <ScopeRow
-        label={'Server'}
-        hint={SCOPE_HINT.server}
+        label={t($ => $.scope.server.label)}
+        hint={t($ => $.scope.server.hint)}
         onPress={navigateToServer}
         onReset={resetServerToSchemaDefaults}
       />,
@@ -90,9 +83,9 @@ export function ConfigScope({ navigation, route }: AppScreen<'ConfigScope'>): JS
   if (hasDimension) {
     rows.push(
       <ScopeRow
-        label={'Dimension'}
-        hint={SCOPE_HINT.dimension}
-        onPress={(): void => navigateToEntityList('dimension', 'Dimension')}
+        label={t($ => $.scope.dimension.label)}
+        hint={t($ => $.scope.dimension.hint)}
+        onPress={(): void => navigateToEntityList('dimension', t($ => $.scope.dimension.label))}
       />,
     );
   }
@@ -100,10 +93,10 @@ export function ConfigScope({ navigation, route }: AppScreen<'ConfigScope'>): JS
   if (hasPlayer) {
     rows.push(
       <ScopeRow
-        label={'Player'}
-        hint={SCOPE_HINT.player}
+        label={t($ => $.scope.player.label)}
+        hint={t($ => $.scope.player.hint)}
         onPress={canPickAnyPlayer
-          ? (): void => navigateToEntityList('player', 'Player')
+          ? (): void => navigateToEntityList('player', t($ => $.scope.player.label))
           : navigateToOwnPlayer}
       />,
     );
@@ -113,7 +106,7 @@ export function ConfigScope({ navigation, route }: AppScreen<'ConfigScope'>): JS
     <Card flexDirection={'column'} padding={0} gap={0}>
       <Header
         title={{ text: addonName }}
-        breadcrumbs={[{ text: 'Config' }]}
+        breadcrumbs={[{ text: t($ => $.config.breadcrumb) }]}
         onBack={(): void => navigation.goBack()}
         onClose={exit}
       />
@@ -124,7 +117,7 @@ export function ConfigScope({ navigation, route }: AppScreen<'ConfigScope'>): JS
               ? <Fragment>{rows}</Fragment>
               : (
                   <Panel justifyContent={'center'} alignItems={'center'} padding={spacing.lg}>
-                    <Text>{`${fontColor.muted}Nothing here you can configure.`}</Text>
+                    <Text>{`${fontColor.muted}${t($ => $.config.empty)}`}</Text>
                   </Panel>
                 )}
           </Panel>

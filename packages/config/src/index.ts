@@ -6,7 +6,7 @@
  * import { core } from '@bedrock-core/server-runtime';
  * import { ui } from '@bedrock-core/config';
  *
- * core.register({ ..., translations: translationKeys, guide: guides });
+ * core.register({ ..., translations: bundle, guide: guides });
  * ui(core);                         // registers the commands and joins the host election
  * ```
  *

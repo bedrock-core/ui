@@ -8,9 +8,12 @@
  * Unlike an addon's guide it is hand-written rather than emitted by the guides filter, but it
  * still points at real localization keys. Literal prose would not survive the trip: a key is sent
  * to the client as a string and the form serializer caps those at 80 bytes, so anything longer
- * than a short phrase has to resolve client-side instead. The values live in the bedrock-core
- * resource pack (`@bedrock-core/ui-resource-pack`, `packs/RP/texts/*.lang`) under
- * `bcg.bedrock_core.commands.*`, which is also what makes it translatable.
+ * than a short phrase has to resolve client-side instead. The values are this package's own
+ * TYPED resources (`src/i18n/en_US.ts`, `guides.commands.*` → real keys `core.guides.commands.*`):
+ * the i18n filter folds them into every consuming realm's bundle and generated `.lang`, which is
+ * what paints, measures, and translates them everywhere — admonition titles included, via the
+ * manifest's per-block `titleK` pointing at the typed `core.guides.adm.*` keys (filter-generated
+ * guides keep the renderer's derived `bcg.<ns>._adm.*` defaults).
  */
 import type { GuideManifest } from '@bedrock-core/guides';
 
@@ -18,7 +21,7 @@ import type { GuideManifest } from '@bedrock-core/guides';
 export const FRAMEWORK_ADDON_ID = 'bedrock-core';
 
 const PAGE = 'commands';
-const K = 'bcg.bedrock_core.commands';
+const K = 'core.guides.commands';
 
 export const frameworkGuide: GuideManifest = {
   v: 1,
@@ -60,7 +63,7 @@ export const frameworkGuide: GuideManifest = {
           ],
         },
         { t: 'p', runs: [{ k: `${K}.scoped` }] },
-        { t: 'adm', kind: 'tip', blocks: [{ t: 'p', runs: [{ k: `${K}.tip` }] }] },
+        { t: 'adm', kind: 'tip', titleK: 'core.guides.adm.tip', blocks: [{ t: 'p', runs: [{ k: `${K}.tip` }] }] },
       ],
     },
   },

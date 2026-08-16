@@ -4,6 +4,7 @@ import { Panel, Scroll, Text, useExit, type JSX } from '@bedrock-core/ui-runtime
 import { splitBreadcrumb } from './breadcrumbs';
 import { ResetButton } from './ConfigScope';
 import { useCore, usePlayer } from '../context';
+import { useTranslation } from '../i18n';
 import { allowedScopes, isOperator } from '../permissions';
 import { filterScope, getScopedSchema, schemaDefaultsPatch } from '../config/schema';
 import { getRoster, patchScope } from '../config/values';
@@ -23,6 +24,7 @@ export function EntityList({ navigation, route }: AppScreen<'EntityList'>): JSX.
   const core = useCore();
   const player = usePlayer();
   const exit = useExit();
+  const { t } = useTranslation();
   const { addonId, scope, breadcrumb } = route.params;
   const accessor = core.config.of(addonId, { actorId: player.id });
 
@@ -53,7 +55,7 @@ export function EntityList({ navigation, route }: AppScreen<'EntityList'>): JSX.
             {roster.length === 0
               ? (
                   <Panel justifyContent={'center'} alignItems={'center'} padding={spacing.lg}>
-                    <Text>{`${fontColor.muted}${scope === 'player' ? 'No players online.' : 'No dimensions found.'}`}</Text>
+                    <Text>{`${fontColor.muted}${scope === 'player' ? t($ => $.roster.noPlayers) : t($ => $.roster.noDimensions)}`}</Text>
                   </Panel>
                 )
               : roster.map(entity => (

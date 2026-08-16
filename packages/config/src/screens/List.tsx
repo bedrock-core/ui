@@ -4,6 +4,7 @@ import type { Runtime } from '@bedrock-core/server-runtime';
 import type { Player } from '@minecraft/server';
 import { Image, Panel, Scroll, Text, useExit, useState, type JSX } from '@bedrock-core/ui-runtime';
 import { useCore, usePlayer } from '../context';
+import { useTranslation } from '../i18n';
 import { isOperator } from '../permissions';
 import { openConfig } from '../navigation/openConfig';
 import { FRAMEWORK_ADDON_ID } from '../frameworkGuide';
@@ -60,6 +61,7 @@ function frameworkAddon(runtimeVersion: string): DisplayAddon {
 export function List({ navigation, route }: AppScreen<'List'>): JSX.Element {
   const core = useCore();
   const player = usePlayer();
+  const { t } = useTranslation();
   const registered = core.registry.all();
   const addons: DisplayAddon[] = [
     ...registered,
@@ -75,7 +77,7 @@ export function List({ navigation, route }: AppScreen<'List'>): JSX.Element {
 
   return (
     <Card flexDirection={'column'} padding={0} gap={0}>
-      <Header title={'Addons'} onClose={exit} />
+      <Header title={t($ => $.addons.title)} onClose={exit} />
       <Panel flexDirection={'row'} flexGrow={1}>
         <Panel width={'40%'} padding={spacing.sm}>
           <Scroll>
@@ -108,6 +110,7 @@ function AddonDetails({ core, addon, player, navigation }: {
   player: Player;
   navigation: AppScreen<'List'>['navigation'];
 }): JSX.Element {
+  const { t } = useTranslation();
   const accessor = core.config.of(addon.id, { actorId: player.id });
   const hasConfig = accessor !== undefined;
   // The framework's own guide is built in rather than replicated — see `frameworkGuide.ts`.
@@ -150,7 +153,7 @@ function AddonDetails({ core, addon, player, navigation }: {
         </Panel>
         <Panel flexDirection={'column'}>
           <Text font={'mojangles'} scale={2} shadow={true} localizationKey={addon.packName} />
-          <Text font={'mojangles'} scale={1}>{`§7Version: ${addon.version}`}</Text>
+          <Text font={'mojangles'} scale={1}>{`§7${t($ => $.addons.version, { version: addon.version })}`}</Text>
         </Panel>
         <Panel flexDirection={'row'} gap={spacing.sm}>
           <OreButton
@@ -162,13 +165,13 @@ function AddonDetails({ core, addon, player, navigation }: {
           >
             <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.sm}>
               <Image width={12} height={12} texture={ICON_CONFIG} />
-              <Text font={'mojangles'} scale={1}>{hasConfig ? '§0Config' : '§8Config'}</Text>
+              <Text font={'mojangles'} scale={1}>{`${hasConfig ? '§0' : '§8'}${t($ => $.addons.config)}`}</Text>
             </Panel>
           </OreButton>
           <OreButton variant={'secondary'} paddingTop={2} paddingLeft={4} enabled={hasGuide} onPress={openGuide}>
             <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.sm}>
               <Image width={12} height={12} texture={ICON_GUIDE} />
-              <Text font={'mojangles'} scale={1}>{hasGuide ? '§0Guide' : '§8Guide'}</Text>
+              <Text font={'mojangles'} scale={1}>{`${hasGuide ? '§0' : '§8'}${t($ => $.addons.guide)}`}</Text>
             </Panel>
           </OreButton>
         </Panel>
@@ -181,7 +184,7 @@ function AddonDetails({ core, addon, player, navigation }: {
             one; the value takes the remaining width and wraps rather than running off the card —
             a creator line is a free-form list ("DrAv0011, Bedrock Tweaks") with no length bound. */}
         <Panel flexDirection={'row'} alignItems={'flex-start'} gap={spacing.xs}>
-          <Text shadow={true} flexShrink={0}>{'§7Author(s):'}</Text>
+          <Text shadow={true} flexShrink={0}>{`§7${t($ => $.addons.authors)}`}</Text>
           <Panel flexGrow={1} flexShrink={1}>
             <Text font={'mojangles'} scale={1} maxLines={2} wordBreak={'break-word'} localizationKey={addon.creatorName ?? addon.creator} />
           </Panel>

@@ -4,12 +4,17 @@ import { Fragment, Panel, Text, useExit, type FormValues, type JSX } from '@bedr
 import { splitBreadcrumb } from './breadcrumbs';
 import { FormHeader } from './FormHeader';
 import { useCore, usePlayer } from '../context';
+import { useTranslation, type CoreResources } from '../i18n';
 import { buildNestedPatch, resolveInitialValue } from '../config/nested';
 import { filterScope, getScopedSchema, groupByTopLevel, splitScalarsAndLists } from '../config/schema';
 import { patchScope } from '../config/values';
 import type { EntrySchema } from '../types';
 import type { AppScreen } from '../navigation/routes';
 import { SectionHeading } from './SectionHeading';
+import type { BoundI18n } from '@bedrock-core/i18n';
+
+/** The bound verb set, threaded into `renderField` — a helper, not a component, so no hooks. */
+type CoreT = BoundI18n<CoreResources>['t'];
 
 const { spacing, fontColor } = theme.tokens;
 
@@ -27,6 +32,7 @@ export function Config({ navigation, route }: AppScreen<'Config'>): JSX.Element 
   const core = useCore();
   const player = usePlayer();
   const exit = useExit();
+  const { t } = useTranslation();
   const { addonId, scope, entityId, breadcrumb, values: currentValues } = route.params;
   // Every read and write from this screen is made on the viewing player's behalf, so the
   // owning addon can refuse what they may not touch even if this screen were reached wrongly.
@@ -38,7 +44,7 @@ export function Config({ navigation, route }: AppScreen<'Config'>): JSX.Element 
       <Card flexDirection={'column'} padding={0} gap={0}>
         <Header {...splitBreadcrumb(breadcrumb)} onBack={(): void => navigation.goBack()} onClose={exit} />
         <Panel flexGrow={1} justifyContent={'center'} alignItems={'center'} padding={spacing.lg}>
-          <Text wordBreak={'break-word'}>{`${fontColor.muted}This scope only has list settings.`}</Text>
+          <Text wordBreak={'break-word'}>{`${fontColor.muted}${t($ => $.config.listOnly)}`}</Text>
         </Panel>
       </Card>
     );
@@ -79,7 +85,7 @@ export function Config({ navigation, route }: AppScreen<'Config'>): JSX.Element 
 
                     return (
                       <Panel flexDirection={'column'} gap={spacing.xs}>
-                        {renderField(fullKey, entry, resolveInitialValue(fullKey, entry, currentValues))}
+                        {renderField(fullKey, entry, resolveInitialValue(fullKey, entry, currentValues), t)}
                         {entry.description
                           ? <Text wordBreak={'break-word'}>{`${fontColor.muted}${entry.description}`}</Text>
                           : null}
@@ -91,14 +97,14 @@ export function Config({ navigation, route }: AppScreen<'Config'>): JSX.Element 
             ))}
           </Fragment>
           {Object.keys(lists).length > 0
-            ? <Text wordBreak={'break-word'}>{`${fontColor.muted}List settings are edited from the previous screen.`}</Text>
+            ? <Text wordBreak={'break-word'}>{`${fontColor.muted}${t($ => $.config.listsElsewhere)}`}</Text>
             : null}
           {/* `Back`, not `Cancel`: the modal's dismiss IS `navigation.goBack()`, and every other
               screen in this stack calls that control back. There is no third control to add — a
               modal form's only buttons are its submit and its dismiss. */}
           <Panel flexDirection={'row'} gap={spacing.sm}>
-            <Form.Button type={'submit'} label={'Save'} flex={2} />
-            <Form.Button type={'exit'} label={'Back'} variant={'contrast'} flex={1} />
+            <Form.Button type={'submit'} label={t($ => $.action.save)} flex={2} />
+            <Form.Button type={'exit'} label={t($ => $.action.back)} variant={'contrast'} flex={1} />
           </Panel>
         </Panel>
       </Card>
@@ -111,7 +117,7 @@ export function Config({ navigation, route }: AppScreen<'Config'>): JSX.Element 
  * control (number falls back to a text input when the range is too wide for a
  * usable slider).
  */
-function renderField(fullKey: string, entry: EntrySchema, current: unknown): JSX.Element {
+function renderField(fullKey: string, entry: EntrySchema, current: unknown, t: CoreT): JSX.Element {
   const { label } = entry;
 
   if (entry.type === 'boolean') {
@@ -127,10 +133,10 @@ function renderField(fullKey: string, entry: EntrySchema, current: unknown): JSX
     if (asInput) {
       return (
         <Form.Input
-          label={`${label} ${fontColor.muted}(${String(min)} to ${String(max)})`}
+          label={`${label} ${fontColor.muted}${t($ => $.field.numberRange, { min, max })}`}
           name={fullKey}
           defaultValue={String(numVal)}
-          placeholder={`${fontColor.muted}Enter number`}
+          placeholder={`${fontColor.muted}${t($ => $.field.enterNumber)}`}
         />
       );
     }
@@ -151,7 +157,7 @@ function renderField(fullKey: string, entry: EntrySchema, current: unknown): JSX
       label={label}
       name={fullKey}
       defaultValue={typeof current === 'string' ? current : ''}
-      placeholder={`${fontColor.muted}Enter ${label.toLowerCase()}`}
+      placeholder={`${fontColor.muted}${t($ => $.field.enterValue, { label: label.toLowerCase() })}`}
     />
   );
 }
