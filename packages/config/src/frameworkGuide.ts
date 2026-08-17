@@ -47,11 +47,14 @@ export const frameworkGuide: GuideManifest = {
             { runs: [{ k: `${K}.cmd_config` }] },
             { runs: [{ k: `${K}.cmd_get` }] },
             { runs: [{ k: `${K}.cmd_set` }] },
+            { runs: [{ k: `${K}.cmd_add` }] },
+            { runs: [{ k: `${K}.cmd_remove` }] },
             { runs: [{ k: `${K}.cmd_guide` }] },
             { runs: [{ k: `${K}.cmd_list` }] },
           ],
         },
         { t: 'p', runs: [{ k: `${K}.autocomplete` }] },
+        { t: 'p', runs: [{ k: `${K}.lists` }] },
         { t: 'h', l: 2, k: `${K}.h2` },
         { t: 'p', runs: [{ k: `${K}.operators` }] },
         {
@@ -59,6 +62,7 @@ export const frameworkGuide: GuideManifest = {
           items: [
             { runs: [{ k: `${K}.cmd_getat` }] },
             { runs: [{ k: `${K}.cmd_setat` }] },
+            { runs: [{ k: `${K}.cmd_addat` }] },
           ],
         },
         { t: 'p', runs: [{ k: `${K}.scoped` }] },

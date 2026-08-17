@@ -21,8 +21,10 @@
  * :config                                    open the UI
  * :config get <setting>                      your own settings
  * :config set <setting> <value>
+ * :config add|remove <setting> <item>        list settings only
  * :configat get <scope.setting> [target]     any scope
  * :configat set <scope.setting> <value> [target]
+ * :configat add|remove <scope.setting> <item> [target]
  * ```
  *
  * The scope rides in the KEY (`server.pricing.tax_rate`) rather than as its own argument, and
@@ -32,7 +34,8 @@
  * pins it, and pinning it is what keeps every setting autocompleting.
  *
  * Arity is dispatched on the verb, which is read before anything else is interpreted: for `get`
- * the third argument is the target, for `set` it is the value and the fourth is the target.
+ * the third argument is the target, for every writing verb it is the value or item and the fourth
+ * is the target.
  *
  * ## Every description starts with the namespace
  *
@@ -66,9 +69,11 @@ import type {
   Player,
 } from '@minecraft/server';
 import type { Runtime } from '@bedrock-core/server-runtime';
-import { CONFIG_SCOPES, type FlatSchemaLike } from '../types';
+import { CONFIG_SCOPES, type EntrySchema, type FlatSchemaLike } from '../types';
 import { buildNestedPatch } from '../config/nested';
+import { translationsFor, type CoreT } from '../i18n';
 import type { OpenCommand } from '../navigation/openTarget';
+import { addToList, describeList, readList, removeFromList, setList } from './lists';
 import { failure, success, withOperator, withPlayer } from './origin';
 import { editableKeys, parseValue, splitScopedKey, type ScopedSchemas } from './parse';
 import { describe, read, resolveTarget, write } from './targets';
@@ -76,8 +81,13 @@ import { describe, read, resolveTarget, write } from './targets';
 /** Hands a fired command to whoever should answer it: `(player, what, args)`, uninterpreted. */
 export type OpenCallback = (player: Player, command: OpenCommand, args: (string | undefined)[]) => void;
 
-/** The two things a config command can do. Registered as an enum so both verbs autocomplete. */
-const VERBS = ['get', 'set'] as const;
+/**
+ * What a config command can do. Registered as an enum so every verb autocompletes.
+ *
+ * `add` and `remove` exist for list settings, which no form can draw a control for: chat is where
+ * a list is edited, and `set` alone would mean retyping the whole list to change one entry.
+ */
+const VERBS = ['get', 'set', 'add', 'remove'] as const;
 
 /**
  * Register this addon's commands. Called by `ui(core)`.
@@ -173,7 +183,7 @@ function registerConfig(
       {
         name: `${ns}:config`,
         description: editable
-          ? `${ns} - open this addon's config, or: get <setting> | set <setting> <value>`
+          ? `${ns} - open this addon's config, or: get <setting> | set <setting> <value> | add|remove <setting> <item>`
           : `${ns} - open this addon's config.`,
         permissionLevel: CommandPermissionLevel.Any,
         cheatsRequired: false,
@@ -205,25 +215,32 @@ function runOwn(
   key: string | undefined,
   value: string | undefined,
 ): CustomCommandResult {
+  // The runner is the one being answered, so the reply is built in their language — the host
+  // realm's published bundle carries this package's strings for every locale the world ships.
+  const { t } = translationsFor(core.translations.forPlayer(player));
+
   if (key === undefined) {
-    return failure(`Which setting? Usage: ${ns}:config ${verb} <setting>${verb === 'set' ? ' <value>' : ''}`);
+    return failure(`Which setting? Usage: ${ns}:config ${verb} <setting>${argumentOf(verb)}`);
   }
 
   const target = { ok: true, scope: 'player', player } as const;
+  const entry = schema[key];
 
-  if (verb === 'get') { return success(`${key} = ${describe(read(core, target), key)}`); }
+  if (verb === 'get') { return success(`${key} = ${show(read(core, target), key, entry, t)}`); }
 
-  if (value === undefined) { return failure(`Which value? Usage: ${ns}:config set ${key} <value>`); }
+  if (value === undefined || (verb !== 'set' && value.trim() === '')) {
+    return failure(missingArgument(`${ns}:config ${verb} ${key}${argumentOf(verb)}`, verb, t));
+  }
 
-  const parsed = parseValue(schema[key], value);
+  const applied = applyWrite(entry, verb, key, value, () => read(core, target), t);
 
-  if (!parsed.ok) { return failure(parsed.message); }
+  if (!applied.ok) { return failure(applied.message); }
 
   // Validation is pure and can answer the player now; the write reaches dynamic properties and
   // cannot run inside the command callback's restricted-execution context.
-  system.run(() => { write(core, target, buildNestedPatch({ [key]: parsed.value })); });
+  system.run(() => { write(core, target, applied.patch); });
 
-  return success(`${key} = ${String(parsed.value)}`);
+  return success(`${key} = ${applied.rendered}`);
 }
 
 /**
@@ -249,48 +266,134 @@ function registerConfigAt(
   reg.registerCommand(
     {
       name: `${ns}:configat`,
-      description: `${ns} - any setting, any scope: get <scope.setting> [target] | set <scope.setting> <value> [target]`,
+      description: `${ns} - any setting, any scope: get <scope.setting> [target] | set|add|remove <scope.setting> <value> [target]`,
       permissionLevel: CommandPermissionLevel.Admin,
       cheatsRequired: false,
       mandatoryParameters: [
         { name: verbEnum, type: CustomCommandParamType.Enum },
         { name: keyEnum, type: CustomCommandParamType.Enum },
       ],
-      // What these mean depends on the verb: `get` takes only a target, `set` takes the value
-      // first. A flat list cannot say that, so the callback dispatches on the verb it read.
+      // What these mean depends on the verb: `get` takes only a target, while `set`, `add` and
+      // `remove` take the value or the item first. A flat list cannot say that, so the callback
+      // dispatches on the verb it read.
       optionalParameters: [
         { name: 'value', type: CustomCommandParamType.String },
         { name: 'target', type: CustomCommandParamType.String },
       ],
     },
     (origin, verb: string, key: string, a?: string, b?: string) => withOperator(origin, (runner) => {
+      // A command block has no runner and therefore no language to answer in; this package's own
+      // default locale stands in.
+      const { t } = translationsFor(runner && core.translations.forPlayer(runner));
       const [scope, path] = splitScopedKey(key);
+      const entry = scoped[scope][path];
 
       if (verb === 'get') {
         const target = resolveTarget(scope, a, runner);
 
         if (!target.ok) { return failure(target.message); }
 
-        return success(`${key} = ${describe(read(core, target), path)}`);
+        return success(`${key} = ${show(read(core, target), path, entry, t)}`);
       }
 
-      if (a === undefined) { return failure(`Which value? Usage: ${ns}:configat set ${key} <value> [target]`); }
+      if (a === undefined || (verb !== 'set' && a.trim() === '')) {
+        return failure(missingArgument(`${ns}:configat ${verb} ${key}${argumentOf(verb)} [target]`, verb, t));
+      }
 
-      const parsed = parseValue(scoped[scope][path], a);
-
-      if (!parsed.ok) { return failure(parsed.message); }
-
+      // Resolved before the argument is interpreted, which `set` alone did not need to do: `add`
+      // and `remove` are relative to what the target already holds, so there is nothing to check
+      // the item against until the target is known.
       const target = resolveTarget(scope, b, runner);
 
       if (!target.ok) { return failure(target.message); }
 
-      const patch = buildNestedPatch({ [path]: parsed.value });
+      const applied = applyWrite(entry, verb, path, a, () => read(core, target), t);
 
-      system.run(() => { write(core, target, patch); });
+      if (!applied.ok) { return failure(applied.message); }
 
-      return success(`${key} = ${String(parsed.value)}`);
+      system.run(() => { write(core, target, applied.patch); });
+
+      return success(`${key} = ${applied.rendered}`);
     }),
   );
+}
+
+/** What a verb takes after the setting, for a usage line. `get` takes nothing but the target. */
+function argumentOf(verb: string): string {
+  if (verb === 'get') { return ''; }
+
+  return verb === 'set' ? ' <value>' : ' <item>';
+}
+
+/**
+ * The "you left the argument out" refusal. `set` keeps the wording it has always had; the list
+ * verbs take a single item rather than the whole value, and say so.
+ */
+function missingArgument(usage: string, verb: string, t: CoreT): string {
+  return verb === 'set' ? `Which value? Usage: ${usage}` : t($ => $.command.list.whichItem, { usage });
+}
+
+/** One setting's current value for chat — a list as its items and count, anything else as before. */
+function show(
+  values: Record<string, unknown>,
+  path: string,
+  entry: EntrySchema | undefined,
+  t: CoreT,
+): string {
+  return entry?.type === 'list' ? describeList(entry, readList(values, path), t) : describe(values, path);
+}
+
+/** What a writing verb decided: the patch to send and the line to answer with, or why it refused. */
+type Applied
+  = | { ok: true; patch: Record<string, unknown>; rendered: string }
+    | { ok: false; message: string };
+
+/**
+ * The half of `set`, `add` and `remove` that both commands share: check the argument against the
+ * schema entry, fold it into the value that will be stored, and render what the runner is told.
+ *
+ * Current values arrive as a thunk because only the list verbs need them. A scalar `set` replaces
+ * the value outright, and making it read the scope first would spend a read on nothing.
+ */
+function applyWrite(
+  entry: EntrySchema | undefined,
+  verb: string,
+  path: string,
+  raw: string,
+  current: () => Record<string, unknown>,
+  t: CoreT,
+): Applied {
+  // Unreachable through the enum, which is built from the schema — but the schema can replicate
+  // again between registration and the command being run, and registration cannot be redone.
+  if (!entry) { return { ok: false, message: t($ => $.command.unknownSetting) }; }
+
+  if (entry.type !== 'list') {
+    // `add` and `remove` are list verbs: a scalar has nothing to append to or take out of.
+    if (verb !== 'set') { return { ok: false, message: t($ => $.command.list.scalarOnly, { verb, key: path }) }; }
+
+    const parsed = parseValue(entry, raw);
+
+    return parsed.ok
+      ? { ok: true, patch: buildNestedPatch({ [path]: parsed.value }), rendered: String(parsed.value) }
+      : { ok: false, message: parsed.message };
+  }
+
+  // The enum offers exactly four verbs and `get` never reaches here, so `set` is what is left.
+  const result = verb === 'add'
+    ? addToList(entry, readList(current(), path), raw, t)
+    : verb === 'remove'
+      ? removeFromList(readList(current(), path), raw, t)
+      : setList(entry, raw, t);
+
+  if (!result.ok) { return result; }
+
+  // A list lives in ONE flat key holding the array's JSON — the encoding the runtime's own
+  // flattening produces — so it is patched exactly like a scalar.
+  return {
+    ok: true,
+    patch: buildNestedPatch({ [path]: JSON.stringify(result.items) }),
+    rendered: describeList(entry, result.items, t),
+  };
 }
 
 /** Identify the acting player and hand the request on, one tick later. */

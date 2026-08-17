@@ -15,11 +15,16 @@ export type ScopedSchemas = Record<ConfigScope, FlatSchemaLike>;
 export type Parsed = { ok: true; value: boolean | number | string } | { ok: false; message: string };
 
 /**
- * Keys a command can carry. List entries are excluded: a list has no single-value spelling, so
- * offering one in autocomplete would only produce a failure on submit.
+ * Keys a command can carry — every key the schema declares.
+ *
+ * Lists used to be filtered out here for want of a single-value spelling, which made autocomplete
+ * offer a key only to fail on submit. `add`, `remove` and a comma-separated `set` are that
+ * spelling, and chat is the only place a list can be edited at all, so hiding them was hiding the
+ * setting. Nothing else is held back either: an entry whose `type` this build has never seen still
+ * reads with `get`, and only refuses on the write, which is the same bargain the screens make.
  */
 export function editableKeys(schema: FlatSchemaLike): string[] {
-  return Object.keys(schema).filter(key => schema[key]?.type !== 'list');
+  return Object.keys(schema);
 }
 
 /** `server.pricing.taxRate` → `['server', 'pricing.taxRate']`. */

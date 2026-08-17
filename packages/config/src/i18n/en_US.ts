@@ -24,9 +24,10 @@ export default {
   config: {
     breadcrumb: 'Config',
     empty: 'Nothing here you can configure.',
-    listOnly: 'This scope only has list settings.',
-    unknownList: 'Unknown list setting.',
-    listsElsewhere: 'List settings are edited from the previous screen.',
+    lists: {
+      heading: 'Lists',
+      hint: 'A list has no control in a form, so these are edited from chat:',
+    },
   },
 
   scope: {
@@ -47,16 +48,6 @@ export default {
   roster: {
     noPlayers: 'No players online.',
     noDimensions: 'No dimensions found.',
-  },
-
-  list: {
-    items: 'Items',
-    add: 'Add',
-    addItem: 'Add item',
-    addPlaceholder: 'Enter {{label}} entry',
-    empty: 'No items yet.',
-    uncheckToRemove: 'Uncheck an item to remove it:',
-    maxReached: 'Maximum of {{max}} items reached.',
   },
 
   reset: {
@@ -83,6 +74,19 @@ export default {
     unknownSetting: 'Unknown setting',
     expectedBoolean: 'Expected true or false',
     expectedNumber: 'Expected a number',
+
+    list: {
+      empty: '(empty)',
+      count: '({{count}}/{{max}})',
+      whichItem: 'Which item? Usage: {{usage}}',
+      scalarOnly: '{{verb}} only works on a list setting, and {{key}} is not one.',
+      notAnOption: '\'{{item}}\' is not one of: {{options}}',
+      duplicate: '\'{{item}}\' is already in the list.',
+      repeated: '\'{{item}}\' is listed twice.',
+      absent: '\'{{item}}\' is not in the list.',
+      full: 'The list already holds its maximum of {{max}} items.',
+      tooMany: 'That is {{count}} items; the maximum is {{max}}.',
+    },
   },
 
   framework: {
@@ -100,13 +104,17 @@ export default {
       cmd_config: '§econfig§r - open that addon\'s settings: the scope picker if you are an operator, your own settings otherwise',
       cmd_get: '§econfig get <setting>§r - read one of your own settings',
       cmd_set: '§econfig set <setting> <value>§r - change one of your own settings',
+      cmd_add: '§econfig add <setting> <item>§r - append one item to a list setting',
+      cmd_remove: '§econfig remove <setting> <item>§r - take one item back out of a list setting',
       cmd_guide: '§eguide§r - open that addon\'s guide, a page like this one',
       cmd_list: '§elist§r - open the addon list, the screen behind this one',
       autocomplete: 'Settings autocomplete: the chat box offers the ones that addon actually has.',
+      lists: 'A list setting holds several values, and it is the one kind the config screen cannot edit - a form has no control for it. get shows the items and how many of the maximum are used, set replaces the whole list from one comma-separated value (tnt, lava_bucket), and add and remove change a single item.',
       h2: 'Operators',
       operators: 'Anyone can read and change their own settings. Changing what applies to the whole server, to a dimension, or to another player needs operator, and those commands are hidden from everyone else.',
       cmd_getat: '§econfigat get <scope.setting> [target]§r',
       cmd_setat: '§econfigat set <scope.setting> <value> [target]§r',
+      cmd_addat: '§econfigat add|remove <scope.setting> <item> [target]§r',
       scoped: 'The scope is part of the setting - server.pricing.tax_rate, player.allow_gifts. For a dimension or player setting, [target] names which one; leave it out to mean yourself, or the dimension you are standing in.',
       tip: 'Command blocks can run configat, so server settings can be driven by redstone or a datapack-style setup.',
     },

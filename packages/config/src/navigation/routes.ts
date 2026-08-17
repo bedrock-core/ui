@@ -26,16 +26,6 @@ export type AppRoutes = {
     /** Current effective values — fetched by the navigating screen BEFORE pushing this one. */
     values: Record<string, unknown>;
   };
-  ConfigList: {
-    addonId: string;
-    scope: ConfigScope;
-    entityId?: string;
-    fieldKey: string;
-    breadcrumb: string;
-
-    /** Current effective values — fetched by the navigating screen BEFORE pushing this one. */
-    values: Record<string, unknown>;
-  };
   ConfirmReset: {
     addonId: string;
     scope: ConfigScope;

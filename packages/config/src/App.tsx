@@ -9,7 +9,6 @@ import type { OpenTarget } from './navigation/openTarget';
 import type { AppRoutes } from './navigation/routes';
 import { isOperator } from './permissions';
 import { Config } from './screens/Config';
-import { ConfigList } from './screens/ConfigList';
 import { ConfigScope as ConfigScopeScreen } from './screens/ConfigScope';
 import { ConfirmReset } from './screens/ConfirmReset';
 import { EntityList } from './screens/EntityList';
@@ -45,7 +44,6 @@ export function App({ core, player, target, values }: AppProps): JSX.Element {
         ConfigScope: ConfigScopeScreen,
         EntityList,
         Config,
-        ConfigList,
         ConfirmReset,
         Guide,
       },

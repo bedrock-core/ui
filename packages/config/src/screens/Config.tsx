@@ -1,20 +1,17 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Form, Header, theme } from '@bedrock-core/ore-styled';
-import { Fragment, Panel, Text, useExit, type FormValues, type JSX } from '@bedrock-core/ui-runtime';
+import { Fragment, Panel, Scroll, Text, useExit, type FormValues, type JSX } from '@bedrock-core/ui-runtime';
 import { splitBreadcrumb } from './breadcrumbs';
 import { FormHeader } from './FormHeader';
 import { useCore, usePlayer } from '../context';
-import { useTranslation, type CoreResources } from '../i18n';
+import { useTranslation, type CoreT } from '../i18n';
+import { describeList } from '../commands/lists';
 import { buildNestedPatch, resolveInitialValue } from '../config/nested';
 import { filterScope, getScopedSchema, groupByTopLevel, splitScalarsAndLists } from '../config/schema';
 import { patchScope } from '../config/values';
-import type { EntrySchema } from '../types';
+import type { ConfigScope, EntrySchema, FlatSchemaLike } from '../types';
 import type { AppScreen } from '../navigation/routes';
 import { SectionHeading } from './SectionHeading';
-import type { BoundI18n } from '@bedrock-core/i18n';
-
-/** The bound verb set, threaded into `renderField` — a helper, not a component, so no hooks. */
-type CoreT = BoundI18n<CoreResources>['t'];
 
 const { spacing, fontColor } = theme.tokens;
 
@@ -25,8 +22,10 @@ const NUMBER_INLINE_MAX_RANGE = 100;
  * Scope editor: ONE native modal form (`<Form>`) holding every scalar field of the
  * scope. Nothing is staged — the modal is atomic, so all values arrive together in
  * `onSubmit`, where they are converted per the schema and patched in one call.
- * List fields have no native modal control; they are edited on their own screen
- * (`ConfigList`), reachable from `ConfigScope`.
+ * List fields have no native modal control, and a modal form has only two buttons —
+ * its submit and its dismiss — so there is no third control to route to an editor
+ * with. Chat is where they are edited, so the screen names each one, shows what it
+ * currently holds, and prints the command that changes it.
  */
 export function Config({ navigation, route }: AppScreen<'Config'>): JSX.Element {
   const core = useCore();
@@ -38,13 +37,27 @@ export function Config({ navigation, route }: AppScreen<'Config'>): JSX.Element 
   // owning addon can refuse what they may not touch even if this screen were reached wrongly.
   const accessor = core.config.of(addonId, { actorId: player.id })!;
   const { scalars, lists } = splitScalarsAndLists(filterScope(getScopedSchema(accessor), scope));
+  // Anyone may reach their OWN player scope through `:config`; every other scope and target is
+  // `:configat`, which is operator-only and carries the scope inside the key.
+  const ownScope = scope === 'player' && entityId === player.id;
+  const listSummary = Object.keys(lists).length > 0
+    ? renderLists(lists, currentValues, key => listCommand(addonId, scope, ownScope, key), t)
+    : null;
 
+  // No scalar field means no form: a native modal is its fields, and one with none to show would
+  // present an empty dialog. The lists still have to be reachable, so they get the plain card.
   if (Object.keys(scalars).length === 0) {
     return (
       <Card flexDirection={'column'} padding={0} gap={0}>
         <Header {...splitBreadcrumb(breadcrumb)} onBack={(): void => navigation.goBack()} onClose={exit} />
-        <Panel flexGrow={1} justifyContent={'center'} alignItems={'center'} padding={spacing.lg}>
-          <Text wordBreak={'break-word'}>{`${fontColor.muted}${t($ => $.config.listOnly)}`}</Text>
+        <Panel flexGrow={1} padding={spacing.md}>
+          {listSummary
+            ? <Scroll>{listSummary}</Scroll>
+            : (
+                <Panel flexGrow={1} justifyContent={'center'} alignItems={'center'}>
+                  <Text wordBreak={'break-word'}>{`${fontColor.muted}${t($ => $.config.empty)}`}</Text>
+                </Panel>
+              )}
         </Panel>
       </Card>
     );
@@ -96,9 +109,7 @@ export function Config({ navigation, route }: AppScreen<'Config'>): JSX.Element 
               </Panel>
             ))}
           </Fragment>
-          {Object.keys(lists).length > 0
-            ? <Text wordBreak={'break-word'}>{`${fontColor.muted}${t($ => $.config.listsElsewhere)}`}</Text>
-            : null}
+          {listSummary}
           {/* `Back`, not `Cancel`: the modal's dismiss IS `navigation.goBack()`, and every other
               screen in this stack calls that control back. There is no third control to add — a
               modal form's only buttons are its submit and its dismiss. */}
@@ -110,6 +121,60 @@ export function Config({ navigation, route }: AppScreen<'Config'>): JSX.Element 
       </Card>
     </Form>
   );
+}
+
+/**
+ * Every list field the scope carries: what it is called, what it currently holds, and the
+ * command that changes it.
+ *
+ * A list has no native modal control, and a modal form's only buttons are its submit and its
+ * dismiss — so there is no third control to route an editor screen from, and there is no editor
+ * screen to route to. What the screen can do is stop the setting being invisible: naming it,
+ * printing its items against `maxItems`, and spelling the command means a player can see it
+ * exists, read it, and knows where to go to change it.
+ */
+function renderLists(
+  lists: FlatSchemaLike,
+  values: Record<string, unknown>,
+  commandFor: (key: string) => string,
+  t: CoreT,
+): JSX.Element {
+  return (
+    <Panel flexDirection={'column'} gap={spacing.md}>
+      <SectionHeading label={t($ => $.config.lists.heading)} />
+      <Text wordBreak={'break-word'}>{`${fontColor.muted}${t($ => $.config.lists.hint)}`}</Text>
+      <Fragment>
+        {Object.entries(lists).map(([key, entry]) => (
+          <Panel flexDirection={'column'} gap={spacing.xs}>
+            <Text wordBreak={'break-word'}>{entry.label}</Text>
+            {entry.description
+              ? <Text wordBreak={'break-word'}>{`${fontColor.muted}${entry.description}`}</Text>
+              : null}
+            <Text wordBreak={'break-word'}>{describeList(entry, listItems(key, entry, values), t)}</Text>
+            <Text wordBreak={'break-word'}>{`${fontColor.muted}${commandFor(key)}`}</Text>
+          </Panel>
+        ))}
+      </Fragment>
+    </Panel>
+  );
+}
+
+/** A list field's current items, falling back to the schema default exactly as a scalar field does. */
+function listItems(key: string, entry: EntrySchema, values: Record<string, unknown>): string[] {
+  const current = resolveInitialValue(key, entry, values);
+
+  return Array.isArray(current) ? current.map(String) : [];
+}
+
+/**
+ * The chat command that edits one list, spelled for whoever is looking at it. `set` rather than
+ * `add`, because it is the verb that works on an empty list and on a full one alike; the guide
+ * carries the rest.
+ */
+function listCommand(addonId: string, scope: ConfigScope, ownScope: boolean, key: string): string {
+  return ownScope
+    ? `/${addonId}:config set ${key} <items>`
+    : `/${addonId}:configat set ${scope}.${key} <items> [target]`;
 }
 
 /**
