@@ -259,7 +259,7 @@ function displayNextSteps(config: ProjectConfig, mcpackName?: string): void {
     chalk.gray('  See packs/BP/scripts/UI/Example.tsx to explore the starter screens and navigation.'),
   );
 
-  console.info('\n' + chalk.bold('Companion resource pack:') + '\n');
+  console.info('\n' + chalk.bold('Render pack:') + '\n');
 
   if (mcpackName) {
     console.info(

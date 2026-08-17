@@ -24,7 +24,7 @@ and JSON generation — all wired and ready.
    yarn regolith-install
    ```
 
-3. **Install companion resource pack:**
+3. **Install the render pack:**
 
    ```txt
    Open the core-ui-v*.mcpack to add it to your game

@@ -10,12 +10,12 @@
 export const configDef = {
   server: {
     general: {
-      greetingEnabled: { type: 'boolean' as const, default: true, label: 'Greeting Enabled', widget: 'toggle' as const },
+      greetingEnabled: { type: 'boolean' as const, default: true, label: 'Greeting Enabled' },
       greetingColor: { type: 'enum' as const, default: 'yellow' as const, options: ['yellow', 'green', 'aqua'] as const, label: 'Greeting Color' },
     },
   },
   player: {
-    showTips: { type: 'boolean' as const, default: true, label: 'Show Tips', widget: 'toggle' as const },
+    showTips: { type: 'boolean' as const, default: true, label: 'Show Tips' },
   },
 } as const;
 
