@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Version the companion resource pack from the release it ships in.
+ * Version the render pack from the release it ships in.
  *
  * The pack is not published to npm — it is the `.mcpack` attached to each
  * `@bedrock-core/ui` release — so its version has one job: let a user tell

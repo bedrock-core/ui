@@ -25,7 +25,7 @@ exports (`.`, `./navigation`, `./ore-styled`, `./guides`, `./config`, `./flexbox
 - **`packages/cli`** – Project scaffolding tool (`@bedrock-core/cli`)
   - CLI to generate pre-configured addon projects with the framework
   - Template system with variable replacement ({{PROJECT_NAME}}, etc.)
-  - Downloads companion resource pack automatically during generation
+  - Downloads the render pack automatically during generation
   - Entry: `src/index.ts` → `dist/index.js` (executable via `npx @bedrock-core/cli`)
 
 - **`packages/navigation`** – Stack navigation system (`@bedrock-core/navigation`)
@@ -41,7 +41,7 @@ exports (`.`, `./navigation`, `./ore-styled`, `./guides`, `./config`, `./flexbox
 - **`packages/ore-styled`** – Ore-UI styled component library (`@bedrock-core/ore-styled`)
   - Pre-built compound components matching Minecraft's Ore-UI visual language
   - Exports: `Button`, `Card`, `Checkbox`, `RadioGroup`/`Radio`, `Toggle`, `ToggleButtonGroup`/`ToggleButtonItem`, `Divider`, `Header`, `MenuRow`, `Input`, `Dropdown`, `Slider`, `Form` (styled modal fields), `ItemSlot`, `ItemContainer`, `EquipmentSlots`, `theme`
-  - Renders through the same companion `@bedrock-core/ui` resource pack — no separate pack
+  - Renders through the same `@bedrock-core/ui` render pack — no separate pack
 
 - **`packages/i18n`** – Localization engine (`@bedrock-core/i18n`)
   - Typed keys, `{{var}}` interpolation, CLDR plural categories; zero runtime dependencies

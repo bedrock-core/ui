@@ -27,14 +27,12 @@ const { key } = i18n;
 
 export function I18nDemo(): JSX.Element {
   const player = usePlayer();
-  // setLocale/clearLocale write a dynamic property, not component state — the
-  // tick forces the re-render that re-resolves the locale chain.
-  const [, setTick] = useState(0);
+  // setLocale/clearLocale write a dynamic property rather than component state,
+  // but nothing has to force an update: every press rebuilds and re-presents,
+  // and render() re-derives the resolver on each build pass.
   const [count, setCount] = useState(1);
 
   const { t, raw, locale } = useTranslation(i18n);
-
-  const rerender = (): void => { setTick(n => n + 1); };
 
   return (
     <Card flexDirection={'column'} padding={12} gap={spacing.sm}>
@@ -104,10 +102,10 @@ export function I18nDemo(): JSX.Element {
       <Text>{t($ => $.ui.demo.locale, { locale })}</Text>
       <Text>{`${fontColor.muted}${t($ => $.ui.demo.pinned, { value: i18n.forLocale('es_ES').t($ => $.ui.demo.title) })}`}</Text>
       <Panel flexDirection={'row'} gap={spacing.sm}>
-        <Button variant={'secondary'} onPress={(): void => { i18n.setLocale(player, 'es_ES'); rerender(); }}>
+        <Button variant={'secondary'} onPress={(): void => { i18n.setLocale(player, 'es_ES'); }}>
           {`§0${t($ => $.ui.demo.action.overrideEs)}`}
         </Button>
-        <Button variant={'contrast'} onPress={(): void => { i18n.clearLocale(player); rerender(); }}>
+        <Button variant={'contrast'} onPress={(): void => { i18n.clearLocale(player); }}>
           {t($ => $.ui.demo.action.clearOverride)}
         </Button>
       </Panel>

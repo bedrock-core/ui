@@ -89,9 +89,9 @@ export const Settings = () => (
 
 Mix a modal `<Form>` and an ActionForm-style screen across separate `render()` calls (e.g. via navigation) — never nested.
 
-## Resource pack
+## Render pack
 
-These components render through the companion `@bedrock-core/ui` resource pack — make sure the latest `.mcpack` from the [releases page](https://github.com/bedrock-core/ui/releases/latest) is installed alongside your addon.
+These components render through the `@bedrock-core/ui` render pack — make sure the latest `.mcpack` from the [releases page](https://github.com/bedrock-core/ui/releases/latest) is installed alongside your addon.
 
 ## License
 

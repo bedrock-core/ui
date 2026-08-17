@@ -5,7 +5,7 @@
 > ⚠️ Beta Status: Active development. Breaking changes may occur until 1.0.0. Pin exact versions for stability.
 
 Custom JSX-driven UI system for Minecraft Bedrock. 
-Components serialize into compact strings decoded by a companion resource pack to render rich layouts beyond native `@minecraft/server-ui` limitations.
+Components serialize into compact strings decoded by a render pack to render rich layouts beyond native `@minecraft/server-ui` limitations.
 
 📘 Full documentation & guides: https://bedrock-core.drav.dev/
 
@@ -18,7 +18,7 @@ Components serialize into compact strings decoded by a companion resource pack t
 ### Core
 
 - JSX runtime with a custom component system and a TypeScript library with proper exports
-- Serialization protocol with UTF-8 safety, decoded by the companion JSON UI resource pack
+- Serialization protocol with UTF-8 safety, decoded by the JSON UI render pack
 - Hooks: `useState`, `useReducer`, `useRef`, `useEffect`, `useContext`, `useEvent`, `usePlayer`, `useExit`
 - Event system with `Button` click handling
 - Custom native component API — register your own native JSON UI components compatible with `@bedrock-core/ui`

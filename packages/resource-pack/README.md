@@ -1,6 +1,6 @@
-# @bedrock-core/ui — companion resource pack
+# @bedrock-core/ui — render pack
 
-The resource pack every `@bedrock-core/ui` addon needs at runtime. It holds the JSON UI that
+The render pack every `@bedrock-core/ui` addon needs at runtime. It holds the JSON UI that
 decodes the framework's **`bcuiv0008`** payloads: the label/button/header/dropdown routers, the
 shared `control.json` decode, the component leaves and the scroll screens, under
 `packs/RP/ui/core-ui/`.
@@ -18,7 +18,7 @@ for you when it scaffolds a project.
 | | |
 | --- | --- |
 | UUID | `761ecd37-ad1c-4a64-862a-d6cc38767426` (never changes) |
-| Version | `1.10.0` — minor = protocol generation, patch = pack revision (see below) |
+| Version | `1.10.0` — tracks the library release it ships in (see below) |
 | Protocol | `bcuiv0008` (also stated in the pack description, visible in-game) |
 | Scope | `world` — one copy is shared by every `@bedrock-core/ui` addon in the world |
 

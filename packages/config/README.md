@@ -23,7 +23,7 @@ version independently.
 | --- | --- |
 | `mount.tsx` | `ui()`, command dispatch, and the host-side open funnel — start here |
 | `App.tsx` | the root screen component: owns the `NavigationContainer` and the context providers |
-| `commands/` | `addon.ts` (every command), `origin.ts`, `parse.ts`, `targets.ts` |
+| `commands/` | `addon.ts` (every command), `lists.ts`, `origin.ts`, `parse.ts`, `targets.ts` |
 | `navigation/` | a fired command → a route stack: `openTarget.ts` → `initialState.ts`, `routes.ts`, `openConfig.ts` |
 | `config/` | the config domain: `schema.ts` shaping, `values.ts` transport, `nested.ts` paths |
 | `permissions.ts` | who may reach which scope — the caller-side half of authorization |
@@ -43,20 +43,26 @@ no shared `core:*` surface.
 | `<ns>:config` | anyone | open this addon's config UI |
 | `<ns>:config get <setting>` | anyone | read one of your own settings |
 | `<ns>:config set <setting> <value>` | anyone | change one of your own settings |
+| `<ns>:config add\|remove <setting> <item>` | anyone | add to / remove from one of your own **list** settings |
 | `<ns>:configat get <scope.setting> [target]` | operator | read any setting |
 | `<ns>:configat set <scope.setting> <value> [target]` | operator | change any setting |
+| `<ns>:configat add\|remove <scope.setting> <item> [target]` | operator | add to / remove from any **list** setting |
 | `<ns>:guide` | anyone | this addon's guide, with the list under it |
 | `<ns>:list` | anyone | the addon list, with this addon selected |
 
-The verb and both setting enums are generated from the config schema, so `get`/`set` and every
-setting autocomplete.
+The verb and both setting enums are generated from the config schema, so `get`, `set`, `add`,
+`remove` and every setting autocomplete — `list` entries included. A list has no form control (a
+modal's only buttons are its submit and its dismiss), so chat is the only place it can be edited:
+`get` prints the items and the count against `maxItems`, `set` replaces the whole list from one
+comma-separated argument, and `add` / `remove` change a single item. The config screen shows each
+list with its current value and the command that changes it.
 
 **The scope rides in the setting** (`server.pricing.tax_rate`), not as its own argument. A
 parameter list is flat and positional with no branching, so a separate scope token would push the
 setting to position 3 or 4 depending on whether that scope takes a target — and a setting that
 moves cannot be an `Enum`. Prefixing pins it, which is what keeps autocomplete. Arity is
-dispatched on the verb: for `get` the next argument is the target, for `set` it is the value and
-the one after is the target.
+dispatched on the verb: for `get` the next argument is the target, for `set`, `add` and `remove`
+it is the value or item and the one after is the target.
 
 **Two commands, not one,** because one command means one enum and one permission level.
 `:config` is `Any` and its enum holds only your own player-scope settings; `:configat` is `Admin`,
@@ -115,7 +121,8 @@ writable by any script in the world.
 | `List` | every registered addon; entry point |
 | `ConfigScope` | pick world / dimension / player scope for an addon |
 | `EntityList` | pick a dimension or player to configure |
-| `Config` / `ConfigList` | the addon's config fields for the chosen scope |
+| `Config` | the addon's config fields for the chosen scope, plus its read-only list summary |
+| `ConfirmReset` | confirm before putting a scope back to its schema defaults |
 | `Guide` | the addon's self-contained guide (via `@bedrock-core/guides` `createGuide`) |
 
 ## License
