@@ -4,13 +4,12 @@ import { Form as PrimitiveForm, Image, Panel } from '@bedrock-core/ui-runtime';
 import { theme } from '../tokens';
 import { labeledColumn, rowSizing } from './label';
 
-export interface FormDropdownProps extends Omit<PrimitiveFormDropdownProps,
-  'background' | 'backgroundHover' | 'backgroundPressed' | 'backgroundLocked'
-  | 'popupBackground' | 'optionBackground' | 'optionHover' | 'optionSelected'
-  | 'optionFont' | 'optionScale' | 'optionAlign'
-  | 'currentColor' | 'currentFont' | 'currentScale' | 'children'> {
-  // currentInsetX/currentInsetY stay exposed: position is a per-instance layout knob
-  // (unlike the theme-owned colors/fonts). Defaults (8, centered) come from the primitive.
+export interface FormDropdownProps extends Omit<PrimitiveFormDropdownProps, 'children'> {
+  // `children` stays omitted — it is the one NON-appearance omission here: the ore layer
+  // owns the option children, building them from the `options` string array below, so a
+  // caller-supplied child could only fight the array. Everything else the theme styles
+  // (closed box, popup and option faces, option/current text style) is accepted as an
+  // override, with the theme as the fallback.
   /** Caption rendered above the closed box. */
   label?: string;
   /**
@@ -32,8 +31,24 @@ export interface FormDropdownProps extends Omit<PrimitiveFormDropdownProps,
  * primitive as `current*` props (from the theme dropdown text style); the text is
  * inset a fixed 8px in the RP (matching the input box). Only the arrow is a JSX overlay
  * here (static, pinned right).
+ *
+ * Every surface the theme paints — the closed box's four faces, the popup card, the
+ * option row faces and the option/current text style — is a DEFAULT, not a lock: pass
+ * any of them and yours wins (same rule as the non-form components). They are
+ * destructured out of the layout rest on purpose: this component is a wrapper Panel
+ * (arrow overlay) inside another wrapper for the caption, and the surfaces belong to
+ * the native DROPDOWN, never to either panel. The "pressed reuses hover" rule survives
+ * an override: a caller's `backgroundHover` also becomes their pressed face unless they
+ * set `backgroundPressed`.
  */
-export function FormDropdown({ label, name, options, defaultValue, enabled = true, currentInsetX, currentInsetY, ...layout }: FormDropdownProps): JSX.Element {
+export function FormDropdown({
+  label, name, options, defaultValue, enabled = true,
+  background, backgroundHover, backgroundPressed, backgroundLocked,
+  popupBackground, optionBackground, optionHover, optionSelected,
+  optionFont, optionScale, optionAlign,
+  currentColor, currentFont, currentScale, currentInsetX, currentInsetY,
+  ...layout
+}: FormDropdownProps): JSX.Element {
   const d = theme.components.dropdown;
 
   const control = (
@@ -43,20 +58,20 @@ export function FormDropdown({ label, name, options, defaultValue, enabled = tru
         defaultValue={defaultValue}
         enabled={enabled}
         width={'100%'}
-        background={d.textures.background}
-        backgroundHover={d.textures.backgroundHover}
-        backgroundPressed={d.textures.backgroundHover}
-        backgroundLocked={d.textures.backgroundDisabled}
-        popupBackground={d.textures.popup}
-        optionBackground={d.textures.option}
-        optionHover={d.textures.optionHover}
-        optionSelected={d.textures.optionSelected}
-        optionFont={d.textStyle.font}
-        optionScale={d.textStyle.scale}
-        optionAlign={'left'}
-        currentColor={enabled ? d.textStyle.value : d.textStyle.disabled}
-        currentFont={d.textStyle.font}
-        currentScale={d.textStyle.scale}
+        background={background ?? d.textures.background}
+        backgroundHover={backgroundHover ?? d.textures.backgroundHover}
+        backgroundPressed={backgroundPressed ?? backgroundHover ?? d.textures.backgroundHover}
+        backgroundLocked={backgroundLocked ?? d.textures.backgroundDisabled}
+        popupBackground={popupBackground ?? d.textures.popup}
+        optionBackground={optionBackground ?? d.textures.option}
+        optionHover={optionHover ?? d.textures.optionHover}
+        optionSelected={optionSelected ?? d.textures.optionSelected}
+        optionFont={optionFont ?? d.textStyle.font}
+        optionScale={optionScale ?? d.textStyle.scale}
+        optionAlign={optionAlign ?? 'left'}
+        currentColor={currentColor ?? (enabled ? d.textStyle.value : d.textStyle.disabled)}
+        currentFont={currentFont ?? d.textStyle.font}
+        currentScale={currentScale ?? d.textStyle.scale}
         currentInsetX={currentInsetX}
         currentInsetY={currentInsetY}
       >

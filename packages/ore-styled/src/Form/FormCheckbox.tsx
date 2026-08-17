@@ -4,9 +4,7 @@ import { Form as PrimitiveForm, Panel } from '@bedrock-core/ui-runtime';
 import { theme } from '../tokens';
 import { fieldLabel, rowSizing } from './label';
 
-export interface FormCheckboxProps extends Omit<PrimitiveFormToggleProps,
-  'background' | 'backgroundHover' | 'backgroundPressed' | 'backgroundLocked'
-  | 'checkedBackground' | 'checkedHover' | 'checkedLocked'> {
+export interface FormCheckboxProps extends PrimitiveFormToggleProps {
   /** Caption rendered to the RIGHT of the box (checkbox reading order). */
   label?: string;
 }
@@ -18,8 +16,18 @@ export interface FormCheckboxProps extends Omit<PrimitiveFormToggleProps,
  * reports a `boolean`. With a `label` it renders as a row with the box on the LEFT
  * and the caption on the right (checkbox reading order, opposite of the switch-right
  * `Form.Toggle`); without one it is the bare box.
+ *
+ * The texture props are the theme's DEFAULTS, not a lock: pass any of them and yours
+ * wins for that state (same rule as the non-form components). They are destructured
+ * out of the layout rest on purpose — a labeled checkbox is a wrapper row plus the
+ * box, and the surfaces belong to the BOX, never to the row panel.
  */
-export function FormCheckbox({ label, name, defaultValue, enabled = true, ...layout }: FormCheckboxProps): JSX.Element {
+export function FormCheckbox({
+  label, name, defaultValue, enabled = true,
+  background, backgroundHover, backgroundPressed, backgroundLocked,
+  checkedBackground, checkedHover, checkedLocked,
+  ...layout
+}: FormCheckboxProps): JSX.Element {
   const c = theme.components.checkbox;
 
   const control = (
@@ -29,12 +37,13 @@ export function FormCheckbox({ label, name, defaultValue, enabled = true, ...lay
       enabled={enabled}
       width={c.size}
       height={c.size}
-      background={c.textures.unchecked}
-      backgroundHover={c.textures.uncheckedHover}
-      backgroundLocked={c.textures.uncheckedDisabled}
-      checkedBackground={c.textures.checked}
-      checkedHover={c.textures.checkedHover}
-      checkedLocked={c.textures.checkedDisabled}
+      background={background ?? c.textures.unchecked}
+      backgroundHover={backgroundHover ?? c.textures.uncheckedHover}
+      backgroundPressed={backgroundPressed}
+      backgroundLocked={backgroundLocked ?? c.textures.uncheckedDisabled}
+      checkedBackground={checkedBackground ?? c.textures.checked}
+      checkedHover={checkedHover ?? c.textures.checkedHover}
+      checkedLocked={checkedLocked ?? c.textures.checkedDisabled}
       {...(label === undefined ? layout : {})}
     />
   );
