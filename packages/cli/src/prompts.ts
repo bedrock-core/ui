@@ -10,7 +10,11 @@ export interface ProjectConfig {
   targetDir: string;
 }
 
-export async function promptUser(initialProjectName?: string): Promise<ProjectConfig> {
+export async function promptUser(
+  initialProjectName?: string,
+  initialAuthor?: string,
+  initialDescription?: string,
+): Promise<ProjectConfig> {
   const questions: prompts.PromptObject[] = [];
 
   // Project name
@@ -35,35 +39,41 @@ export async function promptUser(initialProjectName?: string): Promise<ProjectCo
   }
 
   // Author
-  questions.push({
-    type: 'text',
-    name: 'author',
-    message: 'Author name:',
-    initial: 'Your Name',
-  });
+  if (!initialAuthor) {
+    questions.push({
+      type: 'text',
+      name: 'author',
+      message: 'Author name:',
+      initial: 'Your Name',
+    });
+  }
 
   // Description
-  questions.push({
-    type: 'text',
-    name: 'description',
-    message: 'Description:',
-    initial: 'A Minecraft Bedrock addon with custom UI',
-  });
+  if (!initialDescription) {
+    questions.push({
+      type: 'text',
+      name: 'description',
+      message: 'Description:',
+      initial: 'A Minecraft Bedrock addon with custom UI',
+    });
+  }
 
-  const response = await prompts(questions, {
-    onCancel: () => {
-      console.warn(chalk.yellow('\n✖ Operation cancelled'));
-      process.exit(0);
-    },
-  });
+  const response = questions.length === 0
+    ? {}
+    : await prompts(questions, {
+        onCancel: () => {
+          console.warn(chalk.yellow('\n✖ Operation cancelled'));
+          process.exit(0);
+        },
+      });
 
   const projectName = initialProjectName || response.projectName;
   const targetDir = path.resolve(process.cwd(), projectName);
 
   return {
     projectName,
-    author: response.author,
-    description: response.description,
+    author: initialAuthor || response.author,
+    description: initialDescription || response.description,
     targetDir,
   };
 }

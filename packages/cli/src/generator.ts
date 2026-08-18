@@ -283,11 +283,15 @@ function displayNextSteps(config: ProjectConfig, mcpackName?: string): void {
 /**
  * Main function to create a new project
  */
-export async function createProject(initialProjectName?: string): Promise<void> {
+export async function createProject(
+  initialProjectName?: string,
+  initialAuthor?: string,
+  initialDescription?: string,
+): Promise<void> {
   console.info(chalk.bold.cyan('\n@bedrock-core/ui') + chalk.gray(' - Project Generator\n'));
 
   // Get user input
-  const config = await promptUser(initialProjectName);
+  const config = await promptUser(initialProjectName, initialAuthor, initialDescription);
 
   // Check if target directory exists and is not empty
   const isEmpty = await isDirectoryEmpty(config.targetDir);
