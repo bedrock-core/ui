@@ -1,7 +1,7 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Divider, Header, MenuRow, theme } from '@bedrock-core/ore-styled';
 import { Button, Image, Panel, Scroll, Text, useState, type JSX } from '@bedrock-core/ui-runtime';
-import type { GuideManifest, GuideTreeNode, PageId } from '../types';
+import type { GuideTreeNode, PageId } from '../types';
 
 const { spacing } = theme.tokens;
 const transparentTextures = theme.components.button.variants.transparent.textures;
@@ -10,7 +10,12 @@ const transparentTextures = theme.components.button.variants.transparent.texture
 const ICON_SIZE = 16;
 
 export interface GuideHomeViewProps {
-  manifest: GuideManifest;
+  /**
+   * The sidebar as the viewing audience sees it — `visibleTree(manifest, audience)`. The home
+   * screen IS the tree, so it takes the filtered one rather than a manifest plus an audience
+   * to filter it by all over again.
+   */
+  tree: GuideTreeNode[];
   /** Header title (raw text, colorable). */
   title: string;
   /** A page row was pressed. */
@@ -50,8 +55,8 @@ function iconSlot(icon: string | undefined): JSX.Element[] {
  * divider rule; pages render as icon menu rows (thumbnail + title + one-line subtitle + chevron).
  * `icon`/`descK` are optional per node, so an unannotated guide degrades to a clean text list.
  */
-export function GuideHomeView({ manifest, title, onOpenPage, onExit, onClose }: GuideHomeViewProps): JSX.Element {
-  const [collapsed, setCollapsed] = useState<string[]>(() => initialCollapsed(manifest.tree));
+export function GuideHomeView({ tree, title, onOpenPage, onExit, onClose }: GuideHomeViewProps): JSX.Element {
+  const [collapsed, setCollapsed] = useState<string[]>(() => initialCollapsed(tree));
 
   const toggle = (id: string): void => {
     setCollapsed(collapsed.includes(id) ? collapsed.filter(c => c !== id) : [...collapsed, id]);
@@ -113,7 +118,7 @@ export function GuideHomeView({ manifest, title, onOpenPage, onExit, onClose }: 
     }
   };
 
-  walk(manifest.tree, 0);
+  walk(tree, 0);
 
   return (
     <Card flexDirection={'column'} padding={0} gap={0}>

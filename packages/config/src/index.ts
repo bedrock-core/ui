@@ -29,7 +29,7 @@ export type { AppProps } from './App';
 
 export { registerAddonCommands } from './commands/addon';
 export type { OpenCallback } from './commands/addon';
-export { allowedScopes, clampTarget, isOperator } from './permissions';
+export { allowedScopes, clampTarget, guideAudienceFor, isOperator } from './permissions';
 
 export type { OpenCommand, OpenTarget } from './navigation/openTarget';
 export type { AppRoutes, AppScreen } from './navigation/routes';

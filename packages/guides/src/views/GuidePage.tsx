@@ -2,8 +2,9 @@
 import { Card, Header, Button as OreButton, theme } from '@bedrock-core/ore-styled';
 import type { DisplayText } from '@bedrock-core/i18n';
 import { Image, Panel, Scroll, Text, type JSX } from '@bedrock-core/ui-runtime';
+import { canSee, paginationFor } from '../access';
 import { GuideBlockList } from '../render/GuideBlockList';
-import type { GuideComponents, GuideManifest, GuideTreeNode, PageId } from '../types';
+import type { GuideAudience, GuideComponents, GuideManifest, GuideTreeNode, PageId } from '../types';
 
 const { spacing } = theme.tokens;
 
@@ -32,6 +33,10 @@ function breadcrumbPath(tree: GuideTreeNode[], pageId: PageId): DisplayText[] {
 
 export interface GuidePageViewProps {
   manifest: GuideManifest;
+  /** The sidebar as the viewing audience sees it — breadcrumbs never name a category they can't reach. */
+  tree: GuideTreeNode[];
+  /** Which pagination chain to follow, and which links stay pressable. */
+  audience: GuideAudience;
   pageId: PageId;
   /** Header title (raw text, colorable). */
   title: string;
@@ -57,7 +62,7 @@ export interface GuidePageViewProps {
 }
 
 /** One guide page: title, rendered blocks, prev/home/next footer. */
-export function GuidePageView({ manifest, pageId, title, components, onOpenPage, onBack, onHome, onClose }: GuidePageViewProps): JSX.Element {
+export function GuidePageView({ manifest, tree, audience, pageId, title, components, onOpenPage, onBack, onHome, onClose }: GuidePageViewProps): JSX.Element {
   const page = manifest.pages[pageId];
 
   if (!page) {
@@ -71,9 +76,11 @@ export function GuidePageView({ manifest, pageId, title, components, onOpenPage,
     );
   }
 
-  const prevPage = page?.prev !== undefined ? manifest.pages[page.prev] : undefined;
-  const nextPage = page?.next !== undefined ? manifest.pages[page.next] : undefined;
-  const breadcrumbs = breadcrumbPath(manifest.tree, pageId);
+  const { prev, next } = paginationFor(manifest, page, audience);
+  const prevPage = prev !== undefined ? manifest.pages[prev] : undefined;
+  const nextPage = next !== undefined ? manifest.pages[next] : undefined;
+  const breadcrumbs = breadcrumbPath(tree, pageId);
+  const canOpen = (id: PageId): boolean => canSee(manifest.pages[id]?.a, audience);
 
   return (
     <Card flexDirection={'column'} padding={0} gap={0}>
@@ -85,7 +92,7 @@ export function GuidePageView({ manifest, pageId, title, components, onOpenPage,
               ? (
                   <Panel flexDirection={'column'} gap={spacing.md}>
                     <Text font={'minecraftTen'} scale={2} shadow={true} wordBreak={'break-word'}>{page.titleK}</Text>
-                    <GuideBlockList blocks={page.blocks} ns={manifest.ns} onNavigate={onOpenPage} components={components} />
+                    <GuideBlockList blocks={page.blocks} ns={manifest.ns} onNavigate={onOpenPage} canOpen={canOpen} components={components} />
                   </Panel>
                 )
               : <Text>{'§cPage not found.'}</Text>}
@@ -97,7 +104,7 @@ export function GuidePageView({ manifest, pageId, title, components, onOpenPage,
           is load-bearing: with both axes auto the ratio drives from WIDTH, which would size the
           button to its 12px icon. */}
       <Panel flexDirection={'row'} alignItems={'stretch'} gap={spacing.sm} padding={spacing.sm}>
-        {page?.prev !== undefined && prevPage
+        {prevPage
           ? (
               <OreButton variant={'contrast'} flexGrow={1} paddingTop={spacing.sm} paddingBottom={spacing.sm} onPress={(): void => onOpenPage(prevPage.id)}>
                 <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.xs}>
@@ -114,7 +121,7 @@ export function GuidePageView({ manifest, pageId, title, components, onOpenPage,
               </OreButton>
             )
           : null}
-        {page?.next !== undefined && nextPage
+        {nextPage
           ? (
               <OreButton variant={'contrast'} flexGrow={1} paddingTop={spacing.sm} paddingBottom={spacing.sm} onPress={(): void => onOpenPage(nextPage.id)}>
                 <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.xs}>

@@ -15,6 +15,12 @@ export interface GuideBlockListProps {
   ns: string;
   /** Internal-link presses land here (usually `navigate('GuidePage', …)`). */
   onNavigate?: (pageId: PageId) => void;
+  /**
+   * Whether a link target may be opened at all. A run pointing somewhere this reader cannot go
+   * renders as plain prose instead of a pressable — the sentence still reads, it just stops
+   * offering a door. Defaults to every link being open.
+   */
+  canOpen?: (pageId: PageId) => boolean;
   /** Registry for MDX `cmp` blocks; unregistered names render a placeholder. */
   components?: GuideComponents;
 }
@@ -24,10 +30,10 @@ export interface GuideBlockListProps {
  * a localized `Text` child (the filter compiled it into .lang values), so the client
  * resolves text per player language and wraps it natively.
  */
-export function GuideBlockList({ blocks, ns, onNavigate, components }: GuideBlockListProps): JSX.Element {
+export function GuideBlockList({ blocks, ns, onNavigate, canOpen, components }: GuideBlockListProps): JSX.Element {
   return (
     <Panel flexDirection={'column'} gap={spacing.md}>
-      {blocks.map(block => renderBlock(block, { ns, onNavigate, components }))}
+      {blocks.map(block => renderBlock(block, { ns, onNavigate, canOpen, components }))}
     </Panel>
   );
 }
@@ -35,6 +41,7 @@ export function GuideBlockList({ blocks, ns, onNavigate, components }: GuideBloc
 interface RenderCtx {
   ns: string;
   onNavigate?: (pageId: PageId) => void;
+  canOpen?: (pageId: PageId) => boolean;
   components?: GuideComponents;
 }
 
@@ -107,28 +114,30 @@ function renderBlock(block: GuideBlock, ctx: RenderCtx): JSX.Element {
  * A paragraph/list-item's runs as one flowing, wrapping row: plain runs are
  * inline text, a run with `to` is a transparent (invisible-until-hovered)
  * button positioned right where the link text sits — an inline pressable
- * link, not decorative text plus a detached button underneath.
+ * link, not decorative text plus a detached button underneath. A link `canOpen` refuses
+ * degrades back to prose, so the sentence still reads without offering a door.
  */
 function renderRuns(runs: GuideRun[], ctx: RenderCtx): JSX.Element {
   return (
     <Panel flexDirection={'row'} wrap={'wrap'} alignItems={'center'}>
       {runs.map((run) => {
         const { to } = run;
+        const prose = <Text shadow={true} wordBreak={'break-word'}>{run.k}</Text>;
 
-        return to !== undefined
-          ? (
-              <OreButton
-                variant={'transparent'}
-                paddingTop={0}
-                paddingBottom={0}
-                paddingLeft={2}
-                paddingRight={-2}
-                onPress={(): void => ctx.onNavigate?.(to)}
-              >
-                <Text shadow={true} wordBreak={'break-word'}>{run.k}</Text>
-              </OreButton>
-            )
-          : <Text shadow={true} wordBreak={'break-word'}>{run.k}</Text>;
+        if (to === undefined || !(ctx.canOpen?.(to) ?? true)) { return prose; }
+
+        return (
+          <OreButton
+            variant={'transparent'}
+            paddingTop={0}
+            paddingBottom={0}
+            paddingLeft={2}
+            paddingRight={-2}
+            onPress={(): void => ctx.onNavigate?.(to)}
+          >
+            {prose}
+          </OreButton>
+        );
       })}
     </Panel>
   );

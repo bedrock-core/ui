@@ -1,6 +1,7 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { useExit, useState, type JSX } from '@bedrock-core/ui-runtime';
-import type { GuideComponents, GuideManifest, PageId } from './types';
+import { canSee, visiblePageIds, visibleTree } from './access';
+import type { GuideAudience, GuideComponents, GuideManifest, PageId } from './types';
 import { GuideHomeView } from './views/GuideHome';
 import { GuidePageView } from './views/GuidePage';
 
@@ -9,6 +10,17 @@ export interface GuideOptions {
   title?: string;
   /** Component registry for MDX `cmp` blocks (`<ItemRenderer … />` in a guide). */
   components?: GuideComponents;
+
+  /**
+   * Who this instance is rendered for. `'player'` drops every page and category the manifest
+   * gated with `access: op`; the default `'op'` shows the whole guide, so a host that knows
+   * nothing about access keeps the behaviour it had.
+   *
+   * Fixed at build time, like the landing page it decides — so a host caching guide components
+   * must key that cache by audience as well as by addon, or the first operator to open a guide
+   * hands their copy of it to the next player who does.
+   */
+  audience?: GuideAudience;
 }
 
 export interface GuideProps {
@@ -46,13 +58,19 @@ export interface GuideProps {
  * "page not found": a manifest is replicated data and may have been built against a newer
  * version of this package than the one rendering it.
  *
+ * Everything above is decided over the pages THIS audience can see, which is the whole point of
+ * resolving it per instance: a guide of one public page and three operator ones is a single-page
+ * guide to a player and a sidebar to an operator, and a `home` an operator lands on falls back
+ * to the index for everyone else rather than opening a page they were not meant to read.
+ *
  * Exported for tests; `createGuide` is the public surface.
  */
-export function resolveLanding(manifest: GuideManifest): { landing: PageId | undefined; hasSidebar: boolean } {
-  const pageIds = Object.keys(manifest.pages);
+export function resolveLanding(manifest: GuideManifest, audience: GuideAudience = 'op'): { landing: PageId | undefined; hasSidebar: boolean } {
+  const pageIds = visiblePageIds(manifest, audience);
   const hasSidebar = pageIds.length > 1;
-  const declaredHome = manifest.home !== undefined && manifest.pages[manifest.home] !== undefined
-    ? manifest.home
+  const home = manifest.home;
+  const declaredHome = home !== undefined && manifest.pages[home] !== undefined && canSee(manifest.pages[home].a, audience)
+    ? home
     : undefined;
 
   return { landing: declaredHome ?? (hasSidebar ? undefined : pageIds[0]), hasSidebar };
@@ -60,7 +78,10 @@ export function resolveLanding(manifest: GuideManifest): { landing: PageId | und
 
 export function createGuide(manifest: GuideManifest, options: GuideOptions = {}): (props: GuideProps) => JSX.Element {
   const title = options.title ?? 'Guide';
-  const { landing, hasSidebar } = resolveLanding(manifest);
+  const audience = options.audience ?? 'op';
+  const { landing, hasSidebar } = resolveLanding(manifest, audience);
+  // Pruned once per guide, not per render: the audience cannot change under a mounted guide.
+  const tree = visibleTree(manifest, audience);
 
   return function Guide({ onExit }: GuideProps): JSX.Element {
     // `undefined` = the sidebar screen; a PageId = that page. The state is
@@ -74,16 +95,19 @@ export function createGuide(manifest: GuideManifest, options: GuideOptions = {})
     const [state, setState] = useState<{ ns: string; page: PageId | undefined }>({ ns: manifest.ns, page: landing });
     const close = useExit();
 
-    const pageId = state.ns === manifest.ns && (state.page === undefined || manifest.pages[state.page] !== undefined)
-      ? state.page
-      : landing;
+    // A page this audience cannot see is treated exactly like one the manifest no longer
+    // carries — the reader lands where the guide opens, rather than on a refusal naming a page
+    // that, as far as they are concerned, does not exist.
+    const stateIsUsable = state.ns === manifest.ns
+      && (state.page === undefined || (manifest.pages[state.page] !== undefined && canSee(manifest.pages[state.page].a, audience)));
+    const pageId = stateIsUsable ? state.page : landing;
 
     const setPageId = (page: PageId | undefined): void => { setState({ ns: manifest.ns, page }); };
 
     if (pageId === undefined) {
       return (
         <GuideHomeView
-          manifest={manifest}
+          tree={tree}
           title={title}
           onOpenPage={(id): void => setPageId(id)}
           onExit={onExit}
@@ -95,6 +119,8 @@ export function createGuide(manifest: GuideManifest, options: GuideOptions = {})
     return (
       <GuidePageView
         manifest={manifest}
+        tree={tree}
+        audience={audience}
         pageId={pageId}
         title={title}
         components={options.components}

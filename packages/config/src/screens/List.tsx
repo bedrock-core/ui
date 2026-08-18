@@ -1,14 +1,15 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Divider, Header, MenuRow, Button as OreButton, theme } from '@bedrock-core/ore-styled';
+import { hasVisiblePages } from '@bedrock-core/guides';
 import type { RegisteredAddon, Runtime } from '@bedrock-core/server-runtime';
 import type { Player } from '@minecraft/server';
 import { Image, Panel, Scroll, Text, useExit, useState, type JSX } from '@bedrock-core/ui-runtime';
 import type { DisplayText } from '@bedrock-core/i18n';
 import { useCore, usePlayer } from '../context';
 import { i18n, useTranslation } from '../i18n';
-import { isOperator } from '../permissions';
+import { guideAudienceFor, isOperator } from '../permissions';
 import { openConfig } from '../navigation/openConfig';
-import { FRAMEWORK_ADDON_ID } from '../frameworkGuide';
+import { FRAMEWORK_ADDON_ID, manifestFor } from '../frameworkGuide';
 import type { AppScreen } from '../navigation/routes';
 
 const { spacing } = theme.tokens;
@@ -127,8 +128,10 @@ function AddonDetails({ core, addon, player, navigation }: {
   const { t, display } = useTranslation();
   const accessor = core.config.of(addon.id, { actorId: player.id });
   const hasConfig = accessor !== undefined;
-  // The framework's own guide is built in rather than replicated — see `frameworkGuide.ts`.
-  const hasGuide = addon.id === FRAMEWORK_ADDON_ID || core.guides.has(addon.id);
+  // Greyed out when the addon published no guide — and equally when everything in the one it
+  // published is gated above this player, since there would be nothing behind the button.
+  const guide = manifestFor(core, addon.id);
+  const hasGuide = guide !== undefined && hasVisiblePages(guide, guideAudienceFor(player));
 
   function openGuide(): void {
     navigation.navigate('Guide', { addonId: addon.id });

@@ -77,6 +77,18 @@ describe('GuideBlockList block mapping', () => {
     expect(label.props.children).toBe('label');
   });
 
+  it('renders a link the reader cannot open as plain prose, keeping the sentence intact', () => {
+    const [p] = renderBlocks(
+      [{ t: 'p', runs: [{ k: 'lead' }, { k: 'label', to: 'admin/keys' }] }],
+      { onNavigate: (): void => undefined, canOpen: (id): boolean => id !== 'admin/keys' },
+    );
+    const [lead, gated] = childrenOf(p);
+
+    expect(lead.type).toBe(Text);
+    expect(gated.type).toBe(Text);
+    expect(gated.props.children).toBe('label');
+  });
+
   it('renders unordered and ordered lists with bullets and numbering', () => {
     const [ul, ol] = renderBlocks([
       { t: 'ul', items: [{ runs: [{ k: 'a' }] }, { runs: [{ k: 'b' }], items: [{ runs: [{ k: 'b1' }] }] }] },

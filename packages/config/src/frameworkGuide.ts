@@ -14,7 +14,9 @@
  * what paints, measures, and translates them everywhere. Admonition titles are
  * `@bedrock-core/guides`' own typed resources (`core.guides.adm.*`), the renderer's default.
  */
+import { isGuideManifest } from '@bedrock-core/guides';
 import type { GuideManifest } from '@bedrock-core/guides';
+import type { Runtime } from '@bedrock-core/server-runtime';
 
 /** The list row and guide id for the framework's own entry. Not a namespace — nothing registers it. */
 export const FRAMEWORK_ADDON_ID = 'bedrock-core';
@@ -71,3 +73,22 @@ export const frameworkGuide: GuideManifest = {
     },
   },
 };
+
+/**
+ * The guide behind an addon id, or `undefined` if there is none to render.
+ *
+ * The runtime replicates manifests without inspecting them, so what comes back from
+ * `core.guides.of` is the framework's opaque two-field envelope; narrowing here is the point
+ * where the payload becomes a document, and a peer publishing something malformed reads as
+ * "no guide" rather than crashing the screen that renders it.
+ *
+ * Shared by every caller that has to ask — the list row, the command clamp, and the guide
+ * screen itself — so the framework's own manifest is stood in for exactly once.
+ */
+export function manifestFor(core: Runtime, addonId: string): GuideManifest | undefined {
+  if (addonId === FRAMEWORK_ADDON_ID) { return frameworkGuide; }
+
+  const stored = core.guides.of(addonId);
+
+  return isGuideManifest(stored) ? stored : undefined;
+}

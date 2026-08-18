@@ -54,6 +54,9 @@ export interface UiOptions {
    * only through another installed addon's commands or your own call to {@link openUi}.
    * That is a legitimate choice for an addon with no config that would rather not add names
    * to the command list.
+   *
+   * It frees those four names, not the namespace: whatever commands the addon does register
+   * still belong under `core.id` (see `commands/addon.ts`).
    */
   commands?: boolean;
 }
@@ -130,7 +133,7 @@ function dispatch(core: Runtime, player: Player, command: OpenCommand, args: (st
  * answers it; a direct call is your own code and renders your own copy.
  */
 export function openUi(core: Runtime, player: Player, target: OpenTarget): void {
-  const clamped = clampTarget(target, player);
+  const clamped = clampTarget(target, player, core);
 
   void prefetchScopeValues(core, player, clamped).then((values) => {
     render(<App core={core} player={player} target={clamped} values={values} />, player);

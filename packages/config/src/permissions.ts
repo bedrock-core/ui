@@ -12,6 +12,10 @@
  */
 import { PlayerPermissionLevel } from '@minecraft/server';
 import type { Player } from '@minecraft/server';
+import { hasVisiblePages } from '@bedrock-core/guides';
+import type { GuideAudience } from '@bedrock-core/guides';
+import type { Runtime } from '@bedrock-core/server-runtime';
+import { manifestFor } from './frameworkGuide';
 import { CONFIG_SCOPES, type ConfigScope } from './types';
 import type { OpenTarget } from './navigation/openTarget';
 
@@ -24,6 +28,15 @@ import type { OpenTarget } from './navigation/openTarget';
  */
 export function isOperator(player: Player): boolean {
   return player.playerPermissionLevel === PlayerPermissionLevel.Operator;
+}
+
+/**
+ * Which slice of a guide this player reads. Guides gate pages with `access: op`, and the
+ * renderer takes the audience rather than a `Player` — `@bedrock-core/guides` never imports
+ * `@minecraft/server`, so deciding this is the host's job.
+ */
+export function guideAudienceFor(player: Player): GuideAudience {
+  return isOperator(player) ? 'op' : 'player';
 }
 
 /** The config scopes this player may open. Non-operators get their own settings, nothing else. */
@@ -41,7 +54,19 @@ export function allowedScopes(player: Player): readonly ConfigScope[] {
  * so a plain `:config` drops a normal player onto their own settings and the screens they cannot
  * use never enter the stack.
  */
-export function clampTarget(target: OpenTarget, player: Player): OpenTarget {
+export function clampTarget(target: OpenTarget, player: Player, core: Runtime): OpenTarget {
+  // A guide whose every page is gated has nothing in it for this player, and an index with no
+  // rows is a dead end rather than an answer — so the request lands on the addon list instead,
+  // with that addon selected. Clamping HERE rather than in the screen keeps the Guide route out
+  // of the stack entirely, so backing out behaves like a plain `:list` (see `buildInitialState`).
+  if (target.kind === 'guide') {
+    const manifest = target.addonId === undefined ? undefined : manifestFor(core, target.addonId);
+
+    return manifest !== undefined && hasVisiblePages(manifest, guideAudienceFor(player))
+      ? target
+      : { kind: 'list', addonId: target.addonId };
+  }
+
   if (target.kind !== 'config' || isOperator(player)) { return target; }
 
   return { ...target, scope: 'player', scopeId: player.id };

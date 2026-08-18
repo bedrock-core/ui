@@ -21,6 +21,23 @@ export type PageId = string;
 export type AdmonitionKind = 'note' | 'tip' | 'info' | 'warning' | 'danger';
 
 /**
+ * Who a page or category is for. Absent means everyone.
+ *
+ * A string rather than a boolean because roles are the obvious next shape, and `'admin'`
+ * alongside `'op'` is then an addition rather than a break. The value the filter emits is the
+ * EFFECTIVE one — inheritance from a gated `_category_.json` is already applied — so a node is
+ * gated by reading this field, never by walking its parents.
+ */
+export type GuideAccess = 'op';
+
+/**
+ * Which audience a guide is being rendered for. `'op'` sees everything; `'player'` sees only
+ * ungated content. The host decides which — this package deliberately never reads
+ * `@minecraft/server` to work it out for itself.
+ */
+export type GuideAudience = 'op' | 'player';
+
+/**
  * One run of a paragraph/list-item's inline content, in document order. A run with `to` is an
  * internal link — rendered as its own pressable element woven inline with the surrounding
  * text — everything else is plain (§-styled) prose.
@@ -54,8 +71,8 @@ export type GuideBlock
  * an `icon` points at.
  */
 export type GuideTreeNode
-  = | { t: 'page'; id: PageId; titleK: LangKey; icon?: string; descK?: LangKey }
-    | { t: 'cat'; id: string; labelK: LangKey; collapsed?: boolean; link?: PageId; icon?: string; children: GuideTreeNode[] };
+  = | { t: 'page'; id: PageId; titleK: LangKey; icon?: string; descK?: LangKey; a?: GuideAccess }
+    | { t: 'cat'; id: string; labelK: LangKey; collapsed?: boolean; link?: PageId; icon?: string; a?: GuideAccess; children: GuideTreeNode[] };
 
 export interface GuidePageData {
   id: PageId;
@@ -65,6 +82,18 @@ export interface GuidePageData {
   prev?: PageId;
   /** Next page in sidebar DFS order. */
   next?: PageId;
+
+  /** Effective access — set on every gated page, including `hidden` ones, which stay linkable. */
+  a?: GuideAccess;
+
+  /**
+   * The same chain as `prev`/`next`, walked with gated pages left out — what a `'player'`
+   * reads. Present only on a manifest that declares `gated`, and only on pages that audience
+   * can reach; pagination cannot be pruned at render time as cheaply as the tree can, because
+   * DFS order slots a category's `link` page ahead of its children.
+   */
+  pprev?: PageId;
+  pnext?: PageId;
 }
 
 export interface GuideManifest {
@@ -76,6 +105,13 @@ export interface GuideManifest {
   locales: string[];
   tree: GuideTreeNode[];
   pages: Record<PageId, GuidePageData>;
+
+  /**
+   * Whether anything in this guide is gated. A guide with nothing gated compiles exactly as it
+   * did before access existed — no flag, no `a`, no second pagination chain — so this is also
+   * what tells the renderer the `pprev`/`pnext` chain is there to be used at all.
+   */
+  gated?: true;
 
   /**
    * The page the guide opens on, instead of the sidebar. Set it when the sidebar is not the

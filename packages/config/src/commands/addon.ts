@@ -36,6 +36,33 @@
  * every one of these leads with the namespace: `/guide` reads as "bt_gc_economy - open this
  * addon's in-game guide", and the arbitrariness stops being a surprise.
  *
+ * ## The same rule binds the addon's OWN commands
+ *
+ * An addon that mounts this UI has already spent its namespace here, and Minecraft gives a pack
+ * exactly one. So every other command that addon registers has to be built from `core.id` too:
+ *
+ * ```ts
+ * system.beforeEvents.startup.subscribe((ev) => {
+ *   const ns = core.id;                                  // never a string literal
+ *
+ *   ev.customCommandRegistry.registerEnum(`${ns}:shopaction`, ['buy', 'sell']);
+ *   ev.customCommandRegistry.registerCommand(
+ *     { name: `${ns}:shop`, description: `${ns} - open the shop.`, ... },
+ *     origin => ...,
+ *   );
+ * });
+ * ```
+ *
+ * Reading it rather than hardcoding it is what makes a rename survivable — `creator`/`pack` in
+ * `core.register()` are the only place the namespace is declared, and a literal keeps the old
+ * prefix silently. Enums need it just as much as commands: an enum name is world-wide, so an
+ * unprefixed `registerEnum('shopaction', ...)` collides with the next addon that thinks of the
+ * same word, and the description-leads-with-the-namespace rule above applies verbatim.
+ *
+ * `ui(core, { commands: false })` opts out of the four registered here. It frees the names, not
+ * the namespace — the addon is still `core.id` to state, config, RPC and the addon list, and its
+ * own commands still belong under it.
+ *
  * ## Permissions
  *
  * Two commands rather than one, because one command means one enum and one permission level.

@@ -31,7 +31,7 @@ export function Config({ navigation, route }: AppScreen<'Config'>): JSX.Element 
   const core = useCore();
   const player = usePlayer();
   const exit = useExit();
-  const { t } = useTranslation();
+  const { t, display } = useTranslation();
   const { addonId, scope, entityId, breadcrumb, values: currentValues } = route.params;
   // Every read and write from this screen is made on the viewing player's behalf, so the
   // owning addon can refuse what they may not touch even if this screen were reached wrongly.
@@ -43,7 +43,7 @@ export function Config({ navigation, route }: AppScreen<'Config'>): JSX.Element 
   // `:configat`, which is operator-only and carries the scope inside the key.
   const ownScope = scope === 'player' && entityId === player.id;
   const groups = groupByTopLevel(fields);
-  const body = renderGroups(groups, currentValues, addonId, scope, ownScope, t);
+  const body = renderGroups(groups, currentValues, addonId, scope, ownScope, t, display);
 
   // No scalar field means no form: a native modal IS its fields, and one with none to show would
   // present an empty dialog. Any lists still have to be reachable, so they get the plain card.
@@ -114,6 +114,7 @@ function renderGroups(
   scope: ConfigScope,
   ownScope: boolean,
   t: CoreT,
+  display: (text: string) => string,
 ): JSX.Element {
   return (
     <Fragment>
@@ -130,9 +131,9 @@ function renderGroups(
                 <Panel flexDirection={'column'} gap={spacing.xs}>
                   {entry.type === 'list'
                     ? <Text wordBreak={'break-word'}>{entry.label}</Text>
-                    : renderField(fullKey, entry, resolveInitialValue(fullKey, entry, values), t)}
+                    : renderField(fullKey, entry, resolveInitialValue(fullKey, entry, values), t, display)}
                   {entry.description
-                    ? <Text wordBreak={'break-word'}>{`${fontColor.muted}${entry.description}`}</Text>
+                    ? <Text wordBreak={'break-word'}>{`${fontColor.muted}${display(entry.description)}`}</Text>
                     : null}
                   {entry.type === 'list'
                     ? (
@@ -175,8 +176,10 @@ function listCommand(addonId: string, scope: ConfigScope, ownScope: boolean, key
  * control (number falls back to a text input when the range is too wide for a
  * usable slider).
  */
-function renderField(fullKey: string, entry: EntrySchema, current: unknown, t: CoreT): JSX.Element {
-  const { label } = entry;
+function renderField(fullKey: string, entry: EntrySchema, current: unknown, t: CoreT, display: (text: string) => string): JSX.Element {
+  // Resolve BEFORE composing: schema labels are often .lang keys, and a key
+  // with a §-prefix or a suffix glued on is no longer recognizable as one.
+  const label = display(entry.label);
 
   if (entry.type === 'boolean') {
     return <Form.Toggle label={label} name={fullKey} defaultValue={Boolean(current)} />;
