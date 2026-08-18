@@ -4,17 +4,18 @@ import { Panel, Text, useTranslationResolver } from '@bedrock-core/ui-runtime';
 import { theme } from '../tokens';
 
 /**
- * Literal captions carry the state color as a §-prefix; a string the active
- * resolver knows as a .lang key passes through untouched — a color prefix
- * would break key resolution (same rule MenuRow follows). Bake a § code into
- * the authored translation when a localized caption needs a specific color.
+ * Literal captions carry the state color and weight as §-prefixes; a string the
+ * active resolver knows as a .lang key passes through untouched — a prefix
+ * would break key resolution (same rule MenuRow follows). Bake the § codes into
+ * the authored translation when a localized caption needs them.
  */
 function FieldLabel({ label, enabled }: { label: string; enabled: boolean }): JSX.Element {
   const s = theme.components.form.labelStyle;
   const resolver = useTranslationResolver();
   const literal = label === '' || resolver?.(label) === undefined;
+  const prefix = `${enabled ? s.color : s.disabledColor}${s.bold ? '§l' : ''}`;
 
-  return <Text font={s.font} scale={s.scale}>{literal ? `${enabled ? s.color : s.disabledColor}${label}` : label}</Text>;
+  return <Text font={s.font} scale={s.scale}>{literal ? `${prefix}${label}` : label}</Text>;
 }
 
 /**

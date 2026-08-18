@@ -34,6 +34,7 @@ export type { SliderProps } from './Slider';
 export { ToggleButtonGroup, ToggleButtonItem } from './ToggleButton';
 export type { ToggleButtonGroupProps, ToggleButtonItemProps } from './ToggleButton';
 
+export { fieldLabel } from './Form/label';
 export { Form } from './Form/Form';
 export type { FormProps } from './Form/Form';
 export type { FormToggleProps } from './Form/FormToggle';

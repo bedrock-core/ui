@@ -131,7 +131,7 @@ export interface Theme {
     form: {
       /** Gap between a field's label and its control (labels live in this layer — the modal primitives are label-free). */
       labelGap: number;
-      labelStyle: { font: TextFont; scale: number; color: string; disabledColor: string };
+      labelStyle: { font: TextFont; scale: number; bold: boolean; color: string; disabledColor: string };
     };
     slider: {
       height: number;
@@ -325,7 +325,7 @@ const oreTheme: Theme = {
     },
     form: {
       labelGap: 2,
-      labelStyle: { font: 'mojangles', scale: 1, color: '§f', disabledColor: '§8' },
+      labelStyle: { font: 'mojangles', scale: 1, bold: true, color: '§f', disabledColor: '§8' },
     },
     slider: {
       height: 20,
