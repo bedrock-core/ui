@@ -27,6 +27,14 @@ import { registerAddonCommands } from './commands/addon';
 import { openTargetFrom, type OpenCommand, type OpenTarget } from './navigation/openTarget';
 import { clampTarget } from './permissions';
 import { getScopeValues } from './config/values';
+import {
+  buildSectionTree,
+  filterScope,
+  filterScopeGroups,
+  getScopedGroups,
+  getScopedSchema,
+  isPureSection,
+} from './config/schema';
 import { App } from './App';
 
 /** What a receiving realm forwards: who typed it, what they asked for, and untouched arguments. */
@@ -135,6 +143,16 @@ function dispatch(core: Runtime, player: Player, command: OpenCommand, args: (st
 export function openUi(core: Runtime, player: Player, target: OpenTarget): void {
   const clamped = clampTarget(target, player, core);
 
+  const scopeIsSections = scopeHoldsOnlySections(core, player, clamped);
+
+  // A scope that holds only sub-sections lands on the section screen, which needs no values —
+  // fetching for it would be a round trip whose result nothing reads.
+  if (scopeIsSections) {
+    render(<App core={core} player={player} target={clamped} scopeIsSections={true} />, player);
+
+    return;
+  }
+
   void prefetchScopeValues(core, player, clamped).then((values) => {
     render(<App core={core} player={player} target={clamped} values={values} />, player);
   });
@@ -171,4 +189,26 @@ async function prefetchScopeValues(
 
     return undefined;
   }
+}
+
+/**
+ * Whether the scope a deep link names holds only sub-sections, and so opens as a screen of
+ * buttons rather than as a form.
+ *
+ * Synchronous: the schema is replicated state, already local, unlike the values which are an
+ * RPC away. That is the whole reason this can be decided before the fetch is even started.
+ */
+function scopeHoldsOnlySections(core: Runtime, player: Player, target: OpenTarget): boolean {
+  if (target.kind !== 'config' || target.addonId === undefined || target.scope === undefined) { return false; }
+
+  if (target.scope !== 'server' && target.scopeId === undefined) { return false; }
+
+  const accessor = core.config.of(target.addonId, { actorId: player.id });
+
+  if (!accessor) { return false; }
+
+  return isPureSection(buildSectionTree(
+    filterScope(getScopedSchema(accessor), target.scope),
+    filterScopeGroups(getScopedGroups(accessor), target.scope),
+  ));
 }

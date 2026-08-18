@@ -26,6 +26,21 @@ export type EntrySchema = {
 /** A flat schema: dot-path → entry. Scoped variants keep the `server.`/`player.` prefix. */
 export type FlatSchemaLike = Record<string, EntrySchema>;
 
+/** One group's display strings, as the UI needs them. Both optional — a group may name neither. */
+export type GroupMetaLike = {
+  label?: string;
+  description?: string;
+};
+
+/**
+ * Group display strings, dot-path → strings, keyed exactly as {@link FlatSchemaLike} is.
+ *
+ * Absent for an addon that names no group and for one on a runtime older than the group key —
+ * the screens cannot tell the two apart and do not need to, since both mean "fall back to the
+ * key-derived title".
+ */
+export type FlatGroupsLike = Record<string, GroupMetaLike>;
+
 /**
  * The three layers a setting can live at, in the order they are offered.
  *

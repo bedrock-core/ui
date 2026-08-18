@@ -17,10 +17,38 @@ export type AppRoutes = {
     scope: 'dimension' | 'player';
     breadcrumb: string;
   };
+  /**
+   * A level of the config tree that holds only sub-sections. `path` is its dot-path within the
+   * scope, `''` for the scope root. No `values`: this screen renders buttons, and only the form
+   * at the end of the branch needs them.
+   */
+  ConfigSection: {
+    addonId: string;
+    scope: ConfigScope;
+    entityId?: string;
+    path: string;
+    breadcrumb: string;
+  };
+  /**
+   * The editor for ONE list setting, reached from a section screen. `key` is the list's dot-path
+   * within the scope. Carries `values` for the same reason `Config` does — the screen stages
+   * edits and cannot fetch its own.
+   */
+  ConfigList: {
+    addonId: string;
+    scope: ConfigScope;
+    entityId?: string;
+    key: string;
+    breadcrumb: string;
+    values: Record<string, unknown>;
+  };
   Config: {
     addonId: string;
     scope: ConfigScope;
     entityId?: string;
+
+    /** Which section of the scope this form covers. `''` is the whole scope. */
+    path: string;
     breadcrumb: string;
 
     /** Current effective values — fetched by the navigating screen BEFORE pushing this one. */

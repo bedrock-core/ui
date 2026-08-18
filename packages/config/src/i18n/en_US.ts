@@ -63,6 +63,17 @@ export default {
     enterValue: 'Enter {{label}}',
   },
 
+  list: {
+    add: 'Add item',
+    addTitle: 'Add to {{label}}',
+    editTitle: 'Edit item',
+    save: 'Save item',
+    empty: 'Nothing in this list yet.',
+    full: 'Full — {{max}} items is the maximum.',
+    noOptions: 'Every option is already in the list.',
+    item: 'Item',
+  },
+
   command: {
     playerOnly: 'Must be run by a player',
     playerOrBlockOnly: 'Must be run by a player or a command block',
@@ -105,7 +116,7 @@ export default {
       cmd_guide: '§eguide§r - open that addon\'s guide, a page like this one',
       cmd_list: '§elist§r - open the addon list, the screen behind this one',
       autocomplete: 'Settings autocomplete: the chat box offers the ones that addon actually has.',
-      lists: 'A list setting holds several values, and it is the one kind the config screen cannot edit - a form has no control for it. get shows the items and how many of the maximum are used, set replaces the whole list from one comma-separated value in quotes ("tnt, lava_bucket"), and add and remove change a single item.',
+      lists: 'A list setting holds several values. The config screen edits it on a page of its own - a form has no control for it, so it only gets one where there is room for a button. The commands work anywhere: get shows the items and how many of the maximum are used, set replaces the whole list from one comma-separated value in quotes ("tnt, lava_bucket"), and add and remove change a single item.',
       h2: 'Operators',
       operators: 'Anyone can read and change their own settings. Changing what applies to the whole server, to a dimension, or to another player needs operator, and those commands are hidden from everyone else.',
       cmd_getat: '§econfigat get <scope.setting> [target]§r',

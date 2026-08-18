@@ -8,7 +8,7 @@ import type { DisplayText } from '@bedrock-core/i18n';
 import { useCore, usePlayer } from '../context';
 import { i18n, useTranslation } from '../i18n';
 import { guideAudienceFor, isOperator } from '../permissions';
-import { openConfig } from '../navigation/openConfig';
+import { openScopeRoot } from '../navigation/openConfig';
 import { FRAMEWORK_ADDON_ID, manifestFor } from '../frameworkGuide';
 import type { AppScreen } from '../navigation/routes';
 
@@ -151,7 +151,7 @@ function AddonDetails({ core, addon, player, navigation }: {
       return;
     }
 
-    await openConfig(navigation, accessor, {
+    await openScopeRoot(navigation, accessor, {
       addonId: addon.id,
       scope: 'player',
       entityId: player.id,

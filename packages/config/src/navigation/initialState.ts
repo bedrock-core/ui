@@ -27,11 +27,17 @@ function listRoute(selectedId?: string): NavigationState['routes'][number] {
  * `canPickScope` is false for a player with only one scope to pick. The picker is then left out
  * of the stack entirely rather than merely landed past, so backing out of their settings returns
  * to the list instead of a screen with a single enabled row.
+ *
+ * `scopeIsSections` says the scope's top level holds only sub-sections, so the destination is the
+ * section screen rather than the form. It needs no values — and must not wait for them, since a
+ * scope with nothing at its top level has no scalars to fetch and would otherwise stop at the
+ * picker forever.
  */
 export function buildInitialState(
   target: OpenTarget,
   values?: Record<string, unknown>,
   canPickScope = true,
+  scopeIsSections = false,
 ): Partial<NavigationState> | undefined {
   if (target.kind === 'list') {
     if (target.addonId === undefined) { return undefined; }
@@ -60,12 +66,24 @@ export function buildInitialState(
     ? [{ key: 'ConfigScope', name: 'ConfigScope', params: { addonId } }]
     : [];
 
-  if (scope && values) {
-    const scopeLabel = `${scope.charAt(0).toUpperCase()}${scope.slice(1)}`;
+  const scopeLabel = scope === undefined ? '' : `${scope.charAt(0).toUpperCase()}${scope.slice(1)}`;
+  const breadcrumb = `${addonId} > ${scopeLabel}`;
+
+  if (scope && scopeIsSections) {
     const routes = [
       listRoute(addonId),
       ...picker,
-      { key: 'Config', name: 'Config', params: { addonId, scope, entityId: scopeId, breadcrumb: `${addonId} > ${scopeLabel}`, values } },
+      { key: 'ConfigSection', name: 'ConfigSection', params: { addonId, scope, entityId: scopeId, path: '', breadcrumb } },
+    ];
+
+    return { routes, index: routes.length - 1 };
+  }
+
+  if (scope && values) {
+    const routes = [
+      listRoute(addonId),
+      ...picker,
+      { key: 'Config', name: 'Config', params: { addonId, scope, entityId: scopeId, path: '', breadcrumb, values } },
     ];
 
     return { routes, index: routes.length - 1 };

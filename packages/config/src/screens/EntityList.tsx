@@ -7,7 +7,7 @@ import { useCore, usePlayer } from '../context';
 import { useTranslation } from '../i18n';
 import { allowedScopes, isOperator } from '../permissions';
 import { getRoster } from '../config/values';
-import { openConfig } from '../navigation/openConfig';
+import { openScopeRoot } from '../navigation/openConfig';
 import type { AppScreen } from '../navigation/routes';
 import { Missing } from './Missing';
 
@@ -38,7 +38,7 @@ export function EntityList({ navigation, route }: AppScreen<'EntityList'>): JSX.
     : [];
 
   const navigateToEntity = async (entityId: string, name: string): Promise<void> =>
-    openConfig(navigation, configAccessor, { addonId, scope, entityId, breadcrumb: `${breadcrumb} > ${name}` });
+    openScopeRoot(navigation, configAccessor, { addonId, scope, entityId, breadcrumb: `${breadcrumb} > ${name}` });
 
   /** The reset itself lives on `ConfirmReset` — pressing here only asks. */
   const confirmEntityReset = (entityId: string, name: string): void => {

@@ -5,7 +5,7 @@ import { useCore, usePlayer } from '../context';
 import { useTranslation } from '../i18n';
 import { allowedScopes, isOperator } from '../permissions';
 import { filterScope, getScopedSchema } from '../config/schema';
-import { openConfig } from '../navigation/openConfig';
+import { openScopeRoot } from '../navigation/openConfig';
 import type { AppScreen } from '../navigation/routes';
 import { Missing } from './Missing';
 
@@ -43,7 +43,7 @@ export function ConfigScope({ navigation, route }: AppScreen<'ConfigScope'>): JS
   const schema = getScopedSchema(configAccessor);
 
   const navigateToServer = async (): Promise<void> =>
-    openConfig(navigation, configAccessor, { addonId, scope: 'server', breadcrumb: `${addonName} > ${t($ => $.scope.server.label)}` });
+    openScopeRoot(navigation, configAccessor, { addonId, scope: 'server', breadcrumb: `${addonName} > ${t($ => $.scope.server.label)}` });
 
   const navigateToEntityList = (scope: 'dimension' | 'player', label: string): void => {
     navigation.navigate('EntityList', { addonId, scope, breadcrumb: `${addonName} > ${label}` });
@@ -51,7 +51,7 @@ export function ConfigScope({ navigation, route }: AppScreen<'ConfigScope'>): JS
 
   /** A non-operator has exactly one player to pick, so the roster screen is skipped for them. */
   const navigateToOwnPlayer = async (): Promise<void> =>
-    openConfig(navigation, configAccessor, { addonId, scope: 'player', entityId: player.id, breadcrumb: `${addonName} > ${player.name}` });
+    openScopeRoot(navigation, configAccessor, { addonId, scope: 'player', entityId: player.id, breadcrumb: `${addonName} > ${player.name}` });
 
   /** The reset itself lives on `ConfirmReset` — pressing here only asks. */
   const confirmServerReset = (): void => {
