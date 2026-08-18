@@ -10,6 +10,8 @@ node_modules
 !.yarn/versions
 
 # Build outputs
+build
+.regolith
 dist
 **/dist
 *.tsbuildinfo
@@ -61,3 +63,4 @@ TODO
 # Filter-generated artifacts (rebuilt by regolith)
 **/*.generated.json
 **/*.generated.d.ts
+packs/data/generated/mc/

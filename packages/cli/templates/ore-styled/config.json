@@ -16,7 +16,7 @@
 			},
 			"generator": {
 				"url": "github.com/bedrock-core/regolith-filters",
-				"version": "1.0.0"
+				"version": "1.1.0"
 			},
 			"guides": {
 				"url": "github.com/bedrock-core/regolith-filters",
@@ -40,7 +40,7 @@
 						"filter": "generator",
 						"settings": {
 							"include": ["**/*.ts"],
-							"exclude": ["BP/scripts/**", "**/*.d.ts"],
+							"exclude": ["BP/scripts/**", "data/**", "**/*.d.ts"],
 							"pretty": false
 						}
 					},
@@ -70,7 +70,7 @@
 						"filter": "generator",
 						"settings": {
 							"include": ["**/*.ts"],
-							"exclude": ["BP/scripts/**", "**/*.d.ts"],
+							"exclude": ["BP/scripts/**", "data/**", "**/*.d.ts"],
 							"pretty": true
 						}
 					},

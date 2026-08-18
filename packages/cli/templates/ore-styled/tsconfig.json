@@ -35,6 +35,8 @@
 	],
 	"include": [
 		"packs/BP/scripts/**/*",
+		"packs/BP/blocks/**/*",
+		"packs/BP/entities/**/*",
 		"packs/data/**/*"
 	],
 	"exclude": [

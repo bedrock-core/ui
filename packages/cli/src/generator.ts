@@ -256,6 +256,11 @@ function displayNextSteps(config: ProjectConfig, mcpackName?: string): void {
   console.info(chalk.cyan('  yarn run build') + chalk.gray(' (or npm run build)'));
 
   console.info(
+    chalk.gray('  The first build writes the Minecraft document types, so the .ts templates in'),
+  );
+  console.info(chalk.gray('  packs/BP/blocks and packs/BP/entities autocomplete once it has run.'));
+
+  console.info(
     chalk.gray('  See packs/BP/scripts/UI/Example.tsx to explore the starter screens and navigation.'),
   );
 

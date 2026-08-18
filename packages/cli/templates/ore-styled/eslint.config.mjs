@@ -118,6 +118,10 @@ export default defineConfig([
         { selector: ['property', 'parameterProperty', 'accessor'], modifiers: ['private', 'readonly'], format: ['UPPER_CASE', 'camelCase'], leadingUnderscore: 'allow' },
         { selector: ['property'], modifiers: ['readonly'], format: ['camelCase', 'UPPER_CASE'] },
         { selector: ['objectLiteralProperty', 'typeProperty'], format: ['camelCase', 'snake_case', 'UPPER_CASE', 'PascalCase'], leadingUnderscore: 'allowDouble' },
+        // Namespaced Minecraft JSON keys ("minecraft:physics") in generator templates
+        { selector: ['objectLiteralProperty', 'typeProperty'], modifiers: ['requiresQuotes'], format: null },
+        // i18n plural leaves: camelCase base + CLDR category suffix (stock_one, keyGiven_other)
+        { selector: ['objectLiteralProperty', 'typeProperty'], filter: { regex: '^[a-z][a-zA-Z0-9]*_(zero|one|two|few|many|other)$', match: true }, format: null },
         { selector: 'typeLike', format: ['PascalCase'] },
       ],
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^(_|_.*_?)$' }],

@@ -55,12 +55,19 @@ and JSON generation — all wired and ready.
 | **Config** | `packs/BP/scripts/config.ts` | Typed schema → widgets in the shared config UI, persisted values |
 | **i18n** | `packs/data/i18n/en_US.ts` | TS-first text: `t()` server-filled, `key()`/`raw()` client-resolved, plurals, interpolation |
 | **Guides** | `packs/data/guides/en_US/` | MDX pages compiled to an in-game guide, auto-localized |
-| **Generator** | `packs/BP/blocks/`, `packs/BP/entities/` | Single-file and multi-file `.ts` → `.json` templates |
+| **Generator** | `packs/BP/blocks/`, `packs/BP/entities/` | Single-file and multi-file `.ts` → `.json` templates, typed against Mojang's official schemas |
 
 The Regolith pipeline runs **generator → guides → i18n → bundler**: JSON is
 generated from the `.ts` templates, guides compile to a manifest plus `.lang`
 entries, translations compile to `.lang` files, the typed runtime bundle and
 `.d.ts` autocompletion, and finally the scripts bundle into one `main.js`.
+
+The generator also writes Minecraft document types into
+`packs/data/generated/mc/`, which is what makes `satisfies Block` and
+`satisfies Entity` work in the templates. Like the other filter-generated
+artifacts it is gitignored and rebuilt on every run — so **run the build once
+after scaffolding**, or those two files will show unresolved-name errors in
+your editor until you do.
 
 ## Project Structure
 
