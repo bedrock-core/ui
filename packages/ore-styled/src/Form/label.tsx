@@ -1,16 +1,28 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import type { ControlProps, JSX } from '@bedrock-core/ui-runtime';
-import { Panel, Text } from '@bedrock-core/ui-runtime';
+import { Panel, Text, useTranslationResolver } from '@bedrock-core/ui-runtime';
 import { theme } from '../tokens';
+
+/**
+ * Literal captions carry the state color as a §-prefix; a string the active
+ * resolver knows as a .lang key passes through untouched — a color prefix
+ * would break key resolution (same rule MenuRow follows). Bake a § code into
+ * the authored translation when a localized caption needs a specific color.
+ */
+function FieldLabel({ label, enabled }: { label: string; enabled: boolean }): JSX.Element {
+  const s = theme.components.form.labelStyle;
+  const resolver = useTranslationResolver();
+  const literal = label === '' || resolver?.(label) === undefined;
+
+  return <Text font={s.font} scale={s.scale}>{literal ? `${enabled ? s.color : s.disabledColor}${label}` : label}</Text>;
+}
 
 /**
  * A form field's caption, colored by enabled state. The modal `Form.*` primitives
  * are deliberately label-free — captions are composed here, in the styled layer.
  */
 export function fieldLabel(label: string, enabled: boolean): JSX.Element {
-  const s = theme.components.form.labelStyle;
-
-  return <Text font={s.font} scale={s.scale}>{`${enabled ? s.color : s.disabledColor}${label}`}</Text>;
+  return <FieldLabel label={label} enabled={enabled} />;
 }
 
 /**
