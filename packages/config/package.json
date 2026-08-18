@@ -39,6 +39,9 @@
 			"namespace": "core"
 		}
 	},
+	"publishConfig": {
+		"access": "public"
+	},
 	"files": [
 		"src",
 		"tsconfig.json"

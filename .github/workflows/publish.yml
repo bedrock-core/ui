@@ -16,6 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # setup-node writes an .npmrc keyed on NODE_AUTH_TOKEN, not NPM_TOKEN — without
+      # this every publish 401s. Yarn reads NPM_TOKEN, npm reads NODE_AUTH_TOKEN; set both.
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout

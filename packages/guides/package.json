@@ -33,6 +33,9 @@
 			"import": "./src/i18n/*.ts"
 		}
 	},
+	"publishConfig": {
+		"access": "public"
+	},
 	"files": [
 		"src",
 		"tsconfig.json"

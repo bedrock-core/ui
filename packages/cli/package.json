@@ -23,6 +23,9 @@
   "repository": "github:bedrock-core/ui",
   "type": "module",
   "bin": "./dist/index.js",
+  "publishConfig": {
+    "access": "public"
+  },
   "files": [
     "dist",
     "templates"

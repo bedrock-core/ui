@@ -37,6 +37,9 @@
 			"import": "./src/jsx/jsx-dev-runtime.ts"
 		}
 	},
+	"publishConfig": {
+		"access": "public"
+	},
 	"files": [
 		"src"
 	],

@@ -28,6 +28,9 @@
 			"import": "./src/index.ts"
 		}
 	},
+	"publishConfig": {
+		"access": "public"
+	},
 	"files": [
 		"src",
 		"tsconfig.json"
