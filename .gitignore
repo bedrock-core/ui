@@ -58,3 +58,5 @@ lerna-debug.log*
 
 TODO
 .claude
+# Yarn install state inside scaffolding templates (regenerable)
+**/.yarn/install-state.gz

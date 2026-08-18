@@ -106,6 +106,14 @@ async function copyTemplate(
       await processFile(sourcePath, targetPath, variables);
     }
   }
+
+  // npm strips `.gitignore` files from published tarballs, so the template
+  // ships it as `gitignore` and every scaffold gets the dot back here.
+  const plainGitignore = path.join(targetDir, 'gitignore');
+
+  if (await fs.pathExists(plainGitignore)) {
+    await fs.move(plainGitignore, path.join(targetDir, '.gitignore'), { overwrite: true });
+  }
 }
 
 /**
