@@ -1,11 +1,12 @@
 {
 	"namespace": "core_ui_components",
 	// Extends the shared base (core_ui_common.control). The base owns the generic
-	// control-block decode; the texture (component field 1, [1024-1106]) is decoded by the
-	// img CHILD (computed bindings don't propagate to children, and a derived `bindings`
-	// array would REPLACE the base's — so component decode lives on children, same as
-	// panel_bg / the button state faces). Payload-source $vars pass through instantiation
-	// into both the base bindings and the child (modal label_router overrides them).
+	// control-block decode; the texture (the payload TAIL, everything after [1024]) is
+	// decoded by the img CHILD (computed bindings don't propagate to children, and a
+	// derived `bindings` array would REPLACE the base's — so component decode lives on
+	// children, same as panel_bg / the button state faces). Payload-source $vars pass
+	// through instantiation into both the base bindings and the child (modal
+	// label_router overrides them).
 	"image@core_ui_common.control": {
 		"layer": 80,
 		"$type_gate": "(#pre_visible and (#type = 'image'))",
@@ -36,9 +37,14 @@
 							"binding_name_override": "#payload"
 						},
 						{
-							/* texture — component field 1, absolute [1024] (header 9 + type 83 +
-							   w/h/x/y 4×83 + visible/enabled 2×8 + background 83 + region 83 +
-							   fontType 83 + reserved 335 = 1024) */
+							/* texture — the payload's variable-length TAIL (v0008), starting at
+							   absolute [1024] (header 9 + type 83 + w/h/x/y 4×83 + visible/enabled
+							   2×8 + background 83 + region 83 + fontType 83 + reserved 335 = 1024).
+							   An image cell is TERMINAL (one component field, no children), so the
+							   texture is simply the REMAINDER after the control block — unpadded,
+							   unprefixed, UNCAPPED (same tail contract the terminal Text cell uses
+							   for its text; see text.json's `$text_source` → `#label_rem4`). No
+							   width take, no prefix strip, no marker. */
 							"binding_type": "view",
 							"source_property_name": "('%.1024s' * #payload)",
 							"target_property_name": "#skip_to_texture",
@@ -47,18 +53,6 @@
 						{
 							"binding_type": "view",
 							"source_property_name": "(#payload - #skip_to_texture)",
-							"target_property_name": "#rem_at_texture",
-							"binding_condition": "visible"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "('%.83s' * #rem_at_texture)",
-							"target_property_name": "#raw_texture",
-							"binding_condition": "visible"
-						},
-						{
-							"binding_type": "view",
-							"source_property_name": "(('%.82s' * #raw_texture) - ('%.2s' * #raw_texture) - ';')",
 							"target_property_name": "#texture",
 							"binding_condition": "visible"
 						},

@@ -52,8 +52,8 @@ export { resolveStateBackgrounds, type StateBackgroundProps } from './stateBackg
  * VALID alias at a fixed offset — non-text components default to 'default' — so the label
  * can decode it unconditionally and never see a texture path.
  *
- * Reserved calculation: 1024 - 9 - 83 - (6 × 83) - (2 × 8) - 83 (background) - 83 (region)
- * - 83 (fontType) = 335 bytes (up to 1024 bytes total reserved block for future expansion)
+ * Reserved calculation: 1024 - 9 (header) - 8 × 83 (type, width, height, x, y, background,
+ * region, fontType) - 2 × 8 (visible, enabled) = 335 bytes, the block left for future fields.
  *
  * Component-specific properties are appended after the reserved block.
  *

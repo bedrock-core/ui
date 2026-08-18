@@ -81,12 +81,14 @@ describe('common font slot [606-688]', () => {
     expect(payload.indexOf('s:MinecraftTen')).toBe(FONT_SLOT);
   });
 
-  it('defaults to a valid alias on an image cell, whose texture stays at [1024]', () => {
+  it('defaults to a valid alias on an image cell, whose texture tail starts at [1024]', () => {
     const payload = payloadOf(Image({ texture: 'textures/blocks/diamond_ore' }));
 
     // The exact regression: without the common slot the label read the texture here.
     expect(payload.indexOf('s:default')).toBe(FONT_SLOT);
-    expect(payload.indexOf('s:textures/blocks/diamond_ore')).toBe(COMPONENT_FIELDS);
+    // v0008: the texture is the payload TAIL — raw at [1024], no `s:` prefix, no
+    // padding, no marker, and nothing after it.
+    expect(payload.slice(COMPONENT_FIELDS)).toBe('textures/blocks/diamond_ore');
   });
 
   it('defaults to a valid alias on a panel cell', () => {
@@ -113,5 +115,39 @@ describe('common font slot [606-688]', () => {
 
     // Group slot 1 still holds the font; the cell label just no longer sources it.
     expect(payload.indexOf('s:MinecraftTen', COMPONENT_FIELDS)).toBe(COMPONENT_FIELDS);
+  });
+});
+
+/**
+ * v0008: an image cell is TERMINAL (no children, one component field), so its
+ * `texture` rides the payload's variable-length tail exactly like a Text cell's
+ * content — appended raw after the 1024-byte control block, unpadded, unprefixed,
+ * unmarked and UNCAPPED. That is what lifts the old 80-byte string-field cap on
+ * texture paths. The RP decodes it as the whole post-[1024] remainder.
+ */
+describe('image texture tail [1024→]', () => {
+  it('appends the texture verbatim as the tail', () => {
+    const payload = payloadOf(Image({ texture: 'textures/ui/ore-styled/dropdown/arrow' }));
+
+    expect(payload.slice(COMPONENT_FIELDS)).toBe('textures/ui/ore-styled/dropdown/arrow');
+    expect(payload).toHaveLength(COMPONENT_FIELDS + 'textures/ui/ore-styled/dropdown/arrow'.length);
+  });
+
+  it('carries a texture path longer than the old 80-byte cap', () => {
+    const long = `textures/ui/${'very-long-directory-segment/'.repeat(5)}icon`;
+
+    expect(long.length).toBeGreaterThan(80);
+
+    // Used to throw SerializationError ("exceeds maximum byte length of 80 bytes").
+    const payload = payloadOf(Image({ texture: long }));
+
+    expect(payload.slice(COMPONENT_FIELDS)).toBe(long);
+  });
+
+  it('falls back to the unstyled placeholder as the tail', () => {
+    const payload = payloadOf(Image({}));
+
+    expect(payload.endsWith('textures/ui/unstyled')).toBe(true);
+    expect(payload.slice(COMPONENT_FIELDS)).toBe('textures/ui/unstyled');
   });
 });
