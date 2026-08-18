@@ -50,10 +50,10 @@ export interface UiOptions {
    * Register this addon's `<namespace>:config` / `:configat` / `:guide` / `:list` commands
    * (see `commands/addon.ts`). On by default.
    *
-   * Passing `false` leaves this addon with **no** commands at all — there is no shared surface
-   * to fall back on — so the UI becomes reachable only through another installed addon's
-   * commands or a call to `openConfigUi` of your own. That is a legitimate choice for an addon
-   * with no config that would rather not add names to the command list.
+   * Passing `false` leaves this addon with **no** commands at all, so the UI becomes reachable
+   * only through another installed addon's commands or a call to `openConfigUi` of your own.
+   * That is a legitimate choice for an addon with no config that would rather not add names
+   * to the command list.
    */
   commands?: boolean;
 }

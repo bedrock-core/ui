@@ -9,7 +9,7 @@ import { describeList } from '../commands/lists';
 import { buildNestedPatch, resolveInitialValue } from '../config/nested';
 import { filterScope, getScopedSchema, groupByTopLevel, splitScalarsAndLists } from '../config/schema';
 import { patchScope } from '../config/values';
-import type { ConfigScope, EntrySchema, FlatSchemaLike } from '../types';
+import type { ConfigScope, EntrySchema } from '../types';
 import type { AppScreen } from '../navigation/routes';
 import { SectionHeading } from './SectionHeading';
 
@@ -36,23 +36,24 @@ export function Config({ navigation, route }: AppScreen<'Config'>): JSX.Element 
   // Every read and write from this screen is made on the viewing player's behalf, so the
   // owning addon can refuse what they may not touch even if this screen were reached wrongly.
   const accessor = core.config.of(addonId, { actorId: player.id })!;
-  const { scalars, lists } = splitScalarsAndLists(filterScope(getScopedSchema(accessor), scope));
+  const fields = filterScope(getScopedSchema(accessor), scope);
+  // Only the scalars round-trip through the form; the lists render read-only beside them.
+  const { scalars, lists } = splitScalarsAndLists(fields);
   // Anyone may reach their OWN player scope through `:config`; every other scope and target is
   // `:configat`, which is operator-only and carries the scope inside the key.
   const ownScope = scope === 'player' && entityId === player.id;
-  const listSummary = Object.keys(lists).length > 0
-    ? renderLists(lists, currentValues, key => listCommand(addonId, scope, ownScope, key), t)
-    : null;
+  const groups = groupByTopLevel(fields);
+  const body = renderGroups(groups, currentValues, addonId, scope, ownScope, t);
 
-  // No scalar field means no form: a native modal is its fields, and one with none to show would
-  // present an empty dialog. The lists still have to be reachable, so they get the plain card.
+  // No scalar field means no form: a native modal IS its fields, and one with none to show would
+  // present an empty dialog. Any lists still have to be reachable, so they get the plain card.
   if (Object.keys(scalars).length === 0) {
     return (
       <Card flexDirection={'column'} padding={0} gap={0}>
         <Header {...splitBreadcrumb(breadcrumb)} onBack={(): void => navigation.goBack()} onClose={exit} />
         <Panel flexGrow={1} padding={spacing.md}>
-          {listSummary
-            ? <Scroll>{listSummary}</Scroll>
+          {Object.keys(lists).length > 0
+            ? <Scroll>{body}</Scroll>
             : (
                 <Panel flexGrow={1} justifyContent={'center'} alignItems={'center'}>
                   <Text wordBreak={'break-word'}>{`${fontColor.muted}${t($ => $.config.empty)}`}</Text>
@@ -76,8 +77,6 @@ export function Config({ navigation, route }: AppScreen<'Config'>): JSX.Element 
     navigation.goBack();
   }
 
-  const groups = groupByTopLevel(scalars);
-
   return (
     <Form onSubmit={handleSubmit} onCancel={(): void => navigation.goBack()}>
       {/* One card for the whole modal, header and actions included — the same window frame the
@@ -86,30 +85,7 @@ export function Config({ navigation, route }: AppScreen<'Config'>): JSX.Element 
       <Card variant={'raised'} flexDirection={'column'} gap={0} padding={0} paddingTop={1} paddingBottom={4}>
         <FormHeader title={breadcrumb} />
         <Panel flexDirection={'column'} gap={spacing.md} padding={spacing.sm}>
-          <Fragment>
-            {[...groups.entries()].map(([groupName, entries]) => (
-              <Panel flexDirection={'column'} gap={spacing.md}>
-                {groupName !== ''
-                  ? <SectionHeading label={`${groupName.charAt(0).toUpperCase()}${groupName.slice(1)}`} />
-                  : null}
-                <Fragment>
-                  {entries.map(([subKey, entry]) => {
-                    const fullKey = groupName ? `${groupName}.${subKey}` : subKey;
-
-                    return (
-                      <Panel flexDirection={'column'} gap={spacing.xs}>
-                        {renderField(fullKey, entry, resolveInitialValue(fullKey, entry, currentValues), t)}
-                        {entry.description
-                          ? <Text wordBreak={'break-word'}>{`${fontColor.muted}${entry.description}`}</Text>
-                          : null}
-                      </Panel>
-                    );
-                  })}
-                </Fragment>
-              </Panel>
-            ))}
-          </Fragment>
-          {listSummary}
+          {body}
           {/* `Back`, not `Cancel`: the modal's dismiss IS `navigation.goBack()`, and every other
               screen in this stack calls that control back. There is no third control to add — a
               modal form's only buttons are its submit and its dismiss. */}
@@ -124,38 +100,55 @@ export function Config({ navigation, route }: AppScreen<'Config'>): JSX.Element 
 }
 
 /**
- * Every list field the scope carries: what it is called, what it currently holds, and the
- * command that changes it.
+ * Every field of the scope, in the order its addon declared them, grouped by top-level key.
  *
- * A list has no native modal control, and a modal form's only buttons are its submit and its
- * dismiss — so there is no third control to route an editor screen from, and there is no editor
- * screen to route to. What the screen can do is stop the setting being invisible: naming it,
- * printing its items against `maxItems`, and spelling the command means a player can see it
- * exists, read it, and knows where to go to change it.
+ * A list renders in place like anything else — label, description, current items — but where a
+ * scalar gets its native control a list gets the command that edits it instead. There is no
+ * control to give it: a list has no native modal field, and a modal form's only buttons are its
+ * submit and its dismiss, so there is no third control to route an editor from either.
  */
-function renderLists(
-  lists: FlatSchemaLike,
+function renderGroups(
+  groups: Map<string, [string, EntrySchema][]>,
   values: Record<string, unknown>,
-  commandFor: (key: string) => string,
+  addonId: string,
+  scope: ConfigScope,
+  ownScope: boolean,
   t: CoreT,
 ): JSX.Element {
   return (
-    <Panel flexDirection={'column'} gap={spacing.md}>
-      <SectionHeading label={t($ => $.config.lists.heading)} />
-      <Text wordBreak={'break-word'}>{`${fontColor.muted}${t($ => $.config.lists.hint)}`}</Text>
-      <Fragment>
-        {Object.entries(lists).map(([key, entry]) => (
-          <Panel flexDirection={'column'} gap={spacing.xs}>
-            <Text wordBreak={'break-word'}>{entry.label}</Text>
-            {entry.description
-              ? <Text wordBreak={'break-word'}>{`${fontColor.muted}${entry.description}`}</Text>
-              : null}
-            <Text wordBreak={'break-word'}>{describeList(entry, listItems(key, entry, values), t)}</Text>
-            <Text wordBreak={'break-word'}>{`${fontColor.muted}${commandFor(key)}`}</Text>
-          </Panel>
-        ))}
-      </Fragment>
-    </Panel>
+    <Fragment>
+      {[...groups.entries()].map(([groupName, entries]) => (
+        <Panel flexDirection={'column'} gap={spacing.md}>
+          {groupName !== ''
+            ? <SectionHeading label={`${groupName.charAt(0).toUpperCase()}${groupName.slice(1)}`} />
+            : null}
+          <Fragment>
+            {entries.map(([subKey, entry]) => {
+              const fullKey = groupName ? `${groupName}.${subKey}` : subKey;
+
+              return (
+                <Panel flexDirection={'column'} gap={spacing.xs}>
+                  {entry.type === 'list'
+                    ? <Text wordBreak={'break-word'}>{entry.label}</Text>
+                    : renderField(fullKey, entry, resolveInitialValue(fullKey, entry, values), t)}
+                  {entry.description
+                    ? <Text wordBreak={'break-word'}>{`${fontColor.muted}${entry.description}`}</Text>
+                    : null}
+                  {entry.type === 'list'
+                    ? (
+                        <Fragment>
+                          <Text wordBreak={'break-word'}>{describeList(entry, listItems(fullKey, entry, values), t)}</Text>
+                          <Text wordBreak={'break-word'}>{`${fontColor.muted}${listCommand(addonId, scope, ownScope, fullKey)}`}</Text>
+                        </Fragment>
+                      )
+                    : null}
+                </Panel>
+              );
+            })}
+          </Fragment>
+        </Panel>
+      ))}
+    </Fragment>
   );
 }
 
@@ -173,8 +166,8 @@ function listItems(key: string, entry: EntrySchema, values: Record<string, unkno
  */
 function listCommand(addonId: string, scope: ConfigScope, ownScope: boolean, key: string): string {
   return ownScope
-    ? `/${addonId}:config set ${key} <items>`
-    : `/${addonId}:configat set ${scope}.${key} <items> [target]`;
+    ? `/${addonId}:config set ${key} "<items>"`
+    : `/${addonId}:configat set ${scope}.${key} "<items>" [target]`;
 }
 
 /**

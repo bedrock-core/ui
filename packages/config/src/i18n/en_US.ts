@@ -24,10 +24,6 @@ export default {
   config: {
     breadcrumb: 'Config',
     empty: 'Nothing here you can configure.',
-    lists: {
-      heading: 'Lists',
-      hint: 'A list has no control in a form, so these are edited from chat:',
-    },
   },
 
   scope: {
@@ -109,7 +105,7 @@ export default {
       cmd_guide: '§eguide§r - open that addon\'s guide, a page like this one',
       cmd_list: '§elist§r - open the addon list, the screen behind this one',
       autocomplete: 'Settings autocomplete: the chat box offers the ones that addon actually has.',
-      lists: 'A list setting holds several values, and it is the one kind the config screen cannot edit - a form has no control for it. get shows the items and how many of the maximum are used, set replaces the whole list from one comma-separated value (tnt, lava_bucket), and add and remove change a single item.',
+      lists: 'A list setting holds several values, and it is the one kind the config screen cannot edit - a form has no control for it. get shows the items and how many of the maximum are used, set replaces the whole list from one comma-separated value in quotes ("tnt, lava_bucket"), and add and remove change a single item.',
       h2: 'Operators',
       operators: 'Anyone can read and change their own settings. Changing what applies to the whole server, to a dimension, or to another player needs operator, and those commands are hidden from everyone else.',
       cmd_getat: '§econfigat get <scope.setting> [target]§r',

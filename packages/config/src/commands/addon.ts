@@ -2,19 +2,6 @@
  * Every command this UI registers, all under the addon's own namespace:
  * `bt_gc_graves:config`, `:configat`, `:guide`, `:list`.
  *
- * ## Why there is no shared `core:*` surface
- *
- * Bedrock permits a pack exactly ONE command-enum namespace and forbids two packs from sharing
- * one. A shared `core:` surface would therefore have to own the enum namespace of whichever
- * realm registered it first, locking every other addon out of enums entirely — and that realm's
- * command names, parameter lists and enum values would be frozen for the life of the world,
- * unpatchable by installing anything newer.
- *
- * Per-addon namespaces dissolve all of it. Nothing is contended, nothing is elected, nothing is
- * frozen: an addon owns its own names and updating the addon updates them on the next world
- * load. The cost is one command set per installed addon rather than one per world, which is
- * what `/{namespace}:` autocompletion is for.
- *
  * ## Shape
  *
  * ```
@@ -229,7 +216,7 @@ function runOwn(
   if (verb === 'get') { return success(`${key} = ${show(read(core, target), key, entry, t)}`); }
 
   if (value === undefined || (verb !== 'set' && value.trim() === '')) {
-    return failure(missingArgument(`${ns}:config ${verb} ${key}${argumentOf(verb)}`, verb, t));
+    return failure(missingArgument(`${ns}:config ${verb} ${key}${argumentOf(verb, entry)}`, verb, t));
   }
 
   const applied = applyWrite(entry, verb, key, value, () => read(core, target), t);
@@ -297,7 +284,7 @@ function registerConfigAt(
       }
 
       if (a === undefined || (verb !== 'set' && a.trim() === '')) {
-        return failure(missingArgument(`${ns}:configat ${verb} ${key}${argumentOf(verb)} [target]`, verb, t));
+        return failure(missingArgument(`${ns}:configat ${verb} ${key}${argumentOf(verb, entry)} [target]`, verb, t));
       }
 
       // Resolved before the argument is interpreted, which `set` alone did not need to do: `add`
@@ -318,11 +305,18 @@ function registerConfigAt(
   );
 }
 
-/** What a verb takes after the setting, for a usage line. `get` takes nothing but the target. */
-function argumentOf(verb: string): string {
+/**
+ * What a verb takes after the setting, for a usage line. `get` takes nothing but the target.
+ *
+ * A list `set` is quoted because it is comma-separated and therefore contains spaces, and Bedrock
+ * would otherwise read only the first word as the argument.
+ */
+function argumentOf(verb: string, entry?: EntrySchema): string {
   if (verb === 'get') { return ''; }
 
-  return verb === 'set' ? ' <value>' : ' <item>';
+  if (verb !== 'set') { return ' <item>'; }
+
+  return entry?.type === 'list' ? ' "<items>"' : ' <value>';
 }
 
 /**

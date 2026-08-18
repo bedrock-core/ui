@@ -14,8 +14,8 @@
  *
  * - `mount.tsx` — `ui()`, command dispatch, and the host-side open funnel where the
  *   permission clamp lives. Start there; it explains why the command owner does so little.
- * - `commands/` — the shared `core:*` commands, and the per-addon ones generated from the
- *   config schema, with their argument parsing and scope targeting.
+ * - `commands/` — the per-addon commands generated from the config schema, with their
+ *   argument parsing and scope targeting.
  * - `navigation/` — turning a fired command into a route stack (`openTarget` → `initialState`).
  * - `config/` — the config domain: schema shaping, value transport over RPC, flat/nested paths.
  * - `permissions.ts` — who may reach which scope, the caller-side half of authorization.
