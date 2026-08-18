@@ -51,7 +51,7 @@ export interface UiOptions {
    * (see `commands/addon.ts`). On by default.
    *
    * Passing `false` leaves this addon with **no** commands at all, so the UI becomes reachable
-   * only through another installed addon's commands or a call to `openConfigUi` of your own.
+   * only through another installed addon's commands or your own call to {@link openUi}.
    * That is a legitimate choice for an addon with no config that would rather not add names
    * to the command list.
    */
@@ -73,7 +73,7 @@ export function ui(core: Runtime, options: UiOptions = {}): void {
       // about it, so reject rather than drop it silently.
       if (!player) { throw new Error(`core:ui.open: player '${playerId}' is not in the world`); }
 
-      open(core, player, openTargetFrom(command, args));
+      openUi(core, player, openTargetFrom(command, args));
 
       return true;
     },
@@ -90,7 +90,7 @@ export function ui(core: Runtime, options: UiOptions = {}): void {
  */
 function dispatch(core: Runtime, player: Player, command: OpenCommand, args: (string | undefined)[]): void {
   if (core.host.isHost) {
-    open(core, player, openTargetFrom(command, args));
+    openUi(core, player, openTargetFrom(command, args));
 
     return;
   }
@@ -101,17 +101,35 @@ function dispatch(core: Runtime, player: Player, command: OpenCommand, args: (st
       // may be older and buggier, but showing it beats the command doing nothing.
       console.warn(`[config] host '${core.host.hostId}' did not answer ${command} (${String(error)}) - opening locally`);
 
-      open(core, player, openTargetFrom(command, args));
+      openUi(core, player, openTargetFrom(command, args));
     });
 }
 
 /**
- * The single funnel every way of opening this UI passes through — the command callback above,
- * the `core:ui.open` RPC, and the local fallback — which is why the permission clamp lives here
- * rather than in a screen. It also runs host-side, so the rule stays patchable in the field
- * even for a world whose command owner shipped a year ago.
+ * Open the shared UI for a player, from your own code — an item use, a block interaction, an
+ * event handler, anything. This is the same funnel the commands go through, which is why the
+ * permission clamp lives here rather than in a screen.
+ *
+ * ```ts
+ * world.afterEvents.itemUse.subscribe(({ source, itemStack }) => {
+ *   if (itemStack.typeId !== 'drav0011_shop:guide_book') { return; }
+ *
+ *   openUi(core, source, { kind: 'guide', addonId: core.id });
+ * });
+ * ```
+ *
+ * The target picks the screen: `{ kind: 'list' }` for the addon browser, `{ kind: 'guide' }` for
+ * an addon's guide, `{ kind: 'config' }` for its settings — each optionally naming an `addonId`,
+ * and config additionally a `scope` and `scopeId` to open straight into one scope.
+ *
+ * `clampTarget` still applies, so a non-operator cannot reach past their own player scope even
+ * if you pass a target that says otherwise. Values for a deep-linked config scope are fetched
+ * before the first render.
+ *
+ * Renders in THIS realm. A typed command forwards to the elected host so the world's newest UI
+ * answers it; a direct call is your own code and renders your own copy.
  */
-function open(core: Runtime, player: Player, target: OpenTarget): void {
+export function openUi(core: Runtime, player: Player, target: OpenTarget): void {
   const clamped = clampTarget(target, player);
 
   void prefetchScopeValues(core, player, clamped).then((values) => {

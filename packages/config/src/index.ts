@@ -21,7 +21,7 @@
  * - `permissions.ts` — who may reach which scope, the caller-side half of authorization.
  * - `screens/` — the screens themselves, reading everything through `context.ts`.
  */
-export { ui } from './mount';
+export { ui, openUi } from './mount';
 export type { UiOptions } from './mount';
 
 export { App } from './App';
