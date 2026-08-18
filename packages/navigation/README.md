@@ -1,80 +1,91 @@
 # @bedrock-core/navigation
 
-Stack-based navigation system for @bedrock-core/ui.
+![Logo](https://raw.githubusercontent.com/bedrock-core/ui/main/assets/logo/title.png)
 
-## ⚠️ MVP Status
+Stack-based navigation for [`@bedrock-core/ui`](https://github.com/bedrock-core/ui), inspired by
+React Navigation and adapted to the runtime's one-render-per-player model. Screens are components,
+transitions are actions, and route params are typed by a route map you declare once.
 
-This is a stack-only navigator. It does **not** support:
-- Tabs or other navigator types
-- Nested navigators
-- Deep linking
-- State persistence
-- Transition animations
-- Keep-alive inactive routes
+> ⚠️ MVP scope: stack navigation only. No tabs, nested navigators, deep linking, state
+> persistence, transition animations, or keep-alive for inactive routes.
 
-## Core API
+## Install
 
-- **`NavigationContainer`** – Context provider that initializes and manages navigation state per player session. Wrap the entire navigator tree in this component as the root passed to `render()`.
-- **`createStackNavigator(config)`** – Factory that returns a `{ Navigator }` object. Register screens by passing a `{ screens: { [name]: component | { screen, initialParams } } }` config.
-- **`useNavigation<TRoutes>()`** – Hook returning a `NavigationHelpers<TRoutes>` object with: `navigate(name, params?)`, `push(name, params?)`, `goBack()`, `canGoBack()`, `reset(state)`, `setParams(name, params)`, `getState()`.
-- **`useRoute<TRoutes, K>()`** – Hook returning the current `RouteObject<TRoutes[K]>` with shape `{ key: string, name: K, params: TRoutes[K] }`. Must be called from within a screen component.
-- **`stackReducer(state, action)`** – The pure reducer behind the container, exported with its `StackAction` union and `ScreenDefaults` map for hosts that drive or seed the stack themselves (`@bedrock-core/config` builds an initial state from a fired command this way).
+```bash
+yarn add @bedrock-core/navigation
+```
+
+It also ships inside the umbrella package as `@bedrock-core/ui/navigation`.
+
+## What it gives you
+
+- `NavigationContainer` — the provider that holds a player's navigation state; the root you pass
+  to `render()`
+- `createStackNavigator(config)` — returns `{ Navigator, routeNames, initialRouteName }` from a
+  `{ screens, initialRouteName? }` config; a screen entry is a component or
+  `{ screen, initialParams }`
+- `useNavigation()` — `navigate`, `push`, `goBack`, `canGoBack`, `reset`, `setParams`, `getState`
+- `useRoute()` — the active `{ key, name, params }`
+- `stackReducer` with its `StackAction` union and `ScreenDefaults` map, for hosts that seed or
+  drive the stack themselves (`@bedrock-core/config` builds an initial state from a fired command
+  this way)
 
 ## Usage
 
 ```tsx
-import { NavigationContainer, createStackNavigator, useNavigation, useRoute } from '@bedrock-core/navigation';
-import { Button, render, Text } from '@bedrock-core/ui';
+/** @jsxImportSource @bedrock-core/ui */
+import { NavigationContainer, createStackNavigator, type ScreenProps } from '@bedrock-core/navigation';
+import { Button, Text, render, type JSX } from '@bedrock-core/ui';
+import type { Player } from '@minecraft/server';
 
-// Define screens
-function HomeScreen() {
-  const navigation = useNavigation();
+type AppRoutes = { Home: undefined; Profile: { userId: number } };
+
+function HomeScreen({ navigation }: ScreenProps<AppRoutes, 'Home'>): JSX.Element {
   return (
-    <Button onPress={() => navigation.navigate('Profile', { userId: 42 })}>
+    <Button onPress={(): void => navigation.navigate('Profile', { userId: 42 })}>
       <Text>{'Go to Profile'}</Text>
     </Button>
   );
 }
 
-function ProfileScreen() {
-  const route = useRoute();
-  const { userId } = route.params;
-  const navigation = useNavigation();
+function ProfileScreen({ navigation, route }: ScreenProps<AppRoutes, 'Profile'>): JSX.Element {
   return (
     <>
-      <Text>{`Profile: ${userId}`}</Text>
-      <Button onPress={() => navigation.goBack()}>
+      <Text>{`Profile: ${route.params.userId}`}</Text>
+      <Button onPress={(): void => navigation.goBack()}>
         <Text>{'Back'}</Text>
       </Button>
     </>
   );
 }
 
-// Create navigator
-const Stack = createStackNavigator({
-  screens: {
-    Home: HomeScreen,
-    Profile: {
-      screen: ProfileScreen,
-      initialParams: { userId: 0 }
-    }
-  }
+const Stack = createStackNavigator<AppRoutes>({
+  initialRouteName: 'Home',
+  screens: { Home: HomeScreen, Profile: { screen: ProfileScreen, initialParams: { userId: 0 } } },
 });
 
-// Render once per player
-render(
-  <NavigationContainer>
-    <Stack.Navigator initialRouteName="Home" />
-  </NavigationContainer>,
-  player
-);
+export function openApp(player: Player): void {
+  render(
+    <NavigationContainer>
+      <Stack.Navigator />
+    </NavigationContainer>,
+    player,
+  );
+}
 ```
 
-## Key Architecture
+**One `render()` per player.** Navigating does not call `render()` again — button callbacks feed
+the runtime's existing present cycle, which re-presents the same screen with the new route. Screen
+components must never call `render()` themselves.
 
-1. **Single root render per player** – Navigation state changes do NOT trigger new `render()` calls.
-2. **Action-driven updates** – All screen transitions happen through `navigate`, `push`, `goBack`, etc.
-3. **Reuses present loop** – Button callbacks naturally trigger screen updates via the runtime's present cycle.
-4. **No nested renders** – Screen components must never call `render()` directly.
+## Documentation
 
-See the [full documentation & guides](https://bedrock-core.drav.dev/) for more details.
+- [navigation](https://bedrock-core.drav.dev/docs/ui/navigation) — the model, quick start, and how
+  it works
+- [`createStackNavigator`](https://bedrock-core.drav.dev/docs/ui/navigation/createStackNavigator) ·
+  [`useNavigation`](https://bedrock-core.drav.dev/docs/ui/navigation/useNavigation) ·
+  [`useRoute`](https://bedrock-core.drav.dev/docs/ui/navigation/useRoute)
+
+## License
+
+MIT

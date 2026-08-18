@@ -1,5 +1,7 @@
 # @bedrock-core/ui — render pack
 
+![Logo](https://raw.githubusercontent.com/bedrock-core/ui/main/assets/logo/title.png)
+
 The render pack every `@bedrock-core/ui` addon needs at runtime. It holds the JSON UI that
 decodes the framework's **`bcuiv0008`** payloads: the label/button/header/dropdown routers, the
 shared `control.json` decode, the component leaves and the scroll screens, under

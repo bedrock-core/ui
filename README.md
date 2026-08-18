@@ -4,7 +4,7 @@
 
 > ⚠️ Beta Status: Active development. Breaking changes may occur until 1.0.0. Pin exact versions for stability.
 
-Custom JSX-driven UI system for Minecraft Bedrock. 
+Custom JSX-driven UI system for Minecraft Bedrock.
 Components serialize into compact strings decoded by a render pack to render rich layouts beyond native `@minecraft/server-ui` limitations.
 
 📘 Full documentation & guides: https://bedrock-core.drav.dev/
@@ -12,6 +12,22 @@ Components serialize into compact strings decoded by a render pack to render ric
 ![Preview](./assets/preview.png)
 
 ---
+
+## 📦 Install
+
+```bash
+yarn add @bedrock-core/ui
+```
+
+Or scaffold a whole project — Regolith, TypeScript, the filter chain, an example screen and the render pack:
+
+```bash
+npx @bedrock-core/cli
+```
+
+The one package carries the whole stack behind subpath entries — `@bedrock-core/ui`, `/ore-styled`, `/navigation`, `/i18n`, `/guides`, `/config`, `/flexbox` — plus `/jsx-runtime` for `jsxImportSource`.
+
+The JSON UI decoders live in a **render pack** (`core-ui-v*.mcpack`, attached to every release) that has to ship in the world alongside your addon; take it from the same release as the library. See [Installation](https://bedrock-core.drav.dev/docs/ui/get-started/installation) and [Render pack](https://bedrock-core.drav.dev/docs/ui/ui-runtime/render-pack).
 
 ## ✨ Features
 
@@ -27,13 +43,13 @@ Components serialize into compact strings decoded by a render pack to render ric
 
 - Base components: `Panel`, `Text`, `Image`, `Fragment`, `Button`, `ItemRenderer`
 - `Background` — a screen-level background texture
-- `Scroll` — up to **2** independent scroll regions per render 
+- `Scroll` — up to **2** independent scroll regions per render
 - Modal-backed standalone primitives: `Input`, `Dropdown`, `Slider`
 
 ### Layout & Styling
 
 - Flexbox layout engine — flex, margins, paddings, spacing, alignment, aspect ratio, content measurement ([@bedrock-core/flexbox](./packages/flexbox/README.md))
-- Component theming system via [@bedrock-core/ore-styled](./packages/ore-styled/README.md), plus prebuilt Ore-UI styled components (`Button`, `Card`, `Toggle`, `Divider`, `Input`, `Dropdown`, `Slider`, `Checkbox`, `RadioGroup`/`Radio`, `ToggleButtonGroup`/`ToggleButtonItem`, `Header`, `MenuRow`, `ItemSlot`, `ItemContainer`, `EquipmentSlots`)
+- Prebuilt Ore-UI styled components ([@bedrock-core/ore-styled](./packages/ore-styled/README.md)): `Button`, `Card`, `Toggle`, `Divider`, `Input`, `Dropdown`, `Slider`, `Checkbox`, `RadioGroup`/`Radio`, `ToggleButtonGroup`/`ToggleButtonItem`, `Header`, `MenuRow`, `ItemSlot`, `ItemContainer`, `EquipmentSlots`, plus the `theme` design tokens for ad-hoc styling
 
 ### Localization
 
@@ -69,21 +85,23 @@ Components serialize into compact strings decoded by a render pack to render ric
 - Entity render
 - Structure render
 
+## 📘 Documentation
+
+Everything below is covered in depth at https://bedrock-core.drav.dev/
+
+- [Overview & installation](https://bedrock-core.drav.dev/docs/ui/get-started/overview)
+- [ui-runtime](https://bedrock-core.drav.dev/docs/ui/ui-runtime) — [components](https://bedrock-core.drav.dev/docs/ui/ui-runtime/components), [hooks](https://bedrock-core.drav.dev/docs/ui/ui-runtime/hooks), [API](https://bedrock-core.drav.dev/docs/ui/ui-runtime/api), [render pack](https://bedrock-core.drav.dev/docs/ui/ui-runtime/render-pack)
+- [ore-styled](https://bedrock-core.drav.dev/docs/ui/ore-styled) — prebuilt Ore-UI components and the theme
+- [navigation](https://bedrock-core.drav.dev/docs/ui/navigation) · [i18n](https://bedrock-core.drav.dev/docs/ui/i18n) · [guides](https://bedrock-core.drav.dev/docs/ui/guides) · [config](https://bedrock-core.drav.dev/docs/ui/config)
+- [flexbox](https://bedrock-core.drav.dev/docs/ui/flexbox) — the layout engine, for tool and renderer authors
+- [CLI](https://bedrock-core.drav.dev/docs/ui/cli) — project scaffolding
+- [Server packages](https://bedrock-core.drav.dev/docs/server/get-started/overview) — cross-addon registry, config and transport
+
+The [resource-pack](./packages/resource-pack/README.md) workspace is the reference addon: every component and hook has a working screen in it.
+
 ## 🤝 Contributing
 
 Let's talk in Discord <https://bedrock-core.drav.dev/discord>
-
-For technical documentation and implementation details, see:
-
-- [UI Runtime Package](./packages/ui-runtime/README.md) - Core framework internals
-- [Flexbox](./packages/flexbox/README.md) - Layout engine
-- [i18n](./packages/i18n/README.md) - Typed localization, interpolation and plurals
-- [Navigation](./packages/navigation/README.md) - Stack navigation
-- [Ore-Styled Components](./packages/ore-styled/README.md) - Optional prebuilt Ore-UI styled components
-- [Guides](./packages/guides/README.md) - MDX-authored in-game guides
-- [Config](./packages/config/README.md) - Shared addon list + config + guide UI
-- [Resource Pack](./packages/resource-pack/README.md) - Test addon and reference
-- [CLI Tool](./packages/cli/README.md) - Project scaffolding
 
 ## 📖 Resources
 
