@@ -113,7 +113,9 @@ jobs:
           if [[ "$NEXT" != "${{ steps.prev.outputs.ui }}" ]]; then
             echo "Meta bumped ${{ steps.prev.outputs.ui }} → $NEXT — publishing."
             yarn workspace @bedrock-core/ui npm publish --tolerate-republish
-            git tag "@bedrock-core/ui@$NEXT"
+            # `changeset tag` in the previous step already tags EVERY package at its
+            # current version, the meta included — creating it again is a hard error.
+            git rev-parse -q --verify "refs/tags/@bedrock-core/ui@$NEXT" >/dev/null               || git tag "@bedrock-core/ui@$NEXT"
             echo "bumped=true" >> "$GITHUB_OUTPUT"
           else
             echo "Meta unchanged ($NEXT) — not publishing."
