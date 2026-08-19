@@ -15,12 +15,12 @@
 				"version": "1.1.0"
 			},
 			"guides": {
-				"runWith": "nodejs",
-				"script": "../../../regolith-filters/guides/main.js"
+				"url": "github.com/bedrock-core/regolith-filters",
+				"version": "1.1.1"
 			},
 			"i18n": {
-				"runWith": "nodejs",
-				"script": "../../../regolith-filters/i18n/main.js"
+				"url": "github.com/bedrock-core/regolith-filters",
+				"version": "1.0.1"
 			}
 		},
 		"formatVersion": "1.4.0",
