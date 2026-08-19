@@ -1,0 +1,24 @@
+# @bedrock-core/ui-runtime
+
+## 0.10.1
+
+### Patch Changes
+
+- [`15327a8`](https://github.com/bedrock-core/ui/commit/15327a8a266821b971c00e9253485507fb4cf8c6) Thanks [@drav0011](https://github.com/drav0011)! - Republished as 0.10.1: the 0.10.0 tarball shipped with unrewritten `workspace:*` dependency ranges and cannot be installed — it is deprecated on the registry. Same content, correct ranges. The release below is what 0.10.0 carried:
+
+  Translation resolution is now `@bedrock-core/i18n`-native — lazy resolvers instead of materialized key maps — and `Text` has ONE text channel.
+
+  - **`children?: DisplayText` (`string | RawMessage`) is the only text channel** — the `localizationKey` prop is removed. Protocol v0008 made key and literal text the same wire format (an uncapped variable tail read by a `localize: true` label), so there is nothing to declare: a string child the active resolver knows is treated as a key (client-resolved, per player language); any other string paints literally — exactly what Bedrock does with an unmatched key. A `RawMessage` child (`raw()` output) is always localized; with arguments it rides the rawtext tail and the CLIENT resolves and fills it — no length cap, `score`/`selector` parts included.
+  - **Zero wiring for the common case:** the addon's `createI18n(bundle)` call registers the default translation source, and localized children measure through it automatically, per player. No context at the root, no tables.
+  - **`TranslationContext`** replaces `TranslationKeysContext`: it carries a `TranslationResolver` (`(key) => string | undefined`) and exists to OVERRIDE the default — hosts that resolve beyond their own bundle (`@bedrock-core/config` provides `core.translations.forPlayer(player)`, which chains every addon's published bundle) or subtrees pinned to custom data.
+  - **`useTranslation(i18n)`** — THE translation hook, one home for what every addon was hand-rolling: pass the addon's `createI18n(bundle)` instance and get its fully-typed verbs (`t`, `key`, `raw`, `display`, `resolve`, `locale`) bound to the viewing player through the locale chain. Lives here (not in `@bedrock-core/i18n`) because binding needs the fiber's player — the i18n package stays hook-free for server-side code.
+  - **Context is the one mechanism:** `render()` injects the default instance's resolver into `TranslationContext` at every root (re-derived each build pass, so `setLocale` overrides are picked up live); a provider in the tree shadows it for a subtree. `useTranslationResolver()` is sugar over `useContext(TranslationContext)` (`null` outside a fiber) for components that build display strings themselves.
+  - **Protocol v0008:** the label payload group is reordered to `fontType, fontScale, x, y, text` with the text as an uncapped tail, and `RawMessage` tails are serialized as `{rawtext: [...]}` JSON for the client to resolve. Requires the v0008 resource pack (`bcuiv0008` headers).
+  - **Protocol v0008 — common `fontType` field at `[606-688]`**, carved from the reserved block (418 → 335 bytes) the same way `region` was in v0006, so every component-specific offset from `[1024]` is unchanged. The merged label cell mounts for every cell type, so its label decodes the font slot whatever the cell is; sourcing it from the component-specific region meant an image's `texture` or a button's `backgroundHover` reached the engine's `#font_type` and logged `Could not find font alias <path>` to `NonAssertErrorLog` — which blocks Marketplace submission. Every component now carries a valid alias at a fixed offset (non-text defaults to `default`).
+  - **Protocol v0008 — `Image.texture` is the payload TAIL** (from `[1024]`, unpadded and unprefixed) instead of a fixed 83-byte string cell, so texture paths are no longer capped at 80 bytes and never throw `SerializationError`. Nothing before `[1024]` moved — the control block, the common `fontType` slot included, is byte-identical.
+
+  **Removed:** `Text.localizationKey`, `resolveTranslationKeysForPlayer`, `TranslationKeysByLocale`, `TranslationKeysMap`, `TranslationKeysContext`.
+
+- Updated dependencies [[`b8b0eb3`](https://github.com/bedrock-core/ui/commit/b8b0eb3280e8f1031e0293bf5a4227f12a1f5640), [`d0ad2c6`](https://github.com/bedrock-core/ui/commit/d0ad2c695f8b2173875a511b00c7b40f96163799)]:
+  - @bedrock-core/flexbox@1.0.0
+  - @bedrock-core/i18n@0.1.0

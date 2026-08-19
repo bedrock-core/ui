@@ -1,6 +1,6 @@
 {
 	"name": "@bedrock-core/ore-styled",
-	"version": "0.9.2",
+	"version": "0.10.0",
 	"description": "Ore-UI styled compound components for @bedrock-core/ui",
 	"keywords": [
 		"ui",

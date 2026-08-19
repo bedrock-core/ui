@@ -1,6 +1,6 @@
 {
 	"name": "@bedrock-core/guides",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "In-game guide screens for @bedrock-core/ui — renders MDX guides compiled by the guides regolith filter",
 	"keywords": [
 		"ui",

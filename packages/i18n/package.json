@@ -1,6 +1,6 @@
 {
 	"name": "@bedrock-core/i18n",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "Localization for Minecraft Bedrock: typed keys, interpolation and plurals, resolved client-side per player",
 	"keywords": [
 		"i18n",

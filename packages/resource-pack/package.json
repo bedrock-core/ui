@@ -1,6 +1,6 @@
 {
 	"name": "@bedrock-core/ui-resource-pack",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"private": true,
 	"description": "Test addon and reference implementation for @bedrock-core/ui library",
 	"main": "main.js",
