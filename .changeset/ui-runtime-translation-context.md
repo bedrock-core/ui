@@ -1,6 +1,8 @@
 ---
-'@bedrock-core/ui-runtime': minor
+'@bedrock-core/ui-runtime': patch
 ---
+
+Republished as 0.10.1: the 0.10.0 tarball shipped with unrewritten `workspace:*` dependency ranges and cannot be installed — it is deprecated on the registry. Same content, correct ranges. The release below is what 0.10.0 carried:
 
 Translation resolution is now `@bedrock-core/i18n`-native — lazy resolvers instead of materialized key maps — and `Text` has ONE text channel.
 

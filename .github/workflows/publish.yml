@@ -105,9 +105,13 @@ jobs:
           git add -A
           git commit -m "chore(release): version packages"
 
+      # publish-tarballs, NOT `changeset publish`: changesets shells out to npm from
+      # the workspace directory, which ships `workspace:*` ranges verbatim — that is
+      # exactly how ui-runtime@0.10.0 went out uninstallable. The script packs with
+      # yarn (rewriting the protocols) and publishes the tarball with npm (OIDC).
       - name: Publish sub-packages
         if: steps.detect.outputs.has == 'true'
-        run: yarn changeset publish
+        run: node scripts/publish-tarballs.mjs && yarn changeset tag
 
       - name: Publish & tag meta package
         if: steps.detect.outputs.has == 'true'
