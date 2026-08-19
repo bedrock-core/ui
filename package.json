@@ -90,7 +90,7 @@
     "coverage": "yarn workspaces foreach -ptA run coverage",
     "changeset": "changeset",
     "version-packages": "changeset version && node scripts/bump-meta.mjs && node scripts/sync-cli-template.mjs && node scripts/sync-pack-version.mjs",
-    "release": "yarn build:libs && yarn workspaces foreach -A --no-private --exclude '@bedrock-core/ui' npm publish --tolerate-republish && changeset tag"
+    "release": "yarn build:libs && node scripts/publish-tarballs.mjs && changeset tag"
   },
   "dependencies": {
     "@bedrock-core/config": "workspace:*",

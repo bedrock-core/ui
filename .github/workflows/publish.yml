@@ -9,16 +9,16 @@ on:
 
 permissions:
   contents: write
+  id-token: write   # OIDC for npm trusted publishing — no npm token anywhere
 
 jobs:
   publish-release:
     name: Version, publish & tag changed packages
     runs-on: ubuntu-latest
     env:
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      # setup-node writes an .npmrc keyed on NODE_AUTH_TOKEN, not NPM_TOKEN — without
-      # this every publish 401s. Yarn reads NPM_TOKEN, npm reads NODE_AUTH_TOKEN; set both.
-      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # No npm token: publishes authenticate via OIDC trusted publishing (the
+      # id-token permission above + a trusted publisher configured per package on
+      # npmjs.com pointing at this repo and workflow file).
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
@@ -50,6 +50,11 @@ jobs:
           cache: 'yarn'
           registry-url: 'https://registry.npmjs.org'
           scope: '@bedrock-core'
+
+      # Trusted publishing needs the OIDC exchange in the npm CLI, which shipped in
+      # npm 11.5.1 — newer than what the runner's Node bundles.
+      - name: Update npm for trusted publishing
+        run: npm install -g npm@latest
 
       - name: Install deps
         run: yarn install --immutable
@@ -112,7 +117,7 @@ jobs:
           echo "ui=$NEXT" >> "$GITHUB_OUTPUT"
           if [[ "$NEXT" != "${{ steps.prev.outputs.ui }}" ]]; then
             echo "Meta bumped ${{ steps.prev.outputs.ui }} → $NEXT — publishing."
-            yarn workspace @bedrock-core/ui npm publish --tolerate-republish
+            node scripts/publish-tarballs.mjs --only @bedrock-core/ui
             # `changeset tag` in the previous step already tags EVERY package at its
             # current version, the meta included — creating it again is a hard error.
             git rev-parse -q --verify "refs/tags/@bedrock-core/ui@$NEXT" >/dev/null               || git tag "@bedrock-core/ui@$NEXT"
