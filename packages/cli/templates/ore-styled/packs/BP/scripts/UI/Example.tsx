@@ -3,7 +3,7 @@ import {
   createStackNavigator,
   NavigationContainer,
   type ScreenProps,
-} from '@bedrock-core/navigation';
+} from '@bedrock-core/ui/navigation';
 import {
   Button,
   Card,
@@ -14,7 +14,7 @@ import {
   RadioGroup,
   theme,
   Toggle,
-} from '@bedrock-core/ore-styled';
+} from '@bedrock-core/ui/ore-styled';
 import { Fragment, type JSX, Panel, Text, usePlayer, useState, useTranslation } from '@bedrock-core/ui';
 import { i18n } from './i18n';
 

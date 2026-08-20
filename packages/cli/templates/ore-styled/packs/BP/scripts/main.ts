@@ -10,8 +10,8 @@
  * - A button push opens this addon's own custom UI (./UI/Example).
  */
 import { render } from '@bedrock-core/ui';
-import { core } from '@bedrock-core/server-runtime';
-import { ui } from '@bedrock-core/config';
+import { core } from '@bedrock-core/server';
+import { ui } from '@bedrock-core/ui/config';
 import bundle from '@bedrock-core/generated/i18n';
 import guides from '@bedrock-core/generated/guides';
 import { ButtonPushAfterEvent, Entity, Player, world } from '@minecraft/server';
