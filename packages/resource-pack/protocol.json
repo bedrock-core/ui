@@ -2,8 +2,8 @@
 	"protocol": "v0008",
 	"packVersion": [
 		1,
-		10,
-		1
+		11,
+		0
 	],
 	"packHash": "b1b29e5cfcd2db34d35fa7487e3becc425d627414241af0f920f1cf9f9f3146b"
 }

@@ -1,5 +1,13 @@
 # @bedrock-core/config
 
+## 0.2.0
+
+### Minor Changes
+
+- [`c879bfc`](https://github.com/bedrock-core/ui/commit/c879bfcae06704047e052146601e25267f9747d5) Thanks [@drav0011](https://github.com/drav0011)! - `openUi` now returns `Promise<void>` (settles once the screen is handed to the renderer).
+
+  Return it from a ui-runtime presser — `onPress={() => openUi(core, player, target)}` — so the handoff lands inside the interactive transaction: deterministic, flash-free, and no `exit()` needed. Fire-and-forget call sites keep working; prefix them with `void` to satisfy no-floating-promises lint rules.
+
 ## 0.1.0
 
 ### Minor Changes
