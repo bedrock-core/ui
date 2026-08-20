@@ -84,7 +84,7 @@ export function ui(core: Runtime, options: UiOptions = {}): void {
       // about it, so reject rather than drop it silently.
       if (!player) { throw new Error(`core:ui.open: player '${playerId}' is not in the world`); }
 
-      openUi(core, player, openTargetFrom(command, args));
+      void openUi(core, player, openTargetFrom(command, args));
 
       return true;
     },
@@ -101,7 +101,7 @@ export function ui(core: Runtime, options: UiOptions = {}): void {
  */
 function dispatch(core: Runtime, player: Player, command: OpenCommand, args: (string | undefined)[]): void {
   if (core.host.isHost) {
-    openUi(core, player, openTargetFrom(command, args));
+    void openUi(core, player, openTargetFrom(command, args));
 
     return;
   }
@@ -112,7 +112,7 @@ function dispatch(core: Runtime, player: Player, command: OpenCommand, args: (st
       // may be older and buggier, but showing it beats the command doing nothing.
       console.warn(`[config] host '${core.host.hostId}' did not answer ${command} (${String(error)}) - opening locally`);
 
-      openUi(core, player, openTargetFrom(command, args));
+      void openUi(core, player, openTargetFrom(command, args));
     });
 }
 
@@ -139,8 +139,13 @@ function dispatch(core: Runtime, player: Player, command: OpenCommand, args: (st
  *
  * Renders in THIS realm. A typed command forwards to the elected host so the world's newest UI
  * answers it; a direct call is your own code and renders your own copy.
+ *
+ * Returns a promise that settles once the screen is handed to the renderer. From a ui-runtime
+ * presser, RETURN it — `onPress={() => openUi(core, player, target)}` — so the handoff lands
+ * inside the interactive transaction: deterministic, flash-free, and no `exit()` needed (the
+ * renderer swaps the running app out itself). Outside a presser, `void openUi(...)` is fine.
  */
-export function openUi(core: Runtime, player: Player, target: OpenTarget): void {
+export function openUi(core: Runtime, player: Player, target: OpenTarget): Promise<void> {
   const clamped = clampTarget(target, player, core);
 
   const scopeIsSections = scopeHoldsOnlySections(core, player, clamped);
@@ -150,10 +155,11 @@ export function openUi(core: Runtime, player: Player, target: OpenTarget): void 
   if (scopeIsSections) {
     render(<App core={core} player={player} target={clamped} scopeIsSections={true} />, player);
 
-    return;
+    return Promise.resolve();
   }
 
-  void prefetchScopeValues(core, player, clamped).then((values) => {
+  // Never rejects: prefetchScopeValues catches internally, so floating this is safe.
+  return prefetchScopeValues(core, player, clamped).then((values) => {
     render(<App core={core} player={player} target={clamped} values={values} />, player);
   });
 }
