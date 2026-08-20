@@ -9,6 +9,12 @@ export class Player {
   }
 }
 
+/** Mirror of the engine enum, used by the input-lock util. Values are arbitrary. */
+export enum InputPermissionCategory {
+  Camera = 1,
+  Movement = 2,
+}
+
 class World {
   getAllPlayers(): Player[] {
     // Return a single mock player for testing

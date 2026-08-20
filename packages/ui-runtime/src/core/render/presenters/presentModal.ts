@@ -4,6 +4,7 @@ import { collectFormButtons, formButtonTitleFields, type FormConfig, type FormVa
 import type { JSX } from '../../../jsx';
 import { serialize, serializeModalTitle } from '../../serializer';
 import type { ModalSerializationContext } from '../../types';
+import { isSwapPending } from '../session';
 import { findBackground, resolveScrolls, runInteractiveCallback, type PresentResult } from './shared';
 
 /**
@@ -51,6 +52,13 @@ export async function presentModal(
 
   return form.show(player).then((response) => {
     if (response.canceled) {
+      // A programmatic close during an app handoff is not the player dismissing:
+      // the old app is already dead, and its onCancel must not act (or exit())
+      // on behalf of the app that replaced it. The lifecycle absorbs the swap.
+      if (isSwapPending(player)) {
+        return 'none';
+      }
+
       if (config.onCancel) {
         return runInteractiveCallback(player, () => config.onCancel?.());
       }

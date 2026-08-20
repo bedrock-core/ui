@@ -30,7 +30,8 @@ export async function presentAction(
 
   return form.show(player).then((response) => {
     if (response.canceled) {
-      // User ESC.
+      // User ESC. (A swap-induced programmatic close also lands here, but the
+      // lifecycle overrides any outcome while a swap is pending.)
       return 'cleanup';
     }
 
