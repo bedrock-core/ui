@@ -73,6 +73,7 @@ async function copyTemplate(
     'README.md',
     '.vscode/launch.json',
     'packs/BP/manifest.json',
+    'packs/BP/manifest.test.json',
     'packs/BP/texts/en_US.lang',
     'packs/BP/scripts/main.ts',
     'packs/BP/scripts/UI/Example.tsx',

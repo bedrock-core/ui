@@ -1,0 +1,25 @@
+{
+	"extends": "./manifest.json",
+	"dependencies": [
+		{
+			"uuid": "{{RP_HEADER_UUID}}",
+			"version": [1, 0, 0]
+		},
+		{
+			"uuid": "761ecd37-ad1c-4a64-862a-d6cc38767426",
+			"version": [1, 10, 0]
+		},
+		{
+			"module_name": "@minecraft/server",
+			"version": "2.8.0"
+		},
+		{
+			"module_name": "@minecraft/server-ui",
+			"version": "2.1.0"
+		},
+		{
+			"module_name": "@minecraft/server-gametest",
+			"version": "1.0.0-beta"
+		}
+	]
+}

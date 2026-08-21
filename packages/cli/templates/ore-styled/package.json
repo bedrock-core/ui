@@ -6,7 +6,9 @@
 	"scripts": {
 		"regolith-install": "regolith install-all",
 		"build": "regolith run build",
+		"build:test": "regolith run build-test",
 		"watch": "regolith watch",
+		"watch:test": "regolith watch test",
 		"lint": "eslint .",
 		"loopback": "CheckNetIsolation.exe LoopbackExempt -a -p=S-1-15-2-1958404141-86561845-1752920682-3514627264-368642714-62675701-733520436",
 		"loopback:preview": "CheckNetIsolation.exe LoopbackExempt -a -p=S-1-15-2-424268864-5579737-879501358-346833251-474568803-887069379-4040235476"
@@ -21,6 +23,7 @@
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
 		"@eslint/json": "^2.0.0",
+		"@minecraft/server-gametest": "1.0.0-beta.1.26.32-stable",
 		"@stylistic/eslint-plugin": "^5.10.0",
 		"eslint": "^10.4.1",
 		"eslint-plugin-minecraft-linting": "^1.2.7",
