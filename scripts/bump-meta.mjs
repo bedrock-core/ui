@@ -3,49 +3,49 @@
  * Bump the root `@bedrock-core/ui` meta package.
  *
  * Changesets can only manage `packages/*` workspaces — the repo root
- * (`@bedrock-core/ui`) is invisible to it. This script runs right after
- * `changeset version` and gives the meta the correct bump derived from its own
- * dependencies: for each dep it compares the freshly-versioned working-tree
- * version against the committed (`HEAD`) version and applies the *largest* bump
- * any of them received.
+ * (`@bedrock-core/ui`) is invisible to it — so the meta's version is derived
+ * here, immediately after `changeset version`.
  *
- *   any dep majored → meta major
- *   else any minored → meta minor
- *   else any patched → meta patch
- *   else            → no-op (nothing changed)
+ * The rule: **the meta's MAJOR.MINOR is `@bedrock-core/ui-runtime`'s.** The
+ * runtime is what the meta *is*; every other package it re-exports is support
+ * around it. So:
  *
- * The result is then clamped to {@link MAX_BUMP}: individual packages reach 1.0.0
- * on their own schedule, but the meta version is what people read as "is the
- * framework stable?", so it only leaves 0.x deliberately.
+ *   runtime line moved (0.10.x → 0.11.x, 0.x → 1.x) → meta jumps to <line>.0
+ *   anything else changed, at any level             → meta patch
+ *   nothing changed                                 → no-op
  *
- * The meta's `workspace:*` dependency ranges are left untouched; `yarn npm
- * publish` resolves them to concrete versions at pack time.
+ * A minor on `config` or a major on `flexbox` is a *patch* to the meta: what
+ * ships is the meta's support for that package, not a new framework line. That
+ * also removes the old `MAX_BUMP` clamp — the meta can't outrun the runtime, so
+ * a dependency reaching 1.0.0 no longer drags the framework with it, and
+ * `@bedrock-core/ui` 1.0.0 is exactly `@bedrock-core/ui-runtime` 1.0.0.
+ *
+ * The line only ever moves **forward**. npm can't unpublish, so a meta sitting
+ * ahead of the runtime holds where it is, patching, until the runtime's line
+ * catches up — from then on the two are pinned.
+ *
+ * The meta's `workspace:*` dependency ranges are left untouched;
+ * `publish-tarballs.mjs` resolves them to concrete versions at pack time.
  */
 import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+
+/** The package whose MAJOR.MINOR the meta's version *is*. */
+const RUNTIME_PATH = 'packages/ui-runtime/package.json';
 
 /** The root meta's real (non-peer) dependencies, in `packages/<dir>` form. */
 const META_DEP_DIRS = [
 	'config',
 	'flexbox',
 	'guides',
+	'i18n',
 	'navigation',
 	'ore-styled',
 	'ui-runtime',
 ];
 
-const RANK = { none: 0, patch: 1, minor: 2, major: 3 };
-const LEVEL = ['none', 'patch', 'minor', 'major'];
-
-/**
- * Highest bump the meta may take. Set to `'minor'` while `@bedrock-core/ui` is in
- * beta so a dependency reaching 1.0.0 (e.g. `flexbox`) doesn't drag the whole
- * framework to 1.0.0 with it. Raise to `'major'` when the meta is ready to ship
- * 1.0.0 — that release is a deliberate, one-off call, not a derived one.
- */
-const MAX_BUMP = 'minor';
-
 const readVersion = (json) => JSON.parse(json).version;
+const currentVersion = (path) => readVersion(readFileSync(path, 'utf8'));
 
 /** Version of a package.json at git HEAD, or null if it isn't committed yet. */
 function headVersion(path) {
@@ -56,34 +56,43 @@ function headVersion(path) {
 	}
 }
 
-/** Classify old→new as none/patch/minor/major (works for 0.x too). */
-function bumpRank(oldV, newV) {
-	if (!oldV || oldV === newV) return RANK.none;
-	const [oMajor, oMinor] = oldV.split('.').map(Number);
-	const [nMajor, nMinor] = newV.split('.').map(Number);
-	if (nMajor > oMajor) return RANK.major;
-	if (nMinor > oMinor) return RANK.minor;
-	return RANK.patch;
+/** `1.2.3` → `[1, 2, 3]`. */
+function parse(version) {
+	const match = /^(\d+)\.(\d+)\.(\d+)/.exec(version ?? '');
+
+	if (!match) throw new Error(`bump-meta: cannot parse the version "${version}"`);
+
+	return match.slice(1, 4).map(Number);
 }
 
-let maxRank = RANK.none;
-for (const dir of META_DEP_DIRS) {
-	const path = `packages/${dir}/package.json`;
-	const current = readVersion(readFileSync(path, 'utf8'));
-	maxRank = Math.max(maxRank, bumpRank(headVersion(path), current));
+/** Is `a`'s MAJOR.MINOR strictly ahead of `b`'s? */
+const lineAhead = (a, b) => (a[0] === b[0] ? a[1] > b[1] : a[0] > b[0]);
+
+const meta = parse(currentVersion('package.json'));
+const runtime = parse(currentVersion(RUNTIME_PATH));
+
+let next;
+
+if (lineAhead(runtime, meta)) {
+	next = `${runtime[0]}.${runtime[1]}.0`;
+	console.log(`bump-meta: ui-runtime line → ${runtime[0]}.${runtime[1]} — the meta follows it.`);
+} else {
+	// A dependency that isn't committed yet (headVersion null) is new, not changed.
+	const changed = META_DEP_DIRS.filter((dir) => {
+		const path = `packages/${dir}/package.json`;
+		const head = headVersion(path);
+
+		return head !== null && head !== currentVersion(path);
+	});
+
+	if (changed.length === 0) {
+		console.log('bump-meta: no @bedrock-core/ui dependency changed — meta not bumped.');
+		process.exit(0);
+	}
+
+	next = `${meta[0]}.${meta[1]}.${meta[2] + 1}`;
+	console.log(`bump-meta: support for ${changed.join(', ')} — meta patch.`);
 }
 
-if (maxRank === RANK.none) {
-	console.log('bump-meta: no @bedrock-core/ui dependency changed — meta not bumped.');
-	process.exit(0);
-}
-
-const cappedRank = Math.min(maxRank, RANK[MAX_BUMP]);
-if (cappedRank !== maxRank) {
-	console.log(`bump-meta: capping ${LEVEL[maxRank]} → ${LEVEL[cappedRank]} (MAX_BUMP).`);
-}
-
-const level = LEVEL[cappedRank];
-execSync(`npm version ${level} --no-git-tag-version`, { stdio: 'inherit' });
-const next = readVersion(readFileSync('package.json', 'utf8'));
-console.log(`bump-meta: @bedrock-core/ui bumped (${level}) → ${next}`);
+execSync(`npm version ${next} --no-git-tag-version --allow-same-version`, { stdio: 'inherit' });
+console.log(`bump-meta: @bedrock-core/ui ${meta.join('.')} → ${currentVersion('package.json')}`);
