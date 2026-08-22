@@ -9,6 +9,13 @@ export {
   type Spacing,
 } from './layout';
 
+// Container-screen primitives (compiled, not serialized)
+export {
+  CHEST_CANVAS, Container, Progress, Slot, SlotGrid, SLOT_SIZE,
+  type ContainerProps, type FillDirection, type ProgressProps,
+  type SlotGridProps, type SlotProps,
+} from './container';
+
 // Components
 export { Background, BACKGROUND_SLOT_TYPE, type BackgroundProps } from './Background';
 export { Button, buttonWriter, type ButtonProps } from './Button';

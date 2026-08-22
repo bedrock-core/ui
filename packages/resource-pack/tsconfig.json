@@ -28,6 +28,9 @@
 			"@bedrock-core/i18n/*": [
 				"../../packages/i18n/src/*"
 			],
+			"@bedrock-core/generated/ui": [
+				"./packs/data/ui/index.ts"
+			],
 			"@bedrock-core/generated/i18n": [
 				"./packs/data/i18n/i18n.generated.json"
 			],
@@ -38,6 +41,9 @@
 	},
 	"include": [
 		"packs/BP/scripts/**/*",
+		// Container screens. Compiled by the ui-compile filter and stripped from
+		// the pack, but they are real TypeScript and want the same checking.
+		"packs/RP/ui/**/*.tsx",
 		"packs/data/**/*"
 	]
 }

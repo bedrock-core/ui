@@ -9,6 +9,7 @@ import {
   ObservableString,
 } from '@minecraft/server-ui';
 import { MinecraftBlockTypes, MinecraftEntityTypes } from '@minecraft/vanilla-data';
+import { spawnDemo } from './container/demo';
 import { App } from './UI/App';
 
 const isPlayer = (source: ButtonPushAfterEvent['source']): source is Player =>
@@ -83,6 +84,13 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
     form.button('OK');
 
     form.show(source);
+  }
+
+  if (block.typeId === MinecraftBlockTypes.CrimsonButton) {
+    // Compiled container screen. The layout comes from RP/ui/demo.screen.tsx and
+    // the behaviour from scripts/container/demo.ts — neither of which knows a
+    // slot index or an inventory size; the compiler hands those out.
+    spawnDemo(source);
   }
 
   if (block.typeId === MinecraftBlockTypes.CherryButton) {

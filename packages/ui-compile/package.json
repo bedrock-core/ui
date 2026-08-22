@@ -1,0 +1,52 @@
+{
+	"name": "@bedrock-core/ui-compile",
+	"version": "0.0.0",
+	"description": "Compiles a solved @bedrock-core/ui tree into static JSON UI",
+	"keywords": [
+		"ui",
+		"compiler",
+		"json-ui",
+		"minecraft",
+		"bedrock",
+		"typescript"
+	],
+	"license": "MIT",
+	"author": "DrAv0011",
+	"contributors": [
+		{
+			"name": "DrAv0011",
+			"email": "contact@drav.dev",
+			"url": "https://drav.dev"
+		}
+	],
+	"repository": "github:bedrock-core/ui",
+	"type": "module",
+	"main": "src/index.ts",
+	"types": "src/index.ts",
+	"exports": {
+		".": {
+			"types": "./src/index.ts",
+			"import": "./src/index.ts"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"src"
+	],
+	"sideEffects": false,
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"lint": "eslint .",
+		"test": "vitest run",
+		"coverage": "vitest run --coverage"
+	},
+	"dependencies": {
+		"@bedrock-core/ui-runtime": "workspace:*"
+	},
+	"devDependencies": {
+		"typescript": "^6.0.3",
+		"vitest": "^4.1.5"
+	}
+}

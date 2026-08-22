@@ -21,6 +21,10 @@
 			"i18n": {
 				"url": "github.com/bedrock-core/regolith-filters",
 				"version": "1.0.1"
+			},
+			"ui-compile": {
+				"runWith": "nodejs",
+				"script": "../../../regolith-filters/ui-compile/main.js"
 			}
 		},
 		"formatVersion": "1.4.0",
@@ -43,6 +47,9 @@
 						"settings": {
 							"namespace": "core"
 						}
+					},
+					{
+						"filter": "ui-compile"
 					},
 					{
 						"filter": "bundler",
@@ -70,6 +77,9 @@
 						"settings": {
 							"namespace": "core"
 						}
+					},
+					{
+						"filter": "ui-compile"
 					},
 					{
 						"filter": "bundler",

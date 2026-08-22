@@ -1,0 +1,23 @@
+{
+	"format_version": "1.10.0",
+	"minecraft:client_entity": {
+		"description": {
+			"identifier": "core:spike_container",
+			// Vanilla geometry + vanilla texture on purpose: the spike ships no art.
+			// The armor stand model is just a visible, clickable body so the tester
+			// can find the entity and press use on it.
+			"materials": {
+				"default": "entity_alphatest"
+			},
+			"textures": {
+				"default": "textures/entity/armor_stand"
+			},
+			"geometry": {
+				"default": "geometry.armor_stand"
+			},
+			"render_controllers": [
+				"controller.render.bcui_spike_container"
+			]
+		}
+	}
+}
