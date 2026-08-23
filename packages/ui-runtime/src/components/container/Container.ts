@@ -9,14 +9,17 @@ export interface ContainerProps extends ControlProps {
 /**
  * The root of a compiled container screen.
  *
- * It exists to pin the canvas. A compiled layout is grafted into vanilla's chest
- * frame, so it is solved against 176 x 83 rather than the 320 x 210 canonical
- * screen the rest of the library uses — get that wrong and every offset in the
- * emitted JSON UI is subtly off. Making it a component means the size is stated
- * once, in the tree, instead of being a constant the filter has to remember.
+ * It exists to pin the canvas. A compiled screen REPLACES the chest screen, so
+ * it is solved against `common.root_panel` at 176 x 166 rather than the
+ * 320 x 210 canonical screen the rest of the library uses — get that wrong and
+ * every offset in the emitted JSON UI is subtly off. Making it a component
+ * means the size is stated once, in the tree, instead of being a constant the
+ * filter has to remember.
  *
- * Everything else is an ordinary flex container: column by default, because a
- * container screen reads top to bottom.
+ * Its children are absolute by default rather than stacked, because the things
+ * that go directly on a chest screen — the background, the player's inventory,
+ * the hotbar, your own panel — each know where they belong. Put a flex Panel
+ * inside for anything that should flow.
  */
 export const Container: FunctionComponent<ContainerProps> = (
   { children, ...rest }: ContainerProps,

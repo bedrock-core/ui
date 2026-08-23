@@ -5,28 +5,45 @@
 // when the layout moves.
 
 /** Slot names this screen draws, in the order it draws them. */
-export type SlotName = 'toggle' | 'bay_0' | 'bay_1' | 'bay_2' | 'bay_3' | 'bay_4' | 'bay_5' | 'bay_6' | 'bay_7';
+export type SlotName = 'up' | 'down' | 'cycle' | 'reset' | 'input' | 'output' | 'store';
 
 /** Channel names this screen reads. */
-export type ChannelName = 'charge';
+export type ChannelName = 'mode' | 'status' | 'charge' | 'level' | 'presses' | 'uptime' | 'last' | 'io';
 
-/** Container index of each drawn slot. */
+/**
+ * Where each drawn slot is, and what the player may do with it.
+ *
+ * The role belongs to the SCREEN rather than to the script: a furnace's output
+ * slot is an output slot whatever is attached to it. The runtime enforces it a
+ * tick after the fact, because a container gives no way to veto a move.
+ */
 export const slots = {
-  toggle: 1,
-  bay_0: 2,
-  bay_1: 3,
-  bay_2: 4,
-  bay_3: 5,
-  bay_4: 6,
-  bay_5: 7,
-  bay_6: 8,
-  bay_7: 9,
-} as const satisfies Record<SlotName, number>;
+  up: { slot: 1, role: 'button' },
+  down: { slot: 2, role: 'button' },
+  cycle: { slot: 3, role: 'button' },
+  reset: { slot: 4, role: 'button' },
+  input: { slot: 5, role: 'input' },
+  output: { slot: 6, role: 'output' },
+  store: { slot: 7, role: 'both' },
+} as const satisfies Record<SlotName, { slot: number; role: 'both' | 'input' | 'output' | 'button' }>;
 
-/** Container index of each bank slot backing a channel. */
+/**
+ * Where each channel lives and how wide it is.
+ *
+ * A `text` channel spans one slot per character: the code rides that slot's
+ * stack size, which is the only value writable in place, and the layout
+ * localizes it back into a glyph.
+ */
 export const channels = {
-  charge: 10,
-} as const satisfies Record<ChannelName, number>;
+  mode: { slot: 8, carrier: 'text', length: 8 },
+  status: { slot: 16, carrier: 'text', length: 28 },
+  charge: { slot: 44, carrier: 'ratio', length: 1 },
+  level: { slot: 45, carrier: 'text', length: 6 },
+  presses: { slot: 51, carrier: 'text', length: 5 },
+  uptime: { slot: 56, carrier: 'text', length: 7 },
+  last: { slot: 63, carrier: 'text', length: 12 },
+  io: { slot: 75, carrier: 'text', length: 26 },
+} as const satisfies Record<ChannelName, { slot: number; carrier: 'ratio' | 'text'; length: number }>;
 
 export const screen = {
   /** JSON UI namespace the layout was emitted into. */
@@ -36,11 +53,11 @@ export const screen = {
   /** Carries the routing keys. Never drawn. */
   sentinelSlot: 0,
   /** Slots the layout draws: `1 .. drawn`. */
-  drawn: 9,
+  drawn: 7,
   /** Bank slots backing channels, immediately after the drawn range. */
-  channelCount: 1,
+  channelCount: 93,
   /** What `minecraft:inventory` on the host entity must be sized to. */
-  inventorySize: 11,
+  inventorySize: 101,
   /** Entity the screen was attached to, if the source named one. */
   entity: undefined,
 } as const;

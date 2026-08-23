@@ -1,8 +1,6 @@
 import type { FunctionComponent, JSX } from '../../jsx';
 import { type ControlProps, withControl } from '../control';
-
-/** Which way the fill grows. Matches JSON UI's `clip_direction`. */
-export type FillDirection = 'left' | 'right' | 'up' | 'down' | 'center';
+import { Fill, type FillDirection } from './Fill';
 
 export interface ProgressProps extends ControlProps {
   /** Addresses the value from the script side. Unique within a screen. */
@@ -16,14 +14,13 @@ export interface ProgressProps extends ControlProps {
 }
 
 /**
- * A bar whose fill tracks a number the script owns.
+ * A bar.
  *
- * Nothing about the value is written here. The compiler allocates a bank slot
- * behind it, the runtime writes that slot when the value changes, and the engine
- * redraws — while the screen stays open, with no reopen and no reserialization.
- *
- * Resolution comes from the item backing the channel: a netherite-tier marker
- * gives 2031 steps, which is finer than the bar is wide.
+ * Composed, not built in: it is a panel holding a whole image and a {@link Fill}
+ * stacked on top of it, which is all a bar has ever been. Nothing here is
+ * privileged — copy this component, swap the textures or the direction, and you
+ * have a gauge, a fuel meter or a cooldown sweep. That is the point of keeping
+ * the primitive set small.
  */
 export const Progress: FunctionComponent<ProgressProps> = ({
   name,
@@ -32,12 +29,29 @@ export const Progress: FunctionComponent<ProgressProps> = ({
   direction = 'left',
   ...rest
 }: ProgressProps): JSX.Element => ({
-  type: 'container_bar',
+  type: 'panel',
   props: {
     ...withControl({ height: 6, ...rest }),
-    name,
-    trackTexture: track,
-    fillTexture: fill,
-    direction,
+    children: [
+      // Both absolute, so they occupy the same box instead of stacking. The
+      // clipped one is second, and therefore on top.
+      {
+        type: 'image',
+        props: {
+          ...withControl({ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }),
+          texture: track,
+        },
+      },
+      Fill({
+        name,
+        texture: fill,
+        direction,
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+      }),
+    ],
   },
 });

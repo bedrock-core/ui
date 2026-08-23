@@ -10,7 +10,10 @@
  * spliced into the parent, which is what makes a component boundary free.
  */
 
-import type { Allocation, BarNode, IrDocument, IrNode, PanelNode, Rect, SlotNode } from './ir';
+import type {
+  Allocation, ImageNode, IrDocument, IrNode, LabelNode, PanelNode, Rect, SlotNode, SlotRole,
+  TextNode,
+} from './ir';
 import type { ClipDirection } from './jsonui';
 
 /** The shape this pass needs from a laid-out element. Deliberately structural. */
@@ -24,7 +27,7 @@ export class UnsupportedNodeError extends Error {
     super(
       `<${type}> has no compiled form yet.\n`
       + '  A compiled screen can only contain controls the emitter knows how to bake.\n'
-      + '  Supported: panel, text, image, container_slot, container_bar.',
+      + '  Supported: panel, text, image, vanilla, container_text, container_slot.',
     );
 
     this.name = 'UnsupportedNodeError';
@@ -37,8 +40,44 @@ const isElement = (value: unknown): value is LaidOutElement =>
 const num = (value: unknown, fallback = 0): number =>
   typeof value === 'number' ? value : fallback;
 
+/** The library's serializing components park a terminal string here. */
+const tailOf = (value: unknown): string => {
+  if (typeof value === 'object' && value !== null && 'tail' in value) {
+    const { tail } = value as { tail?: unknown };
+
+    return typeof tail === 'string' ? tail : '';
+  }
+
+  return '';
+};
+
 const str = (value: unknown, fallback = ''): string =>
   typeof value === 'string' ? value : fallback;
+
+/** Where the generated character table lives. Must match what the filter emits. */
+const DEFAULT_KEY_PREFIX = 'bcui.c.';
+
+/** Width of one character cell, in texels. */
+const DEFAULT_CELL_WIDTH = 6;
+
+const SLOT_ROLES: readonly SlotRole[] = ['both', 'input', 'output', 'button'];
+
+/** Validates rather than asserts: an unknown role is an authoring mistake. */
+const slotRole = (value: unknown): SlotRole => {
+  if (value === undefined) {
+    return 'both';
+  }
+
+  const found = SLOT_ROLES.find(candidate => candidate === value);
+
+  if (!found) {
+    throw new Error(
+      `Unknown slot role "${String(value)}". Expected one of: ${SLOT_ROLES.join(', ')}.`,
+    );
+  }
+
+  return found;
+};
 
 const CLIP_DIRECTIONS: readonly ClipDirection[] = ['left', 'right', 'up', 'down', 'center'];
 
@@ -102,6 +141,16 @@ const declaredRect = (element: LaidOutElement, measured: Rect): Rect => {
   };
 };
 
+/** Draw order the author asked for, if any. `withControl` parks it here. */
+const layerOf = (element: LaidOutElement): { layer?: number } => {
+  const layout = element.props.__layout;
+  const zIndex = typeof layout === 'object' && layout !== null
+    ? (layout as { zIndex?: unknown }).zIndex
+    : undefined;
+
+  return typeof zIndex === 'number' ? { layer: zIndex } : {};
+};
+
 const relativeTo = (rect: Rect, origin: Rect): Rect => ({
   x: rect.x - origin.x,
   y: rect.y - origin.y,
@@ -122,7 +171,12 @@ interface Naming {
  */
 interface Allocator {
   slots: SlotNode[];
-  bars: BarNode[];
+  /**
+   * Nodes needing a bank slot, in document order — bars and dynamic labels
+   * alike. One list rather than one per kind, so the numbering a screen gets
+   * does not shift when an unrelated kind is added to it.
+   */
+  channels: (ImageNode | TextNode)[];
 }
 
 /** Slot 0 carries the routing keys, so drawn slots start at 1. */
@@ -174,16 +228,20 @@ const convert = (
 ): IrNode => {
   const type = String(element.type);
   const rect = relativeTo(absoluteRect(element), origin);
+  const layer = layerOf(element);
 
   if (type.startsWith('text')) {
-    return {
+    const node: LabelNode = {
       kind: 'label',
       name: nameFor(element, 'label', naming),
       rect,
+      ...layer,
       text: str(element.props.text ?? element.props.children),
       ...element.props.localize === true ? { localize: true } : {},
       ...typeof element.props.shadow === 'boolean' ? { shadow: element.props.shadow } : {},
     };
+
+    return node;
   }
 
   switch (type) {
@@ -194,46 +252,79 @@ const convert = (
         kind: 'panel',
         name: nameFor(element, 'panel', naming),
         rect,
+        ...layer,
         // Children are relative to THIS panel, not to the grandparent.
         children: flatten(childrenOf(element)).map(child => convert(child, own, naming, alloc)),
       };
     }
 
-    case 'image':
-      return {
+    case 'image': {
+      const node: ImageNode = {
         kind: 'image',
         name: nameFor(element, 'image', naming),
         rect,
-        texture: str(element.props.texture),
+        ...layer,
+        // `texture` is what a compiled Image carries; `value.tail` is what the
+        // library's own Image produces on the serializing path. Reading both is
+        // what lets one component serve a form and a compiled screen.
+        texture: str(element.props.texture, tailOf(element.props.value)),
       };
+
+      // A clipped image is a fill: it costs a bank slot, and two of them stacked
+      // are what a bar is made of. The index is a placeholder until the walk
+      // knows where the bank starts.
+      if (element.props.clip === true) {
+        node.channel = -1;
+        node.direction = clipDirection(element.props.direction);
+        alloc.channels.push(node);
+      }
+
+      return node;
+    }
+
+    case 'vanilla':
+      return {
+        kind: 'ref',
+        name: nameFor(element, 'ref', naming),
+        rect,
+        ...layer,
+        ref: str(element.props.ref),
+        sized: element.props.sized !== false,
+      };
+
+    case 'container_text': {
+      const length = Math.max(1, num(element.props.maxLength, 1));
+
+      // A run of characters, one bank slot each. The index is a placeholder
+      // until the walk knows where the bank starts.
+      const node: TextNode = {
+        kind: 'text',
+        name: nameFor(element, 'text', naming),
+        rect,
+        ...layer,
+        channel: -1,
+        length,
+        keyPrefix: str(element.props.keyPrefix, DEFAULT_KEY_PREFIX),
+        cellWidth: Math.max(1, num(element.props.cellWidth, DEFAULT_CELL_WIDTH)),
+        ...typeof element.props.shadow === 'boolean' ? { shadow: element.props.shadow } : {},
+      };
+
+      alloc.channels.push(node);
+
+      return node;
+    }
 
     case 'container_slot': {
       const node: SlotNode = {
         kind: 'slot',
         name: nameFor(element, 'slot', naming),
         rect,
+        ...layer,
         slot: SENTINEL_SLOT + 1 + alloc.slots.length,
+        role: slotRole(element.props.role),
       };
 
       alloc.slots.push(node);
-
-      return node;
-    }
-
-    case 'container_bar': {
-      const node: BarNode = {
-        kind: 'bar',
-        name: nameFor(element, 'bar', naming),
-        rect,
-        // Placeholder: the bank starts after the last drawn slot, which is not
-        // known until the walk finishes.
-        channel: -1,
-        trackTexture: str(element.props.trackTexture),
-        fillTexture: str(element.props.fillTexture),
-        direction: clipDirection(element.props.direction),
-      };
-
-      alloc.bars.push(node);
 
       return node;
     }
@@ -260,7 +351,7 @@ export interface ToIrOptions {
  */
 export const toIr = (tree: LaidOutElement, options: ToIrOptions): IrDocument => {
   const naming: Naming = { used: new Set(), counters: new Map() };
-  const alloc: Allocator = { slots: [], bars: [] };
+  const alloc: Allocator = { slots: [], channels: [] };
   const roots = flatten([tree]);
   const first = roots[0];
 
@@ -281,15 +372,20 @@ export const toIr = (tree: LaidOutElement, options: ToIrOptions): IrDocument => 
   // Channels live past the drawn range, so nothing on screen can address them.
   const bankStart = SENTINEL_SLOT + 1 + alloc.slots.length;
 
-  alloc.bars.forEach((bar, ordinal) => {
-    bar.channel = bankStart + ordinal;
-  });
+  // Numbered in document order. A text run takes a slot per character, so the
+  // next channel starts past the whole run rather than one along.
+  let next = bankStart;
+
+  for (const node of alloc.channels) {
+    node.channel = next;
+    next += node.kind === 'text' ? node.length : 1;
+  }
 
   const allocation: Allocation = {
     sentinel: SENTINEL_SLOT,
     drawn: alloc.slots.length,
-    channels: alloc.bars.length,
-    size: bankStart + alloc.bars.length,
+    channels: next - bankStart,
+    size: next,
   };
 
   return {

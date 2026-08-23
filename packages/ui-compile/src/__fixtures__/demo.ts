@@ -1,8 +1,9 @@
 import type { IrDocument } from '../ir';
 
 /**
- * The screen proven in game on `spike/container-screens`: a title, a bar reading
- * a bank slot nothing draws, a button slot, and a row of eight.
+ * A screen exercising every node kind the emitter can produce: a title, a fill
+ * clipped by a bank slot nothing draws, a button slot, a row of eight, and a
+ * vanilla control asked for by name.
  *
  * Shared by the emitter tests and by `scripts/emit-demo.ts`, which writes the
  * result into the reference pack. That is the point of sharing it — the JSON UI
@@ -14,7 +15,7 @@ import type { IrDocument } from '../ir';
  *   <Panel flexDirection={'column'} gap={4} padding={7}>
  *     <Text>…</Text>
  *     <Panel flexDirection={'row'} gap={4} alignItems={'center'}>
- *       <Progress value={charge} flexGrow={1} />
+ *       <Progress name={'charge'} flexGrow={1} />
  *       <Slot.Button name={'toggle'} />
  *     </Panel>
  *     <SlotGrid name={'bay'} rows={1} cols={8} />
@@ -43,25 +44,39 @@ export const demoScreen: IrDocument = {
         shadow: true,
       },
       {
-        kind: 'bar',
-        name: 'charge',
+        kind: 'image',
+        name: 'track',
         rect: { x: 7, y: 20, width: 110, height: 6 },
+        texture: 'textures/ui/brewing_fuel_bar_empty',
+      },
+      {
+        kind: 'image',
+        name: 'fill',
+        rect: { x: 7, y: 20, width: 110, height: 6 },
+        texture: 'textures/ui/brewing_fuel_bar_full',
         channel: 10,
-        trackTexture: 'textures/ui/brewing_fuel_bar_empty',
-        fillTexture: 'textures/ui/brewing_fuel_bar_full',
         direction: 'left',
+      },
+      {
+        kind: 'ref',
+        name: 'player_inventory',
+        rect: { x: 0, y: 60, width: 176, height: 0 },
+        ref: 'common.inventory_panel_bottom_half_with_label',
+        sized: false,
       },
       {
         kind: 'slot',
         name: 'toggle',
         rect: { x: 151, y: 14, width: 18, height: 18 },
         slot: 1,
+        role: 'button',
       },
       ...Array.from({ length: 8 }, (_, i) => ({
         kind: 'slot' as const,
         name: `bay_${i}`,
         rect: { x: 7 + i * 18, y: 40, width: 18, height: 18 },
         slot: 2 + i,
+        role: 'both' as const,
       })),
     ],
   },

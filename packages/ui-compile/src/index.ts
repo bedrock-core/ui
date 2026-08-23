@@ -1,13 +1,15 @@
 export type {
   Allocation,
-  BarNode,
   ImageNode,
   IrDocument,
   IrNode,
   LabelNode,
   PanelNode,
   Rect,
+  RefNode,
   SlotNode,
+  SlotRole,
+  TextNode,
 } from './ir';
 
 export type {

@@ -13,19 +13,37 @@
 
 export { CompileTimeHookError, computeLayout, expandStatic } from './core/render/phases';
 
+// The character table is the contract between the compiler and the runtime: the
+// compiler generates the .lang from it, the runtime encodes against it.
 export {
+  BLANK_CODE, BLANK_VALUE, CHARSET, charsetLang, encode, MAX_CODE, UNKNOWN_CODE,
+} from './container/charset';
+
+export {
+  Background,
+  Button,
   CHEST_CANVAS,
   Container,
+  DynamicText,
+  Fill,
+  Hotbar,
+  PlayerInventory,
   Progress,
   Slot,
-  SlotGrid,
   SLOT_SIZE,
+  SlotGrid,
+  Vanilla,
 } from './components/container';
 
 export type {
+  ButtonProps,
   ContainerProps,
+  DynamicTextProps,
   FillDirection,
+  FillProps,
   ProgressProps,
   SlotGridProps,
   SlotProps,
+  SlotRole,
+  VanillaProps,
 } from './components/container';

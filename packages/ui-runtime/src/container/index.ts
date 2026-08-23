@@ -11,4 +11,7 @@
 export { createContainerScreen } from './session';
 export type { ContainerScreen } from './session';
 export { claim, isOwned, OWNED_LORE, OWNED_PROPERTY, setOrdinal, setRatio } from './marker';
-export type { ContainerScreenConfig, ScreenHandle, SlotBehaviour } from './types';
+export type {
+  ChannelCarrier, ChannelSpec, ContainerScreenConfig, ScreenHandle, SlotBehaviour,
+} from './types';
+export { BLANK_CODE, BLANK_VALUE, CHARSET, charsetLang, encode, MAX_CODE, UNKNOWN_CODE } from './charset';

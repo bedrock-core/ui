@@ -118,10 +118,12 @@ describe('the compiler, end to end', () => {
       { namespace: 'test', collection: 'container_items' },
     );
 
-    // 176 x 83 is vanilla's chest top half. Solving against the 320 x 210
+    // 176 x 166 is `common.root_panel`, the whole chest screen: a compiled
+    // screen replaces `chest.small_chest_panel` outright rather than filling
+    // the strip above the player's inventory. Solving against the 320 x 210
     // canonical screen instead would put every offset subtly wrong.
     expect(ir.root.rect.width).toBe(176);
-    expect(ir.root.rect.height).toBe(83);
+    expect(ir.root.rect.height).toBe(166);
   });
 
   it('obeys the host rule it learned in game', () => {

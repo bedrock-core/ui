@@ -77,12 +77,7 @@ describe('toIr', () => {
     const screen = (): LaidOutElement => at('panel', [0, 0, 176, 83], {
       children: [
         at('container_slot', [7, 40, 18, 18], { name: 'fuel' }),
-        at('container_bar', [7, 20, 110, 6], {
-          name: 'charge',
-          trackTexture: 'a',
-          fillTexture: 'b',
-          direction: 'left',
-        }),
+        at('image', [7, 20, 110, 6], { name: 'charge', clip: true, direction: 'left' }),
         at('container_slot', [25, 40, 18, 18], { name: 'ingot' }),
       ],
     });
@@ -99,7 +94,7 @@ describe('toIr', () => {
       const bar = doc.root.children[1];
 
       // Two drawn slots occupy 1 and 2, so the bank opens at 3.
-      expect(bar).toMatchObject({ kind: 'bar', name: 'charge', channel: 3 });
+      expect(bar).toMatchObject({ kind: 'image', name: 'charge', channel: 3 });
       expect(bar).toMatchObject({ channel: doc.allocation.drawn + 1 });
     });
 
@@ -170,4 +165,35 @@ describe('toIr', () => {
     expect(() => toIr(at('fragment', [0, 0, 0, 0], { children: [] }), options))
       .toThrow(/must render at least one control/);
   });
+  it('numbers channels in document order, and a text run takes a slot per cell', () => {
+    // A text run is one channel by name but many slots underneath, because a
+    // slot carries one character. The next channel starts past the whole run,
+    // so adding a character does not silently renumber the bar after it.
+    const tree = at('panel', [0, 0, 176, 83], {
+      children: [
+        at('container_slot', [0, 0, 18, 18]),
+        at('container_text', [0, 20, 24, 10], { name: 'status', maxLength: 4 }),
+        at('image', [0, 40, 100, 6], { name: 'charge', clip: true }),
+      ],
+    });
+
+    const doc = toIr(tree, options);
+    const [, text, bar] = doc.root.children;
+
+    expect(text).toMatchObject({ kind: 'text', name: 'status', channel: 2, length: 4 });
+    expect(bar).toMatchObject({ kind: 'image', name: 'charge', channel: 6 });
+    expect(doc.allocation).toEqual({ sentinel: 0, drawn: 1, channels: 5, size: 7 });
+  });
+
+  it('leaves a static label costing no channel at all', () => {
+    const tree = at('panel', [0, 0, 176, 83], {
+      children: [at('text', [0, 0, 100, 10], { text: 'hi' })],
+    });
+
+    const doc = toIr(tree, options);
+
+    expect(doc.root.children[0]).toMatchObject({ kind: 'label', text: 'hi' });
+    expect(doc.allocation.channels).toBe(0);
+  });
+
 });

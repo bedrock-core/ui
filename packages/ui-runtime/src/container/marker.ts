@@ -26,10 +26,14 @@ export const OWNED_PROPERTY = 'bcui:owned';
  * container slot and makes an escape unrecoverable for the player.
  */
 export const claim = (stack: ItemStack): ItemStack => {
-  stack.setLore([...stack.getLore(), OWNED_LORE]);
-
+  // The property where it fits, lore only where it does not. Lore is visible:
+  // it is part of the item's tooltip, and a text channel READS that tooltip
+  // back through `#hover_text`, so marking with lore would append a stray line
+  // to every dynamic label on screen.
   if (stack.maxAmount === 1) {
     stack.setDynamicProperty(OWNED_PROPERTY, true);
+  } else {
+    stack.setLore([...stack.getLore(), OWNED_LORE]);
   }
 
   stack.lockMode = ItemLockMode.none;
@@ -73,6 +77,25 @@ export const setOrdinal = (stack: ItemStack, ordinal: number): ItemStack => {
   if (durability) {
     durability.damage = durability.maxDurability - ordinal;
   }
+
+  return stack;
+};
+
+/**
+ * Writes free-form text onto an item so JSON UI can read it back as that slot's
+ * `#hover_text` — the tooltip the engine builds from the name and lore, then
+ * formats and localizes before the UI ever sees it.
+ *
+ * The first line becomes the name and the rest become lore, which is the order
+ * the tooltip renders them in.
+ *
+ * @returns the same stack, for chaining.
+ */
+export const setText = (stack: ItemStack, text: string): ItemStack => {
+  const [first = '', ...rest] = text.split('\n');
+
+  stack.nameTag = first;
+  stack.setLore(rest);
 
   return stack;
 };
