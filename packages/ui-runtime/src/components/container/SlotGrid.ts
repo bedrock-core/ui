@@ -1,39 +1,50 @@
+import type { ItemStack, Player } from '@minecraft/server';
 import type { FunctionComponent, JSX } from '../../jsx';
 import { type ControlProps, withControl } from '../control';
 import { SLOT_SIZE } from './constants';
-import { Slot } from './Slot';
+import { Slot, type SlotRole } from './Slot';
 
 export interface SlotGridProps extends ControlProps {
-  /** Prefix for the generated slot names: `bay` yields `bay_0`, `bay_1`, … */
-  name: string;
   rows: number;
   cols: number;
+  /** Applied to every cell. Defaults to `both`. */
+  role?: SlotRole;
+  /** Ran after an item arrives, with the cell's index in the grid. */
+  onInsert?: (player: Player, stack: ItemStack, cell: number) => void;
+  /** Ran after a cell empties. */
+  onRemove?: (player: Player, cell: number) => void;
 }
 
 /**
- * A rectangle of slots, named by position.
+ * A rectangle of slots.
  *
  * This is the shape nobody should hand-write, and the reason a 200-slot screen
  * is one line. It is a plain component — it expands to `rows * cols` `<Slot>`s
- * during the build, so the compiler sees the slots individually and allocates
- * each an index, exactly as if they had been written out.
+ * during the build, so the compiler sees them individually and allocates each an
+ * index, exactly as if they had been written out.
  *
- * Names are positional and stable: `bay_0` is always the top-left cell. A script
- * addresses one directly, or matches the prefix to treat the grid as a unit.
+ * Handlers are shared and told which cell they are for, since a grid is usually
+ * one thing rather than `rows * cols` things.
  */
-export const SlotGrid: FunctionComponent<SlotGridProps> = (
-  { name, rows, cols, ...rest }: SlotGridProps,
-): JSX.Element => {
+export const SlotGrid: FunctionComponent<SlotGridProps> = ({
+  rows,
+  cols,
+  role,
+  onInsert,
+  onRemove,
+  ...rest
+}: SlotGridProps): JSX.Element => {
   if (!Number.isInteger(rows) || !Number.isInteger(cols) || rows < 1 || cols < 1) {
     throw new RangeError(
-      `<SlotGrid name="${name}"> needs whole positive rows and cols, got ${rows} x ${cols}.`,
+      `<SlotGrid> needs whole positive rows and cols, got ${rows} x ${cols}.`,
     );
   }
 
-  const cells: JSX.Element[] = Array.from(
-    { length: rows * cols },
-    (_, index) => Slot({ name: `${name}_${index}` }),
-  );
+  const cells: JSX.Element[] = Array.from({ length: rows * cols }, (_unused, cell) => Slot({
+    role,
+    ...onInsert ? { onInsert: (player, stack) => onInsert(player, stack, cell) } : {},
+    ...onRemove ? { onRemove: player => onRemove(player, cell) } : {},
+  }));
 
   return {
     type: 'panel',

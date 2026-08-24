@@ -15,6 +15,24 @@ import { ItemComponentTypes, ItemLockMode, type ItemStack } from '@minecraft/ser
  *    Netherite tier gives 2031 steps, finer than any bar is wide.
  */
 
+/**
+ * Durability reading a transport item is pinned to, so JSON UI can tell one
+ * from a player's real tool and draw it as nothing.
+ *
+ * The screen's own grids hide any marker-item slot whose
+ * `#item_durability_current_amount` reads exactly this — the same trick the
+ * router plays with the layout key, and the reason the value is neither 0 nor
+ * max: a pristine pickaxe reads max, a worn-out one reads low, and either would
+ * make a player's own tool vanish. A real pickaxe at exactly this reading is
+ * still possible and merely renders hidden while one of our screens is open.
+ *
+ * Layout ids grow upward from 0, so the filter refuses a screen that reaches
+ * this value rather than letting the two keys collide.
+ *
+ * Must match the ui-compile filter's `transportOrdinal`.
+ */
+export const TRANSPORT_ORDINAL = 2001;
+
 /** Marks every item the runtime placed, so an escaped one is identifiable. */
 export const OWNED_LORE = '§8bcui';
 

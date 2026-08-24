@@ -10,8 +10,10 @@
 
 export { createContainerScreen } from './session';
 export type { ContainerScreen } from './session';
-export { claim, isOwned, OWNED_LORE, OWNED_PROPERTY, setOrdinal, setRatio } from './marker';
+export {
+  claim, isOwned, OWNED_LORE, OWNED_PROPERTY, setOrdinal, setRatio, TRANSPORT_ORDINAL,
+} from './marker';
 export type {
-  ChannelCarrier, ChannelSpec, ContainerScreenConfig, ScreenHandle, SlotBehaviour,
+  ChannelCarrier, ChannelSpec, ContainerScreenConfig, ScreenHandle, SlotRole, SlotSpec,
 } from './types';
 export { BLANK_CODE, BLANK_VALUE, CHARSET, charsetLang, encode, MAX_CODE, UNKNOWN_CODE } from './charset';

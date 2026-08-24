@@ -1,13 +1,13 @@
 import {
   CompileTimeHookError,
   computeLayout,
+  Button,
   Container,
   expandStatic,
   Progress,
-  Slot,
   SlotGrid,
 } from '@bedrock-core/ui-runtime/compile';
-import { Panel, Text, useState } from '@bedrock-core/ui-runtime';
+import { Panel, Text, usePlayer, useState } from '@bedrock-core/ui-runtime';
 import type { JSX } from '@bedrock-core/ui-runtime';
 import { describe, expect, it } from 'vitest';
 import { emit } from '../emit';
@@ -43,11 +43,11 @@ describe('the compiler, end to end', () => {
         Panel({
           flexDirection: 'row',
           children: [
-            Progress({ name: 'charge', flexGrow: 1 }),
-            Slot({ name: 'toggle' }),
+            Progress({ value: 0.5, flexGrow: 1 }),
+            Button({ onPress: () => undefined, children: 'Go' }),
           ],
         }),
-        SlotGrid({ name: 'bay', rows: 1, cols: 4 }),
+        SlotGrid({ rows: 1, cols: 4 }),
       ],
     });
 
@@ -68,26 +68,26 @@ describe('the compiler, end to end', () => {
     expect(ir.allocation).toEqual({ sentinel: 0, drawn: 5, channels: 1, size: 7 });
   });
 
-  it('names grid cells positionally so a script can address one', () => {
-    const ir = toIr(
-      computeLayout(expandStatic(Reactor() as never)) as LaidOutElement,
-      { namespace: 'test', collection: 'container_items' },
-    );
-
-    const names: string[] = [];
-    const walk = (node: { kind: string; name: string; children?: unknown[] }): void => {
-      if (node.kind === 'slot') {
-        names.push(node.name);
+  it('expands a grid into individual slots, each with its own index', () => {
+    // A grid is a plain component: the compiler sees `rows * cols` slots and
+    // allocates each an index, exactly as if they had been written out. Nothing
+    // is named — the runtime matches handlers to slots by position.
+    const doc = compile(Reactor);
+    const indices: unknown[] = [];
+    const visit = (control: Control): void => {
+      if (control.$slot !== undefined) {
+        indices.push(control.$slot);
       }
 
-      for (const child of node.children ?? []) {
-        walk(child as never);
+      for (const [, child] of entries(control)) {
+        visit(child);
       }
     };
 
-    walk(ir.root);
+    visit(doc.screen as Control);
 
-    expect(names).toEqual(['toggle', 'bay_0', 'bay_1', 'bay_2', 'bay_3']);
+    // One button, then four grid cells, after the sentinel.
+    expect(indices).toEqual([1, 2, 3, 4, 5]);
   });
 
   it('solves geometry rather than taking coordinates', () => {
@@ -156,16 +156,31 @@ describe('the compiler, end to end', () => {
     }
   });
 
-  it('rejects a runtime-only hook from the top of the pipeline', () => {
+  it(`builds the layout from a hook's INITIAL value`, () => {
+    // State is how a value reaches a channel, so hooks work at build time and
+    // hand back what they started with. The shape they produce is the shape
+    // every player gets; only the values move afterwards.
     const Stateful = (): JSX.Element => {
-      useState(0);
+      const [label] = useState('start');
 
-      return Text({ children: 'never gets here' });
+      return Text({ children: label });
     };
 
     const Screen = (): unknown => Container({ children: [{ type: Stateful, props: {} }] });
 
+    expect(() => compile(Screen)).not.toThrow();
+  });
+
+  it('still rejects a hook that needs a player, because there is not one', () => {
+    const PerPlayer = (): JSX.Element => {
+      usePlayer();
+
+      return Text({ children: 'never gets here' });
+    };
+
+    const Screen = (): unknown => Container({ children: [{ type: PerPlayer, props: {} }] });
+
     expect(() => compile(Screen)).toThrow(CompileTimeHookError);
-    expect(() => compile(Screen)).toThrow(/declare a channel the screen reads/);
+    expect(() => compile(Screen)).toThrow(/reaches the screen on a channel/);
   });
 });

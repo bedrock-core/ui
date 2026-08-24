@@ -42,11 +42,18 @@ export const Vanilla: FunctionComponent<VanillaProps> = ({
 export const Background: FunctionComponent<ControlProps> = (props: ControlProps): JSX.Element =>
   Vanilla({ ...props, ref: 'common.common_panel' });
 
-/** The player's own inventory, with its label. Vanilla places it itself. */
+/**
+ * The player's own inventory, with its label. Places itself, like vanilla's.
+ *
+ * Not vanilla's control but the router's redrawn copy of it, which differs in
+ * exactly one way: a slot holding a button's transport item draws as empty.
+ * A press auto-places its transport here, and vanilla's grid would show a
+ * pickaxe flashing in and out while the script pulls it back.
+ */
 export const PlayerInventory: FunctionComponent<ControlProps> = (
   props: ControlProps,
-): JSX.Element => Vanilla({ ...props, ref: 'common.inventory_panel_bottom_half_with_label' });
+): JSX.Element => Vanilla({ ...props, ref: 'chest.bcui_inventory_panel_with_label' });
 
-/** The player's hotbar. Vanilla places it itself. */
+/** The player's hotbar. The same redrawn grid as {@link PlayerInventory}. */
 export const Hotbar: FunctionComponent<ControlProps> = (props: ControlProps): JSX.Element =>
-  Vanilla({ ...props, ref: 'common.hotbar_grid_template' });
+  Vanilla({ ...props, ref: 'chest.bcui_hotbar_grid' });

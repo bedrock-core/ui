@@ -19,12 +19,17 @@ export {
   BLANK_CODE, BLANK_VALUE, CHARSET, charsetLang, encode, MAX_CODE, UNKNOWN_CODE,
 } from './container/charset';
 
+// The library's own label, re-exported under a name that says what it is: it is
+// baked into the layout, so it may contain any character at all, but it cannot
+// change. `Text` is the live one, because that is what a screen usually wants.
+export { Text as StaticText } from './components/Text';
+
 export {
   Background,
   Button,
   CHEST_CANVAS,
   Container,
-  DynamicText,
+  Text,
   Fill,
   Hotbar,
   PlayerInventory,
@@ -38,7 +43,7 @@ export {
 export type {
   ButtonProps,
   ContainerProps,
-  DynamicTextProps,
+  TextProps,
   FillDirection,
   FillProps,
   ProgressProps,

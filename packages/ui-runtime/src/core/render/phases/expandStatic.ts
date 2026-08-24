@@ -14,10 +14,11 @@ import { isElement } from '../../guards';
  * work exactly as they do today — and anything that implies per-player or
  * over-time state cannot, because there is nothing for it to belong to.
  *
- * Rather than let those fail with `[fiber] useState called outside an active
- * fiber`, this phase installs a dispatcher that explains what to reach for
- * instead. Getting that wrong is the single most likely first mistake when
- * writing a compiled screen, so the error is the documentation.
+ * Hooks work here and return their INITIAL values, because that is what decides
+ * the shape: the tree the build sees is the tree every player gets, and state
+ * only ever changes what is written to a channel afterwards. The one thing that
+ * cannot work is anything needing a player, and that throws with an explanation
+ * rather than an `outside an active fiber` stack.
  */
 
 /** Thrown when a compiled screen calls a hook that only exists at runtime. */
@@ -33,71 +34,66 @@ export class CompileTimeHookError extends Error {
   }
 }
 
-const FROZEN_LAYOUT = 'A compiled screen is laid out once at build time and cannot change shape at runtime.';
-const NO_LIFECYCLE = 'There is no render loop at build time — nothing mounts, updates or unmounts.';
 const NO_PLAYER = 'One compiled layout serves every player, so there is no player to read.';
 
 /** Context values in scope for the component currently being expanded. */
 let contexts = new Map<unknown, unknown>();
 
+const noop = (): void => {
+  /* nothing to do at build time */
+};
+
+/** A hook initialiser may be a value or a thunk. A predicate, so nothing is cast. */
+const isThunk = <T>(value: T | (() => T)): value is () => T => typeof value === 'function';
+
+/**
+ * The build-time dispatcher.
+ *
+ * Hooks WORK here, and return their initial values: a compiled screen is
+ * rendered once to decide its shape, and the shape is whatever the initial
+ * state produces. The same component is then re-rendered per player at runtime
+ * with real state, and the difference is written to channels — so `useState` is
+ * how a value gets onto a channel in the first place, not something to route
+ * around.
+ *
+ * What still cannot work is anything needing a PLAYER, because there is not one
+ * on a build machine. Those throw, and the error is the documentation.
+ */
 const CompileDispatcher: Dispatcher = {
-  useState<T>(): [T, (v: T | ((prev: T) => T)) => void] {
-    throw new CompileTimeHookError(
-      'useState',
-      FROZEN_LAYOUT,
-      'keep the state in your script and declare a channel the screen reads.',
-    );
+  useState<T>(initial: T | (() => T)): [T, (v: T | ((prev: T) => T)) => void] {
+    return [isThunk(initial) ? initial() : initial, noop];
   },
 
-  useReducer<S, A>(): [S, (action: A) => void] {
-    throw new CompileTimeHookError(
-      'useReducer',
-      FROZEN_LAYOUT,
-      'keep the reducer in your script and declare a channel the screen reads.',
-    );
+  useReducer<S, A>(_reducer: (state: S, action: A) => S, initial: S): [S, (action: A) => void] {
+    return [initial, noop];
   },
 
   useEffect(): void {
-    throw new CompileTimeHookError(
-      'useEffect',
-      NO_LIFECYCLE,
-      'run the effect in the container session, which owns open/close and every tick between.',
-    );
+    // Effects belong to a render loop, and the build has none. Ignored rather
+    // than rejected, so a component can be shared between a form and a screen.
   },
 
-  useRef<T>(): { current: T } {
-    throw new CompileTimeHookError(
-      'useRef',
-      NO_LIFECYCLE,
-      'nothing persists between build and runtime; hold the value in your script.',
-    );
+  useRef<T>(initial: T): { current: T } {
+    return { current: initial };
   },
 
   useEvent(): void {
-    throw new CompileTimeHookError(
-      'useEvent',
-      NO_LIFECYCLE,
-      'subscribe in the container session instead.',
-    );
+    // Same as useEffect: nothing to subscribe to on a build machine.
   },
 
   usePlayer(): never {
     throw new CompileTimeHookError(
       'usePlayer',
       NO_PLAYER,
-      'put the per-player difference on a channel, or compile a variant per case and gate it.',
+      'read it at runtime instead — the value reaches the screen on a channel.',
     );
   },
 
   useExit(): () => void {
-    throw new CompileTimeHookError(
-      'useExit',
-      NO_PLAYER,
-      'close the container from the script side.',
-    );
+    return noop;
   },
 
-  /** The one hook that survives: providers are resolved while the tree expands. */
+  /** Providers are resolved while the tree expands, exactly as at runtime. */
   useContext<T>(ctx: Context<T>): T {
     // The stack is heterogeneous by nature — one map holds every provider in
     // scope — so the value comes back untyped and the context's own parameter is
@@ -161,16 +157,20 @@ function expandNode(element: JSX.Element): JSX.Element {
  * @param element - Root element of the screen being compiled.
  * @param initial - Context values to seed, for providers supplied by the build
  *   rather than by the tree itself (theme, i18n, pack config).
+ * @param dispatcher - What hooks resolve against. Defaults to the build-time
+ *   one, which hands back initial values; the container runtime passes a real
+ *   one so the SAME component re-renders per player with real state.
  * @returns The tree with every function component expanded.
- * @throws {@link CompileTimeHookError} when a runtime-only hook is called.
+ * @throws {@link CompileTimeHookError} when a build-time hook needs a player.
  */
 export function expandStatic(
   element: JSX.Element,
   initial?: ReadonlyMap<unknown, unknown>,
+  dispatcher: Dispatcher = CompileDispatcher,
 ): JSX.Element {
   contexts = new Map(initial ?? []);
 
-  setCurrentFiber(undefined, CompileDispatcher);
+  setCurrentFiber(undefined, dispatcher);
 
   try {
     return expandNode(element);

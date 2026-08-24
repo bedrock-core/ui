@@ -64,33 +64,51 @@ describe('expandStatic', () => {
     expect(tree.props.label).toBe('ore');
   });
 
-  describe('rejecting runtime-only hooks', () => {
-    it.each([
-      ['useState', (): unknown => useState(0)],
-      ['useEffect', (): unknown => useEffect(() => undefined, [])],
-      ['usePlayer', (): unknown => usePlayer()],
-    ])('refuses %s', (name, call) => {
+  describe('hooks at build time', () => {
+    it('runs useState and hands back the initial value', () => {
+      // State is how a value reaches a channel, so hooks WORK here: the build
+      // renders once to decide the shape, and the shape is whatever the initial
+      // state produced. Only the values move afterwards.
+      const seen: unknown[] = [];
       const Screen = (): JSX.Element => {
-        call();
+        const [value] = useState('start');
+
+        seen.push(value);
+
+        return el('panel', { children: [] });
+      };
+
+      expandStatic(el(Screen as never, {}));
+
+      expect(seen).toEqual(['start']);
+    });
+
+    it('ignores an effect rather than rejecting it', () => {
+      // A build has no render loop, but a component shared between a form and a
+      // screen should not have to know that.
+      let ran = false;
+      const Screen = (): JSX.Element => {
+        useEffect(() => {
+          ran = true;
+        }, []);
+
+        return el('panel', { children: [] });
+      };
+
+      expect(() => expandStatic(el(Screen as never, {}))).not.toThrow();
+      expect(ran).toBe(false);
+    });
+
+    it('still refuses a hook that needs a player, because there is not one', () => {
+      const Screen = (): JSX.Element => {
+        usePlayer();
 
         return el('panel', { children: [] });
       };
 
       expect(() => expandStatic(el(Screen as never, {}))).toThrow(CompileTimeHookError);
-      expect(() => expandStatic(el(Screen as never, {}))).toThrow(
-        new RegExp(`${name}\\(\\) cannot be used in a compiled screen`),
-      );
-    });
-
-    it('says what to reach for instead, not just what is forbidden', () => {
-      const Screen = (): JSX.Element => {
-        useState(0);
-
-        return el('panel', { children: [] });
-      };
-
       expect(() => expandStatic(el(Screen as never, {})))
-        .toThrow(/Instead: keep the state in your script and declare a channel/);
+        .toThrow(/reaches the screen on a channel/);
     });
   });
 

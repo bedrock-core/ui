@@ -11,8 +11,8 @@
  */
 
 import type {
-  Allocation, ImageNode, IrDocument, IrNode, LabelNode, PanelNode, Rect, SlotNode, SlotRole,
-  TextNode,
+  Allocation, ImageNode, IrDocument, IrNode, LabelNode, PanelNode, Rect, SlotFace, SlotNode,
+  SlotRole, TextNode,
 } from './ir';
 import type { ClipDirection } from './jsonui';
 
@@ -59,6 +59,25 @@ const DEFAULT_KEY_PREFIX = 'bcui.c.';
 
 /** Width of one character cell, in texels. */
 const DEFAULT_CELL_WIDTH = 6;
+
+/** What a button draws instead of an item. Absent on an ordinary slot. */
+const faceOf = (value: unknown): { face?: SlotFace } => {
+  if (typeof value !== 'object' || value === null) {
+    return {};
+  }
+
+  const face = value as Partial<SlotFace>;
+
+  return {
+    face: {
+      texture: str(face.texture),
+      hover: str(face.hover),
+      pressed: str(face.pressed),
+      label: str(face.label),
+      ...typeof face.disabled === 'string' ? { disabled: face.disabled } : {},
+    },
+  };
+};
 
 const SLOT_ROLES: readonly SlotRole[] = ['both', 'input', 'output', 'button'];
 
@@ -322,6 +341,7 @@ const convert = (
         ...layer,
         slot: SENTINEL_SLOT + 1 + alloc.slots.length,
         role: slotRole(element.props.role),
+        ...faceOf(element.props.face),
       };
 
       alloc.slots.push(node);

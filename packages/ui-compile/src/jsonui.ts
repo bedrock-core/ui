@@ -59,6 +59,19 @@ export type ClipDirection = 'left' | 'right' | 'up' | 'down' | 'center';
 /** A size or offset component: pixels, or a string form such as `"100%"`. */
 export type Measure = number | string;
 
+/**
+ * One input route. `from_button_id` may be absent: vanilla's slot prototype
+ * ends with self-routed entries (`shape_drawing`, `container_slot_hovered`)
+ * that name only a target.
+ */
+export interface ButtonMapping {
+  from_button_id?: string;
+  to_button_id: string;
+  mapping_type: 'global' | 'pressed' | 'double_pressed' | 'focused';
+  /** Undocumented by Mojang. An expression; the mapping is dropped when true. */
+  ignored?: string;
+}
+
 export interface Binding {
   binding_type?: BindingType;
   binding_name?: string;
@@ -107,6 +120,23 @@ export interface Control {
    * declares `collection_name`; anywhere else the engine rejects it outright.
    */
   collection_index?: number | string;
+
+  /* buttons */
+  /**
+   * Documented. Name of the child drawn while the pointer is over the button,
+   * and while it is held. A container slot IS a button, which is what lets a
+   * compiled screen give one real hover and pressed states without the item
+   * behind it being visible at all.
+   */
+  hover_control?: string;
+  pressed_control?: string;
+  default_control?: string;
+  /**
+   * Documented. Routes input on this control to engine actions. A derived
+   * control's array REPLACES its base's, which is what lets a button slot swap
+   * vanilla's take-to-cursor for auto-place wholesale.
+   */
+  button_mappings?: ButtonMapping[];
 
   /** Pack-defined variables. Legal in ordinary properties, never in a binding. */
   [variable: `$${string}`]: unknown;

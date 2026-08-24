@@ -74,12 +74,38 @@ export interface ImageNode extends NodeBase {
  */
 export type SlotRole = 'both' | 'input' | 'output' | 'button';
 
+/**
+ * How a button-role slot is drawn.
+ *
+ * A press can only reach script as an item move — JSON UI's button mappings
+ * produce game actions, and the container transaction is the only one the
+ * server sees. But nothing says the item has to be VISIBLE: `common.container_item`
+ * takes its cell face, its item renderer and its button as variables, so the
+ * icon can be replaced with nothing and the face with a real button. The item
+ * stays as pure transport.
+ */
+export interface SlotFace {
+  texture: string;
+  hover: string;
+  pressed: string;
+  /** Drawn over the face. Baked, so it may use any character. */
+  label: string;
+  /**
+   * Drawn instead of `texture` while the button has no handler. Optional: a
+   * button without one keeps its resting face when disabled, and only stops
+   * reacting.
+   */
+  disabled?: string;
+}
+
 /** A real container slot the player can interact with. */
 export interface SlotNode extends NodeBase {
   kind: 'slot';
   /** Index allocated by the compiler, not written by the author. */
   slot: number;
   role: SlotRole;
+  /** Present only for a button: what it looks like instead of an item. */
+  face?: SlotFace;
 }
 
 /**

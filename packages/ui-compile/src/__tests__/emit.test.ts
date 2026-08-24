@@ -326,28 +326,145 @@ describe('emit / vanilla references', () => {
   });
 });
 
-describe('emit / slot roles', () => {
-  it('leaves no trace in the layout, because roles are enforced at runtime', () => {
-    // A container offers no way to veto a move, so a role cannot be expressed
-    // in JSON UI at all: it travels in the generated handle and the runtime
-    // undoes what it disallows a tick later.
-    const of = (role: 'both' | 'input' | 'output' | 'button'): string => JSON.stringify(emit({
-      namespace: 'demo',
-      collection: 'container_items',
-      entry: 'screen',
-      allocation: { sentinel: 0, drawn: 1, channels: 0, size: 2 },
-      root: {
-        kind: 'panel',
-        name: 'root',
-        rect: { x: 0, y: 0, width: 176, height: 166 },
-        children: [
-          { kind: 'slot', name: 'a', rect: { x: 0, y: 0, width: 18, height: 18 }, slot: 1, role },
-        ],
-      },
-    }));
+describe('emit / button faces', () => {
+  const withFace = (disabled?: string): Document => emit({
+    namespace: 'demo',
+    collection: 'container_items',
+    entry: 'screen',
+    allocation: { sentinel: 0, drawn: 1, channels: 0, size: 2 },
+    root: {
+      kind: 'panel',
+      name: 'root',
+      rect: { x: 0, y: 0, width: 176, height: 166 },
+      children: [{
+        kind: 'slot',
+        name: 'a',
+        rect: { x: 0, y: 0, width: 18, height: 18 },
+        slot: 1,
+        role: 'button',
+        face: {
+          texture: 't/rest',
+          hover: 't/hover',
+          pressed: 't/pressed',
+          label: '',
+          ...disabled === undefined ? {} : { disabled },
+        },
+      }],
+    },
+  });
 
-    expect(of('input')).toBe(of('both'));
-    expect(of('output')).toBe(of('both'));
-    expect(of('button')).toBe(of('both'));
+  const control = (doc: Document, name: string): Control => {
+    const found = doc[name];
+
+    if (found === undefined || typeof found === 'string') {
+      throw new Error(`no control ${name}`);
+    }
+
+    return found;
+  };
+
+  const child = (parent: Control, name: string): Control => {
+    const found = parent.controls?.find(entry => name in entry)?.[name];
+
+    if (found === undefined) {
+      throw new Error(`no child ${name}`);
+    }
+
+    return found;
+  };
+
+  const gatesOn = (target: Control, expression: string): void => {
+    // The enabled flag is the slot holding an item, read through the flag
+    // vanilla's own durability bar shows on. No channel carries it.
+    expect(target.bindings).toContainEqual({
+      binding_name: '#item_durability_visible',
+      binding_name_override: '#enabled',
+      binding_type: 'collection',
+      binding_collection_name: 'container_items',
+    });
+    expect(target.bindings).toContainEqual({
+      binding_type: 'view',
+      source_property_name: expression,
+      target_property_name: '#visible',
+    });
+  };
+
+  it('gates hover and pressed on the slot holding a transport, one level down', () => {
+    const states = control(withFace(), 'button_1_states@common.container_slot_button_prototype');
+
+    // The gate sits on an image INSIDE the state control, never on the state
+    // control itself: the button toggles that one's visibility as the pointer
+    // moves, and a binding on the same control would overwrite it.
+    for (const state of ['hover', 'pressed']) {
+      const outer = child(states, state);
+
+      expect(outer.type).toBe('panel');
+      expect(outer.bindings).toBeUndefined();
+      gatesOn(child(outer, 'image'), '(#enabled)');
+    }
+  });
+
+  it('leaves the resting face ungated when no disabled look was given', () => {
+    const face = control(withFace(), 'button_1_face');
+
+    expect(child(face, 'bg').bindings).toBeUndefined();
+    expect(face.controls?.some(entry => 'bg_disabled' in entry)).toBe(false);
+  });
+
+  it('swaps in the disabled look while the slot is empty', () => {
+    const face = control(withFace('t/off'), 'button_1_face');
+
+    gatesOn(child(face, 'bg'), '(#enabled)');
+    gatesOn(child(face, 'bg_disabled'), '(not #enabled)');
+    expect(child(face, 'bg_disabled').texture).toBe('t/off');
+  });
+});
+
+describe('emit / slot roles', () => {
+  const of = (role: 'both' | 'input' | 'output' | 'button'): Document => emit({
+    namespace: 'demo',
+    collection: 'container_items',
+    entry: 'screen',
+    allocation: { sentinel: 0, drawn: 1, channels: 0, size: 2 },
+    root: {
+      kind: 'panel',
+      name: 'root',
+      rect: { x: 0, y: 0, width: 176, height: 166 },
+      children: [
+        { kind: 'slot', name: 'a', rect: { x: 0, y: 0, width: 18, height: 18 }, slot: 1, role },
+      ],
+    },
+  });
+
+  it('leaves output and button roles untraced, because they are enforced at runtime', () => {
+    // A container offers no way to veto a move, so a role is not expressed in
+    // JSON UI: it travels in the generated handle and the runtime undoes what
+    // it disallows a tick later. (A button without a face is a plain slot.)
+    expect(JSON.stringify(of('output'))).toBe(JSON.stringify(of('both')));
+    expect(JSON.stringify(of('button'))).toBe(JSON.stringify(of('both')));
+  });
+
+  it('gives an input slot its own button, with the drop routes removed', () => {
+    // The one take the runtime cannot undo is a drop: the item lands on the
+    // ground, out of reach. So Q over an input slot is not a route at all.
+    const doc = of('input');
+    const states = doc['input_states@common.container_slot_button_prototype'];
+    const routes = typeof states === 'string' ? [] : states.button_mappings ?? [];
+
+    expect(routes.length).toBeGreaterThan(0);
+    expect(routes.map(route => route.to_button_id)).not.toContain('button.drop_one');
+    expect(routes.map(route => route.to_button_id)).not.toContain('button.drop_all');
+    // Everything else is vanilla's, so the slot still takes and places.
+    expect(routes.map(route => route.to_button_id)).toContain('button.container_take_all_place_all');
+
+    const cell = doc['input_slot'];
+
+    expect(typeof cell === 'string' ? undefined : cell.controls?.[0]?.['item@common.container_item'])
+      .toMatchObject({ $button_ref: 'demo.input_states' });
+
+    const screen = doc['screen'];
+
+    expect(typeof screen === 'string' ? undefined : screen.controls?.[0]?.['a@demo.slot_host'])
+      .toMatchObject({ $cell: 'demo.input_slot' });
   });
 });

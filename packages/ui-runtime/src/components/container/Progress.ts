@@ -3,8 +3,8 @@ import { type ControlProps, withControl } from '../control';
 import { Fill, type FillDirection } from './Fill';
 
 export interface ProgressProps extends ControlProps {
-  /** Addresses the value from the script side. Unique within a screen. */
-  name: string;
+  /** How full it is, 0..1. */
+  value?: number;
   /** Empty state, drawn underneath. */
   track?: string;
   /** Full state, clipped to the current value. */
@@ -16,14 +16,14 @@ export interface ProgressProps extends ControlProps {
 /**
  * A bar.
  *
- * Composed, not built in: it is a panel holding a whole image and a {@link Fill}
+ * Composed, not built in: a panel holding a whole image and a {@link Fill}
  * stacked on top of it, which is all a bar has ever been. Nothing here is
  * privileged — copy this component, swap the textures or the direction, and you
  * have a gauge, a fuel meter or a cooldown sweep. That is the point of keeping
  * the primitive set small.
  */
 export const Progress: FunctionComponent<ProgressProps> = ({
-  name,
+  value = 0,
   track = 'textures/ui/brewing_fuel_bar_empty',
   fill = 'textures/ui/brewing_fuel_bar_full',
   direction = 'left',
@@ -43,8 +43,8 @@ export const Progress: FunctionComponent<ProgressProps> = ({
         },
       },
       Fill({
-        name,
         texture: fill,
+        value,
         direction,
         position: 'absolute',
         top: 0,
