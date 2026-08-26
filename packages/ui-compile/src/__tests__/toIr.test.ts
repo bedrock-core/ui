@@ -1,13 +1,17 @@
+import type { JSX } from '@bedrock-core/ui-runtime';
+import { allocate, ContainerScreenError, KEY_PREFIX } from '@bedrock-core/ui-runtime/compile';
 import { describe, expect, it } from 'vitest';
-import type { PanelNode } from '../ir';
-import { type LaidOutElement, toIr, UnsupportedNodeError } from '../toIr';
+import { CHEST_HOST } from '../hosts/chest';
+import type { ButtonNode, IrNode, PanelNode } from '../ir';
+import { toIr, UnsupportedNodeError } from '../toIr';
 
-/** Builds an element the way `computeLayout` leaves it: absolute texels on props. */
+/** Builds an element the way the build leaves it: absolute texels on props. */
 const at = (
   type: string,
   [x, y, width, height]: [number, number, number, number],
-  props: Record<string, unknown> = {},
-): LaidOutElement => ({
+  props: JSX.Props = {},
+  children: JSX.Element[] = [],
+): JSX.Element => ({
   type,
   props: {
     jsonUIx: x,
@@ -15,185 +19,356 @@ const at = (
     jsonUIWidth: width,
     jsonUIHeight: height,
     ...props,
+    children,
   },
 });
 
-const options = { namespace: 'demo', collection: 'container_items' };
+/** A built `<Container>` at the canvas origin. */
+const container = (children: JSX.Element[], props: JSX.Props = {}, rect: [number, number, number, number] = [0, 0, 320, 210]): JSX.Element =>
+  at('container', rect, { __container: { entity: 'core:test' }, ...props }, children);
+
+/** A built `<Text>`: the string in the tail, the metrics beside it. */
+const text = (
+  rect: [number, number, number, number],
+  tail: unknown,
+  metrics: Record<string, unknown> = {},
+  props: JSX.Props = {},
+  type = 'text',
+): JSX.Element => at(type, rect, {
+  value: { tail },
+  __textMetrics: { isKey: false, resolvedText: typeof tail === 'string' ? tail : '', ...metrics },
+  fontType: 'default',
+  fontScaleFactor: 2,
+  labelX: 0,
+  labelY: 0,
+  ...props,
+});
+
+const options = { namespace: 'core_ui_test' };
+
+/** Converts with the allocation the runtime would make for the same tree. */
+const convert = (tree: JSX.Element): ReturnType<typeof toIr> => toIr(tree, allocate(tree), options);
+
+const first = (tree: JSX.Element): IrNode => {
+  const [node] = convert(tree).root.children;
+
+  if (node === undefined) {
+    throw new Error('no node');
+  }
+
+  return node;
+};
+
+const panel = (node: IrNode): PanelNode => {
+  if (node.kind !== 'panel') {
+    throw new Error(`expected a panel, got ${node.kind}`);
+  }
+
+  return node;
+};
+
+const buttonNode = (node: IrNode): ButtonNode => {
+  if (node.kind !== 'button') {
+    throw new Error(`expected a button, got ${node.kind}`);
+  }
+
+  return node;
+};
 
 describe('toIr', () => {
-  it('converts absolute layout coordinates to parent-relative offsets', () => {
-    // The solver places the screen at (40, 20); a label sits at (47, 24).
-    // Relative to its parent that is (7, 4), which is what JSON UI wants.
-    const tree = at('panel', [40, 20, 176, 83], {
-      children: [at('text', [47, 24, 162, 10], { text: 'hi' })],
-    });
+  it('reads the entity, the collection and the canvas off the root', () => {
+    const doc = convert(container([], { background: 'textures/ui/frame' }));
 
-    const doc = toIr(tree, options);
+    expect(doc.entity).toBe('core:test');
+    expect(doc.namespace).toBe('core_ui_test');
+    expect(doc.collection).toBe(CHEST_HOST.collection);
+    expect(doc.root).toMatchObject({ kind: 'panel', rect: { x: 0, y: 0, width: 320, height: 210 }, background: 'textures/ui/frame' });
+    expect(doc.backdrop).toBeUndefined();
+  });
+
+  it('converts absolute layout coordinates to canvas-relative offsets', () => {
+    // The solver places the root at (40, 20); a label sits at (47, 24).
+    // Relative to the canvas that is (7, 4), which is what JSON UI wants.
+    const doc = convert(container([text([47, 24, 162, 10], 'hi')], {}, [40, 20, 176, 83]));
 
     expect(doc.root.rect).toEqual({ x: 0, y: 0, width: 176, height: 83 });
     expect(doc.root.children[0]?.rect).toEqual({ x: 7, y: 4, width: 162, height: 10 });
   });
 
-  it('nests relative to the nearest panel, not the screen', () => {
-    const tree = at('panel', [0, 0, 176, 83], {
-      children: [
-        at('panel', [10, 10, 100, 40], {
-          children: [at('text', [30, 20, 50, 10], { text: 'inner' })],
-        }),
-      ],
-    });
-
-    const inner = (toIr(tree, options).root.children[0] as PanelNode).children[0];
+  it('nests relative to the nearest panel, not the canvas', () => {
+    const inner = panel(first(container([
+      at('panel', [10, 10, 100, 40], {}, [text([30, 20, 50, 10], 'inner')]),
+    ]))).children[0];
 
     expect(inner?.rect).toEqual({ x: 20, y: 10, width: 50, height: 10 });
   });
 
-  it('splices fragments away, so a component boundary costs nothing', () => {
-    const tree = at('panel', [0, 0, 176, 83], {
-      children: [
-        at('fragment', [0, 0, 0, 0], {
-          children: [
-            at('text', [0, 0, 10, 10], { text: 'a' }),
-            at('text', [0, 12, 10, 10], { text: 'b' }),
-          ],
-        }),
-      ],
-    });
+  it('splices fragments and providers away, so a component boundary costs nothing', () => {
+    const tree = at('fragment', [0, 0, 0, 0], {}, [container([
+      at('fragment', [0, 0, 0, 0], {}, [text([0, 0, 10, 10], 'a'), text([0, 12, 10, 10], 'b')]),
+      at('context-provider', [0, 0, 0, 0], { __context: () => undefined, value: null }, [text([0, 24, 10, 10], 'c')]),
+    ])]);
 
-    expect(toIr(tree, options).root.children).toHaveLength(2);
+    expect(convert(tree).root.children.map(node => node.name)).toEqual(['label_1', 'label_2', 'label_3']);
   });
 
-  it('maps every text variant to a label', () => {
-    for (const type of ['text', 'text_shadow', 'text_wrap', 'text_shadow_wrap']) {
-      const tree = at('panel', [0, 0, 10, 10], {
-        children: [at(type, [0, 0, 10, 10], { text: 'x' })],
+  it('passes the author\'s draw order and visibility through', () => {
+    const node = first(container([at('panel', [0, 0, 10, 10], { __layout: { zIndex: 3 }, visible: false })]));
+
+    expect(node).toMatchObject({ layer: 3, visible: false });
+
+    const plain = first(container([at('panel', [0, 0, 10, 10], { __layout: {} })]));
+
+    expect(plain.layer).toBeUndefined();
+    expect(plain.visible).toBeUndefined();
+  });
+
+  describe('labels', () => {
+    it('maps every text variant to a label, shadowed by type', () => {
+      for (const type of ['text', 'text_shadow', 'text_wrap', 'text_shadow_wrap']) {
+        const node = first(container([text([0, 0, 10, 10], 'x', {}, {}, type)]));
+
+        expect(node.kind).toBe('label');
+        expect(node.kind === 'label' && (node.shadow ?? false)).toBe(type.includes('shadow'));
+      }
+    });
+
+    it('bakes the string with the font the label was measured with', () => {
+      const node = first(container([text([7, 7, 120, 10], '§fBEDROCK CORE', {}, { fontType: 'MinecraftTen', fontScaleFactor: 1.6 })]));
+
+      expect(node).toMatchObject({
+        kind: 'label',
+        text: '§fBEDROCK CORE',
+        localize: false,
+        fontType: 'MinecraftTen',
+        fontScaleFactor: 1.6,
+      });
+    });
+
+    it('localizes a label whose string is a translation key', () => {
+      const node = first(container([text([0, 0, 10, 10], 'core.title', { isKey: true, resolvedText: 'Title' })]));
+
+      expect(node).toMatchObject({ kind: 'label', text: 'core.title', localize: true });
+    });
+
+    it('bakes the resolved text of a message the client would have filled', () => {
+      const node = first(container([text([0, 0, 10, 10], { rawtext: [{ text: 'x' }] }, { isKey: true, resolvedText: 'Filled' })]));
+
+      expect(node).toMatchObject({ kind: 'label', text: 'Filled', localize: false });
+    });
+
+    it('folds the label nudge into the offset', () => {
+      const node = first(container([text([10, 10, 20, 10], 'x', {}, { labelX: 1, labelY: -2 })]));
+
+      expect(node.rect).toEqual({ x: 11, y: 8, width: 20, height: 10 });
+    });
+
+    it('draws a label the way <Text> does when the metrics are missing', () => {
+      const node = first(container([at('text', [0, 0, 10, 10], { value: { tail: 'x' } })]));
+
+      expect(node).toMatchObject({ kind: 'label', text: 'x', localize: false, fontType: 'default', fontScaleFactor: 2 });
+    });
+
+    it('turns a live label into a text run on the channel the allocation gave it', () => {
+      const tree = container([
+        at('button', [0, 0, 18, 18]),
+        text([0, 20, 24, 10], 'idle', { maxLength: 4 }),
+      ]);
+      const [, run] = convert(tree).root.children;
+
+      // One drawn cell occupies slot 1, so the bank opens at 2.
+      expect(run).toMatchObject({ kind: 'text', name: 'text_1', channel: 2, length: 4, keyPrefix: KEY_PREFIX, fontType: 'default' });
+    });
+  });
+
+  describe('images', () => {
+    it('reads the texture from the tail', () => {
+      const node = first(container([at('image', [0, 0, 16, 16], { value: { tail: 'textures/ui/icon' } })]));
+
+      expect(node).toEqual({ kind: 'image', name: 'image_1', rect: { x: 0, y: 0, width: 16, height: 16 }, texture: 'textures/ui/icon' });
+    });
+
+  });
+
+  describe('buttons', () => {
+    const button = (props: JSX.Props, children: JSX.Element[] = []): ButtonNode =>
+      buttonNode(first(container([at('button', [10, 10, 60, 20], props, children)])));
+
+    it('takes its slot from the allocation and its look from the component', () => {
+      const node = button({
+        background: 't/rest',
+        backgroundHover: 't/hover',
+        backgroundPressed: 't/pressed',
+        backgroundLocked: 't/off',
       });
 
-      expect(toIr(tree, options).root.children[0]?.kind).toBe('label');
-    }
+      expect(node).toMatchObject({
+        slot: 1,
+        face: { texture: 't/rest', hover: 't/hover', pressed: 't/pressed', disabled: 't/off' },
+      });
+    });
+
+    it('keeps the unstyled placeholder when the author styled nothing', () => {
+      const unstyled = 'textures/ui/unstyled';
+      const node = button({ background: unstyled, backgroundHover: unstyled, backgroundPressed: unstyled, backgroundLocked: unstyled });
+
+      expect(node.face).toEqual({ texture: unstyled, hover: unstyled, pressed: unstyled });
+    });
+
+    it('keeps the resting face for a disabled button unless a distinct one was given', () => {
+      const node = button({ background: 't/a', backgroundHover: 't/a', backgroundPressed: 't/a', backgroundLocked: 't/a' });
+
+      expect(node.face.disabled).toBeUndefined();
+    });
+
+    it('bakes its children relative to its own rect', () => {
+      const node = button({ background: 't/a' }, [text([36, 15, 8, 10], 'Go')]);
+
+      expect(node.children[0]).toMatchObject({ kind: 'label', text: 'Go', rect: { x: 26, y: 5, width: 8, height: 10 } });
+    });
+
+    it('is drawn the same whether or not it starts enabled', () => {
+      const enabled = button({ background: 't/a', enabled: true });
+      const disabled = button({ background: 't/a', enabled: false });
+
+      expect(disabled).toEqual(enabled);
+    });
   });
 
-  describe('allocation', () => {
-    const screen = (): LaidOutElement => at('panel', [0, 0, 176, 83], {
-      children: [
-        at('container_slot', [7, 40, 18, 18], { name: 'fuel' }),
-        at('image', [7, 20, 110, 6], { name: 'charge', clip: true, direction: 'left' }),
-        at('container_slot', [25, 40, 18, 18], { name: 'ingot' }),
-      ],
+  describe('slots', () => {
+    it('takes its index from the allocation, and its role and lock from the props', () => {
+      const doc = convert(container([
+        at('container-slot', [0, 0, 18, 18], { role: 'input' }),
+        at('container-slot', [18, 0, 18, 18], { role: 'output' }),
+        at('container-slot', [36, 0, 18, 18], { interactive: false }),
+        at('container-slot', [54, 0, 18, 18]),
+      ]));
+
+      expect(doc.root.children).toMatchObject([
+        { kind: 'slot', name: 'slot_1', slot: 1, role: 'input', interactive: true },
+        { kind: 'slot', name: 'slot_2', slot: 2, role: 'output', interactive: true },
+        { kind: 'slot', name: 'slot_3', slot: 3, role: 'both', interactive: false },
+        { kind: 'slot', name: 'slot_4', slot: 4, role: 'both', interactive: true },
+      ]);
     });
 
-    it('hands out slot indices in document order, after the sentinel', () => {
-      const [fuel, , ingot] = toIr(screen(), options).root.children;
+    it('reads a foreign slot from its source, and never from the allocation', () => {
+      const tree = container([
+        at('container-slot', [0, 0, 18, 18], { collection: 'inventory_items', index: 5, interactive: true }),
+        at('container-slot', [18, 0, 18, 18], { collection: 'hotbar_items', index: 0, interactive: false }),
+      ]);
+      const doc = convert(tree);
 
-      expect(fuel).toMatchObject({ kind: 'slot', name: 'fuel', slot: 1 });
-      expect(ingot).toMatchObject({ kind: 'slot', name: 'ingot', slot: 2 });
+      expect(doc.root.children).toMatchObject([
+        { kind: 'slot', name: 'slot_1', source: { collection: 'inventory_items', index: 5, interactive: true } },
+        { kind: 'slot', name: 'slot_2', source: { collection: 'hotbar_items', index: 0, interactive: false } },
+      ]);
+      // Nothing of the screen's own container is spent on a foreign slot.
+      expect(doc.allocation).toEqual({ sentinel: 0, drawn: 0, channels: 0, size: 1 });
+    });
+  });
+
+  describe('grids', () => {
+    it('converts a foreign grid to a grid node at its solved rect', () => {
+      const doc = convert(container([
+        at('slot-grid', [79, 120, 162, 54], { collection: 'inventory_items', columns: 9, rows: 3, interactive: true, hideOwned: true }),
+        at('slot-grid', [79, 178, 162, 18], { collection: 'hotbar_items', columns: 9, rows: 1, interactive: true, hideOwned: false }),
+      ]));
+
+      expect(doc.root.children).toEqual([
+        { kind: 'grid', name: 'grid_1', rect: { x: 79, y: 120, width: 162, height: 54 }, collection: 'inventory_items', columns: 9, rows: 3, interactive: true, hideOwned: true },
+        { kind: 'grid', name: 'grid_2', rect: { x: 79, y: 178, width: 162, height: 18 }, collection: 'hotbar_items', columns: 9, rows: 1, interactive: true, hideOwned: false },
+      ]);
     });
 
-    it('puts channels past the drawn range, where nothing on screen reaches', () => {
-      const doc = toIr(screen(), options);
-      const bar = doc.root.children[1];
+    it('spends nothing of the screen\'s own container', () => {
+      const tree = container([at('slot-grid', [0, 0, 162, 18], { collection: 'hotbar_items', columns: 9, rows: 1, interactive: true, hideOwned: true })]);
 
-      // Two drawn slots occupy 1 and 2, so the bank opens at 3.
-      expect(bar).toMatchObject({ kind: 'image', name: 'charge', channel: 3 });
-      expect(bar).toMatchObject({ channel: doc.allocation.drawn + 1 });
+      expect(convert(tree).allocation).toEqual({ sentinel: 0, drawn: 0, channels: 0, size: 1 });
     });
 
-    it('reports the inventory size the entity needs', () => {
-      expect(toIr(screen(), options).allocation)
-        .toEqual({ sentinel: 0, drawn: 2, channels: 1, size: 4 });
-    });
-
-    it('ignores any index the author tried to set', () => {
-      const tree = at('panel', [0, 0, 10, 10], {
-        children: [at('container_slot', [0, 0, 18, 18], { name: 'fuel', slot: 99 })],
+    it('names the host\'s owned-item renderer, so a hideOwned grid can reach it', () => {
+      const tree = container([]);
+      const doc = toIr(tree, allocate(tree), {
+        ...options,
+        host: { ...CHEST_HOST, namespace: 'crate', collection: 'crate_items' },
       });
 
-      expect(toIr(tree, options).root.children[0]).toMatchObject({ slot: 1 });
+      expect(doc.collection).toBe('crate_items');
+      expect(doc.ownedItemRenderer).toBe('crate.core_ui_gated_item');
     });
   });
 
-  describe('naming', () => {
-    it('prefers an explicit name, because the runtime handle keys on it', () => {
-      const tree = at('panel', [0, 0, 10, 10], {
-        children: [at('container_slot', [0, 0, 18, 18], { name: 'fuel' })],
-      });
+  describe('the backdrop', () => {
+    it('lifts the first <Background> out of the canvas', () => {
+      const doc = convert(container([
+        text([0, 0, 10, 10], 'a'),
+        at('background', [0, 0, 0, 0], { __background: 'textures/ui/first' }),
+        at('background', [0, 0, 0, 0], { __background: 'textures/ui/second' }),
+      ]));
 
-      expect(toIr(tree, options).root.children[0]?.name).toBe('fuel');
+      expect(doc.backdrop).toBe('textures/ui/first');
+      expect(doc.root.children.map(node => node.kind)).toEqual(['label']);
     });
 
-    it('generates stable names for anything unnamed', () => {
-      const tree = at('panel', [0, 0, 10, 10], {
-        children: [
-          at('text', [0, 0, 10, 10], { text: 'a' }),
-          at('text', [0, 12, 10, 10], { text: 'b' }),
-        ],
-      });
+    it('finds a <Background> nested anywhere', () => {
+      const doc = convert(container([
+        at('panel', [0, 0, 10, 10], {}, [at('background', [0, 0, 0, 0], { __background: 'textures/ui/deep' })]),
+      ]));
 
-      expect(toIr(tree, options).root.children.map(child => child.name))
-        .toEqual(['label_1', 'label_2']);
-    });
-
-    it('refuses duplicate explicit names rather than silently losing one', () => {
-      const tree = at('panel', [0, 0, 10, 10], {
-        children: [
-          at('container_slot', [0, 0, 18, 18], { name: 'fuel' }),
-          at('container_slot', [18, 0, 18, 18], { name: 'fuel' }),
-        ],
-      });
-
-      expect(() => toIr(tree, options)).toThrow(/Duplicate name "fuel"/);
+      expect(doc.backdrop).toBe('textures/ui/deep');
+      expect(panel(doc.root.children[0] ?? panel(doc.root)).children).toEqual([]);
     });
   });
 
-  it('names the control it cannot compile, and what it can', () => {
-    const tree = at('panel', [0, 0, 10, 10], {
-      children: [at('slider', [0, 0, 10, 10])],
+  it('reports the allocation in counts', () => {
+    const doc = convert(container([
+      at('button', [0, 0, 18, 18]),
+      at('container-slot', [18, 0, 18, 18]),
+      text([0, 20, 24, 10], 'idle', { maxLength: 4 }),
+    ]));
+
+    expect(doc.allocation).toEqual({ sentinel: 0, drawn: 2, channels: 4, size: 7 });
+  });
+
+  it('generates stable per-kind names', () => {
+    const doc = convert(container([
+      text([0, 0, 10, 10], 'a'),
+      at('panel', [0, 0, 10, 10], {}, [text([0, 0, 10, 10], 'b')]),
+      at('image', [0, 0, 10, 10], { value: { tail: 't' } }),
+    ]));
+
+    expect(doc.root.children.map(node => node.name)).toEqual(['label_1', 'panel_1', 'image_1']);
+    expect(panel(doc.root.children[1] ?? doc.root).children[0]?.name).toBe('label_2');
+  });
+
+  describe('refusals', () => {
+    it('names the control it cannot compile, and what it can', () => {
+      const tree = container([at('slider', [0, 0, 10, 10])]);
+
+      expect(() => convert(tree)).toThrow(UnsupportedNodeError);
+      expect(() => convert(tree)).toThrow(/<slider> has no compiled form/);
+      expect(() => convert(tree)).toThrow(/Panel, Text, Image, Button, Slot, SlotGrid, PlayerInventory, Hotbar, Background, Scroll/);
     });
 
-    expect(() => toIr(tree, options)).toThrow(UnsupportedNodeError);
-    expect(() => toIr(tree, options)).toThrow(/<slider> has no compiled form yet/);
-  });
+    it('refuses a tree without a container at its root', () => {
+      const tree = at('panel', [0, 0, 10, 10]);
 
-  it('wraps a non-panel root so the document always has one', () => {
-    const doc = toIr(at('text', [0, 0, 100, 10], { text: 'only' }), options);
-
-    expect(doc.root.kind).toBe('panel');
-    expect(doc.root.children[0]?.kind).toBe('label');
-  });
-
-  it('refuses an empty screen', () => {
-    expect(() => toIr(at('fragment', [0, 0, 0, 0], { children: [] }), options))
-      .toThrow(/must render at least one control/);
-  });
-  it('numbers channels in document order, and a text run takes a slot per cell', () => {
-    // A text run is one channel by name but many slots underneath, because a
-    // slot carries one character. The next channel starts past the whole run,
-    // so adding a character does not silently renumber the bar after it.
-    const tree = at('panel', [0, 0, 176, 83], {
-      children: [
-        at('container_slot', [0, 0, 18, 18]),
-        at('container_text', [0, 20, 24, 10], { name: 'status', maxLength: 4 }),
-        at('image', [0, 40, 100, 6], { name: 'charge', clip: true }),
-      ],
+      expect(() => convert(tree)).toThrow(ContainerScreenError);
     });
 
-    const doc = toIr(tree, options);
-    const [, text, bar] = doc.root.children;
+    it('refuses a container that names no entity', () => {
+      const tree = at('container', [0, 0, 320, 210], { __container: { entity: '' } });
 
-    expect(text).toMatchObject({ kind: 'text', name: 'status', channel: 2, length: 4 });
-    expect(bar).toMatchObject({ kind: 'image', name: 'charge', channel: 6 });
-    expect(doc.allocation).toEqual({ sentinel: 0, drawn: 1, channels: 5, size: 7 });
-  });
-
-  it('leaves a static label costing no channel at all', () => {
-    const tree = at('panel', [0, 0, 176, 83], {
-      children: [at('text', [0, 0, 100, 10], { text: 'hi' })],
+      expect(() => convert(tree)).toThrow(ContainerScreenError);
     });
 
-    const doc = toIr(tree, options);
+    it('refuses an allocation made from a different tree', () => {
+      const tree = container([at('button', [0, 0, 18, 18])]);
+      const other = container([]);
 
-    expect(doc.root.children[0]).toMatchObject({ kind: 'label', text: 'hi' });
-    expect(doc.allocation.channels).toBe(0);
+      expect(() => toIr(tree, allocate(other), options)).toThrow(/no cell/);
+      expect(() => toIr(other, allocate(tree), options)).toThrow(/must see the same tree/);
+    });
   });
-
 });

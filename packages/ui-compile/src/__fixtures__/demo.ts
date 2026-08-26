@@ -1,83 +1,181 @@
+import { KEY_PREFIX } from '@bedrock-core/ui-runtime/compile';
 import type { IrDocument } from '../ir';
 
 /**
- * A screen exercising every node kind the emitter can produce: a title, a fill
- * clipped by a bank slot nothing draws, a button slot, a row of eight, and a
- * vanilla control asked for by name.
+ * A screen exercising every node kind the emitter can produce: a shadowed
+ * title, a translation key, a live text run, a track image,
+ * two buttons with a baked caption each, a locked, an input and an ordinary
+ * slot, a static item
+ * icon, and the player's own grids asked for by name.
  *
- * Shared by the emitter tests and by `scripts/emit-demo.ts`, which writes the
- * result into the reference pack. That is the point of sharing it — the JSON UI
- * that ships is the emitter's own output, so the golden test and the in-game
- * check are testing the same bytes.
+ * Shared by the emitter tests and the artifact test, so the JSON UI the tests
+ * assert on is the emitter's own output rather than something typed by hand.
  *
- * Rects are what the flexbox pass will solve for:
+ * Rects are what the flexbox pass solves for:
  *
- *   <Panel flexDirection={'column'} gap={4} padding={7}>
- *     <Text>…</Text>
- *     <Panel flexDirection={'row'} gap={4} alignItems={'center'}>
- *       <Progress name={'charge'} flexGrow={1} />
- *       <Slot.Button name={'toggle'} />
+ *   <Container entity={'core:demo'} background={…} padding={7} gap={4}>
+ *     <Background texture={…} />
+ *     <Text shadow font={'minecraftTen'}>{'§fBEDROCK CORE'}</Text>
+ *     <Text>{'core.demo.subtitle'}</Text>
+ *     <Text maxLength={8}>{mode}</Text>
+ *     <Panel zIndex={2}>
+ *       <Image texture={track} />
  *     </Panel>
- *     <SlotGrid name={'bay'} rows={1} cols={8} />
- *   </Panel>
+ *     <Panel flexDirection={'row'} gap={4}>
+ *       <Button backgroundLocked={…}>{'+'}</Button>
+ *       <Button backgroundLocked={…}>{'-'}</Button>
+ *     </Panel>
+ *     <Panel flexDirection={'row'} gap={4}>
+ *       <Slot interactive={false} /> <Slot role={'input'} /> <Slot />
+ *     </Panel>
+ *     <PlayerInventory /> <Hotbar />
+ *   </Container>
  *
- * Canvas is the vanilla chest top half: 176 x 83, origin at its top left.
+ * Canvas is the canonical screen: 320 x 210, origin at its top left.
  */
 export const demoScreen: IrDocument = {
-  namespace: 'bcui_demo',
+  namespace: 'core_ui_demo',
   collection: 'container_items',
-  entry: 'screen',
-  // Nine drawn slots after the sentinel, one channel in the bank behind them.
-  // Written out here because the fixture is hand-built; a real screen gets this
-  // from `toIr`, which hands the indices out itself.
-  allocation: { sentinel: 0, drawn: 9, channels: 1, size: 11 },
+  entity: 'core:demo',
+  ownedItemRenderer: 'chest.core_ui_gated_item',
+  // Five drawn cells after the sentinel, then eight bank slots for the text
+  // run. Written out here because the fixture is hand-built; a real screen
+  // gets this from the allocation walk.
+  allocation: { sentinel: 0, drawn: 5, channels: 8, size: 14 },
+  backdrop: 'textures/ui/demo_backdrop',
   root: {
     kind: 'panel',
-    name: 'canvas',
-    rect: { x: 0, y: 0, width: 176, height: 83 },
+    name: 'root',
+    rect: { x: 0, y: 0, width: 320, height: 210 },
+    background: 'textures/ui/dialog_background_opaque',
     children: [
       {
         kind: 'label',
-        name: 'title',
-        rect: { x: 7, y: 4, width: 162, height: 10 },
-        text: '§fCompiled screen — emitted by @bedrock-core/ui-compile',
+        name: 'label_1',
+        rect: { x: 7, y: 7, width: 120, height: 10 },
+        text: '§fBEDROCK CORE',
+        localize: false,
+        fontType: 'MinecraftTen',
+        fontScaleFactor: 2,
         shadow: true,
       },
       {
-        kind: 'image',
-        name: 'track',
-        rect: { x: 7, y: 20, width: 110, height: 6 },
-        texture: 'textures/ui/brewing_fuel_bar_empty',
+        kind: 'label',
+        name: 'label_2',
+        rect: { x: 7, y: 21, width: 90, height: 10 },
+        visible: false,
+        text: 'core.demo.subtitle',
+        localize: true,
+        fontType: 'default',
+        fontScaleFactor: 2,
       },
       {
-        kind: 'image',
-        name: 'fill',
-        rect: { x: 7, y: 20, width: 110, height: 6 },
-        texture: 'textures/ui/brewing_fuel_bar_full',
-        channel: 10,
-        direction: 'left',
+        kind: 'text',
+        name: 'text_1',
+        rect: { x: 7, y: 35, width: 48, height: 10 },
+        channel: 6,
+        length: 8,
+        keyPrefix: KEY_PREFIX,
+        fontType: 'default',
+        fontScaleFactor: 2,
       },
       {
-        kind: 'ref',
-        name: 'player_inventory',
-        rect: { x: 0, y: 60, width: 176, height: 0 },
-        ref: 'common.inventory_panel_bottom_half_with_label',
-        sized: false,
+        kind: 'panel',
+        name: 'panel_1',
+        rect: { x: 7, y: 49, width: 306, height: 6 },
+        layer: 2,
+        children: [
+          {
+            kind: 'image',
+            name: 'image_1',
+            rect: { x: 0, y: 0, width: 306, height: 6 },
+            texture: 'textures/ui/brewing_fuel_bar_empty',
+          },
+        ],
       },
       {
-        kind: 'slot',
-        name: 'toggle',
-        rect: { x: 151, y: 14, width: 18, height: 18 },
-        slot: 1,
-        role: 'button',
+        kind: 'panel',
+        name: 'panel_2',
+        rect: { x: 7, y: 59, width: 306, height: 20 },
+        children: [
+          {
+            kind: 'button',
+            name: 'button_1',
+            rect: { x: 0, y: 0, width: 60, height: 20 },
+            slot: 1,
+            face: {
+              texture: 'textures/ui/button_borderless_light',
+              hover: 'textures/ui/button_borderless_lighthover',
+              pressed: 'textures/ui/button_borderless_lightpressed',
+              disabled: 'textures/ui/disabledButton',
+            },
+            children: [
+              {
+                kind: 'label',
+                name: 'label_3',
+                rect: { x: 26, y: 5, width: 8, height: 10 },
+                text: '+',
+                localize: false,
+                fontType: 'default',
+                fontScaleFactor: 2,
+              },
+            ],
+          },
+          {
+            kind: 'button',
+            name: 'button_2',
+            rect: { x: 64, y: 0, width: 60, height: 20 },
+            slot: 2,
+            face: {
+              texture: 'textures/ui/button_borderless_light',
+              hover: 'textures/ui/button_borderless_lighthover',
+              pressed: 'textures/ui/button_borderless_lightpressed',
+              disabled: 'textures/ui/disabledButton',
+            },
+            children: [
+              {
+                kind: 'label',
+                name: 'label_4',
+                rect: { x: 26, y: 5, width: 8, height: 10 },
+                text: '-',
+                localize: false,
+                fontType: 'default',
+                fontScaleFactor: 2,
+              },
+            ],
+          },
+        ],
       },
-      ...Array.from({ length: 8 }, (_, i) => ({
-        kind: 'slot' as const,
-        name: `bay_${i}`,
-        rect: { x: 7 + i * 18, y: 40, width: 18, height: 18 },
-        slot: 2 + i,
-        role: 'both' as const,
-      })),
+      {
+        kind: 'panel',
+        name: 'panel_3',
+        rect: { x: 7, y: 83, width: 306, height: 18 },
+        children: [
+          { kind: 'slot', name: 'slot_1', rect: { x: 0, y: 0, width: 18, height: 18 }, slot: 3, role: 'both', interactive: false },
+          { kind: 'slot', name: 'slot_2', rect: { x: 22, y: 0, width: 18, height: 18 }, slot: 4, role: 'input', interactive: true },
+          { kind: 'slot', name: 'slot_3', rect: { x: 44, y: 0, width: 18, height: 18 }, slot: 5, role: 'both', interactive: true },
+        ],
+      },
+      {
+        kind: 'grid',
+        name: 'grid_1',
+        rect: { x: 79, y: 125, width: 162, height: 54 },
+        collection: 'inventory_items',
+        columns: 9,
+        rows: 3,
+        interactive: true,
+        hideOwned: true,
+      },
+      {
+        kind: 'grid',
+        name: 'grid_2',
+        rect: { x: 79, y: 183, width: 162, height: 18 },
+        collection: 'hotbar_items',
+        columns: 9,
+        rows: 1,
+        interactive: true,
+        hideOwned: true,
+      },
     ],
   },
 };

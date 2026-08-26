@@ -53,8 +53,8 @@ export type BindingCondition
     | 'always_when_visible'
     | 'visibility_changed';
 
-/** NOT documented by Mojang; taken from vanilla. */
-export type ClipDirection = 'left' | 'right' | 'up' | 'down' | 'center';
+/** Documented by Mojang. `small` is the base the form render pack scales from. */
+export type FontSize = 'small' | 'normal' | 'large' | 'extra_large';
 
 /** A size or offset component: pixels, or a string form such as `"100%"`. */
 export type Measure = number | string;
@@ -78,6 +78,9 @@ export interface Binding {
   binding_name_override?: string;
   binding_collection_name?: string;
   binding_condition?: BindingCondition;
+  /** Undocumented by Mojang. Reads a property off a sibling control by name. */
+  source_control_name?: string;
+  resolve_sibling_scope?: boolean;
   source_property_name?: string;
   target_property_name?: string;
 }
@@ -94,6 +97,8 @@ export interface Control {
   anchor_from?: Anchor;
   anchor_to?: Anchor;
   layer?: number;
+  /** Documented. Emitted only as `false`: a control is visible unless hidden. */
+  visible?: boolean;
   orientation?: 'horizontal' | 'vertical';
   controls?: ControlEntry[];
   bindings?: Binding[];
@@ -104,14 +109,22 @@ export interface Control {
   shadow?: boolean;
   /** Undocumented by Mojang. Labels localize by default; literals need this off. */
   localize?: boolean;
+  /** Documented. A font alias such as `default` or `MinecraftTen`. */
+  font_type?: string;
+  font_size?: FontSize;
+  /** Documented. Multiplies `font_size`; the form render pack draws every label this way. */
+  font_scale_factor?: number;
 
   /* image */
   texture?: string;
   /** Documented. Images preserve their texture's aspect ratio unless this is off. */
   keep_ratio?: boolean;
-  /** Undocumented by Mojang, and the only way to draw a bar. */
-  clip_direction?: ClipDirection;
-  clip_pixelperfect?: boolean;
+
+  /* custom renderers */
+  /** Documented. Which engine renderer a `custom` control draws with. */
+  renderer?: string;
+  /** Documented. Initial values of the properties a renderer reads. */
+  property_bag?: Record<string, unknown>;
 
   /* collections */
   collection_name?: string;
@@ -120,6 +133,10 @@ export interface Control {
    * declares `collection_name`; anywhere else the engine rejects it outright.
    */
   collection_index?: number | string;
+  /** Documented. Columns and rows of a `grid`. */
+  grid_dimensions?: [number, number];
+  /** Documented. The definition a `grid` instantiates per cell. */
+  grid_item_template?: string;
 
   /* buttons */
   /**
@@ -131,12 +148,20 @@ export interface Control {
   hover_control?: string;
   pressed_control?: string;
   default_control?: string;
+  /** Documented. A control with this off takes no focus, so it cannot be interacted with. */
+  focus_enabled?: boolean;
   /**
    * Documented. Routes input on this control to engine actions. A derived
    * control's array REPLACES its base's, which is what lets a button slot swap
    * vanilla's take-to-cursor for auto-place wholesale.
    */
   button_mappings?: ButtonMapping[];
+
+  /* custom renderers */
+  /** Undocumented by Mojang. The paper doll faces the pointer unless this spins it. */
+  rotation?: 'auto';
+  /** Undocumented. The paper doll draws the equipped skin when false. */
+  use_selected_skin?: boolean;
 
   /** Pack-defined variables. Legal in ordinary properties, never in a binding. */
   [variable: `$${string}`]: unknown;
