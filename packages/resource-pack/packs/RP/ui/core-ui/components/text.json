@@ -16,9 +16,12 @@
 	// Controls per label cell: 12 vs 19 in the variant model, and ONE 28-binding base
 	// decode instead of five.
 	//
-	// Layer parity with the old variant model: the cell sits at layer 0 and cell_bg
-	// with it (old panel variant), the text frames at 100 (old text variant) — so a
-	// Card panel's bg still renders beneath its children's text cells.
+	// A form's collection cells draw in a per-KIND band, not by emit order: the scroll
+	// pool instantiates the collection per slot, so order among overlapping equal-layer
+	// cells is non-deterministic (it flickers on scroll). So the cell sits at the base
+	// layer and cell_bg with it, and the text frames at 100 — a Card panel's bg renders
+	// beneath every cell's text, stably. True per-element z-order needs a container
+	// screen, where layer is a baked literal per control (see ui-compile emit).
 	//
 	// NOTE: computed #bindings do NOT propagate to children — every leaf that needs
 	// payload fields binds + decodes them itself. Payload-source $vars
@@ -26,7 +29,6 @@
 	// through instantiation into the whole subtree (the modal label router overrides
 	// them to custom_form / #custom_text / collection_details).
 	"label_cell@core_ui_common.control": {
-		"layer": 0,
 		/* every label-slot type renders through this cell — the only gate is the
 		   serialized visible flag; the leaves route the type. */
 		"$type_gate": "#pre_visible",

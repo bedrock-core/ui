@@ -1,51 +1,35 @@
-import { type Player, world } from '@minecraft/server';
-import { createContainerScreen } from '@bedrock-core/ui-runtime/container';
-import { demo } from '@bedrock-core/generated/ui';
+import type { Block } from '@minecraft/server';
+import { createContainerScreen } from '@bedrock-core/ui/container';
+import Furnace from '../screens/furnace.screen';
 
 /**
  * Serving the compiled screen.
  *
  * This is the whole behaviour-pack side. The screen describes itself — its
- * state, its handlers and its text are all in the JSX — so there is nothing to
- * repeat here and no second place for the two to drift apart.
- *
- * The handle is written by the ui-compile filter into `packs/data/ui/`, never
- * into BP: a filter reads the pack folders and produces a build, it does not
- * edit them.
+ * state, its handlers and its text are all in the JSX — so nothing is repeated
+ * here and there is no second place for the two to drift apart. The build
+ * compiled the same module into JSON UI; the runtime runs it again per viewer
+ * to produce the live values.
  */
-// Debug on while the runtime is being shaken out: every action reports where
-// each item ended up, which is the only way to see a container bug from inside
-// the game.
-const screen = createContainerScreen(demo, { debug: true });
-
-world.afterEvents.worldLoad.subscribe(() => {
-  if (demo.screen.entity) {
-    screen.attachToEntity(demo.screen.entity);
-  }
-});
+const screen = createContainerScreen(Furnace);
 
 /**
- * Spawns one to open, since the host entity is not placeable.
+ * Spawns one to open, on top of the button that was pressed, since the host
+ * entity is not placeable.
  *
  * Nothing opens a container from script, so a screen is bound to something in
  * the world and shown when the player interacts with it.
  */
-export const spawnDemo = (player: Player): void => {
-  const type = demo.screen.entity;
+export const spawnDemo = (button: Block): void => {
+  const { dimension } = button;
 
-  if (!type) {
-    return;
-  }
-
-  for (const existing of player.dimension.getEntities({ type })) {
+  for (const existing of dimension.getEntities({ type: screen.entity })) {
     existing.remove();
   }
 
-  const facing = player.getViewDirection();
-
-  player.dimension.spawnEntity(type, {
-    x: player.location.x + facing.x * 2,
-    y: player.location.y,
-    z: player.location.z + facing.z * 2,
+  dimension.spawnEntity(screen.entity, {
+    x: button.x + 0.5,
+    y: button.y + 1,
+    z: button.z + 0.5,
   });
 };

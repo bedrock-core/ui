@@ -1,9 +1,10 @@
 {
 	// Routes HEADER-slot factory entries. The TS side emits `<Image>` cells through
 	// `form.header(payload)` on ActionForms (see emitHeader): the native factory routes
-	// header entries to this control_id directly, so an image cell instantiates ONLY
-	// this slim router + one component — engine-level type routing with none of the
-	// 6-variant label_router fan-out or `#type` gating cost.
+	// header entries to this control_id directly, so a cell instantiates ONLY this
+	// slim router + the components it routes (an image, an entity) — engine-level
+	// type routing with none of the label_router fan-out; a hidden variant costs
+	// one type gate.
 	//
 	// Region gate: same shape as label_router/button_router — the router decodes the
 	// cell's region field once ([523-605], direct absolute slice) and hides itself on a

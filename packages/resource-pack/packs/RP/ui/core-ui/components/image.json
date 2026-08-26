@@ -8,8 +8,8 @@
 	// through instantiation into both the base bindings and the child (modal
 	// label_router overrides them).
 	"image@core_ui_common.control": {
-		"layer": 80,
 		"$type_gate": "(#pre_visible and (#type = 'image'))",
+		"layer": 80,
 		"controls": [
 			{
 				"img": {

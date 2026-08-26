@@ -87,10 +87,11 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
   }
 
   if (block.typeId === MinecraftBlockTypes.CrimsonButton) {
-    // Compiled container screen. The layout comes from RP/ui/demo.screen.tsx and
-    // the behaviour from scripts/container/demo.ts — neither of which knows a
-    // slot index or an inventory size; the compiler hands those out.
-    spawnDemo(source);
+    // Compiled container screen. scripts/screens/furnace.screen.tsx is both the
+    // layout the build baked and the behaviour the runtime serves;
+    // scripts/container/demo.ts only attaches it. Neither knows a slot index or
+    // an inventory size; the compiler hands those out.
+    spawnDemo(block);
   }
 
   if (block.typeId === MinecraftBlockTypes.CherryButton) {

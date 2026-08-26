@@ -4,7 +4,7 @@
 	//
 	// REGION GATE LIVES HERE (Stage 1 perf shape, see label_router): the router decodes
 	// the cell's region field once and hides itself on a mismatch, so wrong-region cells
-	// never run the button/item_renderer decodes. The base control no longer decodes
+	// never run the button decodes. The base control no longer decodes
 	// region. Region 0 is the default; pooled scrolls point their factories at the _rN
 	// variants below.
 	"namespace": "core_ui_common",
@@ -62,9 +62,6 @@
 		"controls": [
 			{
 				"button@core_ui_components.button": {}
-			},
-			{
-				"item_renderer@core_ui_components.item_renderer": {}
 			}
 		]
 	},

@@ -1,4 +1,5 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
+import { Card } from '@bedrock-core/ore-styled';
 import { Button, Dropdown, Image, Input, Panel, Slider, Text, useState, type JSX } from '@bedrock-core/ui';
 
 const MODES = ['Easy', 'Normal', 'Hard', 'Expert'];
@@ -27,6 +28,16 @@ export function UnstyledPrimitives(): JSX.Element {
         </Button>
       </Panel>
 
+      <Text>{'§e§lText maxLength'}</Text>
+      {/* A literal is cut to `maxLength` characters; a translation key is left
+          whole, since the client resolves it. In a container screen the same
+          prop makes the text live. */}
+      <Card>
+        <Panel flexDirection={'row'} gap={0}>
+          <Text maxLength={12}>{'This literal is cut at twelve characters'}</Text>
+          <Text maxLength={7}>{'and this one at 7!'}</Text>
+        </Panel>
+      </Card>
       <Text>{'§e§lImage (default texture)'}</Text>
       <Image width={32} height={32} />
 

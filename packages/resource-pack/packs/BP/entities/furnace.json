@@ -2,25 +2,18 @@
 	"format_version": "1.21.0",
 	"minecraft:entity": {
 		"description": {
-			"identifier": "core:spike_container",
+			"identifier": "core:furnace",
 			"is_spawnable": false,
 			"is_summonable": true,
 			"is_experimental": false
 		},
 		"components": {
-			// SPIKE — `container` is the only container_type that routes to
-			// chest_screen.json. 54 was measured: the engine picks small_chest_screen,
-			// whose grid draws 27, while #collection_total_items reports the full 54.
-			//
-			// Now testing the CEILING, because <SlotGrid rows cols> needs to know it.
-			// 200 is the first probe. Watch for: does the container open at all, does
-			// the screen still report the full count, and does poll cost scale with
-			// size (the Q5 line already measures it). If 200 works, try 500.
+			// Sized by the ui-compile filter from the screen that names this entity:
+			// the drawn slots plus the live channels behind them. Hoppers must not
+			// reach those channels, so nothing may siphon from it.
 			"minecraft:inventory": {
 				"container_type": "container",
-				"inventory_size": 200,
 				"private": false,
-				"restrict_to_owner": false,
 				"can_be_siphoned_from": false
 			},
 			"minecraft:physics": {
@@ -54,7 +47,7 @@
 			"minecraft:persistent": {},
 			"minecraft:type_family": {
 				"family": [
-					"bcui_spike",
+					"core_ui_furnace",
 					"inanimate"
 				]
 			},

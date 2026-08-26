@@ -48,9 +48,7 @@
 							"namespace": "core"
 						}
 					},
-					{
-						"filter": "ui-compile"
-					},
+					{ "filter": "ui-compile", "settings": { "namespace": "core" } },
 					{
 						"filter": "bundler",
 						"settings": {
@@ -78,9 +76,7 @@
 							"namespace": "core"
 						}
 					},
-					{
-						"filter": "ui-compile"
-					},
+					{ "filter": "ui-compile", "settings": { "namespace": "core" } },
 					{
 						"filter": "bundler",
 						"settings": {
