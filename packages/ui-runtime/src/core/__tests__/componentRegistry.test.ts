@@ -17,7 +17,6 @@ describe('componentRegistry', () => {
     expect(types).toContain('panel');
     expect(types).toContain('text');
     expect(types).toContain('image');
-    expect(types).toContain('item_renderer');
   });
 
   it('marks fragment / context-provider as transparent and renderables as not', () => {

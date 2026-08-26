@@ -1,8 +1,9 @@
-import { type Player } from '@minecraft/server';
+import { MAX_POOLED_SCROLLS } from '../../components/Scroll';
 import type { JSX } from '../../jsx';
-import { deleteFiber, getFibersForPlayer } from '../fabric';
-import { applyInheritance, expandAndResolveContexts, computeLayout } from './phases';
+import { deleteFiber, getFibersForOwner, type Owner } from '../fabric';
+import { applyInheritance, computeLayout, expandAndResolveContexts } from './phases';
 import { createInitialContext, createRootContext, type TraversalContext } from './traversal';
+import { validateContainer } from './validateContainer';
 import { validateForm } from './validateForm';
 
 /**
@@ -18,17 +19,18 @@ import { validateForm } from './validateForm';
  * Phase 1: Expand function components and resolve contexts
  * Phase 2: Compute layout using flexbox algorithm (resolves sizes and positions to absolute Pocket-space texels)
  * Phase 3: Apply parent-child inheritance rules (visibility, enabled)
+ * Phase 4: Enforce the rules of the backend the owner implies
  *
  * @param element - Root JSX element to build
- * @param player - Player rendering the component
+ * @param owner - Who the render belongs to: a player for a form, an entity or the build for a container screen
  * @returns Fully processed JSX element tree and list of created instances
  */
-export function buildTree(element: JSX.Element, player: Player): JSX.Element {
+export function buildTree(element: JSX.Element, owner: Owner): JSX.Element {
   // Initialize traversal context
   const context: TraversalContext = createInitialContext();
 
-  // Reset tree relations for this player's existing fibers before rebuilding
-  const existing = getFibersForPlayer(player);
+  // Reset tree relations for this owner's existing fibers before rebuilding
+  const existing = getFibersForOwner(owner);
 
   for (const f of existing) {
     f.parent = undefined;
@@ -40,12 +42,14 @@ export function buildTree(element: JSX.Element, player: Player): JSX.Element {
   // Phase 1: Expand function components and resolve contexts
   // This creates instances for ALL components in the tree
   // Returns "LayoutProps"
-  let result: JSX.Element = expandAndResolveContexts(element, context, player);
+  let result: JSX.Element = expandAndResolveContexts(element, context, owner);
 
   // Phase 2: Compute layout using flexbox algorithm
   // Resolves sizes and x/y positions to absolute Pocket-space texels
   // Returns "NormalizedControlProps"
-  result = computeLayout(result);
+  // A form draws its scrolls from the render pack's fixed pool; a compiled
+  // screen emits a scroll region per <Scroll>, so nothing caps it.
+  result = computeLayout(result, owner.kind === 'player' ? MAX_POOLED_SCROLLS : Number.POSITIVE_INFINITY, owner.kind !== 'player');
 
   // Phase 3: Apply parent-child inheritance rules (visibility, enabled)
   // Initialize with root parent state
@@ -53,24 +57,29 @@ export function buildTree(element: JSX.Element, player: Player): JSX.Element {
 
   result = applyInheritance(result, rootContext);
 
-  // Enforce form restrictions (modal vs ActionForm) on the fully-expanded tree, so
-  // dynamically-built or type-escaped trees fail loud before the presenter picks a
-  // backend.
-  validateForm(result);
+  // Phase 4: The owner decides the backend, and the backend decides which rules
+  // the built tree has to satisfy — a form for a player, a compiled container
+  // screen for an entity or a build — so dynamically-built or type-escaped
+  // trees fail loud before anything is presented or emitted.
+  if (owner.kind === 'player') {
+    validateForm(result);
+  } else {
+    validateContainer(result);
+  }
 
   return result;
 }
 
 /**
- * Clean up all fibers for a player (stop effects, delete instances).
+ * Clean up all fibers for an owner (stop effects, delete instances).
  *
- * @param player - Player whose components are being cleaned up
+ * @param owner - Whose components are being cleaned up
  */
-export function cleanupComponentTree(player: Player): void {
-  const fiberIds = getFibersForPlayer(player);
+export function cleanupComponentTree(owner: Owner): void {
+  const fibers = getFibersForOwner(owner);
 
   // Sort by depth (deepest first) to clean up children before parents
-  const sortedFibers = fiberIds.sort((a, b) => {
+  const sortedFibers = fibers.sort((a, b) => {
     const depthA = (a.id.match(/\//g) || []).length;
     const depthB = (b.id.match(/\//g) || []).length;
 

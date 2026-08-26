@@ -41,16 +41,21 @@ export type {
   SerializablePrimitive,
   SerializableProps,
   SerializationContext,
-  SerializationError,
-  TranslationKeysError,
-  ItemAuxError,
-  ScrollLimitError,
-  ModalFormError,
   Writer,
 } from './types';
 
+// Error classes are VALUES, not types: they are exported so callers can catch
+// them with `instanceof`.
 export {
-  isFunction, isElement, isNode,
+  ContainerScreenError,
+  ModalFormError,
+  ScrollLimitError,
+  SerializationError,
+  TranslationKeysError,
+} from './types';
+
+export {
+  isFunction, isElement, isNode, childElements,
   isActionForm, isModalForm, isActionContext, isModalContext,
 } from './guards';
 
@@ -58,9 +63,13 @@ export {
   getCurrentFiber,
   invariant,
   createContext,
+  BUILD_OWNER,
+  entityOwner,
+  playerOwner,
 } from './fabric';
 
 export type {
   Context,
   ContextProps,
+  Owner,
 } from './fabric';

@@ -63,6 +63,8 @@ interface TextMetricsData {
   wordBreak?: TextWordBreak;
   overflow?: TextOverflow;
   maxLines?: number;
+  /** Characters the text reserves room for, whatever it says right now. */
+  maxLength?: number;
 }
 
 /** The string content of a `value` prop — plain, or inside a v0008 tail wrapper. */
@@ -98,6 +100,7 @@ function extractTextMetrics(props: JSX.Props): TextMetricsData {
   const wordBreak = Reflect.get(metrics, 'wordBreak');
   const overflow = Reflect.get(metrics, 'overflow');
   const maxLines = Reflect.get(metrics, 'maxLines');
+  const maxLength = Reflect.get(metrics, 'maxLength');
 
   return {
     text,
@@ -106,7 +109,43 @@ function extractTextMetrics(props: JSX.Props): TextMetricsData {
     wordBreak: wordBreak === 'break-word' ? wordBreak : undefined,
     overflow: overflow === 'ellipsis' ? overflow : undefined,
     maxLines: typeof maxLines === 'number' ? maxLines : undefined,
+    maxLength: typeof maxLength === 'number' && maxLength >= 1 ? Math.floor(maxLength) : undefined,
   };
+}
+
+/**
+ * The glyph a reservation is measured with. Every capital, digit and most
+ * lowercase glyphs share the widest advance in both fonts, so a run of this
+ * one is the widest string `maxLength` characters can be.
+ */
+const WIDEST_GLYPH = 'W';
+
+/**
+ * Whether a `maxLength` text reserves room for its widest possible content.
+ *
+ * A container screen's live text changes after the layout is frozen, so its
+ * box must fit the widest string `maxLength` can hold. A form cuts the literal
+ * to `maxLength` and re-measures it every render, so it reserves nothing and
+ * the box hugs the text.
+ */
+let reserveLiveText = true;
+
+/**
+ * The width a text reserves with `maxLength`: room for that many of the widest
+ * glyph, so the box holds whatever the text later says. A live text in a
+ * container screen changes after the layout is frozen, and the string the
+ * build measured is only what it said first.
+ */
+function reservedWidth(td: TextMetricsData): number {
+  if (td.maxLength === undefined) {
+    return 0;
+  }
+
+  return measureText({
+    text: WIDEST_GLYPH.repeat(td.maxLength),
+    font: td.font,
+    fontSize: td.scale,
+  }).width;
 }
 
 // ─── Text overflow processing ───────────────────────────────────────────────────
@@ -282,7 +321,7 @@ function withIntrinsicSize(element: JSX.Element, style: FlexStyle): FlexStyle {
   const next: FlexStyle = { ...style };
 
   if (next.width === undefined) {
-    next.width = dims.width;
+    next.width = reserveLiveText ? Math.max(dims.width, reservedWidth(td)) : dims.width;
   }
 
   if (next.height === undefined) {
@@ -609,9 +648,18 @@ function resolveDerivedProps(element: JSX.Node): void {
  * extent }` is written to `tree.props.jsonUIScrolls` (index 0 = main) for the presenter.
  *
  * @param tree Root JSX element after Phase 1 (function components expanded).
+ * @param maxScrolls How many `<Scroll>`s the backend can show. The form render pack pools a
+ *   fixed number of viewports; a compiled container screen emits one per scroll.
+ * @param reserve Whether `maxLength` text reserves its widest possible width. True for a
+ *   container build (live text grows); false for a form (the literal is cut and measured).
  * @returns The same element tree, mutated in-place with layout values.
  */
-export function computeLayout(tree: JSX.Element): JSX.Element {
+export function computeLayout(
+  tree: JSX.Element,
+  maxScrolls: number = MAX_POOLED_SCROLLS,
+  reserve: boolean = true,
+): JSX.Element {
+  reserveLiveText = reserve;
   const slots: JSX.Element[] = [];
 
   findScrolls(tree, slots);
@@ -620,10 +668,10 @@ export function computeLayout(tree: JSX.Element): JSX.Element {
   // MAX_POOLED_SCROLLS custom viewports (indices 1..MAX_POOLED_SCROLLS, a deliberate
   // perf cap — every mounted slot re-instantiates the full collection), so any beyond
   // that would never render.
-  if (slots.length > MAX_POOLED_SCROLLS) {
+  if (slots.length > maxScrolls) {
     throw new ScrollLimitError(
-      `Too many <Scroll>s: found ${slots.length}, but a render supports at most ${MAX_POOLED_SCROLLS} `
-      + `(plus the implicit root scroll). Scrolls beyond the ${MAX_POOLED_SCROLLS}th would not render.`,
+      `Too many <Scroll>s: found ${slots.length}, but a render supports at most ${maxScrolls} `
+      + `(plus the implicit root scroll). Scrolls beyond the ${maxScrolls}th would not render.`,
     );
   }
 

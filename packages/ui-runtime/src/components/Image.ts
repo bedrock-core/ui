@@ -3,6 +3,9 @@ import { emitHeader } from '../core/writers';
 import { ControlProps, UNSTYLED_TEXTURE, withControl } from './control';
 import { FunctionComponent, JSX } from '../jsx';
 
+/** The host `type` emitted by {@link Image}. */
+export const IMAGE_TYPE = 'image';
+
 export interface ImageProps extends ControlProps {
 
   /**
@@ -16,7 +19,7 @@ export interface ImageProps extends ControlProps {
 }
 
 export const Image: FunctionComponent<ImageProps> = ({ texture, ...rest }: ImageProps): JSX.Element => ({
-  type: 'image',
+  type: IMAGE_TYPE,
   props: {
     // Control block unchanged — the common font slot at [606] included — so every
     // fixed offset before [1024] stays put.

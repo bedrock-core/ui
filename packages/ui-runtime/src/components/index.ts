@@ -9,16 +9,13 @@ export {
   type Spacing,
 } from './layout';
 
-// Container-screen primitives (compiled, not serialized)
-export {
-  CHEST_CANVAS, Container, Progress, Slot, SlotGrid, SLOT_SIZE,
-  type ContainerProps, type FillDirection, type ProgressProps,
-  type SlotGridProps, type SlotProps,
-} from './container';
-
 // Components
 export { Background, BACKGROUND_SLOT_TYPE, type BackgroundProps } from './Background';
-export { Button, buttonWriter, type ButtonProps } from './Button';
+export { Button, BUTTON_TYPE, buttonWriter, isExitButton, type ButtonProps } from './Button';
+export {
+  Container, CONTAINER_TYPE, containerEntity, containerHandlers,
+  type ContainerHandlers, type ContainerProps,
+} from './Container';
 export { Dropdown, type DropdownProps } from './Dropdown';
 export {
   Form, ModalContext, MODAL_FORM_SLOT_TYPE,
@@ -28,14 +25,21 @@ export {
   type FormInputProps, type FormSliderProps, type FormToggleProps,
 } from './Form';
 export { Fragment, type FragmentProps } from './Fragment';
-export { Image, imageWriter, type ImageProps } from './Image';
+export { Image, IMAGE_TYPE, imageWriter, type ImageProps } from './Image';
 export { Input, type InputProps } from './Input';
+export { Hotbar, PlayerInventory } from './Inventory';
 export { Slider, type SliderProps } from './Slider';
-export { ItemRenderer, itemRendererWriter, type ItemRendererProps } from './ItemRenderer';
-export { Panel, panelWriter, type PanelProps } from './Panel';
+export { Panel, PANEL_TYPE, panelWriter, type PanelProps } from './Panel';
 export { Scroll, SCROLL_SLOT_TYPE, MAX_SCROLLS, MAX_POOLED_SCROLLS, type ScrollAxis, type ScrollProps } from './Scroll';
 export {
-  Text, textWriter, isTextElementType,
+  Slot, SLOT_CELL, SLOT_TYPE, slotInteractive, slotRole, slotSource, isForeignSlot,
+  type SlotProps, type SlotRole, type SlotSource,
+} from './Slot';
+export {
+  SlotGrid, SLOT_GRID_TYPE, slotGridConfig, type SlotGridProps, type SlotGridConfig,
+} from './SlotGrid';
+export {
+  Text, textWriter, isTextElementType, liveTextLength,
   TEXT_SHADOW_TYPE, TEXT_WRAP_TYPE, TEXT_SHADOW_WRAP_TYPE,
   type TextFont, type TextOverflow, type TextProps, type TextStyle, type TextWordBreak,
 } from './Text';
@@ -52,7 +56,6 @@ import {
   formInputWriter, formButtonWriter,
 } from './Form';
 import { imageWriter } from './Image';
-import { itemRendererWriter } from './ItemRenderer';
 import { panelWriter } from './Panel';
 import { SCROLL_SLOT_TYPE } from './Scroll';
 import { TEXT_SHADOW_TYPE, TEXT_SHADOW_WRAP_TYPE, TEXT_WRAP_TYPE, textWriter } from './Text';
@@ -64,6 +67,11 @@ let registered = false;
  *
  * Idempotent and called from `render()` — the built-ins are guaranteed present
  * before the first serialize/layout pass.
+ *
+ * The container-screen hosts (`Container`, `Slot`, `SlotGrid`, and the
+ * `PlayerInventory`/`Hotbar` wrappers over it) are deliberately absent: they
+ * never reach the serializer, and an unregistered type is a concrete box to the
+ * layout pass, which is what they are.
  */
 export function registerNativeComponents(): void {
   if (registered) {
@@ -84,7 +92,7 @@ export function registerNativeComponents(): void {
   registerComponent(TEXT_WRAP_TYPE, { writer: textWriter });
   registerComponent(TEXT_SHADOW_WRAP_TYPE, { writer: textWriter });
   registerComponent('image', { writer: imageWriter });
-  registerComponent('item_renderer', { writer: itemRendererWriter });
+
   registerComponent('fragment', { transparent: true });
   registerComponent('context-provider', { transparent: true });
   // Scroll wrapper: emits no payload; the layout pass treats each as an independent

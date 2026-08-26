@@ -50,6 +50,10 @@
       "types": "./src/i18n.ts",
       "import": "./src/i18n.ts"
     },
+    "./container": {
+      "types": "./src/container.ts",
+      "import": "./src/container.ts"
+    },
     "./jsx-runtime": {
       "types": "./src/jsx/jsx-runtime.ts",
       "import": "./src/jsx/jsx-runtime.ts"

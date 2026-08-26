@@ -1,6 +1,5 @@
-import type { Player } from '@minecraft/server';
 import type { JSX } from '../../../jsx';
-import { activateFiber, createFiber, getFiber, isContextProvider } from '../../fabric';
+import { activateFiber, createFiber, getFiber, isContextProvider, type Owner } from '../../fabric';
 import { isElement } from '../../guards';
 import { generateComponentId, type TraversalContext } from '../traversal';
 
@@ -17,14 +16,14 @@ import { generateComponentId, type TraversalContext } from '../traversal';
  * 3. For regular elements → recursively process children
  *
  * @param element - Element that may have function components or context providers
- * @param context - Traversal context with player, parent path, and instance tracking
- * @param player - Player rendering the component
+ * @param context - Traversal context with parent path and instance tracking
+ * @param owner - Who the render belongs to; keys every fiber created here
  * @returns Element with all function components expanded and contexts resolved
  */
 export function expandAndResolveContexts(
   element: JSX.Element,
   context: TraversalContext,
-  player: Player,
+  owner: Owner,
 ): JSX.Element {
   // Step 1: Handle function components - CREATE INSTANCE FOR EACH
   if (typeof element.type === 'function') {
@@ -46,7 +45,7 @@ export function expandAndResolveContexts(
     }
 
     const componentId = generateComponentId(
-      player,
+      owner,
       componentFn,
       effectiveKey,
       context.parentPath,
@@ -54,7 +53,7 @@ export function expandAndResolveContexts(
 
     // Get or create instance for this component
     // Create or get the fiber for this component instance
-    const fiber = getFiber(componentId) ?? createFiber(componentId, player);
+    const fiber = getFiber(componentId) ?? createFiber(componentId, owner);
 
     // Link fiber into parent/child/sibling chain using traversal context
     const parentFiber = context.parentFiber;
@@ -96,7 +95,7 @@ export function expandAndResolveContexts(
     };
 
     // Recursively process the rendered result (visual tree)
-    return expandAndResolveContexts(renderedElement, childContext, player);
+    return expandAndResolveContexts(renderedElement, childContext, owner);
   }
 
   // Step 2: Handle context provider - push context BEFORE processing children
@@ -117,7 +116,7 @@ export function expandAndResolveContexts(
     // Process children recursively (they can now read context via useContext)
     const childrenArray = toChildrenArray(children);
     const resolvedChildren = childrenArray.length
-      ? processChildren(childrenArray, childContext, player)
+      ? processChildren(childrenArray, childContext, owner)
       : [];
 
     return {
@@ -131,7 +130,7 @@ export function expandAndResolveContexts(
 
   // Handle array of children
   if (Array.isArray(children)) {
-    const processedChildren = processChildren(children, context, player);
+    const processedChildren = processChildren(children, context, owner);
 
     return {
       type: element.type,
@@ -145,7 +144,7 @@ export function expandAndResolveContexts(
 
   // Handle single child element
   if (isElement(children)) {
-    const processed = expandAndResolveContexts(children, context, player);
+    const processed = expandAndResolveContexts(children, context, owner);
 
     return {
       type: element.type,
@@ -168,13 +167,13 @@ export function expandAndResolveContexts(
   };
 }
 
-function processChildren(children: JSX.Node[], context: TraversalContext, player: Player): JSX.Element[] {
+function processChildren(children: JSX.Node[], context: TraversalContext, owner: Owner): JSX.Element[] {
   return children.map((child: JSX.Node): JSX.Element | undefined => {
     if (!isElement(child)) {
       return undefined;
     }
 
-    return expandAndResolveContexts(child, context, player);
+    return expandAndResolveContexts(child, context, owner);
   }).filter((child: JSX.Element | undefined): child is JSX.Element => child !== undefined);
 }
 

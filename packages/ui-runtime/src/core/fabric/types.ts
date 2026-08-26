@@ -1,6 +1,7 @@
 import { FunctionComponent, JSX } from '@bedrock-core/ui/jsx-runtime';
 import { EventSignal } from '../../hooks';
 import { Player } from '@minecraft/server';
+import type { Owner } from './owner';
 
 export interface HookSlot<T = unknown> {
   value: T;
@@ -46,8 +47,14 @@ export interface Fiber {
   contextSnapshot?: ContextSnapshot;
   // Effects scheduled during the last evaluation
   pendingEffects: { slotIndex: number; effect: () => (() => void) | void; deps?: readonly unknown[] | undefined }[];
-  // Session metadata
-  player: Player; // Player instance for this fiber
+  /** Who this render belongs to: keys the fiber and decides what its hooks may reach. */
+  owner: Owner;
+  /**
+   * Persisted values for `state` and `reducer` slots, by slot index, handed
+   * over when the fiber is created and read once as each slot mounts. This is
+   * how a container screen's state comes back from the entity it lives on.
+   */
+  seed?: ReadonlyMap<number, unknown>;
   shouldRender: boolean; // Flag for useExit to signal form should close
 
   // Tree relations

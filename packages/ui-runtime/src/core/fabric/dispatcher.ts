@@ -1,9 +1,77 @@
 /* eslint-disable @typescript-eslint/no-unsafe-type-assertion */
 import { isFunction } from '../';
 import { isInInteractiveTransaction, scheduleLogicPass, triggerCleanup } from '../render/session';
+import { containerExit } from './exit';
+import { requirePlayer } from './owner';
 import { getCurrentFiber } from './registry';
-import { Context, Dispatcher, HookSlot } from './types';
+import { Context, Dispatcher, Fiber, HookSlot } from './types';
 import { invariant, nextHookSlot } from './utils';
+
+/**
+ * Mounts a value-carrying slot: the persisted value when the owner's seed has
+ * one for this position, the initial value otherwise. A seeded slot counts as
+ * resolved from the start, since it no longer holds the initial value.
+ */
+function mountValueSlot(fiber: Fiber, tag: 'state' | 'reducer', initial: unknown): HookSlot {
+  const index = fiber.hookIndex;
+  const slot = nextHookSlot(fiber, tag);
+  const seeded = fiber.seed?.has(index) ?? false;
+
+  slot.value = seeded ? fiber.seed?.get(index) : initial;
+  slot.initial = initial;
+  slot.resolved = seeded;
+
+  return slot;
+}
+
+/** Commits a new value into a slot and wakes the owner's session, unless nothing changed. */
+function commit(fiber: Fiber, slot: HookSlot, next: unknown): void {
+  if (Object.is(next, slot.value)) {
+    return;
+  }
+
+  slot.value = next;
+
+  if (!slot.resolved && !Object.is(next, slot.initial)) {
+    slot.resolved = true;
+  }
+
+  scheduleLogicPass(fiber.owner);
+}
+
+function currentPlayer(): ReturnType<Dispatcher['usePlayer']> {
+  const [fiber] = getCurrentFiber();
+
+  invariant(fiber, 'usePlayer');
+
+  return requirePlayer(fiber.owner, 'usePlayer');
+}
+
+/**
+ * The handle `useExit` returns: a form closes for its player; a container
+ * closes only on the client, so its handle is the press that becomes the
+ * screen's close button.
+ */
+function exitHandle(): () => void {
+  const [fiber] = getCurrentFiber();
+
+  invariant(fiber, 'useExit');
+
+  const { owner } = fiber;
+
+  if (owner.kind !== 'player') {
+    return containerExit;
+  }
+
+  return (): void => {
+    fiber.shouldRender = false;
+
+    // If not in an interactive transaction (e.g., called from useEffect),
+    if (!isInInteractiveTransaction(owner)) {
+      triggerCleanup(owner, true);
+    }
+  };
+}
 
 export const MountDispatcher: Dispatcher = {
   useState<T>(initial: T | (() => T)) {
@@ -11,26 +79,10 @@ export const MountDispatcher: Dispatcher = {
 
     invariant(fiber, 'useState');
 
-    const slot: HookSlot = nextHookSlot(fiber, 'state');
-    const value: T = isFunction(initial) ? initial() : initial;
-
-    slot.value = value;
-    slot.initial = value;
-    slot.resolved = false;
+    const slot = mountValueSlot(fiber, 'state', isFunction(initial) ? initial() : initial);
 
     const setter = (v: T | ((prev: T) => T)): void => {
-      const prevVal = slot.value;
-      const nextVal = isFunction(v) ? v(prevVal) : v;
-
-      if (!Object.is(nextVal, prevVal)) {
-        slot.value = nextVal;
-
-        if (!slot.resolved && !Object.is(nextVal, slot.initial)) {
-          slot.resolved = true;
-        }
-
-        scheduleLogicPass(fiber.player);
-      }
+      commit(fiber, slot, isFunction(v) ? v(slot.value) : v);
     };
 
     return [slot.value as T, setter];
@@ -81,51 +133,21 @@ export const MountDispatcher: Dispatcher = {
 
     invariant(fiber, 'useReducer');
 
-    const slot = nextHookSlot(fiber, 'reducer');
-
-    slot.value = initial;
-    slot.initial = initial;
-    slot.resolved = false;
+    const slot = mountValueSlot(fiber, 'reducer', initial);
 
     const dispatch = (action: A): void => {
-      const prevVal = slot.value as S;
-      const nextVal = reducer(prevVal, action);
-
-      if (!Object.is(nextVal, prevVal)) {
-        slot.value = nextVal;
-
-        if (!slot.resolved && !Object.is(nextVal, slot.initial)) {
-          slot.resolved = true;
-        }
-
-        scheduleLogicPass(fiber.player);
-      }
+      commit(fiber, slot, reducer(slot.value as S, action));
     };
 
     return [slot.value as S, dispatch];
   },
 
   usePlayer() {
-    const [fiber] = getCurrentFiber();
-
-    invariant(fiber, 'usePlayer');
-
-    return fiber.player;
+    return currentPlayer();
   },
 
   useExit() {
-    const [fiber] = getCurrentFiber();
-
-    invariant(fiber, 'useExit');
-
-    return (): void => {
-      fiber.shouldRender = false;
-
-      // If not in an interactive transaction (e.g., called from useEffect),
-      if (!isInInteractiveTransaction(fiber.player)) {
-        triggerCleanup(fiber.player, true);
-      }
-    };
+    return exitHandle();
   },
 
   useEvent<T, O>(
@@ -166,18 +188,7 @@ export const UpdateDispatcher: Dispatcher = {
     }
 
     const setter = (v: T | ((prev: T) => T)): void => {
-      const prevVal = slot.value;
-      const nextVal = isFunction(v) ? v(prevVal) : v;
-
-      if (!Object.is(nextVal, prevVal)) {
-        slot.value = nextVal;
-
-        if (!slot.resolved && !Object.is(nextVal, slot.initial)) {
-          slot.resolved = true;
-        }
-
-        scheduleLogicPass(fiber.player);
-      }
+      commit(fiber, slot, isFunction(v) ? v(slot.value) : v);
     };
 
     return [slot.value as T, setter];
@@ -270,44 +281,18 @@ export const UpdateDispatcher: Dispatcher = {
     }
 
     const dispatch = (action: A): void => {
-      const prevVal = slot.value as S;
-      const nextVal = reducer(prevVal, action);
-
-      if (!Object.is(nextVal, prevVal)) {
-        slot.value = nextVal;
-
-        if (!slot.resolved && !Object.is(nextVal, slot.initial)) {
-          slot.resolved = true;
-        }
-
-        scheduleLogicPass(fiber.player);
-      }
+      commit(fiber, slot, reducer(slot.value as S, action));
     };
 
     return [slot.value as S, dispatch];
   },
 
   usePlayer() {
-    const [fiber] = getCurrentFiber();
-
-    invariant(fiber, 'usePlayer');
-
-    return fiber.player;
+    return currentPlayer();
   },
 
   useExit() {
-    const [fiber] = getCurrentFiber();
-
-    invariant(fiber, 'useExit');
-
-    return (): void => {
-      fiber.shouldRender = false;
-
-      // If not in an interactive transaction (e.g., called from useEffect),
-      if (!isInInteractiveTransaction(fiber.player)) {
-        triggerCleanup(fiber.player, true);
-      }
-    };
+    return exitHandle();
   },
 
   useEvent<T, O>(

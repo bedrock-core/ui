@@ -1,16 +1,20 @@
 export {
   Background,
   Button,
+  Container,
   Dropdown,
   Form,
   Fragment,
+  Hotbar,
   Image,
   Input,
-  ItemRenderer,
   ModalContext,
   Panel,
+  PlayerInventory,
   Scroll,
   Slider,
+  Slot,
+  SlotGrid,
   Text,
   withControl,
 } from './components';
@@ -21,6 +25,8 @@ export type {
   AlignSelf,
   BackgroundProps,
   ButtonProps,
+  ContainerHandlers,
+  ContainerProps,
   ControlProps,
   Display,
   DropdownProps,
@@ -41,7 +47,6 @@ export type {
   FragmentProps,
   ImageProps,
   InputProps,
-  ItemRendererProps,
   JustifyContent,
   LayoutProps,
   ModalFieldProps,
@@ -49,6 +54,11 @@ export type {
   Position,
   ScrollProps,
   SliderProps,
+  SlotProps,
+  SlotRole,
+  SlotSource,
+  SlotGridProps,
+  SlotGridConfig,
   Spacing,
   TextFont,
   TextOverflow,
@@ -67,6 +77,15 @@ export {
   useRef,
   useState,
 } from './hooks';
+
+// Error classes, caught with `instanceof`.
+export {
+  ContainerScreenError,
+  ModalFormError,
+  ScrollLimitError,
+  SerializationError,
+  TranslationKeysError,
+} from './core';
 
 export {
   createContext,
@@ -89,12 +108,7 @@ export type {
   Context,
   ContextProps,
   FormTarget,
-  ItemAuxError,
-  ModalFormError,
   ModalValue,
-  ScrollLimitError,
-  SerializationError,
-  TranslationKeysError,
   Writer,
 } from './core';
 
@@ -102,9 +116,6 @@ export type {
   FunctionComponent,
   JSX,
 } from './jsx';
-
-export { ItemAuxContext } from './data/ItemAux';
-export type { ItemAuxMap } from './data/ItemAux';
 
 export { TranslationContext, useTranslation, useTranslationResolver } from './data/Translation';
 export type { TranslationResolver } from '@bedrock-core/i18n';

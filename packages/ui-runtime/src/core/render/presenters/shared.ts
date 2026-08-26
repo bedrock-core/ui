@@ -4,7 +4,7 @@ import { BACKGROUND_SLOT_TYPE } from '../../../components/Background';
 import { MODAL_FORM_SLOT_TYPE, type FormConfig } from '../../../components/Form';
 import type { JSX } from '../../../jsx';
 import type { ScrollMetrics } from '../../serializer';
-import { getFibersForPlayer } from '../../fabric';
+import { getFibersForOwner, playerOwner } from '../../fabric';
 import { isElement } from '../../guards';
 import { beginInteractiveTransaction, endInteractiveTransaction } from '../session';
 
@@ -98,15 +98,17 @@ export async function runInteractiveCallback(
   player: Player,
   callback: () => unknown | Promise<unknown>,
 ): Promise<PresentResult> {
-  beginInteractiveTransaction(player);
+  const owner = playerOwner(player);
+
+  beginInteractiveTransaction(owner);
 
   return Promise.resolve()
     .then(() => callback())
     .finally(() => {
-      endInteractiveTransaction(player);
+      endInteractiveTransaction(owner);
     })
     .then(() => {
-      const shouldClose: boolean = getFibersForPlayer(player).some(fiber => !fiber.shouldRender);
+      const shouldClose: boolean = getFibersForOwner(owner).some(fiber => !fiber.shouldRender);
 
       return shouldClose ? 'cleanup' : 'present';
     });

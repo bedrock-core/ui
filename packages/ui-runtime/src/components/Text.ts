@@ -90,6 +90,21 @@ export interface TextProps extends ControlProps {
    */
   maxLines?: number;
 
+  /**
+   * The most characters the text will ever need.
+   *
+   * In a container screen this is what makes the text LIVE: a compiled layout
+   * cannot grow, so a string that changes at runtime has to reserve its cells
+   * before the build knows what it will say — one container slot per
+   * character, decoded through the character table. Leave it off for text that
+   * never changes, which is baked and may use any character at all.
+   *
+   * In a server form the text is live anyway; a literal string is cut to this
+   * length so the two backends agree on what fits. Keys and messages the client
+   * resolves are left whole.
+   */
+  maxLength?: number;
+
   /** Fine-tune X nudge (px) of the rendered label inside its layout box. Default `0`. */
   offsetX?: number;
   /** Fine-tune Y nudge (px) of the rendered label inside its layout box. Default `0`. */
@@ -122,6 +137,7 @@ export const Text: FunctionComponent<TextProps> = ({
   wordBreak,
   overflow,
   maxLines,
+  maxLength,
   offsetX,
   offsetY,
   shadow,
@@ -178,6 +194,10 @@ export const Text: FunctionComponent<TextProps> = ({
 
     isLocalized = hit !== undefined;
     resolvedText = hit ?? candidate;
+
+    if (!isLocalized && maxLength !== undefined) {
+      resolvedText = resolvedText.slice(0, Math.max(0, Math.floor(maxLength)));
+    }
   }
 
   // The payload's variable-length text tail (v0008) — uncapped:
@@ -241,10 +261,33 @@ export const Text: FunctionComponent<TextProps> = ({
         // string committed — a JSON UI label is content-sized and never wraps
         // on its own, so the `\n`s must be in the string.
         isKey: isLocalized,
+        // The container backend's reservation. Here rather than a plain prop so
+        // it never becomes a payload field.
+        ...maxLength === undefined ? {} : { maxLength },
       },
     },
   };
 };
+
+/**
+ * Characters a built `<Text>` reserved with `maxLength`, or undefined when the
+ * label is baked — how the container backend tells live text from static.
+ */
+export function liveTextLength(element: JSX.Element): number | undefined {
+  if (!isTextElementType(element.type)) {
+    return undefined;
+  }
+
+  const metrics = element.props.__textMetrics;
+
+  if (typeof metrics !== 'object' || metrics === null || !('maxLength' in metrics)) {
+    return undefined;
+  }
+
+  const { maxLength } = metrics;
+
+  return typeof maxLength === 'number' && maxLength >= 1 ? Math.floor(maxLength) : undefined;
+}
 
 /** Serializes a `text` or `text_shadow` into the static (label) slot. */
 export const textWriter: Writer = (payload, form, ctx) => {

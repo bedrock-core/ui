@@ -3,6 +3,7 @@ import type { Player } from '@minecraft/server';
 import { Panel } from '../../components/Panel';
 import { Scroll } from '../../components/Scroll';
 import { isElement } from '../guards';
+import { playerOwner } from '../fabric';
 import { expandAndResolveContexts } from '../render/phases/expand';
 import { computeLayout } from '../render/phases/layout';
 import { createInitialContext } from '../render/traversal';
@@ -79,7 +80,7 @@ describe('scroll pipeline (expand + layout)', () => {
       ],
     });
 
-    const expanded = expandAndResolveContexts(tree, createInitialContext(), player);
+    const expanded = expandAndResolveContexts(tree, createInitialContext(), playerOwner(player));
 
     computeLayout(expanded);
 
@@ -116,7 +117,7 @@ describe('scroll pipeline (expand + layout)', () => {
       children: [el(Panel, { height: 20, children: [] })],
     });
 
-    const expanded = expandAndResolveContexts(tree, createInitialContext(), player);
+    const expanded = expandAndResolveContexts(tree, createInitialContext(), playerOwner(player));
 
     computeLayout(expanded);
 

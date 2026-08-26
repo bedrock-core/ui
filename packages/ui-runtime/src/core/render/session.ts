@@ -1,12 +1,14 @@
-import type { Player } from '@minecraft/server';
 import { uiManager } from '@minecraft/server-ui';
 import type { JSX } from '../../jsx';
 import { stopInputLock } from '../../util';
-import { getFibersForPlayer } from '../fabric';
+import { getFibersForOwner, type Owner } from '../fabric';
 import { cleanupComponentTree } from './tree';
 
+/** Persisted hook values waiting for their fibers: by fiber id, then by slot index. */
+export type StateSeed = ReadonlyMap<string, ReadonlyMap<number, unknown>>;
+
 /**
- * Lightweight per-player render session state for background logic passes.
+ * Lightweight per-owner render session state for background logic passes.
  * We keep the root element and a runner that performs a build-only pass.
  */
 interface SessionState {
@@ -22,6 +24,12 @@ interface SessionState {
   activeChain?: number;
   /** A root swapped into the live chain awaits its first build+show. */
   swapPending: boolean;
+  /**
+   * Hook values handed over before the first build, consumed fiber by fiber
+   * as they are created. Whatever is left belongs to components that did not
+   * render, and is dropped with the session.
+   */
+  seed?: Map<string, ReadonlyMap<number, unknown>>;
 }
 
 const sessions = new Map<string, SessionState>();
@@ -29,8 +37,8 @@ const sessions = new Map<string, SessionState>();
 /** Monotonic id source for present-chain tokens. */
 let nextChainId = 1;
 
-function getOrCreate(player: Player): SessionState {
-  const id = player.id;
+function getOrCreate(owner: Owner): SessionState {
+  const id = owner.id;
   let session = sessions.get(id);
 
   if (!session) {
@@ -42,24 +50,24 @@ function getOrCreate(player: Player): SessionState {
   return session;
 }
 
-export function setPlayerRoot(player: Player, root: JSX.Element): void {
-  const session = getOrCreate(player);
+export function setSessionRoot(owner: Owner, root: JSX.Element): void {
+  const session = getOrCreate(owner);
 
   session.root = root;
 }
 
-export function getPlayerRoot(player: Player): JSX.Element | undefined {
-  return sessions.get(player.id)?.root;
+export function getSessionRoot(owner: Owner): JSX.Element | undefined {
+  return sessions.get(owner.id)?.root;
 }
 
-export function setBuildRunner(player: Player, runBuild: () => void): void {
-  const session = getOrCreate(player);
+export function setBuildRunner(owner: Owner, runBuild: () => void): void {
+  const session = getOrCreate(owner);
 
   session.runBuild = runBuild;
 }
 
-export function clearPlayerRoot(player: Player): void {
-  const session = sessions.get(player.id);
+export function clearSession(owner: Owner): void {
+  const session = sessions.get(owner.id);
 
   if (!session) {
     return;
@@ -71,14 +79,35 @@ export function clearPlayerRoot(player: Player): void {
   session.suppress = false;
   session.activeChain = undefined;
   session.swapPending = false;
+  session.seed = undefined;
 }
 
 /**
- * Mark a new present chain as THE live chain for this player and return its token.
+ * Hand persisted hook values to the fibers the next build creates. A container
+ * screen's state lives on its entity; this is how it gets back into the tree.
+ */
+export function setStateSeed(owner: Owner, seed: StateSeed): void {
+  const session = getOrCreate(owner);
+
+  session.seed = new Map(seed);
+}
+
+/** The seed for one fiber, consumed so a fiber recreated later starts fresh. */
+export function takeStateSeed(owner: Owner, fiberId: string): ReadonlyMap<number, unknown> | undefined {
+  const seed = sessions.get(owner.id)?.seed;
+  const values = seed?.get(fiberId);
+
+  seed?.delete(fiberId);
+
+  return values;
+}
+
+/**
+ * Mark a new present chain as THE live chain for this owner and return its token.
  * Any previously-issued token becomes stale: its continuations must no-op.
  */
-export function beginPresentChain(player: Player): number {
-  const session = getOrCreate(player);
+export function beginPresentChain(owner: Owner): number {
+  const session = getOrCreate(owner);
   const token = nextChainId++;
 
   session.activeChain = token;
@@ -87,9 +116,9 @@ export function beginPresentChain(player: Player): number {
   return token;
 }
 
-/** Whether `token` still identifies this player's live present chain. */
-export function isChainCurrent(player: Player, token: number): boolean {
-  return sessions.get(player.id)?.activeChain === token;
+/** Whether `token` still identifies this owner's live present chain. */
+export function isChainCurrent(owner: Owner, token: number): boolean {
+  return sessions.get(owner.id)?.activeChain === token;
 }
 
 /**
@@ -97,8 +126,8 @@ export function isChainCurrent(player: Player, token: number): boolean {
  * arrived after the chain was superseded or torn down) cannot clear a
  * successor's liveness.
  */
-export function endPresentChain(player: Player, token: number): void {
-  const session = sessions.get(player.id);
+export function endPresentChain(owner: Owner, token: number): void {
+  const session = sessions.get(owner.id);
 
   if (session?.activeChain === token) {
     session.activeChain = undefined;
@@ -106,17 +135,17 @@ export function endPresentChain(player: Player, token: number): void {
   }
 }
 
-/** Whether any present chain is live for this player. */
-export function hasLiveChain(player: Player): boolean {
-  return sessions.get(player.id)?.activeChain !== undefined;
+/** Whether any present chain is live for this owner. */
+export function hasLiveChain(owner: Owner): boolean {
+  return sessions.get(owner.id)?.activeChain !== undefined;
 }
 
 /**
  * Flag that a new root was swapped into the live chain and awaits its first
  * build+show. No-op without a live chain — render() takes the fresh path then.
  */
-export function requestSwap(player: Player): void {
-  const session = sessions.get(player.id);
+export function requestSwap(owner: Owner): void {
+  const session = sessions.get(owner.id);
 
   if (session?.activeChain !== undefined) {
     session.swapPending = true;
@@ -124,8 +153,8 @@ export function requestSwap(player: Player): void {
 }
 
 /** Consume a pending swap: true (clearing the flag) exactly once per swap. */
-export function consumeSwap(player: Player): boolean {
-  const session = sessions.get(player.id);
+export function consumeSwap(owner: Owner): boolean {
+  const session = sessions.get(owner.id);
 
   if (session?.swapPending) {
     session.swapPending = false;
@@ -137,17 +166,22 @@ export function consumeSwap(player: Player): boolean {
 }
 
 /** Whether a swapped-in root is still awaiting its first build+show. */
-export function isSwapPending(player: Player): boolean {
-  return sessions.get(player.id)?.swapPending ?? false;
+export function isSwapPending(owner: Owner): boolean {
+  return sessions.get(owner.id)?.swapPending ?? false;
 }
 
 /**
- * Schedule a background logic pass for this player. Coalesces multiple
+ * Schedule a background logic pass for this owner. Coalesces multiple
  * requests within the same microtask into a single build run. Does not
  * present or serialize UI; it only rebuilds to evaluate effects.
  */
-export function scheduleLogicPass(player: Player): void {
-  const session = getOrCreate(player);
+export function scheduleLogicPass(owner: Owner): void {
+  // A build renders once: a setter called during it has nothing to wake.
+  if (owner.kind === 'build') {
+    return;
+  }
+
+  const session = getOrCreate(owner);
 
   // Skip if an interactive transaction is active
   if (session.suppress) {
@@ -169,7 +203,7 @@ export function scheduleLogicPass(player: Player): void {
   }
 
   // Skip if exit requested
-  const exiting = getFibersForPlayer(player).some(f => !f.shouldRender);
+  const exiting = getFibersForOwner(owner).some(f => !f.shouldRender);
 
   if (exiting) {
     return;
@@ -182,7 +216,7 @@ export function scheduleLogicPass(player: Player): void {
     session.pending = false;
 
     // The session could have been cleared between schedule and flush.
-    const state = sessions.get(player.id);
+    const state = sessions.get(owner.id);
 
     if (!(state?.root && state?.runBuild)) {
       return;
@@ -196,7 +230,7 @@ export function scheduleLogicPass(player: Player): void {
       return;
     }
 
-    const exitingNow = getFibersForPlayer(player).some(f => !f.shouldRender);
+    const exitingNow = getFibersForOwner(owner).some(f => !f.shouldRender);
 
     if (exitingNow) {
       return;
@@ -211,31 +245,36 @@ export function scheduleLogicPass(player: Player): void {
   });
 }
 
-export function beginInteractiveTransaction(player: Player): void {
-  const session = getOrCreate(player);
+export function beginInteractiveTransaction(owner: Owner): void {
+  const session = getOrCreate(owner);
 
   session.suppress = true;
   session.pending = false; // cancel pending microtask; flush path also checks suppress
 }
 
-export function endInteractiveTransaction(player: Player): void {
-  const session = getOrCreate(player);
+export function endInteractiveTransaction(owner: Owner): void {
+  const session = getOrCreate(owner);
 
   session.suppress = false;
 }
 
-export function isInInteractiveTransaction(player: Player): boolean {
-  const session = sessions.get(player.id);
+export function isInInteractiveTransaction(owner: Owner): boolean {
+  const session = sessions.get(owner.id);
 
   return session?.suppress ?? false;
 }
 
-export function triggerCleanup(player: Player, shouldClose: boolean = false): void {
-  stopInputLock(player);
-  cleanupComponentTree(player);
-  clearPlayerRoot(player);
+export function triggerCleanup(owner: Owner, shouldClose: boolean = false): void {
+  // The input lock and the form on screen belong to a player; an entity's
+  // session has neither.
+  if (owner.kind === 'player') {
+    stopInputLock(owner.player);
+  }
 
-  if (shouldClose) {
-    uiManager.closeAllForms(player);
+  cleanupComponentTree(owner);
+  clearSession(owner);
+
+  if (shouldClose && owner.kind === 'player') {
+    uiManager.closeAllForms(owner.player);
   }
 }

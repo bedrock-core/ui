@@ -5,7 +5,7 @@ export {
   createFiber,
   deleteFiber,
   getFiber,
-  getFibersForPlayer,
+  getFibersForOwner,
   runInFiber,
 } from './fiber';
 
@@ -16,3 +16,9 @@ export { createContext } from './context';
 export type { Context, ContextProps } from './types';
 
 export { isContextProvider } from './guards';
+
+export { BUILD_OWNER, entityOwner, playerOwner, requirePlayer } from './owner';
+
+export { isContainerExit } from './exit';
+
+export type { Owner } from './owner';

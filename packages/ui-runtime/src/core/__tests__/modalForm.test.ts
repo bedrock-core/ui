@@ -6,6 +6,7 @@ import { Form } from '../../components/Form';
 import { MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE } from '../../components/Form';
 import { Panel } from '../../components/Panel';
 import { isElement } from '../guards';
+import { playerOwner } from '../fabric';
 import { expandAndResolveContexts } from '../render/phases/expand';
 import { computeLayout } from '../render/phases/layout';
 import { createInitialContext } from '../render/traversal';
@@ -628,7 +629,7 @@ describe('modal control serialization', () => {
       },
     };
 
-    const expanded = expandAndResolveContexts(tree, createInitialContext(), player);
+    const expanded = expandAndResolveContexts(tree, createInitialContext(), playerOwner(player));
 
     computeLayout(expanded);
 
@@ -676,7 +677,7 @@ describe('modal control serialization', () => {
       },
     };
 
-    const expanded = expandAndResolveContexts(tree, createInitialContext(), player);
+    const expanded = expandAndResolveContexts(tree, createInitialContext(), playerOwner(player));
 
     computeLayout(expanded);
 

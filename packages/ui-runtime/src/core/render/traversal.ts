@@ -1,7 +1,6 @@
 import { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
-import type { Player } from '@minecraft/server';
 import type { FunctionComponent } from '../../jsx';
-import { Context } from '../fabric';
+import { Context, type Owner } from '../fabric';
 import type { Fiber } from '../fabric/types';
 
 /**
@@ -37,27 +36,27 @@ export interface TraversalContext {
 /**
  * Generate unique hierarchical ID for component instance.
  *
- * IDs follow the format: "playerName:path/to/Component" or "playerName:path/to/Component:key"
+ * IDs follow the format: "ownerId:path/to/Component" or "ownerId:path/to/Component:key"
  * This ensures each component node in the tree has a unique, stable instance.
  *
- * @param player - Player rendering the component
+ * @param owner - Owner of the render: the player a form is shown to, or the entity a container screen belongs to
  * @param component - Component function
  * @param key - Optional key prop from JSX (for list items)
  * @param parentPath - Path from root to parent component
  * @returns Unique component ID
  *
  * @example
- * generateComponentId(player, Example, undefined, [])
- *   → "Steve:Example"
+ * generateComponentId(owner, Example, undefined, [])
+ *   → "-4294967295:Example"
  *
- * generateComponentId(player, Counter, undefined, ['Example'])
- *   → "Steve:Example/Counter"
+ * generateComponentId(owner, Counter, undefined, ['Example'])
+ *   → "-4294967295:Example/Counter"
  *
- * generateComponentId(player, TodoItem, 'todo-1', ['Example', 'TodoList'])
- *   → "Steve:Example/TodoList/TodoItem:todo-1"
+ * generateComponentId(owner, TodoItem, 'todo-1', ['Example', 'TodoList'])
+ *   → "-4294967295:Example/TodoList/TodoItem:todo-1"
  */
 export function generateComponentId(
-  player: Player,
+  owner: Owner,
   component: FunctionComponent,
   key: string | undefined,
   parentPath: string[],
@@ -66,7 +65,7 @@ export function generateComponentId(
   const pathSegment = key ? `${componentName}:${key}` : componentName;
   const fullPath = [...parentPath, pathSegment].join('/');
 
-  return `${player.id}:${fullPath}`;
+  return `${owner.id}:${fullPath}`;
 }
 
 /**

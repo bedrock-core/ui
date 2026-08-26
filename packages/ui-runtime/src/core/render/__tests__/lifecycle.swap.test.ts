@@ -16,9 +16,9 @@ import { Panel } from '../../../components/Panel';
 import { Text } from '../../../components/Text';
 import { useEffect, useExit, useState } from '../../../hooks';
 import type { FunctionComponent, JSX } from '../../../jsx';
-import { getFibersForPlayer } from '../../fabric';
+import { getFibersForOwner, playerOwner } from '../../fabric';
 import { render } from '../lifecycle';
-import { getPlayerRoot } from '../session';
+import { getSessionRoot } from '../session';
 
 /**
  * Cross-app handoff ("one UI slot per player"): render() during a live session
@@ -250,8 +250,8 @@ describe('render() swap — cross-app handoff', () => {
     esc();
     await tick();
     expect(permissionSpy).toHaveBeenCalledTimes(4);
-    expect(getFibersForPlayer(player)).toHaveLength(0);
-    expect(getPlayerRoot(player)).toBeUndefined();
+    expect(getFibersForOwner(playerOwner(player))).toHaveLength(0);
+    expect(getSessionRoot(playerOwner(player))).toBeUndefined();
     expect(__pendingShowCount()).toBe(0);
   });
 
@@ -328,7 +328,7 @@ describe('render() swap — cross-app handoff', () => {
 
     esc();
     await tick();
-    expect(getPlayerRoot(player)).toBeUndefined();
+    expect(getSessionRoot(playerOwner(player))).toBeUndefined();
     expect(permissionSpy).toHaveBeenCalledTimes(4);
   });
 
@@ -446,7 +446,7 @@ describe('render() swap — cross-app handoff', () => {
 
     // (a) Fresh render that throws: no frozen player, session cleared.
     render(Throwing, player);
-    expect(getPlayerRoot(player)).toBeUndefined();
+    expect(getSessionRoot(playerOwner(player))).toBeUndefined();
     expect(permissionSpy).toHaveBeenCalledTimes(4);
 
     // (b) Swap to a throwing app: absorption tears down instead of stranding.
@@ -454,8 +454,8 @@ describe('render() swap — cross-app handoff', () => {
     await tick();
     render(Throwing, player);
     await tick();
-    expect(getPlayerRoot(player)).toBeUndefined();
-    expect(getFibersForPlayer(player)).toHaveLength(0);
+    expect(getSessionRoot(playerOwner(player))).toBeUndefined();
+    expect(getFibersForOwner(playerOwner(player))).toHaveLength(0);
 
     // Recovery: a later app renders normally.
     render(AppD, player);
@@ -495,7 +495,7 @@ describe('render() swap — cross-app handoff', () => {
     // The tail must not end C's chain or clean C up.
     expect(bodyC).toHaveBeenCalled();
     expect(__pendingShowCount()).toBe(1);
-    expect(getFibersForPlayer(player).length).toBeGreaterThan(0);
+    expect(getFibersForOwner(playerOwner(player)).length).toBeGreaterThan(0);
     // lock A (2) + restore on exit (2) + lock C (2), and nothing after.
     expect(permissionSpy).toHaveBeenCalledTimes(6);
   });
@@ -519,8 +519,8 @@ describe('render() swap — cross-app handoff', () => {
     __rejectShow(new FormRejectError('PlayerQuit', FormRejectReason.PlayerQuit));
     await tick();
 
-    expect(getPlayerRoot(player)).toBeUndefined();
-    expect(getFibersForPlayer(player)).toHaveLength(0);
+    expect(getSessionRoot(playerOwner(player))).toBeUndefined();
+    expect(getFibersForOwner(playerOwner(player))).toHaveLength(0);
 
     // Rejoining renders fresh — mount-phase state, nothing resurrected.
     render(AppA, player);
@@ -631,14 +631,14 @@ describe('render() swap — cross-app handoff', () => {
     await tick();
     expect(__pendingShowCount()).toBe(2);
 
-    const p2Fibers = getFibersForPlayer(p2.player).length;
+    const p2Fibers = getFibersForOwner(playerOwner(p2.player)).length;
 
     render(AppB, p1.player);
     await tick();
 
     // p1 swapped to B; p2's form, fibers, lock, and build count are untouched.
     expect(__pendingShowCount()).toBe(2);
-    expect(getFibersForPlayer(p2.player).length).toBe(p2Fibers);
+    expect(getFibersForOwner(playerOwner(p2.player)).length).toBe(p2Fibers);
     expect(bodyA2).toHaveBeenCalledTimes(1);
     expect(p2.permissionSpy).toHaveBeenCalledTimes(2);
     expect(p1.permissionSpy).toHaveBeenCalledTimes(2);

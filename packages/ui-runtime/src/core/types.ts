@@ -96,13 +96,6 @@ export class TranslationKeysError extends Error {
   }
 }
 
-export class ItemAuxError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ItemAuxError';
-  }
-}
-
 export class ScrollLimitError extends Error {
   constructor(message: string) {
     super(message);
@@ -121,6 +114,19 @@ export class ModalFormError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'ModalFormError';
+  }
+}
+
+/**
+ * Thrown when a tree breaks the container-screen rules: a `<Container>` handed
+ * to `render()`, a container-only control outside a `<Container>`, a form or a
+ * scroll inside one, a hook that needs a player where one compiled layout
+ * serves every player, or content that does not fit the canvas.
+ */
+export class ContainerScreenError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ContainerScreenError';
   }
 }
 

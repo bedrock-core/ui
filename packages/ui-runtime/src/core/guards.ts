@@ -11,6 +11,15 @@ export function isElement(value: unknown): value is JSX.Element {
   return !!value && typeof value === 'object' && !Array.isArray(value) && 'type' in (value);
 }
 
+/** The element children of a node, in order; strings and holes are dropped. */
+export function childElements(children: unknown): JSX.Element[] {
+  if (Array.isArray(children)) {
+    return children.filter(isElement);
+  }
+
+  return isElement(children) ? [children] : [];
+}
+
 export function isNode(value: unknown): value is JSX.Node {
   if (value === null || value === undefined) {
     return true;

@@ -1,19 +1,24 @@
 /**
  * The runtime half of a compiled container screen.
  *
- * The compiler freezes the layout; this drives everything alive in it. What it
- * has to work with is one blunt fact: an item moving is the only signal a
- * container gives back. No click event, no lock that makes a slot read-only, no
- * way to veto a move. Buttons are items taken and put back, and read-only is
- * enforced a tick later rather than prevented.
+ * The build freezes the layout; this drives everything alive in it, with one
+ * blunt fact to work with: an item moving is the only signal a container gives
+ * back. No click event, no lock that makes a slot read-only, no way to veto a
+ * move. Buttons are items taken and put back, and a role is enforced a tick
+ * later rather than prevented.
  */
 
-export { createContainerScreen } from './session';
-export type { ContainerScreen } from './session';
+export { allocate } from './allocate';
+export type { Allocation, CellRole, ChannelEntry, SlotEntry } from './allocate';
+export { analyze } from './analyze';
+export type { Analysis } from './analyze';
+export { buildContainerTree } from './build';
 export {
-  claim, isOwned, OWNED_LORE, OWNED_PROPERTY, setOrdinal, setRatio, TRANSPORT_ORDINAL,
-} from './marker';
-export type {
-  ChannelCarrier, ChannelSpec, ContainerScreenConfig, ScreenHandle, SlotRole, SlotSpec,
-} from './types';
-export { BLANK_CODE, BLANK_VALUE, CHARSET, charsetLang, encode, MAX_CODE, UNKNOWN_CODE } from './charset';
+  BLANK_CODE, BLANK_VALUE, CHARSET, charsetLang, encode, MAX_CODE, UNKNOWN_CODE,
+} from './charset';
+export {
+  COLLECTION, COUNT_ITEM, KEY_PREFIX, LAYOUT_PROPERTY, MAX_LAYOUT, OWNED_LORE, OWNED_PROPERTY,
+  GUARD_ORDINAL, PROTOCOL_ITEM, PROTOCOL_ITEM_AUX, SENTINEL_SLOT, STATE_PROPERTY, TRANSPORT_ORDINAL,
+} from './contract';
+export { createContainerScreen } from './session';
+export type { ContainerScreen, ContainerScreenConfig } from './session';

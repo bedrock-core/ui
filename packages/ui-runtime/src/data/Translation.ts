@@ -1,7 +1,7 @@
 import { currentI18n, type BoundI18n, type I18n, type TranslationResolver } from '@bedrock-core/i18n';
-import type { Player } from '@minecraft/server';
 import type { FunctionComponent, JSX } from '../jsx';
 import { createContext } from '../core/fabric/context';
+import type { Owner } from '../core/fabric/owner';
 import { getCurrentFiber } from '../core/fabric/registry';
 import { useContext, usePlayer } from '../hooks';
 
@@ -26,29 +26,30 @@ export const TranslationContext = createContext<TranslationResolver | null>(null
 
 /**
  * The resolver from the addon's default i18n instance — the last
- * `createI18n(bundle)` call that didn't opt out — bound to this player through
- * the full locale chain. `null` when the addon never created one; keys then
- * measure as their literal text.
- *
- * Takes a GETTER so callers can defer the player read: when there is no
- * instance, the player is never touched — trees without an instance (tests,
- * i18n-less addons) keep working.
+ * `createI18n(bundle)` call that didn't opt out — bound to the owner: through
+ * the full locale chain for a player, and to the default locale for an entity
+ * or a build, which serve every player at once. `null` when the addon never
+ * created one; keys then measure as their literal text.
  */
-export function defaultResolverFor(getPlayer: () => Player): TranslationResolver | null {
+export function defaultResolverFor(owner: Owner): TranslationResolver | null {
   const instance = currentI18n();
 
-  return instance ? instance.forPlayer(getPlayer()).resolve : null;
+  if (!instance) {
+    return null;
+  }
+
+  return owner.kind === 'player' ? instance.forPlayer(owner.player).resolve : instance.resolve;
 }
 
 /**
- * The runtime's root wrapper (mounted by `render()` around every tree): a
- * function component, so the provided value is re-derived on EVERY build pass
- * — a `setLocale` override or a later `createI18n` call is picked up on the
- * next render, not frozen at mount.
+ * The runtime's root wrapper (mounted around every tree): a function
+ * component, so the provided value is re-derived on EVERY build pass — a
+ * `setLocale` override or a later `createI18n` call is picked up on the next
+ * render, not frozen at mount.
  */
-export const DefaultTranslations: FunctionComponent<{ player: Player }> = (
-  { player, children }: { player: Player; children?: JSX.Node },
-): JSX.Element => TranslationContext({ value: defaultResolverFor(() => player), children });
+export const DefaultTranslations: FunctionComponent<{ owner: Owner }> = (
+  { owner, children }: { owner: Owner; children?: JSX.Node },
+): JSX.Element => TranslationContext({ value: defaultResolverFor(owner), children });
 
 /**
  * THE translation hook — an addon's typed verbs bound to the viewing player

@@ -1,0 +1,86 @@
+import type { Entity, Player } from '@minecraft/server';
+import type { FunctionComponent, JSX } from '../jsx';
+import { type ControlProps, withControl } from './control';
+
+/**
+ * The host `type` emitted by {@link Container}. The build and the container
+ * runtime require it at the root of a screen; `render()` rejects it, because a
+ * container screen is compiled ahead of time rather than serialized per player.
+ */
+export const CONTAINER_TYPE = 'container';
+
+export interface ContainerProps extends ControlProps {
+  /** Type of the entity the screen opens from, e.g. `core:furnace`. */
+  entity: string;
+  /**
+   * Ran when a player opens the screen, with the entity it opened. One layout
+   * serves every viewer, so this is where a screen learns who is looking and
+   * what it belongs to — keep what it needs in state.
+   */
+  onOpen?: (player: Player, host: Entity) => void;
+  /**
+   * Ran when a player closes the screen, or leaves the world with it open,
+   * with the entity it belonged to.
+   */
+  onClose?: (player: Player, host: Entity) => void;
+  children?: JSX.Node;
+}
+
+/** What a built `<Container>` runs as viewers come and go. */
+export interface ContainerHandlers {
+  readonly onOpen?: (player: Player, host: Entity) => void;
+  readonly onClose?: (player: Player, host: Entity) => void;
+}
+
+/**
+ * Root that makes a screen a compiled container screen, the way `<Form>` makes
+ * one a native modal. Its presence decides the backend: the tree is laid out
+ * once at build time against the same canvas a form uses, baked into JSON UI,
+ * and served by `createContainerScreen` to every player who opens the entity
+ * it names. Live values travel through container slots afterwards.
+ *
+ * It is also the screen's own panel — every control prop applies, so a
+ * `background` draws the frame and `padding`/`gap` lay the children out — and
+ * it is the one place a container screen states its entity.
+ */
+export const Container: FunctionComponent<ContainerProps> = (
+  { entity, onOpen, onClose, children, ...rest }: ContainerProps,
+): JSX.Element => ({
+  type: CONTAINER_TYPE,
+  props: {
+    ...withControl(rest),
+    __container: { entity },
+    onOpen,
+    onClose,
+    children,
+  },
+});
+
+const isHandler = (value: unknown): value is (...args: unknown[]) => void => typeof value === 'function';
+
+/**
+ * The viewer handlers a built `<Container>` carries, read off the host element.
+ * Who they are called with is the runtime's to check: it hands them a player
+ * only after `typeId` says the entity that opened or closed the screen is one.
+ */
+export function containerHandlers(element: JSX.Element): ContainerHandlers {
+  const { onOpen, onClose } = element.props;
+
+  return {
+    ...isHandler(onOpen) ? { onOpen } : {},
+    ...isHandler(onClose) ? { onClose } : {},
+  };
+}
+
+/** The entity type a built `<Container>` names, read off the host element. */
+export function containerEntity(element: JSX.Element): string | undefined {
+  const config = element.props.__container;
+
+  if (typeof config !== 'object' || config === null || !('entity' in config)) {
+    return undefined;
+  }
+
+  const { entity } = config;
+
+  return typeof entity === 'string' ? entity : undefined;
+}

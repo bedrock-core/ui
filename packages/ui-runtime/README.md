@@ -28,7 +28,7 @@ the world — see [Render pack](https://bedrock-core.drav.dev/docs/ui/ui-runtime
 ## What it gives you
 
 - **Components** — `Panel`, `Text`, `Image`, `Button`, `Fragment`, `Background`, `Scroll`,
-  `ItemRenderer`, the modal-backed `Input` / `Dropdown` / `Slider`, and the `Form` namespace
+  the modal-backed `Input` / `Dropdown` / `Slider`, and the `Form` namespace
   (`Form.Toggle`, `.Slider`, `.Dropdown`, `.InlineSelect`, `.Input`, `.Option`, `.Button`)
 - **Hooks** — `useState`, `useReducer`, `useRef`, `useEffect`, `useContext`, `useEvent`,
   `usePlayer`, `useExit`

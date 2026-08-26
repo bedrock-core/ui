@@ -33,12 +33,6 @@ describe('validateForm', () => {
     expect(() => validateForm(tree)).toThrow(/not allowed inside a `<Form>`/);
   });
 
-  it('rejects an ItemRenderer inside a Form', () => {
-    const tree = modalTree([host('item_renderer')]);
-
-    expect(() => validateForm(tree)).toThrow(/not allowed inside a `<Form>`/);
-  });
-
   it('rejects a nested Form', () => {
     const tree = modalTree([modalTree([host('modal-toggle')])]);
 
@@ -52,9 +46,14 @@ describe('validateForm', () => {
   });
 
   it('accepts an ordinary ActionForm tree with buttons', () => {
-    const tree = host('panel', [host('button'), host('text'), host('item_renderer')]);
+    const tree = host('panel', [host('button'), host('text')]);
 
     expect(() => validateForm(tree)).not.toThrow();
+  });
+
+  it('rejects the container-only item controls (Slot, SlotGrid) in a form', () => {
+    expect(() => validateForm(host('panel', [host('container-slot')]))).toThrow(/only exists in a container screen/);
+    expect(() => validateForm(host('panel', [host('slot-grid')]))).toThrow(/only exists in a container screen/);
   });
 
   it('accepts a Form nested under transparent providers (navigation case)', () => {

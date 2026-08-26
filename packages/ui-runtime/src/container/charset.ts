@@ -1,3 +1,5 @@
+import { KEY_PREFIX } from './contract';
+
 /**
  * How a string crosses into a container screen.
  *
@@ -89,7 +91,7 @@ export const encode = (text: string, length: number): number[] => {
  * compiler and the runtime: change {@link CHARSET} and both sides move together
  * or nothing renders.
  */
-export const charsetLang = (keyPrefix: string): string[] =>
+export const charsetLang = (keyPrefix: string = KEY_PREFIX): string[] =>
   [...CHARSET].map((glyph, index) => {
     const code = index + 1;
 
