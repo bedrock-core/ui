@@ -40,7 +40,7 @@ exports (`.`, `./navigation`, `./ore-styled`, `./guides`, `./config`, `./flexbox
 
 - **`packages/ore-styled`** – Ore-UI styled component library (`@bedrock-core/ore-styled`)
   - Pre-built compound components matching Minecraft's Ore-UI visual language
-  - Exports: `Button`, `Card`, `Checkbox`, `RadioGroup`/`Radio`, `Toggle`, `ToggleButtonGroup`/`ToggleButtonItem`, `Divider`, `Header`, `MenuRow`, `Input`, `Dropdown`, `Slider`, `Form` (styled modal fields), `ItemSlot`, `ItemContainer`, `EquipmentSlots`, `theme`
+  - Exports: `Button`, `Card`, `Checkbox`, `RadioGroup`/`Radio`, `Toggle`, `ToggleButtonGroup`/`ToggleButtonItem`, `Divider`, `Header`, `MenuRow`, `Input`, `Dropdown`, `Slider`, `Form` (styled modal fields), `theme`
   - Renders through the same `@bedrock-core/ui` render pack — no separate pack
 
 - **`packages/i18n`** – Localization engine (`@bedrock-core/i18n`)
@@ -130,8 +130,7 @@ render(root, player) → buildTree() → computeLayout() → present() → [user
   - Must use `withControl(rest)` to apply standard control props
   - Children passed via props, not rest parameters
   - Pattern: `export const Panel = ({ children, ...rest }): JSX.Element => ({ type: 'panel', props: { ...withControl(rest), children } })`
-  - Available components: `Panel`, `Text`, `Image`, `Button`, `Fragment`, `Background`, `Scroll`, `ItemRenderer`, the modal-backed primitives `Input` / `Dropdown` / `Slider`, and `Form` with `Form.Toggle` / `.Slider` / `.Dropdown` / `.InlineSelect` / `.Option` / `.Input` / `.Button`
-  - `ItemRenderer` requires `ItemAuxContext` (experimental — reliable only in single-addon worlds)
+  - Available components: `Panel`, `Text`, `Image`, `Button`, `Fragment`, `Background`, `Scroll`, the modal-backed primitives `Input` / `Dropdown` / `Slider`, and `Form` with `Form.Toggle` / `.Slider` / `.Dropdown` / `.InlineSelect` / `.Option` / `.Input` / `.Button`
   - `Text` children are `DisplayText`: a literal string, a translation key, or a `RawMessage` — auto-detected, no prop to declare
 
 - **Fiber System** (`src/core/fabric/`): Manages component instances and hook state
@@ -319,7 +318,7 @@ export const panelWriter: Writer = (payload, form, ctx) => {
 - **`src/core/fabric/context.ts`** – `createContext()`, `Context<T>`, Provider implementation
 - **`src/core/componentRegistry.ts`** – `registerComponent()` / descriptors: the custom native component API
 - **`src/core/writers.ts`** – Form-slot emitters (`emitLabel`, `emitButton`, `emitHeader`, …) used by writers
-- **`src/components/*.ts`** – Component functions (Panel, Text, Image, Button, Fragment, Background, Scroll, Input, Dropdown, Slider, ItemRenderer)
+- **`src/components/*.ts`** – Component functions (Panel, Text, Image, Button, Fragment, Background, Scroll, Input, Dropdown, Slider)
 - **`src/components/Form/*`** – The modal backend: `Form` + its field members, `controlPayload.ts` (shared label group)
 - **`src/components/control.ts`** – `withControl()` function (canonical ordering, defaults, byte map)
 - **`src/jsx/jsx-runtime.ts`** – Custom JSX runtime: `jsx`, `jsxs`, `jsxDEV`, `Fragment`

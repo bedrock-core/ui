@@ -46,14 +46,5 @@ export type { FormDropdownProps } from './Form/FormDropdown';
 export type { FormInputProps } from './Form/FormInput';
 export type { FormButtonProps } from './Form/FormButton';
 
-export { ItemSlot } from './ItemSlot';
-export type { ItemSlotProps } from './ItemSlot';
-
-export { ItemContainer } from './ItemContainer';
-export type { ItemContainerProps } from './ItemContainer';
-
-export { EquipmentSlots } from './EquipmentSlots';
-export type { EquipmentSlotsProps } from './EquipmentSlots';
-
 export { theme } from './tokens';
 export type { Theme as OreTheme, ButtonTextStyle } from './tokens';

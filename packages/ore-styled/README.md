@@ -23,8 +23,6 @@ through the render pack, so the `core-ui-v*.mcpack` from the matching
   `ToggleButtonGroup`/`ToggleButtonItem`, `Input`, `Dropdown`, `Slider`, `Divider`
 - **Chrome** — `Header` (back button, breadcrumb trail, close button) and `MenuRow` (thumbnail,
   title, muted subtitle, `›` chevron, nesting depth)
-- **Item views** — `ItemSlot` for one `ItemStack`, `ItemContainer` for a whole `Container`,
-  `EquipmentSlots` for an `EntityEquippableComponent`
 - **`Form`** — a native `ModalFormData` modal with an atomic single-submit lifecycle, plus styled,
   labelled fields: `Form.Toggle`, `.Checkbox`, `.Radio`, `.ToggleButton`, `.Slider`, `.Dropdown`,
   `.Input`, `.Button`

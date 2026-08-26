@@ -41,7 +41,7 @@ The JSON UI decoders live in a **render pack** (`core-ui-v*.mcpack`, attached to
 
 ### Components
 
-- Base components: `Panel`, `Text`, `Image`, `Fragment`, `Button`, `ItemRenderer`
+- Base components: `Panel`, `Text`, `Image`, `Fragment`, `Button`
 - `Background` — a screen-level background texture
 - `Scroll` — up to **2** independent scroll regions per render
 - Modal-backed standalone primitives: `Input`, `Dropdown`, `Slider`
@@ -49,7 +49,7 @@ The JSON UI decoders live in a **render pack** (`core-ui-v*.mcpack`, attached to
 ### Layout & Styling
 
 - Flexbox layout engine — flex, margins, paddings, spacing, alignment, aspect ratio, content measurement ([@bedrock-core/flexbox](./packages/flexbox/README.md))
-- Prebuilt Ore-UI styled components ([@bedrock-core/ore-styled](./packages/ore-styled/README.md)): `Button`, `Card`, `Toggle`, `Divider`, `Input`, `Dropdown`, `Slider`, `Checkbox`, `RadioGroup`/`Radio`, `ToggleButtonGroup`/`ToggleButtonItem`, `Header`, `MenuRow`, `ItemSlot`, `ItemContainer`, `EquipmentSlots`, plus the `theme` design tokens for ad-hoc styling
+- Prebuilt Ore-UI styled components ([@bedrock-core/ore-styled](./packages/ore-styled/README.md)): `Button`, `Card`, `Toggle`, `Divider`, `Input`, `Dropdown`, `Slider`, `Checkbox`, `RadioGroup`/`Radio`, `ToggleButtonGroup`/`ToggleButtonItem`, `Header`, `MenuRow`, plus the `theme` design tokens for ad-hoc styling
 
 ### Localization
 

@@ -8,7 +8,7 @@ import { GuidePageView } from './views/GuidePage';
 export interface GuideOptions {
   /** Header title (raw text, colorable). Defaults to `'Guide'`. */
   title?: string;
-  /** Component registry for MDX `cmp` blocks (`<ItemRenderer … />` in a guide). */
+  /** Component registry for MDX `cmp` blocks (`<Panel … />` in a guide). */
   components?: GuideComponents;
 
   /**

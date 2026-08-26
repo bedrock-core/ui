@@ -147,7 +147,7 @@ export function isGuideManifest(value: unknown): value is GuideManifest {
 }
 
 /**
- * Component registry for MDX `cmp` blocks (`<ItemRenderer … />` in a guide).
+ * Component registry for MDX `cmp` blocks (`<Panel … />` in a guide).
  * Unregistered names render an "unsupported content" placeholder.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- registry accepts heterogeneous component prop shapes; props are validated by the authoring filter, not here
