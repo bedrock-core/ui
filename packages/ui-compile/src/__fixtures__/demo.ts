@@ -32,15 +32,16 @@ import type { IrDocument } from '../ir';
  *
  * Canvas is the canonical screen: 320 x 210, origin at its top left.
  */
+/** What the chest's compiler would report for this screen; the document no longer carries it. */
+export const demoCounts = { sentinels: 2, drawn: 5, channels: 8, size: 15 } as const;
+
+/** The entity this screen would open from. Also the compiler's, not the document's. */
+export const demoEntity = 'core:demo';
+
 export const demoScreen: IrDocument = {
   namespace: 'core_ui_demo',
   collection: 'container_items',
-  entity: 'core:demo',
   ownedItemRenderer: 'core_ui_container.gated_item',
-  // Five drawn cells after the two sentinel slots, then eight bank slots for the text
-  // run. Written out here because the fixture is hand-built; a real screen
-  // gets this from the allocation walk.
-  allocation: { sentinels: 2, drawn: 5, channels: 8, size: 15 },
   backdrop: 'textures/ui/demo_backdrop',
   root: {
     kind: 'panel',

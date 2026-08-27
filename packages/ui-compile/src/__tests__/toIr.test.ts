@@ -1,9 +1,9 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
-import { allocate, ContainerScreenError } from '@bedrock-core/ui-runtime/compile';
+import { allocate, containerRoot, ContainerScreenError } from '@bedrock-core/ui-runtime/compile';
 import { describe, expect, it } from 'vitest';
 import { CHEST_HOST } from '../hosts/chest';
 import type { ButtonNode, IrNode, PanelNode } from '../ir';
-import { toIr, UnsupportedNodeError } from '../toIr';
+import { chestAddressing, toIr, UnsupportedNodeError } from '../toIr';
 
 /** Builds an element the way the build leaves it: absolute texels on props. */
 const at = (
@@ -44,10 +44,11 @@ const text = (
   ...props,
 });
 
-const options = { namespace: 'core_ui_test' };
+const options = { namespace: 'core_ui_test', collection: CHEST_HOST.collection };
 
-/** Converts with the allocation the runtime would make for the same tree. */
-const convert = (tree: JSX.Element): ReturnType<typeof toIr> => toIr(tree, allocate(tree), options);
+/** Converts with the addressing the chest would make for the same tree. */
+const convert = (tree: JSX.Element): ReturnType<typeof toIr> =>
+  toIr(containerRoot(tree), chestAddressing(allocate(tree)), options);
 
 const first = (tree: JSX.Element): IrNode => {
   const [node] = convert(tree).root.children;
@@ -76,10 +77,9 @@ const buttonNode = (node: IrNode): ButtonNode => {
 };
 
 describe('toIr', () => {
-  it('reads the entity, the collection and the canvas off the root', () => {
+  it('reads the collection and the canvas off the root', () => {
     const doc = convert(container([], { background: 'textures/ui/frame' }));
 
-    expect(doc.entity).toBe('core:test');
     expect(doc.namespace).toBe('core_ui_test');
     expect(doc.collection).toBe(CHEST_HOST.collection);
     expect(doc.root).toMatchObject({ kind: 'panel', rect: { x: 0, y: 0, width: 320, height: 210 }, background: 'textures/ui/frame' });
@@ -264,7 +264,7 @@ describe('toIr', () => {
         { kind: 'slot', name: 'slot_2', source: { collection: 'hotbar_items', index: 0, interactive: false } },
       ]);
       // Nothing of the screen's own container is spent on a foreign slot.
-      expect(doc.allocation).toEqual({ sentinels: 2, drawn: 0, channels: 0, size: 2 });
+      expect(allocate(tree).size).toBe(2);
     });
   });
 
@@ -284,14 +284,15 @@ describe('toIr', () => {
     it('spends nothing of the screen\'s own container', () => {
       const tree = container([at('slot-grid', [0, 0, 162, 18], { collection: 'hotbar_items', columns: 9, rows: 1, interactive: true, hideOwned: true })]);
 
-      expect(convert(tree).allocation).toEqual({ sentinels: 2, drawn: 0, channels: 0, size: 2 });
+      expect(allocate(tree).size).toBe(2);
     });
 
     it('names the host\'s owned-item renderer, so a hideOwned grid can reach it', () => {
       const tree = container([]);
-      const doc = toIr(tree, allocate(tree), {
+      const doc = toIr(containerRoot(tree), chestAddressing(allocate(tree)), {
         ...options,
-        host: { ...CHEST_HOST, collection: 'crate_items', ownedItemRenderer: 'crate.gated_item' },
+        collection: 'crate_items',
+        ownedItemRenderer: 'crate.gated_item',
       });
 
       expect(doc.collection).toBe('crate_items');
@@ -321,14 +322,16 @@ describe('toIr', () => {
     });
   });
 
-  it('reports the allocation in counts', () => {
-    const doc = convert(container([
+  it('addresses every cell and channel of a mixed screen', () => {
+    const tree = container([
       at('button', [0, 0, 18, 18]),
       at('container-slot', [18, 0, 18, 18]),
       text([0, 20, 24, 10], 'idle', { maxLength: 4 }),
-    ]));
+    ]);
 
-    expect(doc.allocation).toEqual({ sentinels: 2, drawn: 2, channels: 4, size: 8 });
+    // Two drawn cells after the two sentinels, then a four-character run.
+    expect(allocate(tree).size).toBe(8);
+    expect(convert(tree).root.children.map(node => node.kind)).toEqual(['button', 'slot', 'text']);
   });
 
   it('generates stable per-kind names', () => {
@@ -357,18 +360,12 @@ describe('toIr', () => {
       expect(() => convert(tree)).toThrow(ContainerScreenError);
     });
 
-    it('refuses a container that names no entity', () => {
-      const tree = at('container', [0, 0, 320, 210], { __container: { entity: '' } });
-
-      expect(() => convert(tree)).toThrow(ContainerScreenError);
-    });
-
     it('refuses an allocation made from a different tree', () => {
       const tree = container([at('button', [0, 0, 18, 18])]);
       const other = container([]);
 
-      expect(() => toIr(tree, allocate(other), options)).toThrow(/no cell/);
-      expect(() => toIr(other, allocate(tree), options)).toThrow(/must see the same tree/);
+      expect(() => toIr(containerRoot(tree), chestAddressing(allocate(other)), options)).toThrow(/no cell/);
+      expect(() => toIr(containerRoot(other), chestAddressing(allocate(tree)), options)).toThrow(/must see the same tree/);
     });
   });
 });

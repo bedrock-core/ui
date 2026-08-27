@@ -51,7 +51,7 @@ export type { SlotSource } from './components/Slot';
 export { SLOT_GRID_TYPE, slotGridConfig } from './components/SlotGrid';
 export type { SlotGridConfig } from './components/SlotGrid';
 export { isTextElementType, liveTextLength } from './components/Text';
-export { childElements, isElement } from './core/guards';
+export { childElements, concreteRoots, isElement } from './core/guards';
 export { ContainerScreenError } from './core/types';
 export { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
 

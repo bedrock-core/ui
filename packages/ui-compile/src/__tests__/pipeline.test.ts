@@ -217,6 +217,12 @@ describe('the compiler, end to end', () => {
     expect(compiled.allocation.channels).toBe(8);
   });
 
+  it('refuses a container that names no entity, since nothing could serve it', () => {
+    const Screen = (): JSX.Element => Container({ entity: '', children: [] });
+
+    expect(() => compileScreen(Screen, { name: 'nameless' })).toThrow(/needs `entity`/);
+  });
+
   it('still rejects a hook that needs a player, because there is not one', () => {
     const PerPlayer = (): JSX.Element => {
       usePlayer();

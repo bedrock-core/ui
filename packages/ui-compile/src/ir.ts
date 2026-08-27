@@ -1,12 +1,12 @@
 /**
  * The compiler's intermediate representation: a tree whose geometry is already
- * solved and whose container indices are already handed out.
+ * solved and whose addresses are already handed out.
  *
  * Everything upstream of this — JSX, the fiber renderer, the flexbox pass, the
  * allocation walk — produces an `IrDocument`. Everything downstream turns it
  * into JSON UI. Keeping the seam here is deliberate: the emitter knows nothing
- * about components, entities or the chest screen, so it can be tested on a
- * hand-written document and serve other hosts later.
+ * about components, entities or which screen it is drawing on, which is what
+ * lets it be tested on a hand-written document and serve every host.
  *
  * Each node kind declares its own shape in its module under `nodes/`; this
  * module is the document around them, and the one place the shapes are
@@ -53,10 +53,8 @@ export interface Allocation {
 export interface IrDocument {
   /** JSON UI namespace for the emitted file. */
   namespace: string;
-  /** The collection every slot and channel reads from, e.g. `container_items`. */
+  /** The collection every addressed control reads from, e.g. `container_items`. */
   collection: string;
-  /** The entity type the screen's `<Container>` names. */
-  entity: string;
   /**
    * The host's item renderer that hides the runtime's transport item, fully
    * qualified (e.g. `chest.core_ui_gated_item`). A `hideOwned` grid draws its
@@ -70,5 +68,4 @@ export interface IrDocument {
    * of the root because it covers the whole screen, not the canvas.
    */
   backdrop?: string;
-  allocation: Allocation;
 }

@@ -1,15 +1,15 @@
 /**
- * Built tree + allocation -> IR.
+ * A screen's canvas -> IR.
  *
  * `buildContainerTree` leaves absolute Pocket-space texels on every element as
  * `jsonUIx` / `jsonUIy` / `jsonUIWidth` / `jsonUIHeight`. JSON UI positions a
  * control against its parent, so this pass converts absolute to relative on the
  * way through — the same subtraction the form serializer does.
  *
- * Indices come from `allocate`, never from here: the runtime runs the same walk
- * on the same tree and reads handlers off the same entries, so the third button
- * is the third button on both sides by construction. This pass only looks each
- * cell and channel up by the element it belongs to.
+ * Addresses come from the host's `allocate`, never from here: the runtime runs
+ * the same walk on the same tree and reads handlers off the same entries, so
+ * the third button is the third button on both sides by construction. This
+ * pass only looks each cell and channel up by the element it belongs to.
  *
  * Fragments are transparent: they carry no geometry and their children are
  * spliced into the parent, which is what makes a component boundary free.
@@ -21,16 +21,15 @@
 
 import type { JSX } from '@bedrock-core/ui-runtime';
 import {
-  BACKGROUND_SLOT_TYPE, childElements, CONTAINER_TYPE, containerEntity, containerRoot,
-  ContainerScreenError, isTransparentType, type Allocation as ContainerAllocation,
+  BACKGROUND_SLOT_TYPE, childElements, CONTAINER_TYPE, isTransparentType,
+  type Allocation as ContainerAllocation,
 } from '@bedrock-core/ui-runtime/compile';
-import { CHEST_HOST, type ChestHost } from './hosts/chest';
-import type { Allocation, IrDocument, IrNode, Rect } from './ir';
+import type { IrDocument, IrNode, Rect } from './ir';
 import { loweringFor } from './nodes';
 import { num, str } from './nodes/shared';
 import type { Addressing, CellAddress, ChannelAddress, LowerContext, NodeDefinition } from './nodes/types';
 
-/** The components a container screen can be made of, by the name the author writes. */
+/** The components a compiled screen can be made of, by the name the author writes. */
 const SUPPORTED = 'Panel, Text, Image, Button, Slot, SlotGrid, PlayerInventory, Hotbar, Background, Scroll';
 
 export class UnsupportedNodeError extends Error {
@@ -190,8 +189,10 @@ const lower = (definition: NodeDefinition, element: JSX.Element, type: string, o
 export interface ToIrOptions {
   /** JSON UI namespace for the emitted file. */
   namespace: string;
-  /** The host the screen is compiled for. Defaults to the chest. */
-  host?: ChestHost;
+  /** The collection every addressed control reads from. */
+  collection: string;
+  /** The host's transport-hiding renderer, when it has one. */
+  ownedItemRenderer?: string;
 }
 
 /**
@@ -204,28 +205,23 @@ export const chestAddressing = (allocation: ContainerAllocation): Addressing => 
 });
 
 /**
- * Converts a built tree and its allocation into an {@link IrDocument}.
+ * Converts a screen's canvas into an {@link IrDocument}.
  *
- * @param tree - Output of `buildContainerTree`.
- * @param allocation - Output of `allocate` over the same tree.
- * @param options - Namespace and host for the emitted file.
+ * The root is resolved by the caller rather than found here, because what
+ * counts as a screen's root is the host's question — a chest screen renders
+ * exactly one `<Container>`, a form renders whatever the author wrote — and
+ * this walk has no business asking it.
+ *
+ * @param root - The element whose rect is the canvas, already resolved.
+ * @param addressing - Where the host put every cell and channel of that tree.
+ * @param options - Namespace, collection, and the host's renderer if it has one.
  * @throws {@link UnsupportedNodeError} for a control with no compiled form.
- * @throws ContainerScreenError when the root names no entity.
  */
 export const toIr = (
-  tree: JSX.Element,
-  allocation: ContainerAllocation,
+  root: JSX.Element,
+  addressing: Addressing,
   options: ToIrOptions,
 ): IrDocument => {
-  const host = options.host ?? CHEST_HOST;
-  const addressing = chestAddressing(allocation);
-  const root = containerRoot(tree);
-  const entity = containerEntity(root);
-
-  if (entity === undefined || entity === '') {
-    throw new ContainerScreenError('`<Container>` needs `entity`: the type of the entity the screen opens from.');
-  }
-
   const walk: Walk = {
     addressing,
     met: { cells: 0, channels: 0 },
@@ -245,19 +241,10 @@ export const toIr = (
     );
   }
 
-  const drawn = allocation.slots.length;
-  const summary: Allocation = {
-    sentinels: allocation.sentinels.length,
-    drawn,
-    channels: allocation.size - allocation.sentinels.length - drawn,
-    size: allocation.size,
-  };
-
   return {
     namespace: options.namespace,
-    collection: host.collection,
-    entity,
-    ownedItemRenderer: host.ownedItemRenderer,
+    collection: options.collection,
+    ...options.ownedItemRenderer === undefined ? {} : { ownedItemRenderer: options.ownedItemRenderer },
     root: {
       kind: 'panel',
       name: 'root',
@@ -266,6 +253,5 @@ export const toIr = (
       children,
     },
     ...walk.backdrop === undefined ? {} : { backdrop: walk.backdrop },
-    allocation: summary,
   };
 };

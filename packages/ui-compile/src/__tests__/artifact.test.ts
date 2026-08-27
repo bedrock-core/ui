@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { layoutKey, PROTOCOL_ITEM_AUX } from '@bedrock-core/ui-runtime/compile';
 import { describe, expect, it } from 'vitest';
-import { demoScreen } from '../__fixtures__/demo';
+import { demoCounts, demoEntity, demoScreen } from '../__fixtures__/demo';
 import { buildRouter, type CompiledScreen } from '../compile';
 import { CHEST_HOST } from '../hosts/chest';
 import { emit } from '../emit';
@@ -56,9 +56,9 @@ describe('the reference screen', () => {
     addon: 'core_ui',
     namespace: demoScreen.namespace,
     layoutId: layoutKey('core_ui', 'demo'),
-    entity: demoScreen.entity,
+    entity: demoEntity,
     document,
-    allocation: demoScreen.allocation,
+    allocation: demoCounts,
     hasBackdrop: true,
     hasText: true,
   };

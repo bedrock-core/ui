@@ -9,9 +9,7 @@ import { FORM_EMIT } from '../emit';
 const screenOf = (children: IrNode[]): Document => emit({
   namespace: 'core_ui_test',
   collection: FORM_COLLECTION,
-  entity: '',
   root: { kind: 'panel', name: 'root', rect: { x: 0, y: 0, width: 320, height: 210 }, children },
-  allocation: { sentinels: 0, drawn: 0, channels: 0, size: 0 },
 } satisfies IrDocument, FORM_EMIT);
 
 const definition = (document: Document, name: string): Control => {

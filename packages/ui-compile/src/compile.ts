@@ -6,14 +6,14 @@
 
 import type { FunctionComponent } from '@bedrock-core/ui-runtime';
 import {
-  allocate, buildContainerTree, buildScreenOnce, ContainerScreenError, layoutKey, probeLiveness,
-  type Probe,
+  allocate, buildContainerTree, buildScreenOnce, containerEntity, containerRoot,
+  ContainerScreenError, layoutKey, probeLiveness, type Probe,
 } from '@bedrock-core/ui-runtime/compile';
 import { BACKDROP_DEFINITION, emit } from './emit';
 import { CHEST_EMIT, CHEST_HOST, type ChestHost, chestRouter, type ChestRouting } from './hosts/chest';
 import type { Allocation } from './ir';
 import type { Document } from './jsonui';
-import { toIr } from './toIr';
+import { chestAddressing, toIr } from './toIr';
 
 export interface ScreenSpec {
   /** Screen name from the file name, e.g. `furnace`. */
@@ -78,7 +78,7 @@ const checkSpec = (spec: ScreenSpec): void => {
  * anything reported here really did change between two renders; the fix is
  * always the same, and the observed strings show what to size it for.
  */
-const checkLiveness = (probe: Probe, name: string): void => {
+export const checkLiveness = (probe: Probe, name: string): void => {
   if (probe.shape !== undefined) {
     throw new ContainerScreenError(
       `"${name}" renders a different screen when its state changes.\n`
@@ -132,18 +132,40 @@ export function compileScreen(
   checkLiveness(probeLiveness(() => buildScreenOnce(Screen)), spec.name);
 
   const tree = buildContainerTree(Screen);
+
+  // The root and the entity are the CHEST's questions — what counts as a
+  // screen's root differs per host, so the walk below is handed the answer
+  // rather than asked to find it.
+  const root = containerRoot(tree);
+  const entity = containerEntity(root);
+
+  if (entity === undefined || entity === '') {
+    throw new ContainerScreenError('`<Container>` needs `entity`: the type of the entity the screen opens from.');
+  }
+
   const allocation = allocate(tree);
-  const ir = toIr(tree, allocation, { namespace, host });
+  const ir = toIr(root, chestAddressing(allocation), {
+    namespace,
+    collection: host.collection,
+    ownedItemRenderer: host.ownedItemRenderer,
+  });
   const document = emit(ir, CHEST_EMIT);
+  const drawn = allocation.slots.length;
+  const counts: Allocation = {
+    sentinels: allocation.sentinels.length,
+    drawn,
+    channels: allocation.size - allocation.sentinels.length - drawn,
+    size: allocation.size,
+  };
 
   return {
     name: spec.name,
     addon,
     namespace,
     layoutId: layoutKey(addon, spec.name),
-    entity: ir.entity,
+    entity,
     document,
-    allocation: ir.allocation,
+    allocation: counts,
     hasBackdrop: document[BACKDROP_DEFINITION] !== undefined,
     hasText: allocation.channels.some(channel => channel.carrier === 'text'),
   };

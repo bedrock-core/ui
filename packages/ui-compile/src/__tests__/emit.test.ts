@@ -14,8 +14,6 @@ const emit = (doc: IrDocument): Document => emitDocument(doc, CHEST_EMIT);
 const screenOf = (children: IrNode[], extra: Partial<IrDocument> = {}): IrDocument => ({
   namespace: 'core_ui_test',
   collection: 'container_items',
-  entity: 'core:test',
-  allocation: { sentinels: 2, drawn: 0, channels: 0, size: 2 },
   root: { kind: 'panel', name: 'root', rect: { x: 0, y: 0, width: 320, height: 210 }, children },
   ...extra,
 });
@@ -218,7 +216,7 @@ describe('emit / text runs', () => {
       fontScaleFactor: 2,
       ...overrides,
     },
-  ], { allocation: { sentinels: 2, drawn: 0, channels: 4, size: 6 } }));
+  ]));
 
   /** The definition every cell instantiates, where the bindings live. */
   const textDef = (doc: Document): Control => {
@@ -334,7 +332,7 @@ describe('emit / buttons', () => {
   });
 
   const withFace = (look: ButtonFace, children: IrNode[] = []): Document =>
-    emit(screenOf([button('a', 1, look, children)], { allocation: { sentinels: 2, drawn: 1, channels: 0, size: 3 } }));
+    emit(screenOf([button('a', 1, look, children)]));
 
   const gatesOn = (target: Control, expression: string): void => {
     // The enabled flag is the slot holding the TRANSPORT, by its item id —
@@ -455,7 +453,7 @@ describe('emit / buttons', () => {
     const same = emit(screenOf([
       button('a', 1, face, [caption('label_1', 'Go')]),
       button('b', 2, face, [caption('label_2', 'Go')], 64),
-    ], { allocation: { sentinels: 2, drawn: 2, channels: 0, size: 4 } }));
+    ]));
 
     expect(Object.keys(defs(same)).filter(name => name.startsWith('button_'))).toEqual([
       'button_1_face', 'button_1_states@core_ui_container.slot_button', 'button_1',
@@ -465,7 +463,7 @@ describe('emit / buttons', () => {
     const different = emit(screenOf([
       button('a', 1, face, [caption('label_1', 'Go')]),
       button('b', 2, face, [caption('label_2', 'Stop')], 64),
-    ], { allocation: { sentinels: 2, drawn: 2, channels: 0, size: 4 } }));
+    ]));
 
     expect(Object.keys(defs(different)).filter(name => /^button_\d+$/.test(name))).toEqual(['button_1', 'button_2']);
     expect(find(different, name => name.startsWith('b@'))[1].$cell).toBe('core_ui_test.button_2');
@@ -475,7 +473,7 @@ describe('emit / buttons', () => {
 describe('emit / slot roles and locking', () => {
   const of = (role: 'both' | 'input' | 'output', interactive = true): Document => emit(screenOf(
     [{ kind: 'slot', name: 'a', rect: { x: 0, y: 0, width: 18, height: 18 }, address: 1, role, interactive }],
-    { allocation: { sentinels: 2, drawn: 1, channels: 0, size: 3 }, ownedItemRenderer: 'core_ui_container.gated_item' },
+    { ownedItemRenderer: 'core_ui_container.gated_item' },
   ));
 
   const placed = (doc: Document): Control => child(definition(doc, 'screen'), 'a@core_ui_container.slot_host');

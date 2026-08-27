@@ -50,7 +50,9 @@ describe('the container path', () => {
   });
 
   it('requires exactly one <Container> at the root', () => {
-    const Screen = (): JSX.Element => Panel({ children: [Slot({})] });
+    // Nothing container-only in it: a `<Slot>` would be refused first, and by
+    // the more useful message. What is wrong here is only the missing root.
+    const Screen = (): JSX.Element => Panel({ children: [Text({ children: 'no container' })] });
 
     expect(() => buildContainerTree(Screen)).toThrow(ContainerScreenError);
     expect(() => buildContainerTree(Screen)).toThrow(/exactly one/);

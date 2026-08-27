@@ -1,4 +1,5 @@
 import { registerNativeComponents } from '../../components';
+import { containerRoot } from '../../components/Container';
 import { BUILD_OWNER, type Owner } from '../../core/fabric';
 import { buildTree, cleanupComponentTree } from '../../core/render/tree';
 import { DefaultTranslations } from '../../data/Translation';
@@ -29,7 +30,15 @@ export function buildContainerTree(
   }
 
   try {
-    return buildScreenOnce(root, owner);
+    const tree = buildScreenOnce(root, owner);
+
+    // The build owner can build a form too — it compiles those as well — so
+    // being built is no longer proof of being a container screen. This is what
+    // tells someone who handed `createContainerScreen` a form, and it throws
+    // the message that names the fix.
+    containerRoot(tree);
+
+    return tree;
   } finally {
     if (owner.kind === 'build') {
       cleanupComponentTree(owner);

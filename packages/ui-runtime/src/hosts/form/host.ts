@@ -34,7 +34,10 @@ const noContainer = (need: Need): Error => new ContainerScreenError(
  */
 
 const FORM = {
-  owners: ['player'],
+  // A form belongs to the player it is shown to. The build renders it too —
+  // once, with initial state, to decide the shape it will be compiled at — the
+  // same way it renders a container screen, and for the same reason.
+  owners: ['player', 'build'],
   canvas: CANONICAL_SCREEN,
   // A form draws its scrolls from the render pack's fixed pool.
   scrollLimit: MAX_POOLED_SCROLLS,
