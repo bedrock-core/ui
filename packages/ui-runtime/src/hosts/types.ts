@@ -64,7 +64,14 @@ export interface HostContract {
    * region per `<Scroll>`, so nothing caps it.
    */
   readonly scrollLimit: number;
-  /** Whether the layout is baked at build time rather than serialized per present. */
+  /**
+   * Whether a screen of this host is baked at build time by DEFAULT, for the
+   * callers that do not say. It is the host's usual answer, not the truth about
+   * a given screen: the form host serves both a screen serialized per present
+   * and one compiled into the pack, and only the caller knows which it holds.
+   * Anything that turns on a frozen layout — reserving a live string's width,
+   * refusing to bake it into a button face — reads `buildTree`'s answer.
+   */
   readonly compiled: boolean;
   /** What the host offers. A need outside this set is a build error naming both. */
   readonly offers: readonly Capability[];

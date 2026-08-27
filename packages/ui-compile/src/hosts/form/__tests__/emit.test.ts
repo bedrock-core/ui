@@ -39,13 +39,15 @@ const button = (address: number): IrNode => ({
   name: 'button_1',
   rect: { x: 4, y: 8, width: 60, height: 20 },
   address,
+  children: [
+    { kind: 'label', name: 'label_1', rect: { x: 0, y: 0, width: 10, height: 10 }, text: 'go', localize: false, fontType: 'default', fontScaleFactor: 1 },
+  ],
   face: {
     texture: 'textures/ui/a',
     hover: 'textures/ui/b',
     pressed: 'textures/ui/c',
     disabled: 'textures/ui/d',
   },
-  children: [],
 });
 
 const text = (address: number): IrNode => ({
@@ -72,39 +74,60 @@ describe('a form button', () => {
   });
 
   it('carries the collection_details binding ON THE BUTTON — S1: a host above it is not enough', () => {
-    const face = definition(document, 'button_1');
+    const states = definition(document, 'button_1_states');
 
-    expect(face.type).toBe('button');
-    expect(face.bindings).toContainEqual({
+    expect(states.type).toBe('button');
+    expect(states.bindings).toContainEqual({
       binding_type: 'collection_details',
       binding_collection_name: FORM_COLLECTION,
     });
   });
 
   it('routes a press to the engine\'s form click', () => {
-    expect(definition(document, 'button_1').button_mappings).toContainEqual({
+    expect(definition(document, 'button_1_states').button_mappings).toContainEqual({
       from_button_id: 'button.menu_select',
       to_button_id: 'button.form_button_click',
       mapping_type: 'pressed',
     });
   });
 
-  it('takes enabled off its own entry, since a form has a string where a chest has an item', () => {
-    const face = definition(document, 'button_1');
+  it('has no button at all while disabled, because `enabled` does not stop a press', () => {
+    // MEASURED in game: a button with `enabled` bound false still handed the
+    // press to script, and drew no disabled look. The press surface is gated
+    // out instead — the shape the chest host arrived at for the same reason.
+    const cell = definition(document, 'button_1');
+    const [enabled, disabled] = cell.controls ?? [];
 
-    expect(face.enabled).toBe('#entry_enabled');
-    expect(face.bindings).toContainEqual({
+    expect(enabled?.['enabled']?.bindings).toContainEqual({
       binding_type: 'view',
       source_property_name: "(not (#entry_value = '0'))",
-      target_property_name: '#entry_enabled',
+      target_property_name: '#visible',
     });
+    expect(disabled?.['disabled']?.bindings).toContainEqual({
+      binding_type: 'view',
+      source_property_name: "(#entry_value = '0')",
+      target_property_name: '#visible',
+    });
+
+    // Only the enabled branch holds a button.
+    expect(JSON.stringify(enabled)).toContain('button_1_states');
+    expect(JSON.stringify(disabled)).not.toContain('button_1_states');
   });
 
-  it('lets the engine draw the disabled face rather than gating it', () => {
-    const face = definition(document, 'button_1');
+  it('puts the caption INSIDE each state, since a sibling of them is never drawn', () => {
+    const states = definition(document, 'button_1_states');
 
-    expect(face.locked_control).toBe('locked');
-    expect(face.controls?.map(entry => Object.keys(entry)[0])).toEqual(['default', 'hover', 'pressed', 'locked']);
+    expect(states.controls?.map(entry => Object.keys(entry)[0])).toEqual(['default', 'hover', 'pressed']);
+
+    for (const entry of states.controls ?? []) {
+      const [state] = Object.values(entry);
+
+      expect(state?.controls?.map(child => Object.keys(child)[0]))
+        .toEqual(['bg', 'caption@core_ui_test.button_1_content']);
+    }
+
+    // Emitted once, referenced by every face.
+    expect(definition(document, 'button_1_content').type).toBe('panel');
   });
 
   it('shares one definition between two buttons that look the same', () => {

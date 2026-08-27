@@ -1,5 +1,5 @@
 import { SCROLL_SLOT_TYPE } from '@bedrock-core/ui-runtime/compile';
-import { CONTAINER, layerOf, offsetOf, sizeOf, topLeft, visibilityOf } from './shared';
+import { layerOf, offsetOf, SHAPES, sizeOf, topLeft, visibilityOf } from './shared';
 import type { IrNode, NodeBase, NodeDefinition, Rect } from './types';
 
 /**
@@ -26,6 +26,9 @@ const REGION_ORIGIN: Rect = { x: 0, y: 0, width: 0, height: 0 };
 /**
  * Transparent to the layout, but not to the output: a region has a viewport
  * of its own, and its content was laid out from the region's origin.
+ *
+ * The same on every host, which is why this kind has no mechanism to override:
+ * a scroll clips and scrolls baked content and reads nothing at all.
  */
 export const scrollDefinition: NodeDefinition<ScrollNode> = {
   kind: 'scroll',
@@ -61,7 +64,7 @@ export const scrollDefinition: NodeDefinition<ScrollNode> = {
     };
 
     return {
-      [`${node.name}@${CONTAINER}.scroll`]: {
+      [`${node.name}@${SHAPES}.scroll`]: {
         size: sizeOf(node.rect),
         offset: offsetOf(node.rect),
         ...topLeft,

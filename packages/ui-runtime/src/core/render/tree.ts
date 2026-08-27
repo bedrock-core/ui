@@ -22,9 +22,12 @@ import { createInitialContext, createRootContext, type TraversalContext } from '
  *
  * @param element - Root JSX element to build
  * @param owner - Who the render belongs to: a player for a form, an entity or the build for a container screen
+ * @param compiled - Whether THIS screen's layout is baked into the pack. Omit
+ *   to take the host's answer, which is right for every host that only ever
+ *   compiles; the form host serves both kinds and has to be told.
  * @returns Fully processed JSX element tree and list of created instances
  */
-export function buildTree(element: JSX.Element, owner: Owner): JSX.Element {
+export function buildTree(element: JSX.Element, owner: Owner, compiled?: boolean): JSX.Element {
   // Initialize traversal context
   const context: TraversalContext = createInitialContext();
 
@@ -57,7 +60,21 @@ export function buildTree(element: JSX.Element, owner: Owner): JSX.Element {
   // Phase 2: Compute layout using flexbox algorithm
   // Resolves sizes and x/y positions to absolute Pocket-space texels
   // Returns "NormalizedControlProps"
-  result = computeLayout(result, host.scrollLimit, host.compiled);
+  // Whether THIS layout is frozen, which is not the same question as whether
+  // the host always compiles. A form host serves both: an interpreted screen
+  // re-measures on every present, a compiled one was baked at build time and
+  // can never be measured again. Two things turn on the answer.
+  //
+  //  - A live text reserves room for its widest possible content, because
+  //    nothing will re-fit the box when the string grows.
+  //  - Nothing caps the scroll regions. A serialized screen draws its scrolls
+  //    from the render pack's fixed pool; a compiled one emits a region per
+  //    `<Scroll>`, so the pool's limit is not its limit. Applying it anyway
+  //    would compile a three-scroll screen happily and then throw the first
+  //    time a player opened it.
+  const frozen = compiled ?? host.compiled;
+
+  result = computeLayout(result, frozen ? Number.POSITIVE_INFINITY : host.scrollLimit, frozen);
 
   // Phase 3: Apply parent-child inheritance rules (visibility, enabled)
   // Initialize with root parent state
@@ -68,7 +85,7 @@ export function buildTree(element: JSX.Element, owner: Owner): JSX.Element {
   // Phase 4: what the tree NEEDS against what the host OFFERS, plus the rules
   // every screen obeys — so dynamically-built or type-escaped trees fail loud,
   // by name, before anything is presented or emitted.
-  validate(result, host);
+  validate(result, host, frozen);
 
   return result;
 }

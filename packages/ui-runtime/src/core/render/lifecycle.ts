@@ -63,7 +63,7 @@ export function render(
     if (hasLiveChain(owner)) {
       setSessionRoot(owner, rootElement);
       setBuildRunner(owner, () => {
-        buildTree(rootElement, owner);
+        buildTree(rootElement, owner, compiledTitle !== undefined);
       });
       requestSwap(owner);
 
@@ -87,7 +87,7 @@ export function render(
   // Register this player's session root and a background build runner
   setSessionRoot(owner, rootElement);
   setBuildRunner(owner, () => {
-    buildTree(rootElement, owner);
+    buildTree(rootElement, owner, compiledTitle !== undefined);
   });
 
   const token = beginPresentChain(owner);
@@ -116,7 +116,7 @@ export function render(
     let tree: JSX.Element;
 
     try {
-      tree = buildTree(rootNow, owner);
+      tree = buildTree(rootNow, owner, compiledTitle !== undefined);
     } catch (err: unknown) {
       console.error(`[ui-runtime] buildTree error: ${String(err)}`);
 

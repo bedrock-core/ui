@@ -44,7 +44,7 @@ import { BACKDROP_DEFINITION, SCREEN_DEFINITION } from '../emit';
 import type { Binding, Control, ControlEntry, Document } from '../jsonui';
 import { collectKind } from '../nodes';
 import { faceDefs, faceSignature } from '../nodes/button';
-import { CONTAINER } from '../nodes/shared';
+import { CHEST } from '../nodes/shared';
 import { TEXT_DEF, textDef, textSignature } from '../nodes/text';
 import type { HostEmit } from '../nodes/types';
 
@@ -95,7 +95,7 @@ export const CHEST_HOST: ChestHost = {
   collection: COLLECTION,
   containerType: 'container',
   canvas: CANONICAL_SCREEN,
-  ownedItemRenderer: `${CONTAINER}.gated_item`,
+  ownedItemRenderer: `${CHEST}.gated_item`,
 };
 
 /**

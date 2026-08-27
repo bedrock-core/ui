@@ -1,6 +1,6 @@
 import { SLOT_GRID_TYPE, slotGridConfig } from '@bedrock-core/ui-runtime/compile';
 import { collectionKey, layerOf, offsetOf, sizeOf, topLeft, visibilityOf } from './shared';
-import { CELL, containerItemVars } from './slot';
+import { CELL, containerItemVars, hidesTransport } from './slot';
 import type { Emit, NodeBase, NodeDefinition } from './types';
 
 /**
@@ -32,18 +32,20 @@ declare module './types' {
  * the router's own redrawn grids do.
  */
 const ensureGridCell = (emit: Emit, node: GridNode): string => {
+  // One answer, used for both the name and the renderer: a definition keyed
+  // 'plain' that carries the gated renderer would be shared by cells that must
+  // not have it.
+  const gated = hidesTransport(node.collection, node.hideOwned);
   const name = [
     'grid_cell',
     collectionKey(node.collection),
     node.interactive ? 'take' : 'display',
-    node.hideOwned ? 'owned' : 'plain',
+    gated ? 'owned' : 'plain',
   ].join('__');
   const key = `${name}@${CELL.item}`;
 
   if (emit.defs[key] === undefined) {
-    const renderer = node.hideOwned ? emit.ownedRenderer : undefined;
-
-    emit.defs[key] = containerItemVars(node.collection, node.interactive, renderer);
+    emit.defs[key] = containerItemVars(node.collection, node.interactive, gated ? emit.ownedRenderer : undefined);
   }
 
   return `${emit.ns}.${name}`;

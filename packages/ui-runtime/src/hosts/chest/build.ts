@@ -72,5 +72,6 @@ export function buildScreenOnce(
     props: { owner, children: userRoot },
   };
 
-  return buildTree(element, owner);
+  // A build render is what freezes a layout, so it is compiled by definition.
+  return buildTree(element, owner, true);
 }

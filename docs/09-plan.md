@@ -18,7 +18,7 @@ Pack `2.0` accompanies library `1.0` by the existing rule (pack major = library 
 | 1 | **Seam refactor, no behaviour change** ✅ | `core/ir/` (`analyze`, the shared `claim` walk, `validate`); `hosts/` registry — `chest`, `form-action`, `form-modal` — picked by the root the author wrote; needs/offers replaces both validators; `container/*` moved under `hosts/chest/`. **Remaining:** re-run the in-game checklist | done |
 | 2 | **Form host spike** (in game, throwaway) — S1 ✅, S2 folded in | title-key mount gate; static control with baked `collection_index` on `form_buttons` producing `selection`; a one-field entry decoded with one binding; modal field with an entry as its label; local toggle group under the form mount and under the chest mount | 2–3 days |
 | 3 | **Form hosts** — *in progress: placement + title contract done* | `form-action` and `form-modal` contract / emit / runtime; the base baked, layout islands re-solved at runtime; `ui.generated.json`; `render()` routing by name; encoding `1` with `ENCODING_MIN/MAX`; reference addon screens compiled | 2 weeks |
-| 4 | **Vocabulary** | `core_ui_shapes`; chest files renamed under `core_ui_chest`; form carriers and mount; the chest geometry carrier; `protocol.json` windows; `debug` diff | 1 week |
+| 4 | **Vocabulary** — *`core_ui_shapes`, `core_ui_chest` and the form mount done* | ~~`core_ui_shapes`~~; ~~chest files renamed under `core_ui_chest`~~; ~~the form mount~~; form carriers; the chest geometry carrier (S6); `protocol.json` windows; `debug` diff | 1 week |
 | 5 | **Consumers, then delete legacy** | `List max`, `Tabs`; the guides filter emits IR and pages compile as screens with a replicated reference table; config and the addon list on compiled `List max` screens; the interpreter fallback and its decoders deleted; pack minor | 2 weeks |
 | 6 | **Build flow** | the single `core` filter; CLI template; docs site pages replace this folder | 4 days |
 | 7 | **Next host** | the book: findings page, contract, emit, runtime, vocabulary | after 6 |
@@ -46,6 +46,34 @@ What it still cannot do is the rest of [03-ir](./03-ir.md): every prop gets a bi
 
 Each spike is a hand-written RP file plus a ten-line script, recorded in a findings page whichever way it goes.
 
+## Measured while building phase 3
+
+Three engine facts, all found by opening a compiled form rather than by reasoning:
+
+1. **`enabled` on a button stops nothing.** Bound false, the button still handed its press to script and drew no disabled look. A disabled button has to have no button in it at all — which is the shape the chest host already used, for a reason I had read as chest-specific and is not.
+2. **A button draws only the child its `*_control` names.** A caption beside the state controls is never drawn; it belongs inside each face. And it needs a layer above the face, because being later in `controls` does not put it on top.
+3. **`host.compiled` was two questions wearing one name.** It meant "this host's layouts are always baked", and `buildTree` used it to decide whether live text reserves its full width. A compiled FORM is the first screen where "the host is compiled" and "this layout is frozen" differ — so live text hugged its first value and ellipsised the moment the count reached two digits.
+
+   Split and swept. `buildTree` takes the answer and hands it to `validate`; the contract keeps `compiled` only as the *default* for callers that do not say. Every other reader was checked, and three were the same bug unfired:
+
+   - The two rules that refuse a live `<Text maxLength>` and a `<SlotGrid>` inside a button asked the host, so a compiled form would have **baked a live string into a shared face definition** and drawn its build-time value forever — the exact failure the chest rule exists to prevent, on a screen the rule never looked at.
+   - The nested-`<Scroll>` rule the same way: a compiled form lays regions out flat too.
+   - The `<Container>`-placement rule and `requireOwner` were never about baking at all; both ask `host.id === 'chest'` now, which is what they meant.
+   - `render()`'s **supersede** path built its background rebuilds without the flag, so a compiled screen that replaced a live one lost the frozen layout on every rebuild after the first.
+
+4. **The close button had bug 2 as well.** `<Button onPress={useExit()}>` put its caption beside the state controls, so a labelled close button was blank. The chest's demo uses a texture-only X, which is why it went unseen. Fixed where the kind is lowered, so it holds on every host.
+
+## Hiding the transport is not an author's decision
+
+Found in game: pressing a button showed a repeating command block in the first hotbar slot for a tick, and the pointer flashed for players not using a gamepad.
+
+Three separate holes, one cause each:
+
+1. **`hideOwned` was opt-in.** `<PlayerInventory>` and `<Hotbar>` set it; a bare `<SlotGrid>` over the same collection did not, and a foreign `<Slot>` had no way to ask at all. But the transport is the LIBRARY's mechanism — a press auto-places it into whichever of the player's slots is free — so nobody writing a screen should have to know it exists to keep it from being drawn. The gate now follows the collection: any cell over `inventory_items` or `hotbar_items` hides it, grid or slot. `hideOwned` remains for asking over some other collection.
+2. **The cursor preview drew the selected item directly**, the one place an item is drawn without going through a grid cell, so `gated_item` never covered it. It carries the same gate now.
+3. **A binding decides visibility from the frame it first resolves, not the frame the control is created.** An unseeded control draws until then. Seed direction is a judgement each time: the item preview seeds VISIBLE (a broken binding should leave a working preview), the pointer seeds HIDDEN (a frame-late pointer is unnoticeable; a flash is not).
+
+
 ## Open questions
 
 - **Guides — decided.** The guides filter emits the UI IR directly (MDX → IR, no block manifest in between); every page compiles into the owning addon's RP as a form-action screen, and a page's buttons navigate by opening another page's key. Cross-addon only a **reference** replicates over `@bedrock-core/sync`: the home key and, per page, the key each button opens — never the prose. Any realm can present another addon's guide from that reference alone: title = the key, `selection` → the next key, no script of the owning addon involved. `GuidesRegistry` shrinks from the manifest to the reference table; `createGuide` becomes navigation over compiled page keys.
@@ -54,3 +82,25 @@ Each spike is a hand-written RP file plus a ten-line script, recorded in a findi
   2. *Each addon compiles its own config screen* (its schema is a plain object it can import at build) and A forwards the open. A simpler runtime, but a year-old addon shows year-old config screens — the property the config package exists to avoid.
 - **Foreign-language wrapping on compiled forms.** A localized label that wraps gets a client-sized box (`text_wrap` exists today). Whether the box's height can be reserved without server measurement is a layout question for phase 3.
 - **The chest's `enum` carrier.** N gated images on one stack size is the obvious encoding; whether it is worth a node kind of its own or a lowering of `image` with `values` is decided when the first screen needs it.
+
+## Vocabulary, as it now stands
+
+A namespace answers "whose mechanism is this?", and the answer is one of three:
+
+| Namespace | Owns |
+| --- | --- |
+| `core_ui_shapes` | Controls that are the same wherever they are drawn: no collection, no bindings, nothing about transport. The scrolling region is the first — it clips and scrolls, and does so identically on a chest and on a form. |
+| `core_ui_chest` | The chest host's mechanism: item cells, slot buttons, the text host that spells a string one glyph at a time, the renderer that hides the transport item, the chrome. |
+| `core_ui_form` | The form host's mechanism: the mount, and the gate that decides between a compiled screen and the interpreter. |
+
+`core_ui_router` is deliberately not renamed: it is the insertion point every addon's emitted router extends, not a file of the chest's own.
+
+### A namespace the compiler emits is a contract
+
+Renaming `core_ui_container` broke a **deployed** addon the moment the render pack updated — found by opening its chest screen in game, not by any test. An addon compiles its screens once and ships them; they keep referencing what they were built against for as long as that pack exists, and the library cannot rebuild them. The engine's report gives no hint of the cause: the `@`-base stops resolving, so the control has no type at all, and what it complains about is `size` and `offset` being *unknown properties*.
+
+Only two packs were on the old format and both were rebuilt, so no compatibility shim ships — the rename stands as a clean break. It was affordable only because every affected pack was reachable, which is the exception rather than the rule.
+
+The rule this leaves: **anything the compiler writes into someone else's pack — a namespace, a definition name, a title format, a byte offset — is versioned or aliased, never renamed in place.** The encoding window already does this for titles; namespaces now do it too.
+
+The scroll started in the chest's namespace only because the chest was the only host there was — which is what a shared vocabulary is for. Moving it also surfaced a latent bug: `scrollLimit` is the interpreter's pool cap, so a compiled form with three scrolls compiled clean and threw the first time a player opened it.

@@ -34,7 +34,7 @@ describe('the chest routing', () => {
       collection: COLLECTION,
       containerType: 'container',
       canvas: { width: 320, height: 210 },
-      ownedItemRenderer: 'core_ui_container.gated_item',
+      ownedItemRenderer: 'core_ui_chest.gated_item',
     });
     expect(router.namespace).toBe('core_ui_router');
     expect(routerFile).toBe('ui/core-ui/screens/core_router.json');

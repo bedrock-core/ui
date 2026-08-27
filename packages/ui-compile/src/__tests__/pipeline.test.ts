@@ -125,7 +125,7 @@ describe('the compiler, end to end', () => {
 
   it('hands out the slot indices the runtime will read', () => {
     const allocation = allocate(buildContainerTree(Demo));
-    const indices = findAll(document, name => name.includes('@core_ui_container.slot_host'))
+    const indices = findAll(document, name => name.includes('@core_ui_chest.slot_host'))
       .map(([, control]) => control.$slot);
 
     expect(indices).toEqual(allocation.slots.map(entry => entry.slot));
@@ -133,7 +133,7 @@ describe('the compiler, end to end', () => {
 
     const [, locked] = find(document, name => name.startsWith('slot_1@'));
 
-    expect(locked.$cell).toBe('core_ui_container.locked_slot');
+    expect(locked.$cell).toBe('core_ui_chest.locked_slot');
   });
 
   it('hands out the channel indices the runtime will write', () => {

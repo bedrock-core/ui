@@ -39,11 +39,11 @@ describe('a scroll region', () => {
 
   it('mounts vanilla\'s scrolling panel over content laid out at its own height', () => {
     const { document } = compile();
-    const [name, panel] = find(document, control => control.endsWith('@core_ui_container.scroll'));
+    const [name, panel] = find(document, control => control.endsWith('@core_ui_shapes.scroll'));
     const content = definition(document, 'scroll_1_content');
     const rows: Control[] = (content.controls ?? []).map(entry => Object.values(entry)[0]);
 
-    expect(name).toBe('scroll_1@core_ui_container.scroll');
+    expect(name).toBe('scroll_1@core_ui_shapes.scroll');
     expect(panel.size).toEqual([320, 60]);
     expect(panel.$scrolling_content).toBe('core_ui_list.scroll_1_content');
 

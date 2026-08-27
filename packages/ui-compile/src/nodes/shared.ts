@@ -40,7 +40,14 @@ export const PROTOTYPE_MAPPINGS: readonly ButtonMapping[] = [
  * in the render pack. A compiled screen references them by name and emits
  * only what varies per screen.
  */
-export const CONTAINER = 'core_ui_container';
+export const CHEST = 'core_ui_chest';
+
+/**
+ * The namespace of the controls no host owns: the ones that are the same
+ * wherever they are drawn, because they read nothing and bind nothing. A
+ * scrolling region is the first of them.
+ */
+export const SHAPES = 'core_ui_shapes';
 
 /** Self-routed entries carry no source and are never rewritten. */
 export const isSelfRouted = (mapping: ButtonMapping): boolean => mapping.from_button_id === undefined;

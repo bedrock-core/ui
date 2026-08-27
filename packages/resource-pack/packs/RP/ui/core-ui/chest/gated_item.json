@@ -8,15 +8,15 @@
 	// reads the slot's item id and hides itself when it is the transport's —
 	// the runtime's transport aux (12320768), a legacy-range block whose id never
 	// shifts, whatever items other addons register.
-	"namespace": "core_ui_container",
+	"namespace": "core_ui_chest",
 
 	"gated_item": {
 		"type": "panel",
 		"size": [ "100%", "100%" ],
 		"controls": [
-			{ "renderer@core_ui_container.item_renderer": { "size": [ "100%", "100%" ] } },
+			{ "renderer@core_ui_chest.item_renderer": { "size": [ "100%", "100%" ] } },
 			{
-				"durability@core_ui_container.durability_bar": {
+				"durability@core_ui_chest.durability_bar": {
 					"$durability_bar_required": true,
 					"offset": [ 0, 5 ],
 					"layer": 20

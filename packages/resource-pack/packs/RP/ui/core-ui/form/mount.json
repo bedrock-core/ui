@@ -28,6 +28,8 @@
 	"compiled_root": {
 		"type": "panel",
 		"size": [ "100%", "100%" ],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
 		"controls": []
 	},
 
@@ -40,6 +42,8 @@
 	"claimed": {
 		"type": "panel",
 		"size": [ "100%", "100%" ],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
 		"property_bag": {
 			"#visible": false
 		},
@@ -64,6 +68,8 @@
 	"interpreted": {
 		"type": "panel",
 		"size": [ "100%", "100%" ],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
 		"property_bag": {
 			"#visible": true
 		},

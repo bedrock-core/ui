@@ -44,7 +44,7 @@ export function requireOwner(host: HostContract, owner: Owner): void {
     return;
   }
 
-  if (host.compiled) {
+  if (host.id === 'chest') {
     throw new ContainerScreenError(
       '`<Container>` is a compiled container screen and cannot be shown with render(). '
       + 'Serve it with createContainerScreen(Screen); a player opens it by interacting '

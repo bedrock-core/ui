@@ -4,16 +4,16 @@
 	// touch cannot take, a held item has no icon on touch, and a controller has
 	// no pointer. Vanilla's chest panel carries its own copies; they are hidden
 	// with it while a compiled screen shows, so the router mounts these instead.
-	"namespace": "core_ui_container",
+	"namespace": "core_ui_chest",
 
 	"chrome": {
 		"type": "panel",
 		"size": [ "100%", "100%" ],
 		"controls": [
-			{ "routes@core_ui_container.key_routes": {} },
-			{ "take_progress@core_ui_container.take_progress_button": {} },
-			{ "selected_icon@core_ui_container.selected_icon_button": {} },
-			{ "gamepad_cursor@core_ui_container.gamepad_cursor_button": {} }
+			{ "routes@core_ui_chest.key_routes": {} },
+			{ "take_progress@core_ui_chest.take_progress_button": {} },
+			{ "selected_icon@core_ui_chest.selected_icon_button": {} },
+			{ "gamepad_cursor@core_ui_chest.gamepad_cursor_button": {} }
 		]
 	},
 
@@ -68,14 +68,14 @@
 		"sound_pitch": 1.0,
 		"always_handle_pointer": true,
 		"controls": [
-			{ "default@core_ui_container.hold_icon": {} },
-			{ "pressed@core_ui_container.hold_icon": {} },
-			{ "hover@core_ui_container.hold_icon": {} }
+			{ "default@core_ui_chest.hold_icon": {} },
+			{ "pressed@core_ui_chest.hold_icon": {} },
+			{ "hover@core_ui_chest.hold_icon": {} }
 		]
 	},
 
 	// The item on the cursor, drawn at the pointer.
-	"selected_icon@core_ui_container.item_renderer": {
+	"selected_icon@core_ui_chest.item_renderer": {
 		"layer": 50,
 		"size": [ 21, 21 ],
 		"offset": [ -1, -2 ],
@@ -107,7 +107,7 @@
 		]
 	},
 
-	"selected_durability_bar@core_ui_container.durability_bar": {
+	"selected_durability_bar@core_ui_chest.durability_bar": {
 		"$durability_bar_required": true,
 		"layer": 61,
 		"offset": [ "-5%", 5 ],
@@ -121,11 +121,35 @@
 
 	"selected_icon_panel": {
 		"type": "panel",
-		"controls": [
-			{ "selected_item_icon@core_ui_container.selected_icon": {} },
-			{ "selected_stack_size_text@core_ui_container.selected_stack_size_text": {} },
+
+		// The transport gate, in the one place an item is drawn WITHOUT going
+		// through a grid cell.
+		//
+		// A press auto-places the runtime's transport into the player's
+		// inventory, and the script pulls it back a tick later. Grid cells hide
+		// it meanwhile — that is all `gated_item` is for — but the cursor
+		// preview draws `#inventory_selected_item` directly, so when the
+		// transport lands in the selected slot it is drawn: a command block,
+		// under the pointer, for one tick.
+		//
+		// Seeded visible for the same reason the rest of the pack seeds toward
+		// working: if the binding ever fails to resolve, a preview that draws
+		// the held item beats one that silently never appears.
+		"property_bag": { "#visible": true },
+		"visible": "#visible",
+		"bindings": [
+			{ "binding_name": "#inventory_selected_item", "binding_name_override": "#selected_aux", "binding_condition": "always" },
 			{
-				"hover_text@core_ui_container.hover_text": {
+				"binding_type": "view",
+				"source_property_name": "(not (#selected_aux = 12320768))",
+				"target_property_name": "#visible"
+			}
+		],
+		"controls": [
+			{ "selected_item_icon@core_ui_chest.selected_icon": {} },
+			{ "selected_stack_size_text@core_ui_chest.selected_stack_size_text": {} },
+			{
+				"hover_text@core_ui_chest.hover_text": {
 					"layer": 59,
 					"bindings": [
 						{ "binding_name": "#using_touch", "binding_name_override": "#visible" }
@@ -152,20 +176,28 @@
 		"always_handle_pointer": true,
 		"$durability_bar_required|default": true,
 		"controls": [
-			{ "default@core_ui_container.selected_icon_panel": {} },
-			{ "pressed@core_ui_container.selected_icon_panel": {} },
-			{ "hover@core_ui_container.selected_icon_panel": {} },
-			{ "durability_bar_grabbed@core_ui_container.selected_durability_bar": {} }
+			{ "default@core_ui_chest.selected_icon_panel": {} },
+			{ "pressed@core_ui_chest.selected_icon_panel": {} },
+			{ "hover@core_ui_chest.selected_icon_panel": {} },
+			{ "durability_bar_grabbed@core_ui_chest.selected_durability_bar": {} }
 		]
 	},
 
 	// Controller: the pointer.
+	//
+	// Seeded HIDDEN, unlike most of this pack. A binding decides visibility from
+	// the frame it first resolves, not from the frame the control is created, so
+	// an unseeded control draws until then — which is why the pointer flashed
+	// for players not using a gamepad. Appearing a frame late is invisible to a
+	// gamepad player; flashing is not invisible to anyone else.
 	"cursor_image": {
 		"type": "image",
 		"texture": "textures/ui/pointer",
 		"size": [ 14, 14 ],
 		"layer": 60,
 		"follows_cursor": true,
+		"property_bag": { "#visible": false },
+		"visible": "#visible",
 		"bindings": [
 			{ "binding_name": "#gamepad_cursor_visible", "binding_name_override": "#visible", "binding_condition": "always" }
 		]
@@ -185,9 +217,9 @@
 		"follows_cursor": true,
 		"always_handle_pointer": true,
 		"controls": [
-			{ "default@core_ui_container.cursor_image": {} },
-			{ "pressed@core_ui_container.cursor_image": {} },
-			{ "hover@core_ui_container.cursor_image": {} }
+			{ "default@core_ui_chest.cursor_image": {} },
+			{ "pressed@core_ui_chest.cursor_image": {} },
+			{ "hover@core_ui_chest.cursor_image": {} }
 		]
 	}
 }

@@ -6,7 +6,7 @@ import type { Binding, ButtonMapping, Control, ControlEntry } from '../jsonui';
 import type { ExitNode } from './exit';
 import { shapeOf } from './index';
 import {
-  CELL_VAR, CONTAINER, FACE_CONTENT_LAYER, FULL, isSelfRouted, layerOf, offsetOf, PROTOTYPE_MAPPINGS, sizeOf,
+  CELL_VAR, CHEST, FACE_CONTENT_LAYER, FULL, isSelfRouted, layerOf, offsetOf, PROTOTYPE_MAPPINGS, sizeOf,
   SLOT_VAR, str, topLeft, visibilityOf,
 } from './shared';
 import { CELL } from './slot';
@@ -222,7 +222,7 @@ export const faceDefs = (node: ButtonNode, name: string, emit: Emit): Record<str
       ],
     },
 
-    [`${name}_states@${CONTAINER}.slot_button`]: {
+    [`${name}_states@${CHEST}.slot_button`]: {
       hover_control: 'hover',
       pressed_control: 'pressed',
       button_mappings: BUTTON_MAPPINGS,

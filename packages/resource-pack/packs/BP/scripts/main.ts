@@ -9,7 +9,9 @@ import {
   ObservableString,
 } from '@minecraft/server-ui';
 import { MinecraftBlockTypes, MinecraftEntityTypes } from '@minecraft/vanilla-data';
+import '@bedrock-core/generated/ui';
 import { spawnDemo } from './container/demo';
+import Counter from './screens/counter.screen';
 import { App } from './UI/App';
 
 const isPlayer = (source: ButtonPushAfterEvent['source']): source is Player =>
@@ -84,6 +86,13 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
     form.button('OK');
 
     form.show(source);
+  }
+
+  if (block.typeId === MinecraftBlockTypes.JungleButton) {
+    // A COMPILED form screen. The same render() every other screen uses: the
+    // generated module above registered this component, so the runtime names
+    // its layout in the title instead of serializing one.
+    render(Counter, source);
   }
 
   if (block.typeId === MinecraftBlockTypes.CrimsonButton) {

@@ -91,13 +91,19 @@ interface Scope {
 }
 
 /** One rule about where a control may sit. Throws when it sits wrong. */
-type Rule = (node: JSX.Element, type: string, scope: Scope, host: HostContract) => void;
+type Rule = (node: JSX.Element, type: string, scope: Scope, host: HostContract, frozen: boolean) => void;
 
 /**
  * The placement rules, each its own entry. None is about transport: they hold
  * because of what a screen IS — one root, one flat box per scroll region, a
- * button face baked at build — so they consult the host only to know whether a
- * compiled screen's stricter rules apply.
+ * button face baked at build.
+ *
+ * Two different questions decide which of them apply, and they are not the
+ * same question. WHICH host this is settles where a `<Container>` may sit.
+ * Whether THIS LAYOUT IS FROZEN settles what may be baked — and a compiled
+ * form is frozen while its host is not the always-compiled one, so a rule that
+ * asked the host would have let a live `<Text>` be baked into a form button's
+ * face and silently drawn its first value forever.
  */
 const RULES: readonly Rule[] = [
   (_node, type, scope, host): void => {
@@ -112,7 +118,7 @@ const RULES: readonly Rule[] = [
       );
     }
 
-    if (!host.compiled) {
+    if (host.id !== 'chest') {
       throw new ContainerScreenError(
         '`<Container>` is a compiled container screen and cannot be shown with render(). '
         + 'Serve it with createContainerScreen(Screen); a player opens it by interacting '
@@ -130,17 +136,17 @@ const RULES: readonly Rule[] = [
     }
   },
 
-  (_node, type, scope, host): void => {
-    if (host.compiled && type === SCROLL_SLOT_TYPE && scope.insideScroll) {
+  (_node, type, scope, _host, frozen): void => {
+    if (frozen && type === SCROLL_SLOT_TYPE && scope.insideScroll) {
       throw new ContainerScreenError(
-        'A `<Scroll>` cannot sit inside another `<Scroll>` in a container screen: a '
+        'A `<Scroll>` cannot sit inside another `<Scroll>` in a compiled screen: a '
         + 'region is laid out as one flat box. Split the content into sibling scrolls.',
       );
     }
   },
 
-  (node, _type, scope, host): void => {
-    if (host.compiled && scope.insideButton && liveTextLength(node) !== undefined) {
+  (node, _type, scope, _host, frozen): void => {
+    if (frozen && scope.insideButton && liveTextLength(node) !== undefined) {
       throw new ContainerScreenError(
         'A live `<Text maxLength>` cannot sit inside a `<Button>` yet: a button\'s '
         + 'children are baked into its face. Put the live text beside the button.',
@@ -148,8 +154,8 @@ const RULES: readonly Rule[] = [
     }
   },
 
-  (node, type, scope, host): void => {
-    if (host.compiled && scope.insideButton && (type === SLOT_GRID_TYPE || isForeignSlot(node))) {
+  (node, type, scope, _host, frozen): void => {
+    if (frozen && scope.insideButton && (type === SLOT_GRID_TYPE || isForeignSlot(node))) {
       throw new ContainerScreenError(
         'A `<SlotGrid>` or foreign `<Slot collection>` cannot sit inside a `<Button>`: a '
         + 'button bakes its children into a static face, and a live item cell cannot be '
@@ -168,17 +174,29 @@ const RULES: readonly Rule[] = [
  * @param host - The host it belongs to, from `hostFor`.
  * @throws ContainerScreenError or ModalFormError, naming the control and the fix.
  */
-export function validate(tree: JSX.Element, host: HostContract): void {
+export function validate(tree: JSX.Element, host: HostContract, frozen: boolean): void {
   const offers = new Set<Capability>(host.offers);
 
   // Whatever the host demands of the root itself: a chest screen names the
   // entity it opens from and fits a fixed canvas, a form asks nothing.
   host.check?.(tree);
 
-  walk(tree, { insideContainer: false, insideButton: false, insideScroll: false, insideModal: false }, host, offers);
+  walk(
+    tree,
+    { insideContainer: false, insideButton: false, insideScroll: false, insideModal: false },
+    host,
+    offers,
+    frozen,
+  );
 }
 
-function walk(node: JSX.Element, scope: Scope, host: HostContract, offers: ReadonlySet<Capability>): void {
+function walk(
+  node: JSX.Element,
+  scope: Scope,
+  host: HostContract,
+  offers: ReadonlySet<Capability>,
+  frozen: boolean,
+): void {
   const { type } = node;
 
   if (typeof type === 'string') {
@@ -189,7 +207,7 @@ function walk(node: JSX.Element, scope: Scope, host: HostContract, offers: Reado
     }
 
     for (const rule of RULES) {
-      rule(node, type, scope, host);
+      rule(node, type, scope, host, frozen);
     }
   }
 
@@ -201,6 +219,6 @@ function walk(node: JSX.Element, scope: Scope, host: HostContract, offers: Reado
   };
 
   for (const child of childElements(node.props.children)) {
-    walk(child, inner, host, offers);
+    walk(child, inner, host, offers, frozen);
   }
 }

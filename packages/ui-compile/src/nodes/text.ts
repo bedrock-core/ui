@@ -4,7 +4,7 @@ import {
 } from '@bedrock-core/ui-runtime/compile';
 import type { Binding, Control } from '../jsonui';
 import type { LabelNode } from './label';
-import { CONTAINER, FONT_SIZE, layerOf, literal, num, offsetOf, sizeOf, str, tailOf, topLeft, visibilityOf } from './shared';
+import { CHEST, FONT_SIZE, layerOf, literal, num, offsetOf, sizeOf, str, tailOf, topLeft, visibilityOf } from './shared';
 import type { LabelStyle, LowerContext, NodeBase, NodeDefinition, Rect } from './types';
 
 /**
@@ -31,7 +31,7 @@ declare module './types' {
 
 /** The static host one character cell mounts, and the per-screen name a channel definition takes. */
 export const TEXT_DEF = {
-  textHost: `${CONTAINER}.text_host`,
+  textHost: `${CHEST}.text_host`,
   text: 'text_channel',
 } as const;
 

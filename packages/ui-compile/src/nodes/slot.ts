@@ -2,7 +2,7 @@ import type { SlotRole } from '@bedrock-core/ui-runtime';
 import { SLOT_TYPE, slotInteractive, slotSource } from '@bedrock-core/ui-runtime/compile';
 import type { Control } from '../jsonui';
 import {
-  CELL_VAR, collectionKey, CONTAINER, layerOf, offsetOf, sizeOf, SLOT_VAR, topLeft, visibilityOf,
+  CELL_VAR, collectionKey, CHEST, layerOf, offsetOf, sizeOf, SLOT_VAR, topLeft, visibilityOf,
 } from './shared';
 import type { Emit, NodeBase, NodeDefinition } from './types';
 
@@ -54,17 +54,17 @@ declare module './types' {
 
 /**
  * The library's own cell definitions a slot mounts, from the static
- * `core_ui_container` file the render pack ships. One per control shape, never
+ * `core_ui_chest` file the render pack ships. One per control shape, never
  * one per node.
  */
 export const CELL = {
-  host: `${CONTAINER}.slot_host`,
-  slot: `${CONTAINER}.slot`,
-  item: `${CONTAINER}.cell`,
-  lockedSlot: `${CONTAINER}.locked_slot`,
-  outputSlot: `${CONTAINER}.output_slot`,
-  displayStates: `${CONTAINER}.display_states`,
-  empty: `${CONTAINER}.empty`,
+  host: `${CHEST}.slot_host`,
+  slot: `${CHEST}.slot`,
+  item: `${CHEST}.cell`,
+  lockedSlot: `${CHEST}.locked_slot`,
+  outputSlot: `${CHEST}.output_slot`,
+  displayStates: `${CHEST}.display_states`,
+  empty: `${CHEST}.empty`,
 } as const;
 
 /**
@@ -94,6 +94,25 @@ export const containerItemVars = (collection: string, interactive: boolean, rend
 });
 
 /**
+ * The collections the PLAYER owns, as opposed to the screen's own container.
+ *
+ * A press auto-places the runtime's transport into the player's inventory and
+ * the script pulls it back a tick later, so for that tick the transport is
+ * genuinely sitting in one of these — whichever slot happened to be free. Any
+ * cell drawing one of them therefore hides it.
+ *
+ * This is NOT an author's choice. The transport is the library's own
+ * mechanism, and nobody writing a screen should have to know it exists to keep
+ * a command block from flashing in their hotbar. `hideOwned` stays as the way
+ * to ask for the same gate over some other collection.
+ */
+const PLAYER_COLLECTIONS: ReadonlySet<string> = new Set(['inventory_items', 'hotbar_items']);
+
+/** Whether a cell over this collection must hide the runtime's transport. */
+export const hidesTransport = (collection: string, hideOwned = false): boolean =>
+  hideOwned || PLAYER_COLLECTIONS.has(collection);
+
+/**
  * A foreign slot's cell definition, registered once per collection and
  * interactivity.
  */
@@ -101,10 +120,12 @@ const ensureForeignCell = (emit: Emit, collection: string, interactive: boolean)
   const name = `${interactive ? 'slot' : 'display_slot'}__${collectionKey(collection)}`;
 
   if (emit.defs[name] === undefined) {
+    const renderer = hidesTransport(collection) ? emit.ownedRenderer : undefined;
+
     emit.defs[name] = {
       type: 'panel',
       size: [18, 18],
-      controls: [{ [`item@${CELL.item}`]: containerItemVars(collection, interactive) }],
+      controls: [{ [`item@${CELL.item}`]: containerItemVars(collection, interactive, renderer) }],
     };
   }
 

@@ -41,7 +41,7 @@ export const demoEntity = 'core:demo';
 export const demoScreen: IrDocument = {
   namespace: 'core_ui_demo',
   collection: 'container_items',
-  ownedItemRenderer: 'core_ui_container.gated_item',
+  ownedItemRenderer: 'core_ui_chest.gated_item',
   backdrop: 'textures/ui/demo_backdrop',
   root: {
     kind: 'panel',

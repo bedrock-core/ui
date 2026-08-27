@@ -46,6 +46,21 @@ describe('a close button', () => {
     expect(exit.$slot).toBeUndefined();
     expect(exit.collection_index).toBeUndefined();
     expect(JSON.stringify(exit)).toContain('textures/ui/unstyled');
-    expect(JSON.stringify(exit)).toContain('"text":"x"');
+
+    // The caption sits INSIDE each state, referenced from a definition of its
+    // own. A button draws the child its `*_control` names and nothing else, so
+    // a caption beside the states would never be seen — and a close button with
+    // a label is exactly where that goes unnoticed.
+    const states = (exit.controls ?? []).map(entry => Object.keys(entry)[0]);
+
+    expect(states).toEqual(['default', 'hover', 'pressed']);
+
+    for (const entry of exit.controls ?? []) {
+      const [state] = Object.values(entry);
+
+      expect(state?.controls?.map(child => Object.keys(child)[0])?.[1]).toMatch(/^caption@/);
+    }
+
+    expect(JSON.stringify(document)).toContain('"text":"x"');
   });
 });

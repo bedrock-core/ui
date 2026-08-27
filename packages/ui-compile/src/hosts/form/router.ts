@@ -62,6 +62,10 @@ export const routerFileOf = (addon: string): string => `ui/core-ui/screens/${add
 const gate = (title: string, controls: ControlEntry[]): Control => ({
   type: 'panel',
   size: ['100%', '100%'],
+  // Spelled out: a control anchors `center` by default, and everything under
+  // here is positioned from the canvas's top-left.
+  anchor_from: 'top_left',
+  anchor_to: 'top_left',
   property_bag: { '#visible': false },
   visible: '#visible',
   controls,
@@ -112,6 +116,8 @@ export const formRouter = (screens: readonly RoutedFormScreen[], addon: string):
   router[`${addon}_forms`] = {
     type: 'panel',
     size: ['100%', '100%'],
+    anchor_from: 'top_left',
+    anchor_to: 'top_left',
     controls: screens.map(screen => ({ [`${screen.name}@${MOUNT_NAMESPACE}.${addon}_gate_${screen.name}`]: {} })),
   };
 

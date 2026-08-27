@@ -13,7 +13,7 @@ import {
 import type { Document } from '../jsonui';
 
 /** The static files the render pack ships for container screens. */
-const CONTAINER_DIR = path.resolve(__dirname, '../../../resource-pack/packs/RP/ui/core-ui/container');
+const CHEST_DIR = path.resolve(__dirname, '../../../resource-pack/packs/RP/ui/core-ui/chest');
 
 /** The chest root every addon's router adds to, in its own namespace. */
 const ROUTER_FILE = 'router.json';
@@ -23,16 +23,16 @@ const readJsonc = (file: string): Document => JSON.parse(
   readFileSync(file, 'utf-8').replaceAll(/^\s*\/\/.*$/gm, ''),
 ) as Document;
 
-const staticFiles = (): string[] => readdirSync(CONTAINER_DIR).filter(name => name.endsWith('.json'));
+const staticFiles = (): string[] => readdirSync(CHEST_DIR).filter(name => name.endsWith('.json'));
 
-/** The `core_ui_container` definitions, by name. */
+/** The `core_ui_chest` definitions, by name. */
 const staticDefinitions = (): Set<string> => {
   const names = new Set<string>();
 
   for (const file of staticFiles().filter(name => name !== ROUTER_FILE)) {
-    const document = readJsonc(path.join(CONTAINER_DIR, file));
+    const document = readJsonc(path.join(CHEST_DIR, file));
 
-    expect(document.namespace).toBe('core_ui_container');
+    expect(document.namespace).toBe('core_ui_chest');
 
     for (const key of Object.keys(document)) {
       // A derived definition is addressed by the name before its `@`.
@@ -84,25 +84,29 @@ describe('the reference screen', () => {
 
   it('references only the library\'s own definitions, every one of which exists', () => {
     const available = staticDefinitions();
-    const referenced = JSON.stringify(document).match(/core_ui_container\.[a-z_]+/g) ?? [];
+    const referenced = JSON.stringify(document).match(/core_ui_chest\.[a-z_]+/g) ?? [];
 
     expect(referenced.length).toBeGreaterThan(0);
 
     for (const reference of referenced) {
-      expect(available.has(reference.slice('core_ui_container.'.length)), reference).toBe(true);
+      expect(available.has(reference.slice('core_ui_chest.'.length)), reference).toBe(true);
     }
 
     // Nothing of vanilla's: the cells, the buttons, the scroll and the
     // transport-hiding renderer are all the library's.
     expect(JSON.stringify(document)).not.toMatch(/@(common|chest|pocket_containers)\./);
     expect(JSON.stringify(document)).not.toMatch(/"(common|chest)\.[a-z_]+"/);
+    expect(JSON.stringify(document)).not.toMatch(/(?<!\w)@(common|chest|pocket_containers)\./);
   });
 
   it('ships static definitions that reference nothing of vanilla\'s', () => {
     for (const file of staticFiles().filter(name => name !== ROUTER_FILE)) {
-      const text = JSON.stringify(readJsonc(path.join(CONTAINER_DIR, file)));
+      const text = JSON.stringify(readJsonc(path.join(CHEST_DIR, file)));
 
-      expect(text, file).not.toMatch(/@?(common|chest|pocket_containers)\.[a-z_]+/);
+      // `(?<!\w)` so the library's own `core_ui_chest.` is not read as
+      // vanilla's `chest.`: a namespace reference starts at `@`, a quote or a
+      // separator, never in the middle of a longer name.
+      expect(text, file).not.toMatch(/(?<!\w)@?(common|chest|pocket_containers)\.[a-z_]+/);
     }
   });
 
@@ -124,8 +128,8 @@ describe('the reference screen', () => {
  * inserted into an inherited array.
  */
 describe('the chest hook', () => {
-  const UI_DIR = path.resolve(CONTAINER_DIR, '../..');
-  const root = readJsonc(path.join(CONTAINER_DIR, ROUTER_FILE));
+  const UI_DIR = path.resolve(CHEST_DIR, '../..');
+  const root = readJsonc(path.join(CHEST_DIR, ROUTER_FILE));
   const hook = readJsonc(path.join(UI_DIR, 'chest_screen.json'));
   const { router, hooks } = buildRouter([]);
   const inverted = {
@@ -150,7 +154,7 @@ describe('the chest hook', () => {
     expect(entries(definition(root, 'vanilla_gate_desktop@core_ui_router.vanilla_gate'))).toEqual([['vanilla@chest.small_chest_panel', {}]]);
     expect(entries(definition(root, 'vanilla_gate_pocket@core_ui_router.vanilla_gate'))).toEqual([['vanilla@pocket_containers.small_chest_panel', {}]]);
     expect(entries(definition(root, 'claimed_gate')).map(([name]) => name)).toEqual([
-      'chrome@core_ui_container.chrome',
+      'chrome@core_ui_chest.chrome',
       `roots@chest.${CHEST_HOST.hooks[0]?.target ?? ''}`,
     ]);
 
@@ -212,4 +216,5 @@ describe('the chest hook', () => {
     expect(addonHook?.file).toBe('ui/chest_screen.json');
     expect(Object.keys(addonHook?.document ?? {})).toEqual(['namespace', 'small_chest_panel_top_half']);
   });
+
 });

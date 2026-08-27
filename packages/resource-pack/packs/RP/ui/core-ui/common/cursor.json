@@ -4,12 +4,18 @@
 	// Visual cursor image — follows the physical cursor/pointer position.
 	// #gamepad_cursor_visible is a global engine binding; true when the gamepad
 	// cursor is active (analog stick moved, touch not in use).
+	// Seeded HIDDEN: a binding decides visibility from the frame it first
+	// resolves, not from the frame the control is created, so an unseeded
+	// control draws until then and the pointer flashes for players not using a
+	// gamepad.
 	"gamepad_cursor_image": {
 		"type": "image",
 		"texture": "textures/ui/pointer",
 		"size": [ 14, 14 ],
 		"layer": 60,
 		"follows_cursor": true,
+		"property_bag": { "#visible": false },
+		"visible": "#visible",
 		"bindings": [
 			{
 				"binding_name": "#gamepad_cursor_visible",

@@ -3,7 +3,7 @@
 	// a live text run and mounts its glyph label inside, with the bank slot the
 	// character rides as the collection index — `collection_index` is only
 	// accepted on a direct child of a control declaring `collection_name`.
-	"namespace": "core_ui_container",
+	"namespace": "core_ui_chest",
 
 	"text_host": {
 		"type": "stack_panel",

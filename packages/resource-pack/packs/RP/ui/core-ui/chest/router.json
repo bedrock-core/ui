@@ -78,7 +78,7 @@
 		"type": "panel",
 		"size": [ "100%", "100%" ],
 		"controls": [
-			{ "chrome@core_ui_container.chrome": {} },
+			{ "chrome@core_ui_chest.chrome": {} },
 			{
 				"roots@chest.small_chest_panel_top_half": {
 					"size": [ "100%", "100%" ],

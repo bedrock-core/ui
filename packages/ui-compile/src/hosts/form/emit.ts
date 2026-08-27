@@ -2,7 +2,9 @@ import { FORM_COLLECTION, FORM_DETAILS_BINDING } from '@bedrock-core/ui-runtime/
 import type { ButtonNode } from '../../nodes/button';
 import { collectKind, shapeOf } from '../../nodes';
 import type { Binding, Control, ControlEntry } from '../../jsonui';
-import { FONT_SIZE, FULL, layerOf, offsetOf, sizeOf, topLeft, visibilityOf } from '../../nodes/shared';
+import {
+  FACE_CONTENT_LAYER, FONT_SIZE, FULL, layerOf, offsetOf, sizeOf, topLeft, visibilityOf,
+} from '../../nodes/shared';
 import type { TextNode } from '../../nodes/text';
 import type { Emit, HostEmit } from '../../nodes/types';
 
@@ -54,7 +56,24 @@ const entryText = (name: string): Binding[] => [
 
 /** Where a button's entry says whether it is enabled. */
 const ENTRY_PROPERTY = '#entry_value';
-const ENABLED_PROPERTY = '#entry_enabled';
+
+/**
+ * Visible only while the entry says this button may be pressed.
+ *
+ * MEASURED: a `button` with `enabled` bound to false still takes the press —
+ * the property greys nothing and blocks nothing here. The chest host found the
+ * same and answered it the same way: a disabled button has no button at all,
+ * only its face. Gating the control out is the only thing that actually stops
+ * a press.
+ */
+const whenEnabled = (visible: boolean): Binding[] => [
+  ...entryText(ENTRY_PROPERTY),
+  {
+    binding_type: 'view',
+    source_property_name: visible ? `(not (${ENTRY_PROPERTY} = '0'))` : `(${ENTRY_PROPERTY} = '0')`,
+    target_property_name: '#visible',
+  },
+];
 
 /**
  * What lets two buttons share a definition: the same look, at the same size,
@@ -73,60 +92,121 @@ const stateImage = (texture: string): Control => ({
   texture,
   size: FULL,
   keep_ratio: false,
+  layer: 1,
 });
 
 /**
- * The definition one button look needs: a real button, flat under the index
- * host, exactly as S1 measured it.
+ * One state's face: the texture, and the caption over it.
  *
- * `enabled` is a form entry's one field. A chest reads it off the item in the
- * slot because a chest has an item; a form has a string, so `'0'` is disabled
- * and anything else is enabled. The engine draws `locked_control` for a
- * disabled button and refuses the press itself, so nothing here has to gate
- * the mappings — which is also why the button stays one control rather than
- * the enabled/disabled pair a chest needs.
+ * The caption goes INSIDE each state rather than beside them. A button shows
+ * the child its `*_control` names and hides the others, so a sibling of the
+ * state controls is not what gets drawn — which is why the captions were
+ * missing. Vanilla's own form button does the same: its `state_face` carries
+ * both the texture and the text.
  */
-const faceDef = (node: ButtonNode, emit: Emit): Control => ({
-  type: 'button',
-  size: sizeOf(node.rect),
-  enabled: ENABLED_PROPERTY,
-  property_bag: { [ENABLED_PROPERTY]: true },
-  default_control: 'default',
-  hover_control: 'hover',
-  pressed_control: 'pressed',
-  locked_control: 'locked',
-  sound_name: 'random.click',
-  sound_volume: 1,
-  sound_pitch: 1,
-  button_mappings: [
-    { from_button_id: 'button.menu_select', to_button_id: 'button.form_button_click', mapping_type: 'pressed' },
-    { from_button_id: 'button.menu_ok', to_button_id: 'button.form_button_click', mapping_type: 'focused' },
-  ],
-  bindings: [
-    ...entryText(ENTRY_PROPERTY),
-    {
-      binding_type: 'view',
-      source_property_name: `(not (${ENTRY_PROPERTY} = '0'))`,
-      target_property_name: ENABLED_PROPERTY,
-    },
-  ],
+const stateFace = (texture: string, content: string | undefined): Control => ({
+  type: 'panel',
+  size: FULL,
+  ...topLeft,
   controls: [
-    { default: stateImage(node.face.texture) },
-    { hover: stateImage(node.face.hover) },
-    { pressed: stateImage(node.face.pressed) },
-    { locked: stateImage(node.face.disabled ?? node.face.texture) },
-    ...node.children.length === 0
+    { bg: stateImage(texture) },
+    // Layered above the face rather than merely after it. Same reason the chest
+    // emitter layers its own: draw order among siblings at one layer is not
+    // what decides this, and a caption at the default vanishes under the face.
+    ...content === undefined
       ? []
-      : [{
-        content: {
-          type: 'panel' as const,
+      : [{ [`caption@${content}`]: { layer: FACE_CONTENT_LAYER } } satisfies ControlEntry],
+  ],
+});
+
+/**
+ * The definitions one button look needs.
+ *
+ * The press surface exists only while the entry says the button is enabled,
+ * and a disabled button is its face alone — no button, so no press to refuse.
+ * That is the chest's shape, arrived at for the chest's reason: `enabled` on a
+ * button does not actually stop the engine handing the press to script.
+ *
+ * The button itself carries the `collection_details` binding S1 measured, and
+ * sits under the index host that names its entry.
+ */
+const faceDefs = (node: ButtonNode, name: string, emit: Emit): Record<string, Control> => {
+  const { ns } = emit;
+  const content = node.children.length === 0 ? undefined : `${ns}.${name}_content`;
+
+  // One definition, referenced by each state, so a caption is emitted once
+  // however many faces a button has.
+  const captionDef: Record<string, Control> = content === undefined
+    ? {}
+    : {
+        [`${name}_content`]: {
+          type: 'panel',
           size: FULL,
           ...topLeft,
           controls: node.children.map(child => emit.emitNode(child)),
         },
-      } satisfies ControlEntry],
-  ],
-});
+      };
+
+  return {
+    ...captionDef,
+
+    [`${name}_states`]: {
+      type: 'button',
+      size: FULL,
+      ...topLeft,
+      default_control: 'default',
+      hover_control: 'hover',
+      pressed_control: 'pressed',
+      sound_name: 'random.click',
+      sound_volume: 1,
+      sound_pitch: 1,
+      button_mappings: [
+        { from_button_id: 'button.menu_select', to_button_id: 'button.form_button_click', mapping_type: 'pressed' },
+        { from_button_id: 'button.menu_ok', to_button_id: 'button.form_button_click', mapping_type: 'focused' },
+      ],
+      // S1: without this ON THE BUTTON the press is not attributed to the entry
+      // and reaches script as a dismissal.
+      bindings: [{ ...FORM_DETAILS_BINDING }],
+      controls: [
+        { default: stateFace(node.face.texture, content) },
+        { hover: stateFace(node.face.hover, content) },
+        { pressed: stateFace(node.face.pressed, content) },
+      ],
+    },
+
+    [name]: {
+      type: 'panel',
+      size: sizeOf(node.rect),
+      ...topLeft,
+      controls: [
+        {
+          enabled: {
+            type: 'panel',
+            size: FULL,
+            ...topLeft,
+            // Seeded visible: if the binding ever fails to resolve, a button
+            // that still works beats one that silently cannot be pressed.
+            property_bag: { '#visible': true },
+            visible: '#visible',
+            bindings: whenEnabled(true),
+            controls: [{ [`press@${ns}.${name}_states`]: {} }],
+          },
+        },
+        {
+          disabled: {
+            type: 'panel',
+            size: FULL,
+            ...topLeft,
+            property_bag: { '#visible': false },
+            visible: '#visible',
+            bindings: whenEnabled(false),
+            controls: [{ face: stateFace(node.face.disabled ?? node.face.texture, content) }],
+          },
+        },
+      ],
+    },
+  };
+};
 
 /**
  * A live string, which on a form is the entry itself.
@@ -187,7 +267,7 @@ export const FORM_EMIT: HostEmit = {
 
       if (name !== undefined && !emitted.has(name)) {
         emitted.add(name);
-        document[name] = faceDef(node, ctx);
+        Object.assign(document, faceDefs(node, name, ctx));
       }
     }
 

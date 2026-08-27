@@ -3,7 +3,13 @@
 	// laid out on its own and taller than the viewport. The client scrolls it;
 	// the layout stays frozen. A compiled screen mounts it with its size and
 	// offset and names the content through `$scrolling_content`.
-	"namespace": "core_ui_container",
+	//
+	// A SHAPE, not a mechanism: no collection, no bindings, nothing about where
+	// it is drawn. A scroll region is the same control on a chest screen and on
+	// a form, which is why it lives here rather than beside one host's cells —
+	// it started in the chest's namespace only because the chest was the only
+	// host that existed.
+	"namespace": "core_ui_shapes",
 
 	"scroll": {
 		"type": "scroll_view",
@@ -57,7 +63,7 @@
 					]
 				}
 			},
-			{ "bar_and_track@core_ui_container.scrollbar": {} }
+			{ "bar_and_track@core_ui_shapes.scrollbar": {} }
 		]
 	},
 
@@ -81,7 +87,7 @@
 						}
 					],
 					"controls": [
-						{ "bar_indent@core_ui_container.scroll_rail": { "anchor_from": "center", "anchor_to": "center" } }
+						{ "bar_indent@core_ui_shapes.scroll_rail": { "anchor_from": "center", "anchor_to": "center" } }
 					]
 				}
 			},
@@ -102,7 +108,7 @@
 						}
 					],
 					"controls": [
-						{ "handle@core_ui_container.scroll_handle": { "anchor_from": "center", "anchor_to": "center" } }
+						{ "handle@core_ui_shapes.scroll_handle": { "anchor_from": "center", "anchor_to": "center" } }
 					]
 				}
 			}

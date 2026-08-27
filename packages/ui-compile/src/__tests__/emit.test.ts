@@ -56,7 +56,7 @@ describe('emit', () => {
       expect(names, shared).not.toContain(shared);
     }
 
-    expect(JSON.stringify(doc)).toContain('core_ui_container.slot_host');
+    expect(JSON.stringify(doc)).toContain('core_ui_chest.slot_host');
   });
 
   it('never mints a bcui name', () => {
@@ -153,7 +153,7 @@ describe('emit', () => {
     const [, input] = find(doc, name => name.startsWith('slot_2@'));
     const [, plain] = find(doc, name => name.startsWith('slot_3@'));
 
-    expect(locked).toMatchObject({ offset: [0, 0], size: [18, 18], $slot: 4, $cell: 'core_ui_container.locked_slot' });
+    expect(locked).toMatchObject({ offset: [0, 0], size: [18, 18], $slot: 4, $cell: 'core_ui_chest.locked_slot' });
     // An input slot rides the host's default cell, which already drops nothing.
     expect(input).toMatchObject({ offset: [22, 0], $slot: 5 });
     expect(input.$cell).toBeUndefined();
@@ -179,11 +179,11 @@ describe('emit', () => {
   it('draws an owned grid with the router\'s transport-hiding renderer', () => {
     const [, inventory] = find(doc, name => name === 'grid_1');
     const template = inventory.grid_item_template ?? '';
-    const [, cell] = find(doc, name => name === `${template.slice('core_ui_demo.'.length)}@core_ui_container.cell`);
+    const [, cell] = find(doc, name => name === `${template.slice('core_ui_demo.'.length)}@core_ui_chest.cell`);
 
     expect(cell).toEqual({
       $item_collection_name: 'inventory_items',
-      $item_renderer: 'core_ui_container.gated_item',
+      $item_renderer: 'core_ui_chest.gated_item',
       $durability_bar_required: false,
     });
   });
@@ -275,7 +275,7 @@ describe('emit / text runs', () => {
     // THE HOST RULE, which is why each cell costs a host as well as a label.
     const doc = run();
 
-    expect(JSON.stringify(doc)).toContain('@core_ui_container.text_host');
+    expect(JSON.stringify(doc)).toContain('@core_ui_chest.text_host');
 
     eachControl(doc, (name, control) => {
       if (control.collection_index !== undefined) {
@@ -357,7 +357,7 @@ describe('emit / buttons', () => {
     const doc = withFace(face);
     const [name, host] = find(doc, candidate => candidate.startsWith('a@'));
 
-    expect(name).toBe('a@core_ui_container.slot_host');
+    expect(name).toBe('a@core_ui_chest.slot_host');
     expect(host).toMatchObject({ offset: [0, 0], size: [60, 20], $slot: 1, $cell: 'core_ui_test.button_1' });
   });
 
@@ -365,7 +365,7 @@ describe('emit / buttons', () => {
     const cell = definition(withFace(face), 'button_1');
     const enabled = child(cell, 'enabled');
     const disabled = child(cell, 'disabled');
-    const item = child(enabled, 'item@core_ui_container.cell');
+    const item = child(enabled, 'item@core_ui_chest.cell');
 
     // The press surface exists only while the transport is in the slot: a
     // disabled button has no button, so its guard is never auto-placed.
@@ -379,7 +379,7 @@ describe('emit / buttons', () => {
       $cell_image_size: [60, 20],
       $item_collection_name: 'container_items',
       $background_images: 'core_ui_test.button_1_face',
-      $item_renderer: 'core_ui_container.empty',
+      $item_renderer: 'core_ui_chest.empty',
       $button_ref: 'core_ui_test.button_1_states',
       $stack_count_required: false,
       $durability_bar_required: false,
@@ -388,7 +388,7 @@ describe('emit / buttons', () => {
   });
 
   it('routes every press to auto-place and keeps the self-routed entries', () => {
-    const states = definition(withFace(face), 'button_1_states@core_ui_container.slot_button');
+    const states = definition(withFace(face), 'button_1_states@core_ui_chest.slot_button');
     const routes = states.button_mappings ?? [];
 
     expect(routes.length).toBe(13);
@@ -404,7 +404,7 @@ describe('emit / buttons', () => {
   });
 
   it('gates hover and pressed on the slot holding a transport, one level down', () => {
-    const states = definition(withFace(face), 'button_1_states@core_ui_container.slot_button');
+    const states = definition(withFace(face), 'button_1_states@core_ui_chest.slot_button');
 
     // The gate sits on an image INSIDE the state control, never on the state
     // control itself: the button toggles that one's visibility as the pointer
@@ -456,7 +456,7 @@ describe('emit / buttons', () => {
     ]));
 
     expect(Object.keys(defs(same)).filter(name => name.startsWith('button_'))).toEqual([
-      'button_1_face', 'button_1_states@core_ui_container.slot_button', 'button_1',
+      'button_1_face', 'button_1_states@core_ui_chest.slot_button', 'button_1',
     ]);
     expect(find(same, name => name.startsWith('b@'))[1].$cell).toBe('core_ui_test.button_1');
 
@@ -473,10 +473,10 @@ describe('emit / buttons', () => {
 describe('emit / slot roles and locking', () => {
   const of = (role: 'both' | 'input' | 'output', interactive = true): Document => emit(screenOf(
     [{ kind: 'slot', name: 'a', rect: { x: 0, y: 0, width: 18, height: 18 }, address: 1, role, interactive }],
-    { ownedItemRenderer: 'core_ui_container.gated_item' },
+    { ownedItemRenderer: 'core_ui_chest.gated_item' },
   ));
 
-  const placed = (doc: Document): Control => child(definition(doc, 'screen'), 'a@core_ui_container.slot_host');
+  const placed = (doc: Document): Control => child(definition(doc, 'screen'), 'a@core_ui_chest.slot_host');
 
   it('leaves an ordinary slot on the host default, with no cell override', () => {
     expect(placed(of('both')).$cell).toBeUndefined();
@@ -485,11 +485,11 @@ describe('emit / slot roles and locking', () => {
   it('mounts the static guard-toggled cell for an output slot', () => {
     // The real/fake pair lives in the library's static file, gated on the
     // guard's item id; the screen only points at it.
-    expect(placed(of('output')).$cell).toBe('core_ui_container.output_slot');
+    expect(placed(of('output')).$cell).toBe('core_ui_chest.output_slot');
   });
 
   it('mounts the static inert cell for a locked slot, outranking its role', () => {
-    expect(placed(of('input', false)).$cell).toBe('core_ui_container.locked_slot');
+    expect(placed(of('input', false)).$cell).toBe('core_ui_chest.locked_slot');
   });
 
   it('emits no cell definitions of its own for the screen\'s slots', () => {
@@ -545,7 +545,7 @@ describe('emit / foreign slots', () => {
     expect(placed.$cell).toBeUndefined();
     expect(host).toMatchObject({ type: 'stack_panel', collection_name: 'inventory_items' });
     expect(child(host, 'cell@$cell').collection_index).toBe('$slot');
-    expect(child(definition(doc, 'slot__inventory_items'), 'item@core_ui_container.cell'))
+    expect(child(definition(doc, 'slot__inventory_items'), 'item@core_ui_chest.cell'))
       .toEqual({ $item_collection_name: 'inventory_items' });
   });
 
@@ -560,13 +560,13 @@ describe('emit / foreign slots', () => {
     const doc = foreign({ collection: 'hotbar_items', index: 2, interactive: false });
     const [, placed] = find(doc, candidate => candidate.startsWith('a@'));
     const cell = definition(doc, 'display_slot__hotbar_items');
-    const item = child(cell, 'item@core_ui_container.cell');
+    const item = child(cell, 'item@core_ui_chest.cell');
 
     expect(placed.$cell).toBe('core_ui_test.display_slot__hotbar_items');
     // Inert via the library's button with no routes and no focus —
     // `focus_enabled` is a button property, so it lives there, not on the cell.
     expect(cell.focus_enabled).toBeUndefined();
-    expect(item.$button_ref).toBe('core_ui_container.display_states');
+    expect(item.$button_ref).toBe('core_ui_chest.display_states');
     expect(JSON.stringify(cell)).not.toContain('button_mappings');
   });
 
@@ -597,7 +597,7 @@ describe('emit / grids', () => {
     }], extra));
 
   it('emits a JSON UI grid with the right dimensions, collection and template', () => {
-    const doc = grid();
+    const doc = grid({ collection: 'container_items' });
     const [, control] = find(doc, name => name === 'g');
 
     expect(control).toMatchObject({
@@ -605,31 +605,71 @@ describe('emit / grids', () => {
       offset: [4, 8],
       size: [162, 54],
       grid_dimensions: [9, 3],
-      collection_name: 'inventory_items',
-      grid_item_template: 'core_ui_test.grid_cell__inventory_items__take__plain',
+      collection_name: 'container_items',
+      grid_item_template: 'core_ui_test.grid_cell__container_items__take__plain',
     });
-    expect(definition(doc, 'grid_cell__inventory_items__take__plain@core_ui_container.cell'))
-      .toEqual({ $item_collection_name: 'inventory_items' });
+    expect(definition(doc, 'grid_cell__container_items__take__plain@core_ui_chest.cell'))
+      .toEqual({ $item_collection_name: 'container_items' });
   });
 
   it('draws a hideOwned grid with the host\'s transport-hiding renderer', () => {
-    const doc = grid({ hideOwned: true }, { ownedItemRenderer: 'core_ui_container.gated_item' });
+    // The opt-in still exists, for a collection that is not the player's.
+    const doc = grid({ collection: 'container_items', hideOwned: true }, { ownedItemRenderer: 'core_ui_chest.gated_item' });
 
-    expect(find(doc, name => name === 'g')[1].grid_item_template).toBe('core_ui_test.grid_cell__inventory_items__take__owned');
-    expect(definition(doc, 'grid_cell__inventory_items__take__owned@core_ui_container.cell')).toEqual({
-      $item_collection_name: 'inventory_items',
-      $item_renderer: 'core_ui_container.gated_item',
+    expect(find(doc, name => name === 'g')[1].grid_item_template).toBe('core_ui_test.grid_cell__container_items__take__owned');
+    expect(definition(doc, 'grid_cell__container_items__take__owned@core_ui_chest.cell')).toEqual({
+      $item_collection_name: 'container_items',
+      $item_renderer: 'core_ui_chest.gated_item',
       $durability_bar_required: false,
     });
   });
 
   it('withholds focus on a display-only grid, so no cell can be moved', () => {
-    const doc = grid({ interactive: false });
+    const doc = grid({ collection: 'container_items', interactive: false });
 
-    expect(find(doc, name => name === 'g')[1].grid_item_template).toBe('core_ui_test.grid_cell__inventory_items__display__plain');
-    expect(definition(doc, 'grid_cell__inventory_items__display__plain@core_ui_container.cell')).toEqual({
-      $item_collection_name: 'inventory_items',
-      $button_ref: 'core_ui_container.display_states',
+    expect(find(doc, name => name === 'g')[1].grid_item_template).toBe('core_ui_test.grid_cell__container_items__display__plain');
+    expect(definition(doc, 'grid_cell__container_items__display__plain@core_ui_chest.cell')).toEqual({
+      $item_collection_name: 'container_items',
+      $button_ref: 'core_ui_chest.display_states',
     });
+  });
+
+  it('hides the transport in the player own collections without being asked', () => {
+    // A press auto-places the transport into the player's inventory for a tick.
+    // Whether that shows is not the author's decision to get right: the
+    // transport is the library's own mechanism, and `<SlotGrid>` defaults
+    // hideOwned to false — so asking would have meant a command block flashing
+    // in the hotbar of every screen that drew one without knowing to opt in.
+    for (const collection of ['inventory_items', 'hotbar_items']) {
+      const doc = grid({ collection, hideOwned: false }, { ownedItemRenderer: 'core_ui_chest.gated_item' });
+
+      expect(find(doc, name => name === 'g')[1].grid_item_template)
+        .toBe(`core_ui_test.grid_cell__${collection}__take__owned`);
+      expect(definition(doc, `grid_cell__${collection}__take__owned@core_ui_chest.cell`)).toEqual({
+        $item_collection_name: collection,
+        $item_renderer: 'core_ui_chest.gated_item',
+        $durability_bar_required: false,
+      });
+    }
+  });
+
+  it('hides the transport in a foreign Slot over a player collection too', () => {
+    // The bug the rule was found by: grids were gated and a single placed slot
+    // was not, so a screen drawing one hotbar cell showed a repeating command
+    // block in it for the tick after every press.
+    const doc = emit(screenOf(
+      [{
+        kind: 'slot',
+        name: 'a',
+        rect: { x: 0, y: 0, width: 18, height: 18 },
+        address: 1,
+        role: 'both',
+        interactive: true,
+        source: { collection: 'hotbar_items', index: 0, interactive: true },
+      }],
+      { ownedItemRenderer: 'core_ui_chest.gated_item' },
+    ));
+
+    expect(JSON.stringify(definition(doc, 'slot__hotbar_items'))).toContain('core_ui_chest.gated_item');
   });
 });

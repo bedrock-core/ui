@@ -2,14 +2,14 @@
 	// The item cell a container screen draws: the renderer, the count, the
 	// durability bar, the slot button and the shapes a compiled screen mounts
 	// them through. Every definition here is the library's own; a compiled
-	// screen references nothing outside `core_ui_container`.
+	// screen references nothing outside `core_ui_chest`.
 	//
 	// `$item_collection_name` stays a variable: the same cell draws the screen's
 	// own `container_items` and a player's `inventory_items` / `hotbar_items`.
 	// A variable in `binding_collection_name` is fine — the rule that kills
 	// variables applies to `source_property_name`, and every one of those below
 	// is a literal.
-	"namespace": "core_ui_container",
+	"namespace": "core_ui_chest",
 
 	"item_renderer": {
 		"type": "custom",
@@ -125,7 +125,7 @@
 					"alpha": 0.8,
 					"controls": [
 						{
-							"hover_text@core_ui_container.hover_text": {
+							"hover_text@core_ui_chest.hover_text": {
 								"layer": 29,
 								"bindings": [
 									{
@@ -169,7 +169,7 @@
 		"focus_enabled": true,
 		"focus_wrap_enabled": false,
 		"focus_magnet_enabled": true,
-		"$highlight_control|default": "core_ui_container.hover_highlight",
+		"$highlight_control|default": "core_ui_chest.hover_highlight",
 		"default_focus_precedence": 1,
 		"hover_control": "hover",
 		"layer": 1,
@@ -236,7 +236,7 @@
 	// An inert button: no routes and no focus, so a cell it backs takes no
 	// take, place or drop. `focus_enabled` is a button property, so it rides
 	// here, not on the cell that rejects it.
-	"display_states@core_ui_container.slot_button": {
+	"display_states@core_ui_chest.slot_button": {
 		"button_mappings": [],
 		"focus_enabled": false
 	},
@@ -326,14 +326,14 @@
 		"size": [ 18, 18 ],
 		"layer": 1,
 		"$cell_image_size|default": [ 18, 18 ],
-		"$button_ref|default": "core_ui_container.slot_button",
+		"$button_ref|default": "core_ui_chest.slot_button",
 		"$stack_count_required|default": true,
 		"$durability_bar_required|default": true,
-		"$item_renderer|default": "core_ui_container.item_renderer",
+		"$item_renderer|default": "core_ui_chest.item_renderer",
 		"$item_renderer_panel_size|default": [ 18, 18 ],
 		"$item_renderer_size|default": [ 16, 16 ],
 		"$item_renderer_offset|default": [ 0, 0 ],
-		"$background_images|default": "core_ui_container.cell_bg",
+		"$background_images|default": "core_ui_chest.cell_bg",
 		"$focus_id|default": "",
 		"$focus_override_down|default": "",
 		"$focus_override_up|default": "",
@@ -362,7 +362,7 @@
 								"size": "$item_renderer_panel_size",
 								"layer": 0,
 								"controls": [
-									{ "stack_count_label@core_ui_container.stack_count_label": { "layer": 27 } },
+									{ "stack_count_label@core_ui_chest.stack_count_label": { "layer": 27 } },
 									{
 										"renderer@$item_renderer": {
 											"size": "$item_renderer_size",
@@ -375,11 +375,11 @@
 								]
 							}
 						},
-						{ "durability_bar@core_ui_container.durability_bar": { "layer": 20 } }
+						{ "durability_bar@core_ui_chest.durability_bar": { "layer": 20 } }
 					]
 				}
 			},
-			{ "item_selected_image@core_ui_container.slot_selected": { "layer": 4 } },
+			{ "item_selected_image@core_ui_chest.slot_selected": { "layer": 4 } },
 			{
 				"item_button_ref@$button_ref": {
 					"tts_ignore_count": true,
@@ -411,7 +411,7 @@
 		"anchor_to": "top_left",
 		"collection_name": "container_items",
 		"$slot|default": 0,
-		"$cell|default": "core_ui_container.slot",
+		"$cell|default": "core_ui_chest.slot",
 		"controls": [
 			{ "cell@$cell": { "collection_index": "$slot" } }
 		]
@@ -421,7 +421,7 @@
 		"type": "panel",
 		"size": [ 18, 18 ],
 		"controls": [
-			{ "item@core_ui_container.cell": { "$item_collection_name": "container_items" } }
+			{ "item@core_ui_chest.cell": { "$item_collection_name": "container_items" } }
 		]
 	},
 
@@ -430,9 +430,9 @@
 		"size": [ 18, 18 ],
 		"controls": [
 			{
-				"item@core_ui_container.cell": {
+				"item@core_ui_chest.cell": {
 					"$item_collection_name": "container_items",
-					"$button_ref": "core_ui_container.display_states"
+					"$button_ref": "core_ui_chest.display_states"
 				}
 			}
 		]
@@ -468,7 +468,7 @@
 						{ "binding_type": "view", "source_property_name": "(not (#aux = 12386304))", "target_property_name": "#visible" }
 					],
 					"controls": [
-						{ "item@core_ui_container.cell": { "$item_collection_name": "container_items" } }
+						{ "item@core_ui_chest.cell": { "$item_collection_name": "container_items" } }
 					]
 				}
 			},
