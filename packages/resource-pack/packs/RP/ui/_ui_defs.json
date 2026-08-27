@@ -54,6 +54,9 @@
 		"ui/core-ui/container/gated_item.json",
 		"ui/core-ui/container/scroll.json",
 		"ui/core-ui/container/chrome.json",
-		"ui/core-ui/container/router.json"
+		"ui/core-ui/container/router.json",
+		// SPIKE S1 — throwaway; delete with the file and its mount in
+		// core-ui/common/action_container.json. See ui/docs/spikes/.
+		"ui/core-ui/spikes/form_entry.json"
 	]
 }

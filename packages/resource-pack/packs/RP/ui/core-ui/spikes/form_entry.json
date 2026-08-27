@@ -1,0 +1,161 @@
+{
+	// ─────────────────────────────────────────────────────────────────────────────
+	// SPIKE S1 — throwaway. Delete this file, its line in _ui_defs.json, the
+	// `spike` child of core_ui_common.action_container, and BP/scripts/spikes/
+	// once the answer is written into ui/docs/spikes/S1-form-entry.md.
+	//
+	// THE QUESTION. A compiled form would place its own controls and tell each
+	// one which form entry it belongs to, instead of being instantiated N times
+	// by vanilla's `server_form_factory` collection. Does a button placed that
+	// way still work? Two halves:
+	//
+	//   1. READ  — does a BAKED `collection_index` bind that entry's data?
+	//              Visible: each row must show its own ENTRY-n caption. If they
+	//              all show ENTRY-0, or nothing, the index did not take.
+	//   2. PRESS — does `button.form_button_click` on such a control come back
+	//              as `response.selection` with THAT index? The script prints
+	//              what it got.
+	//
+	// If both hold, a compiled form cell is an ordinary control with a literal
+	// index, and the whole per-entry decode machinery can go. If the press half
+	// fails, presses have to keep coming from the factory and only the DRAWING
+	// can be compiled — a materially different design, which is why this is
+	// measured before anything is built on it.
+	//
+	// WHY IT SITS HERE. This file is the library's own, mounted by reference
+	// from `action_container` — a definition we own outright. Nothing vanilla is
+	// modified, so a plain chest, a plain form and every normal bcui screen are
+	// untouched whatever this does. The root hides itself unless the form's
+	// title is exactly the spike marker, so it costs one hidden panel per form.
+	// ─────────────────────────────────────────────────────────────────────────────
+	"namespace": "core_ui_spike",
+
+	// The host that carries the index. `collection_index` is accepted only on a
+	// direct child of a control declaring `collection_name`, and that is legal
+	// only on stack_panel and grid — so every cell that reads an entry gets one
+	// of these directly above it. The index rides the REFERENCE, which is how a
+	// compiled screen would hand out a literal.
+	"entry_host": {
+		"type": "stack_panel",
+		"orientation": "vertical",
+		"size": [ 200, 22 ],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"collection_name": "form_buttons",
+		"$entry|default": 0,
+		"controls": [
+			{ "cell@core_ui_spike.entry_cell": { "collection_index": "$entry" } }
+		]
+	},
+
+	// One entry drawn as a real button. The mappings are the ones vanilla's own
+	// form button uses (see core_ui_components.button) — this control differs
+	// from that one ONLY in how it was placed and how it learned its index.
+	"entry_cell": {
+		"type": "button",
+		"size": [ "100%", "100%" ],
+		"focus_enabled": true,
+		"sound_name": "random.click",
+		"sound_volume": 1.0,
+		"button_mappings": [
+			{
+				"from_button_id": "button.menu_select",
+				"to_button_id": "button.form_button_click",
+				"mapping_type": "pressed"
+			},
+			{
+				"from_button_id": "button.menu_ok",
+				"to_button_id": "button.form_button_click",
+				"mapping_type": "focused"
+			}
+		],
+		"controls": [
+			{
+				"face": {
+					"type": "image",
+					"texture": "textures/ui/button_borderless_lightpressed",
+					"size": [ "100%", "100%" ],
+					"keep_ratio": false,
+					"layer": 1
+				}
+			},
+			{
+				// The READ half: this label's only source is the entry the index
+				// selected. What it prints is the answer.
+				"caption": {
+					"type": "label",
+					"offset": [ 6, 5 ],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"layer": 2,
+					"text": "#entry_text",
+					"localize": false,
+					"font_size": "normal",
+					"bindings": [
+						{
+							"binding_type": "collection_details",
+							"binding_collection_name": "form_buttons"
+						},
+						{
+							"binding_name": "#form_button_text",
+							"binding_name_override": "#entry_text",
+							"binding_type": "collection",
+							"binding_collection_name": "form_buttons"
+						}
+					]
+				}
+			}
+		]
+	},
+
+	"heading": {
+		"type": "label",
+		"size": [ 200, 12 ],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"localize": false,
+		"font_size": "normal",
+		"text": "§eSPIKE S1 — press a row, read the chat"
+	},
+
+	// The root `action_container` mounts. Hidden unless the title is exactly the
+	// marker, so every other form pays one panel and one binding chain and draws
+	// nothing. The literal is spelled out rather than passed as a variable: a
+	// `$var` inside a source_property_name is dropped in some mounts, and this
+	// experiment must not fail for a reason that is not the one being tested.
+	"form_entry_root": {
+		"type": "panel",
+		"size": [ "100%", "100%" ],
+		"layer": 60,
+		"property_bag": {
+			"#visible": false
+		},
+		"visible": "#visible",
+		"bindings": [
+			{ "binding_name": "#title_text" },
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.17s' * #title_text) = 'bcuiv0008SPIKE_S1')",
+				"target_property_name": "#visible"
+			}
+		],
+		"controls": [
+			{
+				"rows": {
+					"type": "stack_panel",
+					"orientation": "vertical",
+					"size": [ 200, "100%c" ],
+					"offset": [ 64, 40 ],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"controls": [
+						{ "title@core_ui_spike.heading": {} },
+						{ "row_0@core_ui_spike.entry_host": { "$entry": 0 } },
+						{ "row_1@core_ui_spike.entry_host": { "$entry": 1 } },
+						{ "row_2@core_ui_spike.entry_host": { "$entry": 2 } }
+					]
+				}
+			}
+		]
+	}
+}

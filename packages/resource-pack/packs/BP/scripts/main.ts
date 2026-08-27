@@ -10,6 +10,7 @@ import {
 } from '@minecraft/server-ui';
 import { MinecraftBlockTypes, MinecraftEntityTypes } from '@minecraft/vanilla-data';
 import { spawnDemo } from './container/demo';
+import { openFormEntrySpike } from './spikes/formEntry';
 import { App } from './UI/App';
 
 const isPlayer = (source: ButtonPushAfterEvent['source']): source is Player =>
@@ -84,6 +85,14 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
     form.button('OK');
 
     form.show(source);
+  }
+
+  if (block.typeId === MinecraftBlockTypes.JungleButton) {
+    // SPIKE S1 — throwaway: can a control we place ourselves, told which form
+    // entry it belongs to by a baked collection_index, read that entry and
+    // report its own press? The whole compiled-form design rests on the answer.
+    // See RP/ui/core-ui/spikes/form_entry.json and ui/docs/spikes/.
+    openFormEntrySpike(source);
   }
 
   if (block.typeId === MinecraftBlockTypes.CrimsonButton) {

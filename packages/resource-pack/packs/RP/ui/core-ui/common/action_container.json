@@ -35,6 +35,13 @@
 			},
 			{
 				"scroll_pool@core_ui_screens.scroll_pool": {}
+			},
+			{
+				/* SPIKE S1 — throwaway, and the only line of this file it touches.
+				   Hides itself unless the form's title is the spike marker, so
+				   every real screen pays one panel that draws nothing. Remove
+				   this entry with core-ui/spikes/form_entry.json. */
+				"spike@core_ui_spike.form_entry_root": {}
 			}
 		]
 	}
