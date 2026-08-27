@@ -38,3 +38,14 @@ export interface SlotEvent extends ContainerEvent {
   /** The stack that moved: what was put in, or what was taken out. */
   readonly stack: ItemStack;
 }
+
+/**
+ * A handler prop, when the author gave one.
+ *
+ * A predicate rather than a cast: props arrive as `unknown`, and every call
+ * site would otherwise assert its way to a signature the compiler cannot
+ * check. The caller names the handler shape it expects, and what it gets back
+ * is narrowed rather than asserted.
+ */
+export const isHandler = <T extends (...args: never[]) => unknown>(value: unknown): value is T =>
+  typeof value === 'function';

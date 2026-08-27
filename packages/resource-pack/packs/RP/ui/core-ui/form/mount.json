@@ -1,0 +1,84 @@
+{
+	// Where a COMPILED form screen is mounted.
+	//
+	// A compiled screen's layout is already in an addon's pack; nothing about it
+	// travels at runtime. All the client is told is WHICH screen, and that rides
+	// the form's title: `bcuiv0008core<E>:<addon>_<name>`. The header is the
+	// interpreter's, and is kept on purpose — `server_form.main_screen_content`
+	// sizes the library's own container to the screen only when it is present,
+	// and vanilla's `long_form` hides itself only then. A compiled screen wants
+	// both, so it keeps the header and adds its own marker after it.
+	//
+	// WHY THIS FILE EXISTS AT THIS PATH. Every addon's compiled screens have to
+	// reach one mount, and `modifications` resolve per FILE PATH rather than per
+	// namespace — measured. So an addon ships a copy of THIS path carrying one
+	// modifications entry, and the engine stacks every pack's copy in pack
+	// order. `compiled_root` declares its own `controls` for the same reason the
+	// chest hook targets a definition that declares its own: an insert into an
+	// array a definition merely INHERITS creates one that shadows it.
+	//
+	// Nothing vanilla is touched by any of this. The library's own container is
+	// already gated on the header, so a compiled screen is mounted by being
+	// NAMED rather than by editing a vanilla file — which is why there is no
+	// `server_form` re-declaration anywhere in the pipeline.
+	"namespace": "core_ui_form",
+
+	// Every addon's compiled screens hang here, one gated host each. Empty in
+	// the render pack: the addons fill it.
+	"compiled_root": {
+		"type": "panel",
+		"size": [ "100%", "100%" ],
+		"controls": []
+	},
+
+	// Does a compiled screen claim this form at all?
+	//
+	// Sliced encoding-agnostically — `bcuiv0008core` without the version digit —
+	// so a pack that decodes a range of encodings does not need one gate per
+	// version here. Which screen, and at which encoding, is each screen's own
+	// gate to decide.
+	"claimed": {
+		"type": "panel",
+		"size": [ "100%", "100%" ],
+		"property_bag": {
+			"#visible": false
+		},
+		"visible": "#visible",
+		"bindings": [
+			{ "binding_name": "#title_text" },
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.13s' * #title_text) = 'bcuiv0008core')",
+				"target_property_name": "#visible"
+			}
+		],
+		"controls": [
+			{ "screens@core_ui_form.compiled_root": {} }
+		]
+	},
+
+	// The interpreter's content, which draws every screen that is NOT compiled:
+	// the ones still serialized per player, and every screen from an addon built
+	// before compiled forms existed. Both paths ship in one pack, and the title
+	// is what decides between them.
+	"interpreted": {
+		"type": "panel",
+		"size": [ "100%", "100%" ],
+		"property_bag": {
+			"#visible": true
+		},
+		"visible": "#visible",
+		"bindings": [
+			{ "binding_name": "#title_text" },
+			{
+				"binding_type": "view",
+				"source_property_name": "(not (('%.13s' * #title_text) = 'bcuiv0008core'))",
+				"target_property_name": "#visible"
+			}
+		],
+		"controls": [
+			{ "scroll_root@core_ui_screens.scroll": {} },
+			{ "scroll_pool@core_ui_screens.scroll_pool": {} }
+		]
+	}
+}

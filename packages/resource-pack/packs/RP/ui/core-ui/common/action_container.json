@@ -30,11 +30,15 @@
 			}
 		],
 		"controls": [
+			/* Two ways a screen reaches this container, and the title decides which.
+			   A serialized screen is drawn by the interpreter below; a COMPILED one
+			   is already in an addon's pack and is only named. Each gates itself on
+			   the title, so exactly one of them draws — see core-ui/form/mount.json. */
 			{
-				"scroll_root@core_ui_screens.scroll": {}
+				"interpreted@core_ui_form.interpreted": {}
 			},
 			{
-				"scroll_pool@core_ui_screens.scroll_pool": {}
+				"compiled@core_ui_form.claimed": {}
 			}
 		]
 	}

@@ -54,6 +54,10 @@
 		"ui/core-ui/container/gated_item.json",
 		"ui/core-ui/container/scroll.json",
 		"ui/core-ui/container/chrome.json",
-		"ui/core-ui/container/router.json"
+		"ui/core-ui/container/router.json",
+		// Compiled form screens: the mount every addon's screens hang from, and
+		// the gate that decides between a compiled screen and the interpreter.
+		// Each addon ships a copy of this same path to insert its own.
+		"ui/core-ui/form/mount.json"
 	]
 }

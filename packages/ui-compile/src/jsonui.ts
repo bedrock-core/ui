@@ -103,8 +103,13 @@ export interface Control {
   anchor_from?: Anchor;
   anchor_to?: Anchor;
   layer?: number;
-  /** Documented. Emitted only as `false`: a control is visible unless hidden. */
-  visible?: boolean;
+  /**
+   * Documented. A literal `false` hides a control outright — the emitted form
+   * for anything the author hid, since a control is visible unless told
+   * otherwise. A bound `#property` name is the other form, for a control whose
+   * visibility a binding decides: a screen gate, a state face.
+   */
+  visible?: boolean | string;
   /**
    * Documented. A disabled button draws its `locked_control` and refuses the
    * press itself, so a screen that can turn a button off needs nothing else.

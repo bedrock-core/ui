@@ -4,6 +4,7 @@
  */
 
 import { vi } from 'vitest';
+import type { RawMessage } from '@minecraft/server';
 
 export enum FormCancelationReason {
   UserBusy = 'UserBusy',
@@ -99,6 +100,7 @@ export function __rejectShow(error: unknown, index = 0): void {
 
 /** Reset ALL form-mock state: deferred mode, pending shows, modal queue. */
 export function __resetFormMocks(): void {
+  lastAction = undefined;
   deferShows = false;
   pendingShows.length = 0;
   modalResponseQueue = [];
@@ -139,7 +141,28 @@ export interface ModalFormDataDropdownOptions { defaultValueIndex?: number; tool
 export interface ModalFormDataSliderOptions { defaultValue?: number; valueStep?: number; tooltip?: string }
 export interface ModalFormDataToggleOptions { defaultValue?: boolean; tooltip?: string }
 
+/** The most recent ActionFormData a test's subject constructed, for asserting what it wrote. */
+let lastAction: ActionFormData | undefined;
+
+export function __lastActionForm(): ActionFormData | undefined {
+  return lastAction;
+}
+
+/** Records the newest instance. A function call rather than `const self = this`. */
+function remember(form: ActionFormData): void {
+  lastAction = form;
+}
+
 export class ActionFormData {
+  /** What `title()` was called with, so a test can read the screen key off it. */
+  titleText: string | RawMessage = '';
+  /** What every `button()` was called with, in order — the entries a compiled screen wrote. */
+  buttons: (string | RawMessage)[] = [];
+
+  constructor() {
+    remember(this);
+  }
+
   show = vi.fn((player: unknown): Promise<FormResponse> => {
     if (deferShows) {
       return new Promise<FormResponse>((resolve, reject) => {
@@ -150,7 +173,9 @@ export class ActionFormData {
     return Promise.resolve({ canceled: false, selection: undefined });
   });
 
-  title(_text: string): this {
+  title(text: string | RawMessage): this {
+    this.titleText = text;
+
     return this;
   }
 
@@ -170,7 +195,9 @@ export class ActionFormData {
     return this;
   }
 
-  button(_text: string, _iconPath?: string): this {
+  button(text: string | RawMessage, _iconPath?: string): this {
+    this.buttons.push(text);
+
     return this;
   }
 }

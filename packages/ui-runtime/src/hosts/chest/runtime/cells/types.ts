@@ -28,8 +28,7 @@ export type PressHandler = (event: PressEvent) => void;
 export type InsertHandler = (event: SlotEvent) => void;
 export type RemoveHandler = (event: SlotEvent) => void;
 
-/** A handler prop, when the author gave one. The caller names the handler shape it expects. */
-export const isHandler = <T extends (...args: never[]) => void>(value: unknown): value is T => typeof value === 'function';
+export { isHandler } from '../../../../core/events';
 
 /**
  * What a handler may be called with. A player who left, an entity that died
