@@ -17,6 +17,16 @@ export type { FrozenText, Probe, ShapeChange } from './core/ir/probe';
 
 export { allocate } from './hosts/chest/allocate';
 export type { Allocation, CellRole, ChannelEntry, SlotEntry } from './hosts/chest/allocate';
+
+// The form host's half of the same seam. Named apart from the chest's rather
+// than exported as a namespace, because `hosts/<host>/index.ts` pulls in that
+// host's runtime and a build machine has no use for it.
+export { allocate as allocateForm } from './hosts/form/allocate';
+export type { EntryEntry, Placement as FormPlacement } from './hosts/form/allocate';
+export {
+  COLLECTION as FORM_COLLECTION, compiledPrefix, DETAILS_BINDING as FORM_DETAILS_BINDING,
+  ENCODING_MAX, ENCODING_MIN, keyFrom as formKeyFrom, titleFor as formTitleFor,
+} from './hosts/form/contract';
 export { analyze, claim } from './core/ir';
 export type { Analysis, CellClaim, ChannelClaim, Claims } from './core/ir';
 export {

@@ -3,7 +3,7 @@ import { concreteRoots } from '../core/guards';
 import { ContainerScreenError } from '../core/types';
 import type { JSX } from '../jsx';
 import { CHEST } from './chest/host';
-import { FORM_ACTION, FORM_MODAL } from './form';
+import { FORM_ACTION, FORM_MODAL } from './form/host';
 import type { HostContract } from './types';
 
 /**
@@ -17,7 +17,7 @@ import type { HostContract } from './types';
 export const HOSTS: readonly HostContract[] = [CHEST, FORM_MODAL, FORM_ACTION];
 
 export { CHEST } from './chest/host';
-export { FORM_ACTION, FORM_MODAL } from './form';
+export { FORM_ACTION, FORM_MODAL } from './form/host';
 export type { Capability, CarrierKind, DrawKind, HostContract, InputKind } from './types';
 
 /**

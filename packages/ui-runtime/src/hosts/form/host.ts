@@ -1,9 +1,9 @@
 import { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
-import { findModalConfig } from '../components/Form';
-import { MAX_POOLED_SCROLLS } from '../components/Scroll';
-import type { Need } from '../core/ir/validate';
-import { ContainerScreenError, ModalFormError } from '../core/types';
-import type { HostContract } from './types';
+import { findModalConfig } from '../../components/Form';
+import { MAX_POOLED_SCROLLS } from '../../components/Scroll';
+import type { Need } from '../../core/ir/validate';
+import { ContainerScreenError, ModalFormError } from '../../core/types';
+import type { HostContract } from '../types';
 
 /**
  * A control that needs a container. Both form hosts answer this the same way,
