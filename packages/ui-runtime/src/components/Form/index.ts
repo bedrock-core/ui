@@ -1,5 +1,5 @@
 export {
-  Form, ModalContext, MODAL_FORM_SLOT_TYPE,
+  findModalConfig, Form, ModalContext, MODAL_FORM_SLOT_TYPE,
   type FormConfig, type FormProps, type FormValues, type SubmitEvent,
 } from './Form';
 

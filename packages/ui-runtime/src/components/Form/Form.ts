@@ -1,5 +1,6 @@
 import type { UiEvent } from '../../core/events';
 import { createContext } from '../../core/fabric/context';
+import { isElement } from '../../core/guards';
 import { ModalValue } from '../../core/types';
 import { FunctionComponent, JSX } from '../../jsx';
 import { FormButton, type FormButtonProps } from './FormButton';
@@ -20,16 +21,16 @@ export const MODAL_FORM_SLOT_TYPE = 'modal-form';
 /** The result object handed to {@link FormProps.onSubmit}, keyed by each control's `name`. */
 export type FormValues = Record<string, ModalValue>;
 
-/**
- * Resolved chrome + lifecycle the presenter reads off the `modal-form` node. The
- * callbacks are not primitives, so the serializer keeps them as callbacks and walks
- * the children.
- */
 /** A submitted form: every control's value keyed by its `name`, and who submitted. */
 export interface SubmitEvent extends UiEvent {
   readonly values: FormValues;
 }
 
+/**
+ * Resolved chrome + lifecycle the presenter reads off the `modal-form` node. The
+ * callbacks are not primitives, so the serializer keeps them as callbacks and walks
+ * the children.
+ */
 export interface FormConfig {
   /**
    * Called once when the player submits, with every control's value keyed by
@@ -131,3 +132,40 @@ export const Form: FormComponent = Object.assign(FormRoot, {
   Input: FormInput,
   Button: FormButton,
 });
+
+/**
+ * The `<Form>` marker on a built tree and the config it carries, or `undefined`
+ * when the tree is an ordinary ActionForm tree. What makes a screen a modal
+ * lives with the component that makes it one, so the host registry and the
+ * presenter read the same answer.
+ *
+ * The marker is transparent, so it sits a couple of provider levels below the
+ * root — walk children until it is found.
+ *
+ * @param node - Tree node to search from, typically the built root.
+ */
+export function findModalConfig(node: JSX.Node): FormConfig | undefined {
+  if (!isElement(node)) {
+    return undefined;
+  }
+
+  if (node.type === MODAL_FORM_SLOT_TYPE) {
+    const config = node.props.__formConfig;
+
+    // __formConfig is always a FormConfig (set by <Form>); narrow the unknown prop.
+    return config && typeof config === 'object' ? config : undefined;
+  }
+
+  const { children } = node.props;
+  const childArray = Array.isArray(children) ? children : [children];
+
+  for (const child of childArray) {
+    const found = findModalConfig(child);
+
+    if (found) {
+      return found;
+    }
+  }
+
+  return undefined;
+}

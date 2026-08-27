@@ -10,6 +10,12 @@
 			"@bedrock-core/ui/*": [
 				"../../packages/ui-runtime/src/*"
 			],
+			"@bedrock-core/ui/container": [
+				"../../packages/ui-runtime/src/hosts/chest/index.ts"
+			],
+			"@bedrock-core/ui-runtime/container": [
+				"../../packages/ui-runtime/src/hosts/chest/index.ts"
+			],
 			"@bedrock-core/ui-runtime": [
 				"../../packages/ui-runtime/src/index.ts"
 			],

@@ -14,12 +14,12 @@ Pack `2.0` accompanies library `1.0` by the existing rule (pack major = library 
 
 | # | Phase | Delivers | Estimate |
 | --- | --- | --- | --- |
-| 0 | **1.0 freeze** | event object across both backends; experimental flags; release | 2 days |
-| 1 | **Seam refactor, no behaviour change** | IR + `analyze` + `allocate` moved under `ui-runtime/core/ir`; `hosts/` registry with `chest` and `form-legacy` behind the host interface; needs/offers replaces the validators; all tests green, in-game checklist re-run | 1 week |
+| 0 | **1.0 freeze** ✅ | event object across both backends; experimental flag on `registerComponent`; release still to cut | done |
+| 1 | **Seam refactor, no behaviour change** ✅ | `core/ir/` (`analyze`, the shared `claim` walk, `validate`); `hosts/` registry — `chest`, `form-action`, `form-modal` — picked by the root the author wrote; needs/offers replaces both validators; `container/*` moved under `hosts/chest/`. **Remaining:** re-run the in-game checklist | done |
 | 2 | **Form host spike** (in game, throwaway) | title-key mount gate; static control with baked `collection_index` on `form_buttons` producing `selection`; a one-field entry decoded with one binding; modal field with an entry as its label; local toggle group under the form mount and under the chest mount | 2–3 days |
 | 3 | **Form hosts** | `form-action` and `form-modal` contract / emit / runtime; the base baked, layout islands re-solved at runtime; `ui.generated.json`; `render()` routing by name; encoding `1` with `ENCODING_MIN/MAX`; reference addon screens compiled | 2 weeks |
 | 4 | **Vocabulary** | `core_ui_shapes`; chest files renamed under `core_ui_chest`; form carriers and mount; the chest geometry carrier; `protocol.json` windows; `debug` diff | 1 week |
-| 5 | **Consumers, then delete legacy** | `List max`, `Tabs`; the guides filter emits IR and pages compile as screens with a replicated reference table; config and the addon list on compiled `List max` screens; `form-legacy` and the interpreter decoders deleted; pack minor | 2 weeks |
+| 5 | **Consumers, then delete legacy** | `List max`, `Tabs`; the guides filter emits IR and pages compile as screens with a replicated reference table; config and the addon list on compiled `List max` screens; the interpreter fallback and its decoders deleted; pack minor | 2 weeks |
 | 6 | **Build flow** | the single `core` filter; CLI template; docs site pages replace this folder | 4 days |
 | 7 | **Next host** | the book: findings page, contract, emit, runtime, vocabulary | after 6 |
 

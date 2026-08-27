@@ -16,14 +16,14 @@ The build evaluates the screen module on a build machine with `@minecraft/server
 
 Subscribing to a world event **inside the component** is the intended way for a screen to react to the world: subscribe in `useEffect`, set state from the callback, and the render that follows writes the carriers. The build sees only the initial state and the effect's existence, never its body.
 
-Screens that are *not* discovered (a component handed to `render()` from an ordinary module) run on `form-legacy`. That is the migration path, not a feature: the build warns once per such screen when it can see the call.
+Screens that are *not* discovered (a component handed to `render()` from an ordinary module) run on the interpreter fallback. That is the migration path, not a feature: the build warns once per such screen when it can see the call.
 
 ## Screen identity
 
 *Decided.* A screen's name is its file name without the suffix; its identity is `<namespace>_<name>`; its routing key is derived from that string by the host ([02-pipeline](./02-pipeline.md)). At runtime a form screen must present its key in the title, so the runtime has to know which compiled screen a component is:
 
 - The filter writes `packs/data/ui/ui.generated.json` — one record per compiled screen: `name`, `host`, `key`, the **placement** (addresses in document order, capacities), and the baked snapshot `debug` diffs against. It is reached as `@bedrock-core/generated/ui`, the way `@bedrock-core/generated/i18n` and `/guides` already are, and inlined by the bundler.
-- The link from a component to its record is by **name**: `render(Screen, player)` reads `Screen.screenName`, which the filter stamps by rewriting the screen module's default export (`export default withScreen('furnace', Furnace)`) in the workspace copy before the bundler runs. Nothing in the author's file changes; a module the filter did not see has no name and runs on `form-legacy`.
+- The link from a component to its record is by **name**: `render(Screen, player)` reads `Screen.screenName`, which the filter stamps by rewriting the screen module's default export (`export default withScreen('furnace', Furnace)`) in the workspace copy before the bundler runs. Nothing in the author's file changes; a module the filter did not see has no name and runs on the interpreter fallback.
 
 *Proposed alternative, rejected:* identity by a hash of the IR shape. It keeps `render(Component)` name-free, but any build/runtime divergence in expansion (a stub player, a locale) silently changes the key and the screen renders as a vanilla form; a name fails loud instead.
 

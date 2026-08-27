@@ -8,26 +8,26 @@
  * addon never imports it by accident.
  */
 
-export { buildContainerTree } from './container/build';
-export { containerRoot } from './core/render/validateContainer';
-export { allocate } from './container/allocate';
-export type { Allocation, CellRole, ChannelEntry, SlotEntry } from './container/allocate';
-export { analyze } from './container/analyze';
-export type { Analysis } from './container/analyze';
+export { buildContainerTree } from './hosts/chest/build';
+
+export { allocate } from './hosts/chest/allocate';
+export type { Allocation, CellRole, ChannelEntry, SlotEntry } from './hosts/chest/allocate';
+export { analyze, claim } from './core/ir';
+export type { Analysis, CellClaim, ChannelClaim, Claims } from './core/ir';
 export {
   BLANK_CODE, BLANK_VALUE, CHARSET, charsetLang, encode, MAX_CODE, UNKNOWN_CODE,
-} from './container/charset';
+} from './hosts/chest/charset';
 export {
   COLLECTION, COUNT_ITEM, GUARD_ITEM, GUARD_ITEM_AUX, joinKey, KEY_PREFIX, LAYOUT_PROPERTY, layoutKey,
   MAX_LAYOUT, OWNED_LORE, OWNED_PROPERTY, PROTOCOL_ITEM, PROTOCOL_ITEM_AUX, SENTINEL_SLOTS, splitKey,
   STATE_PROPERTY, TRANSPORT_ITEM, TRANSPORT_ITEM_AUX,
-} from './container/contract';
+} from './hosts/chest/contract';
 
 // What the compiler reads off a built tree: every component owns the shape of
 // its own props, so the readers live beside the components.
 export { BACKGROUND_SLOT_TYPE } from './components/Background';
 export { BUTTON_TYPE, isExitButton } from './components/Button';
-export { CONTAINER_TYPE, containerEntity, containerHandlers } from './components/Container';
+export { CONTAINER_TYPE, containerEntity, containerHandlers, containerRoot } from './components/Container';
 export { IMAGE_TYPE } from './components/Image';
 export { PANEL_TYPE } from './components/Panel';
 export { SCROLL_SLOT_TYPE } from './components/Scroll';

@@ -1,10 +1,9 @@
-import { MAX_POOLED_SCROLLS } from '../../components/Scroll';
+import { hostFor, requireOwner } from '../../hosts';
 import type { JSX } from '../../jsx';
 import { deleteFiber, getFibersForOwner, type Owner } from '../fabric';
+import { validate } from '../ir/validate';
 import { applyInheritance, computeLayout, expandAndResolveContexts } from './phases';
 import { createInitialContext, createRootContext, type TraversalContext } from './traversal';
-import { validateContainer } from './validateContainer';
-import { validateForm } from './validateForm';
 
 /**
  * Build the complete JSX element tree by running all transformation phases.
@@ -44,12 +43,21 @@ export function buildTree(element: JSX.Element, owner: Owner): JSX.Element {
   // Returns "LayoutProps"
   let result: JSX.Element = expandAndResolveContexts(element, context, owner);
 
+  // Which screen this tree is for, decided by the root the author wrote —
+  // `<Container>` is a chest screen the way `<Form>` is a modal. Everything
+  // that differs between screens is read off the host from here on, so no
+  // later phase asks what kind of screen it is looking at.
+  const host = hostFor(result);
+
+  // Serving a screen through the wrong door is the one mistake the host cannot
+  // absorb: a compiled screen has no player to show it to, and a form has no
+  // entity to belong to.
+  requireOwner(host, owner);
+
   // Phase 2: Compute layout using flexbox algorithm
   // Resolves sizes and x/y positions to absolute Pocket-space texels
   // Returns "NormalizedControlProps"
-  // A form draws its scrolls from the render pack's fixed pool; a compiled
-  // screen emits a scroll region per <Scroll>, so nothing caps it.
-  result = computeLayout(result, owner.kind === 'player' ? MAX_POOLED_SCROLLS : Number.POSITIVE_INFINITY, owner.kind !== 'player');
+  result = computeLayout(result, host.scrollLimit, host.compiled);
 
   // Phase 3: Apply parent-child inheritance rules (visibility, enabled)
   // Initialize with root parent state
@@ -57,15 +65,10 @@ export function buildTree(element: JSX.Element, owner: Owner): JSX.Element {
 
   result = applyInheritance(result, rootContext);
 
-  // Phase 4: The owner decides the backend, and the backend decides which rules
-  // the built tree has to satisfy — a form for a player, a compiled container
-  // screen for an entity or a build — so dynamically-built or type-escaped
-  // trees fail loud before anything is presented or emitted.
-  if (owner.kind === 'player') {
-    validateForm(result);
-  } else {
-    validateContainer(result);
-  }
+  // Phase 4: what the tree NEEDS against what the host OFFERS, plus the rules
+  // every screen obeys — so dynamically-built or type-escaped trees fail loud,
+  // by name, before anything is presented or emitted.
+  validate(result, host);
 
   return result;
 }

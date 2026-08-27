@@ -1,4 +1,6 @@
 import type { ContainerEvent } from '../core/events';
+import { concreteRoots } from '../core/guards';
+import { ContainerScreenError } from '../core/types';
 import type { FunctionComponent, JSX } from '../jsx';
 import { type ControlProps, withControl } from './control';
 
@@ -80,4 +82,26 @@ export function containerEntity(element: JSX.Element): string | undefined {
   const { entity } = config;
 
   return typeof entity === 'string' ? entity : undefined;
+}
+
+/**
+ * The `<Container>` a built tree renders at its root, or the reason it has
+ * none. Providers and fragments above it are transparent, so they are looked
+ * through the way every other pass looks through them.
+ *
+ * @throws ContainerScreenError when the tree does not render exactly one.
+ */
+export function containerRoot(tree: JSX.Element): JSX.Element {
+  const roots = concreteRoots(tree);
+  const [root] = roots;
+
+  if (roots.length !== 1 || root === undefined || root.type !== CONTAINER_TYPE) {
+    throw new ContainerScreenError(
+      'A container screen must render exactly one `<Container>` at its root. The root '
+      + 'is what makes the screen a compiled container screen, the way `<Form>` makes '
+      + 'one a modal; put everything else inside it.',
+    );
+  }
+
+  return root;
 }

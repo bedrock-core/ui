@@ -29,8 +29,8 @@
 			"import": "./src/index.ts"
 		},
 		"./container": {
-			"types": "./src/container/index.ts",
-			"import": "./src/container/index.ts"
+			"types": "./src/hosts/chest/index.ts",
+			"import": "./src/hosts/chest/index.ts"
 		},
 		"./compile": {
 			"types": "./src/compile.ts",

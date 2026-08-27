@@ -8,13 +8,13 @@ The runtime is what cannot be baked: fibers, the allocation walk, carrier writes
 packages/ui-runtime/src/
   jsx/  hooks/  core/fabric/          unchanged: JSX runtime, hooks, fibers, owners, contexts
   core/build/                         expand.ts  layout.ts  inherit.ts   (layout + inherit: build-only entry)
-  core/ir/                            nodes/*.ts  analyze.ts  allocate.ts  shape.ts   (shared with the build)
+  core/ir/                            analyze.ts  claims.ts  validate.ts   (shared with the build)
   core/layout/                        islands.ts   (re-solves an island inside its reserved box; the only runtime flexbox)
   core/session/                       session.ts  owner.ts  events.ts   (event objects, handler dispatch)
-  hosts/                              index.ts (the list)
-    chest/                            contract.ts  runtime/{session,poll,cells,channels,reconcile,items,players,watch,store}.ts
-    form-action/  form-modal/         contract.ts  runtime.ts
-    form-legacy/                      contract.ts  runtime.ts  (today's serializer + presenters, quarantined)
+  hosts/                              index.ts (the list)  types.ts (the contract)
+    chest/                            host.ts  contract.ts  charset.ts  allocate.ts  build.ts  index.ts
+      runtime/                        session, poll, cells/*, channels, reconcile, items, players, watch, store
+    form.ts                           form-action + form-modal (the interpreter runtime is still under core/render until phase 5)
   compile.ts                          the build-time surface (as today, wider)
 packages/ui-compile/src/
   emit/                               jsonui.ts  document.ts  shapes.ts
@@ -22,13 +22,17 @@ packages/ui-compile/src/
   compile.ts                          screen in, documents + placement out
 ```
 
-The IR moves down into `ui-runtime` because `allocate` runs on both sides and reads IR nodes; emission stays in `ui-compile`. Contracts (`contract.ts`) are the only files both halves of a host import.
+What moves down into `ui-runtime` is only what BOTH halves run: liveness analysis, the ordered `claim` walk that reads a tree's needs, and the needs-vs-offers check. The IR node kinds and their lowering stay in `ui-compile`, because only the build emits — the runtime never needs a node, only the order of the claims and the values on them. That keeps the runtime smaller than a shared full IR would, which is the point of [01-goals](./01-goals.md) rule 1.
+
+Each host's numbering — where its claims physically land — is the host's own, next to its runtime. Contracts (`contract.ts`) are the only files both halves of a host import.
+
+One import rule holds the graph together: `hosts/index.ts` reaches a host through its `host.ts` alone, never its barrel. A host's barrel pulls in its runtime, its runtime pulls in the render session, and the render session asks `hosts/index.ts` which host a tree belongs to — so a registry that imported barrels would close that circle. The registry only ever needs the contract.
 
 ## Public API
 
 | Call | Host | Change from today |
 | --- | --- | --- |
-| `render(Screen, player)` | form-action / form-modal / form-legacy, by the root element | unchanged signature; picks the compiled layout by the screen's key ([08-build-flow](./08-build-flow.md)), falls back to `form-legacy` for a screen the build did not compile |
+| `render(Screen, player)` | form-action / form-modal, by the root element | unchanged signature; picks the compiled layout by the screen's key ([08-build-flow](./08-build-flow.md)), falls back to the interpreter for a screen the build did not compile |
 | `createContainerScreen(Screen, options)` | chest | unchanged |
 | hooks | all | `useExit` returns a value the IR recognises; `usePlayer` throws on entity-owned hosts as today |
 | handlers | all | the event object ([05-components](./05-components.md)) |
@@ -52,7 +56,7 @@ render(owner)
 - **chest**: unchanged in substance — `entityContainerOpened` / interact open a session per entity, a tick poll over the drawn range fingerprints slots and hands changes to the cell role (`press`, `insert`, `remove`), channels are written by stack size, state persists on the entity. Moves under `hosts/chest/runtime/`.
 - **form-action**: `show()` with the title carrying the key and the `form_buttons` entries carrying live fields; `response.selection` → the `press` input at that entry's position → handler → re-present. Per-present, as the engine dictates.
 - **form-modal**: `show()`; native fields carry their own values; `submit` / `cancel` inputs; `formValues` re-keyed by placement order (decorative rows no longer occupy an ordinal).
-- **form-legacy**: today's presenters and serializer, untouched, behind the host interface.
+- **the interpreter fallback**: today's presenters and serializer, untouched, reached by either form host when a screen has no compiled layout.
 
 ## Debug mode: making inference misses loud
 
@@ -71,4 +75,4 @@ With `debug: true` (both `render` options and `createContainerScreen` options), 
 | `container/analyze.ts`, `container/allocate.ts` | become `core/ir/analyze.ts`, `core/ir/allocate.ts` |
 | whole-tree `computeLayout` on every form present; `util/textMetrics.ts` at runtime | the base is baked; `core/layout/islands.ts` re-solves islands only; text metrics are build-only because live text reserves its box |
 
-Everything in the table survives inside `form-legacy` until [09-plan](./09-plan.md) phase 5, then is deleted with it.
+Everything in the table survives as the interpreter fallback until [09-plan](./09-plan.md) phase 5, then is deleted with it.

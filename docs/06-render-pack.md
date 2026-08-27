@@ -49,7 +49,7 @@ Two numbers are the contract between an addon's compiled screens and the render 
 - `packages/resource-pack/protocol.json` declares `encoding: { min, max }` and `vocabulary: { min, max }` next to the pack version and hash it carries today; the pack description prints both ranges where a player can read them.
 - `ui-runtime` exports `ENCODING_MIN` / `ENCODING_MAX`. A compiled screen emits at the newest encoding the pack it was built against decodes (recorded in `ui.generated.json`); the form mount routes on the header to the decoder generation for that `E`. The window is two versions wide: an encoding stays decodable for two pack minors after it stops being the newest, then the minimum rises in a pack major.
 - A screen whose `V` or `E` is outside the pack's window falls through to the vanilla form or the vanilla chest, and the runtime `debug` log names the versions on both sides. Nothing renders garbage.
-- The legacy byte protocol stays exactly `bcuiv0008`, decoded by `form-legacy` until it is deleted. Removing its paddings is not a version of it; it is encoding `1` of the compiled family, which carries no padding to begin with because a compiled cell knows its own fields.
+- The legacy byte protocol stays exactly `bcuiv0008`, decoded by the interpreter fallback until it is deleted. Removing its paddings is not a version of it; it is encoding `1` of the compiled family, which carries no padding to begin with because a compiled cell knows its own fields.
 
 *Decided.*
 

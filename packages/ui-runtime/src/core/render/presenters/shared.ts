@@ -1,7 +1,7 @@
 import { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
 import { type Player } from '@minecraft/server';
 import { BACKGROUND_SLOT_TYPE } from '../../../components/Background';
-import { MODAL_FORM_SLOT_TYPE, type FormConfig } from '../../../components/Form';
+import { findModalConfig } from '../../../components/Form';
 import type { JSX } from '../../../jsx';
 import type { ScrollMetrics } from '../../serializer';
 import { getFibersForOwner, playerOwner } from '../../fabric';
@@ -16,39 +16,9 @@ import { beginInteractiveTransaction, endInteractiveTransaction } from '../sessi
  */
 export type PresentResult = 'present' | 'cleanup' | 'none';
 
-/**
- * Find the `modal-form` marker on the built tree and return its config, or
- * `undefined` if the tree is an ordinary ActionForm tree. The marker is transparent,
- * so it sits a couple of provider levels below the root — walk children until found.
- *
- * @param node - Tree node to search from (typically the built root).
- * @returns The Form config when a modal tree, else `undefined`.
- */
-export function findModalConfig(node: JSX.Node): FormConfig | undefined {
-  if (!isElement(node)) {
-    return undefined;
-  }
-
-  if (node.type === MODAL_FORM_SLOT_TYPE) {
-    const config = node.props.__formConfig;
-
-    // __formConfig is always a FormConfig (set by <Form>); narrow the unknown prop.
-    return config && typeof config === 'object' ? config : undefined;
-  }
-
-  const { children } = node.props;
-  const childArray = Array.isArray(children) ? children : [children];
-
-  for (const child of childArray) {
-    const found = findModalConfig(child);
-
-    if (found) {
-      return found;
-    }
-  }
-
-  return undefined;
-}
+// The modal marker is the Form component's own business; re-exported here
+// because the presenters have always reached for it through this module.
+export { findModalConfig };
 
 /**
  * Find the first `<Background>` marker on the built tree and return its texture

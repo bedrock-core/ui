@@ -75,7 +75,7 @@ Two rows explain most of the design: the **update model** (a chest changes while
 - **Press.** A baked button still needs an entry for its index: the engine only reports `form_button_click` for a collection item. *Measure*: a static control with `collection_details` + baked `collection_index`, outside vanilla's `collection_panel` factory, must produce `response.selection`. First spike in [09-plan](./09-plan.md).
 - **Title.** Header + key + screen-level carriers (none today). The scroll block and the backdrop slot the title carries now are baked.
 - **Modal.** Native fields stay `ModalFormData` calls; their label string is the field's own entry (live props of that field, often empty). Decorative rows no longer emit `label()` entries, which removes the ordinal-shift bug class outright. `Form.Button` becomes a `button` node with input `submit` / `cancel`.
-- **Interpreter.** The current byte-protocol form backend becomes `form-legacy`: a host whose `allocate` puts every cell on an entry and whose `emit` is the existing render pack. It exists so config, the addon list and guides keep working until they compile ([09-plan](./09-plan.md)); nothing new targets it.
+- **Interpreter.** `form-action` and `form-modal` exist as hosts today (phase 1) with the byte-protocol interpreter as their runtime. Phase 3 gives them a compiled runtime and keeps the interpreter inside them as the fallback for a screen the build did not compile — which is what config, the addon list and guides ride until they compile ([09-plan](./09-plan.md)). There is no separate `form-legacy` host: the fallback is a second backend behind the same contract, not a second screen.
 
 ## The chest host
 

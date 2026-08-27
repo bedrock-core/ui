@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-type-assertion */
-import { isFunction } from '../';
+import { isFunction } from '..';
 import { isInInteractiveTransaction, scheduleLogicPass, triggerCleanup } from '../render/session';
 import { containerExit } from './exit';
 import { requirePlayer } from './owner';

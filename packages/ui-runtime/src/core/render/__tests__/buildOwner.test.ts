@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { Container } from '../../../components/Container';
 import { Panel } from '../../../components/Panel';
 import { Text } from '../../../components/Text';
-import { buildContainerTree } from '../../../container/build';
+import { buildContainerTree } from '../../../hosts/chest/build';
 import { useEffect, useExit, usePlayer, useState } from '../../../hooks';
 import type { JSX } from '../../../jsx';
 import { BUILD_OWNER, entityOwner, getFibersForOwner, isContainerExit, playerOwner } from '../../fabric';
