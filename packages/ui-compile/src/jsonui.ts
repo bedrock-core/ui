@@ -105,6 +105,12 @@ export interface Control {
   layer?: number;
   /** Documented. Emitted only as `false`: a control is visible unless hidden. */
   visible?: boolean;
+  /**
+   * Documented. A disabled button draws its `locked_control` and refuses the
+   * press itself, so a screen that can turn a button off needs nothing else.
+   * Takes a bound `#property` name as well as a literal.
+   */
+  enabled?: string | boolean;
   orientation?: 'horizontal' | 'vertical';
   controls?: ControlEntry[];
   bindings?: Binding[];
@@ -154,6 +160,8 @@ export interface Control {
   hover_control?: string;
   pressed_control?: string;
   default_control?: string;
+  /** Documented. Drawn instead of `default_control` while the button is disabled. */
+  locked_control?: string;
   /** Documented. A control with this off takes no focus, so it cannot be interacted with. */
   focus_enabled?: boolean;
   /** Documented. The sound a button plays when pressed. */

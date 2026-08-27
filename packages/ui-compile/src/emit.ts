@@ -33,7 +33,7 @@
 
 import type { IrDocument, PanelNode } from './ir';
 import type { Document } from './jsonui';
-import { collectShapes, emitNode, NODE_DEFINITIONS, sharedDefs } from './nodes';
+import { collectShapes, emitNode, sharedDefs } from './nodes';
 import { backgroundOf, FULL, sizeOf, topLeft } from './nodes/shared';
 import type { Emit, HostEmit } from './nodes/types';
 
@@ -71,10 +71,6 @@ export const emit = (doc: IrDocument, host: HostEmit): Document => {
     namespace: doc.namespace,
     ...sharedDefs(doc.namespace, doc.collection, kinds),
   };
-
-  for (const definition of NODE_DEFINITIONS) {
-    definition.assemble?.(root, document, context);
-  }
 
   host.assemble?.(root, document, context);
 

@@ -4,7 +4,7 @@ import {
 } from '@bedrock-core/ui-runtime/compile';
 import type { Binding, ButtonMapping, Control, ControlEntry } from '../jsonui';
 import type { ExitNode } from './exit';
-import { collectKind, shapeOf } from './index';
+import { shapeOf } from './index';
 import {
   CELL_VAR, CONTAINER, FACE_CONTENT_LAYER, FULL, isSelfRouted, layerOf, offsetOf, PROTOTYPE_MAPPINGS, sizeOf,
   SLOT_VAR, str, topLeft, visibilityOf,
@@ -143,7 +143,7 @@ const whenDisabled = (collection: string): Binding[] => [
  * What lets two buttons share a definition: the same look, at the same size,
  * with the same things baked into the face.
  */
-const faceSignature = (node: ButtonNode): string => JSON.stringify({
+export const faceSignature = (node: ButtonNode): string => JSON.stringify({
   face: node.face,
   size: sizeOf(node.rect),
   children: node.children.map(shapeOf),
@@ -176,7 +176,7 @@ const faceName = (node: ButtonNode, ctx: Emit): string => {
  * `container_item` and its `item_cell` default to the 18 x 18 item cell and a
  * face only ever fills that.
  */
-const faceDefs = (node: ButtonNode, name: string, emit: Emit): Record<string, Control> => {
+export const faceDefs = (node: ButtonNode, name: string, emit: Emit): Record<string, Control> => {
   const { face } = node;
   const { ns, collection } = emit;
   const size = sizeOf(node.rect);
@@ -353,34 +353,6 @@ export const buttonDefinition: NodeDefinition<ButtonNode> = {
   },
 
   children: node => node.children,
-
-  // One set of definitions per distinct button look. Buttons differing only in
-  // which slot they read collapse onto the same face. Named first and emitted
-  // after, so a face baked inside another face can already be referenced.
-  assemble(root, document, ctx) {
-    const buttons = collectKind(root, 'button');
-
-    for (const node of buttons) {
-      const signature = faceSignature(node);
-
-      if (!ctx.faceNames.has(signature)) {
-        ctx.faceNames.set(signature, `button_${ctx.faceNames.size + 1}`);
-      }
-    }
-
-    const emittedFaces = new Set<string>();
-
-    for (const node of buttons) {
-      const name = ctx.faceNames.get(faceSignature(node));
-
-      if (name === undefined || emittedFaces.has(name)) {
-        continue;
-      }
-
-      emittedFaces.add(name);
-      Object.assign(document, faceDefs(node, name, ctx));
-    }
-  },
 
   emit(node, ctx) {
     return {

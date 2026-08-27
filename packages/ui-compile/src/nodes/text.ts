@@ -3,7 +3,6 @@ import {
   isTextElementType, KEY_PREFIX, labelFontFields, liveTextLength, TEXT_SHADOW_TYPE, TEXT_SHADOW_WRAP_TYPE,
 } from '@bedrock-core/ui-runtime/compile';
 import type { Binding, Control } from '../jsonui';
-import { collectKind } from './index';
 import type { LabelNode } from './label';
 import { CONTAINER, FONT_SIZE, layerOf, literal, num, offsetOf, sizeOf, str, tailOf, topLeft, visibilityOf } from './shared';
 import type { LabelStyle, LowerContext, NodeBase, NodeDefinition, Rect } from './types';
@@ -31,7 +30,7 @@ declare module './types' {
 }
 
 /** The static host one character cell mounts, and the per-screen name a channel definition takes. */
-const TEXT_DEF = {
+export const TEXT_DEF = {
   textHost: `${CONTAINER}.text_host`,
   text: 'text_channel',
 } as const;
@@ -84,7 +83,7 @@ const labelOf = (element: JSX.Element, base: Omit<LabelNode, 'kind' | 'text' | '
  * What lets two text runs share a definition: everything except which slots
  * they read.
  */
-const textSignature = (node: TextNode): string => JSON.stringify([
+export const textSignature = (node: TextNode): string => JSON.stringify([
   node.fontType,
   node.fontScaleFactor,
   node.shadow ?? null,
@@ -103,7 +102,7 @@ const textSignature = (node: TextNode): string => JSON.stringify([
  * gets in: the generated `.lang` decides what each code draws as, which means
  * any glyph, any font, any language.
  */
-const textDef = (node: TextNode, collection: string): Control => ({
+export const textDef = (node: TextNode, collection: string): Control => ({
   type: 'label',
   // Its own natural size. The cells are packed by the engine rather than
   // positioned by the compiler, because glyph widths are not knowable here:
@@ -167,24 +166,6 @@ export const textDefinition: NodeDefinition<TextNode> = {
       ...ctx.decoration,
       ...shadow ? { shadow } : {},
     });
-  },
-
-  // One definition per distinct text channel shape, shared by every label that
-  // wants it. Channels differing only in which slot they read collapse onto the
-  // same definition, because the index is the one thing a reference may supply.
-  assemble(root, document, ctx) {
-    for (const node of collectKind(root, 'text')) {
-      const signature = textSignature(node);
-
-      if (ctx.textNames.has(signature)) {
-        continue;
-      }
-
-      const name = `${TEXT_DEF.text}_${ctx.textNames.size + 1}`;
-
-      ctx.textNames.set(signature, name);
-      document[name] = textDef(node, ctx.collection);
-    }
   },
 
   emit(node, ctx) {

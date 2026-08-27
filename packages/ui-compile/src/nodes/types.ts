@@ -173,12 +173,6 @@ export interface NodeDefinition<N extends IrNode = IrNode> {
    * per document, in definition order, with the shapes the tree actually uses.
    */
   sharedDefs?(ns: string, collection: string, kinds: Set<string>): Record<string, Control>;
-  /**
-   * Document-level definitions this kind derives from the whole tree — one
-   * definition per distinct text channel or button look, shared by reference.
-   * Called once per document, in definition order, before the screen is built.
-   */
-  assemble?(root: IrNode, document: Document, ctx: Emit): void;
   /** One node becomes one entry in its parent's `controls`. */
   emit(node: N, ctx: Emit): ControlEntry;
 }

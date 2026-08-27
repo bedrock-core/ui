@@ -42,7 +42,10 @@ import {
 } from '@bedrock-core/ui-runtime/compile';
 import { BACKDROP_DEFINITION, SCREEN_DEFINITION } from '../emit';
 import type { Binding, Control, ControlEntry, Document } from '../jsonui';
+import { collectKind } from '../nodes';
+import { faceDefs, faceSignature } from '../nodes/button';
 import { CONTAINER } from '../nodes/shared';
+import { TEXT_DEF, textDef, textSignature } from '../nodes/text';
 import type { HostEmit } from '../nodes/types';
 
 /** One vanilla file an addon hooks: the definition in it that every addon's root is inserted into. */
@@ -121,6 +124,50 @@ export const CHEST_EMIT: HostEmit = {
       ],
     },
   }],
+
+  /**
+   * The definitions a chest screen shares by reference: one per distinct button
+   * look, one per distinct text channel shape. Both are mechanism — a face is
+   * built on `container_item` with the item hidden, a channel reads a slot's
+   * stack size through the `.lang` table — so the host assembles them, even
+   * though the builders still live beside the kinds they draw.
+   *
+   * Named before any is emitted, so a face baked inside another face can
+   * already be referenced.
+   */
+  assemble(root, document, ctx): void {
+    const buttons = collectKind(root, 'button');
+
+    for (const node of buttons) {
+      const signature = faceSignature(node);
+
+      if (!ctx.faceNames.has(signature)) {
+        ctx.faceNames.set(signature, `button_${ctx.faceNames.size + 1}`);
+      }
+    }
+
+    const emitted = new Set<string>();
+
+    for (const node of buttons) {
+      const name = ctx.faceNames.get(faceSignature(node));
+
+      if (name !== undefined && !emitted.has(name)) {
+        emitted.add(name);
+        Object.assign(document, faceDefs(node, name, ctx));
+      }
+    }
+
+    for (const node of collectKind(root, 'text')) {
+      const signature = textSignature(node);
+
+      if (!ctx.textNames.has(signature)) {
+        const name = `${TEXT_DEF.text}_${ctx.textNames.size + 1}`;
+
+        ctx.textNames.set(signature, name);
+        document[name] = textDef(node, ctx.collection);
+      }
+    }
+  },
 };
 
 /** What the router needs to know about a compiled screen. */
