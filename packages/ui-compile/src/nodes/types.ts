@@ -77,10 +77,40 @@ export interface LowerContext {
   children(parent: JSX.Element, origin: Rect): IrNode[];
 }
 
+/**
+ * How one host draws the node kinds whose MECHANISM is its own.
+ *
+ * A node kind has two halves ([03-ir](../../../docs/03-ir.md)): what the player
+ * sees, and what it physically IS on the screen it is drawn on. The look is the
+ * same everywhere — a panel is a panel, a label is a label — and lives in the
+ * kind's own module. The mechanism is not: a `button` is a container slot
+ * holding a transport item on a chest screen and a `form_buttons` entry on a
+ * form, and neither of those belongs in a module named after a component.
+ *
+ * So a kind absent from {@link HostEmit.emit} emits its look, and a kind
+ * present here emits this host's mechanism instead. Adding a host means adding
+ * the entries where its mechanism differs, and nothing else.
+ */
+export interface HostEmit {
+  readonly id: string;
+  /**
+   * Controls put under every screen's canvas, before its content — whatever
+   * this host needs around a screen that the screen did not ask for.
+   */
+  chrome?(): ControlEntry[];
+  /** Mechanism, by kind. A kind absent here emits its look. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- each entry is narrowed by its own kind, as NODE_DEFINITIONS is
+  readonly emit?: Partial<Record<string, (node: any, ctx: Emit) => ControlEntry>>;
+  /** Document-level definitions this host derives from the whole tree. */
+  assemble?(root: IrNode, document: Document, ctx: Emit): void;
+}
+
 /** What the emitter carries down the tree. */
 export interface Emit {
   ns: string;
   collection: string;
+  /** The screen this document is being emitted for. */
+  host: HostEmit;
   /** The host renderer that hides the runtime's transport item, if the host has one. */
   ownedRenderer?: string;
   /** Text run signature -> shared definition name. */

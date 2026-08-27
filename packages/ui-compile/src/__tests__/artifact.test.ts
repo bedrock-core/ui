@@ -6,6 +6,7 @@ import { demoScreen } from '../__fixtures__/demo';
 import { buildRouter, type CompiledScreen } from '../compile';
 import { CHEST_HOST } from '../hosts/chest';
 import { emit } from '../emit';
+import { CHEST_EMIT } from '../hosts/chest';
 import {
   child, definition, defs, entries, modification,
 } from '../__fixtures__/helpers';
@@ -49,7 +50,7 @@ const staticDefinitions = (): Set<string> => {
  * definition the screen references exists — in itself or in the static files.
  */
 describe('the reference screen', () => {
-  const document = emit(demoScreen);
+  const document = emit(demoScreen, CHEST_EMIT);
   const compiled: CompiledScreen = {
     name: 'demo',
     addon: 'core_ui',

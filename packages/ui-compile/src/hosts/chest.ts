@@ -43,6 +43,7 @@ import {
 import { BACKDROP_DEFINITION, SCREEN_DEFINITION } from '../emit';
 import type { Binding, Control, ControlEntry, Document } from '../jsonui';
 import { CONTAINER } from '../nodes/shared';
+import type { HostEmit } from '../nodes/types';
 
 /** One vanilla file an addon hooks: the definition in it that every addon's root is inserted into. */
 export interface ChestHook {
@@ -92,6 +93,34 @@ export const CHEST_HOST: ChestHost = {
   containerType: 'container',
   canvas: CANONICAL_SCREEN,
   ownedItemRenderer: `${CONTAINER}.gated_item`,
+};
+
+/**
+ * How a chest screen is drawn: the click shield it needs around any content,
+ * and — for now — nothing else, because every node kind's mechanism was
+ * written for this host and still lives in its own module. A second host
+ * declares the kinds it does differently; see `nodes/types.ts`.
+ */
+export const CHEST_EMIT: HostEmit = {
+  id: 'chest',
+
+  /**
+   * A full-canvas button that swallows a click so it never falls through to the
+   * chest screen's drop-the-cursor mapping. Sits under the content — the slots
+   * and buttons above it handle their own clicks — so only empty space inside
+   * the container absorbs, and a click OUTSIDE the canvas still drops, the way
+   * a click beside a vanilla furnace's panel does.
+   */
+  chrome: (): ControlEntry[] => [{
+    core_ui_click_shield: {
+      type: 'button',
+      size: ['100%', '100%'],
+      button_mappings: [
+        { from_button_id: 'button.menu_select', to_button_id: 'button.menu_select', mapping_type: 'pressed' },
+        { from_button_id: 'button.menu_ok', to_button_id: 'button.menu_ok', mapping_type: 'pressed' },
+      ],
+    },
+  }],
 };
 
 /** What the router needs to know about a compiled screen. */

@@ -1,10 +1,14 @@
 import { KEY_PREFIX, TRANSPORT_ITEM_AUX } from '@bedrock-core/ui-runtime/compile';
 import { describe, expect, it } from 'vitest';
 import { demoScreen } from '../__fixtures__/demo';
-import { emit } from '../emit';
+import { emit as emitDocument } from '../emit';
+import { CHEST_EMIT } from '../hosts/chest';
 import type { ButtonFace, IrDocument, IrNode } from '../ir';
 import type { Control, Document } from '../jsonui';
 import { child, definition, defs, eachControl, entries, find, findAll } from '../__fixtures__/helpers';
+
+/** Every case here is a chest screen, which is the only host these node mechanisms have. */
+const emit = (doc: IrDocument): Document => emitDocument(doc, CHEST_EMIT);
 
 /** A document with the given children on a 320 x 210 canvas and nothing else. */
 const screenOf = (children: IrNode[], extra: Partial<IrDocument> = {}): IrDocument => ({

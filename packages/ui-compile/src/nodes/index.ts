@@ -116,8 +116,14 @@ export const sharedDefs = (ns: string, collection: string, kinds: Set<string>): 
 };
 
 /**
- * One node becomes one entry in its parent's `controls`. Static leaves are
- * inlined; anything reading a slot becomes a host reference, because the index
- * has nowhere else to live.
+ * One node becomes one entry in its parent's `controls`.
+ *
+ * The host draws the kinds whose mechanism is its own — a button is a
+ * container slot on one screen and a form entry on another — and everything it
+ * does not claim emits its look, which is the same wherever it is drawn.
  */
-export const emitNode = (node: IrNode, ctx: Emit): ControlEntry => definitionFor(node.kind).emit(node, ctx);
+export const emitNode = (node: IrNode, ctx: Emit): ControlEntry => {
+  const mechanism = ctx.host.emit?.[node.kind];
+
+  return mechanism === undefined ? definitionFor(node.kind).emit(node, ctx) : mechanism(node, ctx);
+};

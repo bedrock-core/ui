@@ -32,37 +32,25 @@
  */
 
 import type { IrDocument, PanelNode } from './ir';
-import type { ControlEntry, Document } from './jsonui';
+import type { Document } from './jsonui';
 import { collectShapes, emitNode, NODE_DEFINITIONS, sharedDefs } from './nodes';
 import { backgroundOf, FULL, sizeOf, topLeft } from './nodes/shared';
-import type { Emit } from './nodes/types';
+import type { Emit, HostEmit } from './nodes/types';
 
 /** Name of the definition the router mounts: the canvas with everything on it. */
 export const SCREEN_DEFINITION = 'screen';
 
-/**
- * A full-canvas button that swallows a click so it never falls through to the
- * chest screen's drop-the-cursor mapping. Sits under the content — the slots
- * and buttons above it handle their own clicks — so only empty space inside the
- * container absorbs, and a click OUTSIDE the canvas still drops, the way a click
- * beside a vanilla furnace's panel does.
- */
-const CLICK_SHIELD: ControlEntry = {
-  core_ui_click_shield: {
-    type: 'button',
-    size: ['100%', '100%'],
-    button_mappings: [
-      { from_button_id: 'button.menu_select', to_button_id: 'button.menu_select', mapping_type: 'pressed' },
-      { from_button_id: 'button.menu_ok', to_button_id: 'button.menu_ok', mapping_type: 'pressed' },
-    ],
-  },
-};
-
 /** Name of the full-screen image the router mounts behind the canvas, when the screen has one. */
 export const BACKDROP_DEFINITION = 'backdrop';
 
-/** Turns a solved tree into a JSON UI document. */
-export const emit = (doc: IrDocument): Document => {
+/**
+ * Turns a solved tree into a JSON UI document.
+ *
+ * @param doc - The solved IR.
+ * @param host - The screen it is drawn on: it supplies the mechanism for the
+ *   kinds whose mechanism is its own, and whatever chrome it needs around them.
+ */
+export const emit = (doc: IrDocument, host: HostEmit): Document => {
   const kinds = new Set<string>();
 
   collectShapes(doc.root, kinds);
@@ -71,6 +59,7 @@ export const emit = (doc: IrDocument): Document => {
   const context: Emit = {
     ns: doc.namespace,
     collection: doc.collection,
+    host,
     ...doc.ownedItemRenderer === undefined ? {} : { ownedRenderer: doc.ownedItemRenderer },
     textNames: new Map(),
     faceNames: new Map(),
@@ -87,12 +76,14 @@ export const emit = (doc: IrDocument): Document => {
     definition.assemble?.(root, document, context);
   }
 
+  host.assemble?.(root, document, context);
+
   document[SCREEN_DEFINITION] = {
     type: 'panel',
     size: sizeOf(root.rect),
     ...topLeft,
     controls: [
-      CLICK_SHIELD,
+      ...host.chrome?.() ?? [],
       ...backgroundOf(root),
       ...root.children.map(child => context.emitNode(child)),
     ],

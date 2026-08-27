@@ -10,7 +10,7 @@ import {
   type Probe,
 } from '@bedrock-core/ui-runtime/compile';
 import { BACKDROP_DEFINITION, emit } from './emit';
-import { CHEST_HOST, type ChestHost, chestRouter, type ChestRouting } from './hosts/chest';
+import { CHEST_EMIT, CHEST_HOST, type ChestHost, chestRouter, type ChestRouting } from './hosts/chest';
 import type { Allocation } from './ir';
 import type { Document } from './jsonui';
 import { toIr } from './toIr';
@@ -134,7 +134,7 @@ export function compileScreen(
   const tree = buildContainerTree(Screen);
   const allocation = allocate(tree);
   const ir = toIr(tree, allocation, { namespace, host });
-  const document = emit(ir);
+  const document = emit(ir, CHEST_EMIT);
 
   return {
     name: spec.name,
