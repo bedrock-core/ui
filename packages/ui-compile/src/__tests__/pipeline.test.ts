@@ -187,7 +187,9 @@ describe('the compiler, end to end', () => {
     expect(JSON.parse(JSON.stringify(document))).toEqual(document);
   });
 
-  it('builds the layout from a hook\'s INITIAL value', () => {
+  it('refuses baked text a state change would move, naming the maxLength it needs', () => {
+    // The build probes each state slot: this label reads one, so it would be
+    // written into JSON UI once and show 'start' whatever the screen did next.
     const Stateful = (): JSX.Element => {
       const [label] = useState('start');
 
@@ -195,9 +197,24 @@ describe('the compiler, end to end', () => {
     };
 
     const Screen = (): JSX.Element => Container({ entity: 'core:state', children: [{ type: Stateful, props: {} }] });
-    const [, label] = find(compileScreen(Screen, { name: 'state' }).document, name => name === 'label_1');
 
-    expect(label.text).toBe('start');
+    expect(() => compileScreen(Screen, { name: 'state' })).toThrow(/maxLength/);
+  });
+
+  it('builds the layout from a hook\'s INITIAL value', () => {
+    const Stateful = (): JSX.Element => {
+      const [label] = useState('start');
+
+      return Text({ maxLength: 8, children: label });
+    };
+
+    const Screen = (): JSX.Element => Container({ entity: 'core:state', children: [{ type: Stateful, props: {} }] });
+    const compiled = compileScreen(Screen, { name: 'state' });
+
+    // The run reserves what the author declared, not what the initial value
+    // happens to be — the build renders with 'start' but sizes for 8.
+    expect(compiled.hasText).toBe(true);
+    expect(compiled.allocation.channels).toBe(8);
   });
 
   it('still rejects a hook that needs a player, because there is not one', () => {

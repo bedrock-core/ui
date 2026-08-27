@@ -8,7 +8,12 @@
  * addon never imports it by accident.
  */
 
-export { buildContainerTree } from './hosts/chest/build';
+export { buildContainerTree, buildScreenOnce } from './hosts/chest/build';
+
+// What is live, found by rendering rather than by being told. Build-only: the
+// runtime is handed the answer.
+export { probeLiveness } from './core/ir/probe';
+export type { FrozenText, Probe, ShapeChange } from './core/ir/probe';
 
 export { allocate } from './hosts/chest/allocate';
 export type { Allocation, CellRole, ChannelEntry, SlotEntry } from './hosts/chest/allocate';

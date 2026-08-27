@@ -22,6 +22,35 @@ export function buildContainerTree(
   root: JSX.Element | FunctionComponent,
   owner: Owner = BUILD_OWNER,
 ): JSX.Element {
+  // Every build shares one owner id, so a previous screen's fibers must not
+  // lend this one their state.
+  if (owner.kind === 'build') {
+    cleanupComponentTree(owner);
+  }
+
+  try {
+    return buildScreenOnce(root, owner);
+  } finally {
+    if (owner.kind === 'build') {
+      cleanupComponentTree(owner);
+    }
+  }
+}
+
+/**
+ * One render, leaving the fibers it created in place.
+ *
+ * What {@link buildContainerTree} does between its two cleanups. Kept separate
+ * for the one caller that needs the fibers afterwards: the build's liveness
+ * probe reads the state they hold, and seeds the next render with it.
+ *
+ * @param root - The screen: a component, or an element rendering one.
+ * @param owner - Who the render belongs to.
+ */
+export function buildScreenOnce(
+  root: JSX.Element | FunctionComponent,
+  owner: Owner = BUILD_OWNER,
+): JSX.Element {
   registerNativeComponents();
 
   // The same root wrapper a form gets, so `<Text>` detects keys and measures
@@ -34,17 +63,5 @@ export function buildContainerTree(
     props: { owner, children: userRoot },
   };
 
-  // Every build shares one owner id, so a previous screen's fibers must not
-  // lend this one their state.
-  if (owner.kind === 'build') {
-    cleanupComponentTree(owner);
-  }
-
-  try {
-    return buildTree(element, owner);
-  } finally {
-    if (owner.kind === 'build') {
-      cleanupComponentTree(owner);
-    }
-  }
+  return buildTree(element, owner);
 }

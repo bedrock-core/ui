@@ -6,7 +6,8 @@
 
 import type { FunctionComponent } from '@bedrock-core/ui-runtime';
 import {
-  allocate, buildContainerTree, ContainerScreenError, layoutKey,
+  allocate, buildContainerTree, buildScreenOnce, ContainerScreenError, layoutKey, probeLiveness,
+  type Probe,
 } from '@bedrock-core/ui-runtime/compile';
 import { BACKDROP_DEFINITION, emit } from './emit';
 import { CHEST_HOST, type ChestHost, chestRouter, type ChestRouting } from './hosts/chest';
@@ -69,6 +70,43 @@ const checkSpec = (spec: ScreenSpec): void => {
 };
 
 /**
+ * What the build found moving, said in the author's terms.
+ *
+ * A compiled screen is baked, so a string that changes at runtime is not a
+ * detail to warn about — it is a screen that will be wrong and will not say
+ * so. The probe renders the component with each state slot perturbed, so
+ * anything reported here really did change between two renders; the fix is
+ * always the same, and the observed strings show what to size it for.
+ */
+const checkLiveness = (probe: Probe, name: string): void => {
+  if (probe.shape !== undefined) {
+    throw new ContainerScreenError(
+      `"${name}" renders a different screen when its state changes.\n`
+      + '  A compiled screen is numbered once, at build time, so it cannot add, drop or\n'
+      + '  reorder a cell afterwards. Change what a control SHOWS instead of whether it is\n'
+      + '  there: `enabled` on a button, `visible` on a panel, `maxLength` on live text.\n'
+      + `    was: ${probe.shape.before}\n`
+      + `    now: ${probe.shape.after}`,
+    );
+  }
+
+  if (probe.frozen.length === 0) {
+    return;
+  }
+
+  const lines = probe.frozen.map(text =>
+    `    "${text.before}" became "${text.after}" — needs maxLength={${text.longest}} or more`);
+
+  throw new ContainerScreenError(
+    `"${name}" has ${probe.frozen.length} <Text> that change${probe.frozen.length === 1 ? 's' : ''} with state but ${probe.frozen.length === 1 ? 'is' : 'are'} baked into the layout.\n`
+    + '  Baked text is written into JSON UI at build time and never changes again, so the\n'
+    + '  screen would show the build\'s string forever. Give each one `maxLength`, which\n'
+    + '  reserves a container slot per character:\n'
+    + lines.join('\n'),
+  );
+};
+
+/**
  * Compiles one screen: build the tree, allocate its cells and channels, solve
  * the IR, emit JSON UI.
  *
@@ -88,6 +126,11 @@ export function compileScreen(
 
   const addon = spec.namespace ?? DEFAULT_NAMESPACE;
   const namespace = `${addon}_${spec.name}`;
+
+  // Before anything is baked: does this screen actually hold still? Everything
+  // downstream assumes it does.
+  checkLiveness(probeLiveness(() => buildScreenOnce(Screen)), spec.name);
+
   const tree = buildContainerTree(Screen);
   const allocation = allocate(tree);
   const ir = toIr(tree, allocation, { namespace, host });
