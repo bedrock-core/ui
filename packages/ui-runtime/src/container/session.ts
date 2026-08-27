@@ -200,7 +200,7 @@ export function createContainerScreen(
 
     if (onOpen && validPlayer(player) && validHost(session.entity)) {
       handle(session, () => {
-        onOpen(player, session.entity);
+        onOpen({ player, host: session.entity });
       });
     }
   };
@@ -250,7 +250,7 @@ export function createContainerScreen(
 
       if (onClose && validPlayer(viewer) && validHost(session.entity)) {
         handle(session, () => {
-          onClose(viewer, session.entity);
+          onClose({ player: viewer, host: session.entity });
         });
       }
 

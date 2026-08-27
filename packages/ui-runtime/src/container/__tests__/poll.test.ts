@@ -154,7 +154,7 @@ describe('a press', () => {
 
     expect(viewer.cursor.item).toBeUndefined();
     expect(onPress).toHaveBeenCalledTimes(1);
-    expect(onPress).toHaveBeenCalledWith(viewer.player, HOST);
+    expect(onPress).toHaveBeenCalledWith({ player: viewer.player, host: HOST });
     expect(handle).toHaveBeenCalledTimes(1);
 
     const item = container.getItem(2);
@@ -177,7 +177,7 @@ describe('a press', () => {
     poll(host);
 
     expect(viewer.inventory.getItem(4)).toBeUndefined();
-    expect(onPress).toHaveBeenCalledWith(viewer.player, HOST);
+    expect(onPress).toHaveBeenCalledWith({ player: viewer.player, host: HOST });
   });
 
   it('hands back an item swapped into the button and restores the transport', () => {
@@ -206,7 +206,7 @@ describe('a press', () => {
     lift(container, 2, second);
     poll(host);
 
-    expect(onPress).toHaveBeenCalledWith(second.player, HOST);
+    expect(onPress).toHaveBeenCalledWith({ player: second.player, host: HOST });
     expect(second.cursor.item).toBeUndefined();
   });
 
@@ -231,7 +231,7 @@ describe('a press', () => {
     container.setItem(2, undefined);
     poll(host);
 
-    expect(onPress).toHaveBeenCalledWith(viewer.player, HOST);
+    expect(onPress).toHaveBeenCalledWith({ player: viewer.player, host: HOST });
     expect(container.getItem(2)?.typeId).toBe(TRANSPORT_ITEM);
   });
 });
@@ -320,10 +320,10 @@ describe('an input slot', () => {
 
     const call = onInsert.mock.calls[0];
 
-    expect(call?.[0]).toBe(viewer.player);
-    expect(call?.[1]?.typeId).toBe('minecraft:stone');
-    expect(call?.[1]?.amount).toBe(4);
-    expect(call?.[2]).toBe(HOST);
+    expect(call?.[0]?.player).toBe(viewer.player);
+    expect(call?.[0]?.stack?.typeId).toBe('minecraft:stone');
+    expect(call?.[0]?.stack?.amount).toBe(4);
+    expect(call?.[0]?.host).toBe(HOST);
     expect(host.handle).toHaveBeenCalledTimes(1);
     expect(host.watch.expected[3]).toBe(fingerprint(container, 3));
   });
@@ -403,10 +403,10 @@ describe('an output slot', () => {
     poll(host);
 
     expect(onTake).toHaveBeenCalledTimes(1);
-    expect(onTake.mock.calls[0]?.[0]).toBe(viewer.player);
-    expect(onTake.mock.calls[0]?.[1]?.typeId).toBe('minecraft:stone');
-    expect(onTake.mock.calls[0]?.[1]?.amount).toBe(2);
-    expect(onTake.mock.calls[0]?.[2]).toBe(HOST);
+    expect(onTake.mock.calls[0]?.[0]?.player).toBe(viewer.player);
+    expect(onTake.mock.calls[0]?.[0]?.stack?.typeId).toBe('minecraft:stone');
+    expect(onTake.mock.calls[0]?.[0]?.stack?.amount).toBe(2);
+    expect(onTake.mock.calls[0]?.[0]?.host).toBe(HOST);
     expect(viewer.cursor.item?.typeId).toBe('minecraft:stone');
     expect(isGuard(container.getItem(4)!)).toBe(true);
   });
@@ -421,15 +421,15 @@ describe('an ordinary slot', () => {
     poll(host);
 
     expect(onInsert).toHaveBeenCalledTimes(1);
-    expect(onInsert.mock.calls[0]?.[1]?.amount).toBe(6);
+    expect(onInsert.mock.calls[0]?.[0]?.stack?.amount).toBe(6);
 
     lift(container, 5, viewer);
     poll(host);
 
     expect(onRemove).toHaveBeenCalledTimes(1);
-    expect(onRemove.mock.calls[0]?.[0]).toBe(viewer.player);
-    expect(onRemove.mock.calls[0]?.[1]?.amount).toBe(6);
-    expect(onRemove.mock.calls[0]?.[2]).toBe(HOST);
+    expect(onRemove.mock.calls[0]?.[0]?.player).toBe(viewer.player);
+    expect(onRemove.mock.calls[0]?.[0]?.stack?.amount).toBe(6);
+    expect(onRemove.mock.calls[0]?.[0]?.host).toBe(HOST);
     expect(viewer.cursor.item?.amount).toBe(6);
   });
 
@@ -460,8 +460,8 @@ describe('an ordinary slot', () => {
     lift(container, 5, second);
     poll(host);
 
-    expect(onRemove.mock.calls[0]?.[0]).toBe(second.player);
-    expect(onRemove.mock.calls[0]?.[2]).toBe(HOST);
+    expect(onRemove.mock.calls[0]?.[0]?.player).toBe(second.player);
+    expect(onRemove.mock.calls[0]?.[0]?.host).toBe(HOST);
   });
 
   it('traces an insert to the viewer who lost the item, and never marks the item', () => {
@@ -475,7 +475,7 @@ describe('an ordinary slot', () => {
     container.setItem(5, stone(3));
     poll(host);
 
-    expect(onInsert.mock.calls[0]?.[0]).toBe(second.player);
+    expect(onInsert.mock.calls[0]?.[0]?.player).toBe(second.player);
     expect(container.getItem(5)?.getDynamicPropertyIds?.() ?? []).toEqual([]);
   });
 
@@ -488,7 +488,7 @@ describe('an ordinary slot', () => {
     container.setItem(5, stone(3));
     poll(host);
 
-    expect(onInsert.mock.calls[0]?.[0]).toBe(first.player);
+    expect(onInsert.mock.calls[0]?.[0]?.player).toBe(first.player);
   });
 });
 

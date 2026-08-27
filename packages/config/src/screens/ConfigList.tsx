@@ -1,6 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Button, Card, Divider, Form, Header, MenuRow, theme } from '@bedrock-core/ore-styled';
-import { Fragment, Panel, Scroll, Text, useExit, useState, type FormValues, type JSX } from '@bedrock-core/ui-runtime';
+import { Fragment, Panel, Scroll, Text, useExit, useState, type JSX, type SubmitEvent } from '@bedrock-core/ui-runtime';
 import { splitBreadcrumb } from './breadcrumbs';
 import { FormHeader } from './FormHeader';
 import { useCore, usePlayer } from '../context';
@@ -222,9 +222,9 @@ function ItemEditor({ title, submitLabel, current, options, onApply, onCancel }:
   const { t } = useTranslation();
   const choices = options ?? [];
   // The dropdown reports the selected INDEX, exactly as it does in the settings form.
-  const submit = (v: FormValues): void => onApply(options === undefined
-    ? String(v['item'] ?? '').trim()
-    : choices[Number(v['item'] ?? 0)] ?? '');
+  const submit = ({ values }: SubmitEvent): void => onApply(options === undefined
+    ? String(values['item'] ?? '').trim()
+    : choices[Number(values['item'] ?? 0)] ?? '');
 
   return (
     <Form onSubmit={submit} onCancel={onCancel}>

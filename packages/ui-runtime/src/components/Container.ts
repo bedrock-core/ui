@@ -1,4 +1,4 @@
-import type { Entity, Player } from '@minecraft/server';
+import type { ContainerEvent } from '../core/events';
 import type { FunctionComponent, JSX } from '../jsx';
 import { type ControlProps, withControl } from './control';
 
@@ -13,23 +13,20 @@ export interface ContainerProps extends ControlProps {
   /** Type of the entity the screen opens from, e.g. `core:furnace`. */
   entity: string;
   /**
-   * Ran when a player opens the screen, with the entity it opened. One layout
-   * serves every viewer, so this is where a screen learns who is looking and
-   * what it belongs to — keep what it needs in state.
+   * Ran when a player opens the screen. One layout serves every viewer, so
+   * this is where a screen learns who is looking and what it belongs to —
+   * keep what it needs in state.
    */
-  onOpen?: (player: Player, host: Entity) => void;
-  /**
-   * Ran when a player closes the screen, or leaves the world with it open,
-   * with the entity it belonged to.
-   */
-  onClose?: (player: Player, host: Entity) => void;
+  onOpen?: (event: ContainerEvent) => void;
+  /** Ran when a player closes the screen, or leaves the world with it open. */
+  onClose?: (event: ContainerEvent) => void;
   children?: JSX.Node;
 }
 
 /** What a built `<Container>` runs as viewers come and go. */
 export interface ContainerHandlers {
-  readonly onOpen?: (player: Player, host: Entity) => void;
-  readonly onClose?: (player: Player, host: Entity) => void;
+  readonly onOpen?: (event: ContainerEvent) => void;
+  readonly onClose?: (event: ContainerEvent) => void;
 }
 
 /**

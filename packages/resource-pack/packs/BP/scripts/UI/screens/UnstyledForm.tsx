@@ -1,5 +1,5 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Form, Image, Panel, Text, usePlayer, type FormValues, type JSX } from '@bedrock-core/ui';
+import { Form, Image, Panel, Text, type JSX, type SubmitEvent } from '@bedrock-core/ui';
 
 /**
  * Native modal-form demo with ZERO styling props: every control surface (toggle
@@ -16,9 +16,7 @@ import { Form, Image, Panel, Text, usePlayer, type FormValues, type JSX } from '
  * @param back - Returns to the previous screen.
  */
 export function UnstyledForm({ back }: { back: () => void }): JSX.Element {
-  const player = usePlayer();
-
-  const handleSubmit = (values: FormValues): void => {
+  const handleSubmit = ({ player, values }: SubmitEvent): void => {
     player.sendMessage('§a[Unstyled Form] submitted:');
     player.sendMessage(`§7  toggle_a: §f${String(values.toggle_a ?? false)}`);
     player.sendMessage(`§7  toggle_b: §f${String(values.toggle_b ?? false)}`);

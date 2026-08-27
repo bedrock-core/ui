@@ -1,6 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Divider, fieldLabel, Form, Header, theme } from '@bedrock-core/ore-styled';
-import { Fragment, Panel, Scroll, Text, useExit, type FormValues, type JSX } from '@bedrock-core/ui-runtime';
+import { Fragment, Panel, Scroll, Text, useExit, type JSX, type SubmitEvent } from '@bedrock-core/ui-runtime';
 import { splitBreadcrumb } from './breadcrumbs';
 import { FormHeader } from './FormHeader';
 import { useCore, usePlayer } from '../context';
@@ -97,7 +97,7 @@ export function Config({ navigation, route }: AppScreen<'Config'>): JSX.Element 
     );
   }
 
-  function handleSubmit(values: FormValues): void {
+  function handleSubmit({ values }: SubmitEvent): void {
     const flat: Record<string, unknown> = {};
 
     for (const [key, entry] of Object.entries(scalars)) {

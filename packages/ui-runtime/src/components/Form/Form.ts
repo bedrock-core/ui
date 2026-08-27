@@ -1,3 +1,4 @@
+import type { UiEvent } from '../../core/events';
 import { createContext } from '../../core/fabric/context';
 import { ModalValue } from '../../core/types';
 import { FunctionComponent, JSX } from '../../jsx';
@@ -24,14 +25,20 @@ export type FormValues = Record<string, ModalValue>;
  * callbacks are not primitives, so the serializer keeps them as callbacks and walks
  * the children.
  */
+/** A submitted form: every control's value keyed by its `name`, and who submitted. */
+export interface SubmitEvent extends UiEvent {
+  readonly values: FormValues;
+}
+
 export interface FormConfig {
   /**
-   * Called once when the player submits, with every control's value keyed by its
-   * `name`. The native modal is atomic — this is the only place values arrive.
+   * Called once when the player submits, with every control's value keyed by
+   * its `name` in `event.values`. The native modal is atomic — this is the only
+   * place values arrive.
    */
-  onSubmit?: (values: FormValues) => void;
+  onSubmit?: (event: SubmitEvent) => void;
   /** Called when the player dismisses the modal (X / Esc / a `Form.Button` exit). */
-  onCancel?: () => void;
+  onCancel?: (event: UiEvent) => void;
 }
 
 /**

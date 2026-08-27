@@ -39,7 +39,8 @@ export async function presentAction(
       const callback = context.buttonCallbacks.get(response.selection);
 
       if (callback) {
-        return runInteractiveCallback(player, callback);
+        // A form has no entity behind it, so the event carries the viewer alone.
+        return runInteractiveCallback(player, () => callback({ player }));
       }
     }
 

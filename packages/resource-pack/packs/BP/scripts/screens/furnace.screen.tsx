@@ -56,7 +56,7 @@ export default function Furnace(): JSX.Element {
       padding={8}
       gap={8}
       background={'textures/ui/dialog_background_opaque'}
-      onOpen={player => setViewer(player.name)}
+      onOpen={({ player }) => setViewer(player.name)}
       onClose={() => setViewer('nobody')}
     >
       {/* A gallery taller than the screen: the region scrolls on the client
@@ -138,10 +138,10 @@ export default function Furnace(): JSX.Element {
             {/* Ordinary storage: whatever sits here is what the screen says it holds. */}
             <Panel background={'textures/ui/slot_enabled'} flexShrink={0}>
               <Slot
-                onInsert={(_player, stack) => {
+                onInsert={({ stack }) => {
                   setHeld(stack.typeId.replace('minecraft:', '').replaceAll('_', ' '));
                 }}
-                onRemove={(_player, stack) => {
+                onRemove={({ stack }) => {
                   setHeld(`took ${stack.typeId.replace('minecraft:', '').replaceAll('_', ' ')}`);
                 }}
               />
@@ -155,7 +155,7 @@ export default function Furnace(): JSX.Element {
                 where no player can reach and lets it stand. */}
             <Button
               variant={'secondary'}
-              onPress={(_player, host) => {
+              onPress={({ host }) => {
                 host?.getComponent(EntityComponentTypes.Inventory)?.container?.setItem(6, new ItemStack('minecraft:iron_ingot', 4));
               }}
             >

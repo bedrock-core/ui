@@ -21,10 +21,10 @@ export const move = (host: PollHost, entry: SlotEntry, before: ItemStack | undef
 
     if (after) {
       if (isHandler<InsertHandler>(onInsert) && validStack(after)) {
-        onInsert(actor, after, host.entity);
+        onInsert({ player: actor, stack: after, host: host.entity });
       }
     } else if (isHandler<RemoveHandler>(onRemove) && validStack(before)) {
-      onRemove(actor, before, host.entity);
+      onRemove({ player: actor, stack: before, host: host.entity });
     }
   });
 

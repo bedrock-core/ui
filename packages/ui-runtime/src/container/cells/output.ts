@@ -95,7 +95,7 @@ const handleOutput = (
   if (taken !== undefined) {
     host.handle(() => {
       if (isHandler<RemoveHandler>(onRemove) && validPlayer(actor) && validStack(taken) && validHost(host.entity)) {
-        onRemove(actor, taken, host.entity);
+        onRemove({ player: actor, stack: taken, host: host.entity });
       }
     });
   }

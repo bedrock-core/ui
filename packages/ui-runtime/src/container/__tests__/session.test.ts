@@ -284,9 +284,9 @@ describe('a session', () => {
     await vi.advanceTimersByTimeAsync(TICK);
 
     expect(onInsert).toHaveBeenCalledTimes(1);
-    expect(onInsert.mock.calls[0]?.[0]).toBe(viewer.player);
-    expect(onInsert.mock.calls[0]?.[1]?.typeId).toBe('minecraft:coal');
-    expect(onInsert.mock.calls[0]?.[2]).toBe(target.entity);
+    expect(onInsert.mock.calls[0]?.[0]?.player).toBe(viewer.player);
+    expect(onInsert.mock.calls[0]?.[0]?.stack?.typeId).toBe('minecraft:coal');
+    expect(onInsert.mock.calls[0]?.[0]?.host).toBe(target.entity);
 
     // An input slot keeps what it was given: the take is undone a tick later.
     viewer.cursor.hold(target.container.getItem(4));

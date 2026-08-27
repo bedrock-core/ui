@@ -1,4 +1,5 @@
 import type { Entity, ItemStack, Player } from '@minecraft/server';
+import type { PressEvent, SlotEvent } from '../../core/events';
 import type { CellRole, SlotEntry } from '../allocate';
 import type { ItemContainer } from '../items';
 import type { PollHost } from '../poll';
@@ -23,9 +24,9 @@ export interface CellBehavior {
   changed(host: PollHost, entry: SlotEntry, before: ItemStack | undefined, after: ItemStack | undefined): void;
 }
 
-export type PressHandler = (player: Player, host: Entity) => void;
-export type InsertHandler = (player: Player, stack: ItemStack, host: Entity) => void;
-export type RemoveHandler = (player: Player, stack: ItemStack, host: Entity) => void;
+export type PressHandler = (event: PressEvent) => void;
+export type InsertHandler = (event: SlotEvent) => void;
+export type RemoveHandler = (event: SlotEvent) => void;
 
 /** A handler prop, when the author gave one. The caller names the handler shape it expects. */
 export const isHandler = <T extends (...args: never[]) => void>(value: unknown): value is T => typeof value === 'function';

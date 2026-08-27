@@ -16,6 +16,9 @@ export {
 // Rendering
 export { render } from './render';
 
+// What every handler is called with.
+export type { ContainerEvent, PressEvent, SlotEvent, UiEvent } from './events';
+
 // Component registry (custom native component registration)
 export {
   registerComponent,

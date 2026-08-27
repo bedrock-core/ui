@@ -1,4 +1,4 @@
-import type { Entity, ItemStack, Player } from '@minecraft/server';
+import type { SlotEvent } from '../core/events';
 import type { FunctionComponent, JSX } from '../jsx';
 import { type ControlProps, withControl } from './control';
 
@@ -39,10 +39,10 @@ export interface SlotSource {
 export interface SlotProps extends ControlProps {
   /** Defaults to `both`: ordinary storage. Enforced at runtime, and ignored on a foreign or locked slot. */
   role?: SlotRole;
-  /** Ran after an item arrives, with the player who put it there, the stack, and the screen's entity. */
-  onInsert?: (player: Player, stack: ItemStack, host: Entity) => void;
-  /** Ran after the slot empties, with the player who took the item, the stack that left, and the screen's entity. */
-  onRemove?: (player: Player, stack: ItemStack, host: Entity) => void;
+  /** Ran after an item arrives: `event.stack` is what was put in, `event.player` who put it there. */
+  onInsert?: (event: SlotEvent) => void;
+  /** Ran after the slot empties: `event.stack` is what left, `event.player` who took it. */
+  onRemove?: (event: SlotEvent) => void;
   /**
    * A collection to read instead of the screen's own. Given one, the slot is
    * foreign: it draws `collection[index]` and the runtime never touches it —

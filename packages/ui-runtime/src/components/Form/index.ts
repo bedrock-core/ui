@@ -1,6 +1,6 @@
 export {
   Form, ModalContext, MODAL_FORM_SLOT_TYPE,
-  type FormConfig, type FormProps, type FormValues,
+  type FormConfig, type FormProps, type FormValues, type SubmitEvent,
 } from './Form';
 
 export { formToggleWriter, type FormToggleProps } from './FormToggle';

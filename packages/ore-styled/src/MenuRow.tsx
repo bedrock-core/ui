@@ -1,5 +1,5 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import type { ControlProps, JSX } from '@bedrock-core/ui-runtime';
+import type { ControlProps, JSX, PressEvent } from '@bedrock-core/ui-runtime';
 import type { DisplayText } from '@bedrock-core/i18n';
 import { Button, Image, Panel, Text, useTranslationResolver } from '@bedrock-core/ui-runtime';
 import { theme } from './tokens';
@@ -29,7 +29,7 @@ export interface MenuRowProps extends ControlProps {
    * disappeared as soon as two levels sat next to each other.
    */
   depth?: number;
-  onPress?: () => unknown | Promise<unknown>;
+  onPress?: (event: PressEvent) => unknown | Promise<unknown>;
 }
 
 /**

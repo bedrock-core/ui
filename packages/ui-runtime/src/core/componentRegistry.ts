@@ -3,6 +3,8 @@ import { SerializationError, type Writer } from './types';
 /**
  * Describes how a native component type is serialized into the form.
  *
+ * @experimental See {@link registerComponent}.
+ *
  * - `writer`  emits the component's payload via {@link emitButton} / {@link emitLabel}.
  * - `transparent` components emit nothing themselves; the serializer (and the
  *   layout / inherit phases) walk straight through to their children. Used by
@@ -30,6 +32,14 @@ const registry = new Map<string, ComponentDescriptor>();
  * Register a native component type. Throws if the type is already registered so
  * accidental clashes between addons surface immediately rather than silently
  * overriding each other.
+ *
+ * @experimental Not covered by the 1.0 API promise. A registration is a pair of
+ * halves — a writer that packs props into the byte payload, and JSON UI in your
+ * own pack that decodes them at fixed offsets — so it is bound to the wire
+ * format rather than to the component API. That format is being replaced by
+ * compiled screens, which describe a component by the values it carries rather
+ * than by a byte layout, and this entry point changes with it. Everything else
+ * in this package is stable at 1.0; a custom native component is not.
  *
  * @param type - The component `type` string (must match the JSON UI control's `#type` gate).
  * @param descriptor - How to serialize the component (a `writer`, or `transparent: true`).

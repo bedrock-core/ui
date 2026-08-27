@@ -34,7 +34,7 @@ const press = (host: PollHost, entry: SlotEntry, after: ItemStack | undefined): 
 
   host.handle(() => {
     if (isHandler<PressHandler>(onPress) && validPlayer(actor) && validHost(host.entity)) {
-      onPress(actor, host.entity);
+      onPress({ player: actor, host: host.entity });
     }
   });
   host.trace(`press slot ${slot}`);

@@ -23,24 +23,19 @@ This one rule replaces `validateForm`, `validateContainer`, `FORM_ONLY_TYPES`, `
 
 Every handler receives one object. `player` is always present: the viewer on a player-owned screen, the actor on an entity-owned one. `host` is present only on entity-owned screens.
 
-```ts
-interface UiEvent   { player: Player; host?: Entity }
-interface PressEvent  extends UiEvent {}
-interface SlotEvent   extends UiEvent { stack: ItemStack }
-interface SubmitEvent extends UiEvent { values: FormValues }
-interface ChangeEvent<T> extends UiEvent { value: T }
+Shipped in phase 0 (`core/events.ts`). A screen an entity owns always has that entity, so those events narrow `host` from optional to required rather than declaring a second field:
 
-Button.onPress?:    (e: PressEvent) => void
-Slot.onInsert?:     (e: SlotEvent) => void
-Slot.onRemove?:     (e: SlotEvent) => void
-Container.onOpen?:  (e: UiEvent) => void
-Container.onClose?: (e: UiEvent) => void
-Form.onSubmit?:     (e: SubmitEvent) => void
-Form.onCancel?:     (e: UiEvent) => void
-Tabs.onChange?:     (e: ChangeEvent<number>) => void
+```ts
+interface UiEvent        { player: Player; host?: Entity }   // Form.onCancel
+type      PressEvent   = UiEvent                             // Button.onPress
+interface ContainerEvent extends UiEvent { host: Entity }    // Container.onOpen / onClose
+interface SlotEvent      extends ContainerEvent { stack: ItemStack }  // Slot.onInsert / onRemove
+interface SubmitEvent    extends UiEvent { values: FormValues }       // Form.onSubmit
+
+interface ChangeEvent<T> extends UiEvent { value: T }        // Tabs.onChange — phase 5
 ```
 
-Replaces `onPress(player?, host?)`, `onInsert(player, stack, host)` and the rest. *Decided*, and it lands before 1.0 because it is breaking.
+Replaces `onPress(player?, host?)`, `onInsert(player, stack, host)`, `onSubmit(values)` and the rest. *Done* — it landed before 1.0 because it is breaking.
 
 `useExit()` returns a handler value like any other; the IR recognises it as input `exit` and the host decides what a close is (the native close on a form, the client-side close button on a chest). The `containerExit` identity sentinel in `core/fabric/exit.ts` goes.
 

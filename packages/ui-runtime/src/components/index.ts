@@ -23,6 +23,7 @@ export {
   type FormButtonKind, type FormButtonProps,
   type FormDropdownProps, type FormInlineSelectProps, type FormOptionProps,
   type FormInputProps, type FormSliderProps, type FormToggleProps,
+  type SubmitEvent,
 } from './Form';
 export { Fragment, type FragmentProps } from './Fragment';
 export { Image, IMAGE_TYPE, imageWriter, type ImageProps } from './Image';

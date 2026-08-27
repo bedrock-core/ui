@@ -1,5 +1,6 @@
 import type { RawMessage } from '@minecraft/server';
 import { ActionFormData, ModalFormData } from '@minecraft/server-ui';
+import type { PressEvent } from './events';
 
 export interface ReservedBytes { bytes: number }
 
@@ -47,7 +48,7 @@ export interface ActionSerializationContext {
   readonly mode: 'action';
 
   /** Maps button index to their onPress callbacks. */
-  buttonCallbacks: Map<number, () => void>;
+  buttonCallbacks: Map<number, (event: PressEvent) => unknown>;
 
   /** Current button index counter. */
   buttonIndex: number;

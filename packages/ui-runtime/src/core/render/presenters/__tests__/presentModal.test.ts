@@ -45,7 +45,7 @@ describe('presentModal', () => {
 
     await present(player, tree);
 
-    expect(onSubmit).toHaveBeenCalledWith({ sound: true, volume: 7, mode: 1, nick: 'Steve' });
+    expect(onSubmit).toHaveBeenCalledWith({ player, values: { sound: true, volume: 7, mode: 1, nick: 'Steve' } });
   });
 
   it('calls onCancel when the player dismisses', async () => {
@@ -73,6 +73,6 @@ describe('presentModal', () => {
 
     await present(player, tree);
 
-    expect(onSubmit).toHaveBeenCalledWith({ a: true, b: undefined });
+    expect(onSubmit).toHaveBeenCalledWith({ player, values: { a: true, b: undefined } });
   });
 });

@@ -61,7 +61,7 @@ export async function presentModal(
       }
 
       if (config.onCancel) {
-        return runInteractiveCallback(player, () => config.onCancel?.());
+        return runInteractiveCallback(player, () => config.onCancel?.({ player }));
       }
 
       // No cancel handler: dismissal tears the session down (matches ActionForm ESC).
@@ -71,7 +71,7 @@ export async function presentModal(
     const values = collectValues(context, response.formValues);
 
     if (config.onSubmit) {
-      return runInteractiveCallback(player, () => config.onSubmit?.(values));
+      return runInteractiveCallback(player, () => config.onSubmit?.({ player, values }));
     }
 
     return 'none';

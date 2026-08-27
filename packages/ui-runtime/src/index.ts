@@ -60,6 +60,7 @@ export type {
   SlotGridProps,
   SlotGridConfig,
   Spacing,
+  SubmitEvent,
   TextFont,
   TextOverflow,
   TextProps,
@@ -105,10 +106,14 @@ export {
 
 export type {
   ComponentDescriptor,
+  ContainerEvent,
   Context,
   ContextProps,
   FormTarget,
   ModalValue,
+  PressEvent,
+  SlotEvent,
+  UiEvent,
   Writer,
 } from './core';
 

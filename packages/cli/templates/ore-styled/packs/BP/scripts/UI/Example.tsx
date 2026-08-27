@@ -90,7 +90,7 @@ function HomeScreen({ navigation }: Screen<'Home'>): JSX.Element {
 function ProfileFormScreen({ navigation }: Screen<'ProfileForm'>): JSX.Element {
   return (
     <Form
-      onSubmit={(values): void => {
+      onSubmit={({ values }): void => {
         // values.nick / values.difficulty / values.volume / values.notify
         world.sendMessage(`§aSaved profile: ${String(values.nick)}`);
         navigation.goBack();

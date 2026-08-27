@@ -1,6 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Divider, Form, theme } from '@bedrock-core/ore-styled';
-import { Background, Image, Panel, Text, usePlayer, type FormValues, type JSX } from '@bedrock-core/ui';
+import { Background, Image, Panel, Text, type JSX, type SubmitEvent } from '@bedrock-core/ui';
 
 /**
  * The UnstyledForm's twin, rendered through the ore-styled `Form` layer: same
@@ -19,9 +19,7 @@ import { Background, Image, Panel, Text, usePlayer, type FormValues, type JSX } 
  * @param back - Returns to the previous screen.
  */
 export function OreStyledForm({ back }: { back: () => void }): JSX.Element {
-  const player = usePlayer();
-
-  const handleSubmit = (values: FormValues): void => {
+  const handleSubmit = ({ player, values }: SubmitEvent): void => {
     player.sendMessage('§a[Ore-Styled Form] submitted:');
     player.sendMessage(`§7  music: §f${String(values.music ?? false)}`);
     player.sendMessage(`§7  hints: §f${String(values.hints ?? false)}`);

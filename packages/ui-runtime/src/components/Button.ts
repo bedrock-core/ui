@@ -1,5 +1,5 @@
-import type { Entity, Player } from '@minecraft/server';
 import { isContainerExit } from '../core/fabric/exit';
+import type { PressEvent } from '../core/events';
 import type { Writer } from '../core/types';
 import { emitButton } from '../core/writers';
 import { FunctionComponent, JSX } from '../jsx';
@@ -11,11 +11,10 @@ export const BUTTON_TYPE = 'button';
 export interface ButtonProps extends ControlProps, StateBackgroundProps {
   children?: JSX.Node;
   /**
-   * Ran on a press. On a container screen it receives the pressing player and
-   * the entity that owns the screen; a form's native response carries neither,
-   * so both are absent there.
+   * Ran on a press, with the player who pressed. On a screen an entity owns,
+   * `event.host` is that entity; on a form there is none.
    */
-  onPress?: (player?: Player, host?: Entity) => unknown | Promise<unknown>;
+  onPress?: (event: PressEvent) => unknown | Promise<unknown>;
   // state textures serialize at [1024-1106] hover / [1107-1189] pressed /
   // [1190-1272] locked, resolved by the shared `state ?? base ?? unstyled` rule
 }
