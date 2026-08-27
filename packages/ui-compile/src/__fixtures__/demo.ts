@@ -1,4 +1,3 @@
-import { KEY_PREFIX } from '@bedrock-core/ui-runtime/compile';
 import type { IrDocument } from '../ir';
 
 /**
@@ -73,9 +72,8 @@ export const demoScreen: IrDocument = {
         kind: 'text',
         name: 'text_1',
         rect: { x: 7, y: 35, width: 48, height: 10 },
-        channel: 7,
+        address: 7,
         length: 8,
-        keyPrefix: KEY_PREFIX,
         fontType: 'default',
         fontScaleFactor: 2,
       },
@@ -102,7 +100,7 @@ export const demoScreen: IrDocument = {
             kind: 'button',
             name: 'button_1',
             rect: { x: 0, y: 0, width: 60, height: 20 },
-            slot: 2,
+            address: 2,
             face: {
               texture: 'textures/ui/button_borderless_light',
               hover: 'textures/ui/button_borderless_lighthover',
@@ -125,7 +123,7 @@ export const demoScreen: IrDocument = {
             kind: 'button',
             name: 'button_2',
             rect: { x: 64, y: 0, width: 60, height: 20 },
-            slot: 3,
+            address: 3,
             face: {
               texture: 'textures/ui/button_borderless_light',
               hover: 'textures/ui/button_borderless_lighthover',
@@ -151,9 +149,9 @@ export const demoScreen: IrDocument = {
         name: 'panel_3',
         rect: { x: 7, y: 83, width: 306, height: 18 },
         children: [
-          { kind: 'slot', name: 'slot_1', rect: { x: 0, y: 0, width: 18, height: 18 }, slot: 4, role: 'both', interactive: false },
-          { kind: 'slot', name: 'slot_2', rect: { x: 22, y: 0, width: 18, height: 18 }, slot: 5, role: 'input', interactive: true },
-          { kind: 'slot', name: 'slot_3', rect: { x: 44, y: 0, width: 18, height: 18 }, slot: 6, role: 'both', interactive: true },
+          { kind: 'slot', name: 'slot_1', rect: { x: 0, y: 0, width: 18, height: 18 }, address: 4, role: 'both', interactive: false },
+          { kind: 'slot', name: 'slot_2', rect: { x: 22, y: 0, width: 18, height: 18 }, address: 5, role: 'input', interactive: true },
+          { kind: 'slot', name: 'slot_3', rect: { x: 44, y: 0, width: 18, height: 18 }, address: 6, role: 'both', interactive: true },
         ],
       },
       {

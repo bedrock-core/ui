@@ -22,14 +22,13 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
 import {
   BACKGROUND_SLOT_TYPE, childElements, CONTAINER_TYPE, containerEntity, containerRoot,
-  ContainerScreenError, isTransparentType, type Allocation as ContainerAllocation, type ChannelEntry,
-  type SlotEntry,
+  ContainerScreenError, isTransparentType, type Allocation as ContainerAllocation,
 } from '@bedrock-core/ui-runtime/compile';
 import { CHEST_HOST, type ChestHost } from './hosts/chest';
 import type { Allocation, IrDocument, IrNode, Rect } from './ir';
 import { loweringFor } from './nodes';
 import { num, str } from './nodes/shared';
-import type { LowerContext, NodeDefinition } from './nodes/types';
+import type { Addressing, CellAddress, ChannelAddress, LowerContext, NodeDefinition } from './nodes/types';
 
 /** The components a container screen can be made of, by the name the author writes. */
 const SUPPORTED = 'Panel, Text, Image, Button, Slot, SlotGrid, PlayerInventory, Hotbar, Background, Scroll';
@@ -85,11 +84,10 @@ const backdropOf = (element: JSX.Element): string | undefined => {
   return typeof texture === 'string' && texture !== '' ? texture : undefined;
 };
 
-/** What the walk carries: the allocation to look up, and what it has met so far. */
+/** What the walk carries: where the host put things, and what it has met so far. */
 interface Walk {
-  slots: Map<JSX.Element, SlotEntry>;
-  channels: Map<JSX.Element, ChannelEntry>;
-  met: { slots: number; channels: number };
+  addressing: Addressing;
+  met: { cells: number; channels: number };
   counters: Map<string, number>;
   backdrop?: string;
 }
@@ -108,32 +106,32 @@ const nameFor = (kind: string, walk: Walk): string => {
 };
 
 /**
- * The cell the allocation gave an element. Missing means the two walks
- * disagree about the tree, which the runtime could never recover from.
+ * Where the host put an element's cell. Missing means the host's walk and this
+ * one disagree about the tree, which the runtime could never recover from.
  */
-const slotOf = (element: JSX.Element, walk: Walk): SlotEntry => {
-  const entry = walk.slots.get(element);
+const cellOf = (element: JSX.Element, walk: Walk): CellAddress => {
+  const address = walk.addressing.cells.get(element);
 
-  if (entry === undefined) {
-    throw new Error(`The allocation has no cell for a <${String(element.type)}> the compiler met.`);
+  if (address === undefined) {
+    throw new Error(`The host gave no cell to a <${String(element.type)}> the compiler met.`);
   }
 
-  walk.met.slots += 1;
+  walk.met.cells += 1;
 
-  return entry;
+  return address;
 };
 
-/** The channel the allocation gave an element. See {@link slotOf}. */
-const channelOf = (element: JSX.Element, carrier: ChannelEntry['carrier'], walk: Walk): ChannelEntry => {
-  const entry = walk.channels.get(element);
+/** Where the host put an element's live value. See {@link cellOf}. */
+const channelOf = (element: JSX.Element, walk: Walk): ChannelAddress => {
+  const address = walk.addressing.channels.get(element);
 
-  if (entry === undefined || entry.carrier !== carrier) {
-    throw new Error(`The allocation has no ${carrier} channel for a <${String(element.type)}> the compiler met.`);
+  if (address === undefined) {
+    throw new Error(`The host gave no channel to a <${String(element.type)}> the compiler met.`);
   }
 
   walk.met.channels += 1;
 
-  return entry;
+  return address;
 };
 
 const convertChildren = (parent: JSX.Element, origin: Rect, walk: Walk): IrNode[] =>
@@ -181,8 +179,8 @@ const lower = (definition: NodeDefinition, element: JSX.Element, type: string, o
     rect: relativeTo(own, origin),
     decoration: { ...layerOf(element.props), ...visibilityOf(element.props) },
     name: kind => nameFor(kind, walk),
-    slotOf: target => slotOf(target, walk),
-    channelOf: (target, carrier) => channelOf(target, carrier, walk),
+    cellOf: target => cellOf(target, walk),
+    channelOf: target => channelOf(target, walk),
     children: (parent, from) => convertChildren(parent, from, walk),
   };
 
@@ -195,6 +193,15 @@ export interface ToIrOptions {
   /** The host the screen is compiled for. Defaults to the chest. */
   host?: ChestHost;
 }
+
+/**
+ * Where the chest put a built tree's cells and channels, as addresses the IR
+ * can carry without knowing they are container indices.
+ */
+export const chestAddressing = (allocation: ContainerAllocation): Addressing => ({
+  cells: new Map(allocation.slots.map(entry => [entry.element, { address: entry.slot, role: entry.role }])),
+  channels: new Map(allocation.channels.map(entry => [entry.element, { address: entry.slot, length: entry.length }])),
+});
 
 /**
  * Converts a built tree and its allocation into an {@link IrDocument}.
@@ -211,6 +218,7 @@ export const toIr = (
   options: ToIrOptions,
 ): IrDocument => {
   const host = options.host ?? CHEST_HOST;
+  const addressing = chestAddressing(allocation);
   const root = containerRoot(tree);
   const entity = containerEntity(root);
 
@@ -219,9 +227,8 @@ export const toIr = (
   }
 
   const walk: Walk = {
-    slots: new Map(allocation.slots.map(entry => [entry.element, entry])),
-    channels: new Map(allocation.channels.map(entry => [entry.element, entry])),
-    met: { slots: 0, channels: 0 },
+    addressing,
+    met: { cells: 0, channels: 0 },
     counters: new Map(),
   };
 
@@ -231,10 +238,10 @@ export const toIr = (
   const background = str(root.props.background);
   const children = convertChildren(root, origin, walk);
 
-  if (walk.met.slots !== allocation.slots.length || walk.met.channels !== allocation.channels.length) {
+  if (walk.met.cells !== addressing.cells.size || walk.met.channels !== addressing.channels.size) {
     throw new Error(
-      `The allocation numbered ${allocation.slots.length} cell(s) and ${allocation.channels.length} channel(s), `
-      + `but the compiler met ${walk.met.slots} and ${walk.met.channels}. The two walks must see the same tree.`,
+      `The host addressed ${addressing.cells.size} cell(s) and ${addressing.channels.size} channel(s), `
+      + `but the compiler met ${walk.met.cells} and ${walk.met.channels}. The two walks must see the same tree.`,
     );
   }
 

@@ -1,5 +1,5 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
-import { allocate, ContainerScreenError, KEY_PREFIX } from '@bedrock-core/ui-runtime/compile';
+import { allocate, ContainerScreenError } from '@bedrock-core/ui-runtime/compile';
 import { describe, expect, it } from 'vitest';
 import { CHEST_HOST } from '../hosts/chest';
 import type { ButtonNode, IrNode, PanelNode } from '../ir';
@@ -169,7 +169,7 @@ describe('toIr', () => {
       expect(node).toMatchObject({ kind: 'label', text: 'x', localize: false, fontType: 'default', fontScaleFactor: 2 });
     });
 
-    it('turns a live label into a text run on the channel the allocation gave it', () => {
+    it('turns a live label into a text run at the address the host gave it', () => {
       const tree = container([
         at('button', [0, 0, 18, 18]),
         text([0, 20, 24, 10], 'idle', { maxLength: 4 }),
@@ -177,7 +177,7 @@ describe('toIr', () => {
       const [, run] = convert(tree).root.children;
 
       // One drawn cell occupies slot 1, so the bank opens at 2.
-      expect(run).toMatchObject({ kind: 'text', name: 'text_1', channel: 3, length: 4, keyPrefix: KEY_PREFIX, fontType: 'default' });
+      expect(run).toMatchObject({ kind: 'text', name: 'text_1', address: 3, length: 4, fontType: 'default' });
     });
   });
 
@@ -194,7 +194,7 @@ describe('toIr', () => {
     const button = (props: JSX.Props, children: JSX.Element[] = []): ButtonNode =>
       buttonNode(first(container([at('button', [10, 10, 60, 20], props, children)])));
 
-    it('takes its slot from the allocation and its look from the component', () => {
+    it('takes its address from the host and its look from the component', () => {
       const node = button({
         background: 't/rest',
         backgroundHover: 't/hover',
@@ -203,7 +203,7 @@ describe('toIr', () => {
       });
 
       expect(node).toMatchObject({
-        slot: 2,
+        address: 2,
         face: { texture: 't/rest', hover: 't/hover', pressed: 't/pressed', disabled: 't/off' },
       });
     });
@@ -236,7 +236,7 @@ describe('toIr', () => {
   });
 
   describe('slots', () => {
-    it('takes its index from the allocation, and its role and lock from the props', () => {
+    it('takes its address from the host, and its role and lock from the props', () => {
       const doc = convert(container([
         at('container-slot', [0, 0, 18, 18], { role: 'input' }),
         at('container-slot', [18, 0, 18, 18], { role: 'output' }),
@@ -245,10 +245,10 @@ describe('toIr', () => {
       ]));
 
       expect(doc.root.children).toMatchObject([
-        { kind: 'slot', name: 'slot_1', slot: 2, role: 'input', interactive: true },
-        { kind: 'slot', name: 'slot_2', slot: 3, role: 'output', interactive: true },
-        { kind: 'slot', name: 'slot_3', slot: 4, role: 'both', interactive: false },
-        { kind: 'slot', name: 'slot_4', slot: 5, role: 'both', interactive: true },
+        { kind: 'slot', name: 'slot_1', address: 2, role: 'input', interactive: true },
+        { kind: 'slot', name: 'slot_2', address: 3, role: 'output', interactive: true },
+        { kind: 'slot', name: 'slot_3', address: 4, role: 'both', interactive: false },
+        { kind: 'slot', name: 'slot_4', address: 5, role: 'both', interactive: true },
       ]);
     });
 

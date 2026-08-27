@@ -43,8 +43,8 @@ export interface ButtonFace {
  */
 export interface ButtonNode extends NodeBase {
   kind: 'button';
-  /** Index from the allocation walk, never written by the author. */
-  slot: number;
+  /** Where the host put this button's cell. A container index on a chest, an entry on a form. */
+  address: number;
   face: ButtonFace;
   children: IrNode[];
 }
@@ -338,14 +338,14 @@ export const buttonDefinition: NodeDefinition<ButtonNode> = {
       };
     }
 
-    const entry = ctx.slotOf(element);
+    const cell = ctx.cellOf(element);
 
     return {
       kind: 'button',
       name: ctx.name('button'),
       rect: ctx.rect,
       ...ctx.decoration,
-      slot: entry.slot,
+      address: cell.address,
       face: faceOf(props),
       // Baked into the face, relative to the button like any other child.
       children: ctx.children(element, ctx.own),
@@ -389,7 +389,7 @@ export const buttonDefinition: NodeDefinition<ButtonNode> = {
         size: sizeOf(node.rect),
         ...layerOf(node),
         ...visibilityOf(node),
-        [SLOT_VAR]: node.slot,
+        [SLOT_VAR]: node.address,
         [CELL_VAR]: faceName(node, ctx),
       },
     };

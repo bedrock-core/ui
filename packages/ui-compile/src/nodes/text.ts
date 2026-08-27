@@ -18,12 +18,10 @@ import type { LabelStyle, LowerContext, NodeBase, NodeDefinition, Rect } from '.
  */
 export interface TextNode extends NodeBase, LabelStyle {
   kind: 'text';
-  /** First bank slot. The run occupies `channel .. channel + length - 1`. */
-  channel: number;
+  /** Where the host put the run. On a chest it occupies `address .. address + length - 1`. */
+  address: number;
   /** How many characters the screen drew room for. */
   length: number;
-  /** Key the code is appended to, e.g. `core.ui.c.`. */
-  keyPrefix: string;
 }
 
 declare module './types' {
@@ -87,7 +85,6 @@ const labelOf = (element: JSX.Element, base: Omit<LabelNode, 'kind' | 'text' | '
  * they read.
  */
 const textSignature = (node: TextNode): string => JSON.stringify([
-  node.keyPrefix,
   node.fontType,
   node.fontScaleFactor,
   node.shadow ?? null,
@@ -129,7 +126,7 @@ const textDef = (node: TextNode, collection: string): Control => ({
     },
     {
       binding_type: 'view',
-      source_property_name: `(${literal(node.keyPrefix)} + ${TEXT_RAW_PROPERTY})`,
+      source_property_name: `(${literal(KEY_PREFIX)} + ${TEXT_RAW_PROPERTY})`,
       target_property_name: TEXT_PROPERTY,
     },
   ] satisfies Binding[],
@@ -149,16 +146,15 @@ export const textDefinition: NodeDefinition<TextNode> = {
     const nudged: Rect = { ...ctx.rect, x: ctx.rect.x + num(props.labelX), y: ctx.rect.y + num(props.labelY) };
 
     if (length !== undefined) {
-      const channel = ctx.channelOf(element, 'text');
+      const channel = ctx.channelOf(element);
 
       return {
         kind: 'text',
         name: ctx.name('text'),
         rect: nudged,
         ...ctx.decoration,
-        channel: channel.slot,
+        address: channel.address,
         length: channel.length,
-        keyPrefix: KEY_PREFIX,
         fontType: str(props.fontType, defaults.fontType),
         fontScaleFactor: num(props.fontScaleFactor, defaults.fontScaleFactor),
         ...shadow ? { shadow } : {},
@@ -211,7 +207,7 @@ export const textDefinition: NodeDefinition<TextNode> = {
         controls: Array.from({ length: node.length }, (_unused, cell) => ({
           [`cell_${cell}@${TEXT_DEF.textHost}`]: {
             size: hug,
-            controls: [{ [`glyph@${ctx.ns}.${def}`]: { collection_index: node.channel + cell } }],
+            controls: [{ [`glyph@${ctx.ns}.${def}`]: { collection_index: node.address + cell } }],
           },
         })),
       },

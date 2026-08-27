@@ -24,8 +24,8 @@ export interface SlotSource {
 /** A real container slot the player can interact with. */
 export interface SlotNode extends NodeBase {
   kind: 'slot';
-  /** Index from the allocation walk, never written by the author. Unused when foreign. */
-  slot: number;
+  /** Where the host put this cell. Unused when foreign — that index is the author's. */
+  address: number;
   /**
    * Enforced by the runtime, never by the engine: a container offers no way
    * to veto a move, so a forbidden one is undone a tick later rather than
@@ -151,16 +151,16 @@ export const slotDefinition: NodeDefinition<SlotNode> = {
         name: ctx.name('slot'),
         rect: ctx.rect,
         ...ctx.decoration,
-        slot: source.index,
+        address: source.index,
         role: 'both',
         interactive: source.interactive,
         source,
       };
     }
 
-    const entry = ctx.slotOf(element);
+    const cell = ctx.cellOf(element);
 
-    if (entry.role === 'button') {
+    if (cell.role === 'button') {
       throw new Error('The allocation numbered a <Slot> as a button.');
     }
 
@@ -169,8 +169,8 @@ export const slotDefinition: NodeDefinition<SlotNode> = {
       name: ctx.name('slot'),
       rect: ctx.rect,
       ...ctx.decoration,
-      slot: entry.slot,
-      role: entry.role,
+      address: cell.address,
+      role: cell.role,
       interactive: slotInteractive(element),
     };
   },
@@ -202,7 +202,7 @@ export const slotDefinition: NodeDefinition<SlotNode> = {
         size: sizeOf(node.rect),
         ...layerOf(node),
         ...visibilityOf(node),
-        [SLOT_VAR]: node.slot,
+        [SLOT_VAR]: node.address,
         ...cellOf(node),
       },
     };

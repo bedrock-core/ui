@@ -212,9 +212,8 @@ describe('emit / text runs', () => {
       kind: 'text',
       name: 'status',
       rect: { x: 7, y: 7, width: 24, height: 10 },
-      channel: 1,
+      address: 1,
       length: 4,
-      keyPrefix: KEY_PREFIX,
       fontType: 'default',
       fontScaleFactor: 2,
       ...overrides,
@@ -319,7 +318,7 @@ describe('emit / buttons', () => {
     kind: 'button',
     name,
     rect: { x, y: 0, width: 60, height: 20 },
-    slot,
+    address: slot,
     face: look,
     children,
   });
@@ -475,7 +474,7 @@ describe('emit / buttons', () => {
 
 describe('emit / slot roles and locking', () => {
   const of = (role: 'both' | 'input' | 'output', interactive = true): Document => emit(screenOf(
-    [{ kind: 'slot', name: 'a', rect: { x: 0, y: 0, width: 18, height: 18 }, slot: 1, role, interactive }],
+    [{ kind: 'slot', name: 'a', rect: { x: 0, y: 0, width: 18, height: 18 }, address: 1, role, interactive }],
     { allocation: { sentinels: 2, drawn: 1, channels: 0, size: 3 }, ownedItemRenderer: 'core_ui_container.gated_item' },
   ));
 
@@ -532,7 +531,7 @@ describe('emit / foreign slots', () => {
       kind: 'slot',
       name: 'a',
       rect: { x: 0, y: 0, width: 18, height: 18 },
-      slot: source.index,
+      address: source.index,
       role: 'both',
       interactive: source.interactive,
       source,
@@ -575,8 +574,8 @@ describe('emit / foreign slots', () => {
 
   it('shares one host between two foreign slots on the same collection', () => {
     const doc = emit(screenOf([
-      { kind: 'slot', name: 'a', rect: { x: 0, y: 0, width: 18, height: 18 }, slot: 0, role: 'both', interactive: true, source: { collection: 'inventory_items', index: 0, interactive: true } },
-      { kind: 'slot', name: 'b', rect: { x: 18, y: 0, width: 18, height: 18 }, slot: 0, role: 'both', interactive: true, source: { collection: 'inventory_items', index: 1, interactive: true } },
+      { kind: 'slot', name: 'a', rect: { x: 0, y: 0, width: 18, height: 18 }, address: 0, role: 'both', interactive: true, source: { collection: 'inventory_items', index: 0, interactive: true } },
+      { kind: 'slot', name: 'b', rect: { x: 18, y: 0, width: 18, height: 18 }, address: 0, role: 'both', interactive: true, source: { collection: 'inventory_items', index: 1, interactive: true } },
     ]));
 
     expect(Object.keys(defs(doc)).filter(name => name.startsWith('slot_host__'))).toEqual(['slot_host__inventory_items']);

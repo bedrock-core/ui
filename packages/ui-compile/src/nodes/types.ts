@@ -9,7 +9,7 @@
  */
 
 import type { JSX } from '@bedrock-core/ui-runtime';
-import type { ChannelEntry, SlotEntry } from '@bedrock-core/ui-runtime/compile';
+import type { CellRole } from '@bedrock-core/ui-runtime/compile';
 import type { Control, ControlEntry, Document } from '../jsonui';
 
 export interface Rect {
@@ -57,6 +57,31 @@ export interface IrNodeMap {}
 
 export type IrNode = IrNodeMap[keyof IrNodeMap];
 
+/**
+ * Where a cell lives on its host, and what it is.
+ *
+ * The number means whatever the host said it means — a container index on a
+ * chest screen, a `form_buttons` entry on a form. The IR carries it without
+ * knowing which, because the walk that hands them out is the host's
+ * (`allocate`) and the emitter that reads them back is the host's too.
+ */
+export interface CellAddress {
+  readonly address: number;
+  readonly role: CellRole;
+}
+
+/** Where a live value travels, and how much room it was given. */
+export interface ChannelAddress {
+  readonly address: number;
+  readonly length: number;
+}
+
+/** How a host answers "where does this element live?" for one built tree. */
+export interface Addressing {
+  readonly cells: ReadonlyMap<JSX.Element, CellAddress>;
+  readonly channels: ReadonlyMap<JSX.Element, ChannelAddress>;
+}
+
 /** What a lowering sees: the element's solved geometry, and the walk's services. */
 export interface LowerContext {
   /** Absolute rect of the parent the element is positioned against. */
@@ -69,10 +94,10 @@ export interface LowerContext {
   decoration: { layer?: number; visible?: boolean };
   /** A document-unique name for this node, from a per-kind counter. */
   name(kind: string): string;
-  /** The cell the allocation gave this element. Throws when the walks disagree. */
-  slotOf(element: JSX.Element): SlotEntry;
-  /** The channel the allocation gave this element. Throws when the walks disagree. */
-  channelOf(element: JSX.Element, carrier: ChannelEntry['carrier']): ChannelEntry;
+  /** Where the host put this element's cell. Throws when the walks disagree. */
+  cellOf(element: JSX.Element): CellAddress;
+  /** Where the host put this element's live value. Throws when the walks disagree. */
+  channelOf(element: JSX.Element): ChannelAddress;
   /** Lowers an element's children, positioned against the given origin. */
   children(parent: JSX.Element, origin: Rect): IrNode[];
 }
