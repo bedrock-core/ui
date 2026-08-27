@@ -1,0 +1,8 @@
+{
+	"projectId": null,
+	"gameEndpoint": "minecraft",
+	"releaseType": "release",
+	"gameVersionSlugs": [
+		"bedrock"
+	]
+}

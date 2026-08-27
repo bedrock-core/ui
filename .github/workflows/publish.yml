@@ -15,6 +15,9 @@ jobs:
   publish-release:
     name: Version, publish & tag changed packages
     runs-on: ubuntu-latest
+    outputs:
+      meta_bumped: ${{ steps.meta.outputs.bumped }}
+      meta_version: ${{ steps.meta.outputs.ui }}
     env:
       # No npm token: publishes authenticate via OIDC trusted publishing (the
       # id-token permission above + a trusted publisher configured per package on
@@ -170,3 +173,15 @@ jobs:
           generate_release_notes: true
           files: |
             core-ui-${{ steps.meta.outputs.ui }}.mcpack
+
+  # Called, not triggered by `on: release` — a release created above with
+  # GITHUB_TOKEN does not start another workflow run, so an `on: release`
+  # listener would never fire.
+  curseforge:
+    name: Ship to CurseForge
+    needs: publish-release
+    if: needs.publish-release.outputs.meta_bumped == 'true'
+    uses: ./.github/workflows/curseforge.yml
+    with:
+      tag: '@bedrock-core/ui@${{ needs.publish-release.outputs.meta_version }}'
+    secrets: inherit

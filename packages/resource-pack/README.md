@@ -59,6 +59,14 @@ pack output (`build/@bedrock-core_ui_rp`) into the `.mcpack` — see the *Packag
 in [`publish.yml`](../../.github/workflows/publish.yml). Nothing else in this package is an
 artifact.
 
+The same `.mcpack` is then pushed to CurseForge by
+[`curseforge.yml`](../../.github/workflows/curseforge.yml), which downloads it back off the release
+and uploads it with the release notes as the file's changelog. The project id, release type and
+supported game versions live in [`curseforge.json`](./curseforge.json) — that file is the only place
+to declare a new Minecraft version, and an unrecognized slug fails the job rather than shipping a
+file tagged for the wrong versions. CurseForge exposes no API for a project's description page, so
+that page is written by hand and kept version-free.
+
 The behavior pack, the guide/i18n sources under `packs/data/`, and the demo screens are the local
 test harness this repo uses to exercise the framework — a reference implementation and a place to
 reproduce protocol bugs. They are built into `build/@bedrock-core_ui_bp` for local testing and

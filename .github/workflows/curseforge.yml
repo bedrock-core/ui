@@ -1,0 +1,68 @@
+name: CurseForge
+
+# Ships the .mcpack from a GitHub release to the CurseForge project, with the
+# release notes as the file's changelog.
+#
+# It takes the pack from the release instead of rebuilding it, so the job needs
+# only `gh` and Node — no `yarn install`, and therefore none of the
+# server-runtime portal: blocker that holds up publish.yml. That also makes the
+# manual trigger a working backfill for any release already published.
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: Release tag to ship, e.g. "@bedrock-core/ui@0.11.0"
+        type: string
+        required: true
+    secrets:
+      CURSEFORGE_TOKEN:
+        required: true
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to ship, e.g. "@bedrock-core/ui@0.11.0"
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  upload:
+    name: Upload .mcpack to CurseForge
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG: ${{ inputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Fetch release asset & notes
+        id: release
+        run: |
+          mkdir -p .curseforge
+          gh release download "$TAG" --pattern '*.mcpack' --dir .curseforge
+          gh release view "$TAG" --json body -q .body > .curseforge/changelog.md
+          shopt -s nullglob
+          packs=(.curseforge/*.mcpack)
+          if [[ ${#packs[@]} -eq 0 ]]; then
+            echo "No .mcpack attached to $TAG — nothing to upload."
+            exit 1
+          fi
+          echo "file=${packs[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload
+        env:
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+          PACK: ${{ steps.release.outputs.file }}
+        run: |
+          node scripts/curseforge-upload.mjs \
+            --file "$PACK" \
+            --changelog-file .curseforge/changelog.md \
+            --tag "$TAG"
