@@ -27,24 +27,87 @@ const FORM_ONLY_TYPES = new Map<string, string>([
   [MODAL_FORM_BUTTON_SLOT_TYPE, 'Form.Button'],
 ]);
 
+/** Where the walk is: what a node may not contain depends on what it sits in. */
+interface Scope {
+  readonly insideButton: boolean;
+  readonly insideScroll: boolean;
+}
+
+/** One rule a node inside a container screen must obey where it sits. Throws when it does not. */
+type Rule = (node: JSX.Element, type: string, scope: Scope) => void;
+
 /**
- * Enforce the container-screen rules on a built tree — the runtime backstop
- * behind the type-level guards, the way `validateForm` is for modals. Runs for
- * the build and for the entity that serves the screen alike.
- *
- * Rules:
- *  - Exactly one `<Container>` at the root, naming its entity. The root is what
- *    decides the backend, so it cannot be optional or plural.
+ * The container-screen rules, each its own entry:
+ *  - No nested `<Container>`; one entity, one screen.
  *  - Nothing form-only inside it: a container has no native form, so `<Form>`
  *    and `Form.*` have nothing to become.
- *  - No nested `<Container>`; one entity, one screen.
- *  - The content fits the canvas. The canvas is fixed; what does not fit goes
- *    in a `<Scroll>`, which is laid out on its own and scrolls on the client.
  *  - No `<Scroll>` inside a `<Scroll>`: a region is laid out as one flat box.
  *  - Live text (`<Text maxLength>`) not inside a `<Button>` yet: a button's
  *    children are baked into its face.
  *  - No `<SlotGrid>` or foreign `<Slot collection>` inside a `<Button>`: a
  *    button bakes a static face, and a live item cell cannot be baked.
+ */
+const RULES: readonly Rule[] = [
+  (_node, type): void => {
+    if (type === CONTAINER_TYPE) {
+      throw new ContainerScreenError(
+        'A `<Container>` cannot be nested inside another `<Container>`. One entity '
+        + 'opens one screen; compose the inner part as a component instead.',
+      );
+    }
+  },
+
+  (_node, type): void => {
+    const formOnly = FORM_ONLY_TYPES.get(type);
+
+    if (formOnly !== undefined) {
+      throw new ContainerScreenError(
+        `\`${formOnly}\` cannot be used in a container screen. A container has no native `
+        + 'form; use Button and Slot for interaction.',
+      );
+    }
+  },
+
+  (_node, type, scope): void => {
+    if (type === SCROLL_SLOT_TYPE && scope.insideScroll) {
+      throw new ContainerScreenError(
+        'A `<Scroll>` cannot sit inside another `<Scroll>` in a container screen: a '
+        + 'region is laid out as one flat box. Split the content into sibling scrolls.',
+      );
+    }
+  },
+
+  (node, _type, scope): void => {
+    if (scope.insideButton && liveTextLength(node) !== undefined) {
+      throw new ContainerScreenError(
+        'A live `<Text maxLength>` cannot sit inside a `<Button>` yet: a button\'s '
+        + 'children are baked into its face. Put the live text beside the button.',
+      );
+    }
+  },
+
+  (node, type, scope): void => {
+    if (scope.insideButton && (type === SLOT_GRID_TYPE || isForeignSlot(node))) {
+      throw new ContainerScreenError(
+        'A `<SlotGrid>` or foreign `<Slot collection>` cannot sit inside a `<Button>`: a '
+        + 'button bakes its children into a static face, and a live item cell cannot be '
+        + 'baked. Put it beside the button.',
+      );
+    }
+  },
+];
+
+/**
+ * Enforce the container-screen rules on a built tree — the runtime backstop
+ * behind the type-level guards, the way `validateForm` is for modals. Runs for
+ * the build and for the entity that serves the screen alike.
+ *
+ * The root and the canvas are checked here; everything below the root is
+ * checked against {@link RULES} where it sits.
+ *  - Exactly one `<Container>` at the root, naming its entity. The root is what
+ *    decides the backend, so it cannot be optional or plural.
+ *  - The content fits the canvas. The canvas is fixed; what does not fit goes
+ *    in a `<Scroll>`, which is laid out on its own and scrolls on the client.
  *
  * @throws ContainerScreenError on any violation.
  */
@@ -110,52 +173,12 @@ function size(value: unknown): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : 0;
 }
 
-/** Where the walk is: what a node may not contain depends on what it sits in. */
-interface Scope {
-  readonly insideButton: boolean;
-  readonly insideScroll: boolean;
-}
-
 function walk(node: JSX.Element, scope: Scope): void {
   const { type } = node;
 
   if (typeof type === 'string') {
-    if (type === CONTAINER_TYPE) {
-      throw new ContainerScreenError(
-        'A `<Container>` cannot be nested inside another `<Container>`. One entity '
-        + 'opens one screen; compose the inner part as a component instead.',
-      );
-    }
-
-    const formOnly = FORM_ONLY_TYPES.get(type);
-
-    if (formOnly !== undefined) {
-      throw new ContainerScreenError(
-        `\`${formOnly}\` cannot be used in a container screen. A container has no native `
-        + 'form; use Button and Slot for interaction.',
-      );
-    }
-
-    if (type === SCROLL_SLOT_TYPE && scope.insideScroll) {
-      throw new ContainerScreenError(
-        'A `<Scroll>` cannot sit inside another `<Scroll>` in a container screen: a '
-        + 'region is laid out as one flat box. Split the content into sibling scrolls.',
-      );
-    }
-
-    if (scope.insideButton && liveTextLength(node) !== undefined) {
-      throw new ContainerScreenError(
-        'A live `<Text maxLength>` cannot sit inside a `<Button>` yet: a button\'s '
-        + 'children are baked into its face. Put the live text beside the button.',
-      );
-    }
-
-    if (scope.insideButton && (type === SLOT_GRID_TYPE || isForeignSlot(node))) {
-      throw new ContainerScreenError(
-        'A `<SlotGrid>` or foreign `<Slot collection>` cannot sit inside a `<Button>`: a '
-        + 'button bakes its children into a static face, and a live item cell cannot be '
-        + 'baked. Put it beside the button.',
-      );
+    for (const rule of RULES) {
+      rule(node, type, scope);
     }
   }
 

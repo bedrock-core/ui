@@ -23,13 +23,13 @@ const isExit = (control: Control): boolean =>
 
 describe('a close button', () => {
   it('takes no container slot', () => {
-    const { allocation } = compileScreen(Screen, { name: 'closable', layoutId: 1 });
+    const { allocation } = compileScreen(Screen, { name: 'closable' });
 
     expect(allocation.drawn).toBe(1);
   });
 
   it('is a real button routed to the engine exit, drawn with the author\'s faces', () => {
-    const { document } = compileScreen(Screen, { name: 'closable', layoutId: 1 });
+    const { document } = compileScreen(Screen, { name: 'closable' });
     const exits: Control[] = [];
 
     eachControl(document, (_name, control) => {

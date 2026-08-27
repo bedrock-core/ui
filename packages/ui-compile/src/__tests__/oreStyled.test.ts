@@ -23,11 +23,11 @@ const Screen = (): JSX.Element => Container({
 
 describe('ore-styled components in a container screen', () => {
   it('compile without throwing', () => {
-    expect(() => compileScreen(Screen, { name: 'ore', layoutId: 1 })).not.toThrow();
+    expect(() => compileScreen(Screen, { name: 'ore' })).not.toThrow();
   });
 
   it('draw the theme\'s textures and captions', () => {
-    const { document, allocation } = compileScreen(Screen, { name: 'ore', layoutId: 1 });
+    const { document, allocation } = compileScreen(Screen, { name: 'ore' });
     const primary = theme.components.button.variants.primary;
     const danger = theme.components.button.variants.danger;
 

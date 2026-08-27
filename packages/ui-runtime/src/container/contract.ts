@@ -5,51 +5,99 @@
  * container at runtime, so it lives in one place and both sides import it —
  * the ui-compile filter bundles the project's own copy of this module, which
  * is what keeps a screen compiled against the runtime it ships with.
+ *
+ * The items the protocol rides are all vanilla BLOCKS from the legacy id
+ * range. A compiled screen tells them apart by `#item_id_aux`, the item's
+ * numeric id shifted by 16, and that number has to be the same in every
+ * world the pack is installed in: custom items registered by any addon take
+ * numeric ids from 256 upward and shift every vanilla item above them, so a
+ * tool or any other item would change its id the moment another addon
+ * shipped an item. Block ids below 256 are fixed and never move. Blocks stack
+ * and have no durability, so what a block-based marker can carry is its stack
+ * size — which is what the layout key rides, over two slots.
  */
 
-/**
- * The item in the sentinel slot. Its numeric id is the protocol key every
- * compiled screen shares; its durability carries the layout key, so it has to
- * be damageable. Also the transport item behind every button.
- */
-export const PROTOCOL_ITEM = 'minecraft:netherite_pickaxe';
+/** The numeric id of a legacy-range block, as the engine publishes it through `#item_id_aux`. */
+const aux = (id: number): number => id * 65536;
 
 /**
- * `#item_id_aux` the router compares against for {@link PROTOCOL_ITEM}: the
- * item's numeric id shifted by 16. Measured in game; Mojang does not promise
- * the numbering, so this is the one constant a game update can move.
+ * The sentinel item, in the first two slots of a compiled screen's container.
+ * Its id is the protocol key every compiled screen shares; the two stack
+ * sizes are the layout key. Operator-only in vanilla, so no survival chest
+ * ever carries one.
  */
-export const PROTOCOL_ITEM_AUX = 40763392;
+export const PROTOCOL_ITEM = 'minecraft:command_block';
+export const PROTOCOL_ITEM_AUX = aux(137);
+
+/**
+ * The item behind a button. A press reaches script only as the item leaving
+ * its slot, and the item is never drawn: the compiled face hides it, and the
+ * screen's own inventory grids hide a copy in flight.
+ */
+export const TRANSPORT_ITEM = 'minecraft:repeating_command_block';
+export const TRANSPORT_ITEM_AUX = aux(188);
+
+/**
+ * An output slot's placeholder, the guard. It keeps the slot from ever being
+ * empty, so a shift-click cannot auto-place into it, and the compiled output
+ * cell swaps its whole cell for an empty fake while it sits there — nothing
+ * rendered, nothing hoverable, no button to take it with.
+ */
+export const GUARD_ITEM = 'minecraft:chain_command_block';
+export const GUARD_ITEM_AUX = aux(189);
+
+/** Container indices carrying the routing keys, never drawn: the high half of the layout key, then the low. */
+export const SENTINEL_SLOTS = [0, 1] as const;
+
+/**
+ * The stack sizes a sentinel half can take: 2..64. A stack of one publishes
+ * no `#inventory_stack_count` at all — measured — so the smallest readable
+ * size is two, and each half is stored two up.
+ */
+const KEY_FLOOR = 2;
+const KEY_RADIX = 64 - KEY_FLOOR + 1;
+
+/** Highest layout key a screen can be assigned. Keys run from 1. */
+export const MAX_LAYOUT = KEY_RADIX * KEY_RADIX;
+
+/** The two stack sizes a layout key is written as, high half first. */
+export const splitKey = (key: number): { readonly high: number; readonly low: number } => ({
+  high: Math.floor((key - 1) / KEY_RADIX) + KEY_FLOOR,
+  low: ((key - 1) % KEY_RADIX) + KEY_FLOOR,
+});
+
+/** The layout key two sentinel stack sizes spell, the inverse of {@link splitKey}. */
+export const joinKey = (high: number, low: number): number => (high - KEY_FLOOR) * KEY_RADIX + (low - KEY_FLOOR) + 1;
+
+/**
+ * The layout key of a screen: what the router picks its layout by, and what
+ * the build stamps on its entity.
+ *
+ * Derived from the screen's full name rather than handed out in sequence,
+ * because addons are built apart and meet in a world: two addons numbering
+ * their screens from 1 would both claim key 1, and the chest would open the
+ * wrong one. A hash of `<namespace>_<name>` — the JSON UI namespace, unique
+ * across addons — gives every screen a key that depends on nothing but its own
+ * name, so it is the same on every build machine and every rebuild, and an
+ * entity placed in a world keeps opening the screen it was stamped with.
+ * FNV-1a, folded into 1..MAX_LAYOUT.
+ */
+export const layoutKey = (namespace: string, name: string): number => {
+  let hash = 0x811c9dc5;
+
+  for (const char of `${namespace}_${name}`) {
+    hash ^= char.codePointAt(0) ?? 0;
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+
+  return 1 + (hash % MAX_LAYOUT);
+};
 
 /**
  * The item backing a text channel. Stackable on purpose: a character IS the
  * stack size, and an unstackable item pins every cell to 1.
  */
 export const COUNT_ITEM = 'minecraft:paper';
-
-/**
- * Durability reading a button's transport item is pinned to, so the screen's
- * own inventory grids can tell one from a player's tool and draw it as
- * nothing. Neither 0 nor max — a pristine or a worn-out real tool reads
- * those — and above every layout key, so the two never meet.
- */
-export const TRANSPORT_ORDINAL = 2001;
-
-/** Highest layout key a screen can be assigned. Keys grow upward from 1. */
-export const MAX_LAYOUT = TRANSPORT_ORDINAL - 1;
-
-/**
- * Durability reading of an output slot's placeholder, the guard: the protocol
- * item at a second reserved ordinal. It keeps the slot from ever being empty,
- * so a shift-click cannot auto-place into it. The compiled output cell reads
- * this ordinal — with the protocol aux, the same two-literal check the router
- * runs — to swap the real cell for an empty fake, so the guard is never
- * rendered, never hovered and never takeable: no visible cell, no button.
- */
-export const GUARD_ORDINAL = TRANSPORT_ORDINAL + 1;
-
-/** Container index carrying the routing keys. Never drawn. */
-export const SENTINEL_SLOT = 0;
 
 /**
  * Entity property the build stamps with a screen's layout key, and the runtime

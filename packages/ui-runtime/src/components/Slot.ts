@@ -152,3 +152,12 @@ export function slotSource(element: JSX.Element): SlotSource | undefined {
 export function isForeignSlot(element: JSX.Element): boolean {
   return slotSource(element) !== undefined;
 }
+
+/**
+ * The cell a built `<Slot>` claims in the screen's container: its role, unless
+ * it is foreign — a foreign slot reads another collection at the author's
+ * index, so it takes no cell of the screen's own and is never polled.
+ */
+export function slotCell(element: JSX.Element): SlotRole | undefined {
+  return element.type === SLOT_TYPE && !isForeignSlot(element) ? slotRole(element) : undefined;
+}

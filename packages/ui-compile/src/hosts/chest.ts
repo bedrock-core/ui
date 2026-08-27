@@ -3,15 +3,32 @@
  *
  * `container_type: container` on an entity's `minecraft:inventory` is the only
  * one that routes to the chest screen, so every compiled screen opens as a
- * chest and this document decides what the chest draws. Two cheap checks do
- * the routing: one decides whether a chest is ours at all, the next decides
- * which layout it is.
+ * chest. Two kinds of edit to vanilla's chest file put a layout there, and
+ * both are of a kind the engine stacks across packs in whatever order they sit.
  *
- * Both keys ride the sentinel in slot 0. Its item id is the protocol key,
- * shared by every compiled screen; its remaining durability is the layout key,
- * so the binding reads the id straight back without arithmetic. A vanilla
- * chest has no marker there, fails the first check, and renders untouched —
- * absence IS the vanilla path, so nothing has to special-case it.
+ *  - The render pack's static copy of `chest_screen.json` points the chest
+ *    screen's `$screen_content` at the CHEST ROOT, the way vanilla's own
+ *    shulker-box and barrel screens point theirs elsewhere. The root holds
+ *    vanilla's chest panel by reference behind a gate that opens for any
+ *    chest no compiled screen claims, and behind the opposite gate the
+ *    chrome plus a second reference to vanilla's chest top half, whose own
+ *    label and grid that copy also gates. A modification cannot switch the
+ *    content: `variables` is not an array modifications reach, and a
+ *    `controls` insert on the screen creates an array that shadows the one
+ *    the screen inherits, emptying every chest.
+ *  - Each addon's HOOK, generated here into its own copy of the same file,
+ *    inserts the addon's root into that top half — an array vanilla itself
+ *    declares, so inserts from packs built apart all land, and nothing is
+ *    defined that would replace another pack's.
+ *  - Each addon's ROUTER, a file of its own, holds that root: one gated host
+ *    per compiled screen.
+ *
+ * The routing reads the sentinel, the protocol item in the first two slots.
+ * Its item id is the protocol key, shared by every compiled screen; the two
+ * stack sizes are the layout key, high half then low, so each binding reads
+ * a plain number straight back. A vanilla chest has no marker there, fails
+ * the first check, and renders untouched — absence IS the vanilla path, so
+ * nothing has to special-case it.
  *
  * Every number in a binding here is a literal on purpose. A `$variable` inside
  * a `source_property_name` is silently dropped in a subtree the engine
@@ -20,11 +37,27 @@
  */
 
 import {
-  CANONICAL_SCREEN, COLLECTION, ContainerScreenError, MAX_LAYOUT, PROTOCOL_ITEM_AUX,
-  TRANSPORT_ORDINAL,
+  CANONICAL_SCREEN, COLLECTION, ContainerScreenError, MAX_LAYOUT, PROTOCOL_ITEM_AUX, SENTINEL_SLOTS,
+  splitKey,
 } from '@bedrock-core/ui-runtime/compile';
 import { BACKDROP_DEFINITION, SCREEN_DEFINITION } from '../emit';
 import type { Binding, Control, ControlEntry, Document } from '../jsonui';
+import { CONTAINER } from '../nodes/shared';
+
+/** One vanilla file an addon hooks: the definition in it that every addon's root is inserted into. */
+export interface ChestHook {
+  /** Pack path — vanilla's own, which is what makes the edit stack with other packs'. */
+  readonly file: string;
+  /** JSON UI namespace of that file. */
+  readonly namespace: string;
+  /**
+   * The definition the roots are inserted into. It has to declare its own
+   * `controls`: an insert on a definition that only inherits the array creates
+   * one, and that shadows the inherited one. Both UI profiles reach it, as the
+   * chest root mounts it on either.
+   */
+  readonly target: string;
+}
 
 /**
  * A host: the vanilla screen a compiled layout is mounted on, and what the
@@ -32,33 +65,33 @@ import type { Binding, Control, ControlEntry, Document } from '../jsonui';
  */
 export interface ChestHost {
   readonly id: string;
-  /**
-   * Pack path of the router document. It has to be vanilla's own file: JSON UI
-   * resolves a definition from the file that owns it, so replacing
-   * `chest.small_chest_panel` from any other path — same namespace or not — is
-   * silently ignored and the ordinary chest renders instead.
-   */
-  readonly file: string;
-  /** JSON UI namespace of the router document — vanilla's, for the same reason. */
-  readonly namespace: string;
+  /** The vanilla files hooked. */
+  readonly hooks: readonly ChestHook[];
+  /** Pack directory an addon's router document is written into. */
+  readonly routerDir: string;
+  /** JSON UI namespace of the chest root and of every addon's router. */
+  readonly routerNamespace: string;
   /** The collection every slot and channel reads from. */
   readonly collection: string;
   /** `minecraft:inventory.container_type` the entity needs to open this screen. */
   readonly containerType: string;
   /** The canvas a screen is laid out against, in texels. */
   readonly canvas: { readonly width: number; readonly height: number };
-  /** Router definitions a compiled screen references for the player's own grids. */
-  readonly grids: { readonly inventory: string; readonly hotbar: string };
+  /** The renderer that hides the runtime's transport item, fully qualified. */
+  readonly ownedItemRenderer: string;
 }
 
 export const CHEST_HOST: ChestHost = {
   id: 'chest',
-  file: 'ui/chest_screen.json',
-  namespace: 'chest',
+  hooks: [
+    { file: 'ui/chest_screen.json', namespace: 'chest', target: 'small_chest_panel_top_half' },
+  ],
+  routerDir: 'ui/core-ui/screens',
+  routerNamespace: 'core_ui_router',
   collection: COLLECTION,
   containerType: 'container',
   canvas: CANONICAL_SCREEN,
-  grids: { inventory: 'core_ui_inventory_grid', hotbar: 'core_ui_hotbar_grid' },
+  ownedItemRenderer: `${CONTAINER}.gated_item`,
 };
 
 /** What the router needs to know about a compiled screen. */
@@ -67,6 +100,22 @@ export interface RoutedScreen {
   readonly namespace: string;
   readonly layoutId: number;
   readonly hasBackdrop: boolean;
+}
+
+/** A document and the pack path it is written to. */
+export interface PlacedDocument {
+  readonly file: string;
+  readonly document: Document;
+}
+
+/** The documents that route one addon's compiled screens onto the chest. */
+export interface ChestRouting {
+  /** The addon's copies of vanilla's chest files: one modification each, inserting the addon's root. */
+  readonly hooks: readonly PlacedDocument[];
+  /** The addon's router: its root, and a gated host per screen. */
+  readonly router: Document;
+  /** Pack path the router is written to — the addon's own, so two addons' routers never overwrite each other. */
+  readonly routerFile: string;
 }
 
 /**
@@ -80,24 +129,21 @@ export interface RoutedScreen {
  */
 export const MOUNT_ANCHOR = 'center';
 
-/**
- * The router's item renderer that hides the runtime's transport item. A
- * `hideOwned` grid in a compiled screen draws its cells with it, so a button's
- * auto-placed transport never flashes in the player's own grids.
- */
-export const GATED_ITEM = 'core_ui_gated_item';
+/** Pack path of an addon's router document. */
+export const routerFileOf = (addon: string, host: ChestHost = CHEST_HOST): string =>
+  `${host.routerDir}/${addon}_router.json`;
 
 /**
  * `collection_index` is only accepted on a direct child of a control declaring
  * `collection_name`, and that is only legal on stack_panel/grid. So anything
  * reading a slot gets a one-child host directly above it.
  */
-const indexHost = (child: string, collection: string): Control => ({
+const indexHost = (child: string, collection: string, index: number): Control => ({
   type: 'stack_panel',
   orientation: 'vertical',
   size: ['100%', '100%'],
   collection_name: collection,
-  controls: [{ [child]: { collection_index: 0 } }],
+  controls: [{ [child]: { collection_index: index } }],
 });
 
 const sentinelBindings = (collection: string): Binding[] => [
@@ -109,102 +155,27 @@ const sentinelBindings = (collection: string): Binding[] => [
     binding_collection_name: collection,
   },
   {
-    binding_name: '#item_durability_current_amount',
-    binding_name_override: '#layout',
+    binding_name: '#inventory_stack_count',
+    binding_name_override: '#count',
     binding_type: 'collection',
     binding_collection_name: collection,
   },
 ];
 
-/**
- * The player's inventory and hotbar, redrawn so a transport item is invisible.
- *
- * A button press auto-places its transport into the player's inventory, and
- * vanilla's grids would draw it there for the tick it takes the script to pull
- * it back. These are clones of vanilla's own grids with ONE swap: the item
- * renderer is wrapped in a panel that reads the slot's id and durability and
- * hides itself when both match the transport — the same two-literal check the
- * router itself runs on the sentinel. The durability bar rides inside the same
- * wrapper (vanilla's own is turned off), so a damaged transport does not leave
- * a stray bar floating over an apparently empty cell.
- *
- * Cloned rather than modified: vanilla's `container_item` hardcodes its bar and
- * takes only the renderer as a variable, so the wrapper is the one seam wide
- * enough to carry both.
- *
- * The grids carry no anchors or offsets of their own: a compiled screen
- * references them and places them at the rect the author solved for.
- */
-const hiddenItemGrids = (ns: string, grids: ChestHost['grids']): Record<string, Control> => ({
-  // The seam: vanilla's item renderer plus its durability bar, gated together.
-  // `$item_collection_name` flows down from the grid item exactly as it does
-  // into vanilla's own bar — a variable is legal there, since this whole tree
-  // is a normal replacement, not a `modifications` insert.
-  [GATED_ITEM]: {
-    type: 'panel',
-    size: ['100%', '100%'],
-    controls: [
-      { 'renderer@common.item_renderer': { size: ['100%', '100%'] } },
-      {
-        'durability@common.durability_bar': {
-          $durability_bar_required: true,
-          offset: [0, 5],
-          layer: 20,
-        },
-      },
-    ],
-    bindings: [
-      { binding_type: 'collection_details', binding_collection_name: '$item_collection_name' },
-      {
-        binding_name: '#item_id_aux',
-        binding_name_override: '#aux',
-        binding_type: 'collection',
-        binding_collection_name: '$item_collection_name',
-      },
-      {
-        binding_name: '#item_durability_current_amount',
-        binding_name_override: '#dur',
-        binding_type: 'collection',
-        binding_collection_name: '$item_collection_name',
-      },
-      {
-        binding_type: 'view',
-        source_property_name: `(not ((#aux = ${PROTOCOL_ITEM_AUX}) and (#dur = ${TRANSPORT_ORDINAL})))`,
-        target_property_name: '#visible',
-      },
-    ],
-  },
-
-  'core_ui_inventory_item@common.container_item': {
-    $item_collection_name: 'inventory_items',
-    $item_renderer: `${ns}.core_ui_gated_item`,
-    // Off so the only bar is the gated one inside the wrapper above.
-    $durability_bar_required: false,
-  },
-
-  'core_ui_hotbar_item@common.container_item': {
-    $item_collection_name: 'hotbar_items',
-    $item_renderer: `${ns}.core_ui_gated_item`,
-    $durability_bar_required: false,
-  },
-
-  // Vanilla's inventory grid, cell swapped.
-  [grids.inventory]: {
-    type: 'grid',
-    size: [162, 54],
-    grid_dimensions: [9, 3],
-    grid_item_template: `${ns}.core_ui_inventory_item`,
-    collection_name: 'inventory_items',
-  },
-
-  // Vanilla's `common.hotbar_grid_template`, cell swapped.
-  [grids.hotbar]: {
-    type: 'grid',
-    size: [162, 18],
-    grid_dimensions: [9, 1],
-    grid_item_template: `${ns}.core_ui_hotbar_item`,
-    collection_name: 'hotbar_items',
-  },
+/** A full-screen panel shown only while the slot it is hosted on satisfies `condition`. */
+const gate = (collection: string, condition: string, controls: ControlEntry[], layer?: number): Control => ({
+  type: 'panel',
+  size: ['100%', '100%'],
+  ...layer === undefined ? {} : { layer },
+  controls,
+  bindings: [
+    ...sentinelBindings(collection),
+    {
+      binding_type: 'view',
+      source_property_name: condition,
+      target_property_name: '#visible',
+    },
+  ],
 });
 
 /** Every key a screen is routed by has to be usable and unique, or two screens share a chest. */
@@ -214,12 +185,9 @@ const checkKeys = (screens: readonly RoutedScreen[]): void => {
 
   for (const screen of screens) {
     if (!Number.isInteger(screen.layoutId) || screen.layoutId < 1 || screen.layoutId > MAX_LAYOUT) {
-      // The layout key and the transport's mark share the durability channel,
-      // so they must never meet: a layout with the transport's reading would
-      // make the grids hide the wrong item.
       throw new ContainerScreenError(
-        `Layout id ${screen.layoutId} (${screen.name}) is outside 1..${MAX_LAYOUT}; `
-        + `${TRANSPORT_ORDINAL} marks a button's transport item and the two ride the same durability value.`,
+        `Layout id ${screen.layoutId} (${screen.name}) is outside 1..${MAX_LAYOUT}: `
+        + 'the key rides two stack sizes of 2..64.',
       );
     }
 
@@ -227,7 +195,8 @@ const checkKeys = (screens: readonly RoutedScreen[]): void => {
 
     if (taken !== undefined) {
       throw new ContainerScreenError(
-        `Screens "${taken}" and "${screen.name}" share layout id ${screen.layoutId}; both would claim the same chest.`,
+        `Screens "${taken}" and "${screen.name}" share layout key ${screen.layoutId}; both would claim the same chest. `
+        + 'The key is derived from the screen\'s name: rename one of them.',
       );
     }
 
@@ -241,20 +210,62 @@ const checkKeys = (screens: readonly RoutedScreen[]): void => {
 };
 
 /**
- * The router document, in the host's own namespace.
+ * The addon's hooks: its copies of vanilla's chest files, each holding one
+ * modification that inserts the addon's root into the chest top half the
+ * chest root mounts. Nothing is defined in them, so they stack with the
+ * render pack's copies and with every other addon's, whatever order the
+ * packs sit in.
+ */
+const hooksOf = (addon: string, host: ChestHost): PlacedDocument[] => host.hooks.map(hook => ({
+  file: hook.file,
+  document: {
+    namespace: hook.namespace,
+    [hook.target]: {
+      modifications: [
+        {
+          array_name: 'controls',
+          operation: 'insert_back',
+          value: [{ [`${addon}@${host.routerNamespace}.${addon}_root`]: {} }],
+        },
+      ],
+    },
+  },
+}));
+
+/**
+ * The hooks and the router, for every compiled screen of one addon.
  *
  * @param screens - Every compiled screen the router has to reach.
+ * @param addon - The addon's namespace: it names the router's file and every definition in it.
  * @param host - The host the screens were compiled for.
  * @throws ContainerScreenError when a layout key is out of range or shared.
  */
-export const chestRouter = (screens: readonly RoutedScreen[], host: ChestHost = CHEST_HOST): Document => {
+export const chestRouter = (screens: readonly RoutedScreen[], addon: string, host: ChestHost = CHEST_HOST): ChestRouting => {
   checkKeys(screens);
 
-  const ns = host.namespace;
+  const ns = host.routerNamespace;
   const { collection } = host;
-  const document: Document = { namespace: ns, ...hiddenItemGrids(ns, host.grids) };
+  const claimed = `(#aux = ${PROTOCOL_ITEM_AUX})`;
+  const router: Document = { namespace: ns };
+
+  // Every definition carries the addon's name: the router shares its
+  // namespace with the chest root and with every other addon's router, and
+  // the engine keeps one definition per name.
+  //
+  // A screen is gated twice, once per sentinel slot: the outer gate reads the
+  // high half of the key off the first, and hosts the inner gate, which reads
+  // the low half off the second. Both check the protocol id. Two nested gates
+  // are an AND without an expression that would have to read two slots at
+  // once, which no single control can.
+  //
+  // The stack size is a STRING in a binding expression — measured: of every
+  // numeric form, only `(#count = '19')` held on a stack of 19; arithmetic on
+  // it and comparisons against a number are all false — so each key half is
+  // compared as a quoted literal.
+  const [highSlot, lowSlot] = SENTINEL_SLOTS;
 
   for (const screen of screens) {
+    const { high, low } = splitKey(screen.layoutId);
     const mounted: ControlEntry[] = [
       ...screen.hasBackdrop
         ? [{ [`backdrop@${screen.namespace}.${BACKDROP_DEFINITION}`]: {} }]
@@ -267,94 +278,21 @@ export const chestRouter = (screens: readonly RoutedScreen[], host: ChestHost = 
       },
     ];
 
-    document[`core_ui_gate_${screen.name}`] = {
-      type: 'panel',
-      size: ['100%', '100%'],
-      layer: 5,
-      controls: mounted,
-      bindings: [
-        ...sentinelBindings(collection),
-        {
-          binding_type: 'view',
-          source_property_name: `((#aux = ${PROTOCOL_ITEM_AUX}) and (#layout = ${screen.layoutId}))`,
-          target_property_name: '#visible',
-        },
-      ],
-    };
-
-    document[`core_ui_host_${screen.name}`] = indexHost(`gate@${ns}.core_ui_gate_${screen.name}`, collection);
+    router[`${addon}_low_gate_${screen.name}`] = gate(collection, `(${claimed} and (#count = '${low}'))`, mounted, 5);
+    router[`${addon}_low_host_${screen.name}`] = indexHost(`gate@${ns}.${addon}_low_gate_${screen.name}`, collection, lowSlot);
+    router[`${addon}_gate_${screen.name}`] = gate(collection, `(${claimed} and (#count = '${high}'))`, [
+      { [`low@${ns}.${addon}_low_host_${screen.name}`]: {} },
+    ]);
+    router[`${addon}_host_${screen.name}`] = indexHost(`gate@${ns}.${addon}_gate_${screen.name}`, collection, highSlot);
   }
 
-  // True only when no compiled layout claimed the screen, i.e. an ordinary
-  // chest. Vanilla's own visual content is re-emitted here, behind the inverted
-  // gate, because the replacement below takes the whole screen.
-  document['core_ui_vanilla_gate'] = {
+  // The addon's root fills the screen like the chest root does; only the host
+  // whose gate is open draws anything.
+  router[`${addon}_root`] = {
     type: 'panel',
     size: ['100%', '100%'],
-    layer: 5,
-    controls: [
-      { 'common_panel@common.common_panel': {} },
-      { [`small_chest_panel_top_half@${ns}.small_chest_panel_top_half`]: {} },
-      { 'inventory_panel_bottom_half_with_label@common.inventory_panel_bottom_half_with_label': {} },
-      { 'hotbar_grid@common.hotbar_grid_template': {} },
-      // Vanilla keeps its fly animation; compiled screens do without — see the
-      // root panel below.
-      { 'flying_item_renderer@common.flying_item_renderer': { layer: 15 } },
-    ],
-    bindings: [
-      ...sentinelBindings(collection),
-      {
-        binding_type: 'view',
-        source_property_name: `(not (#aux = ${PROTOCOL_ITEM_AUX}))`,
-        target_property_name: '#visible',
-      },
-    ],
+    controls: screens.map(screen => ({ [`${screen.name}@${ns}.${addon}_host_${screen.name}`]: {} })),
   };
 
-  document['core_ui_vanilla_host'] = indexHost(`gate@${ns}.core_ui_vanilla_gate`, collection);
-
-  // The WHOLE screen, not the strip above the player's inventory.
-  //
-  // A compiled screen decides everything that is drawn, so the background, the
-  // player's inventory and the hotbar are not free -- a screen asks for them
-  // by name or does without. What is NOT optional is the functional chrome:
-  // without the take-progress button touch controls cannot take, without the
-  // selected-icon button a held item has no icon on touch, and without the
-  // gamepad cursor a controller cannot move. Those stay in vanilla's
-  // `root_panel`, which also carries the key routes every chest relies on, and
-  // are emitted for both paths.
-  //
-  // Wholesale replacement rather than a modification: a replacement is a normal
-  // control tree, so cross-namespace @-bases resolve inside it.
-  document['small_chest_panel'] = {
-    type: 'panel',
-    controls: [
-      { 'container_gamepad_helpers@common.container_gamepad_helpers': {} },
-      { 'selected_item_details_factory@common.selected_item_details_factory': {} },
-      { 'item_lock_notification_factory@common.item_lock_notification_factory': {} },
-      {
-        'root_panel@common.root_panel': {
-          layer: 1,
-          controls: [
-            { [`vanilla@${ns}.core_ui_vanilla_host`]: {} },
-            { 'inventory_take_progress_icon_button@common.inventory_take_progress_icon_button': {} },
-            // No flyer here: it lives in the vanilla gate. The renderer draws
-            // whatever flies with no way to filter by item, and on a compiled
-            // screen the most frequent flier is a button's transport on its way
-            // to the hidden grids. The cost is real items from input and output
-            // slots arriving without the animation.
-            { 'inventory_selected_icon_button@common.inventory_selected_icon_button': {} },
-            { 'gamepad_cursor@common.gamepad_cursor_button': {} },
-          ],
-        },
-      },
-      // Screen level, not inside `root_panel`: the canvas is the whole screen,
-      // the way a form's is, and `root_panel` is only 176 x 166.
-      ...screens.map(screen => ({
-        [`core_ui_${screen.name}@${ns}.core_ui_host_${screen.name}`]: {},
-      })),
-    ],
-  };
-
-  return document;
+  return { hooks: hooksOf(addon, host), router, routerFile: routerFileOf(addon, host) };
 };

@@ -1,0 +1,115 @@
+{
+	"namespace": "core_ui_router",
+
+	// The chest roots: what the chest screen's content is pointed at, one per
+	// UI profile. Vanilla's own chest panel — referenced by name, untouched —
+	// sits behind a gate that opens only for a chest no compiled screen
+	// claims. Behind the opposite gate: the library's chrome, in place of the
+	// helpers that panel carries, and vanilla's chest top half mounted again,
+	// which is where every addon's build inserts its root. Its own label and
+	// grid hide themselves on the same key, so only the roots show there.
+	//
+	// The routing reads the sentinel in slot 0: its item id is the protocol
+	// key every compiled screen shares. A vanilla chest has no marker there,
+	// fails the check, and renders untouched — absence IS the vanilla path.
+	//
+	// The literal is the runtime's protocol aux (8978432). A `$variable` in a
+	// binding's source_property_name is dropped by the engine, so it is written
+	// out here and pinned by a test against the runtime constant.
+
+	// `collection_index` is accepted only on a direct child of a control that
+	// declares `collection_name`, so anything reading the sentinel sits under a
+	// one-child host. Every name is a literal: a `$variable` as a child's
+	// `@`-base, set from the reference site, mounts nothing — measured — so
+	// nothing in this tree relies on one, in a name or in an expression.
+	"vanilla_host_desktop": {
+		"type": "stack_panel",
+		"orientation": "vertical",
+		"size": [ "100%", "100%" ],
+		"collection_name": "container_items",
+		"controls": [
+			{ "gate@core_ui_router.vanilla_gate_desktop": { "collection_index": 0 } }
+		]
+	},
+
+	"vanilla_host_pocket": {
+		"type": "stack_panel",
+		"orientation": "vertical",
+		"size": [ "100%", "100%" ],
+		"collection_name": "container_items",
+		"controls": [
+			{ "gate@core_ui_router.vanilla_gate_pocket": { "collection_index": 0 } }
+		]
+	},
+
+	"claimed_host": {
+		"type": "stack_panel",
+		"orientation": "vertical",
+		"size": [ "100%", "100%" ],
+		"collection_name": "container_items",
+		"controls": [
+			{ "gate@core_ui_router.claimed_gate": { "collection_index": 0 } }
+		]
+	},
+
+	"vanilla_gate": {
+		"type": "panel",
+		"size": [ "100%", "100%" ],
+		"bindings": [
+			{ "binding_type": "collection_details", "binding_collection_name": "container_items" },
+			{ "binding_name": "#item_id_aux", "binding_name_override": "#aux", "binding_type": "collection", "binding_collection_name": "container_items" },
+			{ "binding_type": "view", "source_property_name": "(not (#aux = 8978432))", "target_property_name": "#visible" }
+		]
+	},
+
+	"vanilla_gate_desktop@core_ui_router.vanilla_gate": {
+		"controls": [
+			{ "vanilla@chest.small_chest_panel": {} }
+		]
+	},
+
+	"vanilla_gate_pocket@core_ui_router.vanilla_gate": {
+		"controls": [
+			{ "vanilla@pocket_containers.small_chest_panel": {} }
+		]
+	},
+
+	"claimed_gate": {
+		"type": "panel",
+		"size": [ "100%", "100%" ],
+		"controls": [
+			{ "chrome@core_ui_container.chrome": {} },
+			{
+				"roots@chest.small_chest_panel_top_half": {
+					"size": [ "100%", "100%" ],
+					"offset": [ 0, 0 ],
+					"anchor_from": "center",
+					"anchor_to": "center"
+				}
+			}
+		],
+		"bindings": [
+			{ "binding_type": "collection_details", "binding_collection_name": "container_items" },
+			{ "binding_name": "#item_id_aux", "binding_name_override": "#aux", "binding_type": "collection", "binding_collection_name": "container_items" },
+			{ "binding_type": "view", "source_property_name": "(#aux = 8978432)", "target_property_name": "#visible" }
+		]
+	},
+
+	"chest_root": {
+		"type": "panel",
+		"size": [ "100%", "100%" ],
+		"controls": [
+			{ "vanilla@core_ui_router.vanilla_host_desktop": {} },
+			{ "claimed@core_ui_router.claimed_host": {} }
+		]
+	},
+
+	"chest_root_pocket": {
+		"type": "panel",
+		"size": [ "100%", "100%" ],
+		"controls": [
+			{ "vanilla@core_ui_router.vanilla_host_pocket": {} },
+			{ "claimed@core_ui_router.claimed_host": {} }
+		]
+	}
+}

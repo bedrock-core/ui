@@ -9,10 +9,10 @@ import { Slot } from '../../components/Slot';
 import type { JSX } from '../../jsx';
 import { allocate, type Allocation } from '../allocate';
 import { buildContainerTree } from '../build';
-import { PROTOCOL_ITEM } from '../contract';
-import { isGuard, isTransport, transport } from '../items';
+import { PROTOCOL_ITEM, TRANSPORT_ITEM } from '../contract';
+import { guard, isGuard, isTransport, transport } from '../items';
 import {
-  createWatch, fingerprint, poll, type PollHost, reclaim, resync, retrieve, sweep,
+  createLedger, createWatch, fingerprint, poll, type PollHost, reclaim, resync, retrieve, sweep,
 } from '../poll';
 import { buttonSlots, reconcile, writeButtons } from '../reconcile';
 
@@ -82,7 +82,7 @@ const onInsert = vi.fn();
 const onRemove = vi.fn();
 const onTake = vi.fn();
 
-/** A button, an input, an output and an ordinary slot: 1, 2, 3, 4. */
+/** A button, an input, an output and an ordinary slot: 2, 3, 4, 5, after the two sentinel slots. */
 const Screen = (): JSX.Element => Container({
   entity: 'core:test',
   children: [
@@ -94,7 +94,7 @@ const Screen = (): JSX.Element => Container({
 });
 
 /** A stand-in host entity: the poll only hands it to the slot handlers. */
-const HOST = { typeId: 'core:test' } as unknown as Entity;
+const HOST = { typeId: 'core:test', isValid: true } as unknown as Entity;
 
 interface Rig {
   readonly container: EngineContainer;
@@ -123,6 +123,7 @@ const rig = (...viewers: FakePlayer[]): Rig => {
     entity: HOST,
     viewers: viewers.map(viewer => viewer.player),
     watch,
+    ledger: createLedger(),
     slots: allocation.slots,
     handle,
     trace: vi.fn(),
@@ -148,7 +149,7 @@ describe('a press', () => {
     const viewer = createPlayer('p1');
     const { container, host, handle } = rig(viewer);
 
-    lift(container, 1, viewer);
+    lift(container, 2, viewer);
     poll(host);
 
     expect(viewer.cursor.item).toBeUndefined();
@@ -156,10 +157,10 @@ describe('a press', () => {
     expect(onPress).toHaveBeenCalledWith(viewer.player, HOST);
     expect(handle).toHaveBeenCalledTimes(1);
 
-    const item = container.getItem(1);
+    const item = container.getItem(2);
 
     expect(item && isTransport(item)).toBe(true);
-    expect(host.watch.expected[1]).toBe(fingerprint(container, 1));
+    expect(host.watch.expected[2]).toBe(fingerprint(container, 2));
 
     // Settled: a second poll sees nothing.
     poll(host);
@@ -171,8 +172,8 @@ describe('a press', () => {
     const viewer = createPlayer('p1');
     const { container, host } = rig(viewer);
 
-    viewer.inventory.setItem(4, container.getItem(1));
-    container.setItem(1, undefined);
+    viewer.inventory.setItem(4, container.getItem(2));
+    container.setItem(2, undefined);
     poll(host);
 
     expect(viewer.inventory.getItem(4)).toBeUndefined();
@@ -183,8 +184,8 @@ describe('a press', () => {
     const viewer = createPlayer('p1');
     const { container, host } = rig(viewer);
 
-    viewer.cursor.hold(container.getItem(1));
-    container.setItem(1, stone(5));
+    viewer.cursor.hold(container.getItem(2));
+    container.setItem(2, stone(5));
     poll(host);
 
     expect(onPress).toHaveBeenCalledTimes(1);
@@ -192,7 +193,7 @@ describe('a press', () => {
     expect(viewer.inventory.getItem(0)?.typeId).toBe('minecraft:stone');
     expect(viewer.inventory.getItem(0)?.amount).toBe(5);
 
-    const item = container.getItem(1);
+    const item = container.getItem(2);
 
     expect(item && isTransport(item)).toBe(true);
   });
@@ -202,7 +203,7 @@ describe('a press', () => {
     const second = createPlayer('p2');
     const { container, host } = rig(first, second);
 
-    lift(container, 1, second);
+    lift(container, 2, second);
     poll(host);
 
     expect(onPress).toHaveBeenCalledWith(second.player, HOST);
@@ -213,24 +214,25 @@ describe('a press', () => {
     const viewer = createPlayer('p1');
     const { container, host, allocation } = rig(viewer);
 
-    container.setItem(4, transport());
+    container.setItem(5, transport());
 
-    expect(reclaim(container, [viewer.player], allocation.slots, 1)).toBeUndefined();
-    expect(container.getItem(4)).toBeUndefined();
-    expect(container.getItem(1)?.typeId).toBe(PROTOCOL_ITEM);
+    expect(reclaim(container, [viewer.player], allocation.slots, 2)).toBeUndefined();
+    expect(container.getItem(5)).toBeUndefined();
+    expect(container.getItem(2)?.typeId).toBe(TRANSPORT_ITEM);
     expect(container.getItem(0)?.typeId).toBe(PROTOCOL_ITEM);
-    expect(host.watch.expected[1]).toBe(fingerprint(container, 1));
+    expect(container.getItem(1)?.typeId).toBe(PROTOCOL_ITEM);
+    expect(host.watch.expected[2]).toBe(fingerprint(container, 2));
   });
 
   it('runs the handler even when the copy is nowhere, so a press is never lost', () => {
     const viewer = createPlayer('p1');
     const { container, host } = rig(viewer);
 
-    container.setItem(1, undefined);
+    container.setItem(2, undefined);
     poll(host);
 
     expect(onPress).toHaveBeenCalledWith(viewer.player, HOST);
-    expect(container.getItem(1)?.typeId).toBe(PROTOCOL_ITEM);
+    expect(container.getItem(2)?.typeId).toBe(TRANSPORT_ITEM);
   });
 });
 
@@ -239,38 +241,38 @@ describe('an input slot', () => {
     const viewer = createPlayer('p1');
     const { container, host } = rig(viewer);
 
-    container.setItem(2, stone(3));
-    resync(container, host.watch, [2]);
-    lift(container, 2, viewer);
+    container.setItem(3, stone(3));
+    resync(container, host.watch, [3]);
+    lift(container, 3, viewer);
     poll(host);
 
     expect(viewer.cursor.item).toBeUndefined();
-    expect(container.getItem(2)?.typeId).toBe('minecraft:stone');
-    expect(container.getItem(2)?.amount).toBe(3);
+    expect(container.getItem(3)?.typeId).toBe('minecraft:stone');
+    expect(container.getItem(3)?.amount).toBe(3);
     expect(onInsert).not.toHaveBeenCalled();
     expect(host.handle).not.toHaveBeenCalled();
-    expect(host.watch.expected[2]).toBe(fingerprint(container, 2));
+    expect(host.watch.expected[3]).toBe(fingerprint(container, 3));
   });
 
   it('takes a partial back from a merged stack and returns the change from a larger cursor', () => {
     const viewer = createPlayer('p1');
     const { container, host } = rig(viewer);
 
-    container.setItem(2, stone(3));
-    resync(container, host.watch, [2]);
+    container.setItem(3, stone(3));
+    resync(container, host.watch, [3]);
     viewer.inventory.setItem(0, stone(10));
-    container.setItem(2, undefined);
+    container.setItem(3, undefined);
     poll(host);
 
     expect(viewer.inventory.getItem(0)?.amount).toBe(7);
-    expect(container.getItem(2)?.amount).toBe(3);
+    expect(container.getItem(3)?.amount).toBe(3);
 
     viewer.cursor.hold(stone(5));
-    container.setItem(2, undefined);
+    container.setItem(3, undefined);
     poll(host);
 
     expect(viewer.cursor.item).toBeUndefined();
-    expect(container.getItem(2)?.amount).toBe(3);
+    expect(container.getItem(3)?.amount).toBe(3);
     expect(viewer.inventory.getItem(1)?.amount).toBe(2);
   });
 
@@ -278,13 +280,13 @@ describe('an input slot', () => {
     const viewer = createPlayer('p1');
     const { container, host } = rig(viewer);
 
-    container.setItem(2, stone(3));
-    resync(container, host.watch, [2]);
-    container.setItem(2, undefined);
+    container.setItem(3, stone(3));
+    resync(container, host.watch, [3]);
+    container.setItem(3, undefined);
     poll(host);
 
-    expect(container.getItem(2)).toBeUndefined();
-    expect(host.watch.expected[2]).toBe('');
+    expect(container.getItem(3)).toBeUndefined();
+    expect(host.watch.expected[3]).toBe('');
     expect(host.trace).toHaveBeenCalledWith(expect.stringMatching(/NOT undone/));
   });
 
@@ -292,17 +294,17 @@ describe('an input slot', () => {
     const viewer = createPlayer('p1');
     const { container, host } = rig(viewer);
 
-    container.setItem(2, stone(3));
-    resync(container, host.watch, [2]);
+    container.setItem(3, stone(3));
+    resync(container, host.watch, [3]);
 
     // The engine swaps: the player's item takes the slot, the original goes to
     // the cursor.
     viewer.cursor.hold(stone(3));
-    container.setItem(2, new ItemStack('minecraft:dirt', 1));
+    container.setItem(3, new ItemStack('minecraft:dirt', 1));
     poll(host);
 
-    expect(container.getItem(2)?.typeId).toBe('minecraft:stone');
-    expect(container.getItem(2)?.amount).toBe(3);
+    expect(container.getItem(3)?.typeId).toBe('minecraft:stone');
+    expect(container.getItem(3)?.amount).toBe(3);
     expect(viewer.inventory.getItem(0)?.typeId).toBe('minecraft:dirt');
     expect(onInsert).not.toHaveBeenCalled();
   });
@@ -311,7 +313,7 @@ describe('an input slot', () => {
     const viewer = createPlayer('p1');
     const { container, host } = rig(viewer);
 
-    container.setItem(2, stone(4));
+    container.setItem(3, stone(4));
     poll(host);
 
     expect(onInsert).toHaveBeenCalledTimes(1);
@@ -323,7 +325,7 @@ describe('an input slot', () => {
     expect(call?.[1]?.amount).toBe(4);
     expect(call?.[2]).toBe(HOST);
     expect(host.handle).toHaveBeenCalledTimes(1);
-    expect(host.watch.expected[2]).toBe(fingerprint(container, 2));
+    expect(host.watch.expected[3]).toBe(fingerprint(container, 3));
   });
 });
 
@@ -331,7 +333,7 @@ describe('an output slot', () => {
   it('never sits empty, so a shift-click has no slot to auto-place into', () => {
     const { container } = rig(createPlayer('p1'));
 
-    expect(isGuard(container.getItem(3)!)).toBe(true);
+    expect(isGuard(container.getItem(4)!)).toBe(true);
   });
 
   it('keeps a result the machine writes over the guard', () => {
@@ -341,33 +343,33 @@ describe('an output slot', () => {
     const viewer = createPlayer('p1');
     const { container, host } = rig(viewer);
 
-    container.setItem(3, stone(2));
+    container.setItem(4, stone(2));
     poll(host);
 
-    expect(container.getItem(3)?.typeId).toBe('minecraft:stone');
-    expect(container.getItem(3)?.amount).toBe(2);
+    expect(container.getItem(4)?.typeId).toBe('minecraft:stone');
+    expect(container.getItem(4)?.amount).toBe(2);
     expect(viewer.inventory.getItem(0)).toBeUndefined();
     expect(onTake).not.toHaveBeenCalled();
-    expect(host.watch.expected[3]).toBe(fingerprint(container, 3));
+    expect(host.watch.expected[4]).toBe(fingerprint(container, 4));
   });
 
   it('reverses a swap over a result: nothing is taken and the result stands again', () => {
     const viewer = createPlayer('p1');
     const { container, host } = rig(viewer);
 
-    container.setItem(3, stone(2));
-    resync(container, host.watch, [3]);
+    container.setItem(4, stone(2));
+    resync(container, host.watch, [4]);
 
     // The player clicks the result with an item on the cursor: the engine
     // swaps them, taking the result and placing theirs. The swap is reversed —
     // the result comes off the cursor and stands in the slot again; the placed
     // item returns to the player (the inventory: a cursor cannot be written).
     viewer.cursor.hold(stone(2));
-    container.setItem(3, new ItemStack('minecraft:dirt', 1));
+    container.setItem(4, new ItemStack('minecraft:dirt', 1));
     poll(host);
 
-    expect(container.getItem(3)?.typeId).toBe('minecraft:stone');
-    expect(container.getItem(3)?.amount).toBe(2);
+    expect(container.getItem(4)?.typeId).toBe('minecraft:stone');
+    expect(container.getItem(4)?.amount).toBe(2);
     expect(viewer.cursor.item).toBeUndefined();
     expect(viewer.inventory.getItem(0)?.typeId).toBe('minecraft:dirt');
     expect(onTake).not.toHaveBeenCalled();
@@ -377,14 +379,14 @@ describe('an output slot', () => {
     const viewer = createPlayer('p1', 1);
     const { container, host } = rig(viewer);
 
-    container.setItem(3, stone(2));
-    resync(container, host.watch, [3]);
+    container.setItem(4, stone(2));
+    resync(container, host.watch, [4]);
     viewer.inventory.setItem(0, stone(1));
 
     // A swap over the result with a full inventory: the refund has nowhere to
     // go, so it is dropped rather than destroyed.
     viewer.cursor.hold(stone(2));
-    container.setItem(3, new ItemStack('minecraft:dirt', 2));
+    container.setItem(4, new ItemStack('minecraft:dirt', 2));
     poll(host);
 
     expect(viewer.dropped).toHaveLength(1);
@@ -395,9 +397,9 @@ describe('an output slot', () => {
     const viewer = createPlayer('p1');
     const { container, host } = rig(viewer);
 
-    container.setItem(3, stone(2));
-    resync(container, host.watch, [3]);
-    lift(container, 3, viewer);
+    container.setItem(4, stone(2));
+    resync(container, host.watch, [4]);
+    lift(container, 4, viewer);
     poll(host);
 
     expect(onTake).toHaveBeenCalledTimes(1);
@@ -406,7 +408,7 @@ describe('an output slot', () => {
     expect(onTake.mock.calls[0]?.[1]?.amount).toBe(2);
     expect(onTake.mock.calls[0]?.[2]).toBe(HOST);
     expect(viewer.cursor.item?.typeId).toBe('minecraft:stone');
-    expect(isGuard(container.getItem(3)!)).toBe(true);
+    expect(isGuard(container.getItem(4)!)).toBe(true);
   });
 });
 
@@ -415,13 +417,13 @@ describe('an ordinary slot', () => {
     const viewer = createPlayer('p1');
     const { container, host } = rig(viewer);
 
-    container.setItem(4, stone(6));
+    container.setItem(5, stone(6));
     poll(host);
 
     expect(onInsert).toHaveBeenCalledTimes(1);
     expect(onInsert.mock.calls[0]?.[1]?.amount).toBe(6);
 
-    lift(container, 4, viewer);
+    lift(container, 5, viewer);
     poll(host);
 
     expect(onRemove).toHaveBeenCalledTimes(1);
@@ -436,9 +438,9 @@ describe('an ordinary slot', () => {
     const { container, host } = rig(viewer);
 
     onInsert.mockImplementationOnce(() => {
-      container.setItem(4, undefined);
+      container.setItem(5, undefined);
     });
-    container.setItem(4, stone(1));
+    container.setItem(5, stone(1));
     poll(host);
     poll(host);
 
@@ -446,18 +448,47 @@ describe('an ordinary slot', () => {
     expect(onRemove).not.toHaveBeenCalled();
   });
 
-  it('guesses the viewer holding the removed item as the one who took it', () => {
+  it('traces a removal to the viewer who gained the item since the last poll', () => {
     const first = createPlayer('p1');
     const second = createPlayer('p2');
     const { container, host } = rig(first, second);
 
-    container.setItem(4, stone(2));
-    resync(container, host.watch, [4]);
-    lift(container, 4, second);
+    container.setItem(5, stone(2));
+    resync(container, host.watch, [5]);
+    // A quiet poll records what each viewer carries; the take is read against it.
+    poll(host);
+    lift(container, 5, second);
     poll(host);
 
     expect(onRemove.mock.calls[0]?.[0]).toBe(second.player);
     expect(onRemove.mock.calls[0]?.[2]).toBe(HOST);
+  });
+
+  it('traces an insert to the viewer who lost the item, and never marks the item', () => {
+    const first = createPlayer('p1');
+    const second = createPlayer('p2');
+    const { container, host } = rig(first, second);
+
+    second.inventory.setItem(0, stone(5));
+    poll(host);
+    second.inventory.setItem(0, stone(2));
+    container.setItem(5, stone(3));
+    poll(host);
+
+    expect(onInsert.mock.calls[0]?.[0]).toBe(second.player);
+    expect(container.getItem(5)?.getDynamicPropertyIds?.() ?? []).toEqual([]);
+  });
+
+  it('falls back to the first viewer when no viewer\'s side changed', () => {
+    const first = createPlayer('p1');
+    const second = createPlayer('p2');
+    const { container, host } = rig(first, second);
+
+    poll(host);
+    container.setItem(5, stone(3));
+    poll(host);
+
+    expect(onInsert.mock.calls[0]?.[0]).toBe(first.player);
   });
 });
 
@@ -489,9 +520,69 @@ describe('a session’s housekeeping', () => {
   it('does nothing without a viewer', () => {
     const { container, host } = rig();
 
-    container.setItem(1, undefined);
+    container.setItem(2, undefined);
     poll(host);
 
     expect(onPress).not.toHaveBeenCalled();
+  });
+});
+
+describe('handler guards', () => {
+  it('never hands a handler a player who is no longer valid', () => {
+    const viewer = createPlayer('p1');
+    const { container, host } = rig(viewer);
+
+    (viewer.player as unknown as { isValid: boolean }).isValid = false;
+    lift(container, 2, viewer);
+    poll(host);
+
+    expect(onPress).not.toHaveBeenCalled();
+  });
+
+  it('never hands a handler an entity that is no longer valid', () => {
+    const viewer = createPlayer('p1');
+    const { container, host } = rig(viewer);
+    const dead = { ...host, entity: { typeId: 'core:test', isValid: false } as unknown as Entity };
+
+    lift(container, 2, viewer);
+    poll(dead);
+
+    expect(onPress).not.toHaveBeenCalled();
+
+    container.setItem(5, stone(2));
+    poll(dead);
+
+    expect(onInsert).not.toHaveBeenCalled();
+  });
+});
+
+describe('an output slot under a late click', () => {
+  it('reverses a swap over the guard rather than taking it for a machine write', () => {
+    const viewer = createPlayer('p1');
+    const { container, host } = rig(viewer);
+
+    // The client still drew the result it last saw; the click landed after the
+    // guard was restored and swapped: the player's item in, the guard out.
+    viewer.cursor.hold(guard());
+    container.setItem(4, stone(1));
+    poll(host);
+
+    const restored = container.getItem(4);
+
+    expect(restored !== undefined && isGuard(restored)).toBe(true);
+    expect(viewer.cursor.item).toBeUndefined();
+    expect(viewer.inventory.getItem(0)?.typeId).toBe('minecraft:stone');
+    expect(onTake).not.toHaveBeenCalled();
+  });
+
+  it('lets a machine write stand when no viewer holds the guard', () => {
+    const viewer = createPlayer('p1');
+    const { container, host } = rig(viewer);
+
+    container.setItem(4, stone(1));
+    poll(host);
+
+    expect(container.getItem(4)?.typeId).toBe('minecraft:stone');
+    expect(viewer.inventory.getItem(0)).toBeUndefined();
   });
 });

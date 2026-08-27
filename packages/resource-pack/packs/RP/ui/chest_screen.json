@@ -1,0 +1,71 @@
+// The chest screen, hooked for compiled screens.
+//
+// Vanilla's chest content is switched off the way vanilla's own shulker-box
+// and barrel screens switch theirs: the screen names a different
+// $screen_content. Ours is the chest root, which holds vanilla's chest panel
+// by reference behind a gate that opens for any chest no compiled screen
+// claims, and the library's chrome behind the opposite gate. A modification
+// cannot do this: `variables` is not an array modifications reach, and a
+// `controls` insert on the screen creates an array that shadows the one the
+// screen inherits from common.base_screen, leaving every chest empty.
+//
+// Two chest-only definitions get a visibility binding: the title label and
+// the 9x3 grid, shown for an ordinary chest, hidden while the sentinel in
+// slot 0 carries the protocol key. Their panel, small_chest_panel_top_half,
+// is where every addon's build inserts its root, in its own copy of this
+// file — an array vanilla itself declares, so the inserts stack in whatever
+// order the packs sit — and the chest root mounts that panel a second time,
+// claimed, with nothing but the roots left visible in it.
+{
+	"namespace": "chest",
+
+	"small_chest_screen@common.inventory_screen_common": {
+		"$close_on_player_hurt|default": true,
+		"$use_custom_pocket_toast|default": false,
+		"close_on_player_hurt": "$close_on_player_hurt",
+		"use_custom_pocket_toast": "$use_custom_pocket_toast",
+		"variables": [
+			{
+				"requires": "$desktop_screen",
+				"$screen_content": "core_ui_router.chest_root",
+				"$screen_bg_content": "common.screen_background",
+				"$screen_background_alpha": 0.4
+			},
+			{
+				"requires": "$pocket_screen",
+				"$use_custom_pocket_toast": true,
+				"$screen_content": "core_ui_router.chest_root_pocket"
+			}
+		]
+	},
+
+	// The literal is the runtime's protocol aux (8978432): a $variable inside
+	// an inserted binding's source_property_name is dropped by the engine.
+	"chest_label": {
+		"modifications": [
+			{
+				"array_name": "bindings",
+				"operation": "insert_back",
+				"value": [
+					{ "binding_type": "collection_details", "binding_collection_name": "container_items" },
+					{ "binding_name": "#item_id_aux", "binding_name_override": "#core_ui_aux", "binding_type": "collection", "binding_collection_name": "container_items" },
+					{ "binding_type": "view", "source_property_name": "(not (#core_ui_aux = 8978432))", "target_property_name": "#visible" }
+				]
+			}
+		]
+	},
+
+	"small_chest_grid": {
+		"modifications": [
+			{
+				"array_name": "bindings",
+				"operation": "insert_back",
+				"value": [
+					{ "binding_type": "collection_details", "binding_collection_name": "container_items" },
+					{ "binding_name": "#item_id_aux", "binding_name_override": "#core_ui_aux", "binding_type": "collection", "binding_collection_name": "container_items" },
+					{ "binding_type": "view", "source_property_name": "(not (#core_ui_aux = 8978432))", "target_property_name": "#visible" }
+				]
+			}
+		]
+	}
+}

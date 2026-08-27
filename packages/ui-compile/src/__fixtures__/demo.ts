@@ -37,11 +37,11 @@ export const demoScreen: IrDocument = {
   namespace: 'core_ui_demo',
   collection: 'container_items',
   entity: 'core:demo',
-  ownedItemRenderer: 'chest.core_ui_gated_item',
-  // Five drawn cells after the sentinel, then eight bank slots for the text
+  ownedItemRenderer: 'core_ui_container.gated_item',
+  // Five drawn cells after the two sentinel slots, then eight bank slots for the text
   // run. Written out here because the fixture is hand-built; a real screen
   // gets this from the allocation walk.
-  allocation: { sentinel: 0, drawn: 5, channels: 8, size: 14 },
+  allocation: { sentinels: 2, drawn: 5, channels: 8, size: 15 },
   backdrop: 'textures/ui/demo_backdrop',
   root: {
     kind: 'panel',
@@ -73,7 +73,7 @@ export const demoScreen: IrDocument = {
         kind: 'text',
         name: 'text_1',
         rect: { x: 7, y: 35, width: 48, height: 10 },
-        channel: 6,
+        channel: 7,
         length: 8,
         keyPrefix: KEY_PREFIX,
         fontType: 'default',
@@ -102,7 +102,7 @@ export const demoScreen: IrDocument = {
             kind: 'button',
             name: 'button_1',
             rect: { x: 0, y: 0, width: 60, height: 20 },
-            slot: 1,
+            slot: 2,
             face: {
               texture: 'textures/ui/button_borderless_light',
               hover: 'textures/ui/button_borderless_lighthover',
@@ -125,7 +125,7 @@ export const demoScreen: IrDocument = {
             kind: 'button',
             name: 'button_2',
             rect: { x: 64, y: 0, width: 60, height: 20 },
-            slot: 2,
+            slot: 3,
             face: {
               texture: 'textures/ui/button_borderless_light',
               hover: 'textures/ui/button_borderless_lighthover',
@@ -151,9 +151,9 @@ export const demoScreen: IrDocument = {
         name: 'panel_3',
         rect: { x: 7, y: 83, width: 306, height: 18 },
         children: [
-          { kind: 'slot', name: 'slot_1', rect: { x: 0, y: 0, width: 18, height: 18 }, slot: 3, role: 'both', interactive: false },
-          { kind: 'slot', name: 'slot_2', rect: { x: 22, y: 0, width: 18, height: 18 }, slot: 4, role: 'input', interactive: true },
-          { kind: 'slot', name: 'slot_3', rect: { x: 44, y: 0, width: 18, height: 18 }, slot: 5, role: 'both', interactive: true },
+          { kind: 'slot', name: 'slot_1', rect: { x: 0, y: 0, width: 18, height: 18 }, slot: 4, role: 'both', interactive: false },
+          { kind: 'slot', name: 'slot_2', rect: { x: 22, y: 0, width: 18, height: 18 }, slot: 5, role: 'input', interactive: true },
+          { kind: 'slot', name: 'slot_3', rect: { x: 44, y: 0, width: 18, height: 18 }, slot: 6, role: 'both', interactive: true },
         ],
       },
       {

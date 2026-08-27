@@ -177,7 +177,7 @@ describe('toIr', () => {
       const [, run] = convert(tree).root.children;
 
       // One drawn cell occupies slot 1, so the bank opens at 2.
-      expect(run).toMatchObject({ kind: 'text', name: 'text_1', channel: 2, length: 4, keyPrefix: KEY_PREFIX, fontType: 'default' });
+      expect(run).toMatchObject({ kind: 'text', name: 'text_1', channel: 3, length: 4, keyPrefix: KEY_PREFIX, fontType: 'default' });
     });
   });
 
@@ -203,7 +203,7 @@ describe('toIr', () => {
       });
 
       expect(node).toMatchObject({
-        slot: 1,
+        slot: 2,
         face: { texture: 't/rest', hover: 't/hover', pressed: 't/pressed', disabled: 't/off' },
       });
     });
@@ -245,10 +245,10 @@ describe('toIr', () => {
       ]));
 
       expect(doc.root.children).toMatchObject([
-        { kind: 'slot', name: 'slot_1', slot: 1, role: 'input', interactive: true },
-        { kind: 'slot', name: 'slot_2', slot: 2, role: 'output', interactive: true },
-        { kind: 'slot', name: 'slot_3', slot: 3, role: 'both', interactive: false },
-        { kind: 'slot', name: 'slot_4', slot: 4, role: 'both', interactive: true },
+        { kind: 'slot', name: 'slot_1', slot: 2, role: 'input', interactive: true },
+        { kind: 'slot', name: 'slot_2', slot: 3, role: 'output', interactive: true },
+        { kind: 'slot', name: 'slot_3', slot: 4, role: 'both', interactive: false },
+        { kind: 'slot', name: 'slot_4', slot: 5, role: 'both', interactive: true },
       ]);
     });
 
@@ -264,7 +264,7 @@ describe('toIr', () => {
         { kind: 'slot', name: 'slot_2', source: { collection: 'hotbar_items', index: 0, interactive: false } },
       ]);
       // Nothing of the screen's own container is spent on a foreign slot.
-      expect(doc.allocation).toEqual({ sentinel: 0, drawn: 0, channels: 0, size: 1 });
+      expect(doc.allocation).toEqual({ sentinels: 2, drawn: 0, channels: 0, size: 2 });
     });
   });
 
@@ -284,18 +284,18 @@ describe('toIr', () => {
     it('spends nothing of the screen\'s own container', () => {
       const tree = container([at('slot-grid', [0, 0, 162, 18], { collection: 'hotbar_items', columns: 9, rows: 1, interactive: true, hideOwned: true })]);
 
-      expect(convert(tree).allocation).toEqual({ sentinel: 0, drawn: 0, channels: 0, size: 1 });
+      expect(convert(tree).allocation).toEqual({ sentinels: 2, drawn: 0, channels: 0, size: 2 });
     });
 
     it('names the host\'s owned-item renderer, so a hideOwned grid can reach it', () => {
       const tree = container([]);
       const doc = toIr(tree, allocate(tree), {
         ...options,
-        host: { ...CHEST_HOST, namespace: 'crate', collection: 'crate_items' },
+        host: { ...CHEST_HOST, collection: 'crate_items', ownedItemRenderer: 'crate.gated_item' },
       });
 
       expect(doc.collection).toBe('crate_items');
-      expect(doc.ownedItemRenderer).toBe('crate.core_ui_gated_item');
+      expect(doc.ownedItemRenderer).toBe('crate.gated_item');
     });
   });
 
@@ -328,7 +328,7 @@ describe('toIr', () => {
       text([0, 20, 24, 10], 'idle', { maxLength: 4 }),
     ]));
 
-    expect(doc.allocation).toEqual({ sentinel: 0, drawn: 2, channels: 4, size: 7 });
+    expect(doc.allocation).toEqual({ sentinels: 2, drawn: 2, channels: 4, size: 8 });
   });
 
   it('generates stable per-kind names', () => {

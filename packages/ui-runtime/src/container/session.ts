@@ -14,10 +14,12 @@ import { allocate, type Allocation } from './allocate';
 import { buildContainerTree } from './build';
 import { writeChannels, type Written } from './channels';
 import { LAYOUT_PROPERTY } from './contract';
+import { isOwned } from './items';
 import { snapshot } from './debug';
 import {
-  createWatch, poll, resync, sweep, type Watch,
+  createLedger, createWatch, type Ledger, poll, resync, sweep, type Watch,
 } from './poll';
+import { validHost, validPlayer } from './cells/types';
 import { buttonSlots, reconcile, writeButtons } from './reconcile';
 import { hydrateState, persistState } from './store';
 
@@ -71,6 +73,8 @@ interface Session {
   /** Everyone with the screen open, by player id. */
   readonly viewers: Map<string, Player>;
   readonly watch: Watch;
+  /** What every viewer carried at the last poll, so a move is traced to its mover. */
+  readonly ledger: Ledger;
   readonly written: Written;
   /** The latest render's cells and channels. Replaced by every render. */
   allocation: Allocation;
@@ -130,7 +134,7 @@ export function createContainerScreen(
 
     if (container?.isValid) {
       snapshot(label, container, viewersOf(session), {
-        sentinel: session.allocation.sentinel,
+        sentinels: session.allocation.sentinels,
         drawn: session.allocation.slots.map(entry => entry.slot),
       });
     }
@@ -194,7 +198,7 @@ export function createContainerScreen(
   const greet = (session: Session, player: Player): void => {
     const { onOpen } = session.handlers;
 
-    if (onOpen) {
+    if (onOpen && validPlayer(player) && validHost(session.entity)) {
       handle(session, () => {
         onOpen(player, session.entity);
       });
@@ -244,7 +248,7 @@ export function createContainerScreen(
 
       const { onClose } = session.handlers;
 
-      if (onClose) {
+      if (onClose && validPlayer(viewer) && validHost(session.entity)) {
         handle(session, () => {
           onClose(viewer, session.entity);
         });
@@ -286,6 +290,7 @@ export function createContainerScreen(
       entity: session.entity,
       viewers: viewersOf(session),
       watch: session.watch,
+      ledger: session.ledger,
       get slots() {
         return session.allocation.slots;
       },
@@ -385,6 +390,7 @@ export function createContainerScreen(
       owner,
       viewers: new Map([[player.id, player]]),
       watch: createWatch(),
+      ledger: createLedger(),
       written: new Map(),
       allocation,
       handlers,
@@ -484,11 +490,30 @@ export function createContainerScreen(
     }
   });
 
+  // A marker that reaches the ground — dropped off the cursor, thrown, spilled
+  // by a death — is an item entity anyone could pick up later, outside every
+  // sweep. It is destroyed the moment it spawns, so no marker ever exists in
+  // the world as anything but a slot of ours.
+  const onItemSpawn = world.afterEvents.entitySpawn.subscribe((event) => {
+    const { entity } = event;
+
+    if (entity.typeId !== 'minecraft:item' || !entity.isValid) {
+      return;
+    }
+
+    const stack = entity.getComponent(EntityComponentTypes.Item)?.itemStack;
+
+    if (stack !== undefined && isOwned(stack)) {
+      entity.remove();
+    }
+  });
+
   const detach = (): void => {
     world.beforeEvents.playerInteractWithEntity.unsubscribe(onInteract);
     world.afterEvents.entityContainerOpened.unsubscribe(onOpen);
     world.afterEvents.entityContainerClosed.unsubscribe(onClose);
     world.afterEvents.playerSpawn.unsubscribe(onSpawn);
+    world.afterEvents.entitySpawn.unsubscribe(onItemSpawn);
 
     for (const session of [...sessions.values()]) {
       end(session);

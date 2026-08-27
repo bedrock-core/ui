@@ -63,8 +63,8 @@ const viewerLine = (viewer: Player): string => {
 };
 
 export interface SnapshotOptions {
-  /** Container index carrying the routing keys. */
-  sentinel: number;
+  /** Container indices carrying the routing keys. */
+  sentinels: readonly number[];
   /** Slots the layout draws. */
   drawn: readonly number[];
 }
@@ -88,22 +88,21 @@ export const snapshot = (
   let bankUsed = 0;
 
   for (let slot = 0; slot < container.size; slot += 1) {
-    if (!options.drawn.includes(slot) && slot !== options.sentinel && container.getItem(slot)) {
+    if (!options.drawn.includes(slot) && !options.sentinels.includes(slot) && container.getItem(slot)) {
       bankUsed += 1;
     }
   }
 
-  const sentinelItem = container.getItem(options.sentinel);
-  const routed = sentinelItem?.typeId === PROTOCOL_ITEM;
+  const routed = options.sentinels.every(slot => container.getItem(slot)?.typeId === PROTOCOL_ITEM);
 
   // The content log, never chat. A snapshot per action would bury everything
   // a player is actually there to read, and the log is where a developer
   // already is.
   console.warn([
     `[core.ui] ${label}`,
-    `  key  ${routed ? cell(container, options.sentinel) : 'MISSING - screen unrouted'}`,
+    `  key  ${routed ? options.sentinels.map(slot => cell(container, slot)).join(' ') : 'MISSING - screen unrouted'}`,
     `  draw ${drawn}`,
-    `  bank ${bankUsed} used of ${container.size - options.drawn.length - 1}`,
+    `  bank ${bankUsed} used of ${container.size - options.drawn.length - options.sentinels.length}`,
     ...viewers.map(viewerLine),
   ].join('\n'));
 };

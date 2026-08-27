@@ -1,16 +1,31 @@
-import type { Control, Document } from '../jsonui';
+import type { Control, Document, Modified } from '../jsonui';
 
-/** Every definition in the document, by name. */
+/** Whether a document entry edits a definition another file owns rather than declaring one. */
+export const isModified = (value: Control | Modified | string): value is Modified =>
+  typeof value !== 'string' && 'modifications' in value;
+
+/** Every definition in the document, by name. Modifications are not definitions. */
 export const defs = (doc: Document): Record<string, Control> => {
   const out: Record<string, Control> = {};
 
   for (const [name, value] of Object.entries(doc)) {
-    if (typeof value !== 'string') {
+    if (typeof value !== 'string' && !isModified(value)) {
       out[name] = value;
     }
   }
 
   return out;
+};
+
+/** A modification by the name of the definition it edits, or a failure naming it. */
+export const modification = (doc: Document, name: string): Modified => {
+  const found = doc[name];
+
+  if (found === undefined || !isModified(found)) {
+    throw new Error(`no modification of ${name}`);
+  }
+
+  return found;
 };
 
 /** Walks every control under one, inline children included. */
@@ -35,7 +50,7 @@ export const eachControl = (doc: Document, visit: (name: string, control: Contro
 export const definition = (doc: Document, name: string): Control => {
   const found = doc[name];
 
-  if (found === undefined || typeof found === 'string') {
+  if (found === undefined || typeof found === 'string' || isModified(found)) {
     throw new Error(`no definition ${name}`);
   }
 

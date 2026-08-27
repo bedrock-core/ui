@@ -49,3 +49,12 @@ export const buttonWriter: Writer = (payload, form, ctx, callbacks) => {
 export function isExitButton(element: JSX.Element): boolean {
   return isContainerExit(element.props.onPress);
 }
+
+/**
+ * The cell a built `<Button>` claims in the screen's container: a button
+ * slot, unless it is the close button — that press is the client's, so it
+ * takes no slot and the runtime never polls it.
+ */
+export function buttonCell(element: JSX.Element): 'button' | undefined {
+  return element.type === BUTTON_TYPE && !isExitButton(element) ? 'button' : undefined;
+}

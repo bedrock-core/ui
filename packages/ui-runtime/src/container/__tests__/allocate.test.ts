@@ -33,14 +33,14 @@ const Screen = (): JSX.Element => Container({
 
 describe('allocate', () => {
   it('numbers drawn cells after the sentinel, in document order', () => {
-    const { sentinel, slots } = allocate(buildContainerTree(Screen));
+    const { sentinels, slots } = allocate(buildContainerTree(Screen));
 
-    expect(sentinel).toBe(0);
+    expect(sentinels).toEqual([0, 1]);
     expect(slots.map(({ slot, role }) => [slot, role])).toEqual([
-      [1, 'button'],
-      [2, 'input'],
-      [3, 'both'],
-      [4, 'output'],
+      [2, 'button'],
+      [3, 'input'],
+      [4, 'both'],
+      [5, 'output'],
     ]);
   });
 
@@ -48,9 +48,9 @@ describe('allocate', () => {
     const { channels, size } = allocate(buildContainerTree(Screen));
 
     expect(channels.map(({ slot, carrier, length }) => [slot, carrier, length])).toEqual([
-      [5, 'text', 5],
+      [6, 'text', 5],
     ]);
-    expect(size).toBe(10);
+    expect(size).toBe(11);
   });
 
   it('keeps every entry attached to its element', () => {
@@ -78,7 +78,7 @@ describe('allocate', () => {
     };
     const { slots } = allocate(buildContainerTree(Closable));
 
-    expect(slots.map(({ slot, role }) => [slot, role])).toEqual([[1, 'button']]);
+    expect(slots.map(({ slot, role }) => [slot, role])).toEqual([[2, 'button']]);
   });
 
   it('skips foreign slots and grids: they read a collection the screen does not own', () => {
@@ -96,8 +96,8 @@ describe('allocate', () => {
 
     // Only the two OWN slots are numbered; the foreign slot, the grid and the
     // PlayerInventory wrapper over it take no cell of the screen's container.
-    expect(slots.map(({ slot, role }) => [slot, role])).toEqual([[1, 'both'], [2, 'output']]);
-    expect(size).toBe(3);
+    expect(slots.map(({ slot, role }) => [slot, role])).toEqual([[2, 'both'], [3, 'output']]);
+    expect(size).toBe(4);
   });
 
   it('allocates only the sentinel for a screen with nothing live', () => {
@@ -106,7 +106,7 @@ describe('allocate', () => {
       children: [Text({ children: 'title' }), Image({})],
     });
 
-    expect(allocate(buildContainerTree(Static))).toEqual({ sentinel: 0, slots: [], channels: [], size: 1 });
+    expect(allocate(buildContainerTree(Static))).toEqual({ sentinels: [0, 1], slots: [], channels: [], size: 2 });
   });
 
   it('is deterministic across builds of the same screen', () => {

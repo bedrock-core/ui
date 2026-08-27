@@ -64,6 +64,11 @@ export interface PlayerSpawnAfterEvent {
   readonly player: unknown;
 }
 
+export interface EntitySpawnAfterEvent {
+  readonly entity: unknown;
+  readonly cause: string;
+}
+
 class World {
   readonly beforeEvents = {
     playerInteractWithEntity: new MockSignal<PlayerInteractWithEntityBeforeEvent>(),
@@ -73,6 +78,7 @@ class World {
     entityContainerOpened: new MockSignal<EntityContainerOpenedAfterEvent>(),
     entityContainerClosed: new MockSignal<EntityContainerClosedAfterEvent>(),
     playerSpawn: new MockSignal<PlayerSpawnAfterEvent>(),
+    entitySpawn: new MockSignal<EntitySpawnAfterEvent>(),
     worldLoad: new MockSignal<Record<string, never>>(),
   };
 
@@ -161,6 +167,7 @@ export const system = new System();
 export enum EntityComponentTypes {
   CursorInventory = 'minecraft:cursor_inventory',
   Inventory = 'minecraft:inventory',
+  Item = 'minecraft:item',
 }
 
 /** Mirror of the engine enum: the item components the container runtime reads. */

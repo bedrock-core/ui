@@ -13,22 +13,23 @@
  *
  * Fragments are transparent: they carry no geometry and their children are
  * spliced into the parent, which is what makes a component boundary free.
+ *
+ * What a kind lowers INTO is that kind's business, in its module under
+ * `nodes/`; this walk owns the order, the geometry and the bookkeeping, and
+ * hands each element to the definition that claims its type.
  */
 
 import type { JSX } from '@bedrock-core/ui-runtime';
 import {
-  BACKGROUND_SLOT_TYPE, BUTTON_TYPE, childElements, CONTAINER_TYPE, containerEntity, containerRoot,
-  ContainerScreenError, IMAGE_TYPE, isExitButton,
-  isTextElementType, isTransparentType, KEY_PREFIX, labelFontFields,
-  liveTextLength, PANEL_TYPE, SCROLL_SLOT_TYPE, SLOT_GRID_TYPE, slotGridConfig, slotInteractive, slotSource, SLOT_TYPE,
-  TEXT_SHADOW_TYPE,
-  TEXT_SHADOW_WRAP_TYPE, type Allocation as ContainerAllocation, type ChannelEntry, type SlotEntry,
+  BACKGROUND_SLOT_TYPE, childElements, CONTAINER_TYPE, containerEntity, containerRoot,
+  ContainerScreenError, isTransparentType, type Allocation as ContainerAllocation, type ChannelEntry,
+  type SlotEntry,
 } from '@bedrock-core/ui-runtime/compile';
-import { CHEST_HOST, type ChestHost, GATED_ITEM } from './hosts/chest';
-import type {
-  Allocation, ButtonFace, ButtonNode, ExitNode, GridNode, IrDocument, IrNode, LabelNode, PanelNode,
-  Rect, ScrollNode, SlotNode, TextNode,
-} from './ir';
+import { CHEST_HOST, type ChestHost } from './hosts/chest';
+import type { Allocation, IrDocument, IrNode, Rect } from './ir';
+import { loweringFor } from './nodes';
+import { num, str } from './nodes/shared';
+import type { LowerContext, NodeDefinition } from './nodes/types';
 
 /** The components a container screen can be made of, by the name the author writes. */
 const SUPPORTED = 'Panel, Text, Image, Button, Slot, SlotGrid, PlayerInventory, Hotbar, Background, Scroll';
@@ -44,40 +45,6 @@ export class UnsupportedNodeError extends Error {
     this.name = 'UnsupportedNodeError';
   }
 }
-
-const num = (value: unknown, fallback = 0): number =>
-  typeof value === 'number' && Number.isFinite(value) ? value : fallback;
-
-const str = (value: unknown, fallback = ''): string =>
-  typeof value === 'string' ? value : fallback;
-
-/**
- * The string a serializing component parks in its `value` tail, or undefined
- * when the tail is a RawMessage the client would have resolved.
- */
-const tailOf = (value: unknown): string | undefined => {
-  if (typeof value !== 'object' || value === null || !('tail' in value)) {
-    return undefined;
-  }
-
-  const { tail } = value;
-
-  return typeof tail === 'string' ? tail : undefined;
-};
-
-/** What `<Text>` recorded about its string for the layout pass. */
-const textMetricsOf = (value: unknown): { isKey: boolean; resolvedText: string } => {
-  if (typeof value !== 'object' || value === null) {
-    return { isKey: false, resolvedText: '' };
-  }
-
-  const isKey = 'isKey' in value && value.isKey === true;
-  const resolvedText = 'resolvedText' in value && typeof value.resolvedText === 'string'
-    ? value.resolvedText
-    : '';
-
-  return { isKey, resolvedText };
-};
 
 /** Draw order the author asked for, if any. `withControl` parks it under `__layout`. */
 const layerOf = (props: JSX.Props): { layer?: number } => {
@@ -116,23 +83,6 @@ const backdropOf = (element: JSX.Element): string | undefined => {
   const texture = element.props.__background;
 
   return typeof texture === 'string' && texture !== '' ? texture : undefined;
-};
-
-/**
- * What a built `<Button>` looks like. The component resolves every state to a
- * concrete texture, so a missing state reads as the base one — which is also
- * why a disabled look is only kept when it differs from the resting face.
- */
-const faceOf = (props: JSX.Props): ButtonFace => {
-  const texture = str(props.background);
-  const locked = str(props.backgroundLocked);
-
-  return {
-    texture,
-    hover: str(props.backgroundHover),
-    pressed: str(props.backgroundPressed),
-    ...locked === texture ? {} : { disabled: locked },
-  };
 };
 
 /** What the walk carries: the allocation to look up, and what it has met so far. */
@@ -186,25 +136,6 @@ const channelOf = (element: JSX.Element, carrier: ChannelEntry['carrier'], walk:
   return entry;
 };
 
-const labelOf = (element: JSX.Element, base: Omit<LabelNode, 'kind' | 'text' | 'localize' | 'fontType' | 'fontScaleFactor'>): LabelNode => {
-  const { props } = element;
-  const tail = tailOf(props.value);
-  const metrics = textMetricsOf(props.__textMetrics);
-  const defaults = labelFontFields();
-
-  return {
-    kind: 'label',
-    ...base,
-    // A string tail is what the label shows: a literal, or a key the engine
-    // resolves. A RawMessage tail would be resolved by the client in a form;
-    // here the build's own resolution is baked instead.
-    text: tail ?? metrics.resolvedText,
-    localize: tail !== undefined && metrics.isKey,
-    fontType: str(props.fontType, defaults.fontType),
-    fontScaleFactor: num(props.fontScaleFactor, defaults.fontScaleFactor),
-  };
-};
-
 const convertChildren = (parent: JSX.Element, origin: Rect, walk: Walk): IrNode[] =>
   childElements(parent.props.children).flatMap(child => convertChild(child, origin, walk));
 
@@ -223,194 +154,39 @@ const convertChild = (element: JSX.Element, origin: Rect, walk: Walk): IrNode[] 
     return [];
   }
 
-  // Transparent to the layout, but not to the output: a region has a viewport
-  // of its own, and its content was laid out from the region's origin.
-  if (type === SCROLL_SLOT_TYPE) {
-    return [scrollOf(element, origin, walk)];
+  // A kind that claims the type lowers it — before transparency is consulted,
+  // because a scroll region is transparent to the layout yet a node of its own.
+  const definition = loweringFor(type);
+
+  if (definition !== undefined) {
+    return [lower(definition, element, type, origin, walk)];
   }
 
   if (isTransparentType(type)) {
     return convertChildren(element, origin, walk);
   }
 
-  return [convert(element, type, origin, walk)];
+  throw new UnsupportedNodeError(type === CONTAINER_TYPE ? 'Container' : type);
 };
 
-/** The content's own origin: a region's children are solved relative to its top-left. */
-const REGION_ORIGIN: Rect = { x: 0, y: 0, width: 0, height: 0 };
+const lower = (definition: NodeDefinition, element: JSX.Element, type: string, origin: Rect, walk: Walk): IrNode => {
+  if (definition.lower === undefined) {
+    throw new UnsupportedNodeError(type);
+  }
 
-const scrollOf = (element: JSX.Element, origin: Rect, walk: Walk): ScrollNode => {
-  const rect = relativeTo(absoluteRect(element), origin);
-  const children = convertChildren(element, REGION_ORIGIN, walk);
-  const bottom = children.reduce((max, child) => Math.max(max, child.rect.y + child.rect.height), 0);
-
-  return {
-    kind: 'scroll',
-    name: nameFor('scroll', walk),
-    rect,
-    ...layerOf(element.props),
-    ...visibilityOf(element.props),
-    extent: Math.max(rect.height, bottom),
-    children,
-  };
-};
-
-const convert = (element: JSX.Element, type: string, origin: Rect, walk: Walk): IrNode => {
-  const { props } = element;
   const own = absoluteRect(element);
-  const rect = relativeTo(own, origin);
-  const decoration = { ...layerOf(props), ...visibilityOf(props) };
+  const ctx: LowerContext = {
+    origin,
+    own,
+    rect: relativeTo(own, origin),
+    decoration: { ...layerOf(element.props), ...visibilityOf(element.props) },
+    name: kind => nameFor(kind, walk),
+    slotOf: target => slotOf(target, walk),
+    channelOf: (target, carrier) => channelOf(target, carrier, walk),
+    children: (parent, from) => convertChildren(parent, from, walk),
+  };
 
-  if (isTextElementType(type)) {
-    const shadow = type === TEXT_SHADOW_TYPE || type === TEXT_SHADOW_WRAP_TYPE;
-    const length = liveTextLength(element);
-    const defaults = labelFontFields();
-
-    // The label's own nudge, applied here so the emitter sees one offset.
-    const nudged: Rect = { ...rect, x: rect.x + num(props.labelX), y: rect.y + num(props.labelY) };
-
-    if (length !== undefined) {
-      const channel = channelOf(element, 'text', walk);
-
-      const node: TextNode = {
-        kind: 'text',
-        name: nameFor('text', walk),
-        rect: nudged,
-        ...decoration,
-        channel: channel.slot,
-        length: channel.length,
-        keyPrefix: KEY_PREFIX,
-        fontType: str(props.fontType, defaults.fontType),
-        fontScaleFactor: num(props.fontScaleFactor, defaults.fontScaleFactor),
-        ...shadow ? { shadow } : {},
-      };
-
-      return node;
-    }
-
-    return labelOf(element, {
-      name: nameFor('label', walk),
-      rect: nudged,
-      ...decoration,
-      ...shadow ? { shadow } : {},
-    });
-  }
-
-  switch (type) {
-    case PANEL_TYPE: {
-      const background = str(props.background);
-      const node: PanelNode = {
-        kind: 'panel',
-        name: nameFor('panel', walk),
-        rect,
-        ...decoration,
-        ...background === '' ? {} : { background },
-        // Children are relative to THIS panel, not to the grandparent.
-        children: convertChildren(element, own, walk),
-      };
-
-      return node;
-    }
-
-    case IMAGE_TYPE:
-      return {
-        kind: 'image',
-        name: nameFor('image', walk),
-        rect,
-        ...decoration,
-        texture: tailOf(props.value) ?? '',
-      };
-
-    case BUTTON_TYPE: {
-      // A close button is the client's: no cell to look up, nothing for the
-      // runtime to poll.
-      if (isExitButton(element)) {
-        const exit: ExitNode = {
-          kind: 'exit',
-          name: nameFor('exit', walk),
-          rect,
-          ...decoration,
-          face: faceOf(props),
-          children: convertChildren(element, own, walk),
-        };
-
-        return exit;
-      }
-
-      const entry = slotOf(element, walk);
-      const node: ButtonNode = {
-        kind: 'button',
-        name: nameFor('button', walk),
-        rect,
-        ...decoration,
-        slot: entry.slot,
-        face: faceOf(props),
-        // Baked into the face, relative to the button like any other child.
-        children: convertChildren(element, own, walk),
-      };
-
-      return node;
-    }
-
-    case SLOT_TYPE: {
-      const source = slotSource(element);
-
-      if (source !== undefined) {
-        // Foreign: reads another collection at the author's index, so it is not
-        // in the allocation and the runtime never polls it.
-        const node: SlotNode = {
-          kind: 'slot',
-          name: nameFor('slot', walk),
-          rect,
-          ...decoration,
-          slot: source.index,
-          role: 'both',
-          interactive: source.interactive,
-          source,
-        };
-
-        return node;
-      }
-
-      const entry = slotOf(element, walk);
-
-      if (entry.role === 'button') {
-        throw new Error('The allocation numbered a <Slot> as a button.');
-      }
-
-      const node: SlotNode = {
-        kind: 'slot',
-        name: nameFor('slot', walk),
-        rect,
-        ...decoration,
-        slot: entry.slot,
-        role: entry.role,
-        interactive: slotInteractive(element),
-      };
-
-      return node;
-    }
-
-    case SLOT_GRID_TYPE: {
-      const config = slotGridConfig(element);
-      const node: GridNode = {
-        kind: 'grid',
-        name: nameFor('grid', walk),
-        rect,
-        ...decoration,
-        collection: config.collection,
-        columns: config.columns,
-        rows: config.rows,
-        interactive: config.interactive,
-        hideOwned: config.hideOwned,
-      };
-
-      return node;
-    }
-
-    default:
-      throw new UnsupportedNodeError(type === CONTAINER_TYPE ? 'Container' : type);
-  }
+  return definition.lower(element, type, ctx);
 };
 
 export interface ToIrOptions {
@@ -464,9 +240,9 @@ export const toIr = (
 
   const drawn = allocation.slots.length;
   const summary: Allocation = {
-    sentinel: allocation.sentinel,
+    sentinels: allocation.sentinels.length,
     drawn,
-    channels: allocation.size - allocation.sentinel - 1 - drawn,
+    channels: allocation.size - allocation.sentinels.length - drawn,
     size: allocation.size,
   };
 
@@ -474,7 +250,7 @@ export const toIr = (
     namespace: options.namespace,
     collection: host.collection,
     entity,
-    ownedItemRenderer: `${host.namespace}.${GATED_ITEM}`,
+    ownedItemRenderer: host.ownedItemRenderer,
     root: {
       kind: 'panel',
       name: 'root',

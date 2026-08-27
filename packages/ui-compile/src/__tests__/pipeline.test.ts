@@ -4,7 +4,7 @@ import {
   usePlayer, useState,
 } from '@bedrock-core/ui-runtime';
 import {
-  allocate, buildContainerTree, ContainerScreenError, KEY_PREFIX, MAX_LAYOUT,
+  allocate, buildContainerTree, ContainerScreenError, KEY_PREFIX, layoutKey, MAX_LAYOUT,
 } from '@bedrock-core/ui-runtime/compile';
 import { describe, expect, it } from 'vitest';
 import { compileScreen } from '../compile';
@@ -63,14 +63,15 @@ const Demo = (): JSX.Element => Container({
 });
 
 describe('the compiler, end to end', () => {
-  const compiled = compileScreen(Demo, { name: 'demo', layoutId: 1 });
+  const compiled = compileScreen(Demo, { name: 'demo' });
   const { document } = compiled;
 
   it('names the screen, its namespace and its entity', () => {
     expect(compiled).toMatchObject({
       name: 'demo',
+      addon: 'core_ui',
       namespace: 'core_ui_demo',
-      layoutId: 1,
+      layoutId: layoutKey('core_ui', 'demo'),
       entity: 'core:demo',
       hasBackdrop: true,
       hasText: true,
@@ -124,15 +125,15 @@ describe('the compiler, end to end', () => {
 
   it('hands out the slot indices the runtime will read', () => {
     const allocation = allocate(buildContainerTree(Demo));
-    const indices = findAll(document, name => name.includes('@core_ui_demo.slot_host'))
+    const indices = findAll(document, name => name.includes('@core_ui_container.slot_host'))
       .map(([, control]) => control.$slot);
 
     expect(indices).toEqual(allocation.slots.map(entry => entry.slot));
-    expect(indices).toEqual([1, 2, 3, 4, 5]);
+    expect(indices).toEqual([2, 3, 4, 5, 6]);
 
     const [, locked] = find(document, name => name.startsWith('slot_1@'));
 
-    expect(locked.$cell).toBe('core_ui_demo.locked_slot');
+    expect(locked.$cell).toBe('core_ui_container.locked_slot');
   });
 
   it('hands out the channel indices the runtime will write', () => {
@@ -145,7 +146,7 @@ describe('the compiler, end to end', () => {
 
     expect(cells).toEqual(Array.from({ length: 8 }, (_unused, cell) => (run?.slot ?? 0) + cell));
 
-    expect(compiled.allocation).toEqual({ sentinel: 0, drawn: 5, channels: 8, size: 14 });
+    expect(compiled.allocation).toEqual({ sentinels: 2, drawn: 5, channels: 8, size: 15 });
   });
 
   it('decodes text through the shared character table', () => {
@@ -194,7 +195,7 @@ describe('the compiler, end to end', () => {
     };
 
     const Screen = (): JSX.Element => Container({ entity: 'core:state', children: [{ type: Stateful, props: {} }] });
-    const [, label] = find(compileScreen(Screen, { name: 'state', layoutId: 2 }).document, name => name === 'label_1');
+    const [, label] = find(compileScreen(Screen, { name: 'state' }).document, name => name === 'label_1');
 
     expect(label.text).toBe('start');
   });
@@ -208,14 +209,14 @@ describe('the compiler, end to end', () => {
 
     const Screen = (): JSX.Element => Container({ entity: 'core:player', children: [{ type: PerPlayer, props: {} }] });
 
-    expect(() => compileScreen(Screen, { name: 'player', layoutId: 3 })).toThrow();
+    expect(() => compileScreen(Screen, { name: 'player' })).toThrow();
   });
 
   it('reports a screen with nothing live as sentinel-only', () => {
     const Static = (): JSX.Element => Container({ entity: 'core:static', children: [Text({ children: 'title' })] });
-    const result = compileScreen(Static, { name: 'static', layoutId: 4 });
+    const result = compileScreen(Static, { name: 'static' });
 
-    expect(result.allocation).toEqual({ sentinel: 0, drawn: 0, channels: 0, size: 1 });
+    expect(result.allocation).toEqual({ sentinels: 2, drawn: 0, channels: 0, size: 2 });
     expect(result.hasText).toBe(false);
     expect(result.hasBackdrop).toBe(false);
     expect(Object.keys(defs(result.document))).toEqual(['screen']);
@@ -224,23 +225,26 @@ describe('the compiler, end to end', () => {
   describe('the spec', () => {
     const Screen = (): JSX.Element => Container({ entity: 'core:spec', children: [] });
 
-    it('rejects a layout id outside the sentinel\'s range', () => {
-      expect(() => compileScreen(Screen, { name: 'spec', layoutId: 0 })).toThrow(ContainerScreenError);
-      expect(() => compileScreen(Screen, { name: 'spec', layoutId: MAX_LAYOUT + 1 })).toThrow(ContainerScreenError);
-      expect(() => compileScreen(Screen, { name: 'spec', layoutId: 1.5 })).toThrow(ContainerScreenError);
-      expect(() => compileScreen(Screen, { name: 'spec', layoutId: MAX_LAYOUT })).not.toThrow();
+    it('keys the layout by its full name, the same on every build and apart from other addons\'', () => {
+      const key = compileScreen(Screen, { name: 'spec' }).layoutId;
+
+      expect(key).toBe(layoutKey('core_ui', 'spec'));
+      expect(key).toBeGreaterThanOrEqual(1);
+      expect(key).toBeLessThanOrEqual(MAX_LAYOUT);
+      expect(compileScreen(Screen, { name: 'spec' }).layoutId).toBe(key);
+      expect(compileScreen(Screen, { name: 'spec', namespace: 'drav0011_shop' }).layoutId).not.toBe(key);
     });
 
     it('rejects a name that cannot be a namespace', () => {
-      expect(() => compileScreen(Screen, { name: 'my.screen', layoutId: 1 })).toThrow(ContainerScreenError);
-      expect(() => compileScreen(Screen, { name: '', layoutId: 1 })).toThrow(ContainerScreenError);
-      expect(compileScreen(Screen, { name: 'my-screen_2', layoutId: 1 }).namespace).toBe('core_ui_my-screen_2');
+      expect(() => compileScreen(Screen, { name: 'my.screen' })).toThrow(ContainerScreenError);
+      expect(() => compileScreen(Screen, { name: '' })).toThrow(ContainerScreenError);
+      expect(compileScreen(Screen, { name: 'my-screen_2' }).namespace).toBe('core_ui_my-screen_2');
     });
 
     it('rejects a screen without a container', () => {
       const Bare = (): JSX.Element => Panel({ children: [Text({ children: 'x' })] });
 
-      expect(() => compileScreen(Bare, { name: 'bare', layoutId: 1 })).toThrow(ContainerScreenError);
+      expect(() => compileScreen(Bare, { name: 'bare' })).toThrow(ContainerScreenError);
     });
   });
 });

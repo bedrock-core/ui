@@ -6,10 +6,10 @@
 
 import type { FunctionComponent } from '@bedrock-core/ui-runtime';
 import {
-  allocate, buildContainerTree, ContainerScreenError, MAX_LAYOUT,
+  allocate, buildContainerTree, ContainerScreenError, layoutKey,
 } from '@bedrock-core/ui-runtime/compile';
 import { BACKDROP_DEFINITION, emit } from './emit';
-import { CHEST_HOST, type ChestHost, chestRouter } from './hosts/chest';
+import { CHEST_HOST, type ChestHost, chestRouter, type ChestRouting } from './hosts/chest';
 import type { Allocation } from './ir';
 import type { Document } from './jsonui';
 import { toIr } from './toIr';
@@ -23,8 +23,6 @@ export interface ScreenSpec {
    * rather than the library's. Defaults to `core_ui`.
    */
   namespace?: string;
-  /** 1..MAX_LAYOUT, assigned by the filter. */
-  layoutId: number;
 }
 
 /** The default namespace prefix when a spec names none. */
@@ -32,7 +30,11 @@ const DEFAULT_NAMESPACE = 'core_ui';
 
 export interface CompiledScreen {
   name: string;
+  /** The addon's namespace the screen was compiled under. */
+  addon: string;
+  /** The JSON UI namespace: `<addon>_<name>`. */
   namespace: string;
+  /** The key the router picks this layout by: derived from the namespace, so it is the same on every build. */
   layoutId: number;
   /** The entity type the screen's `<Container>` names. */
   entity: string;
@@ -64,13 +66,6 @@ const checkSpec = (spec: ScreenSpec): void => {
       + 'which allows letters, digits, "_" and "-" only.',
     );
   }
-
-  if (!Number.isInteger(spec.layoutId) || spec.layoutId < 1 || spec.layoutId > MAX_LAYOUT) {
-    throw new ContainerScreenError(
-      `Layout id ${spec.layoutId} (${spec.name}) is outside 1..${MAX_LAYOUT}: the key rides the sentinel's `
-      + 'durability, and readings past that mark a button\'s transport item.',
-    );
-  }
 };
 
 /**
@@ -79,7 +74,7 @@ const checkSpec = (spec: ScreenSpec): void => {
  *
  * @param Screen - The screen component. The component itself, not the result
  *   of calling it: hooks resolve against the build owner.
- * @param spec - The name and layout key the filter assigned.
+ * @param spec - The screen's name and the addon namespace it is emitted under.
  * @param host - The host the screen is served through. Defaults to the chest.
  * @throws ContainerScreenError when the spec or the tree breaks the container rules.
  * @throws UnsupportedNodeError for a control with no compiled form.
@@ -91,7 +86,8 @@ export function compileScreen(
 ): CompiledScreen {
   checkSpec(spec);
 
-  const namespace = `${spec.namespace ?? DEFAULT_NAMESPACE}_${spec.name}`;
+  const addon = spec.namespace ?? DEFAULT_NAMESPACE;
+  const namespace = `${addon}_${spec.name}`;
   const tree = buildContainerTree(Screen);
   const allocation = allocate(tree);
   const ir = toIr(tree, allocation, { namespace, host });
@@ -99,8 +95,9 @@ export function compileScreen(
 
   return {
     name: spec.name,
+    addon,
     namespace,
-    layoutId: spec.layoutId,
+    layoutId: layoutKey(addon, spec.name),
     entity: ir.entity,
     document,
     allocation: ir.allocation,
@@ -110,13 +107,24 @@ export function compileScreen(
 }
 
 /**
- * The router document that gates every compiled screen onto the host's vanilla
- * screen, in the host's own namespace.
+ * The documents that route one addon's compiled screens onto the host's
+ * vanilla screen: the hook, written into the vanilla file, and the addon's
+ * router that the chest root gains by modification.
  *
- * @param screens - Every compiled screen, in any order.
+ * @param screens - Every compiled screen of the addon, in any order.
  * @param host - The host the screens were compiled for. Defaults to the chest.
- * @throws ContainerScreenError when a layout key is out of range or shared.
+ * @throws ContainerScreenError when a layout key is out of range or shared, or the screens span addons.
  */
-export function buildRouter(screens: readonly CompiledScreen[], host: ChestHost = CHEST_HOST): Document {
-  return chestRouter(screens, host);
+export function buildRouter(screens: readonly CompiledScreen[], host: ChestHost = CHEST_HOST): ChestRouting {
+  const addon = screens[0]?.addon ?? DEFAULT_NAMESPACE;
+  const foreign = screens.find(screen => screen.addon !== addon);
+
+  if (foreign !== undefined) {
+    throw new ContainerScreenError(
+      `Screens "${screens[0]?.name}" (${addon}) and "${foreign.name}" (${foreign.addon}) belong to different addons; `
+      + 'a router covers one addon.',
+    );
+  }
+
+  return chestRouter(screens, addon, host);
 }

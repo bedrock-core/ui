@@ -92,6 +92,12 @@ export interface Binding {
  */
 export interface Control {
   type?: ControlType;
+  /** Drops the control at load time when the expression holds, e.g. `(not $desktop_screen)`. */
+  ignored?: string | boolean;
+  /** Conditional variable sets, each applied when its `requires` expression holds. */
+  variables?: Record<string, unknown>[];
+  close_on_player_hurt?: string | boolean;
+  use_custom_pocket_toast?: string | boolean;
   size?: [Measure, Measure];
   offset?: [Measure, Measure];
   anchor_from?: Anchor;
@@ -150,6 +156,10 @@ export interface Control {
   default_control?: string;
   /** Documented. A control with this off takes no focus, so it cannot be interacted with. */
   focus_enabled?: boolean;
+  /** Documented. The sound a button plays when pressed. */
+  sound_name?: string;
+  sound_volume?: number;
+  sound_pitch?: number;
   /**
    * Documented. Routes input on this control to engine actions. A derived
    * control's array REPLACES its base's, which is what lets a button slot swap
@@ -169,7 +179,24 @@ export interface Control {
 
 export type ControlEntry = Record<string, Control>;
 
+/**
+ * One edit to a definition another file owns. Documented by Mojang: a file
+ * naming an existing definition with `modifications` instead of a body edits
+ * it in place, and edits from several files stack — which is how packs built
+ * apart can all add to the same definition.
+ */
+export interface Modification {
+  array_name: 'controls' | 'bindings' | 'button_mappings' | 'variables';
+  operation: 'insert_front' | 'insert_back' | 'insert_after' | 'insert_before' | 'remove';
+  value?: ControlEntry[] | Binding[] | ButtonMapping[];
+  control_name?: string;
+}
+
+export interface Modified {
+  modifications: Modification[];
+}
+
 export interface Document {
   namespace: string;
-  [definition: string]: Control | string;
+  [definition: string]: Control | Modified | string;
 }

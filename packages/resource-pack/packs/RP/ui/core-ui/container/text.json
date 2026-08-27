@@ -1,0 +1,17 @@
+{
+	// One character cell's host. A compiled screen stacks one per character of
+	// a live text run and mounts its glyph label inside, with the bank slot the
+	// character rides as the collection index — `collection_index` is only
+	// accepted on a direct child of a control declaring `collection_name`.
+	"namespace": "core_ui_container",
+
+	"text_host": {
+		"type": "stack_panel",
+		"orientation": "vertical",
+		"size": [ "100%c", "100%c" ],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"collection_name": "container_items",
+		"controls": []
+	}
+}

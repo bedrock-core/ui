@@ -149,13 +149,14 @@ export default function Furnace(): JSX.Element {
 
             {/* A stand-in for the machine: writes a result over the output's
                 guard, the way real smelting logic would. The output is the 5th
-                drawn cell — three buttons, the input, then it — and writing
-                into it is how machinery fills an output; the poll sees the
-                result appear where no player can reach and lets it stand. */}
+                drawn cell — three buttons, the input, then it — at container
+                index 6, after the two sentinel slots; writing into it is how
+                machinery fills an output, and the poll sees the result appear
+                where no player can reach and lets it stand. */}
             <Button
               variant={'secondary'}
               onPress={(_player, host) => {
-                host?.getComponent(EntityComponentTypes.Inventory)?.container?.setItem(5, new ItemStack('minecraft:iron_ingot', 4));
+                host?.getComponent(EntityComponentTypes.Inventory)?.container?.setItem(6, new ItemStack('minecraft:iron_ingot', 4));
               }}
             >
               {'smelt'}

@@ -1,6 +1,11 @@
 {
 	"ui_defs": [
 		"ui/server_form.json",
+		// Vanilla's chest, hooked for compiled container screens: the screen's
+		// content pointed at the chest root, and a gate on its title and grid;
+		// each addon's ui-compile build inserts its root into its own copy of
+		// this path.
+		"ui/chest_screen.json",
 		// Animations
 		"ui/core-ui/animations/screen_events.json",
 		// Shared bases every component extends (all namespace core_ui_common):
@@ -37,6 +42,18 @@
 		// Router for native-dropdown cells (fans #type → dropdown popup | inline radio/toggle-button).
 		"ui/core-ui/form_components/dropdown.json",
 		"ui/core-ui/form_components/inline_select.json",
-		"ui/core-ui/form_components/label.json"
+		"ui/core-ui/form_components/label.json",
+		// Container screens: the cells, text hosts, scroll, transport-hiding
+		// renderer and chrome every compiled screen references (namespace
+		// core_ui_container), and the chest root every addon's router adds its
+		// screens to (namespace core_ui_router). The screens themselves and each
+		// addon's router are emitted by the ui-compile filter into the addon's
+		// own pack, which registers them in its own _ui_defs.json at build time.
+		"ui/core-ui/container/cell.json",
+		"ui/core-ui/container/text.json",
+		"ui/core-ui/container/gated_item.json",
+		"ui/core-ui/container/scroll.json",
+		"ui/core-ui/container/chrome.json",
+		"ui/core-ui/container/router.json"
 	]
 }
