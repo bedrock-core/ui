@@ -1,6 +1,8 @@
 # S1 — can a placed control own a form entry?
 
-**Status: not yet run.** Fill in Result and Verdict from the game, then delete the harness (see [Cleanup](#cleanup)) whichever way it goes.
+**Status: answered 2026-08-27. Yes, both halves — and the mechanism is named.** The harness has been deleted. Commit `85ec6b2` holds **round 1**, the version that does *not* work; round 2 was never committed. What matters from it is not the code but the binding below, which now lives in `hosts/form/contract.ts` as `DETAILS_BINDING` and in the findings page.
+
+> A control the pack places itself owns a `form_buttons` entry when **the control itself** carries a `collection_details` binding on that collection, under a host supplying the `collection_index`. Without that binding the press still routes — the form closes — but arrives as `canceled`, indistinguishable from Esc.
 
 ## Why it is the first spike
 
@@ -37,24 +39,34 @@ Nothing vanilla is touched, so a plain chest, a plain form and every normal scre
 
 ## Result
 
-*Fill in what actually happened — including a partial or surprising result, which is worth more than a clean one.*
+It took two rounds, and the second round is the finding.
 
-- Rows drawn:
-- Captions read:
-- `selection` on pressing row 0 / 1 / 2:
-- Anything in the content log:
+**Round 1** — buttons with no bindings of their own, reading their entry only through the index their host applied. The rows drew and could be pressed, but *every* press came back `canceled`, exactly like Esc. The click routed somewhere; the engine had nothing to attribute it to.
+
+**Round 2** — rows 0–2 gained a `collection_details` binding **on the button control itself**; row 3 kept the round-1 shape as the control. `core_ui_common.control` had said why in as many words all along: `$cell_details_binding_type` is required on a form button because *"the per-cell collection index is what routes `button.form_button_click` to the right form button."*
+
+| Row | Button's own bindings | Pressed → |
+| --- | --- | --- |
+| 0 | `collection_details` + `#form_button_text` on `form_buttons` | `selection=0` |
+| 1 | same | `selection=1` |
+| 2 | same | `selection=2` |
+| 3 | none | `canceled` |
+
+Each row reporting *its own* index — rather than all three reporting 0 — is also the read half: the baked `collection_index` resolves per control, or the presses could not have been told apart.
 
 ## Verdict
 
-*One of:*
+**Both halves hold.** A compiled form cell is an ordinary control with a literal index, and the interpreter's per-entry fan-out is not needed to make a button work. Phase 3 proceeds as [04-hosts](../04-hosts.md#the-form-hosts-concretely) describes, with one rule now known rather than assumed:
 
-- **Both halves hold** → a compiled form cell is an ordinary control with a literal index. Phase 3 proceeds as [04-hosts](../04-hosts.md) describes, and S2 collapses into it: `main_screen_content` already gates the library's container on the title, so no `server_form` re-declaration is needed — the title carries the screen key and the container mounts that screen's root.
-- **READ holds, PRESS does not** → compile the drawing, keep the presses. Every pressable cell stays a factory instantiation; everything static becomes a placed control. Re-cost phase 3 before starting it.
-- **Neither holds** → the entry model is wrong for forms. Re-open [04-hosts](../04-hosts.md#the-form-hosts-concretely) before writing any of phase 3.
+> Every control that must report a press carries its own `collection_details` binding on `form_buttons`. It is not enough for an ancestor to supply the index, and the failure is silent — a press that looks like a dismissal.
 
-## Cleanup
+**S2 collapses into phase 3** and does not need its own spike. `main_screen_content` already gates the library's container on the protocol header, and `action_container` — which the library owns and which declares its own `controls` — is a working mount that took a placed subtree without a single vanilla edit. A compiled screen needs no `server_form` re-declaration: the title carries the screen key, and the container mounts that screen's root.
 
-Delete the five entries above and this page's harness section once the verdict is recorded. Keep the verdict — in `docs/docs/ui/container-screens/findings.md` if it is a JSON UI fact worth keeping, which a negative result certainly is.
+The durable engine fact is recorded in `docs/docs/ui/container-screens/findings.md`, which outlives this page.
+
+## What this does not answer
+
+S3 (a modal field's label as an entry), S4 (a client-only toggle group) and S6 (writing a rect at runtime) are untouched. S5 (is a compiled cell cheaper to open?) is now worth running against a real compiled screen rather than a spike.
 
 ## Not covered here
 
