@@ -6,6 +6,7 @@ import type { FunctionComponent, JSX } from '../../jsx';
 import { startInputLock } from '../../util';
 import { playerOwner } from '../fabric';
 import { present } from './presenters';
+import { compiledTitleOf } from './screens';
 import {
   beginPresentChain,
   consumeSwap,
@@ -32,6 +33,11 @@ export function render(
   // A form belongs to the player it is shown to: that is what its fibers and
   // session are keyed by, and what its hooks may reach.
   const owner = playerOwner(player);
+
+  // Whether the build compiled this screen. Read from the component itself,
+  // before it is wrapped for translations, because the component is the only
+  // thing both halves of the build hold in common.
+  const compiledTitle = compiledTitleOf(root);
 
   // Convert function component to JSX element if needed, then wrap it so
   // TranslationContext is populated at every root — the default i18n
@@ -122,7 +128,7 @@ export function render(
       return;
     }
 
-    present(player, tree)
+    present(player, tree, compiledTitle)
       .then((result) => {
         // Superseded or torn down while the form was up — this outcome is void.
         if (!isChainCurrent(owner, token)) {

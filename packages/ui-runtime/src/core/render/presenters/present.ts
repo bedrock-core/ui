@@ -1,4 +1,5 @@
 import { type Player } from '@minecraft/server';
+import { presentCompiledForm } from '../../../hosts/form/runtime';
 import type { JSX } from '../../../jsx';
 import { presentAction } from './presentAction';
 import { presentModal } from './presentModal';
@@ -12,17 +13,27 @@ import { findModalConfig, type PresentResult } from './shared';
  *
  * @param player - Player to show the form to.
  * @param tree - Fully built tree for this snapshot.
+ * @param compiledTitle - The title this screen's compiled layout is picked by,
+ *   when the build compiled it. Absent means the interpreter draws it.
  * @returns `'present'` to re-render immediately (programmatic close), `'cleanup'` to
  *   tear the session down, or `'none'` when the player dismissed with no callback.
  */
 export async function present(
   player: Player,
   tree: JSX.Element,
+  compiledTitle?: string,
 ): Promise<PresentResult> {
   const modalConfig = findModalConfig(tree);
 
   if (modalConfig) {
+    // A modal's typed controls are the engine's, and how a compiled screen
+    // reads one is still unmeasured — so a `<Form>` is served by the
+    // interpreter whether or not the screen was compiled.
     return presentModal(player, tree, modalConfig);
+  }
+
+  if (compiledTitle !== undefined) {
+    return presentCompiledForm(player, tree, compiledTitle);
   }
 
   return presentAction(player, tree);

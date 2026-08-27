@@ -101,6 +101,7 @@ export {
   isActionForm,
   isModalForm,
   registerComponent,
+  registerCompiledScreen,
   render,
 } from './core';
 

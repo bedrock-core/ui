@@ -16,6 +16,9 @@ export {
 // Rendering
 export { render } from './render';
 
+// What the build's generated module calls to say a screen was compiled.
+export { compiledTitleOf, registerCompiledScreen } from './render/screens';
+
 // What every handler is called with.
 export type { ContainerEvent, PressEvent, SlotEvent, UiEvent } from './events';
 
