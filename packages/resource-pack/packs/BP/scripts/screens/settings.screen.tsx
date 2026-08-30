@@ -1,7 +1,7 @@
 /** @jsxImportSource @bedrock-core/ui */
 import { Form } from '@bedrock-core/ore-styled';
 import type { JSX, SubmitEvent } from '@bedrock-core/ui';
-import { Panel, Text } from '@bedrock-core/ui';
+import { Panel, Text, useState } from '@bedrock-core/ui';
 
 /**
  * A COMPILED MODAL screen — the same authoring as every other screen here.
@@ -40,8 +40,11 @@ import { Panel, Text } from '@bedrock-core/ui';
  * textures it is given, exactly as a `Button`'s face works.
  */
 export default function Settings(): JSX.Element {
+  const [saved, setSaved] = useState('');
+
   const handleSubmit = ({ player, values }: SubmitEvent): void => {
     player.sendMessage(`§aSaved:§r ${JSON.stringify(values)}`);
+    setSaved(String(values.nick ?? ''));
   };
 
   // No onCancel: a handler that does not exit() means "stay open", so dismissing
@@ -50,6 +53,11 @@ export default function Settings(): JSX.Element {
     <Form onSubmit={handleSubmit}>
       <Panel gap={4}>
         <Text>{'§fCOMPILED MODAL'}</Text>
+
+        {/* Two carriers on `custom_form` rows: a live string, and a visible the
+            build probes — both travel as bare label rows nothing draws. */}
+        <Text maxLength={20}>{saved === '' ? ' ' : `§7saved as: §f${saved}`}</Text>
+        <Text visible={saved !== ''}>{'§asaved!'}</Text>
 
         {/* One of each kind, so a compiled modal is exercised end to end.
             These are the ORE-STYLED components: they pass the theme's textures

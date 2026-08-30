@@ -31,6 +31,11 @@ export default function Counter(): JSX.Element {
         {/* Live: one entry carries this string whole, formatting codes and all. */}
         <Text maxLength={16}>{`count ${count}`}</Text>
 
+        {/* Carried visible: the build probes that state flips this, spends one
+            entry on it, and the compiled gate hides the subtree client-side.
+            The shape never changes — the hint is always in the tree. */}
+        <Text visible={count === 0}>{'§7press + to start'}</Text>
+
         <Panel flexDirection={'row'} gap={4}>
           <Button
             enabled={count < 9}
