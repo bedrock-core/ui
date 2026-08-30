@@ -21,27 +21,27 @@
 	// already gated on the header, so a compiled screen is mounted by being
 	// NAMED rather than by editing a vanilla file — which is why there is no
 	// `server_form` re-declaration anywhere in the pipeline.
+	//
+	// There is no field generator here. A compiled screen PLACES each native
+	// field itself with a literal `collection_index`, so a factory would only
+	// draw a second copy at its own pitch — see `nodes/field.ts`.
 	"namespace": "core_ui_form",
-
-	// Every addon's compiled screens hang here, one gated host each. Empty in
-	// the render pack: the addons fill it.
 	"compiled_root": {
 		"type": "panel",
-		"size": [ "100%", "100%" ],
+		"size": [
+			"100%",
+			"100%"
+		],
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
 		"controls": []
 	},
-
-	// Does a compiled screen claim this form at all?
-	//
-	// Sliced encoding-agnostically — `bcuiv0008core` without the version digit —
-	// so a pack that decodes a range of encodings does not need one gate per
-	// version here. Which screen, and at which encoding, is each screen's own
-	// gate to decide.
-	"claimed": {
+	"claimed_modal": {
 		"type": "panel",
-		"size": [ "100%", "100%" ],
+		"size": [
+			"100%",
+			"100%"
+		],
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
 		"property_bag": {
@@ -49,7 +49,9 @@
 		},
 		"visible": "#visible",
 		"bindings": [
-			{ "binding_name": "#title_text" },
+			{
+				"binding_name": "#title_text"
+			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(('%.13s' * #title_text) = 'bcuiv0008core')",
@@ -57,17 +59,45 @@
 			}
 		],
 		"controls": [
-			{ "screens@core_ui_form.compiled_root": {} }
+			{
+				"screens@core_ui_form.compiled_root": {}
+			}
 		]
 	},
-
-	// The interpreter's content, which draws every screen that is NOT compiled:
-	// the ones still serialized per player, and every screen from an addon built
-	// before compiled forms existed. Both paths ship in one pack, and the title
-	// is what decides between them.
+	"claimed": {
+		"type": "panel",
+		"size": [
+			"100%",
+			"100%"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"property_bag": {
+			"#visible": false
+		},
+		"visible": "#visible",
+		"bindings": [
+			{
+				"binding_name": "#title_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.13s' * #title_text) = 'bcuiv0008core')",
+				"target_property_name": "#visible"
+			}
+		],
+		"controls": [
+			{
+				"screens@core_ui_form.compiled_root": {}
+			}
+		]
+	},
 	"interpreted": {
 		"type": "panel",
-		"size": [ "100%", "100%" ],
+		"size": [
+			"100%",
+			"100%"
+		],
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
 		"property_bag": {
@@ -75,7 +105,9 @@
 		},
 		"visible": "#visible",
 		"bindings": [
-			{ "binding_name": "#title_text" },
+			{
+				"binding_name": "#title_text"
+			},
 			{
 				"binding_type": "view",
 				"source_property_name": "(not (('%.13s' * #title_text) = 'bcuiv0008core'))",
@@ -83,8 +115,12 @@
 			}
 		],
 		"controls": [
-			{ "scroll_root@core_ui_screens.scroll": {} },
-			{ "scroll_pool@core_ui_screens.scroll_pool": {} }
+			{
+				"scroll_root@core_ui_screens.scroll": {}
+			},
+			{
+				"scroll_pool@core_ui_screens.scroll_pool": {}
+			}
 		]
 	}
 }

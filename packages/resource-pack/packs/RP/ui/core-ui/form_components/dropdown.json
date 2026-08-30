@@ -8,14 +8,41 @@
 		"$payload_collection": "custom_form",
 		"$payload_binding": "#custom_text",
 		"$cell_details_binding_type": "collection_details",
+		"$compiled|default": false,
+		/* Restated at every hop — see the same note in slider.json. A $variable set
+		   where a control is MOUNTED does not reach a definition it merely
+		   REFERENCES by name; the referenced one resolves its own scope and takes
+		   its own `|default` instead. */
+		"$scale|default": "#font_scale_factor",
+		"$static_texture|default": "",
 		"$type_gate": "(#pre_visible and (#type = 'modal-dropdown'))",
 		"controls": [
-			{ "dropdown_control@core_ui_form_components.dropdown_control": {} },
+			{
+				"dropdown_control@core_ui_form_components.dropdown_control": {
+					"$static_texture": "$static_texture"
+				}
+			},
 			{
 				// Live current-value overlay (the engine keeps #dropdown_option_text in sync
 				// with the selected option). Layer 20 clears the closed box + faces (≤2).
-				"dropdown_current_label@core_ui_form_components.dropdown_current_label": { "layer": 20 }
+				"dropdown_current_label@core_ui_form_components.dropdown_current_label": {
+					"layer": 20,
+					"$compiled": "$compiled",
+					"$scale": "$scale"
+				}
 			}
+			/* NO POPUP HERE. A compiled cell mounting its own dropdown_popup_router
+			   put an option factory over `custom_dropdown` — and a control named
+			   `custom_dropdown_radio_toggle` — INSIDE the native dropdown's own
+			   subtree, where the engine resolves dropdown_content_control and the
+			   dropdown_area host BY NAME. It took the client down. So the compiled
+			   popup hangs OUTSIDE the cell: the compiler emits one
+			   `dropdown_popup_router` per dropdown at the screen root (see
+			   ui-compile hosts/form/emit.ts), carrying that cell's row index,
+			   `$compiled`, `$open_gate: "#custom_dropdown"`, `$popup_texture` and
+			   `$popup_size` — the same overlay position the interpreted router gets
+			   from modal_container's popup_overlay factory, which cannot pass
+			   per-row variables and so cannot serve the compiled path. */
 		]
 	},
 	// The dropdown assembly: closed-box toggle instance + popup content panel.
@@ -28,6 +55,7 @@
 	// popup hosting to its z-position.
 	"dropdown_control": {
 		"type": "panel",
+		"$static_texture|default": "",
 		"size": ["100%", "100%"],
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
@@ -41,6 +69,7 @@
 					"dropdown_name": "custom_dropdown",
 					"dropdown_content_control": "dropdown_content",
 					"dropdown_area": "inside_header_panel",
+					"$static_texture": "$static_texture",
 					"$toggle_name": "custom_dropdown",
 					"$toggle_state_binding_name": "#custom_dropdown"
 				}
@@ -101,6 +130,16 @@
 		"anchor_to": "top_left",
 		"visible": "#visible",
 		"property_bag": { "#visible": false },
+		"$compiled|default": false,
+		/* Restated here and forwarded at the card reference below — the same
+		   scope rule as everywhere: a $variable set where THIS router is mounted
+		   does not reach a definition the router references by name. */
+		"$popup_texture|default": "",
+		"$popup_size|default": [312, 20],
+		/* WHAT OPENS IT. Interpreted: this row is a dropdown (decoded #type) AND the
+		   engine says it is open. A compiled screen has no #type to decode, and the
+		   open-state channel alone is enough there — only a dropdown row ever has one. */
+		"$open_gate|default": "((#type = 'modal-dropdown') and #custom_dropdown)",
 		"bindings": [
 			{
 				"binding_type": "collection_details",
@@ -120,7 +159,7 @@
 				"binding_type": "collection",
 				"binding_collection_name": "custom_form"
 			},
-			{ "binding_type": "view", "source_property_name": "((#type = 'modal-dropdown') and #custom_dropdown)", "target_property_name": "#visible" }
+			{ "binding_type": "view", "source_property_name": "$open_gate", "target_property_name": "#visible" }
 		],
 		"controls": [
 			{
@@ -138,7 +177,16 @@
 					"size": [1, 1],
 					"anchor_from": "center",
 					"anchor_to": "center",
-					"controls": [ { "popup_card@core_ui_form_components.dropdown_popup_card": {} } ]
+					"controls": [
+						{ "popup_card@core_ui_form_components.dropdown_popup_card": { "ignored": "$compiled" } },
+						{
+							"popup_card_static@core_ui_form_components.dropdown_popup_card_static": {
+								"ignored": "(not $compiled)",
+								"$popup_texture": "$popup_texture",
+								"$popup_size": "$popup_size"
+							}
+						}
+					]
 				}
 			}
 		]
@@ -170,6 +218,38 @@
 				"background@core_ui_form_components.dropdown_popup_background": {}
 			},
 			{ "popup_scroll@core_ui_form_components.dropdown_popup_scroll": {} }
+		]
+	},
+	/* The compiled card. The interpreted one decodes its height out of the cell and
+	   scrolls, because the interpreter caps that height at half the screen; a
+	   compiled screen sends no height to decode, and knows its option list at build
+	   time, so it is GIVEN one and there is nothing to scroll.
+	   NOT 100%c. The card hugging its rows and the surface filling the card are the
+	   same measurement twice: `background` is 100% of a height that is only known
+	   from the children, and the first attempt at that took the client down as the
+	   screen was built. A given size breaks the loop — the number is the one
+	   `FormDropdown.popupHeight` already computes: rows x 17 + 1 fused border + 2
+	   padding. */
+	"dropdown_popup_card_static": {
+		"type": "panel",
+		"$popup_size|default": [312, 20],
+		"$popup_texture|default": "",
+		"size": "$popup_size",
+		"anchor_from": "center",
+		"anchor_to": "center",
+		"controls": [
+			{
+				"background@core_ui_form_components.dropdown_popup_background_static": {
+					"$popup_texture": "$popup_texture"
+				}
+			},
+			{
+				"options@core_ui_form_components.dropdown_options": {
+					"layer": 2,
+					"anchor_from": "top_left",
+					"anchor_to": "top_left"
+				}
+			}
 		]
 	},
 	// ── Popup scroll: OUR scroll_view (the proven core_ui_screens.scroll shape), NOT
@@ -239,17 +319,56 @@
 	"dropdown_current_label": {
 		"type": "panel",
 		"layer": 20,
+		"$compiled|default": false,
+		"$scale|default": "#font_scale_factor",
 		"size": ["100%", "100%"],
 		"controls": [
 			{
 				"value_frame": {
+					"ignored": "$compiled",
 					"type": "panel",
 					"size": [1, 1],
 					"anchor_from": "left_middle",
 					"anchor_to": "left_middle",
-					"controls": [ { "display_text@core_ui_form_components.dropdown_current_value_text": {} } ]
+					"controls": [
+						{ "display_text@core_ui_form_components.dropdown_current_value_text": {} }
+					]
+				}
+			},
+			{
+				"display_text_static@core_ui_form_components.dropdown_current_value_text_static": {
+					"ignored": "(not $compiled)",
+					"$scale": "$scale"
 				}
 			}
+		]
+	},
+	// The compiled screen's current-value text.
+	//
+	// Same option-blob decode as the label below — a chooser's OPTIONS travel on
+	// either path, because they are data rather than layout — and none of the
+	// rest. Everything the interpreted label reads after the text is CELL fields
+	// (colour, font, scale, x, y) that a compiled screen does not send; decoding
+	// them off an empty payload set the scale to 0 and the font alias to '',
+	// which is an invisible label and a "Could not find font alias" log. Style
+	// comes from the mount's own $variables, and the inset is the 8px the edit
+	// box uses with the anchor doing the centring.
+	"dropdown_current_value_text_static@core_ui_components.label": {
+		"size": ["100% - 16px", "default"],
+		"offset": [8, 0],
+		"anchor_from": "left_middle",
+		"anchor_to": "left_middle",
+		"use_anchored_offset": false,
+		"bindings": [
+			{
+				"binding_name": "#dropdown_option_text",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form"
+			},
+			{ "binding_type": "view", "source_property_name": "('%.424s' * #dropdown_option_text)", "target_property_name": "#skip_to_text" },
+			{ "binding_type": "view", "source_property_name": "(#dropdown_option_text - #skip_to_text)", "target_property_name": "#rem_at_text" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_at_text)", "target_property_name": "#raw_opt_text" },
+			{ "binding_type": "view", "source_property_name": "(('%.82s' * #raw_opt_text) - ('%.2s' * #raw_opt_text) - ';')", "target_property_name": "#text" }
 		]
 	},
 	// Current-value text on the shared label base. TWO custom_form channels:
@@ -306,21 +425,33 @@
 	// added here (without them the closed box was un-selectable by controller/keyboard).
 	"dropdown_closed_box@core_ui_form_components.toggle_base": {
 		"size": ["100%", "100%"],
+		"$static_texture|default": "",
 		"focus_wrap_enabled": true,
 		"$toggle_binding_type": "collection",
 		"$toggle_grid_collection_name": "custom_form",
 		// State faces: shared modal_state_face at the button-identical offsets —
 		// idle[440], hover[1024], open/pressed[1107], locked[1190].
 		"controls": [
-			{ "unchecked@core_ui_common.modal_state_face": { "$face_skip": "('%.440s' * #payload)" } },
-			{ "checked@core_ui_common.modal_state_face": { "$face_skip": "('%.1107s' * #payload)" } },
-			{ "unchecked_hover@core_ui_common.modal_state_face": { "$face_skip": "('%.1024s' * #payload)" } },
-			{ "checked_hover@core_ui_common.modal_state_face": { "$face_skip": "('%.1107s' * #payload)" } },
-			{ "unchecked_locked@core_ui_common.modal_state_face": { "$face_skip": "('%.1190s' * #payload)" } },
-			{ "checked_locked@core_ui_common.modal_state_face": { "$face_skip": "('%.1190s' * #payload)" } },
-			{ "unchecked_locked_hover@core_ui_common.modal_state_face": { "$face_skip": "('%.1190s' * #payload)" } },
-			{ "checked_locked_hover@core_ui_common.modal_state_face": { "$face_skip": "('%.1190s' * #payload)" } }
+			{ "unchecked@core_ui_common.modal_state_face": { "$static_texture": "$static_texture", "$face_skip": "('%.440s' * #payload)" } },
+			{ "checked@core_ui_common.modal_state_face": { "$static_texture": "$static_texture", "$face_skip": "('%.1107s' * #payload)" } },
+			{ "unchecked_hover@core_ui_common.modal_state_face": { "$static_texture": "$static_texture", "$face_skip": "('%.1024s' * #payload)" } },
+			{ "checked_hover@core_ui_common.modal_state_face": { "$static_texture": "$static_texture", "$face_skip": "('%.1107s' * #payload)" } },
+			{ "unchecked_locked@core_ui_common.modal_state_face": { "$static_texture": "$static_texture", "$face_skip": "('%.1190s' * #payload)" } },
+			{ "checked_locked@core_ui_common.modal_state_face": { "$static_texture": "$static_texture", "$face_skip": "('%.1190s' * #payload)" } },
+			{ "unchecked_locked_hover@core_ui_common.modal_state_face": { "$static_texture": "$static_texture", "$face_skip": "('%.1190s' * #payload)" } },
+			{ "checked_locked_hover@core_ui_common.modal_state_face": { "$static_texture": "$static_texture", "$face_skip": "('%.1190s' * #payload)" } }
 		]
+	},
+	// The compiled card's surface: the texture GIVEN, nothing decoded. The decoding
+	// twin below writes #texture out of the cell payload, and a compiled screen
+	// sends none — the same binding that feeds an interpreted image blanks a
+	// static one (the slider's statics hit this first).
+	"dropdown_popup_background_static": {
+		"type": "image",
+		"layer": 1,
+		"size": ["100%", "100%"],
+		"$popup_texture|default": "",
+		"texture": "$popup_texture"
 	},
 	// Popup container background: self-decodes popupBackground[1273] from the dropdown's
 	// custom_form cell (collection cell scope reaches inside the popup — probe-verified).
@@ -329,7 +460,9 @@
 		"type": "image",
 		"layer": 1,
 		"size": ["100%", "100%"],
-		"texture": "#texture",
+		// Given on a compiled screen, decoded otherwise — the slider's $track trick.
+		"$popup_texture|default": "#texture",
+		"texture": "$popup_texture",
 		"visible": "#visible",
 		"property_bag": { "#visible": true },
 		"bindings": [

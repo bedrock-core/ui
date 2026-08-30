@@ -19,6 +19,21 @@
 		"$payload_collection": "custom_form",
 		"$payload_binding": "#custom_text"
 	},
+	// `state_face` with the texture GIVEN instead of decoded.
+	//
+	// A compiled screen sends no payload, so there is nothing for the decoding
+	// face to read. The texture comes from the author's own prop, passed in as a
+	// variable where the control is mounted — the library ships no look of its
+	// own, here or anywhere.
+	"static_face": {
+		"type": "image",
+		"size": [ "100%", "100%" ],
+		"anchor_from": "center",
+		"anchor_to": "center",
+		"keep_ratio": false,
+		"$face_texture|default": "textures/ui/unstyled",
+		"texture": "$face_texture"
+	},
 	"state_face": {
 		"type": "panel",
 		"size": [
@@ -27,13 +42,30 @@
 		],
 		"anchor_from": "center",
 		"anchor_to": "center",
+		"$static_texture|default": "",
 		"$face_skip|default": "('%.440s' * #payload)",
 		"$payload_collection|default": "form_buttons",
 		"$payload_binding|default": "#form_button_text",
 		"$cell_details_binding_type|default": "none",
 		"controls": [
 			{
+				// Given, not decoded. A COMPILED screen sends no payload, so the
+				// decode below has nothing to read; the texture arrives as a variable
+				// from the author's own prop instead. `ignored` drops whichever of the
+				// two does not apply, so neither ever costs a binding it will not use.
+				"bg_static": {
+					"ignored": "($static_texture = '')",
+					"type": "image",
+					"size": [ "100%", "100%" ],
+					"anchor_from": "center",
+					"anchor_to": "center",
+					"keep_ratio": false,
+					"texture": "$static_texture"
+				}
+			},
+			{
 				"bg": {
+					"ignored": "(not ($static_texture = ''))",
 					"type": "image",
 					"size": [
 						"100%",

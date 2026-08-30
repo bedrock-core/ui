@@ -366,6 +366,29 @@
 		],
 		"use_anchored_offset": false
 	},
+	// The label with the payload decode REPLACED by the native channel alone.
+	// A COMPILED cell mounts this one: the group decode below reads #payload,
+	// and a compiled screen sends none — the inherited bindings would write ''
+	// into #font_type and #font_scale_factor OVER the literals the mount passed
+	// (the same stomp the slider's static faces hit; a #property binding beats
+	// a literal property). Overriding `bindings` here replaces the whole
+	// inherited array — arrays never merge — so nothing of the decode survives.
+	// Font and scale arrive as $variables instead; the parent never declares
+	// `font_type` as a property (it only ever bound it), so this one does.
+	"label_static@core_ui_components.label": {
+		"$font_type|default": "default",
+		"font_type": "$font_type",
+		"bindings": [
+			{
+				/* the native text channel, the one binding a static label still needs */
+				"binding_name": "$native_binding",
+				"binding_type": "collection",
+				"binding_condition": "always",
+				"binding_collection_name": "$payload_collection",
+				"binding_name_override": "$native_target"
+			}
+		]
+	},
 	"label": {
 		"type": "label",
 		"text": "#text",
@@ -377,7 +400,8 @@
 		],
 		"font_size": "small",
 		"backup_font_type": "UIFont",
-		"font_scale_factor": "#font_scale_factor",
+		"$scale|default": "#font_scale_factor",
+		"font_scale_factor": "$scale",
 		/* `shadow` is NOT runtime-bindable — the engine resolves it at load time (vanilla only
 		   ever sets it to a literal or a $variable, never a #binding). So it is a COMPILE-TIME
 		   $variable; shadowed text arrives as its own element TYPE and the shadow_frame /

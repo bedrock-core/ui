@@ -16,6 +16,61 @@
 	// without it every click writes row 0.
 	// A user with a different bindings shape overrides the whole array (the modal
 	// toggle_control does — its write-back shape was bisected in-game; keep verbatim).
+	// The same widget on a COMPILED screen.
+	//
+	// `toggle_base` still owns the state read and the write-back — that half is
+	// the engine's and no pack replaces it. What changes is the faces: a
+	// compiled screen sends no payload, so they are GIVEN as variables instead
+	// of decoded from one. Unstyled by default like every other base; the
+	// author's textures arrive from their own props, and the library ships no
+	// look of its own.
+	//
+	// It carries its own `collection_details` binding, which is S1's rule: a
+	// control the pack PLACES owns its entry only by carrying that itself.
+	"compiled_toggle@core_ui_form_components.toggle_base": {
+		"size": [ "100%", "100%" ],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"layer": 2,
+		"enabled": "#enabled",
+		"focus_enabled": true,
+		"focus_magnet_enabled": true,
+		"focus_wrap_enabled": true,
+		"default_focus_precedence": 0,
+		"$toggle_name": "custom_toggle",
+		"$toggle_grid_collection_name": "custom_form",
+		"$off|default": "textures/ui/unstyled",
+		"$on|default": "textures/ui/unstyled",
+		"$off_hover|default": "textures/ui/unstyled",
+		"$on_hover|default": "textures/ui/unstyled",
+		"$off_locked|default": "textures/ui/unstyled",
+		"$on_locked|default": "textures/ui/unstyled",
+		"bindings": [
+			{ "binding_type": "collection_details", "binding_collection_name": "custom_form" },
+			{
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form",
+				"binding_name": "#custom_toggle_state",
+				"binding_name_override": "#toggle_state"
+			},
+			{
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form",
+				"binding_name": "#custom_toggle_enabled",
+				"binding_name_override": "#enabled"
+			}
+		],
+		"controls": [
+			{ "unchecked@core_ui_common.static_face": { "$face_texture": "$off" } },
+			{ "checked@core_ui_common.static_face": { "$face_texture": "$on" } },
+			{ "unchecked_hover@core_ui_common.static_face": { "$face_texture": "$off_hover" } },
+			{ "checked_hover@core_ui_common.static_face": { "$face_texture": "$on_hover" } },
+			{ "unchecked_locked@core_ui_common.static_face": { "$face_texture": "$off_locked" } },
+			{ "checked_locked@core_ui_common.static_face": { "$face_texture": "$on_locked" } },
+			{ "unchecked_locked_hover@core_ui_common.static_face": { "$face_texture": "$off_locked" } },
+			{ "checked_locked_hover@core_ui_common.static_face": { "$face_texture": "$on_locked" } }
+		]
+	},
 	"toggle_base": {
 		"type": "toggle",
 		"layer": 1,

@@ -38,7 +38,24 @@
 		],
 		"controls": [
 			{
-				"modal_content@core_ui_common.modal_scroll": {}
+				/* The interpreter's rows, hidden once a compiled screen claims the
+				   title. Both paths ship in one pack and the title decides, exactly
+				   as it does on an action form — see core-ui/form/mount.json. */
+				"modal_content@core_ui_common.modal_scroll": {
+					"property_bag": { "#visible": true },
+					"visible": "#visible",
+					"bindings": [
+						{ "binding_name": "#title_text" },
+						{
+							"binding_type": "view",
+							"source_property_name": "(not (('%.13s' * #title_text) = 'bcuiv0008core'))",
+							"target_property_name": "#visible"
+						}
+					]
+				}
+			},
+			{
+				"compiled_content@core_ui_form.claimed_modal": {}
 			},
 			{
 				/* Dropdown popup OVERLAY at the content root — OUTSIDE the scroll, so an open

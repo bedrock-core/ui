@@ -23,6 +23,24 @@
 		"$payload_collection": "custom_form",
 		"$payload_binding": "#custom_text",
 		"$cell_details_binding_type": "collection_details",
+		"$travel_size|default": [ 1, 0 ],
+		"$bar_size|default": [ 1, 0 ],
+		"$thumb_size|default": [ 1, 0 ],
+		"$compiled|default": false,
+		/* Restated at every hop. A $variable set where a control is MOUNTED does
+		   not reach a definition it merely REFERENCES by name: slider_control
+		   resolved its own scope, so the sizes it was handed were never seen and
+		   its faces fell back to a decode of a payload a compiled screen does not
+		   send — which is why every piece of the slider was invisible while the
+		   travel area around it (an inline child, same scope) worked and the
+		   thumb still dragged. */
+		"$track|default": "#texture",
+		"$track_hover|default": "#texture",
+		"$progress|default": "#texture",
+		"$progress_hover|default": "#texture",
+		"$thumb|default": "#texture",
+		"$thumb_hover|default": "#texture",
+		"$thumb_locked|default": "#texture",
 		"$type_gate": "(#pre_visible and (#type = 'modal-slider'))",
 		"controls": [
 			{
@@ -41,7 +59,45 @@
 					"anchor_to": "center",
 					"controls": [
 						{
+							// The compiled twin. `travel_area` above decodes its size out of
+							// the payload; a compiled screen has none, so it measures 0x0 and
+							// the slider inside it never appears. This one is told its size.
+							// `ignored` keeps exactly one of the two, decided at load time.
+							"travel_area_static": {
+								"ignored": "(not $compiled)",
+								"type": "panel",
+								"size": "$travel_size",
+								"anchor_from": "center",
+								"anchor_to": "center",
+								"controls": [
+{
+										"slider@core_ui_form_components.slider_control": {
+											"$compiled": true,
+											"$bg_control": "slider_background_static",
+											"$bg_hover_control": "slider_background_hover_static",
+											"$prog_control": "slider_progress_static",
+											"$prog_hover_control": "slider_progress_hover_static",
+											"$box_default": "default_static",
+											"$box_hover": "hover_static",
+											"$box_locked": "locked_static",
+											"$box_indent": "indent_static",
+											"$bar_size": "$bar_size",
+											"$thumb_size": "$thumb_size",
+											"$track": "$track",
+											"$track_hover": "$track_hover",
+											"$progress": "$progress",
+											"$progress_hover": "$progress_hover",
+											"$thumb": "$thumb",
+											"$thumb_hover": "$thumb_hover",
+											"$thumb_locked": "$thumb_locked"
+										}
+									}
+								]
+							}
+						},
+						{
 							"travel_area": {
+								"ignored": "$compiled",
 								"type": "panel",
 								"size": [
 									1,
@@ -110,7 +166,18 @@
 								],
 								"controls": [
 									{
-										"slider@core_ui_form_components.slider_control": {}
+										"slider@core_ui_form_components.slider_control": {
+											"$compiled": false,
+											"$bar_size": "$bar_size",
+											"$thumb_size": "$thumb_size",
+											"$track": "$track",
+											"$track_hover": "$track_hover",
+											"$progress": "$progress",
+											"$progress_hover": "$progress_hover",
+											"$thumb": "$thumb",
+											"$thumb_hover": "$thumb_hover",
+											"$thumb_locked": "$thumb_locked"
+										}
 									}
 								]
 							}
@@ -134,6 +201,25 @@
 		"anchor_to": "top_left",
 		"layer": 2,
 		"enabled": "#enabled",
+		// Each face reads a VARIABLE that defaults to the decoded property, so
+		// an interpreted slider is unchanged. A compiled screen has no payload
+		// to decode, and passes the literal textures instead — the slider is the
+		// one field whose surfaces are its own rather than `state_face`'s, so it
+		// needs them named here rather than the one `$static_texture`.
+		"$track|default": "#texture",
+		"$track_hover|default": "#texture",
+		"$progress|default": "#texture",
+		"$progress_hover|default": "#texture",
+		"$thumb|default": "#texture",
+		"$thumb_hover|default": "#texture",
+		"$thumb_locked|default": "#texture",
+		/* The three its own children read that only the textures declared before
+		   now did. `bar_default_size_static` gates on $compiled and sizes itself
+		   from $bar_size; neither was declared HERE, only forwarded in, and the
+		   level where both ARE declared (the cell) is the level that worked. */
+		"$compiled|default": false,
+		"$bar_size|default": [ 1, 0 ],
+		"$thumb_size|default": [ 1, 0 ],
 		"slider_name": "custom_slider",
 		"slider_track_button": "custom_slider",
 		// var-driven so the step mappings' direction guards (below) can read it.
@@ -142,11 +228,23 @@
 		"slider_collection_name": "custom_form",
 		"slider_box_control": "slider_box",
 		"default_control": "bar_default_anchor",
-		"background_control": "slider_background",
-		"background_hover_control": "slider_background_hover",
-		"progress_control": "slider_progress",
-		"progress_hover_control": "slider_progress_hover",
 		"hover_control": "bar_hover_anchor",
+		/* WHY THESE ARE VARIABLES. The engine resolves each of them BY NAME, and
+		   both paths' copies are in the tree at once: `ignored` stops a control
+		   RENDERING, it does not remove it (measured — an ignored probe was still
+		   in the debug tree). So the lookup took the first match in document order,
+		   which is the interpreted branch. Right on an interpreted screen; on a
+		   compiled one the engine drove an invisible copy and left the drawn one
+		   alone, which is why every piece of the bar was missing while a plain
+		   image beside it rendered. Each path names its own copy. */
+		"$bg_control|default": "slider_background",
+		"$bg_hover_control|default": "slider_background_hover",
+		"$prog_control|default": "slider_progress",
+		"$prog_hover_control|default": "slider_progress_hover",
+		"background_control": "$bg_control",
+		"background_hover_control": "$bg_hover_control",
+		"progress_control": "$prog_control",
+		"progress_hover_control": "$prog_hover_control",
 		"slider_small_decrease_button": "slider.small_decrease",
 		"slider_small_increase_button": "slider.small_increase",
 		"slider_selected_button": "slider.selected",
@@ -250,6 +348,7 @@
 					"controls": [
 						{
 							"bar_default_size": {
+								"ignored": "$compiled",
 								"type": "panel",
 								"size": [
 									1,
@@ -325,7 +424,7 @@
 												"100%"
 											],
 											"layer": 1,
-											"texture": "#texture",
+											"texture": "$track",
 											"bindings": [
 												{
 													"binding_name": "#custom_text",
@@ -376,7 +475,7 @@
 																		"100%"
 																	],
 																	"layer": 1,
-																	"texture": "#texture",
+																	"texture": "$track",
 																	"bindings": [
 																		{
 																			"binding_name": "#custom_text",
@@ -418,7 +517,7 @@
 																		"100%"
 																	],
 																	"layer": 3,
-																	"texture": "#texture",
+																	"texture": "$progress",
 																	"bindings": [
 																		{
 																			"binding_name": "#custom_text",
@@ -462,6 +561,67 @@
 									}
 								]
 							}
+						},
+						{
+							"bar_default_size_static": {
+								"ignored": "(not $compiled)",
+								"type": "panel",
+								"size": "$bar_size",
+								"anchor_from": "center",
+								"anchor_to": "center",
+								"controls": [
+									{
+										"bar_default": {
+											"type": "image",
+											"size": [
+												"100%",
+												"100%"
+											],
+											"layer": 1,
+											"texture": "$track",
+											"controls": [
+												{
+													"sizing_panel": {
+														"type": "panel",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"anchor_from": "center",
+														"anchor_to": "center",
+														"controls": [
+															{
+																"slider_background_static": {
+																	"type": "image",
+																	"size": [
+																		"100%",
+																		"100%"
+																	],
+																	"layer": 1,
+																	"texture": "$track"
+																}
+															},
+															{
+																"slider_progress_static": {
+																	"type": "image",
+																	"size": [
+																		"100%",
+																		"100%"
+																	],
+																	"layer": 3,
+																	"texture": "$progress",
+																	"clip_direction": "left",
+																	"clip_pixelperfect": false
+																}
+															}
+														]
+													}
+												}
+											]
+										}
+									}
+								]
+							}
 						}
 					]
 				}
@@ -482,6 +642,7 @@
 					"controls": [
 						{
 							"bar_hover_size": {
+								"ignored": "$compiled",
 								"type": "panel",
 								"size": [
 									1,
@@ -557,7 +718,7 @@
 												"100%"
 											],
 											"layer": 1,
-											"texture": "#texture",
+											"texture": "$track_hover",
 											"bindings": [
 												{
 													"binding_name": "#custom_text",
@@ -608,7 +769,7 @@
 																		"100%"
 																	],
 																	"layer": 1,
-																	"texture": "#texture",
+																	"texture": "$track_hover",
 																	"bindings": [
 																		{
 																			"binding_name": "#custom_text",
@@ -650,7 +811,7 @@
 																		"100%"
 																	],
 																	"layer": 3,
-																	"texture": "#texture",
+																	"texture": "$progress_hover",
 																	"bindings": [
 																		{
 																			"binding_name": "#custom_text",
@@ -694,6 +855,67 @@
 									}
 								]
 							}
+						},
+						{
+							"bar_hover_size_static": {
+								"ignored": "(not $compiled)",
+								"type": "panel",
+								"size": "$bar_size",
+								"anchor_from": "center",
+								"anchor_to": "center",
+								"controls": [
+									{
+										"bar_hover": {
+											"type": "image",
+											"size": [
+												"100%",
+												"100%"
+											],
+											"layer": 1,
+											"texture": "$track_hover",
+											"controls": [
+												{
+													"sizing_panel": {
+														"type": "panel",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"anchor_from": "center",
+														"anchor_to": "center",
+														"controls": [
+															{
+																"slider_background_hover_static": {
+																	"type": "image",
+																	"size": [
+																		"100%",
+																		"100%"
+																	],
+																	"layer": 1,
+																	"texture": "$track_hover"
+																}
+															},
+															{
+																"slider_progress_hover_static": {
+																	"type": "image",
+																	"size": [
+																		"100%",
+																		"100%"
+																	],
+																	"layer": 3,
+																	"texture": "$progress_hover",
+																	"clip_direction": "left",
+																	"clip_pixelperfect": false
+																}
+															}
+														]
+													}
+												}
+											]
+										}
+									}
+								]
+							}
 						}
 					]
 				}
@@ -708,6 +930,11 @@
 				   thumbHeight [1937]) — exact payload size, moving with the box. */
 				"slider_box": {
 					"type": "slider_box",
+					/* Same duplicate-name problem as the bar above, same answer. */
+					"$box_default|default": "default",
+					"$box_hover|default": "hover",
+					"$box_locked|default": "locked",
+					"$box_indent|default": "indent",
 					"size": [
 						16,
 						16
@@ -715,12 +942,12 @@
 					"anchor_from": "center",
 					"anchor_to": "center",
 					"layer": 4,
-					"default_control": "default",
-					"hover_control": "hover",
-					"locked_control": "locked",
-					"indent_control": "indent",
+					"default_control": "$box_default",
+					"hover_control": "$box_hover",
+					"locked_control": "$box_locked",
+					"indent_control": "$box_indent",
 					"controls": [
-						{
+{
 							/* [1,1] anchor: #size_binding maps 1:1 to px ONLY against a [1,1]
 							   parent — directly inside the 16x16 box the bound values were
 							   multiplied by the box dims (in-game: enormous thumb). */
@@ -735,6 +962,7 @@
 								"controls": [
 									{
 										"thumb_size": {
+											"ignored": "$compiled",
 											"type": "panel",
 											"size": [
 												1,
@@ -810,7 +1038,7 @@
 															"100%"
 														],
 														"layer": 2,
-														"texture": "#texture",
+														"texture": "$thumb",
 														"bindings": [
 															{
 																"binding_name": "#custom_text",
@@ -852,7 +1080,7 @@
 															"100%"
 														],
 														"layer": 2,
-														"texture": "#texture",
+														"texture": "$thumb_hover",
 														"bindings": [
 															{
 																"binding_name": "#custom_text",
@@ -894,7 +1122,7 @@
 															"100%"
 														],
 														"layer": 2,
-														"texture": "#texture",
+														"texture": "$thumb_locked",
 														"bindings": [
 															{
 																"binding_name": "#custom_text",
@@ -936,7 +1164,7 @@
 															"100%"
 														],
 														"layer": 2,
-														"texture": "#texture",
+														"texture": "$thumb",
 														"bindings": [
 															{
 																"binding_name": "#custom_text",
@@ -968,6 +1196,61 @@
 																"binding_condition": "visible"
 															}
 														]
+													}
+												}
+											]
+										}
+									},
+									{
+										"thumb_size_static": {
+											"ignored": "(not $compiled)",
+											"type": "panel",
+											"size": "$thumb_size",
+											"anchor_from": "center",
+											"anchor_to": "center",
+											"controls": [
+												{
+													"default_static": {
+														"type": "image",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"layer": 2,
+														"texture": "$thumb"
+													}
+												},
+												{
+													"hover_static": {
+														"type": "image",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"layer": 2,
+														"texture": "$thumb_hover"
+													}
+												},
+												{
+													"locked_static": {
+														"type": "image",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"layer": 2,
+														"texture": "$thumb_locked"
+													}
+												},
+												{
+													"indent_static": {
+														"type": "image",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"layer": 2,
+														"texture": "$thumb"
 													}
 												}
 											]
