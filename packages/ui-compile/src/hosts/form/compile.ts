@@ -1,12 +1,14 @@
-import type { FunctionComponent, JSX } from '@bedrock-core/ui-runtime';
+import type { FunctionComponent } from '@bedrock-core/ui-runtime';
 import {
-  allocateForm, allocateModal, buildScreenOnce, concreteRoots, ContainerScreenError, FORM_COLLECTION,
-  formTitleFor, probeLiveness, type EntryEntry,
+  allocateForm, allocateModal, analyze, bakedTexts, buildScreenOnce, type CompiledSnapshot, concreteRoots,
+  ContainerScreenError, FORM_COLLECTION, formTitleFor, hasModalRoot, probeLiveness, shapeOf, visiblesAt,
+  type EntryEntry, type ModalRow,
 } from '@bedrock-core/ui-runtime/compile';
 import { checkLiveness } from '../../compile';
 import { BACKDROP_DEFINITION, emit } from '../../emit';
 import type { Document } from '../../jsonui';
-import type { Addressing, CellAddress } from '../../nodes/types';
+import { MODAL_COLLECTION } from '../../nodes/field';
+import type { Addressing } from '../../nodes/types';
 import { toIr } from '../../toIr';
 import { FORM_EMIT } from './emit';
 
@@ -44,6 +46,12 @@ export interface CompiledFormScreen {
   document: Document;
   /** Every entry the runtime has to emit, in order. The nth is `response.selection` n. */
   entries: readonly EntryEntry[];
+  /**
+   * What the build baked, for the generated module to register beside the
+   * title: the carried-visible ordinals the runtime re-marks, and the shape
+   * and baked strings `debug` diffs a render against.
+   */
+  snapshot: CompiledSnapshot;
   hasBackdrop: boolean;
 }
 
@@ -51,35 +59,38 @@ export interface CompiledFormScreen {
 const NAME = /^[A-Za-z0-9_-]+$/;
 
 /**
- * Where the form put a built tree's cells and channels: both are entries, and
- * an entry is the same thing whichever it carries.
+ * Where the action form put a built tree's needs: every one is an entry, and
+ * an entry is the same thing whichever it carries — a press's index, a live
+ * string, or a carried visible's bool.
  */
-/**
- * A modal's rows, keyed by the element that owns one.
- *
- * Merged into the addressing so a `field` reads its row the way every other
- * kind reads its address — and from the SAME function the runtime writes rows
- * with, so a baked `collection_index` and a `formValues` slot cannot drift.
- */
-const modalAddressing = (tree: JSX.Element): ReadonlyMap<JSX.Element, CellAddress> => new Map(
-  allocateModal(tree)
-    .filter(row => row.kind === 'field')
-    .map(row => [row.element, { address: row.row, role: 'button' as const }]),
-);
-
-const formAddressing = (entries: readonly EntryEntry[], tree?: JSX.Element): Addressing => ({
-  cells: new Map([
-    ...entries
-      .filter(entry => entry.role !== undefined)
-      .map(entry => [entry.element, { address: entry.entry, role: entry.role ?? 'button' }] as const),
-    // A modal's native fields are addressed too, on a numbering of their own —
-    // `custom_form` rows rather than `form_buttons` entries. A screen is one or
-    // the other, so the two never meet in the same map.
-    ...tree === undefined ? [] : modalAddressing(tree),
-  ]),
+const actionAddressing = (entries: readonly EntryEntry[]): Addressing => ({
+  cells: new Map(entries
+    .filter(entry => entry.role !== undefined)
+    .map(entry => [entry.element, { address: entry.entry, role: entry.role ?? 'button' }] as const)),
   channels: new Map(entries
-    .filter(entry => entry.length !== undefined)
+    .filter(entry => entry.carrier === 'text')
     .map(entry => [entry.element, { address: entry.entry, length: entry.length ?? 0 }])),
+  visibles: new Map(entries
+    .filter(entry => entry.carrier === 'bool')
+    .map(entry => [entry.element, entry.entry])),
+});
+
+/**
+ * Where the modal put the same needs: `custom_form` rows rather than
+ * `form_buttons` entries, from the SAME function the runtime writes rows
+ * with, so a baked `collection_index` and a `formValues` slot cannot drift.
+ * A screen is one or the other; the two numberings never meet in one map.
+ */
+const modalAddressing = (rows: readonly ModalRow[]): Addressing => ({
+  cells: new Map(rows
+    .filter(row => row.kind === 'field')
+    .map(row => [row.element, { address: row.row, role: 'button' as const }])),
+  channels: new Map(rows
+    .filter(row => row.kind === 'text')
+    .map(row => [row.element, { address: row.row, length: row.length ?? 0 }])),
+  visibles: new Map(rows
+    .filter(row => row.kind === 'bool')
+    .map(row => [row.element, row.row])),
 });
 
 /**
@@ -124,13 +135,24 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
   const namespace = `${spec.namespace}_${spec.name}`;
 
   // A compiled form is as baked as a compiled chest screen, so the same
-  // question applies — and the same answer fails the build.
-  checkLiveness(probeLiveness(() => buildScreenOnce(Screen)), spec.name);
+  // question applies — and the same answer fails the build. What differs is
+  // `visible`: the form has a carrier for it, so a probe that moved one is a
+  // finding rather than an error.
+  const probe = probeLiveness(() => buildScreenOnce(Screen));
+
+  checkLiveness(probe, spec.name, { carriedVisible: true });
 
   const tree = buildScreenOnce(Screen);
-  const placement = allocateForm(tree);
+  const visibles = visiblesAt(tree, probe.liveVisibles);
+  const modal = hasModalRoot(tree);
+
+  // The action form's needs are entries; the modal's are rows. One tree is
+  // exactly one of the two, and each side of the branch is the same function
+  // its runtime writes with — the numbering cannot drift from the bake.
+  const entries = modal ? [] : allocateForm(tree, analyze(tree, visibles)).entries;
+  const addressing = modal ? modalAddressing(allocateModal(tree, visibles)) : actionAddressing(entries);
   const document = emit(
-    toIr(formRoot(tree), formAddressing(placement.entries, tree), { namespace, collection: FORM_COLLECTION }),
+    toIr(formRoot(tree), addressing, { namespace, collection: modal ? MODAL_COLLECTION : FORM_COLLECTION }),
     FORM_EMIT,
   );
 
@@ -140,7 +162,14 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
     namespace,
     title: formTitleFor(namespace),
     document,
-    entries: placement.entries,
+    entries,
+    snapshot: {
+      // Carrier-aware: the bool channels are in the fingerprint, so a runtime
+      // whose visibles no longer match the bake diffs loudly in `debug`.
+      shape: shapeOf(tree, analyze(tree, visibles)),
+      baked: bakedTexts(tree),
+      vis: probe.liveVisibles,
+    },
     hasBackdrop: document[BACKDROP_DEFINITION] !== undefined,
   };
 }

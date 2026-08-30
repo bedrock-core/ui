@@ -130,6 +130,14 @@ export const sharedDefs = (ns: string, collection: string, kinds: Set<string>): 
  * does not claim emits its look, which is the same wherever it is drawn.
  */
 export const emitNode = (node: IrNode, ctx: Emit): ControlEntry => {
+  // A carried visible wraps whatever the node emits: the host owns the gate
+  // (which collection, which binding), the node stays ignorant of it. The
+  // host re-enters through `ctx.emitNode` with `visibleEntry` cleared, so
+  // this branch runs at most once per node.
+  if (node.visibleEntry !== undefined && ctx.host.wrapVisible !== undefined) {
+    return ctx.host.wrapVisible(node, ctx);
+  }
+
   const mechanism = ctx.host.emit?.[node.kind];
 
   return mechanism === undefined ? definitionFor(node.kind).emit(node, ctx) : mechanism(node, ctx);

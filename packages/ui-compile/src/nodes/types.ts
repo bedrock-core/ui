@@ -34,6 +34,14 @@ export interface NodeBase {
   layer?: number;
   /** Present only when the author hid the control; JSON UI shows by default. */
   visible?: boolean;
+  /**
+   * The carrier this node's `visible` rides, when the probes saw it move: the
+   * entry (or modal row) holding '0' / '1', and the value the build rendered
+   * with — what the gate is seeded with, so nothing flashes before the first
+   * binding resolve. The host wraps the emitted control in the gate; a node
+   * without this emits its `visible` as the literal above.
+   */
+  visibleEntry?: { address: number; initial: boolean };
 }
 
 /**
@@ -80,6 +88,8 @@ export interface ChannelAddress {
 export interface Addressing {
   readonly cells: ReadonlyMap<JSX.Element, CellAddress>;
   readonly channels: ReadonlyMap<JSX.Element, ChannelAddress>;
+  /** Where the host put each carried `visible`: the entry its bool rides. */
+  readonly visibles?: ReadonlyMap<JSX.Element, number>;
 }
 
 /** What a lowering sees: the element's solved geometry, and the walk's services. */
@@ -90,8 +100,8 @@ export interface LowerContext {
   own: Rect;
   /** `own`, made relative to `origin` — what the emitted control carries. */
   rect: Rect;
-  /** The author's layer and visibility, if any. */
-  decoration: { layer?: number; visible?: boolean };
+  /** The author's layer and visibility, if any — and the entry a carried visible rides. */
+  decoration: { layer?: number; visible?: boolean; visibleEntry?: { address: number; initial: boolean } };
   /** A document-unique name for this node, from a per-kind counter. */
   name(kind: string): string;
   /** Where the host put this element's cell. Throws when the walks disagree. */
@@ -132,6 +142,13 @@ export interface HostEmit {
    * tree contains (the form's dropdown popups are the first).
    */
   overlay?(root: IrNode, ctx: Emit): ControlEntry[];
+  /**
+   * The gate around a node whose `visible` is carried: reads the node's
+   * entry and shows or hides the whole subtree. The host emits the node
+   * itself through `ctx.emitNode` with `visibleEntry` cleared and its rect
+   * re-based, so the wrapper is the one carrying the placement.
+   */
+  wrapVisible?(node: IrNode, ctx: Emit): ControlEntry;
   /** Document-level definitions this host derives from the whole tree. */
   assemble?(root: IrNode, document: Document, ctx: Emit): void;
 }

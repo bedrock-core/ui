@@ -29,8 +29,32 @@ import { isHandler } from '../events';
  * or one whose build has not run, keeps working unchanged.
  */
 
-/** Component -> the title its compiled layout is picked by. */
-const compiled = new WeakMap<FunctionComponent, string>();
+/**
+ * What the build baked, alongside the layout it wrote into the pack.
+ *
+ * Two consumers, one record. `vis` is load-bearing: it is how the runtime
+ * marks the same elements the build compiled bool carriers for — the ordinals
+ * are positions in the shared visible walk, stable because the shape is
+ * frozen. `shape` and `baked` serve `debug`: a render that disagrees with
+ * either is an inference miss the build could not see, reported instead of
+ * silently drawn wrong.
+ */
+export interface CompiledSnapshot {
+  /** The claim shape the build compiled, as the probe's one-line fingerprint. */
+  readonly shape: string;
+  /** Every baked `<Text>` string, in document order. */
+  readonly baked: readonly string[];
+  /** Ordinals of the elements whose `visible` is carried. */
+  readonly vis: readonly number[];
+}
+
+interface CompiledRecord {
+  readonly title: string;
+  readonly snapshot?: CompiledSnapshot;
+}
+
+/** Component -> the title its compiled layout is picked by, and what was baked. */
+const compiled = new WeakMap<FunctionComponent, CompiledRecord>();
 
 /**
  * Records that a screen was compiled, and what title reaches its layout.
@@ -42,18 +66,21 @@ const compiled = new WeakMap<FunctionComponent, string>();
  *
  * @param screen - The screen component, exactly as the addon renders it.
  * @param title - The compiled title, from the build.
+ * @param snapshot - What the build baked: the carried-visible ordinals the
+ *   runtime needs, and the shape and text `debug` diffs against. A build old
+ *   enough to omit it compiled no bool carriers, so the absence is consistent.
  */
-export function registerCompiledScreen(screen: FunctionComponent, title: string): void {
+export function registerCompiledScreen(screen: FunctionComponent, title: string, snapshot?: CompiledSnapshot): void {
   const existing = compiled.get(screen);
 
-  if (existing !== undefined && existing !== title) {
+  if (existing !== undefined && existing.title !== title) {
     throw new Error(
-      `A screen is already registered as "${existing}" and cannot also be "${title}". `
+      `A screen is already registered as "${existing.title}" and cannot also be "${title}". `
       + 'One component is one compiled screen; render it twice rather than compiling it twice.',
     );
   }
 
-  compiled.set(screen, title);
+  compiled.set(screen, { title, ...snapshot === undefined ? {} : { snapshot } });
 }
 
 /**
@@ -64,5 +91,10 @@ export function registerCompiledScreen(screen: FunctionComponent, title: string)
  * only one of those can have been compiled.
  */
 export function compiledTitleOf(screen: unknown): string | undefined {
-  return isHandler<FunctionComponent>(screen) ? compiled.get(screen) : undefined;
+  return isHandler<FunctionComponent>(screen) ? compiled.get(screen)?.title : undefined;
+}
+
+/** What the build baked for a compiled screen, when its build recorded it. */
+export function compiledSnapshotOf(screen: unknown): CompiledSnapshot | undefined {
+  return isHandler<FunctionComponent>(screen) ? compiled.get(screen)?.snapshot : undefined;
 }

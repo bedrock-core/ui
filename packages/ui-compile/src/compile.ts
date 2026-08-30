@@ -78,7 +78,7 @@ const checkSpec = (spec: ScreenSpec): void => {
  * anything reported here really did change between two renders; the fix is
  * always the same, and the observed strings show what to size it for.
  */
-export const checkLiveness = (probe: Probe, name: string): void => {
+export const checkLiveness = (probe: Probe, name: string, options: { carriedVisible?: boolean } = {}): void => {
   if (probe.shape !== undefined) {
     throw new ContainerScreenError(
       `"${name}" renders a different screen when its state changes.\n`
@@ -87,6 +87,16 @@ export const checkLiveness = (probe: Probe, name: string): void => {
       + '  there: `enabled` on a button, `visible` on a panel, `maxLength` on live text.\n'
       + `    was: ${probe.shape.before}\n`
       + `    now: ${probe.shape.after}`,
+    );
+  }
+
+  // A live visible is a carrier on a host that has one and an error on a host
+  // that does not: the chest would bake the build's value and hide nothing.
+  if (options.carriedVisible !== true && probe.liveVisibles.length > 0) {
+    throw new ContainerScreenError(
+      `"${name}" changes ${probe.liveVisibles.length} element(s)' \`visible\` with state, and this host has no carrier for it.\n`
+      + '  A chest screen bakes `visible`, so the build\'s value would show forever.\n'
+      + '  Keep it static here, or serve the screen from a form host, which carries it as an entry.',
     );
   }
 

@@ -1,4 +1,4 @@
-import { buttonCell } from '../../components/Button';
+import { buttonCell, BUTTON_TYPE } from '../../components/Button';
 import { slotCell, type SlotRole } from '../../components/Slot';
 import type { JSX } from '../../jsx';
 import { childElements } from '../guards';
@@ -31,8 +31,8 @@ export interface CellClaim {
 /** An element that needs a channel for a value that changes at runtime. */
 export interface ChannelClaim {
   readonly element: JSX.Element;
-  readonly carrier: 'text';
-  /** How much of the carrier it reserves — for text, characters. */
+  readonly carrier: 'text' | 'bool';
+  /** How much of the carrier it reserves — characters for text, 1 for a bool. */
   readonly length: number;
 }
 
@@ -78,6 +78,13 @@ export const claim = (tree: JSX.Element, analysis: Analysis = analyze(tree)): Cl
       cells.push({ element, role });
     }
 
+    // The gate before the content: an element that is both live-visible and a
+    // live label claims its bool ahead of its text, so the order is a fact of
+    // the walk rather than of the maps.
+    if (analysis.visibles.has(element)) {
+      channels.push({ element, carrier: 'bool', length: 1 });
+    }
+
     const length = analysis.texts.get(element);
 
     if (length !== undefined) {
@@ -92,4 +99,70 @@ export const claim = (tree: JSX.Element, analysis: Analysis = analyze(tree)): Cl
   visit(tree);
 
   return { cells, channels };
+};
+
+// ---------------------------------------------------------------------------
+// The visible walk: one enumeration, three readers
+// ---------------------------------------------------------------------------
+
+/**
+ * Every element whose `visible` could be carried, in document order.
+ *
+ * One walk with one exclusion, shared by the probe that detects a live
+ * visible, the build that compiles its gate, and the runtime that recovers the
+ * same elements from the snapshot's ordinals. A button's CHILDREN are its
+ * face — baked by definition, the same exclusion the probe's baked-text scan
+ * makes — so the button itself is a candidate and nothing under it is.
+ *
+ * The ordinal into this list is what the compiled snapshot records: positions
+ * survive because a compiled screen's shape is frozen, which the probe
+ * enforces at build and `debug` polices at runtime.
+ */
+export const visibleCandidates = (tree: JSX.Element): JSX.Element[] => visibleWalk(tree).elements;
+
+/**
+ * The same walk with each element's parent ordinal alongside (-1 for the
+ * root). The probe needs the ancestry: the inherit pass stamps `visible:
+ * false` down a hidden subtree, so every descendant of a flipped element
+ * flips with it — and the carrier belongs to the subtree ROOT alone, because
+ * one gate hides the whole subtree.
+ */
+export const visibleWalk = (tree: JSX.Element): { elements: JSX.Element[]; parents: number[] } => {
+  const elements: JSX.Element[] = [];
+  const parents: number[] = [];
+
+  const visit = (element: JSX.Element, parent: number): void => {
+    const ordinal = elements.length;
+
+    elements.push(element);
+    parents.push(parent);
+
+    if (element.type === BUTTON_TYPE) {
+      return;
+    }
+
+    for (const child of childElements(element.props.children)) {
+      visit(child, ordinal);
+    }
+  };
+
+  visit(tree, -1);
+
+  return { elements, parents };
+};
+
+/** The elements a snapshot's visible ordinals name, on this render's tree. */
+export const visiblesAt = (tree: JSX.Element, ordinals: readonly number[]): ReadonlySet<JSX.Element> => {
+  const candidates = visibleCandidates(tree);
+  const found = new Set<JSX.Element>();
+
+  for (const ordinal of ordinals) {
+    const element = candidates[ordinal];
+
+    if (element !== undefined) {
+      found.add(element);
+    }
+  }
+
+  return found;
 };

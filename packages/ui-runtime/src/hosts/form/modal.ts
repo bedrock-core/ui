@@ -3,8 +3,11 @@ import { ModalFormData } from '@minecraft/server-ui';
 import {
   collectFormButtons, type FormConfig, type FormValues, MODAL_FORM_SLOT_TYPE,
 } from '../../components/Form';
+import { visiblesAt } from '../../core/ir';
+import type { CompiledSnapshot } from '../../core/render/screens';
 import { emitLabel } from '../../core/writers';
 import { allocateModal, type ModalRow } from './allocate';
+import { debugDiff } from './debug';
 import { liveText } from './runtime';
 import { getComponentDescriptor } from '../../core/componentRegistry';
 import { playerOwner } from '../../core/fabric';
@@ -93,6 +96,14 @@ function writeRow(row: ModalRow, form: ModalFormData, context: ModalSerializatio
     return;
   }
 
+  // A carried visible: one label row holding '0' or '1'. Nothing draws it —
+  // a compiled modal mounts no row factory — the compiled gate reads it.
+  if (row.kind === 'bool') {
+    emitLabel(element.props.visible === false ? '0' : '1', form, context);
+
+    return;
+  }
+
   const { type, props, nativeArgs } = element;
   const descriptor = typeof type === 'string' ? getComponentDescriptor(type) : undefined;
 
@@ -162,7 +173,15 @@ export async function presentCompiledModal(
   tree: JSX.Element,
   config: FormConfig,
   title: string,
+  snapshot?: CompiledSnapshot,
+  debug = false,
 ): Promise<PresentResult> {
+  if (debug && snapshot !== undefined) {
+    for (const line of debugDiff(tree, snapshot, title)) {
+      console.warn(line);
+    }
+  }
+
   const context: ModalSerializationContext = { mode: 'modal', modalControls: new Map(), modalControlIndex: 0 };
   const form = new ModalFormData();
 
@@ -177,8 +196,9 @@ export async function presentCompiledModal(
   collectFormButtons(tree);
 
   // One numbering, shared with the build: the row a compiled control was baked
-  // against is the row written here and the slot the answer comes back in.
-  for (const row of allocateModal(tree)) {
+  // against is the row written here and the slot the answer comes back in —
+  // the snapshot's ordinals mark the carried visibles the build gave rows to.
+  for (const row of allocateModal(tree, visiblesAt(tree, snapshot?.vis ?? []))) {
     writeRow(row, form, context);
   }
 

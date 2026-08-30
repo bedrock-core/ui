@@ -6,7 +6,7 @@ import type { FunctionComponent, JSX } from '../../jsx';
 import { startInputLock } from '../../util';
 import { playerOwner } from '../fabric';
 import { present } from './presenters';
-import { compiledTitleOf } from './screens';
+import { compiledSnapshotOf, compiledTitleOf } from './screens';
 import {
   beginPresentChain,
   consumeSwap,
@@ -22,9 +22,21 @@ import {
 } from './session';
 import { buildTree, cleanupComponentTree } from './tree';
 
+export interface RenderOptions {
+  /**
+   * Diff every present of a compiled screen against the snapshot its build
+   * recorded, and warn on drift: a baked prop that changed, a shape that no
+   * longer matches, a live string past its reservation. The runtime half of
+   * the liveness guard — probing at build cannot see a threshold no probe
+   * crossed, so this is where such a miss becomes loud instead of silent.
+   */
+  debug?: boolean;
+}
+
 export function render(
   root: JSX.Element | FunctionComponent,
   player: Player,
+  options: RenderOptions = {},
 ): void {
   // Ensure the built-in native components are registered before the first build/
   // serialize. Idempotent — safe to call on every render.
@@ -38,6 +50,7 @@ export function render(
   // before it is wrapped for translations, because the component is the only
   // thing both halves of the build hold in common.
   const compiledTitle = compiledTitleOf(root);
+  const compiled = { snapshot: compiledSnapshotOf(root), debug: options.debug === true };
 
   // Convert function component to JSX element if needed, then wrap it so
   // TranslationContext is populated at every root — the default i18n
@@ -128,7 +141,7 @@ export function render(
       return;
     }
 
-    present(player, tree, compiledTitle)
+    present(player, tree, compiledTitle, compiled)
       .then((result) => {
         // Superseded or torn down while the form was up — this outcome is void.
         if (!isChainCurrent(owner, token)) {

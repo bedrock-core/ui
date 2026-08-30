@@ -1,9 +1,12 @@
 import type { Player } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
 import { isHandler, type PressEvent } from '../../core/events';
+import { analyze, visiblesAt } from '../../core/ir';
+import type { CompiledSnapshot } from '../../core/render/screens';
 import { runInteractiveCallback, type PresentResult } from '../../core/render/presenters/shared';
 import type { JSX } from '../../jsx';
 import { allocate, type EntryEntry } from './allocate';
+import { debugDiff } from './debug';
 
 /**
  * Showing a screen whose layout is already in the pack.
@@ -44,8 +47,14 @@ export const liveText = (element: JSX.Element, length: number): string => {
  * it may happen at all. `'0'` is what the compiled button reads as disabled.
  */
 export const entryValue = (entry: EntryEntry): string => {
-  if (entry.length !== undefined) {
+  if (entry.carrier === 'text' && entry.length !== undefined) {
     return liveText(entry.element, entry.length);
+  }
+
+  // A carried visible and a press's enabled write the same alphabet: '0' is
+  // the one value the compiled control treats as "off".
+  if (entry.carrier === 'bool') {
+    return entry.element.props.visible === false ? '0' : '1';
   }
 
   return entry.element.props.enabled === false ? '0' : '1';
@@ -65,8 +74,19 @@ export async function presentCompiledForm(
   player: Player,
   tree: JSX.Element,
   title: string,
+  snapshot?: CompiledSnapshot,
+  debug = false,
 ): Promise<PresentResult> {
-  const { entries } = allocate(tree);
+  if (debug && snapshot !== undefined) {
+    for (const line of debugDiff(tree, snapshot, title)) {
+      console.warn(line);
+    }
+  }
+
+  // The snapshot's ordinals mark the elements the build compiled bool
+  // carriers for; walking them back onto this render's tree is what keeps the
+  // entry count identical to the one the layout was baked against.
+  const { entries } = allocate(tree, analyze(tree, visiblesAt(tree, snapshot?.vis ?? [])));
   const form = new ActionFormData();
 
   form.title(title);

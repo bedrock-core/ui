@@ -28,13 +28,21 @@ export type { Allocation, CellRole, ChannelEntry, SlotEntry } from './hosts/ches
 // The form host's half of the same seam. Named apart from the chest's rather
 // than exported as a namespace, because `hosts/<host>/index.ts` pulls in that
 // host's runtime and a build machine has no use for it.
-export { allocate as allocateForm, allocateModal, type ModalRow } from './hosts/form/allocate';
+export { allocate as allocateForm, allocateModal, hasModalRoot, type ModalRow } from './hosts/form/allocate';
 export type { EntryEntry, Placement as FormPlacement } from './hosts/form/allocate';
+
+// The liveness seam the compiled snapshot rides: the build detects a carried
+// visible by probing, records the ordinals, and the runtime marks the same
+// elements back onto its tree. The fingerprint and the baked strings are what
+// `debug` diffs a render against.
+export { bakedTexts, shapeOf } from './core/ir/probe';
+export type { CompiledSnapshot } from './core/render/screens';
 export {
   COLLECTION as FORM_COLLECTION, compiledPrefix, DETAILS_BINDING as FORM_DETAILS_BINDING,
   ENCODING_MAX, ENCODING_MIN, keyFrom as formKeyFrom, titleFor as formTitleFor,
+  VOCABULARY_MAX, VOCABULARY_MIN,
 } from './hosts/form/contract';
-export { analyze, claim } from './core/ir';
+export { analyze, claim, visiblesAt } from './core/ir';
 export type { Analysis, CellClaim, ChannelClaim, Claims } from './core/ir';
 export {
   BLANK_CODE, BLANK_VALUE, CHARSET, charsetLang, encode, MAX_CODE, UNKNOWN_CODE,

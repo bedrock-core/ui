@@ -6,7 +6,7 @@ import type { Fiber } from '../fabric/types';
 import { childElements } from '../guards';
 import { setStateSeed, type StateSeed } from '../render/session';
 import { cleanupComponentTree } from '../render/tree';
-import { claim } from './claims';
+import { claim, visibleCandidates, visibleWalk } from './claims';
 
 /**
  * What in a screen is live, found by asking rather than by being told.
@@ -59,6 +59,14 @@ export interface Probe {
    * drop or reorder a cell between renders — the build numbered them once.
    */
   readonly shape?: ShapeChange;
+  /**
+   * Elements whose `visible` a state change flipped, as ordinals into
+   * {@link visibleCandidates}. Not an error: a live visible is what a host
+   * CARRIES — a form spends one entry on it — and the ordinals are what the
+   * compiled snapshot hands the runtime so both sides mark the same elements.
+   * A host with no bool carrier turns these into build errors instead.
+   */
+  readonly liveVisibles: readonly number[];
 }
 
 /** A state or reducer slot, and where it lives. */
@@ -94,7 +102,7 @@ const bakedTextOf = (element: JSX.Element): string => {
  * button is exactly that: it colours its caption by `enabled`, and on a
  * compiled screen only the background swaps.
  */
-const bakedTexts = (tree: JSX.Element): string[] => {
+export const bakedTexts = (tree: JSX.Element): string[] => {
   const found: string[] = [];
 
   const visit = (element: JSX.Element): void => {
@@ -123,13 +131,18 @@ const bakedTexts = (tree: JSX.Element): string[] => {
  * compiled screen have to agree on this exactly — it is what the build
  * numbered and what the runtime walks again.
  */
-const shapeOf = (tree: JSX.Element): string => {
-  const { cells, channels } = claim(tree);
+export const shapeOf = (tree: JSX.Element, analysis?: Parameters<typeof claim>[1]): string => {
+  const { cells, channels } = claim(tree, analysis);
 
   return [
     cells.map(cell => cell.role).join(','),
     channels.map(channel => `${channel.carrier}:${channel.length}`).join(','),
     `text:${bakedTexts(tree).length}`,
+    // Every element, not only the claiming ones: a conditionally-rendered
+    // panel is as much a shape change as a vanished button — `visible` is the
+    // one legal way for a subtree to come and go — and the count is also what
+    // keeps the visible ordinals aligned between the renders compared below.
+    `nodes:${visibleCandidates(tree).length}`,
   ].join(' | ');
 };
 
@@ -201,8 +214,10 @@ export function probeLiveness(build: () => JSX.Element): Probe {
   const slots = slotsOf(getFibersForOwner(BUILD_OWNER));
   const referenceShape = shapeOf(reference);
   const referenceTexts = bakedTexts(reference);
+  const referenceVisibles = visibleCandidates(reference).map(element => element.props.visible !== false);
 
   const frozen = new Map<number, FrozenText>();
+  const liveVisibles = new Set<number>();
   let shape: ShapeChange | undefined;
 
   for (const slot of slots) {
@@ -241,6 +256,38 @@ export function probeLiveness(build: () => JSX.Element): Probe {
           });
         }
       });
+
+      // Same positions on both sides — the shape check above already held.
+      // Only subtree ROOTS are carriers: the inherit pass stamps `visible:
+      // false` down a hidden subtree, so every descendant flips with its
+      // ancestor, and one gate at the root hides them all. An element that
+      // flips on its own in some other probe earns its own ordinal there.
+      const { elements, parents } = visibleWalk(probed);
+      const flipped = new Set<number>();
+
+      elements.forEach((element, ordinal) => {
+        if ((element.props.visible !== false) !== (referenceVisibles[ordinal] ?? true)) {
+          flipped.add(ordinal);
+        }
+      });
+
+      for (const ordinal of flipped) {
+        let ancestor = parents[ordinal] ?? -1;
+        let root = true;
+
+        while (ancestor !== -1) {
+          if (flipped.has(ancestor)) {
+            root = false;
+            break;
+          }
+
+          ancestor = parents[ancestor] ?? -1;
+        }
+
+        if (root) {
+          liveVisibles.add(ordinal);
+        }
+      }
     }
   }
 
@@ -248,6 +295,7 @@ export function probeLiveness(build: () => JSX.Element): Probe {
 
   return {
     frozen: [...frozen.values()].sort((a, b) => a.position - b.position),
+    liveVisibles: [...liveVisibles].sort((a, b) => a - b),
     ...shape === undefined ? {} : { shape },
   };
 }

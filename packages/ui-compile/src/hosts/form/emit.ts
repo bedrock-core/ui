@@ -30,7 +30,13 @@ import type { Emit, HostEmit, IrNode } from '../../nodes/types';
  */
 
 /** The index host. `collection_index` is legal only on a direct child of a control declaring `collection_name`. */
-const entryHost = (name: string, address: number, cell: string, node: ButtonNode | TextNode): ControlEntry => ({
+const entryHost = (
+  name: string,
+  address: number,
+  cell: string,
+  node: ButtonNode | TextNode,
+  collection: string = FORM_COLLECTION,
+): ControlEntry => ({
   [name]: {
     type: 'stack_panel',
     orientation: 'vertical',
@@ -39,19 +45,27 @@ const entryHost = (name: string, address: number, cell: string, node: ButtonNode
     ...topLeft,
     ...layerOf(node),
     ...visibilityOf(node),
-    collection_name: FORM_COLLECTION,
+    collection_name: collection,
     controls: [{ [`cell@${cell}`]: { collection_index: address } }],
   },
 });
 
+/**
+ * The string an addressed value travels on, per collection: an action form's
+ * entries are `form_buttons` texts, a modal's rows are `custom_form` texts.
+ * One emitter serves both because ONLY this name and the collection differ.
+ */
+const payloadBindingFor = (collection: string): string =>
+  collection === 'custom_form' ? '#custom_text' : '#form_button_text';
+
 /** Reads the entry's own string, which is the only thing a form entry carries. */
-const entryText = (name: string): Binding[] => [
-  { ...FORM_DETAILS_BINDING },
+const entryText = (name: string, collection: string = FORM_COLLECTION): Binding[] => [
+  { ...FORM_DETAILS_BINDING, binding_collection_name: collection },
   {
-    binding_name: '#form_button_text',
+    binding_name: payloadBindingFor(collection),
     binding_name_override: name,
     binding_type: 'collection',
-    binding_collection_name: FORM_COLLECTION,
+    binding_collection_name: collection,
   },
 ];
 
@@ -218,7 +232,7 @@ const faceDefs = (node: ButtonNode, name: string, emit: Emit): Record<string, Co
  * binding, no slicing, no table, no cap — which is the difference between the
  * two hosts stated as JSON UI.
  */
-const textDef = (node: TextNode): Control => ({
+const textDef = (node: TextNode, collection: string): Control => ({
   type: 'label',
   size: sizeOf(node.rect),
   ...topLeft,
@@ -228,7 +242,7 @@ const textDef = (node: TextNode): Control => ({
   font_size: FONT_SIZE,
   font_scale_factor: node.fontScaleFactor,
   ...node.shadow ? { shadow: node.shadow } : {},
-  bindings: entryText(ENTRY_PROPERTY),
+  bindings: entryText(ENTRY_PROPERTY, collection),
 });
 
 /** Text runs differing only in which entry they read share a definition. */
@@ -285,17 +299,81 @@ const popupOverlay = (root: IrNode): ControlEntry[] => collectKind(root, 'field'
       },
     } satisfies ControlEntry]);
 
+/**
+ * The gate a carried `visible` draws through.
+ *
+ * The wrapper takes the node's whole placement — rect, layer, the index host
+ * the entry needs — and the node re-emits inside it at (0,0) with the entry
+ * cleared, so nothing else about its emission changes. The gate only READS
+ * its entry, so the ancestor's `collection_index` is enough (S1's ownership
+ * rule is about presses); it is seeded with the value the build rendered
+ * with, so a frame-late binding shows the compiled state rather than a flash.
+ */
+const wrapVisible = (node: IrNode, ctx: Emit): ControlEntry => {
+  const entry = node.visibleEntry;
+
+  if (entry === undefined) {
+    throw new Error(`wrapVisible was handed "${node.name}", which carries no visible entry.`);
+  }
+
+  const inner = ctx.emitNode({
+    ...node,
+    rect: { ...node.rect, x: 0, y: 0 },
+    visibleEntry: undefined,
+    visible: undefined,
+    layer: undefined,
+  });
+
+  return {
+    [`${node.name}_vis`]: {
+      type: 'stack_panel',
+      orientation: 'vertical',
+      size: sizeOf(node.rect),
+      offset: offsetOf(node.rect),
+      ...topLeft,
+      ...layerOf(node),
+      collection_name: ctx.collection,
+      controls: [{
+        gate: {
+          type: 'panel',
+          size: FULL,
+          ...topLeft,
+          collection_index: entry.address,
+          visible: '#visible',
+          property_bag: { '#visible': entry.initial },
+          bindings: [
+            {
+              binding_name: payloadBindingFor(ctx.collection),
+              binding_name_override: '#vis_value',
+              binding_type: 'collection',
+              binding_collection_name: ctx.collection,
+            },
+            {
+              binding_type: 'view',
+              source_property_name: '(not (#vis_value = \'0\'))',
+              target_property_name: '#visible',
+            },
+          ],
+          controls: [inner],
+        },
+      }],
+    },
+  };
+};
+
 export const FORM_EMIT: HostEmit = {
   id: 'form',
 
   overlay: popupOverlay,
+
+  wrapVisible,
 
   emit: {
     button: (node: ButtonNode, ctx: Emit): ControlEntry =>
       entryHost(node.name, node.address, `${ctx.ns}.${ctx.faceNames.get(faceSignature(node)) ?? 'button_1'}`, node),
 
     text: (node: TextNode, ctx: Emit): ControlEntry =>
-      entryHost(node.name, node.address, `${ctx.ns}.${ctx.textNames.get(textSignature(node)) ?? 'text_1'}`, node),
+      entryHost(node.name, node.address, `${ctx.ns}.${ctx.textNames.get(textSignature(node)) ?? 'text_1'}`, node, ctx.collection),
   },
 
   // One definition per distinct look, named before any is emitted so a face
@@ -327,7 +405,7 @@ export const FORM_EMIT: HostEmit = {
         const name = `text_${ctx.textNames.size + 1}`;
 
         ctx.textNames.set(signature, name);
-        document[name] = textDef(node);
+        document[name] = textDef(node, ctx.collection);
       }
     }
   },

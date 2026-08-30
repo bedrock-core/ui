@@ -70,6 +70,14 @@ export const allocate = (tree: JSX.Element, analysis?: Analysis): Allocation => 
   let next = SENTINEL_SLOTS.length + slots.length;
 
   const bank: ChannelEntry[] = channels.map(({ element, carrier, length }) => {
+    // Needs vs offers, at the seam it bites: the chest carries text — a slot
+    // per character — and nothing else yet. A bool claim can only appear here
+    // if a caller marked a carried visible on a chest tree, which the build
+    // refuses long before this; the throw keeps the runtime as honest.
+    if (carrier !== 'text') {
+      throw new Error(`A chest screen has no carrier for a live ${carrier}; only text travels over slots.`);
+    }
+
     const entry: ChannelEntry = { element, slot: next, carrier, length };
 
     next += length;

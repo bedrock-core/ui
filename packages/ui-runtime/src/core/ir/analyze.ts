@@ -17,9 +17,20 @@ import type { JSX } from '../../jsx';
 export interface Analysis {
   /** Characters reserved for each live label. */
   readonly texts: ReadonlyMap<JSX.Element, number>;
+  /**
+   * Elements whose `visible` the probes saw move, so a host must carry it.
+   *
+   * Unlike a live label this cannot be read off the element: `withControl`
+   * stamps `visible: true` on everything and the inherit pass forces `false`
+   * down a hidden subtree, so the prop's presence says nothing about the
+   * author. The BUILD learns it by probing and hands the runtime the element
+   * positions through the compiled snapshot — which is the same contract live
+   * text has, with the snapshot standing where `maxLength` stands.
+   */
+  readonly visibles: ReadonlySet<JSX.Element>;
 }
 
-export const analyze = (tree: JSX.Element): Analysis => {
+export const analyze = (tree: JSX.Element, visibles: ReadonlySet<JSX.Element> = new Set()): Analysis => {
   const texts = new Map<JSX.Element, number>();
 
   const visit = (element: JSX.Element): void => {
@@ -36,5 +47,5 @@ export const analyze = (tree: JSX.Element): Analysis => {
 
   visit(tree);
 
-  return { texts };
+  return { texts, visibles };
 };

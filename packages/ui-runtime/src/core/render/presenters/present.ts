@@ -2,9 +2,16 @@ import { type Player } from '@minecraft/server';
 import { presentCompiledModal } from '../../../hosts/form/modal';
 import { presentCompiledForm } from '../../../hosts/form/runtime';
 import type { JSX } from '../../../jsx';
+import type { CompiledSnapshot } from '../screens';
 import { presentAction } from './presentAction';
 import { presentModal } from './presentModal';
 import { findModalConfig, type PresentResult } from './shared';
+
+/** What a compiled present carries beyond the tree: identity, reference, verbosity. */
+export interface CompiledPresent {
+  readonly snapshot?: CompiledSnapshot;
+  readonly debug?: boolean;
+}
 
 /**
  * Build and show one form snapshot for `player`, dispatching by form mode detected on
@@ -23,6 +30,7 @@ export async function present(
   player: Player,
   tree: JSX.Element,
   compiledTitle?: string,
+  compiled: CompiledPresent = {},
 ): Promise<PresentResult> {
   const modalConfig = findModalConfig(tree);
 
@@ -34,11 +42,11 @@ export async function present(
     // serialized control block.
     return compiledTitle === undefined
       ? presentModal(player, tree, modalConfig)
-      : presentCompiledModal(player, tree, modalConfig, compiledTitle);
+      : presentCompiledModal(player, tree, modalConfig, compiledTitle, compiled.snapshot, compiled.debug);
   }
 
   if (compiledTitle !== undefined) {
-    return presentCompiledForm(player, tree, compiledTitle);
+    return presentCompiledForm(player, tree, compiledTitle, compiled.snapshot, compiled.debug);
   }
 
   return presentAction(player, tree);

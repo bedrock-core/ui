@@ -86,7 +86,7 @@ const backdropOf = (element: JSX.Element): string | undefined => {
 /** What the walk carries: where the host put things, and what it has met so far. */
 interface Walk {
   addressing: Addressing;
-  met: { cells: number; channels: number };
+  met: { cells: number; channels: number; visibles: number };
   counters: Map<string, number>;
   backdrop?: string;
 }
@@ -171,12 +171,27 @@ const lower = (definition: NodeDefinition, element: JSX.Element, type: string, o
     throw new UnsupportedNodeError(type);
   }
 
+  // A carried visible rides the decoration, so every kind inherits it by the
+  // same spread that carries `layer` — the host's wrapper reads it back off
+  // the node and no kind has to know it exists.
+  const visibleAddress = walk.addressing.visibles?.get(element);
+
+  if (visibleAddress !== undefined) {
+    walk.met.visibles += 1;
+  }
+
   const own = absoluteRect(element);
   const ctx: LowerContext = {
     origin,
     own,
     rect: relativeTo(own, origin),
-    decoration: { ...layerOf(element.props), ...visibilityOf(element.props) },
+    decoration: {
+      ...layerOf(element.props),
+      ...visibilityOf(element.props),
+      ...visibleAddress === undefined
+        ? {}
+        : { visibleEntry: { address: visibleAddress, initial: element.props.visible !== false } },
+    },
     name: kind => nameFor(kind, walk),
     cellOf: target => cellOf(target, walk),
     channelOf: target => channelOf(target, walk),
@@ -224,7 +239,7 @@ export const toIr = (
 ): IrDocument => {
   const walk: Walk = {
     addressing,
-    met: { cells: 0, channels: 0 },
+    met: { cells: 0, channels: 0, visibles: 0 },
     counters: new Map(),
   };
 
@@ -234,10 +249,17 @@ export const toIr = (
   const background = str(root.props.background);
   const children = convertChildren(root, origin, walk);
 
-  if (walk.met.cells !== addressing.cells.size || walk.met.channels !== addressing.channels.size) {
+  const expectedVisibles = addressing.visibles?.size ?? 0;
+
+  if (
+    walk.met.cells !== addressing.cells.size
+    || walk.met.channels !== addressing.channels.size
+    || walk.met.visibles !== expectedVisibles
+  ) {
     throw new Error(
-      `The host addressed ${addressing.cells.size} cell(s) and ${addressing.channels.size} channel(s), `
-      + `but the compiler met ${walk.met.cells} and ${walk.met.channels}. The two walks must see the same tree.`,
+      `The host addressed ${addressing.cells.size} cell(s), ${addressing.channels.size} channel(s) `
+      + `and ${expectedVisibles} carried visible(s), but the compiler met ${walk.met.cells}, `
+      + `${walk.met.channels} and ${walk.met.visibles}. The two walks must see the same tree.`,
     );
   }
 

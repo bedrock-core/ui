@@ -10,5 +10,5 @@
 export { analyze } from './analyze';
 export type { Analysis } from './analyze';
 
-export { claim } from './claims';
+export { claim, visibleCandidates, visiblesAt } from './claims';
 export type { CellClaim, CellRole, ChannelClaim, Claims } from './claims';

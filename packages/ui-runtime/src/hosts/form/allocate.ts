@@ -1,5 +1,5 @@
 import {
-  MODAL_DROPDOWN_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE,
+  MODAL_DROPDOWN_SLOT_TYPE, MODAL_FORM_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE,
   MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
 } from '../../components/Form';
 import { liveTextLength } from '../../components/Text';
@@ -39,6 +39,8 @@ export interface EntryEntry {
   readonly entry: number;
   /** What the cell is, when it takes a press. Absent for an entry that only carries a value. */
   readonly role?: CellRole;
+  /** What the entry carries, when it carries one: a live string, or a visible bool. */
+  readonly carrier?: 'text' | 'bool';
   /** Characters reserved when the entry carries live text. */
   readonly length?: number;
 }
@@ -67,10 +69,12 @@ export const allocate = (tree: JSX.Element, analysis?: Analysis): Placement => {
   const { cells, channels } = claim(tree, analysis);
   const entries: EntryEntry[] = [
     ...cells.map(({ element, role }, index) => ({ element, entry: index, role })),
-    ...channels.map(({ element, length }, index) => ({
+    ...channels.map(({ element, carrier, length }, index) => ({
       element,
       entry: cells.length + index,
-      length,
+      carrier,
+      // A bool needs no width; only text reserves one.
+      ...carrier === 'text' ? { length } : {},
     })),
   ];
 
@@ -105,8 +109,8 @@ export interface ModalRow {
   readonly element: JSX.Element;
   /** Index in `custom_form`, and the `formValues` slot the answer arrives in. */
   readonly row: number;
-  /** A native control the engine draws, or a live string riding a label row. */
-  readonly kind: 'field' | 'text';
+  /** A native control the engine draws, or a value riding a label row: a live string, or a visible bool. */
+  readonly kind: 'field' | 'text' | 'bool';
   /** Characters reserved when the row carries live text. */
   readonly length?: number;
 }
@@ -127,11 +131,18 @@ const NATIVE_FIELDS: ReadonlySet<string> = new Set([
  * registered, so the nth row is the nth row on every side because every side
  * walks the same tree the same way.
  */
-export const allocateModal = (tree: JSX.Element): readonly ModalRow[] => {
+export const allocateModal = (tree: JSX.Element, visibles: ReadonlySet<JSX.Element> = new Set()): readonly ModalRow[] => {
   const rows: ModalRow[] = [];
 
   const visit = (node: JSX.Element): void => {
     const { type } = node;
+
+    // The gate before the content, the same order the action form's claims
+    // walk fixes: an element that is both live-visible and a live label takes
+    // its bool row first.
+    if (visibles.has(node)) {
+      rows.push({ element: node, row: rows.length, kind: 'bool' });
+    }
 
     if (typeof type === 'string') {
       if (NATIVE_FIELDS.has(type)) {
@@ -154,3 +165,12 @@ export const allocateModal = (tree: JSX.Element): readonly ModalRow[] => {
 
   return rows;
 };
+
+/**
+ * Whether a built tree presents as a modal — the compile-side twin of the
+ * runtime's `isModalTree`, kept here because the build machine must never
+ * import a host's runtime (it pulls `@minecraft/server`).
+ */
+export const hasModalRoot = (tree: JSX.Element): boolean =>
+  tree.type === MODAL_FORM_SLOT_TYPE
+  || childElements(tree.props.children).some(child => hasModalRoot(child));

@@ -110,12 +110,14 @@ export {
 
 export type {
   ComponentDescriptor,
+  CompiledSnapshot,
   ContainerEvent,
   Context,
   ContextProps,
   FormTarget,
   ModalValue,
   PressEvent,
+  RenderOptions,
   SlotEvent,
   UiEvent,
   Writer,
