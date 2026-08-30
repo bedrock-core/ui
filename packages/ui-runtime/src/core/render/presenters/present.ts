@@ -1,4 +1,5 @@
 import { type Player } from '@minecraft/server';
+import { presentCompiledModal } from '../../../hosts/form/modal';
 import { presentCompiledForm } from '../../../hosts/form/runtime';
 import type { JSX } from '../../../jsx';
 import { presentAction } from './presentAction';
@@ -26,10 +27,14 @@ export async function present(
   const modalConfig = findModalConfig(tree);
 
   if (modalConfig) {
-    // A modal's typed controls are the engine's, and how a compiled screen
-    // reads one is still unmeasured — so a `<Form>` is served by the
-    // interpreter whether or not the screen was compiled.
-    return presentModal(player, tree, modalConfig);
+    // A modal's typed controls are the engine's either way — there is no
+    // compiling those. What being compiled changes is everything AROUND them:
+    // the layout is a definition in the pack, so the title names it instead of
+    // carrying it, and each field's label goes over bare instead of carrying a
+    // serialized control block.
+    return compiledTitle === undefined
+      ? presentModal(player, tree, modalConfig)
+      : presentCompiledModal(player, tree, modalConfig, compiledTitle);
   }
 
   if (compiledTitle !== undefined) {

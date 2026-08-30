@@ -11,6 +11,7 @@
 export { FORM_ACTION, FORM_MODAL } from './host';
 
 export { allocate } from './allocate';
+export { isModalTree, presentCompiledModal } from './modal';
 export type { EntryEntry, Placement } from './allocate';
 
 export {

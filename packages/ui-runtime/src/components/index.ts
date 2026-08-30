@@ -31,6 +31,8 @@ export { Input, type InputProps } from './Input';
 export { Hotbar, PlayerInventory } from './Inventory';
 export { Slider, type SliderProps } from './Slider';
 export { Panel, PANEL_TYPE, panelWriter, type PanelProps } from './Panel';
+export { Tabs, TABS_SLOT_TYPE, TAB_SLOT_TYPE, DEFAULT_TAB_HEIGHT } from './Tabs';
+export type { TabsProps, TabProps } from './Tabs';
 export { Scroll, SCROLL_SLOT_TYPE, MAX_SCROLLS, MAX_POOLED_SCROLLS, type ScrollAxis, type ScrollProps } from './Scroll';
 export {
   Slot, SLOT_CELL, SLOT_TYPE, slotInteractive, slotRole, slotSource, isForeignSlot,
@@ -73,6 +75,11 @@ let registered = false;
  * `PlayerInventory`/`Hotbar` wrappers over it) are deliberately absent: they
  * never reach the serializer, and an unregistered type is a concrete box to the
  * layout pass, which is what they are.
+ *
+ * `Tabs` and `Tabs.Tab` are absent for the same reason, and registering them as
+ * TRANSPARENT was a real bug: the layout flattened the group instead of solving
+ * its box, so every rect the compiler saw was the 100x100 default and the panes
+ * drew on top of the header row.
  */
 export function registerNativeComponents(): void {
   if (registered) {

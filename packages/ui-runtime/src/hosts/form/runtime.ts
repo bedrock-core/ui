@@ -21,7 +21,14 @@ import { allocate, type EntryEntry } from './allocate';
  */
 
 /** The string a live `<Text>` shows, exactly as written — a form entry has no alphabet to lose. */
-const liveText = (element: JSX.Element, length: number): string => {
+/**
+ * What a live `<Text>` puts on the wire, capped at the width it reserved.
+ *
+ * Exported because both form hosts have to agree on it: an action form carries
+ * the string in an entry, a modal in a row, and a compiled control reads
+ * whichever with the same binding. One definition, or they drift.
+ */
+export const liveText = (element: JSX.Element, length: number): string => {
   const { value } = element.props;
   const tail = typeof value === 'object' && value !== null && 'tail' in value ? value.tail : undefined;
 

@@ -82,6 +82,7 @@ export const emit = (doc: IrDocument, host: HostEmit): Document => {
       ...host.chrome?.() ?? [],
       ...backgroundOf(root),
       ...root.children.map(child => context.emitNode(child)),
+      ...host.overlay?.(root, context) ?? [],
     ],
   };
 

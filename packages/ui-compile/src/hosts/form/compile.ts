@@ -1,12 +1,12 @@
-import type { FunctionComponent } from '@bedrock-core/ui-runtime';
+import type { FunctionComponent, JSX } from '@bedrock-core/ui-runtime';
 import {
-  allocateForm, buildScreenOnce, concreteRoots, ContainerScreenError, FORM_COLLECTION,
+  allocateForm, allocateModal, buildScreenOnce, concreteRoots, ContainerScreenError, FORM_COLLECTION,
   formTitleFor, probeLiveness, type EntryEntry,
 } from '@bedrock-core/ui-runtime/compile';
 import { checkLiveness } from '../../compile';
 import { BACKDROP_DEFINITION, emit } from '../../emit';
 import type { Document } from '../../jsonui';
-import type { Addressing } from '../../nodes/types';
+import type { Addressing, CellAddress } from '../../nodes/types';
 import { toIr } from '../../toIr';
 import { FORM_EMIT } from './emit';
 
@@ -54,10 +54,29 @@ const NAME = /^[A-Za-z0-9_-]+$/;
  * Where the form put a built tree's cells and channels: both are entries, and
  * an entry is the same thing whichever it carries.
  */
-const formAddressing = (entries: readonly EntryEntry[]): Addressing => ({
-  cells: new Map(entries
-    .filter(entry => entry.role !== undefined)
-    .map(entry => [entry.element, { address: entry.entry, role: entry.role ?? 'button' }])),
+/**
+ * A modal's rows, keyed by the element that owns one.
+ *
+ * Merged into the addressing so a `field` reads its row the way every other
+ * kind reads its address — and from the SAME function the runtime writes rows
+ * with, so a baked `collection_index` and a `formValues` slot cannot drift.
+ */
+const modalAddressing = (tree: JSX.Element): ReadonlyMap<JSX.Element, CellAddress> => new Map(
+  allocateModal(tree)
+    .filter(row => row.kind === 'field')
+    .map(row => [row.element, { address: row.row, role: 'button' as const }]),
+);
+
+const formAddressing = (entries: readonly EntryEntry[], tree?: JSX.Element): Addressing => ({
+  cells: new Map([
+    ...entries
+      .filter(entry => entry.role !== undefined)
+      .map(entry => [entry.element, { address: entry.entry, role: entry.role ?? 'button' }] as const),
+    // A modal's native fields are addressed too, on a numbering of their own —
+    // `custom_form` rows rather than `form_buttons` entries. A screen is one or
+    // the other, so the two never meet in the same map.
+    ...tree === undefined ? [] : modalAddressing(tree),
+  ]),
   channels: new Map(entries
     .filter(entry => entry.length !== undefined)
     .map(entry => [entry.element, { address: entry.entry, length: entry.length ?? 0 }])),
@@ -111,7 +130,7 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
   const tree = buildScreenOnce(Screen);
   const placement = allocateForm(tree);
   const document = emit(
-    toIr(formRoot(tree), formAddressing(placement.entries), { namespace, collection: FORM_COLLECTION }),
+    toIr(formRoot(tree), formAddressing(placement.entries, tree), { namespace, collection: FORM_COLLECTION }),
     FORM_EMIT,
   );
 

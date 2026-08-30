@@ -1,4 +1,10 @@
+import {
+  MODAL_DROPDOWN_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE,
+  MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
+} from '../../components/Form';
+import { liveTextLength } from '../../components/Text';
 import { type Analysis, type CellRole, claim } from '../../core/ir';
+import { childElements } from '../../core/guards';
 import type { JSX } from '../../jsx';
 
 /**
@@ -69,4 +75,82 @@ export const allocate = (tree: JSX.Element, analysis?: Analysis): Placement => {
   ];
 
   return { entries, size: entries.length };
+};
+
+// ---------------------------------------------------------------------------
+// The modal's rows
+// ---------------------------------------------------------------------------
+
+/**
+ * What a `custom_form` row is, and which element owns it.
+ *
+ * A modal numbers differently from an action form and the two must not be
+ * confused. An action form's entries are the CLAIMS a screen makes — a cell per
+ * press, a channel per live string — because a compiled screen draws every one
+ * of them itself. A modal's rows are the NATIVE CONTROLS, because the engine
+ * draws those and nothing else can, plus a row per live string for the same
+ * reason an action form needs one.
+ *
+ * `formValues` is positional over exactly this list, and MEASURED (S3): a
+ * control the pack places owns its row by carrying a literal `collection_index`
+ * plus its own `collection_details` binding on `custom_form`. So the number a
+ * field is given here is the number the compiled control is baked with AND the
+ * slot the response comes back in — one index space, three uses.
+ *
+ * Which is why this lives in one function. The build numbers a tree with it,
+ * the runtime writes rows with it, and the emitted JSON UI is baked against it;
+ * three walks that must agree, over one definition that cannot disagree.
+ */
+export interface ModalRow {
+  readonly element: JSX.Element;
+  /** Index in `custom_form`, and the `formValues` slot the answer arrives in. */
+  readonly row: number;
+  /** A native control the engine draws, or a live string riding a label row. */
+  readonly kind: 'field' | 'text';
+  /** Characters reserved when the row carries live text. */
+  readonly length?: number;
+}
+
+/** The host types the ENGINE draws. Nothing else can, which is why they take rows. */
+const NATIVE_FIELDS: ReadonlySet<string> = new Set([
+  MODAL_TOGGLE_SLOT_TYPE,
+  MODAL_SLIDER_SLOT_TYPE,
+  MODAL_DROPDOWN_SLOT_TYPE,
+  MODAL_INPUT_SLOT_TYPE,
+  MODAL_INLINE_SELECT_SLOT_TYPE,
+]);
+
+/**
+ * Every row a modal tree needs, in document order.
+ *
+ * Document order is the whole contract: nothing is named and nothing is
+ * registered, so the nth row is the nth row on every side because every side
+ * walks the same tree the same way.
+ */
+export const allocateModal = (tree: JSX.Element): readonly ModalRow[] => {
+  const rows: ModalRow[] = [];
+
+  const visit = (node: JSX.Element): void => {
+    const { type } = node;
+
+    if (typeof type === 'string') {
+      if (NATIVE_FIELDS.has(type)) {
+        rows.push({ element: node, row: rows.length, kind: 'field' });
+      } else {
+        const length = liveTextLength(node);
+
+        if (length !== undefined) {
+          rows.push({ element: node, row: rows.length, kind: 'text', length });
+        }
+      }
+    }
+
+    for (const child of childElements(node.props.children)) {
+      visit(child);
+    }
+  };
+
+  visit(tree);
+
+  return rows;
 };

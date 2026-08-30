@@ -8,6 +8,13 @@
  * addon never imports it by accident.
  */
 
+// The native modal fields. A compiled screen lays them out but does not draw
+// them: the widget is the engine's, instantiated by vanilla's row factory.
+export {
+  MODAL_DROPDOWN_SLOT_TYPE, MODAL_FORM_BUTTON_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE,
+  MODAL_INPUT_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
+} from './components/Form';
+
 export { buildContainerTree, buildScreenOnce } from './hosts/chest/build';
 
 // What is live, found by rendering rather than by being told. Build-only: the
@@ -21,7 +28,7 @@ export type { Allocation, CellRole, ChannelEntry, SlotEntry } from './hosts/ches
 // The form host's half of the same seam. Named apart from the chest's rather
 // than exported as a namespace, because `hosts/<host>/index.ts` pulls in that
 // host's runtime and a build machine has no use for it.
-export { allocate as allocateForm } from './hosts/form/allocate';
+export { allocate as allocateForm, allocateModal, type ModalRow } from './hosts/form/allocate';
 export type { EntryEntry, Placement as FormPlacement } from './hosts/form/allocate';
 export {
   COLLECTION as FORM_COLLECTION, compiledPrefix, DETAILS_BINDING as FORM_DETAILS_BINDING,
@@ -46,6 +53,7 @@ export { CONTAINER_TYPE, containerEntity, containerHandlers, containerRoot } fro
 export { IMAGE_TYPE } from './components/Image';
 export { PANEL_TYPE } from './components/Panel';
 export { SCROLL_SLOT_TYPE } from './components/Scroll';
+export { TAB_SLOT_TYPE, TABS_SLOT_TYPE } from './components/Tabs';
 export { isForeignSlot, SLOT_CELL, SLOT_TYPE, slotInteractive, slotRole, slotSource } from './components/Slot';
 export type { SlotSource } from './components/Slot';
 export { SLOT_GRID_TYPE, slotGridConfig } from './components/SlotGrid';

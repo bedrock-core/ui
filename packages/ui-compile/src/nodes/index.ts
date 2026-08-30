@@ -9,12 +9,15 @@
 import type { Control, ControlEntry } from '../jsonui';
 import { buttonDefinition } from './button';
 import { exitDefinition } from './exit';
+import { fieldDefinition } from './field';
 import { gridDefinition } from './grid';
 import { imageDefinition } from './image';
 import { labelDefinition } from './label';
+import { modalButtonDefinition } from './modalButton';
 import { panelDefinition } from './panel';
 import { scrollDefinition } from './scroll';
 import { slotDefinition } from './slot';
+import { tabDefinition, tabsDefinition } from './tabs';
 import { textDefinition } from './text';
 import type { Emit, IrNode, NodeDefinition } from './types';
 
@@ -29,6 +32,10 @@ export const NODE_DEFINITIONS: readonly NodeDefinition<any>[] = [
   buttonDefinition,
   exitDefinition,
   scrollDefinition,
+  tabsDefinition,
+  tabDefinition,
+  fieldDefinition,
+  modalButtonDefinition,
 ];
 
 const byKind = new Map<string, NodeDefinition>(NODE_DEFINITIONS.map(definition => [definition.kind, definition]));

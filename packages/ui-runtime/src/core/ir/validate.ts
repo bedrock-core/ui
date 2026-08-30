@@ -6,6 +6,7 @@ import {
   MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
 } from '../../components/Form';
 import { SCROLL_SLOT_TYPE } from '../../components/Scroll';
+import { TABS_SLOT_TYPE } from '../../components/Tabs';
 import { isForeignSlot, SLOT_TYPE } from '../../components/Slot';
 import { SLOT_GRID_TYPE } from '../../components/SlotGrid';
 import { liveTextLength } from '../../components/Text';
@@ -150,6 +151,17 @@ const RULES: readonly Rule[] = [
       throw new ContainerScreenError(
         'A live `<Text maxLength>` cannot sit inside a `<Button>` yet: a button\'s '
         + 'children are baked into its face. Put the live text beside the button.',
+      );
+    }
+  },
+
+  (_node, type, _scope, _host, frozen): void => {
+    if (!frozen && type === TABS_SLOT_TYPE) {
+      throw new ContainerScreenError(
+        'A `<Tabs>` can only be used on a COMPILED screen. The content of every tab is '
+        + 'in the tree at once, so on a serialized screen N tabs cost N times the payload '
+        + 'on every present — the whole point of tabs is that the switch is free, and '
+        + 'there it would not be. Compile the screen, or use navigation.navigate().',
       );
     }
   },

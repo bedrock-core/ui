@@ -167,6 +167,8 @@ export interface Control {
   default_control?: string;
   /** Documented. Drawn instead of `default_control` while the button is disabled. */
   locked_control?: string;
+  /** Documented. Where a label draws inside its own box. */
+  text_alignment?: 'left' | 'center' | 'right';
   /** Documented. A control with this off takes no focus, so it cannot be interacted with. */
   focus_enabled?: boolean;
   /** Documented. The sound a button plays when pressed. */
@@ -185,6 +187,42 @@ export interface Control {
   rotation?: 'auto';
   /** Undocumented. The paper doll draws the equipped skin when false. */
   use_selected_skin?: boolean;
+
+  /* toggles */
+  /**
+   * Documented. A toggle draws the ONE child its current state names and
+   * nothing else of its own — measured the hard way in spike S4, where a group
+   * with only two of these defined vanished the moment the pointer touched it.
+   * Define all eight, or accept a control that disappears.
+   */
+  checked_control?: string;
+  unchecked_control?: string;
+  checked_hover_control?: string;
+  unchecked_hover_control?: string;
+  checked_locked_control?: string;
+  unchecked_locked_control?: string;
+  checked_locked_hover_control?: string;
+  unchecked_locked_hover_control?: string;
+  /** Documented. Toggles sharing a name form one group; `radio` makes it exclusive. */
+  toggle_name?: string;
+  radio_toggle_group?: boolean;
+  toggle_default_state?: boolean;
+  /** Documented. This toggle's index within its radio group, and the group's initial pick. */
+  toggle_group_forced_index?: number;
+  toggle_group_default_selected?: number;
+  toggle_grid_collection_name?: string;
+  enable_directional_toggling?: boolean;
+  /**
+   * Documented. Without these a toggle DRAWS but never takes a press — the
+   * other half of what S4 got wrong on its first round.
+   */
+  toggle_on_button?: string;
+  toggle_off_button?: string;
+
+  /* focus */
+  focus_magnet_enabled?: boolean;
+  focus_wrap_enabled?: boolean;
+  default_focus_precedence?: number;
 
   /** Pack-defined variables. Legal in ordinary properties, never in a binding. */
   [variable: `$${string}`]: unknown;

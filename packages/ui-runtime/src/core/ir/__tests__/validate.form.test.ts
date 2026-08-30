@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { registerNativeComponents } from '../../../components';
 import { MODAL_FORM_SLOT_TYPE } from '../../../components/Form';
 import { SCROLL_SLOT_TYPE } from '../../../components/Scroll';
+import { TABS_SLOT_TYPE } from '../../../components/Tabs';
 import { hostFor } from '../../../hosts';
 import type { JSX } from '../../../jsx';
 import { validate } from '../validate';
@@ -111,5 +112,15 @@ describe('validate, on the form hosts', () => {
 
     expect(() => check(tree)).not.toThrow();
     expect(() => check(tree, true)).toThrow(/one flat box/);
+  });
+
+  it('refuses Tabs on a serialized screen, where the switch would not be free', () => {
+    // Every pane is in the tree at once. Compiled, that is pack size and
+    // nothing at runtime; serialized, it is N times the payload on every
+    // present — which turns the one thing tabs are for into the thing they cost.
+    const tree = host('panel', [host(TABS_SLOT_TYPE, [host('tab-slot')])]);
+
+    expect(() => check(tree)).toThrow(/COMPILED screen/);
+    expect(() => check(tree, true)).not.toThrow();
   });
 });

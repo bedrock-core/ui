@@ -126,6 +126,12 @@ export interface HostEmit {
   /** Mechanism, by kind. A kind absent here emits its look. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- each entry is narrowed by its own kind, as NODE_DEFINITIONS is
   readonly emit?: Partial<Record<string, (node: any, ctx: Emit) => ControlEntry>>;
+  /**
+   * Controls put under the canvas AFTER its content — chrome that must sit
+   * over everything the screen drew, and that only exists because of what the
+   * tree contains (the form's dropdown popups are the first).
+   */
+  overlay?(root: IrNode, ctx: Emit): ControlEntry[];
   /** Document-level definitions this host derives from the whole tree. */
   assemble?(root: IrNode, document: Document, ctx: Emit): void;
 }

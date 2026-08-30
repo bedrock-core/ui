@@ -2,11 +2,12 @@ import { FORM_COLLECTION, FORM_DETAILS_BINDING } from '@bedrock-core/ui-runtime/
 import type { ButtonNode } from '../../nodes/button';
 import { collectKind, shapeOf } from '../../nodes';
 import type { Binding, Control, ControlEntry } from '../../jsonui';
+import { MODAL_COLLECTION } from '../../nodes/field';
 import {
   FACE_CONTENT_LAYER, FONT_SIZE, FULL, layerOf, offsetOf, sizeOf, topLeft, visibilityOf,
 } from '../../nodes/shared';
 import type { TextNode } from '../../nodes/text';
-import type { Emit, HostEmit } from '../../nodes/types';
+import type { Emit, HostEmit, IrNode } from '../../nodes/types';
 
 /**
  * How a form draws the kinds a chest draws with items.
@@ -238,8 +239,56 @@ const textSignature = (node: TextNode): string => JSON.stringify([
   sizeOf(node.rect),
 ]);
 
+/** Draws over everything the screen put down, the way the interpreted overlay's layer does. */
+const POPUP_LAYER = 300;
+
+/**
+ * One dropdown popup per dropdown CELL, hung at the screen root.
+ *
+ * The interpreted screen gets its popups from `modal_container`'s
+ * `popup_overlay` factory — one `dropdown_popup_router` per row, each decoding
+ * what it needs from its row's payload. A factory cannot pass per-row
+ * `$variables` and a compiled row has no payload, so the compiled screen bakes
+ * its own router per dropdown, given that cell's row index, popup surface and
+ * height. `$open_gate` keeps only the open-state half of the shared gate: the
+ * `#type` half reads a payload that never arrives, and only a dropdown row has
+ * an open-state channel at all.
+ *
+ * At the ROOT, not in the cell: the popup must draw over the whole screen, and
+ * the one attempt to mount it inside the native dropdown's own subtree crashed
+ * the client — the names in there are the engine's to resolve.
+ */
+const popupOverlay = (root: IrNode): ControlEntry[] => collectKind(root, 'field')
+  .flatMap(node => node.popup === undefined
+    ? []
+    : [{
+      [`${node.name}_popup`]: {
+        type: 'stack_panel',
+        orientation: 'vertical',
+        size: FULL,
+        ...topLeft,
+        layer: POPUP_LAYER,
+        collection_name: MODAL_COLLECTION,
+        controls: [{
+          'popup@core_ui_form_components.dropdown_popup_router': {
+            collection_index: node.address,
+            size: FULL,
+            $compiled: true,
+            $open_gate: '#custom_dropdown',
+            $popup_texture: node.popup.texture,
+            // The interpreted card is 16px narrower than its form so the
+            // popup's scrollbar clears the form's own; kept for the look,
+            // though a compiled card has nothing to scroll.
+            $popup_size: [Math.max(0, root.rect.width - 16), node.popup.height],
+          },
+        }],
+      },
+    } satisfies ControlEntry]);
+
 export const FORM_EMIT: HostEmit = {
   id: 'form',
+
+  overlay: popupOverlay,
 
   emit: {
     button: (node: ButtonNode, ctx: Emit): ControlEntry =>
