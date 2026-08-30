@@ -12,10 +12,17 @@ import { MinecraftBlockTypes, MinecraftEntityTypes } from '@minecraft/vanilla-da
 import '@bedrock-core/generated/ui';
 import { spawnDemo } from './container/demo';
 import Counter from './screens/counter.screen';
+import Settings from './screens/settings.screen';
+import TabsDemo from './screens/tabs.screen';
 import { App } from './UI/App';
 
-const isPlayer = (source: ButtonPushAfterEvent['source']): source is Player =>
-  source.typeId === MinecraftEntityTypes.Player;
+/**
+ * `source` is typed as always present and is not: a button pushed by redstone,
+ * an arrow, or anything that is not an entity delivers the event with none. The
+ * guard dereferenced it before it could return false, so every such press threw.
+ */
+const isPlayer = (source: ButtonPushAfterEvent['source'] | undefined): source is Player =>
+  source?.typeId === MinecraftEntityTypes.Player;
 
 world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent): void => {
   if (!isPlayer(source)) {
@@ -93,6 +100,18 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
     // generated module above registered this component, so the runtime names
     // its layout in the title instead of serializing one.
     render(Counter, source);
+  }
+
+  if (block.typeId === MinecraftBlockTypes.WoodenButton) {
+    // A COMPILED MODAL. Same render() as everything else: the generated module
+    // registered it, so the runtime names the baked layout in the title instead
+    // of serializing a control block per field.
+    render(Settings, source);
+  }
+
+  if (block.typeId === MinecraftBlockTypes.SpruceButton) {
+    // Client-only tabs on a compiled screen: pressing a tab sends nothing.
+    render(TabsDemo, source);
   }
 
   if (block.typeId === MinecraftBlockTypes.CrimsonButton) {
