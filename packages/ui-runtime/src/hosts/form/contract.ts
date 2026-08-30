@@ -45,6 +45,18 @@ export const ENCODING_MIN = 1;
 export const ENCODING_MAX = 1;
 
 /**
+ * The render pack's vocabulary — the definitions compiled screens reference
+ * and the `$variables` they take — versioned by the same window rule. An
+ * addon's screens are compiled once against one vocabulary and keep
+ * referencing it for as long as they ship, and the library cannot rebuild
+ * them: a definition or variable a compiled screen references is added under
+ * a new version, never changed in place. `resource-pack/protocol.json`
+ * declares the same window on the pack side.
+ */
+export const VOCABULARY_MIN = 1;
+export const VOCABULARY_MAX = 1;
+
+/**
  * The interpreter's header, which a compiled title still carries.
  *
  * Not a decision so much as the shape of the screen we mount on: vanilla's
