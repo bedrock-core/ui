@@ -1,7 +1,7 @@
 /** @jsxImportSource @bedrock-core/ui */
-import { Button, Card } from '@bedrock-core/ore-styled';
+import { Button, Card, Divider } from '@bedrock-core/ore-styled';
 import type { JSX } from '@bedrock-core/ui';
-import { Panel, Text, useState } from '@bedrock-core/ui';
+import { List, Panel, Scroll, Text, useState } from '@bedrock-core/ui';
 
 /**
  * A COMPILED FORM screen, written exactly like every other screen here.
@@ -31,14 +31,47 @@ export default function Counter(): JSX.Element {
         {/* Live: one entry carries this string whole, formatting codes and all. */}
         <Text maxLength={16}>{`count ${count}`}</Text>
 
-        {/* Carried visible: the build probes that state flips this, spends one
-            entry on it, and the compiled gate hides the subtree client-side.
-            The shape never changes — the hint is always in the tree. */}
-        <Text visible={count === 0}>{'§7press + to start'}</Text>
+        <Divider width={96} />
+
+        {/* Two things that can never show together SHARE one box: both sit
+            absolute in this panel and each is gated by its own carrier — the
+            hint by a carried visible the build probed, the rows by the list's
+            count. The frozen layout reserves ONE space; the carriers decide
+            which content uses it. */}
+        <Panel width={96} height={50}>
+          <Text
+            visible={count === 0}
+            position={'absolute'}
+            left={0}
+            top={0}
+          >
+            {'§7press + to start'}
+          </Text>
+
+          {/* Twenty row slots compiled behind a scroll: ONE int entry carries
+              how many are real, a gate per row. `max` is the screen's
+              capacity — items past it have no row to appear in, the way text
+              past `maxLength` has no cell — and the scroll makes a capacity
+              taller than the viewport reachable. */}
+          <Scroll
+            position={'absolute'}
+            left={0}
+            top={0}
+            right={0}
+            bottom={0}
+          >
+            <List
+              max={20}
+              items={Array.from({ length: Math.min(count, 20) }, (_, index) => index + 1)}
+              row={(item: number | undefined): JSX.Element =>
+                <Text maxLength={9}>{item === undefined ? '' : `§eitem ${item}`}</Text>}
+            />
+          </Scroll>
+        </Panel>
 
         <Panel flexDirection={'row'} gap={4}>
           <Button
-            enabled={count < 9}
+            enabled={count < 20}
             onPress={(): void => { setCount(value => value + 1); }}
           >
             {'+'}
