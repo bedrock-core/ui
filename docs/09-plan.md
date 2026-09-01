@@ -19,7 +19,7 @@ Pack `2.0` accompanies library `1.0` by the existing rule (pack major = library 
 | 2 | **Form host spike** (in game, throwaway) — S1 ✅, S2 folded in | title-key mount gate; static control with baked `collection_index` on `form_buttons` producing `selection`; a one-field entry decoded with one binding; modal field with an entry as its label; local toggle group under the form mount and under the chest mount | 2–3 days |
 | 3 | **Form hosts** ✅ | `form-action` and `form-modal` contract / emit / runtime; the base baked (runtime layout islands parked with S6); `ui.generated.json`; `render()` routing by name; encoding `1` with `ENCODING_MIN/MAX`; reference addon screens compiled (`counter`, `settings`, `tabs`). **Remaining:** the in-game pass | done |
 | 4 | **Vocabulary** — *form carriers, windows and `debug` done; geometry carrier parked* | ~~`core_ui_shapes`~~; ~~chest files renamed under `core_ui_chest`~~; ~~the form mount~~; ~~form carriers~~ (carried `visible` on both form hosts, live text on modal rows; int/enum wait for their phase-5 consumers); the chest geometry carrier (PARKED with S6); ~~`protocol.json` windows~~ (encoding + vocabulary, declared in the pack and stamped in `ui.generated.ts`); ~~`debug` diff~~ (form hosts; the chest wiring is with phase 5's runtime move). **Remaining:** the in-game pass | done |
-| 5 | **Consumers, then delete legacy** | `List max`, ~~`Tabs`~~ (landed with phase 3); the guides filter emits IR and pages compile as screens with a replicated reference table; config and the addon list on compiled `List max` screens; the interpreter fallback and its decoders deleted; pack minor | 2 weeks |
+| 5 | **Consumers, then delete legacy** — *`List max` done* | ~~`List max`~~ (the int carrier: `max` row slots compiled, one count entry, a gate per row enumerating the counts that show it as string equalities; the rows are a `stack_panel`'s children, so hidden rows collapse and a scroll over a list reaches exactly the real rows — see *Measured while building List*); ~~`Tabs`~~ (landed with phase 3); the guides filter emits IR and pages compile as screens with a replicated reference table; config and the addon list on compiled `List max` screens; the interpreter fallback and its decoders deleted; pack minor | 2 weeks |
 | 6 | **Build flow** | the single `core` filter; CLI template; docs site pages replace this folder | 4 days |
 | 7 | **Next host** | the book: findings page, contract, emit, runtime, vocabulary | after 6 |
 
@@ -90,6 +90,17 @@ Nearly every failed round failed on the HARNESS rather than the engine, and they
 
 None of that is a finding about Minecraft. All of it is the cost of writing a harness from memory instead of from the working definition sitting beside it — `core_ui_form_components.toggle_base`, `core_ui_chest.stack_count_label`, `core_ui_common.control` — or from the JSON UI knowledge base, where the fraction rule is written down plainly. **Copy what works; do not reason about what ought to.**
 
+
+## Measured while building List
+
+One probe matrix, eight controls on the compiled counter screen, each one atom away from a pattern already proven inside the compiled subtree. Read in one look:
+
+1. **`#size_binding_*` is inert inside a modification-inserted subtree** — the `property_bag` seed and a view-written value alike, on a `[1,1]`-anchored panel exactly as the interpreted modal sizes its scroll. Every compiled screen lives in such a subtree (`compiled_root`'s modification insert is how addons stack), so **no compiled control can be sized by a binding**. This is the wall S6 kept hitting on the chest, and the second measured casualty of modification inserts after `$variables` in expressions ([06-render-pack](./06-render-pack.md) rule 2).
+2. **A `stack_panel` gives an invisible child no space, whether its `visible` is static or bound.** The one native runtime reflow, and `<List>` is built on it: the list is a vertical stack of gates, so hidden rows collapse and the visible ones pack from the top; a scroll whose content is exactly one list takes the stack itself, sized `100%c`, as its content — vanilla's own idiom, and the extent follows the count with nothing decoded.
+3. **Title decodes work there.** Slicing `#title_text`, string minus, a view targeting a custom property a label then shows, `binding_condition: 'visible'` — all fine. Screen-level carrier fields on the title remain a viable mechanism for *visibility and text*; they were built for size first, which is the one thing they cannot drive, so they came out again.
+4. A numeric `>` in a runtime binding over a coerced entry string drew nothing; the list gates enumerate the counts that show a row as string equalities instead, which also fails closed when the entry never resolves.
+
+The method note stands from the spikes: every failure was a mechanism nobody had read the whole of, and the matrix cost one deploy where four rounds of reasoning had cost four.
 
 ## The compiled modal, and why the generator went away
 

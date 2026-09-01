@@ -34,8 +34,9 @@ Measured, and kept from today's emitter comments:
 5. `localize: false` on literal labels; `localize: true` with a key for localized ones.
 6. Never insert into an array the target definition only inherits — the insert shadows the inherited array (the plain-chest killer). Re-declare the screen instead, as the chest hook does.
 7. `modifications` resolve per file path; hooks live at vanilla's own path, define nothing, and stack across packs.
-8. A binding expression uses `+ - *`, `= < >`, `not`, `and`, `or`; never `/`, `>=` or an empty literal. `#inventory_stack_count` is a string inside an expression.
+8. A binding expression uses `+ - *`, `=`, `not`, `and`, `or`; never `/`, `>=` or an empty literal. `#inventory_stack_count` is a string inside an expression. An ordering comparison (`>`) over a coerced entry string drew nothing; compare with `=` and enumerate.
 9. A `remove` of an inherited child drops the whole file silently. Hide with a binding instead.
+10. No `#size_binding_*` under a modification-inserted subtree — seed and binding alike are inert there, and every compiled screen is one. A runtime-variable extent is a `stack_panel` whose children hide: an invisible child takes no space, static or bound.
 
 ## Versioning — a window, as in `@bedrock-core/sync`
 
