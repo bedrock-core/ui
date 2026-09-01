@@ -1,6 +1,7 @@
 import type { Player } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
 import { isHandler, type PressEvent } from '../../core/events';
+import { listCount } from '../../components/List';
 import { analyze, visiblesAt } from '../../core/ir';
 import type { CompiledSnapshot } from '../../core/render/screens';
 import { runInteractiveCallback, type PresentResult } from '../../core/render/presenters/shared';
@@ -55,6 +56,11 @@ export const entryValue = (entry: EntryEntry): string => {
   // the one value the compiled control treats as "off".
   if (entry.carrier === 'bool') {
     return entry.element.props.visible === false ? '0' : '1';
+  }
+
+  // A list's count, as decimal digits the compiled gates compare against.
+  if (entry.carrier === 'int') {
+    return String(listCount(entry.element) ?? 0);
   }
 
   return entry.element.props.enabled === false ? '0' : '1';

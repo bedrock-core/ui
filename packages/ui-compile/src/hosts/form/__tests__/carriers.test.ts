@@ -1,5 +1,5 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
-import { Form, Panel, Text, useState } from '@bedrock-core/ui-runtime';
+import { Form, List, Panel, Scroll, Text, useState } from '@bedrock-core/ui-runtime';
 import { describe, expect, it } from 'vitest';
 import { eachControl } from '../../../__fixtures__/helpers';
 import type { Control, Document } from '../../../jsonui';
@@ -60,6 +60,87 @@ describe('carried visible on the action form', () => {
   it('bakes the fingerprint and the baked strings for debug', () => {
     expect(compiled.snapshot.shape).toContain('bool:1');
     expect(compiled.snapshot.baked).toEqual(['HEADER', 'DETAILS']);
+  });
+});
+
+describe('the list count on the action form', () => {
+  const Screen = (): JSX.Element => Panel({
+    children: [
+      List({
+        max: 3,
+        items: ['alpha', 'beta'],
+        row: (item: string | undefined) => Text({ maxLength: 8, children: item ?? '' }),
+      }),
+    ],
+  });
+
+  const compiled = compileFormScreen(Screen, { namespace: 'a', name: 'listing' });
+
+  it('spends one int entry on the count, before the rows\' own channels', () => {
+    // Document order: the list's int, then the three live row texts.
+    expect(compiled.entries.map(entry => entry.carrier)).toEqual(['int', 'text', 'text', 'text']);
+    expect(compiled.snapshot.shape).toContain('int:1');
+  });
+
+  it('gates every row on the counts that show it, as string equalities', () => {
+    const json = JSON.stringify(compiled.document);
+
+    // Row i shows for counts i+1..max — enumeration on proven atoms, never a
+    // numeric ordering, and fail-closed when the entry does not resolve.
+    expect(json).toContain("((#row_count = '1') or (#row_count = '2') or (#row_count = '3'))");
+    expect(json).toContain("((#row_count = '2') or (#row_count = '3'))");
+    expect(json).toContain("(#row_count = '3')");
+  });
+
+  it('seeds the gates with the count the build rendered with', () => {
+    const seeds: boolean[] = [];
+
+    eachControl(compiled.document, (name, control) => {
+      if (name.endsWith('_gate') && typeof control.property_bag?.['#visible'] === 'boolean'
+        && JSON.stringify(control.bindings).includes('#row_count')) {
+        seeds.push(control.property_bag['#visible']);
+      }
+    });
+
+    // Two items at build: rows 0 and 1 visible, row 2 hidden until the count says so.
+    expect(seeds).toEqual([true, true, false]);
+  });
+});
+
+describe('a scroll over a list', () => {
+  const Screen = (): JSX.Element => Panel({
+    children: [
+      Scroll({
+        width: 60,
+        height: 40,
+        children: [
+          List({
+            max: 5,
+            items: ['alpha'],
+            row: (item: string | undefined) => Text({ maxLength: 6, children: item ?? '' }),
+          }),
+        ],
+      }),
+    ],
+  });
+
+  const compiled = compileFormScreen(Screen, { namespace: 'a', name: 'scrolling' });
+
+  it('takes the list stack as its content, so the extent follows the visible rows', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- the definition is what the test is about
+    const content = compiled.document.scroll_1_content as Control;
+
+    // Not a baked panel: the list itself, a content-sized stack of gates —
+    // an invisible child takes no space in a stack, so the scroll reaches
+    // exactly as far as the real rows.
+    expect(content.type).toBe('stack_panel');
+    expect(content.size).toEqual([60, '100%c']);
+    expect(content.collection_name).toBe('form_buttons');
+    expect(content.controls).toHaveLength(5);
+  });
+
+  it('never sizes anything with a binding: that is dead where compiled screens live', () => {
+    expect(JSON.stringify(compiled.document)).not.toContain('#size_binding');
   });
 });
 

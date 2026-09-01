@@ -3,6 +3,7 @@ import type { ButtonNode } from '../../nodes/button';
 import { collectKind, shapeOf } from '../../nodes';
 import type { Binding, Control, ControlEntry } from '../../jsonui';
 import { MODAL_COLLECTION } from '../../nodes/field';
+import type { ListNode } from '../../nodes/list';
 import {
   FACE_CONTENT_LAYER, FONT_SIZE, FULL, layerOf, offsetOf, sizeOf, topLeft, visibilityOf,
 } from '../../nodes/shared';
@@ -361,6 +362,80 @@ const wrapVisible = (node: IrNode, ctx: Emit): ControlEntry => {
   };
 };
 
+/**
+ * A list's rows, each behind a gate reading the carried count.
+ *
+ * ONE entry serves every row: the count travels once as decimal digits, and
+ * each gate bakes the ENUMERATION of the counts that show it — row i is
+ * visible when the count is any of 'i+1'..'max', as string equalities. Not a
+ * numeric `>`: every atom here (`=`, `or`, `not`) is measured in this pack,
+ * while an ordering comparison in a runtime binding drew nothing — and
+ * equality on the raw string also fails CLOSED, since an entry that never
+ * resolves matches no term and the row stays hidden.
+ */
+const showsRow = (index: number, max: number): string => {
+  const terms = Array.from({ length: max - index }, (_, offset) => `(#row_count = '${index + 1 + offset}')`);
+
+  return terms.length === 1 ? terms[0] ?? '' : `(${terms.join(' or ')})`;
+};
+
+/**
+ * The list itself: a vertical `stack_panel` of those gates, sized `100%c`.
+ *
+ * MEASURED: a stack gives an invisible child no space — whether its `visible`
+ * is static or bound — so hidden rows COLLAPSE and the visible ones pack from
+ * the top; the box is as tall as the real rows, and a scroll over it scrolls
+ * exactly that far. That is the one place a compiled screen reflows at
+ * runtime, and it costs nothing: it is what a stack panel does. `#size_binding`
+ * was the first attempt and is dead inside a modification-inserted subtree —
+ * seed and binding alike — which every compiled screen is.
+ *
+ * The stack declares the collection so each gate, a DIRECT child, can carry
+ * the count entry's index; each gate is one row pitch tall (gap included, the
+ * last row its own height) so the packing keeps the layout's spacing.
+ */
+const listRows = (node: ListNode, ctx: Emit): ControlEntry => ({
+  [node.name]: {
+    type: 'stack_panel',
+    orientation: 'vertical',
+    size: [node.rect.width, '100%c'],
+    offset: offsetOf(node.rect),
+    ...topLeft,
+    ...layerOf(node),
+    ...visibilityOf(node),
+    collection_name: ctx.collection,
+    controls: node.rows.map((row, index) => {
+      const next = node.rows[index + 1];
+      const pitch = next === undefined ? row.rect.height : next.rect.y - row.rect.y;
+
+      return {
+        [`${row.name}_gate`]: {
+          type: 'panel',
+          size: [node.rect.width, pitch],
+          ...topLeft,
+          collection_index: node.countEntry,
+          visible: '#visible',
+          property_bag: { '#visible': index < node.initial },
+          bindings: [
+            {
+              binding_name: payloadBindingFor(ctx.collection),
+              binding_name_override: '#row_count',
+              binding_type: 'collection',
+              binding_collection_name: ctx.collection,
+            },
+            {
+              binding_type: 'view',
+              source_property_name: showsRow(index, node.rows.length),
+              target_property_name: '#visible',
+            },
+          ],
+          controls: [ctx.emitNode({ ...row, rect: { ...row.rect, y: 0 } })],
+        },
+      };
+    }),
+  },
+});
+
 export const FORM_EMIT: HostEmit = {
   id: 'form',
 
@@ -374,6 +449,8 @@ export const FORM_EMIT: HostEmit = {
 
     text: (node: TextNode, ctx: Emit): ControlEntry =>
       entryHost(node.name, node.address, `${ctx.ns}.${ctx.textNames.get(textSignature(node)) ?? 'text_1'}`, node, ctx.collection),
+
+    list: listRows,
   },
 
   // One definition per distinct look, named before any is emitted so a face

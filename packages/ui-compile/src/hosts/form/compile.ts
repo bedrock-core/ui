@@ -68,7 +68,7 @@ const actionAddressing = (entries: readonly EntryEntry[]): Addressing => ({
     .filter(entry => entry.role !== undefined)
     .map(entry => [entry.element, { address: entry.entry, role: entry.role ?? 'button' }] as const)),
   channels: new Map(entries
-    .filter(entry => entry.carrier === 'text')
+    .filter(entry => entry.carrier === 'text' || entry.carrier === 'int')
     .map(entry => [entry.element, { address: entry.entry, length: entry.length ?? 0 }])),
   visibles: new Map(entries
     .filter(entry => entry.carrier === 'bool')
@@ -86,7 +86,7 @@ const modalAddressing = (rows: readonly ModalRow[]): Addressing => ({
     .filter(row => row.kind === 'field')
     .map(row => [row.element, { address: row.row, role: 'button' as const }])),
   channels: new Map(rows
-    .filter(row => row.kind === 'text')
+    .filter(row => row.kind === 'text' || row.kind === 'int')
     .map(row => [row.element, { address: row.row, length: row.length ?? 0 }])),
   visibles: new Map(rows
     .filter(row => row.kind === 'bool')

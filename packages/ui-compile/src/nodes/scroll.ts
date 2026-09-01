@@ -55,8 +55,18 @@ export const scrollDefinition: NodeDefinition<ScrollNode> = {
     // own because the region takes it by name. The 5-texel track runs down the
     // right edge, the viewport spans the rest.
     const content = `${node.name}_content`;
+    const [sole] = node.children;
 
-    ctx.defs[content] = {
+    // A scroll over exactly one list takes the LIST as its content: the host
+    // emits a list as a stack of gated rows sized `100%c`, and a stack gives
+    // an invisible child no space (measured, static and bound alike), so the
+    // extent follows the live count with nothing decoded — vanilla's own idiom
+    // for a scrolling list. Baked content otherwise.
+    const [stack] = ctx.host.id === 'form' && node.children.length === 1 && sole?.kind === 'list'
+      ? Object.values(ctx.emitNode({ ...sole, rect: { ...sole.rect, x: 0, y: 0 } }))
+      : [];
+
+    ctx.defs[content] = stack ?? {
       type: 'panel',
       size: [node.rect.width, node.extent],
       ...topLeft,

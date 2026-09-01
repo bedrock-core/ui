@@ -1,4 +1,5 @@
 import { BUTTON_TYPE } from '../../components/Button';
+import { LIST_SLOT_TYPE } from '../../components/List';
 import { CONTAINER_TYPE } from '../../components/Container';
 import {
   MODAL_DROPDOWN_SLOT_TYPE, MODAL_FORM_BUTTON_SLOT_TYPE, MODAL_FORM_SLOT_TYPE,
@@ -162,6 +163,25 @@ const RULES: readonly Rule[] = [
         + 'in the tree at once, so on a serialized screen N tabs cost N times the payload '
         + 'on every present — the whole point of tabs is that the switch is free, and '
         + 'there it would not be. Compile the screen, or use navigation.navigate().',
+      );
+    }
+  },
+
+  (_node, type, _scope, _host, frozen): void => {
+    if (!frozen && type === LIST_SLOT_TYPE) {
+      throw new ContainerScreenError(
+        'A `<List>` can only be used on a COMPILED screen. A serialized screen '
+        + 're-renders per present, so a variable count is free there: map your data '
+        + 'directly instead.',
+      );
+    }
+  },
+
+  (_node, type, scope, _host, frozen): void => {
+    if (frozen && scope.insideButton && type === LIST_SLOT_TYPE) {
+      throw new ContainerScreenError(
+        'A `<List>` cannot sit inside a `<Button>`: a button bakes its children into '
+        + 'a static face, and a gated row cannot be baked. Put the list beside the button.',
       );
     }
   },

@@ -29,6 +29,7 @@ export { Fragment, type FragmentProps } from './Fragment';
 export { Image, IMAGE_TYPE, imageWriter, type ImageProps } from './Image';
 export { Input, type InputProps } from './Input';
 export { Hotbar, PlayerInventory } from './Inventory';
+export { List, LIST_SLOT_TYPE, listCapacity, listCount, type ListProps } from './List';
 export { Slider, type SliderProps } from './Slider';
 export { Panel, PANEL_TYPE, panelWriter, type PanelProps } from './Panel';
 export { Tabs, TABS_SLOT_TYPE, TAB_SLOT_TYPE, DEFAULT_TAB_HEIGHT } from './Tabs';

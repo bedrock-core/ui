@@ -2,6 +2,7 @@ import {
   MODAL_DROPDOWN_SLOT_TYPE, MODAL_FORM_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE,
   MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
 } from '../../components/Form';
+import { listCapacity } from '../../components/List';
 import { liveTextLength } from '../../components/Text';
 import { type Analysis, type CellRole, claim } from '../../core/ir';
 import { childElements } from '../../core/guards';
@@ -39,9 +40,9 @@ export interface EntryEntry {
   readonly entry: number;
   /** What the cell is, when it takes a press. Absent for an entry that only carries a value. */
   readonly role?: CellRole;
-  /** What the entry carries, when it carries one: a live string, or a visible bool. */
-  readonly carrier?: 'text' | 'bool';
-  /** Characters reserved when the entry carries live text. */
+  /** What the entry carries, when it carries one: a live string, a visible bool, or a list count. */
+  readonly carrier?: 'text' | 'bool' | 'int';
+  /** Characters reserved when the entry carries live text, digits for a count. */
   readonly length?: number;
 }
 
@@ -73,8 +74,8 @@ export const allocate = (tree: JSX.Element, analysis?: Analysis): Placement => {
       element,
       entry: cells.length + index,
       carrier,
-      // A bool needs no width; only text reserves one.
-      ...carrier === 'text' ? { length } : {},
+      // A bool needs no width; text and a count's digits reserve one.
+      ...carrier === 'bool' ? {} : { length },
     })),
   ];
 
@@ -109,8 +110,8 @@ export interface ModalRow {
   readonly element: JSX.Element;
   /** Index in `custom_form`, and the `formValues` slot the answer arrives in. */
   readonly row: number;
-  /** A native control the engine draws, or a value riding a label row: a live string, or a visible bool. */
-  readonly kind: 'field' | 'text' | 'bool';
+  /** A native control the engine draws, or a value riding a label row: a live string, a visible bool, or a list count. */
+  readonly kind: 'field' | 'text' | 'bool' | 'int';
   /** Characters reserved when the row carries live text. */
   readonly length?: number;
 }
@@ -147,6 +148,8 @@ export const allocateModal = (tree: JSX.Element, visibles: ReadonlySet<JSX.Eleme
     if (typeof type === 'string') {
       if (NATIVE_FIELDS.has(type)) {
         rows.push({ element: node, row: rows.length, kind: 'field' });
+      } else if (listCapacity(node) !== undefined) {
+        rows.push({ element: node, row: rows.length, kind: 'int' });
       } else {
         const length = liveTextLength(node);
 

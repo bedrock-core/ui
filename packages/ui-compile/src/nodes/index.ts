@@ -13,6 +13,7 @@ import { fieldDefinition } from './field';
 import { gridDefinition } from './grid';
 import { imageDefinition } from './image';
 import { labelDefinition } from './label';
+import { listDefinition } from './list';
 import { modalButtonDefinition } from './modalButton';
 import { panelDefinition } from './panel';
 import { scrollDefinition } from './scroll';
@@ -34,6 +35,7 @@ export const NODE_DEFINITIONS: readonly NodeDefinition<any>[] = [
   scrollDefinition,
   tabsDefinition,
   tabDefinition,
+  listDefinition,
   fieldDefinition,
   modalButtonDefinition,
 ];

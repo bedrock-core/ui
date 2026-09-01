@@ -30,7 +30,7 @@ import { num, str } from './nodes/shared';
 import type { Addressing, CellAddress, ChannelAddress, LowerContext, NodeDefinition } from './nodes/types';
 
 /** The components a compiled screen can be made of, by the name the author writes. */
-const SUPPORTED = 'Panel, Text, Image, Button, Slot, SlotGrid, PlayerInventory, Hotbar, Background, Scroll';
+const SUPPORTED = 'Panel, Text, Image, Button, Slot, SlotGrid, PlayerInventory, Hotbar, Background, Scroll, Tabs, List';
 
 export class UnsupportedNodeError extends Error {
   public constructor(type: string) {

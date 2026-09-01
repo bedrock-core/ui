@@ -3,6 +3,7 @@ import { ModalFormData } from '@minecraft/server-ui';
 import {
   collectFormButtons, type FormConfig, type FormValues, MODAL_FORM_SLOT_TYPE,
 } from '../../components/Form';
+import { listCount } from '../../components/List';
 import { visiblesAt } from '../../core/ir';
 import type { CompiledSnapshot } from '../../core/render/screens';
 import { emitLabel } from '../../core/writers';
@@ -100,6 +101,13 @@ function writeRow(row: ModalRow, form: ModalFormData, context: ModalSerializatio
   // a compiled modal mounts no row factory — the compiled gate reads it.
   if (row.kind === 'bool') {
     emitLabel(element.props.visible === false ? '0' : '1', form, context);
+
+    return;
+  }
+
+  // A list's count, digits on a bare row the compiled gates compare against.
+  if (row.kind === 'int') {
+    emitLabel(String(listCount(element) ?? 0), form, context);
 
     return;
   }

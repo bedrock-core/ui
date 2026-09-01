@@ -1,4 +1,5 @@
 import { buttonCell, BUTTON_TYPE } from '../../components/Button';
+import { listCapacity } from '../../components/List';
 import { slotCell, type SlotRole } from '../../components/Slot';
 import type { JSX } from '../../jsx';
 import { childElements } from '../guards';
@@ -31,8 +32,8 @@ export interface CellClaim {
 /** An element that needs a channel for a value that changes at runtime. */
 export interface ChannelClaim {
   readonly element: JSX.Element;
-  readonly carrier: 'text' | 'bool';
-  /** How much of the carrier it reserves — characters for text, 1 for a bool. */
+  readonly carrier: 'text' | 'bool' | 'int';
+  /** How much it reserves — characters for text, 1 for a bool, digits for an int. */
   readonly length: number;
 }
 
@@ -83,6 +84,13 @@ export const claim = (tree: JSX.Element, analysis: Analysis = analyze(tree)): Cl
     // the walk rather than of the maps.
     if (analysis.visibles.has(element)) {
       channels.push({ element, carrier: 'bool', length: 1 });
+    }
+
+    // A list's count, declared by `max` the way `maxLength` declares text.
+    const digits = listCapacity(element);
+
+    if (digits !== undefined) {
+      channels.push({ element, carrier: 'int', length: digits });
     }
 
     const length = analysis.texts.get(element);
