@@ -31,7 +31,8 @@ export function expandAndResolveContexts(
 
     // Generate unique ID for this component node
     const componentName = componentFn.name || 'anonymous';
-    const keyProp = typeof element.props.key === 'string' ? element.props.key : undefined;
+    const rawKey = element.props.key;
+    const keyProp = typeof rawKey === 'string' || typeof rawKey === 'number' ? String(rawKey) : undefined;
     // Auto-generate a stable key per parent path + component name to avoid
     // sibling collisions when keys are not provided.
     let effectiveKey = keyProp;
@@ -54,6 +55,8 @@ export function expandAndResolveContexts(
     // Get or create instance for this component
     // Create or get the fiber for this component instance
     const fiber = getFiber(componentId) ?? createFiber(componentId, owner);
+
+    context.visited.add(componentId);
 
     // Link fiber into parent/child/sibling chain using traversal context
     const parentFiber = context.parentFiber;

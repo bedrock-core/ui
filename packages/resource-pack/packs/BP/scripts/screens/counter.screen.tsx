@@ -35,18 +35,19 @@ export default function Counter(): JSX.Element {
 
         {/* Two things that can never show together SHARE one box: both sit
             absolute in this panel and each is gated by its own carrier — the
-            hint by a carried visible the build probed, the rows by the list's
-            count. The frozen layout reserves ONE space; the carriers decide
-            which content uses it. */}
+            hint by a carried visible (the && guard becomes one at build), the
+            rows by the list's count. The frozen layout reserves ONE space;
+            the carriers decide which content uses it. */}
         <Panel width={96} height={50}>
-          <Text
-            visible={count === 0}
-            position={'absolute'}
-            left={0}
-            top={0}
-          >
-            {'§7press + to start'}
-          </Text>
+          {count === 0 && (
+            <Text
+              position={'absolute'}
+              left={0}
+              top={0}
+            >
+              {'§7press + to start'}
+            </Text>
+          )}
 
           {/* Twenty row slots compiled behind a scroll: ONE int entry carries
               how many are real, a gate per row. `max` is the screen's

@@ -46,6 +46,17 @@ export function buildTree(element: JSX.Element, owner: Owner, compiled?: boolean
   // Returns "LayoutProps"
   let result: JSX.Element = expandAndResolveContexts(element, context, owner);
 
+  // A fiber this pass never reached is an orphan — a component whose key
+  // changed, or one a serialized tree stopped rendering. Deleting it runs its
+  // hook cleanups and forgets its state NOW, so a key that flips back gets a
+  // fresh instance (React's reset semantics) instead of resurrecting the old
+  // one at screen close.
+  for (const fiber of existing) {
+    if (!context.visited.has(fiber.id)) {
+      deleteFiber(fiber.id);
+    }
+  }
+
   // Which screen this tree is for, decided by the root the author wrote —
   // `<Container>` is a chest screen the way `<Form>` is a modal. Everything
   // that differs between screens is read off the host from here on, so no

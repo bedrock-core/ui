@@ -31,6 +31,7 @@ export interface TraversalContext {
   parentState?: ParentState; // Parent state for inheritance (used in Phase 4)
   currentContext: Map<Context<unknown>, unknown>; // Fiber context snapshot being propagated (keyed by context object)
   parentFiber?: Fiber; // Current parent function-component fiber (used for building fiber relations)
+  visited: Set<string>; // Fiber ids this pass reached — one shared Set; what is absent afterwards is an orphan
 }
 
 /**
@@ -78,6 +79,7 @@ export function createInitialContext(): TraversalContext {
     idCounters: new Map(),
     currentContext: new Map(),
     parentFiber: undefined,
+    visited: new Set(),
   };
 }
 
