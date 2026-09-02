@@ -29,11 +29,20 @@
 					"anchor_to": "top_left",
 					"dropdown_name": "$dropdown_name",
 					"dropdown_content_control": "inline_content",
-					/* Deliberately NONEXISTENT area name: inside_header_panel is now a REAL
-					   host at the modal content root (for popup dropdowns) — pointing there
-					   would re-host the inline rows into it. The no-host fallback keeps
-					   inline_content rendering in place (this stub never opens a popup). */
+					/* NOT inside_header_panel: that is a REAL host at the modal content
+					   root (for popup dropdowns) — pointing there re-hosts the inline rows
+					   into it. This area is the dead-end sibling below: it exists so the
+					   name resolves (an unresolvable control name is an assertion, which
+					   is a Marketplace rejection), but the stub never opens, so the rows
+					   are never moved into it and inline_content renders in place. */
 					"dropdown_area": "inline_offscreen_area"
+				}
+			},
+			{
+				"inline_offscreen_area": {
+					"type": "panel",
+					"size": [0, 0],
+					"visible": false
 				}
 			},
 			{

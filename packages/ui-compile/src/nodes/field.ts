@@ -77,6 +77,13 @@ const sliderGeometry = (node: FieldNode): Record<string, unknown> => {
 
   return {
     $compiled: true,
+    // Baked, never read from the row: a compiled slider exists behind its
+    // title gate on screens with no row at all, and an unresolved steps read
+    // is a division by zero inside the engine's percentage. The starting value
+    // is baked too (the engine seeds the row from the form data and owns the
+    // drag), so the control needs no collection reads at all.
+    $steps: node.steps ?? 1,
+    $value: node.value ?? 0,
     // The engine bounds the thumb's CENTRE to the control's width, so the box
     // the slider lives in is narrower than the track by one thumb — then the
     // thumb's EDGE meets the track ends at min and max. Same expression the
@@ -85,6 +92,28 @@ const sliderGeometry = (node: FieldNode): Record<string, unknown> => {
     $bar_size: [node.rect.width, track],
     $thumb_size: [thumb, num(node.thumbHeight, DEFAULT_THUMB_HEIGHT)],
   };
+};
+
+/** The engine's discrete step count for a slider, from the author's range. */
+const sliderSteps = (element: JSX.Element): number => {
+  const args = element.nativeArgs;
+  const min = num(args?.['min'], 0);
+  const max = num(args?.['max'], 1);
+  const step = num(args?.['step'], 0);
+
+  return Math.max(1, Math.round(step > 0 ? (max - min) / step : max - min));
+};
+
+/** The slider's default value as a step index over that count. */
+const sliderValue = (element: JSX.Element): number => {
+  const args = element.nativeArgs;
+  const min = num(args?.['min'], 0);
+  const max = num(args?.['max'], 1);
+  const step = num(args?.['step'], 0);
+  const unit = step > 0 ? step : 1;
+  const fallback = Math.min(Math.max(num(args?.['defaultValue'], min), min), max);
+
+  return Math.max(0, Math.min(sliderSteps(element), Math.round((fallback - min) / unit)));
 };
 
 /** The kinds mounted through `core_ui_common.control`, whose decode is replaced. */
@@ -218,6 +247,10 @@ export interface FieldNode extends NodeBase {
   trackHeight?: number;
   thumbWidth?: number;
   thumbHeight?: number;
+  /** The slider's discrete step count, baked from min/max/step. */
+  steps?: number;
+  /** The slider's default value as a step index, baking the thumb's start. */
+  value?: number;
   /**
    * The dropdown's popup, baked for the OVERLAY the host emits at the screen
    * root. It cannot ride this cell: the visual popup must draw over the whole
@@ -256,6 +289,9 @@ export const fieldDefinition: NodeDefinition<FieldNode> = {
       trackHeight: num(element.props.trackHeight),
       thumbWidth: num(element.props.thumbWidth),
       thumbHeight: num(element.props.thumbHeight),
+      ...type === MODAL_SLIDER_SLOT_TYPE
+        ? { steps: sliderSteps(element), value: sliderValue(element) }
+        : {},
       // The popup is data the CELL cannot draw; the host's overlay reads it
       // back off this node. `popupHeight` is FormDropdown's own computation
       // (rows x 17 + the fused border + padding), baked as given.

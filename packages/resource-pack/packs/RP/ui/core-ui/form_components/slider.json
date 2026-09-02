@@ -26,6 +26,8 @@
 		"$travel_size|default": [ 1, 0 ],
 		"$bar_size|default": [ 1, 0 ],
 		"$thumb_size|default": [ 1, 0 ],
+		"$steps|default": 1,
+		"$value|default": 0,
 		"$compiled|default": false,
 		/* Restated at every hop. A $variable set where a control is MOUNTED does
 		   not reach a definition it merely REFERENCES by name: slider_control
@@ -71,7 +73,9 @@
 								"anchor_to": "center",
 								"controls": [
 {
-										"slider@core_ui_form_components.slider_control": {
+										"slider@core_ui_form_components.slider_control_compiled": {
+											"$steps": "$steps",
+											"$value": "$value",
 											"$compiled": true,
 											"$bg_control": "slider_background_static",
 											"$bg_hover_control": "slider_background_hover_static",
@@ -186,6 +190,26 @@
 				}
 			}
 		]
+	},
+	/* The compiled slider, constructed behind its title gate on EVERY form screen
+	   (bisected 2026-09-02): there the custom_form rows it reads do not exist, the
+	   steps override left #slider_steps at 0, and value/0 raised "Progress out of
+	   range" (SliderComponent::_setPercentage) — a Marketplace-blocking assertion
+	   on every form open in the world; binding_condition "visible" did not stop a
+	   control hidden by an ANCESTOR gate from evaluating. So the compiled twin
+	   REPLACES the base's bindings (arrays never merge) with NOTHING: steps AND the
+	   starting value are BAKED — the build knows min/max/step/defaultValue — and
+	   the engine's own slider machinery (slider_name/slider_collection_name) owns
+	   dragging and write-back; the collection reads only existed to seed the
+	   visual, and hidden they read rows that do not exist. */
+	"slider_control_compiled@core_ui_form_components.slider_control": {
+		"$steps|default": 1,
+		"$value|default": 0,
+		"property_bag": {
+			"#slider_steps": "$steps",
+			"#slider_value": "$value"
+		},
+		"bindings": []
 	},
 	"slider_control": {
 		"type": "slider",
@@ -310,26 +334,37 @@
 				"ignore_input_scope": true
 			}
 		],
+		/* MEASURED with asserts on (bisected 2026-09-02): a compiled screen's slider
+		   is CONSTRUCTED behind its title gate on every form screen, where these
+		   collection rows do not exist — the overrides then stomp the safe seeds
+		   below and the engine's percentage leaves 0..1: "Progress out of range",
+		   a Marketplace-blocking assertion, on every form open in the world.
+		   `binding_condition: "visible"` keeps a hidden slider on its seeds
+		   (steps 1, value 0 → progress 0) and evaluates the real values only
+		   when the gate is open and the rows are real. */
 		"bindings": [
 			{
 				/* number of discrete steps for THIS cell */
 				"binding_type": "collection",
 				"binding_collection_name": "custom_form",
 				"binding_name": "#custom_slider_steps",
-				"binding_name_override": "#slider_steps"
+				"binding_name_override": "#slider_steps",
+				"binding_condition": "visible"
 			},
 			{
 				/* current value for THIS cell (read + write-back) */
 				"binding_type": "collection",
 				"binding_collection_name": "custom_form",
 				"binding_name": "#custom_slider_value",
-				"binding_name_override": "#slider_value"
+				"binding_name_override": "#slider_value",
+				"binding_condition": "visible"
 			},
 			{
 				"binding_type": "collection",
 				"binding_collection_name": "custom_form",
 				"binding_name": "#custom_slider_enabled",
-				"binding_name_override": "#enabled"
+				"binding_name_override": "#enabled",
+				"binding_condition": "visible"
 			}
 		],
 		"controls": [
