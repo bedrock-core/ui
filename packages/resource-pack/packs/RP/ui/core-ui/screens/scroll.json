@@ -15,6 +15,11 @@
 	"namespace": "core_ui_screens",
 	"scroll": {
 		"type": "scroll_view",
+		/* MEASURED with asserts on: a scroll_view whose content is not taller than its
+		   viewport puts the scrollbar's slider percentage outside 0..1 unless scrolling
+		   is off while the content fits — and this control is CONSTRUCTED on every form
+		   screen, compiled ones included, where its content decodes to 0. */
+		"allow_scroll_even_when_content_fits": false,
 		"size": [
 			"328px",
 			"98%"

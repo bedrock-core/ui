@@ -21,6 +21,11 @@
 		"always_listen_to_input": true,
 		"always_handle_pointer": true,
 		"always_handle_scrolling": true,
+		// MEASURED with asserts on: content shorter than the viewport puts the
+		// scrollbar's slider percentage outside 0..1 — "Progress out of range",
+		// a Marketplace-blocking assertion — unless scrolling is off while the
+		// content fits. Vanilla's scrolling_panel exposes the same switch.
+		"allow_scroll_even_when_content_fits": false,
 		"scroll_content": "scrolling_content",
 		"scroll_view_port": "scrolling_view_port",
 		"scrollbar_track": "track",

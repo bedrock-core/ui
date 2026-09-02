@@ -11,6 +11,12 @@
 		"gamepad_cursor": true
 	},
 	"long_form": {
+		/* This hidden vanilla dialog is still constructed under the library's gate;
+		   scrolling is off while its content fits, through the variable vanilla
+		   threads into common.scrolling_panel for exactly this. Precautionary: the
+		   bisected "Progress out of range" assertion turned out to be the compiled
+		   slider's, not this panel's. */
+		"$allow_scrolling_even_when_content_fits": false,
 		"$protocol_header": "bcuiv0008",
 		"modifications": [
 			{
@@ -30,6 +36,12 @@
 		]
 	},
 	"custom_form": {
+		/* This hidden vanilla dialog is still constructed under the library's gate;
+		   scrolling is off while its content fits, through the variable vanilla
+		   threads into common.scrolling_panel for exactly this. Precautionary: the
+		   bisected "Progress out of range" assertion turned out to be the compiled
+		   slider's, not this panel's. */
+		"$allow_scrolling_even_when_content_fits": false,
 		"$protocol_header": "bcuiv0008",
 		"modifications": [
 			{

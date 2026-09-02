@@ -66,12 +66,17 @@ export const scrollDefinition: NodeDefinition<ScrollNode> = {
       ? Object.values(ctx.emitNode({ ...sole, rect: { ...sole.rect, x: 0, y: 0 } }))
       : [];
 
-    ctx.defs[content] = stack ?? {
-      type: 'panel',
-      size: [node.rect.width, node.extent],
-      ...topLeft,
-      controls: node.children.map(child => ctx.emitNode(child)),
-    };
+    // Never shorter than the viewport: with asserts on, content that fits with
+    // room to spare puts the scrollbar's percentage out of 0..1 and the client
+    // asserts. `min_size` is the floor; the stack still grows past it.
+    ctx.defs[content] = stack === undefined
+      ? {
+          type: 'panel',
+          size: [node.rect.width, node.extent],
+          ...topLeft,
+          controls: node.children.map(child => ctx.emitNode(child)),
+        }
+      : { ...stack, min_size: [node.rect.width, node.rect.height] };
 
     return {
       [`${node.name}@${SHAPES}.scroll`]: {

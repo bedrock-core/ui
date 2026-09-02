@@ -135,6 +135,8 @@ describe('a scroll over a list', () => {
     // exactly as far as the real rows.
     expect(content.type).toBe('stack_panel');
     expect(content.size).toEqual([60, '100%c']);
+    // The viewport is the floor: content shorter than it asserts in the client.
+    expect(content.min_size).toEqual([60, 40]);
     expect(content.collection_name).toBe('form_buttons');
     expect(content.controls).toHaveLength(5);
   });
