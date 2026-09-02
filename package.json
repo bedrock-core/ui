@@ -93,6 +93,9 @@
     "lint": "yarn workspaces foreach -ptA run lint",
     "test": "yarn workspaces foreach -ptA run test",
     "coverage": "yarn workspaces foreach -ptA run coverage",
+    "deploy": "yarn workspace @bedrock-core/ui-resource-pack exec regolith run",
+    "preflight": "node scripts/preflight.mjs",
+    "gamelog": "node scripts/gamelog.mjs",
     "changeset": "changeset",
     "version-packages": "changeset version && node scripts/bump-meta.mjs && node scripts/sync-cli-template.mjs && node scripts/sync-pack-version.mjs",
     "release": "yarn build:libs && node scripts/publish-tarballs.mjs && changeset tag"

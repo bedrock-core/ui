@@ -206,8 +206,14 @@ export async function presentCompiledModal(
   // One numbering, shared with the build: the row a compiled control was baked
   // against is the row written here and the slot the answer comes back in —
   // the snapshot's ordinals mark the carried visibles the build gave rows to.
-  for (const row of allocateModal(tree, visiblesAt(tree, snapshot?.vis ?? []))) {
+  const rows = allocateModal(tree, visiblesAt(tree, snapshot?.vis ?? []));
+
+  for (const row of rows) {
     writeRow(row, form, context);
+  }
+
+  if (debug) {
+    console.info(`[ui] ${title} rows ${JSON.stringify(rows.map(row => row.kind))}`);
   }
 
   return form.show(player).then((response) => {

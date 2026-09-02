@@ -99,19 +99,19 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
     // A COMPILED form screen. The same render() every other screen uses: the
     // generated module above registered this component, so the runtime names
     // its layout in the title instead of serializing one.
-    render(Counter, source);
+    render(Counter, source, { debug: true });
   }
 
   if (block.typeId === MinecraftBlockTypes.WoodenButton) {
     // A COMPILED MODAL. Same render() as everything else: the generated module
     // registered it, so the runtime names the baked layout in the title instead
     // of serializing a control block per field.
-    render(Settings, source);
+    render(Settings, source, { debug: true });
   }
 
   if (block.typeId === MinecraftBlockTypes.SpruceButton) {
     // Client-only tabs on a compiled screen: pressing a tab sends nothing.
-    render(TabsDemo, source);
+    render(TabsDemo, source, { debug: true });
   }
 
   if (block.typeId === MinecraftBlockTypes.CrimsonButton) {

@@ -99,8 +99,14 @@ export async function presentCompiledForm(
 
   // Every entry is a button() call, so the collection index a control was
   // compiled with and the selection a press comes back as are the same number.
-  for (const entry of entries) {
-    form.button(entryValue(entry));
+  const values = entries.map(entryValue);
+
+  for (const value of values) {
+    form.button(value);
+  }
+
+  if (debug) {
+    console.info(`[ui] ${title} entries ${JSON.stringify(values)}`);
   }
 
   return form.show(player).then((response) => {

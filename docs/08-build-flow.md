@@ -56,6 +56,17 @@ Each step stays its own module inside the filter, with today's README as its sec
 
 The filter bundles each screen together with the **project's** copy of `ui-runtime` and `ui-compile` (esbuild, game modules aliased to a stub), so a screen compiles against the library the addon ships — unchanged. One esbuild build with every screen as an entry point replaces today's build-per-screen. The compiler's own error messages are relayed unchanged.
 
+## Working loop
+
+What has to be true before a change is worth a look in game, and how each rule earned its place.
+
+1. **One deploy path.** `yarn preflight` — tests, lint, `regolith run` on the development profile, then a read-back of the pack the game will load. The `build` profile fills `packages/resource-pack/build/` for CI and nothing else. Two builds landing in two folders cost two rounds of "the change did nothing".
+2. **A build stamp on the HUD.** The development profile sets `"stamp": true` on `ui-compile`, which bakes `ui <hash6> HH:MM` at the HUD's top-left — a hash of every compiled screen plus the clock. Preflight fails when the deployed stamp is not the one it just built; a `regolith watch` holding the session lock fails the same way, named.
+3. **Console, not chat.** `render(Screen, player, { debug: true })` logs what each present wrote (`[ui] <title> entries [...]`) and the `debug` diff to the content log, where a line copies with a click.
+4. **Probe first, build second.** A JSON UI behaviour not in [06-render-pack](./06-render-pack.md)'s rules or a findings page gets a probe matrix before a feature stands on it: one atom per probe, lettered, readable as colours and text without debug mode, one deploy, one reading. `#size_binding` under a modification insert cost four rounds of reasoning and one matrix.
+5. **Structured readings.** A test request names where to look, what working looks like, and what failing looks like.
+6. **Asserts on, always, and `yarn gamelog` after every pass.** Marketplace review runs the client with assertions enabled, so a screen that "works" in a release build and asserts in a debug one is a rejection. The game runs with asserts on during development, and `yarn gamelog` prints every `Assertion failed` (with its condition and function) and every `[ui]` script line from the newest debug and content logs — copyable, and read before anything is called done. The first one it caught took a six-round removal bisect to attribute: the compiled settings slider, constructed hidden behind its title gate on every form screen, reading collection rows that do not exist there ([06-render-pack](./06-render-pack.md) rule 12).
+
 ## CLI template
 
 `npx @bedrock-core/cli` scaffolds the single filter, one `*.screen.tsx` per host the template shows, and the pack download; `scripts/sync-cli-template.mjs` keeps the template's filter version in step as today.
