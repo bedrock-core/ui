@@ -37,6 +37,7 @@ export const labelDefinition: NodeDefinition<LabelNode> = {
         font_size: FONT_SIZE,
         font_scale_factor: node.fontScaleFactor,
         ...node.shadow ? { shadow: node.shadow } : {},
+        ...node.color === undefined ? {} : { color: [...node.color] as [number, number, number] },
       },
     };
   },

@@ -1,7 +1,7 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import type { ControlProps, JSX, PressEvent } from '@bedrock-core/ui-runtime';
 import { Button, Panel, Text, useTranslationResolver } from '@bedrock-core/ui-runtime';
-import { resolveDisplay, type DisplayText } from '@bedrock-core/i18n';
+import type { DisplayText } from '@bedrock-core/i18n';
 import { theme } from './tokens';
 
 export interface HeaderProps extends ControlProps {
@@ -19,23 +19,35 @@ export interface HeaderProps extends ControlProps {
  * Ore header bar: icon-only back button, breadcrumb trail, close button. Every screen
  * in a stack wears this so the chrome does not shift as the player moves between them.
  *
- * The trail is one raw string (not per-segment `Text`s) so a single `overflow: ellipsis`
- * can clip the whole thing — sibling label controls don't share a width budget, so
- * ellipsis-per-segment can't truncate the row as a unit. Keys resolve through
- * `TranslationContext` up front, same as `Text` does internally; missing keys fall
- * back to the key itself.
+ * Each segment of the trail is a `Text` of its own, so a segment that is a key stays a
+ * key all the way to the client and resolves in the player's language — a compiled
+ * screen bakes a label per key, and one label cannot hold two. The trail cannot then
+ * be clipped as a unit; the last segment, the one that grows with the page title,
+ * is the one that shrinks and ellipsises.
  */
 export function Header({ title, breadcrumbs, onBack, onClose, ...layout }: HeaderProps): JSX.Element {
   const resolver = useTranslationResolver();
   const h = theme.components.header;
-  const { color, separator } = h.textStyle;
+  const { font, scale, color, colorRgb, separator } = h.textStyle;
+  const segments: DisplayText[] = [title, ...breadcrumbs ?? []];
 
-  // resolveDisplay: literal strings pass through (resolver miss), key strings
-  // and RawMessages become their filled display strings.
-  const resolve = (segment: DisplayText): string => resolveDisplay(resolver, segment);
+  // A literal takes the trail colour as a § code, the way it always did. A key
+  // or a RawMessage cannot carry one — the client resolves it — so it goes to
+  // `Text` bare, coloured through the label instead.
+  const isLiteral = (value: DisplayText): value is string => typeof value === 'string' && resolver?.(value) === undefined;
 
-  const head = resolve(title);
-  const trail = (breadcrumbs ?? []).map(resolve).join(`${separator} > ${color}`);
+  const trail = segments.flatMap((value, index): JSX.Element[] => [
+    ...index === 0 ? [] : [<Text font={font} scale={scale} flexShrink={0}>{`${separator} > `}</Text>],
+    <Text
+      font={font}
+      scale={scale}
+      maxLines={1}
+      flexShrink={index === segments.length - 1 ? 1 : 0}
+      color={isLiteral(value) ? undefined : colorRgb}
+    >
+      {isLiteral(value) ? `${color}${value}` : value}
+    </Text>,
+  ]);
 
   return (
     <Panel
@@ -52,10 +64,8 @@ export function Header({ title, breadcrumbs, onBack, onClose, ...layout }: Heade
       {onBack
         ? <Button width={h.iconSize} height={h.iconSize} background={h.textures.back} backgroundHover={h.textures.backHover} backgroundPressed={h.textures.backPressed} onPress={onBack} />
         : <Panel width={h.iconSize} height={h.iconSize} />}
-      <Panel flexGrow={1} flexShrink={1} justifyContent={'center'} alignItems={'center'}>
-        <Text font={h.textStyle.font} scale={h.textStyle.scale} maxLines={1}>
-          {trail ? `${color}${head}${separator} > ${color}${trail}` : `${color}${head}`}
-        </Text>
+      <Panel flexGrow={1} flexShrink={1} flexDirection={'row'} justifyContent={'center'} alignItems={'center'}>
+        {trail}
       </Panel>
       {onClose
         ? <Button width={h.iconSize} height={h.iconSize} background={h.textures.close} backgroundHover={h.textures.closeHover} backgroundPressed={h.textures.closePressed} onPress={onClose} />

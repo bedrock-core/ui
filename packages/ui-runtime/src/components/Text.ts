@@ -116,6 +116,14 @@ export interface TextProps extends ControlProps {
    * which the RP routes to a label variant with a literal `shadow: true`.
    */
   shadow?: boolean;
+
+  /**
+   * Glyph colour as RGB in 0..1 (JSON UI `color`). For text a `§` code cannot
+   * colour: a localization key, whose value the client resolves and which
+   * cannot carry a code of its own. Honoured by compiled screens; a serialized
+   * screen's payload has no field for it and paints the default.
+   */
+  color?: readonly [number, number, number];
 }
 
 /**
@@ -141,6 +149,7 @@ export const Text: FunctionComponent<TextProps> = ({
   offsetX,
   offsetY,
   shadow,
+  color,
   ...rest
 }: TextProps): JSX.Element => {
   const resolvedScale = scale ?? 1.0;
@@ -244,6 +253,7 @@ export const Text: FunctionComponent<TextProps> = ({
       fontScaleFactor: labelFont.fontScaleFactor,
       labelX: offsetX ?? 0, // [1190] → label anchored X offset
       labelY: offsetY ?? 0, // [1273] → label anchored Y offset
+      ...color === undefined ? {} : { color },
       value: { tail },
       __textMetrics: {
         font,

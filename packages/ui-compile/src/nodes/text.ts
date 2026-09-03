@@ -76,8 +76,15 @@ const labelOf = (element: JSX.Element, base: Omit<LabelNode, 'kind' | 'text' | '
     localize: tail !== undefined && metrics.isKey,
     fontType: str(props.fontType, defaults.fontType),
     fontScaleFactor: num(props.fontScaleFactor, defaults.fontScaleFactor),
+    ...rgbOf(props.color),
   };
 };
+
+/** A `color` prop as the label's RGB, when it is three finite numbers. */
+const rgbOf = (value: unknown): { color?: readonly [number, number, number] } =>
+  Array.isArray(value) && value.length === 3 && value.every(part => typeof part === 'number' && Number.isFinite(part))
+    ? { color: [value[0], value[1], value[2]] as const }
+    : {};
 
 /**
  * What lets two text runs share a definition: everything except which slots

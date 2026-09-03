@@ -54,7 +54,7 @@ export interface Theme {
       gap: number;
       /** Edge of the square back/close controls (px). */
       iconSize: number;
-      textStyle: { font: TextFont; scale: number; color: string; separator: string };
+      textStyle: { font: TextFont; scale: number; color: string; colorRgb: readonly [number, number, number]; separator: string };
       textures: {
         background: string;
         back: string; backHover: string; backPressed: string;
@@ -208,7 +208,9 @@ const oreTheme: Theme = {
       padding: 4,
       gap: 4,
       iconSize: 15,
-      textStyle: { font: 'minecraftTen', scale: 1.2, color: '§0', separator: '§8' },
+      // `color` is the § code a literal takes; `colorRgb` the same black for a
+      // localized key, which no code can colour.
+      textStyle: { font: 'minecraftTen', scale: 1.2, color: '§0', colorRgb: [0, 0, 0], separator: '§8' },
       textures: {
         background: `${BASE}/header/background`,
         back: `${BASE}/button/back/background`,

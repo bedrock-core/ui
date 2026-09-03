@@ -31,10 +31,11 @@ export const stackRows = (children: readonly IrNode[], width: number, ctx: Emit)
       // below would move.
       if (child.kind === 'disclosure') {
         const gap = pitch - child.rect.height;
+        const spacer: ControlEntry = { [`${child.name}_gap`]: { type: 'panel', size: [width, gap], ...topLeft } };
 
         return [
           { [`${child.name}_row`]: { type: 'panel', size: [width, '100%c'], ...topLeft, controls: [row] } },
-          ...gap > 0 ? [{ [`${child.name}_gap`]: { type: 'panel', size: [width, gap] as [number, number], ...topLeft } }] : [],
+          ...gap > 0 ? [spacer] : [],
         ];
       }
 

@@ -54,6 +54,8 @@ export interface LabelStyle {
   fontType: string;
   fontScaleFactor: number;
   shadow?: boolean;
+  /** Glyph colour, RGB in 0..1. */
+  color?: readonly [number, number, number];
 }
 
 /**
