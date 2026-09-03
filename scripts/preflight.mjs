@@ -84,7 +84,8 @@ const stampIn = (file) => {
 
 const config = JSON.parse(fs.readFileSync(path.join(packRoot, 'config.json'), 'utf-8'));
 const packName = `${config.name}_rp`;
-const stampPath = path.join('ui', 'core-ui', 'screens', 'core_build.json');
+// Under the demo addon's namespace, where the filter puts every screen it writes.
+const stampPath = path.join('ui', 'core-ui', 'screens', 'core', 'core_build.json');
 const built = stampIn(path.join(packRoot, '.regolith', 'tmp', 'RP', stampPath));
 
 if (built === undefined) {

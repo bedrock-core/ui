@@ -20,10 +20,6 @@
 		],
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
-		"offset": [
-			"50% - 164px",
-			"0%"
-		],
 		"$protocol_header": "bcuiv0008",
 		"bindings": [
 			{
@@ -42,6 +38,10 @@
 				   title. Both paths ship in one pack and the title decides, exactly
 				   as it does on an action form — see core-ui/form/mount.json. */
 				"modal_content@core_ui_common.modal_scroll": {
+					/* The interpreter draws a 328px canvas from this box's left edge, so
+					   the offset that centres it is ITS offset — on the container it also
+					   shifted the compiled mount, which centres its own canvas. */
+					"offset": [ "50% - 164px", "0%" ],
 					"property_bag": { "#visible": true },
 					"visible": "#visible",
 					"bindings": [

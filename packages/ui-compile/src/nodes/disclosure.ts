@@ -97,7 +97,12 @@ export const disclosureDefinition: NodeDefinition<DisclosureNode> = {
 
   emit(node, ctx): ControlEntry {
     const width = node.rect.width;
-    const head = `${node.name}_head`;
+    // Named after the SCREEN too: a source_control_name is looked up by name,
+    // and every gated compiled screen is constructed on every form open, so a
+    // second screen's `disclosure_1_head` — another addon's guide index — would
+    // otherwise be the one the rows read (measured: the rows followed a toggle
+    // on a hidden screen and never folded).
+    const head = `${ctx.ns}_${node.name}_head`;
     const open = `${node.name}_open`;
     const closed = `${node.name}_closed`;
     const headerRect: Rect = { x: 0, y: 0, width, height: node.headerHeight };
@@ -181,6 +186,9 @@ export const disclosureDefinition: NodeDefinition<DisclosureNode> = {
                 {
                   binding_type: 'view',
                   source_control_name: head,
+                  // Among siblings, not the whole screen — the name is unique
+                  // anyway, but the lookup is what the engine documents.
+                  resolve_sibling_scope: true,
                   source_property_name: '#toggle_state',
                   target_property_name: '#visible',
                 },

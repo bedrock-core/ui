@@ -59,7 +59,7 @@ describe('a disclosure', () => {
 
   it('is a stack of the header toggle and the rows that read its state', () => {
     const disclosure = child(child(column, 'disclosure_1_row'), 'disclosure_1');
-    const head = child(disclosure, 'disclosure_1_head');
+    const head = child(disclosure, 'core_ui_test_disclosure_1_head');
     const rows = child(disclosure, 'disclosure_1_rows');
 
     expect(disclosure.type).toBe('stack_panel');
@@ -72,9 +72,12 @@ describe('a disclosure', () => {
     expect(rows.type).toBe('stack_panel');
     expect(rows.visible).toBe('#visible');
     expect(rows.property_bag).toEqual({ '#visible': false });
+    // Named after the screen, resolved among siblings: another screen's
+    // `disclosure_1_head`, constructed on the same form, must never be read.
     expect(rows.bindings).toEqual([{
       binding_type: 'view',
-      source_control_name: 'disclosure_1_head',
+      source_control_name: 'core_ui_test_disclosure_1_head',
+      resolve_sibling_scope: true,
       source_property_name: '#toggle_state',
       target_property_name: '#visible',
     }]);
@@ -86,7 +89,7 @@ describe('a disclosure', () => {
 
   it('bakes each header into the matching states', () => {
     const disclosure = child(child(column, 'disclosure_1_row'), 'disclosure_1');
-    const head = child(disclosure, 'disclosure_1_head');
+    const head = child(disclosure, 'core_ui_test_disclosure_1_head');
 
     expect(names(child(head, 'checked'))).toEqual(['header@core_ui_test.disclosure_1_open']);
     expect(names(child(head, 'unchecked_hover'))).toEqual(['header@core_ui_test.disclosure_1_closed']);
