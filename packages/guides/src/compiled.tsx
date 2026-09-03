@@ -44,6 +44,8 @@ const CANVAS = { width: 300, height: 200 };
 
 interface GuideScreens {
   home?: FunctionComponent;
+  /** The index with a back button whose press ends the presentation — for a host that opened the guide. */
+  homeBack?: FunctionComponent;
   pages: Map<PageId, FunctionComponent>;
   landing: PageId | undefined;
   hasSidebar: boolean;
@@ -104,12 +106,22 @@ const open = (ns: string, page: PageId | undefined, player: PressEvent['player']
   return true;
 };
 
-/** The home index of `manifest` as a compiled screen. */
-export function guideHomeScreen(manifest: GuideManifest, options: CompiledGuideOptions = {}): FunctionComponent {
-  const screens = screensOf(manifest);
+/**
+ * Leaving the guide from its back button, probed like a page press: a host
+ * that opened the guide reads `{ exit: true }` off the reference and takes
+ * the player back where they came from. Rendered by the addon's own code the
+ * back button is never shown, so this is never pressed there.
+ */
+const leave = (player: PressEvent['player']): void => {
+  if (player === PROBE) {
+    probed = { exit: true };
+  }
+};
+
+const homeScreen = (manifest: GuideManifest, options: CompiledGuideOptions, back: boolean): FunctionComponent => {
   const title = options.title ?? 'Guide';
 
-  const GuideHome = (): JSX.Element => {
+  return (): JSX.Element => {
     const close = useExit();
 
     return (
@@ -120,14 +132,39 @@ export function guideHomeScreen(manifest: GuideManifest, options: CompiledGuideO
         height={options.height ?? CANVAS.height}
         folding={'client'}
         onOpenPage={(id, event): void => { open(manifest.ns, id, event.player); }}
+        {...back ? { onExit: (event: PressEvent): void => { leave(event.player); } } : {}}
         onClose={close}
       />
     );
   };
+};
+
+/**
+ * The home index of `manifest` as a compiled screen — the one `openGuide`
+ * shows: no back button, since the addon's own code opened it.
+ */
+export function guideHomeScreen(manifest: GuideManifest, options: CompiledGuideOptions = {}): FunctionComponent {
+  const screens = screensOf(manifest);
+  const GuideHome = homeScreen(manifest, options, false);
 
   screens.home = GuideHome;
 
   return GuideHome;
+}
+
+/**
+ * The home index with a back button, as a compiled screen of its own: a
+ * screen's shape is fixed, so the index a host opens — and returns from —
+ * is a second screen, not a state of the first. `presentGuideReference`
+ * shows it in place of the plain index when asked for `back`.
+ */
+export function guideHomeBackScreen(manifest: GuideManifest, options: CompiledGuideOptions = {}): FunctionComponent {
+  const screens = screensOf(manifest);
+  const GuideHomeBack = homeScreen(manifest, options, true);
+
+  screens.homeBack = GuideHomeBack;
+
+  return GuideHomeBack;
 }
 
 /** Page `pageId` of `manifest` as a compiled screen. */
@@ -191,8 +228,8 @@ export function openGuide(ns: string, player: PressEvent['player'], options: { d
 
 // ─── The reference: a guide as another realm can show it ──────────────────────
 
-/** Where a press leads: a page, the home index, or nowhere the guide knows. */
-export type GuideTarget = { page: PageId } | { home: true };
+/** Where a press leads: a page, the home index, or out of the guide (its back button). */
+export type GuideTarget = { page: PageId } | { home: true } | { exit: true };
 
 /** One compiled screen as a title and the entries it is shown with. */
 export interface GuideScreenReference {
@@ -216,6 +253,8 @@ export interface GuideReference {
   /** The page the guide opens on; the home index when absent. */
   landing?: PageId;
   home?: GuideScreenReference;
+  /** The index with a back button, shown in place of `home` when the host asks for one. */
+  homeBack?: GuideScreenReference;
   pages: Record<PageId, GuideScreenReference>;
 }
 
@@ -261,6 +300,7 @@ export function guideReference(ns: string): GuideReference | undefined {
   }
 
   const home = screens.home === undefined ? undefined : referenceOf(screens.home);
+  const homeBack = screens.homeBack === undefined ? undefined : referenceOf(screens.homeBack);
   const pages: Record<PageId, GuideScreenReference> = {};
 
   for (const [pageId, screen] of screens.pages) {
@@ -271,13 +311,29 @@ export function guideReference(ns: string): GuideReference | undefined {
     }
   }
 
+  console.info(`[ui] guide reference ${ns}: ${home === undefined ? 'no index' : 'index'}, ${String(Object.keys(pages).length)} page(s)`);
+
   return {
     v: 1,
     ns,
     ...screens.landing === undefined ? {} : { landing: screens.landing },
     ...home === undefined ? {} : { home },
+    ...homeBack === undefined ? {} : { homeBack },
     pages,
   };
+}
+
+/**
+ * Narrows a reference that arrived over the wire — the runtime replicates it
+ * as a loose two-field shape, since it never looks inside. Shallow, like
+ * `isGuideManifest`: the envelope, not every screen.
+ */
+export function isGuideReference(value: unknown): value is GuideReference {
+  if (typeof value !== 'object' || value === null) { return false; }
+
+  const candidate = value as Partial<GuideReference>;
+
+  return candidate.v === 1 && typeof candidate.ns === 'string' && typeof candidate.pages === 'object' && candidate.pages !== null;
 }
 
 /**
@@ -286,15 +342,26 @@ export function guideReference(ns: string): GuideReference | undefined {
  * the player dismisses the form. Any realm can call this for any addon's
  * guide — the client draws the layouts from the pack it already has.
  */
-export async function presentGuideReference(reference: GuideReference, player: PressEvent['player']): Promise<void> {
-  let screen = reference.landing === undefined ? reference.home : reference.pages[reference.landing];
+export async function presentGuideReference(
+  reference: GuideReference,
+  player: PressEvent['player'],
+  options: { back?: boolean } = {},
+): Promise<void> {
+  // A host that opened the guide gets the index with a back button, whose
+  // press resolves this promise — the host then shows where the player was.
+  const home = options.back === true ? reference.homeBack ?? reference.home : reference.home;
+  let screen = reference.landing === undefined ? home : reference.pages[reference.landing];
 
   while (screen !== undefined) {
     const selection = await showCompiledTitle(player, screen.title, screen.values);
     const target = selection === undefined ? null : screen.targets[selection] ?? null;
 
-    screen = target === null
+    // What the client answered, for the log: a press that leads nowhere is
+    // the one thing this presenter cannot tell from a dismissal.
+    console.info(`[ui] guide ${screen.title} selection ${String(selection)} -> ${JSON.stringify(target)}`);
+
+    screen = target === null || 'exit' in target
       ? undefined
-      : 'home' in target ? reference.home : reference.pages[target.page];
+      : 'home' in target ? home : reference.pages[target.page];
   }
 }

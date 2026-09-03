@@ -1,6 +1,6 @@
 import { registerCompiledScreen } from '@bedrock-core/ui-runtime';
 import { describe, expect, it } from 'vitest';
-import { guideHomeScreen, guidePageScreen, guideReference } from '../compiled';
+import { guideHomeBackScreen, guideHomeScreen, guidePageScreen, guideReference } from '../compiled';
 import type { GuideManifest } from '../types';
 
 // The reference is read off the compiled screens themselves: each screen is
@@ -23,10 +23,12 @@ const manifest: GuideManifest = {
 };
 
 const Home = guideHomeScreen(manifest);
+const HomeBack = guideHomeBackScreen(manifest);
 const Intro = guidePageScreen(manifest, 'intro');
 const Usage = guidePageScreen(manifest, 'usage');
 
 registerCompiledScreen(Home, 'core1:ref_home');
+registerCompiledScreen(HomeBack, 'core1:ref_home_back');
 registerCompiledScreen(Intro, 'core1:ref_intro');
 registerCompiledScreen(Usage, 'core1:ref_usage');
 
@@ -43,6 +45,11 @@ describe('guideReference', () => {
   it('follows the index rows to their pages', () => {
     expect(reference?.home?.targets).toEqual([{ page: 'intro' }, { page: 'usage' }]);
     expect(reference?.home?.values).toEqual(['1', '1']);
+  });
+
+  it('leaves the guide from the back button of the index a host opened', () => {
+    expect(reference?.homeBack?.title).toBe('core1:ref_home_back');
+    expect(reference?.homeBack?.targets).toEqual([{ exit: true }, { page: 'intro' }, { page: 'usage' }]);
   });
 
   it('follows a page\'s back, links and footer', () => {

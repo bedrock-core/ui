@@ -1,7 +1,7 @@
 export { createGuide } from './createGuide';
 export type { GuideOptions, GuideProps } from './createGuide';
 
-export { guideHomeScreen, guidePageScreen, guideReference, openGuide, presentGuideReference } from './compiled';
+export { guideHomeBackScreen, guideHomeScreen, guidePageScreen, guideReference, isGuideReference, openGuide, presentGuideReference } from './compiled';
 export type { CompiledGuideOptions, GuideReference, GuideScreenReference, GuideTarget } from './compiled';
 
 export { GuideBlockList } from './render/GuideBlockList';
