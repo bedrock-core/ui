@@ -14,6 +14,7 @@ import '@bedrock-core/generated/ui';
 import { spawnDemo } from './container/demo';
 import Counter from './screens/counter.screen';
 import Settings from './screens/settings.screen';
+import ConfigProbe from './screens/config.screen';
 import TabsDemo from './screens/tabs.screen';
 import { App } from './UI/App';
 
@@ -101,6 +102,12 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
     // generated module above registered this component, so the runtime names
     // its layout in the title instead of serializing one.
     render(Counter, source, { debug: true });
+  }
+
+  if (block.typeId === MinecraftBlockTypes.PolishedBlackstoneButton) {
+    // The generic config screen's shape, probed: list rows of native fields
+    // behind carried visibilities on a compiled modal.
+    render(ConfigProbe, source, { debug: true });
   }
 
   if (block.typeId === MinecraftBlockTypes.WoodenButton) {

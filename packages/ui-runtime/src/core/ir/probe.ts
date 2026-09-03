@@ -214,10 +214,17 @@ export function probeLiveness(build: () => JSX.Element): Probe {
   const slots = slotsOf(getFibersForOwner(BUILD_OWNER));
   const referenceShape = shapeOf(reference);
   const referenceTexts = bakedTexts(reference);
-  const referenceVisibles = visibleCandidates(reference).map(element => element.props.visible !== false);
+  const candidates = visibleCandidates(reference);
+  const referenceVisibles = candidates.map(element => element.props.visible !== false);
 
   const frozen = new Map<number, FrozenText>();
-  const liveVisibles = new Set<number>();
+  // Declared carriers first: an element marked `liveVisible` is carried
+  // whether or not a probe below flips it — a visibility that is false in
+  // the reference and in every perturbation (a row whose kind no probe
+  // value reaches) would otherwise bake hidden.
+  const liveVisibles = new Set<number>(
+    candidates.flatMap((element, ordinal) => element.props.liveVisible === true ? [ordinal] : []),
+  );
   let shape: ShapeChange | undefined;
 
   for (const slot of slots) {

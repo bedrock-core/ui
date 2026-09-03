@@ -9,6 +9,14 @@ export const UNSTYLED_TEXTURE = 'textures/ui/unstyled';
 
 export interface ControlProps extends LayoutProps {
   visible?: boolean;
+  /**
+   * Carry `visible` on a compiled screen whether or not the build's liveness
+   * probe sees it flip — the probe perturbs each state slot a few ways, and a
+   * visibility that is false in every one of them is otherwise baked hidden.
+   * The conditional sugar sets this on every `{cond && <X/>}` it rewrites: a
+   * condition an author wrote is dynamic by intent.
+   */
+  liveVisible?: boolean;
   enabled?: boolean;
   background?: string;
 }
@@ -66,6 +74,7 @@ export { resolveStateBackgrounds, type StateBackgroundProps } from './stateBackg
 export function withControl(props: JSX.Props): JSX.Props {
   const {
     visible,
+    liveVisible,
     enabled,
     background,
     // Layout props
@@ -118,6 +127,7 @@ export function withControl(props: JSX.Props): JSX.Props {
 
     // Control props
     visible: visible ?? true,
+    ...liveVisible === true ? { liveVisible: true } : {},
     enabled: enabled ?? true,
 
     background: background ?? '', // [440-522] optional background texture path
