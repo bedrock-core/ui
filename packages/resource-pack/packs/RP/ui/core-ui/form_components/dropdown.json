@@ -15,11 +15,18 @@
 		   its own `|default` instead. */
 		"$scale|default": "#font_scale_factor",
 		"$static_texture|default": "",
+		/* The control the engine hosts the popup box in, resolved BY NAME across
+		   the screen. The interpreter's screens sit inside modal_container, which
+		   names its overlay host after vanilla's; a compiled screen may be mounted
+		   anywhere in the form (another pack's hook), so it names a host of its
+		   own at its root — an unresolved name is an assertion. */
+		"$dropdown_area|default": "inside_header_panel",
 		"$type_gate": "(#pre_visible and (#type = 'modal-dropdown'))",
 		"controls": [
 			{
 				"dropdown_control@core_ui_form_components.dropdown_control": {
-					"$static_texture": "$static_texture"
+					"$static_texture": "$static_texture",
+					"$dropdown_area": "$dropdown_area"
 				}
 			},
 			{
@@ -56,6 +63,7 @@
 	"dropdown_control": {
 		"type": "panel",
 		"$static_texture|default": "",
+		"$dropdown_area|default": "inside_header_panel",
 		"size": ["100%", "100%"],
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
@@ -68,7 +76,7 @@
 					"anchor_to": "top_left",
 					"dropdown_name": "custom_dropdown",
 					"dropdown_content_control": "dropdown_content",
-					"dropdown_area": "inside_header_panel",
+					"dropdown_area": "$dropdown_area",
 					"$static_texture": "$static_texture",
 					"$toggle_name": "custom_dropdown",
 					"$toggle_state_binding_name": "#custom_dropdown"

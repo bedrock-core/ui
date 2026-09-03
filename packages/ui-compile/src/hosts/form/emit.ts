@@ -2,7 +2,7 @@ import { FORM_COLLECTION, FORM_DETAILS_BINDING } from '@bedrock-core/ui-runtime/
 import type { ButtonNode } from '../../nodes/button';
 import { collectKind, shapeOf } from '../../nodes';
 import type { Binding, Control, ControlEntry } from '../../jsonui';
-import { MODAL_COLLECTION } from '../../nodes/field';
+import { MODAL_COLLECTION, popupHostOf } from '../../nodes/field';
 import type { ListNode } from '../../nodes/list';
 import {
   FACE_CONTENT_LAYER, FONT_SIZE, FULL, layerOf, offsetOf, sizeOf, topLeft, visibilityOf,
@@ -273,8 +273,8 @@ const POPUP_LAYER = 300;
  * the one attempt to mount it inside the native dropdown's own subtree crashed
  * the client — the names in there are the engine's to resolve.
  */
-const popupOverlay = (root: IrNode): ControlEntry[] => collectKind(root, 'field')
-  .flatMap(node => node.popup === undefined
+const popupOverlay = (root: IrNode, ctx: Emit): ControlEntry[] => {
+  const popups = collectKind(root, 'field').flatMap(node => node.popup === undefined
     ? []
     : [{
       [`${node.name}_popup`]: {
@@ -299,6 +299,14 @@ const popupOverlay = (root: IrNode): ControlEntry[] => collectKind(root, 'field'
         }],
       },
     } satisfies ControlEntry]);
+
+  // One host over the whole screen, named after it: the control every
+  // dropdown of this screen names as its popup area, so the engine's input
+  // shield adopts this layer wherever the screen is mounted.
+  return popups.length === 0
+    ? []
+    : [{ [popupHostOf(ctx.ns)]: { type: 'panel', size: FULL, ...topLeft, layer: POPUP_LAYER, controls: popups } }];
+};
 
 /**
  * The gate a carried `visible` draws through.

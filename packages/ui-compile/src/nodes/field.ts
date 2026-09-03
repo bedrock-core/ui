@@ -116,6 +116,9 @@ const sliderValue = (element: JSX.Element): number => {
   return Math.max(0, Math.min(sliderSteps(element), Math.round((fallback - min) / unit)));
 };
 
+/** The control a compiled screen hosts its dropdown popups in, named after the screen. */
+export const popupHostOf = (ns: string): string => `${ns}_popups`;
+
 /** The kinds mounted through `core_ui_common.control`, whose decode is replaced. */
 const NEEDS_DECODE_REPLACED: ReadonlySet<string> = new Set([
   MODAL_SLIDER_SLOT_TYPE,
@@ -301,7 +304,7 @@ export const fieldDefinition: NodeDefinition<FieldNode> = {
     };
   },
 
-  emit(node) {
+  emit(node, ctx) {
     // The index host. `collection_index` is legal only on a direct child of a
     // control declaring `collection_name`, which is why the widget is wrapped
     // rather than carrying the index itself.
@@ -331,9 +334,12 @@ export const fieldDefinition: NodeDefinition<FieldNode> = {
             // mounts a popup of its own: the shared one gates itself on a `#type`
             // it decodes out of the cell, which a compiled screen does not send,
             // so it never opens.
-            ...node.field === MODAL_DROPDOWN_SLOT_TYPE || node.field === MODAL_INLINE_SELECT_SLOT_TYPE
-              ? { $compiled: true }
-              : {},
+            ...node.field === MODAL_INLINE_SELECT_SLOT_TYPE ? { $compiled: true } : {},
+            // The engine hosts the popup box in the control this names, found
+            // BY NAME across the screen: the screen's own popup host, so the
+            // name resolves wherever the screen is mounted (the host emits it
+            // at the root — see the form host's overlay).
+            ...node.field === MODAL_DROPDOWN_SLOT_TYPE ? { $compiled: true, $dropdown_area: popupHostOf(ctx.ns) } : {},
             // The static value and placeholder labels, and the engine pointed at
             // them BY NAME: `ignored` does not take the interpreted copies out of
             // the by-name lookup, so each path names its own (the slider's

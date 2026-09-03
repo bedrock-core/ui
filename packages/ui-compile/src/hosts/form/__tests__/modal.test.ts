@@ -188,6 +188,11 @@ describe('compiling a modal screen', () => {
     expect(router?.$open_gate).toBe('#custom_dropdown');
     expect(router?.$popup_texture).toBe('mine/popup');
     expect(Array.isArray(router?.$popup_size)).toBe(true);
+
+    // The routers hang in a host named after the screen, which every dropdown
+    // of the screen names as its popup area — resolvable wherever the screen
+    // is mounted, unlike the library container's host.
+    expect((document['screen']?.controls ?? []).some(entry => 'a_choosing_popups' in entry)).toBe(true);
   });
 
   it('takes the faces of a field from the author, never from the library', () => {
