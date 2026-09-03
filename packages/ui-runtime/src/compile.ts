@@ -15,7 +15,7 @@ export {
   MODAL_INPUT_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
 } from './components/Form';
 
-export { buildContainerTree, buildScreenOnce } from './hosts/chest/build';
+export { buildContainerTree, buildScreenOnce, buildScreenTree } from './hosts/chest/build';
 
 // What is live, found by rendering rather than by being told. Build-only: the
 // runtime is handed the answer.

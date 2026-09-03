@@ -76,6 +76,41 @@ export const entryValue = (entry: EntryEntry): string => {
  * @returns Whether to re-present, clean up, or do nothing — the same outcomes
  *   the interpreter's presenters return, so the lifecycle is unchanged.
  */
+/**
+ * What a compiled screen sends: its entries in order, and the value each is
+ * shown with. The whole of what presenting the screen by its title needs.
+ */
+export const compiledValuesOf = (tree: JSX.Element, snapshot?: CompiledSnapshot): { entries: readonly EntryEntry[]; values: string[] } => {
+  // The snapshot's ordinals mark the elements the build compiled bool
+  // carriers for; walking them back onto this render's tree is what keeps the
+  // entry count identical to the one the layout was baked against.
+  const { entries } = allocate(tree, analyze(tree, visiblesAt(tree, snapshot?.vis ?? [])));
+
+  return { entries, values: entries.map(entryValue) };
+};
+
+/**
+ * Shows the compiled screen `title` names, with `values` as its entries, and
+ * resolves to what was pressed — or undefined when the form was dismissed.
+ *
+ * Nothing of the screen's own script is involved: the client draws the layout
+ * its pack holds for that title, so a realm that has only the title and the
+ * values (a guide's replicated reference) can show another addon's screen.
+ */
+export async function showCompiledTitle(player: Player, title: string, values: readonly string[]): Promise<number | undefined> {
+  const form = new ActionFormData();
+
+  form.title(title);
+
+  for (const value of values) {
+    form.button(value);
+  }
+
+  const response = await form.show(player);
+
+  return response.canceled ? undefined : response.selection;
+}
+
 export async function presentCompiledForm(
   player: Player,
   tree: JSX.Element,
@@ -92,14 +127,13 @@ export async function presentCompiledForm(
   // The snapshot's ordinals mark the elements the build compiled bool
   // carriers for; walking them back onto this render's tree is what keeps the
   // entry count identical to the one the layout was baked against.
-  const { entries } = allocate(tree, analyze(tree, visiblesAt(tree, snapshot?.vis ?? [])));
+  const { entries, values } = compiledValuesOf(tree, snapshot);
   const form = new ActionFormData();
 
   form.title(title);
 
   // Every entry is a button() call, so the collection index a control was
   // compiled with and the selection a press comes back as are the same number.
-  const values = entries.map(entryValue);
 
   for (const value of values) {
     form.button(value);

@@ -1,4 +1,4 @@
-import { openGuide } from '@bedrock-core/guides';
+import { guideReference, openGuide, presentGuideReference } from '@bedrock-core/guides';
 import { render } from '@bedrock-core/ui';
 import { ButtonPushAfterEvent, Player, world } from '@minecraft/server';
 import {
@@ -120,6 +120,18 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
     // and the build baked each; every press renders the next page for this
     // player, so nothing about a page travels at runtime.
     openGuide('core', source, { debug: true });
+  }
+
+  if (block.typeId === MinecraftBlockTypes.DarkOakButton) {
+    // The same guide BY REFERENCE: what another addon's realm would hold of
+    // it — each screen's title and baked entry values, and where each press
+    // leads — shown with a plain native form, none of this addon's screens
+    // rendered. The client draws the layouts its pack holds for the titles.
+    const reference = guideReference('core');
+
+    if (reference !== undefined) {
+      void presentGuideReference(reference, source);
+    }
   }
 
   if (block.typeId === MinecraftBlockTypes.CrimsonButton) {

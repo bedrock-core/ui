@@ -18,7 +18,7 @@ export { render } from './render';
 export type { RenderOptions } from './render';
 
 // What the build's generated module calls to say a screen was compiled.
-export { compiledTitleOf, registerCompiledScreen } from './render/screens';
+export { compiledSnapshotOf, compiledTitleOf, registerCompiledScreen } from './render/screens';
 export type { CompiledSnapshot } from './render/screens';
 
 // What every handler is called with.

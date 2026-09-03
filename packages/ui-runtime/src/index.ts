@@ -109,8 +109,12 @@ export {
   isModalForm,
   registerComponent,
   registerCompiledScreen,
+  compiledSnapshotOf,
+  compiledTitleOf,
   render,
 } from './core';
+
+export { compiledValuesOf, showCompiledTitle } from './hosts/form/runtime';
 
 export type {
   ComponentDescriptor,

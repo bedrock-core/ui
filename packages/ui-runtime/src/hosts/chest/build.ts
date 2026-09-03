@@ -19,6 +19,21 @@ import type { FunctionComponent, JSX } from '../../jsx';
  * @returns The built tree, with `<Container>` at its root.
  * @throws ContainerScreenError when the tree breaks the container rules.
  */
+/**
+ * Builds any screen once under the build owner — a form as readily as a
+ * container — and leaves no fibers behind. What a reader of a compiled
+ * screen's entries wants: the tree the compile baked, nothing else.
+ */
+export function buildScreenTree(root: JSX.Element | FunctionComponent): JSX.Element {
+  cleanupComponentTree(BUILD_OWNER);
+
+  try {
+    return buildScreenOnce(root, BUILD_OWNER);
+  } finally {
+    cleanupComponentTree(BUILD_OWNER);
+  }
+}
+
 export function buildContainerTree(
   root: JSX.Element | FunctionComponent,
   owner: Owner = BUILD_OWNER,
