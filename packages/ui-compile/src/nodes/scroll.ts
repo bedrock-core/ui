@@ -62,7 +62,10 @@ export const scrollDefinition: NodeDefinition<ScrollNode> = {
     // an invisible child no space (measured, static and bound alike), so the
     // extent follows the live count with nothing decoded — vanilla's own idiom
     // for a scrolling list. Baked content otherwise.
-    const [stack] = ctx.host.id === 'form' && node.children.length === 1 && sole?.kind === 'list'
+    // A column that folds (it holds a disclosure) is a stack too, and takes the
+    // scroll the same way: the extent follows the fold.
+    const soleStack = sole?.kind === 'list' || (sole?.kind === 'panel' && sole.stack === true);
+    const [stack] = ctx.host.id === 'form' && node.children.length === 1 && soleStack
       ? Object.values(ctx.emitNode({ ...sole, rect: { ...sole.rect, x: 0, y: 0 } }))
       : [];
 

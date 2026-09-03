@@ -8,6 +8,7 @@ import {
 } from '../../components/Form';
 import { SCROLL_SLOT_TYPE } from '../../components/Scroll';
 import { TABS_SLOT_TYPE } from '../../components/Tabs';
+import { DISCLOSURE_SLOT_TYPE } from '../../components/Disclosure';
 import { isForeignSlot, SLOT_TYPE } from '../../components/Slot';
 import { SLOT_GRID_TYPE } from '../../components/SlotGrid';
 import { liveTextLength } from '../../components/Text';
@@ -163,6 +164,16 @@ const RULES: readonly Rule[] = [
         + 'in the tree at once, so on a serialized screen N tabs cost N times the payload '
         + 'on every present — the whole point of tabs is that the switch is free, and '
         + 'there it would not be. Compile the screen, or use navigation.navigate().',
+      );
+    }
+  },
+
+  (_node, type, _scope, _host, frozen): void => {
+    if (!frozen && type === DISCLOSURE_SLOT_TYPE) {
+      throw new ContainerScreenError(
+        'A `<Disclosure>` can only be used on a COMPILED screen: its fold is a toggle the '
+        + 'client handles. A serialized screen re-renders per present, so fold with `useState` '
+        + 'and render the rows conditionally instead.',
       );
     }
   },

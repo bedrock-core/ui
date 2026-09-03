@@ -133,6 +133,9 @@ function renderRuns(runs: GuideRun[], ctx: RenderCtx): JSX.Element {
             paddingBottom={0}
             paddingLeft={0}
             paddingRight={0}
+            // The run before ends in a space, and its box is measured a shade
+            // wider than the client draws it: the link sits into that slack.
+            marginLeft={-2}
             onPress={(event): void => ctx.onNavigate?.(to, event)}
           >
             {prose}

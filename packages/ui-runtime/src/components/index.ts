@@ -34,6 +34,8 @@ export { Slider, type SliderProps } from './Slider';
 export { Panel, PANEL_TYPE, panelWriter, type PanelProps } from './Panel';
 export { Tabs, TABS_SLOT_TYPE, TAB_SLOT_TYPE, DEFAULT_TAB_HEIGHT } from './Tabs';
 export type { TabsProps, TabProps } from './Tabs';
+export { Disclosure, DISCLOSURE_SLOT_TYPE, DISCLOSURE_HEADER_SLOT_TYPE, DEFAULT_DISCLOSURE_HEADER_HEIGHT } from './Disclosure';
+export type { DisclosureProps } from './Disclosure';
 export { Scroll, SCROLL_SLOT_TYPE, MAX_SCROLLS, MAX_POOLED_SCROLLS, type ScrollAxis, type ScrollProps } from './Scroll';
 export {
   Slot, SLOT_CELL, SLOT_TYPE, slotInteractive, slotRole, slotSource, isForeignSlot,

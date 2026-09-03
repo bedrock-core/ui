@@ -16,8 +16,8 @@ import { GuidePageView } from './views/GuidePage';
  * carry and the shape of every screen is fixed at build. What that changes
  * against `createGuide`:
  *
- * - The home index cannot fold categories (a fold is a shape change), so it
- *   renders every row expanded and its section headers are plain.
+ * - The home index folds its categories on the client (`<Disclosure>`): the
+ *   header is a toggle the rows read, and nothing reaches script for a fold.
  * - Every screen is compiled for the widest audience. Access gating is per
  *   viewer, which a frozen shape cannot express yet, so a gated guide keeps
  *   rendering through `createGuide` until the gate rides a carried visible.
@@ -98,7 +98,7 @@ export function guideHomeScreen(manifest: GuideManifest, options: CompiledGuideO
         title={title}
         width={options.width ?? CANVAS.width}
         height={options.height ?? CANVAS.height}
-        collapsible={false}
+        folding={'client'}
         onOpenPage={(id, event): void => { open(manifest.ns, id, event.player); }}
         onClose={close}
       />

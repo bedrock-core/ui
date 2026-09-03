@@ -62,6 +62,7 @@ export { IMAGE_TYPE } from './components/Image';
 export { PANEL_TYPE } from './components/Panel';
 export { SCROLL_SLOT_TYPE, SCROLL_TRACK_WIDTH } from './components/Scroll';
 export { TAB_SLOT_TYPE, TABS_SLOT_TYPE } from './components/Tabs';
+export { DISCLOSURE_HEADER_SLOT_TYPE, DISCLOSURE_SLOT_TYPE } from './components/Disclosure';
 export { LIST_SLOT_TYPE, listCapacity, listCount } from './components/List';
 export { isForeignSlot, SLOT_CELL, SLOT_TYPE, slotInteractive, slotRole, slotSource } from './components/Slot';
 export type { SlotSource } from './components/Slot';

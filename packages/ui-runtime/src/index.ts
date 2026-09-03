@@ -17,6 +17,7 @@ export {
   Slot,
   SlotGrid,
   Tabs,
+  Disclosure,
   Text,
   withControl,
 } from './components';
@@ -58,6 +59,7 @@ export type {
   ScrollProps,
   TabProps,
   TabsProps,
+  DisclosureProps,
   SliderProps,
   SlotProps,
   SlotRole,

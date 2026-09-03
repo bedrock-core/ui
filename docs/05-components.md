@@ -76,5 +76,5 @@ Same JSX, one decision per layer, no layer repeating another's.
 
 - `Button`, `Text`, `Image`, `Panel`, `Scroll`, `Background`, `Slot`, `SlotGrid`, `Container`, `Form.*`: keep their public props; drop their writers, cell claims, `nativeArgs` side channels and `__textMetrics` payload contracts.
 - `Text`: `maxLength` keeps its meaning (capacity + liveness marker). Localized text is a key resolved on the client with `localize: true` on every host; the server never measures a player's language.
-- New: `List max`, `Tabs`. *Proposed*; `List` is required before the config screens can compile ([09-plan](./09-plan.md)).
+- New: `List max`, `Tabs`, `Disclosure` (a header toggle folding the rows under it on the client; compiled-only like `Tabs`). `List` is required before the config screens can compile ([09-plan](./09-plan.md)).
 - `registerComponent` / custom native components: the current contract is the byte protocol's. It is marked experimental at 1.0 and replaced by "register an IR node kind + a host emitter" in v2.
