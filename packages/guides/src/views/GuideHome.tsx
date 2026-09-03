@@ -1,6 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Divider, Header, MenuRow, theme } from '@bedrock-core/ore-styled';
-import { Button, Image, Panel, Scroll, Text, useState, type JSX } from '@bedrock-core/ui-runtime';
+import { Button, Image, Panel, Scroll, Text, useState, type JSX, type PressEvent } from '@bedrock-core/ui-runtime';
 import type { GuideTreeNode, PageId } from '../types';
 
 const { spacing } = theme.tokens;
@@ -18,12 +18,21 @@ export interface GuideHomeViewProps {
   tree: GuideTreeNode[];
   /** Header title (raw text, colorable). */
   title: string;
-  /** A page row was pressed. */
-  onOpenPage: (pageId: PageId) => void;
+  /** The index's box. Unset, it takes the space its host gives it. */
+  width?: number;
+  height?: number;
+  /** A page row was pressed; the press comes along for a host that opens pages as screens. */
+  onOpenPage: (pageId: PageId, event: PressEvent) => void;
   /** Leave the guide entirely (host `navigation.goBack()`). Omit to hide the back button. */
-  onExit?: () => void;
+  onExit?: (event: PressEvent) => void;
   /** Close the whole UI (the header's × button). */
   onClose: () => void;
+  /**
+   * Whether section headers fold their category on press. Off, every row renders expanded and
+   * the headers are plain — what a compiled home needs, where a fold would change the shape the
+   * build froze. Defaults to on.
+   */
+  collapsible?: boolean;
 }
 
 /** Category ids marked `collapsed: true` in the manifest start collapsed. */
@@ -55,8 +64,8 @@ function iconSlot(icon: string | undefined): JSX.Element[] {
  * divider rule; pages render as icon menu rows (thumbnail + title + one-line subtitle + chevron).
  * `icon`/`descK` are optional per node, so an unannotated guide degrades to a clean text list.
  */
-export function GuideHomeView({ tree, title, onOpenPage, onExit, onClose }: GuideHomeViewProps): JSX.Element {
-  const [collapsed, setCollapsed] = useState<string[]>(() => initialCollapsed(tree));
+export function GuideHomeView({ tree, title, width, height, onOpenPage, onExit, onClose, collapsible = true }: GuideHomeViewProps): JSX.Element {
+  const [collapsed, setCollapsed] = useState<string[]>(() => collapsible ? initialCollapsed(tree) : []);
 
   const toggle = (id: string): void => {
     setCollapsed(collapsed.includes(id) ? collapsed.filter(c => c !== id) : [...collapsed, id]);
@@ -70,7 +79,7 @@ export function GuideHomeView({ tree, title, onOpenPage, onExit, onClose }: Guid
       title={node.titleK}
       subtitle={node.descK}
       depth={depth}
-      onPress={(): void => onOpenPage(node.id)}
+      onPress={(event): void => onOpenPage(node.id, event)}
     />
   );
 
@@ -78,8 +87,26 @@ export function GuideHomeView({ tree, title, onOpenPage, onExit, onClose }: Guid
     const headerChildren: JSX.Element[] = [
       ...iconSlot(node.icon),
       <Text font={'minecraftTen'} shadow={true} maxLines={1} overflow={'ellipsis'} flexGrow={1} flexShrink={1}>{node.labelK}</Text>,
-      <Text>{isCollapsed ? '§7+' : '§7-'}</Text>,
+      ...collapsible ? [<Text>{isCollapsed ? '§7+' : '§7-'}</Text>] : [],
     ];
+
+    if (!collapsible) {
+      return (
+        <Panel
+          flexDirection={'row'}
+          alignItems={'center'}
+          gap={spacing.sm}
+          width={'100%'}
+          paddingTop={spacing.sm}
+          paddingBottom={spacing.xs}
+          paddingLeft={spacing.sm + depth * spacing.md}
+          paddingRight={spacing.sm}
+          marginTop={rows.length > 0 ? spacing.sm : 0}
+        >
+          {headerChildren}
+        </Panel>
+      );
+    }
 
     return (
       <Button
@@ -121,7 +148,7 @@ export function GuideHomeView({ tree, title, onOpenPage, onExit, onClose }: Guid
   walk(tree, 0);
 
   return (
-    <Card flexDirection={'column'} padding={0} gap={0}>
+    <Card flexDirection={'column'} padding={0} gap={0} width={width} height={height}>
       <Header title={title} onBack={onExit} onClose={onClose} />
       <Panel flexGrow={1} padding={spacing.sm}>
         <Scroll>

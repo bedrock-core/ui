@@ -1,5 +1,5 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import type { ControlProps, JSX } from '@bedrock-core/ui-runtime';
+import type { ControlProps, JSX, PressEvent } from '@bedrock-core/ui-runtime';
 import { Button, Panel, Text, useTranslationResolver } from '@bedrock-core/ui-runtime';
 import { resolveDisplay, type DisplayText } from '@bedrock-core/i18n';
 import { theme } from './tokens';
@@ -10,9 +10,9 @@ export interface HeaderProps extends ControlProps {
   /** Trail after the title, e.g. scope and entity labels: `title > … > …`. */
   breadcrumbs?: DisplayText[];
   /** Omit to hide the back control (the slot keeps its width, so the title stays centered). */
-  onBack?: () => void;
+  onBack?: (event: PressEvent) => unknown;
   /** Omit to hide the close control. */
-  onClose?: () => void;
+  onClose?: (event: PressEvent) => unknown;
 }
 
 /**

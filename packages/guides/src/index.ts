@@ -1,6 +1,9 @@
 export { createGuide } from './createGuide';
 export type { GuideOptions, GuideProps } from './createGuide';
 
+export { guideHomeScreen, guidePageScreen, openGuide } from './compiled';
+export type { CompiledGuideOptions } from './compiled';
+
 export { GuideBlockList } from './render/GuideBlockList';
 
 export { canSee, hasVisiblePages, paginationFor, visiblePageIds, visibleTree } from './access';

@@ -39,7 +39,8 @@
 					{
 						"filter": "guides",
 						"settings": {
-							"namespace": "core"
+							"namespace": "core",
+							"componentsModule": "BP/scripts/UI/guideComponents.ts"
 						}
 					},
 					{
@@ -67,7 +68,8 @@
 					{
 						"filter": "guides",
 						"settings": {
-							"namespace": "core"
+							"namespace": "core",
+							"componentsModule": "BP/scripts/UI/guideComponents.ts"
 						}
 					},
 					{

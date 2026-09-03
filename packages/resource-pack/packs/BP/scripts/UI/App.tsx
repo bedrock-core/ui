@@ -15,7 +15,7 @@ import {
 } from '@bedrock-core/navigation';
 
 import { BackBar } from './components/BackBar';
-import { GuideDemoButton } from './components/GuideDemoButton';
+import guideComponents from './guideComponents';
 // Imported for its side effect too: creating the addon's i18n instance is what
 // registers the default translation source Text measures localized children with.
 import './i18n';
@@ -60,7 +60,7 @@ type AppScreen<K extends keyof AppRoutes> = ScreenProps<AppRoutes, K>;
 // Built once so its open-page state survives re-renders (see createGuide).
 const DemoGuide = createGuide(guidesManifest, {
   title: 'Guide Demo',
-  components: { GuideDemoButton },
+  components: guideComponents,
 });
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

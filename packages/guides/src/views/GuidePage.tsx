@@ -1,7 +1,7 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Header, Button as OreButton, theme } from '@bedrock-core/ore-styled';
 import type { DisplayText } from '@bedrock-core/i18n';
-import { Image, Panel, Scroll, Text, type JSX } from '@bedrock-core/ui-runtime';
+import { Image, Panel, Scroll, Text, type JSX, type PressEvent } from '@bedrock-core/ui-runtime';
 import { canSee, paginationFor } from '../access';
 import { GuideBlockList } from '../render/GuideBlockList';
 import type { GuideAudience, GuideComponents, GuideManifest, GuideTreeNode, PageId } from '../types';
@@ -40,29 +40,33 @@ export interface GuidePageViewProps {
   pageId: PageId;
   /** Header title (raw text, colorable). */
   title: string;
+  /** The page's box. Unset, the page takes the space its host gives it. */
+  width?: number;
+  height?: number;
   /** Component registry for MDX `cmp` blocks. */
   components?: GuideComponents;
-  /** A prev/next/link press — navigate to another page in place. */
-  onOpenPage: (pageId: PageId) => void;
+  /** A prev/next/link press — navigate to another page in place. The press comes along for a
+   *  host that opens the next page as a screen of its own for the pressing player. */
+  onOpenPage: (pageId: PageId, event: PressEvent) => void;
   /**
    * Header back. Leaves this page for wherever the reader came from — the sidebar when there is
    * one, otherwise out of the guide entirely. Absent hides the control, for a root guide with
    * nowhere to go back to.
    */
-  onBack?: () => void;
+  onBack?: (event: PressEvent) => void;
 
   /**
    * Footer index button. Set only when there IS an index: a single-page guide has no second page
    * to choose between, so the button would either lead to a one-row table of contents or, worse,
    * duplicate the back button while looking like something else.
    */
-  onHome?: () => void;
+  onHome?: (event: PressEvent) => void;
   /** Close the whole UI (the header's × button). */
   onClose: () => void;
 }
 
 /** One guide page: title, rendered blocks, prev/home/next footer. */
-export function GuidePageView({ manifest, tree, audience, pageId, title, components, onOpenPage, onBack, onHome, onClose }: GuidePageViewProps): JSX.Element {
+export function GuidePageView({ manifest, tree, audience, pageId, title, width, height, components, onOpenPage, onBack, onHome, onClose }: GuidePageViewProps): JSX.Element {
   const page = manifest.pages[pageId];
 
   if (!page) {
@@ -83,7 +87,7 @@ export function GuidePageView({ manifest, tree, audience, pageId, title, compone
   const canOpen = (id: PageId): boolean => canSee(manifest.pages[id]?.a, audience);
 
   return (
-    <Card flexDirection={'column'} padding={0} gap={0}>
+    <Card flexDirection={'column'} padding={0} gap={0} width={width} height={height}>
       <Header title={title} breadcrumbs={breadcrumbs} onBack={onBack} onClose={onClose} />
       <Panel flexGrow={1} padding={spacing.sm}>
         <Scroll marginRight={spacing.md}>
@@ -106,7 +110,7 @@ export function GuidePageView({ manifest, tree, audience, pageId, title, compone
       <Panel flexDirection={'row'} alignItems={'stretch'} gap={spacing.sm} padding={spacing.sm}>
         {prevPage
           ? (
-              <OreButton variant={'contrast'} flexGrow={1} paddingTop={spacing.sm} paddingBottom={spacing.sm} onPress={(): void => onOpenPage(prevPage.id)}>
+              <OreButton variant={'contrast'} flexGrow={1} paddingTop={spacing.sm} paddingBottom={spacing.sm} onPress={(event): void => onOpenPage(prevPage.id, event)}>
                 <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.xs}>
                   <Text>{'§7<'}</Text>
                   <Text>{prevPage.titleK}</Text>
@@ -123,7 +127,7 @@ export function GuidePageView({ manifest, tree, audience, pageId, title, compone
           : null}
         {nextPage
           ? (
-              <OreButton variant={'contrast'} flexGrow={1} paddingTop={spacing.sm} paddingBottom={spacing.sm} onPress={(): void => onOpenPage(nextPage.id)}>
+              <OreButton variant={'contrast'} flexGrow={1} paddingTop={spacing.sm} paddingBottom={spacing.sm} onPress={(event): void => onOpenPage(nextPage.id, event)}>
                 <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.xs}>
                   <Text>{nextPage.titleK}</Text>
                   <Text>{'§7>'}</Text>

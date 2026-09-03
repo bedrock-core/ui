@@ -1,3 +1,4 @@
+import { openGuide } from '@bedrock-core/guides';
 import { render } from '@bedrock-core/ui';
 import { ButtonPushAfterEvent, Player, world } from '@minecraft/server';
 import {
@@ -112,6 +113,13 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
   if (block.typeId === MinecraftBlockTypes.SpruceButton) {
     // Client-only tabs on a compiled screen: pressing a tab sends nothing.
     render(TabsDemo, source, { debug: true });
+  }
+
+  if (block.typeId === MinecraftBlockTypes.MangroveButton) {
+    // The guide, compiled: the guides filter wrote one screen module per page
+    // and the build baked each; every press renders the next page for this
+    // player, so nothing about a page travels at runtime.
+    openGuide('core', source, { debug: true });
   }
 
   if (block.typeId === MinecraftBlockTypes.CrimsonButton) {

@@ -1,6 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Divider, Button as OreButton, theme } from '@bedrock-core/ore-styled';
-import { Fragment, Image, Panel, Text, type JSX } from '@bedrock-core/ui-runtime';
+import { Fragment, Image, Panel, Text, type JSX, type PressEvent } from '@bedrock-core/ui-runtime';
 import { defaultAdmonitionTitleKey } from '../admonitions';
 import type { GuideBlock, GuideComponents, GuideListItem, GuideRun, PageId } from '../types';
 
@@ -13,8 +13,8 @@ export interface GuideBlockListProps {
   blocks: GuideBlock[];
   /** Manifest namespace — resolves default admonition title keys. */
   ns: string;
-  /** Internal-link presses land here (usually `navigate('GuidePage', …)`). */
-  onNavigate?: (pageId: PageId) => void;
+  /** Internal-link presses land here (usually `navigate('GuidePage', …)`), with the press. */
+  onNavigate?: (pageId: PageId, event: PressEvent) => void;
   /**
    * Whether a link target may be opened at all. A run pointing somewhere this reader cannot go
    * renders as plain prose instead of a pressable — the sentence still reads, it just stops
@@ -40,7 +40,7 @@ export function GuideBlockList({ blocks, ns, onNavigate, canOpen, components }: 
 
 interface RenderCtx {
   ns: string;
-  onNavigate?: (pageId: PageId) => void;
+  onNavigate?: (pageId: PageId, event: PressEvent) => void;
   canOpen?: (pageId: PageId) => boolean;
   components?: GuideComponents;
 }
@@ -131,9 +131,9 @@ function renderRuns(runs: GuideRun[], ctx: RenderCtx): JSX.Element {
             variant={'transparent'}
             paddingTop={0}
             paddingBottom={0}
-            paddingLeft={2}
-            paddingRight={-2}
-            onPress={(): void => ctx.onNavigate?.(to)}
+            paddingLeft={0}
+            paddingRight={0}
+            onPress={(event): void => ctx.onNavigate?.(to, event)}
           >
             {prose}
           </OreButton>
