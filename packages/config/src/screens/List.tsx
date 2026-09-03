@@ -1,6 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Divider, Header, MenuRow, Button as OreButton, theme } from '@bedrock-core/ore-styled';
-import { hasVisiblePages } from '@bedrock-core/guides';
+import { hasVisiblePages, isGuideReference, presentGuideReference } from '@bedrock-core/guides';
 import type { RegisteredAddon, Runtime } from '@bedrock-core/server-runtime';
 import type { Player } from '@minecraft/server';
 import { Image, Panel, Scroll, Text, useExit, useState, type JSX } from '@bedrock-core/ui-runtime';
@@ -128,12 +128,23 @@ function AddonDetails({ core, addon, player, navigation }: {
   const { t, display } = useTranslation();
   const accessor = core.config.of(addon.id, { actorId: player.id });
   const hasConfig = accessor !== undefined;
-  // Greyed out when the addon published no guide — and equally when everything in the one it
-  // published is gated above this player, since there would be nothing behind the button.
+  // A compiled guide arrives as a reference and is presented from it, none of it rendered
+  // here; a manifest is rendered by the Guide screen. Greyed out when the addon published
+  // neither — and equally when everything in its manifest is gated above this player, since
+  // there would be nothing behind the button.
+  const reference = core.guides.referenceOf(addon.id);
   const guide = manifestFor(core, addon.id);
-  const hasGuide = guide !== undefined && hasVisiblePages(guide, guideAudienceFor(player));
+  const hasGuide = isGuideReference(reference) || (guide !== undefined && hasVisiblePages(guide, guideAudienceFor(player)));
 
-  function openGuide(): void {
+  // Returned from the presser: the list waits with the input lock held while the
+  // guide's native forms run, and presents itself again when the last one closes.
+  function openGuide(): void | Promise<void> {
+    console.info(`[ui] guide open ${addon.id} via ${isGuideReference(reference) ? 'reference' : 'manifest'}`);
+
+    if (isGuideReference(reference)) {
+      return presentGuideReference(reference, player, { back: true });
+    }
+
     navigation.navigate('Guide', { addonId: addon.id });
   }
 

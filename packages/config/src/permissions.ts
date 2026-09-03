@@ -12,7 +12,7 @@
  */
 import { PlayerPermissionLevel } from '@minecraft/server';
 import type { Player } from '@minecraft/server';
-import { hasVisiblePages } from '@bedrock-core/guides';
+import { hasVisiblePages, isGuideReference } from '@bedrock-core/guides';
 import type { GuideAudience } from '@bedrock-core/guides';
 import type { Runtime } from '@bedrock-core/server-runtime';
 import { manifestFor } from './frameworkGuide';
@@ -61,8 +61,10 @@ export function clampTarget(target: OpenTarget, player: Player, core: Runtime): 
   // of the stack entirely, so backing out behaves like a plain `:list` (see `buildInitialState`).
   if (target.kind === 'guide') {
     const manifest = target.addonId === undefined ? undefined : manifestFor(core, target.addonId);
+    // A compiled guide is presented from its reference and has no gate yet: everyone sees it.
+    const reference = target.addonId === undefined ? undefined : core.guides.referenceOf(target.addonId);
 
-    return manifest !== undefined && hasVisiblePages(manifest, guideAudienceFor(player))
+    return isGuideReference(reference) || (manifest !== undefined && hasVisiblePages(manifest, guideAudienceFor(player)))
       ? target
       : { kind: 'list', addonId: target.addonId };
   }

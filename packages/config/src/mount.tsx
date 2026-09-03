@@ -21,6 +21,7 @@
  */
 import { world } from '@minecraft/server';
 import type { Player } from '@minecraft/server';
+import { isGuideReference, presentGuideReference } from '@bedrock-core/guides';
 import { render } from '@bedrock-core/ui-runtime';
 import type { Runtime } from '@bedrock-core/server-runtime';
 import { registerAddonCommands } from './commands/addon';
@@ -147,6 +148,17 @@ function dispatch(core: Runtime, player: Player, command: OpenCommand, args: (st
  */
 export function openUi(core: Runtime, player: Player, target: OpenTarget): Promise<void> {
   const clamped = clampTarget(target, player, core);
+
+  // A compiled guide is presented from its reference with native forms — no app rendered,
+  // nothing of the owning addon's script involved. Returned like the render below: from a
+  // presser the handoff waits inside the transaction; on its own it just runs.
+  if (clamped.kind === 'guide' && clamped.addonId !== undefined) {
+    const reference = core.guides.referenceOf(clamped.addonId);
+
+    if (isGuideReference(reference)) {
+      return presentGuideReference(reference, player, { back: true });
+    }
+  }
 
   const scopeIsSections = scopeHoldsOnlySections(core, player, clamped);
 
