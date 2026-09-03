@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-type-assertion */
 import { isFunction } from '..';
 import { isInInteractiveTransaction, scheduleLogicPass, triggerCleanup } from '../render/session';
-import { containerExit } from './exit';
+import { containerExit, markExit } from './exit';
 import { requirePlayer } from './owner';
 import { getCurrentFiber } from './registry';
 import { Context, Dispatcher, Fiber, HookSlot } from './types';
@@ -63,14 +63,14 @@ function exitHandle(): () => void {
     return containerExit;
   }
 
-  return (): void => {
+  return markExit((): void => {
     fiber.shouldRender = false;
 
     // If not in an interactive transaction (e.g., called from useEffect),
     if (!isInInteractiveTransaction(owner)) {
       triggerCleanup(owner, true);
     }
-  };
+  });
 }
 
 export const MountDispatcher: Dispatcher = {
