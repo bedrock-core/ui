@@ -227,9 +227,10 @@ describe('text wrapping inside scroll regions', () => {
 
     computeLayout(tree);
 
-    expect(asNum(t.props.jsonUIWidth)).toBe(120);
+    // The column is the viewport less the 5-texel scrollbar track.
+    expect(asNum(t.props.jsonUIWidth)).toBe(115);
 
-    const expected = measureText({ text: wrapText(DESC, 120, undefined, 1), fontSize: 1 });
+    const expected = measureText({ text: wrapText(DESC, 115, undefined, 1), fontSize: 1 });
 
     expect(asNum(t.props.jsonUIHeight)).toBe(expected.height);
   });

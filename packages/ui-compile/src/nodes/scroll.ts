@@ -1,4 +1,4 @@
-import { SCROLL_SLOT_TYPE } from '@bedrock-core/ui-runtime/compile';
+import { SCROLL_SLOT_TYPE, SCROLL_TRACK_WIDTH } from '@bedrock-core/ui-runtime/compile';
 import { layerOf, offsetOf, SHAPES, sizeOf, topLeft, visibilityOf } from './shared';
 import type { IrNode, NodeBase, NodeDefinition, Rect } from './types';
 
@@ -69,14 +69,17 @@ export const scrollDefinition: NodeDefinition<ScrollNode> = {
     // Never shorter than the viewport: with asserts on, content that fits with
     // room to spare puts the scrollbar's percentage out of 0..1 and the client
     // asserts. `min_size` is the floor; the stack still grows past it.
+    // The column the layout gave the content: the viewport less the track.
+    const width = Math.max(0, node.rect.width - SCROLL_TRACK_WIDTH);
+
     ctx.defs[content] = stack === undefined
       ? {
           type: 'panel',
-          size: [node.rect.width, node.extent],
+          size: [width, node.extent],
           ...topLeft,
           controls: node.children.map(child => ctx.emitNode(child)),
         }
-      : { ...stack, min_size: [node.rect.width, node.rect.height] };
+      : { ...stack, min_size: [width, node.rect.height] };
 
     return {
       [`${node.name}@${SHAPES}.scroll`]: {

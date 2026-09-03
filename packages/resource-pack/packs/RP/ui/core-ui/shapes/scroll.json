@@ -20,7 +20,10 @@
 		"scrollbar_touch_button": "button.scrollbar_touch",
 		"always_listen_to_input": true,
 		"always_handle_pointer": true,
-		"always_handle_scrolling": true,
+		// Off, as in vanilla's scrolling_panel and the interpreter's pooled scroll:
+		// on, the region took every scroll and pointer event for itself — the
+		// wheel did nothing and a button inside the content could not be pressed.
+		"always_handle_scrolling": false,
 		// MEASURED with asserts on: content shorter than the viewport puts the
 		// scrollbar's slider percentage outside 0..1 — "Progress out of range",
 		// a Marketplace-blocking assertion — unless scrolling is off while the
@@ -50,19 +53,14 @@
 					"clips_children": true,
 					"controls": [
 						{
-							"size_anchor": {
-								"type": "panel",
-								"size": [ 1, 1 ],
+							// Directly under the viewport, as vanilla's scrolling_panel
+							// mounts its content. Through an intermediate 1×1 panel the
+							// images inside the content — a card's background — stayed
+							// culled until the first scroll moved them; labels drew.
+							"scrolling_content@$scrolling_content": {
+								"layer": 1,
 								"anchor_from": "top_left",
-								"anchor_to": "top_left",
-								"controls": [
-									{
-										"scrolling_content@$scrolling_content": {
-											"anchor_from": "top_left",
-											"anchor_to": "top_left"
-										}
-									}
-								]
+								"anchor_to": "top_left"
 							}
 						}
 					]

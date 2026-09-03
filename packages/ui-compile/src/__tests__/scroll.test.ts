@@ -47,8 +47,9 @@ describe('a scroll region', () => {
     expect(panel.size).toEqual([320, 60]);
     expect(panel.$scrolling_content).toBe('core_ui_list.scroll_1_content');
 
-    // The content is as tall as its last row reaches, well past the viewport.
-    expect(content.size?.[0]).toBe(320);
+    // The content is as tall as its last row reaches, well past the viewport,
+    // and as wide as the viewport less the 5-texel scrollbar track.
+    expect(content.size?.[0]).toBe(315);
     expect(content.size?.[1]).toBeGreaterThan(60);
     expect(rows).toHaveLength(12);
 

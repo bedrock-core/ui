@@ -5,7 +5,7 @@ import {
   MODAL_DROPDOWN_SLOT_TYPE, MODAL_FORM_BUTTON_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE,
   MODAL_INPUT_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
 } from '../../../components/Form';
-import { MAX_POOLED_SCROLLS, SCROLL_SLOT_TYPE, type ScrollAxis } from '../../../components/Scroll';
+import { MAX_POOLED_SCROLLS, SCROLL_SLOT_TYPE, SCROLL_TRACK_WIDTH, type ScrollAxis } from '../../../components/Scroll';
 import type { JSX } from '../../../jsx';
 import { ellipsizeText, measureText, wrapText } from '../../../util/textMetrics';
 import { isTransparentType } from '../../componentRegistry';
@@ -517,15 +517,17 @@ function layoutScrollContent(slot: JSX.Element, axis: ScrollAxis, viewportWidth:
 
     extent = syntheticRoot.children.reduce((max, c) => Math.max(max, c.layout.x + c.layout.width), 0);
   } else {
-    // Vertical: lay content in a column whose width is the viewport width, so
-    // percentages / stretch / text-wrap resolve against the real column. The flex
-    // engine floors the root height to refHeight — pass the viewport height so the
-    // extent floors to the viewport (not the canonical 210), then grows with content.
+    // Vertical: lay content in a column whose width is the viewport width less
+    // the scrollbar track, so percentages / stretch / text-wrap resolve against
+    // the column the region actually shows. The flex engine floors the root
+    // height to refHeight — pass the viewport height so the extent floors to
+    // the viewport (not the canonical 210), then grows with content.
     const childNodes = roots.map(r => buildNode(r));
+    const columnWidth = Math.max(0, viewportWidth - SCROLL_TRACK_WIDTH);
 
-    syntheticRoot = createNode({ flexDirection: 'column', width: viewportWidth }, childNodes);
+    syntheticRoot = createNode({ flexDirection: 'column', width: columnWidth }, childNodes);
 
-    flexComputeLayout(syntheticRoot, viewportWidth, viewportHeight);
+    flexComputeLayout(syntheticRoot, columnWidth, viewportHeight);
 
     extent = syntheticRoot.layout.height;
   }

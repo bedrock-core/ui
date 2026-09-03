@@ -29,6 +29,14 @@ export const MAX_SCROLLS = 4;
 export const MAX_POOLED_SCROLLS = 2;
 
 /**
+ * Texels the scrollbar track takes at the right edge of a vertical scroll
+ * region (`core_ui_shapes.scroll`: the viewport is `100% - 5px`). Content is
+ * laid out that much narrower, so its right edge meets the track instead of
+ * running under it and being clipped.
+ */
+export const SCROLL_TRACK_WIDTH = 5;
+
+/**
  * `<Scroll>` — one independent scroll region. Each `<Scroll>` in a render becomes its own
  * scroll viewport (index 0 is the implicit root) that scrolls vertically.
  *
