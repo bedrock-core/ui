@@ -2,6 +2,7 @@ import { uiManager } from '@minecraft/server-ui';
 import type { JSX } from '../../jsx';
 import { stopInputLock } from '../../util';
 import { getFibersForOwner, type Owner } from '../fabric';
+import type { CompiledSnapshot } from './screens';
 import { cleanupComponentTree } from './tree';
 
 /** Persisted hook values waiting for their fibers: by fiber id, then by slot index. */
@@ -11,8 +12,22 @@ export type StateSeed = ReadonlyMap<string, ReadonlyMap<number, unknown>>;
  * Lightweight per-owner render session state for background logic passes.
  * We keep the root element and a runner that performs a build-only pass.
  */
+/**
+ * How the session's root is shown: the compiled title its layout is picked
+ * by (absent for an interpreted screen), what the build baked, and whether
+ * presents are diffed. Kept BESIDE the root, because a handoff swaps the root
+ * under a live present chain, and the chain must show the new root the way
+ * the new root was compiled — not the way the chain's first root was.
+ */
+export interface SessionCompiled {
+  title?: string;
+  snapshot?: CompiledSnapshot;
+  debug: boolean;
+}
+
 interface SessionState {
   root?: JSX.Element;
+  compiled?: SessionCompiled;
   runBuild?: () => void;
   pending: boolean;
   suppress: boolean;
@@ -50,14 +65,24 @@ function getOrCreate(owner: Owner): SessionState {
   return session;
 }
 
-export function setSessionRoot(owner: Owner, root: JSX.Element): void {
+/**
+ * @param compiled - How the form chain shows this root. A chest session never
+ *   presents through the chain (its render lands in slots), so it leaves it.
+ */
+export function setSessionRoot(owner: Owner, root: JSX.Element, compiled: SessionCompiled = { debug: false }): void {
   const session = getOrCreate(owner);
 
   session.root = root;
+  session.compiled = compiled;
 }
 
 export function getSessionRoot(owner: Owner): JSX.Element | undefined {
   return sessions.get(owner.id)?.root;
+}
+
+/** How the current root is shown; see {@link SessionCompiled}. */
+export function getSessionCompiled(owner: Owner): SessionCompiled {
+  return sessions.get(owner.id)?.compiled ?? { debug: false };
 }
 
 export function setBuildRunner(owner: Owner, runBuild: () => void): void {

@@ -11,11 +11,13 @@ import {
   beginPresentChain,
   consumeSwap,
   endPresentChain,
+  getSessionCompiled,
   getSessionRoot,
   hasLiveChain,
   isChainCurrent,
   isSwapPending,
   requestSwap,
+  type SessionCompiled,
   setBuildRunner,
   setSessionRoot,
   triggerCleanup,
@@ -50,7 +52,10 @@ export function render(
   // before it is wrapped for translations, because the component is the only
   // thing both halves of the build hold in common.
   const compiledTitle = compiledTitleOf(root);
-  const compiled = { snapshot: compiledSnapshotOf(root), debug: options.debug === true };
+  // Stored with the root: a later render() swaps a different root into this
+  // chain, and each pass shows whatever root it finds the way THAT root was
+  // compiled.
+  const shown: SessionCompiled = { title: compiledTitle, snapshot: compiledSnapshotOf(root), debug: options.debug === true };
 
   // Convert function component to JSX element if needed, then wrap it so
   // TranslationContext is populated at every root — the default i18n
@@ -74,7 +79,7 @@ export function render(
     // A hook cleanup may have called exit() outside a transaction, tearing the
     // whole session down mid-swap. Fall through to a fresh start in that case.
     if (hasLiveChain(owner)) {
-      setSessionRoot(owner, rootElement);
+      setSessionRoot(owner, rootElement, shown);
       setBuildRunner(owner, () => {
         buildTree(rootElement, owner, compiledTitle !== undefined);
       });
@@ -98,7 +103,7 @@ export function render(
   cleanupComponentTree(owner);
 
   // Register this player's session root and a background build runner
-  setSessionRoot(owner, rootElement);
+  setSessionRoot(owner, rootElement, shown);
   setBuildRunner(owner, () => {
     buildTree(rootElement, owner, compiledTitle !== undefined);
   });
@@ -126,10 +131,11 @@ export function render(
       cleanupComponentTree(owner);
     }
 
+    const current = getSessionCompiled(owner);
     let tree: JSX.Element;
 
     try {
-      tree = buildTree(rootNow, owner, compiledTitle !== undefined);
+      tree = buildTree(rootNow, owner, current.title !== undefined);
     } catch (err: unknown) {
       console.error(`[ui-runtime] buildTree error: ${String(err)}`);
 
@@ -141,7 +147,7 @@ export function render(
       return;
     }
 
-    present(player, tree, compiledTitle, compiled)
+    present(player, tree, current.title, { snapshot: current.snapshot, debug: current.debug })
       .then((result) => {
         // Superseded or torn down while the form was up — this outcome is void.
         if (!isChainCurrent(owner, token)) {
