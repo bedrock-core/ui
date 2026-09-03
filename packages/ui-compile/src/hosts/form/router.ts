@@ -105,9 +105,14 @@ export const formRouter = (screens: readonly RoutedFormScreen[], addon: string):
     router[`${addon}_gate_${screen.name}`] = gate(formTitleFor(screen.namespace), [
       ...screen.hasBackdrop ? [{ [`backdrop@${screen.namespace}.${BACKDROP_DEFINITION}`]: {} }] : [],
       {
+        // Centred, because the box this gate fills is the form's content area,
+        // which vanilla sizes 0×0 at the middle of the screen and the
+        // interpreter grows through the title; a compiled title carries no
+        // size. Anchored top-left, the canvas hung off the screen's centre —
+        // drawn down and to the right of it, cut where the screen ended.
         [`screen@${screen.namespace}.${SCREEN_DEFINITION}`]: {
-          anchor_from: 'top_left',
-          anchor_to: 'top_left',
+          anchor_from: 'center',
+          anchor_to: 'center',
         },
       },
     ]);

@@ -13,10 +13,6 @@
 		],
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
-		"offset": [
-			"50% - 164px",
-			"0%"
-		],
 		"$protocol_header": "bcuiv0008",
 		"bindings": [
 			{
@@ -35,7 +31,16 @@
 			   is already in an addon's pack and is only named. Each gates itself on
 			   the title, so exactly one of them draws — see core-ui/form/mount.json. */
 			{
-				"interpreted@core_ui_form.interpreted": {}
+				/* The interpreter draws a 328px canvas from this box's left edge, so
+				   the offset that centres it is ITS offset — on the container it also
+				   shifted the compiled mount, which centres its own canvas in the full
+				   content box and came out pushed right by (50% - 164px). */
+				"interpreted@core_ui_form.interpreted": {
+					"offset": [
+						"50% - 164px",
+						"0%"
+					]
+				}
 			},
 			{
 				"compiled@core_ui_form.claimed": {}
