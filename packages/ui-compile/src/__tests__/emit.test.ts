@@ -510,9 +510,11 @@ describe('emit / panels', () => {
     }]));
     const [, card] = find(doc, name => name === 'card');
 
-    expect(entries(card).map(([name]) => name)).toEqual(['bg', 'icon']);
+    // The children sit one layer above the background, in a panel of their own.
+    expect(entries(card).map(([name]) => name)).toEqual(['bg', 'content']);
     expect(child(card, 'bg')).toEqual({ type: 'image', texture: 'textures/ui/card', size: ['100%', '100%'], keep_ratio: false });
-    expect(child(card, 'icon').offset).toEqual([4, 4]);
+    expect(child(card, 'content').layer).toBe(1);
+    expect(child(child(card, 'content'), 'icon').offset).toEqual([4, 4]);
   });
 
   it('draws nothing under a panel without a background', () => {

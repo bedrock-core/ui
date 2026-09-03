@@ -32,7 +32,7 @@
  */
 
 import type { IrDocument, PanelNode } from './ir';
-import type { Document } from './jsonui';
+import type { ControlEntry, Document } from './jsonui';
 import { collectShapes, emitNode, sharedDefs } from './nodes';
 import { backgroundOf, FULL, sizeOf, topLeft } from './nodes/shared';
 import type { Emit, HostEmit } from './nodes/types';
@@ -74,14 +74,20 @@ export const emit = (doc: IrDocument, host: HostEmit): Document => {
 
   host.assemble?.(root, document, context);
 
+  const background = backgroundOf(root);
+  const children = root.children.map(child => context.emitNode(child));
+  // Above the background by a layer, as a panel keeps its children — see the
+  // panel kind for why an equal layer is not enough.
+  const content: ControlEntry = { content: { type: 'panel', size: FULL, ...topLeft, layer: 1, controls: children } };
+
   document[SCREEN_DEFINITION] = {
     type: 'panel',
     size: sizeOf(root.rect),
     ...topLeft,
     controls: [
       ...host.chrome?.() ?? [],
-      ...backgroundOf(root),
-      ...root.children.map(child => context.emitNode(child)),
+      ...background,
+      ...background.length === 0 ? children : [content],
       ...host.overlay?.(root, context) ?? [],
     ],
   };

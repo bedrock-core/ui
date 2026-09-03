@@ -1,5 +1,5 @@
 import { PANEL_TYPE } from '@bedrock-core/ui-runtime/compile';
-import { backgroundOf, layerOf, offsetOf, sizeOf, str, topLeft, visibilityOf } from './shared';
+import { backgroundOf, FULL, layerOf, offsetOf, sizeOf, str, topLeft, visibilityOf } from './shared';
 import type { IrNode, NodeBase, NodeDefinition } from './types';
 
 /** A container. Draws its background, if it has one, behind its children. */
@@ -37,6 +37,9 @@ export const panelDefinition: NodeDefinition<PanelNode> = {
   children: node => node.children,
 
   emit(node, ctx) {
+    const children = node.children.map(child => ctx.emitNode(child));
+    const background = backgroundOf(node);
+
     return {
       [node.name]: {
         type: 'panel',
@@ -45,10 +48,17 @@ export const panelDefinition: NodeDefinition<PanelNode> = {
         ...visibilityOf(node),
         offset: offsetOf(node.rect),
         ...topLeft,
-        controls: [
-          ...backgroundOf(node),
-          ...node.children.map(child => ctx.emitNode(child)),
-        ],
+        // Children one layer above the background, never beside it: at an
+        // equal layer the client resolves the order per draw, and inside a
+        // clipped scroll region a card's text came and went with the scroll
+        // position. A layer is relative to its parent, so nesting keeps
+        // climbing — every descendant stays above every ancestor's background.
+        controls: background.length === 0
+          ? children
+          : [
+              ...background,
+              { content: { type: 'panel', size: FULL, ...topLeft, layer: 1, controls: children } },
+            ],
       },
     };
   },
