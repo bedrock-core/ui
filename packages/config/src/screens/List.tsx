@@ -166,6 +166,7 @@ function AddonDetails({ core, addon, player, navigation }: {
       addonId: addon.id,
       scope: 'player',
       entityId: player.id,
+      player,
       breadcrumb: `${display(addon.packName)} > ${player.name}`,
     });
   };

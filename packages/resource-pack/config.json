@@ -49,7 +49,7 @@
 							"namespace": "core"
 						}
 					},
-					{ "filter": "ui-compile", "settings": { "namespace": "core" } },
+					{ "filter": "ui-compile", "settings": { "namespace": "core", "screens": ["@bedrock-core/config/compiled"] } },
 					{
 						"filter": "bundler",
 						"settings": {
@@ -78,7 +78,7 @@
 							"namespace": "core"
 						}
 					},
-					{ "filter": "ui-compile", "settings": { "namespace": "core", "stamp": true } },
+					{ "filter": "ui-compile", "settings": { "namespace": "core", "stamp": true, "screens": ["@bedrock-core/config/compiled"] } },
 					{
 						"filter": "bundler",
 						"settings": {

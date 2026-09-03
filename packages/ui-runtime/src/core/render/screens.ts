@@ -90,11 +90,33 @@ export function registerCompiledScreen(screen: FunctionComponent, title: string,
  * Takes `unknown` because `render()` accepts a component or an element, and
  * only one of those can have been compiled.
  */
+/**
+ * The registered component behind what `render()` was handed: the component
+ * itself, or an element rendering it — a compiled screen takes props that way
+ * (a generic screen filled per present), since its shape does not depend on
+ * them.
+ */
+const componentOf = (screen: unknown): FunctionComponent | undefined => {
+  if (isHandler<FunctionComponent>(screen)) {
+    return screen;
+  }
+
+  if (typeof screen === 'object' && screen !== null && 'type' in screen && isHandler<FunctionComponent>(screen.type)) {
+    return screen.type;
+  }
+
+  return undefined;
+};
+
 export function compiledTitleOf(screen: unknown): string | undefined {
-  return isHandler<FunctionComponent>(screen) ? compiled.get(screen)?.title : undefined;
+  const component = componentOf(screen);
+
+  return component === undefined ? undefined : compiled.get(component)?.title;
 }
 
 /** What the build baked for a compiled screen, when its build recorded it. */
 export function compiledSnapshotOf(screen: unknown): CompiledSnapshot | undefined {
-  return isHandler<FunctionComponent>(screen) ? compiled.get(screen)?.snapshot : undefined;
+  const component = componentOf(screen);
+
+  return component === undefined ? undefined : compiled.get(component)?.snapshot;
 }

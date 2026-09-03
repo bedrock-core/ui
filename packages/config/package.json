@@ -31,6 +31,10 @@
 		"./i18n/*": {
 			"types": "./src/i18n/*.ts",
 			"import": "./src/i18n/*.ts"
+		},
+		"./compiled": {
+			"types": "./src/compiled/index.ts",
+			"import": "./src/compiled/index.ts"
 		}
 	},
 	"bedrockCore": {

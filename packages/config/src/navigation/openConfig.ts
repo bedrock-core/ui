@@ -13,6 +13,9 @@
  * a screen full of defaults that are not what is actually set.
  */
 import type { NavigationHelpers } from '@bedrock-core/navigation';
+import type { Player } from '@minecraft/server';
+import { compiledTitleOf, render } from '@bedrock-core/ui-runtime';
+import { ConfigScope, configScopeElement, scopeModel } from '../compiled';
 import type { RemoteConfigAccessor } from '@bedrock-core/server-runtime';
 import type { ConfigScope } from '../types';
 import { getScopeValues } from '../config/values';
@@ -38,6 +41,9 @@ export interface ConfigDestination {
 
   /** Which section of the scope the form covers. `''` — the whole scope — unless set. */
   path?: string;
+
+  /** The viewing player, when the compiled editor may be shown to them instead of the serialized one. */
+  player?: Player;
 }
 
 export async function openConfig(
@@ -45,10 +51,23 @@ export async function openConfig(
   accessor: RemoteConfigAccessor,
   destination: ConfigDestination,
 ): Promise<void> {
-  const { addonId, scope, entityId, breadcrumb, path = '' } = destination;
+  const { addonId, scope, entityId, breadcrumb, path = '', player } = destination;
 
   try {
     const values = await getScopeValues(accessor, scope, entityId);
+
+    // The compiled editor when this build carries it and the section fits its
+    // rows: rendered as a screen of its own, which swaps into the running app
+    // and closes on Save; the serialized editor otherwise.
+    if (player !== undefined && compiledTitleOf(ConfigScope) !== undefined) {
+      const model = scopeModel(accessor, { scope, entityId, path, title: breadcrumb }, values);
+
+      if (model !== undefined) {
+        render(configScopeElement(model), player);
+
+        return;
+      }
+    }
 
     navigation.navigate('Config', { addonId, scope, entityId, breadcrumb, path, values });
   } catch (error: unknown) {
@@ -71,7 +90,7 @@ export async function openSection(
   accessor: RemoteConfigAccessor,
   destination: SectionDestination,
 ): Promise<void> {
-  const { addonId, scope, entityId, section, breadcrumb } = destination;
+  const { addonId, scope, entityId, section, breadcrumb, player } = destination;
 
   if (isPureSection(section)) {
     navigation.navigate('ConfigSection', { addonId, scope, entityId, path: section.path, breadcrumb });
@@ -79,7 +98,7 @@ export async function openSection(
     return;
   }
 
-  await openConfig(navigation, accessor, { addonId, scope, entityId, breadcrumb, path: section.path });
+  await openConfig(navigation, accessor, { addonId, scope, entityId, breadcrumb, path: section.path, player });
 }
 
 /** Which section of which scope to open, and what to title it. */
@@ -89,6 +108,7 @@ export interface SectionDestination {
   entityId?: string;
   section: SectionNode;
   breadcrumb: string;
+  player?: Player;
 }
 
 /**
