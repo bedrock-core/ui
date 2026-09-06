@@ -33,13 +33,12 @@ const registry = new Map<string, ComponentDescriptor>();
  * accidental clashes between addons surface immediately rather than silently
  * overriding each other.
  *
- * @experimental Not covered by the 1.0 API promise. A registration is a pair of
- * halves — a writer that packs props into the byte payload, and JSON UI in your
- * own pack that decodes them at fixed offsets — so it is bound to the wire
- * format rather than to the component API. That format is being replaced by
- * compiled screens, which describe a component by the values it carries rather
- * than by a byte layout, and this entry point changes with it. Everything else
- * in this package is stable at 1.0; a custom native component is not.
+ * @deprecated A registration is a pair of halves — a writer that packs props
+ * into the byte payload, and JSON UI in your own pack that decodes them at
+ * fixed offsets — so it is bound to the serialized wire format, which is being
+ * removed with the serialized render path. Compiled screens describe a
+ * component by the values it carries rather than by a byte layout, and a
+ * custom native component will be declared against that instead.
  *
  * @param type - The component `type` string (must match the JSON UI control's `#type` gate).
  * @param descriptor - How to serialize the component (a `writer`, or `transparent: true`).

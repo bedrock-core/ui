@@ -76,6 +76,15 @@ export function resolveLanding(manifest: GuideManifest, audience: GuideAudience 
   return { landing: declaredHome ?? (hasSidebar ? undefined : pageIds[0]), hasSidebar };
 }
 
+/**
+ * A guide as one serialized screen owning its open-page state.
+ *
+ * @deprecated Guides compile: the guides filter writes a screen module per
+ * page, and a guide is opened with `openGuide` or, from any realm, presented
+ * from its `guideReference`. This renders through the serialized path, which
+ * is being removed; it stays for a guide gated per audience until the gate
+ * rides a carried visible.
+ */
 export function createGuide(manifest: GuideManifest, options: GuideOptions = {}): (props: GuideProps) => JSX.Element {
   const title = options.title ?? 'Guide';
   const audience = options.audience ?? 'op';

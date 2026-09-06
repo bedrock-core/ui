@@ -9,10 +9,9 @@ const __dirname = dirname(__filename);
 export default defineConfig([
   ...baseConfig,
   {
-    // Emitted by scripts/generate-framework-keys.mjs, quoted by JSON.stringify. Reformatting it
-    // to satisfy style rules would mean hand-rolling escapes for prose full of apostrophes; tsc
-    // still typechecks it as part of the build.
-    ignores: ['src/frameworkGuideKeys.ts'],
+    // Emitted by the render pack's references filter, quoted by JSON.stringify; tsc still
+    // typechecks it as part of the build.
+    ignores: ['src/generated/**'],
   },
   {
     files: ['**/*.ts', '**/*.tsx'],

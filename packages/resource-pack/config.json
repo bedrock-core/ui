@@ -22,6 +22,10 @@
 				"runWith": "nodejs",
 				"script": "../../../regolith-filters/i18n/main.ts"
 			},
+			"references": {
+				"runWith": "nodejs",
+				"script": "./filters/references.mts"
+			},
 			"ui-compile": {
 				"runWith": "nodejs",
 				"script": "../../../regolith-filters/ui-compile/main.ts"
@@ -50,6 +54,7 @@
 						}
 					},
 					{ "filter": "ui-compile", "settings": { "namespace": "core", "screens": ["@bedrock-core/config/compiled"] } },
+					{ "filter": "references" },
 					{
 						"filter": "bundler",
 						"settings": {
@@ -79,6 +84,7 @@
 						}
 					},
 					{ "filter": "ui-compile", "settings": { "namespace": "core", "stamp": true, "screens": ["@bedrock-core/config/compiled"] } },
+					{ "filter": "references" },
 					{
 						"filter": "bundler",
 						"settings": {

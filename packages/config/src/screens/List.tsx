@@ -1,6 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Divider, Header, MenuRow, Button as OreButton, theme } from '@bedrock-core/ore-styled';
-import { hasVisiblePages, isGuideReference, presentGuideReference } from '@bedrock-core/guides';
+import { hasVisiblePages, presentGuideReference } from '@bedrock-core/guides';
 import type { RegisteredAddon, Runtime } from '@bedrock-core/server-runtime';
 import type { Player } from '@minecraft/server';
 import { Image, Panel, Scroll, Text, useExit, useState, type JSX } from '@bedrock-core/ui-runtime';
@@ -9,7 +9,7 @@ import { useCore, usePlayer } from '../context';
 import { i18n, useTranslation } from '../i18n';
 import { guideAudienceFor, isOperator } from '../permissions';
 import { openScopeRoot } from '../navigation/openConfig';
-import { FRAMEWORK_ADDON_ID, manifestFor } from '../frameworkGuide';
+import { FRAMEWORK_ADDON_ID, guideReferenceFor, manifestFor } from '../frameworkGuide';
 import type { AppScreen } from '../navigation/routes';
 
 const { spacing } = theme.tokens;
@@ -132,16 +132,16 @@ function AddonDetails({ core, addon, player, navigation }: {
   // here; a manifest is rendered by the Guide screen. Greyed out when the addon published
   // neither — and equally when everything in its manifest is gated above this player, since
   // there would be nothing behind the button.
-  const reference = core.guides.referenceOf(addon.id);
+  const reference = guideReferenceFor(core, addon.id);
   const guide = manifestFor(core, addon.id);
-  const hasGuide = isGuideReference(reference) || (guide !== undefined && hasVisiblePages(guide, guideAudienceFor(player)));
+  const hasGuide = reference !== undefined || (guide !== undefined && hasVisiblePages(guide, guideAudienceFor(player)));
 
   // Returned from the presser: the list waits with the input lock held while the
   // guide's native forms run, and presents itself again when the last one closes.
   function openGuide(): void | Promise<void> {
-    console.info(`[ui] guide open ${addon.id} via ${isGuideReference(reference) ? 'reference' : 'manifest'}`);
+    console.info(`[ui] guide open ${addon.id} via ${reference !== undefined ? 'reference' : 'manifest'}`);
 
-    if (isGuideReference(reference)) {
+    if (reference !== undefined) {
       return presentGuideReference(reference, player, { back: true });
     }
 

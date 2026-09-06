@@ -1,5 +1,5 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Card, Divider, Header, Button as OreButton, theme } from '@bedrock-core/ore-styled';
+import { Card, Divider, Header, theme } from '@bedrock-core/ore-styled';
 import {
   Button, EmbedSlots, Image, List, Panel, Scroll, Text, useExit,
   type FunctionComponent, type JSX, type PressEvent,
@@ -16,16 +16,14 @@ import { ADDONS_MAX, FRAME, HEADER_HEIGHT, MAIN, PADDING, PAGE_SLOTS, SIDEBAR_WI
  * area is NOT the host's: what it shows for one addon is that addon's own
  * page, baked in that addon's pack against {@link MAIN} and drawn into this
  * frame while the first entry carries the addon's marker (`<EmbedSlots>`).
- * An addon that published no page gets the generic panel; the framework's
- * own row, which no pack draws, gets its panel here.
+ * An addon that published no page gets the generic panel. The framework's
+ * own page is the render pack's, shown the same way from its reference.
  */
 
 const { spacing } = theme.tokens;
 const row = theme.components.menuRow;
 
 const ICON_MISSING = 'pack_icon';
-const ICON_GUIDE = 'textures/ui/config/guide';
-const ICON_FRAMEWORK = 'textures/ui/bedrock_core/icon';
 
 /** Characters a row's live name and version reserve. */
 const NAME_MAX = 16;
@@ -38,7 +36,7 @@ const ROW_GAP = spacing.xs;
 
 // A compiled screen serves every player, so its baked strings are the
 // package's own default locale; a key is what the client localizes.
-const { key, t } = i18n;
+const { key } = i18n;
 
 export interface AddonListRow {
   id: string;
@@ -51,8 +49,7 @@ export interface AddonListRow {
 /** What the main area shows for the selected row. */
 export type AddonListMain
   = | { kind: 'page'; slots: readonly string[] }
-    | { kind: 'fallback' }
-    | { kind: 'framework'; hasGuide: boolean; onGuide?: (event: PressEvent) => unknown };
+    | { kind: 'fallback' };
 
 export interface AddonListModel {
   rows: readonly AddonListRow[];
@@ -75,8 +72,6 @@ export const AddonList: FunctionComponent<AddonListProps> = ({ model = EMPTY_MOD
   const current = rows[selected];
   const slots = main.kind === 'page' ? main.slots : [];
   const showsFallback = main.kind === 'fallback';
-  const showsFramework = main.kind === 'framework';
-  const frameworkGuide = main.kind === 'framework' && main.hasGuide;
   const rowWidth = SIDEBAR_WIDTH - PADDING - 2 * SIDEBAR_PADDING - 5;
 
   return (
@@ -124,32 +119,6 @@ export const AddonList: FunctionComponent<AddonListProps> = ({ model = EMPTY_MOD
         <Panel position={'absolute'} left={MAIN.x} top={MAIN.y} width={MAIN.width} height={MAIN.height} flexDirection={'column'} gap={spacing.md} padding={spacing.md}>
           <Text font={'mojangles'} scale={2} shadow={true} maxLength={NAME_MAX}>{current?.name ?? ''}</Text>
           <Text font={'mojangles'} scale={1} maxLength={VERSION_MAX}>{`§7${current?.version ?? ''}`}</Text>
-        </Panel>
-      )}
-      {showsFramework && (
-        <Panel position={'absolute'} left={MAIN.x} top={MAIN.y} width={MAIN.width} height={MAIN.height} flexDirection={'column'} gap={spacing.md} padding={spacing.md}>
-          <Panel justifyContent={'center'} alignItems={'center'}>
-            <Image width={40} height={40} texture={ICON_FRAMEWORK} />
-          </Panel>
-          <Panel flexDirection={'column'}>
-            <Text font={'mojangles'} scale={2} shadow={true}>{key($ => $.framework.name)}</Text>
-            <Text font={'mojangles'} scale={1} maxLength={VERSION_MAX}>{`§7${current?.version ?? ''}`}</Text>
-          </Panel>
-          <Panel flexDirection={'row'} gap={spacing.sm}>
-            <OreButton variant={'secondary'} paddingTop={2} paddingLeft={4} enabled={frameworkGuide} onPress={main.kind === 'framework' ? main.onGuide : undefined}>
-              <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.sm}>
-                <Image width={12} height={12} texture={ICON_GUIDE} />
-                <Text font={'mojangles'} scale={1}>{`§0${t($ => $.addons.guide)}`}</Text>
-              </Panel>
-            </OreButton>
-          </Panel>
-          <Card variant={'dark'}>
-            <Text font={'mojangles'} scale={1} maxLines={4} wordBreak={'break-word'}>{key($ => $.framework.description)}</Text>
-          </Card>
-          <Panel flexDirection={'row'} alignItems={'flex-start'} gap={spacing.xs}>
-            <Text shadow={true} flexShrink={0}>{`§7${t($ => $.addons.authors)}`}</Text>
-            <Text font={'mojangles'} scale={1}>{key($ => $.framework.creator)}</Text>
-          </Panel>
         </Panel>
       )}
     </Card>

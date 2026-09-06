@@ -194,6 +194,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bedrock-core/ui-resource-pack@workspace:packages/resource-pack"
   dependencies:
+    "@bedrock-core/config": "workspace:*"
     "@bedrock-core/guides": "workspace:*"
     "@bedrock-core/i18n": "workspace:*"
     "@bedrock-core/navigation": "workspace:*"

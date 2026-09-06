@@ -35,6 +35,15 @@ export interface RenderOptions {
   debug?: boolean;
 }
 
+/**
+ * Shows a screen to one player and keeps it shown across its state changes.
+ *
+ * A screen the build compiled is drawn from the pack by its title; one it did
+ * not is serialized into the form on every present. That serialized path is
+ * **deprecated**: it stays until every screen the library itself serves is
+ * compiled, and is then removed. Compile every form screen — a `*.screen.tsx`
+ * the ui-compile filter bakes — rather than relying on it.
+ */
 export function render(
   root: JSX.Element | FunctionComponent,
   player: Player,

@@ -21,7 +21,7 @@
  */
 import { world } from '@minecraft/server';
 import type { Player } from '@minecraft/server';
-import { isGuideReference, presentGuideReference } from '@bedrock-core/guides';
+import { presentGuideReference } from '@bedrock-core/guides';
 import { render } from '@bedrock-core/ui-runtime';
 import type { Runtime } from '@bedrock-core/server-runtime';
 import { registerAddonCommands } from './commands/addon';
@@ -37,6 +37,7 @@ import {
   isPureSection,
 } from './config/schema';
 import { App } from './App';
+import { guideReferenceFor } from './frameworkGuide';
 import { canPresentAddonList, presentAddonList } from './compiled/host';
 
 /** What a receiving realm forwards: who typed it, what they asked for, and untouched arguments. */
@@ -154,9 +155,9 @@ export function openUi(core: Runtime, player: Player, target: OpenTarget): Promi
   // nothing of the owning addon's script involved. Returned like the render below: from a
   // presser the handoff waits inside the transaction; on its own it just runs.
   if (clamped.kind === 'guide' && clamped.addonId !== undefined) {
-    const reference = core.guides.referenceOf(clamped.addonId);
+    const reference = guideReferenceFor(core, clamped.addonId);
 
-    if (isGuideReference(reference)) {
+    if (reference !== undefined) {
       return presentGuideReference(reference, player, { back: true });
     }
   }

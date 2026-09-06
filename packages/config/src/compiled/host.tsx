@@ -1,9 +1,10 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { hasVisiblePages, isGuideReference, presentGuideReference } from '@bedrock-core/guides';
+import { hasVisiblePages, presentGuideReference } from '@bedrock-core/guides';
 import type { RegisteredAddon, Runtime } from '@bedrock-core/server-runtime';
 import { compiledTitleOf, embedMarker, FLAG_OFF, FLAG_ON, render } from '@bedrock-core/ui-runtime';
 import type { Player } from '@minecraft/server';
-import { FRAMEWORK_ADDON_ID, manifestFor } from '../frameworkGuide';
+import { FRAMEWORK_ADDON_ID, guideReferenceFor, manifestFor } from '../frameworkGuide';
+import { FRAMEWORK_NAMESPACE, FRAMEWORK_PAGE } from '../generated/framework.generated';
 import { i18n, translationsFor } from '../i18n';
 import { guideAudienceFor } from '../permissions';
 import { PAGE_SLOTS } from './frame';
@@ -54,7 +55,7 @@ const rowsFor = (core: Runtime, player: Player): AddonListRow[] => {
  * page published it — except a press the host can already answer, whose
  * enabled state is the host's knowledge, not the page's.
  */
-const pageSlots = (addonId: string, reference: AddonPageReference, hasConfig: boolean, hasGuide: boolean): string[] => {
+const pageSlots = (namespace: string, reference: AddonPageReference, hasConfig: boolean, hasGuide: boolean): string[] => {
   const values = reference.values.map((value, index) => {
     const target = reference.targets[index] ?? null;
 
@@ -65,7 +66,7 @@ const pageSlots = (addonId: string, reference: AddonPageReference, hasConfig: bo
     return value;
   });
 
-  return [embedMarker(addonId), ...values].slice(0, PAGE_SLOTS);
+  return [embedMarker(namespace), ...values].slice(0, PAGE_SLOTS);
 };
 
 export function presentAddonList(core: Runtime, player: Player, openers: AddonListOpeners, selectedId?: string): void {
@@ -81,19 +82,18 @@ export function presentAddonList(core: Runtime, player: Player, openers: AddonLi
   let reference: AddonPageReference | undefined;
 
   if (current !== undefined && current.id === FRAMEWORK_ADDON_ID) {
-    const manifest = manifestFor(core, FRAMEWORK_ADDON_ID);
-    const hasGuide = manifest !== undefined && hasVisiblePages(manifest, audience);
-
-    main = { kind: 'framework', hasGuide, onGuide: (): unknown => openers.guide(FRAMEWORK_ADDON_ID) };
+    // The framework's page and guide are the render pack's own; it has no config.
+    reference = FRAMEWORK_PAGE;
+    main = { kind: 'page', slots: pageSlots(FRAMEWORK_NAMESPACE, FRAMEWORK_PAGE, false, true) };
   } else if (current !== undefined) {
     const published = core.pages.of(current.id);
-    const guideReference = core.guides.referenceOf(current.id);
     const manifest = manifestFor(core, current.id);
     const hasConfig = core.config.of(current.id, { actorId: player.id }) !== undefined;
-    const hasGuide = isGuideReference(guideReference) || (manifest !== undefined && hasVisiblePages(manifest, audience));
+    const hasGuide = guideReferenceFor(core, current.id) !== undefined || (manifest !== undefined && hasVisiblePages(manifest, audience));
 
     if (isAddonPageReference(published)) {
       reference = published;
+      // An addon's page is compiled under its id, which is its pack's namespace.
       main = { kind: 'page', slots: pageSlots(current.id, published, hasConfig, hasGuide) };
     }
   }
@@ -117,12 +117,12 @@ export function presentAddonList(core: Runtime, player: Player, openers: AddonLi
         return openers.config(addonId);
       }
 
-      const guideReference = core.guides.referenceOf(addonId);
+      const guideReference = guideReferenceFor(core, addonId);
 
       // A compiled guide is presented from its reference and the list waits
       // for it; the promise returned keeps the press's transaction open, and
       // the list presents itself again when the guide's last screen closes.
-      if (isGuideReference(guideReference)) {
+      if (guideReference !== undefined) {
         return presentGuideReference(guideReference, player, { back: true });
       }
 
