@@ -60,6 +60,106 @@
 			}
 		]
 	},
+	/* Vanilla's own button per entry stays constructed under every title, and
+	   its icon image loads whatever the entry's icon path says. A compiled form
+	   carries each entry's VALUE there (the text is the payload decoy every
+	   decoder ignores), and the engine hunting the packs for a texture named
+	   "§fEconomy" seventy-five times is what a slow list is made of. So the
+	   icon is read only while the entry's text is not the decoy. */
+	"dynamic_button": {
+		"modifications": [
+			{
+				"array_name": "controls",
+				"operation": "replace",
+				"control_name": "panel_name",
+				"value": {
+					"panel_name": {
+						"type": "panel",
+						"size": [
+							34,
+							"100%c"
+						],
+						"bindings": [
+							{
+								"binding_type": "view",
+								"source_control_name": "image",
+								"resolve_sibling_scope": true,
+								"source_property_name": "(not (#texture = ''))",
+								"target_property_name": "#visible"
+							}
+						],
+						"controls": [
+							{
+								"image": {
+									"type": "image",
+									"layer": 2,
+									"size": [
+										32,
+										32
+									],
+									"offset": [
+										0,
+										0
+									],
+									"bindings": [
+										{
+											"binding_name": "#form_button_text",
+											"binding_name_override": "#entry_text",
+											"binding_type": "collection",
+											"binding_collection_name": "form_buttons"
+										},
+										{
+											"binding_name": "#form_button_texture",
+											"binding_name_override": "#icon",
+											"binding_type": "collection",
+											"binding_collection_name": "form_buttons"
+										},
+										{
+											"binding_name": "#form_button_texture_file_system",
+											"binding_name_override": "#texture_file_system",
+											"binding_type": "collection",
+											"binding_collection_name": "form_buttons"
+										},
+										{
+											"binding_type": "view",
+											"source_property_name": "(((not (#entry_text = 'bcuiv0008s:panel;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;0b:false1')) and #icon) or '')",
+											"target_property_name": "#texture"
+										},
+										{
+											"binding_type": "view",
+											"source_property_name": "(not ((#texture = '') or (#texture = 'loading')))",
+											"target_property_name": "#visible"
+										}
+									]
+								}
+							},
+							{
+								"progress@progress.progress_loading_bars": {
+									"size": [
+										30,
+										4
+									],
+									"offset": [
+										-2,
+										16
+									],
+									"bindings": [
+										{
+											"binding_type": "view",
+											"source_control_name": "image",
+											"resolve_sibling_scope": true,
+											"source_property_name": "(#texture = 'loading')",
+											"target_property_name": "#visible"
+										}
+									]
+								}
+							}
+						]
+					}
+				}
+			}
+		]
+	},
 	"main_screen_content": {
 		"$protocol_header": "bcuiv0008",
 		"size": [
