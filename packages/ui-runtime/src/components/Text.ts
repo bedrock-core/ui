@@ -253,7 +253,9 @@ export const Text: FunctionComponent<TextProps> = ({
       fontScaleFactor: labelFont.fontScaleFactor,
       labelX: offsetX ?? 0, // [1190] → label anchored X offset
       labelY: offsetY ?? 0, // [1273] → label anchored Y offset
-      ...color === undefined ? {} : { color },
+      // Under a private name: the interpreter serializes every plain prop and
+      // has no encoding for a colour, which only a compiled label draws.
+      ...color === undefined ? {} : { __color: color },
       value: { tail },
       __textMetrics: {
         font,

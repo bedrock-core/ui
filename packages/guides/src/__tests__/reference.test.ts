@@ -44,7 +44,7 @@ describe('guideReference', () => {
 
   it('follows the index rows to their pages', () => {
     expect(reference?.home?.targets).toEqual([{ page: 'intro' }, { page: 'usage' }]);
-    expect(reference?.home?.values).toEqual(['1', '1']);
+    expect(reference?.home?.values).toEqual(['t', 't']);
   });
 
   it('leaves the guide from the back button of the index a host opened', () => {

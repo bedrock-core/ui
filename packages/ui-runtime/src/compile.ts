@@ -39,7 +39,8 @@ export { bakedTexts, shapeOf } from './core/ir/probe';
 export type { CompiledSnapshot } from './core/render/screens';
 export {
   COLLECTION as FORM_COLLECTION, compiledPrefix, DETAILS_BINDING as FORM_DETAILS_BINDING,
-  ENCODING_MAX, ENCODING_MIN, keyFrom as formKeyFrom, titleFor as formTitleFor,
+  COUNT_PREFIX as FORM_COUNT_PREFIX, ENCODING_MAX, ENCODING_MIN, FLAG_OFF as FORM_FLAG_OFF,
+  FLAG_ON as FORM_FLAG_ON, keyFrom as formKeyFrom, titleFor as formTitleFor,
   VOCABULARY_MAX, VOCABULARY_MIN,
 } from './hosts/form/contract';
 export { analyze, claim, visiblesAt } from './core/ir';
@@ -58,7 +59,8 @@ export {
 export { BACKGROUND_SLOT_TYPE } from './components/Background';
 export { BUTTON_TYPE, isExitButton } from './components/Button';
 export { CONTAINER_TYPE, containerEntity, containerHandlers, containerRoot } from './components/Container';
-export { IMAGE_TYPE } from './components/Image';
+export { IMAGE_TYPE, liveTexture } from './components/Image';
+export { EMBED_SLOT_TYPE, embedMarker, embedSlotIndex, entryBaseOf, isEmbedRoot, isEmbedSlot } from './components/Embed';
 export { PANEL_TYPE } from './components/Panel';
 export { SCROLL_SLOT_TYPE, SCROLL_TRACK_WIDTH } from './components/Scroll';
 export { TAB_SLOT_TYPE, TABS_SLOT_TYPE } from './components/Tabs';

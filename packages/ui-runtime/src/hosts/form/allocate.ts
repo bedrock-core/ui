@@ -2,6 +2,8 @@ import {
   MODAL_DROPDOWN_SLOT_TYPE, MODAL_FORM_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE,
   MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
 } from '../../components/Form';
+import { entryBaseOf } from '../../components/Embed';
+import { liveTexture } from '../../components/Image';
 import { listCapacity } from '../../components/List';
 import { liveTextLength } from '../../components/Text';
 import { type Analysis, type CellRole, claim } from '../../core/ir';
@@ -40,8 +42,8 @@ export interface EntryEntry {
   readonly entry: number;
   /** What the cell is, when it takes a press. Absent for an entry that only carries a value. */
   readonly role?: CellRole;
-  /** What the entry carries, when it carries one: a live string, a visible bool, or a list count. */
-  readonly carrier?: 'text' | 'bool' | 'int';
+  /** What the entry carries, when it carries one: a live string, a visible bool, a list count, or a texture path. */
+  readonly carrier?: 'text' | 'bool' | 'int' | 'texture';
   /** Characters reserved when the entry carries live text, digits for a count. */
   readonly length?: number;
 }
@@ -68,18 +70,20 @@ export interface Placement {
  */
 export const allocate = (tree: JSX.Element, analysis?: Analysis): Placement => {
   const { cells, channels } = claim(tree, analysis);
+  // An embedded screen's entries start after the host's marker slot.
+  const base = entryBaseOf(tree);
   const entries: EntryEntry[] = [
-    ...cells.map(({ element, role }, index) => ({ element, entry: index, role })),
+    ...cells.map(({ element, role }, index) => ({ element, entry: base + index, role })),
     ...channels.map(({ element, carrier, length }, index) => ({
       element,
-      entry: cells.length + index,
+      entry: base + cells.length + index,
       carrier,
       // A bool needs no width; text and a count's digits reserve one.
       ...carrier === 'bool' ? {} : { length },
     })),
   ];
 
-  return { entries, size: entries.length };
+  return { entries, size: base + entries.length };
 };
 
 // ---------------------------------------------------------------------------
@@ -110,8 +114,8 @@ export interface ModalRow {
   readonly element: JSX.Element;
   /** Index in `custom_form`, and the `formValues` slot the answer arrives in. */
   readonly row: number;
-  /** A native control the engine draws, or a value riding a label row: a live string, a visible bool, or a list count. */
-  readonly kind: 'field' | 'text' | 'bool' | 'int';
+  /** A native control the engine draws, or a value riding a label row: a live string, a visible bool, a list count, or a texture path. */
+  readonly kind: 'field' | 'text' | 'bool' | 'int' | 'texture';
   /** Characters reserved when the row carries live text. */
   readonly length?: number;
 }
@@ -150,6 +154,8 @@ export const allocateModal = (tree: JSX.Element, visibles: ReadonlySet<JSX.Eleme
         rows.push({ element: node, row: rows.length, kind: 'field' });
       } else if (listCapacity(node) !== undefined) {
         rows.push({ element: node, row: rows.length, kind: 'int' });
+      } else if (liveTexture(node)) {
+        rows.push({ element: node, row: rows.length, kind: 'texture' });
       } else {
         const length = liveTextLength(node);
 

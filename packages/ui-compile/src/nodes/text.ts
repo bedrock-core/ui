@@ -76,7 +76,7 @@ const labelOf = (element: JSX.Element, base: Omit<LabelNode, 'kind' | 'text' | '
     localize: tail !== undefined && metrics.isKey,
     fontType: str(props.fontType, defaults.fontType),
     fontScaleFactor: num(props.fontScaleFactor, defaults.fontScaleFactor),
-    ...rgbOf(props.color),
+    ...rgbOf(props.__color),
   };
 };
 

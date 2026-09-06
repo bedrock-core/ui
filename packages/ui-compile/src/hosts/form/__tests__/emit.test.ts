@@ -100,12 +100,12 @@ describe('a form button', () => {
 
     expect(enabled?.['enabled']?.bindings).toContainEqual({
       binding_type: 'view',
-      source_property_name: "(not (#entry_value = '0'))",
+      source_property_name: "(not (#entry_value = 'f'))",
       target_property_name: '#visible',
     });
     expect(disabled?.['disabled']?.bindings).toContainEqual({
       binding_type: 'view',
-      source_property_name: "(#entry_value = '0')",
+      source_property_name: "(#entry_value = 'f')",
       target_property_name: '#visible',
     });
 
@@ -145,8 +145,9 @@ describe('a form live text', () => {
     const run = definition(document, 'text_1');
 
     expect(run).toMatchObject({ type: 'label', text: '#entry_value', localize: false });
+    // The value rides the entry's icon path: one plain collection binding, no expression.
     expect(run.bindings).toContainEqual({
-      binding_name: '#form_button_text',
+      binding_name: '#form_button_texture',
       binding_name_override: '#entry_value',
       binding_type: 'collection',
       binding_collection_name: FORM_COLLECTION,

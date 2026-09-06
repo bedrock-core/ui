@@ -16,14 +16,26 @@ export interface ImageProps extends ControlProps {
    * Defaults to the unstyled placeholder texture.
    */
   texture?: string;
+  /**
+   * Carry the texture path at runtime on a compiled screen. A compiled image
+   * is baked otherwise: the path is written into the pack and a later render
+   * showing another texture is silently wrong. Costs one entry on a form.
+   */
+  live?: boolean;
 }
 
-export const Image: FunctionComponent<ImageProps> = ({ texture, ...rest }: ImageProps): JSX.Element => ({
+/** Whether a built `<Image>` carries its texture live — how a compiling host tells it from a baked one. */
+export function liveTexture(element: JSX.Element): boolean {
+  return element.type === IMAGE_TYPE && element.props.__live === true;
+}
+
+export const Image: FunctionComponent<ImageProps> = ({ texture, live, ...rest }: ImageProps): JSX.Element => ({
   type: IMAGE_TYPE,
   props: {
     // Control block unchanged — the common font slot at [606] included — so every
     // fixed offset before [1024] stays put.
     ...withControl(rest),
+    ...live === true ? { __live: true } : {},
     // The texture is the payload's TAIL (v0008): an image cell is always terminal
     // (no children, one component field), so the path is emitted verbatim after the
     // control block — unpadded, unprefixed, uncapped. The RP decodes it as the whole

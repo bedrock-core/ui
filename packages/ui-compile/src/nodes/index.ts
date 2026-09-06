@@ -9,6 +9,7 @@
 import type { Control, ControlEntry } from '../jsonui';
 import { buttonDefinition } from './button';
 import { disclosureDefinition, disclosureHeaderDefinition } from './disclosure';
+import { embedDefinition } from './embed';
 import { exitDefinition } from './exit';
 import { fieldDefinition } from './field';
 import { gridDefinition } from './grid';
@@ -41,6 +42,7 @@ export const NODE_DEFINITIONS: readonly NodeDefinition<any>[] = [
   listDefinition,
   fieldDefinition,
   modalButtonDefinition,
+  embedDefinition,
 ];
 
 const byKind = new Map<string, NodeDefinition>(NODE_DEFINITIONS.map(definition => [definition.kind, definition]));

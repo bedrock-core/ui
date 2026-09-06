@@ -15,6 +15,33 @@
 export const COLLECTION = 'form_buttons';
 
 /**
+ * The TEXT every compiled entry is shown with.
+ *
+ * A form entry carries two strings: its text and its icon path. The
+ * interpreter's decoders are constructed on every form, compiled ones
+ * included, and slice each entry's TEXT as a byte payload; a text that is
+ * not one asserts inside them. So the text of every compiled entry is a
+ * payload they already know how to ignore — a hidden panel — and the value
+ * a compiled control wants rides the icon path (`#form_button_texture`),
+ * which nothing but the compiled control reads. Gone with the interpreter.
+ */
+export const ENTRY_TEXT = 'bcuiv0008s:panel;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;0b:false1';
+
+/**
+ * The alphabet a carried flag is written in — a visible, a press's enabled.
+ *
+ * Letters, not digits: a compiled control reads its entry through string
+ * arithmetic (the prefix is sliced off), and the engine types the result of
+ * an expression by its look, so a '0' comes out a number and never equals
+ * the '0' a gate compares it with.
+ */
+export const FLAG_ON = 't';
+export const FLAG_OFF = 'f';
+
+/** A list's count travels as `n` + decimal digits, for the same reason. */
+export const COUNT_PREFIX = 'n';
+
+/**
  * How a control is bound to the entry it draws.
  *
  * MEASURED 2026-08-27 (spike S1): a control the pack places itself owns an

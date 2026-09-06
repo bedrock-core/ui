@@ -53,8 +53,8 @@ describe('carried visible on the action form', () => {
 
     expect(inner?.collection_index).toBe(0);
     expect(inner?.property_bag?.['#visible']).toBe(true);
-    expect(JSON.stringify(inner?.bindings)).toContain('#form_button_text');
-    expect(JSON.stringify(inner?.bindings)).toContain("(not (#vis_value = '0'))");
+    expect(JSON.stringify(inner?.bindings)).toContain('#form_button_texture');
+    expect(JSON.stringify(inner?.bindings)).toContain("(not (#vis_value = 'f'))");
   });
 
   it('bakes the fingerprint and the baked strings for debug', () => {
@@ -87,9 +87,11 @@ describe('the list count on the action form', () => {
 
     // Row i shows for counts i+1..max — enumeration on proven atoms, never a
     // numeric ordering, and fail-closed when the entry does not resolve.
-    expect(json).toContain("((#row_count = '1') or (#row_count = '2') or (#row_count = '3'))");
-    expect(json).toContain("((#row_count = '2') or (#row_count = '3'))");
-    expect(json).toContain("(#row_count = '3')");
+    const count = (n: number): string => `(#row_count = 'n${String(n)}')`;
+
+    expect(json).toContain(`(${count(1)} or ${count(2)} or ${count(3)})`);
+    expect(json).toContain(`(${count(2)} or ${count(3)})`);
+    expect(json).toContain(count(3));
   });
 
   it('seeds the gates with the count the build rendered with', () => {

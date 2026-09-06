@@ -1,8 +1,8 @@
 import type { FunctionComponent } from '@bedrock-core/ui-runtime';
 import {
   allocateForm, allocateModal, analyze, bakedTexts, buildScreenOnce, type CompiledSnapshot, concreteRoots,
-  ContainerScreenError, FORM_COLLECTION, formTitleFor, hasModalRoot, probeLiveness, shapeOf, visiblesAt,
-  type EntryEntry, type ModalRow,
+  ContainerScreenError, embedMarker, FORM_COLLECTION, formTitleFor, hasModalRoot, isEmbedRoot, probeLiveness, shapeOf,
+  visiblesAt, type EntryEntry, type ModalRow,
 } from '@bedrock-core/ui-runtime/compile';
 import { checkLiveness } from '../../compile';
 import { BACKDROP_DEFINITION, emit } from '../../emit';
@@ -42,6 +42,12 @@ export interface CompiledFormScreen {
   namespace: string;
   /** What the runtime shows the form with, and what the mount gates on. */
   title: string;
+  /**
+   * Set when the screen is drawn INTO another pack's: the string the host's
+   * first entry carries while this screen is wanted. The router gates on it
+   * in place of the title, since the title is the host's.
+   */
+  marker?: string;
   /** The JSON UI document: `screen` (+ `backdrop`) and its shared definitions. */
   document: Document;
   /** Every entry the runtime has to emit, in order. The nth is `response.selection` n. */
@@ -68,7 +74,7 @@ const actionAddressing = (entries: readonly EntryEntry[]): Addressing => ({
     .filter(entry => entry.role !== undefined)
     .map(entry => [entry.element, { address: entry.entry, role: entry.role ?? 'button' }] as const)),
   channels: new Map(entries
-    .filter(entry => entry.carrier === 'text' || entry.carrier === 'int')
+    .filter(entry => entry.carrier === 'text' || entry.carrier === 'int' || entry.carrier === 'texture')
     .map(entry => [entry.element, { address: entry.entry, length: entry.length ?? 0 }])),
   visibles: new Map(entries
     .filter(entry => entry.carrier === 'bool')
@@ -86,7 +92,7 @@ const modalAddressing = (rows: readonly ModalRow[]): Addressing => ({
     .filter(row => row.kind === 'field')
     .map(row => [row.element, { address: row.row, role: 'button' as const }])),
   channels: new Map(rows
-    .filter(row => row.kind === 'text' || row.kind === 'int')
+    .filter(row => row.kind === 'text' || row.kind === 'int' || row.kind === 'texture')
     .map(row => [row.element, { address: row.row, length: row.length ?? 0 }])),
   visibles: new Map(rows
     .filter(row => row.kind === 'bool')
@@ -145,6 +151,11 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
   const tree = buildScreenOnce(Screen);
   const visibles = visiblesAt(tree, probe.liveVisibles);
   const modal = hasModalRoot(tree);
+  const embedded = isEmbedRoot(tree);
+
+  if (embedded && modal) {
+    throw new ContainerScreenError('An embedded screen is drawn into an action form; it cannot be a <Form> modal.');
+  }
 
   // The action form's needs are entries; the modal's are rows. One tree is
   // exactly one of the two, and each side of the branch is the same function
@@ -161,6 +172,7 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
     addon: spec.namespace,
     namespace,
     title: formTitleFor(namespace),
+    ...embedded ? { marker: embedMarker(spec.namespace) } : {},
     document,
     entries,
     snapshot: {

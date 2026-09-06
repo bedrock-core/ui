@@ -26,7 +26,11 @@ export {
   type SubmitEvent,
 } from './Form';
 export { Fragment, type FragmentProps } from './Fragment';
-export { Image, IMAGE_TYPE, imageWriter, type ImageProps } from './Image';
+export { Image, IMAGE_TYPE, imageWriter, liveTexture, type ImageProps } from './Image';
+export {
+  Embed, EMBED_SLOT_TYPE, embedMarker, EmbedSlots, embedSlotIndex, embedSlotValue, entryBaseOf, isEmbedRoot, isEmbedSlot,
+  type EmbedProps, type EmbedSlotsProps,
+} from './Embed';
 export { Input, type InputProps } from './Input';
 export { Hotbar, PlayerInventory } from './Inventory';
 export { List, LIST_SLOT_TYPE, listCapacity, listCount, type ListProps } from './List';

@@ -1,5 +1,6 @@
-import { ContainerScreenError, formTitleFor } from '@bedrock-core/ui-runtime/compile';
+import { ContainerScreenError, FORM_COLLECTION, FORM_DETAILS_BINDING, formTitleFor } from '@bedrock-core/ui-runtime/compile';
 import { SCREEN_DEFINITION, BACKDROP_DEFINITION } from '../../emit';
+import { entryValueBinding } from './emit';
 import type { Control, ControlEntry, Document } from '../../jsonui';
 
 /**
@@ -38,6 +39,8 @@ export interface RoutedFormScreen {
   /** The JSON UI namespace the screen was emitted into: `<addon>_<name>`. */
   readonly namespace: string;
   readonly hasBackdrop: boolean;
+  /** Present for a screen drawn into another pack's: gated on the host's marker entry, not the title. */
+  readonly marker?: string;
 }
 
 /** A document and the pack path it is written to. */
@@ -81,6 +84,49 @@ const gate = (title: string, controls: ControlEntry[]): Control => ({
   ],
 });
 
+/** Draws over the host's own content, whichever pack's root comes first under the mount. */
+const EMBED_LAYER = 2;
+
+/**
+ * A panel shown only while the form's FIRST entry carries this marker: the
+ * host that embeds the screen writes it there while the screen is wanted,
+ * whatever the host's own title is — an embedded screen cannot know the
+ * title of every host that may draw it, and the marker is a fact about the
+ * screen alone. Any other form's first entry is a button caption, which never
+ * equals a marker; a form with no entries never resolves the binding, and
+ * the seeded false holds.
+ */
+const markerGate = (marker: string, controls: ControlEntry[]): Control => ({
+  type: 'stack_panel',
+  orientation: 'vertical',
+  size: ['100%', '100%'],
+  anchor_from: 'top_left',
+  anchor_to: 'top_left',
+  layer: EMBED_LAYER,
+  collection_name: FORM_COLLECTION,
+  controls: [{
+    gate: {
+      type: 'panel',
+      size: ['100%', '100%'],
+      anchor_from: 'top_left',
+      anchor_to: 'top_left',
+      collection_index: 0,
+      property_bag: { '#visible': false },
+      visible: '#visible',
+      controls,
+      bindings: [
+        { ...FORM_DETAILS_BINDING },
+        entryValueBinding('#marker', FORM_COLLECTION),
+        {
+          binding_type: 'view',
+          source_property_name: `(#marker = '${marker}')`,
+          target_property_name: '#visible',
+        },
+      ],
+    },
+  }],
+});
+
 /**
  * The documents that put one addon's compiled form screens on the mount.
  *
@@ -102,7 +148,11 @@ export const formRouter = (screens: readonly RoutedFormScreen[], addon: string):
 
     seen.add(screen.name);
 
-    router[`${addon}_gate_${screen.name}`] = gate(formTitleFor(screen.namespace), [
+    const gated = (controls: ControlEntry[]): Control => (screen.marker === undefined
+      ? gate(formTitleFor(screen.namespace), controls)
+      : markerGate(screen.marker, controls));
+
+    router[`${addon}_gate_${screen.name}`] = gated([
       ...screen.hasBackdrop ? [{ [`backdrop@${screen.namespace}.${BACKDROP_DEFINITION}`]: {} }] : [],
       {
         // Centred, because the box this gate fills is the form's content area,

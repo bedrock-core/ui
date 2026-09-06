@@ -172,6 +172,9 @@ export class ActionFormData {
   /** What every `button()` was called with, in order — the entries a compiled screen wrote. */
   buttons: (string | RawMessage)[] = [];
 
+  /** The icon path of every `button()`, in order — where a compiled entry's value rides. */
+  icons: (string | undefined)[] = [];
+
   constructor() {
     remember(this);
   }
@@ -208,8 +211,9 @@ export class ActionFormData {
     return this;
   }
 
-  button(text: string | RawMessage, _iconPath?: string): this {
+  button(text: string | RawMessage, iconPath?: string): this {
     this.buttons.push(text);
+    this.icons.push(iconPath);
 
     return this;
   }

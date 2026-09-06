@@ -89,6 +89,13 @@ interface Walk {
   met: { cells: number; channels: number; visibles: number };
   counters: Map<string, number>;
   backdrop?: string;
+  /**
+   * How many carried-visible ancestors the element being lowered has. The
+   * build's inherit pass stamps `visible: false` down a hidden subtree, so a
+   * subtree hidden at build time and shown by its gate at runtime would bake
+   * every descendant hidden; under a gate, the gate alone decides.
+   */
+  carried: number;
 }
 
 /**
@@ -175,8 +182,9 @@ const lower = (definition: NodeDefinition, element: JSX.Element, type: string, o
   // same spread that carries `layer` — the host's wrapper reads it back off
   // the node and no kind has to know it exists.
   const visibleAddress = walk.addressing.visibles?.get(element);
+  const carried = visibleAddress !== undefined;
 
-  if (visibleAddress !== undefined) {
+  if (carried) {
     walk.met.visibles += 1;
   }
 
@@ -187,10 +195,10 @@ const lower = (definition: NodeDefinition, element: JSX.Element, type: string, o
     rect: relativeTo(own, origin),
     decoration: {
       ...layerOf(element.props),
-      ...visibilityOf(element.props),
-      ...visibleAddress === undefined
-        ? {}
-        : { visibleEntry: { address: visibleAddress, initial: element.props.visible !== false } },
+      ...walk.carried > 0 && !carried ? {} : visibilityOf(element.props),
+      ...carried
+        ? { visibleEntry: { address: visibleAddress, initial: element.props.visible !== false } }
+        : {},
     },
     name: kind => nameFor(kind, walk),
     cellOf: target => cellOf(target, walk),
@@ -198,7 +206,13 @@ const lower = (definition: NodeDefinition, element: JSX.Element, type: string, o
     children: (parent, from) => convertChildren(parent, from, walk),
   };
 
-  return definition.lower(element, type, ctx);
+  walk.carried += carried ? 1 : 0;
+
+  try {
+    return definition.lower(element, type, ctx);
+  } finally {
+    walk.carried -= carried ? 1 : 0;
+  }
 };
 
 export interface ToIrOptions {
@@ -240,7 +254,7 @@ export const toIr = (
   const walk: Walk = {
     addressing,
     met: { cells: 0, channels: 0, visibles: 0 },
-    counters: new Map(),
+    counters: new Map(), carried: 0,
   };
 
   // The canvas: every rect below is relative to it, so a root the solver placed

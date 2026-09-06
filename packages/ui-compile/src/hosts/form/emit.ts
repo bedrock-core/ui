@@ -1,14 +1,15 @@
-import { FORM_COLLECTION, FORM_DETAILS_BINDING } from '@bedrock-core/ui-runtime/compile';
+import { FORM_COLLECTION, FORM_COUNT_PREFIX, FORM_DETAILS_BINDING, FORM_FLAG_OFF } from '@bedrock-core/ui-runtime/compile';
 import type { ButtonNode } from '../../nodes/button';
 import { collectKind, shapeOf } from '../../nodes';
 import type { Binding, Control, ControlEntry } from '../../jsonui';
 import { MODAL_COLLECTION, popupHostOf } from '../../nodes/field';
+import { imageDefinition, type ImageNode } from '../../nodes/image';
 import type { ListNode } from '../../nodes/list';
 import {
   FACE_CONTENT_LAYER, FONT_SIZE, FULL, layerOf, offsetOf, sizeOf, topLeft, visibilityOf,
 } from '../../nodes/shared';
 import type { TextNode } from '../../nodes/text';
-import type { Emit, HostEmit, IrNode } from '../../nodes/types';
+import type { Emit, HostEmit, IrNode, NodeBase } from '../../nodes/types';
 
 /**
  * How a form draws the kinds a chest draws with items.
@@ -35,7 +36,7 @@ const entryHost = (
   name: string,
   address: number,
   cell: string,
-  node: ButtonNode | TextNode,
+  node: NodeBase,
   collection: string = FORM_COLLECTION,
 ): ControlEntry => ({
   [name]: {
@@ -52,12 +53,20 @@ const entryHost = (
 });
 
 /**
- * The string an addressed value travels on, per collection: an action form's
- * entries are `form_buttons` texts, a modal's rows are `custom_form` texts.
- * One emitter serves both because ONLY this name and the collection differ.
+ * The string an addressed value travels on, per collection.
+ *
+ * An action form's entries carry the value in their ICON PATH, a modal's rows
+ * in their text. The text of an action-form entry is the interpreter's decoy
+ * (`ENTRY_TEXT`): its decoders are constructed on every form and slice every
+ * entry's text as a payload, and a text that is not one asserts. The icon
+ * path nothing but a compiled control reads — and reads by a plain
+ * collection binding, which is the one thing measured safe on an interpreted
+ * form's entries as well: an expression over one of those, a `-` or a
+ * `'%.Ns' *` format, copies a payload longer than the engine's 1024-byte
+ * stack string and asserts, whatever gate the control sits behind.
  */
 const payloadBindingFor = (collection: string): string =>
-  collection === 'custom_form' ? '#custom_text' : '#form_button_text';
+  (collection === MODAL_COLLECTION ? '#custom_text' : '#form_button_texture');
 
 /** Reads the entry's own string, which is the only thing a form entry carries. */
 const entryText = (name: string, collection: string = FORM_COLLECTION): Binding[] => [
@@ -69,6 +78,14 @@ const entryText = (name: string, collection: string = FORM_COLLECTION): Binding[
     binding_collection_name: collection,
   },
 ];
+
+/** The value read for a gate: the entry's string alone, no details. */
+export const entryValueBinding = (name: string, collection: string): Binding => ({
+  binding_name: payloadBindingFor(collection),
+  binding_name_override: name,
+  binding_type: 'collection',
+  binding_collection_name: collection,
+});
 
 /** Where a button's entry says whether it is enabled. */
 const ENTRY_PROPERTY = '#entry_value';
@@ -86,7 +103,7 @@ const whenEnabled = (visible: boolean): Binding[] => [
   ...entryText(ENTRY_PROPERTY),
   {
     binding_type: 'view',
-    source_property_name: visible ? `(not (${ENTRY_PROPERTY} = '0'))` : `(${ENTRY_PROPERTY} = '0')`,
+    source_property_name: visible ? `(not (${ENTRY_PROPERTY} = '${FORM_FLAG_OFF}'))` : `(${ENTRY_PROPERTY} = '${FORM_FLAG_OFF}')`,
     target_property_name: '#visible',
   },
 ];
@@ -246,6 +263,24 @@ const textDef = (node: TextNode, collection: string): Control => ({
   bindings: entryText(ENTRY_PROPERTY, collection),
 });
 
+/**
+ * A live texture: the entry's string IS the path. One definition per screen,
+ * since nothing about the look varies — the host sizes it, the entry names it.
+ */
+const TEXTURE_DEF = 'live_image';
+
+/** The property an image's `texture` reads from: vanilla's own name for a bound texture. */
+const TEXTURE_PROPERTY = '#texture';
+
+const textureDef = (collection: string): Control => ({
+  type: 'image',
+  size: FULL,
+  ...topLeft,
+  keep_ratio: false,
+  texture: TEXTURE_PROPERTY,
+  bindings: entryText(TEXTURE_PROPERTY, collection),
+});
+
 /** Text runs differing only in which entry they read share a definition. */
 const textSignature = (node: TextNode): string => JSON.stringify([
   node.fontType,
@@ -351,15 +386,10 @@ const wrapVisible = (node: IrNode, ctx: Emit): ControlEntry => {
           visible: '#visible',
           property_bag: { '#visible': entry.initial },
           bindings: [
-            {
-              binding_name: payloadBindingFor(ctx.collection),
-              binding_name_override: '#vis_value',
-              binding_type: 'collection',
-              binding_collection_name: ctx.collection,
-            },
+            entryValueBinding('#vis_value', ctx.collection),
             {
               binding_type: 'view',
-              source_property_name: '(not (#vis_value = \'0\'))',
+              source_property_name: `(not (#vis_value = '${FORM_FLAG_OFF}'))`,
               target_property_name: '#visible',
             },
           ],
@@ -382,7 +412,7 @@ const wrapVisible = (node: IrNode, ctx: Emit): ControlEntry => {
  * resolves matches no term and the row stays hidden.
  */
 const showsRow = (index: number, max: number): string => {
-  const terms = Array.from({ length: max - index }, (_, offset) => `(#row_count = '${index + 1 + offset}')`);
+  const terms = Array.from({ length: max - index }, (_, offset) => `(#row_count = '${FORM_COUNT_PREFIX}${String(index + 1 + offset)}')`);
 
   return terms.length === 1 ? terms[0] ?? '' : `(${terms.join(' or ')})`;
 };
@@ -425,12 +455,7 @@ const listRows = (node: ListNode, ctx: Emit): ControlEntry => ({
           visible: '#visible',
           property_bag: { '#visible': index < node.initial },
           bindings: [
-            {
-              binding_name: payloadBindingFor(ctx.collection),
-              binding_name_override: '#row_count',
-              binding_type: 'collection',
-              binding_collection_name: ctx.collection,
-            },
+            entryValueBinding('#row_count', ctx.collection),
             {
               binding_type: 'view',
               source_property_name: showsRow(index, node.rows.length),
@@ -459,6 +484,16 @@ export const FORM_EMIT: HostEmit = {
       entryHost(node.name, node.address, `${ctx.ns}.${ctx.textNames.get(textSignature(node)) ?? 'text_1'}`, node, ctx.collection),
 
     list: listRows,
+
+    image: (node: ImageNode, ctx: Emit): ControlEntry => {
+      if (node.address === undefined) {
+        return imageDefinition.emit(node, ctx);
+      }
+
+      ctx.defs[TEXTURE_DEF] ??= textureDef(ctx.collection);
+
+      return entryHost(node.name, node.address, `${ctx.ns}.${TEXTURE_DEF}`, node, ctx.collection);
+    },
   },
 
   // One definition per distinct look, named before any is emitted so a face

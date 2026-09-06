@@ -1,4 +1,6 @@
 import { buttonCell, BUTTON_TYPE } from '../../components/Button';
+import { isEmbedSlot } from '../../components/Embed';
+import { liveTexture } from '../../components/Image';
 import { listCapacity } from '../../components/List';
 import { slotCell, type SlotRole } from '../../components/Slot';
 import type { JSX } from '../../jsx';
@@ -32,8 +34,8 @@ export interface CellClaim {
 /** An element that needs a channel for a value that changes at runtime. */
 export interface ChannelClaim {
   readonly element: JSX.Element;
-  readonly carrier: 'text' | 'bool' | 'int';
-  /** How much it reserves — characters for text, 1 for a bool, digits for an int. */
+  readonly carrier: 'text' | 'bool' | 'int' | 'texture';
+  /** How much it reserves — characters for text, 1 for a bool, digits for an int, 0 for a texture path (uncapped). */
   readonly length: number;
 }
 
@@ -48,7 +50,13 @@ export interface Claims {
  * a foreign slot reads another collection. A list rather than a chain of
  * conditionals, so a component kind is added by adding an entry.
  */
-const CLAIMS: readonly ((element: JSX.Element) => CellRole | undefined)[] = [buttonCell, slotCell];
+const CLAIMS: readonly ((element: JSX.Element) => CellRole | undefined)[] = [
+  buttonCell,
+  slotCell,
+  // A reserved entry of an embedded screen: pressable there, drawn by the
+  // pack that fills it, so here it is a button with nothing of its own.
+  (element): CellRole | undefined => (isEmbedSlot(element) ? 'button' : undefined),
+];
 
 const roleOf = (element: JSX.Element): CellRole | undefined => {
   for (const claims of CLAIMS) {
@@ -91,6 +99,11 @@ export const claim = (tree: JSX.Element, analysis: Analysis = analyze(tree)): Cl
 
     if (digits !== undefined) {
       channels.push({ element, carrier: 'int', length: digits });
+    }
+
+    // A live texture path, declared by `live` the way `maxLength` declares text.
+    if (liveTexture(element)) {
+      channels.push({ element, carrier: 'texture', length: 0 });
     }
 
     const length = analysis.texts.get(element);

@@ -1,4 +1,5 @@
 import { BUTTON_TYPE } from '../../components/Button';
+import { EMBED_SLOT_TYPE } from '../../components/Embed';
 import { LIST_SLOT_TYPE } from '../../components/List';
 import { CONTAINER_TYPE } from '../../components/Container';
 import {
@@ -174,6 +175,15 @@ const RULES: readonly Rule[] = [
         'A `<Disclosure>` can only be used on a COMPILED screen: its fold is a toggle the '
         + 'client handles. A serialized screen re-renders per present, so fold with `useState` '
         + 'and render the rows conditionally instead.',
+      );
+    }
+  },
+
+  (_node, type, _scope, _host, frozen): void => {
+    if (!frozen && type === EMBED_SLOT_TYPE) {
+      throw new ContainerScreenError(
+        '`<EmbedSlots>` can only be used on a COMPILED screen: the slots are entries another '
+        + 'pack\'s compiled screen is baked against, and a serialized screen has no such entries.',
       );
     }
   },

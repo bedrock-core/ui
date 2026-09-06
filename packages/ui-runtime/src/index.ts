@@ -3,6 +3,9 @@ export {
   Button,
   Container,
   Dropdown,
+  Embed,
+  embedMarker,
+  EmbedSlots,
   Form,
   Fragment,
   Hotbar,
@@ -33,6 +36,8 @@ export type {
   ControlProps,
   Display,
   DropdownProps,
+  EmbedProps,
+  EmbedSlotsProps,
   FlexDirection,
   FlexSize,
   FlexWrap,
@@ -115,6 +120,7 @@ export {
 } from './core';
 
 export { compiledValuesOf, showCompiledTitle } from './hosts/form/runtime';
+export { FLAG_OFF, FLAG_ON } from './hosts/form/contract';
 
 export type {
   ComponentDescriptor,

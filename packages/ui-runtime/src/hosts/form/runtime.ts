@@ -1,12 +1,14 @@
 import type { Player } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
 import { isHandler, type PressEvent } from '../../core/events';
+import { embedSlotValue, isEmbedSlot } from '../../components/Embed';
 import { listCount } from '../../components/List';
 import { analyze, visiblesAt } from '../../core/ir';
 import type { CompiledSnapshot } from '../../core/render/screens';
 import { runInteractiveCallback, type PresentResult } from '../../core/render/presenters/shared';
 import type { JSX } from '../../jsx';
 import { allocate, type EntryEntry } from './allocate';
+import { COUNT_PREFIX, ENTRY_TEXT, FLAG_OFF, FLAG_ON } from './contract';
 import { debugDiff } from './debug';
 
 /**
@@ -45,25 +47,35 @@ export const liveText = (element: JSX.Element, length: number): string => {
  * A cell that only reports a press still needs an entry — the engine numbers
  * `response.selection` by entry, and a control with no entry cannot be
  * attributed — so it carries the one thing about a press that changes: whether
- * it may happen at all. `'0'` is what the compiled button reads as disabled.
+ * it may happen at all. `FLAG_OFF` is what the compiled button reads as disabled.
  */
 export const entryValue = (entry: EntryEntry): string => {
   if (entry.carrier === 'text' && entry.length !== undefined) {
     return liveText(entry.element, entry.length);
   }
 
-  // A carried visible and a press's enabled write the same alphabet: '0' is
-  // the one value the compiled control treats as "off".
+  // A texture path travels whole: the compiled image binds the entry's string as its texture.
+  if (entry.carrier === 'texture') {
+    return liveText(entry.element, Number.MAX_SAFE_INTEGER);
+  }
+
+  // A reserved slot carries whatever the host was told the embedded screen wants there.
+  if (isEmbedSlot(entry.element)) {
+    return embedSlotValue(entry.element);
+  }
+
+  // A carried visible and a press's enabled write the same alphabet: FLAG_OFF
+  // is the one value the compiled control treats as "off".
   if (entry.carrier === 'bool') {
-    return entry.element.props.visible === false ? '0' : '1';
+    return entry.element.props.visible === false ? FLAG_OFF : FLAG_ON;
   }
 
-  // A list's count, as decimal digits the compiled gates compare against.
+  // A list's count, as digits the compiled gates compare against.
   if (entry.carrier === 'int') {
-    return String(listCount(entry.element) ?? 0);
+    return `${COUNT_PREFIX}${String(listCount(entry.element) ?? 0)}`;
   }
 
-  return entry.element.props.enabled === false ? '0' : '1';
+  return entry.element.props.enabled === false ? FLAG_OFF : FLAG_ON;
 };
 
 /**
@@ -103,7 +115,7 @@ export async function showCompiledTitle(player: Player, title: string, values: r
   form.title(title);
 
   for (const value of values) {
-    form.button(value);
+    form.button(ENTRY_TEXT, value);
   }
 
   const response = await form.show(player);
@@ -134,9 +146,9 @@ export async function presentCompiledForm(
 
   // Every entry is a button() call, so the collection index a control was
   // compiled with and the selection a press comes back as are the same number.
-
+  // The value rides the icon path; the text is the decoders' decoy.
   for (const value of values) {
-    form.button(value);
+    form.button(ENTRY_TEXT, value);
   }
 
   if (debug) {
@@ -148,7 +160,8 @@ export async function presentCompiledForm(
       return 'cleanup';
     }
 
-    const pressed = response.selection === undefined ? undefined : entries[response.selection];
+    // By entry number rather than position: an embedded screen's entries start after the marker.
+    const pressed = entries.find(entry => entry.entry === response.selection);
     const { onPress } = pressed?.element.props ?? {};
 
     if (!isHandler<(event: PressEvent) => unknown>(onPress)) {

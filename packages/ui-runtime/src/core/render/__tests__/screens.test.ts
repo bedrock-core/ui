@@ -93,7 +93,7 @@ describe('render, on a screen the build compiled', () => {
 
     // The title picks the layout; the one entry is the button's enabled flag.
     expect(form?.titleText).toBe('bcuiv0008core1:shop_home');
-    expect(form?.buttons).toEqual(['1']);
+    expect(form?.icons).toEqual(['t']);
   });
 
   it('leaves an unregistered screen to the interpreter, which ships the whole layout', () => {
