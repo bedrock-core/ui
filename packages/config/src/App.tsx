@@ -7,6 +7,7 @@ import { CoreContext, PlayerContext } from './context';
 import { buildInitialState } from './navigation/initialState';
 import type { OpenTarget } from './navigation/openTarget';
 import type { AppRoutes } from './navigation/routes';
+import { canPresentAddonList } from './compiled/host';
 import { isOperator } from './permissions';
 import { Config } from './screens/Config';
 import { ConfigList } from './screens/ConfigList';
@@ -62,7 +63,7 @@ export function App({ core, player, target, values, scopeIsSections }: AppProps)
     <CoreContext value={core}>
       <PlayerContext value={player}>
         <TranslationContext value={core.translations.forPlayer(player)}>
-          <NavigationContainer initialState={buildInitialState(target, values, isOperator(player), scopeIsSections)}>
+          <NavigationContainer initialState={buildInitialState(target, values, isOperator(player), scopeIsSections, canPresentAddonList())}>
             <Stack.Navigator />
           </NavigationContainer>
         </TranslationContext>

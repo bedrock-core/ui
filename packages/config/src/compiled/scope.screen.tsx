@@ -5,7 +5,7 @@ import { List, Panel, Text, useExit, type FunctionComponent, type JSX, type Subm
 import { buildNestedPatch } from '../config/nested';
 import { buildSectionTree, filterScope, filterScopeGroups, findSection, formEntries, getScopedGroups, getScopedSchema, type SectionNode } from '../config/schema';
 import { patchScope } from '../config/values';
-import type { ConfigScope, EntrySchema } from '../types';
+import type { ConfigScope as Scope, EntrySchema } from '../types';
 
 /**
  * The config editor as ONE compiled screen every schema fits.
@@ -165,7 +165,7 @@ const valueOf = (entry: EntrySchema, raw: unknown): unknown => {
  */
 export function scopeModel(
   accessor: RemoteConfigAccessor,
-  destination: { scope: ConfigScope; entityId?: string; path?: string; title: string },
+  destination: { scope: Scope; entityId?: string; path?: string; title: string },
   values: Record<string, unknown>,
 ): ScopeModel | undefined {
   const { scope, entityId, path = '', title } = destination;
@@ -218,11 +218,3 @@ export function scopeModel(
 
 /** The editor filled with one present's model, for `render()`. */
 export const configScopeElement = (model: ScopeModel): JSX.Element => <ConfigScope model={model} />;
-
-/** The screens the ui-compile filter bakes from this package, by name. */
-const screens: Record<string, FunctionComponent> = {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- the registry keys screens by the component; its props are the present's, never the registry's
-  config_scope: ConfigScope as FunctionComponent,
-};
-
-export default screens;

@@ -38,7 +38,13 @@ export function buildInitialState(
   values?: Record<string, unknown>,
   canPickScope = true,
   scopeIsSections = false,
+  listCompiled = false,
 ): Partial<NavigationState> | undefined {
+  // With the compiled list, the stack starts past it: a screen at the bottom
+  // of the stack returns to the compiled list through `openUi`, not to a
+  // serialized list underneath.
+  const list = (addonId: string): NavigationState['routes'] => (listCompiled ? [] : [listRoute(addonId)]);
+
   if (target.kind === 'list') {
     if (target.addonId === undefined) { return undefined; }
 
@@ -48,13 +54,12 @@ export function buildInitialState(
   if (target.kind === 'guide') {
     if (target.addonId === undefined) { return undefined; }
 
-    return {
-      routes: [
-        listRoute(target.addonId),
-        { key: 'Guide', name: 'Guide', params: { addonId: target.addonId } },
-      ],
-      index: 1,
-    };
+    const routes = [
+      ...list(target.addonId),
+      { key: 'Guide', name: 'Guide', params: { addonId: target.addonId } },
+    ];
+
+    return { routes, index: routes.length - 1 };
   }
 
   // config
@@ -71,7 +76,7 @@ export function buildInitialState(
 
   if (scope && scopeIsSections) {
     const routes = [
-      listRoute(addonId),
+      ...list(addonId),
       ...picker,
       { key: 'ConfigSection', name: 'ConfigSection', params: { addonId, scope, entityId: scopeId, path: '', breadcrumb } },
     ];
@@ -81,7 +86,7 @@ export function buildInitialState(
 
   if (scope && values) {
     const routes = [
-      listRoute(addonId),
+      ...list(addonId),
       ...picker,
       { key: 'Config', name: 'Config', params: { addonId, scope, entityId: scopeId, path: '', breadcrumb, values } },
     ];
@@ -91,7 +96,7 @@ export function buildInitialState(
 
   // No scope resolved, so the picker is the destination. Without it there is nowhere further to
   // go than the list, which is where a player who cannot pick a scope belongs anyway.
-  return picker.length === 0
-    ? { routes: [listRoute(addonId)], index: 0 }
-    : { routes: [listRoute(addonId), ...picker], index: 1 };
+  const routes = picker.length === 0 ? [listRoute(addonId)] : [...list(addonId), ...picker];
+
+  return { routes, index: routes.length - 1 };
 }

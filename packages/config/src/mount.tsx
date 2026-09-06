@@ -37,6 +37,7 @@ import {
   isPureSection,
 } from './config/schema';
 import { App } from './App';
+import { canPresentAddonList, presentAddonList } from './compiled/host';
 
 /** What a receiving realm forwards: who typed it, what they asked for, and untouched arguments. */
 interface OpenRequest {
@@ -158,6 +159,18 @@ export function openUi(core: Runtime, player: Player, target: OpenTarget): Promi
     if (isGuideReference(reference)) {
       return presentGuideReference(reference, player, { back: true });
     }
+  }
+
+  // The compiled list when this build carries it: the sidebar is the host's,
+  // the page for each addon is the addon's own, drawn from its pack. Its
+  // presses come back here, so what they open is decided in one place.
+  if (clamped.kind === 'list' && canPresentAddonList()) {
+    presentAddonList(core, player, {
+      config: (addonId): Promise<void> => openUi(core, player, { kind: 'config', addonId }),
+      guide: (addonId): Promise<void> => openUi(core, player, { kind: 'guide', addonId }),
+    }, clamped.addonId);
+
+    return Promise.resolve();
   }
 
   const scopeIsSections = scopeHoldsOnlySections(core, player, clamped);

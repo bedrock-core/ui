@@ -15,7 +15,7 @@
 import type { NavigationHelpers } from '@bedrock-core/navigation';
 import type { Player } from '@minecraft/server';
 import { compiledTitleOf, render } from '@bedrock-core/ui-runtime';
-import { ConfigScope, configScopeElement, scopeModel } from '../compiled';
+import { ConfigScope as ConfigScopeScreen, configScopeElement, scopeModel } from '../compiled';
 import type { RemoteConfigAccessor } from '@bedrock-core/server-runtime';
 import type { ConfigScope } from '../types';
 import { getScopeValues } from '../config/values';
@@ -59,7 +59,7 @@ export async function openConfig(
     // The compiled editor when this build carries it and the section fits its
     // rows: rendered as a screen of its own, which swaps into the running app
     // and closes on Save; the serialized editor otherwise.
-    if (player !== undefined && compiledTitleOf(ConfigScope) !== undefined) {
+    if (player !== undefined && compiledTitleOf(ConfigScopeScreen) !== undefined) {
       const model = scopeModel(accessor, { scope, entityId, path, title: breadcrumb }, values);
 
       if (model !== undefined) {

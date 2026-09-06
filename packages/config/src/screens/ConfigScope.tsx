@@ -6,6 +6,7 @@ import { useTranslation } from '../i18n';
 import { allowedScopes, isOperator } from '../permissions';
 import { filterScope, getScopedSchema } from '../config/schema';
 import { openScopeRoot } from '../navigation/openConfig';
+import { openUi } from '../mount';
 import type { AppScreen } from '../navigation/routes';
 import { Missing } from './Missing';
 
@@ -109,7 +110,7 @@ export function ConfigScope({ navigation, route }: AppScreen<'ConfigScope'>): JS
       <Header
         title={addonName}
         breadcrumbs={[t($ => $.config.breadcrumb)]}
-        onBack={(): void => navigation.goBack()}
+        onBack={(): unknown => (navigation.canGoBack() ? navigation.goBack() : openUi(core, player, { kind: 'list', addonId }))}
         onClose={exit}
       />
       <Panel flexGrow={1} padding={spacing.sm}>

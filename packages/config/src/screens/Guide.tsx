@@ -3,6 +3,7 @@ import { type JSX } from '@bedrock-core/ui-runtime';
 import { createGuide, hasVisiblePages, type GuideAudience, type GuideManifest, type GuideProps } from '@bedrock-core/guides';
 import { useCore, usePlayer } from '../context';
 import { manifestFor } from '../frameworkGuide';
+import { openUi } from '../mount';
 import { guideAudienceFor } from '../permissions';
 import type { AppScreen } from '../navigation/routes';
 import { Missing } from './Missing';
@@ -50,5 +51,5 @@ export function Guide({ navigation, route }: AppScreen<'Guide'>): JSX.Element {
 
   const GuideComponent = guideFor(manifest, addonId, audience, '§0Guide');
 
-  return <GuideComponent onExit={(): void => navigation.goBack()} />;
+  return <GuideComponent onExit={(): unknown => (navigation.canGoBack() ? navigation.goBack() : openUi(core, player, { kind: 'list', addonId }))} />;
 }
