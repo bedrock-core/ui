@@ -28,6 +28,7 @@ import { registerAddonCommands } from './commands/addon';
 import { openTargetFrom, type OpenCommand, type OpenTarget } from './navigation/openTarget';
 import { clampTarget } from './permissions';
 import { getScopeValues } from './config/values';
+import { translationsFor } from './i18n';
 import {
   buildSectionTree,
   filterScope,
@@ -39,6 +40,8 @@ import {
 import { App } from './App';
 import { guideReferenceFor } from './frameworkGuide';
 import { canPresentAddonList, presentAddonList } from './compiled/host';
+import { canPresentScopePicker, presentScopePicker } from './compiled/configHost';
+import { configScopeElement, scopeModel } from './compiled';
 
 /** What a receiving realm forwards: who typed it, what they asked for, and untouched arguments. */
 interface OpenRequest {
@@ -174,6 +177,18 @@ export function openUi(core: Runtime, player: Player, target: OpenTarget): Promi
     return Promise.resolve();
   }
 
+  // The compiled scope picker when this build carries it. Its rows come back
+  // here with the scope chosen, so the roster, the sections and the editor
+  // are reached the way a command reaches them.
+  if (clamped.kind === 'config' && clamped.addonId !== undefined && clamped.scope === undefined && canPresentScopePicker()) {
+    presentScopePicker(core, player, clamped.addonId, {
+      scope: (addonId, scope): Promise<void> => openUi(core, player, { kind: 'config', addonId, scope }),
+      back: (addonId): Promise<void> => openUi(core, player, { kind: 'list', addonId }),
+    });
+
+    return Promise.resolve();
+  }
+
   const scopeIsSections = scopeHoldsOnlySections(core, player, clamped);
 
   // A scope that holds only sub-sections lands on the section screen, which needs no values —
@@ -186,8 +201,41 @@ export function openUi(core: Runtime, player: Player, target: OpenTarget): Promi
 
   // Never rejects: prefetchScopeValues catches internally, so floating this is safe.
   return prefetchScopeValues(core, player, clamped).then((values) => {
+    // The compiled editor when this build carries it and the section fits its
+    // rows — the same choice a press in the serialized app makes.
+    if (values !== undefined && presentCompiledEditor(core, player, clamped, values)) {
+      return;
+    }
+
     render(<App core={core} player={player} target={clamped} values={values} />, player);
   });
+}
+
+/**
+ * Shows the compiled editor for a resolved scope when this build carries it
+ * and the scope's top level fits it. False when the serialized app has to
+ * draw it instead.
+ */
+function presentCompiledEditor(core: Runtime, player: Player, target: OpenTarget, values: Record<string, unknown>): boolean {
+  if (target.kind !== 'config' || target.addonId === undefined || target.scope === undefined) { return false; }
+
+  const accessor = core.config.of(target.addonId, { actorId: player.id });
+
+  if (!accessor) { return false; }
+
+  const { resolve, t } = translationsFor(core.translations.forPlayer(player));
+  const nameKey = core.registry.get(target.addonId)?.packName ?? target.addonId;
+  const scopeLabel = target.scope === 'server'
+    ? t($ => $.scope.server.label)
+    : target.scope === 'dimension' ? t($ => $.scope.dimension.label) : t($ => $.scope.player.label);
+  const title = `${resolve(nameKey) ?? nameKey} > ${scopeLabel}`;
+  const model = scopeModel(accessor, { scope: target.scope, entityId: target.scopeId, path: '', title }, values);
+
+  if (model === undefined) { return false; }
+
+  render(configScopeElement(model), player);
+
+  return true;
 }
 
 /**

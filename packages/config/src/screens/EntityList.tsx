@@ -8,6 +8,7 @@ import { useTranslation } from '../i18n';
 import { allowedScopes, isOperator } from '../permissions';
 import { getRoster } from '../config/values';
 import { openScopeRoot } from '../navigation/openConfig';
+import { backToPicker } from '../navigation/back';
 import type { AppScreen } from '../navigation/routes';
 import { Missing } from './Missing';
 
@@ -47,7 +48,7 @@ export function EntityList({ navigation, route }: AppScreen<'EntityList'>): JSX.
 
   return (
     <Card flexDirection={'column'} padding={0} gap={0}>
-      <Header {...splitBreadcrumb(breadcrumb)} onBack={(): void => navigation.goBack()} onClose={exit} />
+      <Header {...splitBreadcrumb(breadcrumb)} onBack={(): unknown => backToPicker(navigation, core, player, addonId)} onClose={exit} />
       <Panel flexGrow={1} padding={spacing.sm}>
         <Scroll>
           <Panel flexDirection={'column'} gap={spacing.xs}>

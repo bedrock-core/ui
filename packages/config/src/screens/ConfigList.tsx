@@ -8,6 +8,7 @@ import { useTranslation } from '../i18n';
 import { buildNestedPatch, resolveInitialValue } from '../config/nested';
 import { filterScope, getScopedSchema } from '../config/schema';
 import { patchScope } from '../config/values';
+import { backToPicker } from '../navigation/back';
 import type { AppScreen } from '../navigation/routes';
 import { Missing } from './Missing';
 
@@ -113,7 +114,7 @@ export function ConfigList({ navigation, route }: AppScreen<'ConfigList'>): JSX.
 
   return (
     <Card flexDirection={'column'} padding={0} gap={0}>
-      <Header {...splitBreadcrumb(breadcrumb)} onBack={(): void => navigation.goBack()} onClose={exit} />
+      <Header {...splitBreadcrumb(breadcrumb)} onBack={(): unknown => backToPicker(navigation, core, player, addonId)} onClose={exit} />
       <Panel flexGrow={1} flexDirection={'column'} padding={spacing.sm} gap={spacing.sm}>
         {listEntry.description
           ? <Text wordBreak={'break-word'}>{`${fontColor.muted}${display(listEntry.description)}`}</Text>

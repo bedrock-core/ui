@@ -39,6 +39,7 @@ export function buildInitialState(
   canPickScope = true,
   scopeIsSections = false,
   listCompiled = false,
+  pickerCompiled = false,
 ): Partial<NavigationState> | undefined {
   // With the compiled list, the stack starts past it: a screen at the bottom
   // of the stack returns to the compiled list through `openUi`, not to a
@@ -67,12 +68,25 @@ export function buildInitialState(
 
   if (addonId === undefined) { return undefined; }
 
-  const picker = canPickScope
+  // With the compiled picker, the stack starts past it the way it starts past
+  // the compiled list: a screen at the bottom returns to it through `openUi`.
+  const picker = canPickScope && !pickerCompiled
     ? [{ key: 'ConfigScope', name: 'ConfigScope', params: { addonId } }]
     : [];
 
   const scopeLabel = scope === undefined ? '' : `${scope.charAt(0).toUpperCase()}${scope.slice(1)}`;
   const breadcrumb = `${addonId} > ${scopeLabel}`;
+
+  // A roster scope with no entity named yet: the roster is where one is picked.
+  if ((scope === 'dimension' || scope === 'player') && scopeId === undefined && canPickScope) {
+    const routes = [
+      ...list(addonId),
+      ...picker,
+      { key: 'EntityList', name: 'EntityList', params: { addonId, scope, breadcrumb } },
+    ];
+
+    return { routes, index: routes.length - 1 };
+  }
 
   if (scope && scopeIsSections) {
     const routes = [

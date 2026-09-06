@@ -19,6 +19,7 @@ import {
 } from '../config/schema';
 import { patchScope } from '../config/values';
 import type { ConfigScope, EntrySchema } from '../types';
+import { backToPicker } from '../navigation/back';
 import type { AppScreen } from '../navigation/routes';
 import { SectionHeading } from './SectionHeading';
 
@@ -83,7 +84,7 @@ export function Config({ navigation, route }: AppScreen<'Config'>): JSX.Element 
   if (Object.keys(scalars).length === 0) {
     return (
       <Card flexDirection={'column'} padding={0} gap={0}>
-        <Header {...splitBreadcrumb(breadcrumb)} onBack={(): void => navigation.goBack()} onClose={exit} />
+        <Header {...splitBreadcrumb(breadcrumb)} onBack={(): unknown => backToPicker(navigation, core, player, addonId)} onClose={exit} />
         <Panel flexGrow={1} padding={spacing.md}>
           {Object.keys(lists).length > 0
             ? <Scroll>{body}</Scroll>
@@ -115,11 +116,11 @@ export function Config({ navigation, route }: AppScreen<'Config'>): JSX.Element 
     }
 
     patchScope(accessor, scope, entityId, buildNestedPatch(flat));
-    navigation.goBack();
+    backToPicker(navigation, core, player, addonId);
   }
 
   return (
-    <Form onSubmit={handleSubmit} onCancel={(): void => navigation.goBack()}>
+    <Form onSubmit={handleSubmit} onCancel={(): unknown => backToPicker(navigation, core, player, addonId)}>
       {/* One card for the whole modal, header and actions included — the same window frame the
           navigable screens wear. Splitting the body and the buttons across two boxes left the
           Save/Back row floating on the bare dialog background. */}

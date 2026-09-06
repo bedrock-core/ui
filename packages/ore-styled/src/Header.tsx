@@ -13,6 +13,12 @@ export interface HeaderProps extends ControlProps {
   onBack?: (event: PressEvent) => unknown;
   /** Omit to hide the close control. */
   onClose?: (event: PressEvent) => unknown;
+  /**
+   * Characters the title reserves. A compiled screen bakes its title unless it
+   * is told how long a live one may be; set this where the title is a string
+   * known only when the screen is shown, such as an addon's name.
+   */
+  titleMaxLength?: number;
 }
 
 /**
@@ -25,7 +31,7 @@ export interface HeaderProps extends ControlProps {
  * be clipped as a unit; the last segment, the one that grows with the page title,
  * is the one that shrinks and ellipsises.
  */
-export function Header({ title, breadcrumbs, onBack, onClose, ...layout }: HeaderProps): JSX.Element {
+export function Header({ title, breadcrumbs, onBack, onClose, titleMaxLength, ...layout }: HeaderProps): JSX.Element {
   const resolver = useTranslationResolver();
   const h = theme.components.header;
   const { font, scale, color, colorRgb, separator } = h.textStyle;
@@ -44,6 +50,7 @@ export function Header({ title, breadcrumbs, onBack, onClose, ...layout }: Heade
       maxLines={1}
       flexShrink={index === segments.length - 1 ? 1 : 0}
       color={isLiteral(value) ? undefined : colorRgb}
+      {...index === 0 && titleMaxLength !== undefined ? { maxLength: titleMaxLength } : {}}
     >
       {isLiteral(value) ? `${color}${value}` : value}
     </Text>,

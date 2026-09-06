@@ -18,7 +18,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { evaluateEntry } from '../../../../regolith-filters/ui-compile/lib/load';
+import { evaluateEntry } from '../../../../regolith-filters/ui-compile/lib/load.ts';
 
 const projectRoot = process.env['ROOT_DIR'];
 
