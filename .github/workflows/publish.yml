@@ -25,7 +25,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -47,7 +47,7 @@ jobs:
         run: corepack enable
 
       - name: Use Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: 'yarn'
@@ -166,7 +166,7 @@ jobs:
 
       - name: Create @bedrock-core/ui GitHub Release
         if: steps.meta.outputs.bumped == 'true'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: '@bedrock-core/ui@${{ steps.meta.outputs.ui }}'
           name: '@bedrock-core/ui@${{ steps.meta.outputs.ui }}'

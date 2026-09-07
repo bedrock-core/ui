@@ -1,6 +1,8 @@
 export { useState } from './useState';
 export { useEffect } from './useEffect';
 export { useRef } from './useRef';
+export { useObservable } from './useObservable';
+export type { ObservableLike } from './useObservable';
 export { useContext } from './useContext';
 export { useReducer } from './useReducer';
 export { usePlayer } from './usePlayer';

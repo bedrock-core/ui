@@ -85,11 +85,13 @@ export {
   useEffect,
   useEvent,
   useExit,
+  useObservable,
   usePlayer,
   useReducer,
   useRef,
   useState,
 } from './hooks';
+export type { ObservableLike } from './hooks';
 
 // Error classes, caught with `instanceof`.
 export {
