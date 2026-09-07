@@ -42,11 +42,8 @@ import { ui } from '@bedrock-core/config';
 import bundle from '@bedrock-core/generated/i18n';
 import guides from '@bedrock-core/generated/guides';
 
-const config = core.register({
-  creator: 'bt',
-  pack: 'gc_graves',
-  packName: 'Graves',
-  version: '1.0.0',
+const { config } = core.register({
+  manifest: { creator: 'bt', pack: 'gc_graves', packName: 'Graves', version: '1.0.0' },
   translations: bundle,
   guide: guides,
   config: { server: { keepInventory: { type: 'boolean', default: false, label: 'Keep Inventory' } } },

@@ -3,7 +3,7 @@
  *
  * - `core.register()` brings the addon online: display fields are i18n keys
  *   (other addons render them per player language), the i18n bundle and guide
- *   manifest ride along, and the returned accessors are typed by configDef.
+ *   manifest ride along, and the returned `config` accessors are typed by configDef.
  * - `ui(core)` mounts the shared config UI (config + guides for EVERY
  *   bedrock-core addon in the world) — command registration is first-wins, so
  *   with several addons installed exactly one serves the UI for all of them.
@@ -22,13 +22,15 @@ import { Example } from './UI/Example';
 
 const isPlayer = (entity: Entity): entity is Player => entity.typeId === MinecraftEntityTypes.Player;
 
-const config = core.register({
-  creator: '{{CREATOR_ID}}',
-  pack: '{{PACK_ID}}',
-  packName: i18n.key($ => $.meta.name),
-  creatorName: i18n.key($ => $.meta.creator),
-  version: '1.0.0',
-  description: i18n.key($ => $.meta.description),
+const { config } = core.register({
+  manifest: {
+    creator: '{{CREATOR_ID}}',
+    pack: '{{PACK_ID}}',
+    packName: i18n.key($ => $.meta.name),
+    creatorName: i18n.key($ => $.meta.creator),
+    version: '1.0.0',
+    description: i18n.key($ => $.meta.description),
+  },
   translations: bundle,
   guide: guides,
   config: configDef,
