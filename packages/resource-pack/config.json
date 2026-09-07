@@ -10,25 +10,9 @@
 	"regolith": {
 		"dataPath": "./packs/data",
 		"filterDefinitions": {
-			"bundler": {
+			"core": {
 				"runWith": "nodejs",
-				"script": "../../../regolith-filters/bundler/main.ts"
-			},
-			"guides": {
-				"runWith": "nodejs",
-				"script": "../../../regolith-filters/guides/main.ts"
-			},
-			"i18n": {
-				"runWith": "nodejs",
-				"script": "../../../regolith-filters/i18n/main.ts"
-			},
-			"references": {
-				"runWith": "nodejs",
-				"script": "./filters/references.mts"
-			},
-			"ui-compile": {
-				"runWith": "nodejs",
-				"script": "../../../regolith-filters/ui-compile/main.ts"
+				"script": "../../../regolith-filters/core/main.ts"
 			}
 		},
 		"formatVersion": "1.4.0",
@@ -41,24 +25,27 @@
 				},
 				"filters": [
 					{
-						"filter": "guides",
+						"filter": "core",
 						"settings": {
-							"namespace": "core",
-							"componentsModule": "BP/scripts/UI/guideComponents.ts"
-						}
-					},
-					{
-						"filter": "i18n",
-						"settings": {
-							"namespace": "core"
-						}
-					},
-					{ "filter": "ui-compile", "settings": { "namespace": "core", "screens": ["@bedrock-core/config/compiled"] } },
-					{ "filter": "references" },
-					{
-						"filter": "bundler",
-						"settings": {
-							"debug": false
+							"shared": {
+								"namespace": "core"
+							},
+							"stages": [
+								"guides",
+								"i18n",
+								"ui-compile",
+								{ "script": "./filters/references.mts", "name": "references" },
+								"bundler"
+							],
+							"guides": {
+								"componentsModule": "BP/scripts/UI/guideComponents.ts"
+							},
+							"ui-compile": {
+								"screens": ["@bedrock-core/config/compiled"]
+							},
+							"bundler": {
+								"debug": false
+							}
 						}
 					}
 				]
@@ -71,24 +58,28 @@
 				},
 				"filters": [
 					{
-						"filter": "guides",
+						"filter": "core",
 						"settings": {
-							"namespace": "core",
-							"componentsModule": "BP/scripts/UI/guideComponents.ts"
-						}
-					},
-					{
-						"filter": "i18n",
-						"settings": {
-							"namespace": "core"
-						}
-					},
-					{ "filter": "ui-compile", "settings": { "namespace": "core", "stamp": true, "screens": ["@bedrock-core/config/compiled"] } },
-					{ "filter": "references" },
-					{
-						"filter": "bundler",
-						"settings": {
-							"debug": true
+							"shared": {
+								"namespace": "core"
+							},
+							"stages": [
+								"guides",
+								"i18n",
+								"ui-compile",
+								{ "script": "./filters/references.mts", "name": "references" },
+								"bundler"
+							],
+							"guides": {
+								"componentsModule": "BP/scripts/UI/guideComponents.ts"
+							},
+							"ui-compile": {
+								"stamp": true,
+								"screens": ["@bedrock-core/config/compiled"]
+							},
+							"bundler": {
+								"debug": true
+							}
 						}
 					}
 				]
