@@ -46,6 +46,12 @@ export default {
     noDimensions: 'No dimensions found.',
   },
 
+  paging: {
+    previous: '<',
+    next: '>',
+    of: '{{page}} / {{pages}}',
+  },
+
   reset: {
     question: 'Reset {{target}} to the defaults this addon ships with?',
     warning: 'Every setting it carries goes back to its default value. This cannot be undone.',

@@ -64,7 +64,7 @@ export function buildInitialState(
   }
 
   // config
-  const { addonId, scope, scopeId } = target;
+  const { addonId, scope, scopeId, path = '', list: listKey, trail } = target;
 
   if (addonId === undefined) { return undefined; }
 
@@ -75,7 +75,7 @@ export function buildInitialState(
     : [];
 
   const scopeLabel = scope === undefined ? '' : `${scope.charAt(0).toUpperCase()}${scope.slice(1)}`;
-  const breadcrumb = `${addonId} > ${scopeLabel}`;
+  const breadcrumb = trail ?? `${addonId} > ${scopeLabel}`;
 
   // A roster scope with no entity named yet: the roster is where one is picked.
   if ((scope === 'dimension' || scope === 'player') && scopeId === undefined && canPickScope) {
@@ -88,11 +88,21 @@ export function buildInitialState(
     return { routes, index: routes.length - 1 };
   }
 
+  if (scope && listKey !== undefined && values) {
+    const routes = [
+      ...list(addonId),
+      ...picker,
+      { key: 'ConfigList', name: 'ConfigList', params: { addonId, scope, entityId: scopeId, key: listKey, breadcrumb, values } },
+    ];
+
+    return { routes, index: routes.length - 1 };
+  }
+
   if (scope && scopeIsSections) {
     const routes = [
       ...list(addonId),
       ...picker,
-      { key: 'ConfigSection', name: 'ConfigSection', params: { addonId, scope, entityId: scopeId, path: '', breadcrumb } },
+      { key: 'ConfigSection', name: 'ConfigSection', params: { addonId, scope, entityId: scopeId, path, breadcrumb } },
     ];
 
     return { routes, index: routes.length - 1 };
@@ -102,7 +112,7 @@ export function buildInitialState(
     const routes = [
       ...list(addonId),
       ...picker,
-      { key: 'Config', name: 'Config', params: { addonId, scope, entityId: scopeId, path: '', breadcrumb, values } },
+      { key: 'Config', name: 'Config', params: { addonId, scope, entityId: scopeId, path, breadcrumb, values } },
     ];
 
     return { routes, index: routes.length - 1 };

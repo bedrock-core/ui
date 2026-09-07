@@ -3,12 +3,14 @@
 import type { FunctionComponent } from '@bedrock-core/ui-runtime';
 import { ConfirmReset } from './confirm.screen';
 import { AddonList } from './list.screen';
+import { MenuList } from './menu.screen';
 import { ScopePicker } from './picker.screen';
 import { ConfigScope } from './scope.screen';
 
 export * from './confirm.screen';
 export * from './frame';
 export * from './list.screen';
+export * from './menu.screen';
 export * from './page.screen';
 export * from './picker.screen';
 export * from './scope.screen';
@@ -23,6 +25,8 @@ const screens: Record<string, FunctionComponent> = {
   scope_picker: ScopePicker as FunctionComponent,
   // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- as above
   confirm_reset: ConfirmReset as FunctionComponent,
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- as above
+  menu_list: MenuList as FunctionComponent,
 };
 
 export default screens;

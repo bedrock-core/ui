@@ -30,6 +30,18 @@ export interface MenuRowProps extends ControlProps {
    */
   depth?: number;
   onPress?: (event: PressEvent) => unknown | Promise<unknown>;
+  /**
+   * Characters the title reserves. A compiled screen bakes a row's text unless
+   * told how long a live one may be; set this where the title is only known
+   * when the screen is shown.
+   */
+  titleMaxLength?: number;
+  /**
+   * Characters the subtitle reserves. Setting it also keeps the subtitle line
+   * in the row when the subtitle is empty, so a compiled row has the same
+   * shape whatever it is shown with.
+   */
+  subtitleMaxLength?: number;
 }
 
 /**
@@ -50,6 +62,8 @@ export function MenuRow({
   depth = 0,
   enabled = true,
   onPress,
+  titleMaxLength,
+  subtitleMaxLength,
   ...layout
 }: MenuRowProps): JSX.Element {
   const row = theme.components.menuRow;
@@ -62,19 +76,23 @@ export function MenuRow({
   // untouched — a color prefix would break key resolution.
   const resolver = useTranslationResolver();
 
-  const line = (source: DisplayText, color: string, shadow: boolean): JSX.Element => {
+  const line = (source: DisplayText, color: string, shadow: boolean, maxLength: number | undefined): JSX.Element => {
     const literal = typeof source === 'string' && (source === '' || resolver?.(source) === undefined);
 
     return (
-      <Text font={font} scale={scale} shadow={shadow} maxLines={1} overflow={'ellipsis'}>
+      <Text font={font} scale={scale} shadow={shadow} maxLines={1} overflow={'ellipsis'} {...maxLength === undefined ? {} : { maxLength }}>
         {literal ? `${color}${source}` : source}
       </Text>
     );
   };
 
-  const lines: JSX.Element[] = [line(title, titleColor, true)];
+  const lines: JSX.Element[] = [line(title, titleColor, true, titleMaxLength)];
 
-  if (subtitle) { lines.push(line(subtitle, subtitleColor, false)); }
+  if (subtitleMaxLength !== undefined) {
+    lines.push(line(subtitle ?? '', subtitleColor, false, subtitleMaxLength));
+  } else if (subtitle) {
+    lines.push(line(subtitle, subtitleColor, false, undefined));
+  }
 
   const children: JSX.Element[] = [];
 

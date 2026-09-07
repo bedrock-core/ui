@@ -33,6 +33,7 @@ import {
   buildSectionTree,
   filterScope,
   filterScopeGroups,
+  findSection,
   getScopedGroups,
   getScopedSchema,
   isPureSection,
@@ -40,7 +41,10 @@ import {
 import { App } from './App';
 import { guideReferenceFor } from './frameworkGuide';
 import { canPresentAddonList, presentAddonList } from './compiled/host';
-import { canPresentScopePicker, presentScopePicker } from './compiled/configHost';
+import {
+  canPresentMenuList, canPresentScopePicker, isSectionLevel, openLevel, presentEntityRoster, presentScopePicker,
+  type SectionListOpeners, type SectionTarget,
+} from './compiled/configHost';
 import { configScopeElement, scopeModel } from './compiled';
 
 /** What a receiving realm forwards: who typed it, what they asked for, and untouched arguments. */
@@ -189,6 +193,31 @@ export function openUi(core: Runtime, player: Player, target: OpenTarget): Promi
     return Promise.resolve();
   }
 
+  // The compiled roster and section screens when this build carries them:
+  // a roster scope with no entity named lands on the roster, a level of the
+  // tree holding only sections on the section list. Their presses come
+  // back here with the level chosen.
+  if (clamped.kind === 'config' && clamped.addonId !== undefined && clamped.scope !== undefined && clamped.list === undefined && canPresentMenuList()) {
+    const { addonId, scope, scopeId } = clamped;
+
+    if ((scope === 'dimension' || scope === 'player') && scopeId === undefined) {
+      presentEntityRoster(core, player, { addonId, scope }, {
+        entity: (id, at, entityId): Promise<void> => openUi(core, player, { kind: 'config', addonId: id, scope: at, scopeId: entityId }),
+        back: (id): Promise<void> => openUi(core, player, { kind: 'config', addonId: id }),
+      });
+
+      return Promise.resolve();
+    }
+
+    const level: SectionTarget = { addonId, scope, entityId: scopeId, path: clamped.path ?? '', title: clamped.trail ?? trailFor(core, player, clamped) };
+
+    if (isSectionLevel(core, player, level)) {
+      openLevel(core, player, level, levelOpeners(core, player));
+
+      return Promise.resolve();
+    }
+  }
+
   const scopeIsSections = scopeHoldsOnlySections(core, player, clamped);
 
   // A scope that holds only sub-sections lands on the section screen, which needs no values —
@@ -211,25 +240,56 @@ export function openUi(core: Runtime, player: Player, target: OpenTarget): Promi
   });
 }
 
+/** Where a level of the tree sends its presses: every one comes back through `openUi`. */
+const levelOpeners = (core: Runtime, player: Player): SectionListOpeners => ({
+  editor: ({ addonId, scope, entityId, path, title }): Promise<void> =>
+    openUi(core, player, { kind: 'config', addonId, scope, scopeId: entityId, path, trail: title }),
+  list: ({ addonId, scope, entityId, key, title }): Promise<void> =>
+    openUi(core, player, { kind: 'config', addonId, scope, scopeId: entityId, list: key, trail: title }),
+  back: ({ addonId, scope, entityId }): Promise<void> =>
+    openUi(core, player, scope === 'server' || entityId === undefined ? { kind: 'config', addonId } : { kind: 'config', addonId, scope }),
+});
+
+/** The trail a scope's root is titled with: the addon, the scope, and the entity when there is one. */
+function trailFor(core: Runtime, player: Player, target: OpenTarget): string {
+  if (target.kind !== 'config' || target.addonId === undefined) { return ''; }
+
+  const { resolve, t } = translationsFor(core.translations.forPlayer(player));
+  const nameKey = core.registry.get(target.addonId)?.packName ?? target.addonId;
+  const segments = [resolve(nameKey) ?? nameKey];
+
+  if (target.scope !== undefined) {
+    segments.push(target.scope === 'server'
+      ? t($ => $.scope.server.label)
+      : target.scope === 'dimension' ? t($ => $.scope.dimension.label) : t($ => $.scope.player.label));
+  }
+
+  if (target.scope !== 'server' && target.scopeId !== undefined) {
+    segments.push(entityNameFor(target.scope, target.scopeId));
+  }
+
+  return segments.join(' > ');
+}
+
+/** What a dimension or player is called on screen: the player's name, the dimension's id. */
+function entityNameFor(scope: 'dimension' | 'player' | undefined, entityId: string): string {
+  return scope === 'player' ? world.getAllPlayers().find(candidate => candidate.id === entityId)?.name ?? entityId : entityId;
+}
+
 /**
  * Shows the compiled editor for a resolved scope when this build carries it
  * and the scope's top level fits it. False when the serialized app has to
  * draw it instead.
  */
 function presentCompiledEditor(core: Runtime, player: Player, target: OpenTarget, values: Record<string, unknown>): boolean {
-  if (target.kind !== 'config' || target.addonId === undefined || target.scope === undefined) { return false; }
+  if (target.kind !== 'config' || target.addonId === undefined || target.scope === undefined || target.list !== undefined) { return false; }
 
   const accessor = core.config.of(target.addonId, { actorId: player.id });
 
   if (!accessor) { return false; }
 
-  const { resolve, t } = translationsFor(core.translations.forPlayer(player));
-  const nameKey = core.registry.get(target.addonId)?.packName ?? target.addonId;
-  const scopeLabel = target.scope === 'server'
-    ? t($ => $.scope.server.label)
-    : target.scope === 'dimension' ? t($ => $.scope.dimension.label) : t($ => $.scope.player.label);
-  const title = `${resolve(nameKey) ?? nameKey} > ${scopeLabel}`;
-  const model = scopeModel(accessor, { scope: target.scope, entityId: target.scopeId, path: '', title }, values);
+  const title = target.trail ?? trailFor(core, player, target);
+  const model = scopeModel(accessor, { scope: target.scope, entityId: target.scopeId, path: target.path ?? '', title }, values);
 
   if (model === undefined) { return false; }
 
@@ -287,8 +347,11 @@ function scopeHoldsOnlySections(core: Runtime, player: Player, target: OpenTarge
 
   if (!accessor) { return false; }
 
-  return isPureSection(buildSectionTree(
+  const root = buildSectionTree(
     filterScope(getScopedSchema(accessor), target.scope),
     filterScopeGroups(getScopedGroups(accessor), target.scope),
-  ));
+  );
+  const section = findSection(root, target.path ?? '');
+
+  return section !== undefined && isPureSection(section);
 }

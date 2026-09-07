@@ -227,11 +227,20 @@ function makeTextMeasure(element: JSX.Element): MeasureFunc | undefined {
     return undefined;
   }
 
-  return availableWidth => measureText({
-    text: processOverflowText(td, availableWidth),
-    font: td.font,
-    fontSize: td.scale,
-  });
+  return (availableWidth) => {
+    const measured = measureText({
+      text: processOverflowText(td, availableWidth),
+      font: td.font,
+      fontSize: td.scale,
+    });
+
+    // A live overflow text reserves its widest content the way a plain one
+    // does, within the box it was granted: the string it was measured with is
+    // only what it said first.
+    const reserved = reserveLiveText ? Math.min(reservedWidth(td), availableWidth) : 0;
+
+    return reserved > measured.width ? { ...measured, width: reserved } : measured;
+  };
 }
 
 /**

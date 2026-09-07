@@ -27,7 +27,22 @@ export type OpenCommand = 'list' | 'guide' | 'config';
 export type OpenTarget
   = | { kind: 'list'; addonId?: string }
     | { kind: 'guide'; addonId?: string }
-    | { kind: 'config'; addonId?: string; scope?: ConfigScope; scopeId?: string };
+    | {
+      kind: 'config';
+      addonId?: string;
+      scope?: ConfigScope;
+      scopeId?: string;
+      /**
+       * A level of the scope's config tree, as its dot-path; `''` or absent
+       * is the scope root. Set by the screens that walk the tree, never by a
+       * command.
+       */
+      path?: string;
+      /** A list setting to edit, as its dot-path within the scope. Set by the screens, never by a command. */
+      list?: string;
+      /** The trail the screen is titled with, when the caller already resolved it. */
+      trail?: string;
+    };
 
 /** Positional read that tolerates `undefined`, `null`, and anything non-string. */
 function stringAt(args: readonly unknown[], index: number): string | undefined {

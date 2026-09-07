@@ -21,13 +21,13 @@ const { spacing, fontColor } = theme.tokens;
 const ICON_RESET = 'textures/ui/config/reset';
 
 /** Characters the live addon name reserves. */
-const NAME_MAX = 24;
+const NAME_MAX = 16;
 
 /** The reset button's edge: the row's height, so it reads as part of the row. */
 const RESET_SIZE = 24;
 
-// Baked in the package's default locale; keys localize on the client.
-const { key } = i18n;
+// Keys localize on the client; a string that takes a colour code bakes in the package's default locale.
+const { key, t } = i18n;
 
 export interface PickerModel {
   /** The addon's display name, resolved for the viewing player. */
@@ -55,7 +55,7 @@ export const ScopePicker: FunctionComponent<ScopePickerProps> = ({ model = EMPTY
 
   return (
     <Card variant={'raised'} width={FRAME.width} height={FRAME.height} flexDirection={'column'} padding={0} gap={0}>
-      <Header title={model.addonName} titleMaxLength={NAME_MAX} breadcrumbs={[key($ => $.config.breadcrumb)]} onBack={model.onBack} onClose={exit} />
+      <Header title={model.addonName} titleMaxLength={NAME_MAX} breadcrumbs={[key($ => $.config.breadcrumb)]} onBack={(event): unknown => model.onBack?.(event)} onClose={exit} />
       <Panel flexDirection={'column'} gap={spacing.xs} padding={spacing.sm}>
         {hasServer && (
           <Panel flexDirection={'row'} alignItems={'stretch'} gap={spacing.xs}>
@@ -75,7 +75,7 @@ export const ScopePicker: FunctionComponent<ScopePickerProps> = ({ model = EMPTY
         )}
         {isEmpty && (
           <Panel justifyContent={'center'} alignItems={'center'} padding={spacing.lg}>
-            <Text>{`${fontColor.muted}${key($ => $.config.empty)}`}</Text>
+            <Text>{`${fontColor.muted}${t($ => $.config.empty)}`}</Text>
           </Panel>
         )}
       </Panel>

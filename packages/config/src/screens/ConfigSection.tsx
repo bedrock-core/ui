@@ -15,7 +15,7 @@ import {
   type SectionNode,
 } from '../config/schema';
 import { openList, openSection } from '../navigation/openConfig';
-import { backToPicker } from '../navigation/back';
+import { backToParent } from '../navigation/back';
 import type { AppScreen } from '../navigation/routes';
 import { Missing } from './Missing';
 
@@ -63,7 +63,7 @@ export function ConfigSection({ navigation, route }: AppScreen<'ConfigSection'>)
 
   return (
     <Card flexDirection={'column'} padding={0} gap={0}>
-      <Header {...splitBreadcrumb(breadcrumb)} onBack={(): unknown => backToPicker(navigation, core, player, addonId)} onClose={exit} />
+      <Header {...splitBreadcrumb(breadcrumb)} onBack={(): unknown => backToParent(navigation, core, player, { addonId, scope, entityId, path, breadcrumb })} onClose={exit} />
       <Panel flexGrow={1} padding={spacing.sm}>
         <Scroll>
           <Panel flexDirection={'column'} gap={spacing.xs}>
