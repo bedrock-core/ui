@@ -25,7 +25,7 @@ export const FRAMEWORK_ADDON_ID = 'bedrock-core';
 export function guideReferenceFor(core: Runtime, addonId: string): GuideReference | undefined {
   if (addonId === FRAMEWORK_ADDON_ID) { return FRAMEWORK_GUIDE; }
 
-  const stored = core.guides.referenceOf(addonId);
+  const stored = core.guides.of(addonId);
 
   return isGuideReference(stored) ? stored : undefined;
 }
@@ -37,7 +37,7 @@ export function guideReferenceFor(core: Runtime, addonId: string): GuideReferenc
 export function manifestFor(core: Runtime, addonId: string): GuideManifest | undefined {
   if (addonId === FRAMEWORK_ADDON_ID) { return undefined; }
 
-  const stored = core.guides.of(addonId);
+  const stored = core.guides.manifest.of(addonId);
 
   return isGuideManifest(stored) ? stored : undefined;
 }
