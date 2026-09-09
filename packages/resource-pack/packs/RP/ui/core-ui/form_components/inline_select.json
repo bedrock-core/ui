@@ -61,6 +61,25 @@
 		"size": [0, 0],
 		"visible": false
 	},
+	// ── The compiled row toggle ─────────────────────────────────────────────────────
+	// A compiled inline select places its rows itself: each is this toggle at the rect
+	// the build solved, carrying its `collection_index` in custom_dropdown and its four
+	// looks as literal state children. Every variable toggle_base's bindings read is
+	// fixed HERE — a $variable set where a compiled screen mounts a control does not
+	// reach the bindings of the definition it references — so the mount carries only
+	// literals: the row, the rect, the faces.
+	"compiled_option_toggle@core_ui_form_components.toggle_base": {
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"layer": 2,
+		"$radio_toggle_group": true,
+		"$toggle_name": "custom_dropdown_radio_toggle",
+		"$toggle_binding_type": "collection",
+		"$toggle_binding_condition": "always",
+		"$toggle_grid_collection_name": "custom_dropdown",
+		"$toggle_state_binding_name": "#custom_radio_toggled",
+		"$toggle_details_binding_type": "collection_details"
+	},
 	// Factory host for the inline rows — the PROVEN main-form pattern (a collection_panel
 	// generating one row frame per option), NOT the popup's stack_panel radio group.
 	// TRAP: inline rows SELF-POSITION from blob geometry, so each row needs its own [1,1]

@@ -1,13 +1,14 @@
 import {
-  labelFontFields,
+  fallbackGroupDefaults, isGroupDefaults, labelFontFields,
   MODAL_DROPDOWN_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE,
-  MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
+  MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE, optionElements, optionLabelPosition, readOption,
 } from '@bedrock-core/ui-runtime/compile';
 import type { JSX } from '@bedrock-core/ui-runtime';
 import { childElements } from '@bedrock-core/ui-runtime/compile';
 import { FONT_SIZE, FULL, layerOf, num, offsetOf, sizeOf, str, topLeft, visibilityOf } from './shared';
 import type { Control, ControlEntry } from '../jsonui';
-import type { NodeBase, NodeDefinition } from './types';
+import type { Rect } from '../ir';
+import type { LowerContext, NodeBase, NodeDefinition } from './types';
 
 /** The collection a modal's rows live on. */
 export const MODAL_COLLECTION = 'custom_form';
@@ -40,8 +41,18 @@ export const ROW: Readonly<Record<string, string>> = {
   [MODAL_SLIDER_SLOT_TYPE]: 'core_ui_form_components.slider',
   [MODAL_DROPDOWN_SLOT_TYPE]: 'core_ui_form_components.dropdown',
   [MODAL_INPUT_SLOT_TYPE]: 'core_ui_form_components.input',
-  [MODAL_INLINE_SELECT_SLOT_TYPE]: 'core_ui_form_components.dropdown',
 };
+
+/**
+ * The toggle one option of a compiled inline select is: the shared radio
+ * toggle over the engine's `custom_dropdown` collection, with every variable
+ * the toggle's bindings read fixed in the definition itself. The screen
+ * mounts it with literals only — its row, its rect and its state faces.
+ */
+export const INLINE_OPTION_TOGGLE = 'core_ui_form_components.compiled_option_toggle';
+
+/** The invisible native dropdown that owns an inline select's options, mounted in place. */
+export const INLINE_STUB = 'core_ui_form_components.inline_dropdown_toggle_stub';
 
 /**
  * What a wrapper needs when there is no payload behind it.
@@ -125,7 +136,6 @@ export const NEEDS_DECODE_REPLACED: ReadonlySet<string> = new Set([
   MODAL_SLIDER_SLOT_TYPE,
   MODAL_INPUT_SLOT_TYPE,
   MODAL_DROPDOWN_SLOT_TYPE,
-  MODAL_INLINE_SELECT_SLOT_TYPE,
 ]);
 
 export const NO_DECODE = {
@@ -237,12 +247,48 @@ const facesOf = (props: JSX.Props): Record<string, string> => {
  * as well: one control per field the screen actually has, rather than the
  * factory's machinery over the whole collection.
  */
+/**
+ * One option of an inline select, as the build laid it out: its row inside
+ * the field, and the look of each state. An inline select's rows cannot
+ * position themselves the way the interpreter's do — a size or an offset
+ * read through a binding is inert under a compiled mount — so the compile
+ * places each one at its rect, and draws its faces from the author's
+ * textures rather than decoding them.
+ */
+export interface InlineOption {
+  /** The row, relative to the field's own rect. */
+  rect: Rect;
+  label: string;
+  /** Where the label sits in the row: the build's alignment, as an offset from the row's top-left. */
+  labelX: number;
+  labelY: number;
+  fontType: string;
+  fontScaleFactor: number;
+  /** Row faces per state; `''` draws nothing. */
+  background: string;
+  backgroundHover: string;
+  backgroundSelected: string;
+  /** Bullet glyphs per state, at the row's left middle; `''` draws nothing. */
+  bullet: string;
+  bulletSelected: string;
+  bulletHover: string;
+  bulletSelectedHover: string;
+  bulletWidth: number;
+  bulletHeight: number;
+}
+
+/** The state of an option a face is drawn for. */
+export type InlineOptionState = 'rest' | 'selected' | 'hover' | 'selectedHover';
+
 export interface FieldNode extends NodeBase {
   kind: 'field';
   /** Which native control this is: the vanilla row definition it mounts. */
   field: string;
   /** Row in `custom_form`, and the `formValues` slot the answer arrives in. */
   address: number;
+  /** An inline select's options, placed; and which one is selected at rest. */
+  options?: InlineOption[];
+  selected?: number;
   /** The author's textures, as the variables the mounted control reads. */
   faces: Record<string, string>;
   /** `font_scale_factor` for the labels inside the control, over the `small` base. */
@@ -284,6 +330,114 @@ const currentOptionLabel = (element: JSX.Element): string => {
 
   return current === undefined ? value : str(current.props.label, value);
 };
+
+/** A radio bullet's left inset, then the gap to the label; the writer's own numbers. */
+const LABEL_GAP = 4;
+
+/**
+ * An inline select's options as the layout placed them, read the way the
+ * runtime's writer reads them, so the rows the compile draws are the rows
+ * the engine's selection is numbered by.
+ */
+const inlineOptionsOf = (element: JSX.Element, ctx: LowerContext): InlineOption[] => {
+  const defaults = isGroupDefaults(element.nativeArgs?.['groupDefaults'])
+    ? element.nativeArgs['groupDefaults']
+    : fallbackGroupDefaults();
+
+  return optionElements(element.props.children).map((option) => {
+    const data = readOption(option, defaults, ctx.own.x, ctx.own.y);
+    const { style, geometry } = data;
+    const label = optionLabelPosition(
+      data.text, style, geometry.width, geometry.height, style.bulletTexture === '' ? LABEL_GAP : style.bulletWidth + LABEL_GAP,
+    );
+
+    return {
+      rect: { x: geometry.x, y: geometry.y, width: geometry.width, height: geometry.height },
+      label: data.text,
+      labelX: label.x,
+      labelY: label.y,
+      fontType: style.fontType,
+      fontScaleFactor: style.fontScaleFactor,
+      background: style.background,
+      backgroundHover: style.backgroundHover,
+      backgroundSelected: style.backgroundSelected,
+      bullet: style.bulletTexture,
+      bulletSelected: style.bulletSelectedTexture,
+      bulletHover: style.bulletHoverTexture,
+      bulletSelectedHover: style.bulletSelectedHoverTexture,
+      bulletWidth: style.bulletWidth,
+      bulletHeight: style.bulletHeight,
+    };
+  });
+};
+
+/** Which option an inline select shows selected at rest: the default value's, else the first. */
+const selectedOf = (element: JSX.Element): number => {
+  const value = str(element.nativeArgs?.['defaultValue']);
+  const index = optionElements(element.props.children).findIndex(option => str(option.props.value) === value);
+
+  return Math.max(0, index);
+};
+
+/**
+ * One option's look in one state: its row face, its bullet and its label.
+ * The face document draws the rest state and the selected one; the modal
+ * host puts all four inside the toggle it stands in.
+ *
+ * @param option - The option, as placed.
+ * @param state - Which of its looks.
+ */
+export const inlineOptionFace = (option: InlineOption, state: InlineOptionState): ControlEntry[] => {
+  const selected = state === 'selected' || state === 'selectedHover';
+  const background = selected ? option.backgroundSelected : state === 'hover' ? option.backgroundHover : option.background;
+  const bullet = state === 'rest'
+    ? option.bullet
+    : state === 'selected'
+      ? option.bulletSelected
+      : state === 'hover' ? option.bulletHover : option.bulletSelectedHover;
+  const glyph: ControlEntry[] = bullet === ''
+    ? []
+    : [{
+        bullet: {
+          type: 'image',
+          texture: bullet,
+          size: [option.bulletWidth, option.bulletHeight],
+          anchor_from: 'left_middle',
+          anchor_to: 'left_middle',
+          keep_ratio: false,
+          layer: 2,
+        },
+      }];
+  const label: ControlEntry[] = option.label === ''
+    ? []
+    : [{
+        label: {
+          type: 'label',
+          size: ['default', 'default'],
+          offset: [option.labelX, option.labelY],
+          ...topLeft,
+          text: option.label,
+          localize: false,
+          font_type: option.fontType,
+          font_size: FONT_SIZE,
+          font_scale_factor: option.fontScaleFactor,
+          layer: 3,
+        },
+      }];
+
+  return [...surface(background), ...glyph, ...label];
+};
+
+/** An inline select at rest: every option row in place, the selected one drawn so. */
+const inlineFace = (node: FieldNode): ControlEntry[] => (node.options ?? []).map((option, index) => ({
+  [`option_${String(index)}`]: {
+    type: 'panel',
+    size: sizeOf(option.rect),
+    offset: offsetOf(option.rect),
+    ...topLeft,
+    controls: inlineOptionFace(option, index === node.selected ? 'selected' : 'rest'),
+  },
+}));
 
 /** What each kind of field shows at rest. */
 const initialOf = (element: JSX.Element, type: string): FieldNode['initial'] => {
@@ -382,6 +536,9 @@ const restOf = (node: FieldNode): ControlEntry[] => {
       ];
     }
 
+    case MODAL_INLINE_SELECT_SLOT_TYPE:
+      return [...surface(node.faces['$static_texture']), ...inlineFace(node)];
+
     default:
       return [...surface(node.faces['$static_texture']), ...caption(node.initial.text ?? '', node)];
   }
@@ -413,6 +570,9 @@ export const fieldDefinition: NodeDefinition<FieldNode> = {
       initial: initialOf(element, type),
       ...type === MODAL_SLIDER_SLOT_TYPE
         ? { steps: sliderSteps(element), value: sliderValue(element) }
+        : {},
+      ...type === MODAL_INLINE_SELECT_SLOT_TYPE
+        ? { options: inlineOptionsOf(element, ctx), selected: selectedOf(element) }
         : {},
       // The popup is data the CELL cannot draw; the host's overlay reads it
       // back off this node. `popupHeight` is FormDropdown's own computation

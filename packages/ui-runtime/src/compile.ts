@@ -61,6 +61,10 @@ export { BUTTON_TYPE, isExitButton } from './components/Button';
 export { CONTAINER_TYPE, containerEntity, containerHandlers, containerRoot } from './components/Container';
 export { IMAGE_TYPE, liveTexture } from './components/Image';
 export { EMBED_SLOT_TYPE, embedMarker, embedPlacementOf, embedSlotIndex, entryBaseOf, isEmbedRoot, isEmbedSlot } from './components/Embed';
+export {
+  fallbackGroupDefaults, isGroupDefaults, optionElements, optionLabelPosition, readOption,
+} from './components/Form/optionPayload';
+export type { GroupOptionDefaults, OptionData } from './components/Form/optionPayload';
 export type { EmbedPlacement } from './components/Embed';
 export { PANEL_TYPE } from './components/Panel';
 export { SCROLL_SLOT_TYPE, SCROLL_TRACK_WIDTH } from './components/Scroll';

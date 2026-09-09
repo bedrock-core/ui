@@ -6,7 +6,8 @@ import { type ButtonNode, faceSignature } from '../../nodes/button';
 import { collectKind } from '../../nodes';
 import type { Binding, Control, ControlEntry } from '../../jsonui';
 import {
-  type FieldNode, MODAL_COLLECTION, NEEDS_DECODE_REPLACED, NO_DECODE, popupHostOf, ROW, sliderGeometry,
+  type FieldNode, INLINE_OPTION_TOGGLE, INLINE_STUB, type InlineOption, inlineOptionFace, type InlineOptionState,
+  MODAL_COLLECTION, NEEDS_DECODE_REPLACED, NO_DECODE, popupHostOf, ROW, sliderGeometry,
 } from '../../nodes/field';
 import type { ImageNode } from '../../nodes/image';
 import type { ListNode } from '../../nodes/list';
@@ -422,7 +423,72 @@ const listRows = (node: ListNode, entry: ControlEntry, ctx: Emit): ControlEntry 
  * declaring `collection_name`, which is why the widget is wrapped rather than
  * carrying the index itself.
  */
-const fieldRow = (node: FieldNode, entry: ControlEntry, ctx: Emit): ControlEntry => ({
+/**
+ * A compiled inline select: the engine's selection machinery with the rows
+ * placed by the build.
+ *
+ * The interpreter's rows position themselves from each option's blob, through
+ * size and offset bindings that are inert under a compiled mount. So the
+ * compile places them: an invisible native dropdown owns the row's
+ * `custom_dropdown` collection and names its content control in place — the
+ * interpreter's own stub, which never opens — and inside that content each
+ * option is the shared radio toggle at its rect, carrying its index in the
+ * collection and the four looks the build drew for it. The toggle's own
+ * bindings live in its definition, where the variables they read are fixed.
+ */
+const inlineSelectRow = (node: FieldNode, entry: ControlEntry): ControlEntry => {
+  const content = `content_${String(node.address)}`;
+  const offscreen = `offscreen_${String(node.address)}`;
+  // The toggle's eight state children; the locked ones look like rest and selected.
+  const LOOKS: readonly [string, InlineOptionState][] = [
+    ['unchecked', 'rest'], ['checked', 'selected'], ['unchecked_hover', 'hover'], ['checked_hover', 'selectedHover'],
+    ['unchecked_locked', 'rest'], ['checked_locked', 'selected'], ['unchecked_locked_hover', 'rest'], ['checked_locked_hover', 'selected'],
+  ];
+  const states = (option: InlineOption): ControlEntry[] => LOOKS.map(([name, look]) => ({
+    [name]: { type: 'panel', size: FULL, ...topLeft, controls: inlineOptionFace(option, look) },
+  }));
+  const rows: ControlEntry[] = (node.options ?? []).map((option, index) => ({
+    [`option_${String(index)}@${INLINE_OPTION_TOGGLE}`]: {
+      size: sizeOf(option.rect),
+      offset: [option.rect.x, option.rect.y],
+      collection_index: index,
+      controls: states(option),
+    },
+  }));
+
+  return {
+    [node.name]: {
+      type: 'stack_panel',
+      orientation: 'vertical',
+      ...placed(entry),
+      collection_name: MODAL_COLLECTION,
+      controls: [{
+        field: {
+          type: 'panel',
+          size: FULL,
+          ...topLeft,
+          collection_index: node.address,
+          bindings: [{ binding_type: 'collection_details', binding_collection_name: MODAL_COLLECTION }],
+          controls: [
+            {
+              [`stub@${INLINE_STUB}`]: {
+                type: 'dropdown',
+                ...topLeft,
+                dropdown_name: 'custom_dropdown',
+                dropdown_content_control: content,
+                dropdown_area: offscreen,
+              },
+            },
+            { [offscreen]: { type: 'panel', size: [0, 0], visible: false } },
+            { [content]: { type: 'panel', size: FULL, ...topLeft, controls: rows } },
+          ],
+        },
+      }],
+    },
+  };
+};
+
+const fieldRow = (node: FieldNode, entry: ControlEntry, ctx: Emit): ControlEntry => (node.field === MODAL_INLINE_SELECT_SLOT_TYPE ? inlineSelectRow(node, entry) : {
   [node.name]: {
     type: 'stack_panel',
     orientation: 'vertical',
@@ -440,11 +506,6 @@ const fieldRow = (node: FieldNode, entry: ControlEntry, ctx: Emit): ControlEntry
         // `"$travel_w"` is a string with neither: the parser rejects the
         // whole file with "Dangling number (no % or px in Size)".
         ...node.field === MODAL_SLIDER_SLOT_TYPE ? sliderGeometry(node) : {},
-        // Reads the engine's synced selection instead of decoding one, and
-        // mounts a popup of its own: the shared one gates itself on a `#type`
-        // it decodes out of the cell, which a compiled screen does not send,
-        // so it never opens.
-        ...node.field === MODAL_INLINE_SELECT_SLOT_TYPE ? { $compiled: true } : {},
         // The engine hosts the popup box in the control this names, found
         // BY NAME across the screen: the screen's own popup host, so the
         // name resolves wherever the screen is mounted (the host emits it

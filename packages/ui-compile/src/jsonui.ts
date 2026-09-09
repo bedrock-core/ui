@@ -220,6 +220,12 @@ export interface Control {
   toggle_on_button?: string;
   toggle_off_button?: string;
 
+  /* dropdown */
+  /** Documented. The collection the dropdown's options fill, and the controls it opens into. */
+  dropdown_name?: string;
+  dropdown_content_control?: string;
+  dropdown_area?: string;
+
   /* focus */
   focus_magnet_enabled?: boolean;
   focus_wrap_enabled?: boolean;

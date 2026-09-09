@@ -20,7 +20,7 @@ const FRAME = { width: 300, height: 200 } as const;
 const HEADER_HEIGHT = 24;
 const ROWS_MAX = 12;
 const ROW_HEIGHT = 22;
-const NAME_MAX = 16;
+const NAME_MAX = 22;
 const COUNT_MAX = 12;
 /** One line of the default font. */
 const COUNT_HEIGHT = 10;

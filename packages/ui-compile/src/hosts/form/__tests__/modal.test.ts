@@ -218,3 +218,87 @@ describe('compiling a modal screen', () => {
     expect(json).not.toContain('ore-styled');
   });
 });
+
+describe('an inline select on a compiled modal', () => {
+  const Picker = (): JSX.Element => Form({
+    children: Panel({
+      padding: 6,
+      children: [
+        Form.InlineSelect({
+          name: 'view',
+          defaultValue: 'third',
+          bullet: 'mine/off',
+          bulletSelected: 'mine/on',
+          bulletWidth: 8,
+          bulletHeight: 8,
+          flexDirection: 'column',
+          gap: 2,
+          width: 120,
+          children: [
+            Form.Option({ value: 'first', label: 'First person', width: '100%', height: 17 }),
+            Form.Option({ value: 'third', label: 'Third person', width: '100%', height: 17 }),
+          ],
+        }),
+        Form.Button({ type: 'submit', label: 'Save' }),
+      ],
+    }),
+  });
+
+  const compiled = compileFormScreen(Picker, { namespace: 'a', name: 'picker' });
+
+  const named = (document: Record<string, unknown>, wanted: (name: string) => boolean): [string, Control][] => {
+    const found: [string, Control][] = [];
+
+    eachControl(document as Parameters<typeof eachControl>[0], (name, control) => {
+      if (wanted(name)) {
+        found.push([name, control]);
+      }
+    });
+
+    return found;
+  };
+
+  it('draws every option row in place, the default one selected', () => {
+    const rows = named(compiled.preview.document, name => name.startsWith('option_'));
+
+    expect(rows.map(([name]) => name)).toEqual(['option_0', 'option_1']);
+    expect(rows[0]?.[1].offset).toEqual([0, 0]);
+    expect(rows[1]?.[1].offset).toEqual([0, 19]);
+    expect(rows[0]?.[1].size).toEqual([120, 17]);
+
+    const bullets = rows.map(([, row]) => row.controls?.find(entry => 'bullet' in entry)?.['bullet']?.texture);
+
+    expect(bullets).toEqual(['mine/off', 'mine/on']);
+
+    const labels = rows.map(([, row]) => row.controls?.find(entry => 'label' in entry)?.['label']);
+
+    expect(labels[0]?.text).toBe('First person');
+    // Past the bullet and its gap, vertically centred in the row.
+    expect(labels[0]?.offset?.[0]).toBe(12);
+  });
+
+  it('stands the engine selection in: an in-place dropdown owning placed radio toggles', () => {
+    const [stub] = named(compiled.document, name => name.startsWith('stub@'));
+    const toggles = named(compiled.document, name => name.startsWith('option_'));
+
+    expect(stub?.[1].type).toBe('dropdown');
+    expect(stub?.[1].dropdown_name).toBe('custom_dropdown');
+    expect(stub?.[1].dropdown_content_control).toBe('content_0');
+    expect(toggles.map(([name]) => name.split('@')[1])).toEqual([
+      'core_ui_form_components.compiled_option_toggle',
+      'core_ui_form_components.compiled_option_toggle',
+    ]);
+    expect(toggles.map(([, toggle]) => toggle.collection_index)).toEqual([0, 1]);
+    expect(toggles[1]?.[1].offset).toEqual([0, 19]);
+    expect(toggles[0]?.[1].controls?.map(entry => Object.keys(entry)[0])).toEqual([
+      'unchecked', 'checked', 'unchecked_hover', 'checked_hover',
+      'unchecked_locked', 'checked_locked', 'unchecked_locked_hover', 'checked_locked_hover',
+    ]);
+  });
+
+  it('carries no variable into the mounted subtree', () => {
+    const [field] = named(compiled.document, name => name === 'field');
+
+    expect(JSON.stringify(field?.[1])).not.toContain('"$');
+  });
+});

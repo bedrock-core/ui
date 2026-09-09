@@ -38,15 +38,15 @@ const spawnLocker = (button: Block): void => {
 const isPlayer = (source: ButtonPushAfterEvent['source'] | undefined): source is Player =>
   source?.typeId === MinecraftEntityTypes.Player;
 
-/** Everyone online but the viewer, each row a visit to where they stand. */
-const playersFor = (viewer: Player): PlayerRow[] => world.getAllPlayers()
-  .filter(other => other.id !== viewer.id)
-  .map(other => ({
-    name: other.name,
-    onVisit: ({ player }: PressEvent): void => {
+/** Everyone online, the viewer included; a row is a visit to where that player stands. */
+const playersFor = (viewer: Player): PlayerRow[] => world.getAllPlayers().map(other => ({
+  name: other.id === viewer.id ? `${other.name} (you)` : other.name,
+  onVisit: ({ player }: PressEvent): void => {
+    if (other.id !== player.id) {
       player.teleport(other.location, { dimension: other.dimension });
-    },
-  }));
+    }
+  },
+}));
 
 const savePreferences = ({ player, values }: SubmitEvent): void => {
   player.sendMessage(`§a${t($ => $.ui.preferences.saved)}§r ${JSON.stringify(values)}`);

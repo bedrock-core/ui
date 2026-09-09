@@ -155,6 +155,16 @@ component.
 one `Radio`, one `ToggleButtonGroup`, one `Slider`, one `Dropdown`, one `Input`. `Form`
 remains as the root.
 
+**Host-specific props, typed by the host.** A component is declared once, with the props every
+host shares. Where one host takes more — the modal's `name` on a field, the chest's `role` on a
+slot — those props are not a second component (`Form.Toggle` beside `Toggle`); they are typed
+onto the one component by the host the element sits in. Two ways to know the host, both
+decided in B: the root's type narrows its subtree, so a `Toggle` under `<Form>` shows the
+modal's props; and a component library that renders into a host it does not own wraps its
+fragment in an expected-host marker (`<Expect host="form-modal">`), which types the same way.
+Outside any host a component shows only the shared props. Nothing is declared twice: the
+basics, and the combinations the hosts add. *Decided.*
+
 ## The gallery
 
 Every screen type is looked at as faces only before any host serves it. The dev profile
@@ -230,7 +240,7 @@ what landed.
 | A2 | **Gallery** ✅ | the preview mount on the action form; the generated gallery screen; `openGallery`; chest cells as frames | 3 days |
 | A3 | **Rect guard** ✅ | the diff after host emit, run inside every compile, so the tests and `yarn preflight` both hit it | 1 day |
 | A4 | **Visual pass** | starts from a clean slate: every demo screen in the reference pack's BP is deleted, and one screen per family is written from scratch as that family is signed off in game, fixes in `ore-styled` only. Families: a chest screen; guide home and one page; the config screens (scope, menu, list, picker, confirm, editor); the addon list and one addon page, with `Embed` reworked to the area (above); one modal with every field kind; one action form with a list and a scroll | 3 days |
-| B | **Host roots and the node layer** | `<Screen>`; `render` and `createContainerScreen` refuse non-host roots; the mechanism table per host in place of the flat `offers` list; the modal lowers the plain set to native fields; `ore-styled` duplicates removed; the node layer reduced to primitives and behaviours, with `Tabs`, `Disclosure`, `List`, the close button and `Form.Button` as compositions | 6 days |
+| B | **Host roots and the node layer** | `<Screen>`; `render` and `createContainerScreen` refuse non-host roots; the mechanism table per host in place of the flat `offers` list; the modal lowers the plain set to native fields; host-specific props typed by the root or an expected-host marker, `Form.*` and the `ore-styled` duplicates removed; the node layer reduced to primitives and behaviours, with `Tabs`, `Disclosure`, `List`, the close button and `Form.Button` as compositions | 6 days |
 | C | **References** | `<Link to>`; the reference feed and `navigate('<ns>:<screen>')`; guides on it, `createGuide` deleted; generated key types | 5 days |
 | D | **Delete the interpreter** | numbers as sliders on the config editor; serializer, writers, presenters and decoders deleted; state values readonly; pack minor | 3 days |
 | E | **Build flow and the book** | the single `core` filter finished; CLI template; the docs site replaces this folder; then the book host, drawn from faces alone | after D |
