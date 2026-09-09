@@ -195,7 +195,10 @@ describe('compiling a modal screen', () => {
     // The routers hang in a host named after the screen, which every dropdown
     // of the screen names as its popup area — resolvable wherever the screen
     // is mounted, unlike the library container's host.
-    expect((document['screen']?.controls ?? []).some(entry => 'a_choosing_popups' in entry)).toBe(true);
+    const screen = document['screen'];
+    const entries = typeof screen === 'object' && 'controls' in screen ? screen.controls ?? [] : [];
+
+    expect(entries.some(entry => 'a_choosing_popups' in entry)).toBe(true);
   });
 
   it('takes the faces of a field from the author, never from the library', () => {
@@ -279,17 +282,21 @@ describe('an inline select on a compiled modal', () => {
 
   it('stands the engine selection in: an in-place dropdown owning placed radio toggles', () => {
     const [stub] = named(compiled.document, name => name.startsWith('stub@'));
-    const toggles = named(compiled.document, name => name.startsWith('option_'));
+    const rows = named(compiled.document, name => name.startsWith('option_'));
+    const toggles = named(compiled.document, name => name.startsWith('toggle@'));
 
     expect(stub?.[1].type).toBe('dropdown');
     expect(stub?.[1].dropdown_name).toBe('custom_dropdown');
     expect(stub?.[1].dropdown_content_control).toBe('content_0');
+    // The index is the row panel's: a toggle takes no collection_index.
+    expect(rows.map(([, row]) => row.collection_index)).toEqual([0, 1]);
+    expect(rows[1]?.[1].offset).toEqual([0, 19]);
     expect(toggles.map(([name]) => name.split('@')[1])).toEqual([
       'core_ui_form_components.compiled_option_toggle',
       'core_ui_form_components.compiled_option_toggle',
     ]);
-    expect(toggles.map(([, toggle]) => toggle.collection_index)).toEqual([0, 1]);
-    expect(toggles[1]?.[1].offset).toEqual([0, 19]);
+    // A radio group of this row's own: two inline selects on one screen select apart.
+    expect(toggles.map(([, toggle]) => toggle.toggle_name)).toEqual(['custom_dropdown_radio_toggle_0', 'custom_dropdown_radio_toggle_0']);
     expect(toggles[0]?.[1].controls?.map(entry => Object.keys(entry)[0])).toEqual([
       'unchecked', 'checked', 'unchecked_hover', 'checked_hover',
       'unchecked_locked', 'checked_locked', 'unchecked_locked_hover', 'checked_locked_hover',

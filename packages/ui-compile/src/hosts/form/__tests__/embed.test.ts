@@ -70,7 +70,9 @@ describe('the embedded side: entries from 1, gated by the marker', () => {
   const compiled = compileFormScreen(Page, { namespace: 'drav0011_economy', name: 'addon' });
 
   it('is laid out against the area, which is its canvas', () => {
-    expect(compiled.document.screen?.size).toEqual([185, 173]);
+    const screen = compiled.document['screen'];
+
+    expect(typeof screen === 'object' && 'size' in screen ? screen.size : undefined).toEqual([185, 173]);
     expect(compiled.embed).toEqual({ frame: [300, 200], offset: [114, 25] });
   });
 

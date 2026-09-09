@@ -432,13 +432,18 @@ const listRows = (node: ListNode, entry: ControlEntry, ctx: Emit): ControlEntry 
  * compile places them: an invisible native dropdown owns the row's
  * `custom_dropdown` collection and names its content control in place — the
  * interpreter's own stub, which never opens — and inside that content each
- * option is the shared radio toggle at its rect, carrying its index in the
- * collection and the four looks the build drew for it. The toggle's own
+ * option is a panel at its rect carrying its index in the collection (an
+ * index is a panel's property, not a toggle's), holding the shared radio
+ * toggle with the four looks the build drew for it. The toggle's own
  * bindings live in its definition, where the variables they read are fixed.
+ *
+ * The radio group is named after the row: every inline select on a screen is
+ * visible at once, and toggles sharing a group name select together.
  */
 const inlineSelectRow = (node: FieldNode, entry: ControlEntry): ControlEntry => {
   const content = `content_${String(node.address)}`;
   const offscreen = `offscreen_${String(node.address)}`;
+  const group = `custom_dropdown_radio_toggle_${String(node.address)}`;
   // The toggle's eight state children; the locked ones look like rest and selected.
   const LOOKS: readonly [string, InlineOptionState][] = [
     ['unchecked', 'rest'], ['checked', 'selected'], ['unchecked_hover', 'hover'], ['checked_hover', 'selectedHover'],
@@ -448,11 +453,19 @@ const inlineSelectRow = (node: FieldNode, entry: ControlEntry): ControlEntry => 
     [name]: { type: 'panel', size: FULL, ...topLeft, controls: inlineOptionFace(option, look) },
   }));
   const rows: ControlEntry[] = (node.options ?? []).map((option, index) => ({
-    [`option_${String(index)}@${INLINE_OPTION_TOGGLE}`]: {
+    [`option_${String(index)}`]: {
+      type: 'panel',
       size: sizeOf(option.rect),
       offset: [option.rect.x, option.rect.y],
+      ...topLeft,
       collection_index: index,
-      controls: states(option),
+      controls: [{
+        [`toggle@${INLINE_OPTION_TOGGLE}`]: {
+          size: FULL,
+          toggle_name: group,
+          controls: states(option),
+        },
+      }],
     },
   }));
 
