@@ -1,5 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Header, MenuRow, Button as OreButton, theme } from '@bedrock-core/ore-styled';
+import type { DisplayText } from '@bedrock-core/i18n';
 import { Image, Panel, Text, useExit, type FunctionComponent, type JSX, type PressEvent } from '@bedrock-core/ui-runtime';
 import { i18n } from '../i18n';
 import type { ConfigScope } from '../types';
@@ -11,9 +12,9 @@ import { FRAME } from './frame';
  * the server row resetting in place.
  *
  * Which rows show is only known when the screen is shown, so each row sits
- * behind a carried visibility and the addon's name is a live title; the
- * labels and hints are keys the client resolves. A scope that is not offered
- * is left out rather than greyed, the way the serialized picker leaves it out.
+ * behind a carried visibility. The addon's name is a live title sent as its
+ * key, which the client resolves like the baked labels and hints. A scope
+ * that is not offered is left out rather than greyed.
  */
 
 const { spacing, fontColor } = theme.tokens;
@@ -30,8 +31,8 @@ const RESET_SIZE = 24;
 const { key, t } = i18n;
 
 export interface PickerModel {
-  /** The addon's display name, resolved for the viewing player. */
-  addonName: string;
+  /** The addon's display name: its key, resolved on the client. */
+  addonName: DisplayText;
   /** The scopes offered, in the order the rows draw them. */
   scopes: readonly ConfigScope[];
   onScope?: (scope: ConfigScope, event: PressEvent) => unknown;
@@ -55,7 +56,7 @@ export const ScopePicker: FunctionComponent<ScopePickerProps> = ({ model = EMPTY
 
   return (
     <Card variant={'raised'} width={FRAME.width} height={FRAME.height} flexDirection={'column'} padding={0} gap={0}>
-      <Header title={model.addonName} titleMaxLength={NAME_MAX} breadcrumbs={[key($ => $.config.breadcrumb)]} onBack={(event): unknown => model.onBack?.(event)} onClose={exit} />
+      <Header segments={[{ text: model.addonName, maxLength: NAME_MAX }, key($ => $.config.breadcrumb)]} onBack={(event): unknown => model.onBack?.(event)} onClose={exit} />
       <Panel flexDirection={'column'} gap={spacing.xs} padding={spacing.sm}>
         {hasServer && (
           <Panel flexDirection={'row'} alignItems={'stretch'} gap={spacing.xs}>

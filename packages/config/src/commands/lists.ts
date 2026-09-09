@@ -5,11 +5,8 @@
  * so chat is the only place it can be edited, and it used to be left out of the command enum
  * entirely for want of a spelling. `set` alone is not that spelling: replacing the whole list to
  * add one entry means retyping everything already in it, and getting one wrong silently drops it.
- * Hence `add` and `remove` beside it. All three end in the same place — a whole array of items.
- *
- * Storage is one flat key holding the array's JSON, which is what the runtime's own flattening
- * does with an array, so a list is patched exactly like a scalar with `JSON.stringify` standing in
- * for the value.
+ * Hence `add` and `remove` beside it. All three end in the same place — a whole array of items,
+ * which is one value and is patched exactly like a scalar.
  *
  * Everything here is pure, so a command callback can refuse a bad item immediately — only the
  * write itself has to wait for a tick it is allowed to run in.
@@ -27,8 +24,8 @@ const SEPARATOR = ',';
 /**
  * The items currently at a dot-path, from the effective values a scope read returns.
  *
- * A scope read already parses a list back into an array, but the stored form is the JSON string;
- * both are accepted so a value that took some other route here is not reported as an empty list.
+ * An array is what a scope read returns; a JSON string is accepted too, so a value that took some
+ * other route here is not reported as an empty list.
  */
 export function readList(values: Record<string, unknown>, path: string): string[] {
   const value = getNestedValue(values, path);

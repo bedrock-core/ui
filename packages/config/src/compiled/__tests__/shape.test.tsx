@@ -6,6 +6,7 @@ import { ConfirmReset, type ConfirmModel } from '../confirm.screen';
 import { AddonList, type AddonListModel } from '../list.screen';
 import { MenuList, type MenuListModel } from '../menu.screen';
 import { ScopePicker, type PickerModel } from '../picker.screen';
+import { ConfigScope, type ScopeModel } from '../scope.screen';
 
 /**
  * A compiled screen is baked from a render with no model, and shown with
@@ -31,7 +32,7 @@ const shapeAgainstBake = <P,>(Screen: FunctionComponent<P>, shown: JSX.Element):
 
 describe('a compiled config screen keeps its shape when shown', () => {
   it('scope picker', () => {
-    const model: PickerModel = { addonName: 'Economy', scopes: ['server', 'dimension', 'player'], onScope: press, onReset: press, onBack: press };
+    const model: PickerModel = { addonName: { translate: 'drav0011_economy.meta.name' }, scopes: ['server', 'dimension', 'player'], onScope: press, onReset: press, onBack: press };
     const { baked, shown } = shapeAgainstBake(ScopePicker, <ScopePicker model={model} />);
 
     expect(shown).toBe(baked);
@@ -39,7 +40,7 @@ describe('a compiled config screen keeps its shape when shown', () => {
 
   it('menu list, with rows, resets and pages', () => {
     const model: MenuListModel = {
-      title: 'Economy > Player',
+      trail: [{ translate: 'drav0011_economy.meta.name' }, { translate: 'core.scope.player.label' }],
       rows: [{ title: 'Steve', subtitle: 'op', reset: true }, { title: 'Alex' }],
       empty: '',
       page: 2,
@@ -55,15 +56,30 @@ describe('a compiled config screen keeps its shape when shown', () => {
   });
 
   it('reset confirmation', () => {
-    const model: ConfirmModel = { title: 'Economy > Server', question: 'Reset?', onConfirm: press, onCancel: press };
+    const model: ConfirmModel = { trail: [{ translate: 'drav0011_economy.meta.name' }, 'Server'], question: 'Reset?', onConfirm: press, onCancel: press };
     const { baked, shown } = shapeAgainstBake(ConfirmReset, <ConfirmReset model={model} />);
+
+    expect(shown).toBe(baked);
+  });
+
+  it('editor, with every row kind', () => {
+    const model: ScopeModel = {
+      trail: [{ translate: 'drav0011_economy.meta.name' }, { translate: 'core.scope.server.label' }, { translate: 'drav0011_economy.config.pricing' }],
+      rows: [
+        { key: 'a', label: { translate: 'drav0011_economy.config.a' }, kind: 'toggle', toggle: true },
+        { key: 'b', label: 'Literal', kind: 'input', text: '3' },
+        { key: 'c', label: { translate: 'drav0011_economy.config.c' }, kind: 'dropdown', options: ['x', 'y'], selected: 'y' },
+      ],
+      onSubmit: press,
+    };
+    const { baked, shown } = shapeAgainstBake(ConfigScope, <ConfigScope model={model} />);
 
     expect(shown).toBe(baked);
   });
 
   it('addon list', () => {
     const model: AddonListModel = {
-      rows: [{ id: 'a', name: 'A', version: '1' }, { id: 'b', name: 'B', version: '2', icon: 'x' }],
+      rows: [{ id: 'a', name: { translate: 'a.meta.name' }, version: '1' }, { id: 'b', name: 'B', version: '2', icon: 'x' }],
       selected: 1,
       main: { kind: 'page', slots: ['m', 't'] },
       onSelect: press,

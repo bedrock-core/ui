@@ -1,7 +1,9 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Card, Divider, Form } from '@bedrock-core/ore-styled';
+import { Card, Divider, Form, Trail, type TrailSegment } from '@bedrock-core/ore-styled';
+import type { DisplayText } from '@bedrock-core/i18n';
 import type { RemoteConfigAccessor } from '@bedrock-core/server-runtime';
 import { List, Panel, Text, useExit, type FunctionComponent, type JSX, type SubmitEvent } from '@bedrock-core/ui-runtime';
+import { TRAIL_LENGTHS } from './frame';
 import { buildNestedPatch } from '../config/nested';
 import { buildSectionTree, filterScope, filterScopeGroups, findSection, formEntries, getScopedGroups, getScopedSchema, type SectionNode } from '../config/schema';
 import { patchScope } from '../config/values';
@@ -25,7 +27,7 @@ import type { ConfigScope as Scope, EntrySchema } from '../types';
 /** Rows a section may hold before the serialized editor takes over. */
 export const ROWS_MAX = 12;
 
-/** The longest label a row carries; longer ones keep the serialized editor. */
+/** Characters a row's label reserves; it is sent as a key, which the client resolves. */
 const LABEL_MAX = 32;
 
 /** The most options a dropdown row draws; more keep the serialized editor. */
@@ -39,7 +41,8 @@ export type RowKind = 'toggle' | 'input' | 'dropdown' | 'heading';
 /** One row of the editor: what it says, which field it shows, and the field's starting value. */
 export interface ScopeRow {
   key: string;
-  label: string;
+  /** The entry's label, a key the client resolves. */
+  label: DisplayText;
   kind: RowKind;
   toggle?: boolean;
   text?: string;
@@ -49,7 +52,8 @@ export interface ScopeRow {
 
 /** What one present fills the screen with. Absent at build, where the shape alone matters. */
 export interface ScopeModel {
-  title: string;
+  /** The trail the editor is titled with, one segment per {@link TRAIL_LENGTHS} slot. */
+  trail: readonly DisplayText[];
   rows: ScopeRow[];
   /** Runs with the submitted values before the screen closes. */
   onSubmit?: (values: SubmitEvent['values']) => void;
@@ -61,6 +65,9 @@ export interface ConfigScopeProps {
 
 /** A row that draws nothing: what the build sees, and what pads a short section. */
 const EMPTY: ScopeRow = { key: '', label: '', kind: 'heading' };
+
+const trailSegments = (trail: readonly DisplayText[] | undefined): TrailSegment[] =>
+  TRAIL_LENGTHS.map((maxLength, index) => ({ text: trail?.[index] ?? '', maxLength }));
 
 /**
  * The screen. Every row is laid out with all of its fields over each other in
@@ -79,7 +86,7 @@ export const ConfigScope: FunctionComponent<ConfigScopeProps> = ({ model }: Conf
   return (
     <Form onSubmit={handleSubmit}>
       <Card variant={'raised'} flexDirection={'column'} gap={0} padding={0} paddingTop={1} paddingBottom={4}>
-        <Text font={'minecraftTen'} scale={1.2} marginLeft={6} marginTop={4} maxLength={LABEL_MAX}>{`§0${model?.title ?? ''}`}</Text>
+        <Trail segments={trailSegments(model?.trail)} marginTop={4} />
         <Panel flexDirection={'column'} gap={4} padding={4}>
           <List
             max={ROWS_MAX}
@@ -113,27 +120,25 @@ export const ConfigScope: FunctionComponent<ConfigScopeProps> = ({ model }: Conf
 
 /** The row an entry becomes, or undefined when no row here can hold it. */
 const rowOf = (key: string, entry: EntrySchema, current: unknown): ScopeRow | undefined => {
-  if (entry.label.length > LABEL_MAX) {
-    return undefined;
-  }
+  const label: DisplayText = { translate: entry.label };
 
   if (entry.type === 'boolean') {
-    return { key, label: entry.label, kind: 'toggle', toggle: Boolean(current) };
+    return { key, label, kind: 'toggle', toggle: Boolean(current) };
   }
 
   if (entry.type === 'number') {
-    return { key, label: entry.label, kind: 'input', text: String(typeof current === 'number' ? current : Number(current ?? 0)) };
+    return { key, label, kind: 'input', text: String(typeof current === 'number' ? current : Number(current ?? 0)) };
   }
 
   if (entry.type === 'string') {
-    return { key, label: entry.label, kind: 'input', text: typeof current === 'string' ? current : String(current ?? '') };
+    return { key, label, kind: 'input', text: typeof current === 'string' ? current : String(current ?? '') };
   }
 
   if (entry.type === 'enum' && entry.options !== undefined && entry.options.length <= OPTIONS_MAX) {
     const options = entry.options;
     const selected = typeof current === 'string' && options.includes(current) ? current : options[0] ?? '';
 
-    return { key, label: entry.label, kind: 'dropdown', options, selected };
+    return { key, label, kind: 'dropdown', options, selected };
   }
 
   return undefined;
@@ -165,10 +170,10 @@ const valueOf = (entry: EntrySchema, raw: unknown): unknown => {
  */
 export function scopeModel(
   accessor: RemoteConfigAccessor,
-  destination: { scope: Scope; entityId?: string; path?: string; title: string },
+  destination: { scope: Scope; entityId?: string; path?: string; trail: readonly DisplayText[] },
   values: Record<string, unknown>,
 ): ScopeModel | undefined {
-  const { scope, entityId, path = '', title } = destination;
+  const { scope, entityId, path = '', trail } = destination;
   const root: SectionNode = buildSectionTree(
     filterScope(getScopedSchema(accessor), scope),
     filterScopeGroups(getScopedGroups(accessor), scope),
@@ -198,7 +203,7 @@ export function scopeModel(
   }
 
   return {
-    title,
+    trail,
     rows,
     onSubmit: (submitted): void => {
       const flat: Record<string, unknown> = {};

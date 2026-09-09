@@ -29,7 +29,7 @@ type Editing = { index: number } | 'new' | null;
  * Splitting the two is what lets a row be pressed at all — with remove on the row itself there
  * was no gesture left for editing, and the destructive action was the easy one to hit.
  *
- * Every change writes immediately. There is no Save: a list is one flat key holding the whole
+ * Every change writes immediately. There is no Save: a list is one value holding the whole
  * array, so each edit is already a complete, valid value. Staging them would only add a way to
  * lose work by backing out, for a screen where every action is one press to undo.
  */
@@ -249,7 +249,7 @@ function ItemEditor({ title, submitLabel, current, options, onApply, onCancel }:
   );
 }
 
-/** A stored list value as strings — an array already, or the JSON a flat key holds. */
+/** A list value as strings — an array already, or JSON that took some other route here. */
 function toItems(value: unknown): string[] {
   if (Array.isArray(value)) { return value.map(String); }
 

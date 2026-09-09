@@ -1,5 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Divider, Header, theme } from '@bedrock-core/ore-styled';
+import type { DisplayText } from '@bedrock-core/i18n';
 import {
   Button, EmbedSlots, Image, List, Panel, Scroll, Text, useExit,
   type FunctionComponent, type JSX, type PressEvent,
@@ -40,8 +41,8 @@ const { key } = i18n;
 
 export interface AddonListRow {
   id: string;
-  /** Display strings, resolved for the viewing player. */
-  name: string;
+  /** The addon's display name: its key, resolved on the client. */
+  name: DisplayText;
   version: string;
   icon?: string;
 }
@@ -104,8 +105,8 @@ export const AddonList: FunctionComponent<AddonListProps> = ({ model = EMPTY_MOD
                   <Panel position={'absolute'} left={0} top={0} width={rowWidth} height={ROW_HEIGHT} zIndex={2} flexDirection={'row'} alignItems={'center'} gap={row.gap} padding={spacing.xs}>
                     <Image live={true} width={ROW_ICON} height={ROW_ICON} texture={item?.icon ?? ICON_MISSING} />
                     <Panel flexDirection={'column'} flexGrow={1} flexShrink={1} justifyContent={'center'}>
-                      <Text font={row.textStyle.font} scale={row.textStyle.scale} shadow={true} maxLength={NAME_MAX}>{`${row.textStyle.color}${item?.name ?? ''}`}</Text>
-                      <Text font={row.textStyle.font} scale={row.textStyle.scale} maxLength={VERSION_MAX}>{`${row.textStyle.muted}${item?.version ?? ''}`}</Text>
+                      <Text font={row.textStyle.font} scale={row.textStyle.scale} shadow={true} maxLength={NAME_MAX}>{item?.name ?? ''}</Text>
+                      <Text font={row.textStyle.font} scale={row.textStyle.scale} color={row.textStyle.mutedRgb} maxLength={VERSION_MAX}>{item?.version ?? ''}</Text>
                     </Panel>
                   </Panel>
                 </Panel>
@@ -118,7 +119,7 @@ export const AddonList: FunctionComponent<AddonListProps> = ({ model = EMPTY_MOD
       {showsFallback && (
         <Panel position={'absolute'} left={MAIN.x} top={MAIN.y} width={MAIN.width} height={MAIN.height} flexDirection={'column'} gap={spacing.md} padding={spacing.md}>
           <Text font={'mojangles'} scale={2} shadow={true} maxLength={NAME_MAX}>{current?.name ?? ''}</Text>
-          <Text font={'mojangles'} scale={1} maxLength={VERSION_MAX}>{`§7${current?.version ?? ''}`}</Text>
+          <Text font={'mojangles'} scale={1} color={row.textStyle.mutedRgb} maxLength={VERSION_MAX}>{current?.version ?? ''}</Text>
         </Panel>
       )}
     </Card>

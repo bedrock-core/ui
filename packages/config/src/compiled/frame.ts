@@ -39,4 +39,11 @@ export const MAIN = {
 export const PAGE_SLOTS = 8;
 
 /** Rows the sidebar is baked with; a world with more addons shows the first. */
+/**
+ * Characters each segment of a screen's trail reserves: the addon, the scope,
+ * the entity, the section. A trail is sent as references — keys the client
+ * resolves — so a reservation is room for the resolved text, not the key.
+ */
+export const TRAIL_LENGTHS: readonly number[] = [16, 12, 16, 20];
+
 export const ADDONS_MAX = 12;

@@ -5,7 +5,7 @@ import { compiledTitleOf, embedMarker, FLAG_OFF, FLAG_ON, render } from '@bedroc
 import type { Player } from '@minecraft/server';
 import { FRAMEWORK_ADDON_ID, guideReferenceFor, manifestFor } from '../frameworkGuide';
 import { FRAMEWORK_NAMESPACE, FRAMEWORK_PAGE } from '../generated/framework.generated';
-import { i18n, translationsFor } from '../i18n';
+import { i18n } from '../i18n';
 import { guideAudienceFor } from '../permissions';
 import { PAGE_SLOTS } from './frame';
 import { AddonList, addonListElement, type AddonListMain, type AddonListModel, type AddonListRow } from './list.screen';
@@ -33,20 +33,19 @@ export const canPresentAddonList = (): boolean => compiledTitleOf(AddonList) !==
 
 const { key } = i18n;
 
-const rowsFor = (core: Runtime, player: Player): AddonListRow[] => {
-  const { display } = translationsFor(core.translations.forPlayer(player));
+const rowsFor = (core: Runtime): AddonListRow[] => {
   const registered: RegisteredAddon[] = core.registry.all();
   const runtimeVersion = registered.find(addon => addon.self)?.runtimeVersion ?? 'unknown';
 
   return [
     ...registered.map((addon): AddonListRow => ({
       id: addon.id,
-      name: display(addon.packName),
+      name: { translate: addon.packName },
       version: addon.version,
       ...addon.icon === undefined ? {} : { icon: addon.icon },
     })),
     // The framework itself, pinned last: nothing registers it, so its row is synthetic.
-    { id: FRAMEWORK_ADDON_ID, name: display(key($ => $.framework.name)), version: runtimeVersion, icon: 'textures/ui/bedrock_core/icon' },
+    { id: FRAMEWORK_ADDON_ID, name: { translate: key($ => $.framework.name) }, version: runtimeVersion, icon: 'textures/ui/bedrock_core/icon' },
   ];
 };
 
@@ -70,7 +69,7 @@ const pageSlots = (namespace: string, reference: AddonPageReference, hasConfig: 
 };
 
 export function presentAddonList(core: Runtime, player: Player, openers: AddonListOpeners, selectedId?: string): void {
-  const rows = rowsFor(core, player);
+  const rows = rowsFor(core);
   const found = rows.findIndex(row => row.id === selectedId);
   const selected = found < 0 ? 0 : found;
   const current = rows[selected];

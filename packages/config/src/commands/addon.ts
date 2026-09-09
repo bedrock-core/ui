@@ -408,11 +408,10 @@ function applyWrite(
 
   if (!result.ok) { return result; }
 
-  // A list lives in ONE flat key holding the array's JSON — the encoding the runtime's own
-  // flattening produces — so it is patched exactly like a scalar.
+  // A list is one value — the whole array — so it is patched exactly like a scalar.
   return {
     ok: true,
-    patch: buildNestedPatch({ [path]: JSON.stringify(result.items) }),
+    patch: buildNestedPatch({ [path]: result.items }),
     rendered: describeList(entry, result.items, t),
   };
 }

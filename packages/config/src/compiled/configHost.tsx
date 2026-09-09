@@ -1,13 +1,14 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
+import type { DisplayText } from '@bedrock-core/i18n';
 import type { Runtime } from '@bedrock-core/server-runtime';
 import { compiledTitleOf, render } from '@bedrock-core/ui-runtime';
-import type { Player } from '@minecraft/server';
+import { world, type Player } from '@minecraft/server';
 import {
   buildSectionTree, filterScope, filterScopeGroups, findSection, getScopedGroups, getScopedSchema, isPureSection,
   listEntries, schemaDefaultsPatch, type SectionNode,
 } from '../config/schema';
 import { getRoster, patchScope } from '../config/values';
-import { translationsFor } from '../i18n';
+import { i18n, translationsFor } from '../i18n';
 import { allowedScopes, isOperator } from '../permissions';
 import type { ConfigScope } from '../types';
 import { ConfirmReset, confirmResetElement } from './confirm.screen';
@@ -39,18 +40,86 @@ export interface ScopePickerOpeners {
   back: (addonId: string) => unknown | Promise<unknown>;
 }
 
-/** The addon's display name for the viewing player, or its id when it is not registered. */
-const addonNameFor = (core: Runtime, player: Player, addonId: string): string => {
-  const { resolve } = translationsFor(core.translations.forPlayer(player));
-  const nameKey = core.registry.get(addonId)?.packName ?? addonId;
+const { key } = i18n;
 
-  return resolve(nameKey) ?? nameKey;
-};
+/** The addon's display name as a reference: its key, which the client resolves; its id when it is not registered. */
+const addonNameOf = (core: Runtime, addonId: string): DisplayText => ({ translate: core.registry.get(addonId)?.packName ?? addonId });
+
+/** A scope's label as a reference. */
+const scopeLabelOf = (scope: ConfigScope): DisplayText => ({
+  translate: scope === 'server'
+    ? key($ => $.scope.server.label)
+    : scope === 'dimension' ? key($ => $.scope.dimension.label) : key($ => $.scope.player.label),
+});
+
+/** What a dimension or player is called on screen: the player's name, the dimension's id. */
+const entityNameOf = (scope: ConfigScope, entityId: string): string =>
+  (scope === 'player' ? world.getAllPlayers().find(candidate => candidate.id === entityId)?.name ?? entityId : entityId);
+
+/** Where in the addon's config a screen is: the addon, the scope, the entity, the sections. */
+export interface ConfigPlace {
+  addonId: string;
+  scope?: ConfigScope;
+  entityId?: string;
+  /** Dot-path of the level within the scope; `''` or absent is the scope root. */
+  path?: string;
+}
+
+/**
+ * The trail a config screen is titled with, as references: the addon's and
+ * the scope's keys, the entity's name, and the key of every section down to
+ * the level. The client resolves each in the player's language.
+ */
+export function trailOf(core: Runtime, player: Player, place: ConfigPlace): DisplayText[] {
+  const { addonId, scope, entityId, path = '' } = place;
+  const trail: DisplayText[] = [addonNameOf(core, addonId)];
+
+  if (scope === undefined) {
+    return trail;
+  }
+
+  trail.push(scopeLabelOf(scope));
+
+  if (scope !== 'server' && entityId !== undefined) {
+    trail.push(entityNameOf(scope, entityId));
+  }
+
+  const accessor = core.config.of(addonId, { actorId: player.id });
+
+  if (accessor === undefined || path === '') {
+    return trail;
+  }
+
+  const root = buildSectionTree(
+    filterScope(getScopedSchema(accessor), scope),
+    filterScopeGroups(getScopedGroups(accessor), scope),
+  );
+
+  // Every prefix of the path names a level; each contributes its label.
+  const segments = path.split('.');
+
+  for (let depth = 1; depth <= segments.length; depth += 1) {
+    const section = findSection(root, segments.slice(0, depth).join('.'));
+
+    if (section !== undefined) {
+      trail.push({ translate: section.label });
+    }
+  }
+
+  return trail;
+}
+
+/** A trail as one string, for the serialized screens that title themselves with text. */
+export function trailText(core: Runtime, player: Player, trail: readonly DisplayText[]): string {
+  const { display } = translationsFor(core.translations.forPlayer(player));
+
+  return trail.map(segment => display(segment)).join(' > ');
+}
 
 export function presentScopePicker(core: Runtime, player: Player, addonId: string, openers: ScopePickerOpeners): void {
   const { t } = translationsFor(core.translations.forPlayer(player));
   const accessor = core.config.of(addonId, { actorId: player.id });
-  const addonName = addonNameFor(core, player, addonId);
+  const addonName = addonNameOf(core, addonId);
   // Declared by the addon AND permitted for this player, in the order the rows draw.
   const schema = accessor === undefined ? {} : getScopedSchema(accessor);
   const scopes = accessor === undefined
@@ -68,11 +137,9 @@ export function presentScopePicker(core: Runtime, player: Player, addonId: strin
         return;
       }
 
-      const label = t($ => $.scope.server.label);
-
       presentConfirmReset(core, player, {
-        title: `${addonName} > ${label}`,
-        target: label,
+        trail: [addonName, scopeLabelOf('server')],
+        target: t($ => $.scope.server.label),
         onConfirm: (): void => {
           patchScope(accessor, 'server', undefined, schemaDefaultsPatch(filterScope(getScopedSchema(accessor), 'server')));
           again();
@@ -87,7 +154,7 @@ export function presentScopePicker(core: Runtime, player: Player, addonId: strin
 /** What a reset asks about, and where each answer leads. */
 export interface ConfirmResetRequest {
   /** The trail the screen is titled with. */
-  title: string;
+  trail: readonly DisplayText[];
   /** What the question names: the scope's label, or the dimension or player being reset. */
   target: string;
   /** Performs the reset, then shows whatever comes next. */
@@ -100,21 +167,12 @@ export function presentConfirmReset(core: Runtime, player: Player, request: Conf
   const { t } = translationsFor(core.translations.forPlayer(player));
 
   render(confirmResetElement({
-    title: request.title,
+    trail: request.trail,
     question: t($ => $.reset.question, { target: request.target }),
     onConfirm: request.onConfirm,
     onCancel: request.onCancel,
   }), player);
 }
-
-/** The label of a scope, in the viewing player's language. */
-const scopeLabelFor = (core: Runtime, player: Player, scope: ConfigScope): string => {
-  const { t } = translationsFor(core.translations.forPlayer(player));
-
-  return scope === 'server'
-    ? t($ => $.scope.server.label)
-    : scope === 'dimension' ? t($ => $.scope.dimension.label) : t($ => $.scope.player.label);
-};
 
 /** Where the roster sends a press it does not answer itself. */
 export interface EntityRosterOpeners {
@@ -137,9 +195,8 @@ export function presentEntityRoster(
   page = 1,
 ): void {
   const { addonId, scope } = target;
-  const { t } = translationsFor(core.translations.forPlayer(player));
   const accessor = core.config.of(addonId, { actorId: player.id });
-  const title = `${addonNameFor(core, player, addonId)} > ${scopeLabelFor(core, player, scope)}`;
+  const trail = trailOf(core, player, { addonId, scope });
   const roster = accessor !== undefined && allowedScopes(player).includes(scope)
     ? getRoster(scope).filter(entry => isOperator(player) || entry.id === player.id)
     : [];
@@ -148,9 +205,9 @@ export function presentEntityRoster(
   const again = (at = shown.page): void => { presentEntityRoster(core, player, target, openers, at); };
 
   render(menuListElement({
-    title,
+    trail,
     rows: shown.rows.map((entry): MenuListRow => ({ title: entry.name, reset: true })),
-    empty: scope === 'player' ? t($ => $.roster.noPlayers) : t($ => $.roster.noDimensions),
+    empty: { translate: scope === 'player' ? key($ => $.roster.noPlayers) : key($ => $.roster.noDimensions) },
     page: shown.page,
     pages: shown.pages,
     onRow: (index): unknown => {
@@ -166,7 +223,7 @@ export function presentEntityRoster(
       }
 
       presentConfirmReset(core, player, {
-        title: `${title} > ${entry.name}`,
+        trail: [...trail, entry.name],
         target: entry.name,
         onConfirm: (): void => {
           patchScope(accessor, scope, entry.id, schemaDefaultsPatch(filterScope(getScopedSchema(accessor), scope)));
@@ -187,8 +244,8 @@ export interface SectionTarget {
   entityId?: string;
   /** Dot-path of the level within the scope; `''` is the scope root. */
   path: string;
-  /** The trail the screen is titled with, resolved for the viewing player. */
-  title: string;
+  /** The trail the screen is titled with, as references. */
+  trail: readonly DisplayText[];
 }
 
 /** Where a level of the tree sends a press it does not answer itself. */
@@ -231,13 +288,12 @@ export const isSectionLevel = (core: Runtime, player: Player, target: SectionTar
  * another level here. Nothing is fetched: only the editor needs values.
  */
 export function presentSectionList(core: Runtime, player: Player, target: SectionTarget, openers: SectionListOpeners, page = 1): void {
-  const { t, display } = translationsFor(core.translations.forPlayer(player));
   const section = sectionAt(core, player, target);
   const children = section?.children ?? [];
   const lists = section === undefined ? [] : listEntries(section);
   const all: MenuListRow[] = [
-    ...children.map((child): MenuListRow => ({ title: display(child.label), ...child.description === undefined ? {} : { subtitle: display(child.description) } })),
-    ...lists.map(([, entry]): MenuListRow => ({ title: display(entry.label), ...entry.description === undefined ? {} : { subtitle: display(entry.description) } })),
+    ...children.map((child): MenuListRow => ({ title: { translate: child.label }, ...child.description === undefined ? {} : { subtitle: { translate: child.description } } })),
+    ...lists.map(([, entry]): MenuListRow => ({ title: { translate: entry.label }, ...entry.description === undefined ? {} : { subtitle: { translate: entry.description } } })),
   ];
   const shown = pageOf(all, page);
 
@@ -248,15 +304,15 @@ export function presentSectionList(core: Runtime, player: Player, target: Sectio
 
     // Up one level: the path and the trail both lose their last segment.
     const path = target.path.slice(0, Math.max(0, target.path.lastIndexOf('.')));
-    const title = target.title.slice(0, Math.max(0, target.title.lastIndexOf(' > ')));
+    const trail = target.trail.slice(0, -1);
 
-    return openLevel(core, player, { ...target, path, title }, openers);
+    return openLevel(core, player, { ...target, path, trail }, openers);
   };
 
   render(menuListElement({
-    title: target.title,
+    trail: target.trail,
     rows: shown.rows,
-    empty: t($ => $.config.empty),
+    empty: { translate: key($ => $.config.empty) },
     page: shown.page,
     pages: shown.pages,
     onRow: (index): unknown => {
@@ -264,14 +320,14 @@ export function presentSectionList(core: Runtime, player: Player, target: Sectio
       const child = children[at];
 
       if (child !== undefined) {
-        return openLevel(core, player, { ...target, path: child.path, title: `${target.title} > ${display(child.label)}` }, openers);
+        return openLevel(core, player, { ...target, path: child.path, trail: [...target.trail, { translate: child.label }] }, openers);
       }
 
       const list = lists[at - children.length];
 
       return list === undefined
         ? undefined
-        : openers.list({ ...target, key: list[0], title: `${target.title} > ${display(list[1].label)}` });
+        : openers.list({ ...target, key: list[0], trail: [...target.trail, { translate: list[1].label }] });
     },
     onPage: (at): void => { presentSectionList(core, player, target, openers, at); },
     onBack: parent,

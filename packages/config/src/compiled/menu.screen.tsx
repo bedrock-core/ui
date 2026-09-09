@@ -1,19 +1,20 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Card, Header, Button as OreButton, theme } from '@bedrock-core/ore-styled';
+import { Card, Header, Button as OreButton, theme, type TrailSegment } from '@bedrock-core/ore-styled';
+import type { DisplayText } from '@bedrock-core/i18n';
 import { Button, Image, List, Panel, Scroll, Text, useExit, type FunctionComponent, type JSX, type PressEvent } from '@bedrock-core/ui-runtime';
 import { i18n } from '../i18n';
-import { FRAME, HEADER_HEIGHT, PADDING } from './frame';
+import { FRAME, HEADER_HEIGHT, PADDING, TRAIL_LENGTHS } from './frame';
 
 /**
  * A screen of rows that lead somewhere, as ONE compiled screen: the entity
  * roster of a scope and a level of the config tree are both this, and so is
  * any list a host fills at runtime. Each row carries its title and subtitle
- * live, resolved for the viewing player by the host, and shows a reset
- * button behind a carried visibility. Rows beyond a page are reached by
- * paging, since a compiled list has a fixed number of rows.
+ * live — a key the client resolves, or a literal — and shows a reset button
+ * behind a carried visibility. Rows beyond a page are reached by paging,
+ * since a compiled list has a fixed number of rows.
  */
 
-const { spacing, fontColor } = theme.tokens;
+const { spacing } = theme.tokens;
 const row = theme.components.menuRow;
 
 const ICON_RESET = 'textures/ui/config/reset';
@@ -22,7 +23,6 @@ const ICON_RESET = 'textures/ui/config/reset';
 export const MENU_ROWS = 12;
 
 /** Characters the live strings reserve. */
-const TITLE_MAX = 40;
 const ROW_TITLE_MAX = 24;
 const ROW_SUBTITLE_MAX = 40;
 const EMPTY_MAX = 48;
@@ -37,20 +37,20 @@ const PAGER_BUTTON = 24;
 const { t } = i18n;
 
 export interface MenuListRow {
-  /** Resolved for the viewing player: a live row shows what it is sent. */
-  title: string;
-  subtitle?: string;
+  /** A key the client resolves, or a literal. */
+  title: DisplayText;
+  subtitle?: DisplayText;
   /** Whether the row resets something in place. */
   reset?: boolean;
 }
 
 export interface MenuListModel {
-  /** The trail the screen is titled with, resolved for the viewing player. */
-  title: string;
+  /** The trail the screen is titled with, one segment per {@link TRAIL_LENGTHS} slot. */
+  trail: readonly DisplayText[];
   /** This page's rows. */
   rows: readonly MenuListRow[];
   /** What the screen says when there are no rows at all. */
-  empty: string;
+  empty: DisplayText;
   /** One-based, for the pager; a single page hides it. */
   page: number;
   pages: number;
@@ -64,7 +64,11 @@ export interface MenuListProps {
   model?: MenuListModel;
 }
 
-const EMPTY_MODEL: MenuListModel = { title: '', rows: [], empty: '', page: 1, pages: 1 };
+const EMPTY_MODEL: MenuListModel = { trail: [], rows: [], empty: '', page: 1, pages: 1 };
+
+/** Every trail slot, live: a slot the present leaves empty hides with its separator. */
+const trailSegments = (trail: readonly DisplayText[]): TrailSegment[] =>
+  TRAIL_LENGTHS.map((maxLength, index) => ({ text: trail[index] ?? '', maxLength }));
 
 export const MenuList: FunctionComponent<MenuListProps> = ({ model = EMPTY_MODEL }: MenuListProps): JSX.Element => {
   const exit = useExit();
@@ -79,7 +83,7 @@ export const MenuList: FunctionComponent<MenuListProps> = ({ model = EMPTY_MODEL
 
   return (
     <Card variant={'raised'} width={FRAME.width} height={FRAME.height} flexDirection={'column'} padding={0} gap={0}>
-      <Header title={model.title} titleMaxLength={TITLE_MAX} onBack={(event): unknown => model.onBack?.(event)} onClose={exit} height={HEADER_HEIGHT} />
+      <Header segments={trailSegments(model.trail)} onBack={(event): unknown => model.onBack?.(event)} onClose={exit} height={HEADER_HEIGHT} />
       <Panel flexDirection={'column'} gap={spacing.xs} padding={BODY_PADDING} height={bodyHeight}>
         <Scroll width={rowWidth + 5} height={listHeight}>
           <List
@@ -106,8 +110,8 @@ export const MenuList: FunctionComponent<MenuListProps> = ({ model = EMPTY_MODEL
                   />
                   <Panel position={'absolute'} left={0} top={0} width={faceWidth} height={ROW_HEIGHT} zIndex={2} flexDirection={'row'} alignItems={'center'} gap={row.gap} padding={row.padding}>
                     <Panel flexDirection={'column'} flexGrow={1} flexShrink={1} justifyContent={'center'}>
-                      <Text font={row.textStyle.font} scale={row.textStyle.scale} shadow={true} maxLength={ROW_TITLE_MAX}>{`${row.textStyle.color}${item?.title ?? ''}`}</Text>
-                      <Text font={row.textStyle.font} scale={row.textStyle.scale} maxLength={ROW_SUBTITLE_MAX}>{`${row.textStyle.muted}${item?.subtitle ?? ''}`}</Text>
+                      <Text font={row.textStyle.font} scale={row.textStyle.scale} shadow={true} maxLength={ROW_TITLE_MAX}>{item?.title ?? ''}</Text>
+                      <Text font={row.textStyle.font} scale={row.textStyle.scale} color={row.textStyle.mutedRgb} maxLength={ROW_SUBTITLE_MAX}>{item?.subtitle ?? ''}</Text>
                     </Panel>
                     <Text>{`${row.textStyle.muted}>`}</Text>
                   </Panel>
@@ -124,7 +128,7 @@ export const MenuList: FunctionComponent<MenuListProps> = ({ model = EMPTY_MODEL
         {/* Over the scroll rather than in it: a scroll whose only child is the list follows the live row count. */}
         {isEmpty && (
           <Panel position={'absolute'} left={BODY_PADDING} top={BODY_PADDING} width={rowWidth} height={listHeight} justifyContent={'center'} alignItems={'center'} padding={spacing.lg}>
-            <Text wordBreak={'break-word'} maxLength={EMPTY_MAX}>{`${fontColor.muted}${model.empty}`}</Text>
+            <Text wordBreak={'break-word'} color={row.textStyle.mutedRgb} maxLength={EMPTY_MAX}>{model.empty}</Text>
           </Panel>
         )}
         {paged && (

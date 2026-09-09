@@ -45,6 +45,6 @@ export function backToParent(
     scope,
     scopeId: entityId,
     path: path.slice(0, Math.max(0, path.lastIndexOf('.'))),
-    trail: breadcrumb.slice(0, Math.max(0, breadcrumb.lastIndexOf(' > '))),
+    trail: breadcrumb.split(' > ').slice(0, -1),
   });
 }

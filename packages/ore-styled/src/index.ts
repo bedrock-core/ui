@@ -21,6 +21,8 @@ export type { HeaderProps } from './Header';
 
 export { MenuRow } from './MenuRow';
 export type { MenuRowProps } from './MenuRow';
+export { Trail } from './Trail';
+export type { TrailProps, TrailSegment } from './Trail';
 
 export { Input } from './Input';
 export type { InputProps } from './Input';

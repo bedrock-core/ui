@@ -68,7 +68,16 @@ export interface Theme {
       /** Edge of a row's leading thumbnail (px). */
       iconSize: number;
       textures: { background: string; backgroundHover: string; backgroundPressed: string; backgroundSelected: string };
-      textStyle: { font: TextFont; scale: number; color: string; disabledColor: string; muted: string; mutedDisabled: string };
+      textStyle: {
+        font: TextFont;
+        scale: number;
+        color: string;
+        disabledColor: string;
+        muted: string;
+        mutedDisabled: string;
+        /** The muted grey a key or a live line takes, which a code cannot colour. */
+        mutedRgb: readonly [number, number, number];
+      };
     };
     radio: {
       size: number;
@@ -233,7 +242,7 @@ const oreTheme: Theme = {
       },
       // Full scale for the subtitle too — a sub-1 scale lands on a fractional
       // font_scale_factor and reads mushy in game; the §7 grey already separates it.
-      textStyle: { font: 'mojangles', scale: 1, color: '§f', disabledColor: '§8', muted: '§7', mutedDisabled: '§8' },
+      textStyle: { font: 'mojangles', scale: 1, color: '§f', disabledColor: '§8', muted: '§7', mutedDisabled: '§8', mutedRgb: [170, 170, 170] },
     },
     radio: {
       size: 12,

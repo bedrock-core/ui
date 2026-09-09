@@ -32,11 +32,14 @@ export interface AppProps {
 
   /** Whether the deep-linked scope's top level holds only sub-sections — see `buildInitialState`. */
   scopeIsSections?: boolean;
+
+  /** The trail the deep-linked screen is titled with, as text. */
+  trail?: string;
 }
 
 type AppStack = ReturnType<typeof createStackNavigator<AppRoutes>>;
 
-export function App({ core, player, target, values, scopeIsSections }: AppProps): JSX.Element {
+export function App({ core, player, target, values, scopeIsSections, trail }: AppProps): JSX.Element {
   // The navigator is created once per mount — the guide source closes over
   // `core`, and recreating the navigator on re-render would discard screen
   // identity while navigation state lives in the container.
@@ -64,7 +67,7 @@ export function App({ core, player, target, values, scopeIsSections }: AppProps)
     <CoreContext value={core}>
       <PlayerContext value={player}>
         <TranslationContext value={core.translations.forPlayer(player)}>
-          <NavigationContainer initialState={buildInitialState(target, values, isOperator(player), scopeIsSections, canPresentAddonList(), canPresentScopePicker())}>
+          <NavigationContainer initialState={buildInitialState(target, values, isOperator(player), scopeIsSections, canPresentAddonList(), canPresentScopePicker(), trail)}>
             <Stack.Navigator />
           </NavigationContainer>
         </TranslationContext>

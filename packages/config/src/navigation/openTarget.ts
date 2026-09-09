@@ -12,6 +12,7 @@
  * without the host having to change. Absent values arrive as `undefined` or (after JSON transit)
  * `null`, and {@link stringAt} flattens both.
  */
+import type { DisplayText } from '@bedrock-core/i18n';
 import { CONFIG_SCOPES, type ConfigScope } from '../types';
 
 /**
@@ -40,8 +41,8 @@ export type OpenTarget
       path?: string;
       /** A list setting to edit, as its dot-path within the scope. Set by the screens, never by a command. */
       list?: string;
-      /** The trail the screen is titled with, when the caller already resolved it. */
-      trail?: string;
+      /** The trail the screen is titled with, as references, when the caller already built it. */
+      trail?: readonly DisplayText[];
     };
 
 /** Positional read that tolerates `undefined`, `null`, and anything non-string. */

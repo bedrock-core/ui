@@ -64,8 +64,8 @@ export function resolveInitialValue(
 
   if (val !== undefined) { return val; }
 
-  // `list` and `multiselect` both store their default as the array's JSON, since a stored value
-  // is a scalar — so both parse back the same way.
+  // A runtime published before list defaults were announced as arrays sends them as the array's
+  // JSON; both parse back the same way.
   if ((entry.type === 'list' || entry.type === 'multiselect') && typeof entry.default === 'string') {
     try {
       const parsed: unknown = JSON.parse(entry.default);

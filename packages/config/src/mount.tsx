@@ -28,7 +28,6 @@ import { registerAddonCommands } from './commands/addon';
 import { openTargetFrom, type OpenCommand, type OpenTarget } from './navigation/openTarget';
 import { clampTarget } from './permissions';
 import { getScopeValues } from './config/values';
-import { translationsFor } from './i18n';
 import {
   buildSectionTree,
   filterScope,
@@ -43,7 +42,7 @@ import { guideReferenceFor } from './frameworkGuide';
 import { canPresentAddonList, presentAddonList } from './compiled/host';
 import {
   canPresentMenuList, canPresentScopePicker, isSectionLevel, openLevel, presentEntityRoster, presentScopePicker,
-  type SectionListOpeners, type SectionTarget,
+  trailOf, trailText, type SectionListOpeners, type SectionTarget,
 } from './compiled/configHost';
 import { configScopeElement, scopeModel } from './compiled';
 
@@ -209,7 +208,13 @@ export function openUi(core: Runtime, player: Player, target: OpenTarget): Promi
       return Promise.resolve();
     }
 
-    const level: SectionTarget = { addonId, scope, entityId: scopeId, path: clamped.path ?? '', title: clamped.trail ?? trailFor(core, player, clamped) };
+    const level: SectionTarget = {
+      addonId,
+      scope,
+      entityId: scopeId,
+      path: clamped.path ?? '',
+      trail: clamped.trail ?? trailOf(core, player, { addonId, scope, entityId: scopeId, path: clamped.path }),
+    };
 
     if (isSectionLevel(core, player, level)) {
       openLevel(core, player, level, levelOpeners(core, player));
@@ -220,10 +225,15 @@ export function openUi(core: Runtime, player: Player, target: OpenTarget): Promi
 
   const scopeIsSections = scopeHoldsOnlySections(core, player, clamped);
 
+  // The serialized screens title themselves with text, from the same references.
+  const trail = clamped.kind === 'config' && clamped.addonId !== undefined && clamped.scope !== undefined
+    ? trailText(core, player, clamped.trail ?? trailOf(core, player, { addonId: clamped.addonId, scope: clamped.scope, entityId: clamped.scopeId, path: clamped.path }))
+    : undefined;
+
   // A scope that holds only sub-sections lands on the section screen, which needs no values —
   // fetching for it would be a round trip whose result nothing reads.
   if (scopeIsSections) {
-    render(<App core={core} player={player} target={clamped} scopeIsSections={true} />, player);
+    render(<App core={core} player={player} target={clamped} scopeIsSections={true} trail={trail} />, player);
 
     return Promise.resolve();
   }
@@ -236,45 +246,19 @@ export function openUi(core: Runtime, player: Player, target: OpenTarget): Promi
       return;
     }
 
-    render(<App core={core} player={player} target={clamped} values={values} />, player);
+    render(<App core={core} player={player} target={clamped} values={values} trail={trail} />, player);
   });
 }
 
 /** Where a level of the tree sends its presses: every one comes back through `openUi`. */
 const levelOpeners = (core: Runtime, player: Player): SectionListOpeners => ({
-  editor: ({ addonId, scope, entityId, path, title }): Promise<void> =>
-    openUi(core, player, { kind: 'config', addonId, scope, scopeId: entityId, path, trail: title }),
-  list: ({ addonId, scope, entityId, key, title }): Promise<void> =>
-    openUi(core, player, { kind: 'config', addonId, scope, scopeId: entityId, list: key, trail: title }),
+  editor: ({ addonId, scope, entityId, path, trail }): Promise<void> =>
+    openUi(core, player, { kind: 'config', addonId, scope, scopeId: entityId, path, trail }),
+  list: ({ addonId, scope, entityId, key, trail }): Promise<void> =>
+    openUi(core, player, { kind: 'config', addonId, scope, scopeId: entityId, list: key, trail }),
   back: ({ addonId, scope, entityId }): Promise<void> =>
     openUi(core, player, scope === 'server' || entityId === undefined ? { kind: 'config', addonId } : { kind: 'config', addonId, scope }),
 });
-
-/** The trail a scope's root is titled with: the addon, the scope, and the entity when there is one. */
-function trailFor(core: Runtime, player: Player, target: OpenTarget): string {
-  if (target.kind !== 'config' || target.addonId === undefined) { return ''; }
-
-  const { resolve, t } = translationsFor(core.translations.forPlayer(player));
-  const nameKey = core.registry.get(target.addonId)?.packName ?? target.addonId;
-  const segments = [resolve(nameKey) ?? nameKey];
-
-  if (target.scope !== undefined) {
-    segments.push(target.scope === 'server'
-      ? t($ => $.scope.server.label)
-      : target.scope === 'dimension' ? t($ => $.scope.dimension.label) : t($ => $.scope.player.label));
-  }
-
-  if (target.scope !== 'server' && target.scopeId !== undefined) {
-    segments.push(entityNameFor(target.scope, target.scopeId));
-  }
-
-  return segments.join(' > ');
-}
-
-/** What a dimension or player is called on screen: the player's name, the dimension's id. */
-function entityNameFor(scope: 'dimension' | 'player' | undefined, entityId: string): string {
-  return scope === 'player' ? world.getAllPlayers().find(candidate => candidate.id === entityId)?.name ?? entityId : entityId;
-}
 
 /**
  * Shows the compiled editor for a resolved scope when this build carries it
@@ -288,8 +272,8 @@ function presentCompiledEditor(core: Runtime, player: Player, target: OpenTarget
 
   if (!accessor) { return false; }
 
-  const title = target.trail ?? trailFor(core, player, target);
-  const model = scopeModel(accessor, { scope: target.scope, entityId: target.scopeId, path: target.path ?? '', title }, values);
+  const trail = target.trail ?? trailOf(core, player, { addonId: target.addonId, scope: target.scope, entityId: target.scopeId, path: target.path });
+  const model = scopeModel(accessor, { scope: target.scope, entityId: target.scopeId, path: target.path ?? '', trail }, values);
 
   if (model === undefined) { return false; }
 

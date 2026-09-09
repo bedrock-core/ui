@@ -144,7 +144,8 @@ describe('a form live text', () => {
   it('is one label reading its entry — no table, no slicing, no cap', () => {
     const run = definition(document, 'text_1');
 
-    expect(run).toMatchObject({ type: 'label', text: '#entry_value', localize: false });
+    // Localized: a live key resolves on the client, a literal renders as itself.
+    expect(run).toMatchObject({ type: 'label', text: '#entry_value', localize: true });
     // The value rides the entry's icon path: one plain collection binding, no expression.
     expect(run.bindings).toContainEqual({
       binding_name: '#form_button_texture',

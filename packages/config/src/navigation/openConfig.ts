@@ -60,7 +60,7 @@ export async function openConfig(
     // rows: rendered as a screen of its own, which swaps into the running app
     // and closes on Save; the serialized editor otherwise.
     if (player !== undefined && compiledTitleOf(ConfigScopeScreen) !== undefined) {
-      const model = scopeModel(accessor, { scope, entityId, path, title: breadcrumb }, values);
+      const model = scopeModel(accessor, { scope, entityId, path, trail: breadcrumb.split(' > ') }, values);
 
       if (model !== undefined) {
         render(configScopeElement(model), player);

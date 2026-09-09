@@ -40,6 +40,7 @@ export function buildInitialState(
   scopeIsSections = false,
   listCompiled = false,
   pickerCompiled = false,
+  trail?: string,
 ): Partial<NavigationState> | undefined {
   // With the compiled list, the stack starts past it: a screen at the bottom
   // of the stack returns to the compiled list through `openUi`, not to a
@@ -64,7 +65,7 @@ export function buildInitialState(
   }
 
   // config
-  const { addonId, scope, scopeId, path = '', list: listKey, trail } = target;
+  const { addonId, scope, scopeId, path = '', list: listKey } = target;
 
   if (addonId === undefined) { return undefined; }
 

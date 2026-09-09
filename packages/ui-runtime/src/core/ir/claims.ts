@@ -1,5 +1,6 @@
 import { buttonCell, BUTTON_TYPE } from '../../components/Button';
 import { isEmbedSlot } from '../../components/Embed';
+import { MODAL_DROPDOWN_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE } from '../../components/Form';
 import { liveTexture } from '../../components/Image';
 import { listCapacity } from '../../components/List';
 import { slotCell, type SlotRole } from '../../components/Slot';
@@ -133,7 +134,10 @@ export const claim = (tree: JSX.Element, analysis: Analysis = analyze(tree)): Cl
  * visible, the build that compiles its gate, and the runtime that recovers the
  * same elements from the snapshot's ordinals. A button's CHILDREN are its
  * face — baked by definition, the same exclusion the probe's baked-text scan
- * makes — so the button itself is a candidate and nothing under it is.
+ * makes — so the button itself is a candidate and nothing under it is. A
+ * chooser's children are its OPTIONS: data the native form carries per
+ * present, as many as the schema says, so they are no candidates either, or
+ * every ordinal after a dropdown would move with its option count.
  *
  * The ordinal into this list is what the compiled snapshot records: positions
  * survive because a compiled screen's shape is frozen, which the probe
@@ -158,7 +162,7 @@ export const visibleWalk = (tree: JSX.Element): { elements: JSX.Element[]; paren
     elements.push(element);
     parents.push(parent);
 
-    if (element.type === BUTTON_TYPE) {
+    if (element.type === BUTTON_TYPE || element.type === MODAL_DROPDOWN_SLOT_TYPE || element.type === MODAL_INLINE_SELECT_SLOT_TYPE) {
       return;
     }
 

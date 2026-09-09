@@ -250,12 +250,15 @@ const faceDefs = (node: ButtonNode, name: string, emit: Emit): Record<string, Co
  * binding, no slicing, no table, no cap — which is the difference between the
  * two hosts stated as JSON UI.
  */
+// Localized on the client: a live value that is a `.lang` key resolves in the
+// player's language, and a literal renders as itself the way an unmatched
+// key does. That is what lets a reference travel as its name.
 const textDef = (node: TextNode, collection: string): Control => ({
   type: 'label',
   size: sizeOf(node.rect),
   ...topLeft,
   text: ENTRY_PROPERTY,
-  localize: false,
+  localize: true,
   font_type: node.fontType,
   font_size: FONT_SIZE,
   font_scale_factor: node.fontScaleFactor,
