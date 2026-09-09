@@ -135,7 +135,7 @@ component. Only the roots, `Slot` and `SlotGrid` stay host-specific in public. *
 | --- | --- | --- | --- | --- |
 | `Button` | button face | refused, unless `submit` / `cancel` | entry with baked index | slot with transport item |
 | `Toggle`, `Checkbox` | two-state face | native toggle field | button + carried bool | slot button + carried bool |
-| `Radio`, `ToggleButtonGroup` | N faces | native dropdown or inline select | buttons + carried enum | slot buttons + carried int |
+| `Radio`, `ToggleButtonGroup` | N faces | placed radio toggles over the native dropdown's options | buttons + carried enum | slot buttons + carried int |
 | `Slider` | track + thumb | native slider | refused | refused |
 | `Dropdown` | header + popup | native dropdown | refused | refused |
 | `Input` | text box | native text field | refused | refused |
@@ -239,14 +239,17 @@ what landed.
 | A1 | **Face pass** ✅ | `faces.json` per addon; the face document per screen with every socket as its inert face; the static validator; the socket list as the placement's addresses | 5 days |
 | A2 | **Gallery** ✅ | the preview mount on the action form; the generated gallery screen; `openGallery`; chest cells as frames | 3 days |
 | A3 | **Rect guard** ✅ | the diff after host emit, run inside every compile, so the tests and `yarn preflight` both hit it | 1 day |
-| A4 | **Visual pass** | starts from a clean slate: every demo screen in the reference pack's BP is deleted, and one screen per family is written from scratch as that family is signed off in game, fixes in `ore-styled` only. Families: a chest screen; guide home and one page; the config screens (scope, menu, list, picker, confirm, editor); the addon list and one addon page, with `Embed` reworked to the area (above); one modal with every field kind; one action form with a list and a scroll | 3 days |
-| B | **Host roots and the node layer** | `<Screen>`; `render` and `createContainerScreen` refuse non-host roots; the mechanism table per host in place of the flat `offers` list; the modal lowers the plain set to native fields; host-specific props typed by the root or an expected-host marker, `Form.*` and the `ore-styled` duplicates removed; the node layer reduced to primitives and behaviours, with `Tabs`, `Disclosure`, `List`, the close button and `Form.Button` as compositions | 6 days |
+| A4 | **Visual pass** ✅ | starts from a clean slate: every demo screen in the reference pack's BP is deleted, and one screen per family is written from scratch as that family is signed off in game, fixes in `ore-styled` only. Families: a chest screen; guide home and one page; the config screens (scope, menu, list, picker, confirm, editor); the addon list and one addon page, with `Embed` reworked to the area (above); one modal with every field kind; one action form with a list and a scroll | 3 days |
+| B1 | **Host roots** | `<Screen>`; `render` and `createContainerScreen` refuse non-host roots; `hostFor` throws instead of falling through | 0.5 day |
+| B2 | **One component set** | the mechanism table per host in place of the flat `offers` list; the modal lowers the plain set to native fields; host-specific props typed by the root or an expected-host marker; `Form.*` internal and the `ore-styled` duplicates removed | 2.5 days |
+| B3 | **The node layer** | primitives and behaviours, with `Tabs`, `Disclosure`, `List`, the close button and `Form.Button` as compositions | 3 days |
 | C | **References** | `<Link to>`; the reference feed and `navigate('<ns>:<screen>')`; guides on it, `createGuide` deleted; generated key types | 5 days |
 | D | **Delete the interpreter** | numbers as sliders on the config editor; serializer, writers, presenters and decoders deleted; state values readonly; pack minor | 3 days |
 | E | **Build flow and the book** | the single `core` filter finished; CLI template; the docs site replaces this folder; then the book host, drawn from faces alone | after D |
 
 After E: fibers mutate the tree in place instead of rebuilding it per render.
 
-A precedes B because faces are what the roots serve, and A4 is the sign-off B builds on. C
-needs A so that a reference is a key plus baked faces. D closes the last consumers of the
-byte protocol.
+A precedes B because faces are what the roots serve, and A4 is the sign-off B builds on. B1
+before B2 because the root is what types a subtree; B3 last because it reshapes what B2's
+mechanisms attach to. C needs A so that a reference is a key plus baked faces. D closes the
+last consumers of the byte protocol.
