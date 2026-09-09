@@ -4,8 +4,9 @@ import {
   MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
 } from '@bedrock-core/ui-runtime/compile';
 import type { JSX } from '@bedrock-core/ui-runtime';
-import { FULL, layerOf, num, offsetOf, sizeOf, str, topLeft, visibilityOf } from './shared';
-import type { Control } from '../jsonui';
+import { childElements } from '@bedrock-core/ui-runtime/compile';
+import { FONT_SIZE, FULL, layerOf, num, offsetOf, sizeOf, str, topLeft, visibilityOf } from './shared';
+import type { Control, ControlEntry } from '../jsonui';
 import type { NodeBase, NodeDefinition } from './types';
 
 /** The collection a modal's rows live on. */
@@ -21,7 +22,7 @@ export const MODAL_COLLECTION = 'custom_form';
  * below (`NO_DECODE`, `sliderGeometry`, `facesOf`) instead of being read out
  * of a payload that is not there.
  */
-const ROW: Readonly<Record<string, string>> = {
+export const ROW: Readonly<Record<string, string>> = {
   // The interpreter's OWN wrappers — the `@core_ui_common.control` variants,
   // not the `*_control` inside them.
   //
@@ -71,7 +72,7 @@ const DEFAULT_THUMB_HEIGHT = 16;
  * Arrays, never a pair of numbers in strings: a size must carry a unit or be a
  * real number, and `"$w"` holding `304` is neither.
  */
-const sliderGeometry = (node: FieldNode): Record<string, unknown> => {
+export const sliderGeometry = (node: FieldNode): Record<string, unknown> => {
   const track = num(node.trackHeight, DEFAULT_TRACK_HEIGHT);
   const thumb = num(node.thumbWidth, DEFAULT_THUMB_WIDTH);
 
@@ -120,14 +121,14 @@ const sliderValue = (element: JSX.Element): number => {
 export const popupHostOf = (ns: string): string => `${ns}_popups`;
 
 /** The kinds mounted through `core_ui_common.control`, whose decode is replaced. */
-const NEEDS_DECODE_REPLACED: ReadonlySet<string> = new Set([
+export const NEEDS_DECODE_REPLACED: ReadonlySet<string> = new Set([
   MODAL_SLIDER_SLOT_TYPE,
   MODAL_INPUT_SLOT_TYPE,
   MODAL_DROPDOWN_SLOT_TYPE,
   MODAL_INLINE_SELECT_SLOT_TYPE,
 ]);
 
-const NO_DECODE = {
+export const NO_DECODE = {
   size: FULL,
   property_bag: {
     '#size_binding_x': 1.0,
@@ -255,6 +256,12 @@ export interface FieldNode extends NodeBase {
   /** The slider's default value as a step index, baking the thumb's start. */
   value?: number;
   /**
+   * What the field shows at rest, for the face: a toggle's state, a chooser's
+   * current option label, an input's text or placeholder. The engine owns the
+   * value once the screen is open; this is only what the build rendered.
+   */
+  initial: { on?: boolean; text?: string; placeholder?: string };
+  /**
    * The dropdown's popup, baked for the OVERLAY the host emits at the screen
    * root. It cannot ride this cell: the visual popup must draw over the whole
    * screen, and the one attempt to mount it inside the native dropdown's own
@@ -268,6 +275,117 @@ declare module './types' {
     field: FieldNode;
   }
 }
+
+/** The label of the option a chooser starts on, by its value; the value itself when no option carries it. */
+const currentOptionLabel = (element: JSX.Element): string => {
+  const value = str(element.nativeArgs?.['defaultValue']);
+  const options = childElements(element.props.children);
+  const current = options.find(option => str(option.props.value) === value) ?? options[0];
+
+  return current === undefined ? value : str(current.props.label, value);
+};
+
+/** What each kind of field shows at rest. */
+const initialOf = (element: JSX.Element, type: string): FieldNode['initial'] => {
+  const args = element.nativeArgs;
+
+  switch (type) {
+    case MODAL_TOGGLE_SLOT_TYPE:
+      return { on: args?.['defaultValue'] === true };
+    case MODAL_INPUT_SLOT_TYPE:
+      return { text: str(args?.['defaultValue']), placeholder: str(args?.['placeholder']) };
+    case MODAL_DROPDOWN_SLOT_TYPE:
+    case MODAL_INLINE_SELECT_SLOT_TYPE:
+      return { text: currentOptionLabel(element) };
+    default:
+      return {};
+  }
+};
+
+/** A texture over the whole control, when the author gave one. */
+const surface = (texture: string | undefined, layer = 1): ControlEntry[] => (
+  texture === undefined || texture === ''
+    ? []
+    : [{ bg: { type: 'image', texture, size: FULL, ...topLeft, keep_ratio: false, layer } }]
+);
+
+/** A caption over the face, scaled the way the field scales its own labels. */
+const caption = (text: string, node: FieldNode, muted = false): ControlEntry[] => (
+  text === ''
+    ? []
+    : [{
+        caption: {
+          type: 'label',
+          size: ['100% - 8px', 'default'],
+          offset: [4, 0],
+          anchor_from: 'left_middle',
+          anchor_to: 'left_middle',
+          text,
+          localize: false,
+          font_size: FONT_SIZE,
+          font_scale_factor: node.scale,
+          ...muted ? { color: [0.6, 0.6, 0.6] as [number, number, number] } : {},
+          layer: 2,
+        },
+      }]
+);
+
+/**
+ * The slider at rest: the track across the middle, the thumb where the
+ * default value puts it. The same four boxes the mechanism sizes from
+ * literals, drawn as images.
+ */
+const sliderFace = (node: FieldNode): ControlEntry[] => {
+  const track = num(node.trackHeight, DEFAULT_TRACK_HEIGHT);
+  const thumbWidth = num(node.thumbWidth, DEFAULT_THUMB_WIDTH);
+  const thumbHeight = num(node.thumbHeight, DEFAULT_THUMB_HEIGHT);
+  const travel = Math.max(0, node.rect.width - thumbWidth);
+  const steps = Math.max(1, node.steps ?? 1);
+  const thumbX = Math.round(travel * Math.min(steps, node.value ?? 0) / steps);
+  const thumb = node.faces['$thumb'];
+
+  return [
+    ...surface(node.faces['$track']).map(entry => ({
+      track: { ...entry['bg'], size: [node.rect.width, track] as [number, number], anchor_from: 'left_middle' as const, anchor_to: 'left_middle' as const },
+    })),
+    ...thumb === undefined || thumb === ''
+      ? []
+      : [{
+          thumb: {
+            type: 'image' as const,
+            texture: thumb,
+            size: [thumbWidth, thumbHeight] as [number, number],
+            offset: [thumbX, 0] as [number, number],
+            anchor_from: 'left_middle' as const,
+            anchor_to: 'left_middle' as const,
+            keep_ratio: false,
+            layer: 2,
+          },
+        }],
+  ];
+};
+
+/** What the field looks like at rest, per kind. */
+const restOf = (node: FieldNode): ControlEntry[] => {
+  switch (node.field) {
+    case MODAL_TOGGLE_SLOT_TYPE:
+      return surface(node.initial.on === true ? node.faces['$on'] : node.faces['$off']);
+    case MODAL_SLIDER_SLOT_TYPE:
+      return sliderFace(node);
+
+    case MODAL_INPUT_SLOT_TYPE: {
+      const text = node.initial.text ?? '';
+
+      return [
+        ...surface(node.faces['$static_texture']),
+        ...text === '' ? caption(node.initial.placeholder ?? '', node, true) : caption(text, node),
+      ];
+    }
+
+    default:
+      return [...surface(node.faces['$static_texture']), ...caption(node.initial.text ?? '', node)];
+  }
+};
 
 export const fieldDefinition: NodeDefinition<FieldNode> = {
   kind: 'field',
@@ -292,6 +410,7 @@ export const fieldDefinition: NodeDefinition<FieldNode> = {
       trackHeight: num(element.props.trackHeight),
       thumbWidth: num(element.props.thumbWidth),
       thumbHeight: num(element.props.thumbHeight),
+      initial: initialOf(element, type),
       ...type === MODAL_SLIDER_SLOT_TYPE
         ? { steps: sliderSteps(element), value: sliderValue(element) }
         : {},
@@ -304,52 +423,20 @@ export const fieldDefinition: NodeDefinition<FieldNode> = {
     };
   },
 
-  emit(node, ctx) {
-    // The index host. `collection_index` is legal only on a direct child of a
-    // control declaring `collection_name`, which is why the widget is wrapped
-    // rather than carrying the index itself.
+  socket: () => 'field',
+
+  // At rest: the field as the build rendered it, from the author's textures.
+  // The modal host stands the engine's own widget here, placed by its row.
+  face(node): ControlEntry {
     return {
       [node.name]: {
-        type: 'stack_panel',
-        orientation: 'vertical',
+        type: 'panel',
         size: sizeOf(node.rect),
         offset: offsetOf(node.rect),
         ...topLeft,
         ...layerOf(node),
         ...visibilityOf(node),
-        collection_name: MODAL_COLLECTION,
-        controls: [{
-          [`field@${ROW[node.field] ?? ''}`]: {
-            collection_index: node.address,
-            ...NEEDS_DECODE_REPLACED.has(node.field) ? { ...NO_DECODE, $scale: node.scale } : { size: FULL },
-            // The slider's travel area sizes itself from the payload, so a
-            // compiled one is told its size instead — see `travel_area_static`.
-            //
-            // As an ARRAY, not two numbers. A size must carry a unit or be a
-            // real number, and a variable holding `304` substituted into
-            // `"$travel_w"` is a string with neither: the parser rejects the
-            // whole file with "Dangling number (no % or px in Size)".
-            ...node.field === MODAL_SLIDER_SLOT_TYPE ? sliderGeometry(node) : {},
-            // Reads the engine's synced selection instead of decoding one, and
-            // mounts a popup of its own: the shared one gates itself on a `#type`
-            // it decodes out of the cell, which a compiled screen does not send,
-            // so it never opens.
-            ...node.field === MODAL_INLINE_SELECT_SLOT_TYPE ? { $compiled: true } : {},
-            // The engine hosts the popup box in the control this names, found
-            // BY NAME across the screen: the screen's own popup host, so the
-            // name resolves wherever the screen is mounted (the host emits it
-            // at the root — see the form host's overlay).
-            ...node.field === MODAL_DROPDOWN_SLOT_TYPE ? { $compiled: true, $dropdown_area: popupHostOf(ctx.ns) } : {},
-            // The static value and placeholder labels, and the engine pointed at
-            // them BY NAME: `ignored` does not take the interpreted copies out of
-            // the by-name lookup, so each path names its own (the slider's
-            // bar-control rule, on the edit box).
-            ...node.field === MODAL_INPUT_SLOT_TYPE
-              ? { $compiled: true, $text_ctrl: 'display_text_static', $placeholder_ctrl: 'place_holder_static' }
-              : {},
-            ...node.faces,
-          },
-        }],
+        controls: restOf(node),
       },
     };
   },

@@ -1,10 +1,7 @@
 import type { SlotRole } from '@bedrock-core/ui-runtime';
 import { SLOT_TYPE, slotInteractive, slotSource } from '@bedrock-core/ui-runtime/compile';
-import type { Control } from '../jsonui';
-import {
-  CELL_VAR, collectionKey, CHEST, layerOf, offsetOf, sizeOf, SLOT_VAR, topLeft, visibilityOf,
-} from './shared';
-import type { Emit, NodeBase, NodeDefinition } from './types';
+import { cellFrame, layerOf, visibilityOf } from './shared';
+import type { NodeBase, NodeDefinition } from './types';
 
 /**
  * A slot reading a collection the screen does not own, at an author-given
@@ -52,111 +49,6 @@ declare module './types' {
   }
 }
 
-/**
- * The library's own cell definitions a slot mounts, from the static
- * `core_ui_chest` file the render pack ships. One per control shape, never
- * one per node.
- */
-export const CELL = {
-  host: `${CHEST}.slot_host`,
-  slot: `${CHEST}.slot`,
-  item: `${CHEST}.cell`,
-  lockedSlot: `${CHEST}.locked_slot`,
-  outputSlot: `${CHEST}.output_slot`,
-  displayStates: `${CHEST}.display_states`,
-  empty: `${CHEST}.empty`,
-} as const;
-
-/**
- * Which cell a slot host instantiates: an inert cell for a locked slot, the
- * guard-toggled pair for an output slot, or the host's default otherwise. An
- * input's refusals are the runtime's, so it needs no cell of its own.
- */
-const cellOf = (node: SlotNode): { [CELL_VAR]?: string } => {
-  if (!node.interactive) {
-    return { [CELL_VAR]: CELL.lockedSlot };
-  }
-
-  return node.role === 'output' ? { [CELL_VAR]: CELL.outputSlot } : {};
-};
-
-/**
- * What the cell needs to draw the given collection: its item, and nothing that
- * reveals the runtime's transport. A display-only cell rides the inert button,
- * which withholds focus — no take, no place, no drop — since the engine's slot
- * has no take-only or place-only action to bake instead. `renderer`, when
- * given, hides a transport item for a player's own grids.
- */
-export const containerItemVars = (collection: string, interactive: boolean, renderer?: string): Control => ({
-  $item_collection_name: collection,
-  ...renderer === undefined ? {} : { $item_renderer: renderer, $durability_bar_required: false },
-  ...interactive ? {} : { $button_ref: CELL.displayStates },
-});
-
-/**
- * The collections the PLAYER owns, as opposed to the screen's own container.
- *
- * A press auto-places the runtime's transport into the player's inventory and
- * the script pulls it back a tick later, so for that tick the transport is
- * genuinely sitting in one of these — whichever slot happened to be free. Any
- * cell drawing one of them therefore hides it.
- *
- * This is NOT an author's choice. The transport is the library's own
- * mechanism, and nobody writing a screen should have to know it exists to keep
- * a command block from flashing in their hotbar. `hideOwned` stays as the way
- * to ask for the same gate over some other collection.
- */
-const PLAYER_COLLECTIONS: ReadonlySet<string> = new Set(['inventory_items', 'hotbar_items']);
-
-/** Whether a cell over this collection must hide the runtime's transport. */
-export const hidesTransport = (collection: string, hideOwned = false): boolean =>
-  hideOwned || PLAYER_COLLECTIONS.has(collection);
-
-/**
- * A foreign slot's cell definition, registered once per collection and
- * interactivity.
- */
-const ensureForeignCell = (emit: Emit, collection: string, interactive: boolean): string => {
-  const name = `${interactive ? 'slot' : 'display_slot'}__${collectionKey(collection)}`;
-
-  if (emit.defs[name] === undefined) {
-    const renderer = hidesTransport(collection) ? emit.ownedRenderer : undefined;
-
-    emit.defs[name] = {
-      type: 'panel',
-      size: [18, 18],
-      controls: [{ [`item@${CELL.item}`]: containerItemVars(collection, interactive, renderer) }],
-    };
-  }
-
-  return `${emit.ns}.${name}`;
-};
-
-/**
- * A foreign slot's host, registered once per collection. Its default cell is
- * the interactive one; a display-only slot passes its own cell as an override.
- */
-const ensureForeignHost = (emit: Emit, collection: string): string => {
-  const name = `slot_host__${collectionKey(collection)}`;
-
-  if (emit.defs[name] === undefined) {
-    const cell = ensureForeignCell(emit, collection, true);
-
-    emit.defs[name] = {
-      type: 'stack_panel',
-      orientation: 'vertical',
-      size: [18, 18],
-      ...topLeft,
-      collection_name: collection,
-      [`${SLOT_VAR}|default`]: 0,
-      [`${CELL_VAR}|default`]: cell,
-      controls: [{ [`cell@${CELL_VAR}`]: { collection_index: SLOT_VAR } }],
-    };
-  }
-
-  return `${emit.ns}.${name}`;
-};
-
 export const slotDefinition: NodeDefinition<SlotNode> = {
   kind: 'slot',
   types: [SLOT_TYPE],
@@ -196,35 +88,15 @@ export const slotDefinition: NodeDefinition<SlotNode> = {
     };
   },
 
-  emit(node, ctx) {
-    if (node.source !== undefined) {
-      // A foreign slot: its own host over its own collection, keyed by that
-      // collection so two slots on the same one share it. The index is the
-      // author's, not the allocation's, and the runtime never touches it.
-      const host = ensureForeignHost(ctx, node.source.collection);
+  socket: () => 'slot',
 
-      return {
-        [`${node.name}@${host}`]: {
-          offset: offsetOf(node.rect),
-          size: sizeOf(node.rect),
-          ...layerOf(node),
-          ...visibilityOf(node),
-          [SLOT_VAR]: node.source.index,
-          ...node.source.interactive
-            ? {}
-            : { [CELL_VAR]: ensureForeignCell(ctx, node.source.collection, false) },
-        },
-      };
-    }
-
+  // At rest: an empty cell. The host stands a cell over its collection here.
+  face(node) {
     return {
-      [`${node.name}@${CELL.host}`]: {
-        offset: offsetOf(node.rect),
-        size: sizeOf(node.rect),
+      [node.name]: {
+        ...cellFrame(node.rect),
         ...layerOf(node),
         ...visibilityOf(node),
-        [SLOT_VAR]: node.address,
-        ...cellOf(node),
       },
     };
   },

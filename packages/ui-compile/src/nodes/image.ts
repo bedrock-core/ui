@@ -35,11 +35,11 @@ export const imageDefinition: NodeDefinition<ImageNode> = {
     };
   },
 
-  emit(node) {
-    if (node.address !== undefined) {
-      throw new Error(`A live <Image> has no compiled form on this host; "${node.name}" carries its texture, which only a form can draw.`);
-    }
+  socket: node => (node.address === undefined ? undefined : 'texture'),
 
+  // The texture the build rendered with; a host with a string carrier stands
+  // its live image here.
+  face(node) {
     return {
       [node.name]: {
         type: 'image',

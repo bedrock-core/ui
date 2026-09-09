@@ -9,10 +9,11 @@ import {
   allocate, buildContainerTree, buildScreenOnce, containerEntity, containerRoot,
   ContainerScreenError, layoutKey, probeLiveness, type Probe,
 } from '@bedrock-core/ui-runtime/compile';
-import { BACKDROP_DEFINITION, emit } from './emit';
+import { BACKDROP_DEFINITION, type FaceDocument, faceOf, facesNamespaceOf } from './face';
+import { fill } from './fill';
 import { CHEST_EMIT, CHEST_HOST, type ChestHost, chestRouter, type ChestRouting } from './hosts/chest';
 import type { Allocation } from './ir';
-import type { Document } from './jsonui';
+import type { Control, Document } from './jsonui';
 import { chestAddressing, toIr } from './toIr';
 
 export interface ScreenSpec {
@@ -41,6 +42,11 @@ export interface CompiledScreen {
   entity: string;
   /** The JSON UI document: `screen` (+ `backdrop` when the screen has a Background) and its shared definitions. */
   document: Document;
+  /** The screen as faces alone, before the host stood its mechanisms in: what the gallery draws. */
+  face: FaceDocument;
+  /** The namespace of the addon's shared faces, and the looks this screen contributes to it. */
+  facesNamespace: string;
+  faces: Record<string, Control>;
   /** Counts the filter reports and stamps: drawn cells, bank slots, and the inventory size the entity needs. */
   allocation: Allocation;
   hasBackdrop: boolean;
@@ -156,10 +162,12 @@ export function compileScreen(
   const allocation = allocate(tree);
   const ir = toIr(root, chestAddressing(allocation), {
     namespace,
+    faces: facesNamespaceOf(addon),
     collection: host.collection,
     ownedItemRenderer: host.ownedItemRenderer,
   });
-  const document = emit(ir, CHEST_EMIT);
+  const face = faceOf(ir);
+  const document = fill(face, CHEST_EMIT);
   const drawn = allocation.slots.length;
   const counts: Allocation = {
     sentinels: allocation.sentinels.length,
@@ -175,6 +183,9 @@ export function compileScreen(
     layoutId: layoutKey(addon, spec.name),
     entity,
     document,
+    face,
+    facesNamespace: face.facesNamespace,
+    faces: face.faces,
     allocation: counts,
     hasBackdrop: document[BACKDROP_DEFINITION] !== undefined,
     hasText: allocation.channels.some(channel => channel.carrier === 'text'),

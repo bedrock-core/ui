@@ -1,7 +1,10 @@
 import { SLOT_GRID_TYPE, slotGridConfig } from '@bedrock-core/ui-runtime/compile';
-import { collectionKey, layerOf, offsetOf, sizeOf, topLeft, visibilityOf } from './shared';
-import { CELL, containerItemVars, hidesTransport } from './slot';
-import type { Emit, NodeBase, NodeDefinition } from './types';
+import type { ControlEntry } from '../jsonui';
+import { cellFrame, layerOf, offsetOf, sizeOf, topLeft, visibilityOf } from './shared';
+import type { NodeBase, NodeDefinition } from './types';
+
+/** The pitch of an item cell, which is what a `grid` draws its template at. */
+export const CELL_PITCH = 18;
 
 /**
  * A grid of cells over a collection the screen does not own — the player's
@@ -26,31 +29,6 @@ declare module './types' {
   }
 }
 
-/**
- * A grid's cell template, registered once per collection, interactivity and
- * owned-hiding. `container_item` is used directly as the template, exactly as
- * the router's own redrawn grids do.
- */
-const ensureGridCell = (emit: Emit, node: GridNode): string => {
-  // One answer, used for both the name and the renderer: a definition keyed
-  // 'plain' that carries the gated renderer would be shared by cells that must
-  // not have it.
-  const gated = hidesTransport(node.collection, node.hideOwned);
-  const name = [
-    'grid_cell',
-    collectionKey(node.collection),
-    node.interactive ? 'take' : 'display',
-    gated ? 'owned' : 'plain',
-  ].join('__');
-  const key = `${name}@${CELL.item}`;
-
-  if (emit.defs[key] === undefined) {
-    emit.defs[key] = containerItemVars(node.collection, node.interactive, gated ? emit.ownedRenderer : undefined);
-  }
-
-  return `${emit.ns}.${name}`;
-};
-
 export const gridDefinition: NodeDefinition<GridNode> = {
   kind: 'grid',
   types: [SLOT_GRID_TYPE],
@@ -71,20 +49,29 @@ export const gridDefinition: NodeDefinition<GridNode> = {
     };
   },
 
-  emit(node, ctx) {
-    // A grid over a foreign collection: the grid declares the collection, so
-    // each cell gets its index for free — no per-cell host is needed.
+  socket: () => 'grid',
+
+  // At rest: the empty cells, one frame per cell at the engine's pitch. The
+  // host stands a grid over its collection here.
+  face(node) {
+    const cells = Array.from({ length: node.columns * node.rows }, (_unused, index): ControlEntry => ({
+      [`cell_${index}`]: cellFrame({
+        x: (index % node.columns) * CELL_PITCH,
+        y: Math.floor(index / node.columns) * CELL_PITCH,
+        width: CELL_PITCH,
+        height: CELL_PITCH,
+      }),
+    }));
+
     return {
       [node.name]: {
-        type: 'grid',
+        type: 'panel',
         size: sizeOf(node.rect),
         offset: offsetOf(node.rect),
         ...topLeft,
         ...layerOf(node),
         ...visibilityOf(node),
-        grid_dimensions: [node.columns, node.rows],
-        collection_name: node.collection,
-        grid_item_template: ensureGridCell(ctx, node),
+        controls: cells,
       },
     };
   },

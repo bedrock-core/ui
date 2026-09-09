@@ -1,8 +1,10 @@
 import { MODAL_FORM_BUTTON_SLOT_TYPE } from '@bedrock-core/ui-runtime/compile';
 import type { ButtonMapping, Control, ControlEntry } from '../jsonui';
 import { type ButtonFace, faceOf } from './button';
-import { FACE_CONTENT_LAYER, FULL, layerOf, offsetOf, sizeOf, str, topLeft, visibilityOf } from './shared';
-import type { NodeBase, NodeDefinition } from './types';
+import {
+  FACE_CONTENT_LAYER, faceId, FULL, layerOf, offsetOf, shareFace, sizeOf, str, topLeft, visibilityOf,
+} from './shared';
+import type { FaceEmit, NodeBase, NodeDefinition } from './types';
 
 /**
  * A modal's submit or exit button, drawn by the pack.
@@ -16,7 +18,8 @@ import type { NodeBase, NodeDefinition } from './types';
  * So this is an ordinary compiled button whose press is routed to the modal's
  * own action. Nothing about it reaches script directly — the engine turns the
  * press into the submit or the dismissal, and the runtime hears it as the
- * `formValues` response or as a cancel.
+ * `formValues` response or as a cancel. The route is the client's, so the
+ * node is a look with no socket.
  */
 export interface ModalButtonNode extends NodeBase {
   kind: 'modal_button';
@@ -61,7 +64,7 @@ const mappingsFor = (role: 'submit' | 'exit'): ButtonMapping[] => [
  * child its `*_control` names and nothing else of its own, so a sibling of the
  * state controls is never seen.
  */
-const face = (texture: string, content: string | undefined): Control => ({
+const stateFace = (texture: string, content: string | undefined): Control => ({
   type: 'panel',
   size: FULL,
   ...topLeft,
@@ -72,6 +75,42 @@ const face = (texture: string, content: string | undefined): Control => ({
       : [{ [`caption@${content}`]: { layer: FACE_CONTENT_LAYER } } satisfies ControlEntry],
   ],
 });
+
+/**
+ * The caption, centred on the face in BOTH axes.
+ *
+ * A label sized to the whole button draws its text at the top of that box, so
+ * centring the box changes nothing — the text still sits at the top edge.
+ * Sizing the label to its own content (`default` height) and anchoring THAT
+ * to the centre is what puts the text in the middle; `text_alignment` then
+ * handles the horizontal within it.
+ */
+const caption = (label: string): Control => ({
+  type: 'label',
+  size: ['100%', 'default'],
+  anchor_from: 'center',
+  anchor_to: 'center',
+  text_alignment: 'center',
+  text: label,
+  localize: false,
+});
+
+/** The three shared faces one captioned button look has, fully qualified. */
+const shareFaces = (node: ModalButtonNode, ctx: FaceEmit): { rest: string; hover: string; pressed: string } => {
+  const id = faceId('modal_button', JSON.stringify({ face: node.face, size: sizeOf(node.rect), label: node.label }));
+  const { faces, facesNs } = ctx;
+  const content = node.label === '' ? undefined : `${facesNs}.${id}_content`;
+
+  if (content !== undefined) {
+    shareFace(faces, `${id}_content`, caption(node.label));
+  }
+
+  return {
+    rest: `${facesNs}.${shareFace(faces, id, stateFace(node.face.texture, content))}`,
+    hover: `${facesNs}.${shareFace(faces, `${id}_hover`, stateFace(node.face.hover, content))}`,
+    pressed: `${facesNs}.${shareFace(faces, `${id}_pressed`, stateFace(node.face.pressed, content))}`,
+  };
+};
 
 export const modalButtonDefinition: NodeDefinition<ModalButtonNode> = {
   kind: 'modal_button',
@@ -90,27 +129,8 @@ export const modalButtonDefinition: NodeDefinition<ModalButtonNode> = {
     };
   },
 
-  emit(node, ctx): ControlEntry {
-    const content = node.label === '' ? undefined : `${ctx.ns}.${node.name}_content`;
-
-    if (content !== undefined) {
-      // Centred on the face in BOTH axes.
-      //
-      // A label sized to the whole button draws its text at the top of that
-      // box, so centring the box changes nothing — the text still sits at the
-      // top edge. Sizing the label to its own content (`default` height) and
-      // anchoring THAT to the centre is what puts the text in the middle;
-      // `text_alignment` then handles the horizontal within it.
-      ctx.defs[`${node.name}_content`] = {
-        type: 'label',
-        size: ['100%', 'default'],
-        anchor_from: 'center',
-        anchor_to: 'center',
-        text_alignment: 'center',
-        text: node.label,
-        localize: false,
-      };
-    }
+  face(node, ctx): ControlEntry {
+    const faces = shareFaces(node, ctx);
 
     return {
       [node.name]: {
@@ -128,9 +148,9 @@ export const modalButtonDefinition: NodeDefinition<ModalButtonNode> = {
         sound_pitch: 1,
         button_mappings: mappingsFor(node.role),
         controls: [
-          { default: face(node.face.texture, content) },
-          { hover: face(node.face.hover, content) },
-          { pressed: face(node.face.pressed, content) },
+          { [`default@${faces.rest}`]: {} },
+          { [`hover@${faces.hover}`]: {} },
+          { [`pressed@${faces.pressed}`]: {} },
         ],
       },
     };

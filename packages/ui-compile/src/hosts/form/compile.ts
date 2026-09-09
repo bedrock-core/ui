@@ -5,8 +5,9 @@ import {
   visiblesAt, type EntryEntry, type ModalRow,
 } from '@bedrock-core/ui-runtime/compile';
 import { checkLiveness } from '../../compile';
-import { BACKDROP_DEFINITION, emit } from '../../emit';
-import type { Document } from '../../jsonui';
+import { BACKDROP_DEFINITION, type FaceDocument, faceOf, facesNamespaceOf } from '../../face';
+import { fill } from '../../fill';
+import type { Control, Document } from '../../jsonui';
 import { MODAL_COLLECTION } from '../../nodes/field';
 import type { Addressing } from '../../nodes/types';
 import { toIr } from '../../toIr';
@@ -50,6 +51,11 @@ export interface CompiledFormScreen {
   marker?: string;
   /** The JSON UI document: `screen` (+ `backdrop`) and its shared definitions. */
   document: Document;
+  /** The screen as faces alone, before the host stood its mechanisms in: what the gallery draws. */
+  face: FaceDocument;
+  /** The namespace of the addon's shared faces, and the looks this screen contributes to it. */
+  facesNamespace: string;
+  faces: Record<string, Control>;
   /** Every entry the runtime has to emit, in order. The nth is `response.selection` n. */
   entries: readonly EntryEntry[];
   /**
@@ -162,10 +168,12 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
   // its runtime writes with — the numbering cannot drift from the bake.
   const entries = modal ? [] : allocateForm(tree, analyze(tree, visibles)).entries;
   const addressing = modal ? modalAddressing(allocateModal(tree, visibles)) : actionAddressing(entries);
-  const document = emit(
-    toIr(formRoot(tree), addressing, { namespace, collection: modal ? MODAL_COLLECTION : FORM_COLLECTION }),
-    FORM_EMIT,
-  );
+  const face = faceOf(toIr(formRoot(tree), addressing, {
+    namespace,
+    faces: facesNamespaceOf(spec.namespace),
+    collection: modal ? MODAL_COLLECTION : FORM_COLLECTION,
+  }));
+  const document = fill(face, FORM_EMIT);
 
   return {
     name: spec.name,
@@ -174,6 +182,9 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
     title: formTitleFor(namespace),
     ...embedded ? { marker: embedMarker(spec.namespace) } : {},
     document,
+    face,
+    facesNamespace: face.facesNamespace,
+    faces: face.faces,
     entries,
     snapshot: {
       // Carrier-aware: the bool channels are in the fingerprint, so a runtime

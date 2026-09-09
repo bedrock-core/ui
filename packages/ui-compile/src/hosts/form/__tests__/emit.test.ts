@@ -1,16 +1,21 @@
 import { FORM_COLLECTION } from '@bedrock-core/ui-runtime/compile';
 import { describe, expect, it } from 'vitest';
 import { emit } from '../../../emit';
+import { faceOf } from '../../../face';
 import type { IrDocument, IrNode } from '../../../ir';
 import type { Control, Document } from '../../../jsonui';
+import { type ButtonNode, faceSignature } from '../../../nodes/button';
+import { faceId } from '../../../nodes/shared';
 import { FORM_EMIT } from '../emit';
 
-/** A form document with the given children on the canvas and nothing else. */
-const screenOf = (children: IrNode[]): Document => emit({
+const irOf = (children: IrNode[]): IrDocument => ({
   namespace: 'core_ui_test',
   collection: FORM_COLLECTION,
   root: { kind: 'panel', name: 'root', rect: { x: 0, y: 0, width: 320, height: 210 }, children },
-} satisfies IrDocument, FORM_EMIT);
+});
+
+/** A form document with the given children on the canvas and nothing else. */
+const screenOf = (children: IrNode[]): Document => emit(irOf(children), FORM_EMIT);
 
 const definition = (document: Document, name: string): Control => {
   const found = document[name];
@@ -34,7 +39,7 @@ const only = (control: Control): [string, Control] => {
   return [name, child];
 };
 
-const button = (address: number): IrNode => ({
+const button = (address: number): ButtonNode => ({
   kind: 'button',
   name: 'button_1',
   rect: { x: 4, y: 8, width: 60, height: 20 },
@@ -56,6 +61,8 @@ const text = (address: number): IrNode => ({
   rect: { x: 0, y: 0, width: 40, height: 10 },
   address,
   length: 12,
+  initial: 'idle',
+  localize: false,
   fontType: 'default',
   fontScaleFactor: 1,
 });
@@ -63,18 +70,21 @@ const text = (address: number): IrNode => ({
 describe('a form button', () => {
   const document = screenOf([button(2)]);
   const host = definition(document, 'screen').controls?.[0]?.['button_1'];
+  const id = faceId('button', faceSignature(button(2)));
 
-  it('reads its entry through a one-child host, because the index goes nowhere else', () => {
-    expect(host).toMatchObject({ type: 'stack_panel', collection_name: FORM_COLLECTION });
+  it('reads its entry through a one-child host at the face\'s place, because the index goes nowhere else', () => {
+    expect(host).toMatchObject({
+      type: 'stack_panel', collection_name: FORM_COLLECTION, offset: [4, 8], size: [60, 20], anchor_from: 'top_left',
+    });
 
     const [name, cell] = only(host ?? {});
 
-    expect(name).toBe('cell@core_ui_test.button_1');
+    expect(name).toBe('cell@core_ui_test.press_1');
     expect(cell.collection_index).toBe(2);
   });
 
   it('carries the collection_details binding ON THE BUTTON — S1: a host above it is not enough', () => {
-    const states = definition(document, 'button_1_states');
+    const states = definition(document, 'press_1_states');
 
     expect(states.type).toBe('button');
     expect(states.bindings).toContainEqual({
@@ -84,7 +94,7 @@ describe('a form button', () => {
   });
 
   it('routes a press to the engine\'s form click', () => {
-    expect(definition(document, 'button_1_states').button_mappings).toContainEqual({
+    expect(definition(document, 'press_1_states').button_mappings).toContainEqual({
       from_button_id: 'button.menu_select',
       to_button_id: 'button.form_button_click',
       mapping_type: 'pressed',
@@ -95,7 +105,7 @@ describe('a form button', () => {
     // MEASURED in game: a button with `enabled` bound false still handed the
     // press to script, and drew no disabled look. The press surface is gated
     // out instead — the shape the chest host arrived at for the same reason.
-    const cell = definition(document, 'button_1');
+    const cell = definition(document, 'press_1');
     const [enabled, disabled] = cell.controls ?? [];
 
     expect(enabled?.['enabled']?.bindings).toContainEqual({
@@ -109,32 +119,40 @@ describe('a form button', () => {
       target_property_name: '#visible',
     });
 
-    // Only the enabled branch holds a button.
-    expect(JSON.stringify(enabled)).toContain('button_1_states');
-    expect(JSON.stringify(disabled)).not.toContain('button_1_states');
+    // Only the enabled branch holds a button; the disabled branch is the
+    // disabled face alone.
+    expect(JSON.stringify(enabled)).toContain('press_1_states');
+    expect(JSON.stringify(disabled)).not.toContain('press_1_states');
+    expect(disabled?.['disabled']?.controls).toEqual([{ [`face@core_ui_test_faces.${id}_disabled`]: {} }]);
   });
 
-  it('puts the caption INSIDE each state, since a sibling of them is never drawn', () => {
-    const states = definition(document, 'button_1_states');
+  it('draws every state through the shared faces, caption inside each', () => {
+    const states = definition(document, 'press_1_states');
 
-    expect(states.controls?.map(entry => Object.keys(entry)[0])).toEqual(['default', 'hover', 'pressed']);
+    // A button draws the child its `*_control` names and nothing else of its
+    // own, so each state IS one of the faces, and the caption lives in there.
+    expect(states.controls?.map(entry => Object.keys(entry)[0])).toEqual([
+      `default@core_ui_test_faces.${id}`,
+      `hover@core_ui_test_faces.${id}_hover`,
+      `pressed@core_ui_test_faces.${id}_pressed`,
+    ]);
 
-    for (const entry of states.controls ?? []) {
-      const [state] = Object.values(entry);
+    const { faces } = faceOf(irOf([button(2)]));
 
-      expect(state?.controls?.map(child => Object.keys(child)[0]))
-        .toEqual(['bg', 'caption@core_ui_test.button_1_content']);
+    for (const state of [id, `${id}_hover`, `${id}_pressed`, `${id}_disabled`]) {
+      expect(faces[state]?.controls?.map(child => Object.keys(child)[0]))
+        .toEqual(['bg', `caption@core_ui_test_faces.${id}_content`]);
     }
 
     // Emitted once, referenced by every face.
-    expect(definition(document, 'button_1_content').type).toBe('panel');
+    expect(faces[`${id}_content`]?.type).toBe('panel');
   });
 
   it('shares one definition between two buttons that look the same', () => {
-    const two = screenOf([button(0), { ...button(1), name: 'button_2' } as IrNode]);
+    const two = screenOf([button(0), { ...button(1), name: 'button_2' }]);
 
-    expect(two['button_2']).toBeUndefined();
-    expect(only(two['button_1'] as Control)).toBeDefined();
+    expect(two['press_2']).toBeUndefined();
+    expect(only(two['press_1'] as Control)).toBeDefined();
   });
 });
 
@@ -142,7 +160,7 @@ describe('a form live text', () => {
   const document = screenOf([text(5)]);
 
   it('is one label reading its entry — no table, no slicing, no cap', () => {
-    const run = definition(document, 'text_1');
+    const run = definition(document, 'text_carrier_1');
 
     // Localized: a live key resolves on the client, a literal renders as itself.
     expect(run).toMatchObject({ type: 'label', text: '#entry_value', localize: true });
@@ -155,16 +173,24 @@ describe('a form live text', () => {
     });
   });
 
-  it('mounts through the same index host a button uses', () => {
+  it('mounts through the same index host a button uses, at the face\'s place', () => {
     const host = definition(document, 'screen').controls?.[0]?.['text_1'];
     const [name, cell] = only(host ?? {});
 
-    expect(name).toBe('cell@core_ui_test.text_1');
+    expect(host).toMatchObject({ offset: [0, 0], size: [40, 10], anchor_from: 'top_left' });
+    expect(name).toBe('cell@core_ui_test.text_carrier_1');
     expect(cell.collection_index).toBe(5);
   });
 
+  it('draws the string the build rendered with as its face', () => {
+    const [entry] = definition(faceOf(irOf([text(5)])).document, 'screen').controls ?? [];
+
+    expect(entry?.['text_1']).toMatchObject({ type: 'label', text: 'idle', localize: false, size: [40, 10] });
+    expect(entry?.['text_1']?.bindings).toBeUndefined();
+  });
+
   it('is not pressable: no mappings, and nothing to attribute a press to', () => {
-    const run = definition(document, 'text_1');
+    const run = definition(document, 'text_carrier_1');
 
     expect(run.button_mappings).toBeUndefined();
   });

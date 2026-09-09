@@ -5,7 +5,8 @@ import { describe, expect, it } from 'vitest';
 import { demoCounts, demoEntity, demoScreen } from '../__fixtures__/demo';
 import { buildRouter, type CompiledScreen } from '../compile';
 import { CHEST_HOST } from '../hosts/chest';
-import { emit } from '../emit';
+import { faceOf } from '../face';
+import { fill } from '../fill';
 import { CHEST_EMIT } from '../hosts/chest';
 import {
   child, definition, defs, entries, modification,
@@ -50,7 +51,8 @@ const staticDefinitions = (): Set<string> => {
  * definition the screen references exists — in itself or in the static files.
  */
 describe('the reference screen', () => {
-  const document = emit(demoScreen, CHEST_EMIT);
+  const face = faceOf(demoScreen);
+  const document = fill(face, CHEST_EMIT);
   const compiled: CompiledScreen = {
     name: 'demo',
     addon: 'core_ui',
@@ -58,6 +60,9 @@ describe('the reference screen', () => {
     layoutId: layoutKey('core_ui', 'demo'),
     entity: demoEntity,
     document,
+    face,
+    facesNamespace: face.facesNamespace,
+    faces: face.faces,
     allocation: demoCounts,
     hasBackdrop: true,
     hasText: true,

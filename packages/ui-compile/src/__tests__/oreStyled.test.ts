@@ -27,22 +27,25 @@ describe('ore-styled components in a container screen', () => {
   });
 
   it('draw the theme\'s textures and captions', () => {
-    const { document, allocation } = compileScreen(Screen, { name: 'ore' });
+    const { document, faces, allocation } = compileScreen(Screen, { name: 'ore' });
     const primary = theme.components.button.variants.primary;
     const danger = theme.components.button.variants.danger;
 
     expect(allocation).toMatchObject({ drawn: 2, channels: 0 });
 
-    const go = definition(document, 'button_1_face');
+    // Two looks, so two face families and two mechanisms, in document order.
+    const [go, stop] = ['press_1', 'press_2'].map((mechanism) => {
+      const [enabled] = definition(document, mechanism).controls ?? [];
 
-    expect(child(go, 'bg').texture).toBe(primary.textures.default);
-    expect(child(go, 'bg_disabled').texture).toBe(primary.textures.disabled);
-    expect(child(child(go, 'content'), 'label_2').text).toBe(`${primary.textStyle.color}Go`);
+      return String(enabled?.['enabled']?.controls?.[0]?.['item@core_ui_chest.cell']?.$background_images).replace('core_ui_faces.', '');
+    });
 
-    const stop = definition(document, 'button_2_face');
+    expect(child(faces[go ?? ''] ?? {}, 'bg').texture).toBe(primary.textures.default);
+    expect(child(faces[`${go}_disabled`] ?? {}, 'bg').texture).toBe(primary.textures.disabled);
+    expect(child(faces[`${go}_content`] ?? {}, 'c0').text).toBe(`${primary.textStyle.color}Go`);
 
-    expect(child(stop, 'bg').texture).toBe(danger.textures.default);
-    expect(child(child(stop, 'content'), 'label_3').text).toBe(`${danger.textStyle.disabledColor}Stop`);
+    expect(child(faces[stop ?? ''] ?? {}, 'bg').texture).toBe(danger.textures.default);
+    expect(child(faces[`${stop}_content`] ?? {}, 'c0').text).toBe(`${danger.textStyle.disabledColor}Stop`);
 
     const [, card] = find(document, name => name === 'panel_1');
 

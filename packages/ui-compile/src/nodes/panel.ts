@@ -53,7 +53,7 @@ export const panelDefinition: NodeDefinition<PanelNode> = {
 
   children: node => node.children,
 
-  emit(node, ctx) {
+  face(node, ctx) {
     if (node.stack === true) {
       return {
         [node.name]: {

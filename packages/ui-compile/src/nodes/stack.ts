@@ -1,6 +1,6 @@
 import type { ControlEntry } from '../jsonui';
 import { topLeft } from './shared';
-import type { Emit, IrNode } from './types';
+import type { FaceEmit, IrNode } from './types';
 
 /**
  * A column of laid-out children as a `stack_panel`'s rows.
@@ -12,7 +12,7 @@ import type { Emit, IrNode } from './types';
  * one native reflow a frozen screen has. A child above the first (a padding
  * the column started with) becomes a leading spacer.
  */
-export const stackRows = (children: readonly IrNode[], width: number, ctx: Emit): ControlEntry[] => {
+export const stackRows = (children: readonly IrNode[], width: number, ctx: FaceEmit): ControlEntry[] => {
   const [first] = children;
   const lead = first === undefined || first.rect.y <= 0
     ? []

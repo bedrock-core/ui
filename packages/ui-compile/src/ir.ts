@@ -53,6 +53,8 @@ export interface Allocation {
 export interface IrDocument {
   /** JSON UI namespace for the emitted file. */
   namespace: string;
+  /** The namespace of the addon's shared faces. Defaults to `<namespace>_faces`. */
+  faces?: string;
   /** The collection every addressed control reads from, e.g. `container_items`. */
   collection: string;
   /**

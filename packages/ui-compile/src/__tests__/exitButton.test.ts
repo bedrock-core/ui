@@ -29,7 +29,7 @@ describe('a close button', () => {
   });
 
   it('is a real button routed to the engine exit, drawn with the author\'s faces', () => {
-    const { document } = compileScreen(Screen, { name: 'closable' });
+    const { document, faces } = compileScreen(Screen, { name: 'closable' });
     const exits: Control[] = [];
 
     eachControl(document, (_name, control) => {
@@ -45,22 +45,23 @@ describe('a close button', () => {
     expect(exit.type).toBe('button');
     expect(exit.$slot).toBeUndefined();
     expect(exit.collection_index).toBeUndefined();
-    expect(JSON.stringify(exit)).toContain('textures/ui/unstyled');
 
-    // The caption sits INSIDE each state, referenced from a definition of its
-    // own. A button draws the child its `*_control` names and nothing else, so
-    // a caption beside the states would never be seen — and a close button with
+    // Every state IS one of the shared faces, the caption inside each. A
+    // button draws the child its `*_control` names and nothing else, so a
+    // caption beside the states would never be seen — and a close button with
     // a label is exactly where that goes unnoticed.
-    const states = (exit.controls ?? []).map(entry => Object.keys(entry)[0]);
+    const states = (exit.controls ?? []).map(entry => Object.keys(entry)[0] ?? '');
 
-    expect(states).toEqual(['default', 'hover', 'pressed']);
+    expect(states.map(state => state.split('@')[0])).toEqual(['default', 'hover', 'pressed']);
 
-    for (const entry of exit.controls ?? []) {
-      const [state] = Object.values(entry);
+    for (const state of states) {
+      const face = faces[state.split('.')[1] ?? ''];
 
-      expect(state?.controls?.map(child => Object.keys(child)[0])?.[1]).toMatch(/^caption@/);
+      expect(JSON.stringify(face)).toContain('textures/ui/unstyled');
+      expect(face?.controls?.map(child => Object.keys(child)[0])?.[1]).toMatch(/^caption@/);
     }
 
-    expect(JSON.stringify(document)).toContain('"text":"x"');
+    expect(JSON.stringify(faces)).toContain('"text":"x"');
+    expect(JSON.stringify(document)).not.toContain('"text":"x"');
   });
 });

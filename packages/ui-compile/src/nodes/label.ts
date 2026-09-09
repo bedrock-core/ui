@@ -22,7 +22,7 @@ declare module './types' {
 export const labelDefinition: NodeDefinition<LabelNode> = {
   kind: 'label',
 
-  emit(node) {
+  face(node) {
     return {
       [node.name]: {
         type: 'label',

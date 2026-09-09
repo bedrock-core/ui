@@ -50,39 +50,44 @@ export const scrollDefinition: NodeDefinition<ScrollNode> = {
 
   children: node => node.children,
 
-  emit(node, ctx) {
+  face(node, ctx) {
     // The library's scrolling region, with the content as a definition of its
     // own because the region takes it by name. The 5-texel track runs down the
     // right edge, the viewport spans the rest.
-    const content = `${node.name}_content`;
     const [sole] = node.children;
 
-    // A scroll over exactly one list takes the LIST as its content: the host
-    // emits a list as a stack of gated rows sized `100%c`, and a stack gives
+    // A scroll over exactly one stack takes the STACK as its content: a list
+    // is a stack of rows, a folding column is a stack too, and a stack gives
     // an invisible child no space (measured, static and bound alike), so the
-    // extent follows the live count with nothing decoded — vanilla's own idiom
+    // extent follows what is shown with nothing decoded — vanilla's own idiom
     // for a scrolling list. Baked content otherwise.
-    // A column that folds (it holds a disclosure) is a stack too, and takes the
-    // scroll the same way: the extent follows the fold.
-    const soleStack = sole?.kind === 'list' || (sole?.kind === 'panel' && sole.stack === true);
-    const [stack] = ctx.host.id === 'form' && node.children.length === 1 && soleStack
-      ? Object.values(ctx.emitNode({ ...sole, rect: { ...sole.rect, x: 0, y: 0 } }))
-      : [];
+    const soleStack = sole !== undefined && node.children.length === 1
+      && (sole.kind === 'list' || (sole.kind === 'panel' && sole.stack === true));
 
-    // Never shorter than the viewport: with asserts on, content that fits with
-    // room to spare puts the scrollbar's percentage out of 0..1 and the client
-    // asserts. `min_size` is the floor; the stack still grows past it.
     // The column the layout gave the content: the viewport less the track.
     const width = Math.max(0, node.rect.width - SCROLL_TRACK_WIDTH);
+    let content: string;
 
-    ctx.defs[content] = stack === undefined
-      ? {
-          type: 'panel',
-          size: [width, node.extent],
-          ...topLeft,
-          controls: node.children.map(child => ctx.emitNode(child)),
-        }
-      : { ...stack, min_size: [width, node.rect.height] };
+    if (soleStack) {
+      // The stack IS the content definition, under the stack's own name, so a
+      // host that has to fill it (a list's gates) finds it where every other
+      // node is found. Never shorter than the viewport: with asserts on,
+      // content that fits with room to spare puts the scrollbar's percentage
+      // out of 0..1 and the client asserts. `min_size` is the floor; the
+      // stack still grows past it.
+      const [stack] = Object.values(ctx.emitNode({ ...sole, rect: { ...sole.rect, x: 0, y: 0 } }));
+
+      content = sole.name;
+      ctx.defs[content] = { ...stack, min_size: [width, node.rect.height] };
+    } else {
+      content = `${node.name}_content`;
+      ctx.defs[content] = {
+        type: 'panel',
+        size: [width, node.extent],
+        ...topLeft,
+        controls: node.children.map(child => ctx.emitNode(child)),
+      };
+    }
 
     return {
       [`${node.name}@${SHAPES}.scroll`]: {

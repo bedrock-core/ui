@@ -32,6 +32,9 @@ export type {
 } from './jsonui';
 
 export { BACKDROP_DEFINITION, emit, SCREEN_DEFINITION } from './emit';
+export { faceOf, facesNamespaceOf } from './face';
+export type { FaceDocument } from './face';
+export { fill } from './fill';
 export { toIr, UnsupportedNodeError } from './toIr';
 export type { ToIrOptions } from './toIr';
 export { CHEST_HOST, MOUNT_ANCHOR } from './hosts/chest';

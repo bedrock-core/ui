@@ -2,13 +2,24 @@ import { KEY_PREFIX, TRANSPORT_ITEM_AUX } from '@bedrock-core/ui-runtime/compile
 import { describe, expect, it } from 'vitest';
 import { demoScreen } from '../__fixtures__/demo';
 import { emit as emitDocument } from '../emit';
+import { faceOf } from '../face';
+import { fill } from '../fill';
 import { CHEST_EMIT } from '../hosts/chest';
 import type { ButtonFace, IrDocument, IrNode } from '../ir';
 import type { Control, Document } from '../jsonui';
+import { type ButtonNode, faceSignature } from '../nodes/button';
+import { faceId } from '../nodes/shared';
 import { child, definition, defs, eachControl, entries, find, findAll } from '../__fixtures__/helpers';
 
 /** Every case here is a chest screen, which is the only host these node mechanisms have. */
 const emit = (doc: IrDocument): Document => emitDocument(doc, CHEST_EMIT);
+
+/** Both halves: the faces the screen shares with its addon, and the document the chest serves. */
+const compiled = (doc: IrDocument): { faces: Record<string, Control>; doc: Document } => {
+  const face = faceOf(doc);
+
+  return { faces: face.faces, doc: fill(face, CHEST_EMIT) };
+};
 
 /** A document with the given children on a 320 x 210 canvas and nothing else. */
 const screenOf = (children: IrNode[], extra: Partial<IrDocument> = {}): IrDocument => ({
@@ -212,6 +223,8 @@ describe('emit / text runs', () => {
       rect: { x: 7, y: 7, width: 24, height: 10 },
       address: 1,
       length: 4,
+      initial: 'idle',
+      localize: false,
       fontType: 'default',
       fontScaleFactor: 2,
       ...overrides,
@@ -312,7 +325,7 @@ describe('emit / text runs', () => {
 describe('emit / buttons', () => {
   const face: ButtonFace = { texture: 't/rest', hover: 't/hover', pressed: 't/pressed' };
 
-  const button = (name: string, slot: number, look: ButtonFace, children: IrNode[] = [], x = 0): IrNode => ({
+  const button = (name: string, slot: number, look: ButtonFace, children: IrNode[] = [], x = 0): ButtonNode => ({
     kind: 'button',
     name,
     rect: { x, y: 0, width: 60, height: 20 },
@@ -331,8 +344,11 @@ describe('emit / buttons', () => {
     fontScaleFactor: 2,
   });
 
-  const withFace = (look: ButtonFace, children: IrNode[] = []): Document =>
-    emit(screenOf([button('a', 1, look, children)]));
+  /** The shared face id of one look, as both passes name it. */
+  const idOf = (look: ButtonFace, children: IrNode[] = []): string => faceId('button', faceSignature(button('x', 0, look, children)));
+
+  const withFace = (look: ButtonFace, children: IrNode[] = []): { faces: Record<string, Control>; doc: Document } =>
+    compiled(screenOf([button('a', 1, look, children)]));
 
   const gatesOn = (target: Control, expression: string): void => {
     // The enabled flag is the slot holding the TRANSPORT, by its item id —
@@ -353,16 +369,27 @@ describe('emit / buttons', () => {
 
   const ENABLED = `(#btn_aux = ${TRANSPORT_ITEM_AUX})`;
 
-  it('rides a slot host like any other cell, instantiating its own face', () => {
-    const doc = withFace(face);
-    const [name, host] = find(doc, candidate => candidate.startsWith('a@'));
+  it('draws its resting face at rest, and the chest stands a slot host in its place', () => {
+    const id = idOf(face);
+    const before = faceOf(screenOf([button('a', 1, face)]));
+    const [faceName, rest] = find(before.document, candidate => candidate === 'a');
+
+    // The face: the resting look at the button's place, nothing about slots.
+    expect(faceName).toBe('a');
+    expect(rest).toMatchObject({ type: 'panel', offset: [0, 0], size: [60, 20], anchor_from: 'top_left' });
+    expect(rest.controls).toEqual([{ [`face@core_ui_test_faces.${id}`]: {} }]);
+    expect(JSON.stringify(before.document)).not.toContain('binding');
+
+    // The mechanism: a slot host at the same place, instantiating the look's cell.
+    const [name, host] = find(withFace(face).doc, candidate => candidate.startsWith('a@'));
 
     expect(name).toBe('a@core_ui_chest.slot_host');
-    expect(host).toMatchObject({ offset: [0, 0], size: [60, 20], $slot: 1, $cell: 'core_ui_test.button_1' });
+    expect(host).toMatchObject({ offset: [0, 0], size: [60, 20], anchor_from: 'top_left', $slot: 1, $cell: 'core_ui_test.press_1' });
   });
 
   it('hides the transport item and sizes the cell to the button', () => {
-    const cell = definition(withFace(face), 'button_1');
+    const id = idOf(face);
+    const cell = definition(withFace(face).doc, 'press_1');
     const enabled = child(cell, 'enabled');
     const disabled = child(cell, 'disabled');
     const item = child(enabled, 'item@core_ui_chest.cell');
@@ -371,16 +398,17 @@ describe('emit / buttons', () => {
     // disabled button has no button, so its guard is never auto-placed.
     gatesOn(enabled, ENABLED);
     gatesOn(disabled, `(not ${ENABLED})`);
-    expect(disabled.controls).toEqual([{ 'face@core_ui_test.button_1_face': {} }]);
+    // No disabled look was given, so the disabled state is the resting face.
+    expect(disabled.controls).toEqual([{ [`face@core_ui_test_faces.${id}`]: {} }]);
 
     expect(cell.size).toEqual([60, 20]);
     expect(item).toEqual({
       size: [60, 20],
       $cell_image_size: [60, 20],
       $item_collection_name: 'container_items',
-      $background_images: 'core_ui_test.button_1_face',
+      $background_images: `core_ui_test_faces.${id}`,
       $item_renderer: 'core_ui_chest.empty',
-      $button_ref: 'core_ui_test.button_1_states',
+      $button_ref: 'core_ui_test.press_1_states',
       $stack_count_required: false,
       $durability_bar_required: false,
       $storage_bar_required: false,
@@ -388,7 +416,7 @@ describe('emit / buttons', () => {
   });
 
   it('routes every press to auto-place and keeps the self-routed entries', () => {
-    const states = definition(withFace(face), 'button_1_states@core_ui_chest.slot_button');
+    const states = definition(withFace(face).doc, 'press_1_states@core_ui_chest.slot_button');
     const routes = states.button_mappings ?? [];
 
     expect(routes.length).toBe(13);
@@ -404,9 +432,10 @@ describe('emit / buttons', () => {
   });
 
   it('gates hover and pressed on the slot holding a transport, one level down', () => {
-    const states = definition(withFace(face), 'button_1_states@core_ui_chest.slot_button');
+    const id = idOf(face);
+    const states = definition(withFace(face).doc, 'press_1_states@core_ui_chest.slot_button');
 
-    // The gate sits on an image INSIDE the state control, never on the state
+    // The gate sits on a panel INSIDE the state control, never on the state
     // control itself: the button toggles that one's visibility as the pointer
     // moves, and a binding on the same control would overwrite it.
     for (const state of ['hover', 'pressed']) {
@@ -414,59 +443,94 @@ describe('emit / buttons', () => {
 
       expect(outer.type).toBe('panel');
       expect(outer.bindings).toBeUndefined();
-      gatesOn(child(outer, 'image'), ENABLED);
+      gatesOn(child(outer, 'gate'), ENABLED);
     }
 
-    expect(child(child(states, 'hover'), 'image').texture).toBe('t/hover');
-    expect(child(child(states, 'pressed'), 'image').texture).toBe('t/pressed');
+    expect(child(child(states, 'hover'), 'gate').controls).toEqual([{ [`face@core_ui_test_faces.${id}_hover`]: {} }]);
+    expect(child(child(states, 'pressed'), 'gate').controls).toEqual([{ [`face@core_ui_test_faces.${id}_pressed`]: {} }]);
   });
 
-  it('leaves the resting face ungated when no disabled look was given', () => {
-    const facePanel = definition(withFace(face), 'button_1_face');
+  it('shares one face per state with the addon, and none carries a binding', () => {
+    const id = idOf(face);
+    const { faces } = withFace(face);
 
-    expect(child(facePanel, 'bg').bindings).toBeUndefined();
-    expect(child(facePanel, 'bg').texture).toBe('t/rest');
-    expect(facePanel.controls?.some(entry => 'bg_disabled' in entry)).toBe(false);
+    expect(Object.keys(faces)).toEqual([id, `${id}_hover`, `${id}_pressed`]);
+    expect(child(faces[id] ?? {}, 'bg')).toMatchObject({ type: 'image', texture: 't/rest', keep_ratio: false });
+    expect(child(faces[`${id}_hover`] ?? {}, 'bg').texture).toBe('t/hover');
+    expect(child(faces[`${id}_pressed`] ?? {}, 'bg').texture).toBe('t/pressed');
+    expect(JSON.stringify(faces)).not.toContain('binding');
   });
 
   it('swaps in the disabled look while the slot holds no transport', () => {
-    const facePanel = definition(withFace({ ...face, disabled: 't/off' }), 'button_1_face');
+    const look = { ...face, disabled: 't/off' };
+    const id = idOf(look);
+    const { faces, doc } = withFace(look);
 
-    gatesOn(child(facePanel, 'bg'), ENABLED);
-    gatesOn(child(facePanel, 'bg_disabled'), `(not ${ENABLED})`);
-    expect(child(facePanel, 'bg_disabled').texture).toBe('t/off');
+    expect(child(faces[`${id}_disabled`] ?? {}, 'bg').texture).toBe('t/off');
+
+    const disabled = child(definition(doc, 'press_1'), 'disabled');
+
+    gatesOn(disabled, `(not ${ENABLED})`);
+    expect(disabled.controls).toEqual([{ [`face@core_ui_test_faces.${id}_disabled`]: {} }]);
   });
 
   it('bakes the children into the face, above the button, at their solved offsets', () => {
-    const facePanel = definition(withFace(face, [caption('label_1', 'Go')]), 'button_1_face');
-    const content = child(facePanel, 'content');
+    const children = [caption('label_1', 'Go')];
+    const id = idOf(face, children);
+    const { faces } = withFace(face, children);
+    const content = faces[`${id}_content`] ?? {};
 
-    expect(content).toMatchObject({ type: 'panel', size: ['100%', '100%'], layer: 12, anchor_from: 'top_left' });
-    expect(child(content, 'label_1')).toMatchObject({ type: 'label', text: 'Go', localize: false, offset: [26, 5] });
+    // Every state references the one caption, layered above its texture.
+    expect(child(faces[id] ?? {}, `caption@core_ui_test_faces.${id}_content`)).toEqual({ layer: 12 });
+    expect(child(faces[`${id}_hover`] ?? {}, `caption@core_ui_test_faces.${id}_content`)).toEqual({ layer: 12 });
+    expect(content).toMatchObject({ type: 'panel', size: ['100%', '100%'], anchor_from: 'top_left' });
+    // Named by position, not by the screen's counter: the face is shared.
+    expect(child(content, 'c0')).toMatchObject({ type: 'label', text: 'Go', localize: false, offset: [26, 5] });
   });
 
-  it('has no content panel when the button has nothing baked', () => {
-    expect(definition(withFace(face), 'button_1_face').controls?.some(entry => 'content' in entry)).toBe(false);
+  it('has no content face when the button has nothing baked', () => {
+    const { faces } = withFace(face);
+
+    expect(Object.keys(faces).some(name => name.endsWith('_content'))).toBe(false);
   });
 
   it('shares one face between buttons that look the same, and not otherwise', () => {
-    const same = emit(screenOf([
+    const same = compiled(screenOf([
       button('a', 1, face, [caption('label_1', 'Go')]),
       button('b', 2, face, [caption('label_2', 'Go')], 64),
     ]));
 
-    expect(Object.keys(defs(same)).filter(name => name.startsWith('button_'))).toEqual([
-      'button_1_face', 'button_1_states@core_ui_chest.slot_button', 'button_1',
+    // Different child names, the same look: one face, one mechanism.
+    expect(Object.keys(same.faces)).toHaveLength(4);
+    expect(Object.keys(defs(same.doc)).filter(name => name.startsWith('press_'))).toEqual([
+      'press_1_states@core_ui_chest.slot_button', 'press_1',
     ]);
-    expect(find(same, name => name.startsWith('b@'))[1].$cell).toBe('core_ui_test.button_1');
+    expect(find(same.doc, name => name.startsWith('b@'))[1].$cell).toBe('core_ui_test.press_1');
 
-    const different = emit(screenOf([
+    const different = compiled(screenOf([
       button('a', 1, face, [caption('label_1', 'Go')]),
       button('b', 2, face, [caption('label_2', 'Stop')], 64),
     ]));
 
-    expect(Object.keys(defs(different)).filter(name => /^button_\d+$/.test(name))).toEqual(['button_1', 'button_2']);
-    expect(find(different, name => name.startsWith('b@'))[1].$cell).toBe('core_ui_test.button_2');
+    expect(Object.keys(different.faces)).toHaveLength(8);
+    expect(Object.keys(defs(different.doc)).filter(name => /^press_\d+$/.test(name))).toEqual(['press_1', 'press_2']);
+    expect(find(different.doc, name => name.startsWith('b@'))[1].$cell).toBe('core_ui_test.press_2');
+  });
+
+  it('refuses a socket baked into a face', () => {
+    const live: IrNode = {
+      kind: 'text',
+      name: 'text_1',
+      rect: { x: 2, y: 2, width: 20, height: 10 },
+      address: 9,
+      length: 4,
+      initial: 'hi',
+      localize: false,
+      fontType: 'default',
+      fontScaleFactor: 2,
+    };
+
+    expect(() => faceOf(screenOf([button('a', 1, face, [live])]))).toThrow(/baked into a button's face/);
   });
 });
 

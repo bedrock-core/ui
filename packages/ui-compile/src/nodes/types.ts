@@ -2,10 +2,16 @@
  * The contracts a node kind implements.
  *
  * A kind is one vertical slice of the compiler: its IR shape, how a built JSX
- * element lowers into that shape, and how the shape emits JSON UI. Each slice
- * lives in its own module under `nodes/` and registers a {@link NodeDefinition};
- * the walks in `toIr.ts` and `emit.ts` own order and bookkeeping, and dispatch
- * through the definitions instead of switching on kinds.
+ * element lowers into that shape, and how the shape draws. Each slice lives in
+ * its own module under `nodes/` and registers a {@link NodeDefinition}; the
+ * walks in `toIr.ts`, `face.ts` and `fill.ts` own order and bookkeeping, and
+ * dispatch through the definitions instead of switching on kinds.
+ *
+ * A node is two things ([03-ir](../../../docs/03-ir.md)): what the player sees
+ * and what it physically is on the screen it is drawn on. The kind owns the
+ * first — its {@link NodeDefinition.face} — and says through
+ * {@link NodeDefinition.socket} when it has a second, which a host supplies
+ * ([10-faces-and-hosts](../../../docs/10-faces-and-hosts.md)).
  */
 
 import type { JSX } from '@bedrock-core/ui-runtime';
@@ -38,8 +44,8 @@ export interface NodeBase {
    * The carrier this node's `visible` rides, when the probes saw it move: the
    * entry (or modal row) holding '0' / '1', and the value the build rendered
    * with — what the gate is seeded with, so nothing flashes before the first
-   * binding resolve. The host wraps the emitted control in the gate; a node
-   * without this emits its `visible` as the literal above.
+   * binding resolve. The host wraps the face in the gate; the face itself
+   * draws the reference visibility.
    */
   visibleEntry?: { address: number; initial: boolean };
 }
@@ -115,18 +121,79 @@ export interface LowerContext {
 }
 
 /**
- * How one host draws the node kinds whose MECHANISM is its own.
+ * What a node physically is on a host, when it is more than its look.
  *
- * A node kind has two halves ([03-ir](../../../docs/03-ir.md)): what the player
- * sees, and what it physically IS on the screen it is drawn on. The look is the
- * same everywhere — a panel is a panel, a label is a label — and lives in the
- * kind's own module. The mechanism is not: a `button` is a container slot
- * holding a transport item on a chest screen and a `form_buttons` entry on a
- * form, and neither of those belongs in a module named after a component.
+ *  - `press`   — a button whose press reaches script.
+ *  - `text`    — a label whose string changes at runtime.
+ *  - `texture` — an image whose path changes at runtime.
+ *  - `slot`    — a cell over a collection: the screen's own, or a foreign one.
+ *  - `grid`    — a grid of cells over a foreign collection.
+ *  - `field`   — a native control the engine owns while the screen is open.
+ *  - `list`    — a variable count of rows behind one carried int.
+ *  - `visible` — a subtree whose visibility is carried.
  *
- * So a kind absent from {@link HostEmit.emit} emits its look, and a kind
- * present here emits this host's mechanism instead. Adding a host means adding
- * the entries where its mechanism differs, and nothing else.
+ * A host serves the kinds it has a mechanism for and refuses the rest at
+ * build, by name.
+ */
+export type SocketKind = 'press' | 'text' | 'texture' | 'slot' | 'grid' | 'field' | 'list' | 'visible';
+
+/** One place a host has to supply a mechanism: the node, and which mechanism. */
+export interface Socket {
+  readonly node: IrNode;
+  readonly kind: SocketKind;
+}
+
+/** What the face pass carries down the tree. */
+export interface FaceEmit {
+  /** The screen's JSON UI namespace. */
+  ns: string;
+  /** The namespace of the addon's shared faces, `<addon>_faces`. */
+  facesNs: string;
+  /**
+   * The faces this screen shares with every other screen of the addon, by a
+   * name derived from the look itself, so the same look is one definition
+   * however many screens draw it.
+   */
+  faces: Record<string, Control>;
+  /** Definitions a node needs of its own, such as a scroll region's content. */
+  defs: Record<string, Control>;
+  /** Draws one node — how a kind recurses into children. */
+  emitNode(node: IrNode): ControlEntry;
+  /**
+   * Draws nodes as part of a SHARED face: named by position rather than by
+   * the screen's counters, so two screens baking the same children produce
+   * the same definition. A socket or a per-screen definition in there is a
+   * build error — a shared face has no screen to belong to.
+   */
+  shared(nodes: readonly IrNode[]): ControlEntry[];
+}
+
+/** What the host pass carries down the tree. */
+export interface Emit {
+  ns: string;
+  facesNs: string;
+  collection: string;
+  /** The screen this document is being filled for. */
+  host: HostEmit;
+  /** The host renderer that hides the runtime's transport item, if the host has one. */
+  ownedRenderer?: string;
+  /** Face id -> this screen's mechanism definition for that look. */
+  faceNames: Map<string, string>;
+  /** Text run signature -> this screen's carrier definition for that style. */
+  textNames: Map<string, string>;
+  /** Definitions the host needs of its own. */
+  defs: Record<string, Control>;
+}
+
+/**
+ * How one host serves the sockets whose MECHANISM is its own.
+ *
+ * The face pass has already drawn every node; a host receives each socket's
+ * face entry and returns the control that stands in its place — a wrapper
+ * around the face (a gate, an index host) or a replacement for it (a cell
+ * over a container slot). Either way the outer control keeps the face's
+ * placement: size, offset, anchors and layer are the layout's, and the build
+ * refuses a host that moves them.
  */
 export interface HostEmit {
   readonly id: string;
@@ -135,51 +202,33 @@ export interface HostEmit {
    * this host needs around a screen that the screen did not ask for.
    */
   chrome?(): ControlEntry[];
-  /** Mechanism, by kind. A kind absent here emits its look. */
+  /** Mechanism, by socket kind. A kind absent here is one the host cannot serve. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- each entry is narrowed by its own kind, as NODE_DEFINITIONS is
-  readonly emit?: Partial<Record<string, (node: any, ctx: Emit) => ControlEntry>>;
+  readonly fill: Partial<Record<Exclude<SocketKind, 'visible'>, (node: any, entry: ControlEntry, ctx: Emit) => ControlEntry>>;
+  /**
+   * The gate around a node whose `visible` is carried: reads the node's
+   * entry and shows or hides the whole subtree. Receives the face entry with
+   * its placement and returns the wrapper carrying that placement, the face
+   * re-based inside it.
+   */
+  wrapVisible?(node: IrNode, entry: ControlEntry, ctx: Emit): ControlEntry;
   /**
    * Controls put under the canvas AFTER its content — chrome that must sit
    * over everything the screen drew, and that only exists because of what the
    * tree contains (the form's dropdown popups are the first).
    */
   overlay?(root: IrNode, ctx: Emit): ControlEntry[];
-  /**
-   * The gate around a node whose `visible` is carried: reads the node's
-   * entry and shows or hides the whole subtree. The host emits the node
-   * itself through `ctx.emitNode` with `visibleEntry` cleared and its rect
-   * re-based, so the wrapper is the one carrying the placement.
-   */
-  wrapVisible?(node: IrNode, ctx: Emit): ControlEntry;
-  /** Document-level definitions this host derives from the whole tree. */
+  /** Document-level definitions this host derives from the whole tree, before any socket is filled. */
   assemble?(root: IrNode, document: Document, ctx: Emit): void;
-}
-
-/** What the emitter carries down the tree. */
-export interface Emit {
-  ns: string;
-  collection: string;
-  /** The screen this document is being emitted for. */
-  host: HostEmit;
-  /** The host renderer that hides the runtime's transport item, if the host has one. */
-  ownedRenderer?: string;
-  /** Text run signature -> shared definition name. */
-  textNames: Map<string, string>;
-  /** Button look signature -> shared definition name. */
-  faceNames: Map<string, string>;
-  /** Definitions a node needs of its own, such as a scroll region's content. */
-  defs: Record<string, Control>;
-  /** Emits one node through its definition — how a kind recurses into children. */
-  emitNode(node: IrNode): ControlEntry;
 }
 
 /**
  * One node kind, end to end.
  *
  * The walks stay dumb: `toIr` dispatches `lower` by the JSX `type` strings a
- * kind claims, `emit` dispatches `emit` by `node.kind`, and the generic
- * traversals reach children only through `children`. Everything else — shapes,
- * shared definitions, document-level assembly — is the kind's own business.
+ * kind claims, the face pass dispatches `face` by `node.kind`, and the generic
+ * traversals reach children only through `children`. Everything else — shared
+ * faces, per-screen definitions — is the kind's own business.
  */
 export interface NodeDefinition<N extends IrNode = IrNode> {
   kind: N['kind'];
@@ -191,13 +240,15 @@ export interface NodeDefinition<N extends IrNode = IrNode> {
   lower?(element: JSX.Element, type: string, ctx: LowerContext): IrNode;
   /** The node's IR children, for the generic traversals. Leafs omit it. */
   children?(node: N): IrNode[];
-  /** Marks the shared-definition shapes this node needs. */
-  shapes?(node: N, into: Set<string>): void;
   /**
-   * Definitions shared by every node of a shape this kind owns. Called once
-   * per document, in definition order, with the shapes the tree actually uses.
+   * The mechanism this node needs from its host, if any. A node with none
+   * draws the same on every host and is never touched by one.
    */
-  sharedDefs?(ns: string, collection: string, kinds: Set<string>): Record<string, Control>;
-  /** One node becomes one entry in its parent's `controls`. */
-  emit(node: N, ctx: Emit): ControlEntry;
+  socket?(node: N): Exclude<SocketKind, 'visible'> | undefined;
+  /**
+   * The look: one node becomes one entry in its parent's `controls`, static
+   * and the same on every host. A socket's face is what the node looks like
+   * at rest — the resting texture, the reference string, the empty cell.
+   */
+  face(node: N, ctx: FaceEmit): ControlEntry;
 }

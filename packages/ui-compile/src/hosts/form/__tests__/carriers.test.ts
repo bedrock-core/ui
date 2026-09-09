@@ -98,7 +98,7 @@ describe('the list count on the action form', () => {
     const seeds: boolean[] = [];
 
     eachControl(compiled.document, (name, control) => {
-      if (name.endsWith('_gate') && typeof control.property_bag?.['#visible'] === 'boolean'
+      if (name.endsWith('_row') && typeof control.property_bag?.['#visible'] === 'boolean'
         && JSON.stringify(control.bindings).includes('#row_count')) {
         seeds.push(control.property_bag['#visible']);
       }
@@ -129,12 +129,15 @@ describe('a scroll over a list', () => {
   const compiled = compileFormScreen(Screen, { namespace: 'a', name: 'scrolling' });
 
   it('takes the list stack as its content, so the extent follows the visible rows', () => {
+    // The list itself is the content definition, under the list's own name.
     // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- the definition is what the test is about
-    const content = compiled.document.scroll_1_content as Control;
+    const content = compiled.document.list_1 as Control;
 
     // Not a baked panel: the list itself, a content-sized stack of gates —
     // an invisible child takes no space in a stack, so the scroll reaches
     // exactly as far as the real rows.
+    expect(compiled.document.scroll_1_content).toBeUndefined();
+    expect(JSON.stringify(compiled.document)).toContain('"$scrolling_content":"a_scrolling.list_1"');
     expect(content.type).toBe('stack_panel');
     // The viewport less the 5-texel scrollbar track.
     expect(content.size).toEqual([55, '100%c']);

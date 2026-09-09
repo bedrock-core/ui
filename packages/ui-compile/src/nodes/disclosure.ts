@@ -67,7 +67,7 @@ export const disclosureHeaderDefinition: NodeDefinition<DisclosureHeaderNode> = 
 
   // A header never emits on its own: its group bakes it into the toggle's
   // states. Reaching here means the slot was written outside a `<Disclosure>`.
-  emit(node) {
+  face(node) {
     return { [node.name]: { type: 'panel', size: sizeOf(node.rect), ...topLeft } };
   },
 };
@@ -95,7 +95,7 @@ export const disclosureDefinition: NodeDefinition<DisclosureNode> = {
     };
   },
 
-  emit(node, ctx): ControlEntry {
+  face(node, ctx): ControlEntry {
     const width = node.rect.width;
     // Named after the SCREEN too: a source_control_name is looked up by name,
     // and every gated compiled screen is constructed on every form open, so a

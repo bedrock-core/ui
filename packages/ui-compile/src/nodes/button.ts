@@ -1,26 +1,16 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
-import {
-  BUTTON_TYPE, isExitButton, TRANSPORT_ITEM_AUX,
-} from '@bedrock-core/ui-runtime/compile';
-import type { Binding, ButtonMapping, Control, ControlEntry } from '../jsonui';
+import { BUTTON_TYPE, isExitButton } from '@bedrock-core/ui-runtime/compile';
+import type { Control, ControlEntry } from '../jsonui';
 import type { ExitNode } from './exit';
 import { shapeOf } from './index';
 import {
-  CELL_VAR, CHEST, FACE_CONTENT_LAYER, FULL, isSelfRouted, layerOf, offsetOf, PROTOTYPE_MAPPINGS, sizeOf,
-  SLOT_VAR, str, topLeft, visibilityOf,
+  FACE_CONTENT_LAYER, faceId, FULL, layerOf, offsetOf, shareFace, sizeOf, str, topLeft, visibilityOf,
 } from './shared';
-import { CELL } from './slot';
-import type { Emit, IrNode, NodeBase, NodeDefinition } from './types';
+import type { FaceEmit, IrNode, NodeBase, NodeDefinition, Rect } from './types';
 
 /**
- * What a button looks like instead of an item.
- *
- * A press can only reach script as an item move — JSON UI's button mappings
- * produce game actions, and the container transaction is the only one the
- * server sees. But nothing says the item has to be VISIBLE: `common.container_item`
- * takes its cell face, its item renderer and its button as variables, so the
- * icon can be replaced with nothing and the face with a real button. The item
- * stays as pure transport.
+ * What a button looks like in each state. The look is the same on every host;
+ * only what a press IS differs, and that is the host's ([10-faces-and-hosts](../../../docs/10-faces-and-hosts.md)).
  */
 export interface ButtonFace {
   texture: string;
@@ -35,7 +25,7 @@ export interface ButtonFace {
 }
 
 /**
- * A container slot drawn as a button, with its children baked into the face.
+ * A button, with its children baked into the face.
  *
  * The children were laid out by the flex engine like everything else, so they
  * are ordinary nodes positioned relative to the button's rect. Live text is not
@@ -72,249 +62,91 @@ export const faceOf = (props: JSX.Props): ButtonFace => {
   };
 };
 
-/**
- * A button slot's routes: every item-moving route becomes AUTO-PLACE.
- *
- * Vanilla's default, take-to-cursor, hangs the transport item on the mouse
- * where the engine draws it HARDCODED — no JSON UI control renders the held
- * stack, so nothing can hide it there. Auto-place sends it to the player's
- * inventory instead, which IS ours to draw: the router's own grids render a
- * transport as nothing, so the press becomes invisible end to end.
- *
- * The drop routes fold in too, because Q over a button would throw the
- * transport on the GROUND — the one place the runtime cannot reach it. So does
- * the double-click coalesce, which would otherwise gather transports from
- * every other button onto the cursor.
- *
- * Two costs, both accepted: a press with a completely FULL inventory has
- * nowhere to auto-place and does nothing, and a double-click auto-places twice
- * — harmlessly, since the slot is already empty the second time.
- */
-const BUTTON_MAPPINGS: ButtonMapping[] = PROTOTYPE_MAPPINGS.map(mapping => (
-  isSelfRouted(mapping) ? mapping : { ...mapping, to_button_id: 'button.container_auto_place' }
-));
-
-/**
- * Where a button's enabled state is read from: whether its slot holds the
- * TRANSPORT, by its item id.
- *
- * The runtime keeps a transport in the slot exactly while the button is
- * enabled and the guard while it is not. The two are different blocks, so the
- * id alone tells them apart, and a legacy-range block's id never shifts.
- */
-const ENABLED_PROPERTY = `(#btn_aux = ${TRANSPORT_ITEM_AUX})`;
-
-/**
- * Reads the slot item's id, which {@link ENABLED_PROPERTY} compares against
- * the transport's. Every control that draws differently by state carries its
- * own copy, since a binding cannot be shared.
- */
-const enabledBindings = (collection: string) => [
-  { binding_type: 'collection_details', binding_collection_name: collection },
-  {
-    binding_name: '#item_id_aux',
-    binding_name_override: '#btn_aux',
-    binding_type: 'collection',
-    binding_collection_name: collection,
-  },
-] as const satisfies Binding[];
-
-/** Visible only while the button is enabled. */
-const whenEnabled = (collection: string): Binding[] => [
-  ...enabledBindings(collection),
-  {
-    binding_type: 'view',
-    source_property_name: ENABLED_PROPERTY,
-    target_property_name: '#visible',
-  },
-];
-
-/** Visible only while the button is disabled. */
-const whenDisabled = (collection: string): Binding[] => [
-  ...enabledBindings(collection),
-  {
-    binding_type: 'view',
-    source_property_name: `(not ${ENABLED_PROPERTY})`,
-    target_property_name: '#visible',
-  },
-];
+/** What one button look is made of: its textures, its size, and what is baked into it. */
+export interface FacedNode {
+  face: ButtonFace;
+  rect: Rect;
+  children: IrNode[];
+}
 
 /**
  * What lets two buttons share a definition: the same look, at the same size,
  * with the same things baked into the face.
  */
-export const faceSignature = (node: ButtonNode): string => JSON.stringify({
+export const faceSignature = (node: FacedNode): string => JSON.stringify({
   face: node.face,
   size: sizeOf(node.rect),
   children: node.children.map(shapeOf),
 });
 
-/** The face a button mounts: its look's shared definition, in the screen's namespace. */
-const faceName = (node: ButtonNode, ctx: Emit): string => {
-  const name = ctx.faceNames.get(faceSignature(node));
-
-  return name === undefined ? CELL.slot : `${ctx.ns}.${name}`;
-};
+/** The shared definitions one button look has, fully qualified. */
+export interface ButtonFaces {
+  /** The face id: what the host names its mechanism definitions after. */
+  id: string;
+  rest: string;
+  hover: string;
+  pressed: string;
+  /** Present only when the author gave a disabled texture. */
+  disabled?: string;
+}
 
 /**
- * The three definitions one button look needs.
+ * One state's face: the texture, and the caption over it.
  *
- * A press reaches script only as an item move, so a button IS a container slot
- * — but `common.container_item` takes its face, its icon and its button as
- * variables, so none of it has to look like an item. The icon becomes nothing,
- * the overlays are turned off, and the face becomes a real button with hover
- * and pressed states. The item underneath is pure transport.
- *
- * The button itself EXTENDS vanilla's rather than replacing it, because the
- * transaction is the whole point: lose it and the button stops reporting.
- *
- * Hover and pressed are gated on the slot holding a transport, so a disabled
- * button does not react; the resting face is gated the same way only when the
- * author supplied a disabled look to swap in.
- *
- * The cell and the item are sized to the button's solved rect, because
- * `container_item` and its `item_cell` default to the 18 x 18 item cell and a
- * face only ever fills that.
+ * The caption goes INSIDE each state rather than beside them. A button shows
+ * the child its `*_control` names and hides the others, so a sibling of the
+ * state controls is not what gets drawn. And it is layered above the face
+ * rather than merely after it: draw order among siblings at one layer is not
+ * what decides this, and a caption at the default vanishes under the face.
  */
-export const faceDefs = (node: ButtonNode, name: string, emit: Emit): Record<string, Control> => {
-  const { face } = node;
-  const { ns, collection } = emit;
-  const size = sizeOf(node.rect);
+const stateFace = (texture: string, content: string | undefined): Control => ({
+  type: 'panel',
+  size: FULL,
+  ...topLeft,
+  controls: [
+    { bg: { type: 'image', texture, size: FULL, keep_ratio: false, layer: 1 } },
+    ...content === undefined
+      ? []
+      : [{ [`caption@${content}`]: { layer: FACE_CONTENT_LAYER } } satisfies ControlEntry],
+  ],
+});
 
-  return {
-    [`${name}_face`]: {
+/**
+ * Registers a button look's faces with the addon and names them.
+ *
+ * One definition per state, plus one for the caption every state references,
+ * so a caption is emitted once however many faces a button has. Named by the
+ * look, so every screen of the addon that draws this button draws these.
+ */
+export const shareButtonFaces = (node: FacedNode, ctx: FaceEmit): ButtonFaces => {
+  const id = faceId('button', faceSignature(node));
+  const { faces, facesNs } = ctx;
+  const content = node.children.length === 0 ? undefined : `${facesNs}.${id}_content`;
+
+  if (content !== undefined) {
+    shareFace(faces, `${id}_content`, {
       type: 'panel',
       size: FULL,
-      controls: [
-        {
-          bg: {
-            type: 'image',
-            texture: face.texture,
-            size: FULL,
-            keep_ratio: false,
-            layer: 1,
-            ...face.disabled === undefined ? {} : { bindings: whenEnabled(collection) },
-          },
-        },
-        ...face.disabled === undefined
-          ? []
-          : [{
-            bg_disabled: {
-              type: 'image' as const,
-              texture: face.disabled,
-              size: FULL,
-              keep_ratio: false,
-              layer: 1,
-              bindings: whenDisabled(collection),
-            },
-          } satisfies ControlEntry],
-        ...node.children.length === 0
-          ? []
-          : [{
-            content: {
-              type: 'panel' as const,
-              size: FULL,
-              ...topLeft,
-              layer: FACE_CONTENT_LAYER,
-              controls: node.children.map(child => emit.emitNode(child)),
-            },
-          } satisfies ControlEntry],
-      ],
-    },
+      ...topLeft,
+      controls: ctx.shared(node.children),
+    });
+  }
 
-    [`${name}_states@${CHEST}.slot_button`]: {
-      hover_control: 'hover',
-      pressed_control: 'pressed',
-      button_mappings: BUTTON_MAPPINGS,
-      // A slot is silent, the way vanilla's are; a button clicks, the way
-      // vanilla's do.
-      sound_name: 'random.click',
-      sound_volume: 1,
-      sound_pitch: 1,
-      // Two visibilities, on two controls. The button toggles `hover` and
-      // `pressed` itself as the pointer comes and goes, and a binding writing
-      // `#visible` on the SAME control fights it: re-enabling a button set both
-      // faces visible at once, pointer or no pointer, until the next hover made
-      // the engine recompute — measured. So the engine owns the outer panel, the
-      // gate owns the image inside, and a state is drawn only when both agree.
-      controls: [
-        {
-          hover: {
-            type: 'panel',
-            size: FULL,
-            controls: [{
-              image: {
-                type: 'image',
-                texture: face.hover,
-                size: FULL,
-                keep_ratio: false,
-                bindings: whenEnabled(collection),
-              },
-            }],
-          },
-        },
-        {
-          pressed: {
-            type: 'panel',
-            size: FULL,
-            controls: [{
-              image: {
-                type: 'image',
-                texture: face.pressed,
-                size: FULL,
-                keep_ratio: false,
-                bindings: whenEnabled(collection),
-              },
-            }],
-          },
-        },
-      ],
-    },
+  const { face } = node;
+  const named = {
+    id,
+    rest: shareFace(faces, id, stateFace(face.texture, content)),
+    hover: shareFace(faces, `${id}_hover`, stateFace(face.hover, content)),
+    pressed: shareFace(faces, `${id}_pressed`, stateFace(face.pressed, content)),
+    ...face.disabled === undefined ? {} : { disabled: shareFace(faces, `${id}_disabled`, stateFace(face.disabled, content)) },
+  };
 
-    [name]: {
-      type: 'panel',
-      size,
-      controls: [
-        {
-          // The press surface exists only while the transport is in the slot.
-          // A disabled button therefore has no button at all: a click or a
-          // shift-click routes nowhere, so the guard that marks it disabled is
-          // never auto-placed into the player's inventory where it would show.
-          enabled: {
-            type: 'panel',
-            size: FULL,
-            bindings: whenEnabled(collection),
-            controls: [
-              {
-                [`item@${CELL.item}`]: {
-                  size,
-                  $cell_image_size: size,
-                  $item_collection_name: collection,
-                  $background_images: `${ns}.${name}_face`,
-                  $item_renderer: CELL.empty,
-                  $button_ref: `${ns}.${name}_states`,
-                  // Nothing about the transport item may show: not its count, not its
-                  // durability — which a text channel rides — and not its storage.
-                  $stack_count_required: false,
-                  $durability_bar_required: false,
-                  $storage_bar_required: false,
-                },
-              },
-            ],
-          },
-        },
-        {
-          // The face alone, no press surface. Its own gates draw the disabled
-          // background and keep the caption.
-          disabled: {
-            type: 'panel',
-            size: FULL,
-            bindings: whenDisabled(collection),
-            controls: [{ [`face@${ns}.${name}_face`]: {} }],
-          },
-        },
-      ],
-    },
+  return {
+    ...named,
+    rest: `${facesNs}.${named.rest}`,
+    hover: `${facesNs}.${named.hover}`,
+    pressed: `${facesNs}.${named.pressed}`,
+    ...named.disabled === undefined ? {} : { disabled: `${facesNs}.${named.disabled}` },
   };
 };
 
@@ -354,15 +186,22 @@ export const buttonDefinition: NodeDefinition<ButtonNode> = {
 
   children: node => node.children,
 
-  emit(node, ctx) {
+  socket: () => 'press',
+
+  // At rest: the resting face at the button's place. A host stands its
+  // mechanism here and draws the other states through the same faces.
+  face(node, ctx) {
+    const faces = shareButtonFaces(node, ctx);
+
     return {
-      [`${node.name}@${CELL.host}`]: {
-        offset: offsetOf(node.rect),
+      [node.name]: {
+        type: 'panel',
         size: sizeOf(node.rect),
+        offset: offsetOf(node.rect),
+        ...topLeft,
         ...layerOf(node),
         ...visibilityOf(node),
-        [SLOT_VAR]: node.address,
-        [CELL_VAR]: faceName(node, ctx),
+        controls: [{ [`face@${faces.rest}`]: {} }],
       },
     };
   },

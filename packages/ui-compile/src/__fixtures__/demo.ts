@@ -75,6 +75,8 @@ export const demoScreen: IrDocument = {
         rect: { x: 7, y: 35, width: 48, height: 10 },
         address: 7,
         length: 8,
+        initial: 'idle',
+        localize: false,
         fontType: 'default',
         fontScaleFactor: 2,
       },

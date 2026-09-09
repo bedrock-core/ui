@@ -64,7 +64,7 @@ const Demo = (): JSX.Element => Container({
 
 describe('the compiler, end to end', () => {
   const compiled = compileScreen(Demo, { name: 'demo' });
-  const { document } = compiled;
+  const { document, faces } = compiled;
 
   it('names the screen, its namespace and its entity', () => {
     expect(compiled).toMatchObject({
@@ -108,19 +108,34 @@ describe('the compiler, end to end', () => {
     expect(subtitle).toMatchObject({ type: 'label', text: 'core.demo.subtitle', localize: true });
   });
 
-  it('bakes the button\'s child label into its face', () => {
-    const plus = definition(document, 'button_1_face');
+  it('bakes the button\'s child label into its shared face', () => {
+    // The faces are the addon's, named by their look; each button's mechanism
+    // on the chest references them.
+    const faceOf = (mechanism: string): { rest: string; disabled: string } => {
+      const cell = definition(document, mechanism);
+      const [enabled, disabled] = cell.controls ?? [];
+      const rest = String(enabled?.['enabled']?.controls?.[0]?.['item@core_ui_chest.cell']?.$background_images).replace('core_ui_faces.', '');
+      const off = Object.keys(disabled?.['disabled']?.controls?.[0] ?? {})[0]?.replace('face@core_ui_faces.', '') ?? '';
 
-    expect(child(child(plus, 'content'), 'label_3')).toMatchObject({ type: 'label', text: '+', localize: false });
-    expect(child(plus, 'bg').texture).toBe('textures/ui/unstyled');
+      return { rest, disabled: off };
+    };
 
-    const minus = definition(document, 'button_2_face');
+    const plus = faceOf('press_1');
+    const plusFace = faces[plus.rest] ?? {};
+    const plusContent = faces[`${plus.rest}_content`] ?? {};
+
+    expect(child(plusContent, 'c0')).toMatchObject({ type: 'label', text: '+', localize: false });
+    expect(child(plusFace, 'bg').texture).toBe('textures/ui/unstyled');
+    expect(plus.disabled).toBe(plus.rest);
+
+    const minus = faceOf('press_2');
 
     // `<Text>` guards a dash-leading literal with a zero-width `§r`, which a
     // JSON UI label renders as nothing; the guard is kept, not stripped.
-    expect(child(child(minus, 'content'), 'label_4')).toMatchObject({ type: 'label', text: '§r-' });
-    expect(child(minus, 'bg').texture).toBe('textures/ui/dark');
-    expect(child(minus, 'bg_disabled').texture).toBe('textures/ui/dark_off');
+    expect(child(faces[`${minus.rest}_content`] ?? {}, 'c0')).toMatchObject({ type: 'label', text: '§r-' });
+    expect(child(faces[minus.rest] ?? {}, 'bg').texture).toBe('textures/ui/dark');
+    expect(minus.disabled).toBe(`${minus.rest}_disabled`);
+    expect(child(faces[minus.disabled] ?? {}, 'bg').texture).toBe('textures/ui/dark_off');
   });
 
   it('hands out the slot indices the runtime will read', () => {

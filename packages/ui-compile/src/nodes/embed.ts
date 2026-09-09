@@ -33,7 +33,7 @@ export const embedDefinition: NodeDefinition<EmbedNode> = {
     };
   },
 
-  emit(node): ControlEntry {
+  face(node): ControlEntry {
     return { [node.name]: { type: 'panel', size: [0, 0], visible: false } };
   },
 };

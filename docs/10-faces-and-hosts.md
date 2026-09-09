@@ -59,6 +59,12 @@ prop ([03-ir](./03-ir.md)). Output: the faces file and one face document per scr
   binding. A failure names the element and the rule.
 - **The layout is the base.** Rects are baked here. Islands ([03-ir](./03-ir.md)) are the
   one runtime exception and stay parked with S6.
+- **Every static JSON UI property is fair game.** The interpreter could only carry what its
+  byte payload had room for; a face is written as JSON UI, so a component may expose any
+  static property the engine has: `text_alignment`, `line_padding`, `clips_children`,
+  `shadow`, `font_type`, `alpha`, `fill`, `color` on images, `tiled` nineslices, sounds on
+  buttons. Each is added as a component prop the face bakes, and each lands in the visual
+  pass (A4) as the first place it is seen. `Text align` is first.
 
 ## The host pass
 
@@ -173,9 +179,9 @@ what landed.
 
 | # | Phase | Delivers | Estimate |
 | --- | --- | --- | --- |
-| A1 | **Face pass** | `faces.json` per addon; the face document per screen with every socket as its inert face; the static validator; the socket list as the placement's addresses | 5 days |
+| A1 | **Face pass** ✅ | `faces.json` per addon; the face document per screen with every socket as its inert face; the static validator; the socket list as the placement's addresses | 5 days |
 | A2 | **Gallery** | the preview mount on the action form; the generated gallery screen; `openGallery`; chest chrome and cells as faces | 3 days |
-| A3 | **Rect guard** | the diff after host emit, in the compile tests and `yarn preflight` | 1 day |
+| A3 | **Rect guard** ✅ | the diff after host emit, run inside every compile, so the tests and `yarn preflight` both hit it | 1 day |
 | A4 | **Visual pass** | in game, one round per family, fixes in `ore-styled` only: the demo screens (counter, settings, tabs, furnace, crafting table); guide home and one page; the config screens (scope, menu, list, picker, confirm, editor); the addon list and one addon page; one modal with every field kind | 2 days |
 | B | **Host roots** | `<Screen>`; `render` and `createContainerScreen` refuse non-host roots; the mechanism table per host in place of the flat `offers` list; the modal lowers the plain set to native fields; `ore-styled` duplicates removed | 4 days |
 | C | **References** | `<Link to>`; the reference feed and `navigate('<ns>:<screen>')`; guides on it, `createGuide` deleted; generated key types | 5 days |

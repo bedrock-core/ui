@@ -40,13 +40,11 @@ import {
   CANONICAL_SCREEN, COLLECTION, ContainerScreenError, MAX_LAYOUT, PROTOCOL_ITEM_AUX, SENTINEL_SLOTS,
   splitKey,
 } from '@bedrock-core/ui-runtime/compile';
-import { BACKDROP_DEFINITION, SCREEN_DEFINITION } from '../emit';
-import type { Binding, Control, ControlEntry, Document } from '../jsonui';
-import { collectKind } from '../nodes';
-import { faceDefs, faceSignature } from '../nodes/button';
-import { CHEST } from '../nodes/shared';
-import { TEXT_DEF, textDef, textSignature } from '../nodes/text';
-import type { HostEmit } from '../nodes/types';
+import { BACKDROP_DEFINITION, SCREEN_DEFINITION } from '../../face';
+import type { Binding, Control, ControlEntry, Document } from '../../jsonui';
+import { CHEST } from '../../nodes/shared';
+
+export { CELL, CHEST_EMIT, hidesTransport, TEXT_DEF, textDef } from './emit';
 
 /** One vanilla file an addon hooks: the definition in it that every addon's root is inserted into. */
 export interface ChestHook {
@@ -96,78 +94,6 @@ export const CHEST_HOST: ChestHost = {
   containerType: 'container',
   canvas: CANONICAL_SCREEN,
   ownedItemRenderer: `${CHEST}.gated_item`,
-};
-
-/**
- * How a chest screen is drawn: the click shield it needs around any content,
- * and — for now — nothing else, because every node kind's mechanism was
- * written for this host and still lives in its own module. A second host
- * declares the kinds it does differently; see `nodes/types.ts`.
- */
-export const CHEST_EMIT: HostEmit = {
-  id: 'chest',
-
-  /**
-   * A full-canvas button that swallows a click so it never falls through to the
-   * chest screen's drop-the-cursor mapping. Sits under the content — the slots
-   * and buttons above it handle their own clicks — so only empty space inside
-   * the container absorbs, and a click OUTSIDE the canvas still drops, the way
-   * a click beside a vanilla furnace's panel does.
-   */
-  chrome: (): ControlEntry[] => [{
-    core_ui_click_shield: {
-      type: 'button',
-      size: ['100%', '100%'],
-      button_mappings: [
-        { from_button_id: 'button.menu_select', to_button_id: 'button.menu_select', mapping_type: 'pressed' },
-        { from_button_id: 'button.menu_ok', to_button_id: 'button.menu_ok', mapping_type: 'pressed' },
-      ],
-    },
-  }],
-
-  /**
-   * The definitions a chest screen shares by reference: one per distinct button
-   * look, one per distinct text channel shape. Both are mechanism — a face is
-   * built on `container_item` with the item hidden, a channel reads a slot's
-   * stack size through the `.lang` table — so the host assembles them, even
-   * though the builders still live beside the kinds they draw.
-   *
-   * Named before any is emitted, so a face baked inside another face can
-   * already be referenced.
-   */
-  assemble(root, document, ctx): void {
-    const buttons = collectKind(root, 'button');
-
-    for (const node of buttons) {
-      const signature = faceSignature(node);
-
-      if (!ctx.faceNames.has(signature)) {
-        ctx.faceNames.set(signature, `button_${ctx.faceNames.size + 1}`);
-      }
-    }
-
-    const emitted = new Set<string>();
-
-    for (const node of buttons) {
-      const name = ctx.faceNames.get(faceSignature(node));
-
-      if (name !== undefined && !emitted.has(name)) {
-        emitted.add(name);
-        Object.assign(document, faceDefs(node, name, ctx));
-      }
-    }
-
-    for (const node of collectKind(root, 'text')) {
-      const signature = textSignature(node);
-
-      if (!ctx.textNames.has(signature)) {
-        const name = `${TEXT_DEF.text}_${ctx.textNames.size + 1}`;
-
-        ctx.textNames.set(signature, name);
-        document[name] = textDef(node, ctx.collection);
-      }
-    }
-  },
 };
 
 /** What the router needs to know about a compiled screen. */

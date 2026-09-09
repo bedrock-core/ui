@@ -3,6 +3,7 @@ import {
 } from '@bedrock-core/ui-runtime/compile';
 import { describe, expect, it } from 'vitest';
 import { buildRouter, type CompiledScreen } from '../compile';
+import { faceOf } from '../face';
 import { CHEST_HOST, MOUNT_ANCHOR, routerFileOf } from '../hosts/chest';
 import {
   child, definition, defs, eachControl, entries, isModified, modification,
@@ -14,6 +15,13 @@ const screen = (name: string, layoutId: number, hasBackdrop = false, addon = 'co
   namespace: `${addon}_${name}`,
   layoutId,
   entity: `${addon}:${name}`,
+  face: faceOf({
+    namespace: `${addon}_${name}`,
+    collection: 'container_items',
+    root: { kind: 'panel', name: 'root', rect: { x: 0, y: 0, width: 320, height: 210 }, children: [] },
+  }),
+  facesNamespace: `${addon}_faces`,
+  faces: {},
   document: { namespace: `${addon}_${name}` },
   allocation: { sentinels: 2, drawn: 0, channels: 0, size: 2 },
   hasBackdrop,

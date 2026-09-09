@@ -109,7 +109,7 @@ export const tabDefinition: NodeDefinition<TabNode> = {
   // A pane never emits on its own: it is emitted by its group, inside the
   // checked states of its tab's toggle. Reaching here means a `<Tabs.Tab>` was
   // written outside a `<Tabs>`.
-  emit(node) {
+  face(node) {
     return { [node.name]: { type: 'panel', size: sizeOf(node.rect), ...topLeft } };
   },
 };
@@ -133,7 +133,7 @@ export const tabsDefinition: NodeDefinition<TabsNode> = {
     };
   },
 
-  emit(node, ctx): ControlEntry {
+  face(node, ctx): ControlEntry {
     const { tabs, tabHeight } = node;
     const width = tabs.length === 0 ? node.rect.width : Math.floor(node.rect.width / tabs.length);
 

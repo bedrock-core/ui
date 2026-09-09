@@ -218,6 +218,8 @@ const lower = (definition: NodeDefinition, element: JSX.Element, type: string, o
 export interface ToIrOptions {
   /** JSON UI namespace for the emitted file. */
   namespace: string;
+  /** The namespace of the addon's shared faces, `<addon>_faces`. */
+  faces?: string;
   /** The collection every addressed control reads from. */
   collection: string;
   /** The host's transport-hiding renderer, when it has one. */
@@ -279,6 +281,7 @@ export const toIr = (
 
   return {
     namespace: options.namespace,
+    ...options.faces === undefined ? {} : { faces: options.faces },
     collection: options.collection,
     ...options.ownedItemRenderer === undefined ? {} : { ownedItemRenderer: options.ownedItemRenderer },
     root: {

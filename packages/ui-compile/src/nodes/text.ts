@@ -1,19 +1,17 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
 import {
-  isTextElementType, KEY_PREFIX, labelFontFields, liveTextLength, TEXT_SHADOW_TYPE, TEXT_SHADOW_WRAP_TYPE,
+  isTextElementType, labelFontFields, liveTextLength, TEXT_SHADOW_TYPE, TEXT_SHADOW_WRAP_TYPE,
 } from '@bedrock-core/ui-runtime/compile';
-import type { Binding, Control } from '../jsonui';
-import type { LabelNode } from './label';
-import { CHEST, FONT_SIZE, layerOf, literal, num, offsetOf, sizeOf, str, tailOf, topLeft, visibilityOf } from './shared';
+import { labelDefinition, type LabelNode } from './label';
+import { num, str, tailOf } from './shared';
 import type { LabelStyle, LowerContext, NodeBase, NodeDefinition, Rect } from './types';
 
 /**
- * A run of characters the script writes as an ordinary string.
+ * A string the script writes at runtime.
  *
- * One cell per character, each backed by its own bank slot: the slot's stack
- * size is the character code, and the label localizes `keyPrefix + code` so the
- * generated `.lang` decides what is drawn. That is the only way text reaches a
- * container screen -- no per-slot binding publishes a string.
+ * The look is a label like any other; what carries the string is the host's:
+ * one container slot per character on a chest, an entry on a form. The face
+ * draws the string the build rendered with, in the box the layout reserved.
  */
 export interface TextNode extends NodeBase, LabelStyle {
   kind: 'text';
@@ -21,6 +19,10 @@ export interface TextNode extends NodeBase, LabelStyle {
   address: number;
   /** How many characters the screen drew room for. */
   length: number;
+  /** What the build rendered: the face's string, and what `debug` compares against. */
+  initial: string;
+  /** True when `initial` is a translation key the client resolves. */
+  localize: boolean;
 }
 
 declare module './types' {
@@ -28,23 +30,6 @@ declare module './types' {
     text: TextNode;
   }
 }
-
-/** The static host one character cell mounts, and the per-screen name a channel definition takes. */
-export const TEXT_DEF = {
-  textHost: `${CHEST}.text_host`,
-  text: 'text_channel',
-} as const;
-
-/**
- * Private name a text channel's string is renamed to.
- *
- * Never `#hover_text` itself: the engine owns that name at screen scope and
- * overwrites it while a slot is pressed.
- */
-const TEXT_PROPERTY = '#channel_text';
-
-/** Where the raw code lands before the key is built around it. */
-const TEXT_RAW_PROPERTY = '#channel_raw';
 
 /** What `<Text>` recorded about its string for the layout pass. */
 const textMetricsOf = (value: unknown): { isKey: boolean; resolvedText: string } => {
@@ -87,56 +72,15 @@ const rgbOf = (value: unknown): { color?: readonly [number, number, number] } =>
     : {};
 
 /**
- * What lets two text runs share a definition: everything except which slots
- * they read.
+ * What lets two text runs share a carrier definition: everything except which
+ * address they read.
  */
 export const textSignature = (node: TextNode): string => JSON.stringify([
   node.fontType,
   node.fontScaleFactor,
   node.shadow ?? null,
+  node.color ?? null,
 ]);
-
-/**
- * The definition one character cell instantiates.
- *
- * A binding cannot be parameterised: a `$variable` inside one is dropped
- * outright in a subtree inserted through `modifications` -- measured six ways
- * -- so every name in a binding is baked here, and a reference may only supply
- * what is NOT a binding: the collection index, and the box.
- *
- * The cell reads its slot's STACK SIZE, builds `keyPrefix + code`, and
- * localizes it. No per-slot binding publishes text, so this is how a string
- * gets in: the generated `.lang` decides what each code draws as, which means
- * any glyph, any font, any language.
- */
-export const textDef = (node: TextNode, collection: string): Control => ({
-  type: 'label',
-  // Its own natural size. The cells are packed by the engine rather than
-  // positioned by the compiler, because glyph widths are not knowable here:
-  // which character lands in a cell is decided at runtime. On a fixed pitch
-  // every narrow glyph left a gap -- `units` came out `uni ts`.
-  size: ['default', 'default'],
-  text: TEXT_PROPERTY,
-  localize: true,
-  font_type: node.fontType,
-  font_size: FONT_SIZE,
-  font_scale_factor: node.fontScaleFactor,
-  ...node.shadow ? { shadow: node.shadow } : {},
-  bindings: [
-    { binding_type: 'collection_details', binding_collection_name: collection },
-    {
-      binding_name: '#inventory_stack_count',
-      binding_name_override: TEXT_RAW_PROPERTY,
-      binding_type: 'collection',
-      binding_collection_name: collection,
-    },
-    {
-      binding_type: 'view',
-      source_property_name: `(${literal(KEY_PREFIX)} + ${TEXT_RAW_PROPERTY})`,
-      target_property_name: TEXT_PROPERTY,
-    },
-  ] satisfies Binding[],
-});
 
 export const textDefinition: NodeDefinition<TextNode> = {
   kind: 'text',
@@ -153,6 +97,8 @@ export const textDefinition: NodeDefinition<TextNode> = {
 
     if (length !== undefined) {
       const channel = ctx.channelOf(element);
+      const tail = tailOf(props.value);
+      const metrics = textMetricsOf(props.__textMetrics);
 
       return {
         kind: 'text',
@@ -161,9 +107,12 @@ export const textDefinition: NodeDefinition<TextNode> = {
         ...ctx.decoration,
         address: channel.address,
         length: channel.length,
+        initial: tail ?? metrics.resolvedText,
+        localize: tail !== undefined && metrics.isKey,
         fontType: str(props.fontType, defaults.fontType),
         fontScaleFactor: num(props.fontScaleFactor, defaults.fontScaleFactor),
         ...shadow ? { shadow } : {},
+        ...rgbOf(props.__color),
       };
     }
 
@@ -175,30 +124,13 @@ export const textDefinition: NodeDefinition<TextNode> = {
     });
   },
 
-  emit(node, ctx) {
-    // One host per cell, because `collection_index` is only accepted on a
-    // direct child of a control declaring `collection_name`. The hosts sit in
-    // a horizontal stack panel and hug their glyph, so the run reads as text
-    // rather than as a grid of letters.
-    const def = ctx.textNames.get(textSignature(node)) ?? TEXT_DEF.text;
-    const hug: [string, string] = ['100%c', '100%c'];
+  socket: () => 'text',
 
-    return {
-      [node.name]: {
-        type: 'stack_panel',
-        orientation: 'horizontal',
-        size: sizeOf(node.rect),
-        offset: offsetOf(node.rect),
-        ...layerOf(node),
-        ...visibilityOf(node),
-        ...topLeft,
-        controls: Array.from({ length: node.length }, (_unused, cell) => ({
-          [`cell_${cell}@${TEXT_DEF.textHost}`]: {
-            size: hug,
-            controls: [{ [`glyph@${ctx.ns}.${def}`]: { collection_index: node.address + cell } }],
-          },
-        })),
-      },
-    };
+  // At rest: the string the build rendered with, as a label in the reserved
+  // box. A host stands its carrier here.
+  face(node, ctx) {
+    const { address: _address, length: _length, initial, ...style } = node;
+
+    return labelDefinition.face({ ...style, kind: 'label', text: initial }, ctx);
   },
 };

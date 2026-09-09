@@ -113,14 +113,17 @@ describe('compiling a modal screen', () => {
     const [button] = buttons;
 
     expect(button).toBeDefined();
-    expect((button?.controls ?? []).map(entry => Object.keys(entry)[0])).toEqual(['default', 'hover', 'pressed']);
 
-    for (const entry of button?.controls ?? []) {
-      const [state] = Object.values(entry);
+    const states = (button?.controls ?? []).map(entry => Object.keys(entry)[0] ?? '');
 
+    expect(states.map(state => state.split('@')[0])).toEqual(['default', 'hover', 'pressed']);
+
+    for (const state of states) {
       // A button draws the child its `*_control` names and nothing else of its
-      // own, so a caption beside the states would never be seen.
-      expect(state?.controls?.map(child => Object.keys(child)[0])?.[1]).toMatch(/^caption@/);
+      // own, so each state is a shared face with the caption inside it.
+      const face = compiled.faces[state.split('.')[1] ?? ''];
+
+      expect(face?.controls?.map(child => Object.keys(child)[0])?.[1]).toMatch(/^caption@/);
     }
   });
 
