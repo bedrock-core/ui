@@ -282,15 +282,19 @@ describe('an inline select on a compiled modal', () => {
 
   it('stands the engine selection in: an in-place dropdown owning placed radio toggles', () => {
     const [stub] = named(compiled.document, name => name.startsWith('stub@'));
-    const rows = named(compiled.document, name => name.startsWith('option_'));
+    const hosts = named(compiled.document, name => name.startsWith('option_'));
+    const rows = named(compiled.document, name => name === 'row');
     const toggles = named(compiled.document, name => name.startsWith('toggle@'));
 
     expect(stub?.[1].type).toBe('dropdown');
     expect(stub?.[1].dropdown_name).toBe('custom_dropdown');
     expect(stub?.[1].dropdown_content_control).toBe('content_0');
-    // The index is the row panel's: a toggle takes no collection_index.
+    // An index is legal only on a direct child of the control declaring the
+    // collection, and a toggle takes none: each option is a stack declaring
+    // it, whose one child carries the index and holds the toggle.
+    expect(hosts.map(([, host]) => host.collection_name)).toEqual(['custom_dropdown', 'custom_dropdown']);
+    expect(hosts[1]?.[1].offset).toEqual([0, 19]);
     expect(rows.map(([, row]) => row.collection_index)).toEqual([0, 1]);
-    expect(rows[1]?.[1].offset).toEqual([0, 19]);
     expect(toggles.map(([name]) => name.split('@')[1])).toEqual([
       'core_ui_form_components.compiled_option_toggle',
       'core_ui_form_components.compiled_option_toggle',

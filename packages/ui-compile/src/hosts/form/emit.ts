@@ -432,9 +432,9 @@ const listRows = (node: ListNode, entry: ControlEntry, ctx: Emit): ControlEntry 
  * compile places them: an invisible native dropdown owns the row's
  * `custom_dropdown` collection and names its content control in place — the
  * interpreter's own stub, which never opens — and inside that content each
- * option is a panel at its rect carrying its index in the collection (an
- * index is a panel's property, not a toggle's), holding the shared radio
- * toggle with the four looks the build drew for it. The toggle's own
+ * option is an index host at its rect: a stack declaring the collection,
+ * whose one child carries the index (legal only there) and holds the shared
+ * radio toggle with the four looks the build drew for it. The toggle's own
  * bindings live in its definition, where the variables they read are fixed.
  *
  * The radio group is named after the row: every inline select on a screen is
@@ -454,16 +454,25 @@ const inlineSelectRow = (node: FieldNode, entry: ControlEntry): ControlEntry => 
   }));
   const rows: ControlEntry[] = (node.options ?? []).map((option, index) => ({
     [`option_${String(index)}`]: {
-      type: 'panel',
+      type: 'stack_panel',
+      orientation: 'vertical',
       size: sizeOf(option.rect),
       offset: [option.rect.x, option.rect.y],
       ...topLeft,
-      collection_index: index,
+      collection_name: 'custom_dropdown',
       controls: [{
-        [`toggle@${INLINE_OPTION_TOGGLE}`]: {
+        row: {
+          type: 'panel',
           size: FULL,
-          toggle_name: group,
-          controls: states(option),
+          ...topLeft,
+          collection_index: index,
+          controls: [{
+            [`toggle@${INLINE_OPTION_TOGGLE}`]: {
+              size: FULL,
+              toggle_name: group,
+              controls: states(option),
+            },
+          }],
         },
       }],
     },
