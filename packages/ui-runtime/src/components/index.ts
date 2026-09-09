@@ -17,6 +17,7 @@ export {
   type ContainerHandlers, type ContainerProps,
 } from './Container';
 export { Dropdown, type DropdownProps } from './Dropdown';
+export { Expect, EXPECT_SLOT_TYPE, expectedHost, type ExpectProps } from './Expect';
 export {
   Form, ModalContext, MODAL_FORM_SLOT_TYPE,
   type FormConfig, type FormProps, type FormValues,
@@ -66,6 +67,7 @@ import {
   formToggleWriter, formSliderWriter, formDropdownWriter, formInlineSelectWriter,
   formInputWriter, formButtonWriter,
 } from './Form';
+import { EXPECT_SLOT_TYPE } from './Expect';
 import { imageWriter } from './Image';
 import { panelWriter } from './Panel';
 import { SCREEN_TYPE } from './Screen';
@@ -121,6 +123,9 @@ export function registerNativeComponents(): void {
   // laid out against the canvas.
   registerComponent(SCREEN_TYPE, { transparent: true });
   registerComponent(MODAL_FORM_SLOT_TYPE, { transparent: true });
+
+  // The expected-host marker: draws nothing, checked against the host at build.
+  registerComponent(EXPECT_SLOT_TYPE, { transparent: true });
 
   // Full-screen backdrop: transparent marker with no children/box; the presenters
   // find it and append its texture to the form-title metadata (see Background).

@@ -20,7 +20,9 @@ export const HOSTS: readonly HostContract[] = [CHEST, FORM_MODAL, FORM_ACTION];
 
 export { CHEST } from './chest/host';
 export { FORM_ACTION, FORM_MODAL } from './form/host';
-export type { Capability, CarrierKind, DrawKind, HostContract, InputKind } from './types';
+export type {
+  Capability, CarrierKind, ComponentKind, DrawKind, HostContract, InputKind, Mechanism,
+} from './types';
 
 /** The roots, the way an author writes them, for the message a rootless tree gets. */
 const ROOTS = '`<Screen>` for an action form, `<Form>` for a modal, `<Container entity="…">` for a container screen';

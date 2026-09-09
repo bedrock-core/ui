@@ -1,16 +1,18 @@
 import { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
 import { MAX_POOLED_SCROLLS } from '../../components/Scroll';
 import { MODAL_FORM_SLOT_TYPE, SCREEN_TYPE } from '../../core/roots';
-import type { Need } from '../../core/ir/validate';
 import { ContainerScreenError, ModalFormError } from '../../core/types';
-import type { HostContract } from '../types';
+import type { ComponentKind, HostContract } from '../types';
+
+/** The two kinds that only a container screen can draw. */
+const isContainerOnly = (kind: ComponentKind): boolean => kind === 'Slot' || kind === 'SlotGrid';
 
 /**
  * A control that needs a container. Both form hosts answer this the same way,
  * because the reason is the same: there is no container behind a form.
  */
-const noContainer = (need: Need): Error => new ContainerScreenError(
-  `\`${need.label}\` only exists in a container screen. Wrap the screen in `
+const noContainer = (kind: ComponentKind): Error => new ContainerScreenError(
+  `\`${kind}\` only exists in a container screen. Wrap the screen in `
   + '`<Container entity="…">` and serve it with createContainerScreen.',
 );
 
@@ -50,15 +52,26 @@ export const FORM_ACTION: HostContract = {
   id: 'form-action',
   label: 'form',
   root: SCREEN_TYPE,
-  offers: ['bool', 'int', 'enum', 'text', 'press', 'exit'],
+  carriers: ['bool', 'int', 'enum', 'text'],
+
+  // Everything the action form draws, it draws as a button it hears back: a
+  // toggle is a button that flips a carried bool, a chooser one button per
+  // option. What it has no answer for is a control the ENGINE owns — there is
+  // no native field on a screen of buttons — so the typed three are absent.
+  mechanisms: {
+    Button: 'press',
+    Toggle: 'press',
+    Select: 'press',
+    Option: 'press',
+  },
 
   // Two ways to reach here: a container control on a screen with no container,
   // and a modal control on a screen that is not a modal. The second is nearly
   // always a `<Form>` the author forgot to wrap the fields in.
-  refuse: need => (need.capability === 'slot' || need.capability === 'collection'
-    ? noContainer(need)
+  refuse: kind => (isContainerOnly(kind)
+    ? noContainer(kind)
     : new ModalFormError(
-        `\`${need.label}\` must be rendered inside a \`<Form>\`. The native modal is what `
+        `\`${kind}\` must be rendered inside a \`<Form>\`. The native modal is what `
         + 'draws a typed control; outside one there is nothing for it to be.',
       )),
 };
@@ -69,15 +82,28 @@ export const FORM_MODAL: HostContract = {
   id: 'form-modal',
   label: 'modal form',
   root: MODAL_FORM_SLOT_TYPE,
-  offers: ['bool', 'int', 'enum', 'text', 'field', 'submit', 'cancel', 'exit'],
+  carriers: ['bool', 'int', 'enum', 'text'],
 
-  // A native modal has no generic button slot — only its own submit and
-  // dismiss — so an ordinary `<Button>` has nothing to become.
-  refuse: need => (need.capability === 'slot' || need.capability === 'collection'
-    ? noContainer(need)
+  // The one host with typed controls: every field is the engine's, owned by it
+  // while the screen is open and returned in one answer on submit. `Button` is
+  // absent on purpose — a native modal has no generic button slot, only its own
+  // submit and dismiss, which is what `Submit` is.
+  mechanisms: {
+    Form: 'submit',
+    Submit: 'submit',
+    Toggle: 'field',
+    Select: 'field',
+    Option: 'field',
+    Slider: 'field',
+    Dropdown: 'field',
+    Input: 'field',
+  },
+
+  refuse: kind => (isContainerOnly(kind)
+    ? noContainer(kind)
     : new ModalFormError(
-        `\`${need.label}\` is not allowed inside a \`<Form>\`. A native modal draws only its `
-        + 'typed fields plus the submit and exit buttons; use `Form.Button` for an action, '
-        + 'or move the control to a screen of its own.',
+        `\`${kind}\` is not allowed inside a \`<Form>\`. A native modal draws only its `
+        + 'typed fields plus the submit and exit buttons; use a submit or exit button for '
+        + 'an action, or move the control to a screen of its own.',
       )),
 };

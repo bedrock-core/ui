@@ -1,5 +1,4 @@
 import type { Owner } from '../core/fabric';
-import type { Need } from '../core/ir/validate';
 import type { JSX } from '../jsx';
 
 /**
@@ -44,6 +43,27 @@ export type DrawKind = 'collection';
 
 export type Capability = CarrierKind | InputKind | DrawKind;
 
+/**
+ * A component as the author writes it, which is what a host answers about.
+ *
+ * The library's own kinds, not the styled layer's: a `Checkbox` asks about a
+ * `Toggle` and a `Radio` or `ToggleButtonGroup` about a `Select`, because
+ * that is what each one IS once the look is set aside. Everything absent —
+ * panels, text, images, fragments — draws on every host and asks nothing.
+ */
+export type ComponentKind
+  = 'Button' | 'Toggle' | 'Select' | 'Option' | 'Slider' | 'Dropdown' | 'Input'
+    | 'Form' | 'Submit' | 'Slot' | 'SlotGrid';
+
+/**
+ * What one kind of component BECOMES on a host.
+ *
+ * `local` is the one that costs the host nothing: the client draws it and
+ * handles it, and script never hears about it. The rest are the host's own
+ * transport, so each is a capability the screen spends.
+ */
+export type Mechanism = InputKind | DrawKind | 'local';
+
 export interface HostContract {
   readonly id: 'chest' | 'form-action' | 'form-modal';
   /** For error messages: what the author calls this screen. */
@@ -74,14 +94,24 @@ export interface HostContract {
    * refusing to bake it into a button face — reads `buildTree`'s answer.
    */
   readonly compiled: boolean;
-  /** What the host offers. A need outside this set is a build error naming both. */
-  readonly offers: readonly Capability[];
+  /** What a value that changes at runtime can travel on here. */
+  readonly carriers: readonly CarrierKind[];
   /**
-   * How this host explains a control it cannot serve. The wording belongs to
-   * the host because the FIX does: the same `Form.Slider` is "put it inside a
+   * What each kind of component becomes here. This is the whole of what a host
+   * offers a component: a kind the table names is drawn through that
+   * mechanism, and a kind it does not name has nothing to be here and is
+   * refused at build by name. One table rather than a flat list of
+   * capabilities, because "a `Toggle` is a native field on the modal and a
+   * pressed button on the action form" is the fact both the component and the
+   * check need, and neither can read it off a list.
+   */
+  readonly mechanisms: Readonly<Partial<Record<ComponentKind, Mechanism>>>;
+  /**
+   * How this host explains a component it cannot serve. The wording belongs to
+   * the host because the FIX does: the same `Slider` is "put it inside a
    * `<Form>`" on one screen and "a container has no native form" on another.
    */
-  refuse(need: Need): Error;
+  refuse(kind: ComponentKind): Error;
   /**
    * What the host demands of the root itself, beyond the rules every screen
    * obeys — a compiled screen names its entity and fits a fixed canvas.

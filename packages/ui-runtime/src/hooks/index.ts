@@ -4,6 +4,7 @@ export { useRef } from './useRef';
 export { useObservable } from './useObservable';
 export type { ObservableLike } from './useObservable';
 export { useContext } from './useContext';
+export { useMechanism } from './useMechanism';
 export { useReducer } from './useReducer';
 export { usePlayer } from './usePlayer';
 export { useEvent, EventSignal } from './useEvent';

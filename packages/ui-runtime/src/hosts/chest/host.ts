@@ -65,12 +65,25 @@ export const CHEST: HostContract = {
   // A compiled screen emits a region per <Scroll>; nothing draws them from a pool.
   scrollLimit: Number.POSITIVE_INFINITY,
   compiled: true,
-  offers: ['bool', 'int', 'text', 'press', 'slot', 'collection', 'exit'],
+  carriers: ['bool', 'int', 'text'],
+
+  // Everything interactive here moves an item: a press is an item taken and put
+  // straight back, so a button and a chooser's options are cells of the screen's
+  // own container, and a `<Slot>` is one the player fills. The typed three are
+  // absent for the same reason they are on the action form — no native form.
+  mechanisms: {
+    Button: 'slot',
+    Toggle: 'slot',
+    Select: 'slot',
+    Option: 'slot',
+    Slot: 'slot',
+    SlotGrid: 'collection',
+  },
 
   // The only thing a chest screen cannot serve is a native form: the chest
   // screen has no typed control, no submit and no single atomic response.
-  refuse: need => new ContainerScreenError(
-    `\`${need.label}\` cannot be used in a container screen. A container has no native `
+  refuse: kind => new ContainerScreenError(
+    `\`${kind}\` cannot be used in a container screen. A container has no native `
     + 'form; use Button and Slot for interaction.',
   ),
 

@@ -13,10 +13,10 @@ interface HostContract {
   canvas: { width: number; height: number };
   /** The element type that names this host at a screen's root: <Screen>, <Form>, <Container>, <Book>. No default. */
   root: string;
-  /** What the host can carry, with the cost of each. */
-  carriers: readonly CarrierSpec[];       // { type, capacity limits, cost }
-  /** What the host can deliver to script. */
-  inputs: readonly InputSpec[];           // { kind, cost }
+  /** What a value that changes at runtime can travel on here. */
+  carriers: readonly CarrierKind[];       // bool | int | enum | text
+  /** What each kind of component becomes here; a kind absent from the table is refused by name. */
+  mechanisms: Partial<Record<ComponentKind, Mechanism>>;
   /** The one walk: IR -> placement. Run at build and at runtime. */
   allocate(ir: IrDocument): Placement;
   /** How the screen is identified on the client. */

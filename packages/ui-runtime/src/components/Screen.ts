@@ -1,3 +1,4 @@
+import { HostContext } from '../core/hostContext';
 import { SCREEN_TYPE } from '../core/roots';
 import type { FunctionComponent, JSX } from '../jsx';
 
@@ -33,7 +34,5 @@ export interface ScreenProps {
  * }
  * ```
  */
-export const Screen: FunctionComponent<ScreenProps> = ({ children }: ScreenProps): JSX.Element => ({
-  type: SCREEN_TYPE,
-  props: { children },
-});
+export const Screen: FunctionComponent<ScreenProps> = ({ children }: ScreenProps): JSX.Element =>
+  HostContext({ value: 'form-action', children: { type: SCREEN_TYPE, props: { children } } });

@@ -1,5 +1,6 @@
 import type { ContainerEvent } from '../core/events';
 import { concreteRoots } from '../core/guards';
+import { HostContext } from '../core/hostContext';
 import { CONTAINER_TYPE } from '../core/roots';
 import { ContainerScreenError } from '../core/types';
 import type { FunctionComponent, JSX } from '../jsx';
@@ -45,14 +46,17 @@ export interface ContainerHandlers {
  */
 export const Container: FunctionComponent<ContainerProps> = (
   { entity, onOpen, onClose, children, ...rest }: ContainerProps,
-): JSX.Element => ({
-  type: CONTAINER_TYPE,
-  props: {
-    ...withControl(rest),
-    __container: { entity },
-    onOpen,
-    onClose,
-    children,
+): JSX.Element => HostContext({
+  value: 'chest',
+  children: {
+    type: CONTAINER_TYPE,
+    props: {
+      ...withControl(rest),
+      __container: { entity },
+      onOpen,
+      onClose,
+      children,
+    },
   },
 });
 

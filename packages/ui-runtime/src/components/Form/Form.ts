@@ -1,6 +1,7 @@
 import type { UiEvent } from '../../core/events';
 import { createContext } from '../../core/fabric/context';
 import { isElement } from '../../core/guards';
+import { HostContext } from '../../core/hostContext';
 import { MODAL_FORM_SLOT_TYPE } from '../../core/roots';
 import { ModalValue } from '../../core/types';
 import { FunctionComponent, JSX } from '../../jsx';
@@ -104,19 +105,22 @@ const FormRoot: FunctionComponent<FormProps> = ({
 }: FormProps): JSX.Element => {
   const config: FormConfig = { onSubmit, onCancel };
 
-  // Provide the config to descendants (so the restriction pass sees the modal scope)
-  // and emit the transparent `modal-form` marker the presenter detects. The marker
-  // carries the config so the presenter reads chrome + lifecycle without re-walking
-  // providers.
-  return ModalContext({
-    value: config,
-    children: {
-      type: MODAL_FORM_SLOT_TYPE,
-      props: {
-        __formConfig: config,
-        children,
+  // Provide the host (so every component below lowers to a native field) and the
+  // config (so the restriction pass sees the modal scope), then emit the
+  // transparent `modal-form` marker the presenter detects. The marker carries the
+  // config so the presenter reads chrome + lifecycle without re-walking providers.
+  return HostContext({
+    value: 'form-modal',
+    children: ModalContext({
+      value: config,
+      children: {
+        type: MODAL_FORM_SLOT_TYPE,
+        props: {
+          __formConfig: config,
+          children,
+        },
       },
-    },
+    }),
   });
 };
 

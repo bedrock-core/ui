@@ -510,41 +510,43 @@ const inlineSelectRow = (node: FieldNode, entry: ControlEntry): ControlEntry => 
   };
 };
 
-const fieldRow = (node: FieldNode, entry: ControlEntry, ctx: Emit): ControlEntry => (node.field === MODAL_INLINE_SELECT_SLOT_TYPE ? inlineSelectRow(node, entry) : {
-  [node.name]: {
-    type: 'stack_panel',
-    orientation: 'vertical',
-    ...placed(entry),
-    collection_name: MODAL_COLLECTION,
-    controls: [{
-      [`field@${ROW[node.field] ?? ''}`]: {
-        collection_index: node.address,
-        ...NEEDS_DECODE_REPLACED.has(node.field) ? { ...NO_DECODE, $scale: node.scale } : { size: FULL },
-        // The slider's travel area sizes itself from the payload, so a
-        // compiled one is told its size instead — see `travel_area_static`.
-        //
-        // As an ARRAY, not two numbers. A size must carry a unit or be a
-        // real number, and a variable holding `304` substituted into
-        // `"$travel_w"` is a string with neither: the parser rejects the
-        // whole file with "Dangling number (no % or px in Size)".
-        ...node.field === MODAL_SLIDER_SLOT_TYPE ? sliderGeometry(node) : {},
-        // The engine hosts the popup box in the control this names, found
-        // BY NAME across the screen: the screen's own popup host, so the
-        // name resolves wherever the screen is mounted (the host emits it
-        // at the root — see the overlay).
-        ...node.field === MODAL_DROPDOWN_SLOT_TYPE ? { $compiled: true, $dropdown_area: popupHostOf(ctx.ns) } : {},
-        // The static value and placeholder labels, and the engine pointed at
-        // them BY NAME: `ignored` does not take the interpreted copies out of
-        // the by-name lookup, so each path names its own (the slider's
-        // bar-control rule, on the edit box).
-        ...node.field === MODAL_INPUT_SLOT_TYPE
-          ? { $compiled: true, $text_ctrl: 'display_text_static', $placeholder_ctrl: 'place_holder_static' }
-          : {},
-        ...node.faces,
+const fieldRow = (node: FieldNode, entry: ControlEntry, ctx: Emit): ControlEntry => (node.field === MODAL_INLINE_SELECT_SLOT_TYPE
+  ? inlineSelectRow(node, entry)
+  : {
+      [node.name]: {
+        type: 'stack_panel',
+        orientation: 'vertical',
+        ...placed(entry),
+        collection_name: MODAL_COLLECTION,
+        controls: [{
+          [`field@${ROW[node.field] ?? ''}`]: {
+            collection_index: node.address,
+            ...NEEDS_DECODE_REPLACED.has(node.field) ? { ...NO_DECODE, $scale: node.scale } : { size: FULL },
+            // The slider's travel area sizes itself from the payload, so a
+            // compiled one is told its size instead — see `travel_area_static`.
+            //
+            // As an ARRAY, not two numbers. A size must carry a unit or be a
+            // real number, and a variable holding `304` substituted into
+            // `"$travel_w"` is a string with neither: the parser rejects the
+            // whole file with "Dangling number (no % or px in Size)".
+            ...node.field === MODAL_SLIDER_SLOT_TYPE ? sliderGeometry(node) : {},
+            // The engine hosts the popup box in the control this names, found
+            // BY NAME across the screen: the screen's own popup host, so the
+            // name resolves wherever the screen is mounted (the host emits it
+            // at the root — see the overlay).
+            ...node.field === MODAL_DROPDOWN_SLOT_TYPE ? { $compiled: true, $dropdown_area: popupHostOf(ctx.ns) } : {},
+            // The static value and placeholder labels, and the engine pointed at
+            // them BY NAME: `ignored` does not take the interpreted copies out of
+            // the by-name lookup, so each path names its own (the slider's
+            // bar-control rule, on the edit box).
+            ...node.field === MODAL_INPUT_SLOT_TYPE
+              ? { $compiled: true, $text_ctrl: 'display_text_static', $placeholder_ctrl: 'place_holder_static' }
+              : {},
+            ...node.faces,
+          },
+        }],
       },
-    }],
-  },
-});
+    });
 
 export const FORM_EMIT: HostEmit = {
   id: 'form',

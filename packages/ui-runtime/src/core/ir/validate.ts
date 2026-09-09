@@ -1,5 +1,6 @@
 import { BUTTON_TYPE } from '../../components/Button';
 import { EMBED_SLOT_TYPE } from '../../components/Embed';
+import { EXPECT_SLOT_TYPE, expectedHost } from '../../components/Expect';
 import { LIST_SLOT_TYPE } from '../../components/List';
 import {
   MODAL_DROPDOWN_SLOT_TYPE, MODAL_FORM_BUTTON_SLOT_TYPE,
@@ -12,52 +13,51 @@ import { DISCLOSURE_SLOT_TYPE } from '../../components/Disclosure';
 import { isForeignSlot, SLOT_TYPE } from '../../components/Slot';
 import { SLOT_GRID_TYPE } from '../../components/SlotGrid';
 import { liveTextLength } from '../../components/Text';
-import type { Capability, HostContract } from '../../hosts';
+import type { ComponentKind, HostContract } from '../../hosts';
 import type { JSX } from '../../jsx';
 import { childElements } from '../guards';
 import { CONTAINER_TYPE, isHostRoot, MODAL_FORM_SLOT_TYPE, SCREEN_TYPE } from '../roots';
 import { ContainerScreenError, ScreenRootError } from '../types';
 
 /**
- * The one thing a built tree is checked against: what it NEEDS, against what
- * its host OFFERS.
+ * The one thing a built tree is checked against: what it holds, against what
+ * its host has a MECHANISM for.
  *
  * There used to be a validator per backend, each a hand-kept list of which
  * component types were forbidden on it — two lists edited in opposite
  * directions every time a component or a screen was added, and neither said
- * WHY a control was refused. A need says why: a `<Slot>` asks to be interacted
- * with through a cell of the screen's own container, and a screen with no
- * container behind it has none to give. Add a host and nothing here changes;
- * add a component and it declares its need in one line.
+ * WHY a control was refused. The host's table says why: it names what each
+ * kind of component becomes there, so a kind it does not name has nothing to
+ * be on that screen. Add a host and nothing here changes; add a component and
+ * it names its kind in one line.
  *
  * What is left over are rules about WHERE a control may sit rather than what
- * it needs — a scroll inside a scroll, live text inside a button's baked face.
- * Those hold because of what a screen is, not because of how a host carries
- * things, so they are listed separately below.
+ * it becomes — a scroll inside a scroll, live text inside a button's baked
+ * face. Those hold because of what a screen is, not because of how a host
+ * carries things, so they are listed separately below.
  */
-
-/** What a control asks of its host, and the name the author knows it by. */
-export interface Need {
-  readonly capability: Capability;
-  /** What the author wrote, for the message: `Form.Toggle`, not `modal-toggle`. */
-  readonly label: string;
-}
 
 /**
- * One line per component that needs anything at all. Everything absent from
- * this table — panels, text, images, fragments — draws on every host, which is
- * why most of the component set is not in it.
+ * One line per element type that is a component kind a host answers about.
+ * Everything absent from this table — panels, text, images, fragments — draws
+ * on every host and asks for nothing, which is why most of the component set
+ * is not in it.
+ *
+ * Several types map to one kind: the modal's toggle and the plain one are both
+ * a `Toggle`, and an inline select and a dropdown popup are both a `Select`,
+ * because a host answers about the component the author wrote rather than
+ * about the shape it was lowered to.
  */
-const NEEDS: ReadonlyMap<string, Need> = new Map<string, Need>([
-  [SLOT_GRID_TYPE, { capability: 'collection', label: 'SlotGrid / PlayerInventory / Hotbar' }],
-  [MODAL_FORM_SLOT_TYPE, { capability: 'submit', label: 'Form' }],
-  [MODAL_FORM_BUTTON_SLOT_TYPE, { capability: 'submit', label: 'Form.Button' }],
-  [MODAL_TOGGLE_SLOT_TYPE, { capability: 'field', label: 'Form.Toggle' }],
-  [MODAL_SLIDER_SLOT_TYPE, { capability: 'field', label: 'Form.Slider' }],
-  [MODAL_DROPDOWN_SLOT_TYPE, { capability: 'field', label: 'Form.Dropdown' }],
-  [MODAL_INLINE_SELECT_SLOT_TYPE, { capability: 'field', label: 'Form.Radio / Form.ToggleButton' }],
-  [MODAL_OPTION_SLOT_TYPE, { capability: 'field', label: 'Form.Option' }],
-  [MODAL_INPUT_SLOT_TYPE, { capability: 'field', label: 'Form.Input' }],
+const KINDS: ReadonlyMap<string, ComponentKind> = new Map<string, ComponentKind>([
+  [SLOT_GRID_TYPE, 'SlotGrid'],
+  [MODAL_FORM_SLOT_TYPE, 'Form'],
+  [MODAL_FORM_BUTTON_SLOT_TYPE, 'Submit'],
+  [MODAL_TOGGLE_SLOT_TYPE, 'Toggle'],
+  [MODAL_SLIDER_SLOT_TYPE, 'Slider'],
+  [MODAL_DROPDOWN_SLOT_TYPE, 'Dropdown'],
+  [MODAL_INLINE_SELECT_SLOT_TYPE, 'Select'],
+  [MODAL_OPTION_SLOT_TYPE, 'Option'],
+  [MODAL_INPUT_SLOT_TYPE, 'Input'],
 ]);
 
 /** The roots as the author writes them, for the nesting message. */
@@ -67,13 +67,8 @@ const LABELS: Readonly<Record<string, string>> = {
   [CONTAINER_TYPE]: 'Container',
 };
 
-/**
- * What one element needs. Two components decide by their props rather than by
- * their type, so they are not in the table: a `<Slot>` reading a foreign
- * collection needs that collection rather than a cell of the screen's own, and
- * a `<Button>` needs a press whatever its handler goes on to do.
- */
-export const needOf = (element: JSX.Element): Need | undefined => {
+/** What kind of component one element is, or nothing when it is not one a host answers about. */
+export const kindOf = (element: JSX.Element): ComponentKind | undefined => {
   const { type } = element;
 
   if (typeof type !== 'string') {
@@ -81,16 +76,14 @@ export const needOf = (element: JSX.Element): Need | undefined => {
   }
 
   if (type === BUTTON_TYPE) {
-    return { capability: 'press', label: 'Button' };
+    return 'Button';
   }
 
   if (type === SLOT_TYPE) {
-    return isForeignSlot(element)
-      ? { capability: 'collection', label: 'Slot' }
-      : { capability: 'slot', label: 'Slot' };
+    return 'Slot';
   }
 
-  return NEEDS.get(type);
+  return KINDS.get(type);
 };
 
 /** Where the walk is: what a node may not contain depends on what it sits in. */
@@ -124,6 +117,18 @@ const RULES: readonly Rule[] = [
         `A \`<${LABELS[type] ?? type}>\` cannot sit inside a ${host.label}: a root names the `
         + 'host of the whole screen, so there is one, at the top. Compose the inner '
         + 'part as a component, or give it a screen of its own.',
+      );
+    }
+  },
+
+  (node, type, _scope, host): void => {
+    const expected = type === EXPECT_SLOT_TYPE ? expectedHost(node) : undefined;
+
+    if (expected !== undefined && expected !== host.id) {
+      throw new ScreenRootError(
+        `This part of the screen is written for a ${expected} and is being drawn on a `
+        + `${host.id}. Either give it a screen of that kind, or use components the `
+        + `${host.label} can draw.`,
       );
     }
   },
@@ -216,20 +221,17 @@ const RULES: readonly Rule[] = [
  * @throws ContainerScreenError, ModalFormError or ScreenRootError, naming the control and the fix.
  */
 export function validate(tree: JSX.Element, host: HostContract, frozen: boolean): void {
-  const offers = new Set<Capability>(host.offers);
-
   // Whatever the host demands of the root itself: a chest screen names the
   // entity it opens from and fits a fixed canvas, a form asks nothing.
   host.check?.(tree);
 
-  walk(tree, { insideRoot: false, insideButton: false, insideScroll: false }, host, offers, frozen);
+  walk(tree, { insideRoot: false, insideButton: false, insideScroll: false }, host, frozen);
 }
 
 function walk(
   node: JSX.Element,
   scope: Scope,
   host: HostContract,
-  offers: ReadonlySet<Capability>,
   frozen: boolean,
 ): void {
   const { type } = node;
@@ -241,10 +243,10 @@ function walk(
       rule(node, type, scope, host, frozen);
     }
 
-    const need = needOf(node);
+    const kind = kindOf(node);
 
-    if (need !== undefined && !offers.has(need.capability)) {
-      throw host.refuse(need);
+    if (kind !== undefined && host.mechanisms[kind] === undefined) {
+      throw host.refuse(kind);
     }
   }
 
@@ -255,6 +257,6 @@ function walk(
   };
 
   for (const child of childElements(node.props.children)) {
-    walk(child, inner, host, offers, frozen);
+    walk(child, inner, host, frozen);
   }
 }

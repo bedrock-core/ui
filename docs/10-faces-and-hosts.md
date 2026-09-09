@@ -132,6 +132,12 @@ a host that has none refuses the component at build by name, as today. `Form.*` 
 stop being public: they are the modal host's lowering targets, reached only through the plain
 component. Only the roots, `Slot` and `SlotGrid` stay host-specific in public. *Decided.*
 
+The table below is the host's, declared as `mechanisms` on its contract, and it answers both
+questions at once: a component asks `useMechanism('Toggle')` and renders what it is told, and
+the same table is what the build checks a tree against — a kind the host does not name has
+nothing to be there and is refused in the host's own words. The root provides the host to its
+subtree, so the question is answered wherever a component sits. *Done in B2.*
+
 | Component | Face | form-modal | form-action | chest |
 | --- | --- | --- | --- | --- |
 | `Button` | button face | refused, unless `submit` / `cancel` | entry with baked index | slot with transport item |
@@ -159,12 +165,18 @@ remains as the root.
 **Host-specific props, typed by the host.** A component is declared once, with the props every
 host shares. Where one host takes more — the modal's `name` on a field, the chest's `role` on a
 slot — those props are not a second component (`Form.Toggle` beside `Toggle`); they are typed
-onto the one component by the host the element sits in. Two ways to know the host, both
-decided in B: the root's type narrows its subtree, so a `Toggle` under `<Form>` shows the
-modal's props; and a component library that renders into a host it does not own wraps its
-fragment in an expected-host marker (`<Expect host="form-modal">`), which types the same way.
-Outside any host a component shows only the shared props. Nothing is declared twice: the
-basics, and the combinations the hosts add. *Decided.*
+onto the one component by the host the element sits in. Two ways to know the host: the root
+provides it to its whole subtree, so a `Toggle` under `<Form>` is a native field and takes the
+modal's `name`; and a component library that renders into a host it does not own opens its
+fragment with an expected-host marker (`<Expect host="form-modal">`), which says what it
+assumed and fails by name on the wrong screen instead of failing once per field. A component
+with no root above it at all is told that, by the kind that noticed. Nothing is declared
+twice: the basics, and the combinations the hosts add. *Done in B2.*
+
+TypeScript cannot narrow a component's props by the JSX parent it sits under, so the
+host-specific props are declared on the one component and are the host's to enforce: a field
+inside a `<Form>` says so when it has no `name`, and a screen of buttons refuses a `Slider`
+outright rather than drawing an inert one.
 
 ## The gallery
 
