@@ -1,7 +1,7 @@
 import type { FunctionComponent } from '@bedrock-core/ui-runtime';
 import {
   allocateForm, allocateModal, analyze, bakedTexts, buildScreenOnce, type CompiledSnapshot, concreteRoots,
-  ContainerScreenError, embedMarker, FORM_COLLECTION, formTitleFor, hasModalRoot, isEmbedRoot, probeLiveness, shapeOf,
+  ContainerScreenError, embedMarker, embedPlacementOf, type EmbedPlacement, FORM_COLLECTION, formTitleFor, hasModalRoot, probeLiveness, shapeOf,
   visiblesAt, type EntryEntry, type ModalRow,
 } from '@bedrock-core/ui-runtime/compile';
 import { checkLiveness, previewOf } from '../../compile';
@@ -49,6 +49,8 @@ export interface CompiledFormScreen {
    * in place of the title, since the title is the host's.
    */
   marker?: string;
+  /** With `marker`: where the screen sits in the host's frame. Its canvas is the area; the mount places it. */
+  embed?: EmbedPlacement;
   /** The JSON UI document: `screen` (+ `backdrop`) and its shared definitions. */
   document: Document;
   /** The screen as faces alone, before the host stood its mechanisms in: what the gallery draws. */
@@ -159,9 +161,9 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
   const tree = buildScreenOnce(Screen);
   const visibles = visiblesAt(tree, probe.liveVisibles);
   const modal = hasModalRoot(tree);
-  const embedded = isEmbedRoot(tree);
+  const embedded = embedPlacementOf(tree);
 
-  if (embedded && modal) {
+  if (embedded !== undefined && modal) {
     throw new ContainerScreenError('An embedded screen is drawn into an action form; it cannot be a <Form> modal.');
   }
 
@@ -183,7 +185,7 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
     addon: spec.namespace,
     namespace,
     title: formTitleFor(namespace),
-    ...embedded ? { marker: embedMarker(spec.namespace) } : {},
+    ...embedded === undefined ? {} : { marker: embedMarker(spec.namespace), embed: embedded },
     document,
     face,
     facesNamespace: face.facesNamespace,

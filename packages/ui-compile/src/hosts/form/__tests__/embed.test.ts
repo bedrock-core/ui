@@ -62,12 +62,17 @@ describe('the host side: reserved slots', () => {
 
 describe('the embedded side: entries from 1, gated by the marker', () => {
   const Page = (): JSX.Element => Embed({
-    width: 300,
-    height: 200,
+    frame: { width: 300, height: 200 },
+    area: { x: 114, y: 25, width: 185, height: 173 },
     children: [Button({ onPress: () => {}, children: [Text({ children: 'CONFIG' })] })],
   });
 
   const compiled = compileFormScreen(Page, { namespace: 'drav0011_economy', name: 'addon' });
+
+  it('is laid out against the area, which is its canvas', () => {
+    expect(compiled.document.screen?.size).toEqual([185, 173]);
+    expect(compiled.embed).toEqual({ frame: [300, 200], offset: [114, 25] });
+  });
 
   it('starts its entries after the marker slot', () => {
     expect(compiled.entries[0]?.entry).toBe(1);
@@ -81,16 +86,30 @@ describe('the embedded side: entries from 1, gated by the marker', () => {
     expect(compiled.marker).toBe('core_addon:drav0011_economy');
   });
 
-  it('routes through a gate reading entry 0 rather than the title', () => {
-    const routing = formRouter([{ name: compiled.name, namespace: compiled.namespace, hasBackdrop: false, marker: compiled.marker }], 'drav0011_economy');
-    const gate = routing.router.drav0011_economy_gate_addon as Control;
-    const inner = gate.controls?.[0]?.gate;
+  const routing = formRouter([{
+    name: compiled.name, namespace: compiled.namespace, hasBackdrop: false, marker: compiled.marker, embed: compiled.embed,
+  }], 'drav0011_economy');
+  const gate = routing.router.drav0011_economy_gate_addon as Control;
+  const inner = gate.controls?.[0]?.gate;
 
+  it('routes through a gate reading entry 0 rather than the title', () => {
     expect(gate.collection_name).toBe('form_buttons');
     expect(inner?.collection_index).toBe(0);
     expect(inner?.property_bag?.['#visible']).toBe(false);
     expect(JSON.stringify(inner?.bindings)).toContain("(#marker = 'core_addon:drav0011_economy')");
     expect(JSON.stringify(inner?.bindings)).not.toContain('#title_text');
+  });
+
+  it('is mounted where the area sits in the host\'s centred frame', () => {
+    const frame = inner?.controls?.[0]?.frame;
+    const [mounted] = frame?.controls ?? [];
+    const [name, screen] = Object.entries(mounted ?? {})[0] ?? [];
+
+    expect(frame?.size).toEqual([300, 200]);
+    expect(frame?.anchor_from).toBe('center');
+    expect(name).toBe('screen@drav0011_economy_addon.screen');
+    expect(screen?.anchor_from).toBe('top_left');
+    expect(screen?.offset).toEqual([114, 25]);
   });
 });
 

@@ -14,9 +14,10 @@ import { FRAME, MAIN } from './frame';
  * Everything on it is the addon's own — thumbnail, icon, name, description,
  * authors — and none of it changes at runtime, so none of it is carried: the
  * strings are localization keys the client resolves from the addon's own
- * `.lang`, the textures are the addon's, and the layout is baked against
- * the list's {@link MAIN} area. The host draws the frame around it, writes
- * the addon's marker into the first entry, and reads the two presses back.
+ * `.lang`, the textures are the addon's, and the layout fills the list's
+ * {@link MAIN} area, which is the page's whole canvas. The host draws the
+ * frame around it, writes the addon's marker into the first entry, and
+ * reads the two presses back.
  *
  * The addon declares the page like any screen — a module default-exporting
  * `() => <AddonPage addon={...} />` — and publishes what presenting it needs
@@ -76,46 +77,44 @@ const targetOf = (handler: unknown): PageTarget | null => {
 };
 
 export const AddonPage: FunctionComponent<AddonPageProps> = ({ addon }: AddonPageProps): JSX.Element => (
-  <Embed width={FRAME.width} height={FRAME.height}>
-    <Panel position={'absolute'} left={MAIN.x} top={MAIN.y} width={MAIN.width} height={MAIN.height}>
-      {/* Two pixels short of the area, so the track clears the card's edge. */}
-      <Scroll width={MAIN.width - 2} height={MAIN.height}>
-        <Panel flexDirection={'column'} gap={spacing.md} padding={spacing.md} width={MAIN.width - 2 - 5}>
-          {/* Absolute, so a page without a banner loses no room: an empty background draws nothing. */}
-          <Panel position={'absolute'} left={0} right={0} top={0} aspectRatio={THUMBNAIL_RATIO} background={addon.thumbnail ?? ''} />
-          <Panel justifyContent={'center'} alignItems={'center'}>
-            <Image width={40} height={40} texture={addon.icon ?? ICON_MISSING} />
-          </Panel>
-          <Panel flexDirection={'column'}>
-            <Text font={'mojangles'} scale={2} shadow={true}>{addon.packName}</Text>
-            <Text font={'mojangles'} scale={1}>{`§7${t($ => $.addons.version, { version: addon.version })}`}</Text>
-          </Panel>
-          <Panel flexDirection={'row'} gap={spacing.sm}>
-            <OreButton variant={'secondary'} paddingTop={2} paddingLeft={4} onPress={pressConfig}>
-              <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.sm}>
-                <Image width={12} height={12} texture={ICON_CONFIG} />
-                <Text font={'mojangles'} scale={1}>{`§0${t($ => $.addons.config)}`}</Text>
-              </Panel>
-            </OreButton>
-            <OreButton variant={'secondary'} paddingTop={2} paddingLeft={4} onPress={pressGuide}>
-              <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.sm}>
-                <Image width={12} height={12} texture={ICON_GUIDE} />
-                <Text font={'mojangles'} scale={1}>{`§0${t($ => $.addons.guide)}`}</Text>
-              </Panel>
-            </OreButton>
-          </Panel>
-          <Card variant={'dark'}>
-            <Text font={'mojangles'} scale={1} wordBreak={'break-word'}>{addon.description ?? ''}</Text>
-          </Card>
-          <Panel flexDirection={'row'} alignItems={'flex-start'} gap={spacing.xs}>
-            <Text shadow={true} flexShrink={0}>{`§7${t($ => $.addons.authors)}`}</Text>
-            <Panel flexGrow={1} flexShrink={1}>
-              <Text font={'mojangles'} scale={1} wordBreak={'break-word'}>{addon.creatorName ?? addon.creator}</Text>
+  <Embed frame={FRAME} area={MAIN}>
+    {/* Two pixels short of the area, so the track clears the card's edge. */}
+    <Scroll width={MAIN.width - 2} height={MAIN.height}>
+      <Panel flexDirection={'column'} gap={spacing.md} padding={spacing.md} width={MAIN.width - 2 - 5}>
+        {/* Absolute, so a page without a banner loses no room: an empty background draws nothing. */}
+        <Panel position={'absolute'} left={0} right={0} top={0} aspectRatio={THUMBNAIL_RATIO} background={addon.thumbnail ?? ''} />
+        <Panel justifyContent={'center'} alignItems={'center'}>
+          <Image width={40} height={40} texture={addon.icon ?? ICON_MISSING} />
+        </Panel>
+        <Panel flexDirection={'column'}>
+          <Text font={'mojangles'} scale={2} shadow={true}>{addon.packName}</Text>
+          <Text font={'mojangles'} scale={1}>{`§7${t($ => $.addons.version, { version: addon.version })}`}</Text>
+        </Panel>
+        <Panel flexDirection={'row'} gap={spacing.sm}>
+          <OreButton variant={'secondary'} paddingTop={2} paddingLeft={4} onPress={pressConfig}>
+            <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.sm}>
+              <Image width={12} height={12} texture={ICON_CONFIG} />
+              <Text font={'mojangles'} scale={1}>{`§0${t($ => $.addons.config)}`}</Text>
             </Panel>
+          </OreButton>
+          <OreButton variant={'secondary'} paddingTop={2} paddingLeft={4} onPress={pressGuide}>
+            <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.sm}>
+              <Image width={12} height={12} texture={ICON_GUIDE} />
+              <Text font={'mojangles'} scale={1}>{`§0${t($ => $.addons.guide)}`}</Text>
+            </Panel>
+          </OreButton>
+        </Panel>
+        <Card variant={'dark'}>
+          <Text font={'mojangles'} scale={1} wordBreak={'break-word'}>{addon.description ?? ''}</Text>
+        </Card>
+        <Panel flexDirection={'row'} alignItems={'flex-start'} gap={spacing.xs}>
+          <Text shadow={true} flexShrink={0}>{`§7${t($ => $.addons.authors)}`}</Text>
+          <Panel flexGrow={1} flexShrink={1}>
+            <Text font={'mojangles'} scale={1} wordBreak={'break-word'}>{addon.creatorName ?? addon.creator}</Text>
           </Panel>
         </Panel>
-      </Scroll>
-    </Panel>
+      </Panel>
+    </Scroll>
   </Embed>
 );
 

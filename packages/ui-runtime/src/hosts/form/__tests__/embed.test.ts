@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { Button, Embed, EmbedSlots, Image, Panel, Text } from '../../../components';
+import { Button, Embed, embedPlacementOf, EmbedSlots, Image, Panel, Text } from '../../../components';
+import { concreteRoots } from '../../../core/guards';
 import { buildScreenTree } from '../../chest/build';
 import { allocate } from '../allocate';
 import { compiledValuesOf, entryValue } from '../runtime';
@@ -34,12 +35,19 @@ describe('reserved slots on the host', () => {
 
 describe('the embedded screen', () => {
   const Page = (): ReturnType<typeof Embed> => Embed({
-    width: 300,
-    height: 200,
+    frame: { width: 300, height: 200 },
+    area: { x: 114, y: 25, width: 185, height: 173 },
     children: [Button({ onPress: () => {}, children: [Text({ children: 'CONFIG' })] })],
   });
 
   const tree = buildScreenTree(Page);
+
+  it('is the size of its area and remembers where the area sits', () => {
+    const [root] = concreteRoots(tree);
+
+    expect(root?.props.__layout).toMatchObject({ width: 185, height: 173 });
+    expect(embedPlacementOf(tree)).toEqual({ frame: [300, 200], offset: [114, 25] });
+  });
 
   it('numbers its entries from 1, leaving entry 0 to the host\'s marker', () => {
     const placement = allocate(tree);

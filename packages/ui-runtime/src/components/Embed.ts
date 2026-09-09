@@ -21,11 +21,13 @@ import { PANEL_TYPE } from './Panel';
  * whether each is enabled — which the host writes from the values the
  * screen's owner published, and reads back as presses by slot.
  *
- * On the other side, {@link Embed} is the root of the embedded screen: its
- * canvas is the host's whole frame, so it positions its content where the
- * host left room, and its entries are numbered from 1 because slot 0 is the
- * marker. Neither side renders the other; the one contract is the frame and
- * the slot count, both constants of the host component that embeds.
+ * On the other side, {@link Embed} is the root of the embedded screen: a
+ * component drawn into the AREA the host leaves for it. That area is its
+ * canvas — the tree fills it, and nothing inside knows where the host put
+ * it — and its entries are numbered from 1 because slot 0 is the marker.
+ * Neither side renders the other; the one contract is the host's frame, the
+ * area's place in it and the slot count, all constants of the host component
+ * that embeds.
  */
 
 /** The host `type` of one reserved entry; emits nothing and is filled by the embedded pack. */
@@ -88,28 +90,78 @@ export const EmbedSlots: FunctionComponent<EmbedSlotsProps> = ({ count, values, 
   };
 };
 
-export interface EmbedProps extends ControlProps {
+/** The canvas the host's own screen is baked at. */
+export interface EmbedFrame {
+  width: number;
+  height: number;
+}
+
+/** Where in the host's frame the embedded component draws: its canvas. */
+export interface EmbedArea {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** How an embedded screen sits in its host's frame; what its mount places it by. */
+export interface EmbedPlacement {
+  /** The host's frame, `[width, height]`. */
+  readonly frame: readonly [number, number];
+  /** The area's top-left within that frame, `[x, y]`. */
+  readonly offset: readonly [number, number];
+}
+
+export interface EmbedProps extends Omit<ControlProps, 'width' | 'height'> {
+  /** The host's frame: what the host bakes its own screen against. */
+  frame: EmbedFrame;
+  /** The area of that frame this component fills. It is the canvas everything below is laid out in. */
+  area: EmbedArea;
   children?: JSX.Node;
 }
 
 /**
- * The root of a screen drawn into another pack's: a panel the size of the
- * host's frame, whose pack gates it on the host's marker slot.
+ * The root of a component drawn into another pack's screen: a panel the
+ * size of the area the host leaves for it, whose pack gates it on the host's
+ * marker slot and mounts it where the area sits in the host's frame.
  */
-export const Embed: FunctionComponent<EmbedProps> = ({ children, ...rest }: EmbedProps): JSX.Element => ({
+export const Embed: FunctionComponent<EmbedProps> = ({ frame, area, children, ...rest }: EmbedProps): JSX.Element => ({
   type: PANEL_TYPE,
   props: {
-    ...withControl(rest),
-    __embed: true,
+    ...withControl({ ...rest, width: area.width, height: area.height }),
+    __embed: { frame: [frame.width, frame.height], offset: [area.x, area.y] } satisfies EmbedPlacement,
     children,
   },
 });
 
-/** Whether a built tree is an embedded screen: its concrete root is an {@link Embed}. */
-export function isEmbedRoot(tree: JSX.Element): boolean {
+/** How a built tree's root sits in its host's frame, when the root is an {@link Embed}. */
+export function embedPlacementOf(tree: JSX.Element): EmbedPlacement | undefined {
   const [root] = concreteRoots(tree);
 
-  return root !== undefined && root.type === PANEL_TYPE && root.props.__embed === true;
+  if (root === undefined || root.type !== PANEL_TYPE) {
+    return undefined;
+  }
+
+  const placement: unknown = root.props.__embed;
+
+  if (typeof placement !== 'object' || placement === null || !('frame' in placement) || !('offset' in placement)) {
+    return undefined;
+  }
+
+  const pair = (value: unknown): readonly [number, number] | undefined => (
+    Array.isArray(value) && value.length === 2 && value.every(item => typeof item === 'number')
+      ? [Number(value[0]), Number(value[1])]
+      : undefined
+  );
+  const frame = pair(placement.frame);
+  const offset = pair(placement.offset);
+
+  return frame === undefined || offset === undefined ? undefined : { frame, offset };
+}
+
+/** Whether a built tree is an embedded screen: its concrete root is an {@link Embed}. */
+export function isEmbedRoot(tree: JSX.Element): boolean {
+  return embedPlacementOf(tree) !== undefined;
 }
 
 /**

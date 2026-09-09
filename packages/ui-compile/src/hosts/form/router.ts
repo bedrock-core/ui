@@ -1,4 +1,6 @@
-import { ContainerScreenError, FORM_COLLECTION, FORM_DETAILS_BINDING, formTitleFor } from '@bedrock-core/ui-runtime/compile';
+import {
+  ContainerScreenError, type EmbedPlacement, FORM_COLLECTION, FORM_DETAILS_BINDING, formTitleFor,
+} from '@bedrock-core/ui-runtime/compile';
 import { SCREEN_DEFINITION, BACKDROP_DEFINITION } from '../../emit';
 import { entryValueBinding } from './emit';
 import type { Control, ControlEntry, Document } from '../../jsonui';
@@ -41,6 +43,8 @@ export interface RoutedFormScreen {
   readonly hasBackdrop: boolean;
   /** Present for a screen drawn into another pack's: gated on the host's marker entry, not the title. */
   readonly marker?: string;
+  /** With `marker`: where the screen sits in the host's frame. Absent, the screen is centred like any other. */
+  readonly embed?: EmbedPlacement;
 }
 
 /** A document and the pack path it is written to. */
@@ -152,19 +156,34 @@ export const formRouter = (screens: readonly RoutedFormScreen[], addon: string):
       ? gate(formTitleFor(screen.namespace), controls)
       : markerGate(screen.marker, controls));
 
+    // Centred, because the box this gate fills is the form's content area,
+    // which vanilla sizes 0×0 at the middle of the screen and the interpreter
+    // grows through the title; a compiled title carries no size. Anchored
+    // top-left, the canvas hung off the screen's centre — drawn down and to
+    // the right of it, cut where the screen ended.
+    const centred = { anchor_from: 'center', anchor_to: 'center' } as const;
+
     router[`${addon}_gate_${screen.name}`] = gated([
       ...screen.hasBackdrop ? [{ [`backdrop@${screen.namespace}.${BACKDROP_DEFINITION}`]: {} }] : [],
-      {
-        // Centred, because the box this gate fills is the form's content area,
-        // which vanilla sizes 0×0 at the middle of the screen and the
-        // interpreter grows through the title; a compiled title carries no
-        // size. Anchored top-left, the canvas hung off the screen's centre —
-        // drawn down and to the right of it, cut where the screen ended.
-        [`screen@${screen.namespace}.${SCREEN_DEFINITION}`]: {
-          anchor_from: 'center',
-          anchor_to: 'center',
-        },
-      },
+      screen.embed === undefined
+        ? { [`screen@${screen.namespace}.${SCREEN_DEFINITION}`]: centred }
+        : {
+            // An embedded screen's canvas is the area its host left for it:
+            // the host's frame is centred exactly as the host centres its
+            // own, and the screen sits in it where the area does.
+            frame: {
+              type: 'panel',
+              size: [...screen.embed.frame],
+              ...centred,
+              controls: [{
+                [`screen@${screen.namespace}.${SCREEN_DEFINITION}`]: {
+                  anchor_from: 'top_left',
+                  anchor_to: 'top_left',
+                  offset: [...screen.embed.offset],
+                },
+              }],
+            },
+          },
     ]);
   }
 
