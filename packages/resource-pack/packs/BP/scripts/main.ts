@@ -10,7 +10,7 @@ import {
   ObservableString,
 } from '@minecraft/server-ui';
 import { MinecraftBlockTypes, MinecraftEntityTypes } from '@minecraft/vanilla-data';
-import '@bedrock-core/generated/ui';
+import { openGallery } from '@bedrock-core/generated/ui';
 import { spawnDemo } from './container/demo';
 import Counter from './screens/counter.screen';
 import Settings from './screens/settings.screen';
@@ -95,6 +95,12 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
     form.button('OK');
 
     form.show(source);
+  }
+
+  if (block.typeId === MinecraftBlockTypes.BambooButton) {
+    // The gallery: every compiled screen of this pack as faces alone, before
+    // any host serves it. Built by the development profile only.
+    openGallery(source, { debug: true });
   }
 
   if (block.typeId === MinecraftBlockTypes.JungleButton) {

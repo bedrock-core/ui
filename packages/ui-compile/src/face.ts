@@ -41,6 +41,26 @@ export const BACKDROP_DEFINITION = 'backdrop';
 export const facesNamespaceOf = (addon: string): string => `${addon}_faces`;
 
 /**
+ * The namespace a screen's PREVIEW is emitted under: the face document alone,
+ * mounted on the action form for the gallery. Its own namespace, so nothing
+ * it defines or names collides with the screen the host serves — every gated
+ * compiled screen is constructed on every form open, and a name a binding
+ * looks up is found screen-wide.
+ */
+export const previewNamespaceOf = (namespace: string): string => `${namespace}__preview`;
+
+/** A screen as faces alone, under its preview namespace: what the gallery opens. */
+export interface Preview {
+  /** The JSON UI namespace: `<screen namespace>__preview`. */
+  namespace: string;
+  /** The title the runtime opens the preview with, and what its gate reads. */
+  title: string;
+  /** The face document, renamed into the preview namespace. Complete, static, drawable. */
+  document: Document;
+  hasBackdrop: boolean;
+}
+
+/**
  * A screen drawn as faces: what the face pass hands the host pass, and what
  * the gallery shows on its own.
  */

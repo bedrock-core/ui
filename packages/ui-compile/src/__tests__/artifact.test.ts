@@ -3,7 +3,7 @@ import path from 'node:path';
 import { layoutKey, PROTOCOL_ITEM_AUX } from '@bedrock-core/ui-runtime/compile';
 import { describe, expect, it } from 'vitest';
 import { demoCounts, demoEntity, demoScreen } from '../__fixtures__/demo';
-import { buildRouter, type CompiledScreen } from '../compile';
+import { buildRouter, type CompiledScreen, previewOf } from '../compile';
 import { CHEST_HOST } from '../hosts/chest';
 import { faceOf } from '../face';
 import { fill } from '../fill';
@@ -63,6 +63,7 @@ describe('the reference screen', () => {
     face,
     facesNamespace: face.facesNamespace,
     faces: face.faces,
+    preview: previewOf(demoScreen),
     allocation: demoCounts,
     hasBackdrop: true,
     hasText: true,

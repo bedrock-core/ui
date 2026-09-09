@@ -66,6 +66,31 @@ prop ([03-ir](./03-ir.md)). Output: the faces file and one face document per scr
   buttons. Each is added as a component prop the face bakes, and each lands in the visual
   pass (A4) as the first place it is seen. `Text align` is first.
 
+## The node layer: primitives, behaviours, mechanisms
+
+*Proposed.* The compile's node kinds are the last layer before JSON UI, so they should be
+JSON UI's own vocabulary and nothing above it. Today they are not: `tabs`, `disclosure`,
+`list`, `exit` and `modal_button` are compositions with client logic in them, and each carries
+that logic as a special case. Three layers instead:
+
+| Layer | Holds | Examples |
+| --- | --- | --- |
+| **Primitives** | one node kind per JSON UI control type, static props only; a face is a primitive with its props | `panel`, `stack`, `image`, `label`, `button`, `toggle`, `scroll`, `grid`, `slider`, `edit_box`, `dropdown` |
+| **Behaviours** | client-only logic a primitive may carry, still static, still in the face document | `route` (a button's mappings: close, submit, form click), `group` (radio toggles), `states` (per-state children), `follows` (a sibling reading a toggle's state) |
+| **Mechanisms** | what a host stands in for a socket | press, text, texture, slot, grid, field, list count, carried visible |
+
+With that, `Tabs` is toggles in a group with panes in their checked state, `Disclosure` is a
+toggle and a stack that follows it, `List` is a stack whose rows a count mechanism gates, a
+close button is a button with the close route, and `Form.Button` is a button with the submit
+route. All of them move up into the component layer as compositions of primitives, and the
+compile shrinks to the primitives and the behaviours it can attach. Every face can then carry
+a behaviour, which is what makes the split honest.
+
+Open: whether `disclosure` earns a behaviour of its own or is only `follows` on a stack, and
+whether the interpreter's field wrappers are primitives or a modal-host detail. Decided with
+phase B, since B reworks the component set; the face pass and the gallery do not depend on
+it.
+
 ## The host pass
 
 A host takes the face document and the placement and, for each socket, either **wraps** the
@@ -136,18 +161,22 @@ Every screen type is looked at as faces only before any host serves it. The dev 
 (the `development` profile in `packages/resource-pack/config.json`, the one that stamps the
 HUD) makes the build write two extra things:
 
-- **A preview per screen.** The face document mounted on the action form under the title key
-  `<ns>_<name>__preview`. Chest screens preview at the chest canvas, centred on the form, with
-  the chrome drawn as a face. Nothing in a preview needs an entity, an entry or a channel;
-  `Tabs` and `Disclosure` work because they are local. A preview shows the reference render:
-  reference strings, reference visibility.
-- **A gallery screen.** `<ns>_gallery`, a `<Screen>` of `<Link>` buttons, one per compiled
-  screen of the addon whatever its root, in a scroll. Opened with `openGallery(player)` from
-  the generated module. The gallery is itself a face-only screen with presses, which is the
-  same shape a guide home and a cross-addon reference have.
+- **A preview per screen.** The face document regenerated under the namespace
+  `<ns>_<name>__preview`, written as `<name>.preview.json` and gated on its own title like any
+  compiled form screen. Its own namespace because every gated compiled screen is constructed on
+  every form open and a name a binding looks up is found screen-wide. Chest screens preview at
+  the chest canvas, centred on the form. Nothing in a preview needs an entity, an entry or a
+  channel; `Tabs` and `Disclosure` work because they are local. A preview shows the reference
+  render: reference strings, reference visibility, fields as static twins.
+- **A gallery screen.** `<ns>_gallery`, a compiled screen the filter writes and compiles last:
+  a scroll of buttons, one per compiled screen of the addon whatever its root, each opening
+  that screen's preview with `showCompiledTitle` and no entries. `openGallery(player)` is
+  exported from `@bedrock-core/generated/ui`; a build without the gallery exports one that warns.
+  The gallery is itself a face-only screen with presses, which is the same shape a guide home
+  and a cross-addon reference have, so `<Link>` replaces its handlers in phase C.
 
-The gallery ships in the dev profile only and stays, the way a component storybook does.
-*Decided*; names *Proposed*.
+The gallery is the `gallery: true` setting of the ui-compile filter, on in the reference pack's
+development profile only, and stays, the way a component storybook does. *Decided.*
 
 ## References and navigation
 
@@ -171,6 +200,21 @@ same shape.
   Breaking, pre-1.0. *Decided.*
 - **Generated types.** `@bedrock-core/generated/ui` exports the addon's screen keys as a
   union, so a `navigate` into another addon is typed against what that addon built.
+- **`Embed` retires.** An embedded screen is laid out against a frame it does not own, which
+  is why the framework's page reads as absolute coordinates in the gallery. With references,
+  an addon's page in the addon list is that addon's own full-canvas screen, opened by key; the
+  list row itself draws only what travels as reference data, the name key and the icon path.
+  One mechanism fewer, and every screen is laid out against its own canvas.
+
+## Layout stays the build's
+
+Percentages, `%c` and anchors are not exposed to authors. The flexbox solver is the one source
+of geometry and it produces pixel rects against a canvas the host names; JSON UI's relative
+sizes appear only where the *engine* has to decide at draw time — a stack sized `100%c` so
+hidden rows collapse, a fill of `100%` inside a box the layout already sized. Mixing units
+by hand would bring anchors, safe zones and UI scale into every screen, which is exactly what
+baking against a 300×200 canvas inside the smallest scale was chosen to avoid. Revisited only
+if a host needs a screen-relative canvas, and then as a host property, never a prop. *Decided.*
 
 ## Phases
 
@@ -180,10 +224,10 @@ what landed.
 | # | Phase | Delivers | Estimate |
 | --- | --- | --- | --- |
 | A1 | **Face pass** ✅ | `faces.json` per addon; the face document per screen with every socket as its inert face; the static validator; the socket list as the placement's addresses | 5 days |
-| A2 | **Gallery** | the preview mount on the action form; the generated gallery screen; `openGallery`; chest chrome and cells as faces | 3 days |
+| A2 | **Gallery** ✅ | the preview mount on the action form; the generated gallery screen; `openGallery`; chest cells as frames | 3 days |
 | A3 | **Rect guard** ✅ | the diff after host emit, run inside every compile, so the tests and `yarn preflight` both hit it | 1 day |
-| A4 | **Visual pass** | in game, one round per family, fixes in `ore-styled` only: the demo screens (counter, settings, tabs, furnace, crafting table); guide home and one page; the config screens (scope, menu, list, picker, confirm, editor); the addon list and one addon page; one modal with every field kind | 2 days |
-| B | **Host roots** | `<Screen>`; `render` and `createContainerScreen` refuse non-host roots; the mechanism table per host in place of the flat `offers` list; the modal lowers the plain set to native fields; `ore-styled` duplicates removed | 4 days |
+| A4 | **Visual pass** | starts from a clean slate: every demo screen in the reference pack's BP is deleted, and one screen per family is written from scratch as that family is signed off in game, fixes in `ore-styled` only. Families: a chest screen; guide home and one page; the config screens (scope, menu, list, picker, confirm, editor); the addon list and one addon page; one modal with every field kind; one action form with a list and a scroll | 3 days |
+| B | **Host roots and the node layer** | `<Screen>`; `render` and `createContainerScreen` refuse non-host roots; the mechanism table per host in place of the flat `offers` list; the modal lowers the plain set to native fields; `ore-styled` duplicates removed; the node layer reduced to primitives and behaviours, with `Tabs`, `Disclosure`, `List`, the close button and `Form.Button` as compositions | 6 days |
 | C | **References** | `<Link to>`; the reference feed and `navigate('<ns>:<screen>')`; guides on it, `createGuide` deleted; generated key types | 5 days |
 | D | **Delete the interpreter** | numbers as sliders on the config editor; serializer, writers, presenters and decoders deleted; state values readonly; pack minor | 3 days |
 | E | **Build flow and the book** | the single `core` filter finished; CLI template; the docs site replaces this folder; then the book host, drawn from faces alone | after D |

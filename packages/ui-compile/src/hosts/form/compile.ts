@@ -4,8 +4,8 @@ import {
   ContainerScreenError, embedMarker, FORM_COLLECTION, formTitleFor, hasModalRoot, isEmbedRoot, probeLiveness, shapeOf,
   visiblesAt, type EntryEntry, type ModalRow,
 } from '@bedrock-core/ui-runtime/compile';
-import { checkLiveness } from '../../compile';
-import { BACKDROP_DEFINITION, type FaceDocument, faceOf, facesNamespaceOf } from '../../face';
+import { checkLiveness, previewOf } from '../../compile';
+import { BACKDROP_DEFINITION, type FaceDocument, faceOf, facesNamespaceOf, type Preview } from '../../face';
 import { fill } from '../../fill';
 import type { Control, Document } from '../../jsonui';
 import { MODAL_COLLECTION } from '../../nodes/field';
@@ -56,6 +56,8 @@ export interface CompiledFormScreen {
   /** The namespace of the addon's shared faces, and the looks this screen contributes to it. */
   facesNamespace: string;
   faces: Record<string, Control>;
+  /** The screen as faces alone under its preview namespace, for the gallery. */
+  preview: Preview;
   /** Every entry the runtime has to emit, in order. The nth is `response.selection` n. */
   entries: readonly EntryEntry[];
   /**
@@ -168,11 +170,12 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
   // its runtime writes with — the numbering cannot drift from the bake.
   const entries = modal ? [] : allocateForm(tree, analyze(tree, visibles)).entries;
   const addressing = modal ? modalAddressing(allocateModal(tree, visibles)) : actionAddressing(entries);
-  const face = faceOf(toIr(formRoot(tree), addressing, {
+  const ir = toIr(formRoot(tree), addressing, {
     namespace,
     faces: facesNamespaceOf(spec.namespace),
     collection: modal ? MODAL_COLLECTION : FORM_COLLECTION,
-  }));
+  });
+  const face = faceOf(ir);
   const document = fill(face, FORM_EMIT);
 
   return {
@@ -185,6 +188,7 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
     face,
     facesNamespace: face.facesNamespace,
     faces: face.faces,
+    preview: previewOf(ir),
     entries,
     snapshot: {
       // Carrier-aware: the bool channels are in the fingerprint, so a runtime
