@@ -1,6 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui */
 import { Button, Card, Header, theme } from '@bedrock-core/ore-styled';
-import { List, Panel, Scroll, Text, useExit, type JSX, type PressEvent } from '@bedrock-core/ui';
+import { List, Panel, Screen, Scroll, Text, useExit, type JSX, type PressEvent } from '@bedrock-core/ui';
 import { i18n } from '../i18n';
 
 /**
@@ -43,29 +43,31 @@ export default function Players({ players = [] }: PlayersProps): JSX.Element {
   const listHeight = FRAME.height - HEADER_HEIGHT - 3 * spacing.md - COUNT_HEIGHT;
 
   return (
-    <Card variant={'raised'} width={FRAME.width} height={FRAME.height} padding={0} gap={0}>
-      <Header title={key($ => $.ui.players.title)} onClose={exit} />
-      <Panel flexDirection={'column'} padding={spacing.md} gap={spacing.md}>
-        <Scroll width={content} height={listHeight}>
-          <List
-            max={ROWS_MAX}
-            items={players}
-            gap={spacing.xs}
-            row={(player: PlayerRow | undefined): JSX.Element => (
-              <Panel flexDirection={'row'} alignItems={'center'} width={rowWidth} height={ROW_HEIGHT} gap={spacing.sm}>
-                <Text flexGrow={1} flexShrink={1} maxLength={NAME_MAX}>{player?.name ?? ''}</Text>
-                <Button variant={'secondary'} onPress={(event: PressEvent): unknown => player?.onVisit(event)}>
-                  {t($ => $.ui.players.visit)}
-                </Button>
-              </Panel>
-            )}
-          />
-        </Scroll>
-        <Text width={content} textAlign={'right'} maxLength={COUNT_MAX} color={[0.7, 0.7, 0.7]}>
-          {t($ => $.ui.players.count, { count: players.length })}
-        </Text>
-      </Panel>
-    </Card>
+    <Screen>
+      <Card variant={'raised'} width={FRAME.width} height={FRAME.height} padding={0} gap={0}>
+        <Header title={key($ => $.ui.players.title)} onClose={exit} />
+        <Panel flexDirection={'column'} padding={spacing.md} gap={spacing.md}>
+          <Scroll width={content} height={listHeight}>
+            <List
+              max={ROWS_MAX}
+              items={players}
+              gap={spacing.xs}
+              row={(player: PlayerRow | undefined): JSX.Element => (
+                <Panel flexDirection={'row'} alignItems={'center'} width={rowWidth} height={ROW_HEIGHT} gap={spacing.sm}>
+                  <Text flexGrow={1} flexShrink={1} maxLength={NAME_MAX}>{player?.name ?? ''}</Text>
+                  <Button variant={'secondary'} onPress={(event: PressEvent): unknown => player?.onVisit(event)}>
+                    {t($ => $.ui.players.visit)}
+                  </Button>
+                </Panel>
+              )}
+            />
+          </Scroll>
+          <Text width={content} textAlign={'right'} maxLength={COUNT_MAX} color={[0.7, 0.7, 0.7]}>
+            {t($ => $.ui.players.count, { count: players.length })}
+          </Text>
+        </Panel>
+      </Card>
+    </Screen>
   );
 }
 

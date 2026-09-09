@@ -5,6 +5,7 @@ import { Container } from '../../../components/Container';
 import { Form } from '../../../components/Form';
 import { Image } from '../../../components/Image';
 import { Panel } from '../../../components/Panel';
+import { Screen } from '../../../components/Screen';
 import { Scroll } from '../../../components/Scroll';
 import { Slot } from '../../../components/Slot';
 import { SlotGrid } from '../../../components/SlotGrid';
@@ -12,7 +13,7 @@ import { Text } from '../../../components/Text';
 import { buildContainerTree } from '../../../hosts/chest/build';
 import type { JSX } from '../../../jsx';
 import { playerOwner } from '../../fabric';
-import { ContainerScreenError } from '../../types';
+import { ContainerScreenError, ScreenRootError } from '../../types';
 import { buildTree } from '../../render/tree';
 
 const player = { id: 'validate-container' } as unknown as Player;
@@ -29,9 +30,16 @@ describe('the form path', () => {
   });
 
   it('rejects a Slot outside a container', () => {
-    const tree = Panel({ children: [Slot({})] });
+    const tree = Screen({ children: Panel({ children: [Slot({})] }) });
 
     expect(() => buildTree(tree, playerOwner(player))).toThrow(/only exists in a container screen/);
+  });
+
+  it('rejects a tree with no root before anything in it, naming the roots', () => {
+    const tree = Panel({ children: [Slot({})] });
+
+    expect(() => buildTree(tree, playerOwner(player))).toThrow(ScreenRootError);
+    expect(() => buildTree(tree, playerOwner(player))).toThrow(/<Screen>.*<Form>.*<Container entity/);
   });
 
 });
@@ -49,13 +57,16 @@ describe('the container path', () => {
     expect(() => buildContainerTree(Screen)).not.toThrow();
   });
 
-  it('requires exactly one <Container> at the root', () => {
+  it('requires a <Container> at the root: a form root is refused by name, no root by the list of roots', () => {
     // Nothing container-only in it: a `<Slot>` would be refused first, and by
-    // the more useful message. What is wrong here is only the missing root.
-    const Screen = (): JSX.Element => Panel({ children: [Text({ children: 'no container' })] });
+    // the more useful message. What is wrong here is only the root.
+    const Rootless = (): JSX.Element => Panel({ children: [Text({ children: 'no container' })] });
+    const AForm = (): JSX.Element => Screen({ children: Panel({ children: [Text({ children: 'a form' })] }) });
 
-    expect(() => buildContainerTree(Screen)).toThrow(ContainerScreenError);
-    expect(() => buildContainerTree(Screen)).toThrow(/exactly one/);
+    expect(() => buildContainerTree(Rootless)).toThrow(ScreenRootError);
+    expect(() => buildContainerTree(Rootless)).toThrow(/<Screen>.*<Form>.*<Container entity/);
+    expect(() => buildContainerTree(AForm)).toThrow(ContainerScreenError);
+    expect(() => buildContainerTree(AForm)).toThrow(/exactly one/);
   });
 
   it('requires the container to name its entity', () => {
@@ -67,7 +78,8 @@ describe('the container path', () => {
   it('rejects a nested <Container>', () => {
     const Screen = screen(Container({ entity: 'core:inner', children: [] }));
 
-    expect(() => buildContainerTree(Screen)).toThrow(/nested/);
+    expect(() => buildContainerTree(Screen)).toThrow(ScreenRootError);
+    expect(() => buildContainerTree(Screen)).toThrow(/`<Container>` cannot sit inside a container screen/);
   });
 
   it('accepts a <Scroll>, and refuses one inside another', () => {
@@ -78,10 +90,10 @@ describe('the container path', () => {
     expect(() => buildContainerTree(Nested)).toThrow(/inside another `<Scroll>`/);
   });
 
-  it('rejects a <Form>: a container has no native form', () => {
+  it('rejects a <Form>: a root cannot sit below the root', () => {
     const Screen = screen(Form({ children: [Form.Toggle({ name: 't' })] }));
 
-    expect(() => buildContainerTree(Screen)).toThrow(/cannot be used in a container screen/);
+    expect(() => buildContainerTree(Screen)).toThrow(/`<Form>` cannot sit inside a container screen/);
   });
 
   it('rejects content that does not fit the canvas', () => {

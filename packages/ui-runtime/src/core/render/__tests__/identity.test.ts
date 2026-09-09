@@ -2,6 +2,7 @@ import type { Player } from '@minecraft/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { Panel } from '../../../components/Panel';
+import { Screen } from '../../../components/Screen';
 import { Text } from '../../../components/Text';
 import { useState } from '../../../hooks';
 import type { JSX } from '../../../jsx';
@@ -23,7 +24,7 @@ const Stateful = (): JSX.Element => {
 
 /** The screen with `Stateful` mounted under `key`, or without it entirely. */
 const screen = (key?: string | number, mounted = true): JSX.Element =>
-  Panel({ children: mounted ? [{ type: Stateful, props: key === undefined ? {} : { key } }] : [] });
+  Screen({ children: Panel({ children: mounted ? [{ type: Stateful, props: key === undefined ? {} : { key } }] : [] }) });
 
 /** The one stateful fiber, which the tests mutate to watch identity. */
 const statefulFiber = () =>

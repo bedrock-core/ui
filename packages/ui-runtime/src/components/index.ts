@@ -40,6 +40,7 @@ export { Tabs, TABS_SLOT_TYPE, TAB_SLOT_TYPE, DEFAULT_TAB_HEIGHT } from './Tabs'
 export type { TabsProps, TabProps } from './Tabs';
 export { Disclosure, DISCLOSURE_SLOT_TYPE, DISCLOSURE_HEADER_SLOT_TYPE, DEFAULT_DISCLOSURE_HEADER_HEIGHT } from './Disclosure';
 export type { DisclosureProps } from './Disclosure';
+export { Screen, SCREEN_TYPE, type ScreenProps } from './Screen';
 export { Scroll, SCROLL_SLOT_TYPE, MAX_SCROLLS, MAX_POOLED_SCROLLS, type ScrollAxis, type ScrollProps } from './Scroll';
 export {
   Slot, SLOT_CELL, SLOT_TYPE, slotInteractive, slotRole, slotSource, isForeignSlot,
@@ -67,6 +68,7 @@ import {
 } from './Form';
 import { imageWriter } from './Image';
 import { panelWriter } from './Panel';
+import { SCREEN_TYPE } from './Screen';
 import { SCROLL_SLOT_TYPE } from './Scroll';
 import { TEXT_SHADOW_TYPE, TEXT_SHADOW_WRAP_TYPE, TEXT_WRAP_TYPE, textWriter } from './Text';
 
@@ -114,8 +116,10 @@ export function registerNativeComponents(): void {
   // layout root (its own viewport) and tags its descendants with its scroll index.
   registerComponent(SCROLL_SLOT_TYPE, { transparent: true });
 
-  // Modal form: transparent marker; the presenter detects it on the built tree and
-  // switches to the native ModalFormData backend. Its children are walked normally.
+  // The form roots: transparent markers the host registry reads. An action
+  // form's `<Screen>` and a modal's `<Form>` have no box; their children are
+  // laid out against the canvas.
+  registerComponent(SCREEN_TYPE, { transparent: true });
   registerComponent(MODAL_FORM_SLOT_TYPE, { transparent: true });
 
   // Full-screen backdrop: transparent marker with no children/box; the presenters

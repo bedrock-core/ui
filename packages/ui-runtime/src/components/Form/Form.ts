@@ -1,6 +1,7 @@
 import type { UiEvent } from '../../core/events';
 import { createContext } from '../../core/fabric/context';
 import { isElement } from '../../core/guards';
+import { MODAL_FORM_SLOT_TYPE } from '../../core/roots';
 import { ModalValue } from '../../core/types';
 import { FunctionComponent, JSX } from '../../jsx';
 import { FormButton, type FormButtonProps } from './FormButton';
@@ -16,7 +17,7 @@ import { FormToggle, type FormToggleProps } from './FormToggle';
  * transparent (no payload, children only); the presenter detects it on the built
  * tree to switch from the ActionForm backend to the native `ModalFormData` one.
  */
-export const MODAL_FORM_SLOT_TYPE = 'modal-form';
+export { MODAL_FORM_SLOT_TYPE };
 
 /** The result object handed to {@link FormProps.onSubmit}, keyed by each control's `name`. */
 export type FormValues = Record<string, ModalValue>;

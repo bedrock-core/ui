@@ -28,7 +28,7 @@ export type { Allocation, CellRole, ChannelEntry, SlotEntry } from './hosts/ches
 // The form host's half of the same seam. Named apart from the chest's rather
 // than exported as a namespace, because `hosts/<host>/index.ts` pulls in that
 // host's runtime and a build machine has no use for it.
-export { allocate as allocateForm, allocateModal, hasModalRoot, type ModalRow } from './hosts/form/allocate';
+export { allocate as allocateForm, allocateModal, type ModalRow } from './hosts/form/allocate';
 export type { EntryEntry, Placement as FormPlacement } from './hosts/form/allocate';
 
 // The liveness seam the compiled snapshot rides: the build detects a carried
@@ -59,6 +59,8 @@ export {
 export { BACKGROUND_SLOT_TYPE } from './components/Background';
 export { BUTTON_TYPE, isExitButton } from './components/Button';
 export { CONTAINER_TYPE, containerEntity, containerHandlers, containerRoot } from './components/Container';
+export { SCREEN_TYPE } from './components/Screen';
+export { hostFor, rootOf } from './hosts';
 export { IMAGE_TYPE, liveTexture } from './components/Image';
 export { EMBED_SLOT_TYPE, embedMarker, embedPlacementOf, embedSlotIndex, entryBaseOf, isEmbedRoot, isEmbedSlot } from './components/Embed';
 export {
@@ -77,7 +79,7 @@ export { SLOT_GRID_TYPE, slotGridConfig } from './components/SlotGrid';
 export type { SlotGridConfig } from './components/SlotGrid';
 export { isTextElementType, liveTextLength } from './components/Text';
 export { childElements, concreteRoots, isElement } from './core/guards';
-export { ContainerScreenError } from './core/types';
+export { ContainerScreenError, ScreenRootError } from './core/types';
 export { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
 
 // What the compiler needs to draw a built element the way the form render pack

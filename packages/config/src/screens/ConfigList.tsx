@@ -1,6 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Button, Card, Divider, Form, Header, MenuRow, theme } from '@bedrock-core/ore-styled';
-import { Fragment, Panel, Scroll, Text, useExit, useState, type JSX, type SubmitEvent } from '@bedrock-core/ui-runtime';
+import { Fragment, Panel, Screen, Scroll, Text, useExit, useState, type JSX, type SubmitEvent } from '@bedrock-core/ui-runtime';
 import { splitBreadcrumb } from './breadcrumbs';
 import { FormHeader } from './FormHeader';
 import { useCore, usePlayer } from '../context';
@@ -113,44 +113,46 @@ export function ConfigList({ navigation, route }: AppScreen<'ConfigList'>): JSX.
   }
 
   return (
-    <Card flexDirection={'column'} padding={0} gap={0}>
-      <Header {...splitBreadcrumb(breadcrumb)} onBack={(): unknown => backToParent(navigation, core, player, { addonId, scope, entityId, path: key, breadcrumb })} onClose={exit} />
-      <Panel flexGrow={1} flexDirection={'column'} padding={spacing.sm} gap={spacing.sm}>
-        {listEntry.description
-          ? <Text wordBreak={'break-word'}>{`${fontColor.muted}${display(listEntry.description)}`}</Text>
-          : null}
-        <Panel flexGrow={1}>
-          <Scroll>
-            <Panel flexDirection={'column'} gap={spacing.xs}>
-              {items.length > 0
-                ? (
-                    <Fragment>
-                      {items.map((item, index) => (
-                        <ItemRow
-                          item={item}
-                          onEdit={(): void => setEditing({ index })}
-                          onRemove={(): void => commit(items.filter((_, i) => i !== index))}
-                        />
-                      ))}
-                    </Fragment>
-                  )
-                : <Text wordBreak={'break-word'}>{`${fontColor.muted}${t($ => $.list.empty)}`}</Text>}
-            </Panel>
-          </Scroll>
+    <Screen>
+      <Card flexDirection={'column'} padding={0} gap={0}>
+        <Header {...splitBreadcrumb(breadcrumb)} onBack={(): unknown => backToParent(navigation, core, player, { addonId, scope, entityId, path: key, breadcrumb })} onClose={exit} />
+        <Panel flexGrow={1} flexDirection={'column'} padding={spacing.sm} gap={spacing.sm}>
+          {listEntry.description
+            ? <Text wordBreak={'break-word'}>{`${fontColor.muted}${display(listEntry.description)}`}</Text>
+            : null}
+          <Panel flexGrow={1}>
+            <Scroll>
+              <Panel flexDirection={'column'} gap={spacing.xs}>
+                {items.length > 0
+                  ? (
+                      <Fragment>
+                        {items.map((item, index) => (
+                          <ItemRow
+                            item={item}
+                            onEdit={(): void => setEditing({ index })}
+                            onRemove={(): void => commit(items.filter((_, i) => i !== index))}
+                          />
+                        ))}
+                      </Fragment>
+                    )
+                  : <Text wordBreak={'break-word'}>{`${fontColor.muted}${t($ => $.list.empty)}`}</Text>}
+              </Panel>
+            </Scroll>
+          </Panel>
+          <Divider />
+          {/* Why adding is unavailable is worth a line — a dead button with no reason reads as a
+              broken screen rather than as a list with no room left. */}
+          {canAdd
+            ? null
+            : (
+                <Text wordBreak={'break-word'}>
+                  {`${fontColor.muted}${full ? t($ => $.list.full, { max: maxItems ?? 0 }) : t($ => $.list.noOptions)}`}
+                </Text>
+              )}
+          <Button enabled={canAdd} onPress={(): void => setEditing('new')}>{t($ => $.list.add)}</Button>
         </Panel>
-        <Divider />
-        {/* Why adding is unavailable is worth a line — a dead button with no reason reads as a
-            broken screen rather than as a list with no room left. */}
-        {canAdd
-          ? null
-          : (
-              <Text wordBreak={'break-word'}>
-                {`${fontColor.muted}${full ? t($ => $.list.full, { max: maxItems ?? 0 }) : t($ => $.list.noOptions)}`}
-              </Text>
-            )}
-        <Button enabled={canAdd} onPress={(): void => setEditing('new')}>{t($ => $.list.add)}</Button>
-      </Panel>
-    </Card>
+      </Card>
+    </Screen>
   );
 }
 

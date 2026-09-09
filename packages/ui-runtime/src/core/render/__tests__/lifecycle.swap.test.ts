@@ -13,6 +13,7 @@ import {
 import { Button } from '../../../components/Button';
 import { Form } from '../../../components/Form';
 import { Panel } from '../../../components/Panel';
+import { Screen } from '../../../components/Screen';
 import { Text } from '../../../components/Text';
 import { useEffect, useExit, useState } from '../../../hooks';
 import type { FunctionComponent, JSX } from '../../../jsx';
@@ -62,10 +63,12 @@ function tick(): Promise<void> {
 
 /** A minimal ActionForm app: one button at ordinal 0 wired to `onPress`. */
 function screenOf(label: string, onPress: () => unknown): JSX.Element {
-  return el(Panel, {
-    width: 220,
-    height: 120,
-    children: [el(Button, { onPress, children: el(Text, { children: label }) })],
+  return el(Screen, {
+    children: el(Panel, {
+      width: 220,
+      height: 120,
+      children: [el(Button, { onPress, children: el(Text, { children: label }) })],
+    }),
   });
 }
 

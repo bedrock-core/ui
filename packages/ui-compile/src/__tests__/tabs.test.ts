@@ -1,12 +1,12 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
-import { Panel, Tabs, Text } from '@bedrock-core/ui-runtime';
+import { Panel, Screen as ScreenRoot, Tabs, Text } from '@bedrock-core/ui-runtime';
 import { describe, expect, it } from 'vitest';
 import { compileFormScreen } from '../hosts/form/compile';
 import type { Control } from '../jsonui';
 import { definition, eachControl } from '../__fixtures__/helpers';
 
 /** Two panes, so a swap has something to swap to. */
-const Screen = (): JSX.Element => Panel({
+const Screen = (): JSX.Element => ScreenRoot({ children: Panel({
   children: Tabs({
     width: 300,
     height: 120,
@@ -16,7 +16,7 @@ const Screen = (): JSX.Element => Panel({
       Tabs.Tab({ label: 'Two', background: 'b', backgroundSelected: 'b_on', children: Text({ children: 'second' }) }),
     ],
   }),
-});
+}) });
 
 const compiled = compileFormScreen(Screen, { namespace: 'a', name: 'tabbed' });
 

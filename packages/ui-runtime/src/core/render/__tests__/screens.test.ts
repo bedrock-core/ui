@@ -7,6 +7,7 @@ import { registerNativeComponents } from '../../../components';
 import { Button } from '../../../components/Button';
 import { Form } from '../../../components/Form';
 import { Panel } from '../../../components/Panel';
+import { Screen } from '../../../components/Screen';
 import { Text } from '../../../components/Text';
 import { titleFor } from '../../../hosts/form/contract';
 import type { FunctionComponent, JSX } from '../../../jsx';
@@ -42,11 +43,13 @@ const nextPlayer = (): Player => {
 };
 
 /** A fresh component per case: the registry is keyed by identity, so two names for one function are one screen. */
-const screenComponent = (): FunctionComponent => (): JSX.Element => Panel({
-  children: [
-    Text({ children: 'BEDROCK CORE' }),
-    Button({ onPress: () => undefined, children: Text({ children: 'go' }) }),
-  ],
+const screenComponent = (): FunctionComponent => (): JSX.Element => Screen({
+  children: Panel({
+    children: [
+      Text({ children: 'BEDROCK CORE' }),
+      Button({ onPress: () => undefined, children: Text({ children: 'go' }) }),
+    ],
+  }),
 });
 
 describe('the compiled-screen registry', () => {

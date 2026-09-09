@@ -1,10 +1,12 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerNativeComponents } from '../../../components';
 import { MODAL_FORM_SLOT_TYPE } from '../../../components/Form';
+import { SCREEN_TYPE } from '../../../components/Screen';
 import { SCROLL_SLOT_TYPE } from '../../../components/Scroll';
 import { TABS_SLOT_TYPE } from '../../../components/Tabs';
 import { hostFor } from '../../../hosts';
 import type { JSX } from '../../../jsx';
+import { ScreenRootError } from '../../types';
 import { validate } from '../validate';
 
 beforeAll(() => {
@@ -24,6 +26,9 @@ function host(type: string, children: JSX.Node = undefined): JSX.Element {
   return { type, props: { children } };
 }
 
+/** Wrap children in the action form's root marker (what a built `<Screen>` tree looks like). */
+const screenTree = (children: JSX.Node): JSX.Element => host(SCREEN_TYPE, children);
+
 /**
  * What `buildTree` does at the end: pick the host from the tree, then check it.
  * A form defaults to serialized, which is the shape most of these trees are.
@@ -33,9 +38,20 @@ const check = (tree: JSX.Element, frozen = false): void => {
 };
 
 describe('validate, on the form hosts', () => {
-  it('picks the modal host for a tree carrying a Form marker', () => {
+  it('picks the host by the root: a Form marker is the modal, a Screen marker the action form', () => {
     expect(hostFor(modalTree([host('modal-toggle')])).id).toBe('form-modal');
-    expect(hostFor(host('panel', [host('button')])).id).toBe('form-action');
+    expect(hostFor(screenTree([host('button')])).id).toBe('form-action');
+  });
+
+  it('refuses a tree with no host root, naming the three roots', () => {
+    expect(() => hostFor(host('panel', [host('button')]))).toThrow(ScreenRootError);
+    expect(() => hostFor(host('panel', [host('button')]))).toThrow(/starts with `<panel>`.*<Screen>.*<Form>.*<Container entity/);
+  });
+
+  it('refuses a wrapper holding more than one element, since none of them is the root', () => {
+    const tree = host('fragment', [screenTree([host('text')]), host('text')]);
+
+    expect(() => hostFor(tree)).toThrow(/more than one element/);
   });
 
   it('accepts a modal tree of Form.* controls and decorative nodes', () => {
@@ -55,31 +71,32 @@ describe('validate, on the form hosts', () => {
     expect(() => check(tree)).toThrow(/not allowed inside a `<Form>`/);
   });
 
-  it('rejects a nested Form', () => {
-    const tree = modalTree([modalTree([host('modal-toggle')])]);
-
-    expect(() => check(tree)).toThrow(/cannot be nested/);
+  it('rejects a root below the root: a Form in a Form, a Screen in a Form, a Form in a Screen', () => {
+    expect(() => check(modalTree([modalTree([host('modal-toggle')])]))).toThrow(ScreenRootError);
+    expect(() => check(modalTree([modalTree([host('modal-toggle')])]))).toThrow(/`<Form>` cannot sit inside a modal form/);
+    expect(() => check(modalTree([host('panel', [screenTree([host('text')])])]))).toThrow(/`<Screen>` cannot sit inside a modal form/);
+    expect(() => check(screenTree([host('panel', [modalTree([host('modal-toggle')])])]))).toThrow(/`<Form>` cannot sit inside a form/);
   });
 
   it('rejects a modal-only control used outside a Form', () => {
-    const tree = host('panel', [host('modal-slider')]);
+    const tree = screenTree([host('panel', [host('modal-slider')])]);
 
     expect(() => check(tree)).toThrow(/must be rendered inside a `<Form>`/);
   });
 
   it('accepts an ordinary ActionForm tree with buttons', () => {
-    const tree = host('panel', [host('button'), host('text')]);
+    const tree = screenTree([host('panel', [host('button'), host('text')])]);
 
     expect(() => check(tree)).not.toThrow();
   });
 
   it('rejects the container-only item controls (Slot, SlotGrid) in a form', () => {
-    expect(() => check(host('panel', [host('container-slot')]))).toThrow(/only exists in a container screen/);
-    expect(() => check(host('panel', [host('slot-grid')]))).toThrow(/only exists in a container screen/);
+    expect(() => check(screenTree([host('panel', [host('container-slot')])]))).toThrow(/only exists in a container screen/);
+    expect(() => check(screenTree([host('panel', [host('slot-grid')])]))).toThrow(/only exists in a container screen/);
   });
 
-  it('rejects a Container nested in a form tree, pointing at createContainerScreen', () => {
-    expect(() => check(host('panel', [host('container')]))).toThrow(/createContainerScreen/);
+  it('rejects a Container nested in a form tree: a root cannot sit below the root', () => {
+    expect(() => check(screenTree([host('panel', [host('container')])]))).toThrow(/`<Container>` cannot sit inside a form/);
   });
 
   it('accepts a Form nested under transparent providers (navigation case)', () => {
@@ -92,12 +109,13 @@ describe('validate, on the form hosts', () => {
       ]),
     ]);
 
+    expect(hostFor(tree).id).toBe('form-modal');
     expect(() => check(tree)).not.toThrow();
   });
 
   it('bakes the button faces of a compiled form, so no live text may sit in one', () => {
     const live: JSX.Element = { type: 'text', props: { __textMetrics: { maxLength: 8 } } };
-    const tree = host('panel', [host('button', [live])]);
+    const tree = screenTree([host('panel', [host('button', [live])])]);
 
     // A serialized form redraws per present, so a face is not baked there.
     expect(() => check(tree)).not.toThrow();
@@ -108,7 +126,7 @@ describe('validate, on the form hosts', () => {
   });
 
   it('lays the scroll regions of a compiled form out flat, so none may nest', () => {
-    const tree = host('panel', [host(SCROLL_SLOT_TYPE, [host(SCROLL_SLOT_TYPE)])]);
+    const tree = screenTree([host('panel', [host(SCROLL_SLOT_TYPE, [host(SCROLL_SLOT_TYPE)])])]);
 
     expect(() => check(tree)).not.toThrow();
     expect(() => check(tree, true)).toThrow(/one flat box/);
@@ -118,7 +136,7 @@ describe('validate, on the form hosts', () => {
     // Every pane is in the tree at once. Compiled, that is pack size and
     // nothing at runtime; serialized, it is N times the payload on every
     // present — which turns the one thing tabs are for into the thing they cost.
-    const tree = host('panel', [host(TABS_SLOT_TYPE, [host('tab-slot')])]);
+    const tree = screenTree([host('panel', [host(TABS_SLOT_TYPE, [host('tab-slot')])])]);
 
     expect(() => check(tree)).toThrow(/COMPILED screen/);
     expect(() => check(tree, true)).not.toThrow();

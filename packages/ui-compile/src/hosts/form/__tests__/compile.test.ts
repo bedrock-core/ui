@@ -1,5 +1,5 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
-import { Button, Image, Panel, Scroll, Slot, Text, useExit, useState } from '@bedrock-core/ui-runtime';
+import { Button, Container, Image, Panel, Screen, Scroll, Slot, Text, useExit, useState } from '@bedrock-core/ui-runtime';
 import { FORM_COLLECTION } from '@bedrock-core/ui-runtime/compile';
 import { describe, expect, it } from 'vitest';
 import type { Control } from '../../../jsonui';
@@ -10,7 +10,7 @@ import { compileFormScreen } from '../compile';
  * Every part of a form a compiled screen has to place: static decoration that
  * costs nothing, a press, and a string that changes.
  */
-const Home = (): JSX.Element => Panel({
+const Home = (): JSX.Element => Screen({ children: Panel({
   padding: 6,
   gap: 4,
   children: [
@@ -25,7 +25,7 @@ const Home = (): JSX.Element => Panel({
       ],
     }),
   ],
-});
+}) });
 
 describe('compiling a form screen', () => {
   const compiled = compileFormScreen(Home, { namespace: 'drav0011_shop', name: 'home' });
@@ -85,7 +85,7 @@ describe('compiling a form screen', () => {
   });
 
   it('draws a scroll region, which is a shape no host owns', () => {
-    const Scrolling = (): JSX.Element => Panel({
+    const Scrolling = (): JSX.Element => Screen({ children: Panel({
       children: [
         Scroll({
           width: 120,
@@ -93,7 +93,7 @@ describe('compiling a form screen', () => {
           children: [Text({ children: 'a long list' }), Text({ children: 'that scrolls' })],
         }),
       ],
-    });
+    }) });
 
     const compiledScroll = compileFormScreen(Scrolling, { namespace: 'a', name: 'scrolly' });
 
@@ -107,9 +107,9 @@ describe('compiling a form screen', () => {
     // A serialized form draws its scrolls from a pool of two. A compiled one
     // emits a region per <Scroll>, so three is not a limit it has — and the
     // build is where that would otherwise have passed and the runtime thrown.
-    const Three = (): JSX.Element => Panel({
+    const Three = (): JSX.Element => Screen({ children: Panel({
       children: [0, 1, 2].map(() => Scroll({ width: 60, height: 40, children: [Text({ children: 'x' })] })),
-    });
+    }) });
 
     expect(() => compileFormScreen(Three, { namespace: 'a', name: 'three' })).not.toThrow();
   });
@@ -123,7 +123,7 @@ describe('compiling a form screen', () => {
     const Everything = (): JSX.Element => {
       const exit = useExit();
 
-      return Panel({
+      return Screen({ children: Panel({
         children: [
           Text({ children: 'static' }),
           Text({ maxLength: 6, children: 'live' }),
@@ -132,7 +132,7 @@ describe('compiling a form screen', () => {
           Button({ onPress: exit, children: Text({ children: 'x' }) }),
           Scroll({ width: 100, height: 40, children: [Text({ children: 'scrolled' })] }),
         ],
-      });
+      }) });
     };
 
     const everything = compileFormScreen(Everything, { namespace: 'a', name: 'everything' });
@@ -141,16 +141,19 @@ describe('compiling a form screen', () => {
   });
 
   it('refuses a screen that renders more than one root, having no canvas to measure from', () => {
-    const Two = (): JSX.Element => ({
-      type: 'fragment',
-      props: { children: [Panel({ children: [] }), Panel({ children: [] })] },
-    });
+    const Two = (): JSX.Element => Screen({ children: [Panel({ children: [] }), Panel({ children: [] })] });
 
     expect(() => compileFormScreen(Two, { namespace: 'a', name: 'two' })).toThrow(/exactly one element at its root/);
   });
 
+  it('refuses a container screen, which compileScreen bakes', () => {
+    const Chest = (): JSX.Element => Container({ entity: 'core:chest', children: [Text({ children: 'x' })] });
+
+    expect(() => compileFormScreen(Chest, { namespace: 'a', name: 'chest' })).toThrow(/compileScreen\(\)/);
+  });
+
   it('refuses a container control, because a form has no container behind it', () => {
-    const WithSlot = (): JSX.Element => Panel({ children: [Slot({})] });
+    const WithSlot = (): JSX.Element => Screen({ children: Panel({ children: [Slot({})] }) });
 
     expect(() => compileFormScreen(WithSlot, { namespace: 'a', name: 'slotty' }))
       .toThrow(/only exists in a container screen/);
@@ -160,7 +163,7 @@ describe('compiling a form screen', () => {
     const Stateful = (): JSX.Element => {
       const [label] = useState('start');
 
-      return Panel({ children: [Text({ children: label })] });
+      return Screen({ children: Panel({ children: [Text({ children: label })] }) });
     };
 
     expect(() => compileFormScreen(Stateful, { namespace: 'a', name: 'frozen' })).toThrow(/maxLength/);

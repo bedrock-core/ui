@@ -1,6 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Header, MenuRow, theme } from '@bedrock-core/ore-styled';
-import { Panel, Scroll, Text, useExit, type JSX } from '@bedrock-core/ui-runtime';
+import { Panel, Screen, Scroll, Text, useExit, type JSX } from '@bedrock-core/ui-runtime';
 import { splitBreadcrumb } from './breadcrumbs';
 import { ResetButton } from './ConfigScope';
 import { useCore, usePlayer } from '../context';
@@ -47,28 +47,30 @@ export function EntityList({ navigation, route }: AppScreen<'EntityList'>): JSX.
   };
 
   return (
-    <Card flexDirection={'column'} padding={0} gap={0}>
-      <Header {...splitBreadcrumb(breadcrumb)} onBack={(): unknown => backToPicker(navigation, core, player, addonId)} onClose={exit} />
-      <Panel flexGrow={1} padding={spacing.sm}>
-        <Scroll>
-          <Panel flexDirection={'column'} gap={spacing.xs}>
-            {roster.length === 0
-              ? (
-                  <Panel justifyContent={'center'} alignItems={'center'} padding={spacing.lg}>
-                    <Text>{`${fontColor.muted}${scope === 'player' ? t($ => $.roster.noPlayers) : t($ => $.roster.noDimensions)}`}</Text>
-                  </Panel>
-                )
-              : roster.map(entity => (
-                  <EntityRow
-                    label={entity.name}
-                    onPress={(): Promise<void> => navigateToEntity(entity.id, entity.name)}
-                    onReset={(): void => confirmEntityReset(entity.id, entity.name)}
-                  />
-                ))}
-          </Panel>
-        </Scroll>
-      </Panel>
-    </Card>
+    <Screen>
+      <Card flexDirection={'column'} padding={0} gap={0}>
+        <Header {...splitBreadcrumb(breadcrumb)} onBack={(): unknown => backToPicker(navigation, core, player, addonId)} onClose={exit} />
+        <Panel flexGrow={1} padding={spacing.sm}>
+          <Scroll>
+            <Panel flexDirection={'column'} gap={spacing.xs}>
+              {roster.length === 0
+                ? (
+                    <Panel justifyContent={'center'} alignItems={'center'} padding={spacing.lg}>
+                      <Text>{`${fontColor.muted}${scope === 'player' ? t($ => $.roster.noPlayers) : t($ => $.roster.noDimensions)}`}</Text>
+                    </Panel>
+                  )
+                : roster.map(entity => (
+                    <EntityRow
+                      label={entity.name}
+                      onPress={(): Promise<void> => navigateToEntity(entity.id, entity.name)}
+                      onReset={(): void => confirmEntityReset(entity.id, entity.name)}
+                    />
+                  ))}
+            </Panel>
+          </Scroll>
+        </Panel>
+      </Card>
+    </Screen>
   );
 }
 

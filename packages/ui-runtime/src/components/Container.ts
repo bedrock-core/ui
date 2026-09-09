@@ -1,5 +1,6 @@
 import type { ContainerEvent } from '../core/events';
 import { concreteRoots } from '../core/guards';
+import { CONTAINER_TYPE } from '../core/roots';
 import { ContainerScreenError } from '../core/types';
 import type { FunctionComponent, JSX } from '../jsx';
 import { type ControlProps, withControl } from './control';
@@ -9,7 +10,7 @@ import { type ControlProps, withControl } from './control';
  * runtime require it at the root of a screen; `render()` rejects it, because a
  * container screen is compiled ahead of time rather than serialized per player.
  */
-export const CONTAINER_TYPE = 'container';
+export { CONTAINER_TYPE };
 
 export interface ContainerProps extends ControlProps {
   /** Type of the entity the screen opens from, e.g. `core:furnace`. */

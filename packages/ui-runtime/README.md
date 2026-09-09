@@ -46,19 +46,23 @@ the world — see [Render pack](https://bedrock-core.drav.dev/docs/ui/ui-runtime
 
 ```tsx
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Button, Panel, Text, render, useState, type JSX } from '@bedrock-core/ui-runtime';
+import { Button, Panel, Screen, Text, render, useState, type JSX } from '@bedrock-core/ui-runtime';
 import type { Player } from '@minecraft/server';
 
+// The root names the host: <Screen> is an action form, <Form> a native modal,
+// <Container> a compiled container screen. There is no default.
 function Counter(): JSX.Element {
   const [count, setCount] = useState(0);
 
   return (
-    <Panel flexDirection={'column'} padding={6} gap={4}>
-      <Text>{`Count: ${count}`}</Text>
-      <Button onPress={(): void => { setCount(prev => prev + 1); }}>
-        <Text>{'§a+1'}</Text>
-      </Button>
-    </Panel>
+    <Screen>
+      <Panel flexDirection={'column'} padding={6} gap={4}>
+        <Text>{`Count: ${count}`}</Text>
+        <Button onPress={(): void => { setCount(prev => prev + 1); }}>
+          <Text>{'§a+1'}</Text>
+        </Button>
+      </Panel>
+    </Screen>
   );
 }
 

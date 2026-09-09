@@ -8,6 +8,7 @@ import {
 } from '../../../__mocks__/@minecraft/server-ui';
 import { Button } from '../../../components/Button';
 import { Panel } from '../../../components/Panel';
+import { Screen } from '../../../components/Screen';
 import { Text } from '../../../components/Text';
 import type { FunctionComponent, JSX } from '../../../jsx';
 import { playerOwner } from '../../fabric';
@@ -25,7 +26,7 @@ const el = (type: unknown, props: Record<string, unknown>): JSX.Element =>
   ({ type, props }) as JSX.Element;
 
 const screenOf = (label: string, onPress: () => unknown): JSX.Element =>
-  el(Panel, { width: 220, height: 120, children: [el(Button, { onPress, children: el(Text, { children: label }) })] });
+  el(Screen, { children: el(Panel, { width: 220, height: 120, children: [el(Button, { onPress, children: el(Text, { children: label }) })] }) });
 
 const tick = (): Promise<void> => new Promise((resolve) => { setTimeout(resolve, 0); });
 

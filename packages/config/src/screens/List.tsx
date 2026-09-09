@@ -3,7 +3,7 @@ import { Card, Divider, Header, MenuRow, Button as OreButton, theme } from '@bed
 import { hasVisiblePages, presentGuideReference } from '@bedrock-core/guides';
 import type { RegisteredAddon, Runtime } from '@bedrock-core/server-runtime';
 import type { Player } from '@minecraft/server';
-import { Image, Panel, Scroll, Text, useExit, useState, type JSX } from '@bedrock-core/ui-runtime';
+import { Image, Panel, Screen, Scroll, Text, useExit, useState, type JSX } from '@bedrock-core/ui-runtime';
 import type { DisplayText } from '@bedrock-core/i18n';
 import { useCore, usePlayer } from '../context';
 import { i18n, useTranslation } from '../i18n';
@@ -90,32 +90,34 @@ export function List({ navigation, route }: AppScreen<'List'>): JSX.Element {
   const exit = useExit();
 
   return (
-    <Card flexDirection={'column'} padding={0} gap={0}>
-      <Header title={t($ => $.addons.title)} onClose={exit} />
-      <Panel flexDirection={'row'} flexGrow={1}>
-        <Panel width={'40%'} padding={spacing.sm}>
-          <Scroll>
-            <Panel flexDirection={'column'} gap={spacing.xs}>
-              {addons.map(addon => (
-                <MenuRow
-                  icon={addon.icon ?? ICON_MISSING}
-                  iconSize={ROW_ICON_SIZE}
-                  title={addon.packName}
-                  subtitle={`${'§7'}${addon.version}`}
-                  chevron={false}
-                  selected={addon.id === selectedId}
-                  onPress={(): void => setSelectedId(addon.id)}
-                />
-              ))}
-            </Panel>
-          </Scroll>
+    <Screen>
+      <Card flexDirection={'column'} padding={0} gap={0}>
+        <Header title={t($ => $.addons.title)} onClose={exit} />
+        <Panel flexDirection={'row'} flexGrow={1}>
+          <Panel width={'40%'} padding={spacing.sm}>
+            <Scroll>
+              <Panel flexDirection={'column'} gap={spacing.xs}>
+                {addons.map(addon => (
+                  <MenuRow
+                    icon={addon.icon ?? ICON_MISSING}
+                    iconSize={ROW_ICON_SIZE}
+                    title={addon.packName}
+                    subtitle={`${'§7'}${addon.version}`}
+                    chevron={false}
+                    selected={addon.id === selectedId}
+                    onPress={(): void => setSelectedId(addon.id)}
+                  />
+                ))}
+              </Panel>
+            </Scroll>
+          </Panel>
+          <Divider orientation={'vertical'} marginBottom={1} />
+          <Panel flexGrow={1}>
+            {selected ? <AddonDetails core={core} addon={selected} player={player} navigation={navigation} /> : null}
+          </Panel>
         </Panel>
-        <Divider orientation={'vertical'} marginBottom={1} />
-        <Panel flexGrow={1}>
-          {selected ? <AddonDetails core={core} addon={selected} player={player} navigation={navigation} /> : null}
-        </Panel>
-      </Panel>
-    </Card>
+      </Card>
+    </Screen>
   );
 }
 

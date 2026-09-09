@@ -11,8 +11,8 @@ Two halves, one contract module they share. *Decided* at this altitude; field na
 interface HostContract {
   id: 'chest' | 'form-action' | 'form-modal' | 'book' | …;
   canvas: { width: number; height: number };
-  /** Which root element makes a screen this host's: <Container>, <Form>, <Book>, or the default. */
-  claims(root: IrNode): boolean;
+  /** The element type that names this host at a screen's root: <Screen>, <Form>, <Container>, <Book>. No default. */
+  root: string;
   /** What the host can carry, with the cost of each. */
   carriers: readonly CarrierSpec[];       // { type, capacity limits, cost }
   /** What the host can deliver to script. */

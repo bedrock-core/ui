@@ -6,6 +6,7 @@ import {
 import { registerNativeComponents } from '../../../components';
 import { Button } from '../../../components/Button';
 import { Panel } from '../../../components/Panel';
+import { Screen } from '../../../components/Screen';
 import { Text } from '../../../components/Text';
 import { playerOwner } from '../../../core/fabric';
 import { buildTree } from '../../../core/render/tree';
@@ -25,7 +26,7 @@ afterEach(() => {
 const player = { id: 'compiled-form' } as unknown as Player;
 
 const build = (screen: () => JSX.Element): JSX.Element =>
-  buildTree({ type: screen, props: {} }, playerOwner(player));
+  buildTree(Screen({ children: { type: screen, props: {} } }), playerOwner(player));
 
 const TITLE = titleFor('drav0011_shop_home');
 

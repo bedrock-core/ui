@@ -1,7 +1,7 @@
 /** @jsxImportSource @bedrock-core/ui */
 import { AddonPage } from '@bedrock-core/config/compiled';
 import { i18n } from '@bedrock-core/config/i18n/index';
-import type { JSX } from '@bedrock-core/ui';
+import { Screen, type JSX } from '@bedrock-core/ui';
 import manifest from '../../../RP/manifest.json';
 
 /**
@@ -18,14 +18,16 @@ const [major, minor, patch] = manifest.header.version;
 
 export default function FrameworkPage(): JSX.Element {
   return (
-    <AddonPage
-      addon={{
-        packName: key($ => $.framework.name),
-        version: `${String(major)}.${String(minor)}.${String(patch)}`,
-        creator: key($ => $.framework.creator),
-        description: key($ => $.framework.description),
-        icon: 'textures/ui/bedrock_core/icon',
-      }}
-    />
+    <Screen>
+      <AddonPage
+        addon={{
+          packName: key($ => $.framework.name),
+          version: `${String(major)}.${String(minor)}.${String(patch)}`,
+          creator: key($ => $.framework.creator),
+          description: key($ => $.framework.description),
+          icon: 'textures/ui/bedrock_core/icon',
+        }}
+      />
+    </Screen>
   );
 }

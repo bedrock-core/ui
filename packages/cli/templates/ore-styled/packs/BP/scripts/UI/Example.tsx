@@ -15,7 +15,7 @@ import {
   theme,
   Toggle,
 } from '@bedrock-core/ui/ore-styled';
-import { Fragment, type JSX, Panel, Text, usePlayer, useState, useTranslation } from '@bedrock-core/ui';
+import { Fragment, type JSX, Panel, Screen, Text, usePlayer, useState, useTranslation } from '@bedrock-core/ui';
 import { i18n } from './i18n';
 
 // ─── Route map ────────────────────────────────────────────────────────────────
@@ -26,7 +26,7 @@ type AppRoutes = {
   ProfileForm: undefined;
 };
 
-type Screen<K extends keyof AppRoutes> = ScreenProps<AppRoutes, K>;
+type Route<K extends keyof AppRoutes> = ScreenProps<AppRoutes, K>;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -34,7 +34,7 @@ const { fontColor, spacing } = theme.tokens;
 
 // ─── Screens ──────────────────────────────────────────────────────────────────
 
-function HomeScreen({ navigation }: Screen<'Home'>): JSX.Element {
+function HomeScreen({ navigation }: Route<'Home'>): JSX.Element {
   const player = usePlayer();
   const [enabled, setEnabled] = useState(false);
   const [accepted, setAccepted] = useState(false);
@@ -44,50 +44,52 @@ function HomeScreen({ navigation }: Screen<'Home'>): JSX.Element {
   const { t, key } = useTranslation(i18n);
 
   return (
-    <Panel flexDirection={'column'} padding={spacing.md} gap={spacing.md}>
-      {/* A key() string as a child is auto-detected and resolved CLIENT-side. */}
-      <Text>{key($ => $.meta.name)}</Text>
-      {/* t() resolves + fills server-side in this player's language. */}
-      <Text>{`${fontColor.muted}${t($ => $.example.greeting, { name: player.name })}`}</Text>
+    <Screen>
+      <Panel flexDirection={'column'} padding={spacing.md} gap={spacing.md}>
+        {/* A key() string as a child is auto-detected and resolved CLIENT-side. */}
+        <Text>{key($ => $.meta.name)}</Text>
+        {/* t() resolves + fills server-side in this player's language. */}
+        <Text>{`${fontColor.muted}${t($ => $.example.greeting, { name: player.name })}`}</Text>
 
-      <Card>
-        <Text>{'Preferences'}</Text>
-        <Divider />
-        <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.md}>
-          <Fragment>
-            <Toggle on={enabled} onChange={setEnabled} />
-            <Text>{`Auto-save: ${enabled ? '§aON' : '§cOFF'}`}</Text>
-          </Fragment>
-        </Panel>
-        <Checkbox label={'I agree to the terms'} checked={accepted} onChange={setAccepted} />
-      </Card>
+        <Card>
+          <Text>{'Preferences'}</Text>
+          <Divider />
+          <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.md}>
+            <Fragment>
+              <Toggle on={enabled} onChange={setEnabled} />
+              <Text>{`Auto-save: ${enabled ? '§aON' : '§cOFF'}`}</Text>
+            </Fragment>
+          </Panel>
+          <Checkbox label={'I agree to the terms'} checked={accepted} onChange={setAccepted} />
+        </Card>
 
-      <Card>
-        <Text>{'Choose a plan'}</Text>
-        <Divider />
-        <RadioGroup value={plan} onChange={setPlan}>
-          <Fragment>
-            <Radio value={'basic'} label={'Basic'} />
-            <Radio value={'pro'} label={'Pro'} />
-            <Radio value={'team'} label={'Team'} disabled />
-          </Fragment>
-        </RadioGroup>
-      </Card>
+        <Card>
+          <Text>{'Choose a plan'}</Text>
+          <Divider />
+          <RadioGroup value={plan} onChange={setPlan}>
+            <Fragment>
+              <Radio value={'basic'} label={'Basic'} />
+              <Radio value={'pro'} label={'Pro'} />
+              <Radio value={'team'} label={'Team'} disabled />
+            </Fragment>
+          </RadioGroup>
+        </Card>
 
-      <Button onPress={(): void => navigation.navigate('Settings', { plan })}>
-        {`${fontColor.default}Go to Settings →`}
-      </Button>
+        <Button onPress={(): void => navigation.navigate('Settings', { plan })}>
+          {`${fontColor.default}Go to Settings →`}
+        </Button>
 
-      <Button variant={'secondary'} onPress={(): void => navigation.navigate('ProfileForm')}>
-        {`${fontColor.default}Open Profile Form →`}
-      </Button>
-    </Panel>
+        <Button variant={'secondary'} onPress={(): void => navigation.navigate('ProfileForm')}>
+          {`${fontColor.default}Open Profile Form →`}
+        </Button>
+      </Panel>
+    </Screen>
   );
 }
 
 // A native modal form (ModalFormData-backed): every field's value arrives once, in
 // onSubmit, keyed by its `name`. Exactly one Form.Button type="submit" is required.
-function ProfileFormScreen({ navigation }: Screen<'ProfileForm'>): JSX.Element {
+function ProfileFormScreen({ navigation }: Route<'ProfileForm'>): JSX.Element {
   return (
     <Form
       onSubmit={({ values }): void => {
@@ -108,23 +110,25 @@ function ProfileFormScreen({ navigation }: Screen<'ProfileForm'>): JSX.Element {
   );
 }
 
-function SettingsScreen({ navigation, route }: Screen<'Settings'>): JSX.Element {
+function SettingsScreen({ navigation, route }: Route<'Settings'>): JSX.Element {
   const { plan } = route.params;
 
   return (
-    <Panel flexDirection={'column'} padding={spacing.md} gap={spacing.md}>
-      <Text>{'§lSettings'}</Text>
+    <Screen>
+      <Panel flexDirection={'column'} padding={spacing.md} gap={spacing.md}>
+        <Text>{'§lSettings'}</Text>
 
-      <Card>
-        <Text>{`${fontColor.muted}Selected plan: ${fontColor.default}§l${plan}`}</Text>
-        <Divider />
-        <Text>{`${fontColor.disabled}Manage your account settings here.`}</Text>
-      </Card>
+        <Card>
+          <Text>{`${fontColor.muted}Selected plan: ${fontColor.default}§l${plan}`}</Text>
+          <Divider />
+          <Text>{`${fontColor.disabled}Manage your account settings here.`}</Text>
+        </Card>
 
-      <Button variant={'secondary'} onPress={(): void => navigation.goBack()}>
-        {`${fontColor.default}<- Go Back`}
-      </Button>
-    </Panel>
+        <Button variant={'secondary'} onPress={(): void => navigation.goBack()}>
+          {`${fontColor.default}<- Go Back`}
+        </Button>
+      </Panel>
+    </Screen>
   );
 }
 

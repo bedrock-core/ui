@@ -1,6 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Header, MenuRow, Button as OreButton, theme } from '@bedrock-core/ore-styled';
-import { Fragment, Image, Panel, Scroll, Text, useExit, type JSX } from '@bedrock-core/ui-runtime';
+import { Fragment, Image, Panel, Screen, Scroll, Text, useExit, type JSX } from '@bedrock-core/ui-runtime';
 import { useCore, usePlayer } from '../context';
 import { useTranslation } from '../i18n';
 import { allowedScopes, isOperator } from '../permissions';
@@ -106,27 +106,29 @@ export function ConfigScope({ navigation, route }: AppScreen<'ConfigScope'>): JS
   }
 
   return (
-    <Card flexDirection={'column'} padding={0} gap={0}>
-      <Header
-        title={addonName}
-        breadcrumbs={[t($ => $.config.breadcrumb)]}
-        onBack={(): unknown => (navigation.canGoBack() ? navigation.goBack() : openUi(core, player, { kind: 'list', addonId }))}
-        onClose={exit}
-      />
-      <Panel flexGrow={1} padding={spacing.sm}>
-        <Scroll>
-          <Panel flexDirection={'column'} gap={spacing.xs}>
-            {rows.length > 0
-              ? <Fragment>{rows}</Fragment>
-              : (
-                  <Panel justifyContent={'center'} alignItems={'center'} padding={spacing.lg}>
-                    <Text>{`${fontColor.muted}${t($ => $.config.empty)}`}</Text>
-                  </Panel>
-                )}
-          </Panel>
-        </Scroll>
-      </Panel>
-    </Card>
+    <Screen>
+      <Card flexDirection={'column'} padding={0} gap={0}>
+        <Header
+          title={addonName}
+          breadcrumbs={[t($ => $.config.breadcrumb)]}
+          onBack={(): unknown => (navigation.canGoBack() ? navigation.goBack() : openUi(core, player, { kind: 'list', addonId }))}
+          onClose={exit}
+        />
+        <Panel flexGrow={1} padding={spacing.sm}>
+          <Scroll>
+            <Panel flexDirection={'column'} gap={spacing.xs}>
+              {rows.length > 0
+                ? <Fragment>{rows}</Fragment>
+                : (
+                    <Panel justifyContent={'center'} alignItems={'center'} padding={spacing.lg}>
+                      <Text>{`${fontColor.muted}${t($ => $.config.empty)}`}</Text>
+                    </Panel>
+                  )}
+            </Panel>
+          </Scroll>
+        </Panel>
+      </Card>
+    </Screen>
   );
 }
 

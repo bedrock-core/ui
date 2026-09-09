@@ -1,5 +1,5 @@
 import {
-  MODAL_DROPDOWN_SLOT_TYPE, MODAL_FORM_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE,
+  MODAL_DROPDOWN_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE,
   MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
 } from '../../components/Form';
 import { entryBaseOf } from '../../components/Embed';
@@ -174,12 +174,3 @@ export const allocateModal = (tree: JSX.Element, visibles: ReadonlySet<JSX.Eleme
 
   return rows;
 };
-
-/**
- * Whether a built tree presents as a modal — the compile-side twin of the
- * runtime's `isModalTree`, kept here because the build machine must never
- * import a host's runtime (it pulls `@minecraft/server`).
- */
-export const hasModalRoot = (tree: JSX.Element): boolean =>
-  tree.type === MODAL_FORM_SLOT_TYPE
-  || childElements(tree.props.children).some(child => hasModalRoot(child));

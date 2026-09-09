@@ -1,6 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Header, MenuRow, theme } from '@bedrock-core/ore-styled';
-import { Fragment, Panel, Scroll, Text, useExit, type JSX } from '@bedrock-core/ui-runtime';
+import { Fragment, Panel, Screen, Scroll, Text, useExit, type JSX } from '@bedrock-core/ui-runtime';
 import { splitBreadcrumb } from './breadcrumbs';
 import { useCore, usePlayer } from '../context';
 import { useTranslation } from '../i18n';
@@ -62,57 +62,59 @@ export function ConfigSection({ navigation, route }: AppScreen<'ConfigSection'>)
   const rowCount = children.length + lists.length;
 
   return (
-    <Card flexDirection={'column'} padding={0} gap={0}>
-      <Header {...splitBreadcrumb(breadcrumb)} onBack={(): unknown => backToParent(navigation, core, player, { addonId, scope, entityId, path, breadcrumb })} onClose={exit} />
-      <Panel flexGrow={1} padding={spacing.sm}>
-        <Scroll>
-          <Panel flexDirection={'column'} gap={spacing.xs}>
-            {rowCount > 0
-              ? (
-                  <Fragment>
+    <Screen>
+      <Card flexDirection={'column'} padding={0} gap={0}>
+        <Header {...splitBreadcrumb(breadcrumb)} onBack={(): unknown => backToParent(navigation, core, player, { addonId, scope, entityId, path, breadcrumb })} onClose={exit} />
+        <Panel flexGrow={1} padding={spacing.sm}>
+          <Scroll>
+            <Panel flexDirection={'column'} gap={spacing.xs}>
+              {rowCount > 0
+                ? (
                     <Fragment>
-                      {children.map(child => (
-                        <SectionRow
-                          child={child}
-                          onPress={(): Promise<void> => openSection(navigation, configAccessor, {
-                            addonId,
-                            scope,
-                            entityId,
-                            section: child,
-                            breadcrumb: `${breadcrumb} > ${display(child.label)}`,
-                          })}
-                        />
-                      ))}
+                      <Fragment>
+                        {children.map(child => (
+                          <SectionRow
+                            child={child}
+                            onPress={(): Promise<void> => openSection(navigation, configAccessor, {
+                              addonId,
+                              scope,
+                              entityId,
+                              section: child,
+                              breadcrumb: `${breadcrumb} > ${display(child.label)}`,
+                            })}
+                          />
+                        ))}
+                      </Fragment>
+                      <Fragment>
+                        {lists.map(([key, entry]) => (
+                          // The description, not the current items — this screen holds no values
+                          // by design, and fetching a whole scope just to count a list would be a
+                          // round trip per row. The editor shows what is actually in there.
+                          <MenuRow
+                            title={entry.label}
+                            {...(entry.description !== undefined ? { subtitle: entry.description } : {})}
+                            onPress={(): Promise<void> => openList(navigation, configAccessor, {
+                              addonId,
+                              scope,
+                              entityId,
+                              key,
+                              breadcrumb: `${breadcrumb} > ${display(entry.label)}`,
+                            })}
+                          />
+                        ))}
+                      </Fragment>
                     </Fragment>
-                    <Fragment>
-                      {lists.map(([key, entry]) => (
-                        // The description, not the current items — this screen holds no values
-                        // by design, and fetching a whole scope just to count a list would be a
-                        // round trip per row. The editor shows what is actually in there.
-                        <MenuRow
-                          title={entry.label}
-                          {...(entry.description !== undefined ? { subtitle: entry.description } : {})}
-                          onPress={(): Promise<void> => openList(navigation, configAccessor, {
-                            addonId,
-                            scope,
-                            entityId,
-                            key,
-                            breadcrumb: `${breadcrumb} > ${display(entry.label)}`,
-                          })}
-                        />
-                      ))}
-                    </Fragment>
-                  </Fragment>
-                )
-              : (
-                  <Panel flexGrow={1} justifyContent={'center'} alignItems={'center'}>
-                    <Text wordBreak={'break-word'}>{`${fontColor.muted}${t($ => $.config.empty)}`}</Text>
-                  </Panel>
-                )}
-          </Panel>
-        </Scroll>
-      </Panel>
-    </Card>
+                  )
+                : (
+                    <Panel flexGrow={1} justifyContent={'center'} alignItems={'center'}>
+                      <Text wordBreak={'break-word'}>{`${fontColor.muted}${t($ => $.config.empty)}`}</Text>
+                    </Panel>
+                  )}
+            </Panel>
+          </Scroll>
+        </Panel>
+      </Card>
+    </Screen>
   );
 }
 

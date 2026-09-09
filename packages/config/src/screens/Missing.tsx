@@ -9,7 +9,7 @@
  * one yet. The useful response is the list, not a message — so this bounces back to it, with the
  * addon still selected, and renders nothing on the way.
  */
-import { Panel, useEffect, type JSX } from '@bedrock-core/ui-runtime';
+import { Panel, Screen, useEffect, type JSX } from '@bedrock-core/ui-runtime';
 import type { NavigationHelpers } from '@bedrock-core/navigation';
 import type { AppRoutes } from '../navigation/routes';
 
@@ -29,5 +29,5 @@ export function Missing({ navigation, addonId }: {
     });
   }, []);
 
-  return <Panel />;
+  return <Screen><Panel /></Screen>;
 }

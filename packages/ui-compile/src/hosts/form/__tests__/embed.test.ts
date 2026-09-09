@@ -1,5 +1,5 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
-import { Button, Embed, EmbedSlots, Image, Panel, Text } from '@bedrock-core/ui-runtime';
+import { Button, Embed, EmbedSlots, Image, Panel, Screen as ScreenRoot, Text } from '@bedrock-core/ui-runtime';
 import { describe, expect, it } from 'vitest';
 import { eachControl } from '../../../__fixtures__/helpers';
 import type { Control, Document } from '../../../jsonui';
@@ -34,12 +34,12 @@ const find = (document: Document, predicate: (name: string, control: Control) =>
 };
 
 describe('the host side: reserved slots', () => {
-  const Host = (): JSX.Element => Panel({
+  const Host = (): JSX.Element => ScreenRoot({ children: Panel({
     children: [
       EmbedSlots({ count: 3, values: ['core_addon:x', '1', '0'] }),
       Button({ onPress: () => {}, children: [Text({ children: 'MINE' })] }),
     ],
-  });
+  }) });
 
   const compiled = compileFormScreen(Host, { namespace: 'host', name: 'list' });
 
@@ -61,11 +61,11 @@ describe('the host side: reserved slots', () => {
 });
 
 describe('the embedded side: entries from 1, gated by the marker', () => {
-  const Page = (): JSX.Element => Embed({
+  const Page = (): JSX.Element => ScreenRoot({ children: Embed({
     frame: { width: 300, height: 200 },
     area: { x: 114, y: 25, width: 185, height: 173 },
     children: [Button({ onPress: () => {}, children: [Text({ children: 'CONFIG' })] })],
-  });
+  }) });
 
   const compiled = compileFormScreen(Page, { namespace: 'drav0011_economy', name: 'addon' });
 
@@ -116,9 +116,9 @@ describe('the embedded side: entries from 1, gated by the marker', () => {
 });
 
 describe('the texture carrier', () => {
-  const Screen = (): JSX.Element => Panel({
+  const Screen = (): JSX.Element => ScreenRoot({ children: Panel({
     children: [Image({ live: true, texture: 'textures/ui/a', width: 16, height: 16 })],
-  });
+  }) });
 
   const compiled = compileFormScreen(Screen, { namespace: 'a', name: 'icons' });
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { registerNativeComponents } from '../../../components';
 import { Button } from '../../../components/Button';
 import { Panel } from '../../../components/Panel';
+import { Screen } from '../../../components/Screen';
 import { Text } from '../../../components/Text';
 import { buildTree } from '../../../core/render/tree';
 import { playerOwner } from '../../../core/fabric';
@@ -16,7 +17,7 @@ registerNativeComponents();
 const player = { id: 'form-allocate' } as unknown as Player;
 
 const build = (screen: () => JSX.Element): JSX.Element =>
-  buildTree({ type: screen, props: {} }, playerOwner(player));
+  buildTree(Screen({ children: { type: screen, props: {} } }), playerOwner(player));
 
 describe('a form placement', () => {
   it('gives an entry to each press, in document order', () => {

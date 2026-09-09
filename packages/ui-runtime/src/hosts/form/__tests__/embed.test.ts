@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Button, Embed, embedPlacementOf, EmbedSlots, Image, Panel, Text } from '../../../components';
+import { Button, Embed, embedPlacementOf, EmbedSlots, Image, Panel, Screen, Text } from '../../../components';
 import { concreteRoots } from '../../../core/guards';
 import { buildScreenTree } from '../../chest/build';
 import { allocate } from '../allocate';
@@ -12,11 +12,13 @@ import { compiledValuesOf, entryValue } from '../runtime';
  */
 
 describe('reserved slots on the host', () => {
-  const Host = (): ReturnType<typeof Panel> => Panel({
-    children: [
-      EmbedSlots({ count: 3, values: ['core_addon:x', '1'], onPress: () => {} }),
-      Button({ onPress: () => {}, children: [Text({ children: 'MINE' })] }),
-    ],
+  const Host = (): ReturnType<typeof Screen> => Screen({
+    children: Panel({
+      children: [
+        EmbedSlots({ count: 3, values: ['core_addon:x', '1'], onPress: () => {} }),
+        Button({ onPress: () => {}, children: [Text({ children: 'MINE' })] }),
+      ],
+    }),
   });
 
   const tree = buildScreenTree(Host);
@@ -34,10 +36,12 @@ describe('reserved slots on the host', () => {
 });
 
 describe('the embedded screen', () => {
-  const Page = (): ReturnType<typeof Embed> => Embed({
-    frame: { width: 300, height: 200 },
-    area: { x: 114, y: 25, width: 185, height: 173 },
-    children: [Button({ onPress: () => {}, children: [Text({ children: 'CONFIG' })] })],
+  const Page = (): ReturnType<typeof Screen> => Screen({
+    children: Embed({
+      frame: { width: 300, height: 200 },
+      area: { x: 114, y: 25, width: 185, height: 173 },
+      children: [Button({ onPress: () => {}, children: [Text({ children: 'CONFIG' })] })],
+    }),
   });
 
   const tree = buildScreenTree(Page);
@@ -58,11 +62,13 @@ describe('the embedded screen', () => {
 });
 
 describe('the texture carrier', () => {
-  const Screen = (): ReturnType<typeof Panel> => Panel({
-    children: [Image({ live: true, texture: 'textures/ui/icon', width: 16, height: 16 })],
+  const Icon = (): ReturnType<typeof Screen> => Screen({
+    children: Panel({
+      children: [Image({ live: true, texture: 'textures/ui/icon', width: 16, height: 16 })],
+    }),
   });
 
-  const tree = buildScreenTree(Screen);
+  const tree = buildScreenTree(Icon);
   const { entries } = allocate(tree);
 
   it('claims one entry and carries the whole path', () => {

@@ -49,11 +49,12 @@ export interface HostContract {
   /** For error messages: what the author calls this screen. */
   readonly label: string;
   /**
-   * Whether this host claims a built tree. Decided by the root the author
-   * wrote — `<Container>` is a chest screen the way `<Form>` is a modal — so
-   * a screen declares its host in the one place a reader looks.
+   * The `type` of the element that names this host at the root of a tree —
+   * `<Container>` is a chest screen the way `<Form>` is a modal and
+   * `<Screen>` an action form — so a screen declares its host in the one
+   * place a reader looks, and there is no default.
    */
-  claims(roots: readonly JSX.Element[], tree: JSX.Element): boolean;
+  readonly root: string;
   /** Who may serve a screen of this host. A container screen belongs to an entity; a form to a player. */
   readonly owners: readonly Owner['kind'][];
   /** The canvas a screen is laid out against, in texels. */

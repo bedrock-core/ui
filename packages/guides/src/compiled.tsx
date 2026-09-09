@@ -1,6 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import {
-  compiledSnapshotOf, compiledTitleOf, compiledValuesOf, render, showCompiledTitle, useExit,
+  compiledSnapshotOf, compiledTitleOf, compiledValuesOf, render, Screen, showCompiledTitle, useExit,
   type FunctionComponent, type JSX, type PressEvent,
 } from '@bedrock-core/ui-runtime';
 import { buildScreenTree } from '@bedrock-core/ui-runtime/compile';
@@ -125,16 +125,18 @@ const homeScreen = (manifest: GuideManifest, options: CompiledGuideOptions, back
     const close = useExit();
 
     return (
-      <GuideHomeView
-        tree={manifest.tree}
-        title={title}
-        width={options.width ?? CANVAS.width}
-        height={options.height ?? CANVAS.height}
-        folding={'client'}
-        onOpenPage={(id, event): void => { open(manifest.ns, id, event.player); }}
-        {...back ? { onExit: (event: PressEvent): void => { leave(event.player); } } : {}}
-        onClose={close}
-      />
+      <Screen>
+        <GuideHomeView
+          tree={manifest.tree}
+          title={title}
+          width={options.width ?? CANVAS.width}
+          height={options.height ?? CANVAS.height}
+          folding={'client'}
+          onOpenPage={(id, event): void => { open(manifest.ns, id, event.player); }}
+          {...back ? { onExit: (event: PressEvent): void => { leave(event.player); } } : {}}
+          onClose={close}
+        />
+      </Screen>
     );
   };
 };
@@ -179,20 +181,22 @@ export function guidePageScreen(manifest: GuideManifest, pageId: PageId, options
     const close = useExit();
 
     return (
-      <GuidePageView
-        manifest={manifest}
-        tree={manifest.tree}
-        audience={'op'}
-        pageId={pageId}
-        title={title}
-        width={options.width ?? CANVAS.width}
-        height={options.height ?? CANVAS.height}
-        components={options.components}
-        onOpenPage={(id, event): void => { open(manifest.ns, id, event.player); }}
-        onBack={toHome}
-        onHome={toHome}
-        onClose={close}
-      />
+      <Screen>
+        <GuidePageView
+          manifest={manifest}
+          tree={manifest.tree}
+          audience={'op'}
+          pageId={pageId}
+          title={title}
+          width={options.width ?? CANVAS.width}
+          height={options.height ?? CANVAS.height}
+          components={options.components}
+          onOpenPage={(id, event): void => { open(manifest.ns, id, event.player); }}
+          onBack={toHome}
+          onHome={toHome}
+          onClose={close}
+        />
+      </Screen>
     );
   };
 

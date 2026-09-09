@@ -106,15 +106,26 @@ export class ScrollLimitError extends Error {
 
 /**
  * Thrown when a tree violates the modal-form restrictions: a regular interactive
- * control (e.g. `Button`) inside a `<ModalForm>`, a nested `<ModalForm>`, a modal
- * form mixed with ActionForm-only roots, or a modal-only control used outside any
- * `<ModalForm>`. A modal renders the native `ModalFormData`, which only supports
+ * control (e.g. `Button`) inside a `<Form>`, or a modal-only control used outside
+ * any `<Form>`. A modal renders the native `ModalFormData`, which only supports
  * toggle/slider/dropdown/textField/label plus the hardcoded submit + esc buttons.
  */
 export class ModalFormError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'ModalFormError';
+  }
+}
+
+/**
+ * Thrown when a tree has no host root, or a root below its root. A screen's
+ * root names its host — `<Screen>`, `<Form>` or `<Container>` — and there is
+ * no default, so a tree that starts with anything else has no screen to be.
+ */
+export class ScreenRootError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ScreenRootError';
   }
 }
 

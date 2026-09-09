@@ -1,5 +1,5 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
-import { Form, List, Panel, Scroll, Text, useState } from '@bedrock-core/ui-runtime';
+import { Form, List, Panel, Screen as ScreenRoot, Scroll, Text, useState } from '@bedrock-core/ui-runtime';
 import { describe, expect, it } from 'vitest';
 import { eachControl } from '../../../__fixtures__/helpers';
 import type { Control, Document } from '../../../jsonui';
@@ -28,12 +28,12 @@ describe('carried visible on the action form', () => {
   const Screen = (): JSX.Element => {
     const [open] = useState(true);
 
-    return Panel({
+    return ScreenRoot({ children: Panel({
       children: [
         Text({ children: 'HEADER' }),
         Panel({ visible: open, children: [Text({ children: 'DETAILS' })] }),
       ],
-    });
+    }) });
   };
 
   const compiled = compileFormScreen(Screen, { namespace: 'a', name: 'gated' });
@@ -64,7 +64,7 @@ describe('carried visible on the action form', () => {
 });
 
 describe('the list count on the action form', () => {
-  const Screen = (): JSX.Element => Panel({
+  const Screen = (): JSX.Element => ScreenRoot({ children: Panel({
     children: [
       List({
         max: 3,
@@ -72,7 +72,7 @@ describe('the list count on the action form', () => {
         row: (item: string | undefined) => Text({ maxLength: 8, children: item ?? '' }),
       }),
     ],
-  });
+  }) });
 
   const compiled = compileFormScreen(Screen, { namespace: 'a', name: 'listing' });
 
@@ -110,7 +110,7 @@ describe('the list count on the action form', () => {
 });
 
 describe('a scroll over a list', () => {
-  const Screen = (): JSX.Element => Panel({
+  const Screen = (): JSX.Element => ScreenRoot({ children: Panel({
     children: [
       Scroll({
         width: 60,
@@ -124,7 +124,7 @@ describe('a scroll over a list', () => {
         ],
       }),
     ],
-  });
+  }) });
 
   const compiled = compileFormScreen(Screen, { namespace: 'a', name: 'scrolling' });
 
@@ -208,13 +208,13 @@ describe('carriers on the modal', () => {
 });
 
 describe('text alignment', () => {
-  const Screen = (): JSX.Element => Panel({
+  const Screen = (): JSX.Element => ScreenRoot({ children: Panel({
     width: 120,
     children: [
       Text({ width: 100, textAlign: 'center', children: 'Baked' }),
       Text({ width: 100, textAlign: 'right', maxLength: 8, children: 'Live' }),
     ],
-  });
+  }) });
 
   const compiled = compileFormScreen(Screen, { namespace: 'a', name: 'aligned' });
 

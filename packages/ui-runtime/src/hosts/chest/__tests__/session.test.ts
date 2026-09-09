@@ -7,10 +7,11 @@ import {
 import { Container as MockContainer, world } from '../../../__mocks__/@minecraft/server';
 import { Button } from '../../../components/Button';
 import { Container } from '../../../components/Container';
+import { Screen as ScreenRoot } from '../../../components/Screen';
 import { Slot } from '../../../components/Slot';
 import { Text } from '../../../components/Text';
 import { entityOwner, getFibersForOwner } from '../../../core/fabric';
-import { ContainerScreenError } from '../../../core/types';
+import { ContainerScreenError, ScreenRootError } from '../../../core/types';
 import { useEffect, useState } from '../../../hooks';
 import type { JSX } from '../../../jsx';
 import { CHARSET } from '../charset';
@@ -202,8 +203,11 @@ describe('createContainerScreen', () => {
 
   it('rejects a screen that breaks the container rules before anything is served', () => {
     const Bare = (): JSX.Element => Text({ children: 'no container' });
+    const AForm = (): JSX.Element => ScreenRoot({ children: Text({ children: 'a form' }) });
 
-    expect(() => createContainerScreen(Bare)).toThrow(ContainerScreenError);
+    expect(() => createContainerScreen(Bare)).toThrow(ScreenRootError);
+    expect(() => createContainerScreen(AForm)).toThrow(ContainerScreenError);
+    expect(() => createContainerScreen(AForm)).toThrow(/exactly one `<Container>`/);
     expect(world.beforeEvents.playerInteractWithEntity.__count).toBe(0);
   });
 

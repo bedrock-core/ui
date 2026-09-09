@@ -1,10 +1,10 @@
 import type { JSX, TranslationResolver } from '@bedrock-core/ui-runtime';
 import {
-  Background, Button, Container, Hotbar, Image, Panel, PlayerInventory, Slot, Text, TranslationContext,
+  Background, Button, Container, Hotbar, Image, Panel, PlayerInventory, Screen as ScreenRoot, Slot, Text, TranslationContext,
   usePlayer, useState,
 } from '@bedrock-core/ui-runtime';
 import {
-  allocate, buildContainerTree, ContainerScreenError, KEY_PREFIX, layoutKey, MAX_LAYOUT,
+  allocate, buildContainerTree, ContainerScreenError, KEY_PREFIX, layoutKey, MAX_LAYOUT, ScreenRootError,
 } from '@bedrock-core/ui-runtime/compile';
 import { describe, expect, it } from 'vitest';
 import { compileScreen } from '../compile';
@@ -279,10 +279,13 @@ describe('the compiler, end to end', () => {
       expect(compileScreen(Screen, { name: 'my-screen_2' }).namespace).toBe('core_ui_my-screen_2');
     });
 
-    it('rejects a screen without a container', () => {
+    it('rejects a screen without a container: a form root by name, no root by the list of roots', () => {
       const Bare = (): JSX.Element => Panel({ children: [Text({ children: 'x' })] });
+      const AForm = (): JSX.Element => ScreenRoot({ children: Panel({ children: [Text({ children: 'x' })] }) });
 
-      expect(() => compileScreen(Bare, { name: 'bare' })).toThrow(ContainerScreenError);
+      expect(() => compileScreen(Bare, { name: 'bare' })).toThrow(ScreenRootError);
+      expect(() => compileScreen(AForm, { name: 'form' })).toThrow(ContainerScreenError);
+      expect(() => compileScreen(AForm, { name: 'form' })).toThrow(/exactly one `<Container>`/);
     });
   });
 });

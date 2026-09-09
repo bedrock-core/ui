@@ -2,7 +2,7 @@
 import { Card, Divider, Header, theme } from '@bedrock-core/ore-styled';
 import type { DisplayText } from '@bedrock-core/i18n';
 import {
-  Button, EmbedSlots, Image, List, Panel, Scroll, Text, useExit,
+  Button, EmbedSlots, Image, List, Panel, Screen, Scroll, Text, useExit,
   type FunctionComponent, type JSX, type PressEvent,
 } from '@bedrock-core/ui-runtime';
 import { i18n } from '../i18n';
@@ -76,53 +76,55 @@ export const AddonList: FunctionComponent<AddonListProps> = ({ model = EMPTY_MOD
   const rowWidth = SIDEBAR_WIDTH - PADDING - 2 * SIDEBAR_PADDING - 5;
 
   return (
-    <Card variant={'raised'} width={FRAME.width} height={FRAME.height} padding={0} gap={0}>
-      <EmbedSlots count={PAGE_SLOTS} values={slots} onPress={model.onSlot} position={'absolute'} left={0} top={0} width={0} height={0} />
-      <Header title={key($ => $.addons.title)} onClose={exit} position={'absolute'} left={PADDING} right={PADDING} top={PADDING} height={HEADER_HEIGHT} marginTop={0} marginLeft={0} marginRight={0} />
-      <Panel position={'absolute'} left={PADDING} top={MAIN.y} width={SIDEBAR_WIDTH - PADDING} height={MAIN.height} padding={SIDEBAR_PADDING}>
-        <Scroll width={SIDEBAR_WIDTH - PADDING - 2 * SIDEBAR_PADDING} height={MAIN.height - 2 * SIDEBAR_PADDING}>
-          <List
-            max={ADDONS_MAX}
-            items={rows}
-            gap={ROW_GAP}
-            row={(item: AddonListRow | undefined, index: number): JSX.Element => {
-              const isSelected = item !== undefined && index === selected;
+    <Screen>
+      <Card variant={'raised'} width={FRAME.width} height={FRAME.height} padding={0} gap={0}>
+        <EmbedSlots count={PAGE_SLOTS} values={slots} onPress={model.onSlot} position={'absolute'} left={0} top={0} width={0} height={0} />
+        <Header title={key($ => $.addons.title)} onClose={exit} position={'absolute'} left={PADDING} right={PADDING} top={PADDING} height={HEADER_HEIGHT} marginTop={0} marginLeft={0} marginRight={0} />
+        <Panel position={'absolute'} left={PADDING} top={MAIN.y} width={SIDEBAR_WIDTH - PADDING} height={MAIN.height} padding={SIDEBAR_PADDING}>
+          <Scroll width={SIDEBAR_WIDTH - PADDING - 2 * SIDEBAR_PADDING} height={MAIN.height - 2 * SIDEBAR_PADDING}>
+            <List
+              max={ADDONS_MAX}
+              items={rows}
+              gap={ROW_GAP}
+              row={(item: AddonListRow | undefined, index: number): JSX.Element => {
+                const isSelected = item !== undefined && index === selected;
 
-              return (
-                <Panel width={rowWidth} height={ROW_HEIGHT}>
-                  <Button
-                    position={'absolute'}
-                    left={0}
-                    top={0}
-                    width={rowWidth}
-                    height={ROW_HEIGHT}
-                    background={row.textures.background}
-                    backgroundHover={row.textures.backgroundHover}
-                    backgroundPressed={row.textures.backgroundPressed}
-                    onPress={(event: PressEvent): unknown => model.onSelect?.(index, event)}
-                  />
-                  {isSelected && <Image position={'absolute'} left={0} top={0} width={rowWidth} height={ROW_HEIGHT} zIndex={1} texture={row.textures.backgroundSelected} />}
-                  <Panel position={'absolute'} left={0} top={0} width={rowWidth} height={ROW_HEIGHT} zIndex={2} flexDirection={'row'} alignItems={'center'} gap={row.gap} padding={spacing.xs}>
-                    <Image live={true} width={ROW_ICON} height={ROW_ICON} texture={item?.icon ?? ICON_MISSING} />
-                    <Panel flexDirection={'column'} flexGrow={1} flexShrink={1} justifyContent={'center'}>
-                      <Text font={row.textStyle.font} scale={row.textStyle.scale} shadow={true} maxLength={NAME_MAX}>{item?.name ?? ''}</Text>
-                      <Text font={row.textStyle.font} scale={row.textStyle.scale} color={row.textStyle.mutedRgb} maxLength={VERSION_MAX}>{item?.version ?? ''}</Text>
+                return (
+                  <Panel width={rowWidth} height={ROW_HEIGHT}>
+                    <Button
+                      position={'absolute'}
+                      left={0}
+                      top={0}
+                      width={rowWidth}
+                      height={ROW_HEIGHT}
+                      background={row.textures.background}
+                      backgroundHover={row.textures.backgroundHover}
+                      backgroundPressed={row.textures.backgroundPressed}
+                      onPress={(event: PressEvent): unknown => model.onSelect?.(index, event)}
+                    />
+                    {isSelected && <Image position={'absolute'} left={0} top={0} width={rowWidth} height={ROW_HEIGHT} zIndex={1} texture={row.textures.backgroundSelected} />}
+                    <Panel position={'absolute'} left={0} top={0} width={rowWidth} height={ROW_HEIGHT} zIndex={2} flexDirection={'row'} alignItems={'center'} gap={row.gap} padding={spacing.xs}>
+                      <Image live={true} width={ROW_ICON} height={ROW_ICON} texture={item?.icon ?? ICON_MISSING} />
+                      <Panel flexDirection={'column'} flexGrow={1} flexShrink={1} justifyContent={'center'}>
+                        <Text font={row.textStyle.font} scale={row.textStyle.scale} shadow={true} maxLength={NAME_MAX}>{item?.name ?? ''}</Text>
+                        <Text font={row.textStyle.font} scale={row.textStyle.scale} color={row.textStyle.mutedRgb} maxLength={VERSION_MAX}>{item?.version ?? ''}</Text>
+                      </Panel>
                     </Panel>
                   </Panel>
-                </Panel>
-              );
-            }}
-          />
-        </Scroll>
-      </Panel>
-      <Divider orientation={'vertical'} position={'absolute'} left={SIDEBAR_WIDTH} top={MAIN.y} height={MAIN.height} />
-      {showsFallback && (
-        <Panel position={'absolute'} left={MAIN.x} top={MAIN.y} width={MAIN.width} height={MAIN.height} flexDirection={'column'} gap={spacing.md} padding={spacing.md}>
-          <Text font={'mojangles'} scale={2} shadow={true} maxLength={NAME_MAX}>{current?.name ?? ''}</Text>
-          <Text font={'mojangles'} scale={1} color={row.textStyle.mutedRgb} maxLength={VERSION_MAX}>{current?.version ?? ''}</Text>
+                );
+              }}
+            />
+          </Scroll>
         </Panel>
-      )}
-    </Card>
+        <Divider orientation={'vertical'} position={'absolute'} left={SIDEBAR_WIDTH} top={MAIN.y} height={MAIN.height} />
+        {showsFallback && (
+          <Panel position={'absolute'} left={MAIN.x} top={MAIN.y} width={MAIN.width} height={MAIN.height} flexDirection={'column'} gap={spacing.md} padding={spacing.md}>
+            <Text font={'mojangles'} scale={2} shadow={true} maxLength={NAME_MAX}>{current?.name ?? ''}</Text>
+            <Text font={'mojangles'} scale={1} color={row.textStyle.mutedRgb} maxLength={VERSION_MAX}>{current?.version ?? ''}</Text>
+          </Panel>
+        )}
+      </Card>
+    </Screen>
   );
 };
 

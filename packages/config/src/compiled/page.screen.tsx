@@ -20,8 +20,8 @@ import { FRAME, MAIN } from './frame';
  * reads the two presses back.
  *
  * The addon declares the page like any screen — a module default-exporting
- * `() => <AddonPage addon={...} />` — and publishes what presenting it needs
- * through `core.register({ page: addonPageReference(Page) })`.
+ * `() => <Screen><AddonPage addon={...} /></Screen>` — and publishes what
+ * presenting it needs through `core.register({ page: addonPageReference(Page) })`.
  */
 
 const { spacing } = theme.tokens;

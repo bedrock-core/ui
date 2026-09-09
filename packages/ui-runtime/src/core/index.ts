@@ -57,6 +57,7 @@ export type {
 export {
   ContainerScreenError,
   ModalFormError,
+  ScreenRootError,
   ScrollLimitError,
   SerializationError,
   TranslationKeysError,

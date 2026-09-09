@@ -1,7 +1,7 @@
 import type { FunctionComponent } from '@bedrock-core/ui-runtime';
 import {
   allocateForm, allocateModal, analyze, bakedTexts, buildScreenOnce, type CompiledSnapshot, concreteRoots,
-  ContainerScreenError, embedMarker, embedPlacementOf, type EmbedPlacement, FORM_COLLECTION, formTitleFor, hasModalRoot, probeLiveness, shapeOf,
+  ContainerScreenError, embedMarker, embedPlacementOf, type EmbedPlacement, FORM_COLLECTION, formTitleFor, hostFor, probeLiveness, shapeOf,
   visiblesAt, type EntryEntry, type ModalRow,
 } from '@bedrock-core/ui-runtime/compile';
 import { checkLiveness, previewOf } from '../../compile';
@@ -160,7 +160,13 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
 
   const tree = buildScreenOnce(Screen);
   const visibles = visiblesAt(tree, probe.liveVisibles);
-  const modal = hasModalRoot(tree);
+  const host = hostFor(tree);
+
+  if (host.id === 'chest') {
+    throw new ContainerScreenError('`<Container>` is a container screen; compile it with compileScreen().');
+  }
+
+  const modal = host.id === 'form-modal';
   const embedded = embedPlacementOf(tree);
 
   if (embedded !== undefined && modal) {

@@ -36,26 +36,29 @@ work and localize per player with no extra wiring.
 ```tsx
 /** @jsxImportSource @bedrock-core/ui */
 import { Card, Checkbox, Toggle } from '@bedrock-core/ore-styled';
-import { Text, useState, type JSX } from '@bedrock-core/ui';
+import { Screen, Text, useState, type JSX } from '@bedrock-core/ui';
 
 export function Settings(): JSX.Element {
   const [enabled, setEnabled] = useState(false);
   const [accepted, setAccepted] = useState(false);
 
   return (
-    <Card>
-      <Text>{'Settings'}</Text>
-      <Toggle on={enabled} onChange={setEnabled} />
-      <Checkbox checked={accepted} onChange={setAccepted} label={'I agree'} />
-    </Card>
+    <Screen>
+      <Card>
+        <Text>{'Settings'}</Text>
+        <Toggle on={enabled} onChange={setEnabled} />
+        <Checkbox checked={accepted} onChange={setAccepted} label={'I agree'} />
+      </Card>
+    </Screen>
   );
 }
 ```
 
-`<Form>` works the same way, with one rule of its own: every field value arrives once, in
-`onSubmit`, keyed by its `name`, and the form must declare exactly one `Form.Button type="submit"`
-(plus at most one `type="exit"`), placed anywhere in the flow. Mix a modal `<Form>` and an
-ActionForm-style screen across separate `render()` calls — via navigation, say — never nested.
+`<Form>` is the other root — a screen starts with `<Screen>` or `<Form>`, never both — with one
+rule of its own: every field value arrives once, in `onSubmit`, keyed by its `name`, and the form
+must declare exactly one `Form.Button type="submit"` (plus at most one `type="exit"`), placed
+anywhere in the flow. Mix a modal `<Form>` and a `<Screen>` across separate `render()` calls —
+via navigation, say — never nested.
 
 ## Documentation
 

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { Button, isExitButton } from '../../../components/Button';
 import { Panel } from '../../../components/Panel';
+import { Screen as ScreenRoot } from '../../../components/Screen';
 import { Text } from '../../../components/Text';
 import { useExit } from '../../../hooks';
 import type { JSX } from '../../../jsx';
@@ -19,13 +20,15 @@ const player = { id: 'exit-claim' } as unknown as Player;
 const Screen = (): JSX.Element => {
   const close = useExit();
 
-  return Panel({
-    width: 100,
-    height: 40,
-    children: [
-      Button({ onPress: close, children: Text({ children: 'x' }) }),
-      Button({ onPress: (): void => undefined, children: Text({ children: 'go' }) }),
-    ],
+  return ScreenRoot({
+    children: Panel({
+      width: 100,
+      height: 40,
+      children: [
+        Button({ onPress: close, children: Text({ children: 'x' }) }),
+        Button({ onPress: (): void => undefined, children: Text({ children: 'go' }) }),
+      ],
+    }),
   });
 };
 

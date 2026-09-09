@@ -1,6 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Divider, fieldLabel, Form, Header, theme } from '@bedrock-core/ore-styled';
-import { Fragment, Panel, Scroll, Text, useExit, type JSX, type SubmitEvent } from '@bedrock-core/ui-runtime';
+import { Fragment, Panel, Screen, Scroll, Text, useExit, type JSX, type SubmitEvent } from '@bedrock-core/ui-runtime';
 import { splitBreadcrumb } from './breadcrumbs';
 import { FormHeader } from './FormHeader';
 import { useCore, usePlayer } from '../context';
@@ -83,18 +83,20 @@ export function Config({ navigation, route }: AppScreen<'Config'>): JSX.Element 
   // present an empty dialog. Any lists still have to be reachable, so they get the plain card.
   if (Object.keys(scalars).length === 0) {
     return (
-      <Card flexDirection={'column'} padding={0} gap={0}>
-        <Header {...splitBreadcrumb(breadcrumb)} onBack={(): unknown => backToParent(navigation, core, player, { addonId, scope, entityId, path, breadcrumb })} onClose={exit} />
-        <Panel flexGrow={1} padding={spacing.md}>
-          {Object.keys(lists).length > 0
-            ? <Scroll>{body}</Scroll>
-            : (
-                <Panel flexGrow={1} justifyContent={'center'} alignItems={'center'}>
-                  <Text wordBreak={'break-word'}>{`${fontColor.muted}${t($ => $.config.empty)}`}</Text>
-                </Panel>
-              )}
-        </Panel>
-      </Card>
+      <Screen>
+        <Card flexDirection={'column'} padding={0} gap={0}>
+          <Header {...splitBreadcrumb(breadcrumb)} onBack={(): unknown => backToParent(navigation, core, player, { addonId, scope, entityId, path, breadcrumb })} onClose={exit} />
+          <Panel flexGrow={1} padding={spacing.md}>
+            {Object.keys(lists).length > 0
+              ? <Scroll>{body}</Scroll>
+              : (
+                  <Panel flexGrow={1} justifyContent={'center'} alignItems={'center'}>
+                    <Text wordBreak={'break-word'}>{`${fontColor.muted}${t($ => $.config.empty)}`}</Text>
+                  </Panel>
+                )}
+          </Panel>
+        </Card>
+      </Screen>
     );
   }
 

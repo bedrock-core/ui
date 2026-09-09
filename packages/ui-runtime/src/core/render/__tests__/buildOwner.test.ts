@@ -2,6 +2,7 @@ import type { Entity, Player } from '@minecraft/server';
 import { describe, expect, it, vi } from 'vitest';
 import { Container } from '../../../components/Container';
 import { Panel } from '../../../components/Panel';
+import { Screen as ScreenRoot } from '../../../components/Screen';
 import { Text } from '../../../components/Text';
 import { buildContainerTree } from '../../../hosts/chest/build';
 import { useEffect, useExit, usePlayer, useState } from '../../../hooks';
@@ -145,7 +146,7 @@ describe('a player owner', () => {
       return Text({ children: 'x' });
     };
 
-    buildTree(Panel({ children: [{ type: Reader, props: {} }] }), playerOwner(player));
+    buildTree(ScreenRoot({ children: Panel({ children: [{ type: Reader, props: {} }] }) }), playerOwner(player));
 
     expect(seen).toBe(player);
 

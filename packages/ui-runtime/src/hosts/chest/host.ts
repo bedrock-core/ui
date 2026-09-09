@@ -1,5 +1,6 @@
 import { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
-import { containerEntity, containerRoot, CONTAINER_TYPE } from '../../components/Container';
+import { containerEntity, containerRoot } from '../../components/Container';
+import { CONTAINER_TYPE } from '../../core/roots';
 import { ContainerScreenError } from '../../core/types';
 import type { JSX } from '../../jsx';
 import type { HostContract } from '../types';
@@ -58,7 +59,7 @@ const checkRoot = (tree: JSX.Element): void => {
 export const CHEST: HostContract = {
   id: 'chest',
   label: 'container screen',
-  claims: roots => roots.some(root => root.type === CONTAINER_TYPE),
+  root: CONTAINER_TYPE,
   owners: ['entity', 'build'],
   canvas: CANONICAL_SCREEN,
   // A compiled screen emits a region per <Scroll>; nothing draws them from a pool.

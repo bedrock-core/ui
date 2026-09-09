@@ -1,9 +1,8 @@
 import { BUTTON_TYPE } from '../../components/Button';
 import { EMBED_SLOT_TYPE } from '../../components/Embed';
 import { LIST_SLOT_TYPE } from '../../components/List';
-import { CONTAINER_TYPE } from '../../components/Container';
 import {
-  MODAL_DROPDOWN_SLOT_TYPE, MODAL_FORM_BUTTON_SLOT_TYPE, MODAL_FORM_SLOT_TYPE,
+  MODAL_DROPDOWN_SLOT_TYPE, MODAL_FORM_BUTTON_SLOT_TYPE,
   MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE, MODAL_OPTION_SLOT_TYPE,
   MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
 } from '../../components/Form';
@@ -16,7 +15,8 @@ import { liveTextLength } from '../../components/Text';
 import type { Capability, HostContract } from '../../hosts';
 import type { JSX } from '../../jsx';
 import { childElements } from '../guards';
-import { ContainerScreenError, ModalFormError } from '../types';
+import { CONTAINER_TYPE, isHostRoot, MODAL_FORM_SLOT_TYPE, SCREEN_TYPE } from '../roots';
+import { ContainerScreenError, ScreenRootError } from '../types';
 
 /**
  * The one thing a built tree is checked against: what it NEEDS, against what
@@ -60,6 +60,13 @@ const NEEDS: ReadonlyMap<string, Need> = new Map<string, Need>([
   [MODAL_INPUT_SLOT_TYPE, { capability: 'field', label: 'Form.Input' }],
 ]);
 
+/** The roots as the author writes them, for the nesting message. */
+const LABELS: Readonly<Record<string, string>> = {
+  [SCREEN_TYPE]: 'Screen',
+  [MODAL_FORM_SLOT_TYPE]: 'Form',
+  [CONTAINER_TYPE]: 'Container',
+};
+
 /**
  * What one element needs. Two components decide by their props rather than by
  * their type, so they are not in the table: a `<Slot>` reading a foreign
@@ -88,10 +95,10 @@ export const needOf = (element: JSX.Element): Need | undefined => {
 
 /** Where the walk is: what a node may not contain depends on what it sits in. */
 interface Scope {
-  readonly insideContainer: boolean;
+  /** Below the root that names the host — everything but the wrappers above it. */
+  readonly insideRoot: boolean;
   readonly insideButton: boolean;
   readonly insideScroll: boolean;
-  readonly insideModal: boolean;
 }
 
 /** One rule about where a control may sit. Throws when it sits wrong. */
@@ -103,7 +110,8 @@ type Rule = (node: JSX.Element, type: string, scope: Scope, host: HostContract, 
  * button face baked at build.
  *
  * Two different questions decide which of them apply, and they are not the
- * same question. WHICH host this is settles where a `<Container>` may sit.
+ * same question. WHICH host this is, the root settles, and a second root below
+ * it is refused whatever it is.
  * Whether THIS LAYOUT IS FROZEN settles what may be baked — and a compiled
  * form is frozen while its host is not the always-compiled one, so a rule that
  * asked the host would have let a live `<Text>` be baked into a form button's
@@ -111,31 +119,11 @@ type Rule = (node: JSX.Element, type: string, scope: Scope, host: HostContract, 
  */
 const RULES: readonly Rule[] = [
   (_node, type, scope, host): void => {
-    if (type !== CONTAINER_TYPE) {
-      return;
-    }
-
-    if (scope.insideContainer) {
-      throw new ContainerScreenError(
-        'A `<Container>` cannot be nested inside another `<Container>`. One entity '
-        + 'opens one screen; compose the inner part as a component instead.',
-      );
-    }
-
-    if (host.id !== 'chest') {
-      throw new ContainerScreenError(
-        '`<Container>` is a compiled container screen and cannot be shown with render(). '
-        + 'Serve it with createContainerScreen(Screen); a player opens it by interacting '
-        + 'with the entity it names.',
-      );
-    }
-  },
-
-  (_node, type, scope): void => {
-    if (type === MODAL_FORM_SLOT_TYPE && scope.insideModal) {
-      throw new ModalFormError(
-        'A `<Form>` cannot be nested inside another `<Form>`. A modal is one atomic '
-        + 'submit; put the fields in the same form.',
+    if (scope.insideRoot && isHostRoot(type)) {
+      throw new ScreenRootError(
+        `A \`<${LABELS[type] ?? type}>\` cannot sit inside a ${host.label}: a root names the `
+        + 'host of the whole screen, so there is one, at the top. Compose the inner '
+        + 'part as a component, or give it a screen of its own.',
       );
     }
   },
@@ -225,7 +213,7 @@ const RULES: readonly Rule[] = [
  *
  * @param tree - A built tree, as the inherit pass leaves it.
  * @param host - The host it belongs to, from `hostFor`.
- * @throws ContainerScreenError or ModalFormError, naming the control and the fix.
+ * @throws ContainerScreenError, ModalFormError or ScreenRootError, naming the control and the fix.
  */
 export function validate(tree: JSX.Element, host: HostContract, frozen: boolean): void {
   const offers = new Set<Capability>(host.offers);
@@ -234,13 +222,7 @@ export function validate(tree: JSX.Element, host: HostContract, frozen: boolean)
   // entity it opens from and fits a fixed canvas, a form asks nothing.
   host.check?.(tree);
 
-  walk(
-    tree,
-    { insideContainer: false, insideButton: false, insideScroll: false, insideModal: false },
-    host,
-    offers,
-    frozen,
-  );
+  walk(tree, { insideRoot: false, insideButton: false, insideScroll: false }, host, offers, frozen);
 }
 
 function walk(
@@ -253,22 +235,23 @@ function walk(
   const { type } = node;
 
   if (typeof type === 'string') {
+    // Placement first: a root below the root is refused as a root, not as a
+    // control the host happens not to offer.
+    for (const rule of RULES) {
+      rule(node, type, scope, host, frozen);
+    }
+
     const need = needOf(node);
 
     if (need !== undefined && !offers.has(need.capability)) {
       throw host.refuse(need);
     }
-
-    for (const rule of RULES) {
-      rule(node, type, scope, host, frozen);
-    }
   }
 
   const inner: Scope = {
-    insideContainer: scope.insideContainer || type === CONTAINER_TYPE,
+    insideRoot: scope.insideRoot || (typeof type === 'string' && isHostRoot(type)),
     insideButton: scope.insideButton || type === BUTTON_TYPE,
     insideScroll: scope.insideScroll || type === SCROLL_SLOT_TYPE,
-    insideModal: scope.insideModal || type === MODAL_FORM_SLOT_TYPE,
   };
 
   for (const child of childElements(node.props.children)) {

@@ -110,7 +110,7 @@ place. *Proposed* names.
 
 ## Roots
 
-A screen's root names its host, and there is no default. *Decided.*
+A screen's root names its host, and there is no default. *Decided; done in B1.*
 
 | Root | Host | Entry point |
 | --- | --- | --- |
@@ -121,8 +121,9 @@ A screen's root names its host, and there is no default. *Decided.*
 
 `render()` refuses any other root with a message naming the three roots; `createContainerScreen()`
 refuses anything but `<Container>`; `hostFor` throws instead of falling through to the action
-form. A component library never renders a root: a root is the one element an author writes
-at the top of a `*.screen.tsx`.
+form, and a root below the root is refused whatever it is. A component library never renders
+a root: a root is the one element an author writes at the top of a `*.screen.tsx`, and an
+embedded page is `<Screen>` around the `<Embed>`.
 
 ## One component set, per-host mechanisms
 
@@ -240,7 +241,7 @@ what landed.
 | A2 | **Gallery** ✅ | the preview mount on the action form; the generated gallery screen; `openGallery`; chest cells as frames | 3 days |
 | A3 | **Rect guard** ✅ | the diff after host emit, run inside every compile, so the tests and `yarn preflight` both hit it | 1 day |
 | A4 | **Visual pass** ✅ | starts from a clean slate: every demo screen in the reference pack's BP is deleted, and one screen per family is written from scratch as that family is signed off in game, fixes in `ore-styled` only. Families: a chest screen; guide home and one page; the config screens (scope, menu, list, picker, confirm, editor); the addon list and one addon page, with `Embed` reworked to the area (above); one modal with every field kind; one action form with a list and a scroll | 3 days |
-| B1 | **Host roots** | `<Screen>`; `render` and `createContainerScreen` refuse non-host roots; `hostFor` throws instead of falling through | 0.5 day |
+| B1 | **Host roots** ✅ | `<Screen>`; `render` and `createContainerScreen` refuse non-host roots; `hostFor` throws instead of falling through | 0.5 day |
 | B2 | **One component set** | the mechanism table per host in place of the flat `offers` list; the modal lowers the plain set to native fields; host-specific props typed by the root or an expected-host marker; `Form.*` internal and the `ore-styled` duplicates removed | 2.5 days |
 | B3 | **The node layer** | primitives and behaviours, with `Tabs`, `Disclosure`, `List`, the close button and `Form.Button` as compositions | 3 days |
 | C | **References** | `<Link to>`; the reference feed and `navigate('<ns>:<screen>')`; guides on it, `createGuide` deleted; generated key types | 5 days |

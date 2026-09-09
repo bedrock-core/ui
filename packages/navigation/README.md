@@ -35,27 +35,31 @@ It also ships inside the umbrella package as `@bedrock-core/ui/navigation`.
 ```tsx
 /** @jsxImportSource @bedrock-core/ui */
 import { NavigationContainer, createStackNavigator, type ScreenProps } from '@bedrock-core/navigation';
-import { Button, Text, render, type JSX } from '@bedrock-core/ui';
+import { Button, Screen, Text, render, type JSX } from '@bedrock-core/ui';
 import type { Player } from '@minecraft/server';
 
 type AppRoutes = { Home: undefined; Profile: { userId: number } };
 
+// Each route is a whole screen, so each starts with a host root: <Screen> for an
+// action form, <Form> for a native modal.
 function HomeScreen({ navigation }: ScreenProps<AppRoutes, 'Home'>): JSX.Element {
   return (
-    <Button onPress={(): void => navigation.navigate('Profile', { userId: 42 })}>
-      <Text>{'Go to Profile'}</Text>
-    </Button>
+    <Screen>
+      <Button onPress={(): void => navigation.navigate('Profile', { userId: 42 })}>
+        <Text>{'Go to Profile'}</Text>
+      </Button>
+    </Screen>
   );
 }
 
 function ProfileScreen({ navigation, route }: ScreenProps<AppRoutes, 'Profile'>): JSX.Element {
   return (
-    <>
+    <Screen>
       <Text>{`Profile: ${route.params.userId}`}</Text>
       <Button onPress={(): void => navigation.goBack()}>
         <Text>{'Back'}</Text>
       </Button>
-    </>
+    </Screen>
   );
 }
 

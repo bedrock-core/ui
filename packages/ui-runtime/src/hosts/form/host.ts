@@ -1,6 +1,6 @@
 import { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
-import { findModalConfig } from '../../components/Form';
 import { MAX_POOLED_SCROLLS } from '../../components/Scroll';
+import { MODAL_FORM_SLOT_TYPE, SCREEN_TYPE } from '../../core/roots';
 import type { Need } from '../../core/ir/validate';
 import { ContainerScreenError, ModalFormError } from '../../core/types';
 import type { HostContract } from '../types';
@@ -44,14 +44,12 @@ const FORM = {
   compiled: false,
 } as const;
 
-/** The default: an `ActionFormData` screen of buttons and decorative cells. */
+/** A `<Screen>` at the root: an `ActionFormData` screen of buttons and decorative cells. */
 export const FORM_ACTION: HostContract = {
   ...FORM,
   id: 'form-action',
   label: 'form',
-  // The fallback host. A tree no other host claims is an ordinary form, which
-  // is why this entry is last in the registry.
-  claims: () => true,
+  root: SCREEN_TYPE,
   offers: ['bool', 'int', 'enum', 'text', 'press', 'exit'],
 
   // Two ways to reach here: a container control on a screen with no container,
@@ -65,12 +63,12 @@ export const FORM_ACTION: HostContract = {
       )),
 };
 
-/** A `<Form>` anywhere on the tree: one native `ModalFormData` with a single atomic submit. */
+/** A `<Form>` at the root: one native `ModalFormData` with a single atomic submit. */
 export const FORM_MODAL: HostContract = {
   ...FORM,
   id: 'form-modal',
   label: 'modal form',
-  claims: (_roots, tree) => findModalConfig(tree) !== undefined,
+  root: MODAL_FORM_SLOT_TYPE,
   offers: ['bool', 'int', 'enum', 'text', 'field', 'submit', 'cancel', 'exit'],
 
   // A native modal has no generic button slot — only its own submit and

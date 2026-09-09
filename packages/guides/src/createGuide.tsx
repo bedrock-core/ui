@@ -1,5 +1,5 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { useExit, useState, type JSX } from '@bedrock-core/ui-runtime';
+import { Screen, useExit, useState, type JSX } from '@bedrock-core/ui-runtime';
 import { canSee, visiblePageIds, visibleTree } from './access';
 import type { GuideAudience, GuideComponents, GuideManifest, PageId } from './types';
 import { GuideHomeView } from './views/GuideHome';
@@ -115,33 +115,37 @@ export function createGuide(manifest: GuideManifest, options: GuideOptions = {})
 
     if (pageId === undefined) {
       return (
-        <GuideHomeView
-          tree={tree}
-          title={title}
-          onOpenPage={(id): void => setPageId(id)}
-          onExit={onExit}
-          onClose={close}
-        />
+        <Screen>
+          <GuideHomeView
+            tree={tree}
+            title={title}
+            onOpenPage={(id): void => setPageId(id)}
+            onExit={onExit}
+            onClose={close}
+          />
+        </Screen>
       );
     }
 
     return (
-      <GuidePageView
-        manifest={manifest}
-        tree={tree}
-        audience={audience}
-        pageId={pageId}
-        title={title}
-        components={options.components}
-        onOpenPage={(id): void => setPageId(id)}
-        // Back goes to the sidebar when there is one; without it, out of the guide entirely —
-        // the same gesture, one screen shorter. `onExit` may itself be absent for a root guide,
-        // which hides the control. The footer index button is offered only when there is an
-        // index to reach, so a single-page guide shows no button that merely repeats Back.
-        onBack={hasSidebar ? (): void => setPageId(undefined) : onExit}
-        onHome={hasSidebar ? (): void => setPageId(undefined) : undefined}
-        onClose={close}
-      />
+      <Screen>
+        <GuidePageView
+          manifest={manifest}
+          tree={tree}
+          audience={audience}
+          pageId={pageId}
+          title={title}
+          components={options.components}
+          onOpenPage={(id): void => setPageId(id)}
+          // Back goes to the sidebar when there is one; without it, out of the guide entirely —
+          // the same gesture, one screen shorter. `onExit` may itself be absent for a root guide,
+          // which hides the control. The footer index button is offered only when there is an
+          // index to reach, so a single-page guide shows no button that merely repeats Back.
+          onBack={hasSidebar ? (): void => setPageId(undefined) : onExit}
+          onHome={hasSidebar ? (): void => setPageId(undefined) : undefined}
+          onClose={close}
+        />
+      </Screen>
     );
   };
 }
