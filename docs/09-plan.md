@@ -12,6 +12,8 @@ Pack `2.0` accompanies library `1.0` by the existing rule (pack major = library 
 
 ## Phases
 
+The remaining work is ordered by [10-faces-and-hosts](./10-faces-and-hosts.md); the rows below record what landed and what each phase was scoped as.
+
 | # | Phase | Delivers | Estimate |
 | --- | --- | --- | --- |
 | 0 | **1.0 freeze** ✅ | event object across both backends; experimental flag on `registerComponent`; release still to cut | done |

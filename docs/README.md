@@ -25,6 +25,7 @@ documentation. Nothing here is user-facing.
 | [07-runtime](./07-runtime.md) | The minimal runtime per host, and what is deleted |
 | [08-build-flow](./08-build-flow.md) | Discovery, one filter, generated artifacts, screen identity |
 | [09-plan](./09-plan.md) | Phases, estimates, the 1.0 decisions, the spikes |
+| [10-faces-and-hosts](./10-faces-and-hosts.md) | The face pass and the host pass, the roots, one component set per host, the gallery, references, the phases that order the remaining work |
 | [example/](./example/README.md) | One screen end to end: JSX, IR, the shapes it uses, the compiled JSON UI per host, the placement record |
 
 ## Glossary
@@ -35,3 +36,6 @@ documentation. Nothing here is user-facing.
 - **Baked** — decided at build and written into JSON UI as a literal. Costs nothing at runtime.
 - **Placement** — the result of allocation: every carried value and every input given an address on the host, by one walk the build and the runtime both run.
 - **Vocabulary** — the definitions the render pack ships that compiled screens reference by name.
+- **Face** — a node's look with its static props, no bindings; deduplicated per addon and referenced by name. What the face pass emits.
+- **Socket** — a node with a carried prop or an input. The face document draws it as its inert face; the host pass wraps or replaces it, never moves it.
+- **Gallery** — the dev-profile screen that opens every compiled screen as faces only, for visual sign-off before any host serves it.
