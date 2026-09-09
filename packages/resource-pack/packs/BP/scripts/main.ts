@@ -1,7 +1,13 @@
 import { openGuide } from '@bedrock-core/guides';
 import { openGallery } from '@bedrock-core/generated/ui';
+import { render, type PressEvent, type SubmitEvent } from '@bedrock-core/ui';
 import { ButtonPushAfterEvent, Player, world } from '@minecraft/server';
 import { MinecraftBlockTypes, MinecraftEntityTypes } from '@minecraft/vanilla-data';
+import { i18n } from './i18n';
+import { type PlayerRow, playersElement } from './screens/players.screen';
+import { preferencesElement } from './screens/preferences.screen';
+
+const { t } = i18n;
 
 /**
  * `source` is typed as always present and is not: a button pushed by redstone,
@@ -9,6 +15,20 @@ import { MinecraftBlockTypes, MinecraftEntityTypes } from '@minecraft/vanilla-da
  */
 const isPlayer = (source: ButtonPushAfterEvent['source'] | undefined): source is Player =>
   source?.typeId === MinecraftEntityTypes.Player;
+
+/** Everyone online but the viewer, each row a visit to where they stand. */
+const playersFor = (viewer: Player): PlayerRow[] => world.getAllPlayers()
+  .filter(other => other.id !== viewer.id)
+  .map(other => ({
+    name: other.name,
+    onVisit: ({ player }: PressEvent): void => {
+      player.teleport(other.location, { dimension: other.dimension });
+    },
+  }));
+
+const savePreferences = ({ player, values }: SubmitEvent): void => {
+  player.sendMessage(`§a${t($ => $.ui.preferences.saved)}§r ${JSON.stringify(values)}`);
+};
 
 world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent): void => {
   if (!isPlayer(source)) {
@@ -26,5 +46,15 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
     // and the build baked each; every press renders the next page for this
     // player, so nothing about a page travels at runtime.
     openGuide('core', source, { debug: true });
+  }
+
+  if (block.typeId === MinecraftBlockTypes.JungleButton) {
+    // An action form with a list and a scroll, filled per viewer.
+    render(playersElement(playersFor(source)), source, { debug: true });
+  }
+
+  if (block.typeId === MinecraftBlockTypes.WoodenButton) {
+    // A modal with every field kind.
+    render(preferencesElement(savePreferences), source, { debug: true });
   }
 });
