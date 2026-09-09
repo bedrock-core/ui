@@ -62,6 +62,7 @@ const labelOf = (element: JSX.Element, base: Omit<LabelNode, 'kind' | 'text' | '
     fontType: str(props.fontType, defaults.fontType),
     fontScaleFactor: num(props.fontScaleFactor, defaults.fontScaleFactor),
     ...rgbOf(props.__color),
+    ...alignmentOf(props.__textAlign),
   };
 };
 
@@ -70,6 +71,10 @@ const rgbOf = (value: unknown): { color?: readonly [number, number, number] } =>
   Array.isArray(value) && value.length === 3 && value.every(part => typeof part === 'number' && Number.isFinite(part))
     ? { color: [value[0], value[1], value[2]] as const }
     : {};
+
+/** A `textAlign` prop as the label's alignment, when it is one the engine knows. */
+const alignmentOf = (value: unknown): { textAlignment?: 'left' | 'center' | 'right' } =>
+  value === 'left' || value === 'center' || value === 'right' ? { textAlignment: value } : {};
 
 /**
  * What lets two text runs share a carrier definition: everything except which
@@ -80,6 +85,7 @@ export const textSignature = (node: TextNode): string => JSON.stringify([
   node.fontScaleFactor,
   node.shadow ?? null,
   node.color ?? null,
+  node.textAlignment ?? null,
 ]);
 
 export const textDefinition: NodeDefinition<TextNode> = {
@@ -113,6 +119,7 @@ export const textDefinition: NodeDefinition<TextNode> = {
         fontScaleFactor: num(props.fontScaleFactor, defaults.fontScaleFactor),
         ...shadow ? { shadow } : {},
         ...rgbOf(props.__color),
+        ...alignmentOf(props.__textAlign),
       };
     }
 

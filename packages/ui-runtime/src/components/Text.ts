@@ -124,7 +124,17 @@ export interface TextProps extends ControlProps {
    * screen's payload has no field for it and paints the default.
    */
   color?: readonly [number, number, number];
+
+  /**
+   * Where the glyphs sit in the label's box (JSON UI `text_alignment`), which
+   * only shows when the box is wider than the text: give the text a `width`,
+   * or let it grow. Default `'left'`. Honoured by compiled screens; a
+   * serialized screen's payload has no field for it.
+   */
+  textAlign?: TextAlign;
 }
+
+export type TextAlign = 'left' | 'center' | 'right';
 
 /**
  * Make raw text safe to render as a Bedrock JSON UI label. JSON UI feeds a
@@ -150,6 +160,7 @@ export const Text: FunctionComponent<TextProps> = ({
   offsetY,
   shadow,
   color,
+  textAlign,
   ...rest
 }: TextProps): JSX.Element => {
   const resolvedScale = scale ?? 1.0;
@@ -256,6 +267,7 @@ export const Text: FunctionComponent<TextProps> = ({
       // Under a private name: the interpreter serializes every plain prop and
       // has no encoding for a colour, which only a compiled label draws.
       ...color === undefined ? {} : { __color: color },
+      ...textAlign === undefined ? {} : { __textAlign: textAlign },
       value: { tail },
       __textMetrics: {
         font,

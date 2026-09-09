@@ -62,6 +62,8 @@ export interface LabelStyle {
   shadow?: boolean;
   /** Glyph colour, RGB in 0..1. */
   color?: readonly [number, number, number];
+  /** Where the glyphs sit in a box wider than the text. Absent: the engine's left. */
+  textAlignment?: 'left' | 'center' | 'right';
 }
 
 /**

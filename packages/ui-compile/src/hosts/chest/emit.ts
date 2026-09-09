@@ -276,6 +276,7 @@ export const textDef = (node: TextNode, collection: string): Control => ({
   font_scale_factor: node.fontScaleFactor,
   ...node.shadow ? { shadow: node.shadow } : {},
   ...node.color === undefined ? {} : { color: [...node.color] as [number, number, number] },
+  ...node.textAlignment === undefined ? {} : { text_alignment: node.textAlignment },
   bindings: [
     { binding_type: 'collection_details', binding_collection_name: collection },
     {

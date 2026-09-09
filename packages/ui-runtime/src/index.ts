@@ -78,6 +78,7 @@ export type {
   SubmitEvent,
   TextFont,
   TextOverflow,
+  TextAlign,
   TextProps,
   TextStyle,
   TextWordBreak,

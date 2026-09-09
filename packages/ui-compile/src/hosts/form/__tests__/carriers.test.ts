@@ -206,3 +206,38 @@ describe('carriers on the modal', () => {
     expect(JSON.stringify(gate)).toContain('"collection_index": 2'.replace(': ', ':'));
   });
 });
+
+describe('text alignment', () => {
+  const Screen = (): JSX.Element => Panel({
+    width: 120,
+    children: [
+      Text({ width: 100, textAlign: 'center', children: 'Baked' }),
+      Text({ width: 100, textAlign: 'right', maxLength: 8, children: 'Live' }),
+    ],
+  });
+
+  const compiled = compileFormScreen(Screen, { namespace: 'a', name: 'aligned' });
+
+  const labels = (document: Document): Control[] => {
+    const found: Control[] = [];
+
+    eachControl(document, (_name, control) => {
+      if (control.type === 'label') {
+        found.push(control);
+      }
+    });
+
+    return found;
+  };
+
+  it('reaches the baked label and the live carrier alike', () => {
+    const alignments = labels(compiled.document).map(label => label.text_alignment);
+
+    expect(alignments).toContain('center');
+    expect(alignments).toContain('right');
+  });
+
+  it('is part of what the preview draws', () => {
+    expect(labels(compiled.preview.document).map(label => label.text_alignment)).toEqual(['center', 'right']);
+  });
+});

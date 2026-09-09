@@ -51,7 +51,7 @@ export {
 export {
   Text, textWriter, isTextElementType, liveTextLength,
   TEXT_SHADOW_TYPE, TEXT_WRAP_TYPE, TEXT_SHADOW_WRAP_TYPE,
-  type TextFont, type TextOverflow, type TextProps, type TextStyle, type TextWordBreak,
+  type TextFont, type TextOverflow, type TextAlign, type TextProps, type TextStyle, type TextWordBreak,
 } from './Text';
 
 import { registerComponent } from '../core/componentRegistry';
