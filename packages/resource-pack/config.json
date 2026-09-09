@@ -44,7 +44,7 @@
 						"filter": "guides",
 						"settings": {
 							"namespace": "core",
-							"componentsModule": "BP/scripts/UI/guideComponents.ts"
+							"componentsModule": "BP/scripts/guides/components.tsx"
 						}
 					},
 					{
@@ -76,7 +76,7 @@
 						"filter": "guides",
 						"settings": {
 							"namespace": "core",
-							"componentsModule": "BP/scripts/UI/guideComponents.ts"
+							"componentsModule": "BP/scripts/guides/components.tsx"
 						}
 					},
 					{

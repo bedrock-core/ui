@@ -329,10 +329,10 @@ export const panelWriter: Writer = (payload, form, ctx) => {
 
 ### Resource-Pack (Test Addon)
 
-- **`packs/BP/scripts/main.ts`** – Entry point, opens the demo UI
-- **`packs/BP/scripts/UI/App.tsx`** – Navigator + route map for the demo screens
-- **`packs/BP/scripts/UI/screens/*.tsx`** – One screen per feature (hooks, flex, scrolls, forms, i18n, …)
-- **`packs/BP/scripts/UI/i18n.ts`** – The addon's `createI18n(bundle)` call (also the measurement wiring)
+- **`packs/BP/scripts/main.ts`** – Entry point: a bamboo button opens the gallery, a mangrove button the guide
+- **`packs/BP/scripts/screens/*.screen.tsx`** – The compiled screens, one per family, each previewed in the gallery
+- **`packs/BP/scripts/guides/components.tsx`** – The `cmp` blocks the guide pages may use
+- **`packs/BP/scripts/i18n.ts`** – The addon's `createI18n(bundle)` call (also the measurement wiring)
 - **`packs/data/i18n/<locale>.ts`** / **`packs/data/guides/<locale>/**.mdx`** – Sources for the `i18n` and `guides` filters
 - **`packs/RP/ui/_ui_defs.json`** – Declares which JSON UI files to load
 - **`packs/RP/ui/server_form.json`** – Entry screen; gates on `$protocol_header` (`bcuiv0008`)
@@ -462,5 +462,5 @@ replaced by the v0007 scroll-component model. `render()` takes exactly `(root, p
 2. **Byte map:** `packages/ui-runtime/src/components/control.ts` (`withControl` doc comment — authoritative)
 3. **Working component example:** `packages/ui-runtime/src/components/Panel.ts`
 4. **Test patterns:** `packages/ui-runtime/src/core/__tests__/serializer.test.ts`
-5. **Addon integration:** `packages/resource-pack/packs/BP/scripts/UI/App.tsx`
+5. **Addon integration:** `packages/resource-pack/packs/BP/scripts/main.ts`
 6. **JSON UI decoder:** `packages/resource-pack/packs/RP/ui/core-ui/components/text.json`

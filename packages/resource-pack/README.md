@@ -67,10 +67,10 @@ to declare a new Minecraft version, and an unrecognized slug fails the job rathe
 file tagged for the wrong versions. CurseForge exposes no API for a project's description page, so
 that page is written by hand and kept version-free.
 
-The behavior pack, the guide/i18n sources under `packs/data/`, and the demo screens are the local
-test harness this repo uses to exercise the framework — a reference implementation and a place to
-reproduce protocol bugs. They are built into `build/@bedrock-core_ui_bp` for local testing and
-deliberately never released.
+The behavior pack, the guide/i18n sources under `packs/data/` and the screens under
+`packs/BP/scripts/screens/` are the local test harness this repo uses to exercise the framework —
+a reference implementation and a place to reproduce bugs. They are built into
+`build/@bedrock-core_ui_bp` for local testing and deliberately never released.
 
 ## Development
 
@@ -84,12 +84,14 @@ yarn build            # Build all packages (including this addon)
 yarn watch            # Rebuild and deploy to com.mojang on change
 ```
 
-The filter chain is `guides` → `i18n` → `bundler`. The generated bundles are reached through
-`tsconfig.json` path aliases — `@bedrock-core/generated/i18n` and `@bedrock-core/generated/guides`
-— resolving to the filters' output under `packs/data/`; the committed `.d.ts` files next to them
-are what the IDE reads before Regolith has ever run.
+The filter chain is `guides` → `i18n` → `ui-compile` → `references` → `bundler`. The generated
+bundles are reached through `tsconfig.json` path aliases — `@bedrock-core/generated/i18n`,
+`@bedrock-core/generated/guides` and `@bedrock-core/generated/ui` — resolving to the filters'
+output under `packs/data/`; the committed `.d.ts` files next to them are what the IDE reads before
+Regolith has ever run.
 
-`packs/BP/scripts/UI/screens/` is the reference gallery, reachable from the addon's home screen:
-hooks, flex layout, font metrics, unstyled primitives, ore-styled components, both form backends,
-three scroll variants, a stress test, and `I18nDemo` — typed keys, interpolation and plurals
-resolving per player language.
+Every `*.screen.tsx` under `packs/BP/scripts/screens/` is compiled to JSON UI at build time, as are
+the guide pages the guides filter writes and the config screens the `screens` setting names. The
+`default` profile builds with `gallery: true`, which adds a preview of every compiled screen as
+faces alone — the layout with no host behind it — and a gallery screen that opens each. In game:
+a bamboo button opens the gallery, a mangrove button opens the guide.

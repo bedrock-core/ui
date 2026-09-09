@@ -24,7 +24,6 @@ Rewrite as present-tense facts. Spike references become a link to the checked-in
 | `packages/ui-compile/src/__fixtures__/demo.ts:35` | "the document no longer carries it" | "does not carry it" |
 | `scripts/bump-meta.mjs:17-21` | "removes the old `MAX_BUMP` clamp" | drop the clause |
 | `packages/ui-runtime/scripts/generate-font-metrics.mjs:22` | "clipped the bottom of wrap_box'd headings" | the box height is the measured height and clips children |
-| `packages/resource-pack/packs/BP/scripts/main.ts:74-83` | "SPIKE — protocol v0008 groundwork" | delete the block and the dead probe branch |
 | `packages/resource-pack/packs/RP/ui/core-ui/common/control.json:3-39` | "Stage 1, in-game proven by the S1/S2 spikes"; "S1-verified"; "S2-verified"; "moved UP"; "no longer decodes"; "the old copy/paste didn't" | present tense; drop verification tags |
 | `…/common/label_router.json:1-11`, `…/common/button_router.json:1-9` | "Stage 1 perf shape"; "no longer knows about regions" | the region gate lives in the routers; the base control does not decode regions |
 | `…/screens/scroll_pool.json:66,236-240` | "S4 spike"; "SPIKE S5"; "previously collapsed"; "The bet:" | drop tags and the bet; rewrite the rest |

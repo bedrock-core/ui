@@ -200,11 +200,13 @@ same shape.
   Breaking, pre-1.0. *Decided.*
 - **Generated types.** `@bedrock-core/generated/ui` exports the addon's screen keys as a
   union, so a `navigate` into another addon is typed against what that addon built.
-- **`Embed` retires.** An embedded screen is laid out against a frame it does not own, which
-  is why the framework's page reads as absolute coordinates in the gallery. With references,
-  an addon's page in the addon list is that addon's own full-canvas screen, opened by key; the
-  list row itself draws only what travels as reference data, the name key and the icon path.
-  One mechanism fewer, and every screen is laid out against its own canvas.
+- **`Embed` is a component embed.** An embedded page is a component drawn into the area a
+  host leaves for it, not a screen laid over the host's frame. Its canvas is that area:
+  `<Embed>` takes the area's size and the tree fills it, so the page holds no coordinate of
+  the host's frame and the gallery shows it as its own canvas. Where the area sits inside the
+  frame is the host's constant and goes on the mount: the router places an embedded root at
+  the area's offset within the centred frame. The contract between the two packs stays the
+  area rect and the slot count. *Decided; lands in A4 with the addon-page family.*
 
 ## Layout stays the build's
 
@@ -214,7 +216,8 @@ sizes appear only where the *engine* has to decide at draw time — a stack size
 hidden rows collapse, a fill of `100%` inside a box the layout already sized. Mixing units
 by hand would bring anchors, safe zones and UI scale into every screen, which is exactly what
 baking against a 300×200 canvas inside the smallest scale was chosen to avoid. Revisited only
-if a host needs a screen-relative canvas, and then as a host property, never a prop. *Decided.*
+if a host needs a screen-relative canvas, and then as a host property, never a prop. *Decided
+for now.*
 
 ## Phases
 
@@ -226,7 +229,7 @@ what landed.
 | A1 | **Face pass** ✅ | `faces.json` per addon; the face document per screen with every socket as its inert face; the static validator; the socket list as the placement's addresses | 5 days |
 | A2 | **Gallery** ✅ | the preview mount on the action form; the generated gallery screen; `openGallery`; chest cells as frames | 3 days |
 | A3 | **Rect guard** ✅ | the diff after host emit, run inside every compile, so the tests and `yarn preflight` both hit it | 1 day |
-| A4 | **Visual pass** | starts from a clean slate: every demo screen in the reference pack's BP is deleted, and one screen per family is written from scratch as that family is signed off in game, fixes in `ore-styled` only. Families: a chest screen; guide home and one page; the config screens (scope, menu, list, picker, confirm, editor); the addon list and one addon page; one modal with every field kind; one action form with a list and a scroll | 3 days |
+| A4 | **Visual pass** | starts from a clean slate: every demo screen in the reference pack's BP is deleted, and one screen per family is written from scratch as that family is signed off in game, fixes in `ore-styled` only. Families: a chest screen; guide home and one page; the config screens (scope, menu, list, picker, confirm, editor); the addon list and one addon page, with `Embed` reworked to the area (above); one modal with every field kind; one action form with a list and a scroll | 3 days |
 | B | **Host roots and the node layer** | `<Screen>`; `render` and `createContainerScreen` refuse non-host roots; the mechanism table per host in place of the flat `offers` list; the modal lowers the plain set to native fields; `ore-styled` duplicates removed; the node layer reduced to primitives and behaviours, with `Tabs`, `Disclosure`, `List`, the close button and `Form.Button` as compositions | 6 days |
 | C | **References** | `<Link to>`; the reference feed and `navigate('<ns>:<screen>')`; guides on it, `createGuide` deleted; generated key types | 5 days |
 | D | **Delete the interpreter** | numbers as sliders on the config editor; serializer, writers, presenters and decoders deleted; state values readonly; pack minor | 3 days |
