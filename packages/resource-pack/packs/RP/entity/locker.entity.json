@@ -1,0 +1,20 @@
+{
+	"format_version": "1.10.0",
+	"minecraft:client_entity": {
+		"description": {
+			"identifier": "core:locker",
+			"materials": {
+				"default": "entity_alphatest"
+			},
+			"textures": {
+				"default": "textures/entity/armor_stand"
+			},
+			"geometry": {
+				"default": "geometry.armor_stand"
+			},
+			"render_controllers": [
+				"controller.render.default"
+			]
+		}
+	}
+}

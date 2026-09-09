@@ -1,13 +1,35 @@
 import { openGuide } from '@bedrock-core/guides';
 import { openGallery } from '@bedrock-core/generated/ui';
 import { render, type PressEvent, type SubmitEvent } from '@bedrock-core/ui';
-import { ButtonPushAfterEvent, Player, world } from '@minecraft/server';
+import { createContainerScreen } from '@bedrock-core/ui/container';
+import { type Block, ButtonPushAfterEvent, Player, world } from '@minecraft/server';
 import { MinecraftBlockTypes, MinecraftEntityTypes } from '@minecraft/vanilla-data';
 import { i18n } from './i18n';
+import Locker from './screens/locker.screen';
 import { type PlayerRow, playersElement } from './screens/players.screen';
 import { preferencesElement } from './screens/preferences.screen';
 
 const { t } = i18n;
+
+/**
+ * The locker, served: the screen names its entity, the build sized that
+ * entity's inventory, and this attaches the behaviour to every one spawned.
+ */
+const locker = createContainerScreen(Locker);
+
+/**
+ * Nothing opens a container from script, so a locker is an entity in the
+ * world, opened by interacting with it. One per button, on top of it.
+ */
+const spawnLocker = (button: Block): void => {
+  const { dimension } = button;
+
+  for (const existing of dimension.getEntities({ type: locker.entity })) {
+    existing.remove();
+  }
+
+  dimension.spawnEntity(locker.entity, { x: button.x + 0.5, y: button.y + 1, z: button.z + 0.5 });
+};
 
 /**
  * `source` is typed as always present and is not: a button pushed by redstone,
@@ -56,5 +78,10 @@ world.afterEvents.buttonPush.subscribe(({ source, block }: ButtonPushAfterEvent)
   if (block.typeId === MinecraftBlockTypes.WoodenButton) {
     // A modal with every field kind.
     render(preferencesElement(savePreferences), source, { debug: true });
+  }
+
+  if (block.typeId === MinecraftBlockTypes.CrimsonButton) {
+    // A chest screen: the locker entity to interact with.
+    spawnLocker(block);
   }
 });
