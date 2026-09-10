@@ -32,7 +32,7 @@ import type { IrDocument } from '../ir';
  *
  * Canvas is the canonical screen: 320 x 210, origin at its top left.
  */
-/** What the chest's compiler would report for this screen; the document no longer carries it. */
+/** What the chest's compiler reports for this screen; the document does not carry it. */
 export const demoCounts = { sentinels: 2, drawn: 5, channels: 8, size: 15 } as const;
 
 /** The entity this screen would open from. Also the compiler's, not the document's. */
@@ -50,7 +50,7 @@ export const demoScreen: IrDocument = {
     background: 'textures/ui/dialog_background_opaque',
     children: [
       {
-        kind: 'label',
+        kind: 'text',
         name: 'label_1',
         rect: { x: 7, y: 7, width: 120, height: 10 },
         text: '§fBEDROCK CORE',
@@ -60,7 +60,7 @@ export const demoScreen: IrDocument = {
         shadow: true,
       },
       {
-        kind: 'label',
+        kind: 'text',
         name: 'label_2',
         rect: { x: 7, y: 21, width: 90, height: 10 },
         visible: false,
@@ -75,7 +75,7 @@ export const demoScreen: IrDocument = {
         rect: { x: 7, y: 35, width: 48, height: 10 },
         address: 7,
         length: 8,
-        initial: 'idle',
+        text: 'idle',
         localize: false,
         fontType: 'default',
         fontScaleFactor: 2,
@@ -112,7 +112,7 @@ export const demoScreen: IrDocument = {
             },
             children: [
               {
-                kind: 'label',
+                kind: 'text',
                 name: 'label_3',
                 rect: { x: 26, y: 5, width: 8, height: 10 },
                 text: '+',
@@ -135,7 +135,7 @@ export const demoScreen: IrDocument = {
             },
             children: [
               {
-                kind: 'label',
+                kind: 'text',
                 name: 'label_4',
                 rect: { x: 26, y: 5, width: 8, height: 10 },
                 text: '-',

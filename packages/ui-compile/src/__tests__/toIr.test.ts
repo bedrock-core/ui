@@ -124,20 +124,28 @@ describe('toIr', () => {
   });
 
   describe('labels', () => {
-    it('maps every text variant to a label, shadowed by type', () => {
+    it('maps every text variant to one kind, shadowed by type', () => {
       for (const type of ['text', 'text_shadow', 'text_wrap', 'text_shadow_wrap']) {
         const node = first(container([text([0, 0, 10, 10], 'x', {}, {}, type)]));
 
-        expect(node.kind).toBe('label');
-        expect(node.kind === 'label' && (node.shadow ?? false)).toBe(type.includes('shadow'));
+        expect(node.kind).toBe('text');
+        expect(node.kind === 'text' && (node.shadow ?? false)).toBe(type.includes('shadow'));
       }
+    });
+
+    it('asks for a carrier only when the string is live', () => {
+      const baked = first(container([text([0, 0, 10, 10], 'x')]));
+      const live = first(container([text([0, 0, 10, 10], 'x', { maxLength: 8 })]));
+
+      expect(baked.kind === 'text' && baked.address).toBeUndefined();
+      expect(live.kind === 'text' && live.address).toBeTypeOf('number');
     });
 
     it('bakes the string with the font the label was measured with', () => {
       const node = first(container([text([7, 7, 120, 10], '§fBEDROCK CORE', {}, { fontType: 'MinecraftTen', fontScaleFactor: 1.6 })]));
 
       expect(node).toMatchObject({
-        kind: 'label',
+        kind: 'text',
         text: '§fBEDROCK CORE',
         localize: false,
         fontType: 'MinecraftTen',
@@ -148,13 +156,13 @@ describe('toIr', () => {
     it('localizes a label whose string is a translation key', () => {
       const node = first(container([text([0, 0, 10, 10], 'core.title', { isKey: true, resolvedText: 'Title' })]));
 
-      expect(node).toMatchObject({ kind: 'label', text: 'core.title', localize: true });
+      expect(node).toMatchObject({ kind: 'text', text: 'core.title', localize: true });
     });
 
     it('bakes the resolved text of a message the client would have filled', () => {
       const node = first(container([text([0, 0, 10, 10], { rawtext: [{ text: 'x' }] }, { isKey: true, resolvedText: 'Filled' })]));
 
-      expect(node).toMatchObject({ kind: 'label', text: 'Filled', localize: false });
+      expect(node).toMatchObject({ kind: 'text', text: 'Filled', localize: false });
     });
 
     it('folds the label nudge into the offset', () => {
@@ -166,7 +174,7 @@ describe('toIr', () => {
     it('draws a label the way <Text> does when the metrics are missing', () => {
       const node = first(container([at('text', [0, 0, 10, 10], { value: { tail: 'x' } })]));
 
-      expect(node).toMatchObject({ kind: 'label', text: 'x', localize: false, fontType: 'default', fontScaleFactor: 2 });
+      expect(node).toMatchObject({ kind: 'text', text: 'x', localize: false, fontType: 'default', fontScaleFactor: 2 });
     });
 
     it('turns a live label into a text run at the address the host gave it', () => {
@@ -224,7 +232,7 @@ describe('toIr', () => {
     it('bakes its children relative to its own rect', () => {
       const node = button({ background: 't/a' }, [text([36, 15, 8, 10], 'Go')]);
 
-      expect(node.children[0]).toMatchObject({ kind: 'label', text: 'Go', rect: { x: 26, y: 5, width: 8, height: 10 } });
+      expect(node.children[0]).toMatchObject({ kind: 'text', text: 'Go', rect: { x: 26, y: 5, width: 8, height: 10 } });
     });
 
     it('is drawn the same whether or not it starts enabled', () => {
@@ -309,7 +317,7 @@ describe('toIr', () => {
       ]));
 
       expect(doc.backdrop).toBe('textures/ui/first');
-      expect(doc.root.children.map(node => node.kind)).toEqual(['label']);
+      expect(doc.root.children.map(node => node.kind)).toEqual(['text']);
     });
 
     it('finds a <Background> nested anywhere', () => {

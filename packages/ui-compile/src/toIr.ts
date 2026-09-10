@@ -26,8 +26,8 @@ import {
 } from '@bedrock-core/ui-runtime/compile';
 import type { IrDocument, IrNode, Rect } from './ir';
 import { loweringFor } from './nodes';
-import { num, str } from './nodes/shared';
-import type { Addressing, CellAddress, ChannelAddress, LowerContext, NodeDefinition } from './nodes/types';
+import { num, str } from './nodes/utils/shared';
+import type { Addressing, CellAddress, ChannelAddress, LowerContext, NodeDefinition } from './nodes/utils/types';
 
 /** The components a compiled screen can be made of, by the name the author writes. */
 const SUPPORTED = 'Panel, Text, Image, Button, Slot, SlotGrid, PlayerInventory, Hotbar, Background, Scroll, Tabs, List';
@@ -195,10 +195,14 @@ const lower = (definition: NodeDefinition, element: JSX.Element, type: string, o
     rect: relativeTo(own, origin),
     decoration: {
       ...layerOf(element.props),
+      // A node INSIDE a carried subtree gives its visibility up to the gate.
+      // The build's inherit pass stamps `visible: false` down a hidden
+      // subtree, so a subtree hidden at build and shown by its gate at runtime
+      // would bake every descendant hidden and the gate would open onto
+      // nothing. The subtree's ROOT keeps its own, because a face drawn with
+      // no host — a gallery preview — has no gate to hide it.
       ...walk.carried > 0 && !carried ? {} : visibilityOf(element.props),
-      ...carried
-        ? { visibleEntry: { address: visibleAddress, initial: element.props.visible !== false } }
-        : {},
+      ...carried ? { carriedVisible: visibleAddress } : {},
     },
     name: kind => nameFor(kind, walk),
     cellOf: target => cellOf(target, walk),

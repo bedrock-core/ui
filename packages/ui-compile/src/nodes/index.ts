@@ -6,33 +6,28 @@
  * to another's in the emitted document.
  */
 
-import { buttonDefinition } from './button';
-import { disclosureDefinition, disclosureHeaderDefinition } from './disclosure';
-import { embedDefinition } from './embed';
-import { exitDefinition } from './exit';
-import { fieldDefinition } from './field';
-import { gridDefinition } from './grid';
-import { imageDefinition } from './image';
-import { labelDefinition } from './label';
-import { listDefinition } from './list';
-import { modalButtonDefinition } from './modalButton';
-import { panelDefinition } from './panel';
-import { scrollDefinition } from './scroll';
-import { slotDefinition } from './slot';
-import { tabDefinition, tabsDefinition } from './tabs';
-import { textDefinition } from './text';
-import type { IrNode, NodeDefinition, SocketKind } from './types';
+import { buttonDefinition } from './primitives/button';
+import { disclosureDefinition, disclosureHeaderDefinition } from './compositions/disclosure';
+import { embedDefinition } from './primitives/embed';
+import { fieldDefinition } from './primitives/field';
+import { gridDefinition } from './primitives/grid';
+import { imageDefinition } from './primitives/image';
+import { listDefinition } from './primitives/list';
+import { panelDefinition } from './primitives/panel';
+import { scrollDefinition } from './primitives/scroll';
+import { slotDefinition } from './primitives/slot';
+import { tabDefinition, tabsDefinition } from './compositions/tabs';
+import { textDefinition } from './primitives/text';
+import type { IrNode, NodeDefinition, Socket, SocketKind } from './utils/types';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- each entry is narrowed by its own kind
 export const NODE_DEFINITIONS: readonly NodeDefinition<any>[] = [
   panelDefinition,
-  labelDefinition,
   textDefinition,
   imageDefinition,
   slotDefinition,
   gridDefinition,
   buttonDefinition,
-  exitDefinition,
   scrollDefinition,
   tabsDefinition,
   tabDefinition,
@@ -40,7 +35,6 @@ export const NODE_DEFINITIONS: readonly NodeDefinition<any>[] = [
   disclosureHeaderDefinition,
   listDefinition,
   fieldDefinition,
-  modalButtonDefinition,
   embedDefinition,
 ];
 
@@ -68,9 +62,27 @@ export const loweringFor = (type: string): NodeDefinition | undefined =>
 /** A node's IR children, for a definition that has them. */
 export const childrenOf = (node: IrNode): IrNode[] => definitionFor(node.kind).children?.(node) ?? [];
 
-/** The mechanism a node needs from its host, if any. */
+/** The mechanism a node's kind declares it needs from its host, if any. */
 export const socketOf = (node: IrNode): Exclude<SocketKind, 'visible'> | undefined =>
   definitionFor(node.kind).socket?.(node);
+
+/**
+ * Every mechanism one node needs, in the order a host must supply them.
+ *
+ * A carried `visible` comes FIRST and is not declared by the kind, because it
+ * is not about what the node is: any node at all can have its visibility
+ * carried, and the gate wraps whatever the node turned out to be. So the
+ * subtree is gated before anything inside it is filled, and the host finds the
+ * inner sockets inside its own wrapper by name.
+ */
+export const socketsOf = (node: IrNode): Socket[] => {
+  const own = socketOf(node);
+
+  return [
+    ...node.carriedVisible === undefined ? [] : [{ node, kind: 'visible' as const }],
+    ...own === undefined ? [] : [{ node, kind: own }],
+  ];
+};
 
 const isKind = <K extends IrNode['kind']>(node: IrNode, kind: K): node is Extract<IrNode, { kind: K }> =>
   node.kind === kind;

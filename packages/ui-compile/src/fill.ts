@@ -26,8 +26,8 @@
 import { ContainerScreenError } from '@bedrock-core/ui-runtime/compile';
 import { type FaceDocument, SCREEN_DEFINITION } from './face';
 import type { Control, ControlEntry, Document } from './jsonui';
-import { entryControl, placementOf } from './nodes/shared';
-import type { Emit, HostEmit, Socket } from './nodes/types';
+import { entryControl, placementOf } from './nodes/utils/shared';
+import type { Emit, HostEmit, Socket } from './nodes/utils/types';
 
 /** Where an entry was found: the list it sits in and its position, or the document itself. */
 type Found

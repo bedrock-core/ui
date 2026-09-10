@@ -29,14 +29,14 @@ const Settings = (): JSX.Element => Form({
 describe('compiling a modal screen', () => {
   const compiled = compileFormScreen(Settings, { namespace: 'drav0011_shop', name: 'settings' });
 
-  it('compiles at all, which an unlowered field used to prevent', () => {
+  it('compiles a lowered field', () => {
     expect(compiled.namespace).toBe('drav0011_shop_settings');
     expect(compiled.title).toContain('drav0011_shop_settings');
   });
 
   it('places each field itself, with the row it was compiled against', () => {
-    // MEASURED (S1, and again on `custom_form` in S3): a control the pack
-    // places owns a collection entry when it carries a literal
+    // A control the pack places owns a collection entry when it carries a
+    // literal
     // `collection_index` under a host declaring the collection. That is what
     // lets a compiled screen put a field where the LAYOUT says instead of where
     // a generator would stack it — and it costs one control per field the

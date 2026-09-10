@@ -46,7 +46,7 @@ describe('compiling Tabs', () => {
   });
 
   it('defines all eight states, which is what stops a tab vanishing on hover', () => {
-    // Measured in S4: a toggle draws the ONE child its current state names, so
+    // A toggle draws the ONE child its current state names, so
     // a state left undefined is a control that disappears the moment the
     // pointer touches it.
     for (const toggle of toggles()) {

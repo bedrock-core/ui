@@ -26,9 +26,9 @@
 import { ContainerScreenError } from '@bedrock-core/ui-runtime/compile';
 import type { IrDocument, PanelNode } from './ir';
 import type { Control, ControlEntry, Document } from './jsonui';
-import { definitionFor, socketOf } from './nodes';
-import { backgroundOf, FULL, sizeOf, topLeft } from './nodes/shared';
-import type { FaceEmit, IrNode, Socket } from './nodes/types';
+import { definitionFor, socketsOf } from './nodes';
+import { FULL, over, sizeOf, surface, topLeft } from './faces';
+import type { FaceEmit, IrNode, Socket } from './nodes/utils/types';
 import { validateFace } from './validate';
 
 /** Name of the definition the router mounts: the canvas with everything on it. */
@@ -111,18 +111,7 @@ export const faceOf = (doc: IrDocument): FaceDocument => {
   const defs: Record<string, Control> = {};
 
   const emitNode = (node: IrNode): ControlEntry => {
-    // Outer first: a subtree whose visibility is carried is wrapped before
-    // anything inside it is filled, and the host finds the inner sockets
-    // inside its wrapper by name.
-    if (node.visibleEntry !== undefined) {
-      sockets.push({ node, kind: 'visible' });
-    }
-
-    const kind = socketOf(node);
-
-    if (kind !== undefined) {
-      sockets.push({ node, kind });
-    }
+    sockets.push(...socketsOf(node));
 
     return definitionFor(node.kind).face(node, context);
   };
@@ -154,11 +143,6 @@ export const faceOf = (doc: IrDocument): FaceDocument => {
   const context: FaceEmit = { ns: doc.namespace, facesNs: facesNamespace, faces, defs, emitNode, shared };
 
   const { root } = doc;
-  const background = backgroundOf(root);
-  const children = root.children.map(child => emitNode(child));
-  // Above the background by a layer, as a panel keeps its children — see the
-  // panel kind for why an equal layer is not enough.
-  const content: ControlEntry = { content: { type: 'panel', size: FULL, ...topLeft, layer: 1, controls: children } };
 
   const document: Document = {
     namespace: doc.namespace,
@@ -166,10 +150,9 @@ export const faceOf = (doc: IrDocument): FaceDocument => {
       type: 'panel',
       size: sizeOf(root.rect),
       ...topLeft,
-      controls: [
-        ...background,
-        ...background.length === 0 ? children : [content],
-      ],
+      // The canvas keeps its children a layer above its background, exactly as
+      // a panel does — see the panel face for why an equal layer is not enough.
+      controls: over(surface(root.background), root.children.map(child => emitNode(child))),
     },
     ...defs,
   };

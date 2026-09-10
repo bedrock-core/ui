@@ -7,8 +7,8 @@ import { fill } from '../fill';
 import { CHEST_EMIT } from '../hosts/chest';
 import type { ButtonFace, IrDocument, IrNode } from '../ir';
 import type { Control, Document } from '../jsonui';
-import { type ButtonNode, faceSignature } from '../nodes/button';
-import { faceId } from '../nodes/shared';
+import { type ButtonNode, faceSignature } from '../nodes/primitives/button';
+import { faceId } from '../nodes/utils/shared';
 import { child, definition, defs, eachControl, entries, find, findAll } from '../__fixtures__/helpers';
 
 /** Every case here is a chest screen, which is the only host these node mechanisms have. */
@@ -223,7 +223,7 @@ describe('emit / text runs', () => {
       rect: { x: 7, y: 7, width: 24, height: 10 },
       address: 1,
       length: 4,
-      initial: 'idle',
+      text: 'idle',
       localize: false,
       fontType: 'default',
       fontScaleFactor: 2,
@@ -335,7 +335,7 @@ describe('emit / buttons', () => {
   });
 
   const caption = (name: string, text: string): IrNode => ({
-    kind: 'label',
+    kind: 'text',
     name,
     rect: { x: 26, y: 5, width: 8, height: 10 },
     text,
@@ -524,7 +524,7 @@ describe('emit / buttons', () => {
       rect: { x: 2, y: 2, width: 20, height: 10 },
       address: 9,
       length: 4,
-      initial: 'hi',
+      text: 'hi',
       localize: false,
       fontType: 'default',
       fontScaleFactor: 2,
@@ -720,9 +720,9 @@ describe('emit / grids', () => {
   });
 
   it('hides the transport in a foreign Slot over a player collection too', () => {
-    // The bug the rule was found by: grids were gated and a single placed slot
-    // was not, so a screen drawing one hotbar cell showed a repeating command
-    // block in it for the tick after every press.
+    // A single placed slot is gated exactly like a grid: without it, a screen
+    // drawing one hotbar cell shows the transport item in it for the tick
+    // after every press.
     const doc = emit(screenOf(
       [{
         kind: 'slot',

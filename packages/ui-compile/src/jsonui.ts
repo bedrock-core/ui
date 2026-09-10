@@ -192,9 +192,8 @@ export interface Control {
   /* toggles */
   /**
    * Documented. A toggle draws the ONE child its current state names and
-   * nothing else of its own — measured the hard way in spike S4, where a group
-   * with only two of these defined vanished the moment the pointer touched it.
-   * Define all eight, or accept a control that disappears.
+   * nothing else of its own, so a state left undefined is a control that
+   * vanishes the moment it enters that state. Define all eight.
    */
   checked_control?: string;
   unchecked_control?: string;

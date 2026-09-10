@@ -15,19 +15,17 @@
  */
 
 import type { SlotRole } from '@bedrock-core/ui-runtime';
-import type { PanelNode } from './nodes/panel';
+import type { PanelNode } from './nodes/primitives/panel';
 
 export type { SlotRole };
-export type { IrNode, Rect } from './nodes/types';
-export type { PanelNode } from './nodes/panel';
-export type { LabelNode } from './nodes/label';
-export type { ImageNode } from './nodes/image';
-export type { SlotNode, SlotSource } from './nodes/slot';
-export type { GridNode } from './nodes/grid';
-export type { ButtonFace, ButtonNode } from './nodes/button';
-export type { ExitNode } from './nodes/exit';
-export type { ScrollNode } from './nodes/scroll';
-export type { TextNode } from './nodes/text';
+export type { IrNode, Rect } from './nodes/utils/types';
+export type { PanelNode } from './nodes/primitives/panel';
+export type { ImageNode } from './nodes/primitives/image';
+export type { SlotNode, SlotSource } from './nodes/primitives/slot';
+export type { GridNode } from './nodes/primitives/grid';
+export type { ButtonFace, ButtonNode } from './nodes/primitives/button';
+export type { ScrollNode } from './nodes/primitives/scroll';
+export type { TextNode } from './nodes/primitives/text';
 
 /**
  * How the container was carved up, in counts. The author never sees an index;

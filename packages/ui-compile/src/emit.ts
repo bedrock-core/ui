@@ -8,7 +8,7 @@ import { faceOf } from './face';
 import { fill } from './fill';
 import type { IrDocument } from './ir';
 import type { Document } from './jsonui';
-import type { HostEmit } from './nodes/types';
+import type { HostEmit } from './nodes/utils/types';
 
 export { BACKDROP_DEFINITION, SCREEN_DEFINITION } from './face';
 

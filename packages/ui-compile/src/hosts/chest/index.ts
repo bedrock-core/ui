@@ -42,9 +42,10 @@ import {
 } from '@bedrock-core/ui-runtime/compile';
 import { BACKDROP_DEFINITION, SCREEN_DEFINITION } from '../../face';
 import type { Binding, Control, ControlEntry, Document } from '../../jsonui';
-import { CHEST } from '../../nodes/shared';
+import { CHEST } from '../../connectors/chest';
 
-export { CELL, CHEST_EMIT, hidesTransport, TEXT_DEF, textDef } from './emit';
+export { CHEST_EMIT } from './emit';
+export { CELL, hidesTransport, TEXT_DEF, textDef } from '../../connectors/chest';
 
 /** One vanilla file an addon hooks: the definition in it that every addon's root is inserted into. */
 export interface ChestHook {

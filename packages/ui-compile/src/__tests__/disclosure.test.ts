@@ -8,7 +8,7 @@ import { child, definition, entries, find } from '../__fixtures__/helpers';
 const emit = (doc: IrDocument): Document => emitDocument(doc, FORM_EMIT);
 
 const label = (name: string, y: number, text: string): IrNode =>
-  ({ kind: 'label', name, rect: { x: 0, y, width: 100, height: 10 }, text, localize: false, fontType: 'default', fontScaleFactor: 1 });
+  ({ kind: 'text', name, rect: { x: 0, y, width: 100, height: 10 }, text, localize: false, fontType: 'default', fontScaleFactor: 1 });
 
 /** A column of a row, a disclosure of two rows, and a row after it. */
 const screenOf = (): IrDocument => ({

@@ -8,8 +8,8 @@ import { checkLiveness, previewOf } from '../../compile';
 import { BACKDROP_DEFINITION, type FaceDocument, faceOf, facesNamespaceOf, type Preview } from '../../face';
 import { fill } from '../../fill';
 import type { Control, Document } from '../../jsonui';
-import { MODAL_COLLECTION } from '../../nodes/field';
-import type { Addressing } from '../../nodes/types';
+import { MODAL_COLLECTION } from '../../nodes/primitives/field';
+import type { Addressing } from '../../nodes/utils/types';
 import { toIr } from '../../toIr';
 import { FORM_EMIT } from './emit';
 
@@ -200,7 +200,7 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
     entries,
     snapshot: {
       // Carrier-aware: the bool channels are in the fingerprint, so a runtime
-      // whose visibles no longer match the bake diffs loudly in `debug`.
+      // whose visibles do not match the bake diffs loudly in `debug`.
       shape: shapeOf(tree, analyze(tree, visibles)),
       baked: bakedTexts(tree),
       vis: probe.liveVisibles,

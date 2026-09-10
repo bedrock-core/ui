@@ -2,7 +2,7 @@ import {
   ContainerScreenError, type EmbedPlacement, FORM_COLLECTION, FORM_DETAILS_BINDING, formTitleFor,
 } from '@bedrock-core/ui-runtime/compile';
 import { SCREEN_DEFINITION, BACKDROP_DEFINITION } from '../../emit';
-import { entryValueBinding } from './emit';
+import { entryValueBinding } from '../../connectors/form';
 import type { Control, ControlEntry, Document } from '../../jsonui';
 
 /**

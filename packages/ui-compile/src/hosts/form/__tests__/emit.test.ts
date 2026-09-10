@@ -4,8 +4,8 @@ import { emit } from '../../../emit';
 import { faceOf } from '../../../face';
 import type { IrDocument, IrNode } from '../../../ir';
 import type { Control, Document } from '../../../jsonui';
-import { type ButtonNode, faceSignature } from '../../../nodes/button';
-import { faceId } from '../../../nodes/shared';
+import { type ButtonNode, faceSignature } from '../../../nodes/primitives/button';
+import { faceId } from '../../../nodes/utils/shared';
 import { FORM_EMIT } from '../emit';
 
 const irOf = (children: IrNode[]): IrDocument => ({
@@ -45,7 +45,7 @@ const button = (address: number): ButtonNode => ({
   rect: { x: 4, y: 8, width: 60, height: 20 },
   address,
   children: [
-    { kind: 'label', name: 'label_1', rect: { x: 0, y: 0, width: 10, height: 10 }, text: 'go', localize: false, fontType: 'default', fontScaleFactor: 1 },
+    { kind: 'text', name: 'label_1', rect: { x: 0, y: 0, width: 10, height: 10 }, text: 'go', localize: false, fontType: 'default', fontScaleFactor: 1 },
   ],
   face: {
     texture: 'textures/ui/a',
@@ -61,7 +61,7 @@ const text = (address: number): IrNode => ({
   rect: { x: 0, y: 0, width: 40, height: 10 },
   address,
   length: 12,
-  initial: 'idle',
+  text: 'idle',
   localize: false,
   fontType: 'default',
   fontScaleFactor: 1,
@@ -102,9 +102,9 @@ describe('a form button', () => {
   });
 
   it('has no button at all while disabled, because `enabled` does not stop a press', () => {
-    // MEASURED in game: a button with `enabled` bound false still handed the
-    // press to script, and drew no disabled look. The press surface is gated
-    // out instead — the shape the chest host arrived at for the same reason.
+    // A button with `enabled` bound false still hands the press to script and
+    // draws no disabled look, so the press surface is gated out instead — the
+    // shape the chest host uses for the same reason.
     const cell = definition(document, 'press_1');
     const [enabled, disabled] = cell.controls ?? [];
 
@@ -205,7 +205,7 @@ describe('a form screen', () => {
 
   it('draws panels, labels and images with their look, which no host owns', () => {
     const document = screenOf([
-      { kind: 'label', name: 'label_1', rect: { x: 0, y: 0, width: 10, height: 10 }, text: 'HI', localize: false, fontType: 'default', fontScaleFactor: 1 },
+      { kind: 'text', name: 'label_1', rect: { x: 0, y: 0, width: 10, height: 10 }, text: 'HI', localize: false, fontType: 'default', fontScaleFactor: 1 },
       { kind: 'image', name: 'image_1', rect: { x: 0, y: 0, width: 8, height: 8 }, texture: 'textures/ui/x' },
     ]);
     const controls = definition(document, 'screen').controls ?? [];
