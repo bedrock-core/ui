@@ -1,5 +1,5 @@
 /** @jsxImportSource @bedrock-core/ui */
-import { Card, Form, theme } from '@bedrock-core/ore-styled';
+import { Card, Checkbox, Dropdown, Form, theme, Input, Radio, Slider, Toggle, ToggleButtonGroup } from '@bedrock-core/ore-styled';
 import { Panel, Scroll, Text, type JSX, type SubmitEvent } from '@bedrock-core/ui';
 import { i18n } from '../i18n';
 
@@ -37,12 +37,12 @@ export default function Preferences({ onSubmit }: PreferencesProps): JSX.Element
         <Text width={content} height={TITLE_HEIGHT} textAlign={'center'} font={'minecraftTen'} shadow={true}>{key($ => $.ui.preferences.title)}</Text>
         <Scroll width={content} height={fieldsHeight}>
           <Panel flexDirection={'column'} gap={spacing.sm} width={content - TRACK}>
-            <Form.Input name={'nickname'} label={t($ => $.ui.preferences.nickname)} placeholder={t($ => $.ui.preferences.nicknamePlaceholder)} />
-            <Form.Toggle name={'coordinates'} label={t($ => $.ui.preferences.coordinates)} defaultValue={true} />
-            <Form.Checkbox name={'tips'} label={t($ => $.ui.preferences.tips)} defaultValue={true} />
-            <Form.Slider name={'volume'} label={t($ => $.ui.preferences.volume)} min={0} max={10} step={1} defaultValue={7} />
-            <Form.Dropdown name={'team'} label={t($ => $.ui.preferences.team)} options={['Red', 'Blue', 'Green']} defaultValue={'Blue'} />
-            <Form.Radio
+            <Input name={'nickname'} label={t($ => $.ui.preferences.nickname)} placeholder={t($ => $.ui.preferences.nicknamePlaceholder)} />
+            <Toggle name={'coordinates'} label={t($ => $.ui.preferences.coordinates)} defaultValue={true} />
+            <Checkbox name={'tips'} label={t($ => $.ui.preferences.tips)} defaultValue={true} />
+            <Slider name={'volume'} label={t($ => $.ui.preferences.volume)} min={0} max={10} step={1} defaultValue={7} />
+            <Dropdown name={'team'} label={t($ => $.ui.preferences.team)} options={['Red', 'Blue', 'Green']} defaultValue={'Blue'} />
+            <Radio
               name={'view'}
               label={t($ => $.ui.preferences.view)}
               options={[
@@ -50,7 +50,7 @@ export default function Preferences({ onSubmit }: PreferencesProps): JSX.Element
                 { value: 'third', label: t($ => $.ui.preferences.viewThird) },
               ]}
             />
-            <Form.ToggleButton
+            <ToggleButtonGroup
               name={'difficulty'}
               label={t($ => $.ui.preferences.difficulty)}
               defaultValue={'normal'}

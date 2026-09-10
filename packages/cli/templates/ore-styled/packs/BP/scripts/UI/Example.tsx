@@ -100,10 +100,10 @@ function ProfileFormScreen({ navigation }: Route<'ProfileForm'>): JSX.Element {
       onCancel={(): void => navigation.goBack()}
     >
       <Text>{'§lProfile'}</Text>
-      <Form.Input name={'nick'} label={'Nickname'} placeholder={'Steve'} />
-      <Form.Dropdown name={'difficulty'} label={'Difficulty'} options={['Peaceful', 'Easy', 'Normal', 'Hard']} />
-      <Form.Slider name={'volume'} label={'Volume'} min={0} max={10} defaultValue={7} />
-      <Form.Toggle name={'notify'} label={'Notifications'} defaultValue={true} />
+      <Input name={'nick'} label={'Nickname'} placeholder={'Steve'} />
+      <Dropdown name={'difficulty'} label={'Difficulty'} options={['Peaceful', 'Easy', 'Normal', 'Hard']} />
+      <Slider name={'volume'} label={'Volume'} min={0} max={10} defaultValue={7} />
+      <Toggle name={'notify'} label={'Notifications'} defaultValue={true} />
       <Form.Button type={'submit'} label={'Save'} />
       <Form.Button type={'exit'} label={'Cancel'} />
     </Form>

@@ -1,58 +1,51 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import type { InputProps as PrimitiveInputProps, JSX } from '@bedrock-core/ui-runtime';
-import { Input as PrimitiveInput, Text, useState } from '@bedrock-core/ui-runtime';
+import type { FormInputProps as PrimitiveInputProps, JSX } from '@bedrock-core/ui-runtime';
+import { Form as PrimitiveForm, useMechanism } from '@bedrock-core/ui-runtime';
 import { theme } from './tokens';
+import { labeledColumn } from './Form/label';
 
-export interface InputProps extends Omit<PrimitiveInputProps, 'face'> {}
+export interface InputProps extends PrimitiveInputProps {
+  /** Caption rendered above the field. */
+  label?: string;
+}
 
 /**
- * @deprecated Ore wrapper over the legacy modal-field `Input` (one modal per field).
- * Prefer `Form.Input` from `@bedrock-core/ore-styled`'s `Form` inside a `<Form>`.
+ * The theme's text field: the theme's field-box faces on the native
+ * `Form.Input`. There is no dedicated focused-state texture, so the pressed
+ * (selected) face reuses hover — same rule as the ActionForm-side `Input`.
+ *
+ * The texture props and the field's `font`/`scale` are the theme's DEFAULTS, not a
+ * lock: pass any of them and yours wins (same rule as the non-form components). They
+ * are destructured out of the layout rest on purpose — a labeled field is a wrapper
+ * column plus the box, and the surfaces and text style belong to the BOX, never to
+ * the column panel. The "pressed reuses hover" rule survives an override: a caller's
+ * `backgroundHover` also becomes their focused face unless they set `backgroundPressed`.
  */
 export function Input({
-  value,
-  defaultValue,
-  onChange,
-  placeholder,
-  enabled = true,
-  ...rest
+  label, name, placeholder, defaultValue, enabled = true,
+  background, backgroundHover, backgroundPressed, backgroundLocked, font, scale,
+  ...layout
 }: InputProps): JSX.Element {
-  const [internal, setInternal] = useState(defaultValue ?? '');
-  const current = value ?? internal;
+  useMechanism('Input');
 
-  const t = theme.components.field;
-  const isEmpty = current === '';
-  const display = isEmpty ? (placeholder ?? '') : current;
-  const color = enabled === false
-    ? t.textStyle.disabled
-    : isEmpty
-      ? t.textStyle.placeholder
-      : t.textStyle.value;
+  const t = theme.components.field.textures;
+  const ts = theme.components.field.textStyle;
 
-  function handleChange(next: string): void {
-    setInternal(next);
-    onChange?.(next);
-  }
-
-  return (
-    <PrimitiveInput
-      background={t.textures.background}
-      backgroundHover={t.textures.backgroundHover}
-      backgroundPressed={t.textures.backgroundHover}
-      backgroundLocked={t.textures.backgroundDisabled}
-      paddingLeft={t.padding.x}
-      paddingRight={t.padding.x}
-      paddingTop={t.padding.top}
-      paddingBottom={t.padding.bottom}
-      flexDirection={'row'}
-      justifyContent={'flex-start'}
-      alignItems={'center'}
-      {...rest}
-      value={current}
-      onChange={handleChange}
+  const control = (
+    <PrimitiveForm.Input
+      name={name}
       placeholder={placeholder}
+      defaultValue={defaultValue}
       enabled={enabled}
-      face={<Text font={t.textStyle.font} scale={t.textStyle.scale}>{`${color}${display}`}</Text>}
+      background={background ?? t.background}
+      backgroundHover={backgroundHover ?? t.backgroundHover}
+      backgroundPressed={backgroundPressed ?? backgroundHover ?? t.backgroundHover}
+      backgroundLocked={backgroundLocked ?? t.backgroundDisabled}
+      font={font ?? ts.font}
+      scale={scale ?? ts.scale}
+      {...(label === undefined ? layout : { width: '100%' })}
     />
   );
+
+  return labeledColumn(label, enabled, layout, control);
 }

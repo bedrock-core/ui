@@ -1,55 +1,32 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Button, Fragment, Panel, Text, useState } from '@bedrock-core/ui-runtime';
-import type { ControlProps, JSX } from '@bedrock-core/ui-runtime';
+import type { JSX } from '@bedrock-core/ui-runtime';
+import { type BooleanProps, Switch } from './Switch';
 import { theme } from './tokens';
 
-export interface CheckboxProps extends ControlProps {
-  checked?: boolean;
-  defaultChecked?: boolean;
-  onChange?: (checked: boolean) => void;
-  label?: string;
-  disabled?: boolean;
-}
+export type CheckboxProps = BooleanProps;
 
-export function Checkbox({
-  checked,
-  defaultChecked = false,
-  onChange,
-  label,
-  disabled = false,
-  ...layout
-}: CheckboxProps): JSX.Element {
-  const [internal, setInternal] = useState(defaultChecked);
-  const isChecked = checked ?? internal;
+/**
+ * A box that ticks: the box on the left, the caption after it.
+ *
+ * Checkbox reading order, the opposite of the switch-right {@link Toggle}. The
+ * same boolean underneath — a checkbox is not a control of its own, it is a
+ * square skin and a different place for the caption.
+ */
+export function Checkbox(props: CheckboxProps): JSX.Element {
+  const c = theme.components.checkbox;
 
-  function handle(): void {
-    if (disabled) {
-      return;
-    }
-
-    const next = !isChecked;
-
-    setInternal(next);
-    onChange?.(next);
-  }
-
-  const t = theme.components.checkbox.textures;
-
-  return (
-    <Panel flexDirection={'row'} alignItems={'center'} gap={theme.components.checkbox.gap} {...layout}>
-      <Fragment>
-        <Button
-          width={theme.components.checkbox.size}
-          height={theme.components.checkbox.size}
-          background={isChecked ? t.checked : t.unchecked}
-          backgroundHover={isChecked ? t.checkedHover : t.uncheckedHover}
-          backgroundPressed={isChecked ? t.unchecked : t.checked}
-          backgroundLocked={isChecked ? t.checkedDisabled : t.uncheckedDisabled}
-          onPress={handle}
-          enabled={!disabled}
-        />
-        <Text>{label ?? ''}</Text>
-      </Fragment>
-    </Panel>
-  );
+  return Switch(props, {
+    width: c.size,
+    height: c.size,
+    caption: 'after',
+    gap: c.gap,
+    faces: {
+      background: c.textures.unchecked,
+      backgroundHover: c.textures.uncheckedHover,
+      backgroundLocked: c.textures.uncheckedDisabled,
+      checkedBackground: c.textures.checked,
+      checkedHover: c.textures.checkedHover,
+      checkedLocked: c.textures.checkedDisabled,
+    },
+  });
 }

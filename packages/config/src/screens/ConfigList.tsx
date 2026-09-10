@@ -1,5 +1,5 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Button, Card, Divider, Form, Header, MenuRow, theme } from '@bedrock-core/ore-styled';
+import { Button, Card, Divider, Dropdown, Form, Header, theme, Input, MenuRow } from '@bedrock-core/ore-styled';
 import { Fragment, Panel, Screen, Scroll, Text, useExit, useState, type JSX, type SubmitEvent } from '@bedrock-core/ui-runtime';
 import { splitBreadcrumb } from './breadcrumbs';
 import { FormHeader } from './FormHeader';
@@ -235,9 +235,9 @@ function ItemEditor({ title, submitLabel, current, options, onApply, onCancel }:
         <FormHeader title={title} back={true} />
         <Panel flexDirection={'column'} gap={spacing.md} padding={spacing.sm}>
           {options === undefined
-            ? <Form.Input label={t($ => $.list.item)} name={'item'} defaultValue={current} />
+            ? <Input label={t($ => $.list.item)} name={'item'} defaultValue={current} />
             : (
-                <Form.Dropdown
+                <Dropdown
                   label={t($ => $.list.item)}
                   name={'item'}
                   options={choices}

@@ -1,5 +1,5 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Card, Divider, fieldLabel, Form, Header, theme } from '@bedrock-core/ore-styled';
+import { Card, Checkbox, Divider, Dropdown, fieldLabel, Form, Header, theme, Input, Slider, Toggle, ToggleButtonGroup } from '@bedrock-core/ore-styled';
 import { Fragment, Panel, Screen, Scroll, Text, useExit, type JSX, type SubmitEvent } from '@bedrock-core/ui-runtime';
 import { splitBreadcrumb } from './breadcrumbs';
 import { FormHeader } from './FormHeader';
@@ -255,7 +255,7 @@ function renderField(fullKey: string, entry: EntrySchema, current: unknown, t: C
   const label = display(entry.label);
 
   if (entry.type === 'boolean') {
-    return <Form.Toggle label={label} name={fullKey} defaultValue={Boolean(current)} />;
+    return <Toggle label={label} name={fullKey} defaultValue={Boolean(current)} />;
   }
 
   if (entry.type === 'number') {
@@ -266,7 +266,7 @@ function renderField(fullKey: string, entry: EntrySchema, current: unknown, t: C
 
     if (asInput) {
       return (
-        <Form.Input
+        <Input
           label={`${label} ${fontColor.muted}${t($ => $.field.numberRange, { min, max })}`}
           name={fullKey}
           defaultValue={String(numVal)}
@@ -275,7 +275,7 @@ function renderField(fullKey: string, entry: EntrySchema, current: unknown, t: C
       );
     }
 
-    return <Form.Slider label={label} name={fullKey} min={min} max={max} step={entry.step} defaultValue={numVal} />;
+    return <Slider label={label} name={fullKey} min={min} max={max} step={entry.step} defaultValue={numVal} />;
   }
 
   if (entry.type === 'enum' && entry.options) {
@@ -284,7 +284,7 @@ function renderField(fullKey: string, entry: EntrySchema, current: unknown, t: C
 
     if (options.length <= ENUM_INLINE_MAX_OPTIONS) {
       return (
-        <Form.ToggleButton
+        <ToggleButtonGroup
           label={label}
           name={fullKey}
           options={options.map(value => ({ value, label: display(value) }))}
@@ -293,7 +293,7 @@ function renderField(fullKey: string, entry: EntrySchema, current: unknown, t: C
       );
     }
 
-    return <Form.Dropdown label={label} name={fullKey} options={options} defaultValue={currentStr} />;
+    return <Dropdown label={label} name={fullKey} options={options} defaultValue={currentStr} />;
   }
 
   if (entry.type === 'multiselect' && entry.options) {
@@ -307,7 +307,7 @@ function renderField(fullKey: string, entry: EntrySchema, current: unknown, t: C
         {fieldLabel(label, true)}
         <Fragment>
           {[...entry.options].map(option => (
-            <Form.Checkbox
+            <Checkbox
               label={display(option)}
               name={`${fullKey}${MULTISELECT_SEP}${option}`}
               defaultValue={selected.has(option)}
@@ -320,7 +320,7 @@ function renderField(fullKey: string, entry: EntrySchema, current: unknown, t: C
 
   // string (and any unknown future type, best-effort)
   return (
-    <Form.Input
+    <Input
       label={label}
       name={fullKey}
       defaultValue={typeof current === 'string' ? current : ''}

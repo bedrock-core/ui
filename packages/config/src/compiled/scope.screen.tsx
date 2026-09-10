@@ -1,5 +1,5 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Card, Divider, Form, Trail, type TrailSegment } from '@bedrock-core/ore-styled';
+import { Card, Divider, Dropdown, Form, Input, Toggle, Trail, type TrailSegment } from '@bedrock-core/ore-styled';
 import type { DisplayText } from '@bedrock-core/i18n';
 import type { RemoteConfigAccessor } from '@bedrock-core/server-runtime';
 import { List, Panel, Text, useExit, type FunctionComponent, type JSX, type SubmitEvent } from '@bedrock-core/ui-runtime';
@@ -99,9 +99,9 @@ export const ConfigScope: FunctionComponent<ConfigScopeProps> = ({ model }: Conf
                 <Panel flexDirection={'column'} gap={2}>
                   <Text maxLength={LABEL_MAX}>{at.label}</Text>
                   <Panel height={FIELD_HEIGHT}>
-                    {at.kind === 'toggle' && <Form.Toggle label={''} name={name} defaultValue={at.toggle === true} position={'absolute'} left={0} top={0} />}
-                    {at.kind === 'input' && <Form.Input label={''} name={name} defaultValue={at.text ?? ''} position={'absolute'} left={0} right={0} top={0} height={FIELD_HEIGHT} />}
-                    {at.kind === 'dropdown' && <Form.Dropdown label={''} name={name} options={[...at.options ?? []]} defaultValue={at.selected ?? ''} position={'absolute'} left={0} right={0} top={0} />}
+                    {at.kind === 'toggle' && <Toggle label={''} name={name} defaultValue={at.toggle === true} position={'absolute'} left={0} top={0} />}
+                    {at.kind === 'input' && <Input label={''} name={name} defaultValue={at.text ?? ''} position={'absolute'} left={0} right={0} top={0} height={FIELD_HEIGHT} />}
+                    {at.kind === 'dropdown' && <Dropdown label={''} name={name} options={[...at.options ?? []]} defaultValue={at.selected ?? ''} position={'absolute'} left={0} right={0} top={0} />}
                   </Panel>
                   <Divider />
                 </Panel>
