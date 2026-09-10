@@ -547,8 +547,8 @@ describe('modal control serialization', () => {
 
     const label = labelArg(form, 'dropdown');
 
-    // popupHeight now sits at [1356] (right after popupBackground) — the uniform option-style
-    // block that used to precede it moved into each option's own blob.
+    // popupHeight sits at [1356], right after popupBackground: an option's style
+    // travels in that option's own blob rather than in a block ahead of them.
     expect(label.indexOf('n:107')).toBe(1356);
   });
 

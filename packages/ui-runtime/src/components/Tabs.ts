@@ -5,16 +5,15 @@ import { type ControlProps, withControl } from './control';
 /**
  * Tabs: several panes on ONE screen, switched without the server hearing about it.
  *
- * MEASURED (spike S4): a radio toggle group swaps its content with nothing
- * reaching script — no press, no re-present, no payload — on the pack's own
- * form mount AND under the modification-inserted chest mount. So a tab change
- * costs nothing at runtime, whichever screen it is drawn on.
+ * A radio toggle group swaps its content with nothing reaching script — no
+ * press, no re-present, no payload — on the pack's own form mount AND under
+ * the modification-inserted chest mount. So a tab change costs nothing at
+ * runtime, whichever screen it is drawn on.
  *
- * That is the whole reason this is a component rather than navigation. A
+ * That is why this is a component rather than navigation. A
  * `navigation.navigate()` is a state change: it rebuilds the tree and presents
- * again, which S5 priced at 14 ms of server work for 50 cells and 53 ms for
- * 200. Tabs pay none of it. Routing them through the navigator would have
- * built the expensive version of a thing that can be free.
+ * again, which measures 14 ms of server work for 50 cells and 53 ms for 200.
+ * Tabs pay none of it.
  *
  * What you give up for that is exactly what "the server never hears it" means:
  * no handler runs on a switch, and nothing outside the group can know which
@@ -26,8 +25,8 @@ import { type ControlProps, withControl } from './control';
  * Every tab's content is in the tree at once, so N tabs draw N times the
  * controls. On a COMPILED screen that is paid in pack size and nothing at
  * runtime, which is what makes tabs essentially free however many there are.
- * On a serialized screen it would be N times the payload on every present —
- * which is why this is compiled-only for now, and says so at build.
+ * On a serialized screen it would be N times the payload on every present,
+ * which is why this is compiled-only and says so at build.
  */
 
 /** Host type for the tab group. Transparent: laid out, then lowered by the compiler. */

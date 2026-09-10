@@ -23,13 +23,10 @@ import { ContainerScreenError, ScreenRootError } from '../types';
  * The one thing a built tree is checked against: what it holds, against what
  * its host has a MECHANISM for.
  *
- * There used to be a validator per backend, each a hand-kept list of which
- * component types were forbidden on it — two lists edited in opposite
- * directions every time a component or a screen was added, and neither said
- * WHY a control was refused. The host's table says why: it names what each
- * kind of component becomes there, so a kind it does not name has nothing to
- * be on that screen. Add a host and nothing here changes; add a component and
- * it names its kind in one line.
+ * A host's mechanism table is what answers, and it answers with a reason: it
+ * names what each kind of component becomes on that screen, so a kind it does
+ * not name has nothing to be there. Add a host and nothing here changes; add a
+ * component and it names its kind in one line.
  *
  * What is left over are rules about WHERE a control may sit rather than what
  * it becomes — a scroll inside a scroll, live text inside a button's baked

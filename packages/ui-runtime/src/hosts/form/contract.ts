@@ -44,9 +44,8 @@ export const COUNT_PREFIX = 'n';
 /**
  * How a control is bound to the entry it draws.
  *
- * MEASURED 2026-08-27 (spike S1): a control the pack places itself owns an
- * entry only when THE CONTROL ITSELF carries a `collection_details` binding on
- * this collection. A host above it supplying `collection_index` is enough to
+ * A control the pack places itself owns an entry only when THE CONTROL ITSELF
+ * carries a `collection_details` binding on this collection. A host above it supplying `collection_index` is enough to
  * READ the entry and enough for the control to be pressed — but not for the
  * press to be attributed, and the failure is silent: the form closes and
  * script sees `canceled`, exactly as if the player had pressed Esc.

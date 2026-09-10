@@ -84,7 +84,7 @@ describe('common font slot [606-688]', () => {
   it('defaults to a valid alias on an image cell, whose texture tail starts at [1024]', () => {
     const payload = payloadOf(Image({ texture: 'textures/blocks/diamond_ore' }));
 
-    // The exact regression: without the common slot the label read the texture here.
+    // Without the common slot the label reads the texture out of this position.
     expect(payload.indexOf('s:default')).toBe(FONT_SLOT);
     // v0008: the texture is the payload TAIL — raw at [1024], no `s:` prefix, no
     // padding, no marker, and nothing after it.
@@ -138,7 +138,6 @@ describe('image texture tail [1024→]', () => {
 
     expect(long.length).toBeGreaterThan(80);
 
-    // Used to throw SerializationError ("exceeds maximum byte length of 80 bytes").
     const payload = payloadOf(Image({ texture: long }));
 
     expect(payload.slice(COMPONENT_FIELDS)).toBe(long);

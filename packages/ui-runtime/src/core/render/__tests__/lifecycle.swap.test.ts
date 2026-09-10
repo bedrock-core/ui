@@ -135,7 +135,7 @@ describe('render() swap — cross-app handoff', () => {
     expect(bValues).toEqual([0]);
     expect(__pendingShowCount()).toBe(1);
 
-    // THE regression: B's first press must not be swallowed by a wiped session.
+    // B's first press must not be swallowed by a wiped session.
     press();
     await tick();
     expect(bValues).toEqual([0, 1]);
