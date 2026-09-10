@@ -27,7 +27,8 @@ import { ContainerScreenError } from '@bedrock-core/ui-runtime/compile';
 import type { IrDocument, PanelNode } from './ir';
 import type { Control, ControlEntry, Document } from './jsonui';
 import { definitionFor, socketsOf } from './nodes';
-import { FULL, over, sizeOf, surface, topLeft } from './faces';
+import { FULL, over, shownWhileOn, sizeOf, surface, topLeft } from './faces';
+import { swapControlName } from './nodes/primitives/swap';
 import type { FaceEmit, IrNode, Socket } from './nodes/utils/types';
 import { validateFace } from './validate';
 
@@ -113,8 +114,17 @@ export const faceOf = (doc: IrDocument): FaceDocument => {
   const emitNode = (node: IrNode): ControlEntry => {
     sockets.push(...socketsOf(node));
 
-    return definitionFor(node.kind).face(node, context);
+    const drawn = definitionFor(node.kind).face(node, context);
+
+    return node.follows === undefined ? drawn : following(node, node.follows, drawn);
   };
+
+  /** A node drawn while the swap it names is on. */
+  const following = (node: IrNode, id: string, drawn: ControlEntry): ControlEntry =>
+    Object.fromEntries(Object.entries(drawn).map(([name, control]) => [
+      name,
+      shownWhileOn(swapControlName(doc.namespace, id), node.visible !== false, control),
+    ]));
 
   const shared = (nodes: readonly IrNode[]): ControlEntry[] => {
     const socketsBefore = sockets.length;

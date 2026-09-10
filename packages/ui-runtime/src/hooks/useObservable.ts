@@ -32,6 +32,7 @@ export interface ObservableLike<T> {
  */
 export function useObservable<T>(source: ObservableLike<T>): T;
 export function useObservable<T, S>(source: ObservableLike<T>, select: (value: T) => S): S;
+
 export function useObservable<T, S = T>(source: ObservableLike<T>, select?: (value: T) => S): S {
   const selectRef = useRef(select);
 
@@ -40,7 +41,15 @@ export function useObservable<T, S = T>(source: ObservableLike<T>, select?: (val
   const read = (): S => {
     const value = source.get();
 
-    return selectRef.current ? selectRef.current(value) : (value as unknown as S);
+    if (selectRef.current !== undefined) {
+      return selectRef.current(value);
+    }
+
+    // With no selector the overloads fix `S` to `T`. The implementation
+    // signature cannot say so — `S = T` is a default, not a constraint — so
+    // the narrowing the overloads guarantee is asserted here instead.
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- the no-select overload returns T, which is S
+    return value as unknown as S;
   };
 
   const [slice, setSlice] = useState<S>(read);

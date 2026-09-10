@@ -26,7 +26,8 @@ import {
 } from '@bedrock-core/ui-runtime/compile';
 import type { IrDocument, IrNode, Rect } from './ir';
 import { loweringFor } from './nodes';
-import { num, str } from './nodes/utils/shared';
+import type { LookNode, SwapNode } from './nodes/primitives/swap';
+import { FOLLOWS_PREVIOUS, followsOf, num, str } from './nodes/utils/shared';
 import type { Addressing, CellAddress, ChannelAddress, LowerContext, NodeDefinition } from './nodes/utils/types';
 
 /** The components a compiled screen can be made of, by the name the author writes. */
@@ -141,7 +142,80 @@ const channelOf = (element: JSX.Element, walk: Walk): ChannelAddress => {
 };
 
 const convertChildren = (parent: JSX.Element, origin: Rect, walk: Walk): IrNode[] =>
-  childElements(parent.props.children).flatMap(child => convertChild(child, origin, walk));
+  resolveSiblings(childElements(parent.props.children).flatMap(child => convertChild(child, origin, walk)));
+
+/**
+ * Everything that crosses siblings, resolved in the one walk that has them all.
+ *
+ * Nothing inside a node can see what sits beside it, and all three of these
+ * are about exactly that:
+ *
+ *  - EXCLUSIVE swaps that name no group of their own form ONE group, the first
+ *    of them naming it. That is what a row of tabs is, and what makes a group
+ *    of one — a fold — the same primitive.
+ *  - `follows: true` means the swap before it: a fold's rows, which have to
+ *    reflow what is under them and so cannot live inside a look.
+ *  - A look that DRAWS a sibling takes it out of the list and into itself,
+ *    re-based from the swap's own corner. The layout solved it beside the
+ *    swap, where a pane belongs — the whole box under the headers — and it is
+ *    drawn inside the state, where a pane hidden is a pane never built.
+ */
+const resolveSiblings = (children: IrNode[]): IrNode[] => {
+  let group: string | undefined;
+  let previous: string | undefined;
+  const drawn = new Set<string>();
+
+  const resolved = children.map((child): IrNode => {
+    if (child.kind === 'swap') {
+      previous = child.id;
+
+      if (child.exclusive) {
+        group ??= child.id;
+      }
+
+      return {
+        ...child,
+        ...child.group === undefined && child.exclusive ? { group } : {},
+        looks: child.looks.map(look => drawInto(look, child, children, drawn)),
+      };
+    }
+
+    if (child.follows !== FOLLOWS_PREVIOUS) {
+      return child;
+    }
+
+    if (previous === undefined) {
+      throw new UnsupportedNodeError('a control that follows a swap with no swap before it');
+    }
+
+    return { ...child, follows: previous };
+  });
+
+  return resolved.filter(child => child.id === undefined || !drawn.has(child.id));
+};
+
+/** The sibling a look draws, moved inside it at the swap's own corner. */
+const drawInto = (look: LookNode, swap: SwapNode, siblings: readonly IrNode[], drawn: Set<string>): LookNode => {
+  if (look.draws === undefined) {
+    return look;
+  }
+
+  const target = siblings.find(sibling => sibling.id === look.draws);
+
+  if (target === undefined) {
+    throw new UnsupportedNodeError(`a look drawing "${look.draws}", which is not beside its swap`);
+  }
+
+  drawn.add(look.draws);
+
+  return {
+    ...look,
+    children: [
+      ...look.children,
+      { ...target, rect: { ...target.rect, x: target.rect.x - swap.rect.x, y: target.rect.y - swap.rect.y } },
+    ],
+  };
+};
 
 /** Markers and wrappers produce no node of their own. */
 const convertChild = (element: JSX.Element, origin: Rect, walk: Walk): IrNode[] => {
@@ -203,6 +277,8 @@ const lower = (definition: NodeDefinition, element: JSX.Element, type: string, o
       // no host — a gallery preview — has no gate to hide it.
       ...walk.carried > 0 && !carried ? {} : visibilityOf(element.props),
       ...carried ? { carriedVisible: visibleAddress } : {},
+      ...followsOf(element.props),
+      ...typeof element.props.id === 'string' ? { id: element.props.id } : {},
     },
     name: kind => nameFor(kind, walk),
     cellOf: target => cellOf(target, walk),

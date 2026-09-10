@@ -7,7 +7,7 @@ import { Form } from '../../components/Form';
 import { Panel } from '../../components/Panel';
 import { Screen } from '../../components/Screen';
 import { Text } from '../../components/Text';
-import { playerOwner } from '../../core/fabric';
+import { BUILD_OWNER, playerOwner } from '../../core/fabric';
 import { buildTree } from '../../core/render/tree';
 import { ScreenRootError } from '../../core/types';
 import { useMechanism } from '../../hooks';
@@ -67,7 +67,7 @@ describe('a component asking what it becomes', () => {
     show((): JSX.Element => Screen({ children: { type: asks('Toggle', onAction), props: {} } }));
     buildTree(
       Container({ entity: 'core:test', children: [{ type: asks('Toggle', onChest), props: {} }] }),
-      { kind: 'build' },
+      BUILD_OWNER,
     );
 
     expect(onModal.seen).toBe('field');

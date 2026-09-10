@@ -28,6 +28,15 @@ export interface Rect {
 export interface NodeBase {
   /** Unique within the document. Becomes the control name in the output. */
   name: string;
+  /**
+   * What the author calls this node, when something beside it has to name it.
+   *
+   * Sibling-scoped, because both readers are: a look DRAWS a sibling of its
+   * swap, and a follower FOLLOWS one. Nothing else resolves an id, and no id
+   * reaches the output — the swap's is the exception, and it is qualified with
+   * the screen first.
+   */
+  id?: string;
   rect: Rect;
   /**
    * Draw order within the parent, from the author's `zIndex`.
@@ -60,6 +69,21 @@ export interface NodeBase {
    * out to be.
    */
   carriedVisible?: number;
+  /**
+   * The `id` of a swap this node is drawn while ON.
+   *
+   * The one place something reads a swap back rather than being drawn inside
+   * it, and it exists for the one case that cannot nest: a fold's rows have to
+   * reflow what is under them, and content inside a look has no say over its
+   * siblings. Everything else a swap shows belongs in the look.
+   *
+   * Still client-only — the read is a `view` binding between siblings, which
+   * no host is involved in — so it lives in the face document like any other
+   * static property. Which is also why the swap has to BE a sibling: an
+   * element writes `follows: true` and the lowering fills in the swap before
+   * it, or names one explicitly when it has a reason to.
+   */
+  follows?: string;
 }
 
 /**
@@ -123,7 +147,7 @@ export interface LowerContext {
   /** `own`, made relative to `origin` — what the emitted control carries. */
   rect: Rect;
   /** The author's layer and visibility, if any — and the entry a carried visible rides. */
-  decoration: { layer?: number; visible?: boolean; carriedVisible?: number };
+  decoration: { layer?: number; visible?: boolean; carriedVisible?: number; follows?: string };
   /** A document-unique name for this node, from a per-kind counter. */
   name(kind: string): string;
   /** Where the host put this element's cell. Throws when the walks disagree. */

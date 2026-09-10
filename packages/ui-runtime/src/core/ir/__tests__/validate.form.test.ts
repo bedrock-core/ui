@@ -3,7 +3,7 @@ import { registerNativeComponents } from '../../../components';
 import { MODAL_FORM_SLOT_TYPE } from '../../../components/Form';
 import { SCREEN_TYPE } from '../../../components/Screen';
 import { SCROLL_SLOT_TYPE } from '../../../components/Scroll';
-import { TABS_SLOT_TYPE } from '../../../components/Tabs';
+import { SWAP_SLOT_TYPE } from '../../../components/Swap';
 import { hostFor } from '../../../hosts';
 import type { JSX } from '../../../jsx';
 import { ScreenRootError } from '../../types';
@@ -132,11 +132,12 @@ describe('validate, on the form hosts', () => {
     expect(() => check(tree, true)).toThrow(/one flat box/);
   });
 
-  it('refuses Tabs on a serialized screen, where the switch would not be free', () => {
-    // Every pane is in the tree at once. Compiled, that is pack size and
-    // nothing at runtime; serialized, it is N times the payload on every
-    // present — which turns the one thing tabs are for into the thing they cost.
-    const tree = screenTree([host('panel', [host(TABS_SLOT_TYPE, [host('tab-slot')])])]);
+  it('refuses a swap on a serialized screen, where the switch would not be free', () => {
+    // Everything a swap can show is in the tree at once. Compiled, that is pack
+    // size and nothing at runtime; serialized, it is N times the payload on
+    // every present — which turns the one thing tabs are for into what they
+    // cost.
+    const tree = screenTree([host('panel', [host(SWAP_SLOT_TYPE, [host('swap-look-slot')])])]);
 
     expect(() => check(tree)).toThrow(/COMPILED screen/);
     expect(() => check(tree, true)).not.toThrow();

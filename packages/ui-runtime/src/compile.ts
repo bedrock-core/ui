@@ -70,8 +70,8 @@ export type { GroupOptionDefaults, OptionData } from './components/Form/optionPa
 export type { EmbedPlacement } from './components/Embed';
 export { PANEL_TYPE } from './components/Panel';
 export { SCROLL_SLOT_TYPE, SCROLL_TRACK_WIDTH } from './components/Scroll';
-export { TAB_SLOT_TYPE, TABS_SLOT_TYPE } from './components/Tabs';
-export { DISCLOSURE_HEADER_SLOT_TYPE, DISCLOSURE_SLOT_TYPE } from './components/Disclosure';
+export { SWAP_LOOK_SLOT_TYPE, SWAP_SLOT_TYPE } from './components/Swap';
+export type { SwapState } from './components/Swap';
 export { LIST_SLOT_TYPE, listCapacity, listCount } from './components/List';
 export { isForeignSlot, SLOT_CELL, SLOT_TYPE, slotInteractive, slotRole, slotSource } from './components/Slot';
 export type { SlotSource } from './components/Slot';

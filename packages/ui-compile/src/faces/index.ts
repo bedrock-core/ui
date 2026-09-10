@@ -41,9 +41,7 @@ export { panelFace, type PanelFace } from './primitives/panel';
 export { scrollContent, scrollFace, TRACK_WIDTH, type Axis, type ContentFace, type ScrollFace } from './primitives/scroll';
 
 // Compositions.
-export { disclosureFace, type DisclosureFace } from './compositions/disclosure';
 export { selectFace, type SelectFace } from './compositions/select';
-export { tabsFace, type Tab, type TabsFace } from './compositions/tabs';
 
 // The shared vocabulary.
 export { entry, FONT_SIZE, FULL, offsetOf, over, placed, sizeOf, styled, surface, topLeft, UNSTYLED } from './utils/place';

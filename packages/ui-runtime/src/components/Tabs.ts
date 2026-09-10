@@ -1,24 +1,32 @@
 import { childElements } from '../core/guards';
 import type { FunctionComponent, JSX } from '../jsx';
 import { type ControlProps, withControl } from './control';
+import { PANEL_TYPE } from './Panel';
+import { Swap } from './Swap';
 
 /**
  * Tabs: several panes on ONE screen, switched without the server hearing about it.
  *
- * A radio toggle group swaps its content with nothing reaching script — no
- * press, no re-present, no payload — on the pack's own form mount AND under
- * the modification-inserted chest mount. So a tab change costs nothing at
- * runtime, whichever screen it is drawn on.
+ * Each tab is a {@link Swap} in the row of headers, and its pane is DRAWN
+ * INSIDE the chosen look. That asymmetry is the feature: the pane exists in
+ * the tree exactly while its tab is the chosen one, so nothing outside the
+ * toggle observes which tab is open, nothing has to be told when it changes,
+ * and a pane that is not showing is never built — which is what keeps an
+ * engine field inside a tab off a collection row that is not there.
+ *
+ * The panes are laid out beside the headers, filling the box below them,
+ * because that is where a pane belongs and one header cell is not big enough
+ * to solve it in. The compile re-bases each into its swap.
  *
  * That is why this is a component rather than navigation. A
  * `navigation.navigate()` is a state change: it rebuilds the tree and presents
  * again, which measures 14 ms of server work for 50 cells and 53 ms for 200.
  * Tabs pay none of it.
  *
- * What you give up for that is exactly what "the server never hears it" means:
- * no handler runs on a switch, and nothing outside the group can know which
- * tab is open. A tab whose content depends on the switch is a screen change,
- * not a tab.
+ * What you give up is exactly what "the server never hears it" means: no
+ * handler runs on a switch, and nothing outside the group can know which tab
+ * is open. A tab whose content depends on the switch is a screen change, not a
+ * tab.
  *
  * ## What it costs instead
  *
@@ -29,26 +37,14 @@ import { type ControlProps, withControl } from './control';
  * which is why this is compiled-only and says so at build.
  */
 
-/** Host type for the tab group. Transparent: laid out, then lowered by the compiler. */
-export const TABS_SLOT_TYPE = 'tabs-slot';
-
-/** Host type for one pane. Laid out so its children get rects; drawn by its tab's face. */
-export const TAB_SLOT_TYPE = 'tab-slot';
-
 /** The height of the header row, in texels, when a `<Tabs>` does not say. */
 export const DEFAULT_TAB_HEIGHT = 20;
 
 export interface TabProps extends ControlProps {
-  /** What the tab's header reads. */
-  label: string;
-  /**
-   * The header's face while this tab is the chosen one.
-   *
-   * `background` styles the other state. Both default to unstyled, and one
-   * given alone styles the tab in both states — the same `state ?? base` rule a
-   * `Button` face follows.
-   */
-  backgroundSelected?: string;
+  /** The header while this tab is not the chosen one, drawn by the author. */
+  header: JSX.Element;
+  /** The header while it is; `header` when absent. */
+  headerSelected?: JSX.Element;
   children?: JSX.Node;
 }
 
@@ -58,87 +54,85 @@ export interface TabsProps extends ControlProps {
   children?: JSX.Node;
 }
 
+/** Host type for one tab. A marker its group reads; it never reaches the compiler. */
+export const TAB_SLOT_TYPE = 'tab-slot';
+
 /**
- * One pane.
+ * One tab.
  *
- * Positioned absolutely by {@link Tabs} rather than by the author: every pane
- * occupies the same rect — the group's box below the headers — because only
- * one of them is ever drawn. Laying them out in flow would stack them down the
- * screen and leave the group as tall as all its tabs put together.
+ * A marker rather than an element of its own: `<Tabs>` takes the two looks and
+ * the pane apart and builds the swap around them, so nothing of this reaches
+ * the compile. A `<Tabs.Tab>` written outside a `<Tabs>` is refused there, by
+ * its type.
  */
 const Tab: FunctionComponent<TabProps> = (
-  { label, backgroundSelected, children, ...layout }: TabProps,
-): JSX.Element => ({
-  type: TAB_SLOT_TYPE,
-  props: {
-    ...withControl(layout),
-    label,
-    // Carried explicitly. `withControl` returns only the props it knows, so
-    // anything a component adds of its own is DROPPED silently by passing
-    // through it — which is why the selected face never reached the compiler
-    // and the chosen tab drew blank.
-    backgroundSelected,
-    children,
-  },
-});
+  { header, headerSelected, children }: TabProps,
+): JSX.Element => ({ type: TAB_SLOT_TYPE, props: { header, headerSelected, children } });
 
 const isTab = (element: JSX.Element): boolean => {
   // A child of `<Tabs>` has not been expanded yet, so its `type` is the Tab
-  // FUNCTION; after expansion it is the host string. Accept both, the way
-  // `isOptionElement` does for `Form.Option`.
+  // FUNCTION; after expansion it is the host string. Accept both.
   const { type } = element;
 
   return type === TAB_SLOT_TYPE || type === (Tab as unknown);
 };
 
-/**
- * The group.
- *
- * Its children are `<Tabs.Tab>`s and nothing else. Each is re-positioned here,
- * so the pane rects are the group's own arithmetic rather than something every
- * author has to get right: absolute, inset from the top by the header height,
- * filling the rest.
- */
+/** What a look names the pane beside it by. Only its siblings ever resolve it. */
+const paneId = (index: number): string => `pane_${String(index)}`;
+
+/** A tab's props arrive as the author wrote them, so each look is read back by shape. */
+const isElement = (value: unknown): value is JSX.Element =>
+  typeof value === 'object' && value !== null && 'type' in value && 'props' in value;
+
+/** The look a tab draws in one state, falling back to its resting one. */
+const lookOf = (tab: JSX.Element, state: 'header' | 'headerSelected'): JSX.Node => {
+  const drawn = tab.props[state];
+
+  return isElement(drawn) ? drawn : lookOf(tab, 'header');
+};
+
 const TabsRoot: FunctionComponent<TabsProps> = (
   { tabHeight = DEFAULT_TAB_HEIGHT, children, ...layout }: TabsProps,
-): JSX.Element => ({
-  type: TABS_SLOT_TYPE,
-  props: {
-    ...withControl({ flexDirection: 'column', ...layout }),
-    tabHeight,
-    children: childElements(children)
-      .filter(isTab)
-      .map(tab => ({
-        ...tab,
-        props: {
-          ...tab.props,
-          // RAW props, not a `withControl` block.
-          //
-          // A `<Tabs.Tab>` child is still UNEXPANDED here — `Tab` has not been
-          // called — so anything nested into `__layout` now is thrown away when
-          // it is: `Tab` reads `position`/`top`/… off its own props and builds
-          // its own block. Handing it a finished block instead lost the
-          // positioning entirely, and the panes stacked down the screen.
-          //
-          // `top` + `bottom` with no `height` is what makes every pane exactly
-          // the box below the headers: the solver derives the height from the
-          // insets, and `FlexSize` offers no arithmetic to say it directly.
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          top: tabHeight,
-          bottom: 0,
-        },
-      })),
-  },
-});
+): JSX.Element => {
+  const tabs = childElements(children).filter(isTab);
+
+  return {
+    type: PANEL_TYPE,
+    props: {
+      // The headers share the width evenly; the panes are out of that flow.
+      ...withControl({ flexDirection: 'row', ...layout }),
+      children: [
+        ...tabs.map((tab, index): JSX.Element => Swap({
+          index,
+          exclusive: true,
+          // Above the panes, which reach under the headers beside their own.
+          zIndex: 1,
+          flexGrow: 1,
+          height: tabHeight,
+          children: [
+            Swap.Look({ state: 'off', children: lookOf(tab, 'header') }),
+            Swap.Look({ state: 'on', draws: paneId(index), children: lookOf(tab, 'headerSelected') }),
+          ],
+        })),
+        ...tabs.map((tab, index): JSX.Element => ({
+          type: PANEL_TYPE,
+          props: {
+            // The whole box below the headers, every pane on the same rect:
+            // only one is ever drawn, so laying them in flow would stack them
+            // down the screen and make the group as tall as all its tabs.
+            ...withControl({ position: 'absolute', left: 0, right: 0, top: tabHeight, bottom: 0 }),
+            id: paneId(index),
+            children: tab.props.children,
+          },
+        })),
+      ],
+    },
+  };
+};
 
 interface TabsComponent extends FunctionComponent<TabsProps> {
   Tab: FunctionComponent<TabProps>;
 }
 
-/**
- * Assembled with `Object.assign` so the namespace shape is built structurally,
- * the same way `Form` is.
- */
+/** Assembled with `Object.assign` so the namespace is built structurally, as `Form` is. */
 export const Tabs: TabsComponent = Object.assign(TabsRoot, { Tab });

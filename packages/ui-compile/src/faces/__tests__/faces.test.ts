@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  disclosureFace, gridFace, listFace, optionParts, panelFace, selectFace,
-  sliderFace, slotFace, stateFace, tabsFace, textFace, toggleFace,
+  gridFace, listFace, optionParts, panelFace, selectFace, shownWhileOn, sliderFace,
+  slotFace, stateFace, swap, textFace, toggleFace,
   type Control, type ControlEntry, type TextStyle,
 } from '..';
 
@@ -198,67 +198,38 @@ describe('a slot', () => {
 describe('the compositions', () => {
   const look = (text: string): Control => ({ type: 'panel', controls: [{ caption: { type: 'label', text } }] });
 
-  it('give tabs all eight states, or a state vanishes on hover', () => {
-    const control = drawn(tabsFace({
-      name: 'tabs',
-      rect: RECT,
-      headerHeight: 20,
-      group: 'core_demo_tabs',
-      tabs: [
-        { name: 'one', header: look('One'), headerSelected: look('One'), pane: 'ns.one_pane' },
-        { name: 'two', header: look('Two'), headerSelected: look('Two'), pane: 'ns.two_pane' },
-      ],
-    }), 'tabs');
-
-    const [first] = childrenOf(control);
-    const toggle = first?.['one'] ?? {};
+  it('give a swap all eight states, or a state vanishes on hover', () => {
+    const toggle = swap(
+      { group: 'core_demo_tabs', index: 0, exclusive: true },
+      { on: look('One'), off: look('Two') },
+      { size: [80, 20] },
+    );
 
     expect(toggle.type).toBe('toggle');
     expect(childrenOf(toggle)).toHaveLength(8);
     expect(toggle.toggle_name).toBe('core_demo_tabs');
     expect(toggle.radio_toggle_group).toBe(true);
+    expect(toggle.toggle_group_forced_index).toBe(0);
     expect(toggle.toggle_on_button).toBe('toggle.toggle_on');
   });
 
-  it('mount a tab\'s pane inside its checked state, which is what makes the switch free', () => {
-    const control = drawn(tabsFace({
-      name: 'tabs',
-      rect: RECT,
-      headerHeight: 20,
-      group: 'g',
-      tabs: [{ name: 'one', header: look('One'), headerSelected: look('One'), pane: 'ns.one_pane' }],
-    }), 'tabs');
+  it('fall a state with no look of its own back to its own resting side', () => {
+    const toggle = swap({ group: 'g' }, { on: look('Open'), off: look('Shut') }, {});
+    const [checked, checkedHover, , , unchecked] = childrenOf(toggle);
 
-    const toggle = childrenOf(control)[0]?.['one'] ?? {};
-    const [checked, , , , unchecked] = childrenOf(toggle);
-
-    expect(JSON.stringify(checked)).toContain('pane@ns.one_pane');
-    expect(JSON.stringify(unchecked)).not.toContain('pane@');
+    expect(JSON.stringify(checked?.['checked'])).toContain('Open');
+    expect(JSON.stringify(checkedHover?.['checked_hover'])).toContain('Open');
+    expect(JSON.stringify(unchecked?.['unchecked'])).toContain('Shut');
   });
 
-  it('read a disclosure back by name, because its rows must reflow what is under them', () => {
-    const control = drawn(disclosureFace({
-      name: 'section',
-      rect: RECT,
-      headerHeight: 14,
-      open: true,
-      group: 'core_demo_section',
-      swapName: 'section_head',
-      header: look('Shut'),
-      headerOpen: look('Open'),
-      rows: [{ row: { type: 'panel' } }],
-    }), 'section');
+  it('show a control while a swap beside it is on, seeded so it does not flash', () => {
+    const rows = shownWhileOn('section_head', true, { type: 'stack_panel' });
 
-    expect(control.type).toBe('stack_panel');
-
-    const [, rows] = childrenOf(control);
-    const folded = rows?.['section_rows'] ?? {};
-
-    expect(folded.type).toBe('stack_panel');
-    expect(folded.visible).toBe('#visible');
-    expect(folded.property_bag).toEqual({ '#visible': true });
-    expect(folded.bindings?.[0]?.source_control_name).toBe('section_head');
-    expect(folded.bindings?.[0]?.source_property_name).toBe('#toggle_state');
+    expect(rows.visible).toBe('#visible');
+    expect(rows.property_bag).toEqual({ '#visible': true });
+    expect(rows.bindings?.[0]?.source_control_name).toBe('section_head');
+    expect(rows.bindings?.[0]?.resolve_sibling_scope).toBe(true);
+    expect(rows.bindings?.[0]?.source_property_name).toBe('#toggle_state');
   });
 
   it('draw a select as its options, the chosen one selected', () => {

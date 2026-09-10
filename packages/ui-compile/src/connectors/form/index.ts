@@ -12,6 +12,9 @@ export {
   placed, whenEnabled,
 } from './entry';
 export { field, type NativeField } from './field';
+export {
+  dropdownWidget, inputWidget, popupHostOf, sliderWidget, toggleWidget,
+} from './widget';
 export { list, type Count } from './list';
 export { popupOverlay, type Popup } from './popup';
 export { press, pressDefs, type PressLook } from './press';

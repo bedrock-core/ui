@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { emit as emitDocument } from '../emit';
 import { FORM_EMIT } from '../hosts/form/emit';
 import type { IrDocument, IrNode } from '../ir';
+import type { LookNode } from '../nodes/primitives/swap';
 import type { Control, Document } from '../jsonui';
 import { child, definition, entries, find } from '../__fixtures__/helpers';
 
@@ -10,7 +11,15 @@ const emit = (doc: IrDocument): Document => emitDocument(doc, FORM_EMIT);
 const label = (name: string, y: number, text: string): IrNode =>
   ({ kind: 'text', name, rect: { x: 0, y, width: 100, height: 10 }, text, localize: false, fontType: 'default', fontScaleFactor: 1 });
 
-/** A column of a row, a disclosure of two rows, and a row after it. */
+const look = (name: string, state: 'on' | 'off', children: IrNode[]): LookNode =>
+  ({ kind: 'look', name, rect: { x: 0, y: 0, width: 100, height: 20 }, state, children });
+
+/**
+ * A column of a row, a fold of two rows, and a row after it.
+ *
+ * The fold is what `<Disclosure>` lowers to: a stack holding a swap and a
+ * panel that follows it, with no kind of its own.
+ */
 const screenOf = (): IrDocument => ({
   namespace: 'core_ui_test',
   collection: 'form_buttons',
@@ -26,14 +35,34 @@ const screenOf = (): IrDocument => ({
       children: [
         label('before', 0, 'before'),
         {
-          kind: 'disclosure',
-          name: 'disclosure_1',
+          kind: 'panel',
+          name: 'fold',
+          stack: true,
           rect: { x: 0, y: 12, width: 100, height: 44 },
-          headerHeight: 20,
-          defaultOpen: false,
-          headerOpen: [label('open', 0, '-')],
-          headerClosed: [label('closed', 0, '+')],
-          rows: [label('row_a', 20, 'a'), label('row_b', 32, 'b')],
+          children: [
+            {
+              kind: 'swap',
+              name: 'head',
+              rect: { x: 0, y: 0, width: 100, height: 20 },
+              layer: 1,
+              id: 'section',
+              group: 'section',
+              exclusive: false,
+              on: false,
+              looks: [
+                look('head_on', 'on', [label('open', 0, '-')]),
+                look('head_off', 'off', [label('closed', 0, '+')]),
+              ],
+            },
+            {
+              kind: 'panel',
+              name: 'rows',
+              stack: true,
+              follows: 'section',
+              rect: { x: 0, y: 20, width: 100, height: 24 },
+              children: [label('row_a', 0, 'a'), label('row_b', 12, 'b')],
+            },
+          ],
         },
         label('after', 60, 'after'),
       ],
@@ -41,7 +70,7 @@ const screenOf = (): IrDocument => ({
   },
 });
 
-describe('a disclosure', () => {
+describe('a fold', () => {
   const doc = emit(screenOf());
   const [, column] = find(doc, name => name === 'column');
   const names = (control: Control): string[] => entries(control).map(([name]) => name);
@@ -49,20 +78,25 @@ describe('a disclosure', () => {
   it('turns the column that holds it into a stack of pitched rows', () => {
     expect(column.type).toBe('stack_panel');
     expect(column.size).toEqual([100, '100%c']);
-    expect(names(column)).toEqual(['before_row', 'disclosure_1_row', 'disclosure_1_gap', 'after_row']);
+    expect(names(column)).toEqual(['before_row', 'fold_row', 'fold_gap', 'after_row']);
     expect(child(column, 'before_row').size).toEqual([100, 12]);
     // The folding row is as tall as its state; the gap after it is its own spacer.
-    expect(child(column, 'disclosure_1_row').size).toEqual([100, '100%c']);
-    expect(child(column, 'disclosure_1_gap').size).toEqual([100, 4]);
+    expect(child(column, 'fold_row').size).toEqual([100, '100%c']);
+    expect(child(column, 'fold_gap').size).toEqual([100, 4]);
     expect(child(column, 'after_row').size).toEqual([100, 10]);
   });
 
-  it('is a stack of the header toggle and the rows that read its state', () => {
-    const disclosure = child(child(column, 'disclosure_1_row'), 'disclosure_1');
-    const head = child(disclosure, 'core_ui_test_disclosure_1_head');
-    const rows = child(disclosure, 'disclosure_1_rows');
+  it('is a stack of the header swap and the rows that read its state', () => {
+    const fold = child(child(column, 'fold_row'), 'fold');
+    const head = child(child(fold, 'head_row'), 'core_ui_test_section');
+    const rows = child(child(fold, 'rows_row'), 'rows');
 
-    expect(disclosure.type).toBe('stack_panel');
+    expect(fold.type).toBe('stack_panel');
+    // Its children are stack rows like any other stack's: the header at its
+    // own height, the rows content-sized so folding them moves what is below.
+    expect(names(fold)).toEqual(['head_row', 'rows_row']);
+    expect(child(fold, 'head_row').size).toEqual([100, 20]);
+    expect(child(fold, 'rows_row').size).toEqual([100, '100%c']);
     expect(head.type).toBe('toggle');
     expect(head.size).toEqual([100, 20]);
     expect(head.toggle_default_state).toBe(false);
@@ -71,12 +105,12 @@ describe('a disclosure', () => {
 
     expect(rows.type).toBe('stack_panel');
     expect(rows.visible).toBe('#visible');
-    expect(rows.property_bag).toEqual({ '#visible': false });
+    expect(rows.property_bag).toEqual({ '#visible': true });
     // Named after the screen, resolved among siblings: another screen's
-    // `disclosure_1_head`, constructed on the same form, must never be read.
+    // `section`, constructed on the same form, must never be read.
     expect(rows.bindings).toEqual([{
       binding_type: 'view',
-      source_control_name: 'core_ui_test_disclosure_1_head',
+      source_control_name: 'core_ui_test_section',
       resolve_sibling_scope: true,
       source_property_name: '#toggle_state',
       target_property_name: '#visible',
@@ -88,12 +122,11 @@ describe('a disclosure', () => {
   });
 
   it('bakes each header into the matching states', () => {
-    const disclosure = child(child(column, 'disclosure_1_row'), 'disclosure_1');
-    const head = child(disclosure, 'core_ui_test_disclosure_1_head');
+    const fold = child(child(column, 'fold_row'), 'fold');
+    const head = child(child(fold, 'head_row'), 'core_ui_test_section');
 
-    expect(names(child(head, 'checked'))).toEqual(['header@core_ui_test.disclosure_1_open']);
-    expect(names(child(head, 'unchecked_hover'))).toEqual(['header@core_ui_test.disclosure_1_closed']);
-    expect(definition(doc, 'disclosure_1_open').size).toEqual([100, 20]);
-    expect(names(definition(doc, 'disclosure_1_closed'))).toEqual(['closed']);
+    expect(names(child(head, 'checked'))).toEqual(['look@core_ui_test.head_on']);
+    expect(names(child(head, 'unchecked_hover'))).toEqual(['look@core_ui_test.head_off']);
+    expect(names(definition(doc, 'head_off'))).toEqual(['closed']);
   });
 });

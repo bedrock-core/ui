@@ -1,21 +1,15 @@
 import {
-  MODAL_DROPDOWN_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE,
-} from '@bedrock-core/ui-runtime/compile';
-import {
-  field, list, popupOverlay, press, pressDefs, select, type SelectOption, text, textDef, texture,
-  TEXTURE_DEF, visible,
+  dropdownWidget, field, inputWidget, list, popupHostOf, popupOverlay, press, pressDefs, select,
+  type SelectOption, sliderWidget, text, textDef, texture, TEXTURE_DEF, toggleWidget, visible,
 } from '../../connectors/form';
 import type { TextStyle } from '../../faces';
 import { type ButtonNode, faceSignature, pressAddress } from '../../nodes/primitives/button';
 import { collectKind } from '../../nodes';
-import type { Control, ControlEntry } from '../../jsonui';
-import {
-  type FieldNode, type InlineOption, inlineOptionFace,
-  NEEDS_DECODE_REPLACED, NO_DECODE, popupHostOf, ROW, sliderGeometry,
-} from '../../nodes/primitives/field';
+import type { ControlEntry } from '../../jsonui';
+import { type InlineOption, inlineOptionFace } from '../../nodes/primitives/select';
 import type { ImageNode } from '../../nodes/primitives/image';
 import type { ListNode } from '../../nodes/primitives/list';
-import { faceId, FULL, sizeOf } from '../../nodes/utils/shared';
+import { faceId, sizeOf } from '../../nodes/utils/shared';
 import { isLive, runOf, type TextNode, textSignature } from '../../nodes/primitives/text';
 import type { Emit, HostEmit, IrNode } from '../../nodes/utils/types';
 
@@ -69,9 +63,8 @@ const facesOf = (node: ButtonNode, ctx: Emit): { id: string; rest: string; hover
 /** The screen's dropdown popups, read off the tree the face pass drew. */
 const popups = (root: IrNode, ctx: Emit): ControlEntry[] => popupOverlay(
   popupHostOf(ctx.ns),
-  collectKind(root, 'field').flatMap(node => (node.popup === undefined
-    ? []
-    : [{ name: node.name, address: node.address, texture: node.popup.texture, height: node.popup.height }])),
+  collectKind(root, 'dropdown').map(node =>
+    ({ name: node.name, address: node.address, texture: node.popup.texture, height: node.popup.height })),
   root.rect.width,
 );
 
@@ -92,35 +85,6 @@ const wrapVisible = (node: IrNode, entry: ControlEntry, ctx: Emit): ControlEntry
   return visible({ name: node.name, address }, entry, ctx);
 };
 
-/**
- * What the mounted row is given, per kind.
- *
- * Only the kind knows which of these apply, which is why they are assembled
- * here and handed to the mechanism rather than decided inside it.
- */
-const fieldProps = (node: FieldNode, ctx: Emit): Control => ({
-  ...NEEDS_DECODE_REPLACED.has(node.field) ? { ...NO_DECODE, $scale: node.scale } : { size: FULL },
-  // The slider's travel area sizes itself from the payload, so a compiled one
-  // is told its size instead — see `travel_area_static`.
-  //
-  // As an ARRAY, not two numbers. A size must carry a unit or be a real
-  // number, and a variable holding `304` substituted into `"$travel_w"` is a
-  // string with neither: the parser rejects the whole file with "Dangling
-  // number (no % or px in Size)".
-  ...node.field === MODAL_SLIDER_SLOT_TYPE ? sliderGeometry(node) : {},
-  // The engine hosts the popup box in the control this names, found BY NAME
-  // across the screen: the screen's own popup host, so the name resolves
-  // wherever the screen is mounted.
-  ...node.field === MODAL_DROPDOWN_SLOT_TYPE ? { $compiled: true, $dropdown_area: popupHostOf(ctx.ns) } : {},
-  // The static value and placeholder labels, and the engine pointed at them BY
-  // NAME: `ignored` does not take the interpreted copies out of the by-name
-  // lookup, so each path names its own.
-  ...node.field === MODAL_INPUT_SLOT_TYPE
-    ? { $compiled: true, $text_ctrl: 'display_text_static', $placeholder_ctrl: 'place_holder_static' }
-    : {},
-  ...node.faces,
-});
-
 /** An option's four looks, drawn. */
 const looksOf = (option: InlineOption): SelectOption => ({
   rect: option.rect,
@@ -130,19 +94,39 @@ const looksOf = (option: InlineOption): SelectOption => ({
   selectedHover: inlineOptionFace(option, 'selectedHover'),
 });
 
-/** A chooser shows every option at once; every other kind is one native widget. */
-const fieldRow = (node: FieldNode, entry: ControlEntry, ctx: Emit): ControlEntry => (
-  node.field === MODAL_INLINE_SELECT_SLOT_TYPE
-    ? select(
-        { name: node.name, address: node.address, options: (node.options ?? []).map(looksOf) },
+/**
+ * A native field: the engine's own widget, standing in the face's place.
+ *
+ * Each kind names the row it mounts and what that row reads; the mechanism is
+ * the same for all five, which is what makes them one socket rather than five.
+ * A chooser is the exception — it shows every option at once, so it is placed
+ * rather than mounted.
+ */
+const nativeField = (node: IrNode, entry: ControlEntry, ctx: Emit): ControlEntry => {
+  switch (node.kind) {
+    case 'select':
+      return select(
+        { name: node.name, address: node.address, options: node.options.map(looksOf) },
         entry,
         ctx,
-      )
-    : field(
-        { name: node.name, address: node.address, definition: ROW[node.field] ?? '', props: fieldProps(node, ctx) },
-        entry,
-        ctx,
-      ));
+      );
+
+    case 'toggle':
+      return field({ name: node.name, address: node.address, ...toggleWidget(node) }, entry, ctx);
+
+    case 'slider':
+      return field({ name: node.name, address: node.address, ...sliderWidget(node) }, entry, ctx);
+
+    case 'input':
+      return field({ name: node.name, address: node.address, ...inputWidget(node) }, entry, ctx);
+
+    case 'dropdown':
+      return field({ name: node.name, address: node.address, ...dropdownWidget(node, ctx.ns) }, entry, ctx);
+
+    default:
+      throw new Error(`The modal has no widget for a "${node.kind}", which asked for a field.`);
+  }
+};
 
 export const FORM_EMIT: HostEmit = {
   id: 'form',
@@ -167,7 +151,7 @@ export const FORM_EMIT: HostEmit = {
     list: (node: ListNode, entry, ctx): ControlEntry =>
       list({ address: node.countEntry, initial: node.initial, max: node.rows.length }, entry, ctx),
 
-    field: fieldRow,
+    field: nativeField,
 
     texture: (node: ImageNode, entry, ctx): ControlEntry =>
       texture({ name: node.name, address: node.address ?? 0, definition: TEXTURE_DEF }, entry, ctx),

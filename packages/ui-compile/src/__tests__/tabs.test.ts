@@ -3,7 +3,10 @@ import { Panel, Screen as ScreenRoot, Tabs, Text } from '@bedrock-core/ui-runtim
 import { describe, expect, it } from 'vitest';
 import { compileFormScreen } from '../hosts/form/compile';
 import type { Control } from '../jsonui';
-import { definition, eachControl } from '../__fixtures__/helpers';
+import { defs, eachControl } from '../__fixtures__/helpers';
+
+const header = (background: string, caption: string): JSX.Element =>
+  Panel({ background, children: Text({ children: caption }) });
 
 /** Two panes, so a swap has something to swap to. */
 const Screen = (): JSX.Element => ScreenRoot({ children: Panel({
@@ -12,8 +15,16 @@ const Screen = (): JSX.Element => ScreenRoot({ children: Panel({
     height: 120,
     tabHeight: 20,
     children: [
-      Tabs.Tab({ label: 'One', background: 'a', backgroundSelected: 'a_on', children: Text({ children: 'first' }) }),
-      Tabs.Tab({ label: 'Two', background: 'b', backgroundSelected: 'b_on', children: Text({ children: 'second' }) }),
+      Tabs.Tab({
+        header: header('a', 'One'),
+        headerSelected: header('a_on', 'One'),
+        children: Text({ children: 'first' }),
+      }),
+      Tabs.Tab({
+        header: header('b', 'Two'),
+        headerSelected: header('b_on', 'Two'),
+        children: Text({ children: 'second' }),
+      }),
     ],
   }),
 }) });
@@ -32,6 +43,15 @@ const toggles = (): Control[] => {
   return found;
 };
 
+/** The definition a state mounts, by the `look@ns.name` reference inside it. */
+const lookOf = (toggle: Control, state: string): Control => {
+  const entry = (toggle.controls ?? []).find(row => state in row);
+  const mount = Object.keys((entry?.[state]?.controls ?? [])[0] ?? {})[0] ?? '';
+  const name = mount.split('@')[1]?.replace('a_tabbed.', '') ?? '';
+
+  return defs(compiled.document)[name] ?? {};
+};
+
 describe('compiling Tabs', () => {
   it('emits one exclusive group, so picking a tab unpicks the others', () => {
     const group = toggles();
@@ -40,15 +60,25 @@ describe('compiling Tabs', () => {
     expect(group.every(toggle => toggle.radio_toggle_group === true)).toBe(true);
 
     // One name for the group, and a distinct forced index per tab: two `<Tabs>`
-    // on one screen must never pick each other's tabs.
+    // on one screen must never pick each other's tabs. The group is the first
+    // swap's, which is what makes exclusive siblings one group with nothing
+    // naming it.
     expect(new Set(group.map(toggle => toggle.toggle_name)).size).toBe(1);
     expect(group.map(toggle => toggle.toggle_group_forced_index)).toEqual([0, 1]);
   });
 
+  it('shares the width evenly, so the headers tile the row', () => {
+    const [first, second] = toggles();
+
+    expect(first?.size).toEqual([150, 20]);
+    expect(second?.size).toEqual([150, 20]);
+    expect(first?.offset).toEqual([0, 0]);
+    expect(second?.offset).toEqual([150, 0]);
+  });
+
   it('defines all eight states, which is what stops a tab vanishing on hover', () => {
-    // A toggle draws the ONE child its current state names, so
-    // a state left undefined is a control that disappears the moment the
-    // pointer touches it.
+    // A toggle draws the ONE child its current state names, so a state left
+    // undefined is a control that disappears the moment the pointer touches it.
     for (const toggle of toggles()) {
       const named = [
         toggle.checked_control, toggle.unchecked_control,
@@ -70,53 +100,72 @@ describe('compiling Tabs', () => {
     }
   });
 
-  it('puts the pane INSIDE the checked states and nowhere else', () => {
-    // This is what makes the group client-only. A pane gated as a SIBLING would
-    // need something outside the toggle to observe the state — and then the
-    // state would have to be reported, which is the cost tabs exist to avoid.
-    for (const toggle of toggles()) {
-      for (const entry of toggle.controls ?? []) {
-        const [name] = Object.keys(entry);
-        const [face] = Object.values(entry);
-        const children = (face?.controls ?? []).map(child => Object.keys(child)[0] ?? '');
-        const hasPane = children.some(child => child.startsWith('pane@'));
+  it('puts the pane INSIDE the checked look and nowhere else', () => {
+    // This is what makes the group client-only, and what keeps a pane that is
+    // not showing from being BUILT: a pane gated as a sibling would need
+    // something outside the toggle to observe the state, and it would be
+    // constructed either way.
+    const [first, second] = toggles();
 
-        expect(hasPane, `${name ?? ''} should ${name?.startsWith('checked') === true ? '' : 'not '}hold the pane`)
-          .toBe(name?.startsWith('checked') === true);
+    expect(JSON.stringify(lookOf(first ?? {}, 'checked'))).toContain('first');
+    expect(JSON.stringify(lookOf(first ?? {}, 'unchecked'))).not.toContain('first');
+    expect(JSON.stringify(lookOf(second ?? {}, 'checked'))).toContain('second');
+    expect(JSON.stringify(lookOf(second ?? {}, 'unchecked'))).not.toContain('second');
+  });
+
+  it('re-bases each pane into its own tab, so both fill the box below the headers', () => {
+    // The pane is drawn after the header inside the look, which is where the
+    // compile put it when it took it out of the sibling list.
+    const paneOf = (toggle: Control): Control => {
+      const rows = lookOf(toggle, 'checked').controls ?? [];
+
+      return Object.values(rows[rows.length - 1] ?? {})[0] ?? {};
+    };
+
+    const [first, second] = toggles();
+
+    // Solved beside the headers at (0, 20), then moved into a swap that sits at
+    // x = 0 and x = 150: the same 300x100 box either way.
+    expect(paneOf(first ?? {}).size).toEqual([300, 100]);
+    expect(paneOf(first ?? {}).offset).toEqual([0, 20]);
+    expect(paneOf(second ?? {}).size).toEqual([300, 100]);
+    expect(paneOf(second ?? {}).offset).toEqual([-150, 20]);
+  });
+
+  it('leaves no pane beside the headers, since each was taken into a look', () => {
+    // A pane left in the sibling list would be drawn outside every toggle,
+    // which is the one place it must never be: visible whichever tab is chosen.
+    // The group holds its two headers and nothing else.
+    let group: Control | undefined;
+
+    eachControl(compiled.document, (_name, control) => {
+      if ((control.controls ?? []).some(entry => Object.values(entry)[0]?.type === 'toggle')) {
+        group = control;
       }
+    });
+
+    expect(group?.controls).toHaveLength(2);
+    expect((group?.controls ?? []).every(entry => Object.values(entry)[0]?.type === 'toggle')).toBe(true);
+  });
+
+  it('emits each look once, named by every state that draws it', () => {
+    for (const toggle of toggles()) {
+      const mounted = ['checked', 'checked_hover', 'checked_locked', 'checked_locked_hover']
+        .map(state => JSON.stringify(lookOf(toggle, state)));
+
+      expect(new Set(mounted).size).toBe(1);
     }
   });
 
-  it('emits each pane once, referenced by both checked states', () => {
-    expect(definition(compiled.document, 'tab_1_pane')).toBeDefined();
-    expect(definition(compiled.document, 'tab_2_pane')).toBeDefined();
-    expect(JSON.stringify(compiled.document)).toContain('first');
-    expect(JSON.stringify(compiled.document)).toContain('second');
-  });
-
-  it('carries both faces through, so the chosen tab is not drawn blank', () => {
+  it('carries both looks through, so the chosen tab is not drawn blank', () => {
     // `withControl` returns only the props it knows, so a component prop that
-    // rides through it is dropped in silence — which is exactly how the
-    // selected face went missing and every chosen tab drew as nothing. A
-    // missing texture does not warn; it is simply not there.
-    const json = JSON.stringify(compiled.document);
+    // rides through it is dropped in silence — a missing texture does not warn,
+    // it is simply not there.
+    const [first, second] = toggles();
 
-    expect(json).toContain('a_on');
-    expect(json).toContain('b_on');
-    expect(json).toContain('"a"');
-    expect(json).toContain('"b"');
-  });
-
-  it('shows the selected face only while its tab is chosen', () => {
-    for (const toggle of toggles()) {
-      for (const entry of toggle.controls ?? []) {
-        const [name] = Object.keys(entry);
-        const [face] = Object.values(entry);
-        const texture = String(JSON.stringify(face?.controls?.[0] ?? {}));
-        const chosen = name?.startsWith('checked') === true;
-
-        expect(texture.includes('_on'), `${name ?? ''} face`).toBe(chosen);
-      }
-    }
+    expect(JSON.stringify(lookOf(first ?? {}, 'checked'))).toContain('a_on');
+    expect(JSON.stringify(lookOf(first ?? {}, 'unchecked'))).toContain('"a"');
+    expect(JSON.stringify(lookOf(second ?? {}, 'checked'))).toContain('b_on');
+    expect(JSON.stringify(lookOf(second ?? {}, 'unchecked'))).toContain('"b"');
   });
 });

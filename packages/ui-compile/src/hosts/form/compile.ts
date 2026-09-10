@@ -8,7 +8,7 @@ import { checkLiveness, previewOf } from '../../compile';
 import { BACKDROP_DEFINITION, type FaceDocument, faceOf, facesNamespaceOf, type Preview } from '../../face';
 import { fill } from '../../fill';
 import type { Control, Document } from '../../jsonui';
-import { MODAL_COLLECTION } from '../../nodes/primitives/field';
+import { MODAL_COLLECTION } from '../../connectors/form';
 import type { Addressing } from '../../nodes/utils/types';
 import { toIr } from '../../toIr';
 import { FORM_EMIT } from './emit';

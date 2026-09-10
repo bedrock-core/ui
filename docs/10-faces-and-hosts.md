@@ -82,45 +82,59 @@ ControlEntry`: the same shape, one host, and free only to wrap or replace what i
 the rect guard below proves it moved nothing. Children reach a face already drawn, so no
 recursion crosses two layers.
 
-`nodes/` sorts into `primitives/`, `compositions/` and `utils/`: a primitive is one JSON UI
-control type with its static props, a composition is client logic built out of primitives, and
-the utilities are what more than one lowering reads off an element.
+`nodes/` holds `primitives/` and `utils/` and nothing else. Every kind is one JSON UI control
+type with its static props; the utilities are what more than one lowering reads off an element.
+There is no composition layer in the compile — a composition is a component, built out of these.
 
 ### Behaviours
 
-*Phase B3.* Five node kinds are still compositions inside the compile — `tabs`, `tab`,
-`disclosure`, `disclosureHeader`, `list` — each carrying its client logic as a special case of
-its own. They belong in the component layer, which first needs that logic to be something any
-primitive can carry:
+A behaviour is client-only logic a primitive carries: still static, still in the face document,
+never a mechanism. Four of them, and between them they are every switch the library has.
 
-| Behaviour | What it is | Today |
+| Behaviour | What it is | Where |
 | --- | --- | --- |
-| `route` | a button's mappings: close, submit, form click | done — `action` on the `button` primitive |
-| `group` | toggles that swap exclusively, one forced index each | in `faces/utils/swap.ts`, reachable only through `tabsFace` |
-| `states` | which children a control draws per state | the same module, the same limit |
-| `follows` | a sibling drawn from another control's state | the same module, reachable only through `disclosureFace` |
+| `route` | a button's mappings: close, submit, form click | `action` on the `button` primitive |
+| `group` | swaps that move together, one forced index each | `group` on the `swap` primitive |
+| `states` | which children a control draws per state | the `look` primitive, one per state |
+| `follows` | a sibling drawn while a swap beside it is on | `follows`, on any node at all |
 
-Nothing client-side is lost by moving up, because none of the four needs the server: a swap is
-the one mechanism a compiled screen owns outright, and each composition is a swap plus a
-placement. `Tabs` is a group whose panes sit in each toggle's checked state; `Disclosure` is
-`follows` on a stack, which is what the faces layer already draws — `disclosureFace` takes the
-swap's name and the rows read it, so no behaviour of its own; `List` is a stack whose rows a
-count mechanism gates, and the count is a mechanism already. The one thing a composition may
-not do is read a swap back: nothing outside the toggle learns which look is showing, on any
-host, which is the limit these kinds have today.
+A swap is the one mechanism a compiled screen owns outright: a toggle changes its own content
+with nothing reaching script, on the pack's own form mount and under the modification-inserted
+chest mount alike. So everything built on it is free — a tab change, a fold, a choice between
+options costs no press, no re-present and no payload.
+
+Content a swap shows lives INSIDE the look, which is what keeps it client-only and what keeps a
+look that is not showing from being BUILT — an engine field behind a gate that reads a
+collection row which is not there is an assertion, so this is not only an optimisation. Two
+things follow from that:
+
+- A look may DRAW a sibling of its swap, which the compile moves inside it, re-based from the
+  swap's own corner. For content too big to be solved inside the control that switches to it: a
+  tab's pane is the whole box below the headers.
+- `follows` is the one read in the other direction, for the one case that cannot nest: a fold's
+  rows have to reflow what is under them, and content inside a look has no say over its
+  siblings. A stack gives a hidden child no space, which is the reflow.
+
+`Tabs` and `Disclosure` are therefore components — a group of swaps whose panes are drawn, and
+one swap with a panel that follows it. `List` needs none of this: it is a stack whose rows a
+count mechanism gates, and the count is a mechanism already.
+
+Everything crossing siblings — the group an exclusive swap joins, the swap a `follows` names,
+the sibling a look draws — is resolved in the one walk that has the sibling list, because
+nothing inside a node can see what sits beside it.
 
 ### Fields are primitives
 
-*Decided.* A modal field is two halves and they belong in two layers. An input is a primitive
-like any other and has a face — a box, a placeholder, a style — that draws on any screen and in
-the gallery. What makes it a *modal* field is the connector: `connectors/form/input.ts` places
-the engine's own widget and tells it which row it is, and the modal is the only host that has
-one. A host with no connector for a kind refuses it by name, which is the mechanism table
-below.
+A modal field is two halves and they belong in two layers. An input is a primitive like any
+other and has a face — a box, a placeholder, a style — that draws on any screen and in the
+gallery. What makes it a *modal* field is the connector: `connectors/form/widget.ts` names the
+row the engine's own widget is mounted from and what that row reads, and the modal is the only
+host that has one. A host with no connector for a kind refuses it by name, which is the
+mechanism table below.
 
-So `field` splits along the line the faces already draw: one primitive per kind, with the
-modal's wiring in `connectors/form/`. The interpreter's field wrappers are a modal-host detail
-and go with it.
+So `field` is five primitives — `toggle`, `slider`, `input`, `dropdown`, `select` — each
+carrying its own look, the row it answers on, and the variables its widget reads. The
+interpreter's field wrappers are a modal-host detail and live with the connector.
 
 ## The host pass
 
@@ -286,7 +300,7 @@ what landed.
 | A4 | **Visual pass** ✅ | starts from a clean slate: every demo screen in the reference pack's BP is deleted, and one screen per family is written from scratch as that family is signed off in game, fixes in `ore-styled` only. Families: a chest screen; guide home and one page; the config screens (scope, menu, list, picker, confirm, editor); the addon list and one addon page, with `Embed` reworked to the area (above); one modal with every field kind; one action form with a list and a scroll | 3 days |
 | B1 | **Host roots** ✅ | `<Screen>`; `render` and `createContainerScreen` refuse non-host roots; `hostFor` throws instead of falling through | 0.5 day |
 | B2 | **One component set** | the mechanism table per host in place of the flat `offers` list; the modal lowers the plain set to native fields; host-specific props typed by the root or an expected-host marker; `Form.*` internal and the `ore-styled` duplicates removed | 2.5 days |
-| B3 | **The node layer** | `group`, `states` and `follows` attachable to any primitive; `Tabs`, `Disclosure` and `List` rebuilt on them in the component layer; `field` split into primitives | 3 days |
+| B3 | **The node layer** ✅ | `swap` and `look` primitives with `group`, `states`, `follows` and a look that draws a sibling; `Tabs` and `Disclosure` rebuilt on them as components; `field` split into five primitives with the modal's wiring in its connector | 3 days |
 | C | **References** | `<Link to>`; the reference feed and `navigate('<ns>:<screen>')`; guides on it, `createGuide` deleted; generated key types | 5 days |
 | D | **Delete the interpreter** | numbers as sliders on the config editor; serializer, writers, presenters and decoders deleted; state values readonly; pack minor | 3 days |
 | E | **Build flow and the book** | the CLI template on the `core` filter; the docs site replaces this folder; then the book host, drawn from faces alone | after D |

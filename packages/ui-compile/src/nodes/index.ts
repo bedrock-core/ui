@@ -7,16 +7,19 @@
  */
 
 import { buttonDefinition } from './primitives/button';
-import { disclosureDefinition, disclosureHeaderDefinition } from './compositions/disclosure';
 import { embedDefinition } from './primitives/embed';
-import { fieldDefinition } from './primitives/field';
+import { dropdownDefinition } from './primitives/dropdown';
+import { inputDefinition } from './primitives/input';
+import { selectDefinition } from './primitives/select';
+import { sliderDefinition } from './primitives/slider';
+import { toggleDefinition } from './primitives/toggle';
 import { gridDefinition } from './primitives/grid';
 import { imageDefinition } from './primitives/image';
 import { listDefinition } from './primitives/list';
 import { panelDefinition } from './primitives/panel';
 import { scrollDefinition } from './primitives/scroll';
 import { slotDefinition } from './primitives/slot';
-import { tabDefinition, tabsDefinition } from './compositions/tabs';
+import { lookDefinition, swapDefinition } from './primitives/swap';
 import { textDefinition } from './primitives/text';
 import type { IrNode, NodeDefinition, Socket, SocketKind } from './utils/types';
 
@@ -29,12 +32,14 @@ export const NODE_DEFINITIONS: readonly NodeDefinition<any>[] = [
   gridDefinition,
   buttonDefinition,
   scrollDefinition,
-  tabsDefinition,
-  tabDefinition,
-  disclosureDefinition,
-  disclosureHeaderDefinition,
+  swapDefinition,
+  lookDefinition,
   listDefinition,
-  fieldDefinition,
+  toggleDefinition,
+  sliderDefinition,
+  inputDefinition,
+  dropdownDefinition,
+  selectDefinition,
   embedDefinition,
 ];
 

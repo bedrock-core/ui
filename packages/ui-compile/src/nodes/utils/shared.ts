@@ -7,8 +7,10 @@
  * belongs to that host's connector.
  */
 
+import type { JSX } from '@bedrock-core/ui-runtime';
 import type { Box } from '../../faces';
 import type { Control, ControlEntry } from '../../jsonui';
+import type { IrNode } from './types';
 import type { Rect } from './types';
 
 /** A literal inside a JSON UI expression is single-quoted. */
@@ -37,6 +39,35 @@ export const layerOf = (node: { layer?: number }): { layer?: number } =>
 /** Emitted only when the author hid the control, since visible is the default. */
 export const visibilityOf = (node: { visible?: boolean }): { visible?: false } =>
   node.visible === false ? { visible: false } : {};
+
+/**
+ * What an element writes when the swap it follows is the one before it: the
+ * lowering fills in that swap's id, because nothing inside a node can see its
+ * own siblings.
+ */
+export const FOLLOWS_PREVIOUS = '\u0000previous';
+
+/** The swap this element follows, by name or as the one before it. */
+export const followsOf = (props: JSX.Props): { follows?: string } => {
+  if (props.follows === true) {
+    return { follows: FOLLOWS_PREVIOUS };
+  }
+
+  return typeof props.follows === 'string' ? { follows: props.follows } : {};
+};
+
+/**
+ * Whether this node's height changes at runtime, so a stack above it has to
+ * reflow rather than reserve the height the layout solved.
+ *
+ * A node that follows a swap is the case: it is drawn only while that swap is
+ * on, and a stack gives a hidden child no space. It travels up through the
+ * stacks that hold it, because a fold nested two panels deep still moves what
+ * is under those panels.
+ */
+export const collapses = (node: IrNode): boolean =>
+  node.follows !== undefined
+  || (node.kind === 'panel' && node.stack === true && node.children.some(collapses));
 
 /** A collection name, made safe to sit in a definition name and a reference. */
 export const collectionKey = (collection: string): string => collection.replaceAll(/[^A-Za-z0-9_]/g, '_');

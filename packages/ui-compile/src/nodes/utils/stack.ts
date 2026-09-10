@@ -1,5 +1,5 @@
 import type { ControlEntry } from '../../jsonui';
-import { topLeft } from './shared';
+import { collapses, topLeft } from './shared';
 import type { FaceEmit, IrNode } from './types';
 
 /**
@@ -29,7 +29,7 @@ export const stackRows = (children: readonly IrNode[], width: number, ctx: FaceE
       // open, so its row is content-sized and the gap after it is a spacer of
       // its own — otherwise the row would hold the open height and nothing
       // below would move.
-      if (child.kind === 'disclosure') {
+      if (collapses(child)) {
         const gap = pitch - child.rect.height;
         const spacer: ControlEntry = { [`${child.name}_gap`]: { type: 'panel', size: [width, gap], ...topLeft } };
 
