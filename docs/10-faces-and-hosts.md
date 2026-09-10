@@ -44,8 +44,8 @@ prop ([03-ir](./03-ir.md)). Output: the faces file and one face document per scr
 
 - **A face** is a node's look with its static props: the four textures of a button face, a
   label's font and scale, a cell frame, a nineslice. Faces are deduplicated by a signature over
-  the props that reach JSON UI, generalising today's `faceSignature` (`nodes/button.ts`) and
-  `textSignature` (`nodes/text.ts`) to every node kind. A screen references a face by name
+  the props that reach JSON UI: `faceSignature` (`nodes/primitives/button.ts`) and
+  `textSignature` (`nodes/primitives/text.ts`) are the shape every node kind follows. A screen references a face by name
   and overrides nothing at runtime; a static prop that differs between two uses is two faces.
 - **A socket** is a node with at least one carried prop or one input: a button with a press,
   a label whose text is live, a slot, a native field, a subtree with a carried `visible`. The
@@ -66,30 +66,61 @@ prop ([03-ir](./03-ir.md)). Output: the faces file and one face document per scr
   buttons. Each is added as a component prop the face bakes, and each lands in the visual
   pass (A4) as the first place it is seen. `Text align` is first.
 
-## The node layer: primitives, behaviours, mechanisms
+## The compile's three layers
 
-*Proposed.* The compile's node kinds are the last layer before JSON UI, so they should be
-JSON UI's own vocabulary and nothing above it. Today they are not: `tabs`, `disclosure`,
-`list`, `exit` and `modal_button` are compositions with client logic in them, and each carries
-that logic as a special case. Three layers instead:
+*Decided.* The stretch between the IR and the JSON UI is three directories, each a pure step
+and each testable without the other two.
 
-| Layer | Holds | Examples |
+| Layer | Takes | Gives | Knows |
+| --- | --- | --- | --- |
+| **`faces/`** | plain data: a rect, textures, a style, children already drawn | one `ControlEntry` — the look, written as JSON UI | nothing else. No host, no context, no address |
+| **`connectors/`** | that face, plus the address the host allocated | the control that stands in the face's place | one host each. `connectors/form` and `connectors/chest` are separate entry points, since both export a `press` and a `text` |
+| **`nodes/`** | a JSX element | an IR node, and the mechanism that node needs | the IR, and what each kind *is* |
+
+A face is `(data) => ControlEntry` and a connector is its mirror, `(data, face, ctx) =>
+ControlEntry`: the same shape, one host, and free only to wrap or replace what it was handed —
+the rect guard below proves it moved nothing. Children reach a face already drawn, so no
+recursion crosses two layers.
+
+`nodes/` sorts into `primitives/`, `compositions/` and `utils/`: a primitive is one JSON UI
+control type with its static props, a composition is client logic built out of primitives, and
+the utilities are what more than one lowering reads off an element.
+
+### Behaviours
+
+*Phase B3.* Five node kinds are still compositions inside the compile — `tabs`, `tab`,
+`disclosure`, `disclosureHeader`, `list` — each carrying its client logic as a special case of
+its own. They belong in the component layer, which first needs that logic to be something any
+primitive can carry:
+
+| Behaviour | What it is | Today |
 | --- | --- | --- |
-| **Primitives** | one node kind per JSON UI control type, static props only; a face is a primitive with its props | `panel`, `stack`, `image`, `label`, `button`, `toggle`, `scroll`, `grid`, `slider`, `edit_box`, `dropdown` |
-| **Behaviours** | client-only logic a primitive may carry, still static, still in the face document | `route` (a button's mappings: close, submit, form click), `group` (radio toggles), `states` (per-state children), `follows` (a sibling reading a toggle's state) |
-| **Mechanisms** | what a host stands in for a socket | press, text, texture, slot, grid, field, list count, carried visible |
+| `route` | a button's mappings: close, submit, form click | done — `action` on the `button` primitive |
+| `group` | toggles that swap exclusively, one forced index each | in `faces/utils/swap.ts`, reachable only through `tabsFace` |
+| `states` | which children a control draws per state | the same module, the same limit |
+| `follows` | a sibling drawn from another control's state | the same module, reachable only through `disclosureFace` |
 
-With that, `Tabs` is toggles in a group with panes in their checked state, `Disclosure` is a
-toggle and a stack that follows it, `List` is a stack whose rows a count mechanism gates, a
-close button is a button with the close route, and `Form.Button` is a button with the submit
-route. All of them move up into the component layer as compositions of primitives, and the
-compile shrinks to the primitives and the behaviours it can attach. Every face can then carry
-a behaviour, which is what makes the split honest.
+Nothing client-side is lost by moving up, because none of the four needs the server: a swap is
+the one mechanism a compiled screen owns outright, and each composition is a swap plus a
+placement. `Tabs` is a group whose panes sit in each toggle's checked state; `Disclosure` is
+`follows` on a stack, which is what the faces layer already draws — `disclosureFace` takes the
+swap's name and the rows read it, so no behaviour of its own; `List` is a stack whose rows a
+count mechanism gates, and the count is a mechanism already. The one thing a composition may
+not do is read a swap back: nothing outside the toggle learns which look is showing, on any
+host, which is the limit these kinds have today.
 
-Open: whether `disclosure` earns a behaviour of its own or is only `follows` on a stack, and
-whether the interpreter's field wrappers are primitives or a modal-host detail. Decided with
-phase B, since B reworks the component set; the face pass and the gallery do not depend on
-it.
+### Fields are primitives
+
+*Decided.* A modal field is two halves and they belong in two layers. An input is a primitive
+like any other and has a face — a box, a placeholder, a style — that draws on any screen and in
+the gallery. What makes it a *modal* field is the connector: `connectors/form/input.ts` places
+the engine's own widget and tells it which row it is, and the modal is the only host that has
+one. A host with no connector for a kind refuses it by name, which is the mechanism table
+below.
+
+So `field` splits along the line the faces already draw: one primitive per kind, with the
+modal's wiring in `connectors/form/`. The interpreter's field wrappers are a modal-host detail
+and go with it.
 
 ## The host pass
 
@@ -255,10 +286,10 @@ what landed.
 | A4 | **Visual pass** ✅ | starts from a clean slate: every demo screen in the reference pack's BP is deleted, and one screen per family is written from scratch as that family is signed off in game, fixes in `ore-styled` only. Families: a chest screen; guide home and one page; the config screens (scope, menu, list, picker, confirm, editor); the addon list and one addon page, with `Embed` reworked to the area (above); one modal with every field kind; one action form with a list and a scroll | 3 days |
 | B1 | **Host roots** ✅ | `<Screen>`; `render` and `createContainerScreen` refuse non-host roots; `hostFor` throws instead of falling through | 0.5 day |
 | B2 | **One component set** | the mechanism table per host in place of the flat `offers` list; the modal lowers the plain set to native fields; host-specific props typed by the root or an expected-host marker; `Form.*` internal and the `ore-styled` duplicates removed | 2.5 days |
-| B3 | **The node layer** | primitives and behaviours, with `Tabs`, `Disclosure`, `List`, the close button and `Form.Button` as compositions | 3 days |
+| B3 | **The node layer** | `group`, `states` and `follows` attachable to any primitive; `Tabs`, `Disclosure` and `List` rebuilt on them in the component layer; `field` split into primitives | 3 days |
 | C | **References** | `<Link to>`; the reference feed and `navigate('<ns>:<screen>')`; guides on it, `createGuide` deleted; generated key types | 5 days |
 | D | **Delete the interpreter** | numbers as sliders on the config editor; serializer, writers, presenters and decoders deleted; state values readonly; pack minor | 3 days |
-| E | **Build flow and the book** | the single `core` filter finished; CLI template; the docs site replaces this folder; then the book host, drawn from faces alone | after D |
+| E | **Build flow and the book** | the CLI template on the `core` filter; the docs site replaces this folder; then the book host, drawn from faces alone | after D |
 
 After E: fibers mutate the tree in place instead of rebuilding it per render.
 

@@ -29,15 +29,15 @@ Screens that are *not* discovered (a component handed to `render()` from an ordi
 
 ## One filter
 
-Today: five filters with four ordering rules (`guides` before `i18n`, `ui-compile` after `i18n` and before `bundler`, `generator` excluding `BP/scripts`) and a `namespace` setting repeated in four places. v2 ships **one** filter, `core`, that runs the steps in the only order that works and resolves the namespace once (setting, else the `core.register()` scan):
+One Regolith entry, `core`, runs the whole stack in the only order it supports, with the namespace declared once under `shared`:
 
 ```
 manifest -> generator -> guides -> i18n -> ui-compile -> bundler
 ```
 
-Each step stays its own module inside the filter, with today's README as its section; a project that needs only some steps lists them in the filter's `steps` setting. The individual filters keep resolving from the repository for existing projects until 2.0 of the filters, then are removed.
+Each stage runs in its own Node process out of its own folder, exactly as Regolith would run it — same cwd, same `ROOT_DIR`, same settings JSON, same exit code — so `core` only assembles the settings and enforces the order. Per-stage settings sit under the stage's key and are merged over `shared`; `false` skips a stage; `generator` is opt-in because it writes types into the project. A stage whose inputs are absent reports that it has nothing to do and the run continues, so a project may use part of the stack.
 
-*Decided.* Ships in phase 6 ([09-plan](./09-plan.md)); nothing earlier depends on it.
+A project that needs a filter of its own between two stages lists the six one by one instead and puts its filter where it belongs. The individual filters keep resolving from the repository until 2.0, then are removed.
 
 ## What the build generates
 
