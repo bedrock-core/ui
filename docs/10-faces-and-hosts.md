@@ -203,9 +203,14 @@ re-presents; the chest on the poll that saw the change. That is a property of th
 input kind (`field`, `press`, `slot`) and is documented in the capability matrix, not in the
 component.
 
-`ore-styled` therefore drops its seven `Form.*` pairs and keeps one `Toggle`, one `Checkbox`,
-one `Radio`, one `ToggleButtonGroup`, one `Slider`, one `Dropdown`, one `Input`. `Form`
-remains as the root.
+`ore-styled` therefore ships one `Toggle`, one `Checkbox`, one `Radio`, one
+`ToggleButtonGroup`, one `Slider`, one `Dropdown` and one `Input`, each asking what it becomes
+here. `Form` remains as the root, with the submit button that genuinely is modal-only.
+
+A `Checkbox` is a `Toggle` in a different skin — same boolean, square textures, the caption on
+the other side — so the two share one implementation. `Slider`, `Dropdown` and `Input` have no
+second form at all: no host but the modal offers a mechanism for them, so each is one component
+that refuses elsewhere in that screen's own words.
 
 **Host-specific props, typed by the host.** A component is declared once, with the props every
 host shares. Where one host takes more — the modal's `name` on a field, the chest's `role` on a
@@ -299,7 +304,7 @@ what landed.
 | A3 | **Rect guard** ✅ | the diff after host emit, run inside every compile, so the tests and `yarn preflight` both hit it | 1 day |
 | A4 | **Visual pass** ✅ | starts from a clean slate: every demo screen in the reference pack's BP is deleted, and one screen per family is written from scratch as that family is signed off in game, fixes in `ore-styled` only. Families: a chest screen; guide home and one page; the config screens (scope, menu, list, picker, confirm, editor); the addon list and one addon page, with `Embed` reworked to the area (above); one modal with every field kind; one action form with a list and a scroll | 3 days |
 | B1 | **Host roots** ✅ | `<Screen>`; `render` and `createContainerScreen` refuse non-host roots; `hostFor` throws instead of falling through | 0.5 day |
-| B2 | **One component set** | the mechanism table per host in place of the flat `offers` list; the modal lowers the plain set to native fields; host-specific props typed by the root or an expected-host marker; `Form.*` internal and the `ore-styled` duplicates removed | 2.5 days |
+| B2 | **One component set** ✅ | the mechanism table per host in place of the flat `offers` list; the modal lowers the plain set to native fields; host-specific props typed by the root or an expected-host marker; `Form` keeps only its root and submit button, and `ore-styled` ships one of each control | 2.5 days |
 | B3 | **The node layer** ✅ | `swap` and `look` primitives with `group`, `states`, `follows` and a look that draws a sibling; `Tabs` and `Disclosure` rebuilt on them as components; `field` split into five primitives with the modal's wiring in its connector | 3 days |
 | C | **References** | `<Link to>`; the reference feed and `navigate('<ns>:<screen>')`; guides on it, `createGuide` deleted; generated key types | 5 days |
 | D | **Delete the interpreter** | numbers as sliders on the config editor; serializer, writers, presenters and decoders deleted; state values readonly; pack minor | 3 days |
