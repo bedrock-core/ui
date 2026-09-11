@@ -199,6 +199,7 @@ __metadata:
     "@bedrock-core/i18n": "workspace:*"
     "@bedrock-core/navigation": "workspace:*"
     "@bedrock-core/ore-styled": "workspace:*"
+    "@bedrock-core/server-runtime": "npm:^0.1.0"
     "@bedrock-core/ui": "workspace:*"
     "@eslint/js": "npm:^10.0.1"
     "@eslint/json": "npm:^1.2.0"

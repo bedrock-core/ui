@@ -1,15 +1,24 @@
+import { ui } from '@bedrock-core/config';
 import { openGuide } from '@bedrock-core/guides';
 import { openGallery } from '@bedrock-core/generated/ui';
+import { core } from '@bedrock-core/server-runtime';
 import { render, type PressEvent, type SubmitEvent } from '@bedrock-core/ui';
 import { createContainerScreen } from '@bedrock-core/ui/container';
 import { type Block, ButtonPushAfterEvent, Player, world } from '@minecraft/server';
 import { MinecraftBlockTypes, MinecraftEntityTypes } from '@minecraft/vanilla-data';
+import { config, manifest } from './addon';
 import { i18n } from './i18n';
 import Locker from './screens/locker.screen';
 import { type PlayerRow, playersElement } from './screens/players.screen';
 import { preferencesElement } from './screens/preferences.screen';
 
 const { t } = i18n;
+
+// The declaration: what this addon is, and the settings it has. Its build reads
+// the same call and bakes a config screen per section of the schema, so `ui()`
+// has one to open by the time a player asks for it.
+core.register({ ...manifest, config });
+ui(core);
 
 /**
  * The locker, served: the screen names its entity, the build sized that

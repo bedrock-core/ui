@@ -54,8 +54,7 @@
 					{
 						"filter": "ui-compile",
 						"settings": {
-							"namespace": "core",
-							"screens": ["@bedrock-core/config/compiled"]
+							"namespace": "core"
 						}
 					},
 					{ "filter": "references" },
@@ -88,8 +87,7 @@
 						"settings": {
 							"namespace": "core",
 							"stamp": true,
-							"gallery": true,
-							"screens": ["@bedrock-core/config/compiled"]
+							"gallery": true
 						}
 					},
 					{ "filter": "references" },
