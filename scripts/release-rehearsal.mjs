@@ -2,7 +2,7 @@
 // Release rehearsal: prove the next release resolves on npm without publishing to npm.
 //
 // What it does:
-//   1. Clones the committed state of this repo (and ../server-public if present)
+//   1. Clones the committed state of this repo (and ../server if present)
 //      into a temp dir, preserving the sibling layout the portal: resolutions need.
 //   2. Installs, applies the pending changesets (version-packages), builds.
 //   3. Starts a throwaway Verdaccio registry that proxies registry.npmjs.org.
@@ -17,7 +17,7 @@
 //
 // Usage: node scripts/release-rehearsal.mjs
 //   [--no-server]           rehearse the ui repo alone
-//   [--server-root <path>]  server repo checkout (default: sibling server-public)
+//   [--server-root <path>]  server repo checkout (default: sibling server)
 //   [--publisher changeset|yarn]  publish command to rehearse (default: changeset)
 //   [--port <n>]            registry port (default: 4873)
 //   [--keep]                keep the temp dir for inspection
@@ -36,7 +36,7 @@ const opt = (name, def) => {
 };
 
 const uiRoot = resolve(opt('--ui-root', join(dirname(fileURLToPath(import.meta.url)), '..')));
-const serverRoot = flag('--no-server') ? null : resolve(opt('--server-root', join(uiRoot, '..', 'server-public')));
+const serverRoot = flag('--no-server') ? null : resolve(opt('--server-root', join(uiRoot, '..', 'server')));
 const publisher = opt('--publisher', 'changeset');
 const port = Number(opt('--port', '4873'));
 const registry = `http://localhost:${port}`;
@@ -230,9 +230,9 @@ async function main() {
 	tmp = mkdtempSync(join(tmpdir(), 'bcore-rehearsal-'));
 	log(`temp workspace: ${tmp}`);
 
-	// Sibling names must match the portal: paths (../ui, ../server-public).
+	// Sibling names must match the portal: paths (../ui, ../server).
 	const uiClone = join(tmp, 'ui');
-	const serverClone = serverRoot ? join(tmp, 'server-public') : null;
+	const serverClone = serverRoot ? join(tmp, 'server') : null;
 	log('cloning committed state');
 	cloneRepo(uiRoot, uiClone);
 	if (serverClone) cloneRepo(serverRoot, serverClone);

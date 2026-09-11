@@ -82,10 +82,10 @@
 				"./packages/config/src/*"
 			],
 			"@bedrock-core/server-runtime": [
-				"../server-public/packages/server-runtime/src/index.ts"
+				"../server/packages/server-runtime/src/index.ts"
 			],
 			"@bedrock-core/sync": [
-				"../server-public/packages/sync/src/index.ts"
+				"../server/packages/sync/src/index.ts"
 			]
 		}
 	},

@@ -31,15 +31,15 @@ jobs:
 
       # ── PREREQUISITE: @bedrock-core/server-runtime ────────────────────────────
       # `guides` + `config` depend on @bedrock-core/server-runtime, resolved
-      # locally via `resolutions` → portal:../server-public. That package is NOT
+      # locally via `resolutions` → portal:../server. That package is NOT
       # yet on npm and the sibling repo is absent in CI, so `yarn install` below
       # FAILS until one of these is done:
       #   (1) Publish @bedrock-core/server-runtime (+ sync) to npm and drop the
       #       two portal: entries from the root package.json "resolutions".
-      #   (2) Check out server-public alongside this repo. The portal is
-      #       `../server-public` (a sibling ABOVE the workspace), so both repos
+      #   (2) Check out server alongside this repo. The portal is
+      #       `../server` (a sibling ABOVE the workspace), so both repos
       #       must share a parent: change the checkout above to `path: ui`, add a
-      #       second `actions/checkout` with `path: server-public`, and set
+      #       second `actions/checkout` with `path: server`, and set
       #       `working-directory: ui` on every step below.
       # This workflow cannot go green until the blocker is resolved.
 
