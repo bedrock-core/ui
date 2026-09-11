@@ -1,6 +1,5 @@
 // Component utilities
 export { withControl, type ControlProps } from './control';
-export { type ModalFieldProps } from './modalField';
 
 export {
   type AlignContent, type AlignItems, type AlignSelf,
@@ -16,7 +15,6 @@ export {
   Container, CONTAINER_TYPE, containerEntity, containerHandlers,
   type ContainerHandlers, type ContainerProps,
 } from './Container';
-export { Dropdown, type DropdownProps } from './Dropdown';
 export { Expect, EXPECT_SLOT_TYPE, expectedHost, type ExpectProps } from './Expect';
 export {
   Form, ModalContext, MODAL_FORM_SLOT_TYPE,
@@ -32,10 +30,8 @@ export {
   Embed, EMBED_SLOT_TYPE, embedMarker, embedPlacementOf, EmbedSlots, embedSlotIndex, embedSlotValue, entryBaseOf, isEmbedRoot, isEmbedSlot,
   type EmbedArea, type EmbedFrame, type EmbedPlacement, type EmbedProps, type EmbedSlotsProps,
 } from './Embed';
-export { Input, type InputProps } from './Input';
 export { Hotbar, PlayerInventory } from './Inventory';
 export { List, LIST_SLOT_TYPE, listCapacity, listCount, type ListProps } from './List';
-export { Slider, type SliderProps } from './Slider';
 export { Panel, PANEL_TYPE, type PanelProps } from './Panel';
 export { Tabs, DEFAULT_TAB_HEIGHT } from './Tabs';
 export type { TabsProps, TabProps } from './Tabs';

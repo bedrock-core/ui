@@ -32,9 +32,9 @@ export interface FormResponse {
 }
 
 // ─── Controllable ModalFormData.show responses (for tests) ──────────────────────
-// showModalForm constructs its own ModalFormData, so tests can't reach the
-// instance. Enqueue responses here; each show() dequeues one (falling back to a
-// confirmed-empty response).
+// A modal is created inside the present, so a test cannot reach the instance.
+// Enqueue responses here; each show() dequeues one, falling back to a
+// confirmed-empty response.
 
 let modalResponseQueue: ModalFormResponse[] = [];
 
