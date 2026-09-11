@@ -2,7 +2,7 @@
 	"name": "@bedrock-core/ui-resource-pack",
 	"version": "1.0.1",
 	"private": true,
-	"description": "Test addon and reference implementation for @bedrock-core/ui library",
+	"description": "The @bedrock-core/ui render pack: the JSON UI hosts, shapes and faces every addon draws through",
 	"main": "main.js",
 	"scripts": {
 		"regolith-install": "regolith install-all",
@@ -18,13 +18,9 @@
 		"@bedrock-core/i18n": "workspace:*",
 		"@bedrock-core/navigation": "workspace:*",
 		"@bedrock-core/ore-styled": "workspace:*",
-		"@bedrock-core/server-runtime": "^0.1.0",
 		"@bedrock-core/ui": "workspace:*",
-		"@minecraft/common": "1.3.0",
-		"@minecraft/math": "2.4.0",
 		"@minecraft/server": "2.8.0",
-		"@minecraft/server-ui": "2.1.0",
-		"@minecraft/vanilla-data": "1.26.32"
+		"@minecraft/server-ui": "2.1.0"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",

@@ -1,35 +1,8 @@
 /**
- * This addon's text, TS-first — the i18n filter turns this into
- * RP/texts/en_US.lang (keys prefixed `core.`), the runtime bundle, and the
- * types behind `t($ => $.…)`. This DEFAULT locale's shape is the contract:
- * every other locale file must carry exactly these paths.
+ * This pack declares no text of its own: everything it draws is the framework's,
+ * and those strings live in the packages it is built from. The file still has to
+ * exist — the i18n filter reads the default locale's shape to know which locales
+ * a pack has, and it is what collects the library and guide keys into
+ * RP/texts/en_US.lang and the runtime bundle.
  */
-export default {
-  ui: {
-    players: {
-      title: 'Players online',
-      visit: 'Visit',
-      count: '{{count}} online',
-    },
-
-    preferences: {
-      title: 'Preferences',
-      nickname: 'Nickname',
-      nicknamePlaceholder: 'shown above your head',
-      coordinates: 'Show coordinates',
-      tips: 'Show tips',
-      volume: 'Music volume',
-      team: 'Team',
-      view: 'View',
-      viewFirst: 'First person',
-      viewThird: 'Third person',
-      difficulty: 'Difficulty',
-      difficultyEasy: 'Easy',
-      difficultyNormal: 'Normal',
-      difficultyHard: 'Hard',
-      save: 'Save',
-      cancel: 'Cancel',
-      saved: 'Preferences saved',
-    },
-  },
-} as const;
+export default {} as const;

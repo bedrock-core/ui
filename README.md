@@ -97,7 +97,7 @@ Everything below is covered in depth at https://bedrock-core.drav.dev/
 - [CLI](https://bedrock-core.drav.dev/docs/ui/cli) — project scaffolding
 - [Server packages](https://bedrock-core.drav.dev/docs/server/get-started/overview) — cross-addon registry, config and transport
 
-The [resource-pack](./packages/resource-pack/README.md) workspace is the reference addon: every component and hook has a working screen in it.
+The [resource-pack](./packages/resource-pack/README.md) workspace is the render pack itself: the JSON UI hosts and shapes every addon draws through, plus the framework’s own screens.
 
 ## 🤝 Contributing
 
