@@ -1,0 +1,89 @@
+{
+	// Inline select (radio group / toggle-button group): reuses the native dropdown()
+	// machinery but renders the options INLINE (no popup); rows self-position from the
+	// flex geometry packed into each option blob.
+	"namespace": "core_ui_form_components",
+	"inline_dropdown_toggle_stub": {
+		"type": "panel",
+		"size": [0, 0],
+		"visible": false
+	},
+	// ── The compiled row toggle ─────────────────────────────────────────────────────
+	// A compiled inline select places its rows itself: each is this toggle at the rect
+	// the build solved, carrying its `collection_index` in custom_dropdown and its four
+	// looks as literal state children. Every variable toggle_base's bindings read is
+	// fixed HERE — a $variable set where a compiled screen mounts a control does not
+	// reach the bindings of the definition it references — so the mount carries only
+	// literals: the row, the rect, the faces.
+	"compiled_option_toggle@core_ui_form_components.toggle_base": {
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"layer": 2,
+		"$radio_toggle_group": true,
+		"$toggle_name": "custom_dropdown_radio_toggle",
+		"$toggle_binding_type": "collection",
+		"$toggle_binding_condition": "always",
+		"$toggle_grid_collection_name": "custom_dropdown",
+		"$toggle_state_binding_name": "#custom_radio_toggled",
+		"$toggle_details_binding_type": "collection_details"
+	},
+	"inline_bullet": {
+		"type": "panel",
+		"size": [1, 1],
+		"anchor_from": "left_middle",
+		"anchor_to": "left_middle",
+		"layer": 11,
+		"$bullet_skip|default": "('%.839s' * #custom_radio_text)",
+		"controls": [ { "bullet_box@core_ui_form_components.inline_bullet_box": { "$bullet_skip": "$bullet_skip" } } ]
+	},
+	"inline_bullet_box": {
+		"type": "panel",
+		"size": [0, 0],
+		"anchor_from": "left_middle",
+		"anchor_to": "left_middle",
+		"$bullet_skip|default": "('%.839s' * #custom_radio_text)",
+		"property_bag": {
+			"#size_binding_x": 0,
+			"#size_binding_y": 0
+		},
+		"bindings": [
+			{
+				"binding_name": "#custom_radio_text",
+				"binding_type": "collection",
+				"binding_condition": "always",
+				"binding_collection_name": "custom_dropdown"
+			},
+			{ "binding_type": "collection_details" },
+			{ "binding_type": "view", "source_property_name": "('%.1337s' * #custom_radio_text)", "target_property_name": "#skip_bullet_w", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_bullet_w)", "target_property_name": "#rem_bullet_w", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_bullet_w)", "target_property_name": "#raw_bullet_w", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_bullet_w) - ('%.2s' * #raw_bullet_w) - ';') * 1)", "target_property_name": "#size_binding_x", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "('%.1420s' * #custom_radio_text)", "target_property_name": "#skip_bullet_h", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_bullet_h)", "target_property_name": "#rem_bullet_h", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_bullet_h)", "target_property_name": "#raw_bullet_h", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_bullet_h) - ('%.2s' * #raw_bullet_h) - ';') * 1)", "target_property_name": "#size_binding_y", "binding_condition": "visible" }
+		],
+		"controls": [ { "img@core_ui_form_components.inline_bullet_img": { "$bullet_skip": "$bullet_skip" } } ]
+	},
+	"inline_bullet_img": {
+		"type": "image",
+		"size": ["100%", "100%"],
+		"$bullet_skip|default": "('%.839s' * #custom_radio_text)",
+		"texture": "#texture",
+		"visible": "#visible",
+		"bindings": [
+			{
+				"binding_name": "#custom_radio_text",
+				"binding_type": "collection",
+				"binding_condition": "always",
+				"binding_collection_name": "custom_dropdown"
+			},
+			{ "binding_type": "collection_details" },
+			{ "binding_type": "view", "source_property_name": "$bullet_skip", "target_property_name": "#skip_texture", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "(#custom_radio_text - #skip_texture)", "target_property_name": "#rem_texture", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_texture)", "target_property_name": "#raw_texture", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "(('%.82s' * #raw_texture) - ('%.2s' * #raw_texture) - ';')", "target_property_name": "#texture", "binding_condition": "visible" },
+			{ "binding_type": "view", "source_property_name": "(not (#texture = ''))", "target_property_name": "#visible", "binding_condition": "visible" }
+		]
+	}
+}

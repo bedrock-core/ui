@@ -1,0 +1,91 @@
+{
+	// ─────────────────────────────────────────────────────────────────────────────
+	// Native ModalForm custom_form renderer. The factory below maps each custom_form
+	// entry's type to its component router (toggle / slider / input / dropdown wired;
+	// header/divider still routed to core_ui_common.unused pending their pass).
+	//
+	// Each component decodes its own geometry from #custom_text (header 9 → type 83 →
+	// width 83 → height 83 → x 83 → y 83) into the property_bag the engine maps to size +
+	// anchored offset (use_anchored_offset), and self-hides unless the decoded #type
+	// matches its slot type (modal-toggle / modal-slider / modal-input / modal-dropdown).
+	// Per-cell state read + write-back go through each native element's
+	// *_grid/collection_name hook.
+	// ─────────────────────────────────────────────────────────────────────────────
+	"namespace": "core_ui_common",
+	"modal_container": {
+		"type": "panel",
+		"size": [
+			"100%",
+			"100%"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"$protocol_header": "bcuiv0008",
+		"bindings": [
+			{
+				"binding_name": "#title_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(not ((#title_text - $protocol_header) = #title_text))",
+				"target_property_name": "#visible",
+				"binding_condition": "visible"
+			}
+		],
+		"controls": [
+			{
+				"compiled_content@core_ui_form.claimed_modal": {}
+			},
+			{
+				/* Dropdown popup OVERLAY at the content root — OUTSIDE the scroll, so an open
+				   popup never scrolls with the form and is always form-wide/host-anchored
+				   (the engine's own popup box is cell-relative: a 50%-wide dropdown got a
+				   50%-wide, toggle-anchored, scrolled popup). The name doubles as the
+				   dropdown_area host ("inside_header_panel", the vanilla server-form name) so
+				   the engine's now-INVISIBLE input shield adopts this layer. The collection
+				   panel generates one popup router per custom_form row; each router shows
+				   only when its row is an OPEN dropdown (type gate + the row's
+				   #custom_dropdown open-state, which the closed box writes via its
+				   collection-type toggle binding — vanilla's own wiring). */
+				"inside_header_panel": {
+					"type": "panel",
+					"size": [
+						"328px",
+						"98%"
+					],
+					"offset": [
+						0,
+						"1%"
+					],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"layer": 300,
+					"controls": [
+						{
+							"popup_overlay": {
+								"type": "collection_panel",
+								"size": [
+									"100%",
+									"100%"
+								],
+								"anchor_from": "top_left",
+								"anchor_to": "top_left",
+								"factory": {
+									"name": "buttons",
+									"control_name": "core_ui_form_components.dropdown_popup_router"
+								},
+								"collection_name": "custom_form",
+								"bindings": [
+									{
+										"binding_name": "#custom_form_length",
+										"binding_name_override": "#collection_length"
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		]
+	}
+}

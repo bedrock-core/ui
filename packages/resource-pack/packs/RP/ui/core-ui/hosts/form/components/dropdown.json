@@ -1,14 +1,19 @@
 {
 	// Dropdown primitive (popup): closed box + floating option popup.
 	"namespace": "core_ui_form_components",
-	"dropdown@core_ui_common.control": {
-		// core_ui_common.control owns the whole control-block decode; this just points it
-		// at the modal payload and supplies the type gate.
+	"dropdown": {
+		// A control the pack PLACES owns its row: the compiled screen gives it a
+		// `collection_index`, and the `collection_details` binding below is what
+		// makes that index resolve. Everything else about it is literal — the box
+		// is the screen's, and what it draws arrives as variables.
+		"type": "panel",
+		"size": [ "100%", "100%" ],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"bindings": [
+			{ "binding_type": "collection_details", "binding_collection_name": "custom_form" }
+		],
 		"layer": 50,
-		"$payload_collection": "custom_form",
-		"$payload_binding": "#custom_text",
-		"$cell_details_binding_type": "collection_details",
-		"$compiled|default": false,
 		/* Restated at every hop — see the same note in slider.json. A $variable set
 		   where a control is MOUNTED does not reach a definition it merely
 		   REFERENCES by name; the referenced one resolves its own scope and takes
@@ -21,7 +26,6 @@
 		   anywhere in the form (another pack's hook), so it names a host of its
 		   own at its root — an unresolved name is an assertion. */
 		"$dropdown_area|default": "inside_header_panel",
-		"$type_gate": "(#pre_visible and (#type = 'modal-dropdown'))",
 		"controls": [
 			{
 				"dropdown_control@core_ui_form_components.dropdown_control": {
@@ -34,7 +38,6 @@
 				// with the selected option). Layer 20 clears the closed box + faces (≤2).
 				"dropdown_current_label@core_ui_form_components.dropdown_current_label": {
 					"layer": 20,
-					"$compiled": "$compiled",
 					"$scale": "$scale"
 				}
 			}
@@ -138,7 +141,6 @@
 		"anchor_to": "top_left",
 		"visible": "#visible",
 		"property_bag": { "#visible": false },
-		"$compiled|default": false,
 		/* Restated here and forwarded at the card reference below — the same
 		   scope rule as everywhere: a $variable set where THIS router is mounted
 		   does not reach a definition the router references by name. */
@@ -186,10 +188,8 @@
 					"anchor_from": "center",
 					"anchor_to": "center",
 					"controls": [
-						{ "popup_card@core_ui_form_components.dropdown_popup_card": { "ignored": "$compiled" } },
 						{
 							"popup_card_static@core_ui_form_components.dropdown_popup_card_static": {
-								"ignored": "(not $compiled)",
 								"$popup_texture": "$popup_texture",
 								"$popup_size": "$popup_size"
 							}
@@ -199,46 +199,6 @@
 			}
 		]
 	},
-	// The popup surface: 312px (16px narrower than the form → the popup scrollbar clears
-	// the form's own scrollbar)
-	"dropdown_popup_card": {
-		"type": "panel",
-		"size": ["312px", 0],
-		"offset": [-4.5, 0],
-		"anchor_from": "center",
-		"anchor_to": "center",
-		"property_bag": { "#size_binding_y": 0.0 },
-		"bindings": [
-			{
-				"binding_name": "#custom_text",
-				"binding_type": "collection",
-				"binding_collection_name": "custom_form"
-			},
-			{ "binding_type": "view", "source_property_name": "('%.1356s' * #custom_text)", "target_property_name": "#skip_to_popup_h", "binding_condition": "visible" },
-			{ "binding_type": "view", "source_property_name": "(#custom_text - #skip_to_popup_h)", "target_property_name": "#rem_at_popup_h", "binding_condition": "visible" },
-			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_at_popup_h)", "target_property_name": "#raw_popup_h", "binding_condition": "visible" },
-			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_popup_h) - ('%.2s' * #raw_popup_h) - ';') * 1)", "target_property_name": "#size_binding_y", "binding_condition": "visible" }
-		],
-		"controls": [
-			{
-				/* Popup surface bg: a direct child of the card (NOT scroll chrome), so it
-				   fills the card exactly regardless of what the scroll does. */
-				"background@core_ui_form_components.dropdown_popup_background": {}
-			},
-			{ "popup_scroll@core_ui_form_components.dropdown_popup_scroll": {} }
-		]
-	},
-	/* The compiled card. Same shape as the interpreted one — a surface and a scroll
-	   over the options — differing only in where the height comes from: decoded out
-	   of the cell there, given here, since a compiled screen sends nothing to decode.
-	   Either way it is CAPPED at half the screen (`FormDropdown.popupHeight`), and
-	   the scroll is what reaches the options past the cap. A compiled dropdown's
-	   option list is therefore no shorter than an interpreted one's.
-	   NOT 100%c. The card hugging its rows and the surface filling the card are the
-	   same measurement twice: `background` is 100% of a height that is only known
-	   from the children, and the first attempt at that took the client down as the
-	   screen was built. A given size breaks the loop — the number is rows x 17 + 1
-	   fused border + 2 padding, capped. */
 	"dropdown_popup_card_static": {
 		"type": "panel",
 		"$popup_size|default": [312, 20],
@@ -313,7 +273,7 @@
 					]
 				}
 			},
-			{ "bar_and_track@core_ui_screens.scrollbar": {} }
+			{ "bar_and_track@core_ui_shapes.scrollbar": {} }
 		]
 	},
 	// Closed-box current-value host: a [1,1] frame at the box's left-middle; the value
@@ -322,25 +282,11 @@
 	"dropdown_current_label": {
 		"type": "panel",
 		"layer": 20,
-		"$compiled|default": false,
 		"$scale|default": "#font_scale_factor",
 		"size": ["100%", "100%"],
 		"controls": [
 			{
-				"value_frame": {
-					"ignored": "$compiled",
-					"type": "panel",
-					"size": [1, 1],
-					"anchor_from": "left_middle",
-					"anchor_to": "left_middle",
-					"controls": [
-						{ "display_text@core_ui_form_components.dropdown_current_value_text": {} }
-					]
-				}
-			},
-			{
 				"display_text_static@core_ui_form_components.dropdown_current_value_text_static": {
-					"ignored": "(not $compiled)",
 					"$scale": "$scale"
 				}
 			}
@@ -374,58 +320,6 @@
 			{ "binding_type": "view", "source_property_name": "(('%.82s' * #raw_opt_text) - ('%.2s' * #raw_opt_text) - ';')", "target_property_name": "#text" }
 		]
 	},
-	// Current-value text on the shared label base. TWO custom_form channels:
-	//   #dropdown_option_text — engine-synced SELECTED option; its value is that option's
-	//     whole blob, so decode text[424] out of it (v0008 option order: fontType[92],
-	//     fontScale[175], labelX[258], labelY[341], text[424]).
-	//   #custom_text — the dropdown CELL payload: currentColor[1439] (a §-code PREFIX —
-	//     label color isn't bindable, color rides the text), currentFontType[1522],
-	//     currentFontScale[1605], currentX[1688], currentY[1771].
-	// Rendered text = color prefix + decoded option text.
-	"dropdown_current_value_text@core_ui_components.label": {
-		"bindings": [
-			{
-				"binding_name": "#dropdown_option_text",
-				"binding_type": "collection",
-				"binding_collection_name": "custom_form"
-			},
-			{ "binding_type": "view", "source_property_name": "('%.424s' * #dropdown_option_text)", "target_property_name": "#skip_to_text" },
-			{ "binding_type": "view", "source_property_name": "(#dropdown_option_text - #skip_to_text)", "target_property_name": "#rem_at_text" },
-			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_at_text)", "target_property_name": "#raw_opt_text" },
-			{ "binding_type": "view", "source_property_name": "(('%.82s' * #raw_opt_text) - ('%.2s' * #raw_opt_text) - ';')", "target_property_name": "#opt_text" },
-			{
-				"binding_name": "#custom_text",
-				"binding_type": "collection",
-				"binding_collection_name": "custom_form"
-			},
-			{ "binding_type": "view", "source_property_name": "('%.1439s' * #custom_text)", "target_property_name": "#skip_to_color", "binding_condition": "visible" },
-			{ "binding_type": "view", "source_property_name": "(#custom_text - #skip_to_color)", "target_property_name": "#rem_at_color", "binding_condition": "visible" },
-			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_at_color)", "target_property_name": "#raw_color", "binding_condition": "visible" },
-			{ "binding_type": "view", "source_property_name": "(('%.82s' * #raw_color) - ('%.2s' * #raw_color) - ';')", "target_property_name": "#color_prefix", "binding_condition": "visible" },
-			{ "binding_type": "view", "source_property_name": "(#color_prefix + #opt_text)", "target_property_name": "#text" },
-			{ "binding_type": "view", "source_property_name": "('%.1522s' * #custom_text)", "target_property_name": "#skip_to_font_type", "binding_condition": "visible" },
-			{ "binding_type": "view", "source_property_name": "(#custom_text - #skip_to_font_type)", "target_property_name": "#rem_at_font_type", "binding_condition": "visible" },
-			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_at_font_type)", "target_property_name": "#raw_font_type", "binding_condition": "visible" },
-			{ "binding_type": "view", "source_property_name": "(('%.82s' * #raw_font_type) - ('%.2s' * #raw_font_type) - ';')", "target_property_name": "#font_type", "binding_condition": "visible" },
-			{ "binding_type": "view", "source_property_name": "('%.1605s' * #custom_text)", "target_property_name": "#skip_to_font_scale", "binding_condition": "visible" },
-			{ "binding_type": "view", "source_property_name": "(#custom_text - #skip_to_font_scale)", "target_property_name": "#rem_at_font_scale", "binding_condition": "visible" },
-			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_at_font_scale)", "target_property_name": "#raw_font_scale", "binding_condition": "visible" },
-			{ "binding_type": "view", "source_property_name": "(('%.82s' * #raw_font_scale) - ('%.2s' * #raw_font_scale) - ';')", "target_property_name": "#font_scale_factor", "binding_condition": "visible" },
-			{ "binding_type": "view", "source_property_name": "('%.1688s' * #custom_text)", "target_property_name": "#skip_to_cur_x", "binding_condition": "visible" },
-			{ "binding_type": "view", "source_property_name": "(#custom_text - #skip_to_cur_x)", "target_property_name": "#rem_at_cur_x", "binding_condition": "visible" },
-			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_at_cur_x)", "target_property_name": "#raw_cur_x", "binding_condition": "visible" },
-			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_cur_x) - ('%.2s' * #raw_cur_x) - ';') * 1)", "target_property_name": "#anchored_offset_value_x", "binding_condition": "visible" },
-			{ "binding_type": "view", "source_property_name": "('%.1771s' * #custom_text)", "target_property_name": "#skip_to_cur_y", "binding_condition": "visible" },
-			{ "binding_type": "view", "source_property_name": "(#custom_text - #skip_to_cur_y)", "target_property_name": "#rem_at_cur_y", "binding_condition": "visible" },
-			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_at_cur_y)", "target_property_name": "#raw_cur_y", "binding_condition": "visible" },
-			{ "binding_type": "view", "source_property_name": "((('%.82s' * #raw_cur_y) - ('%.2s' * #raw_cur_y) - ';') * 1)", "target_property_name": "#anchored_offset_value_y", "binding_condition": "visible" }
-		]
-	},
-	// Closed-box visuals on toggle_base. The instantiation above overrides type to
-	// "dropdown" (the native engine type that owns open/close); toggle_base's toggle-family
-	// props/mappings are still required for clicks to register.
-	// TRAP: vanilla common.toggle has NO focus props — the base carries the trio, wrap is
-	// added here (without them the closed box was un-selectable by controller/keyboard).
 	"dropdown_closed_box@core_ui_form_components.toggle_base": {
 		"size": ["100%", "100%"],
 		"$static_texture|default": "",
@@ -435,14 +329,14 @@
 		// State faces: shared modal_state_face at the button-identical offsets —
 		// idle[440], hover[1024], open/pressed[1107], locked[1190].
 		"controls": [
-			{ "unchecked@core_ui_common.modal_state_face": { "$static_texture": "$static_texture", "$face_skip": "('%.440s' * #payload)" } },
-			{ "checked@core_ui_common.modal_state_face": { "$static_texture": "$static_texture", "$face_skip": "('%.1107s' * #payload)" } },
-			{ "unchecked_hover@core_ui_common.modal_state_face": { "$static_texture": "$static_texture", "$face_skip": "('%.1024s' * #payload)" } },
-			{ "checked_hover@core_ui_common.modal_state_face": { "$static_texture": "$static_texture", "$face_skip": "('%.1107s' * #payload)" } },
-			{ "unchecked_locked@core_ui_common.modal_state_face": { "$static_texture": "$static_texture", "$face_skip": "('%.1190s' * #payload)" } },
-			{ "checked_locked@core_ui_common.modal_state_face": { "$static_texture": "$static_texture", "$face_skip": "('%.1190s' * #payload)" } },
-			{ "unchecked_locked_hover@core_ui_common.modal_state_face": { "$static_texture": "$static_texture", "$face_skip": "('%.1190s' * #payload)" } },
-			{ "checked_locked_hover@core_ui_common.modal_state_face": { "$static_texture": "$static_texture", "$face_skip": "('%.1190s' * #payload)" } }
+			{ "unchecked@core_ui_common.modal_state_face": { "$static_texture": "$static_texture" } },
+			{ "checked@core_ui_common.modal_state_face": { "$static_texture": "$static_texture" } },
+			{ "unchecked_hover@core_ui_common.modal_state_face": { "$static_texture": "$static_texture" } },
+			{ "checked_hover@core_ui_common.modal_state_face": { "$static_texture": "$static_texture" } },
+			{ "unchecked_locked@core_ui_common.modal_state_face": { "$static_texture": "$static_texture" } },
+			{ "checked_locked@core_ui_common.modal_state_face": { "$static_texture": "$static_texture" } },
+			{ "unchecked_locked_hover@core_ui_common.modal_state_face": { "$static_texture": "$static_texture" } },
+			{ "checked_locked_hover@core_ui_common.modal_state_face": { "$static_texture": "$static_texture" } }
 		]
 	},
 	// The compiled card's surface: the texture GIVEN, nothing decoded. The decoding
@@ -456,31 +350,6 @@
 		"$popup_texture|default": "",
 		"texture": "$popup_texture"
 	},
-	// Popup container background: self-decodes popupBackground[1273] from the dropdown's
-	// custom_form cell (collection cell scope reaches inside the popup — probe-verified).
-	// An empty texture self-hides via the #visible binding.
-	"dropdown_popup_background": {
-		"type": "image",
-		"layer": 1,
-		"size": ["100%", "100%"],
-		// Given on a compiled screen, decoded otherwise — the slider's $track trick.
-		"$popup_texture|default": "#texture",
-		"texture": "$popup_texture",
-		"visible": "#visible",
-		"property_bag": { "#visible": true },
-		"bindings": [
-			{
-				"binding_name": "#custom_text",
-				"binding_type": "collection",
-				"binding_collection_name": "custom_form"
-			},
-			{ "binding_type": "view", "source_property_name": "('%.1273s' * #custom_text)", "target_property_name": "#skip_to_popup_bg", "binding_condition": "visible" },
-			{ "binding_type": "view", "source_property_name": "(#custom_text - #skip_to_popup_bg)", "target_property_name": "#rem_at_popup_bg", "binding_condition": "visible" },
-			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_at_popup_bg)", "target_property_name": "#raw_popup_bg", "binding_condition": "visible" },
-			{ "binding_type": "view", "source_property_name": "(('%.82s' * #raw_popup_bg) - ('%.2s' * #raw_popup_bg) - ';')", "target_property_name": "#texture", "binding_condition": "visible" }
-		]
-	},
-	// Popup option list: stack of factory-generated rows (one per custom_dropdown entry).
 	"dropdown_options": {
 		"type": "panel",
 		"size": ["100%", "100%c"],
@@ -520,11 +389,8 @@
 			}
 		]
 	},
-	// One popup row: fixed 17px FLOW height, 18px face anchored to the row top — the face
-	// overshoots 1px into the next row so adjacent 1px texture borders FUSE into a single
-	// line (OPTION_ROW_OVERLAP in FormDropdown.ts, which also centers the label in the
-	// 18px face). The later sibling's top border draws over the previous row's bottom
-	// border — same border color across states keeps the seam invisible.
+	// One option row, built by the popup's factory — named there rather than
+	// mounted, so a `control_name` is the only thing that reaches it.
 	"dropdown_option_radio": {
 		"type": "panel",
 		"anchor_from": "top_left",

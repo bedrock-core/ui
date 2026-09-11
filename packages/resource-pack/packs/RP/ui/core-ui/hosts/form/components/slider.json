@@ -1,0 +1,539 @@
+{
+	"namespace": "core_ui_form_components",
+	"slider": {
+		// A control the pack PLACES owns its row: the compiled screen gives it a
+		// `collection_index`, and the `collection_details` binding below is what
+		// makes that index resolve. Everything else about it is literal — the box
+		// is the screen's, and what it draws arrives as variables.
+		"type": "panel",
+		"size": [ "100%", "100%" ],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"bindings": [
+			{ "binding_type": "collection_details", "binding_collection_name": "custom_form" }
+		],
+		"layer": 50,
+		"$travel_size|default": [
+			1,
+			0
+		],
+		"$bar_size|default": [
+			1,
+			0
+		],
+		"$thumb_size|default": [
+			1,
+			0
+		],
+		"$steps|default": 1,
+		"$value|default": 0,
+		/* Restated at every hop. A $variable set where a control is MOUNTED does
+		   not reach a definition it merely REFERENCES by name: slider_control
+		   resolved its own scope, so the sizes it was handed were never seen and
+		   its faces fell back to a decode of a payload a compiled screen does not
+		   send — which is why every piece of the slider was invisible while the
+		   travel area around it (an inline child, same scope) worked and the
+		   thumb still dragged. */
+		"$track|default": "#texture",
+		"$track_hover|default": "#texture",
+		"$progress|default": "#texture",
+		"$progress_hover|default": "#texture",
+		"$thumb|default": "#texture",
+		"$thumb_hover|default": "#texture",
+		"$thumb_locked|default": "#texture",
+		"controls": [
+			{
+				/* Travel inset: the engine bounds the thumb's CENTER travel to the slider
+				   control's width, so the control lives in a size-carrier panel that is
+				   travelWidth = width - thumbWidth + hitbox(10) (post-layout in TS, field
+				   [2020]) — at min/max the thumb EDGE aligns with the full-width track
+				   ends. Track visuals overflow the narrow control symmetrically. */
+				"travel_anchor": {
+					"type": "panel",
+					"size": [
+						1,
+						1
+					],
+					"anchor_from": "center",
+					"anchor_to": "center",
+					"controls": [
+						{
+							// The compiled twin. `travel_area` above decodes its size out of
+							// the payload; a compiled screen has none, so it measures 0x0 and
+							// the slider inside it never appears. This one is told its size.
+							// `ignored` keeps exactly one of the two, decided at load time.
+							"travel_area_static": {
+								"type": "panel",
+								"size": "$travel_size",
+								"anchor_from": "center",
+								"anchor_to": "center",
+								"controls": [
+									{
+										"slider@core_ui_form_components.slider_control_compiled": {
+											"$steps": "$steps",
+											"$value": "$value",
+											"$bg_control": "slider_background_static",
+											"$bg_hover_control": "slider_background_hover_static",
+											"$prog_control": "slider_progress_static",
+											"$prog_hover_control": "slider_progress_hover_static",
+											"$box_default": "default_static",
+											"$box_hover": "hover_static",
+											"$box_locked": "locked_static",
+											"$box_indent": "indent_static",
+											"$bar_size": "$bar_size",
+											"$thumb_size": "$thumb_size",
+											"$track": "$track",
+											"$track_hover": "$track_hover",
+											"$progress": "$progress",
+											"$progress_hover": "$progress_hover",
+											"$thumb": "$thumb",
+											"$thumb_hover": "$thumb_hover",
+											"$thumb_locked": "$thumb_locked"
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		]
+	},
+	/* The compiled slider, constructed behind its title gate on EVERY form screen
+	   (bisected 2026-09-02): there the custom_form rows it reads do not exist, the
+	   steps override left #slider_steps at 0, and value/0 raised "Progress out of
+	   range" (SliderComponent::_setPercentage) — a Marketplace-blocking assertion
+	   on every form open in the world; binding_condition "visible" did not stop a
+	   control hidden by an ANCESTOR gate from evaluating. So the compiled twin
+	   REPLACES the base's bindings (arrays never merge) with NOTHING: steps AND the
+	   starting value are BAKED — the build knows min/max/step/defaultValue — and
+	   the engine's own slider machinery (slider_name/slider_collection_name) owns
+	   dragging and write-back; the collection reads only existed to seed the
+	   visual, and hidden they read rows that do not exist. */
+	"slider_control_compiled@core_ui_form_components.slider_control": {
+		"$steps|default": 1,
+		"$value|default": 0,
+		"property_bag": {
+			"#slider_steps": "$steps",
+			"#slider_value": "$value"
+		},
+		"bindings": []
+	},
+	"slider_control": {
+		"type": "slider",
+		// Fills the decoded container (the parent `slider` panel is sized by
+		// #size_binding_x/y from the control's computed width/height). The track spans
+		// this full width; track height + thumb size come from the geometry payload
+		// fields decoded below.
+		"size": [
+			"100%",
+			"100%"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"layer": 2,
+		"enabled": "#enabled",
+		// Each face reads a VARIABLE that defaults to the decoded property, so
+		// an interpreted slider is unchanged. A compiled screen has no payload
+		// to decode, and passes the literal textures instead — the slider is the
+		// one field whose surfaces are its own rather than `state_face`'s, so it
+		// needs them named here rather than the one `$static_texture`.
+		"$track|default": "#texture",
+		"$track_hover|default": "#texture",
+		"$progress|default": "#texture",
+		"$progress_hover|default": "#texture",
+		"$thumb|default": "#texture",
+		"$thumb_hover|default": "#texture",
+		"$thumb_locked|default": "#texture",
+		/* The three its own children read that only the textures declared before
+		   now did. `bar_default_size_static` gates on $compiled and sizes itself
+		   from $bar_size; neither was declared HERE, only forwarded in, and the
+		   level where both ARE declared (the cell) is the level that worked. */
+		"$bar_size|default": [
+			1,
+			0
+		],
+		"$thumb_size|default": [
+			1,
+			0
+		],
+		"slider_name": "custom_slider",
+		"slider_track_button": "custom_slider",
+		// var-driven so the step mappings' direction guards (below) can read it.
+		"$slider_direction|default": "horizontal",
+		"slider_direction": "$slider_direction",
+		"slider_collection_name": "custom_form",
+		"slider_box_control": "slider_box",
+		"default_control": "bar_default_anchor",
+		"hover_control": "bar_hover_anchor",
+		/* WHY THESE ARE VARIABLES. The engine resolves each of them BY NAME, and
+		   both paths' copies are in the tree at once: `ignored` stops a control
+		   RENDERING, it does not remove it (measured — an ignored probe was still
+		   in the debug tree). So the lookup took the first match in document order,
+		   which is the interpreted branch. Right on an interpreted screen; on a
+		   compiled one the engine drove an invisible copy and left the drawn one
+		   alone, which is why every piece of the bar was missing while a plain
+		   image beside it rendered. Each path names its own copy. */
+		"$bg_control|default": "slider_background",
+		"$bg_hover_control|default": "slider_background_hover",
+		"$prog_control|default": "slider_progress",
+		"$prog_hover_control|default": "slider_progress_hover",
+		"background_control": "$bg_control",
+		"background_hover_control": "$bg_hover_control",
+		"progress_control": "$prog_control",
+		"progress_hover_control": "$prog_hover_control",
+		"slider_small_decrease_button": "slider.small_decrease",
+		"slider_small_increase_button": "slider.small_increase",
+		"slider_selected_button": "slider.selected",
+		"slider_deselected_button": "slider.deselected",
+		"always_listen_to_input": false,
+		"always_handle_pointer": true,
+		"focus_enabled": true,
+		"default_focus_precedence": 0,
+		"property_bag": {
+			"#slider_steps": 1,
+			"#slider_value": 0
+		},
+		/* Mappings copied from vanilla common.slider (ui_common.json:1025-1069). The
+		   menu_left/right → small_decrease/increase pair is what gives d-pad discrete
+		   steps once selected (we had only select + ok, so the pad did nothing). The
+		   vertical up/down variants are kept behind vanilla's direction guard even though
+		   we're always horizontal — harmless and matches vanilla verbatim. `ignore_input_scope`
+		   lets the step fire while the slider is the focused/selected control.
+		   menu_cancel → deselected mirrors vanilla so the pad can exit the selected state. */
+		"button_mappings": [
+			{
+				"from_button_id": "button.menu_select",
+				"to_button_id": "custom_slider",
+				"mapping_type": "pressed",
+				"button_up_right_of_first_refusal": true
+			},
+			{
+				"from_button_id": "button.menu_ok",
+				"to_button_id": "slider.selected",
+				"mapping_type": "focused"
+			},
+			{
+				"from_button_id": "button.menu_cancel",
+				"to_button_id": "slider.deselected",
+				"mapping_type": "focused"
+			},
+			{
+				"ignored": "($slider_direction = 'vertical')",
+				"from_button_id": "button.menu_left",
+				"to_button_id": "slider.small_decrease",
+				"mapping_type": "pressed",
+				"ignore_input_scope": true
+			},
+			{
+				"ignored": "($slider_direction = 'horizontal')",
+				"from_button_id": "button.menu_up",
+				"to_button_id": "slider.small_decrease",
+				"mapping_type": "pressed",
+				"ignore_input_scope": true
+			},
+			{
+				"ignored": "($slider_direction = 'vertical')",
+				"from_button_id": "button.menu_right",
+				"to_button_id": "slider.small_increase",
+				"mapping_type": "pressed",
+				"ignore_input_scope": true
+			},
+			{
+				"ignored": "($slider_direction = 'horizontal')",
+				"from_button_id": "button.menu_down",
+				"to_button_id": "slider.small_increase",
+				"mapping_type": "pressed",
+				"ignore_input_scope": true
+			}
+		],
+		/* MEASURED with asserts on (bisected 2026-09-02): a compiled screen's slider
+		   is CONSTRUCTED behind its title gate on every form screen, where these
+		   collection rows do not exist — the overrides then stomp the safe seeds
+		   below and the engine's percentage leaves 0..1: "Progress out of range",
+		   a Marketplace-blocking assertion, on every form open in the world.
+		   `binding_condition: "visible"` keeps a hidden slider on its seeds
+		   (steps 1, value 0 → progress 0) and evaluates the real values only
+		   when the gate is open and the rows are real. */
+		"bindings": [
+			{
+				/* number of discrete steps for THIS cell */
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form",
+				"binding_name": "#custom_slider_steps",
+				"binding_name_override": "#slider_steps",
+				"binding_condition": "visible"
+			},
+			{
+				/* current value for THIS cell (read + write-back) */
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form",
+				"binding_name": "#custom_slider_value",
+				"binding_name_override": "#slider_value",
+				"binding_condition": "visible"
+			},
+			{
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form",
+				"binding_name": "#custom_slider_enabled",
+				"binding_name_override": "#enabled",
+				"binding_condition": "visible"
+			}
+		],
+		"controls": [
+			{
+				/* bar_default: [1,1] anchor → SIZE-CARRIER PANEL (w = control width [92],
+				   h = trackHeight [1771]; #size_binding only works on panels, written
+				   via bindings — probe-verified) → texture image fills it. */
+				"bar_default_anchor": {
+					"type": "panel",
+					"size": [
+						1,
+						1
+					],
+					"anchor_from": "center",
+					"anchor_to": "center",
+					"controls": [
+						{
+							"bar_default_size_static": {
+								"type": "panel",
+								"size": "$bar_size",
+								"anchor_from": "center",
+								"anchor_to": "center",
+								"controls": [
+									{
+										"bar_default": {
+											"type": "image",
+											"size": [
+												"100%",
+												"100%"
+											],
+											"layer": 1,
+											"texture": "$track",
+											"controls": [
+												{
+													"sizing_panel": {
+														"type": "panel",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"anchor_from": "center",
+														"anchor_to": "center",
+														"controls": [
+															{
+																"slider_background_static": {
+																	"type": "image",
+																	"size": [
+																		"100%",
+																		"100%"
+																	],
+																	"layer": 1,
+																	"texture": "$track"
+																}
+															},
+															{
+																"slider_progress_static": {
+																	"type": "image",
+																	"size": [
+																		"100%",
+																		"100%"
+																	],
+																	"layer": 3,
+																	"texture": "$progress",
+																	"clip_direction": "left",
+																	"clip_pixelperfect": false
+																}
+															}
+														]
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				/* bar_hover: [1,1] anchor → SIZE-CARRIER PANEL (w = control width [92],
+				   h = trackHeight [1771]; #size_binding only works on panels, written
+				   via bindings — probe-verified) → texture image fills it. */
+				"bar_hover_anchor": {
+					"type": "panel",
+					"size": [
+						1,
+						1
+					],
+					"anchor_from": "center",
+					"anchor_to": "center",
+					"visible": false,
+					"controls": [
+						{
+							"bar_hover_size_static": {
+								"type": "panel",
+								"size": "$bar_size",
+								"anchor_from": "center",
+								"anchor_to": "center",
+								"controls": [
+									{
+										"bar_hover": {
+											"type": "image",
+											"size": [
+												"100%",
+												"100%"
+											],
+											"layer": 1,
+											"texture": "$track_hover",
+											"controls": [
+												{
+													"sizing_panel": {
+														"type": "panel",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"anchor_from": "center",
+														"anchor_to": "center",
+														"controls": [
+															{
+																"slider_background_hover_static": {
+																	"type": "image",
+																	"size": [
+																		"100%",
+																		"100%"
+																	],
+																	"layer": 1,
+																	"texture": "$track_hover"
+																}
+															},
+															{
+																"slider_progress_hover_static": {
+																	"type": "image",
+																	"size": [
+																		"100%",
+																		"100%"
+																	],
+																	"layer": 3,
+																	"texture": "$progress_hover",
+																	"clip_direction": "left",
+																	"clip_pixelperfect": false
+																}
+															}
+														]
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				/* draggable handle: slider_box must be a DIRECT child for the engine to move it
+				   (a carrier parent froze it, in-game verified), and its OWN size cannot be
+				   payload-driven: #size_binding is panels-only and %c only reads children's
+				   STATIC sizes (bound carrier => collapsed to 0, in-game verified). So the
+				   HITBOX is a fixed compromise (16x16, matching the TS default thumb) while the
+				   VISUAL thumb is the bound thumb_size carrier inside (thumbWidth [1854] x
+				   thumbHeight [1937]) — exact payload size, moving with the box. */
+				"slider_box": {
+					"type": "slider_box",
+					/* Same duplicate-name problem as the bar above, same answer. */
+					"$box_default|default": "default",
+					"$box_hover|default": "hover",
+					"$box_locked|default": "locked",
+					"$box_indent|default": "indent",
+					"size": [
+						16,
+						16
+					],
+					"anchor_from": "center",
+					"anchor_to": "center",
+					"layer": 4,
+					"default_control": "$box_default",
+					"hover_control": "$box_hover",
+					"locked_control": "$box_locked",
+					"indent_control": "$box_indent",
+					"controls": [
+						{
+							/* [1,1] anchor: #size_binding maps 1:1 to px ONLY against a [1,1]
+							   parent — directly inside the 16x16 box the bound values were
+							   multiplied by the box dims (in-game: enormous thumb). */
+							"thumb_anchor": {
+								"type": "panel",
+								"size": [
+									1,
+									1
+								],
+								"anchor_from": "center",
+								"anchor_to": "center",
+								"controls": [
+									{
+										"thumb_size_static": {
+											"type": "panel",
+											"size": "$thumb_size",
+											"anchor_from": "center",
+											"anchor_to": "center",
+											"controls": [
+												{
+													"default_static": {
+														"type": "image",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"layer": 2,
+														"texture": "$thumb"
+													}
+												},
+												{
+													"hover_static": {
+														"type": "image",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"layer": 2,
+														"texture": "$thumb_hover"
+													}
+												},
+												{
+													"locked_static": {
+														"type": "image",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"layer": 2,
+														"texture": "$thumb_locked"
+													}
+												},
+												{
+													"indent_static": {
+														"type": "image",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"layer": 2,
+														"texture": "$thumb"
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		]
+	}
+}

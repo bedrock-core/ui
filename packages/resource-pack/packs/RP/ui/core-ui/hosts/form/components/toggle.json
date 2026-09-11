@@ -1,0 +1,130 @@
+{
+	"namespace": "core_ui_form_components",
+	// The boolean field the modal draws, and the base every toggle-family
+	// control in this pack extends — the dropdown's closed box and the option
+	// radios are the same widget with different faces.
+	//
+	// `toggle_base` owns the half that is the ENGINE's: reading the row's state
+	// and writing the press back. No pack replaces that. What the pack decides
+	// is the faces, and those arrive as variables from the author's own props —
+	// unstyled by default, because the library ships no look of its own.
+	//
+	// TRAP: a collection binding needs `collection_details` on the SAME control,
+	// collection FIRST — the radios set $toggle_details_binding_type for it.
+	// TRAP: $radio_toggle_group must stay a variable; hardcoding false crashed
+	// radios inside a radio-group factory, with nothing in the log.
+	// `toggle_grid_collection_name` must be a real PROPERTY — without it every
+	// click writes row 0.
+	//
+	// State children are NOT declared here: each user declares its own eight,
+	// because a `controls` array REPLACES the base's on derivation.
+	//
+	// It carries its own `collection_details`: a control the pack PLACES owns
+	// its row only by saying so itself.
+	"toggle@core_ui_form_components.toggle_base": {
+		"size": [ "100%", "100%" ],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"layer": 2,
+		"enabled": "#enabled",
+		"focus_enabled": true,
+		"focus_magnet_enabled": true,
+		"focus_wrap_enabled": true,
+		"default_focus_precedence": 0,
+		"$toggle_name": "custom_toggle",
+		"$toggle_grid_collection_name": "custom_form",
+		"$off|default": "textures/ui/unstyled",
+		"$on|default": "textures/ui/unstyled",
+		"$off_hover|default": "textures/ui/unstyled",
+		"$on_hover|default": "textures/ui/unstyled",
+		"$off_locked|default": "textures/ui/unstyled",
+		"$on_locked|default": "textures/ui/unstyled",
+		"bindings": [
+			{ "binding_type": "collection_details", "binding_collection_name": "custom_form" },
+			{
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form",
+				"binding_name": "#custom_toggle_state",
+				"binding_name_override": "#toggle_state"
+			},
+			{
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form",
+				"binding_name": "#custom_toggle_enabled",
+				"binding_name_override": "#enabled"
+			}
+		],
+		"controls": [
+			{ "unchecked@core_ui_common.static_face": { "$face_texture": "$off" } },
+			{ "checked@core_ui_common.static_face": { "$face_texture": "$on" } },
+			{ "unchecked_hover@core_ui_common.static_face": { "$face_texture": "$off_hover" } },
+			{ "checked_hover@core_ui_common.static_face": { "$face_texture": "$on_hover" } },
+			{ "unchecked_locked@core_ui_common.static_face": { "$face_texture": "$off_locked" } },
+			{ "checked_locked@core_ui_common.static_face": { "$face_texture": "$on_locked" } },
+			{ "unchecked_locked_hover@core_ui_common.static_face": { "$face_texture": "$off_locked" } },
+			{ "checked_locked_hover@core_ui_common.static_face": { "$face_texture": "$on_locked" } }
+		]
+	},
+	"toggle_base": {
+		"type": "toggle",
+		"layer": 1,
+		"sound_name": "random.click",
+		"sound_volume": 1.0,
+		"sound_pitch": 1.0,
+		"focus_enabled": true,
+		"focus_magnet_enabled": true,
+		"default_focus_precedence": 0,
+		"checked_control": "checked",
+		"unchecked_control": "unchecked",
+		"checked_hover_control": "checked_hover",
+		"unchecked_hover_control": "unchecked_hover",
+		"checked_locked_control": "checked_locked",
+		"unchecked_locked_control": "unchecked_locked",
+		"checked_locked_hover_control": "checked_locked_hover",
+		"unchecked_locked_hover_control": "unchecked_locked_hover",
+		"$toggle_name|default": "toggle",
+		"$toggle_binding_type|default": "global",
+		"$toggle_binding_condition|default": "visible",
+		"$toggle_state_binding_name|default": "#toggle_state",
+		"$toggle_grid_collection_name|default": "",
+		"$toggle_details_binding_type|default": "none",
+		"$radio_toggle_group|default": false,
+		"$toggle_group_forced_index|default": -1,
+		"$toggle_group_default_selected|default": 0,
+		"radio_toggle_group": "$radio_toggle_group",
+		"toggle_name": "$toggle_name",
+		"toggle_default_state": false,
+		"toggle_group_forced_index": "$toggle_group_forced_index",
+		"toggle_group_default_selected": "$toggle_group_default_selected",
+		"toggle_grid_collection_name": "$toggle_grid_collection_name",
+		"enable_directional_toggling": false,
+		"toggle_on_button": "toggle.toggle_on",
+		"toggle_off_button": "toggle.toggle_off",
+		"button_mappings": [
+			{ "from_button_id": "button.menu_select", "to_button_id": "button.menu_select", "mapping_type": "pressed" },
+			{ "from_button_id": "button.menu_ok", "to_button_id": "button.menu_ok", "mapping_type": "focused" },
+			{ "from_button_id": "button.controller_back", "to_button_id": "button.controller_back", "mapping_type": "focused", "ignored": true }
+		],
+		"property_bag": { "#toggle_state": true },
+		"bindings": [
+			{
+				"binding_type": "$toggle_binding_type",
+				"binding_condition": "$toggle_binding_condition",
+				"binding_collection_name": "$toggle_grid_collection_name",
+				"binding_name": "$toggle_state_binding_name",
+				"binding_name_override": "#toggle_state"
+			},
+			{
+				"binding_type": "none",
+				"binding_condition": "visible",
+				"binding_collection_name": "$toggle_grid_collection_name",
+				"binding_name": "#toggle_enabled",
+				"binding_name_override": "#enabled"
+			},
+			{
+				"binding_type": "$toggle_details_binding_type",
+				"binding_collection_name": ""
+			}
+		]
+	}
+}

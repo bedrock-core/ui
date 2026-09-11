@@ -70,6 +70,9 @@
 		]
 	},
 
+	// The bar, on its own: a scroll view names it through `scroll_box_and_track_panel`,
+	// so a view that wants the bar over its content rather than beside it mounts the
+	// same one and sizes its own viewport. The dropdown popup is the other caller.
 	"scrollbar": {
 		"type": "panel",
 		"size": [ 5, "100%" ],

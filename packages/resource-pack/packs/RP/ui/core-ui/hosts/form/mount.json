@@ -91,36 +91,5 @@
 				"screens@core_ui_form.compiled_root": {}
 			}
 		]
-	},
-	"interpreted": {
-		"type": "panel",
-		"size": [
-			"100%",
-			"100%"
-		],
-		"anchor_from": "top_left",
-		"anchor_to": "top_left",
-		"property_bag": {
-			"#visible": true
-		},
-		"visible": "#visible",
-		"bindings": [
-			{
-				"binding_name": "#title_text"
-			},
-			{
-				"binding_type": "view",
-				"source_property_name": "(not (('%.13s' * #title_text) = 'bcuiv0008core'))",
-				"target_property_name": "#visible"
-			}
-		],
-		"controls": [
-			{
-				"scroll_root@core_ui_screens.scroll": {}
-			},
-			{
-				"scroll_pool@core_ui_screens.scroll_pool": {}
-			}
-		]
 	}
 }

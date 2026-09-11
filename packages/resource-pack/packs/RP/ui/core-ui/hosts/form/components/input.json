@@ -1,29 +1,18 @@
 {
 	"namespace": "core_ui_form_components",
-	"input_router": {
+	"input": {
+		// A control the pack PLACES owns its row: the compiled screen gives it a
+		// `collection_index`, and the `collection_details` binding below is what
+		// makes that index resolve. Everything else about it is literal — the box
+		// is the screen's, and what it draws arrives as variables.
 		"type": "panel",
-		// Components must be inside a panel with size [1,1] so size_binding values map 1:1 to pixels.
-		"size": [
-			1,
-			1
+		"size": [ "100%", "100%" ],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"bindings": [
+			{ "binding_type": "collection_details", "binding_collection_name": "custom_form" }
 		],
-		"controls": [
-			{
-				"input@core_ui_form_components.input": {}
-			}
-		]
-	},
-	"input@core_ui_common.control": {
-		// Extends the shared base (core_ui_common.control): the base owns the whole generic
-		// control-block decode; this modal cell just points it at the modal payload
-		// (custom_form / #custom_text / per-cell collection_details) and supplies its type
-		// gate. (Regions are an ActionForm/scroll concept — the region gate lives in the
-		// ActionForm routers, so modal cells like this one never see it.)
 		"layer": 50,
-		"$payload_collection": "custom_form",
-		"$payload_binding": "#custom_text",
-		"$cell_details_binding_type": "collection_details",
-		"$type_gate": "(#pre_visible and (#type = 'modal-input'))",
 		/* WHAT A COMPILED SCREEN GIVES THIS CELL, and why every hop restates it.
 		   A $variable set where a control is MOUNTED does not reach a definition
 		   the control merely REFERENCES by name — that definition resolves its
@@ -33,21 +22,11 @@
 		   So each hop forwards by name, the way flow_button_anchor does. */
 		"$scale|default": "#font_scale_factor",
 		"$static_texture|default": "",
-		"$compiled|default": false,
-		/* The engine resolves text_control / place_holder_control BY NAME, and
-		   `ignored` does not take a control out of that lookup (the slider's
-		   bar controls measured this) — so each path names its own copy and the
-		   compiled mount swaps the names. */
-		"$text_ctrl|default": "display_text",
-		"$placeholder_ctrl|default": "place_holder_control",
 		"controls": [
 			{
 				"input@core_ui_form_components.input_control": {
 					"$scale": "$scale",
-					"$static_texture": "$static_texture",
-					"$compiled": "$compiled",
-					"$text_ctrl": "$text_ctrl",
-					"$placeholder_ctrl": "$placeholder_ctrl"
+					"$static_texture": "$static_texture"
 				}
 			}
 		]
@@ -61,9 +40,6 @@
 		"type": "edit_box",
 		"$scale|default": "#font_scale_factor",
 		"$static_texture|default": "",
-		"$compiled|default": false,
-		"$text_ctrl|default": "display_text",
-		"$placeholder_ctrl|default": "place_holder_control",
 		"size": [
 			"100%",
 			"100%"
@@ -76,8 +52,8 @@
 		"text_edit_box_grid_collection_name": "custom_form",
 		"max_length": 100,
 		"text_type": "ExtendedASCII",
-		"text_control": "$text_ctrl",
-		"place_holder_control": "$placeholder_ctrl",
+		"text_control": "display_text_static",
+		"place_holder_control": "place_holder_static",
 		"default_control": "default",
 		"hover_control": "hover",
 		"pressed_control": "pressed",
@@ -163,42 +139,6 @@
 					"clips_children": true,
 					"controls": [
 						{
-							/* value label — the edit_box's text_control. It reads text from the native
-							   edit-box channel ($native_* slot); font/scale decode from the group at
-							   [1273]. The value GROUP's x/y are ignored here (see below): the 8px inset
-							   is a fixed offset and vertical centering comes from left_middle anchoring.
-							   OVERFLOW-SCROLL: because this IS the text_control, on SELECT the engine
-							   scrolls the label to keep the caret visible. That only works with vanilla's
-							   text_edit_box_label recipe — sit DIRECTLY in the full-size clip (not a
-							   [1,1] frame, whose min_size 100% would collapse to 1px), size ["default"]
-							   so it auto-grows past the box, min_size ["100%",0] so short text still
-							   fills the box, and NO use_anchored_offset (a fixed anchored X fights the
-							   engine scroll → short text got yanked left out of the clip). */
-							"display_text@core_ui_components.label": {
-								"ignored": "$compiled",
-								"$scale": "$scale",
-								"localize": false,
-								"text": "#item_name",
-								"layer": 1,
-								"use_anchored_offset": false,
-								"size": ["default", "default"],
-								"min_size": ["100%", 0],
-								"offset": [8, 0],
-								"anchor_from": "left_middle",
-								"anchor_to": "left_middle",
-								"property_bag": {
-									"#property_field": "#item_name",
-									"#anchored_offset_value_x": 0.0,
-									"#anchored_offset_value_y": 0.0
-								},
-								"$payload_collection": "custom_form",
-								"$payload_binding": "#custom_text",
-								"$label_skip": "('%.1273s' * #payload)",
-								"$native_binding": "#custom_input_text",
-								"$native_target": "#item_name"
-							}
-						},
-						{
 							/* The compiled twin: label_static, so the group decode above never
 							   runs — its bindings write #font_scale_factor out of a payload a
 							   compiled screen does not send, over the $scale the mount passed
@@ -206,7 +146,6 @@
 							   otherwise, and it is the $text_ctrl name on a compiled screen so
 							   the engine's caret-follow scroll drives THIS copy. */
 							"display_text_static@core_ui_components.label_static": {
-								"ignored": "(not $compiled)",
 								"$scale": "$scale",
 								"localize": false,
 								"text": "#item_name",
@@ -222,7 +161,6 @@
 									"#anchored_offset_value_x": 0.0,
 									"#anchored_offset_value_y": 0.0
 								},
-								"$payload_collection": "custom_form",
 								"$native_binding": "#custom_input_text",
 								"$native_target": "#item_name"
 							}
@@ -241,26 +179,10 @@
 											"anchor_to": "left_middle",
 											"controls": [
 												{
-													"place_holder_control@core_ui_components.label": {
-														"ignored": "$compiled",
-														"$scale": "$scale",
-														"localize": false,
-														"text": "#placeholder",
-														"color": [0.7, 0.7, 0.7, 1],
-														"layer": 1,
-														"$payload_collection": "custom_form",
-														"$payload_binding": "#custom_text",
-														"$label_skip": "('%.1688s' * #payload)",
-														"$native_binding": "#custom_placeholder_text",
-														"$native_target": "#placeholder"
-													}
-												},
-												{
 													/* Compiled twin — the interpreted one above places itself by the
 													   group's decoded x/y, which a compiled screen does not send, so
 													   this one takes the value label's fixed inset instead. */
 													"place_holder_static@core_ui_components.label_static": {
-														"ignored": "(not $compiled)",
 														"$scale": "$scale",
 														"localize": false,
 														"text": "#placeholder",
@@ -270,7 +192,6 @@
 														"offset": [8, 0],
 														"anchor_from": "left_middle",
 														"anchor_to": "left_middle",
-														"$payload_collection": "custom_form",
 														"$native_binding": "#custom_placeholder_text",
 														"$native_target": "#placeholder"
 													}
@@ -301,30 +222,24 @@
 				}
 			},
 			{
-				/* Payload-decoded background states: shared core_ui_common.modal_state_face,
-				   one $face_skip per state at the button-identical offsets (default [440],
-				   hover [1024], pressed [1107], locked [1190]). */
+				/* The four background states, each told its own texture. */
 				"default@core_ui_common.modal_state_face": {
-					"$static_texture": "$static_texture",
-					"$face_skip": "('%.440s' * #payload)"
+					"$static_texture": "$static_texture"
 				}
 			},
 			{
 				"hover@core_ui_common.modal_state_face": {
-					"$static_texture": "$static_texture",
-					"$face_skip": "('%.1024s' * #payload)"
+					"$static_texture": "$static_texture"
 				}
 			},
 			{
 				"pressed@core_ui_common.modal_state_face": {
-					"$static_texture": "$static_texture",
-					"$face_skip": "('%.1107s' * #payload)"
+					"$static_texture": "$static_texture"
 				}
 			},
 			{
 				"locked@core_ui_common.modal_state_face": {
-					"$static_texture": "$static_texture",
-					"$face_skip": "('%.1190s' * #payload)"
+					"$static_texture": "$static_texture"
 				}
 			}
 		]
