@@ -228,16 +228,17 @@
 			{ "popup_scroll@core_ui_form_components.dropdown_popup_scroll": {} }
 		]
 	},
-	/* The compiled card. The interpreted one decodes its height out of the cell and
-	   scrolls, because the interpreter caps that height at half the screen; a
-	   compiled screen sends no height to decode, and knows its option list at build
-	   time, so it is GIVEN one and there is nothing to scroll.
+	/* The compiled card. Same shape as the interpreted one — a surface and a scroll
+	   over the options — differing only in where the height comes from: decoded out
+	   of the cell there, given here, since a compiled screen sends nothing to decode.
+	   Either way it is CAPPED at half the screen (`FormDropdown.popupHeight`), and
+	   the scroll is what reaches the options past the cap. A compiled dropdown's
+	   option list is therefore no shorter than an interpreted one's.
 	   NOT 100%c. The card hugging its rows and the surface filling the card are the
 	   same measurement twice: `background` is 100% of a height that is only known
 	   from the children, and the first attempt at that took the client down as the
-	   screen was built. A given size breaks the loop — the number is the one
-	   `FormDropdown.popupHeight` already computes: rows x 17 + 1 fused border + 2
-	   padding. */
+	   screen was built. A given size breaks the loop — the number is rows x 17 + 1
+	   fused border + 2 padding, capped. */
 	"dropdown_popup_card_static": {
 		"type": "panel",
 		"$popup_size|default": [312, 20],
@@ -251,13 +252,7 @@
 					"$popup_texture": "$popup_texture"
 				}
 			},
-			{
-				"options@core_ui_form_components.dropdown_options": {
-					"layer": 2,
-					"anchor_from": "top_left",
-					"anchor_to": "top_left"
-				}
-			}
+			{ "popup_scroll@core_ui_form_components.dropdown_popup_scroll": {} }
 		]
 	},
 	// ── Popup scroll: OUR scroll_view (the proven core_ui_screens.scroll shape), NOT

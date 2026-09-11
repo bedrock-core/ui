@@ -35,9 +35,6 @@ export const ROWS_MAX = 12;
 /** Characters a row's label reserves; it is sent as a key, which the client resolves. */
 const LABEL_MAX = 32;
 
-/** The most options a dropdown row draws; more keep the serialized editor. */
-const OPTIONS_MAX = 8;
-
 /**
  * The widest range a slider row covers. A number spanning more than this is
  * typed instead: dragging one step out of thousands is not an edit anyone can
@@ -168,7 +165,9 @@ const rowOf = (key: string, entry: EntrySchema, current: unknown): ScopeRow | un
     return { key, label, kind: 'input', text: typeof current === 'string' ? current : String(current ?? '') };
   }
 
-  if (entry.type === 'enum' && entry.options !== undefined && entry.options.length <= OPTIONS_MAX) {
+  // However many options: the popup is capped at half the screen and scrolls
+  // past that, so a long enum costs the row nothing.
+  if (entry.type === 'enum' && entry.options !== undefined) {
     const options = entry.options;
     const selected = typeof current === 'string' && options.includes(current) ? current : options[0] ?? '';
 
