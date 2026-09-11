@@ -6,9 +6,15 @@
  * import { core } from '@bedrock-core/server-runtime';
  * import { ui } from '@bedrock-core/config';
  *
- * core.register({ manifest, translations: bundle, guide: guides });
+ * core.register({ manifest, config });
  * ui(core);                         // registers the commands and joins the host election
  * ```
+ *
+ * The addon declares; the build does the rest. The ui-compile filter reads that
+ * register call and compiles what follows from it — the addon's page in the
+ * shared list, drawn from its manifest, and one config screen per section of its
+ * schema — and `ui()` announces those along with the i18n bundle and guide the
+ * other filters generated. Nothing above is repeated anywhere else.
  *
  * This file is the package's public surface and nothing else. The map:
  *
@@ -24,14 +30,24 @@
 export { ui, openUi } from './mount';
 export type { UiOptions } from './mount';
 
-export { App } from './App';
-export type { AppProps } from './App';
-
 export { registerAddonCommands } from './commands/addon';
 export type { OpenCallback } from './commands/addon';
 export { allowedScopes, clampTarget, guideAudienceFor, isOperator } from './permissions';
 
 export type { OpenCommand, OpenTarget } from './navigation/openTarget';
-export type { AppRoutes, AppScreen } from './navigation/routes';
 export { CONFIG_SCOPES } from './types';
 export type { ConfigScope, EntrySchema, FlatSchemaLike } from './types';
+
+/**
+ * The config screens an addon's own schema becomes, for the ui-compile filter's
+ * `screens` setting: one per section that holds settings, shaped for it.
+ */
+export { configScreens, leafName, registerConfigScreens, type LeafModel, type LeafProps } from './compiled/shaped';
+
+/**
+ * What a build declares on its addon's behalf: the page drawn from its manifest,
+ * its i18n bundle, its guide manifest. The ui-compile filter generates the
+ * module that calls these; `ui()` publishes what they carry.
+ */
+export { addonPageScreen, type AddonPageInfo } from './compiled/page.screen';
+export { registerDeclared, type DeclaredParts } from './declared';

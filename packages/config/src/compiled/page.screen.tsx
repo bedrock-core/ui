@@ -1,7 +1,7 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Button as OreButton, theme } from '@bedrock-core/ore-styled';
 import {
-  compiledSnapshotOf, compiledValuesOf, Embed, Image, Panel, Scroll, Text,
+  compiledSnapshotOf, compiledValuesOf, Embed, Image, Panel, Screen, Scroll, Text,
   type FunctionComponent, type JSX, type PressEvent,
 } from '@bedrock-core/ui-runtime';
 import { buildScreenTree } from '@bedrock-core/ui-runtime/compile';
@@ -19,9 +19,11 @@ import { FRAME, MAIN } from './frame';
  * frame around it, writes the addon's marker into the first entry, and
  * reads the two presses back.
  *
- * The addon declares the page like any screen — a module default-exporting
- * `() => <Screen><AddonPage addon={...} /></Screen>` — and publishes what
- * presenting it needs through `core.register({ page: addonPageReference(Page) })`.
+ * The page follows from the manifest: everything on it is already declared, so
+ * the build writes the screen and `ui()` publishes its reference. An addon that
+ * wants a different page writes one as a module default-exporting
+ * `() => <Screen>…</Screen>` and names it in `core.register({ page:
+ * addonPageReference(Page) })`, and no page is generated for it.
  */
 
 const { spacing } = theme.tokens;
@@ -154,3 +156,19 @@ export function isAddonPageReference(value: unknown): value is AddonPageReferenc
 
   return candidate.v === 1 && Array.isArray(candidate.values) && Array.isArray(candidate.targets);
 }
+
+/**
+ * The page as a screen of its own, built from what an addon declared.
+ *
+ * Everything the page draws is in the manifest — name, version, icon, banner,
+ * description, authors — so the build writes no page: it asks for one with the
+ * manifest the addon already registered. An addon that wants a different page
+ * writes the screen itself and names it in `core.register({ page })`, and this
+ * one is not built.
+ */
+export const addonPageScreen = (addon: AddonPageInfo): FunctionComponent =>
+  (): JSX.Element => (
+    <Screen>
+      <AddonPage addon={addon} />
+    </Screen>
+  );

@@ -1,6 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import type { DisplayText } from '@bedrock-core/i18n';
-import type { Runtime } from '@bedrock-core/server-runtime';
+import type { RemoteConfigAccessor, Runtime } from '@bedrock-core/server-runtime';
 import { compiledTitleOf, render } from '@bedrock-core/ui-runtime';
 import { world, type Player } from '@minecraft/server';
 import {
@@ -11,11 +11,11 @@ import { buildNestedPatch, resolveInitialValue, toItems } from '../config/nested
 import { getRoster, patchScope } from '../config/values';
 import { i18n, translationsFor } from '../i18n';
 import { allowedScopes, isOperator } from '../permissions';
-import type { ConfigScope } from '../types';
+import type { ConfigScope, EntrySchema } from '../types';
 import { ConfirmReset, confirmResetElement } from './confirm.screen';
 import { MENU_ROWS, MenuList, menuListElement, pageOf, type MenuListRow } from './menu.screen';
 import { ScopePicker, scopePickerElement } from './picker.screen';
-import { ConfigScope as ScopeEditor, configScopeElement, type ScopeRow } from './scope.screen';
+import { ITEM_FIELD, shapedElement, shapedItemScreen, shapedScreen } from './shaped';
 
 /**
  * Showing the compiled config screens that lead up to the editor.
@@ -35,7 +35,6 @@ export const canPresentConfirmReset = (): boolean => compiledTitleOf(ConfirmRese
 export const canPresentMenuList = (): boolean => compiledTitleOf(MenuList) !== undefined;
 
 /** Whether this build carries the editor the rows and the list items are typed in. */
-export const canPresentConfigScope = (): boolean => compiledTitleOf(ScopeEditor) !== undefined;
 
 /** Where the picker sends a press it does not answer itself. */
 export interface ScopePickerOpeners {
@@ -423,7 +422,7 @@ export function presentListEditor(
     onRow: (index): void => {
       const at = (shown.page - 1) * MENU_ROWS + index;
 
-      presentItemEditor(core, player, target, at < items.length ? at : undefined, {
+      presentItemEditor(player, target, at < items.length ? at : undefined, {
         current: items[at] ?? '',
         options: isEnum ? optionsFor(at < items.length ? at : undefined) : undefined,
         apply: (item: string): void => {
@@ -463,40 +462,117 @@ export function presentListEditor(
 }
 
 /**
- * One item of a list, in the editor every other setting uses.
+ * One item of a list, on the screen its list was shaped a screen for.
  *
- * A one-row {@link ScopeModel}: the shape is a screen of rows and nothing says
- * a schema has to be what fills it, so an item needs no screen of its own — a
- * text field for a string-item list, since there is no other way to type one,
- * and a dropdown of what is still available for an enum-item list.
+ * A list has no native modal control, so an item is edited on its own: a text
+ * field where the items are free strings, a dropdown of what is still available
+ * where they come from a set. Which of the set is still free is known only now,
+ * so it travels rather than being baked — the engine reads a dropdown's options
+ * off the modal row either way.
  */
 function presentItemEditor(
-  core: Runtime,
   player: Player,
   target: SectionTarget & { key: string },
   index: number | undefined,
   item: { current: string; options?: string[]; apply: (value: string) => void },
 ): void {
+  const screen = shapedItemScreen(target.scope, target.key);
+
+  if (screen === undefined) {
+    console.warn(`[config] no shaped item screen for ${target.scope} list '${target.key}'`);
+
+    return;
+  }
+
   // No parameter: the trail already ends with the list's own label, so the
   // segment says which of the two this is and nothing more.
   const label: DisplayText = {
     translate: index === undefined ? key($ => $.list.add) : key($ => $.list.editTitle),
   };
-  const row: ScopeRow = item.options === undefined
-    ? { key: 'item', label: { translate: key($ => $.list.item) }, kind: 'input', text: item.current }
-    : {
-        key: 'item',
-        label: { translate: key($ => $.list.item) },
-        kind: 'dropdown',
-        options: item.options,
-        selected: item.options.includes(item.current) ? item.current : item.options[0] ?? '',
-      };
 
-  render(configScopeElement({
+  render(shapedElement(screen, {
     trail: [...target.trail, label],
-    rows: [row],
-    onSubmit: (values): void => { item.apply(String(values['r0'] ?? '')); },
+    values: { [ITEM_FIELD]: item.current },
+    ...item.options === undefined ? {} : { options: { [ITEM_FIELD]: item.options } },
+    onSubmit: (values): void => { item.apply(String(values[ITEM_FIELD] ?? '')); },
+  }), player);
+}
+
+/**
+ * One section's settings, on the screen this addon's build shaped for them.
+ *
+ * The generic editor had to be told everything at present time — the labels,
+ * which control each row shows, how many rows there are — because it was one
+ * shape for every schema. A shaped screen was built against this section, so
+ * the only thing that travels is the values, and they ride the modal rows the
+ * engine reads anyway.
+ */
+export function presentShapedEditor(
+  accessor: RemoteConfigAccessor,
+  player: Player,
+  target: SectionTarget,
+  values: Record<string, unknown>,
+): boolean {
+  const screen = shapedScreen(target.scope, target.path);
+
+  if (screen === undefined || compiledTitleOf(screen) === undefined) {
+    return false;
+  }
+
+  const schema = filterScope(getScopedSchema(accessor), target.scope);
+
+  render(shapedElement(screen, {
+    trail: target.trail,
+    values,
+    onSubmit: (submitted: Record<string, unknown>): void => {
+      const patch: Record<string, unknown> = {};
+
+      for (const [key, raw] of Object.entries(submitted)) {
+        const entry = schema[key];
+        const value = entry === undefined ? undefined : settingValue(entry, raw);
+
+        if (value !== undefined) {
+          patch[key] = value;
+        }
+      }
+
+      patchScope(accessor, target.scope, target.entityId, buildNestedPatch(patch));
+    },
   }), player);
 
-  void core;
+  return true;
 }
+
+/**
+ * A submitted field, back in the entry's own type.
+ *
+ * The engine reports what its control holds — a boolean from a toggle, a number
+ * from a slider, a string from a box — and the schema says what the setting is.
+ * A value outside the entry's range is clamped rather than refused: the control
+ * that produced it was built from the same range, so an out-of-range answer is
+ * a schema that moved, not a player doing something wrong.
+ */
+const settingValue = (entry: EntrySchema, raw: unknown): unknown => {
+  if (entry.type === 'boolean') {
+    return Boolean(raw);
+  }
+
+  if (entry.type === 'number') {
+    const parsed = typeof raw === 'number' ? raw : Number(raw);
+
+    if (!Number.isFinite(parsed)) {
+      return undefined;
+    }
+
+    return Math.min(entry.max ?? Number.POSITIVE_INFINITY, Math.max(entry.min ?? Number.NEGATIVE_INFINITY, parsed));
+  }
+
+  if (entry.type === 'enum') {
+    // A dropdown reports the chosen INDEX; a radio reports the value itself.
+    const chosen = typeof raw === 'number' ? entry.options?.[raw] : raw;
+
+    return typeof chosen === 'string' && entry.options?.includes(chosen) === true ? chosen : undefined;
+  }
+
+  return typeof raw === 'string' ? raw : undefined;
+};

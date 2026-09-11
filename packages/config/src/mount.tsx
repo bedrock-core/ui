@@ -22,30 +22,22 @@
 import { world } from '@minecraft/server';
 import type { Player } from '@minecraft/server';
 import { presentGuideReference } from '@bedrock-core/guides';
-import { render } from '@bedrock-core/ui-runtime';
 import type { Runtime } from '@bedrock-core/server-runtime';
 import { registerAddonCommands } from './commands/addon';
 import { openTargetFrom, type OpenCommand, type OpenTarget } from './navigation/openTarget';
 import { clampTarget } from './permissions';
 import { getScopeValues } from './config/values';
-import {
-  buildSectionTree,
-  filterScope,
-  filterScopeGroups,
-  findSection,
-  getScopedGroups,
-  getScopedSchema,
-  isPureSection,
-} from './config/schema';
-import { App } from './App';
 import { guideReferenceFor } from './frameworkGuide';
 import { canPresentAddonList, presentAddonList } from './compiled/host';
 import {
-  canPresentConfigScope, canPresentMenuList, canPresentScopePicker, isSectionLevel, openLevel,
-  presentEntityRoster, presentListEditor, presentScopePicker,
-  trailOf, trailText, type SectionListOpeners, type SectionTarget,
+  canPresentMenuList, canPresentScopePicker, isSectionLevel, openLevel,
+  presentEntityRoster, presentListEditor, presentScopePicker, presentShapedEditor,
+  trailOf, type SectionListOpeners, type SectionTarget,
 } from './compiled/configHost';
-import { configScopeElement, scopeModel } from './compiled';
+import { guideReference } from '@bedrock-core/guides';
+import { i18n } from './i18n';
+import { declaredParts } from './declared';
+import { addonPageReference } from './compiled/page.screen';
 
 /** What a receiving realm forwards: who typed it, what they asked for, and untouched arguments. */
 interface OpenRequest {
@@ -102,6 +94,51 @@ export function ui(core: Runtime, options: UiOptions = {}): void {
 
   if (options.commands !== false) {
     registerAddonCommands(core, (player, command, args) => { dispatch(core, player, command, args); });
+  }
+
+  publishDeclared(core);
+}
+
+/**
+ * Announce what the build declared for this addon.
+ *
+ * Here rather than in `core.register()` because all of it is read off what the
+ * build produced — the page's reference off its built tree, the guide's off the
+ * compiled screens the generated module registers — and none of it is known
+ * until the addon's own modules have been evaluated. `ui()` is the first point
+ * where the addon is online AND everything it ships is loaded.
+ *
+ * Whatever the addon named in `core.register()` was already published by the
+ * runtime; nothing here is generated for a part the addon declared itself.
+ */
+function publishDeclared(core: Runtime): void {
+  const { page, translations, guide } = declaredParts();
+
+  announce(translations, bundle => core.translations.provide(bundle));
+  announce(guide, manifest => core.guides.manifest.provide(manifest));
+  // Undefined when this pack compiled no guide of its own, which is most addons.
+  announce(guideReference(core.id), reference => core.guides.provide(reference));
+  announce(page, screen => core.pages.provide(addonPageReference(screen)));
+}
+
+/**
+ * Announce one part, if there is one and the runtime has somewhere to put it.
+ *
+ * The registries an addon's runtime carries grow over time — `core.pages` is
+ * newer than the first of them — and an addon is free to ship an older one than
+ * the UI it mounts. A part with nowhere to go is simply not announced: the
+ * addon keeps its screens, and the one thing that would have read it elsewhere
+ * does without.
+ */
+function announce<T>(part: T | undefined, provide: (part: T) => void): void {
+  if (part === undefined) {
+    return;
+  }
+
+  try {
+    provide(part);
+  } catch (error: unknown) {
+    console.warn(`[config] this runtime cannot announce one of the build's declarations: ${String(error)}`);
   }
 }
 
@@ -224,22 +261,6 @@ export function openUi(core: Runtime, player: Player, target: OpenTarget): Promi
     }
   }
 
-  const scopeIsSections = scopeHoldsOnlySections(core, player, clamped);
-
-  // The serialized screens title themselves with text, from the same references.
-  const trail = clamped.kind === 'config' && clamped.addonId !== undefined && clamped.scope !== undefined
-    ? trailText(core, player, clamped.trail ?? trailOf(core, player, { addonId: clamped.addonId, scope: clamped.scope, entityId: clamped.scopeId, path: clamped.path }))
-    : undefined;
-
-  // A scope that holds only sub-sections lands on the section screen, which needs no values —
-  // fetching for it would be a round trip whose result nothing reads. A list names a setting
-  // rather than a level, so it is never one of these however pure the level around it is.
-  if (scopeIsSections && (clamped.kind !== 'config' || clamped.list === undefined)) {
-    render(<App core={core} player={player} target={clamped} scopeIsSections={true} trail={trail} />, player);
-
-    return Promise.resolve();
-  }
-
   // Never rejects: prefetchScopeValues catches internally, so floating this is safe.
   return prefetchScopeValues(core, player, clamped).then((values) => {
     // A list setting is a screen of its items rather than a form: the native
@@ -249,13 +270,14 @@ export function openUi(core: Runtime, player: Player, target: OpenTarget): Promi
       return;
     }
 
-    // The compiled editor when this build carries it and the section fits its
-    // rows — the same choice a press in the serialized app makes.
-    if (values !== undefined && presentCompiledEditor(core, player, clamped, values)) {
+    // The screen this addon's build shaped for the section, when it carries
+    // one: everything about the section is baked into it, so only the values
+    // travel.
+    if (values !== undefined && presentShaped(core, player, clamped, values)) {
       return;
     }
 
-    render(<App core={core} player={player} target={clamped} values={values} trail={trail} />, player);
+    missing(player, clamped);
   });
 }
 
@@ -270,40 +292,34 @@ const levelOpeners = (core: Runtime, player: Player): SectionListOpeners => ({
 });
 
 /**
+ * Shows the section on the screen this addon's build shaped for it, when there
+ * is one. False when something more general has to draw it.
+ */
+function presentShaped(core: Runtime, player: Player, target: OpenTarget, values: Record<string, unknown>): boolean {
+  if (target.kind !== 'config' || target.addonId === undefined || target.scope === undefined || target.list !== undefined) { return false; }
+
+  const { addonId, scope, scopeId } = target;
+  const path = target.path ?? '';
+  const trail = target.trail ?? trailOf(core, player, { addonId, scope, entityId: scopeId, path });
+
+  const accessor = core.config.of(addonId, { actorId: player.id });
+
+  return accessor !== undefined && presentShapedEditor(accessor, player, { addonId, scope, entityId: scopeId, path, trail }, values);
+}
+
+/**
  * Shows the compiled list editor when this build carries it and the target
  * names a list. False when the serialized app has to draw it instead.
  */
 function presentCompiledList(core: Runtime, player: Player, target: OpenTarget, values: Record<string, unknown>): boolean {
   if (target.kind !== 'config' || target.addonId === undefined || target.scope === undefined || target.list === undefined) { return false; }
 
-  if (!canPresentMenuList() || !canPresentConfigScope()) { return false; }
+  if (!canPresentMenuList()) { return false; }
 
   const { addonId, scope, scopeId, list } = target;
   const trail = target.trail ?? trailOf(core, player, { addonId, scope, entityId: scopeId, path: list });
 
   presentListEditor(core, player, { addonId, scope, entityId: scopeId, path: '', key: list, trail }, values, levelOpeners(core, player));
-
-  return true;
-}
-
-/**
- * Shows the compiled editor for a resolved scope when this build carries it
- * and the scope's top level fits it. False when the serialized app has to
- * draw it instead.
- */
-function presentCompiledEditor(core: Runtime, player: Player, target: OpenTarget, values: Record<string, unknown>): boolean {
-  if (target.kind !== 'config' || target.addonId === undefined || target.scope === undefined || target.list !== undefined) { return false; }
-
-  const accessor = core.config.of(target.addonId, { actorId: player.id });
-
-  if (!accessor) { return false; }
-
-  const trail = target.trail ?? trailOf(core, player, { addonId: target.addonId, scope: target.scope, entityId: target.scopeId, path: target.path });
-  const model = scopeModel(accessor, { scope: target.scope, entityId: target.scopeId, path: target.path ?? '', trail }, values);
-
-  if (model === undefined) { return false; }
-
-  render(configScopeElement(model), player);
 
   return true;
 }
@@ -342,26 +358,19 @@ async function prefetchScopeValues(
 }
 
 /**
- * Whether the scope a deep link names holds only sub-sections, and so opens as a screen of
- * buttons rather than as a form.
+ * Nothing in this pack can draw what was asked for.
  *
- * Synchronous: the schema is replicated state, already local, unlike the values which are an
- * RPC away. That is the whole reason this can be decided before the fetch is even started.
+ * Every screen the config UI needs is compiled into an addon's own pack from
+ * what it declared, so reaching here means a pack that was built without the
+ * ui-compile filter, or one built against a library that did not yet shape the
+ * screen this target wants. Either is a build to fix, which is why it is said
+ * here rather than papered over.
  */
-function scopeHoldsOnlySections(core: Runtime, player: Player, target: OpenTarget): boolean {
-  if (target.kind !== 'config' || target.addonId === undefined || target.scope === undefined) { return false; }
+function missing(player: Player, target: OpenTarget): void {
+  const what = target.kind === 'config' && target.addonId !== undefined
+    ? `${target.addonId} ${target.scope ?? 'config'}${target.path === undefined || target.path === '' ? '' : ` ${target.path}`}`
+    : target.kind;
 
-  if (target.scope !== 'server' && target.scopeId === undefined) { return false; }
-
-  const accessor = core.config.of(target.addonId, { actorId: player.id });
-
-  if (!accessor) { return false; }
-
-  const root = buildSectionTree(
-    filterScope(getScopedSchema(accessor), target.scope),
-    filterScopeGroups(getScopedGroups(accessor), target.scope),
-  );
-  const section = findSection(root, target.path ?? '');
-
-  return section !== undefined && isPureSection(section);
+  console.error(`[config] no compiled screen for ${what} — build this pack with the ui-compile filter`);
+  player.sendMessage({ translate: i18n.key($ => $.errors.notCompiled) });
 }

@@ -6,7 +6,8 @@ import { ConfirmReset, type ConfirmModel } from '../confirm.screen';
 import { AddonList, type AddonListModel } from '../list.screen';
 import { MenuList, type MenuListModel } from '../menu.screen';
 import { ScopePicker, type PickerModel } from '../picker.screen';
-import { ConfigScope, type ScopeModel } from '../scope.screen';
+import { configScreens, type LeafModel, type LeafProps } from '../shaped';
+import type { ConfigDefinition } from '@bedrock-core/server-runtime';
 
 /**
  * A compiled screen is baked from a render with no model, and shown with
@@ -62,17 +63,30 @@ describe('a compiled config screen keeps its shape when shown', () => {
     expect(shown).toBe(baked);
   });
 
-  it('editor, with every row kind', () => {
-    const model: ScopeModel = {
+  it('a shaped section, with every field kind', () => {
+    const screens = configScreens({
+      server: {
+        pricing: {
+          enabled: { type: 'boolean', default: true, label: 'Enabled' },
+          rate: { type: 'number', default: 3, min: 0, max: 10, label: 'Rate' },
+          mode: { type: 'enum', default: 'y', options: ['w', 'x', 'y', 'z'], label: 'Mode' },
+          note: { type: 'string', default: '', label: 'Note' },
+        },
+      },
+    } as ConfigDefinition);
+
+    const Screen = screens['config_server_pricing'] as FunctionComponent<LeafProps> | undefined;
+
+    expect(Screen).toBeDefined();
+
+    if (Screen === undefined) { return; }
+
+    const model: LeafModel = {
       trail: [{ translate: 'drav0011_economy.meta.name' }, { translate: 'core.scope.server.label' }, { translate: 'drav0011_economy.config.pricing' }],
-      rows: [
-        { key: 'a', label: { translate: 'drav0011_economy.config.a' }, kind: 'toggle', toggle: true },
-        { key: 'b', label: 'Literal', kind: 'input', text: '3' },
-        { key: 'c', label: { translate: 'drav0011_economy.config.c' }, kind: 'dropdown', options: ['x', 'y'], selected: 'y' },
-      ],
+      values: { 'pricing.enabled': false, 'pricing.rate': 7, 'pricing.mode': 'x', 'pricing.note': 'hello' },
       onSubmit: press,
     };
-    const { baked, shown } = shapeAgainstBake(ConfigScope, <ConfigScope model={model} />);
+    const { baked, shown } = shapeAgainstBake(Screen, <Screen model={model} />);
 
     expect(shown).toBe(baked);
   });

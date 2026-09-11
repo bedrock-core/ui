@@ -21,6 +21,10 @@ export default {
     guide: 'Guide',
   },
 
+  errors: {
+    notCompiled: 'This addon was built without its screens. Rebuild its pack with the ui-compile filter.',
+  },
+
   config: {
     breadcrumb: 'Config',
     empty: 'Nothing here you can configure.',
