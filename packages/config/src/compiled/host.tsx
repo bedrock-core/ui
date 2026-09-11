@@ -45,7 +45,7 @@ const rowsFor = (core: Runtime): AddonListRow[] => {
       ...addon.icon === undefined ? {} : { icon: addon.icon },
     })),
     // The framework itself, pinned last: nothing registers it, so its row is synthetic.
-    { id: FRAMEWORK_ADDON_ID, name: { translate: key($ => $.framework.name) }, version: runtimeVersion, icon: 'textures/ui/bedrock_core/icon' },
+    { id: FRAMEWORK_ADDON_ID, name: { translate: key($ => $.framework.name) }, version: runtimeVersion, icon: 'textures/ui/bedrock-core/icon' },
   ];
 };
 

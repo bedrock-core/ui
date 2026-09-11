@@ -68,7 +68,7 @@ function frameworkAddon(runtimeVersion: string): DisplayAddon {
     creator: 'drav0011',
     creatorName: key($ => $.framework.creator),
     description: key($ => $.framework.description),
-    icon: 'textures/ui/bedrock_core/icon',
+    icon: 'textures/ui/bedrock-core/icon',
   };
 }
 

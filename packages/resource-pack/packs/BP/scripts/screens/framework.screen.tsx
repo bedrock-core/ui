@@ -25,7 +25,7 @@ export default function FrameworkPage(): JSX.Element {
           version: `${String(major)}.${String(minor)}.${String(patch)}`,
           creator: key($ => $.framework.creator),
           description: key($ => $.framework.description),
-          icon: 'textures/ui/bedrock_core/icon',
+          icon: 'textures/ui/bedrock-core/icon',
         }}
       />
     </Screen>
