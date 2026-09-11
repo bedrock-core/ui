@@ -1,5 +1,5 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { Card, Divider, Dropdown, Form, Input, Toggle, Trail, type TrailSegment } from '@bedrock-core/ore-styled';
+import { Card, Divider, Dropdown, Form, Input, Slider, Toggle, Trail, type TrailSegment } from '@bedrock-core/ore-styled';
 import type { DisplayText } from '@bedrock-core/i18n';
 import type { RemoteConfigAccessor } from '@bedrock-core/server-runtime';
 import { List, Panel, Text, useExit, type FunctionComponent, type JSX, type SubmitEvent } from '@bedrock-core/ui-runtime';
@@ -22,6 +22,11 @@ import type { ConfigScope as Scope, EntrySchema } from '../types';
  *
  * What a fixed shape cannot follow is capped: a section with more rows than
  * fit, or an entry kind with no row here, keeps the serialized editor.
+ *
+ * A slider is the one control whose own numbers travel: the engine reads a
+ * slider's range, step and value off the modal row rather than off the control,
+ * so a compiled slider serves every schema's range without any of them being
+ * baked.
  */
 
 /** Rows a section may hold before the serialized editor takes over. */
@@ -33,10 +38,17 @@ const LABEL_MAX = 32;
 /** The most options a dropdown row draws; more keep the serialized editor. */
 const OPTIONS_MAX = 8;
 
+/**
+ * The widest range a slider row covers. A number spanning more than this is
+ * typed instead: dragging one step out of thousands is not an edit anyone can
+ * make.
+ */
+const RANGE_MAX = 100;
+
 /** One box every field of a row shares, so a row is as tall as one field. */
 const FIELD_HEIGHT = 22;
 
-export type RowKind = 'toggle' | 'input' | 'dropdown' | 'heading';
+export type RowKind = 'toggle' | 'input' | 'slider' | 'dropdown' | 'heading';
 
 /** One row of the editor: what it says, which field it shows, and the field's starting value. */
 export interface ScopeRow {
@@ -48,6 +60,19 @@ export interface ScopeRow {
   text?: string;
   options?: readonly string[];
   selected?: string;
+  /**
+   * A slider row's range and where it starts, from the entry's own schema.
+   *
+   * Carried rather than baked, and the one place this screen's frozen shape
+   * does not bind: the engine takes a slider's range, step and value from the
+   * modal ROW it is given, so the numbers below travel per present while the
+   * control that reads them was compiled once. What the build bakes is only
+   * what the face draws with.
+   */
+  min?: number;
+  max?: number;
+  step?: number;
+  value?: number;
 }
 
 /** What one present fills the screen with. Absent at build, where the shape alone matters. */
@@ -101,6 +126,7 @@ export const ConfigScope: FunctionComponent<ConfigScopeProps> = ({ model }: Conf
                   <Panel height={FIELD_HEIGHT}>
                     {at.kind === 'toggle' && <Toggle label={''} name={name} defaultValue={at.toggle === true} position={'absolute'} left={0} top={0} />}
                     {at.kind === 'input' && <Input label={''} name={name} defaultValue={at.text ?? ''} position={'absolute'} left={0} right={0} top={0} height={FIELD_HEIGHT} />}
+                    {at.kind === 'slider' && <Slider label={''} name={name} min={at.min ?? 0} max={at.max ?? 1} step={at.step ?? 1} defaultValue={at.value ?? 0} position={'absolute'} left={0} right={0} top={0} />}
                     {at.kind === 'dropdown' && <Dropdown label={''} name={name} options={[...at.options ?? []]} defaultValue={at.selected ?? ''} position={'absolute'} left={0} right={0} top={0} />}
                   </Panel>
                   <Divider />
@@ -127,7 +153,15 @@ const rowOf = (key: string, entry: EntrySchema, current: unknown): ScopeRow | un
   }
 
   if (entry.type === 'number') {
-    return { key, label, kind: 'input', text: String(typeof current === 'number' ? current : Number(current ?? 0)) };
+    const min = entry.min ?? 0;
+    const max = entry.max ?? 100;
+    const value = typeof current === 'number' ? current : Number(current ?? 0);
+
+    if (max - min > RANGE_MAX) {
+      return { key, label, kind: 'input', text: String(value) };
+    }
+
+    return { key, label, kind: 'slider', min, max, step: entry.step ?? 1, value };
   }
 
   if (entry.type === 'string') {
@@ -153,7 +187,14 @@ const valueOf = (entry: EntrySchema, raw: unknown): unknown => {
   if (entry.type === 'number') {
     const parsed = typeof raw === 'number' ? raw : Number(raw);
 
-    return Number.isFinite(parsed) ? parsed : undefined;
+    if (!Number.isFinite(parsed)) {
+      return undefined;
+    }
+
+    // Clamped to the entry's own range: a typed number is whatever was typed,
+    // and a slider that spans a wider range than the schema still reports its
+    // own end.
+    return Math.min(entry.max ?? Number.POSITIVE_INFINITY, Math.max(entry.min ?? Number.NEGATIVE_INFINITY, parsed));
   }
 
   if (entry.type === 'enum') {

@@ -118,13 +118,19 @@ export const swap = (group: SwapGroup, looks: SwapLooks, geometry: Control): Con
 });
 
 /**
- * A control shown while a swap beside it is on.
+ * A control shown while a swap is on.
  *
  * The one place something reads a swap back rather than nesting inside it: a
- * fold's rows are a SIBLING of its header, because they have to reflow what is
- * under them and content nested in a look cannot. The lookup is by name among
- * siblings, and the seed keeps it from flashing before the first binding
- * resolves.
+ * fold's rows have to reflow what is under them, and content nested in a look
+ * cannot. The seed keeps it from flashing before the first binding resolves.
+ *
+ * The lookup is SCREEN-WIDE, which is what the swap's name is qualified for.
+ * Restricting it to siblings is what a hand-built fold could afford, because
+ * it put the toggle and the rows in one stack itself; a swap and its follower
+ * pass through whatever the layout put between them — a stack wraps every
+ * child in a row of its own pitch — so by the time they are drawn the two are
+ * cousins, and a sibling lookup cannot see across. An unresolved name is an
+ * assertion in the client, not a control that quietly fails to fold.
  */
 export const shownWhileOn = (swapName: string, on: boolean, control: Control): Control => ({
   ...control,
@@ -134,7 +140,6 @@ export const shownWhileOn = (swapName: string, on: boolean, control: Control): C
     {
       binding_type: 'view',
       source_control_name: swapName,
-      resolve_sibling_scope: true,
       source_property_name: '#toggle_state',
       target_property_name: '#visible',
     },

@@ -17,8 +17,8 @@
  *  4. Sibling names are unique: two entries of one name in one `controls` list
  *     draw one of them.
  *  5. Every reference into the screen's own namespace or the addon's faces
- *     resolves. An unresolvable name is an assertion in the client, and so a
- *     Marketplace rejection.
+ *     resolves, and so does every `source_control_name`. An unresolvable name
+ *     is an assertion in the client, and so a Marketplace rejection.
  */
 
 import { ContainerScreenError } from '@bedrock-core/ui-runtime/compile';
@@ -33,10 +33,32 @@ const isLocal = (binding: Binding): boolean =>
   binding.binding_type === 'view' && binding.source_control_name !== undefined
   && binding.binding_collection_name === undefined && binding.binding_name === undefined;
 
-const checkControl = (where: string, control: Control, ns: string, facesNs: string, known: ReadonlySet<string>): void => {
+/** Every control name in a document, at any depth: what a `source_control_name` may name. */
+const controlNames = (control: Control, into: Set<string>): Set<string> => {
+  for (const entry of control.controls ?? []) {
+    for (const [key, child] of Object.entries(entry)) {
+      into.add(key.split('@')[0] ?? '');
+      controlNames(child, into);
+    }
+  }
+
+  return into;
+};
+
+const checkControl = (where: string, control: Control, ns: string, facesNs: string, known: ReadonlySet<string>, controls: ReadonlySet<string>): void => {
   for (const binding of control.bindings ?? []) {
     if (!isLocal(binding)) {
       refuse(where, `a face carries no binding that reads a host (${JSON.stringify(binding)}).`);
+    }
+
+    const source = binding.source_control_name;
+
+    if (source !== undefined && !controls.has(source)) {
+      refuse(
+        where,
+        `it reads "${source}", which no control on this screen is called. `
+        + 'An unresolved name is an assertion in the client, not a binding that quietly does nothing.',
+      );
     }
   }
 
@@ -72,7 +94,7 @@ const checkControl = (where: string, control: Control, ns: string, facesNs: stri
         }
       }
 
-      checkControl(`${where}/${name}`, child, ns, facesNs, known);
+      checkControl(`${where}/${name}`, child, ns, facesNs, known, controls);
     }
   }
 };
@@ -95,11 +117,26 @@ export const validateFace = (document: Document, faces: Record<string, Control>,
     ...Object.keys(faces).map(name => `${facesNs}.${name}`),
   ]);
 
+  // Every name in the screen, since a `source_control_name` is looked up
+  // screen-wide: the reader and its source are rarely siblings by the time the
+  // layout has put each of them in a row of its own.
+  const controls = new Set<string>();
+
   for (const [name, control] of definitions(document)) {
-    checkControl(name, control, ns, facesNs, known);
+    controls.add(name.split('@')[0] ?? '');
+    controlNames(control, controls);
   }
 
   for (const [name, control] of Object.entries(faces)) {
-    checkControl(`${facesNs}.${name}`, control, ns, facesNs, known);
+    controls.add(name);
+    controlNames(control, controls);
+  }
+
+  for (const [name, control] of definitions(document)) {
+    checkControl(name, control, ns, facesNs, known, controls);
+  }
+
+  for (const [name, control] of Object.entries(faces)) {
+    checkControl(`${facesNs}.${name}`, control, ns, facesNs, known, controls);
   }
 };

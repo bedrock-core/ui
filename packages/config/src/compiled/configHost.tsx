@@ -206,7 +206,7 @@ export function presentEntityRoster(
 
   render(menuListElement({
     trail,
-    rows: shown.rows.map((entry): MenuListRow => ({ title: entry.name, reset: true })),
+    rows: shown.rows.map((entry): MenuListRow => ({ title: entry.name, action: 'reset' })),
     empty: { translate: scope === 'player' ? key($ => $.roster.noPlayers) : key($ => $.roster.noDimensions) },
     page: shown.page,
     pages: shown.pages,

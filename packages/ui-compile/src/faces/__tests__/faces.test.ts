@@ -228,7 +228,10 @@ describe('the compositions', () => {
     expect(rows.visible).toBe('#visible');
     expect(rows.property_bag).toEqual({ '#visible': true });
     expect(rows.bindings?.[0]?.source_control_name).toBe('section_head');
-    expect(rows.bindings?.[0]?.resolve_sibling_scope).toBe(true);
+    // Screen-wide, which the swap's qualified name is what makes safe: a stack
+    // puts each child in a row of its own, so the two are never siblings by
+    // the time they are drawn.
+    expect(rows.bindings?.[0]?.resolve_sibling_scope).toBeUndefined();
     expect(rows.bindings?.[0]?.source_property_name).toBe('#toggle_state');
   });
 

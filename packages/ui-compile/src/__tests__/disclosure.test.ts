@@ -111,7 +111,6 @@ describe('a fold', () => {
     expect(rows.bindings).toEqual([{
       binding_type: 'view',
       source_control_name: 'core_ui_test_section',
-      resolve_sibling_scope: true,
       source_property_name: '#toggle_state',
       target_property_name: '#visible',
     }]);

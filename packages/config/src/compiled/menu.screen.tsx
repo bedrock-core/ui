@@ -9,13 +9,14 @@ import { FRAME, HEADER_HEIGHT, PADDING, TRAIL_LENGTHS } from './frame';
  * A screen of rows that lead somewhere, as ONE compiled screen: the entity
  * roster of a scope and a level of the config tree are both this, and so is
  * any list a host fills at runtime. Each row carries its title and subtitle
- * live — a key the client resolves, or a literal — and shows a reset button
- * behind a carried visibility. Rows beyond a page are reached by paging,
+ * live — a key the client resolves, or a literal — and shows the button its
+ * row names, reset or remove, behind a carried visibility. Rows beyond a page are reached by paging,
  * since a compiled list has a fixed number of rows.
  */
 
 const { spacing } = theme.tokens;
 const row = theme.components.menuRow;
+const header = theme.components.header;
 
 const ICON_RESET = 'textures/ui/config/reset';
 
@@ -40,8 +41,15 @@ export interface MenuListRow {
   /** A key the client resolves, or a literal. */
   title: DisplayText;
   subtitle?: DisplayText;
-  /** Whether the row resets something in place. */
-  reset?: boolean;
+  /**
+   * The button beside the row, and which of the two it is.
+   *
+   * Both icons are baked and a carried visibility picks one: a texture cannot
+   * travel on a compiled screen without a carrier of its own, and one bit per
+   * row is cheaper than one string. Absent draws no button, and the row keeps
+   * the square anyway so every row is the same width.
+   */
+  action?: 'reset' | 'remove';
 }
 
 export interface MenuListModel {
@@ -92,7 +100,7 @@ export const MenuList: FunctionComponent<MenuListProps> = ({ model = EMPTY_MODEL
               items={rows}
               gap={ROW_GAP}
               row={(item: MenuListRow | undefined, index: number): JSX.Element => {
-                const hasReset = item?.reset === true;
+                const action = item?.action;
 
                 // A row's text is live, and a button's children bake into its
                 // face, so the face is a button beneath and the text a panel above it.
@@ -116,10 +124,26 @@ export const MenuList: FunctionComponent<MenuListProps> = ({ model = EMPTY_MODEL
                       </Panel>
                       <Text>{`${row.textStyle.muted}>`}</Text>
                     </Panel>
-                    {hasReset && (
+                    {action === 'reset' && (
                       <OreButton position={'absolute'} left={faceWidth + spacing.xs} top={0} variant={'secondary'} width={ROW_HEIGHT} height={ROW_HEIGHT} paddingLeft={0} paddingRight={0} paddingTop={0} paddingBottom={0} onPress={(event): unknown => model.onReset?.(index, event)}>
                         <Image width={10} height={10} texture={ICON_RESET} />
                       </OreButton>
+                    )}
+                    {action === 'remove' && (
+                      // The header's own close face, which carries its cross in the
+                      // texture — the pack ships no separate remove glyph, and a
+                      // reset arrow beside a list item would read as "revert it".
+                      <Button
+                        position={'absolute'}
+                        left={faceWidth + spacing.xs}
+                        top={0}
+                        width={ROW_HEIGHT}
+                        height={ROW_HEIGHT}
+                        background={header.textures.close}
+                        backgroundHover={header.textures.closeHover}
+                        backgroundPressed={header.textures.closePressed}
+                        onPress={(event): unknown => model.onReset?.(index, event)}
+                      />
                     )}
                   </Panel>
                 );

@@ -96,6 +96,16 @@ describe('a swap', () => {
   });
 });
 
+describe('a follow the screen cannot resolve', () => {
+  it('is refused at build, because an unresolved name asserts in the client', () => {
+    const orphan = screenOf();
+
+    orphan.root.children = [{ ...label('rows', 'a'), follows: 'nothing_here' }];
+
+    expect(() => emit(orphan)).toThrow(/no control on this screen is called/);
+  });
+});
+
 describe('a control that follows a swap', () => {
   const doc = emit(screenOf());
   const [, row] = find(doc, name => name === 'rows');
@@ -107,7 +117,6 @@ describe('a control that follows a swap', () => {
     expect(rows().bindings).toEqual([{
       binding_type: 'view',
       source_control_name: 'core_ui_test_fold',
-      resolve_sibling_scope: true,
       source_property_name: '#toggle_state',
       target_property_name: '#visible',
     }]);
