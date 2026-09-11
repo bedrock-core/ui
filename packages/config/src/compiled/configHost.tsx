@@ -7,6 +7,7 @@ import {
   buildSectionTree, filterScope, filterScopeGroups, findSection, getScopedGroups, getScopedSchema, isPureSection,
   listEntries, schemaDefaultsPatch, type SectionNode,
 } from '../config/schema';
+import { buildNestedPatch, resolveInitialValue, toItems } from '../config/nested';
 import { getRoster, patchScope } from '../config/values';
 import { i18n, translationsFor } from '../i18n';
 import { allowedScopes, isOperator } from '../permissions';
@@ -14,6 +15,7 @@ import type { ConfigScope } from '../types';
 import { ConfirmReset, confirmResetElement } from './confirm.screen';
 import { MENU_ROWS, MenuList, menuListElement, pageOf, type MenuListRow } from './menu.screen';
 import { ScopePicker, scopePickerElement } from './picker.screen';
+import { ConfigScope as ScopeEditor, configScopeElement, type ScopeRow } from './scope.screen';
 
 /**
  * Showing the compiled config screens that lead up to the editor.
@@ -31,6 +33,9 @@ export const canPresentConfirmReset = (): boolean => compiledTitleOf(ConfirmRese
 
 /** Whether this build carries the compiled menu list the roster and the sections show on. */
 export const canPresentMenuList = (): boolean => compiledTitleOf(MenuList) !== undefined;
+
+/** Whether this build carries the editor the rows and the list items are typed in. */
+export const canPresentConfigScope = (): boolean => compiledTitleOf(ScopeEditor) !== undefined;
 
 /** Where the picker sends a press it does not answer itself. */
 export interface ScopePickerOpeners {
@@ -344,3 +349,154 @@ export const openLevel = (core: Runtime, player: Player, target: SectionTarget, 
 
   return openers.editor(target);
 };
+
+/**
+ * One list setting, as a screen of its items.
+ *
+ * A list is the one entry type the native modal has no control for, which is
+ * why a form cannot hold one: there is nothing to draw, and no third button to
+ * route an editor from. A screen of rows has neither limit, so a list reached
+ * from a section level gets a real editor here.
+ *
+ * A ROW IS THE ITEM: pressing it edits that item, and the button beside it
+ * removes it. Splitting the two is what lets a row be pressed at all — with
+ * remove on the row itself there is no gesture left for editing, and the
+ * destructive action is the easy one to hit.
+ *
+ * Every change writes immediately. There is no Save: a list is one value
+ * holding the whole array, so each edit is already a complete, valid value.
+ * Staging them would only add a way to lose work by backing out, on a screen
+ * where every action is one press to undo.
+ */
+export function presentListEditor(
+  core: Runtime,
+  player: Player,
+  target: SectionTarget & { key: string },
+  values: Record<string, unknown>,
+  openers: SectionListOpeners,
+  page = 1,
+): void {
+  const accessor = core.config.of(target.addonId, { actorId: player.id });
+  const entry = accessor === undefined ? undefined : filterScope(getScopedSchema(accessor), target.scope)[target.key];
+
+  if (accessor === undefined || entry === undefined) {
+    void openers.back(target);
+
+    return;
+  }
+
+  const items = toItems(resolveInitialValue(target.key, entry, values));
+  const isEnum = entry.itemType === 'enum' && entry.options !== undefined;
+  const full = entry.maxItems !== undefined && items.length >= entry.maxItems;
+
+  /**
+   * What an enum-item list may still offer. Everything already in is excluded
+   * — except the item being edited, which has to stay in its own dropdown or
+   * that row could not keep its value.
+   */
+  const optionsFor = (index?: number): string[] => {
+    const taken = new Set(index === undefined ? items : items.filter((_: string, at: number) => at !== index));
+
+    return [...entry.options ?? []].filter(option => !taken.has(option));
+  };
+
+  const canAdd = !full && (!isEnum || optionsFor().length > 0);
+
+  /** Stage and write in one step — see the note above about why there is no Save. */
+  const commit = (next: string[], at = page): void => {
+    patchScope(accessor, target.scope, target.entityId, buildNestedPatch({ [target.key]: next }));
+    presentListEditor(core, player, target, { ...values, [target.key]: next }, openers, at);
+  };
+
+  const rows: MenuListRow[] = [
+    ...items.map((item): MenuListRow => ({ title: item, action: 'remove' })),
+    ...canAdd ? [{ title: { translate: key($ => $.list.add) } } satisfies MenuListRow] : [],
+  ];
+  const shown = pageOf(rows, page);
+
+  render(menuListElement({
+    trail: target.trail,
+    rows: shown.rows,
+    empty: { translate: key($ => $.list.empty) },
+    page: shown.page,
+    pages: shown.pages,
+    onRow: (index): void => {
+      const at = (shown.page - 1) * MENU_ROWS + index;
+
+      presentItemEditor(core, player, target, at < items.length ? at : undefined, {
+        current: items[at] ?? '',
+        options: isEnum ? optionsFor(at < items.length ? at : undefined) : undefined,
+        apply: (item: string): void => {
+          if (item === '') {
+            presentListEditor(core, player, target, values, openers, page);
+
+            return;
+          }
+
+          if (at >= items.length) {
+            // A duplicate is dropped rather than reported: the enum path cannot
+            // produce one, so the only way here is retyping a string already in.
+            commit(items.includes(item) ? items : [...items, item]);
+
+            return;
+          }
+
+          commit(items[at] !== item && items.includes(item)
+            ? items
+            : items.map((existing: string, other: number) => (other === at ? item : existing)));
+        },
+      });
+    },
+    onReset: (index): void => {
+      const at = (shown.page - 1) * MENU_ROWS + index;
+
+      if (at < items.length) {
+        const next = items.filter((_: string, other: number) => other !== at);
+
+        // The last item of the last page leaves that page behind.
+        commit(next, Math.min(page, Math.max(1, Math.ceil((next.length + 1) / MENU_ROWS))));
+      }
+    },
+    onPage: (at): void => { presentListEditor(core, player, target, values, openers, at); },
+    onBack: (): unknown => openers.back(target),
+  }), player);
+}
+
+/**
+ * One item of a list, in the editor every other setting uses.
+ *
+ * A one-row {@link ScopeModel}: the shape is a screen of rows and nothing says
+ * a schema has to be what fills it, so an item needs no screen of its own — a
+ * text field for a string-item list, since there is no other way to type one,
+ * and a dropdown of what is still available for an enum-item list.
+ */
+function presentItemEditor(
+  core: Runtime,
+  player: Player,
+  target: SectionTarget & { key: string },
+  index: number | undefined,
+  item: { current: string; options?: string[]; apply: (value: string) => void },
+): void {
+  // No parameter: the trail already ends with the list's own label, so the
+  // segment says which of the two this is and nothing more.
+  const label: DisplayText = {
+    translate: index === undefined ? key($ => $.list.add) : key($ => $.list.editTitle),
+  };
+  const row: ScopeRow = item.options === undefined
+    ? { key: 'item', label: { translate: key($ => $.list.item) }, kind: 'input', text: item.current }
+    : {
+        key: 'item',
+        label: { translate: key($ => $.list.item) },
+        kind: 'dropdown',
+        options: item.options,
+        selected: item.options.includes(item.current) ? item.current : item.options[0] ?? '',
+      };
+
+  render(configScopeElement({
+    trail: [...target.trail, label],
+    rows: [row],
+    onSubmit: (values): void => { item.apply(String(values['r0'] ?? '')); },
+  }), player);
+
+  void core;
+}

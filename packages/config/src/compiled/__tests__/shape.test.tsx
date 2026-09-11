@@ -41,7 +41,7 @@ describe('a compiled config screen keeps its shape when shown', () => {
   it('menu list, with rows, resets and pages', () => {
     const model: MenuListModel = {
       trail: [{ translate: 'drav0011_economy.meta.name' }, { translate: 'core.scope.player.label' }],
-      rows: [{ title: 'Steve', subtitle: 'op', reset: true }, { title: 'Alex' }],
+      rows: [{ title: 'Steve', subtitle: 'op', action: 'reset' }, { title: 'Alex' }],
       empty: '',
       page: 2,
       pages: 3,

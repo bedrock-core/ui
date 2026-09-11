@@ -5,7 +5,7 @@ import { splitBreadcrumb } from './breadcrumbs';
 import { FormHeader } from './FormHeader';
 import { useCore, usePlayer } from '../context';
 import { useTranslation } from '../i18n';
-import { buildNestedPatch, resolveInitialValue } from '../config/nested';
+import { buildNestedPatch, resolveInitialValue, toItems } from '../config/nested';
 import { filterScope, getScopedSchema } from '../config/schema';
 import { patchScope } from '../config/values';
 import { backToParent } from '../navigation/back';
@@ -252,16 +252,3 @@ function ItemEditor({ title, submitLabel, current, options, onApply, onCancel }:
 }
 
 /** A list value as strings — an array already, or JSON that took some other route here. */
-function toItems(value: unknown): string[] {
-  if (Array.isArray(value)) { return value.map(String); }
-
-  if (typeof value === 'string') {
-    try {
-      const parsed: unknown = JSON.parse(value);
-
-      return Array.isArray(parsed) ? parsed.map(String) : [];
-    } catch { return []; }
-  }
-
-  return [];
-}

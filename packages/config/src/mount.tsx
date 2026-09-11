@@ -41,7 +41,8 @@ import { App } from './App';
 import { guideReferenceFor } from './frameworkGuide';
 import { canPresentAddonList, presentAddonList } from './compiled/host';
 import {
-  canPresentMenuList, canPresentScopePicker, isSectionLevel, openLevel, presentEntityRoster, presentScopePicker,
+  canPresentConfigScope, canPresentMenuList, canPresentScopePicker, isSectionLevel, openLevel,
+  presentEntityRoster, presentListEditor, presentScopePicker,
   trailOf, trailText, type SectionListOpeners, type SectionTarget,
 } from './compiled/configHost';
 import { configScopeElement, scopeModel } from './compiled';
@@ -231,8 +232,9 @@ export function openUi(core: Runtime, player: Player, target: OpenTarget): Promi
     : undefined;
 
   // A scope that holds only sub-sections lands on the section screen, which needs no values —
-  // fetching for it would be a round trip whose result nothing reads.
-  if (scopeIsSections) {
+  // fetching for it would be a round trip whose result nothing reads. A list names a setting
+  // rather than a level, so it is never one of these however pure the level around it is.
+  if (scopeIsSections && (clamped.kind !== 'config' || clamped.list === undefined)) {
     render(<App core={core} player={player} target={clamped} scopeIsSections={true} trail={trail} />, player);
 
     return Promise.resolve();
@@ -240,6 +242,13 @@ export function openUi(core: Runtime, player: Player, target: OpenTarget): Promi
 
   // Never rejects: prefetchScopeValues catches internally, so floating this is safe.
   return prefetchScopeValues(core, player, clamped).then((values) => {
+    // A list setting is a screen of its items rather than a form: the native
+    // modal has no control for one. It needs the values, which is why it is
+    // reached from here rather than with the section screens above.
+    if (values !== undefined && presentCompiledList(core, player, clamped, values)) {
+      return;
+    }
+
     // The compiled editor when this build carries it and the section fits its
     // rows — the same choice a press in the serialized app makes.
     if (values !== undefined && presentCompiledEditor(core, player, clamped, values)) {
@@ -259,6 +268,23 @@ const levelOpeners = (core: Runtime, player: Player): SectionListOpeners => ({
   back: ({ addonId, scope, entityId }): Promise<void> =>
     openUi(core, player, scope === 'server' || entityId === undefined ? { kind: 'config', addonId } : { kind: 'config', addonId, scope }),
 });
+
+/**
+ * Shows the compiled list editor when this build carries it and the target
+ * names a list. False when the serialized app has to draw it instead.
+ */
+function presentCompiledList(core: Runtime, player: Player, target: OpenTarget, values: Record<string, unknown>): boolean {
+  if (target.kind !== 'config' || target.addonId === undefined || target.scope === undefined || target.list === undefined) { return false; }
+
+  if (!canPresentMenuList() || !canPresentConfigScope()) { return false; }
+
+  const { addonId, scope, scopeId, list } = target;
+  const trail = target.trail ?? trailOf(core, player, { addonId, scope, entityId: scopeId, path: list });
+
+  presentListEditor(core, player, { addonId, scope, entityId: scopeId, path: '', key: list, trail }, values, levelOpeners(core, player));
+
+  return true;
+}
 
 /**
  * Shows the compiled editor for a resolved scope when this build carries it

@@ -76,3 +76,29 @@ export function resolveInitialValue(
 
   return entry.default;
 }
+
+/**
+ * A list setting's value as the items it holds.
+ *
+ * Two shapes reach here: the array itself, and the array's JSON from a runtime
+ * published before list defaults were announced as arrays. Anything else is an
+ * empty list rather than an error — a schema that changed under a stored value
+ * is the addon's to reconcile, not this screen's to refuse.
+ */
+export function toItems(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.map(String);
+  }
+
+  if (typeof value === 'string') {
+    try {
+      const parsed: unknown = JSON.parse(value);
+
+      return Array.isArray(parsed) ? parsed.map(String) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  return [];
+}
