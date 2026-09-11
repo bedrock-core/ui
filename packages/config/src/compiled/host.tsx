@@ -1,12 +1,10 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import { hasVisiblePages, presentGuideReference } from '@bedrock-core/guides';
 import type { RegisteredAddon, Runtime } from '@bedrock-core/server-runtime';
-import { compiledTitleOf, embedMarker, FLAG_OFF, FLAG_ON, render } from '@bedrock-core/ui-runtime';
+import { compiledTitleOf, embedMarker, FLAG_OFF, FLAG_ON, presentReference, render } from '@bedrock-core/ui-runtime';
 import type { Player } from '@minecraft/server';
-import { FRAMEWORK_ADDON_ID, guideReferenceFor, manifestFor } from '../frameworkGuide';
+import { FRAMEWORK_ADDON_ID, guideKeyFor, screenReferenceFor } from '../frameworkGuide';
 import { FRAMEWORK_NAMESPACE, FRAMEWORK_PAGE } from '../generated/framework.generated';
 import { i18n } from '../i18n';
-import { guideAudienceFor } from '../permissions';
 import { PAGE_SLOTS } from './frame';
 import { AddonList, addonListElement, type AddonListMain, type AddonListModel, type AddonListRow } from './list.screen';
 import { isAddonPageReference, type AddonPageReference } from './page.screen';
@@ -73,7 +71,6 @@ export function presentAddonList(core: Runtime, player: Player, openers: AddonLi
   const found = rows.findIndex(row => row.id === selectedId);
   const selected = found < 0 ? 0 : found;
   const current = rows[selected];
-  const audience = guideAudienceFor(player);
 
   const show = (id: string | undefined): void => { presentAddonList(core, player, openers, id); };
 
@@ -86,9 +83,8 @@ export function presentAddonList(core: Runtime, player: Player, openers: AddonLi
     main = { kind: 'page', slots: pageSlots(FRAMEWORK_NAMESPACE, FRAMEWORK_PAGE, false, true) };
   } else if (current !== undefined) {
     const published = core.pages.of(current.id);
-    const manifest = manifestFor(core, current.id);
     const hasConfig = core.config.of(current.id, { actorId: player.id }) !== undefined;
-    const hasGuide = guideReferenceFor(core, current.id) !== undefined || (manifest !== undefined && hasVisiblePages(manifest, audience));
+    const hasGuide = guideKeyFor(core, current.id) !== undefined;
 
     if (isAddonPageReference(published)) {
       reference = published;
@@ -116,13 +112,17 @@ export function presentAddonList(core: Runtime, player: Player, openers: AddonLi
         return openers.config(addonId);
       }
 
-      const guideReference = guideReferenceFor(core, addonId);
+      const guide = guideKeyFor(core, addonId, { back: true });
 
-      // A compiled guide is presented from its reference and the list waits
-      // for it; the promise returned keeps the press's transaction open, and
-      // the list presents itself again when the guide's last screen closes.
-      if (guideReference !== undefined) {
-        return presentGuideReference(guideReference, player, { back: true });
+      // A compiled guide is walked from its references and the list waits for
+      // it; the promise returned keeps the press's transaction open. A back out
+      // of the guide's index returns to this list, which is where the player
+      // pressed from; closing the form leaves the UI.
+      if (guide !== undefined) {
+        return presentReference(key => screenReferenceFor(core, key), guide, player)
+          .then((ended): void => {
+            if (ended === 'back') { presentAddonList(core, player, openers, addonId); }
+          });
       }
 
       return openers.guide(addonId);

@@ -6,7 +6,7 @@ import { Form } from '../../../components/Form';
 import { Panel } from '../../../components/Panel';
 import { Text } from '../../../components/Text';
 import { playerOwner } from '../../../core/fabric';
-import { findModalConfig } from '../../../core/render/presenters/shared';
+import { findModalConfig } from '../../../core/render/present';
 import { buildTree } from '../../../core/render/tree';
 import type { JSX } from '../../../jsx';
 import { titleFor } from '../contract';

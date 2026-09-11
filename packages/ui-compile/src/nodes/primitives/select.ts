@@ -30,8 +30,8 @@ export interface SelectNode extends FieldBase {
  * One option as the build laid it out: its row inside the field, and the look
  * of each state.
  *
- * An inline select's rows cannot position themselves the way the interpreter's
- * do — a size or an offset read through a binding is inert under a compiled
+ * An inline select's rows cannot position themselves the way a native row does
+ * — a size or an offset read through a binding is inert under a compiled
  * mount — so the compile places each at its rect and draws its faces from the
  * author's textures rather than decoding them.
  */

@@ -43,7 +43,7 @@ for (const required of [REGISTRATION, I18N_BUNDLE, PAGE]) {
 }
 
 interface References {
-  guide: unknown;
+  screens: { v: 1; ns: string; screens: Record<string, unknown> };
   page: { v: 1; values: string[]; targets: (string | null)[] };
 }
 
@@ -56,12 +56,12 @@ import { createI18n } from '@bedrock-core/i18n';
 createI18n(i18nBundle);
 
 import ${JSON.stringify(path.resolve(REGISTRATION))};
-import { guideReference } from '@bedrock-core/guides';
+import { addonReference } from '@bedrock-core/ui';
 import { addonPageReference } from '@bedrock-core/config/compiled';
 import Page from ${JSON.stringify(path.resolve(PAGE))};
 
 export default {
-  guide: guideReference(${JSON.stringify(NAMESPACE)}),
+  screens: addonReference(${JSON.stringify(NAMESPACE)}),
   page: addonPageReference(Page),
 };
 `;
@@ -84,8 +84,8 @@ const references = await evaluateEntry<References>({
   return process.exit(1);
 });
 
-if (references.guide === undefined) {
-  console.error(`❌ references: no compiled guide "${NAMESPACE}" was registered — did the guides filter run?`);
+if (Object.keys(references.screens.screens).length === 0) {
+  console.error(`❌ references: no compiled screens under "${NAMESPACE}" were registered — did ui-compile run?`);
   process.exit(1);
 }
 
@@ -102,13 +102,14 @@ fs.writeFileSync(
     '// guide; every realm carries them here instead and shows them from the',
     '// pack the client already has.',
     '',
-    'import type { GuideReference } from \'@bedrock-core/guides\';',
+    "import type { AddonReference } from '@bedrock-core/ui-runtime';",
     'import type { AddonPageReference } from \'../compiled/page.screen\';',
     '',
     '/** The namespace the framework\'s screens are compiled under: what its page\'s marker names. */',
     `export const FRAMEWORK_NAMESPACE = ${JSON.stringify(NAMESPACE)};`,
     '',
-    `export const FRAMEWORK_GUIDE: GuideReference = ${JSON.stringify(references.guide, null, 2)};`,
+    '/** Every static screen the render pack compiled, by the key it is navigated with. */',
+    `export const FRAMEWORK_SCREENS: AddonReference = ${JSON.stringify(references.screens, null, 2)};`,
     '',
     `export const FRAMEWORK_PAGE: AddonPageReference = ${JSON.stringify(references.page, null, 2)};`,
     '',
@@ -116,4 +117,4 @@ fs.writeFileSync(
   'utf-8',
 );
 
-console.log(`✅ references: framework guide and page → ${path.relative(projectRoot, OUTPUT).split(path.sep).join('/')}`);
+console.log(`✅ references: ${String(Object.keys(references.screens.screens).length)} framework screen(s) and the page → ${path.relative(projectRoot, OUTPUT).split(path.sep).join('/')}`);

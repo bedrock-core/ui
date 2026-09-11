@@ -59,10 +59,9 @@ describe('GuideBlockList block mapping', () => {
   });
 
   it('renders a link run as a transparent button positioned inline with the text', () => {
-    const onNavigate = (): void => undefined;
     const [p] = renderBlocks(
       [{ t: 'p', runs: [{ k: 'lead' }, { k: 'label', to: 'other/page' }] }],
-      { onNavigate },
+      { linkTo: (id): string => `guide_${id.replace('/', '_')}` },
     );
     const [lead, button] = childrenOf(p);
 
@@ -70,7 +69,7 @@ describe('GuideBlockList block mapping', () => {
     expect(lead.props.children).toBe('lead');
     expect(button.type).toBe(OreButton);
     expect(button.props.variant).toBe('transparent');
-    expect(typeof button.props.onPress).toBe('function');
+    expect(button.props.to).toBe('guide_other_page');
     const [label] = childrenOf(button);
 
     expect(label.type).toBe(Text);
@@ -80,7 +79,7 @@ describe('GuideBlockList block mapping', () => {
   it('renders a link the reader cannot open as plain prose, keeping the sentence intact', () => {
     const [p] = renderBlocks(
       [{ t: 'p', runs: [{ k: 'lead' }, { k: 'label', to: 'admin/keys' }] }],
-      { onNavigate: (): void => undefined, canOpen: (id): boolean => id !== 'admin/keys' },
+      { linkTo: (id): string => `guide_${id}`, canOpen: (id): boolean => id !== 'admin/keys' },
     );
     const [lead, gated] = childrenOf(p);
 

@@ -1,11 +1,11 @@
-import { registerCompiledScreen } from '@bedrock-core/ui-runtime';
+import { addonReference, registerCompiledScreen } from '@bedrock-core/ui-runtime';
 import { describe, expect, it } from 'vitest';
-import { guideHomeBackScreen, guideHomeScreen, guidePageScreen, guideReference } from '../compiled';
+import { guideHomeBackScreen, guideHomeScreen, guidePageScreen } from '../compiled';
 import type { GuideManifest } from '../types';
 
-// The reference is read off the compiled screens themselves: each screen is
-// built the way the compile built it, its entries listed, and every press
-// probed for where it leads — so the table can never disagree with the bake.
+// A guide's screens are navigated by link, so the reference is read straight off
+// the built tree: each entry's target is the key its `<Link>` carries. The way
+// out takes no entry — the client closes the form, and a walk ends with it.
 
 const manifest: GuideManifest = {
   v: 1,
@@ -27,39 +27,45 @@ const HomeBack = guideHomeBackScreen(manifest);
 const Intro = guidePageScreen(manifest, 'intro');
 const Usage = guidePageScreen(manifest, 'usage');
 
-registerCompiledScreen(Home, 'core1:ref_home');
-registerCompiledScreen(HomeBack, 'core1:ref_home_back');
-registerCompiledScreen(Intro, 'core1:ref_intro');
-registerCompiledScreen(Usage, 'core1:ref_usage');
+registerCompiledScreen(Home, { key: 'ref:guide_home', title: 'core1:ref_guide_home' });
+registerCompiledScreen(HomeBack, { key: 'ref:guide_home_back', title: 'core1:ref_guide_home_back' });
+registerCompiledScreen(Intro, { key: 'ref:guide_intro', title: 'core1:ref_guide_intro' });
+registerCompiledScreen(Usage, { key: 'ref:guide_usage', title: 'core1:ref_guide_usage' });
 
-describe('guideReference', () => {
-  const reference = guideReference('ref');
+describe('a compiled guide as a reference', () => {
+  const reference = addonReference('ref');
 
-  it('names every screen by its compiled title and lands on the index', () => {
-    expect(reference?.landing).toBeUndefined();
-    expect(reference?.home?.title).toBe('core1:ref_home');
-    expect(reference?.pages.intro?.title).toBe('core1:ref_intro');
-    expect(reference?.pages.usage?.title).toBe('core1:ref_usage');
+  it('names every screen by its compiled title', () => {
+    expect(reference.screens['ref:guide_home']?.title).toBe('core1:ref_guide_home');
+    expect(reference.screens['ref:guide_intro']?.title).toBe('core1:ref_guide_intro');
   });
 
-  it('follows the index rows to their pages', () => {
-    expect(reference?.home?.targets).toEqual([{ page: 'intro' }, { page: 'usage' }]);
-    expect(reference?.home?.values).toEqual(['t', 't']);
+  it('sends the index rows to the page screens, with the addon half filled in', () => {
+    const home = reference.screens['ref:guide_home'];
+
+    expect(home?.targets).toContainEqual({ to: 'ref:guide_intro' });
+    expect(home?.targets).toContainEqual({ to: 'ref:guide_usage' });
   });
 
-  it('leaves the guide from the back button of the index a host opened', () => {
-    expect(reference?.homeBack?.title).toBe('core1:ref_home_back');
-    expect(reference?.homeBack?.targets).toEqual([{ exit: true }, { page: 'intro' }, { page: 'usage' }]);
+  it('follows a link written in the prose', () => {
+    const intro = reference.screens['ref:guide_intro'];
+
+    expect(intro?.targets).toContainEqual({ to: 'ref:guide_usage' });
   });
 
-  it('follows a page\'s back, links and footer', () => {
-    // Header back, the inline link, the footer's index button, then next.
-    expect(reference?.pages.intro?.targets).toEqual([{ home: true }, { page: 'usage' }, { home: true }, { page: 'usage' }]);
-    // Header back, the footer's prev, then the index button.
-    expect(reference?.pages.usage?.targets).toEqual([{ home: true }, { page: 'intro' }, { home: true }]);
+  it('marks the back control of the index a host opened', () => {
+    const back = reference.screens['ref:guide_home_back'];
+    const home = reference.screens['ref:guide_home'];
+
+    // The back is an entry of its own, which is what tells a host that the player
+    // asked to go back rather than closing the form; the plain index has none.
+    expect(back?.targets).toContainEqual({ back: true });
+    expect(home?.targets).not.toContainEqual({ back: true });
   });
 
-  it('is undefined for a guide this bundle never registered', () => {
-    expect(guideReference('nowhere')).toBeUndefined();
+  it('sends a page back to the index', () => {
+    const intro = reference.screens['ref:guide_intro'];
+
+    expect(intro?.targets).toContainEqual({ to: 'ref:guide_home' });
   });
 });

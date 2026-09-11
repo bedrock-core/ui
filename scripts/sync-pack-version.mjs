@@ -34,17 +34,17 @@ import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join, posix, relative, sep } from 'node:path';
 
-const SERIALIZER = 'packages/ui-runtime/src/core/serializer.ts';
+const PAYLOAD = 'packages/ui-runtime/src/core/payload.ts';
 const PACK = 'packages/resource-pack/packs/RP';
 const MANIFEST = `${PACK}/manifest.json`;
 const LANG = `${PACK}/texts/en_US.lang`;
 const RECORD = 'packages/resource-pack/protocol.json';
 
 /** The single source of truth for the wire format: `export const VERSION = 'v0008';` */
-const versionMatch = /export const VERSION\s*=\s*'(v\d+)'/.exec(readFileSync(SERIALIZER, 'utf8'));
+const versionMatch = /export const VERSION\s*=\s*'(v\d+)'/.exec(readFileSync(PAYLOAD, 'utf8'));
 
 if (!versionMatch) {
-	console.error(`sync-pack-version: could not read VERSION from ${SERIALIZER}`);
+	console.error(`sync-pack-version: could not read VERSION from ${PAYLOAD}`);
 	process.exit(1);
 }
 
@@ -139,6 +139,8 @@ writeFileSync(MANIFEST, JSON.stringify(manifest, null, '\t') + '\n');
 // Re-hash so the record describes the pack as it now stands.
 writeFileSync(
 	RECORD,
-	JSON.stringify({ protocol, packVersion: next, packHash: hashPack() }, null, '\t') + '\n',
+	// The encoding and vocabulary windows are the record's other half, written by
+	// hand when a compiled screen's format moves; carry them through untouched.
+	JSON.stringify({ ...record, protocol, packVersion: next, packHash: hashPack() }, null, '\t') + '\n',
 );
 console.log(`sync-pack-version: ${why} — pack ${major}.${minor}.${patch} → ${next.join('.')} (protocol ${protocol})`);

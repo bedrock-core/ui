@@ -4,9 +4,9 @@ import { labelFontFields, type LabelFont } from './controlPayload';
 
 /**
  * Host type for `Form.Option` — LAYOUT-ONLY: the flex engine lays it out (so it gets
- * computed x/y/w/h like any element), but the serializer does NOT emit it as a native
- * control — its data + geometry are read by the parent select's writer and packed into
- * the native option blob. Skipped by the serialize walk (see serializer.ts).
+ * computed x/y/w/h like any element), but it is never a control of its own. Its data
+ * and geometry are read off the laid-out child by the parent select — the compile
+ * places the rows it describes, and the runtime packs it into the native option blob.
  */
 export const MODAL_OPTION_SLOT_TYPE = 'modal-option';
 

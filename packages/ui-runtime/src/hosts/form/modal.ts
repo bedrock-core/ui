@@ -13,7 +13,7 @@ import { liveText } from './runtime';
 import { getComponentDescriptor } from '../../core/componentRegistry';
 import { playerOwner } from '../../core/fabric';
 import { childElements } from '../../core/guards';
-import { runInteractiveCallback, type PresentResult } from '../../core/render/presenters/shared';
+import { runInteractiveCallback, type PresentResult } from '../../core/render/present';
 import { isSwapPending } from '../../core/render/session';
 import { isHandler } from '../../core/events';
 import type { ModalSerializationContext, SerializablePrimitive, SerializableProps } from '../../core/types';
@@ -37,9 +37,9 @@ import type { JSX } from '../../jsx';
  * `formValues` is positional, and a `label()` row occupies a slot in it (the
  * engine returns `null` there). So the ordinal a field is recorded at must be
  * its real index in the response, counting every row including the ones that
- * carry nothing. That is exactly what the interpreter's writers already do
- * through {@link ModalSerializationContext.modalControlIndex}, which is why
- * this walk drives the same writers rather than adding fields itself.
+ * carry nothing. {@link ModalSerializationContext.modalControlIndex} is that
+ * count, kept by the writers themselves, which is why this walk drives the
+ * writers rather than adding fields itself.
  *
  * Measured (S3): a control the PACK places reads its row by a baked
  * `collection_index` on `custom_form`, on the same terms S1 found for
@@ -80,13 +80,12 @@ const writerProps = (props: JSX.Props): SerializableProps => Object.fromEntries(
 );
 
 /**
- * Write one row, driving the same writer the interpreter uses so the ordinal
- * bookkeeping is identical.
+ * Write one row, through the component's own writer so the ordinal bookkeeping
+ * is the writers' throughout.
  *
- * The payload is empty rather than a serialized control block. That IS the
- * saving: on an interpreted modal this string is the per-field cost that scales
- * with the screen, and S5 priced it at 14 ms of server work for 50 cells and
- * 53 ms for 200, on every open.
+ * The payload each row carries is empty: the field's look is already in the
+ * pack, so the row exists to hold the engine's control and its slot in
+ * `formValues`, and has nothing to describe.
  */
 function writeRow(row: ModalRow, form: ModalFormData, context: ModalSerializationContext): void {
   const { element } = row;
@@ -119,7 +118,8 @@ function writeRow(row: ModalRow, form: ModalFormData, context: ModalSerializatio
     return;
   }
 
-  // Handlers ride the same side channel the interpreter uses.
+  // Handlers ride a side channel of their own: they are not primitives, so
+  // they cannot travel in the props a writer takes.
   const callbacks: Record<string, (...args: unknown[]) => void> = {};
 
   for (const [key, value] of Object.entries(props)) {
@@ -139,9 +139,9 @@ function writeRow(row: ModalRow, form: ModalFormData, context: ModalSerializatio
 /**
  * Re-key positional `formValues` by each control's name.
  *
- * Identical to the interpreter's, and for the same reason: the registry is
- * ordinal → name, the response is positional, and a row with no name — a label,
- * or a field the author left unnamed — is simply not in the result.
+ * The registry is ordinal → name and the response is positional, so a row with
+ * no name — a label, or a field the author left unnamed — is simply not in the
+ * result.
  */
 function collectValues(
   context: ModalSerializationContext,
@@ -165,10 +165,9 @@ function collectValues(
 /**
  * Present one snapshot of a compiled `<Form>`.
  *
- * The lifecycle is the interpreter's unchanged — submit and cancel run through
- * the same interactive transaction and return the same verdict — because
- * nothing about being compiled changes what a modal IS. It is still one atomic
- * submit, and still nothing comes back until the player is done.
+ * Submit and cancel run through the interactive transaction every form
+ * callback runs in: being compiled changes nothing about what a modal IS. It is
+ * one atomic submit, and nothing comes back until the player is done.
  *
  * @param player - Player to show the modal to.
  * @param tree - Built tree carrying the `<Form>` marker.
@@ -242,7 +241,7 @@ export async function presentCompiledModal(
   });
 }
 
-/** Whether a built tree is a modal, which is what decides between the two presenters. */
+/** Whether a built tree is a modal, which is what decides between the two backends. */
 export const isModalTree = (tree: JSX.Element): boolean =>
   tree.type === MODAL_FORM_SLOT_TYPE
   || childElements(tree.props.children).some(child => isModalTree(child));

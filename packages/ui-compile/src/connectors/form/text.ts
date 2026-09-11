@@ -13,11 +13,10 @@ export interface TextCarrier {
 /**
  * A live string on a form, which is the entry itself.
  *
- * The whole of the interpreter's per-character machinery is absent, and so is
- * the chest's: a container slot publishes numbers, so a string crosses it one
- * glyph and one `.lang` lookup at a time, while a form entry IS a string. One
- * binding, no slicing, no table, no cap — which is the difference between the
- * two hosts stated as JSON UI.
+ * The chest's per-character machinery is absent: a container slot publishes
+ * numbers, so a string crosses it one glyph and one `.lang` lookup at a time,
+ * while a form entry IS a string. One binding, no slicing, no table, no cap —
+ * which is the difference between the two hosts stated as JSON UI.
  */
 export const text: Connector<Addressed> = (data, face, ctx) =>
   entryHost(data.name, data.address, `${ctx.ns}.${data.definition}`, face, ctx.collection);

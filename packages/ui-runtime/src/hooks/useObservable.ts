@@ -70,5 +70,10 @@ export function useObservable<T, S = T>(source: ObservableLike<T>, select?: (val
     return source.subscribe(publish);
   }, [source]);
 
-  return slice;
+  // The slot is readonly because STATE is readonly: a value written in place would
+  // re-render nothing. This one is the source's, not the component's — it changes by
+  // the source publishing a new value, and the observable owns what may touch it — so
+  // it is handed back with the type the source declared.
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- the slot holds exactly what `read` returned
+  return slice as S;
 }

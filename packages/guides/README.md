@@ -11,10 +11,11 @@ prev/next, admonitions and all, with the prose localized per player language.
 packs/data/guides/<locale>/**.mdx
       │  guides regolith filter
       ├─→ RP/texts/<locale>.lang            (auto-localized prose — the client resolves it)
-      └─→ @bedrock-core/generated/guides    (manifest: sidebar tree, pages, prev/next)
+      ├─→ @bedrock-core/generated/guides    (manifest: sidebar tree, pages, prev/next)
+      └─→ BP/scripts/guides/*.screen.tsx    (one screen module per page + the index)
                 │
-                ▼  this package
-      createGuide(manifest) → self-contained <Guide/>
+                ▼  this package, through the ui-compile filter
+      one compiled screen per page, navigated by key
 ```
 
 ## Install
@@ -30,8 +31,9 @@ keys land in the same `.lang` files and runtime bundle.
 
 ## What it gives you
 
-- `createGuide(manifest, { title?, components? })` — a self-contained guide component that owns its
-  own home ⇆ page navigation, so the host only needs one screen for it
+- `guideHomeScreen(manifest, …)` / `guidePageScreen(manifest, pageId, …)` — the screen per page the
+  guides filter's generated modules export; the build bakes each into the pack. Every row, link and
+  prev/next button is a `<Link>`, so nothing about moving through a guide reaches script
 - **Blocks that render themselves** — headings, paragraphs with inline links, bullet and numbered
   lists, images sized from compile-time dimensions, admonitions, and code blocks
 - **Your own components in the prose** — `<Component />` in MDX resolves against the `components`
@@ -44,30 +46,24 @@ keys land in the same `.lang` files and runtime bundle.
 
 ## Usage
 
-```tsx
-/** @jsxImportSource @bedrock-core/ui */
-import { createGuide } from '@bedrock-core/guides';
+The filter writes the screen modules; nothing is written by hand. Opening the guide is one call:
+
+```ts
+import { openGuide } from '@bedrock-core/guides';
 import manifest from '@bedrock-core/generated/guides';
-import type { ScreenProps } from '@bedrock-core/navigation';
-import type { JSX } from '@bedrock-core/ui';
-import type { AppRoutes } from './routes'; // your own route map
 
-// Build ONCE per manifest and cache it — the returned component holds the open-page
-// state, so recreating it on each render resets the guide to its home.
-const Guide = createGuide(manifest, { title: 'My Addon' });
-
-export function GuideScreen({ navigation }: ScreenProps<AppRoutes, 'Guide'>): JSX.Element {
-  return <Guide onExit={(): void => navigation.goBack()} />;
-}
+openGuide('my_addon', player, { manifest });
 ```
 
-`onExit` fires when the player leaves from the guide's home screen; the header's × closes the whole
-UI via `useExit`. Serving several addons? Call `createGuide` once per manifest, cache each by addon
-id, and render the one your route's param selects.
+It is a `navigate()` to the guide's index key (`<addon>:guide_home`), which is also how another
+addon opens it — `navigate('my_addon:guide_home', player)` — from the reference this addon
+published with `core.register({ screens: uiReference() })`. The header's × closes the whole UI via
+`useExit`, and a guide belonging to a realm that is not running this addon's script is walked from
+its references, drawn by the pack every client already holds.
 
 ## Documentation
 
-- [guides](https://bedrock-core.drav.dev/docs/ui/guides) — `createGuide`, the block set, custom
+- [guides](https://bedrock-core.drav.dev/docs/ui/guides) — the compiled screens, the block set, custom
   components, the manifest shape, publishing a guide cross-addon, and the API reference
 - [guides Regolith filter](https://bedrock-core.drav.dev/docs/ui/guides/regolith-filter) —
   authoring, folder layout, frontmatter, the localization model and the filter settings

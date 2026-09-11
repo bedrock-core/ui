@@ -6,19 +6,19 @@ description: Host the guide behind one screen.
 
 # Your First Screen
 
-The guide is one self-contained component you host behind a single screen:
+Every page of a guide is compiled into your pack as a screen of its own. Opening one is a
+navigation:
 
-```tsx
-const Guide = createGuide(guides, { title: 'My Addon' });
-// <Guide onExit={() => navigation.goBack()} />
+```ts
+openGuide('my_addon', player, { manifest: guides });
 ```
 
 ## Embedding
 
-- Add one `Guide` route to your route map
-- Build `createGuide(manifest)` once and cache it
-  - It drives its own home and page navigation
-- Navigate to `Guide` from anywhere
+- The guides filter writes a screen module per page; the build bakes each into the pack
+- Every row, link and prev/next button inside a guide is a `<Link>`, so nothing reaches script
+- Publish the table once — `core.register({ screens: uiReference() })` — and any realm can show
+  your guide, drawn from the pack every client already holds
 
 :::info
 MDX components ride the IR as `cmp` nodes — an unregistered one renders a placeholder:

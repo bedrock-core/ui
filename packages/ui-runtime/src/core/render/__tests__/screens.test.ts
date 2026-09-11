@@ -13,7 +13,7 @@ import { titleFor } from '../../../hosts/form/contract';
 import type { FunctionComponent, JSX } from '../../../jsx';
 import { playerOwner } from '../../fabric';
 import { render } from '../lifecycle';
-import { present } from '../presenters';
+import { present } from '../present';
 import { buildTree } from '../tree';
 import { compiledTitleOf, registerCompiledScreen } from '../screens';
 import { UncompiledScreenError } from '../../types';
@@ -59,7 +59,7 @@ describe('the compiled-screen registry', () => {
 
     expect(compiledTitleOf(Fresh)).toBeUndefined();
 
-    registerCompiledScreen(Fresh, titleFor('a_b'));
+    registerCompiledScreen(Fresh, { key: 'a:b', title: titleFor('a_b') });
 
     expect(compiledTitleOf(Fresh)).toBe('bcuiv0008core1:a_b');
   });
@@ -67,17 +67,17 @@ describe('the compiled-screen registry', () => {
   it('accepts the same registration twice, which a reload does', () => {
     const Twice: FunctionComponent = () => Panel({ children: [] });
 
-    registerCompiledScreen(Twice, titleFor('a_twice'));
+    registerCompiledScreen(Twice, { key: 'a:twice', title: titleFor('a_twice') });
 
-    expect(() => registerCompiledScreen(Twice, titleFor('a_twice'))).not.toThrow();
+    expect(() => registerCompiledScreen(Twice, { key: 'a:twice', title: titleFor('a_twice') })).not.toThrow();
   });
 
   it('refuses one component compiled as two screens, rather than letting the last win', () => {
     const Clash: FunctionComponent = () => Panel({ children: [] });
 
-    registerCompiledScreen(Clash, titleFor('a_one'));
+    registerCompiledScreen(Clash, { key: 'a:one', title: titleFor('a_one') });
 
-    expect(() => registerCompiledScreen(Clash, titleFor('a_two'))).toThrow(/already registered/);
+    expect(() => registerCompiledScreen(Clash, { key: 'a:two', title: titleFor('a_two') })).toThrow(/already registered/);
   });
 
   it('says nothing about a value that is not a component', () => {
@@ -90,7 +90,7 @@ describe('render, on a screen the build compiled', () => {
   it('shows it by name, and writes only what changes', () => {
     const Compiled = screenComponent();
 
-    registerCompiledScreen(Compiled, titleFor('shop_home'));
+    registerCompiledScreen(Compiled, { key: 'shop:home', title: titleFor('shop_home') });
     render(Compiled, nextPlayer());
 
     const form = __lastActionForm();

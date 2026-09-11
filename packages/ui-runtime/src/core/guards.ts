@@ -61,8 +61,8 @@ export function isNode(value: unknown): value is JSX.Node {
 
 /**
  * Narrows a {@link FormTarget} to an `ActionFormData`. The button slot
- * (`form.button()`) only exists on the ActionForm backend, so writers/presenters
- * guard on this before emitting interactive buttons.
+ * (`form.button()`) only exists on the ActionForm backend, so a host guards on
+ * this before emitting interactive buttons.
  */
 export function isActionForm(form: FormTarget): form is ActionFormData {
   return 'button' in form;

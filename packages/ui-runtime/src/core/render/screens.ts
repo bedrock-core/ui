@@ -24,9 +24,10 @@ import { isHandler } from '../events';
  * generates — and the addon imports that module once. The association is by
  * component identity, which is exactly what `render()` has in its hand.
  *
- * A screen that is NOT registered renders through the interpreter, which is
- * what makes this additive: an addon built before compiled screens existed,
- * or one whose build has not run, keeps working unchanged.
+ * A screen that is NOT registered cannot be drawn at all: nothing in the pack
+ * answers to its title. `render()` refuses it by name, pointing at the two
+ * things that produce a registration — the compile seeing the screen, and the
+ * generated module being imported so its registrations run.
  */
 
 /**
@@ -48,13 +49,30 @@ export interface CompiledSnapshot {
   readonly vis: readonly number[];
 }
 
-interface CompiledRecord {
+/**
+ * What the build recorded about one compiled screen.
+ *
+ * The KEY is how anything outside this bundle names the screen: `<addon>:<name>`,
+ * the addon's namespace and the screen's own, which is what `<Link to>` is
+ * written with and what a replicated reference is looked up by. The TITLE is how
+ * the CLIENT names it, and carries the same two halves joined the JSON UI way.
+ * Both are the build's; nothing derives one from the other, because an addon
+ * namespace may itself contain the separator.
+ */
+export interface CompiledScreen {
+  /** `<addon>:<name>` — the screen's public key. */
+  readonly key: string;
+  /** The compiled title the client picks the layout by. */
   readonly title: string;
+  /** What the build baked: carried-visible ordinals, shape fingerprint, strings. */
   readonly snapshot?: CompiledSnapshot;
 }
 
 /** Component -> the title its compiled layout is picked by, and what was baked. */
-const compiled = new WeakMap<FunctionComponent, CompiledRecord>();
+const compiled = new WeakMap<FunctionComponent, CompiledScreen>();
+
+/** Key -> the screen it names, for everything that navigates by key. */
+const byKey = new Map<string, { readonly screen: FunctionComponent; readonly record: CompiledScreen }>();
 
 /**
  * Records that a screen was compiled, and what title reaches its layout.
@@ -65,22 +83,63 @@ const compiled = new WeakMap<FunctionComponent, CompiledRecord>();
  * instead.
  *
  * @param screen - The screen component, exactly as the addon renders it.
- * @param title - The compiled title, from the build.
- * @param snapshot - What the build baked: the carried-visible ordinals the
- *   runtime needs, and the shape and text `debug` diffs against. A build old
- *   enough to omit it compiled no bool carriers, so the absence is consistent.
+ * @param record - The key it is navigated by, the title it is drawn by, and
+ *   what the build baked: the carried-visible ordinals the runtime re-marks,
+ *   and the shape and text a `debug` render is diffed against.
  */
-export function registerCompiledScreen(screen: FunctionComponent, title: string, snapshot?: CompiledSnapshot): void {
+export function registerCompiledScreen(screen: FunctionComponent, record: CompiledScreen): void {
   const existing = compiled.get(screen);
 
-  if (existing !== undefined && existing.title !== title) {
+  if (existing !== undefined && existing.title !== record.title) {
     throw new Error(
-      `A screen is already registered as "${existing.title}" and cannot also be "${title}". `
+      `A screen is already registered as "${existing.title}" and cannot also be "${record.title}". `
       + 'One component is one compiled screen; render it twice rather than compiling it twice.',
     );
   }
 
-  compiled.set(screen, { title, ...snapshot === undefined ? {} : { snapshot } });
+  compiled.set(screen, record);
+  byKey.set(record.key, { screen, record });
+}
+
+/** The key a compiled screen is navigated by, or undefined when it was not compiled. */
+export function compiledKeyOf(screen: unknown): string | undefined {
+  const component = componentOf(screen);
+
+  return component === undefined ? undefined : compiled.get(component)?.key;
+}
+
+/**
+ * The screen `key` names in THIS bundle, or undefined when no such screen was
+ * registered.
+ *
+ * A key with no `<addon>:` in front of it is one of this bundle's own, named the
+ * way its file is — which is how a screen links to a sibling without repeating
+ * the namespace it does not choose. A published reference carries the addon half
+ * filled in, because a realm reading one has no bundle to resolve it against.
+ */
+export function screenForKey(key: string): FunctionComponent | undefined {
+  const direct = byKey.get(key);
+
+  if (direct !== undefined) {
+    return direct.screen;
+  }
+
+  if (key.includes(':')) {
+    return undefined;
+  }
+
+  for (const [registered, entry] of byKey) {
+    if (registered.slice(registered.indexOf(':') + 1) === key) {
+      return entry.screen;
+    }
+  }
+
+  return undefined;
+}
+
+/** Every compiled screen this bundle registered, in registration order. */
+export function compiledScreens(): readonly CompiledScreen[] {
+  return [...byKey.values()].map(entry => entry.record);
 }
 
 /**

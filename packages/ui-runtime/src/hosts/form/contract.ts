@@ -17,13 +17,12 @@ export const COLLECTION = 'form_buttons';
 /**
  * The TEXT every compiled entry is shown with.
  *
- * A form entry carries two strings: its text and its icon path. The
- * interpreter's decoders are constructed on every form, compiled ones
- * included, and slice each entry's TEXT as a byte payload; a text that is
- * not one asserts inside them. So the text of every compiled entry is a
- * payload they already know how to ignore — a hidden panel — and the value
- * a compiled control wants rides the icon path (`#form_button_texture`),
- * which nothing but the compiled control reads. Gone with the interpreter.
+ * A form entry carries two strings: its text and its icon path. The text is
+ * this fixed payload — one that resolves to a hidden panel — which leaves the
+ * icon path (`#form_button_texture`) free to carry the value a compiled
+ * control reads. The library's `server_form` hook compares each entry's text
+ * against this exact string and draws no icon image when they match, so an
+ * entry carrying a channel never draws its channel as a texture.
  */
 export const ENTRY_TEXT = 'bcuiv0008s:panel;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;0b:false1';
 
@@ -83,7 +82,7 @@ export const VOCABULARY_MIN = 1;
 export const VOCABULARY_MAX = 1;
 
 /**
- * The interpreter's header, which a compiled title still carries.
+ * The header every title carries, compiled or not.
  *
  * Not a decision so much as the shape of the screen we mount on: vanilla's
  * `long_form` hides itself when this is present and the library's own

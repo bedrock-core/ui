@@ -68,14 +68,12 @@ export const entryHost = (
  * The string an addressed value travels on, per collection.
  *
  * An action form's entries carry the value in their ICON PATH, a modal's rows
- * in their text. The text of an action-form entry is the interpreter's decoy:
- * its decoders are constructed on every form and slice every entry's text as a
- * payload, and a text that is not one asserts. The icon path nothing but a
- * compiled control reads — and reads by a plain collection binding, which is
- * the one thing measured safe on an interpreted form's entries as well: an
- * expression over one of those, a `-` or a `'%.Ns' *` format, copies a payload
- * longer than the engine's 1024-byte stack string and asserts, whatever gate
- * the control sits behind.
+ * in their text. An action-form entry's text is a fixed decoy the library's
+ * `server_form` hook recognises, so the icon path is left for the value, which
+ * a compiled control reads by a plain collection binding. Plain is the
+ * requirement, not a preference: an expression over an entry string — a `-` or
+ * a `'%.Ns' *` format — copies it into the engine's 1024-byte stack string and
+ * asserts when it does not fit, whatever gate the control sits behind.
  */
 export const payloadBindingFor = (collection: string): string =>
   (collection === MODAL_COLLECTION ? '#custom_text' : '#form_button_texture');

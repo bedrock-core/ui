@@ -69,7 +69,7 @@ let compiled = 0;
 function render(root: FunctionComponent, player: Player): void {
   if (compiledTitleOf(root) === undefined) {
     compiled += 1;
-    registerCompiledScreen(root, titleFor(`swap_${String(compiled)}`));
+    registerCompiledScreen(root, { key: `swap:${String(compiled)}`, title: titleFor(`swap_${String(compiled)}`) });
   }
 
   renderScreen(root, player);

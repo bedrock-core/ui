@@ -1,6 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Divider, Button as OreButton, theme } from '@bedrock-core/ore-styled';
-import { Fragment, Image, Panel, Text, type JSX, type PressEvent } from '@bedrock-core/ui-runtime';
+import { Fragment, Image, Panel, Text, type JSX } from '@bedrock-core/ui-runtime';
 import { defaultAdmonitionTitleKey } from '../admonitions';
 import type { GuideBlock, GuideComponents, GuideListItem, GuideRun, PageId } from '../types';
 
@@ -14,7 +14,7 @@ export interface GuideBlockListProps {
   /** Manifest namespace — resolves default admonition title keys. */
   ns: string;
   /** Internal-link presses land here (usually `navigate('GuidePage', …)`), with the press. */
-  onNavigate?: (pageId: PageId, event: PressEvent) => void;
+  linkTo?: (pageId: PageId) => string;
   /**
    * Whether a link target may be opened at all. A run pointing somewhere this reader cannot go
    * renders as plain prose instead of a pressable — the sentence still reads, it just stops
@@ -30,17 +30,17 @@ export interface GuideBlockListProps {
  * a localized `Text` child (the filter compiled it into .lang values), so the client
  * resolves text per player language and wraps it natively.
  */
-export function GuideBlockList({ blocks, ns, onNavigate, canOpen, components }: GuideBlockListProps): JSX.Element {
+export function GuideBlockList({ blocks, ns, linkTo, canOpen, components }: GuideBlockListProps): JSX.Element {
   return (
     <Panel flexDirection={'column'} gap={spacing.md}>
-      {blocks.map(block => renderBlock(block, { ns, onNavigate, canOpen, components }))}
+      {blocks.map(block => renderBlock(block, { ns, linkTo, canOpen, components }))}
     </Panel>
   );
 }
 
 interface RenderCtx {
   ns: string;
-  onNavigate?: (pageId: PageId, event: PressEvent) => void;
+  linkTo?: (pageId: PageId) => string;
   canOpen?: (pageId: PageId) => boolean;
   components?: GuideComponents;
 }
@@ -74,7 +74,7 @@ function renderBlock(block: GuideBlock, ctx: RenderCtx): JSX.Element {
       return (
         <Card variant={'dark'} flexDirection={'column'} gap={spacing.sm}>
           <Text shadow={true}>{block.titleK ?? defaultAdmonitionTitleKey(block.kind)}</Text>
-          <GuideBlockList blocks={block.blocks} ns={ctx.ns} onNavigate={ctx.onNavigate} components={ctx.components} />
+          <GuideBlockList blocks={block.blocks} ns={ctx.ns} linkTo={ctx.linkTo} components={ctx.components} />
         </Card>
       );
 
@@ -102,7 +102,7 @@ function renderBlock(block: GuideBlock, ctx: RenderCtx): JSX.Element {
       return (
         <Component {...block.props}>
           {block.blocks
-            ? <GuideBlockList blocks={block.blocks} ns={ctx.ns} onNavigate={ctx.onNavigate} components={ctx.components} />
+            ? <GuideBlockList blocks={block.blocks} ns={ctx.ns} linkTo={ctx.linkTo} components={ctx.components} />
             : undefined}
         </Component>
       );
@@ -126,6 +126,10 @@ function renderRuns(runs: GuideRun[], ctx: RenderCtx): JSX.Element {
 
         if (to === undefined || !(ctx.canOpen?.(to) ?? true)) { return prose; }
 
+        const target = ctx.linkTo?.(to);
+
+        if (target === undefined) { return prose; }
+
         return (
           <OreButton
             variant={'transparent'}
@@ -136,7 +140,7 @@ function renderRuns(runs: GuideRun[], ctx: RenderCtx): JSX.Element {
             // The run before ends in a space, and its box is measured a shade
             // wider than the client draws it: the link sits into that slack.
             marginLeft={-2}
-            onPress={(event): void => ctx.onNavigate?.(to, event)}
+            to={target}
           >
             {prose}
           </OreButton>

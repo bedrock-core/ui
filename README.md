@@ -59,9 +59,9 @@ The JSON UI decoders live in a **render pack** (`core-ui-v*.mcpack`, attached to
 
 ### Navigation
 
-- Stack-based multi-screen navigation with screen parameters and typed route state ([@bedrock-core/navigation](./packages/navigation/README.md))
-- `NavigationContainer`, `createStackNavigator`, `stackReducer`
-- Navigation hooks: `useNavigation()`, `useRoute()`
+- Screens are navigated by key ([@bedrock-core/navigation](./packages/navigation/README.md)): `navigate('<addon>:<screen>')` shows one and puts the current screen behind the player, `back()` returns to it
+- `<Link to="<addon>:<screen>">` makes where a press leads DATA, so a screen of links can be shown by an addon running none of its script — from the reference its owner published
+- Navigation hooks: `useNavigation()`
 
 ### Forms
 
@@ -72,7 +72,7 @@ The JSON UI decoders live in a **render pack** (`core-ui-v*.mcpack`, attached to
 
 ### Guides & Config
 
-- In-game guides authored in MDX ([@bedrock-core/guides](./packages/guides/README.md)) — the `guides` regolith filter compiles `packs/data/guides/<locale>/**.mdx` into a guide manifest plus `.lang` files, and `createGuide(manifest)` renders it as a self-contained guide with its own home ⇆ page navigation, prose localized per player language
+- In-game guides authored in MDX ([@bedrock-core/guides](./packages/guides/README.md)) — the `guides` regolith filter compiles `packs/data/guides/<locale>/**.mdx` into a guide manifest plus `.lang` files and writes one screen module per page, which the build bakes into the pack; every press inside a guide is a link, so any realm can show another addon's guide, prose localized per player language
 - Shared addon list + config + guide UI ([@bedrock-core/config](./packages/config/README.md)) — `ui(core)` mounts `<namespace>:config` / `:configat` / `:guide` / `:list` under the addon's own namespace, and whichever realm runs the newest runtime serves the config and guide screens for every registered addon
 
 ### 🚀 Future Considerations

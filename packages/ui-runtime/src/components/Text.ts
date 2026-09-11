@@ -262,8 +262,8 @@ export const Text: FunctionComponent<TextProps> = ({
       fontScaleFactor: labelFont.fontScaleFactor,
       labelX: offsetX ?? 0, // [1190] → label anchored X offset
       labelY: offsetY ?? 0, // [1273] → label anchored Y offset
-      // Under a private name: the interpreter serializes every plain prop and
-      // has no encoding for a colour, which only a compiled label draws.
+      // Under a private name: a colour is drawn by the compiled label alone,
+      // and a plain prop would be offered to every other reader of the element.
       ...color === undefined ? {} : { __color: color },
       ...textAlign === undefined ? {} : { __textAlign: textAlign },
       value: { tail },

@@ -2,9 +2,8 @@ import { FunctionComponent, JSX } from '../jsx';
 
 /**
  * The host `type` string emitted by {@link Background}. Registered transparent, so
- * the layout / inherit / serialize passes walk straight through it (it has no
- * children and no box); the presenters find it on the built tree and encode its
- * texture into the form-title metadata.
+ * every pass walks straight through it (it has no children and no box); the host
+ * finds it on the built tree and encodes its texture into the form-title metadata.
  */
 export const BACKGROUND_SLOT_TYPE = 'background';
 

@@ -3,8 +3,8 @@
 	//
 	// A compiled screen's layout is already in an addon's pack; nothing about it
 	// travels at runtime. All the client is told is WHICH screen, and that rides
-	// the form's title: `bcuiv0008core<E>:<addon>_<name>`. The header is the
-	// interpreter's, and is kept on purpose — `server_form.main_screen_content`
+	// the form's title: `bcuiv0008core<E>:<addon>_<name>`. The header leads every
+	// title the library sends, and is kept on purpose — `main_screen_content`
 	// sizes the library's own container to the screen only when it is present,
 	// and vanilla's `long_form` hides itself only then. A compiled screen wants
 	// both, so it keeps the header and adds its own marker after it.

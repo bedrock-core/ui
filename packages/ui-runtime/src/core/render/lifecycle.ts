@@ -3,10 +3,11 @@ import { uiManager } from '@minecraft/server-ui';
 import { registerNativeComponents } from '../../components';
 import { DefaultTranslations } from '../../data/Translation';
 import type { FunctionComponent, JSX } from '../../jsx';
-import { startInputLock } from '../../util';
+import { startInputLock } from '../../util/inputLock';
 import { playerOwner } from '../fabric';
-import { present } from './presenters';
-import { compiledSnapshotOf, compiledTitleOf } from './screens';
+import { noteShown } from '../history';
+import { present } from './present';
+import { compiledKeyOf, compiledSnapshotOf, compiledTitleOf } from './screens';
 import {
   beginPresentChain,
   consumeSwap,
@@ -69,6 +70,11 @@ export function render(
       + `and import \`@bedrock-core/generated/ui\` once so the build's registrations run.`,
     );
   }
+
+  // What the player is now looking at, for `back()`. Recorded on every path
+  // into render(), not only on `navigate()`, so a screen opened directly is
+  // still somewhere a later navigation can return to.
+  noteShown(player.id, compiledKeyOf(root));
 
   // Stored with the root: a later render() swaps a different root into this
   // chain, and each pass shows whatever root it finds the way THAT root was

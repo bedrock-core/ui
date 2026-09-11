@@ -31,6 +31,7 @@ export {
   type EmbedArea, type EmbedFrame, type EmbedPlacement, type EmbedProps, type EmbedSlotsProps,
 } from './Embed';
 export { Hotbar, PlayerInventory } from './Inventory';
+export { Link, linkTarget, type LinkProps, type LinkTarget } from './Link';
 export { List, LIST_SLOT_TYPE, listCapacity, listCount, type ListProps } from './List';
 export { Panel, PANEL_TYPE, type PanelProps } from './Panel';
 export { Tabs, DEFAULT_TAB_HEIGHT } from './Tabs';
@@ -76,12 +77,12 @@ let registered = false;
  * Registers the built-in native component types into the component registry.
  *
  * Idempotent and called from `render()` — the built-ins are guaranteed present
- * before the first serialize/layout pass.
+ * before the first layout pass.
  *
  * The container-screen hosts (`Container`, `Slot`, `SlotGrid`, and the
- * `PlayerInventory`/`Hotbar` wrappers over it) are deliberately absent: they
- * never reach the serializer, and an unregistered type is a concrete box to the
- * layout pass, which is what they are.
+ * `PlayerInventory`/`Hotbar` wrappers over it) are deliberately absent: an
+ * unregistered type is a concrete box to the layout pass, which is what they
+ * are.
  *
  * `Tabs` and `Tabs.Tab` are absent for the same reason, and registering them as
  * TRANSPARENT was a real bug: the layout flattened the group instead of solving
@@ -126,8 +127,8 @@ export function registerNativeComponents(): void {
   // The expected-host marker: draws nothing, checked against the host at build.
   registerComponent(EXPECT_SLOT_TYPE, { transparent: true });
 
-  // Full-screen backdrop: transparent marker with no children/box; the presenters
-  // find it and append its texture to the form-title metadata (see Background).
+  // Full-screen backdrop: transparent marker with no children/box; the form host
+  // finds it and appends its texture to the form-title metadata (see Background).
   registerComponent(BACKGROUND_SLOT_TYPE, { transparent: true });
 
   // Native modal controls — each writer (co-located with its Form.* component) calls

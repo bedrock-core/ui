@@ -4,9 +4,9 @@
 // before Regolith has ever run — the same arrangement the i18n and guides
 // bundles use.
 //
-// Importing it is what turns compiled screens on. Without the import every
-// screen still renders, serialized by the interpreter, which is what makes the
-// whole feature additive.
+// Importing it is what registers the addon's screens. Without the import
+// nothing is registered, and `render()` refuses every screen: a screen is drawn
+// from the pack, and the registration is what says which compiled screen it is.
 import type { RenderOptions } from '@bedrock-core/ui';
 import type { Player } from '@minecraft/server';
 

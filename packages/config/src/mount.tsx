@@ -20,21 +20,21 @@
  * added before the forward is logic that can never be fixed in the field.
  */
 import { world } from '@minecraft/server';
+import { addonReference, presentReference } from '@bedrock-core/ui-runtime';
+import { provideReferences } from '@bedrock-core/navigation';
 import type { Player } from '@minecraft/server';
-import { presentGuideReference } from '@bedrock-core/guides';
 import type { Runtime } from '@bedrock-core/server-runtime';
 import { registerAddonCommands } from './commands/addon';
 import { openTargetFrom, type OpenCommand, type OpenTarget } from './navigation/openTarget';
 import { clampTarget } from './permissions';
 import { getScopeValues } from './config/values';
-import { guideReferenceFor } from './frameworkGuide';
+import { guideKeyFor, screenReferenceFor } from './frameworkGuide';
 import { canPresentAddonList, presentAddonList } from './compiled/host';
 import {
   canPresentMenuList, canPresentScopePicker, isSectionLevel, openLevel,
   presentEntityRoster, presentListEditor, presentScopePicker, presentShapedEditor,
   trailOf, type SectionListOpeners, type SectionTarget,
 } from './compiled/configHost';
-import { guideReference } from '@bedrock-core/guides';
 import { i18n } from './i18n';
 import { declaredParts } from './declared';
 import { addonPageReference } from './compiled/page.screen';
@@ -112,12 +112,18 @@ export function ui(core: Runtime, options: UiOptions = {}): void {
  * runtime; nothing here is generated for a part the addon declared itself.
  */
 function publishDeclared(core: Runtime): void {
-  const { page, translations, guide } = declaredParts();
+  const { page, translations } = declaredParts();
+
+  // How a key this bundle did not compile resolves from here on: the framework's
+  // own screens, then whatever any addon published. Installed once, so every
+  // `navigate()` and every `<Link>` in this realm reaches another addon's screens.
+  provideReferences(key => screenReferenceFor(core, key));
 
   announce(translations, bundle => core.translations.provide(bundle));
-  announce(guide, manifest => core.guides.manifest.provide(manifest));
-  // Undefined when this pack compiled no guide of its own, which is most addons.
-  announce(guideReference(core.id), reference => core.guides.provide(reference));
+  // Every static screen this addon compiled, so any realm can show them: a guide's
+  // pages, a menu, anything whose presses are links. Empty for an addon that
+  // compiled none, which publishes an empty table rather than nothing.
+  core.screens.provide(addonReference(core.id));
   announce(page, screen => core.pages.provide(addonPageReference(screen)));
 }
 
@@ -195,14 +201,23 @@ function dispatch(core: Runtime, player: Player, command: OpenCommand, args: (st
 export function openUi(core: Runtime, player: Player, target: OpenTarget): Promise<void> {
   const clamped = clampTarget(target, player, core);
 
-  // A compiled guide is presented from its reference with native forms — no app rendered,
-  // nothing of the owning addon's script involved. Returned like the render below: from a
-  // presser the handoff waits inside the transaction; on its own it just runs.
+  // A compiled guide is walked from its screens' references with native forms — no app
+  // rendered, nothing of the owning addon's script involved. Returned like the render below:
+  // from a presser the handoff waits inside the transaction; on its own it just runs.
   if (clamped.kind === 'guide' && clamped.addonId !== undefined) {
-    const reference = guideReferenceFor(core, clamped.addonId);
+    const key = guideKeyFor(core, clamped.addonId, { back: true });
+    const addonId = clamped.addonId;
 
-    if (reference !== undefined) {
-      return presentGuideReference(reference, player, { back: true });
+    if (key !== undefined) {
+      return presentReference(target => screenReferenceFor(core, target), key, player)
+        .then((ended): Promise<void> | void => {
+          // The walk says WHY it ended, which nothing else can: a back press and a
+          // player closing the form both answer the same nothing. Only a back goes
+          // on to the list — a dismissal is the player leaving the UI.
+          if (ended === 'back') {
+            return openUi(core, player, { kind: 'list', addonId });
+          }
+        });
     }
   }
 

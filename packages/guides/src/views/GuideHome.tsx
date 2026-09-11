@@ -1,6 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Divider, Header, MenuRow, theme } from '@bedrock-core/ore-styled';
-import { Button, Disclosure, Image, Panel, Scroll, Text, useState, type JSX, type PressEvent } from '@bedrock-core/ui-runtime';
+import { Button, Disclosure, Image, Panel, Scroll, Text, useState, type JSX } from '@bedrock-core/ui-runtime';
 import type { GuideTreeNode, PageId } from '../types';
 
 const { spacing } = theme.tokens;
@@ -36,10 +36,17 @@ export interface GuideHomeViewProps {
   /** The index's box. Unset, it takes the space its host gives it. */
   width?: number;
   height?: number;
-  /** A page row was pressed; the press comes along for a host that opens pages as screens. */
-  onOpenPage: (pageId: PageId, event: PressEvent) => void;
-  /** Leave the guide entirely (host `navigation.goBack()`). Omit to hide the back button. */
-  onExit?: (event: PressEvent) => void;
+  /**
+   * The screen key a page row opens. Every page is a compiled screen of its own,
+   * so a row is a link and where it leads is data the build can read.
+   */
+  linkTo: (pageId: PageId) => string;
+  /**
+   * Show a back control that returns wherever the player came from — the addon
+   * list, a menu, whatever opened the guide. Omit on the index an addon opens
+   * itself, which has nothing behind it.
+   */
+  back?: boolean;
   /** Close the whole UI (the header's × button). */
   onClose: () => void;
   /** How sections fold; see {@link GuideFolding}. Defaults to `'state'`. */
@@ -78,7 +85,7 @@ type Page = Extract<GuideTreeNode, { t: 'page' }>;
  * divider rule; pages render as icon menu rows (thumbnail + title + one-line subtitle + chevron).
  * `icon`/`descK` are optional per node, so an unannotated guide degrades to a clean text list.
  */
-export function GuideHomeView({ tree, title, width, height, onOpenPage, onExit, onClose, folding = 'state' }: GuideHomeViewProps): JSX.Element {
+export function GuideHomeView({ tree, title, width, height, linkTo, back, onClose, folding = 'state' }: GuideHomeViewProps): JSX.Element {
   const [collapsed, setCollapsed] = useState<string[]>(() => folding === 'state' ? initialCollapsed(tree) : []);
 
   const toggle = (id: string): void => {
@@ -91,7 +98,7 @@ export function GuideHomeView({ tree, title, width, height, onOpenPage, onExit, 
       title={node.titleK}
       subtitle={node.descK}
       depth={depth}
-      onPress={(event): void => onOpenPage(node.id, event)}
+      to={linkTo(node.id)}
     />
   );
 
@@ -145,7 +152,7 @@ export function GuideHomeView({ tree, title, width, height, onOpenPage, onExit, 
   if (folding === 'client') {
     return (
       <Card flexDirection={'column'} padding={0} gap={0} width={width} height={height}>
-        <Header title={title} onBack={onExit} onClose={onClose} />
+        <Header title={title} back={back} onClose={onClose} />
         <Panel flexGrow={1} padding={spacing.sm}>
           <Scroll>
             <Panel flexDirection={'column'} gap={spacing.xs}>
@@ -206,7 +213,7 @@ export function GuideHomeView({ tree, title, width, height, onOpenPage, onExit, 
 
   return (
     <Card flexDirection={'column'} padding={0} gap={0} width={width} height={height}>
-      <Header title={title} onBack={onExit} onClose={onClose} />
+      <Header title={title} back={back} onClose={onClose} />
       <Panel flexGrow={1} padding={spacing.sm}>
         <Scroll>
           <Panel flexDirection={'column'} gap={spacing.xs}>

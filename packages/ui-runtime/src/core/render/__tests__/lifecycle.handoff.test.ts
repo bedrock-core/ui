@@ -51,8 +51,8 @@ describe('a handoff between compiled screens', () => {
       render(Page, player);
     });
 
-    registerCompiledScreen(Home, 'core1:test_home');
-    registerCompiledScreen(Page, 'core1:test_page');
+    registerCompiledScreen(Home, { key: 'test:home', title: 'core1:test_home' });
+    registerCompiledScreen(Page, { key: 'test:page', title: 'core1:test_page' });
 
     render(Home, player);
     await tick();

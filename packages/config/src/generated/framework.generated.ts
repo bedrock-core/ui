@@ -7,68 +7,19 @@
 // guide; every realm carries them here instead and shows them from the
 // pack the client already has.
 
-import type { GuideReference } from '@bedrock-core/guides';
+import type { AddonReference } from '@bedrock-core/ui-runtime';
 import type { AddonPageReference } from '../compiled/page.screen';
 
 /** The namespace the framework's screens are compiled under: what its page's marker names. */
 export const FRAMEWORK_NAMESPACE = "core";
 
-export const FRAMEWORK_GUIDE: GuideReference = {
+/** Every static screen the render pack compiled, by the key it is navigated with. */
+export const FRAMEWORK_SCREENS: AddonReference = {
   "v": 1,
   "ns": "core",
-  "landing": "commands",
-  "home": {
-    "title": "bcuiv0008core1:core_guide_home",
-    "values": [
-      "t",
-      "t",
-      "t",
-      "t"
-    ],
-    "targets": [
-      {
-        "page": "commands"
-      },
-      {
-        "page": "intro"
-      },
-      {
-        "page": "getting-started/installation"
-      },
-      {
-        "page": "getting-started/first-screen"
-      }
-    ]
-  },
-  "homeBack": {
-    "title": "bcuiv0008core1:core_guide_home_back",
-    "values": [
-      "t",
-      "t",
-      "t",
-      "t",
-      "t"
-    ],
-    "targets": [
-      {
-        "exit": true
-      },
-      {
-        "page": "commands"
-      },
-      {
-        "page": "intro"
-      },
-      {
-        "page": "getting-started/installation"
-      },
-      {
-        "page": "getting-started/first-screen"
-      }
-    ]
-  },
-  "pages": {
-    "commands": {
+  "screens": {
+    "core:guide_commands": {
+      "key": "core:guide_commands",
       "title": "bcuiv0008core1:core_guide_commands",
       "values": [
         "t",
@@ -77,17 +28,18 @@ export const FRAMEWORK_GUIDE: GuideReference = {
       ],
       "targets": [
         {
-          "home": true
+          "to": "core:guide_home"
         },
         {
-          "home": true
+          "to": "core:guide_home"
         },
         {
-          "page": "intro"
+          "to": "core:guide_intro"
         }
       ]
     },
-    "getting-started/first-screen": {
+    "core:guide_getting_started_first_screen": {
+      "key": "core:guide_getting_started_first_screen",
       "title": "bcuiv0008core1:core_guide_getting_started_first_screen",
       "values": [
         "t",
@@ -99,24 +51,25 @@ export const FRAMEWORK_GUIDE: GuideReference = {
       ],
       "targets": [
         {
-          "home": true
+          "to": "core:guide_home"
         },
         null,
         {
-          "page": "getting-started/installation"
+          "to": "core:guide_getting_started_installation"
         },
         {
-          "page": "intro"
+          "to": "core:guide_intro"
         },
         {
-          "page": "getting-started/installation"
+          "to": "core:guide_getting_started_installation"
         },
         {
-          "home": true
+          "to": "core:guide_home"
         }
       ]
     },
-    "getting-started/installation": {
+    "core:guide_getting_started_installation": {
+      "key": "core:guide_getting_started_installation",
       "title": "bcuiv0008core1:core_guide_getting_started_installation",
       "values": [
         "t",
@@ -127,23 +80,76 @@ export const FRAMEWORK_GUIDE: GuideReference = {
       ],
       "targets": [
         {
-          "home": true
+          "to": "core:guide_home"
         },
         {
-          "page": "getting-started/first-screen"
+          "to": "core:guide_getting_started_first_screen"
         },
         {
-          "page": "intro"
+          "to": "core:guide_intro"
         },
         {
-          "home": true
+          "to": "core:guide_home"
         },
         {
-          "page": "getting-started/first-screen"
+          "to": "core:guide_getting_started_first_screen"
         }
       ]
     },
-    "intro": {
+    "core:guide_home": {
+      "key": "core:guide_home",
+      "title": "bcuiv0008core1:core_guide_home",
+      "values": [
+        "t",
+        "t",
+        "t",
+        "t"
+      ],
+      "targets": [
+        {
+          "to": "core:guide_commands"
+        },
+        {
+          "to": "core:guide_intro"
+        },
+        {
+          "to": "core:guide_getting_started_installation"
+        },
+        {
+          "to": "core:guide_getting_started_first_screen"
+        }
+      ]
+    },
+    "core:guide_home_back": {
+      "key": "core:guide_home_back",
+      "title": "bcuiv0008core1:core_guide_home_back",
+      "values": [
+        "t",
+        "t",
+        "t",
+        "t",
+        "t"
+      ],
+      "targets": [
+        {
+          "back": true
+        },
+        {
+          "to": "core:guide_commands"
+        },
+        {
+          "to": "core:guide_intro"
+        },
+        {
+          "to": "core:guide_getting_started_installation"
+        },
+        {
+          "to": "core:guide_getting_started_first_screen"
+        }
+      ]
+    },
+    "core:guide_intro": {
+      "key": "core:guide_intro",
       "title": "bcuiv0008core1:core_guide_intro",
       "values": [
         "t",
@@ -154,20 +160,32 @@ export const FRAMEWORK_GUIDE: GuideReference = {
       ],
       "targets": [
         {
-          "home": true
+          "to": "core:guide_home"
         },
         {
-          "page": "getting-started/installation"
+          "to": "core:guide_getting_started_installation"
         },
         {
-          "page": "commands"
+          "to": "core:guide_commands"
         },
         {
-          "home": true
+          "to": "core:guide_home"
         },
         {
-          "page": "getting-started/installation"
+          "to": "core:guide_getting_started_installation"
         }
+      ]
+    },
+    "core:framework": {
+      "key": "core:framework",
+      "title": "bcuiv0008core1:core_framework",
+      "values": [
+        "t",
+        "t"
+      ],
+      "targets": [
+        null,
+        null
       ]
     }
   }

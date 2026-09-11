@@ -67,8 +67,8 @@ export const popupHostOf = (ns: string): string => `${ns}_popups`;
 /** The row a toggle mounts, and what it reads. */
 export const toggleWidget = (node: ToggleNode): { definition: string; props: Control } => ({
   definition: TOGGLE_ROW,
-  // The toggle mounts its own payload-free twin rather than the interpreter's
-  // wrapper, so there is no decode to replace.
+  // The toggle mounts a payload-free twin of the shared one, so there is no
+  // decode to replace.
   props: { size: ['100%', '100%'], ...node.mount },
 });
 

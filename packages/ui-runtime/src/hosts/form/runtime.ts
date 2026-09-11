@@ -5,7 +5,7 @@ import { embedSlotValue, isEmbedSlot } from '../../components/Embed';
 import { listCount } from '../../components/List';
 import { analyze, visiblesAt } from '../../core/ir';
 import type { CompiledSnapshot } from '../../core/render/screens';
-import { runInteractiveCallback, type PresentResult } from '../../core/render/presenters/shared';
+import { runInteractiveCallback, type PresentResult } from '../../core/render/present';
 import type { JSX } from '../../jsx';
 import { allocate, type EntryEntry } from './allocate';
 import { COUNT_PREFIX, ENTRY_TEXT, FLAG_OFF, FLAG_ON } from './contract';
@@ -19,11 +19,6 @@ import { debugDiff } from './debug';
  * response says which entry was pressed. No payload is assembled, no geometry
  * is measured, no bytes are packed — the client already has the screen and is
  * only being told what changed.
- *
- * Set that against the interpreter it replaces, which serializes every
- * element's props into a byte-addressed string on every present and ships the
- * whole layout each time. Both write `form_buttons`; only one of them is
- * describing a screen the client has never seen.
  */
 
 /** The string a live `<Text>` shows, exactly as written — a form entry has no alphabet to lose. */
@@ -85,8 +80,8 @@ export const entryValue = (entry: EntryEntry): string => {
  * @param tree - The built tree for this present. Walked again here, so the nth
  *   entry is the nth entry on both sides by construction.
  * @param title - The compiled title, which is how the client picks the screen.
- * @returns Whether to re-present, clean up, or do nothing — the same outcomes
- *   the interpreter's presenters return, so the lifecycle is unchanged.
+ * @returns Whether to re-present, clean up, or do nothing — what the session's
+ *   lifecycle acts on.
  */
 /**
  * What a compiled screen sends: its entries in order, and the value each is

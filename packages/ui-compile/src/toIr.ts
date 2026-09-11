@@ -4,7 +4,7 @@
  * `buildContainerTree` leaves absolute Pocket-space texels on every element as
  * `jsonUIx` / `jsonUIy` / `jsonUIWidth` / `jsonUIHeight`. JSON UI positions a
  * control against its parent, so this pass converts absolute to relative on the
- * way through — the same subtraction the form serializer does.
+ * way through.
  *
  * Addresses come from the host's `allocate`, never from here: the runtime runs
  * the same walk on the same tree and reads handlers off the same entries, so

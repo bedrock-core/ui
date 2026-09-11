@@ -1,0 +1,17 @@
+{
+  "mode": "pre",
+  "tag": "rc",
+  "initialVersions": {
+    "@bedrock-core/cli": "0.10.3",
+    "@bedrock-core/config": "0.2.0",
+    "@bedrock-core/flexbox": "1.0.0",
+    "@bedrock-core/guides": "0.1.0",
+    "@bedrock-core/i18n": "0.1.0",
+    "@bedrock-core/navigation": "0.9.3",
+    "@bedrock-core/ore-styled": "0.10.0",
+    "@bedrock-core/ui-resource-pack": "1.0.1",
+    "@bedrock-core/ui-compile": "0.0.0",
+    "@bedrock-core/ui-runtime": "0.10.2"
+  },
+  "changesets": []
+}

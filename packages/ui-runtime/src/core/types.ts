@@ -18,9 +18,9 @@ export type SerializablePrimitive = string | number | boolean | ReservedBytes | 
 export type SerializableProps = Record<string, SerializablePrimitive>;
 
 /**
- * The native form a writer emits into. ActionForm writers use `button()`/`label()`;
- * modal writers use the typed `ModalFormData` controls (`toggle`/`slider`/…). The
- * serializer walk is shared; only the writers and the presenter response-mapping differ.
+ * The native form a writer emits into. An action form takes `button()`/`label()`;
+ * a modal takes the typed `ModalFormData` controls (`toggle`/`slider`/…). Both are
+ * filled by the host's runtime from the addresses the build allocated.
  */
 export type FormTarget = ActionFormData | ModalFormData;
 

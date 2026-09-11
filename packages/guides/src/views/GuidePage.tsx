@@ -1,7 +1,7 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import { Card, Header, Button as OreButton, theme } from '@bedrock-core/ore-styled';
 import type { DisplayText } from '@bedrock-core/i18n';
-import { Image, Panel, Scroll, Text, type JSX, type PressEvent } from '@bedrock-core/ui-runtime';
+import { Image, Panel, Scroll, Text, type JSX } from '@bedrock-core/ui-runtime';
 import { canSee, paginationFor } from '../access';
 import { GuideBlockList } from '../render/GuideBlockList';
 import type { GuideAudience, GuideComponents, GuideManifest, GuideTreeNode, PageId } from '../types';
@@ -45,28 +45,33 @@ export interface GuidePageViewProps {
   height?: number;
   /** Component registry for MDX `cmp` blocks. */
   components?: GuideComponents;
-  /** A prev/next/link press — navigate to another page in place. The press comes along for a
-   *  host that opens the next page as a screen of its own for the pressing player. */
-  onOpenPage: (pageId: PageId, event: PressEvent) => void;
   /**
-   * Header back. Leaves this page for wherever the reader came from — the sidebar when there is
-   * one, otherwise out of the guide entirely. Absent hides the control, for a root guide with
-   * nowhere to go back to.
+   * The screen key another page is opened by, for the prev/next buttons and for
+   * every link in the prose. A page is its own compiled screen, so moving
+   * between pages is navigation rather than state — and a key is data, which is
+   * what lets another addon show this guide without running any of its script.
    */
-  onBack?: (event: PressEvent) => void;
+  linkTo: (pageId: PageId) => string;
+  /**
+   * The screen the header's back control returns to — the index, when the guide has one. A key
+   * rather than a handler, so the control still works on a realm showing this guide from its
+   * reference. Absent hides the control, for a single-page guide with nowhere to go back to.
+   */
+  backTo?: string;
 
   /**
-   * Footer index button. Set only when there IS an index: a single-page guide has no second page
-   * to choose between, so the button would either lead to a one-row table of contents or, worse,
-   * duplicate the back button while looking like something else.
+   * Footer index button, as the key of the index screen. Set only when there IS an index: a
+   * single-page guide has no second page to choose between, so the button would either lead to a
+   * one-row table of contents or, worse, duplicate the back button while looking like something
+   * else.
    */
-  onHome?: (event: PressEvent) => void;
+  homeTo?: string;
   /** Close the whole UI (the header's × button). */
   onClose: () => void;
 }
 
 /** One guide page: title, rendered blocks, prev/home/next footer. */
-export function GuidePageView({ manifest, tree, audience, pageId, title, width, height, components, onOpenPage, onBack, onHome, onClose }: GuidePageViewProps): JSX.Element {
+export function GuidePageView({ manifest, tree, audience, pageId, title, width, height, components, linkTo, backTo, homeTo, onClose }: GuidePageViewProps): JSX.Element {
   const page = manifest.pages[pageId];
 
   if (!page) {
@@ -88,7 +93,7 @@ export function GuidePageView({ manifest, tree, audience, pageId, title, width, 
 
   return (
     <Card flexDirection={'column'} padding={0} gap={0} width={width} height={height}>
-      <Header title={title} breadcrumbs={breadcrumbs} onBack={onBack} onClose={onClose} />
+      <Header title={title} breadcrumbs={breadcrumbs} backTo={backTo} onClose={onClose} />
       <Panel flexGrow={1} padding={spacing.sm}>
         <Scroll marginRight={spacing.md}>
           <Panel flexDirection={'column'} gap={spacing.md} padding={spacing.sm}>
@@ -96,7 +101,7 @@ export function GuidePageView({ manifest, tree, audience, pageId, title, width, 
               ? (
                   <Panel flexDirection={'column'} gap={spacing.md}>
                     <Text font={'minecraftTen'} scale={2} shadow={true} wordBreak={'break-word'}>{page.titleK}</Text>
-                    <GuideBlockList blocks={page.blocks} ns={manifest.ns} onNavigate={onOpenPage} canOpen={canOpen} components={components} />
+                    <GuideBlockList blocks={page.blocks} ns={manifest.ns} linkTo={linkTo} canOpen={canOpen} components={components} />
                   </Panel>
                 )
               : <Text>{'§cPage not found.'}</Text>}
@@ -110,7 +115,7 @@ export function GuidePageView({ manifest, tree, audience, pageId, title, width, 
       <Panel flexDirection={'row'} alignItems={'stretch'} gap={spacing.sm} padding={spacing.sm}>
         {prevPage
           ? (
-              <OreButton variant={'contrast'} flexGrow={1} paddingTop={spacing.sm} paddingBottom={spacing.sm} onPress={(event): void => onOpenPage(prevPage.id, event)}>
+              <OreButton variant={'contrast'} flexGrow={1} paddingTop={spacing.sm} paddingBottom={spacing.sm} to={linkTo(prevPage.id)}>
                 <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.xs}>
                   <Text>{'§7<'}</Text>
                   <Text>{prevPage.titleK}</Text>
@@ -118,16 +123,16 @@ export function GuidePageView({ manifest, tree, audience, pageId, title, width, 
               </OreButton>
             )
           : <Panel flexGrow={1} />}
-        {onHome
+        {homeTo !== undefined
           ? (
-              <OreButton variant={'contrast'} height={'100%'} aspectRatio={1} paddingLeft={0} paddingRight={0} paddingTop={0} paddingBottom={0} onPress={onHome}>
+              <OreButton variant={'contrast'} height={'100%'} aspectRatio={1} paddingLeft={0} paddingRight={0} paddingTop={0} paddingBottom={0} to={homeTo}>
                 <Image width={12} height={12} texture={ICON_INDEX} />
               </OreButton>
             )
           : null}
         {nextPage
           ? (
-              <OreButton variant={'contrast'} flexGrow={1} paddingTop={spacing.sm} paddingBottom={spacing.sm} onPress={(event): void => onOpenPage(nextPage.id, event)}>
+              <OreButton variant={'contrast'} flexGrow={1} paddingTop={spacing.sm} paddingBottom={spacing.sm} to={linkTo(nextPage.id)}>
                 <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.xs}>
                   <Text>{nextPage.titleK}</Text>
                   <Text>{'§7>'}</Text>

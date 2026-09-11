@@ -1,43 +1,74 @@
 /**
- * The framework's own entry in the addon list.
+ * Resolving a screen key, wherever the screen came from.
  *
- * The framework has a row in the list but no realm behind it — nothing calls
- * `core.register()` on its behalf — so it can never publish a guide or a page
- * the way an addon does. Both are baked into the render pack instead, and the
- * references the render pack's build emits into this package stand in for
- * what an addon would have published.
+ * A compiled screen is navigated by key, and a realm can show one it did not build from the
+ * reference its owner published. The framework is the exception that shapes this file: it has a
+ * row in the addon list but no realm behind it — nothing calls `core.register()` on its behalf —
+ * so it can never publish anything. Its screens are baked into the render pack instead, and the
+ * table the render pack's build emits into this package stands in for what an addon would have
+ * published.
  */
-import { isGuideManifest, isGuideReference } from '@bedrock-core/guides';
-import type { GuideManifest, GuideReference } from '@bedrock-core/guides';
+import { isScreenReference, type ScreenReference } from '@bedrock-core/ui-runtime';
 import type { Runtime } from '@bedrock-core/server-runtime';
-import { FRAMEWORK_GUIDE } from './generated/framework.generated';
+import { FRAMEWORK_SCREENS } from './generated/framework.generated';
 
 /** The list row and guide id for the framework's own entry. Not a namespace — nothing registers it. */
 export const FRAMEWORK_ADDON_ID = 'bedrock-core';
 
+/** The screen a guide opens on, by the namespace its screens are compiled under. */
+export const guideKeyOf = (namespace: string): string => `${namespace}:guide_home`;
+
 /**
- * The compiled guide behind an addon id, or `undefined` if there is none to present.
+ * The same index with a back control on it.
  *
- * The framework's is this package's own; an addon's arrives over replicated state as the
- * runtime's opaque envelope, and narrowing here is where it becomes a reference — a peer
- * publishing something malformed reads as "no guide" rather than crashing the screen.
+ * A screen's shape is frozen, so the index a HOST opened — and which the reader has to be able to
+ * leave — is a second compiled screen rather than a state of the first. Its back press closes the
+ * form, which ends the walk and hands the reader back to whatever opened the guide.
  */
-export function guideReferenceFor(core: Runtime, addonId: string): GuideReference | undefined {
-  if (addonId === FRAMEWORK_ADDON_ID) { return FRAMEWORK_GUIDE; }
+export const guideBackKeyOf = (namespace: string): string => `${namespace}:guide_home_back`;
 
-  const stored = core.guides.of(addonId);
+/**
+ * The reference for one screen key: the framework's own table first, then whatever addon
+ * published a screen by that key.
+ *
+ * Narrowing here is where an announcement becomes a reference — a peer publishing something
+ * malformed reads as "no such screen" rather than crashing the screen showing it.
+ */
+export function screenReferenceFor(core: Runtime, key: string): ScreenReference | undefined {
+  const own = FRAMEWORK_SCREENS.screens[key];
 
-  return isGuideReference(stored) ? stored : undefined;
+  if (own !== undefined) {
+    return own;
+  }
+
+  const published = core.screens.find(key);
+
+  return isScreenReference(published) ? published : undefined;
 }
 
 /**
- * The serialized guide manifest behind an addon id, or `undefined` if the addon published
- * none. Only an addon built before compiled guides publishes one; the framework never does.
+ * The key of an addon's guide index, or `undefined` when it published no guide.
+ *
+ * The addon half of a key is the namespace its SCREENS were compiled under, which an addon may
+ * set apart from the namespace it syncs under — so it is read off what the addon published
+ * rather than assumed to be its id.
  */
-export function manifestFor(core: Runtime, addonId: string): GuideManifest | undefined {
-  if (addonId === FRAMEWORK_ADDON_ID) { return undefined; }
+export function guideKeyFor(core: Runtime, addonId: string, options: { back?: boolean } = {}): string | undefined {
+  const namespace = addonId === FRAMEWORK_ADDON_ID ? FRAMEWORK_SCREENS.ns : core.screens.of(addonId)?.ns;
 
-  const stored = core.guides.manifest.of(addonId);
+  if (namespace === undefined) {
+    return undefined;
+  }
 
-  return isGuideManifest(stored) ? stored : undefined;
+  // The back variant when the caller has somewhere to hand the reader back to, and only if the
+  // guide was built with one — an addon that compiled its guide before the variant existed still
+  // opens, without the control.
+  const wanted = options.back === true ? guideBackKeyOf(namespace) : guideKeyOf(namespace);
+  const fallback = guideKeyOf(namespace);
+
+  if (screenReferenceFor(core, wanted) !== undefined) {
+    return wanted;
+  }
+
+  return screenReferenceFor(core, fallback) === undefined ? undefined : fallback;
 }

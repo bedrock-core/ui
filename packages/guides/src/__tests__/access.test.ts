@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveLanding } from '../createGuide';
+import { resolveLanding } from '../landing';
 import { hasVisiblePages, paginationFor, visiblePageIds, visibleTree } from '../access';
 import type { GuideAccess, GuideManifest, GuidePageData, GuideTreeNode } from '../types';
 

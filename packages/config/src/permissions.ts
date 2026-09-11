@@ -12,10 +12,9 @@
  */
 import { PlayerPermissionLevel } from '@minecraft/server';
 import type { Player } from '@minecraft/server';
-import { hasVisiblePages } from '@bedrock-core/guides';
 import type { GuideAudience } from '@bedrock-core/guides';
 import type { Runtime } from '@bedrock-core/server-runtime';
-import { guideReferenceFor, manifestFor } from './frameworkGuide';
+import { guideKeyFor } from './frameworkGuide';
 import { CONFIG_SCOPES, type ConfigScope } from './types';
 import type { OpenTarget } from './navigation/openTarget';
 
@@ -60,13 +59,11 @@ export function clampTarget(target: OpenTarget, player: Player, core: Runtime): 
   // with that addon selected. Clamping HERE rather than in the screen keeps the Guide route out
   // of the stack entirely, so backing out behaves like a plain `:list` (see `buildInitialState`).
   if (target.kind === 'guide') {
-    const manifest = target.addonId === undefined ? undefined : manifestFor(core, target.addonId);
-    // A compiled guide is presented from its reference and has no gate yet: everyone sees it.
-    const reference = target.addonId === undefined ? undefined : guideReferenceFor(core, target.addonId);
+    // A compiled guide has no gate yet: everyone sees every page, so the only question is
+    // whether the addon published one at all.
+    const key = target.addonId === undefined ? undefined : guideKeyFor(core, target.addonId);
 
-    return reference !== undefined || (manifest !== undefined && hasVisiblePages(manifest, guideAudienceFor(player)))
-      ? target
-      : { kind: 'list', addonId: target.addonId };
+    return key !== undefined ? target : { kind: 'list', addonId: target.addonId };
   }
 
   if (target.kind !== 'config' || isOperator(player)) { return target; }

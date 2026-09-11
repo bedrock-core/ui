@@ -624,7 +624,7 @@ function dumpLayoutNode(node: LayoutNode, depth = 0): void {
  *   ends at min/max, for any thumb width.
  * - Overflow text commit: re-derive the wrapped/truncated display string at the
  *   node's FINAL granted width (the same width its measure closure last saw) so
- *   the serializer emits the processed text.
+ *   the emitted text is the processed one.
  */
 function resolveDerivedProps(element: JSX.Node): void {
   if (Array.isArray(element)) {
@@ -649,7 +649,7 @@ function resolveDerivedProps(element: JSX.Node): void {
     const width = asNumber(element.props.jsonUIWidth) ?? 0;
 
     if (hasOverflowProps(td) && width > 0) {
-      // Mutate props.value so the serializer sees the processed text — a JSON UI
+      // Mutate props.value so what is emitted is the processed text — a JSON UI
       // label is content-sized and never wraps on its own, so the line breaks
       // MUST be baked into the emitted string.
       // Skip for localization keys — props.value must stay as the key for RP lookup.

@@ -5,7 +5,7 @@ import type { Connector, ControlEntry } from '../types';
 /** The shared toggle each option mounts, with its bindings already fixed. */
 export const OPTION_TOGGLE = 'core_ui_form_components.compiled_option_toggle';
 
-/** The interpreter's own dropdown stub, which owns the collection and never opens. */
+/** The dropdown that owns the row's collection and never opens. */
 export const STUB = 'core_ui_form_components.inline_dropdown_toggle_stub';
 
 /** One option, placed, with each of its four looks already drawn. */
@@ -48,11 +48,11 @@ const LOOKS: readonly [string, keyof Omit<SelectOption, 'rect'>][] = [
  * A chooser whose options are all visible at once, with the rows placed by the
  * build.
  *
- * The interpreter's rows position themselves from each option's blob, through
- * size and offset bindings that are inert under a compiled mount. So the
- * compile places them: an invisible native dropdown owns the row's
- * `custom_dropdown` collection and names its content control in place — the
- * interpreter's own stub, which never opens — and inside that content each
+ * A native row positions itself from each option's blob, through size and
+ * offset bindings that are inert under a compiled mount. So the compile places
+ * them: an invisible native dropdown owns the row's `custom_dropdown`
+ * collection and names its content control in place — the stub, which never
+ * opens — and inside that content each
  * option is an index host at its rect: a stack declaring the collection, whose
  * one child carries the index, legal only there, and holds the shared radio
  * toggle with the four looks the build drew for it. The toggle's own bindings

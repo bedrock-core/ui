@@ -20,7 +20,7 @@
 		"scrollbar_touch_button": "button.scrollbar_touch",
 		"always_listen_to_input": true,
 		"always_handle_pointer": true,
-		// Off, as in vanilla's scrolling_panel and the interpreter's pooled scroll:
+		// Off, as in vanilla's scrolling_panel:
 		// on, the region took every scroll and pointer event for itself — the
 		// wheel did nothing and a button inside the content could not be pressed.
 		"always_handle_scrolling": false,

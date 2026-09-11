@@ -58,6 +58,7 @@ export {
 // its own props, so the readers live beside the components.
 export { BACKGROUND_SLOT_TYPE } from './components/Background';
 export { BUTTON_TYPE, isExitButton } from './components/Button';
+export { linkTarget } from './components/Link';
 export { CONTAINER_TYPE, containerEntity, containerHandlers, containerRoot } from './components/Container';
 export { SCREEN_TYPE } from './components/Screen';
 export { hostFor, rootOf } from './hosts';

@@ -1,8 +1,10 @@
-export { createGuide } from './createGuide';
-export type { GuideOptions, GuideProps } from './createGuide';
+export {
+  guideHomeBackScreen, guideHomeScreen, guidePageScreen, guideScreenName, openGuide,
+  HOME_BACK_SCREEN, HOME_SCREEN,
+} from './compiled';
+export type { CompiledGuideOptions } from './compiled';
 
-export { guideHomeBackScreen, guideHomeScreen, guidePageScreen, guideReference, isGuideReference, openGuide, presentGuideReference } from './compiled';
-export type { CompiledGuideOptions, GuideReference, GuideScreenReference, GuideTarget } from './compiled';
+export { resolveLanding } from './landing';
 
 export { GuideBlockList } from './render/GuideBlockList';
 

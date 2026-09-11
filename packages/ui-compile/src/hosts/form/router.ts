@@ -157,8 +157,8 @@ export const formRouter = (screens: readonly RoutedFormScreen[], addon: string):
       : markerGate(screen.marker, controls));
 
     // Centred, because the box this gate fills is the form's content area,
-    // which vanilla sizes 0×0 at the middle of the screen and the interpreter
-    // grows through the title; a compiled title carries no size. Anchored
+    // which vanilla sizes 0×0 at the middle of the screen and a compiled title
+    // carries no size to grow it with. Anchored
     // top-left, the canvas hung off the screen's centre — drawn down and to
     // the right of it, cut where the screen ended.
     const centred = { anchor_from: 'center', anchor_to: 'center' } as const;

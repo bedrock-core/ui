@@ -67,8 +67,8 @@ export interface ButtonNode extends NodeBase {
  *
  * Three, not two, because closing a screen and dismissing a modal are reached
  * DIFFERENTLY even though they send the same action: a screen's close button
- * is vanilla's own, and a modal's pair are the interpreter's `flow_button`.
- * Both shapes are copied from something that works rather than reasoned about,
+ * is vanilla's own, and a modal's pair are the `flow_button` a custom form
+ * draws its own buttons with. Both shapes are copied from something that works rather than reasoned about,
  * so both are kept exactly.
  */
 export type ButtonAction = 'close' | 'submit' | 'dismiss';
@@ -137,8 +137,8 @@ export const pressAddress = (node: ButtonNode): number => node.address ?? 0;
 /**
  * How each action is reached, verbatim from the source it was taken from.
  *
- * `close` is vanilla's own close button. `submit` and `dismiss` are the
- * interpreter's `flow_button_inner`, mapping types included: `menu_ok` is
+ * `close` is vanilla's own close button. `submit` and `dismiss` are copied
+ * from `flow_button_inner`, mapping types included: `menu_ok` is
  * FOCUSED there, not pressed, and the pair click where a screen's close is
  * silent. `button.submit_custom_form` is the modal's own submit, which is
  * where that name comes from rather than from guesswork.

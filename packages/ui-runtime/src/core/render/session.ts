@@ -1,6 +1,7 @@
 import { uiManager } from '@minecraft/server-ui';
 import type { JSX } from '../../jsx';
-import { stopInputLock } from '../../util';
+import { stopInputLock } from '../../util/inputLock';
+import { clearHistory } from '../history';
 import { getFibersForOwner, type Owner } from '../fabric';
 import type { CompiledSnapshot } from './screens';
 import { cleanupComponentTree } from './tree';
@@ -295,6 +296,9 @@ export function triggerCleanup(owner: Owner, shouldClose: boolean = false): void
   // session has neither.
   if (owner.kind === 'player') {
     stopInputLock(owner.player);
+    // Where the player had been is gone with the session: a screen nobody is
+    // looking at any more is not one `back()` can return to.
+    clearHistory(owner.player.id);
   }
 
   cleanupComponentTree(owner);

@@ -2,12 +2,16 @@
 
 ![Logo](https://raw.githubusercontent.com/bedrock-core/ui/main/assets/logo/title.png)
 
-Stack-based navigation for [`@bedrock-core/ui`](https://github.com/bedrock-core/ui), inspired by
-React Navigation and adapted to the runtime's one-render-per-player model. Screens are components,
-transitions are actions, and route params are typed by a route map you declare once.
+Going from one screen to another in [`@bedrock-core/ui`](https://github.com/bedrock-core/ui), by
+key.
 
-> ⚠️ MVP scope: stack navigation only. No tabs, nested navigators, deep linking, state
-> persistence, transition animations, or keep-alive for inactive routes.
+A compiled screen is drawn from the pack by its title, and its shape is frozen at build. That rules
+out the navigator every React app has — a stack of components swapped inside one root — and leaves
+the one that fits: a stack of KEYS. `navigate('shop:home')` shows that screen and puts the current
+one behind the player; `back()` returns to it.
+
+The key is `<addon>:<name>`, which is what makes this work across addons: a key belonging to an
+addon nobody in this realm is running still resolves, from the reference its owner published.
 
 ## Install
 
@@ -19,77 +23,82 @@ It also ships inside the umbrella package as `@bedrock-core/ui/navigation`.
 
 ## What it gives you
 
-- `NavigationContainer` — the provider that holds a player's navigation state; the root you pass
-  to `render()`
-- `createStackNavigator(config)` — returns `{ Navigator, routeNames, initialRouteName }` from a
-  `{ screens, initialRouteName? }` config; a screen entry is a component or
-  `{ screen, initialParams }`
-- `useNavigation()` — `navigate`, `push`, `goBack`, `canGoBack`, `reset`, `setParams`, `getState`
-- `useRoute()` — the active `{ key, name, params }`
-- `stackReducer` with its `StackAction` union and `ScreenDefaults` map, for hosts that seed or
-  drive the stack themselves (`@bedrock-core/config` builds an initial state from a fired command
-  this way)
+- `navigate(key, player, options?)` — show that screen, putting the current one behind the player.
+  `options.params` fills what a generic screen's layout reserved
+- `replace(key, player)` — show it in the current screen's place, leaving the stack as deep as it is
+- `reset(key, player)` — show it as the only screen the player has been on
+- `back(player)` — show the screen navigated from; `false` when there is none
+- `canGoBack(player)` / `currentKey(player)` / `historyOf(player)` — where the player is and what is
+  behind them
+- `useNavigation()` — all of it bound to the player the screen is being shown to, plus `key` and
+  `history` for the screen itself
+- `provideReferences(lookup)` — what resolves a key this bundle did not compile
+- `ScreenKey` / `ScreenKeys` — the key type each addon's generated module augments, so its own keys
+  autocomplete while another addon's still pass
+
+Coming from the stack navigator this replaced: `push` is `navigate` (it always stacks),
+`goBack` is `back`, `reset` takes a key rather than a route array, and `setParams` is a
+`replace(key, player, { params })` — a compiled screen is drawn from the pack each time it is shown,
+so new params mean showing it again rather than mutating a route entry.
 
 ## Usage
 
+A press that opens another screen is a `<Link>`, not a handler — where it leads is then data the
+build can read, which is what lets another addon show the screen:
+
 ```tsx
 /** @jsxImportSource @bedrock-core/ui */
-import { NavigationContainer, createStackNavigator, type ScreenProps } from '@bedrock-core/navigation';
-import { Button, Screen, Text, render, type JSX } from '@bedrock-core/ui';
-import type { Player } from '@minecraft/server';
+import { Link, Panel, Screen, Text, type JSX } from '@bedrock-core/ui';
 
-type AppRoutes = { Home: undefined; Profile: { userId: number } };
-
-// Each route is a whole screen, so each starts with a host root: <Screen> for an
-// action form, <Form> for a native modal.
-function HomeScreen({ navigation }: ScreenProps<AppRoutes, 'Home'>): JSX.Element {
+export default function Home(): JSX.Element {
   return (
     <Screen>
-      <Button onPress={(): void => navigation.navigate('Profile', { userId: 42 })}>
-        <Text>{'Go to Profile'}</Text>
-      </Button>
+      <Panel flexDirection={'column'} gap={4}>
+        <Link to={'shop:catalogue'}><Text>{'Catalogue'}</Text></Link>
+        <Link to={'other_addon:guide_home'}><Text>{'Their guide'}</Text></Link>
+      </Panel>
     </Screen>
-  );
-}
-
-function ProfileScreen({ navigation, route }: ScreenProps<AppRoutes, 'Profile'>): JSX.Element {
-  return (
-    <Screen>
-      <Text>{`Profile: ${route.params.userId}`}</Text>
-      <Button onPress={(): void => navigation.goBack()}>
-        <Text>{'Back'}</Text>
-      </Button>
-    </Screen>
-  );
-}
-
-const Stack = createStackNavigator<AppRoutes>({
-  initialRouteName: 'Home',
-  screens: { Home: HomeScreen, Profile: { screen: ProfileScreen, initialParams: { userId: 0 } } },
-});
-
-export function openApp(player: Player): void {
-  render(
-    <NavigationContainer>
-      <Stack.Navigator />
-    </NavigationContainer>,
-    player,
   );
 }
 ```
 
-**One `render()` per player.** Navigating does not call `render()` again — button callbacks feed
-the runtime's existing present cycle, which re-presents the same screen with the new route. Screen
-components must never call `render()` themselves.
+From script, or inside a screen:
+
+```ts
+import { back, navigate, useNavigation } from '@bedrock-core/navigation';
+
+navigate('shop:catalogue', player);
+back(player);
+
+// inside a screen
+const navigation = useNavigation();
+
+navigation.navigate('shop:catalogue');
+```
+
+## Resolving another addon's screens
+
+An addon publishes every static screen it compiled — per screen the title, the value each entry is
+shown with and the key each press leads to — and a realm holding that table can show them from the
+pack every client already has:
+
+```ts
+import { provideReferences } from '@bedrock-core/navigation';
+
+core.register({ ..., screens: uiReference() });     // in the owning addon
+
+provideReferences(key => core.screens.find(key));   // in the realm that shows them
+```
+
+`@bedrock-core/config` installs a lookup of its own when the shared UI is mounted, so an addon using
+it needs neither call.
+
+Until something is installed, a key this bundle did not compile warns and shows nothing.
 
 ## Documentation
 
-- [navigation](https://bedrock-core.drav.dev/docs/ui/navigation) — the model, quick start, and how
-  it works
-- [`createStackNavigator`](https://bedrock-core.drav.dev/docs/ui/navigation/createStackNavigator) ·
-  [`useNavigation`](https://bedrock-core.drav.dev/docs/ui/navigation/useNavigation) ·
-  [`useRoute`](https://bedrock-core.drav.dev/docs/ui/navigation/useRoute)
+- [navigation](https://bedrock-core.drav.dev/docs/ui/navigation) — keys, the stack, and references
 
 ## License
 
-MIT
+MIT © [DrAv0011](https://github.com/DrAv0011)

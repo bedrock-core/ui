@@ -260,19 +260,25 @@ same shape.
 
 - **`<Link to="<ns>:<screen>">`** is a `Button` whose press opens the named screen for the
   pressing player. The build reads the target off the prop, so a reference table needs no
-  sentinel player. *Proposed.*
-- **The reference feed.** `core-ui/reference` generalises `core-guide/reference`: one record
-  per static screen, `{ key, title, entries: [{ target }] }`, published by the owning addon and
-  replicated by sync. `@bedrock-core/navigation` gains `navigate('<ns>:<screen>')`, which
-  resolves a key against the addon's own compiled screens first and the replicated references
-  second, and presents the result. A foreign screen is shown by title with its entries baked
-  from the record.
-- **Guides on it.** `createGuide` and the manifest path go; `GuidesRegistry` becomes the
-  table; `openGuide(ns, player)` is `navigate('<ns>:guide_home')`; the config app's Guide route
-  rides the same call. Gating a guide per viewer is a carried `visible` on the compiled screen.
-  Breaking, pre-1.0. *Decided.*
-- **Generated types.** `@bedrock-core/generated/ui` exports the addon's screen keys as a
-  union, so a `navigate` into another addon is typed against what that addon built.
+  sentinel player. A key with no `<ns>:` in front of it is one of the bundle's own, named as its
+  file is — which is how a screen links to a sibling without repeating a namespace it does not
+  choose; a published reference carries the addon half filled in. *Built.*
+- **The reference feed.** `core-ui/reference` replaced `core-guide/reference`: one record per
+  static screen — `{ key, title, values, targets }` — published by the owning addon under
+  `core.screens` and replicated by sync. `navigate('<ns>:<screen>')` resolves a key against this
+  bundle's compiled screens first and, through whatever `provideReferences` installed, the
+  replicated references second; a foreign screen is shown by title with its baked values and
+  followed link by link (`presentReference`). The stack is a stack of KEYS — `back()` shows the
+  screen navigated from, since a frozen shape cannot be restored, only shown again. *Built.*
+- **Guides on it.** `createGuide`, `guideReference` and `presentGuideReference` are gone, and so
+  is `core.guides`: a guide's pages are ordinary screens in the ordinary table, and every press
+  inside one is a `<Link>`. `openGuide(ns, player)` is a `navigate()`. The way out needs no entry
+  at all — the client closes the form and a walk ends with it. Gating a guide per viewer is still
+  a carried `visible` on the compiled screen. *Built.*
+- **Generated types.** The generated module augments `ScreenKeys` with this addon's keys, so
+  `navigate` autocompletes them and a typo is an error, while a key belonging to an addon this
+  build has never seen still passes — which it must, since resolving one of those is the point.
+  *Built.*
 - **`Embed` is a component embed.** An embedded page is a component drawn into the area a
   host leaves for it, not a screen laid over the host's frame. Its canvas is that area:
   `<Embed>` takes the area's size and the tree fills it, so the page holds no coordinate of
@@ -280,6 +286,21 @@ same shape.
   frame is the host's constant and goes on the mount: the router places an embedded root at
   the area's offset within the centred frame. The contract between the two packs stays the
   area rect and the slot count. *Decided; lands in A4 with the addon-page family.*
+
+## Shaped config screens only exist where the addon is
+
+Found in game 2026-09-11: `[config] no shaped item screen for server list 'bannedItems'`.
+
+A config screen shaped for a schema is compiled into the OWNING addon's pack, and the elected host
+draws every addon's config — so the host has a screen for its own lists and none for anybody
+else's. The generic editor that preceded them had no such hole: one shape served any schema.
+
+Not decided. The two ways out: a generic list-item editor in the library set, compiled into every
+addon and used whenever the owner's shaped screen is not in this bundle; or the host asking the
+owning realm to draw its own, which reintroduces the dependency on the owner's realm being alive
+that references exist to remove. The same question is coming for every shaped screen, not just the
+list item — this is only where it surfaces first, because a list item is the one editor a section
+cannot draw inline.
 
 ## Layout stays the build's
 
@@ -306,8 +327,8 @@ what landed.
 | B1 | **Host roots** ✅ | `<Screen>`; `render` and `createContainerScreen` refuse non-host roots; `hostFor` throws instead of falling through | 0.5 day |
 | B2 | **One component set** ✅ | the mechanism table per host in place of the flat `offers` list; the modal lowers the plain set to native fields; host-specific props typed by the root or an expected-host marker; `Form` keeps only its root and submit button, and `ore-styled` ships one of each control | 2.5 days |
 | B3 | **The node layer** ✅ | `swap` and `look` primitives with `group`, `states`, `follows` and a look that draws a sibling; `Tabs` and `Disclosure` rebuilt on them as components; `field` split into five primitives with the modal's wiring in its connector | 3 days |
-| C | **References** | `<Link to>`; the reference feed and `navigate('<ns>:<screen>')`; guides on it, `createGuide` deleted; generated key types | 5 days |
-| D | **Delete the interpreter** | numbers as sliders on the config editor; serializer, writers, presenters and decoders deleted; state values readonly; pack minor | 3 days |
+| C | **References** ✅ | `<Link to>` (and `to` on ore-styled's `Button`/`MenuRow`); `core-ui/reference` as `core.screens`, replacing `core.guides`; `navigate('<ns>:<screen>')` with a per-player stack of keys and `back()`; guides on it — `createGuide`, `guideReference` and `presentGuideReference` deleted; `ScreenKeys` augmented by the generated module | 5 days |
+| D | **Delete the interpreter** ✅ | numbers as sliders on the config editor; the serializer, the presenters and the runtime's tree description deleted — `render()` refuses a screen the build never compiled; state values readonly (`Immutable<T>` from `useState` / `useReducer`); the pack minor follows the meta minor at release, which the release script does | 3 days |
 | E | **Build flow and the book** | the CLI template on the `core` filter; the docs site replaces this folder; then the book host, drawn from faces alone | after D |
 
 After E: fibers mutate the tree in place instead of rebuilding it per render.

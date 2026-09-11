@@ -123,6 +123,14 @@ export interface GuideManifest {
    * just that page. An id no page matches is ignored.
    */
   home?: PageId;
+
+  /**
+   * Each page's compiled screen name, as the guides filter named the module it
+   * generated: `getting-started/intro` -> `guide_getting_started_intro`. The
+   * filter is the half that names the files, so a link follows this rather than
+   * re-deriving the fold.
+   */
+  screens?: Record<PageId, string>;
 }
 
 /**

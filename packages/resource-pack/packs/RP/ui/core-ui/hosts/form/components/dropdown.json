@@ -21,10 +21,10 @@
 		"$scale|default": "#font_scale_factor",
 		"$static_texture|default": "",
 		/* The control the engine hosts the popup box in, resolved BY NAME across
-		   the screen. The interpreter's screens sit inside modal_container, which
-		   names its overlay host after vanilla's; a compiled screen may be mounted
-		   anywhere in the form (another pack's hook), so it names a host of its
-		   own at its root — an unresolved name is an assertion. */
+		   the screen. The library's own modal container names its overlay host
+		   after vanilla's; a compiled screen may be mounted anywhere in the form
+		   (another pack's hook), so it names a host of its own at its root — an
+		   unresolved name is an assertion. */
 		"$dropdown_area|default": "inside_header_panel",
 		"controls": [
 			{

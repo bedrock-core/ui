@@ -14,9 +14,9 @@ import { FormSlider, type FormSliderProps } from './FormSlider';
 import { FormToggle, type FormToggleProps } from './FormToggle';
 
 /**
- * The host `type` string emitted by {@link Form}. The serializer treats it as
- * transparent (no payload, children only); the presenter detects it on the built
- * tree to switch from the ActionForm backend to the native `ModalFormData` one.
+ * The host `type` string emitted by {@link Form}. It carries no geometry of its
+ * own — the children are the screen — and it is the root that names the modal
+ * host, so a screen built on it compiles to a native `ModalFormData`.
  */
 export { MODAL_FORM_SLOT_TYPE };
 
@@ -29,9 +29,9 @@ export interface SubmitEvent extends UiEvent {
 }
 
 /**
- * Resolved chrome + lifecycle the presenter reads off the `modal-form` node. The
- * callbacks are not primitives, so the serializer keeps them as callbacks and walks
- * the children.
+ * Resolved chrome + lifecycle carried on the `modal-form` node: the build reads
+ * the chrome, and the runtime holds the callbacks to call when the native form
+ * comes back.
  */
 export interface FormConfig {
   /**

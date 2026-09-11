@@ -233,8 +233,8 @@ export function optionLabelPosition(
  * `ModalFormData.dropdown` as this option's entry. The engine surfaces it per-row as
  * `#custom_radio_text`, and the RP option controls decode it via the shared `'%.Ns'` slicing
  * grammar. Because each option gets its OWN payload, the 64-field marker budget resets per
- * option, and — since `options[]` bypasses the serializer's primitive prop channel — option
- * text is not subject to the 80-byte field cap here.
+ * option, and — since `options[]` is an array the native call takes directly, not a packed
+ * prop — option text is not subject to the 80-byte field cap here.
  *
  * Field ORDER is the RP decode contract. The LABEL GROUP leads (v0008 order: fontType [92],
  * fontScale [175], labelX [258], labelY [341], text [424]) so the RP `option_label` reuses label's

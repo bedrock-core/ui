@@ -10,6 +10,7 @@ export {
   Fragment,
   Hotbar,
   Image,
+  Link,
   ModalContext,
   Panel,
   PlayerInventory,
@@ -58,6 +59,7 @@ export type {
   ImageProps,
   JustifyContent,
   LayoutProps,
+  LinkProps,
   ListProps,
   PanelProps,
   Position,
@@ -106,6 +108,29 @@ export {
 } from './core';
 
 export {
+  addonReference,
+  back,
+  clearHistory,
+  historyOf,
+  shownKey,
+  isAddonReference,
+  isScreenReference,
+  navigate,
+  openScreen,
+  presentReference,
+  screenReference,
+  setNavigator,
+  compiledKeyOf,
+  screenForKey,
+  compiledScreens,
+} from './core';
+
+export type {
+  AddonReference, CompiledScreen, NavigateOptions, Navigator, ReferenceTarget,
+  ScreenKey, ScreenKeys, ScreenReference, WalkResult,
+} from './core';
+
+export {
   createContext,
   emitDropdown,
   emitInput,
@@ -128,6 +153,10 @@ export { FLAG_OFF, FLAG_ON } from './hosts/form/contract';
 export type {
   ComponentDescriptor,
   CompiledSnapshot,
+  Immutable,
+  ReducerSlot,
+  StateSlot,
+  StateUpdate,
   ContainerEvent,
   Context,
   ContextProps,

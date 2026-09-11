@@ -1,10 +1,10 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { Player } from '@minecraft/server';
-import { __resetModalFormMock, __setModalFormResponses } from '../../../../__mocks__/@minecraft/server-ui';
-import { registerNativeComponents } from '../../../../components';
-import { Form, MODAL_FORM_SLOT_TYPE, type FormConfig } from '../../../../components/Form';
-import type { JSX } from '../../../../jsx';
-import { titleFor } from '../../../../hosts/form/contract';
+import { __resetModalFormMock, __setModalFormResponses } from '../../../__mocks__/@minecraft/server-ui';
+import { registerNativeComponents } from '../../../components';
+import { Form, MODAL_FORM_SLOT_TYPE, type FormConfig } from '../../../components/Form';
+import type { JSX } from '../../../jsx';
+import { titleFor } from '../../../hosts/form/contract';
 import { present } from '../present';
 
 beforeAll(() => {

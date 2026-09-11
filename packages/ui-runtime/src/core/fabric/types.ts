@@ -2,6 +2,7 @@ import { FunctionComponent, JSX } from '@bedrock-core/ui/jsx-runtime';
 import { EventSignal } from '../../hooks';
 import { Player } from '@minecraft/server';
 import type { Owner } from './owner';
+import type { Immutable, ReducerSlot, StateSlot } from '../immutable';
 
 export interface HookSlot<T = unknown> {
   value: T;
@@ -22,11 +23,11 @@ export type Context<T> = FunctionComponent<ContextProps<T>> & { defaultValue: T 
 export type ContextSnapshot = ReadonlyMap<Context<unknown>, unknown>;
 
 export interface Dispatcher {
-  useState<T>(initial: T | (() => T)): [T, (value: T | ((prev: T) => T)) => void];
+  useState<T>(initial: T | (() => T)): StateSlot<T>;
   useEffect(effect: () => (() => void) | void, deps?: readonly unknown[]): void;
   useRef<T>(initial: T): { current: T };
   useContext<T>(ctx: Context<T>): T;
-  useReducer<S, A>(reducer: (state: S, action: A) => S, initial: S): [S, (action: A) => void];
+  useReducer<S, A>(reducer: (state: Immutable<S>, action: A) => S, initial: S): ReducerSlot<S, A>;
 
   usePlayer(): Player;
   useExit(): () => void;

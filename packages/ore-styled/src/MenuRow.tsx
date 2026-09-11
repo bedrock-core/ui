@@ -1,7 +1,7 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import type { ControlProps, JSX, PressEvent } from '@bedrock-core/ui-runtime';
+import type { ControlProps, JSX, PressEvent, ScreenKey } from '@bedrock-core/ui-runtime';
 import type { DisplayText } from '@bedrock-core/i18n';
-import { Button, Image, Panel, Text, useTranslationResolver } from '@bedrock-core/ui-runtime';
+import { Button, Image, Link, Panel, Text, useTranslationResolver } from '@bedrock-core/ui-runtime';
 import { theme } from './tokens';
 
 export interface MenuRowProps extends ControlProps {
@@ -30,6 +30,12 @@ export interface MenuRowProps extends ControlProps {
    */
   depth?: number;
   onPress?: (event: PressEvent) => unknown | Promise<unknown>;
+  /**
+   * The screen this row opens, `<addon>:<name>`. A row with one is a `<Link>`,
+   * so where it leads is data rather than a handler — which is what lets an
+   * index of rows be shown by an addon running none of this one's script.
+   */
+  to?: ScreenKey;
   /**
    * Characters the title reserves. A compiled screen bakes a row's text unless
    * told how long a live one may be; set this where the title is only known
@@ -62,6 +68,7 @@ export function MenuRow({
   depth = 0,
   enabled = true,
   onPress,
+  to,
   titleMaxLength,
   subtitleMaxLength,
   ...layout
@@ -104,29 +111,31 @@ export function MenuRow({
 
   if (chevron) { children.push(<Text>{`${subtitleColor}>`}</Text>); }
 
-  return (
-    <Button
-      // A selected row wears the selected face in EVERY state, and `undefined` is how it does
-      // that: `resolveStateBackgrounds` fills each missing state from the base, so one texture
-      // covers hover, press and locked. Leaving the ordinary hover face on meant pointing at
-      // the current row washed the selection out — hover is LIGHTER than the selected fill.
-      background={selected ? row.textures.backgroundSelected : row.textures.background}
-      backgroundHover={selected ? undefined : row.textures.backgroundHover}
-      backgroundPressed={selected ? undefined : row.textures.backgroundPressed}
-      backgroundLocked={selected ? undefined : row.textures.background}
-      padding={row.padding}
-      // Cross-axis stretch rather than `width: '100%'` — an explicit full width plus the
-      // indent margin would overflow its container by exactly the indent.
-      alignSelf={'stretch'}
-      marginLeft={depth * theme.tokens.spacing.lg}
-      justifyContent={'flex-start'}
-      enabled={enabled}
-      onPress={onPress}
-      {...layout}
-    >
-      <Panel flexDirection={'row'} alignItems={'center'} gap={row.gap} width={'100%'}>
-        {children}
-      </Panel>
-    </Button>
+  const face = (
+    <Panel flexDirection={'row'} alignItems={'center'} gap={row.gap} width={'100%'}>
+      {children}
+    </Panel>
   );
+
+  const styled = {
+    // A selected row wears the selected face in EVERY state, and `undefined` is how it does
+    // that: `resolveStateBackgrounds` fills each missing state from the base, so one texture
+    // covers hover, press and locked. Leaving the ordinary hover face on meant pointing at
+    // the current row washed the selection out — hover is LIGHTER than the selected fill.
+    background: selected ? row.textures.backgroundSelected : row.textures.background,
+    backgroundHover: selected ? undefined : row.textures.backgroundHover,
+    backgroundPressed: selected ? undefined : row.textures.backgroundPressed,
+    backgroundLocked: selected ? undefined : row.textures.background,
+    padding: row.padding,
+    // Cross-axis stretch rather than `width: '100%'` — an explicit full width plus the
+    // indent margin would overflow its container by exactly the indent.
+    alignSelf: 'stretch' as const,
+    marginLeft: depth * theme.tokens.spacing.lg,
+    justifyContent: 'flex-start' as const,
+    enabled,
+    ...layout,
+    children: face,
+  };
+
+  return to === undefined ? Button({ ...styled, onPress }) : Link({ ...styled, to });
 }
