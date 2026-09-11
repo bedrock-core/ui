@@ -117,8 +117,9 @@
 		"@eslint/js": "^10.0.1",
 		"@eslint/json": "^1.2.0",
 		"@eslint/markdown": "^8.0.1",
-		"@minecraft/server": "^2.8.0",
+		"@minecraft/server": "^2.9.0",
 		"@minecraft/server-ui": "^2.1.0",
+		"@minecraft/vanilla-data": "1.26.44",
 		"@stylistic/eslint-plugin": "^5.10.0",
 		"@vitest/coverage-v8": "^4.1.5",
 		"concurrently": "^9.2.1",
@@ -133,8 +134,13 @@
 		"@minecraft/server-ui": "*"
 	},
 	"resolutions": {
-		"@minecraft/server": "2.8.0",
+		"@bedrock-core/db": "portal:../server/packages/db",
+		"@bedrock-core/i18n": "workspace:*",
+		"@bedrock-core/observable": "portal:../server/packages/observable",
+		"@bedrock-core/server-runtime": "portal:../server/packages/server-runtime",
+		"@bedrock-core/sync": "portal:../server/packages/sync",
+		"@minecraft/server": "2.9.0",
 		"@minecraft/server-ui": "2.1.0",
-		"@bedrock-core/i18n": "workspace:*"
+		"@minecraft/vanilla-data": "1.26.44"
 	}
 }

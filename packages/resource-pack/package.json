@@ -19,7 +19,7 @@
 		"@bedrock-core/navigation": "workspace:*",
 		"@bedrock-core/ore-styled": "workspace:*",
 		"@bedrock-core/ui": "workspace:*",
-		"@minecraft/server": "2.8.0",
+		"@minecraft/server": "2.9.0",
 		"@minecraft/server-ui": "2.1.0"
 	},
 	"devDependencies": {

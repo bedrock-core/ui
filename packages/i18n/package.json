@@ -43,11 +43,11 @@
 		"coverage": "vitest run --coverage"
 	},
 	"devDependencies": {
-		"@minecraft/server": "2.8.0",
+		"@minecraft/server": "2.9.0",
 		"typescript": "^6.0.3",
 		"vitest": "^4.1.5"
 	},
 	"peerDependencies": {
-		"@minecraft/server": ">=2.8.0"
+		"@minecraft/server": ">=2.9.0"
 	}
 }
