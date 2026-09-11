@@ -14,12 +14,13 @@ export type StateSeed = ReadonlyMap<string, ReadonlyMap<number, unknown>>;
  */
 /**
  * How the session's root is shown: the compiled title its layout is picked
- * by (absent for an interpreted screen), what the build baked, and whether
- * presents are diffed. Kept BESIDE the root, because a handoff swaps the root
- * under a live present chain, and the chain must show the new root the way
- * the new root was compiled — not the way the chain's first root was.
+ * by, what the build baked, and whether presents are diffed. Kept BESIDE the
+ * root, because a handoff swaps the root under a live present chain, and the
+ * chain must show the new root the way the new root was compiled — not the way
+ * the chain's first root was.
  */
 export interface SessionCompiled {
+  /** Absent only for a chest session, which never presents through the chain. */
   title?: string;
   snapshot?: CompiledSnapshot;
   debug: boolean;

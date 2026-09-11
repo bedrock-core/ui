@@ -14,7 +14,7 @@ import {
 import type { Document } from '../jsonui';
 
 /** The static files the render pack ships for container screens. */
-const CHEST_DIR = path.resolve(__dirname, '../../../resource-pack/packs/RP/ui/core-ui/chest');
+const CHEST_DIR = path.resolve(__dirname, '../../../resource-pack/packs/RP/ui/core-ui/hosts/chest');
 
 /** The chest root every addon's router adds to, in its own namespace. */
 const ROUTER_FILE = 'router.json';
@@ -134,7 +134,7 @@ describe('the reference screen', () => {
  * inserted into an inherited array.
  */
 describe('the chest hook', () => {
-  const UI_DIR = path.resolve(CHEST_DIR, '../..');
+  const UI_DIR = path.resolve(CHEST_DIR, '../../..');
   const root = readJsonc(path.join(CHEST_DIR, ROUTER_FILE));
   const hook = readJsonc(path.join(UI_DIR, 'chest_screen.json'));
   const { router, hooks } = buildRouter([]);

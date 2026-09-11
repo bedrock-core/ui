@@ -1,4 +1,4 @@
-import { labelFontFields } from '@bedrock-core/ui-runtime/compile';
+import { labelFontFields, UNSTYLED_TEXTURE } from '@bedrock-core/ui-runtime/compile';
 import type { JSX } from '@bedrock-core/ui-runtime';
 import { num, str } from './shared';
 import type { NodeBase } from './types';
@@ -85,11 +85,14 @@ export const toggleMount = (props: JSX.Props): Record<string, string> => {
 };
 
 /**
- * The one surface most kinds draw: they go through `core_ui_common.state_face`,
- * which takes a literal when given one and decodes only when not.
+ * The one surface most kinds draw, through `core_ui_common.state_face`.
+ *
+ * Always given, never omitted: the face draws exactly what it is handed, and a
+ * field whose author styled nothing gets the blank canvas the runtime uses for
+ * an unstyled surface — the same texture, said out loud.
  */
 export const surfaceMount = (props: JSX.Props): Record<string, string> =>
-  given({ $static_texture: str(props.background) });
+  ({ $static_texture: first(str(props.background), UNSTYLED_TEXTURE) });
 
 /** The slider's own images: its track, the fill behind the thumb, and the thumb. */
 export const sliderMount = (props: JSX.Props): Record<string, string> => {

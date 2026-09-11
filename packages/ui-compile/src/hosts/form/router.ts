@@ -27,7 +27,7 @@ import type { Control, ControlEntry, Document } from '../../jsonui';
  */
 
 /** Where the library's mount lives. An addon ships this same path to insert into it. */
-export const MOUNT_FILE = 'ui/core-ui/form/mount.json';
+export const MOUNT_FILE = 'ui/core-ui/hosts/form/mount.json';
 
 /** The namespace of that file, and of every addon's router. */
 export const MOUNT_NAMESPACE = 'core_ui_form';

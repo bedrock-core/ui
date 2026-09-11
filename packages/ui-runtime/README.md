@@ -74,15 +74,23 @@ export function openCounter(player: Player): void {
 
 ## Wire format
 
-Reference for anyone writing JSON UI that decodes these payloads. The **v0008 control block**
-(byte map, `fontType` at `[606-688]`, what changed and why) is documented in full on
-[Render pack](https://bedrock-core.drav.dev/docs/ui/ui-runtime/render-pack); the decoder-side
-mechanics below live here, at the source (`src/core/serializer.ts`).
+A compiled screen's layout is a definition in the pack, so almost nothing about it travels. What
+does is here, and what decodes it is the JSON UI under `packs/RP/ui/core-ui/`.
 
-Every payload opens with a 9-byte header — `bcui` + `VERSION`, currently **`bcuiv0008`**. Each
-field is then `type prefix` + `value padded with ';'` + a `1-byte marker` (markers come from the
-ordered alphabet `0-9A-Za-z-_`, so an element carries at most **64** props; index = field order,
-and reordering breaks every backward offset).
+**The title names the screen.** `bcuiv0008core<encoding>:<addon>_<name>` — vanilla's header, the
+marker that says compiled, the encoding, and the screen's own key. The header is kept because
+vanilla's `long_form` hides itself when it is present and the library's container sizes itself to
+the screen only then; a title without it is left untouched. The key is the namespaced name rather
+than a number: a title is a string, so the name travels and stays readable in a crash log.
+
+**Entries carry what changed.** Each form entry is one short value — a flag, a count, a live
+string — read by the compiled screen's own gates. Nothing carries geometry, faces or state; those
+were baked.
+
+**Option blobs are the one fixed-width payload left** (`src/core/payload.ts`). A chooser's options
+are DATA the build cannot know, and they reach the pack through `ModalFormData`'s own `items`
+array, one packed string each. Every field is `type prefix` + `value padded with ';'` + a `1-byte
+marker`, so the pack can slice each at a known offset:
 
 | Type | Prefix | Value | Marker | Full | Notes |
 |---|---|---|---|---|---|
@@ -90,15 +98,13 @@ and reordering breaks every backward offset).
 | Number | `n:` | 80 | 1 | 83 | integer texels — JSON UI ignores decimal points |
 | Boolean | `b:` | 5 | 1 | 8 | `'true'` / `'false'` |
 | Reserved | — | var | — | var | no prefix/marker, so JSON UI can skip it wholesale |
-| Tail | — | var | — | var | last field only, uncapped — `Text` content, `Image` texture |
+| Tail | — | var | — | var | last field only, uncapped |
 
-The **tail** is the one exception to fixed widths: everything before it decodes at a fixed offset,
-so the final field of a terminal payload may be emitted raw. A `RawMessage` tail turns the payload
-into `{ rawtext: [{ text: <fixed fields> }, <tail>] }`, resolved by the **client**. An `<Image>` is
-terminal too, so its `texture` is the tail at `[1024]` — texture paths have no length cap.
+Markers come from the ordered alphabet `0-9A-Za-z-_`, so a blob carries at most **64** fields.
+They exist because JSON UI's subtraction removes *all* occurrences of a substring: without a
+unique marker per field, stripping one would strip a later identical one too.
 
-**Decoding** is a progressive slice-then-subtract — three bindings per field. Subtraction removes
-*all* occurrences, which is exactly why every field ends in a unique marker, and why padding is
+**Decoding** is a progressive slice-then-subtract — three bindings per field, and why padding is
 stripped only after the full segment is isolated:
 
 ```jsonc
@@ -110,26 +116,7 @@ stripped only after the full segment is isolated:
 { "binding_type": "view", "source_property_name": "(('%.{FULL-1}s' * #raw_{FIELD}) - ('%.2s' * #raw_{FIELD}) - ';')", "target_property_name": "#{FIELD}" }
 ```
 
-`{PREV}` is the previous field's name — `header` for the first. A reserved block needs no bindings
-at all: subtract its byte count from the remainder and move on.
-
-**The label group** (`[1024]` for a `Text` cell) is decoded sequentially by
-`core_ui_components.label` from one start offset — consumers pass where the group starts, never
-per-field offsets: `labelFontType` (83) · `fontScaleFactor` (83) · `labelX` (83) · `labelY` (83) ·
-`text` (tail). `labelFontType` is vestigial, since the cell label sources the common `[606]` slot
-now, but it stays so every later offset is unchanged.
-
-**The form title** carries screen-level metadata rather than a control block: a fixed `'scrolls'`
-string at `[0-82]`, then scroll `i`'s block at `[83 + i×498]` (`axis` + `x`, `y`, `width`,
-`height`, `extent`). Index 0 is the implicit root scroll; a pooled scroll past the emitted list
-decodes an empty axis and hides itself. A `<Background>` texture is one string field at the fixed
-`BACKGROUND_TITLE_SKIP` = `83 + 5×498` = **2573**, the same offset on both backends. `server_form`
-gates on `$protocol_header`, so a form whose title lacks `bcuiv0008` is left untouched.
-
-**Extending it:** append new component fields at the end; carve new *common* fields off the front
-of `$reserved`, which keeps every component-specific offset stable (that is how `region` and
-`fontType` landed); never change `TYPE_WIDTH`, `PAD_CHAR`, the header format or canonical field
-order; bump `VERSION` for anything a shipped decoder would misread.
+`{PREV}` is the previous field's name — `header` for the first.
 
 ## Documentation
 

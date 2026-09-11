@@ -58,7 +58,7 @@ describe('compiling a modal screen', () => {
     // The pack's own toggle, which takes its faces from the definition rather
     // than decoding them from a payload a compiled screen does not send. The
     // kinds without such a twin mount vanilla's row control instead.
-    expect(name).toContain('@core_ui_form_components.compiled_toggle');
+    expect(name).toContain('@core_ui_form_components.toggle');
     expect(child?.collection_index).toBe(0);
   });
 

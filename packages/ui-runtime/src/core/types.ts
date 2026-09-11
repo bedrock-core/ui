@@ -97,10 +97,18 @@ export class TranslationKeysError extends Error {
   }
 }
 
-export class ScrollLimitError extends Error {
+/**
+ * Thrown when `render()` is handed a screen the build never compiled.
+ *
+ * A screen is shown from its layout in the pack, picked by the title the build
+ * registered it under. Without that there is nothing to show, so this names the
+ * two things that produce one: the ui-compile filter seeing the screen, and the
+ * generated module being imported so its registrations run.
+ */
+export class UncompiledScreenError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'ScrollLimitError';
+    this.name = 'UncompiledScreenError';
   }
 }
 

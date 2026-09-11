@@ -23,6 +23,7 @@ import {
   triggerCleanup,
 } from './session';
 import { buildTree, cleanupComponentTree } from './tree';
+import { UncompiledScreenError } from '../types';
 
 export interface RenderOptions {
   /**
@@ -38,11 +39,10 @@ export interface RenderOptions {
 /**
  * Shows a screen to one player and keeps it shown across its state changes.
  *
- * A screen the build compiled is drawn from the pack by its title; one it did
- * not is serialized into the form on every present. That serialized path is
- * **deprecated**: it stays until every screen the library itself serves is
- * compiled, and is then removed. Compile every form screen — a `*.screen.tsx`
- * the ui-compile filter bakes — rather than relying on it.
+ * A screen is drawn from the pack, by the title its compiled layout is picked
+ * by. So a screen has to BE compiled — a `*.screen.tsx` under `BP/scripts`, or
+ * one of the screens a build compiles from what the addon declared — and a root
+ * the build never saw is refused here rather than drawn some other way.
  */
 export function render(
   root: JSX.Element | FunctionComponent,
@@ -61,6 +61,15 @@ export function render(
   // before it is wrapped for translations, because the component is the only
   // thing both halves of the build hold in common.
   const compiledTitle = compiledTitleOf(root);
+
+  if (compiledTitle === undefined) {
+    throw new UncompiledScreenError(
+      `render(): this screen was not compiled, so there is no layout in the pack to show it with. `
+      + `A screen is compiled by the ui-compile filter: write it as a \`*.screen.tsx\` under \`BP/scripts\`, `
+      + `and import \`@bedrock-core/generated/ui\` once so the build's registrations run.`,
+    );
+  }
+
   // Stored with the root: a later render() swaps a different root into this
   // chain, and each pass shows whatever root it finds the way THAT root was
   // compiled.
@@ -141,10 +150,14 @@ export function render(
     }
 
     const current = getSessionCompiled(owner);
+    // A handoff swapped another root into this chain, and that root's own title
+    // is what shows it. It went through the same refusal above, so falling back
+    // to this render's title is only for a chain that has not been swapped.
+    const title = current.title ?? compiledTitle;
     let tree: JSX.Element;
 
     try {
-      tree = buildTree(rootNow, owner, current.title !== undefined);
+      tree = buildTree(rootNow, owner, true);
     } catch (err: unknown) {
       console.error(`[ui-runtime] buildTree error: ${String(err)}`);
 
@@ -156,7 +169,7 @@ export function render(
       return;
     }
 
-    present(player, tree, current.title, { snapshot: current.snapshot, debug: current.debug })
+    present(player, tree, title, { snapshot: current.snapshot, debug: current.debug })
       .then((result) => {
         // Superseded or torn down while the form was up — this outcome is void.
         if (!isChainCurrent(owner, token)) {

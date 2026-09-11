@@ -11,7 +11,7 @@ export {
 
 // Components
 export { Background, BACKGROUND_SLOT_TYPE, type BackgroundProps } from './Background';
-export { Button, BUTTON_TYPE, buttonWriter, isExitButton, type ButtonProps } from './Button';
+export { Button, BUTTON_TYPE, isExitButton, type ButtonProps } from './Button';
 export {
   Container, CONTAINER_TYPE, containerEntity, containerHandlers,
   type ContainerHandlers, type ContainerProps,
@@ -27,7 +27,7 @@ export {
   type SubmitEvent,
 } from './Form';
 export { Fragment, type FragmentProps } from './Fragment';
-export { Image, IMAGE_TYPE, imageWriter, liveTexture, type ImageProps } from './Image';
+export { Image, IMAGE_TYPE, liveTexture, type ImageProps } from './Image';
 export {
   Embed, EMBED_SLOT_TYPE, embedMarker, embedPlacementOf, EmbedSlots, embedSlotIndex, embedSlotValue, entryBaseOf, isEmbedRoot, isEmbedSlot,
   type EmbedArea, type EmbedFrame, type EmbedPlacement, type EmbedProps, type EmbedSlotsProps,
@@ -36,13 +36,13 @@ export { Input, type InputProps } from './Input';
 export { Hotbar, PlayerInventory } from './Inventory';
 export { List, LIST_SLOT_TYPE, listCapacity, listCount, type ListProps } from './List';
 export { Slider, type SliderProps } from './Slider';
-export { Panel, PANEL_TYPE, panelWriter, type PanelProps } from './Panel';
+export { Panel, PANEL_TYPE, type PanelProps } from './Panel';
 export { Tabs, DEFAULT_TAB_HEIGHT } from './Tabs';
 export type { TabsProps, TabProps } from './Tabs';
 export { Disclosure, DEFAULT_DISCLOSURE_HEADER_HEIGHT } from './Disclosure';
 export type { DisclosureProps } from './Disclosure';
 export { Screen, SCREEN_TYPE, type ScreenProps } from './Screen';
-export { Scroll, SCROLL_SLOT_TYPE, MAX_SCROLLS, MAX_POOLED_SCROLLS, type ScrollAxis, type ScrollProps } from './Scroll';
+export { Scroll, SCROLL_SLOT_TYPE, type ScrollAxis, type ScrollProps } from './Scroll';
 export {
   Slot, SLOT_CELL, SLOT_TYPE, slotInteractive, slotRole, slotSource, isForeignSlot,
   type SlotProps, type SlotRole, type SlotSource,
@@ -51,14 +51,14 @@ export {
   SlotGrid, SLOT_GRID_TYPE, slotGridConfig, type SlotGridProps, type SlotGridConfig,
 } from './SlotGrid';
 export {
-  Text, textWriter, isTextElementType, liveTextLength,
+  Text, isTextElementType, liveTextLength,
   TEXT_SHADOW_TYPE, TEXT_WRAP_TYPE, TEXT_SHADOW_WRAP_TYPE,
   type TextFont, type TextOverflow, type TextAlign, type TextProps, type TextStyle, type TextWordBreak,
 } from './Text';
 
 import { registerComponent } from '../core/componentRegistry';
 import { BACKGROUND_SLOT_TYPE } from './Background';
-import { buttonWriter } from './Button';
+import { } from './Button';
 import {
   MODAL_FORM_SLOT_TYPE,
   MODAL_TOGGLE_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE,
@@ -68,11 +68,11 @@ import {
   formInputWriter, formButtonWriter,
 } from './Form';
 import { EXPECT_SLOT_TYPE } from './Expect';
-import { imageWriter } from './Image';
-import { panelWriter } from './Panel';
+import { } from './Image';
+import { } from './Panel';
 import { SCREEN_TYPE } from './Screen';
 import { SCROLL_SLOT_TYPE } from './Scroll';
-import { TEXT_SHADOW_TYPE, TEXT_SHADOW_WRAP_TYPE, TEXT_WRAP_TYPE, textWriter } from './Text';
+import { TEXT_SHADOW_TYPE, TEXT_SHADOW_WRAP_TYPE, TEXT_WRAP_TYPE } from './Text';
 
 let registered = false;
 
@@ -99,18 +99,21 @@ export function registerNativeComponents(): void {
 
   registered = true;
 
-  registerComponent('button', { writer: buttonWriter });
-  registerComponent('panel', { writer: panelWriter });
-  registerComponent('text', { writer: textWriter });
-  // Shadowed text: same writer/payload as `text`; the type routes it to the RP label
-  // variant with a literal `shadow: true` (JSON UI `shadow` is load-time, not bindable).
-  registerComponent(TEXT_SHADOW_TYPE, { writer: textWriter });
-  // Localized overflow text: same writer/payload; the type routes it to the RP label
-  // variant whose width is bound to the control box, so Bedrock wraps the resolved
-  // string natively (a localization key cannot be pre-wrapped build-side).
-  registerComponent(TEXT_WRAP_TYPE, { writer: textWriter });
-  registerComponent(TEXT_SHADOW_WRAP_TYPE, { writer: textWriter });
-  registerComponent('image', { writer: imageWriter });
+  // Drawn controls: the compiled layout draws each from the pack, so they emit
+  // nothing at runtime. Registered all the same, because the compiler asks this
+  // registry whether a type is structural, and these are not.
+  registerComponent('button', {});
+  registerComponent('panel', {});
+  registerComponent('text', {});
+  // Shadowed text: the type routes it to the RP label variant with a literal
+  // `shadow: true` (JSON UI `shadow` is load-time, not bindable).
+  registerComponent(TEXT_SHADOW_TYPE, {});
+  // Localized overflow text: the type routes it to the RP label variant whose
+  // width is bound to the control box, so Bedrock wraps the resolved string
+  // natively (a localization key cannot be pre-wrapped build-side).
+  registerComponent(TEXT_WRAP_TYPE, {});
+  registerComponent(TEXT_SHADOW_WRAP_TYPE, {});
+  registerComponent('image', {});
 
   registerComponent('fragment', { transparent: true });
   registerComponent('context-provider', { transparent: true });

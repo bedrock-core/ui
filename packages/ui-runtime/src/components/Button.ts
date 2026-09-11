@@ -1,7 +1,5 @@
 import { isContainerExit } from '../core/fabric/exit';
 import type { PressEvent } from '../core/events';
-import type { Writer } from '../core/types';
-import { emitButton } from '../core/writers';
 import { FunctionComponent, JSX } from '../jsx';
 import { ControlProps, resolveStateBackgrounds, StateBackgroundProps, withControl } from './control';
 
@@ -33,11 +31,6 @@ export const Button: FunctionComponent<ButtonProps> = ({ onPress, backgroundHove
       children,
     },
   };
-};
-
-/** Serializes a `button` into the interactive (button) slot. */
-export const buttonWriter: Writer = (payload, form, ctx, callbacks) => {
-  emitButton(payload, form, ctx, callbacks);
 };
 
 /**

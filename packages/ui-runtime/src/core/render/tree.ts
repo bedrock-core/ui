@@ -85,7 +85,7 @@ export function buildTree(element: JSX.Element, owner: Owner, compiled?: boolean
   //    time a player opened it.
   const frozen = compiled ?? host.compiled;
 
-  result = computeLayout(result, frozen ? Number.POSITIVE_INFINITY : host.scrollLimit, frozen);
+  result = computeLayout(result, frozen);
 
   // Phase 3: Apply parent-child inheritance rules (visibility, enabled)
   // Initialize with root parent state

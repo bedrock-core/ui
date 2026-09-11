@@ -1,11 +1,6 @@
-import { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
 import { type Player } from '@minecraft/server';
-import { BACKGROUND_SLOT_TYPE } from '../../../components/Background';
 import { findModalConfig } from '../../../components/Form';
-import type { JSX } from '../../../jsx';
-import type { ScrollMetrics } from '../../serializer';
 import { getFibersForOwner, playerOwner } from '../../fabric';
-import { isElement } from '../../guards';
 import { beginInteractiveTransaction, endInteractiveTransaction } from '../session';
 
 /**
@@ -19,40 +14,6 @@ export type PresentResult = 'present' | 'cleanup' | 'none';
 // The modal marker is the Form component's own business; re-exported here
 // because the presenters have always reached for it through this module.
 export { findModalConfig };
-
-/**
- * Find the first `<Background>` marker on the built tree and return its texture
- * path, or `''` when the tree declares none. Mirrors {@link findModalConfig}: the
- * marker is transparent and may sit anywhere (ActionForm root level or inside a
- * `<Form>`), so walk the whole tree depth-first — first one wins.
- *
- * @param node - Tree node to search from (typically the built root).
- * @returns The backdrop texture path, or `''`.
- */
-export function findBackground(node: JSX.Node): string {
-  if (!isElement(node)) {
-    return '';
-  }
-
-  if (node.type === BACKGROUND_SLOT_TYPE) {
-    const texture = node.props.__background;
-
-    return typeof texture === 'string' ? texture : '';
-  }
-
-  const { children } = node.props;
-  const childArray = Array.isArray(children) ? children : [children];
-
-  for (const child of childArray) {
-    const found = findBackground(child);
-
-    if (found !== '') {
-      return found;
-    }
-  }
-
-  return '';
-}
 
 /**
  * Run a form callback inside an interactive transaction (background logic passes
@@ -82,52 +43,4 @@ export async function runInteractiveCallback(
 
       return shouldClose ? 'cleanup' : 'present';
     });
-}
-
-/**
- * Coerce a tree-derived metric to a finite number. Position (x/y) may legitimately be
- * 0 or negative, so `allowNonPositive` skips the `> 0` guard for those.
- */
-function sane(value: unknown, fallback: number, allowNonPositive = false): number {
-  return (typeof value === 'number' && Number.isFinite(value) && (allowNonPositive || value > 0)) ? value : fallback;
-}
-
-/**
- * Read the per-scroll geometry the layout pass surfaced on the tree (one
- * `{ axis, x, y, width, height, extent }` per scroll, index 0 is the root scroll) and
- * sanitize it. Falls back to a single full-screen vertical scroll if the tree produced
- * nothing usable, so the RP always receives at least the root scroll. Consumes (deletes)
- * the transient `jsonUIScrolls` / `jsonUIHeight` props off the root.
- *
- * Shared by both presenters: the ActionForm and the native modal use the IDENTICAL
- * title-encoded scroll-geometry protocol (v0007) so a label-only tree sizes the same in
- * both — the modal repurposes its native title for this metadata (it has no separate
- * user title; a heading is authored as a `<Text>`).
- */
-export function resolveScrolls(tree: JSX.Element): ScrollMetrics[] {
-  const rawScrolls = tree.props.jsonUIScrolls;
-  const rawHeight = tree.props.jsonUIHeight;
-
-  delete (tree.props as Record<string, unknown>).jsonUIScrolls;
-  delete (tree.props as Record<string, unknown>).jsonUIHeight;
-
-  const scrollsSource: ScrollMetrics[] = Array.isArray(rawScrolls) && rawScrolls.length > 0
-    ? rawScrolls
-    : [{
-        axis: 'y',
-        x: 0,
-        y: 0,
-        width: CANONICAL_SCREEN.width,
-        height: CANONICAL_SCREEN.height,
-        extent: sane(rawHeight, CANONICAL_SCREEN.height),
-      }];
-
-  return scrollsSource.map(scroll => ({
-    axis: scroll?.axis === 'x' ? 'x' : 'y',
-    x: sane(scroll?.x, 0, true),
-    y: sane(scroll?.y, 0, true),
-    width: sane(scroll?.width, CANONICAL_SCREEN.width),
-    height: sane(scroll?.height, CANONICAL_SCREEN.height),
-    extent: sane(scroll?.extent, CANONICAL_SCREEN.height),
-  }));
 }

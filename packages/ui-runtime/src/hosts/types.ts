@@ -80,12 +80,6 @@ export interface HostContract {
   /** The canvas a screen is laid out against, in texels. */
   readonly canvas: { readonly width: number; readonly height: number };
   /**
-   * How many independent scroll regions the host can draw. A form draws its
-   * scrolls from the render pack's fixed pool; a compiled screen emits a
-   * region per `<Scroll>`, so nothing caps it.
-   */
-  readonly scrollLimit: number;
-  /**
    * Whether a screen of this host is baked at build time by DEFAULT, for the
    * callers that do not say. It is the host's usual answer, not the truth about
    * a given screen: the form host serves both a screen serialized per present

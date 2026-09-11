@@ -1,5 +1,4 @@
 import { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
-import { MAX_POOLED_SCROLLS } from '../../components/Scroll';
 import { MODAL_FORM_SLOT_TYPE, SCREEN_TYPE } from '../../core/roots';
 import { ContainerScreenError, ModalFormError } from '../../core/types';
 import type { ComponentKind, HostContract } from '../types';
@@ -41,8 +40,6 @@ const FORM = {
   // same way it renders a container screen, and for the same reason.
   owners: ['player', 'build'],
   canvas: CANONICAL_SCREEN,
-  // A form draws its scrolls from the render pack's fixed pool.
-  scrollLimit: MAX_POOLED_SCROLLS,
   compiled: false,
 } as const;
 

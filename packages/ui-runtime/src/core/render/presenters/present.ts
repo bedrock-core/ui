@@ -3,8 +3,6 @@ import { presentCompiledModal } from '../../../hosts/form/modal';
 import { presentCompiledForm } from '../../../hosts/form/runtime';
 import type { JSX } from '../../../jsx';
 import type { CompiledSnapshot } from '../screens';
-import { presentAction } from './presentAction';
-import { presentModal } from './presentModal';
 import { findModalConfig, type PresentResult } from './shared';
 
 /** What a compiled present carries beyond the tree: identity, reference, verbosity. */
@@ -14,40 +12,32 @@ export interface CompiledPresent {
 }
 
 /**
- * Build and show one form snapshot for `player`, dispatching by form mode detected on
- * the built tree: a `<Form>` marker routes to the native modal backend
- * ({@link presentModal}); otherwise the default ActionForm backend ({@link presentAction})
- * renders.
+ * Build and show one form snapshot for `player`, on the backend the built tree
+ * asks for: a `<Form>` marker routes to the native modal, everything else to
+ * the action form.
+ *
+ * Both draw the screen from its compiled layout in the pack — the title picks
+ * it — so only what changed between snapshots travels.
  *
  * @param player - Player to show the form to.
  * @param tree - Fully built tree for this snapshot.
- * @param compiledTitle - The title this screen's compiled layout is picked by,
- *   when the build compiled it. Absent means the interpreter draws it.
+ * @param compiledTitle - The title this screen's compiled layout is picked by.
  * @returns `'present'` to re-render immediately (programmatic close), `'cleanup'` to
  *   tear the session down, or `'none'` when the player dismissed with no callback.
  */
 export async function present(
   player: Player,
   tree: JSX.Element,
-  compiledTitle?: string,
+  compiledTitle: string,
   compiled: CompiledPresent = {},
 ): Promise<PresentResult> {
   const modalConfig = findModalConfig(tree);
 
-  if (modalConfig) {
-    // A modal's typed controls are the engine's either way — there is no
-    // compiling those. What being compiled changes is everything AROUND them:
-    // the layout is a definition in the pack, so the title names it instead of
-    // carrying it, and each field's label goes over bare instead of carrying a
-    // serialized control block.
-    return compiledTitle === undefined
-      ? presentModal(player, tree, modalConfig)
-      : presentCompiledModal(player, tree, modalConfig, compiledTitle, compiled.snapshot, compiled.debug);
-  }
-
-  if (compiledTitle !== undefined) {
-    return presentCompiledForm(player, tree, compiledTitle, compiled.snapshot, compiled.debug);
-  }
-
-  return presentAction(player, tree);
+  // A modal's typed controls are the engine's either way — there is no
+  // compiling those. What the compiled layout changes is everything AROUND
+  // them: the title names a definition in the pack, and each field's label goes
+  // over bare.
+  return modalConfig
+    ? presentCompiledModal(player, tree, modalConfig, compiledTitle, compiled.snapshot, compiled.debug)
+    : presentCompiledForm(player, tree, compiledTitle, compiled.snapshot, compiled.debug);
 }

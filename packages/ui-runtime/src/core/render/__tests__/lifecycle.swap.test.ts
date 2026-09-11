@@ -18,7 +18,9 @@ import { Text } from '../../../components/Text';
 import { useEffect, useExit, useState } from '../../../hooks';
 import type { FunctionComponent, JSX } from '../../../jsx';
 import { getFibersForOwner, playerOwner } from '../../fabric';
-import { render } from '../lifecycle';
+import { titleFor } from '../../../hosts/form/contract';
+import { render as renderScreen } from '../lifecycle';
+import { compiledTitleOf, registerCompiledScreen } from '../screens';
 import { getSessionRoot } from '../session';
 
 /**
@@ -52,6 +54,25 @@ function makePlayer(id: string): TestPlayer {
   } as unknown as Player;
 
   return { player, permissionSpy };
+}
+
+let compiled = 0;
+
+/**
+ * Show an app the way a built pack does.
+ *
+ * Every screen here stands for one an addon compiled, and `render()` shows a
+ * screen from its layout in the pack — so each root is registered on its way in
+ * rather than each case repeating it. What these cases are about is the chain
+ * around the present, which is the same whichever screen is in it.
+ */
+function render(root: FunctionComponent, player: Player): void {
+  if (compiledTitleOf(root) === undefined) {
+    compiled += 1;
+    registerCompiledScreen(root, titleFor(`swap_${String(compiled)}`));
+  }
+
+  renderScreen(root, player);
 }
 
 /** Flush the full microtask queue (and one macrotask turn). */

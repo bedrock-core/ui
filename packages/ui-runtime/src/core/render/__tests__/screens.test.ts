@@ -16,6 +16,7 @@ import { render } from '../lifecycle';
 import { present } from '../presenters';
 import { buildTree } from '../tree';
 import { compiledTitleOf, registerCompiledScreen } from '../screens';
+import { UncompiledScreenError } from '../../types';
 
 beforeAll(() => {
   registerNativeComponents();
@@ -99,24 +100,11 @@ describe('render, on a screen the build compiled', () => {
     expect(form?.icons).toEqual(['t']);
   });
 
-  it('leaves an unregistered screen to the interpreter, which ships the whole layout', () => {
-    const Interpreted = screenComponent();
+  it('refuses a screen the build never compiled, naming what produces one', () => {
+    const Uncompiled = screenComponent();
 
-    render(Interpreted, nextPlayer());
-
-    const form = __lastActionForm();
-
-    // The interpreter's title carries scroll metadata rather than a screen key.
-    expect(String(form?.titleText)).toContain('bcuiv0008');
-    expect(String(form?.titleText)).not.toContain('core1:');
-
-    // And its entry carries the whole control block — the layout itself, shipped
-    // again on every present. The compiled screen's entry for the same button
-    // is the single character `'1'`.
-    const [entry] = form?.buttons ?? [];
-
-    expect(String(entry)).toContain('bcuiv0008');
-    expect(String(entry).length).toBeGreaterThan(1000);
+    expect(() => { render(Uncompiled, nextPlayer()); }).toThrow(UncompiledScreenError);
+    expect(__lastActionForm()).toBeUndefined();
   });
 
   it('leaves a <Form> to the interpreter even when compiled, since a modal is unmeasured', async () => {

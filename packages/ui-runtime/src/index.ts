@@ -107,16 +107,14 @@ export {
   ContainerScreenError,
   ModalFormError,
   ScreenRootError,
-  ScrollLimitError,
   SerializationError,
   TranslationKeysError,
+  UncompiledScreenError,
 } from './core';
 
 export {
   createContext,
-  emitButton,
   emitDropdown,
-  emitHeader,
   emitInput,
   emitLabel,
   emitSlider,

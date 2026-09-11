@@ -5,13 +5,33 @@ import {
   MODAL_DROPDOWN_SLOT_TYPE, MODAL_FORM_BUTTON_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE,
   MODAL_INPUT_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
 } from '../../../components/Form';
-import { MAX_POOLED_SCROLLS, SCROLL_SLOT_TYPE, SCROLL_TRACK_WIDTH, type ScrollAxis } from '../../../components/Scroll';
+import { SCROLL_SLOT_TYPE, SCROLL_TRACK_WIDTH, type ScrollAxis } from '../../../components/Scroll';
 import type { JSX } from '../../../jsx';
 import { ellipsizeText, measureText, wrapText } from '../../../util/textMetrics';
 import { isTransparentType } from '../../componentRegistry';
 import { isElement } from '../../guards';
-import type { ScrollMetrics } from '../../serializer';
-import { ScrollLimitError } from '../../types';
+
+/**
+ * Per-scroll geometry, measured by this pass.
+ *
+ * A scroll is a viewport rectangle on screen plus a scrollable content `extent`
+ * along its `axis`. The compiler reads one of these per index and emits the
+ * scroll control positioned and sized from it.
+ */
+export interface ScrollMetrics {
+  /** Scroll axis: 'y' (vertical) or 'x' (horizontal). */
+  axis: 'x' | 'y';
+  /** Viewport top-left x (px, screen space). */
+  x: number;
+  /** Viewport top-left y (px, screen space). */
+  y: number;
+  /** Viewport width (px). */
+  width: number;
+  /** Viewport height (px). */
+  height: number;
+  /** Content extent (px) along the scroll axis — the scrollable length. */
+  extent: number;
+}
 
 // Set to true to log every element's computed x/y/w/h after layout.
 const DEBUG_LAYOUT = false;
@@ -667,24 +687,12 @@ function resolveDerivedProps(element: JSX.Node): void {
  */
 export function computeLayout(
   tree: JSX.Element,
-  maxScrolls: number = MAX_POOLED_SCROLLS,
   reserve: boolean = true,
 ): JSX.Element {
   reserveLiveText = reserve;
   const slots: JSX.Element[] = [];
 
   findScrolls(tree, slots);
-
-  // Fail loudly rather than silently dropping scrolls: the RP only pools
-  // MAX_POOLED_SCROLLS custom viewports (indices 1..MAX_POOLED_SCROLLS, a deliberate
-  // perf cap — every mounted slot re-instantiates the full collection), so any beyond
-  // that would never render.
-  if (slots.length > maxScrolls) {
-    throw new ScrollLimitError(
-      `Too many <Scroll>s: found ${slots.length}, but a render supports at most ${maxScrolls} `
-      + `(plus the implicit root scroll). Scrolls beyond the ${maxScrolls}th would not render.`,
-    );
-  }
 
   // ── Main pass (index 0): whole tree, <Scroll>s as leaf boxes ────────────────────
   const concreteRoots = collectConcrete(tree);

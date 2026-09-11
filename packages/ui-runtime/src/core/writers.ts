@@ -1,72 +1,23 @@
 import type { RawMessage } from '@minecraft/server';
 import type { ModalFormData } from '@minecraft/server-ui';
-import { isActionContext, isActionForm, isModalContext } from './guards';
-import { ModalFormError, type FormTarget, type SerializationContext } from './types';
+import { isModalContext } from './guards';
+import type { FormTarget, SerializationContext } from './types';
 
 /**
- * Slot helpers for native component writers.
+ * The typed calls a modal's fields are made with.
  *
- * The RP renders everything through just two ActionForm primitives:
- *   - `form.button()` → routed by `button_router` (interactive controls)
- *   - `form.label()`  → routed by `label_router` (static controls)
+ * A modal's fields are the ENGINE's, not the pack's: each one exists because a
+ * `ModalFormData` method was called, and these are those calls. Every emitter
+ * owns the ordinal → `name` bookkeeping, so the positional `response.formValues`
+ * can be fanned back out by name, and takes its native args (min/max/options/…)
+ * as direct arguments rather than through the payload — which is primitives
+ * only, and could not carry a dropdown's option array at all.
  *
- * A writer picks one slot in a single call. `emitButton` also owns the
- * button-index / `onPress` callback bookkeeping so every interactive writer
- * (built-in or custom) stays consistent with the presenter's selection mapping.
- *
- * Modal forms reuse the same serialize walk but emit through `ModalFormData`'s
- * typed controls. Each native control has its OWN emitter here — `emitToggle`,
- * `emitSlider`, `emitDropdown`, `emitInput` — exactly like `emitButton`/`emitLabel`
- * own the ActionForm slots. Each emitter owns the ordinal → `name` bookkeeping (so the
- * presenter can fan `response.formValues` back out) AND makes the typed native call,
- * taking its native args (min/max/options/…) as direct function arguments — so a
- * non-primitive like the dropdown's `options` array never has to pass through the
- * serializer's primitive-only payload channel. Decorative nodes (image/panel) keep using
- * `emitLabel`, which works on both form types — only the logic controls differ between
- * the two backends.
+ * {@link emitLabel} is the odd one: a label consumes a `formValues` slot of its
+ * own (the engine returns `null` there), so it has to advance the ordinal
+ * without claiming a name. A compiled modal uses it for the rows that carry a
+ * value rather than a field — live text, a carried visible, a list's count.
  */
-
-type Callbacks = Record<string, (...args: unknown[]) => void>;
-
-/**
- * Emit an interactive (button-slot) control. Registers `callbacks.onPress`
- * against the current button index, advances the index, then writes the button.
- *
- * @param payload - Serialized component payload.
- * @param form - Target form.
- * @param ctx - Serialization context tracking the button index → callback map.
- * @param callbacks - Function props collected for this element (e.g. `onPress`).
- * @param icon - Optional icon path passed to `form.button` (e.g. item aux id).
- */
-export function emitButton(
-  payload: string | RawMessage,
-  form: FormTarget,
-  ctx: SerializationContext | undefined,
-  callbacks: Callbacks,
-  icon?: string,
-): void {
-  // A real button is an ActionForm-only primitive. The modal path forbids buttons
-  // (only the hardcoded submit + esc exist), so reaching here with a ModalFormData
-  // means the restriction pass missed a `<Button>` — fail loud rather than crash on
-  // a missing `.button()` method.
-  if (!isActionForm(form)) {
-    throw new ModalFormError(
-      'emitButton(): a button-slot control reached the modal form path. Modal forms '
-      + 'accept only toggle/slider/dropdown/input/label plus the hardcoded submit/esc '
-      + 'buttons — move interactive `Button`s out of the `<ModalForm>`.',
-    );
-  }
-
-  if (ctx && isActionContext(ctx)) {
-    if (callbacks.onPress) {
-      ctx.buttonCallbacks.set(ctx.buttonIndex, callbacks.onPress);
-    }
-
-    ctx.buttonIndex++;
-  }
-
-  form.button(payload, icon);
-}
 
 /**
  * Emit a static (label-slot) control. `label()` exists on both `ActionFormData`
@@ -90,25 +41,6 @@ export function emitLabel(payload: string | RawMessage, form: FormTarget, ctx?: 
   }
 
   form.label(payload);
-}
-
-/**
- * Emit a static control through the ActionForm HEADER slot. The native factory routes
- * header entries to their own control_id, so a header-slot cell instantiates ONLY the
- * slim `header_router` (one component variant) instead of the full label_router variant
- * fan-out — engine-level type routing, no `#type` gating cost at all. Used for `image`.
- *
- * On the modal backend this falls back to the label slot: modal headers' payload
- * channel + formValues behavior are unproven, while modal labels are (see emitLabel).
- */
-export function emitHeader(payload: string | RawMessage, form: FormTarget, ctx?: SerializationContext): void {
-  if (!isActionForm(form)) {
-    emitLabel(payload, form, ctx);
-
-    return;
-  }
-
-  form.header(payload);
 }
 
 /**

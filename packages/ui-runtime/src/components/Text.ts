@@ -1,8 +1,6 @@
 import { interpolate, type DisplayText } from '@bedrock-core/i18n';
 import { FunctionComponent, JSX } from '../jsx';
 import { useTranslationResolver } from '../data/Translation';
-import { type Writer } from '../core/types';
-import { emitLabel } from '../core/writers';
 import { ControlProps, withControl } from './control';
 import { labelFontFields, type LabelFont } from './Form/controlPayload';
 
@@ -312,8 +310,3 @@ export function liveTextLength(element: JSX.Element): number | undefined {
 
   return typeof maxLength === 'number' && maxLength >= 1 ? Math.floor(maxLength) : undefined;
 }
-
-/** Serializes a `text` or `text_shadow` into the static (label) slot. */
-export const textWriter: Writer = (payload, form, ctx) => {
-  emitLabel(payload, form, ctx);
-};

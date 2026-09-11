@@ -8,27 +8,6 @@ export const SCROLL_SLOT_TYPE = 'scroll-slot';
 export type ScrollAxis = 'x' | 'y';
 
 /**
- * TITLE-FORMAT constant: how many custom scroll blocks the title reserves space for.
- * Do NOT change — the fixed background offset (BACKGROUND_TITLE_SKIP) and the modal
- * flow-button blocks are laid out against this padding on both backends.
- */
-export const MAX_SCROLLS = 4;
-
-/**
- * RUNTIME limit: how many custom `<Scroll>`s a render may actually use. The RP mounts
- * a fixed pool of pooled scroll controls (indices 1..MAX_POOLED_SCROLLS) on top of the
- * implicit root scroll (index 0), and every mounted slot re-instantiates the FULL
- * form_buttons collection — the dominant engine-side cost on big screens — so the pool
- * is kept as small as real layouts need. A render with more `<Scroll>`s throws in the
- * layout phase (the extras would otherwise silently not render).
- *
- * To grow the pool: raise this constant AND re-add the RP side — a `scroll_N` slot in
- * scroll_pool.json (block_skip 83 + 498·N) plus `label_router_rN` / `button_router_rN` /
- * `header_router_rN` variants. The title format already carries up to {@link MAX_SCROLLS}.
- */
-export const MAX_POOLED_SCROLLS = 2;
-
-/**
  * Texels the scrollbar track takes at the right edge of a vertical scroll
  * region (`core_ui_shapes.scroll`: the viewport is `100% - 5px`). Content is
  * laid out that much narrower, so its right edge meets the track instead of
@@ -51,7 +30,6 @@ export const SCROLL_TRACK_WIDTH = 5;
  * to the viewport — the protocol carries only per-scroll geometry.
  *
  * Content NOT wrapped in any `<Scroll>` falls into the root scroll, so simple UIs need none.
- * A render may contain at most {@link MAX_SCROLLS} `<Scroll>`s.
  *
  * ```tsx
  * render(

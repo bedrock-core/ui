@@ -1,16 +1,18 @@
 import { SerializationError, type Writer } from './types';
 
 /**
- * Describes how a native component type is serialized into the form.
+ * What a native component type is, to the passes that walk a tree.
  *
  * @experimental See {@link registerComponent}.
  *
- * - `writer`  emits the component's payload via {@link emitButton} / {@link emitLabel}.
- * - `transparent` components emit nothing themselves; the serializer (and the
- *   layout / inherit phases) walk straight through to their children. Used by
- *   `fragment` and `context-provider`, and available to custom components.
- *
- * A descriptor is either renderable (has a `writer`) or `transparent: true`.
+ * - `transparent` components are structure rather than a control: the layout,
+ *   inherit and IR passes walk straight through to their children. `fragment`
+ *   and `context-provider` are the built-in ones.
+ * - `writer` belongs to the native modal fields alone, which the engine draws
+ *   rather than the pack: the field is instantiated by a typed `ModalFormData`
+ *   call, and the writer is what makes it.
+ * - A descriptor with neither is a control the compiled layout draws, which is
+ *   most of them. Nothing about it travels at runtime.
  */
 export interface ComponentDescriptor {
   writer?: Writer;
@@ -18,13 +20,12 @@ export interface ComponentDescriptor {
 }
 
 /**
- * Registry mapping native component `type` strings to their serialization
- * behavior. Built-ins are registered once via `registerNativeComponents`;
- * consumers add their own native JSON UI elements with {@link registerComponent}.
+ * What each native component `type` is. Built-ins are registered once via
+ * `registerNativeComponents`; consumers add their own with
+ * {@link registerComponent}.
  *
  * Keyed by the string `type` because function components are resolved to host
- * elements (string types) before serialization, so the writer can only be
- * looked up by that string at emit time.
+ * elements (string types) before any pass reads a descriptor.
  */
 const registry = new Map<string, ComponentDescriptor>();
 
@@ -33,27 +34,14 @@ const registry = new Map<string, ComponentDescriptor>();
  * accidental clashes between addons surface immediately rather than silently
  * overriding each other.
  *
- * @deprecated A registration is a pair of halves — a writer that packs props
- * into the byte payload, and JSON UI in your own pack that decodes them at
- * fixed offsets — so it is bound to the serialized wire format, which is being
- * removed with the serialized render path. Compiled screens describe a
- * component by the values it carries rather than by a byte layout, and a
- * custom native component will be declared against that instead.
- *
- * @param type - The component `type` string (must match the JSON UI control's `#type` gate).
- * @param descriptor - How to serialize the component (a `writer`, or `transparent: true`).
+ * @param type - The component `type` string.
+ * @param descriptor - What the type is; see {@link ComponentDescriptor}.
  */
 export function registerComponent(type: string, descriptor: ComponentDescriptor): void {
   if (registry.has(type)) {
     throw new SerializationError(
       `registerComponent(): type "${type}" is already registered. `
       + `Pick a unique, namespaced type for your custom component.`,
-    );
-  }
-
-  if (!descriptor.transparent && !descriptor.writer) {
-    throw new SerializationError(
-      `registerComponent(): descriptor for "${type}" must provide a writer or be transparent.`,
     );
   }
 

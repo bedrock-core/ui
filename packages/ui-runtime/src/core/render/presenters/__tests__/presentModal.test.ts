@@ -4,6 +4,7 @@ import { __resetModalFormMock, __setModalFormResponses } from '../../../../__moc
 import { registerNativeComponents } from '../../../../components';
 import { Form, MODAL_FORM_SLOT_TYPE, type FormConfig } from '../../../../components/Form';
 import type { JSX } from '../../../../jsx';
+import { titleFor } from '../../../../hosts/form/contract';
 import { present } from '../present';
 
 beforeAll(() => {
@@ -31,7 +32,7 @@ function modalTree(config: FormConfig, children: JSX.Element[]): JSX.Element {
   };
 }
 
-describe('presentModal', () => {
+describe('a modal present', () => {
   it('re-keys formValues by control name and passes them to onSubmit', async () => {
     const onSubmit = vi.fn();
     const tree = modalTree({ onSubmit }, [
@@ -43,7 +44,7 @@ describe('presentModal', () => {
 
     __setModalFormResponses({ canceled: false, formValues: [true, 7, 1, 'Steve'] });
 
-    await present(player, tree);
+    await present(player, tree, titleFor('modal_case'));
 
     expect(onSubmit).toHaveBeenCalledWith({ player, values: { sound: true, volume: 7, mode: 1, nick: 'Steve' } });
   });
@@ -55,7 +56,7 @@ describe('presentModal', () => {
 
     __setModalFormResponses({ canceled: true });
 
-    await present(player, tree);
+    await present(player, tree, titleFor('modal_case'));
 
     expect(onCancel).toHaveBeenCalledOnce();
     expect(onSubmit).not.toHaveBeenCalled();
@@ -71,7 +72,7 @@ describe('presentModal', () => {
     // Only one value returned for two controls.
     __setModalFormResponses({ canceled: false, formValues: [true] });
 
-    await present(player, tree);
+    await present(player, tree, titleFor('modal_case'));
 
     expect(onSubmit).toHaveBeenCalledWith({ player, values: { a: true, b: undefined } });
   });

@@ -1,4 +1,4 @@
-import { serializeProps } from '../../core/serializer';
+import { serializeProps } from '../../core/payload';
 import { JSX } from '../../jsx';
 import { measureText } from '../../util/textMetrics';
 import { labelFontFields, type LabelFont } from './controlPayload';

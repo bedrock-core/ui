@@ -62,8 +62,6 @@ export const CHEST: HostContract = {
   root: CONTAINER_TYPE,
   owners: ['entity', 'build'],
   canvas: CANONICAL_SCREEN,
-  // A compiled screen emits a region per <Scroll>; nothing draws them from a pool.
-  scrollLimit: Number.POSITIVE_INFINITY,
   compiled: true,
   carriers: ['bool', 'int', 'text'],
 

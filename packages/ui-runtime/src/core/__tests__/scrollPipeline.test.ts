@@ -8,7 +8,7 @@ import { expandAndResolveContexts } from '../render/phases/expand';
 import { computeLayout } from '../render/phases/layout';
 import { createInitialContext } from '../render/traversal';
 import type { JSX } from '../../jsx';
-import type { ScrollMetrics } from '../serializer';
+import type { ScrollMetrics } from '../render/phases/layout';
 
 function el(type: unknown, props: Record<string, unknown>): JSX.Element {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- test element factory; the { type, props } shape is a JSX.Element at runtime

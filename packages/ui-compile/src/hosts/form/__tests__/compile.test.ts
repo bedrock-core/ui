@@ -103,10 +103,7 @@ describe('compiling a form screen', () => {
     expect(JSON.stringify(compiledScroll.document)).not.toContain('core_ui_chest');
   });
 
-  it('does not cap a compiled screen at the scroll pool the interpreter draws from', () => {
-    // A serialized form draws its scrolls from a pool of two. A compiled one
-    // emits a region per <Scroll>, so three is not a limit it has — and the
-    // build is where that would otherwise have passed and the runtime thrown.
+  it('emits a region per <Scroll>, however many a screen declares', () => {
     const Three = (): JSX.Element => Screen({ children: Panel({
       children: [0, 1, 2].map(() => Scroll({ width: 60, height: 40, children: [Text({ children: 'x' })] })),
     }) });

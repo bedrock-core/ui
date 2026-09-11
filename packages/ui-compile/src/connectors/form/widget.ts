@@ -3,7 +3,6 @@ import type { InputNode } from '../../nodes/primitives/input';
 import type { SliderNode } from '../../nodes/primitives/slider';
 import type { ToggleNode } from '../../nodes/primitives/toggle';
 import type { Control } from '../../jsonui';
-import { MODAL_COLLECTION } from './entry';
 
 /**
  * What the engine's own widget is handed when the modal stands it in a field's
@@ -16,32 +15,10 @@ import { MODAL_COLLECTION } from './entry';
  */
 
 /** The definition each kind mounts: the library's own wrapper, with nothing to decode. */
-const TOGGLE_ROW = 'core_ui_form_components.compiled_toggle';
+const TOGGLE_ROW = 'core_ui_form_components.toggle';
 const SLIDER_ROW = 'core_ui_form_components.slider';
 const DROPDOWN_ROW = 'core_ui_form_components.dropdown';
 const INPUT_ROW = 'core_ui_form_components.input';
-
-/**
- * What a wrapper needs when there is no payload behind it.
- *
- * `core_ui_common.control` is built to DECODE its geometry, its visibility and
- * its enabled state out of `#custom_text`, and is `size: [0, 0]` until it does.
- * A compiled screen sends nothing to decode, so the decode is replaced rather
- * than fed: the size comes from the layout, and the one binding left is the
- * `collection_details` a placed control needs to own its row.
- */
-const NO_DECODE = {
-  size: ['100%', '100%'],
-  property_bag: {
-    '#size_binding_x': 1.0,
-    '#size_binding_y': 1.0,
-    '#anchored_offset_value_x': 0.0,
-    '#anchored_offset_value_y': 0.0,
-    '#visible': true,
-    '#enabled': true,
-  },
-  bindings: [{ binding_type: 'collection_details', binding_collection_name: MODAL_COLLECTION }],
-} satisfies Control;
 
 /**
  * The engine's own defaults for the boxes a compiled slider is told rather
@@ -67,7 +44,6 @@ const sliderBoxes = (node: SliderNode): Record<string, unknown> => {
   const thumb = node.thumbWidth ?? THUMB_WIDTH;
 
   return {
-    $compiled: true,
     // Baked, never read from the row: a compiled slider exists behind its
     // title gate on screens with no row at all, and an unresolved steps read
     // is a division by zero inside the engine's percentage. The starting value
@@ -99,23 +75,13 @@ export const toggleWidget = (node: ToggleNode): { definition: string; props: Con
 /** The row a slider mounts, with every box it would otherwise decode. */
 export const sliderWidget = (node: SliderNode): { definition: string; props: Control } => ({
   definition: SLIDER_ROW,
-  props: { ...NO_DECODE, $scale: node.scale, ...sliderBoxes(node), ...node.mount },
+  props: { $scale: node.scale, ...sliderBoxes(node), ...node.mount },
 });
 
 /** The row an input mounts, with the engine pointed at the static labels. */
 export const inputWidget = (node: InputNode): { definition: string; props: Control } => ({
   definition: INPUT_ROW,
-  // The static value and placeholder labels, named: `ignored` does not take
-  // the interpreted copies out of the by-name lookup, so each path names its
-  // own.
-  props: {
-    ...NO_DECODE,
-    $scale: node.scale,
-    $compiled: true,
-    $text_ctrl: 'display_text_static',
-    $placeholder_ctrl: 'place_holder_static',
-    ...node.mount,
-  },
+  props: { $scale: node.scale, ...node.mount },
 });
 
 /** The row a dropdown mounts, told where the screen hosts its popup. */
@@ -124,11 +90,5 @@ export const dropdownWidget = (node: DropdownNode, ns: string): { definition: st
   // The engine hosts the popup box in the control this names, found BY NAME
   // across the screen: the screen's own popup host, so the name resolves
   // wherever the screen is mounted.
-  props: {
-    ...NO_DECODE,
-    $scale: node.scale,
-    $compiled: true,
-    $dropdown_area: popupHostOf(ns),
-    ...node.mount,
-  },
+  props: { $scale: node.scale, $dropdown_area: popupHostOf(ns), ...node.mount },
 });

@@ -1,6 +1,5 @@
-// Serialization
+// The byte payload a chooser's options still ride; see ./payload.
 export {
-  serialize,
   PROTOCOL_HEADER,
   VERSION,
   PAD_CHAR,
@@ -11,7 +10,7 @@ export {
   TYPE_PREFIX,
   FIELD_MARKERS,
   PROTOCOL_HEADER_LENGTH,
-} from './serializer';
+} from './payload';
 
 // Rendering
 export { render } from './render';
@@ -34,8 +33,8 @@ export {
 
 export type { ComponentDescriptor } from './componentRegistry';
 
-// Writer slot helpers (for custom component writers)
-export { emitButton, emitDropdown, emitHeader, emitInput, emitLabel, emitSlider, emitToggle } from './writers';
+// The typed calls a modal's fields are made with.
+export { emitDropdown, emitInput, emitLabel, emitSlider, emitToggle } from './writers';
 
 // Types
 export type {
@@ -58,8 +57,8 @@ export {
   ContainerScreenError,
   ModalFormError,
   ScreenRootError,
-  ScrollLimitError,
   SerializationError,
+  UncompiledScreenError,
   TranslationKeysError,
 } from './types';
 
