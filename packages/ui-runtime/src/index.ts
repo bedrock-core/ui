@@ -111,6 +111,7 @@ export {
   addonReference,
   back,
   clearHistory,
+  closeUi,
   historyOf,
   shownKey,
   isAddonReference,

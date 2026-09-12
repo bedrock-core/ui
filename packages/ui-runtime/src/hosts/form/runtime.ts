@@ -21,19 +21,29 @@ import { debugDiff } from './debug';
  * only being told what changed.
  */
 
-/** The string a live `<Text>` shows, exactly as written — a form entry has no alphabet to lose. */
 /**
  * What a live `<Text>` puts on the wire, capped at the width it reserved.
  *
  * Exported because both form hosts have to agree on it: an action form carries
  * the string in an entry, a modal in a row, and a compiled control reads
  * whichever with the same binding. One definition, or they drift.
+ *
+ * A KEY is never capped. `maxLength` is how many characters the reader will
+ * see, and a key is not what they see — the label resolves it — so cutting it
+ * to that many characters leaves a key nothing resolves, which the client then
+ * paints verbatim. That is a translated name coming out as `addon.meta.na`.
  */
 export const liveText = (element: JSX.Element, length: number): string => {
-  const { value } = element.props;
+  const { value, __textMetrics: metrics } = element.props;
   const tail = typeof value === 'object' && value !== null && 'tail' in value ? value.tail : undefined;
+  const isKey = typeof metrics === 'object' && metrics !== null && !Array.isArray(metrics)
+    && Reflect.get(metrics, 'isKey') === true;
 
-  return typeof tail === 'string' ? tail.slice(0, length) : '';
+  if (typeof tail !== 'string') {
+    return '';
+  }
+
+  return isKey ? tail : tail.slice(0, length);
 };
 
 /**

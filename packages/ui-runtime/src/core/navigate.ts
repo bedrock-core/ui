@@ -1,6 +1,8 @@
 import type { Player } from '@minecraft/server';
 import type { JSX } from '../jsx';
-import { popHistory, pushHistory } from './history';
+import { clearHistory, popHistory, pushHistory } from './history';
+import { playerOwner } from './fabric';
+import { triggerCleanup } from './render/session';
 import { presentReference, type ScreenReference } from './reference';
 import { render, type RenderOptions } from './render';
 import { screenForKey, staticScreen } from './render/screens';
@@ -171,4 +173,18 @@ export function back(player: Player, options: Omit<NavigateOptions, 'replace'> =
   }
 
   return navigator(key, player, { ...options, replace: true });
+}
+
+/**
+ * Closes whatever this player is looking at, and forgets where they have been.
+ *
+ * `useExit()` is how a SCREEN leaves itself; this is how the code that opened one
+ * leaves it from outside. A host that shows screens by title rather than by
+ * rendering them needs it: the session it rendered earlier is still live, so
+ * when the player dismisses the last form the session simply shows itself again
+ * — the way out of a guide lands back on the list that opened it.
+ */
+export function closeUi(player: Player): void {
+  clearHistory(player.id);
+  triggerCleanup(playerOwner(player), true);
 }

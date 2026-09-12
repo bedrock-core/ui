@@ -24,7 +24,7 @@ export {
 export type { CompiledScreen, CompiledSnapshot, StaticScreenRecord } from './render/screens';
 
 // Navigating by key, and what resolves one.
-export { back, navigate, openScreen, setNavigator } from './navigate';
+export { back, closeUi, navigate, openScreen, setNavigator } from './navigate';
 export { clearHistory, historyOf, shownKey } from './history';
 export type { NavigateOptions, Navigator, ScreenKey, ScreenKeys } from './navigate';
 
