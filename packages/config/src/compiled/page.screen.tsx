@@ -80,8 +80,8 @@ const targetOf = (handler: unknown): PageTarget | null => {
 
 export const AddonPage: FunctionComponent<AddonPageProps> = ({ addon }: AddonPageProps): JSX.Element => (
   <Embed frame={FRAME} area={MAIN}>
-    {/* Two pixels short of the area, so the track clears the card's edge. */}
-    <Scroll width={MAIN.width - 2} height={MAIN.height}>
+    {/* Short of the area on the right and below, so the track clears the card's border. */}
+    <Scroll width={MAIN.width - 2} height={MAIN.height - 1} marginTop={1}>
       <Panel flexDirection={'column'} gap={spacing.md} padding={spacing.md} width={MAIN.width - 2 - 5}>
         {/* Absolute, so a page without a banner loses no room: an empty background draws nothing. */}
         <Panel position={'absolute'} left={0} right={0} top={0} aspectRatio={THUMBNAIL_RATIO} background={addon.thumbnail ?? ''} />

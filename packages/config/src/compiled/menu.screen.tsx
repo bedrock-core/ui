@@ -10,15 +10,17 @@ import { FRAME, HEADER_HEIGHT, PADDING, TRAIL_LENGTHS } from './frame';
  * roster of a scope and a level of the config tree are both this, and so is
  * any list a host fills at runtime. Each row carries its title and subtitle
  * live — a key the client resolves, or a literal — and shows the button its
- * row names, reset or remove, behind a carried visibility. Rows beyond a page are reached by paging,
+ * row names, reset or remove, behind a carried visibility. A row that can do
+ * neither still draws the reset square, disabled: the boxes are solved at build,
+ * so the alternative is a gap where a button would be. Rows beyond a page are reached by paging,
  * since a compiled list has a fixed number of rows.
  */
 
 const { spacing } = theme.tokens;
 const row = theme.components.menuRow;
-const header = theme.components.header;
 
 const ICON_RESET = 'textures/ui/config/reset';
+const ICON_REMOVE = 'textures/ui/config/remove';
 
 /** Rows a page holds. */
 export const MENU_ROWS = 12;
@@ -46,10 +48,12 @@ export interface MenuListRow {
    *
    * Both icons are baked and a carried visibility picks one: a texture cannot
    * travel on a compiled screen without a carrier of its own, and one bit per
-   * row is cheaper than one string. Absent draws no button, and the row keeps
-   * the square anyway so every row is the same width.
+   * row is cheaper than one string. Absent draws the reset square disabled,
+   * so a row that cannot be reset still lines up with one that can; `'none'`
+   * draws no square at all, for a row that is not a setting — the one that
+   * adds an item.
    */
-  action?: 'reset' | 'remove';
+  action?: 'reset' | 'remove' | 'none';
 }
 
 export interface MenuListModel {
@@ -124,26 +128,45 @@ export const MenuList: FunctionComponent<MenuListProps> = ({ model = EMPTY_MODEL
                       </Panel>
                       <Text>{`${row.textStyle.muted}>`}</Text>
                     </Panel>
-                    {action === 'reset' && (
-                      <OreButton position={'absolute'} left={faceWidth + spacing.xs} top={0} variant={'secondary'} width={ROW_HEIGHT} height={ROW_HEIGHT} paddingLeft={0} paddingRight={0} paddingTop={0} paddingBottom={0} onPress={(event): unknown => model.onReset?.(index, event)}>
+                    {action !== 'remove' && action !== 'none' && (
+                      // Always drawn, because the square is the row's whether or
+                      // not this row can use it: the row's boxes are solved at
+                      // build, so a row without the button would be a row with a
+                      // hole. Disabled says the same thing the hole was trying to
+                      // — there is nothing here to reset — and says it visibly.
+                      <OreButton
+                        position={'absolute'}
+                        left={faceWidth + spacing.xs}
+                        top={0}
+                        variant={'secondary'}
+                        width={ROW_HEIGHT}
+                        height={ROW_HEIGHT}
+                        paddingLeft={0}
+                        paddingRight={0}
+                        paddingTop={0}
+                        paddingBottom={0}
+                        enabled={action === 'reset'}
+                        onPress={(event): unknown => model.onReset?.(index, event)}
+                      >
                         <Image width={10} height={10} texture={ICON_RESET} />
                       </OreButton>
                     )}
                     {action === 'remove' && (
-                      // The header's own close face, which carries its cross in the
-                      // texture — the pack ships no separate remove glyph, and a
-                      // reset arrow beside a list item would read as "revert it".
-                      <Button
+                      <OreButton
                         position={'absolute'}
                         left={faceWidth + spacing.xs}
                         top={0}
+                        variant={'secondary'}
                         width={ROW_HEIGHT}
                         height={ROW_HEIGHT}
-                        background={header.textures.close}
-                        backgroundHover={header.textures.closeHover}
-                        backgroundPressed={header.textures.closePressed}
+                        paddingLeft={0}
+                        paddingRight={0}
+                        paddingTop={0}
+                        paddingBottom={0}
                         onPress={(event): unknown => model.onReset?.(index, event)}
-                      />
+                      >
+                        <Image width={10} height={10} texture={ICON_REMOVE} />
+                      </OreButton>
                     )}
                   </Panel>
                 );

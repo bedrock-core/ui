@@ -15,8 +15,8 @@ export const FRAME = { width: 300, height: 200 } as const;
 /** The card's painted border: every region is inset by this much so the border contains it. */
 export const PADDING = 1;
 
-/** The bottom edge takes one more, where the border is thicker. */
-export const PADDING_BOTTOM = 2;
+/** The bottom edge takes more, where the border is thicker and the page's track ends. */
+export const PADDING_BOTTOM = 4;
 
 /** Header bar: the theme's icon plus its padding. */
 export const HEADER_HEIGHT = 23;

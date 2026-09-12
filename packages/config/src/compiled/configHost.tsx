@@ -410,7 +410,7 @@ export function presentListEditor(
 
   const rows: MenuListRow[] = [
     ...items.map((item): MenuListRow => ({ title: item, action: 'remove' })),
-    ...canAdd ? [{ title: { translate: key($ => $.list.add) } } satisfies MenuListRow] : [],
+    ...canAdd ? [{ title: { translate: key($ => $.list.add) }, action: 'none' } satisfies MenuListRow] : [],
   ];
   const shown = pageOf(rows, page);
 
@@ -426,6 +426,7 @@ export function presentListEditor(
       presentItemEditor(player, target, at < items.length ? at : undefined, {
         current: items[at] ?? '',
         options: isEnum ? optionsFor(at < items.length ? at : undefined) : undefined,
+        back: (): void => { presentListEditor(core, player, target, values, openers, page); },
         apply: (item: string): void => {
           if (item === '') {
             presentListEditor(core, player, target, values, openers, page);
@@ -475,7 +476,7 @@ function presentItemEditor(
   player: Player,
   target: SectionTarget & { key: string },
   index: number | undefined,
-  item: { current: string; options?: string[]; apply: (value: string) => void },
+  item: { current: string; options?: string[]; apply: (value: string) => void; back: () => void },
 ): void {
   // The addon's own screen when this bundle has it, which is the case only on
   // the realm that owns the list. Everywhere else — and the realm drawing config
@@ -495,6 +496,9 @@ function presentItemEditor(
     values: { [ITEM_FIELD]: item.current },
     ...item.options === undefined ? {} : { options: { [ITEM_FIELD]: item.options } },
     onSubmit: (values): void => { item.apply(String(values[ITEM_FIELD] ?? '')); },
+    // A modal's dismiss is its only other control, so it is the way back to the
+    // list rather than the way out of the UI.
+    onCancel: item.back,
   }), player);
 }
 
@@ -512,6 +516,7 @@ export function presentShapedEditor(
   player: Player,
   target: SectionTarget,
   values: Record<string, unknown>,
+  back?: () => unknown,
 ): boolean {
   const screen = shapedScreen(target.scope, target.path);
 
@@ -538,6 +543,9 @@ export function presentShapedEditor(
 
       patchScope(accessor, target.scope, target.entityId, buildNestedPatch(patch));
     },
+    // The modal's dismiss is the way back up the tree, since a modal has no
+    // third control to navigate with.
+    ...back === undefined ? {} : { onCancel: (): void => { void back(); } },
   }), player);
 
   return true;
