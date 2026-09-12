@@ -104,24 +104,32 @@ describe('GuideBlockList block mapping', () => {
     expect((num.props as { children: string }).children).toBe('§73.');
   });
 
-  it('renders images with aspect ratio when dimensions are known', () => {
+  it('draws an image at its own size when it already fits', () => {
     const [sized, unsized] = renderBlocks([
       { t: 'img', src: 'textures/ui/demo', w: 32, h: 16 },
       { t: 'img', src: 'textures/ui/other' },
     ]);
 
     expect(sized.type).toBe(Image);
-    expect(sized.props.aspectRatio).toBe(2);
+    expect(sized.props.width).toBe(32);
     expect(sized.props.height).toBe(16);
     expect(sized.props.alignSelf).toBe('center');
     expect(unsized.props.height).toBe(40);
   });
 
-  it('caps a large/square image height instead of stretching it to fill the column', () => {
+  it('shrinks a large image to the taller cap, keeping its ratio', () => {
     const [square] = renderBlocks([{ t: 'img', src: 'textures/ui/pack_icon', w: 2048, h: 2048 }]);
 
-    expect(square.props.aspectRatio).toBe(1);
     expect(square.props.height).toBe(120);
+    expect(square.props.width).toBe(120);
+  });
+
+  it('shrinks a wide image to the column rather than past its edge', () => {
+    // 800x200 at the height cap alone would be 480 wide — twice the page.
+    const [wide] = renderBlocks([{ t: 'img', src: 'textures/ui/banner', w: 800, h: 200 }]);
+
+    expect(wide.props.width).toBe(260);
+    expect(wide.props.height).toBe(65);
   });
 
   it('renders admonitions in a dark card with the default kind title key', () => {

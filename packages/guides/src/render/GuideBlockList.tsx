@@ -9,6 +9,17 @@ const { spacing } = theme.tokens;
 /** Guide body images never render taller than this — keeps a large/square source image icon-sized instead of dominating the page. */
 const IMAGE_MAX_HEIGHT = 120;
 
+/**
+ * Nor wider than this.
+ *
+ * A height cap alone does not bound an image: a wide one at 120 tall is as wide
+ * as its ratio makes it, which on a 300-wide page is a picture running off both
+ * edges. The number is the narrowest column a guide page draws — the 300 canvas
+ * less the card's padding, the prose padding and the scroll's track — so an
+ * image fits the page it is on whatever the page's width.
+ */
+const IMAGE_MAX_WIDTH = 260;
+
 export interface GuideBlockListProps {
   blocks: GuideBlock[];
   /** Manifest namespace — resolves default admonition title keys. */
@@ -62,12 +73,11 @@ function renderBlock(block: GuideBlock, ctx: RenderCtx): JSX.Element {
       return renderList(block.items, block.start ?? 1, ctx);
 
     case 'img':
-      // Height-capped + aspect-ratio-derived width: a wide screenshot still reads
-      // close to full column width, but a square/tall icon doesn't stretch to fill
-      // the column and dominate the page (100%-width forced a 2048×2048 pack icon
-      // to render as a huge square between paragraphs).
+      // Scaled to fit BOTH caps, at its own aspect ratio, and never enlarged: a
+      // wide screenshot reads at column width, a square icon stays icon-sized
+      // rather than dominating the page, and neither runs past the page's edge.
       return block.w !== undefined && block.h !== undefined
-        ? <Image texture={block.src} height={Math.min(block.h, IMAGE_MAX_HEIGHT)} aspectRatio={block.w / block.h} alignSelf={'center'} />
+        ? imageBlock(block.src, block.w, block.h)
         : <Image texture={block.src} width={'100%'} height={40} />;
 
     case 'adm':
@@ -110,6 +120,20 @@ function renderBlock(block: GuideBlock, ctx: RenderCtx): JSX.Element {
   }
 }
 
+/** One image at its own ratio, shrunk until it fits both caps. */
+function imageBlock(src: string, w: number, h: number): JSX.Element {
+  const scale = Math.min(1, IMAGE_MAX_WIDTH / w, IMAGE_MAX_HEIGHT / h);
+
+  return (
+    <Image
+      texture={src}
+      width={Math.max(1, Math.round(w * scale))}
+      height={Math.max(1, Math.round(h * scale))}
+      alignSelf={'center'}
+    />
+  );
+}
+
 /**
  * A paragraph/list-item's runs as one flowing, wrapping row: plain runs are
  * inline text, a run with `to` is a transparent (invisible-until-hovered)
@@ -141,6 +165,7 @@ function renderRuns(runs: GuideRun[], ctx: RenderCtx): JSX.Element {
             // wider than the client draws it: the link sits into that slack.
             marginLeft={-2}
             to={target}
+            replace={true}
           >
             {prose}
           </OreButton>

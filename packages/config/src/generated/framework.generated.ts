@@ -28,13 +28,14 @@ export const FRAMEWORK_SCREENS: AddonReference = {
       ],
       "targets": [
         {
-          "to": "core:guide_home"
+          "back": true
         },
         {
-          "to": "core:guide_home"
+          "back": true
         },
         {
-          "to": "core:guide_intro"
+          "to": "core:guide_intro",
+          "replace": true
         }
       ]
     },
@@ -50,19 +51,22 @@ export const FRAMEWORK_SCREENS: AddonReference = {
       ],
       "targets": [
         {
-          "to": "core:guide_home"
+          "back": true
         },
         {
-          "to": "core:guide_getting_started_installation"
+          "to": "core:guide_getting_started_installation",
+          "replace": true
         },
         {
-          "to": "core:guide_intro"
+          "to": "core:guide_intro",
+          "replace": true
         },
         {
-          "to": "core:guide_getting_started_installation"
+          "to": "core:guide_getting_started_installation",
+          "replace": true
         },
         {
-          "to": "core:guide_home"
+          "back": true
         }
       ]
     },
@@ -78,19 +82,22 @@ export const FRAMEWORK_SCREENS: AddonReference = {
       ],
       "targets": [
         {
-          "to": "core:guide_home"
+          "back": true
         },
         {
-          "to": "core:guide_getting_started_first_screen"
+          "to": "core:guide_getting_started_first_screen",
+          "replace": true
         },
         {
-          "to": "core:guide_intro"
+          "to": "core:guide_intro",
+          "replace": true
         },
         {
-          "to": "core:guide_home"
+          "back": true
         },
         {
-          "to": "core:guide_getting_started_first_screen"
+          "to": "core:guide_getting_started_first_screen",
+          "replace": true
         }
       ]
     },
@@ -158,19 +165,22 @@ export const FRAMEWORK_SCREENS: AddonReference = {
       ],
       "targets": [
         {
-          "to": "core:guide_home"
+          "back": true
         },
         {
-          "to": "core:guide_getting_started_installation"
+          "to": "core:guide_getting_started_installation",
+          "replace": true
         },
         {
-          "to": "core:guide_commands"
+          "to": "core:guide_commands",
+          "replace": true
         },
         {
-          "to": "core:guide_home"
+          "back": true
         },
         {
-          "to": "core:guide_getting_started_installation"
+          "to": "core:guide_getting_started_installation",
+          "replace": true
         }
       ]
     }

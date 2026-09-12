@@ -39,10 +39,19 @@ describe('a compiled guide is presses that are links', () => {
     );
   });
 
-  it('follows a link written in the prose, and sends a page back to the index', () => {
+  it('follows a link written in the prose in place, and takes a page back to its index', () => {
     const targets = targetsOf(guidePageScreen(manifest, 'intro'));
 
-    expect(targets).toEqual(expect.arrayContaining([{ to: 'guide_usage' }, { to: 'guide_home' }]));
+    // A page replaces the page it links from, so the index the reader opened —
+    // the plain one or the one a host opened — stays the screen under whichever
+    // page is showing: the header's back and the footer's index button both
+    // return there, and nothing names an index.
+    expect(targets).toEqual(expect.arrayContaining([
+      { back: true },
+      { to: 'guide_usage', replace: true },
+    ]));
+    expect(targets.filter(target => target !== undefined && 'to' in target && target.replace !== true)).toEqual([]);
+    expect(targets.filter(target => target !== undefined && 'back' in target)).toHaveLength(2);
   });
 
   it('marks the back control of the index a host opened', () => {

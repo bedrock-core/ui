@@ -58,20 +58,26 @@ export interface GuidePageViewProps {
    * reference. Absent hides the control, for a single-page guide with nowhere to go back to.
    */
   backTo?: string;
+  /**
+   * A back control that returns wherever the reader came from, in place of
+   * naming a screen. What a page wants: the index it was opened from may be the
+   * plain one or the one a host opened, and only the reader's own stack knows.
+   */
+  back?: boolean;
 
   /**
-   * Footer index button, as the key of the index screen. Set only when there IS an index: a
-   * single-page guide has no second page to choose between, so the button would either lead to a
-   * one-row table of contents or, worse, duplicate the back button while looking like something
-   * else.
+   * Footer index button. Set only when there IS an index: a single-page guide
+   * has no second page to choose between. It returns to the index the reader
+   * came from — the pages replace one another rather than stacking, so the
+   * index is always the screen under the page, whichever page it is.
    */
-  homeTo?: string;
+  index?: boolean;
   /** Close the whole UI (the header's × button). */
   onClose: () => void;
 }
 
 /** One guide page: title, rendered blocks, prev/home/next footer. */
-export function GuidePageView({ manifest, tree, audience, pageId, title, width, height, components, linkTo, backTo, homeTo, onClose }: GuidePageViewProps): JSX.Element {
+export function GuidePageView({ manifest, tree, audience, pageId, title, width, height, components, linkTo, backTo, back, index, onClose }: GuidePageViewProps): JSX.Element {
   const page = manifest.pages[pageId];
 
   if (!page) {
@@ -93,17 +99,13 @@ export function GuidePageView({ manifest, tree, audience, pageId, title, width, 
 
   return (
     <Card flexDirection={'column'} padding={0} gap={0} width={width} height={height}>
-      <Header title={title} breadcrumbs={breadcrumbs} backTo={backTo} onClose={onClose} />
+      {/* The trail ends with the page's own title, so the page does not say it again. */}
+      <Header title={title} breadcrumbs={breadcrumbs} backTo={backTo} back={back} onClose={onClose} />
       <Panel flexGrow={1} padding={spacing.sm}>
-        <Scroll marginRight={spacing.md}>
+        <Scroll>
           <Panel flexDirection={'column'} gap={spacing.md} padding={spacing.sm}>
             {page
-              ? (
-                  <Panel flexDirection={'column'} gap={spacing.md}>
-                    <Text font={'minecraftTen'} scale={2} shadow={true} wordBreak={'break-word'}>{page.titleK}</Text>
-                    <GuideBlockList blocks={page.blocks} ns={manifest.ns} linkTo={linkTo} canOpen={canOpen} components={components} />
-                  </Panel>
-                )
+              ? <GuideBlockList blocks={page.blocks} ns={manifest.ns} linkTo={linkTo} canOpen={canOpen} components={components} />
               : <Text>{'§cPage not found.'}</Text>}
           </Panel>
         </Scroll>
@@ -115,7 +117,7 @@ export function GuidePageView({ manifest, tree, audience, pageId, title, width, 
       <Panel flexDirection={'row'} alignItems={'stretch'} gap={spacing.sm} padding={spacing.sm}>
         {prevPage
           ? (
-              <OreButton variant={'contrast'} flexGrow={1} paddingTop={spacing.sm} paddingBottom={spacing.sm} to={linkTo(prevPage.id)}>
+              <OreButton variant={'contrast'} flexGrow={1} paddingTop={spacing.sm} paddingBottom={spacing.sm} to={linkTo(prevPage.id)} replace={true}>
                 <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.xs}>
                   <Text>{'§7<'}</Text>
                   <Text>{prevPage.titleK}</Text>
@@ -123,16 +125,16 @@ export function GuidePageView({ manifest, tree, audience, pageId, title, width, 
               </OreButton>
             )
           : <Panel flexGrow={1} />}
-        {homeTo !== undefined
+        {index === true
           ? (
-              <OreButton variant={'contrast'} height={'100%'} aspectRatio={1} paddingLeft={0} paddingRight={0} paddingTop={0} paddingBottom={0} to={homeTo}>
+              <OreButton variant={'contrast'} height={'100%'} aspectRatio={1} paddingLeft={0} paddingRight={0} paddingTop={0} paddingBottom={0} back={true}>
                 <Image width={12} height={12} texture={ICON_INDEX} />
               </OreButton>
             )
           : null}
         {nextPage
           ? (
-              <OreButton variant={'contrast'} flexGrow={1} paddingTop={spacing.sm} paddingBottom={spacing.sm} to={linkTo(nextPage.id)}>
+              <OreButton variant={'contrast'} flexGrow={1} paddingTop={spacing.sm} paddingBottom={spacing.sm} to={linkTo(nextPage.id)} replace={true}>
                 <Panel flexDirection={'row'} alignItems={'center'} gap={spacing.xs}>
                   <Text>{nextPage.titleK}</Text>
                   <Text>{'§7>'}</Text>

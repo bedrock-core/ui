@@ -112,7 +112,6 @@ export function guideHomeBackScreen(manifest: GuideManifest, options: CompiledGu
 export function guidePageScreen(manifest: GuideManifest, pageId: PageId, options: CompiledGuideOptions = {}): FunctionComponent {
   const title = options.title ?? 'Guide';
   const { hasSidebar } = resolveLanding(manifest, 'op');
-  const home = hasSidebar ? HOME_SCREEN : undefined;
 
   return (): JSX.Element => {
     const close = useExit();
@@ -129,7 +128,12 @@ export function guidePageScreen(manifest: GuideManifest, pageId: PageId, options
           height={options.height ?? CANVAS.height}
           components={options.components}
           linkTo={(id): string => pageScreen(manifest, id)}
-          {...home === undefined ? {} : { backTo: home, homeTo: home }}
+          // Back is the index the reader came from — the plain one the addon
+          // opened, or the one a host opened — because the pages replace one
+          // another rather than stacking: whichever page is showing, the index
+          // is the screen under it, and the index's own back leads on out.
+          back={true}
+          index={hasSidebar}
           onClose={close}
         />
       </Screen>
