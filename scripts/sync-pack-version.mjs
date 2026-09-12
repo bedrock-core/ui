@@ -37,6 +37,7 @@ import { join, posix, relative, sep } from 'node:path';
 const PAYLOAD = 'packages/ui-runtime/src/core/payload.ts';
 const PACK = 'packages/resource-pack/packs/RP';
 const MANIFEST = `${PACK}/manifest.json`;
+const BEHAVIOR_MANIFEST = 'packages/resource-pack/packs/BP/manifest.json';
 const LANG = `${PACK}/texts/en_US.lang`;
 const RECORD = 'packages/resource-pack/protocol.json';
 
@@ -136,6 +137,20 @@ if (major !== targetMajor || minor !== targetMinor) {
 
 manifest.header.version = next;
 writeFileSync(MANIFEST, JSON.stringify(manifest, null, '\t') + '\n');
+
+// The behavior pack DEPENDS on the render pack by version, and the game resolves that
+// exactly: a dependency left on a version the pack no longer has is a pack with a
+// missing dependency, which shows up in game and nowhere else.
+if (existsSync(BEHAVIOR_MANIFEST)) {
+	const behavior = JSON.parse(readFileSync(BEHAVIOR_MANIFEST, 'utf8'));
+	const dependency = behavior.dependencies?.find((entry) => entry.uuid === manifest.header.uuid);
+
+	if (dependency && String(dependency.version) !== String(next)) {
+		dependency.version = next;
+		writeFileSync(BEHAVIOR_MANIFEST, JSON.stringify(behavior, null, '\t') + '\n');
+		console.log(`sync-pack-version: behavior pack dependency → ${next.join('.')}`);
+	}
+}
 // Re-hash so the record describes the pack as it now stands.
 writeFileSync(
 	RECORD,

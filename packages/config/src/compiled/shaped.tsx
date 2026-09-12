@@ -104,7 +104,7 @@ const rowFor = (key: string, entry: EntrySchema, model: LeafModel | undefined): 
 };
 
 /** The frame every shaped screen wears, so a leaf sits in the same card the screens before it do. */
-const sheet = (model: LeafModel | undefined, rows: readonly [string, EntrySchema][]): JSX.Element => (
+export const sheet = (model: LeafModel | undefined, rows: readonly [string, EntrySchema][]): JSX.Element => (
   <Form onSubmit={({ values: submitted }: SubmitEvent): void => { model?.onSubmit?.(submitted); }}>
     <Card variant={'raised'} width={FRAME.width} height={FRAME.height} flexDirection={'column'} padding={PADDING} gap={0}>
       <Panel height={HEADER_HEIGHT} flexDirection={'row'} alignItems={'center'} paddingLeft={4}>

@@ -18,9 +18,10 @@ export type { RenderOptions } from './render';
 
 // What the build's generated module calls to say a screen was compiled.
 export {
-  compiledKeyOf, compiledScreens, compiledSnapshotOf, compiledTitleOf, registerCompiledScreen, screenForKey,
+  compiledKeyOf, compiledScreens, compiledSnapshotOf, compiledTitleOf, registerCompiledScreen,
+  registerStaticScreens, screenForKey, staticScreen, staticScreens,
 } from './render/screens';
-export type { CompiledScreen, CompiledSnapshot } from './render/screens';
+export type { CompiledScreen, CompiledSnapshot, StaticScreenRecord } from './render/screens';
 
 // Navigating by key, and what resolves one.
 export { back, navigate, openScreen, setNavigator } from './navigate';
@@ -28,7 +29,7 @@ export { clearHistory, historyOf, shownKey } from './history';
 export type { NavigateOptions, Navigator, ScreenKey, ScreenKeys } from './navigate';
 
 // A screen as another addon can show it.
-export { addonReference, isAddonReference, isScreenReference, presentReference, screenReference } from './reference';
+export { addonReference, isAddonReference, isScreenReference, presentReference } from './reference';
 export type { AddonReference, ReferenceTarget, ScreenReference, WalkResult } from './reference';
 
 // How a screen reads its own state.

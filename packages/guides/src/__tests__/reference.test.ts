@@ -1,11 +1,13 @@
-import { addonReference, registerCompiledScreen } from '@bedrock-core/ui-runtime';
+import { analyze, allocateForm, buildScreenTree, linkTarget, visiblesAt } from '@bedrock-core/ui-runtime/compile';
+import type { FunctionComponent } from '@bedrock-core/ui-runtime';
 import { describe, expect, it } from 'vitest';
 import { guideHomeBackScreen, guideHomeScreen, guidePageScreen } from '../compiled';
 import type { GuideManifest } from '../types';
 
-// A guide's screens are navigated by link, so the reference is read straight off
-// the built tree: each entry's target is the key its `<Link>` carries. The way
-// out takes no entry — the client closes the form, and a walk ends with it.
+// A guide's screens are navigated by link, and the build reads where each press
+// leads straight off the tree — the same walk, over the same entries, that the
+// compile runs. No press inside a guide is a handler: that is what lets a page
+// ship as a table instead of as a component.
 
 const manifest: GuideManifest = {
   v: 1,
@@ -22,50 +24,35 @@ const manifest: GuideManifest = {
   },
 };
 
-const Home = guideHomeScreen(manifest);
-const HomeBack = guideHomeBackScreen(manifest);
-const Intro = guidePageScreen(manifest, 'intro');
-const Usage = guidePageScreen(manifest, 'usage');
+/** Where each of a screen's entries leads, as the build reads it. */
+const targetsOf = (screen: FunctionComponent): (ReturnType<typeof linkTarget>)[] => {
+  const tree = buildScreenTree(screen);
+  const { entries } = allocateForm(tree, analyze(tree, visiblesAt(tree, [])));
 
-registerCompiledScreen(Home, { key: 'ref:guide_home', title: 'core1:ref_guide_home' });
-registerCompiledScreen(HomeBack, { key: 'ref:guide_home_back', title: 'core1:ref_guide_home_back' });
-registerCompiledScreen(Intro, { key: 'ref:guide_intro', title: 'core1:ref_guide_intro' });
-registerCompiledScreen(Usage, { key: 'ref:guide_usage', title: 'core1:ref_guide_usage' });
+  return entries.map(entry => linkTarget(entry.element));
+};
 
-describe('a compiled guide as a reference', () => {
-  const reference = addonReference('ref');
-
-  it('names every screen by its compiled title', () => {
-    expect(reference.screens['ref:guide_home']?.title).toBe('core1:ref_guide_home');
-    expect(reference.screens['ref:guide_intro']?.title).toBe('core1:ref_guide_intro');
+describe('a compiled guide is presses that are links', () => {
+  it('sends the index rows to the page screens', () => {
+    expect(targetsOf(guideHomeScreen(manifest))).toEqual(
+      expect.arrayContaining([{ to: 'guide_intro' }, { to: 'guide_usage' }]),
+    );
   });
 
-  it('sends the index rows to the page screens, with the addon half filled in', () => {
-    const home = reference.screens['ref:guide_home'];
+  it('follows a link written in the prose, and sends a page back to the index', () => {
+    const targets = targetsOf(guidePageScreen(manifest, 'intro'));
 
-    expect(home?.targets).toContainEqual({ to: 'ref:guide_intro' });
-    expect(home?.targets).toContainEqual({ to: 'ref:guide_usage' });
-  });
-
-  it('follows a link written in the prose', () => {
-    const intro = reference.screens['ref:guide_intro'];
-
-    expect(intro?.targets).toContainEqual({ to: 'ref:guide_usage' });
+    expect(targets).toEqual(expect.arrayContaining([{ to: 'guide_usage' }, { to: 'guide_home' }]));
   });
 
   it('marks the back control of the index a host opened', () => {
-    const back = reference.screens['ref:guide_home_back'];
-    const home = reference.screens['ref:guide_home'];
-
-    // The back is an entry of its own, which is what tells a host that the player
-    // asked to go back rather than closing the form; the plain index has none.
-    expect(back?.targets).toContainEqual({ back: true });
-    expect(home?.targets).not.toContainEqual({ back: true });
+    expect(targetsOf(guideHomeBackScreen(manifest))).toEqual(expect.arrayContaining([{ back: true }]));
+    expect(targetsOf(guideHomeScreen(manifest))).not.toEqual(expect.arrayContaining([{ back: true }]));
   });
 
-  it('sends a page back to the index', () => {
-    const intro = reference.screens['ref:guide_intro'];
-
-    expect(intro?.targets).toContainEqual({ to: 'ref:guide_home' });
+  it('leaves no entry to a handler: every press is describable', () => {
+    for (const screen of [guideHomeScreen(manifest), guideHomeBackScreen(manifest), guidePageScreen(manifest, 'usage')]) {
+      expect(targetsOf(screen).every(target => target !== undefined)).toBe(true);
+    }
   });
 });

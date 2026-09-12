@@ -287,6 +287,63 @@ same shape.
   the area's offset within the centred frame. The contract between the two packs stays the
   area rect and the slot count. *Decided; lands in A4 with the addon-page family.*
 
+## A shared frame for a look does not work — measured
+
+A button's four state faces are four whole panels — image, size, anchors, layers — identical to
+every other button of that style except for the one caption name inside. Ten buttons in a style
+write forty copies, and a pack's faces file is a third larger than the looks in it.
+
+The obvious fix does not run. Writing the panel and its texture once as a FRAME whose caption is a
+variable, and making each state a derivation of it —
+
+```jsonc
+"button_frame_ab12": { "type": "panel", …, "controls": [ { "bg": … }, { "caption@$core_content": { "layer": 12 } } ] },
+"button_x_hover@core_faces.button_frame_ab12": { "$core_content": "core_faces.button_x_content" }
+```
+
+— compiles clean, cuts the framework pack's faces from 52 KB to 36 KB and the shop example's from
+73 KB to 49 KB, and then the client refuses every caption in the world:
+
+```
+Unable to create control - unknown UIType: [] for control: [caption]
+UIControlFactory parent control "drav0011_shop_faces.default" failed to create child control
+  "drav0011_shop_faces.caption", did you add a new type?
+```
+
+830 assertions in one session. The frame resolves `caption@$core_content` in its OWN scope, where
+the variable was never set, so the reference names nothing and the control has no type at all —
+which is the rule already written down for `$variables` across a reference, arrived at from the
+other side. Vanilla's `icon@$icon_image_ref` is not the same shape: there the variable is set by
+the control that MOUNTS the definition as a child, not by a definition that derives from it.
+
+So the sharing has to happen at the mount — the screen's own control naming the frame and its
+caption together — which means every consumer that references a face (a press's states, a toggle's
+eight, a modal's buttons) has to carry the caption name with it. Worth doing; not free, and not a
+change to make blind again. Reverted for now.
+
+## A static screen needs no component
+
+A screen is **static** when every string it shows is baked and every press it takes is a `<Link>`.
+Nothing about it can differ between one present and the next, so the build knows the whole of what
+showing it requires — the title, the value each entry carries, the key each press leads to — and
+the addon ships that table instead of the code that would recompute it. `navigate()` shows one
+from the table; it is the same walk that shows another addon's screen, so the local path and the
+foreign path are one path.
+
+Guides are what this was worth. A page's blocks shipped as data, its views shipped as code, and
+every open rebuilt the whole block tree to reproduce a layout baked into the pack at build time —
+for a page whose prose cannot change. As tables, the shop example's bundle loses `GuideBlockList`,
+`GuidePageView`, `GuideHomeView` and the guide manifest outright.
+
+`<Screen static>` is the assertion, not the mechanism: a qualifying screen is detected either way,
+and declaring it makes the build FAIL when the screen stops qualifying rather than quietly growing
+a component again. The framework's own guide found the first case the moment it was declared — a
+`cmp` block in the prose drawn as a `<Button>` with a no-op press. A press is a press to the build;
+somewhere to go is a `<Link>`, and anything else is decoration.
+
+What stays a component: anything with a live value or a press of its own. A modal never qualifies
+— its fields are built per present — and neither does a config editor, a list or the addon page.
+
 ## Shaped config screens only exist where the addon is
 
 Found in game 2026-09-11: `[config] no shaped item screen for server list 'bannedItems'`.
@@ -295,12 +352,17 @@ A config screen shaped for a schema is compiled into the OWNING addon's pack, an
 draws every addon's config — so the host has a screen for its own lists and none for anybody
 else's. The generic editor that preceded them had no such hole: one shape served any schema.
 
-Not decided. The two ways out: a generic list-item editor in the library set, compiled into every
-addon and used whenever the owner's shaped screen is not in this bundle; or the host asking the
-owning realm to draw its own, which reintroduces the dependency on the owner's realm being alive
-that references exist to remove. The same question is coming for every shaped screen, not just the
-list item — this is only where it surfaces first, because a list item is the one editor a section
-cannot draw inline.
+Answered for the list item, which is where it bites first, because a list item is the one editor a
+section cannot draw inline: `list_item_text` and `list_item_choice` ship in the library set, baked
+into every addon by the same setting that bakes the rest, and the host falls back to them whenever
+the owner's shaped screen is not in its bundle. An item is one field, so the generic one costs
+nothing the shaped one saved — the trail already names the list, the value travels per present, and
+a dropdown's options travel with it because the engine reads those off the modal row.
+
+The same question is still open for every OTHER shaped screen: a section's editor drawn by a host
+that is not its owner has no screen either. The two ways out are unchanged — a generic fallback per
+kind, as here, or the host asking the owning realm to draw its own, which reintroduces the
+dependency on that realm being alive that references exist to remove.
 
 ## Layout stays the build's
 

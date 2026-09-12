@@ -38,7 +38,7 @@ export { Tabs, DEFAULT_TAB_HEIGHT } from './Tabs';
 export type { TabsProps, TabProps } from './Tabs';
 export { Disclosure, DEFAULT_DISCLOSURE_HEADER_HEIGHT } from './Disclosure';
 export type { DisclosureProps } from './Disclosure';
-export { Screen, SCREEN_TYPE, type ScreenProps } from './Screen';
+export { declaredStatic, Screen, SCREEN_TYPE, type ScreenProps } from './Screen';
 export { Scroll, SCROLL_SLOT_TYPE, type ScrollAxis, type ScrollProps } from './Scroll';
 export {
   Slot, SLOT_CELL, SLOT_TYPE, slotInteractive, slotRole, slotSource, isForeignSlot,

@@ -75,6 +75,27 @@ const compiled = new WeakMap<FunctionComponent, CompiledScreen>();
 const byKey = new Map<string, { readonly screen: FunctionComponent; readonly record: CompiledScreen }>();
 
 /**
+ * Key -> the whole of what showing that screen needs, for a screen that has no
+ * component here at all.
+ *
+ * A screen with nothing live — every string baked, every press a link — is
+ * shown from what the build knew: the title, the values and the targets. So the
+ * addon ships the table instead of the components, and this is where the build's
+ * generated module puts it. The same table is what the addon publishes for other
+ * realms, which is why showing one's own static screen and showing somebody
+ * else's are one code path.
+ */
+const statics = new Map<string, StaticScreenRecord>();
+
+/** One static screen as the build described it. */
+export interface StaticScreenRecord {
+  readonly key: string;
+  readonly title: string;
+  readonly values: readonly string[];
+  readonly targets: readonly ({ readonly to: string } | { readonly back: true } | null)[];
+}
+
+/**
  * Records that a screen was compiled, and what title reaches its layout.
  *
  * Called by the module the build generates, never by hand. Registering the
@@ -140,6 +161,41 @@ export function screenForKey(key: string): FunctionComponent | undefined {
 /** Every compiled screen this bundle registered, in registration order. */
 export function compiledScreens(): readonly CompiledScreen[] {
   return [...byKey.values()].map(entry => entry.record);
+}
+
+/**
+ * Records the screens the build described in full, which ship as data rather
+ * than as components.
+ *
+ * Called by the generated module with the table it baked. Registering the same
+ * key twice replaces it, since the table is one artifact rewritten per build.
+ */
+export function registerStaticScreens(table: Iterable<StaticScreenRecord>): void {
+  for (const record of table) {
+    statics.set(record.key, record);
+  }
+}
+
+/** What `key` needs in order to be shown, when this bundle carries no component for it. */
+export function staticScreen(key: string): StaticScreenRecord | undefined {
+  const direct = statics.get(key);
+
+  if (direct !== undefined || key.includes(':')) {
+    return direct;
+  }
+
+  for (const [registered, record] of statics) {
+    if (registered.slice(registered.indexOf(':') + 1) === key) {
+      return record;
+    }
+  }
+
+  return undefined;
+}
+
+/** Every static screen this bundle carries, which is what it publishes for other realms. */
+export function staticScreens(): readonly StaticScreenRecord[] {
+  return [...statics.values()];
 }
 
 /**

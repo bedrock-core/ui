@@ -33,11 +33,14 @@ keys land in the same `.lang` files and runtime bundle.
 
 - `guideHomeScreen(manifest, …)` / `guidePageScreen(manifest, pageId, …)` — the screen per page the
   guides filter's generated modules export; the build bakes each into the pack. Every row, link and
-  prev/next button is a `<Link>`, so nothing about moving through a guide reaches script
+  prev/next button is a `<Link>`, so nothing about moving through a guide reaches script — and the
+  pages ship as a table rather than as components, which is why none of this package's rendering
+  code ends up in a built addon
 - **Blocks that render themselves** — headings, paragraphs with inline links, bullet and numbered
   lists, images sized from compile-time dimensions, admonitions, and code blocks
 - **Your own components in the prose** — `<Component />` in MDX resolves against the `components`
-  registry you pass
+  registry you pass. It may not take a press: a guide page is shown from what the build knew about
+  it, so somewhere to go is a `<Link>` and anything else is decoration
 - **A visual index** — categories become section headers, pages become icon rows with an optional
   thumbnail and subtitle from frontmatter; a single-page guide skips the index entirely
 - `GuideBlockList` for rendering the raw block IR under a custom layout, `isGuideManifest` for

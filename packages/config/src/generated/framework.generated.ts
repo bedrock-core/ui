@@ -46,14 +46,12 @@ export const FRAMEWORK_SCREENS: AddonReference = {
         "t",
         "t",
         "t",
-        "t",
         "t"
       ],
       "targets": [
         {
           "to": "core:guide_home"
         },
-        null,
         {
           "to": "core:guide_getting_started_installation"
         },
@@ -174,18 +172,6 @@ export const FRAMEWORK_SCREENS: AddonReference = {
         {
           "to": "core:guide_getting_started_installation"
         }
-      ]
-    },
-    "core:framework": {
-      "key": "core:framework",
-      "title": "bcuiv0008core1:core_framework",
-      "values": [
-        "t",
-        "t"
-      ],
-      "targets": [
-        null,
-        null
       ]
     }
   }

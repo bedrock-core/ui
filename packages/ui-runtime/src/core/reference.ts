@@ -1,9 +1,6 @@
 import type { Player } from '@minecraft/server';
-import { linkTarget } from '../components/Link';
-import { buildScreenTree } from '../hosts/chest/build';
-import { compiledValuesOf, showCompiledTitle } from '../hosts/form/runtime';
-import type { FunctionComponent } from '../jsx';
-import { compiledScreens, compiledSnapshotOf, screenForKey, type CompiledScreen } from './render/screens';
+import { showCompiledTitle } from '../hosts/form/runtime';
+import { staticScreens } from './render/screens';
 
 /**
  * A screen as another addon can show it.
@@ -53,49 +50,17 @@ export interface AddonReference {
 }
 
 /**
- * One screen's reference: the tree built the way the compile built it, its
- * entries read off it, and each press taken from the element rather than run.
+ * Every static screen this bundle carries, as the record an addon publishes.
  *
- * Undefined when the screen was not compiled — there is no title to show it by.
- */
-export function screenReference(screen: FunctionComponent, record: CompiledScreen, ns?: string): ScreenReference | undefined {
-  const { entries, values } = compiledValuesOf(buildScreenTree(screen), compiledSnapshotOf(screen));
-  // A realm reading this has no bundle to resolve a bare key against, so the
-  // addon half every link inside one addon may leave out is filled in here.
-  const absolute = (to: string): string => to.includes(':') || ns === undefined ? to : `${ns}:${to}`;
-
-  const targets = entries.map((entry): ReferenceTarget => {
-    const target = linkTarget(entry.element);
-
-    if (target === undefined) {
-      return null;
-    }
-
-    return 'back' in target ? target : { to: absolute(target.to) };
-  });
-
-  return { key: record.key, title: record.title, values, targets };
-}
-
-/**
- * Every static screen this bundle compiled, as the record an addon publishes.
- *
- * Built on demand from the registry — call it once at startup and announce the
- * result. A screen whose presses all run the owner's handlers is included with
- * `null` targets: it still draws, which is what a preview or a page of prose
- * needs, and a realm that cannot follow its presses is told so by the data
- * rather than by silence.
+ * Read straight off what the build baked — there is nothing to walk, because a
+ * static screen has no component here to walk. Announce it once at startup and
+ * any realm can show this addon's screens.
  */
 export function addonReference(ns: string): AddonReference {
   const screens: Record<string, ScreenReference> = {};
 
-  for (const record of compiledScreens()) {
-    const screen = screenForKey(record.key);
-    const reference = screen === undefined ? undefined : screenReference(screen, record, ns);
-
-    if (reference !== undefined) {
-      screens[record.key] = reference;
-    }
+  for (const record of staticScreens()) {
+    screens[record.key] = record;
   }
 
   return { v: 1, ns, screens };

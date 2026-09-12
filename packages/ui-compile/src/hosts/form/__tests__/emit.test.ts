@@ -1,5 +1,6 @@
 import { FORM_COLLECTION } from '@bedrock-core/ui-runtime/compile';
 import { describe, expect, it } from 'vitest';
+import { drawnFace } from '../../../__fixtures__/helpers';
 import { emit } from '../../../emit';
 import { faceOf } from '../../../face';
 import type { IrDocument, IrNode } from '../../../ir';
@@ -140,7 +141,7 @@ describe('a form button', () => {
     const { faces } = faceOf(irOf([button(2)]));
 
     for (const state of [id, `${id}_hover`, `${id}_pressed`, `${id}_disabled`]) {
-      expect(faces[state]?.controls?.map(child => Object.keys(child)[0]))
+      expect(drawnFace(faces, state).controls?.map(child => Object.keys(child)[0]))
         .toEqual(['bg', `caption@core_ui_test_faces.${id}_content`]);
     }
 

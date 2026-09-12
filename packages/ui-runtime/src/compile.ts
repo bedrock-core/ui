@@ -29,6 +29,8 @@ export type { Allocation, CellRole, ChannelEntry, SlotEntry } from './hosts/ches
 // than exported as a namespace, because `hosts/<host>/index.ts` pulls in that
 // host's runtime and a build machine has no use for it.
 export { allocate as allocateForm, allocateModal, type ModalRow } from './hosts/form/allocate';
+// What each entry is shown with: the build bakes it for a screen that never changes.
+export { entryValue } from './hosts/form/runtime';
 export type { EntryEntry, Placement as FormPlacement } from './hosts/form/allocate';
 
 // The liveness seam the compiled snapshot rides: the build detects a carried
@@ -59,8 +61,9 @@ export {
 export { BACKGROUND_SLOT_TYPE } from './components/Background';
 export { BUTTON_TYPE, isExitButton } from './components/Button';
 export { linkTarget } from './components/Link';
+export type { LinkTarget } from './components/Link';
 export { CONTAINER_TYPE, containerEntity, containerHandlers, containerRoot } from './components/Container';
-export { SCREEN_TYPE } from './components/Screen';
+export { declaredStatic, SCREEN_TYPE } from './components/Screen';
 export { hostFor, rootOf } from './hosts';
 export { IMAGE_TYPE, liveTexture } from './components/Image';
 export { EMBED_SLOT_TYPE, embedMarker, embedPlacementOf, embedSlotIndex, entryBaseOf, isEmbedRoot, isEmbedSlot } from './components/Embed';

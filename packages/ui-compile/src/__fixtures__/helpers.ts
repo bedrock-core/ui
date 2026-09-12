@@ -99,3 +99,39 @@ export const findAll = (doc: Document, matches: (name: string) => boolean): [str
 /** Every child entry of a control as `[name, control]` pairs, in order. */
 export const entries = (control: Control): [string, Control][] =>
   (control.controls ?? []).flatMap(entry => Object.entries(entry));
+
+/**
+ * One face as the engine sees it, derivations followed.
+ *
+ * A face may be declared as `name@base`: the base is what it draws and the
+ * derived body is what this one adds — a caption to put in the base's slot, and
+ * nothing else. A test asks for the face by the name a screen references and
+ * gets the whole of what draws, however the build chose to split it.
+ */
+export const drawnFace = (faces: Record<string, Control>, name: string): Control => {
+  for (const [declared, control] of Object.entries(faces)) {
+    const [own, base] = declared.split('@');
+
+    if (own !== name) {
+      continue;
+    }
+
+    if (base === undefined) {
+      return control;
+    }
+
+    const inherited = drawnFace(faces, base.split('.').pop() ?? '');
+
+    return { ...inherited, ...control };
+  }
+
+  throw new Error(`no face ${name}`);
+};
+
+/** The names faces answer to, with any derivation stripped. */
+export const names = (faces: Record<string, Control>): string[] =>
+  Object.keys(faces).map(name => name.split('@')[0] ?? '');
+
+/** The faces a screen names, with anything shared behind them left out. */
+export const states = (faces: Record<string, Control>): string[] =>
+  names(faces).filter(name => !name.startsWith('button_frame_'));

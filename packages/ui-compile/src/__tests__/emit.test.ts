@@ -9,7 +9,7 @@ import type { ButtonFace, IrDocument, IrNode } from '../ir';
 import type { Control, Document } from '../jsonui';
 import { type ButtonNode, faceSignature } from '../nodes/primitives/button';
 import { faceId } from '../nodes/utils/shared';
-import { child, definition, defs, eachControl, entries, find, findAll } from '../__fixtures__/helpers';
+import { child, definition, defs, drawnFace, eachControl, entries, find, findAll, states } from '../__fixtures__/helpers';
 
 /** Every case here is a chest screen, which is the only host these node mechanisms have. */
 const emit = (doc: IrDocument): Document => emitDocument(doc, CHEST_EMIT);
@@ -454,10 +454,13 @@ describe('emit / buttons', () => {
     const id = idOf(face);
     const { faces } = withFace(face);
 
-    expect(Object.keys(faces)).toEqual([id, `${id}_hover`, `${id}_pressed`]);
-    expect(child(faces[id] ?? {}, 'bg')).toMatchObject({ type: 'image', texture: 't/rest', keep_ratio: false });
-    expect(child(faces[`${id}_hover`] ?? {}, 'bg').texture).toBe('t/hover');
-    expect(child(faces[`${id}_pressed`] ?? {}, 'bg').texture).toBe('t/pressed');
+    // One name per state, whatever the build shares behind them: each state is a
+    // derivation of the frame its texture belongs to, so the panel and the image
+    // are written once however many buttons wear them.
+    expect(states(faces)).toEqual([id, `${id}_hover`, `${id}_pressed`]);
+    expect(child(drawnFace(faces, id), 'bg')).toMatchObject({ type: 'image', texture: 't/rest', keep_ratio: false });
+    expect(child(drawnFace(faces, `${id}_hover`), 'bg').texture).toBe('t/hover');
+    expect(child(drawnFace(faces, `${id}_pressed`), 'bg').texture).toBe('t/pressed');
     expect(JSON.stringify(faces)).not.toContain('binding');
   });
 
@@ -466,7 +469,7 @@ describe('emit / buttons', () => {
     const id = idOf(look);
     const { faces, doc } = withFace(look);
 
-    expect(child(faces[`${id}_disabled`] ?? {}, 'bg').texture).toBe('t/off');
+    expect(child(drawnFace(faces, `${id}_disabled`), 'bg').texture).toBe('t/off');
 
     const disabled = child(definition(doc, 'press_1'), 'disabled');
 
@@ -481,8 +484,10 @@ describe('emit / buttons', () => {
     const content = faces[`${id}_content`] ?? {};
 
     // Every state references the one caption, layered above its texture.
-    expect(child(faces[id] ?? {}, `caption@core_ui_test_faces.${id}_content`)).toEqual({ layer: 12 });
-    expect(child(faces[`${id}_hover`] ?? {}, `caption@core_ui_test_faces.${id}_content`)).toEqual({ layer: 12 });
+    for (const state of [id, `${id}_hover`]) {
+      expect(child(drawnFace(faces, state), `caption@core_ui_test_faces.${id}_content`)).toEqual({ layer: 12 });
+    }
+
     expect(content).toMatchObject({ type: 'panel', size: ['100%', '100%'], anchor_from: 'top_left' });
     // Named by position, not by the screen's counter: the face is shared.
     expect(child(content, 'c0')).toMatchObject({ type: 'label', text: 'Go', localize: false, offset: [26, 5] });
@@ -501,7 +506,7 @@ describe('emit / buttons', () => {
     ]));
 
     // Different child names, the same look: one face, one mechanism.
-    expect(Object.keys(same.faces)).toHaveLength(4);
+    expect(states(same.faces)).toHaveLength(4);
     expect(Object.keys(defs(same.doc)).filter(name => name.startsWith('press_'))).toEqual([
       'press_1_states@core_ui_chest.slot_button', 'press_1',
     ]);
@@ -512,7 +517,7 @@ describe('emit / buttons', () => {
       button('b', 2, face, [caption('label_2', 'Stop')], 64),
     ]));
 
-    expect(Object.keys(different.faces)).toHaveLength(8);
+    expect(states(different.faces)).toHaveLength(8);
     expect(Object.keys(defs(different.doc)).filter(name => /^press_\d+$/.test(name))).toEqual(['press_1', 'press_2']);
     expect(find(different.doc, name => name.startsWith('b@'))[1].$cell).toBe('core_ui_test.press_2');
   });

@@ -1,8 +1,9 @@
 import type { Player } from '@minecraft/server';
 import type { JSX } from '../jsx';
 import { popHistory, pushHistory } from './history';
+import { presentReference, type ScreenReference } from './reference';
 import { render, type RenderOptions } from './render';
-import { screenForKey } from './render/screens';
+import { screenForKey, staticScreen } from './render/screens';
 
 /**
  * Navigating by KEY rather than by component.
@@ -72,6 +73,15 @@ export type Navigator = (key: string, player: Player, options: NavigateOptions) 
  * registry, and the default {@link navigate} performs.
  */
 export function openScreen(key: string, player: Player, options: NavigateOptions = {}): boolean {
+  // A screen the build described in full has no component to render: it is
+  // shown from its table, exactly as another addon's screen is, and its links
+  // are followed the same way.
+  if (staticScreen(key) !== undefined) {
+    void presentReference(ownTable, key, player);
+
+    return true;
+  }
+
   const screen = screenForKey(key);
 
   if (screen === undefined) {
@@ -87,6 +97,13 @@ export function openScreen(key: string, player: Player, options: NavigateOptions
 
   return true;
 }
+
+/** This bundle's own static screens, as the walk reads them. */
+const ownTable = (key: string): ScreenReference | undefined => {
+  const record = staticScreen(key);
+
+  return record === undefined ? undefined : record;
+};
 
 const localOnly: Navigator = (key, player, options) => {
   if (openScreen(key, player, options)) {

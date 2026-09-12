@@ -1,7 +1,7 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
 import { Form, Panel, Text } from '@bedrock-core/ui-runtime';
 import { describe, expect, it } from 'vitest';
-import { eachControl } from '../../../__fixtures__/helpers';
+import { drawnFace, eachControl } from '../../../__fixtures__/helpers';
 import type { Control } from '../../../jsonui';
 import { compileFormScreen } from '../compile';
 
@@ -121,9 +121,9 @@ describe('compiling a modal screen', () => {
     for (const state of states) {
       // A button draws the child its `*_control` names and nothing else of its
       // own, so each state is a shared face with the caption inside it.
-      const face = compiled.faces[state.split('.')[1] ?? ''];
+      const face = drawnFace(compiled.faces, state.split('.')[1] ?? '');
 
-      expect(face?.controls?.map(child => Object.keys(child)[0])?.[1]).toMatch(/^caption@/);
+      expect(face.controls?.map(child => Object.keys(child)[0])?.[1]).toMatch(/^caption@/);
     }
   });
 

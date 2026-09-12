@@ -15,6 +15,7 @@ import type { ConfigScope, EntrySchema } from '../types';
 import { ConfirmReset, confirmResetElement } from './confirm.screen';
 import { MENU_ROWS, MenuList, menuListElement, pageOf, type MenuListRow } from './menu.screen';
 import { ScopePicker, scopePickerElement } from './picker.screen';
+import { listItemChoice, listItemText } from './item.screen';
 import { ITEM_FIELD, shapedElement, shapedItemScreen, shapedScreen } from './shaped';
 
 /**
@@ -476,13 +477,12 @@ function presentItemEditor(
   index: number | undefined,
   item: { current: string; options?: string[]; apply: (value: string) => void },
 ): void {
-  const screen = shapedItemScreen(target.scope, target.key);
-
-  if (screen === undefined) {
-    console.warn(`[config] no shaped item screen for ${target.scope} list '${target.key}'`);
-
-    return;
-  }
+  // The addon's own screen when this bundle has it, which is the case only on
+  // the realm that owns the list. Everywhere else — and the realm drawing config
+  // is usually somebody else — the item is edited on the generic one, which every
+  // addon bakes. The two differ in the field's label and nothing else.
+  const generic = item.options === undefined ? listItemText : listItemChoice;
+  const screen = shapedItemScreen(target.scope, target.key) ?? generic;
 
   // No parameter: the trail already ends with the list's own label, so the
   // segment says which of the two this is and nothing more.

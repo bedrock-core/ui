@@ -5,7 +5,7 @@ import { Button } from '../../../ore-styled/src/Button';
 import { Card } from '../../../ore-styled/src/Card';
 import { theme } from '../../../ore-styled/src/tokens';
 import { compileScreen } from '../compile';
-import { child, definition, find } from '../__fixtures__/helpers';
+import { child, definition, drawnFace, find } from '../__fixtures__/helpers';
 
 /** A styled screen: the components an addon actually writes with. */
 const Screen = (): JSX.Element => Container({
@@ -40,11 +40,11 @@ describe('ore-styled components in a container screen', () => {
       return String(enabled?.['enabled']?.controls?.[0]?.['item@core_ui_chest.cell']?.$background_images).replace('core_ui_faces.', '');
     });
 
-    expect(child(faces[go ?? ''] ?? {}, 'bg').texture).toBe(primary.textures.default);
-    expect(child(faces[`${go}_disabled`] ?? {}, 'bg').texture).toBe(primary.textures.disabled);
+    expect(child(drawnFace(faces, go ?? ''), 'bg').texture).toBe(primary.textures.default);
+    expect(child(drawnFace(faces, `${go}_disabled`), 'bg').texture).toBe(primary.textures.disabled);
     expect(child(faces[`${go}_content`] ?? {}, 'c0').text).toBe(`${primary.textStyle.color}Go`);
 
-    expect(child(faces[stop ?? ''] ?? {}, 'bg').texture).toBe(danger.textures.default);
+    expect(child(drawnFace(faces, stop ?? ''), 'bg').texture).toBe(danger.textures.default);
     expect(child(faces[`${stop}_content`] ?? {}, 'c0').text).toBe(`${danger.textStyle.disabledColor}Stop`);
 
     const [, card] = find(document, name => name === 'panel_1');

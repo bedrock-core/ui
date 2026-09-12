@@ -5,6 +5,7 @@ import {
   visiblesAt, type EntryEntry, type ModalRow,
 } from '@bedrock-core/ui-runtime/compile';
 import { checkLiveness, previewOf } from '../../compile';
+import { staticTable, wantsStatic, type StaticScreen } from '../../static';
 import { BACKDROP_DEFINITION, type FaceDocument, faceOf, facesNamespaceOf, type Preview } from '../../face';
 import { fill } from '../../fill';
 import type { Control, Document } from '../../jsonui';
@@ -69,6 +70,13 @@ export interface CompiledFormScreen {
    */
   snapshot: CompiledSnapshot;
   hasBackdrop: boolean;
+  /**
+   * The screen as a table, when nothing about it can change: the value each
+   * entry carries and where each press leads. Present means the shipped addon
+   * needs no component for this screen — the build knows the whole of what
+   * showing it requires.
+   */
+  table?: StaticScreen;
 }
 
 /** Namespaces are dotted into references, so a name is an identifier, not a path. */
@@ -177,6 +185,23 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
   // exactly one of the two, and each side of the branch is the same function
   // its runtime writes with — the numbering cannot drift from the bake.
   const entries = modal ? [] : allocateForm(tree, analyze(tree, visibles)).entries;
+  // A screen with nothing live is shown from a table rather than from a
+  // component. A modal is never one: its fields are the engine's, built per
+  // present, so there is always something for the runtime to do.
+  const read = modal ? { reason: 'a modal builds its fields per present' } : staticTable(entries, spec.namespace);
+  const table = 'reason' in read ? undefined : read;
+
+  if (table === undefined && wantsStatic(tree)) {
+    const why = 'reason' in read ? read.reason : 'it is not static';
+
+    throw new ContainerScreenError(
+      `"${spec.name}" declares \`<Screen static>\`, but ${why}.\n`
+      + '  A static screen is shown from what the build knows — its title, its baked values and'
+      + '  the key each press leads to — so it can carry no live value and no handler of its\n'
+      + '  own. Drop the marker, or make every press a link and every string baked.',
+    );
+  }
+
   const addressing = modal ? modalAddressing(allocateModal(tree, visibles)) : actionAddressing(entries);
   const ir = toIr(formRoot(tree), addressing, {
     namespace,
@@ -205,6 +230,7 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
       baked: bakedTexts(tree),
       vis: probe.liveVisibles,
     },
+    ...table === undefined ? {} : { table },
     hasBackdrop: document[BACKDROP_DEFINITION] !== undefined,
   };
 }

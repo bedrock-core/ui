@@ -67,7 +67,11 @@ const homeScreen = (manifest: GuideManifest, options: CompiledGuideOptions, back
     const close = useExit();
 
     return (
-      <Screen>
+      // Static, and the build proves it: a guide shows baked prose and its every
+      // press is a link, so nothing about a page can change between one reader
+      // and the next. Declaring it is what keeps the views, the blocks and the
+      // manifest out of the addon — the page ships as the table it amounts to.
+      <Screen static>
         <GuideHomeView
           tree={manifest.tree}
           title={title}
@@ -114,7 +118,7 @@ export function guidePageScreen(manifest: GuideManifest, pageId: PageId, options
     const close = useExit();
 
     return (
-      <Screen>
+      <Screen static>
         <GuidePageView
           manifest={manifest}
           tree={manifest.tree}
@@ -134,21 +138,13 @@ export function guidePageScreen(manifest: GuideManifest, pageId: PageId, options
 }
 
 /**
- * Opens guide `ns` where it lands — its home page when it declares one, the
- * index when there is more than one page, the page itself otherwise.
+ * Opens guide `ns` at its index.
  *
  * A plain `navigate()`, which is what makes it work in either direction: the
- * owning addon opens its own guide out of the registry, and any other realm
- * opens it from the reference the owner published.
+ * owning addon opens its own guide out of the table its build baked, and any
+ * other realm opens it from the table that addon published. Neither needs the
+ * manifest, which is why none of it ships.
  */
-export function openGuide(
-  ns: string,
-  player: PressEvent['player'],
-  options: { manifest?: GuideManifest; debug?: boolean } = {},
-): boolean {
-  const { manifest } = options;
-  const landing = manifest === undefined ? undefined : resolveLanding(manifest, 'op').landing;
-  const screen = landing === undefined || manifest === undefined ? HOME_SCREEN : pageScreen(manifest, landing);
-
-  return navigate(`${ns}:${screen}`, player, options.debug === true ? { debug: true } : {});
+export function openGuide(ns: string, player: PressEvent['player'], options: { debug?: boolean } = {}): boolean {
+  return navigate(`${ns}:${HOME_SCREEN}`, player, options.debug === true ? { debug: true } : {});
 }

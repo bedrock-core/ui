@@ -112,9 +112,11 @@ const definitions = (document: Document): [string, Control][] => Object.entries(
  * @throws ContainerScreenError naming the control and the rule it breaks.
  */
 export const validateFace = (document: Document, faces: Record<string, Control>, ns: string, facesNs: string): void => {
+  // A face may be declared as a derivation — `name@base` — which defines `name`;
+  // the base is what it wears, not what it is called.
   const known = new Set<string>([
     ...definitions(document).map(([name]) => `${ns}.${name.split('@')[0] ?? ''}`),
-    ...Object.keys(faces).map(name => `${facesNs}.${name}`),
+    ...Object.keys(faces).map(name => `${facesNs}.${name.split('@')[0] ?? ''}`),
   ]);
 
   // Every name in the screen, since a `source_control_name` is looked up
@@ -128,7 +130,7 @@ export const validateFace = (document: Document, faces: Record<string, Control>,
   }
 
   for (const [name, control] of Object.entries(faces)) {
-    controls.add(name);
+    controls.add(name.split('@')[0] ?? '');
     controlNames(control, controls);
   }
 
@@ -137,6 +139,6 @@ export const validateFace = (document: Document, faces: Record<string, Control>,
   }
 
   for (const [name, control] of Object.entries(faces)) {
-    checkControl(`${facesNs}.${name}`, control, ns, facesNs, known, controls);
+    checkControl(`${facesNs}.${name.split('@')[0] ?? ''}`, control, ns, facesNs, known, controls);
   }
 };

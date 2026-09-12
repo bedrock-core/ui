@@ -8,7 +8,7 @@ import {
 } from '@bedrock-core/ui-runtime/compile';
 import { describe, expect, it } from 'vitest';
 import { compileScreen } from '../compile';
-import { child, definition, defs, find, findAll } from '../__fixtures__/helpers';
+import { child, definition, defs, drawnFace, find, findAll, names } from '../__fixtures__/helpers';
 
 /** Knows one key, so the build can tell a key from a literal. */
 const resolver: TranslationResolver = key => (key === 'core.demo.subtitle' ? 'Subtitle' : undefined);
@@ -121,7 +121,7 @@ describe('the compiler, end to end', () => {
     };
 
     const plus = faceOf('press_1');
-    const plusFace = faces[plus.rest] ?? {};
+    const plusFace = drawnFace(faces, plus.rest);
     const plusContent = faces[`${plus.rest}_content`] ?? {};
 
     expect(child(plusContent, 'c0')).toMatchObject({ type: 'label', text: '+', localize: false });
@@ -133,9 +133,9 @@ describe('the compiler, end to end', () => {
     // `<Text>` guards a dash-leading literal with a zero-width `§r`, which a
     // JSON UI label renders as nothing; the guard is kept, not stripped.
     expect(child(faces[`${minus.rest}_content`] ?? {}, 'c0')).toMatchObject({ type: 'label', text: '§r-' });
-    expect(child(faces[minus.rest] ?? {}, 'bg').texture).toBe('textures/ui/dark');
+    expect(child(drawnFace(faces, minus.rest), 'bg').texture).toBe('textures/ui/dark');
     expect(minus.disabled).toBe(`${minus.rest}_disabled`);
-    expect(child(faces[minus.disabled] ?? {}, 'bg').texture).toBe('textures/ui/dark_off');
+    expect(child(drawnFace(faces, minus.disabled), 'bg').texture).toBe('textures/ui/dark_off');
   });
 
   it('hands out the slot indices the runtime will read', () => {
@@ -313,7 +313,7 @@ describe('the preview', () => {
     const referenced = new Set([...JSON.stringify(preview.document).matchAll(/core_ui_faces\.([A-Za-z0-9_]+)/g)].map(match => match[1]));
 
     for (const id of referenced) {
-      expect(compiled.faces[id ?? '']).toBeDefined();
+      expect(names(compiled.faces)).toContain(id);
     }
   });
 });

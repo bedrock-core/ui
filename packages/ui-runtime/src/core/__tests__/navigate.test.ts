@@ -4,16 +4,15 @@ import {
   __lastActionForm, __pendingShowCount, __resetFormMocks, __resolveShow, __setDeferredShows,
 } from '../../__mocks__/@minecraft/server-ui';
 import { registerNativeComponents } from '../../components';
-import { Link } from '../../components/Link';
 import { Panel } from '../../components/Panel';
 import { Screen } from '../../components/Screen';
 import { Text } from '../../components/Text';
 import { titleFor } from '../../hosts/form/contract';
-import type { FunctionComponent, JSX } from '../../jsx';
+import type { FunctionComponent } from '../../jsx';
 import { clearHistory, historyOf } from '../history';
 import { back, navigate, setNavigator } from '../navigate';
 import { addonReference, presentReference, type ScreenReference } from '../reference';
-import { registerCompiledScreen } from '../render/screens';
+import { registerCompiledScreen, registerStaticScreens } from '../render/screens';
 
 beforeAll(() => {
   registerNativeComponents();
@@ -46,11 +45,6 @@ const untilShown = async (): Promise<void> => {
     await new Promise(resolve => setTimeout(resolve, 0));
   }
 };
-
-/** A screen whose one button is a link to `to`. */
-const linking = (to: string): FunctionComponent => (): JSX.Element => Screen({
-  children: Panel({ children: Link({ to, children: Text({ children: 'go' }) }) }),
-});
 
 describe('navigating by key', () => {
   it('shows a screen this bundle compiled', () => {
@@ -146,16 +140,33 @@ describe('navigating by key', () => {
 });
 
 describe('a screen as another addon can show it', () => {
-  it('carries where each press leads, with the addon half filled in', () => {
-    const Index = linking('page');
-
-    registerCompiledScreen(Index, { key: 'docs:index', title: titleFor('docs_index') });
+  it('publishes the table the build baked, and nothing it would have to walk', () => {
+    // A static screen has no component here at all: the build described it in
+    // full, so what an addon publishes is what it was handed.
+    registerStaticScreens([
+      { key: 'docs:index', title: titleFor('docs_index'), values: [''], targets: [{ to: 'docs:page' }] },
+    ]);
 
     const reference = addonReference('docs');
     const index = reference.screens['docs:index'];
 
     expect(index?.title).toBe(titleFor('docs_index'));
     expect(index?.targets).toEqual([{ to: 'docs:page' }]);
+  });
+
+  it('shows one of its own static screens without a component', async () => {
+    const player = nextPlayer();
+
+    registerStaticScreens([
+      { key: 'docs:standalone', title: titleFor('docs_standalone'), values: [''], targets: [null] },
+    ]);
+
+    expect(navigate('docs:standalone', player)).toBe(true);
+
+    // The walk is asynchronous: the form reaches the client on the next turn.
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(__lastActionForm()?.titleText).toBe(titleFor('docs_standalone'));
   });
 
   it('follows the links of a foreign screen until one leads nowhere', async () => {

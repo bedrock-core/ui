@@ -118,7 +118,7 @@ export {
   navigate,
   openScreen,
   presentReference,
-  screenReference,
+  registerStaticScreens,
   setNavigator,
   compiledKeyOf,
   screenForKey,

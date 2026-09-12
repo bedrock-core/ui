@@ -1,7 +1,7 @@
 import { Button, Container, Text, useExit } from '@bedrock-core/ui-runtime';
 import type { JSX } from '@bedrock-core/ui-runtime';
 import { describe, expect, it } from 'vitest';
-import { eachControl } from '../__fixtures__/helpers';
+import { drawnFace, eachControl } from '../__fixtures__/helpers';
 import { compileScreen } from '../compile';
 import type { Control } from '../jsonui';
 
@@ -55,10 +55,10 @@ describe('a close button', () => {
     expect(states.map(state => state.split('@')[0])).toEqual(['default', 'hover', 'pressed']);
 
     for (const state of states) {
-      const face = faces[state.split('.')[1] ?? ''];
+      const face = drawnFace(faces, state.split('.')[1] ?? '');
 
       expect(JSON.stringify(face)).toContain('textures/ui/unstyled');
-      expect(face?.controls?.map(child => Object.keys(child)[0])?.[1]).toMatch(/^caption@/);
+      expect(face.controls?.map(child => Object.keys(child)[0])?.[1]).toMatch(/^caption@/);
     }
 
     expect(JSON.stringify(faces)).toContain('"text":"x"');
