@@ -119,12 +119,23 @@ const replaceAt = (document: Document, found: Found, entry: ControlEntry): void 
 };
 
 /**
+ * The placement a mechanism keeps. A gate's wrapper is sized to what it holds
+ * so a stack can fold it, and the size it must keep is its gate's.
+ */
+const kept = (socket: Socket, entry: ControlEntry): Record<string, unknown> => {
+  const control = entryControl(entry);
+  const gate = socket.kind === 'visible' ? control.controls?.[0]?.gate : undefined;
+
+  return placementOf(gate === undefined ? control : { ...control, size: gate.size });
+};
+
+/**
  * The one thing a host may not do: move a socket. The face's placement is the
  * layout's, signed off before any host touched the screen.
  */
 const guard = (socket: Socket, before: ControlEntry, after: ControlEntry, host: HostEmit): void => {
   const was = placementOf(entryControl(before));
-  const now = placementOf(entryControl(after));
+  const now = kept(socket, after);
 
   if (JSON.stringify(was) !== JSON.stringify(now)) {
     throw new ContainerScreenError(

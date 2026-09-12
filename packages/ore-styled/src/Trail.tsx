@@ -25,13 +25,20 @@ const textOf = (segment: TrailSegment): DisplayText => (isLive(segment) ? segmen
 /**
  * The breadcrumb trail every header wears, as a row of its own so any screen
  * can show one: `title > scope > entity`, the separators in the trail's
- * lighter colour, the last segment the one that shrinks.
+ * lighter colour.
  *
  * Each segment is a `Text` of its own, so a key stays a key all the way to
  * the client and resolves in the player's language — one label cannot hold
  * two keys. A literal takes the trail colour as a code; a key or a live
  * segment is coloured through the label, since a code in front of a key
  * stops it resolving.
+ *
+ * The row is a stack of hugging labels: a segment's text is only known when
+ * the screen is shown, so the box a compiled screen solved for it would be as
+ * wide as the longest name it may ever hold and every shorter one would leave
+ * the rest as air. Each label draws at the width of its glyphs, the engine
+ * packs them, an empty segment takes no room at all, and the stack hangs from
+ * the middle of the header — so the trail is centred on what it actually says.
  */
 export function Trail({ segments, ...layout }: TrailProps): JSX.Element {
   const resolver = useTranslationResolver();
@@ -40,7 +47,6 @@ export function Trail({ segments, ...layout }: TrailProps): JSX.Element {
   const isLiteral = (value: DisplayText): value is string => typeof value === 'string' && resolver?.(value) === undefined;
 
   const parts = segments.flatMap((segment, index): JSX.Element[] => {
-    const last = index === segments.length - 1;
     const live = isLive(segment);
     const text = textOf(segment);
     const shown = !live || (typeof text === 'string' ? text !== '' : true);
@@ -50,13 +56,13 @@ export function Trail({ segments, ...layout }: TrailProps): JSX.Element {
         ? []
         : [
             // A live segment's separator follows it: carried, so an empty segment takes no room.
-            <Text font={font} scale={scale} flexShrink={0} visible={shown} liveVisible={live}>{`${separator} > `}</Text>,
+            <Text font={font} scale={scale} hug={true} visible={shown} liveVisible={live}>{`${separator} > `}</Text>,
           ],
       <Text
         font={font}
         scale={scale}
         maxLines={1}
-        flexShrink={last ? 1 : 0}
+        hug={true}
         color={!live && isLiteral(text) ? undefined : colorRgb}
         {...live ? { maxLength: segment.maxLength } : {}}
       >
@@ -66,7 +72,7 @@ export function Trail({ segments, ...layout }: TrailProps): JSX.Element {
   });
 
   return (
-    <Panel flexDirection={'row'} justifyContent={'center'} alignItems={'center'} {...layout}>
+    <Panel stack={true} flexDirection={'row'} justifyContent={'center'} alignItems={'center'} {...layout}>
       {parts}
     </Panel>
   );

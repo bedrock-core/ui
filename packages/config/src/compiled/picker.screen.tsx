@@ -58,7 +58,9 @@ export const ScopePicker: FunctionComponent<ScopePickerProps> = ({ model = EMPTY
     <Screen>
       <Card variant={'raised'} width={FRAME.width} height={FRAME.height} flexDirection={'column'} padding={0} gap={0}>
         <Header segments={[{ text: model.addonName, maxLength: NAME_MAX }, key($ => $.config.breadcrumb)]} onBack={(event): unknown => model.onBack?.(event)} onClose={exit} />
-        <Panel flexDirection={'column'} gap={spacing.xs} padding={spacing.sm}>
+        {/* A stack, so a scope this addon does not offer leaves no gap where its
+            row would have been — the rows after it move up instead. */}
+        <Panel flexDirection={'column'} gap={spacing.xs} padding={spacing.sm} stack={true}>
           {hasServer && (
             <Panel flexDirection={'row'} alignItems={'stretch'} gap={spacing.xs}>
               <Panel flexGrow={1}>

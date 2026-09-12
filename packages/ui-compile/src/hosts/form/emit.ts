@@ -182,8 +182,13 @@ export const FORM_EMIT: HostEmit = {
       if (!ctx.textNames.has(signature)) {
         const definition = `text_carrier_${ctx.textNames.size + 1}`;
 
+        // A hugging string draws at its own width inside the host's box, which
+        // is content-sized: the rect the layout solved is what the box started
+        // from, not what the value has to fit.
+        const size: [number, number] | ['default', 'default'] = node.hug === true ? ['default', 'default'] : sizeOf(node.rect);
+
         ctx.textNames.set(signature, definition);
-        document[definition] = textDef({ definition, size: sizeOf(node.rect), style: styleOf(node) }, ctx.collection);
+        document[definition] = textDef({ definition, size, style: styleOf(node) }, ctx.collection);
       }
     }
   },

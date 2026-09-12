@@ -27,6 +27,11 @@ export interface TextNode extends NodeBase, LabelStyle {
   address?: number;
   /** How many characters the screen drew room for. Absent on a baked string. */
   length?: number;
+  /**
+   * Drawn at the width of its glyphs, for a string in a stack whose length is
+   * only known when the screen is shown. Declared by `<Text hug>`.
+   */
+  hug?: true;
   /** What the build rendered: the face's string, and what `debug` compares against. */
   text: string;
   /** True when `text` is a translation key the client resolves. */
@@ -54,9 +59,9 @@ declare module '../utils/types' {
 }
 
 /** What `<Text>` recorded about its string for the layout pass. */
-const textMetricsOf = (value: unknown): { isKey: boolean; resolvedText: string } => {
+const textMetricsOf = (value: unknown): { isKey: boolean; resolvedText: string; hug: boolean } => {
   if (typeof value !== 'object' || value === null) {
-    return { isKey: false, resolvedText: '' };
+    return { isKey: false, resolvedText: '', hug: false };
   }
 
   const isKey = 'isKey' in value && value.isKey === true;
@@ -64,7 +69,7 @@ const textMetricsOf = (value: unknown): { isKey: boolean; resolvedText: string }
     ? value.resolvedText
     : '';
 
-  return { isKey, resolvedText };
+  return { isKey, resolvedText, hug: 'hug' in value && value.hug === true };
 };
 
 const bakedOf = (element: JSX.Element, base: Omit<TextNode, 'kind' | 'text' | 'localize' | 'fontType' | 'fontScaleFactor'>): TextNode => {
@@ -83,6 +88,7 @@ const bakedOf = (element: JSX.Element, base: Omit<TextNode, 'kind' | 'text' | 'l
     localize: tail !== undefined && metrics.isKey,
     fontType: str(props.fontType, defaults.fontType),
     fontScaleFactor: num(props.fontScaleFactor, defaults.fontScaleFactor),
+    ...metrics.hug ? { hug: true as const } : {},
     ...rgbOf(props.__color),
     ...alignmentOf(props.__textAlign),
   };
@@ -108,6 +114,7 @@ export const textSignature = (node: TextNode): string => JSON.stringify([
   node.shadow ?? null,
   node.color ?? null,
   node.textAlignment ?? null,
+  node.hug ?? null,
 ]);
 
 export const textDefinition: NodeDefinition<TextNode> = {
@@ -139,6 +146,7 @@ export const textDefinition: NodeDefinition<TextNode> = {
         localize: tail !== undefined && metrics.isKey,
         fontType: str(props.fontType, defaults.fontType),
         fontScaleFactor: num(props.fontScaleFactor, defaults.fontScaleFactor),
+        ...metrics.hug ? { hug: true as const } : {},
         ...shadow ? { shadow } : {},
         ...rgbOf(props.__color),
         ...alignmentOf(props.__textAlign),
@@ -162,6 +170,7 @@ export const textDefinition: NodeDefinition<TextNode> = {
   face(node) {
     return textFace({
       ...boxOf(node),
+      ...node.hug === undefined ? {} : { hug: node.hug },
       text: node.text,
       localize: node.localize,
       fontType: node.fontType,

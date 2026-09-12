@@ -1,7 +1,14 @@
-import { FONT_SIZE, entry, placed, topLeft } from '../utils/place';
+import { FONT_SIZE, entry, HUG, placed, topLeft } from '../utils/place';
 import type { Box, Control, Face, TextStyle } from '../utils/types';
 
 export interface TextFace extends Box, TextStyle {
+  /**
+   * Drawn at the width of its glyphs rather than in the box the layout solved,
+   * for a string inside a stack whose length is only known when the screen is
+   * shown. The box becomes a content-sized host holding a content-sized label,
+   * which is the shape a host's carrier stands into unchanged.
+   */
+  hug?: boolean;
   /** A literal, or a key the client resolves when `localize`. */
   text: string;
   /**
@@ -19,7 +26,15 @@ export interface TextFace extends Box, TextStyle {
  * rendered with, in the box the layout reserved for its longest form. What
  * carries the live one is the host's, and stands here in this face's place.
  */
-export const textFace: Face<TextFace> = data => entry(data.name, { ...placed(data), ...glyphs(data) });
+export const textFace: Face<TextFace> = data => (
+  data.hug === true
+    ? entry(data.name, { ...placed(data), type: 'panel', size: HUG, controls: [{ glyphs: hugged(data) }] })
+    : entry(data.name, { ...placed(data), ...glyphs(data) })
+);
+
+/** The label inside a hugging box: its own natural size, drawn from the top left. */
+const hugged = (style: TextStyle & { text: string; localize: boolean }): Control =>
+  label(style, { size: ['default', 'default'], ...topLeft });
 
 /**
  * The bare label, sized and anchored by the caller.

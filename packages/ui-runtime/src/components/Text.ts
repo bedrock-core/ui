@@ -130,6 +130,21 @@ export interface TextProps extends ControlProps {
    * serialized screen's payload has no field for it.
    */
   textAlign?: TextAlign;
+
+  /**
+   * Draw the label at the width of its glyphs rather than in the box the
+   * layout solved for it, and let the engine place what follows.
+   *
+   * For a row of strings whose lengths are only known when the screen is shown
+   * — a breadcrumb trail, a run of names — inside a `<Panel stack>`: the box a
+   * compiled screen solves is as wide as the longest string it may ever hold,
+   * so a short one would leave the rest of that box as air. A hugging label
+   * holds no air, and an empty one takes no room at all.
+   *
+   * Only inside a stack. Anywhere else the neighbours keep the places the
+   * layout gave them and a hugging label simply draws narrower than its box.
+   */
+  hug?: boolean;
 }
 
 export type TextAlign = 'left' | 'center' | 'right';
@@ -159,6 +174,7 @@ export const Text: FunctionComponent<TextProps> = ({
   shadow,
   color,
   textAlign,
+  hug,
   ...rest
 }: TextProps): JSX.Element => {
   const resolvedScale = scale ?? 1.0;
@@ -286,6 +302,9 @@ export const Text: FunctionComponent<TextProps> = ({
         // The container backend's reservation. Here rather than a plain prop so
         // it never becomes a payload field.
         ...maxLength === undefined ? {} : { maxLength },
+        // Drawn at the width of its glyphs: the box the layout solves is only
+        // what the engine starts from, and the stack above re-places the row.
+        ...hug === true ? { hug: true } : {},
       },
     },
   };

@@ -85,6 +85,8 @@ interface TextMetricsData {
   maxLines?: number;
   /** Characters the text reserves room for, whatever it says right now. */
   maxLength?: number;
+  /** Drawn at the width of its glyphs, so it reserves nothing. */
+  hug?: boolean;
 }
 
 /** The string content of a `value` prop — plain, or inside a v0008 tail wrapper. */
@@ -121,6 +123,7 @@ function extractTextMetrics(props: JSX.Props): TextMetricsData {
   const overflow = Reflect.get(metrics, 'overflow');
   const maxLines = Reflect.get(metrics, 'maxLines');
   const maxLength = Reflect.get(metrics, 'maxLength');
+  const hug = Reflect.get(metrics, 'hug');
 
   return {
     text,
@@ -130,6 +133,7 @@ function extractTextMetrics(props: JSX.Props): TextMetricsData {
     overflow: overflow === 'ellipsis' ? overflow : undefined,
     maxLines: typeof maxLines === 'number' ? maxLines : undefined,
     maxLength: typeof maxLength === 'number' && maxLength >= 1 ? Math.floor(maxLength) : undefined,
+    hug: hug === true,
   };
 }
 
@@ -157,7 +161,9 @@ let reserveLiveText = true;
  * build measured is only what it said first.
  */
 function reservedWidth(td: TextMetricsData): number {
-  if (td.maxLength === undefined) {
+  // A hugging label is drawn at the width of its glyphs and the stack above it
+  // places what follows, so there is nothing to hold open.
+  if (td.maxLength === undefined || td.hug === true) {
     return 0;
   }
 

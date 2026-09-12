@@ -12,6 +12,9 @@ export const topLeft = { anchor_from: 'top_left', anchor_to: 'top_left' } as con
 /** The whole of the parent. */
 export const FULL: ['100%', '100%'] = ['100%', '100%'];
 
+/** As wide and as tall as what it holds. */
+export const HUG: ['100%c', '100%c'] = ['100%c', '100%c'];
+
 /**
  * The base every label is drawn at, scaled from there by `font_scale_factor`.
  * The form render pack does the same, so a compiled label and an interpreted

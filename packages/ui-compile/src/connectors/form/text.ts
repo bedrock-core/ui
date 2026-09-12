@@ -6,7 +6,11 @@ import type { Addressed, Connector, Control } from '../types';
 export interface TextCarrier {
   /** The screen-local definition name, e.g. `text_carrier_1`. */
   definition: string;
-  size: [number, number];
+  /**
+   * The box the value draws in: the layout's rect, or its own natural size for
+   * a string that hugs its glyphs inside a stack.
+   */
+  size: [number, number] | ['default', 'default'];
   style: TextStyle;
 }
 

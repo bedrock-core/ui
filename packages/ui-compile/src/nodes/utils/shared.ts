@@ -57,17 +57,24 @@ export const followsOf = (props: JSX.Props): { follows?: string } => {
 };
 
 /**
- * Whether this node's height changes at runtime, so a stack above it has to
- * reflow rather than reserve the height the layout solved.
- *
- * A node that follows a swap is the case: it is drawn only while that swap is
- * on, and a stack gives a hidden child no space. It travels up through the
- * stacks that hold it, because a fold nested two panels deep still moves what
- * is under those panels.
+ * Whether this node makes the panel holding it a stack: a node that follows a
+ * swap is drawn only while that swap is on, and only a stack gives a hidden
+ * child no space. It travels up through the stacks that hold it, because a
+ * fold nested two panels deep still moves what is under those panels.
  */
 export const collapses = (node: IrNode): boolean =>
   node.follows !== undefined
   || (node.kind === 'panel' && node.stack === true && node.children.some(collapses));
+
+/**
+ * Whether this node's height changes at runtime once it IS in a stack, so the
+ * stack reflows around it rather than reserving the height the layout solved.
+ * Everything that makes a stack, and a node whose visibility the host carries
+ * — which asks for no stack of its own, so a card with one optional row keeps
+ * its background, but folds inside a stack the author declared.
+ */
+export const folds = (node: IrNode): boolean =>
+  collapses(node) || node.carriedVisible !== undefined;
 
 /** A collection name, made safe to sit in a definition name and a reference. */
 export const collectionKey = (collection: string): string => collection.replaceAll(/[^A-Za-z0-9_]/g, '_');

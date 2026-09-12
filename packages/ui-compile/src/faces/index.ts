@@ -44,6 +44,6 @@ export { scrollContent, scrollFace, TRACK_WIDTH, type Axis, type ContentFace, ty
 export { selectFace, type SelectFace } from './compositions/select';
 
 // The shared vocabulary.
-export { entry, FONT_SIZE, FULL, offsetOf, over, placed, sizeOf, styled, surface, topLeft, UNSTYLED } from './utils/place';
+export { entry, FONT_SIZE, FULL, HUG, offsetOf, over, placed, sizeOf, styled, surface, topLeft, UNSTYLED } from './utils/place';
 export { shownWhileOn, swap, type SwapGroup, type SwapLooks } from './utils/swap';
 export type { Box, Control, ControlEntry, Face, Rect, States, TextStyle } from './utils/types';
