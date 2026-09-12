@@ -64,6 +64,7 @@ export default {
   action: {
     save: 'Save',
     back: 'Back',
+    cancel: 'Cancel',
     reset: 'Reset',
   },
 

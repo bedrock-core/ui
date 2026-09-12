@@ -2,9 +2,10 @@
 import type { DisplayText } from '@bedrock-core/i18n';
 import type { ConfigDefinition, ConfigScopeName } from '@bedrock-core/server-runtime';
 import { flattenGroups, flattenSchema } from '@bedrock-core/server-runtime';
-import { Card, Checkbox, Divider, Dropdown, Form, Input, Radio, Slider } from '@bedrock-core/ore-styled';
+import { Card, Checkbox, Divider, Dropdown, Form, Header, Input, Radio, Slider, theme, type TrailSegment } from '@bedrock-core/ore-styled';
 import { Panel, Scroll, Text, type FunctionComponent, type JSX, type SubmitEvent } from '@bedrock-core/ui-runtime';
 import { FRAME, HEADER_HEIGHT, PADDING, TRAIL_LENGTHS } from './frame';
+import { i18n } from '../i18n';
 import { buildSectionTree, formEntries, listEntries, type SectionNode } from '../config/schema';
 import type { EntrySchema } from '../types';
 
@@ -45,6 +46,15 @@ export interface LeafModel {
   options?: Record<string, readonly string[]>;
   /** Runs with the submitted values before the screen closes. */
   onSubmit?: (values: SubmitEvent['values']) => void;
+  /**
+   * Where the screen goes when it is left without saving.
+   *
+   * A modal has exactly two controls, its submit and its dismiss, so there is no
+   * third one to navigate with — which makes the dismiss the way BACK rather
+   * than the way out. Unset, leaving the screen closes the UI, which is what a
+   * modal nothing opened should do.
+   */
+  onCancel?: () => void;
 }
 
 export interface LeafProps {
@@ -103,30 +113,64 @@ const rowFor = (key: string, entry: EntrySchema, model: LeafModel | undefined): 
   return <Input name={name} label={label} defaultValue={String(current ?? entry.default ?? '')} />;
 };
 
-/** The frame every shaped screen wears, so a leaf sits in the same card the screens before it do. */
-export const sheet = (model: LeafModel | undefined, rows: readonly [string, EntrySchema][]): JSX.Element => (
-  <Form onSubmit={({ values: submitted }: SubmitEvent): void => { model?.onSubmit?.(submitted); }}>
-    <Card variant={'raised'} width={FRAME.width} height={FRAME.height} flexDirection={'column'} padding={PADDING} gap={0}>
-      <Panel height={HEADER_HEIGHT} flexDirection={'row'} alignItems={'center'} paddingLeft={4}>
-        <Text maxLength={TRAIL_LENGTHS[0] ?? 16}>{model?.trail[0] ?? ''}</Text>
-      </Panel>
-      <Scroll width={FRAME.width - 2 * PADDING} height={FRAME.height - HEADER_HEIGHT - 2 * PADDING - 24}>
-        <Panel flexDirection={'column'} gap={4} padding={4}>
-          {rows.map(([key, entry]): JSX.Element => (
-            <Panel flexDirection={'column'} gap={2}>
-              {rowFor(key, entry, model)}
-              <Divider />
+const { spacing } = theme.tokens;
+
+/** Space between the card's border and the regions inside it. */
+const BODY_PADDING = spacing.sm;
+
+/** The submit button's row, held below the scroll rather than scrolling with it. */
+const ACTION_HEIGHT = 20;
+
+/** The scrollbar's own column, which the content leaves clear. */
+const TRACK_WIDTH = 5;
+
+/** The primary button's word, white: a key takes no colour code, so the colour is the label's. */
+const SAVE_COLOR: readonly [number, number, number] = [1, 1, 1];
+
+/** Every trail slot, live: a slot the present leaves empty hides with its separator. */
+const trailSegments = (trail: readonly DisplayText[]): TrailSegment[] =>
+  TRAIL_LENGTHS.map((maxLength, index) => ({ text: trail[index] ?? '', maxLength }));
+
+/**
+ * The frame every shaped screen wears, so a leaf sits in the same card the
+ * screens before it do: the header and its trail, the settings in a scroll,
+ * and the save below it where it stays in reach however long the section is.
+ *
+ * The header's back control is the form's own dismiss, labelled — a modal has
+ * exactly two controls, so the way out and the way back are the same one, and
+ * there is none left over for a close.
+ */
+export const sheet = (model: LeafModel | undefined, rows: readonly [string, EntrySchema][]): JSX.Element => {
+  const bodyHeight = FRAME.height - HEADER_HEIGHT - 2 * PADDING;
+  const contentWidth = FRAME.width - 2 * PADDING - 2 * BODY_PADDING;
+  const scrollHeight = bodyHeight - 2 * BODY_PADDING - ACTION_HEIGHT - spacing.xs;
+
+  return (
+    <Form
+      onSubmit={({ values: submitted }: SubmitEvent): void => { model?.onSubmit?.(submitted); }}
+      onCancel={(): void => { model?.onCancel?.(); }}
+    >
+      <Card variant={'raised'} width={FRAME.width} height={FRAME.height} flexDirection={'column'} padding={0} gap={0}>
+        <Header segments={trailSegments(model?.trail ?? [])} cancel={i18n.key($ => $.action.cancel)} height={HEADER_HEIGHT} />
+        <Panel flexDirection={'column'} gap={spacing.xs} padding={BODY_PADDING} height={bodyHeight}>
+          <Scroll width={contentWidth} height={scrollHeight}>
+            <Panel flexDirection={'column'} gap={spacing.sm} width={contentWidth - TRACK_WIDTH}>
+              {rows.map(([key, entry]): JSX.Element => (
+                <Panel flexDirection={'column'} gap={spacing.xs}>
+                  {rowFor(key, entry, model)}
+                  <Divider />
+                </Panel>
+              ))}
             </Panel>
-          ))}
+          </Scroll>
+          <Form.Button type={'submit'} width={contentWidth} height={ACTION_HEIGHT} justifyContent={'center'} alignItems={'center'}>
+            <Text color={SAVE_COLOR}>{i18n.key($ => $.action.save)}</Text>
+          </Form.Button>
         </Panel>
-      </Scroll>
-      <Panel flexDirection={'row'} gap={4} height={20} padding={2}>
-        <Form.Button type={'submit'} label={'Save'} flex={2} />
-        <Form.Button type={'exit'} label={'Close'} flex={1} />
-      </Panel>
-    </Card>
-  </Form>
-);
+      </Card>
+    </Form>
+  );
+};
 
 /** One section's settings, in the order the schema declares them. */
 const leafScreen = (entries: readonly [string, EntrySchema][]): FunctionComponent<LeafProps> =>

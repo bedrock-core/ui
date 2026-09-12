@@ -1,6 +1,7 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import type { ControlProps, JSX, PressEvent, ScreenKey } from '@bedrock-core/ui-runtime';
-import { Button, Link, Panel } from '@bedrock-core/ui-runtime';
+import { Button, Image, Link, Panel, Text } from '@bedrock-core/ui-runtime';
+import { Form } from './Form/Form';
 import type { DisplayText } from '@bedrock-core/i18n';
 import { theme } from './tokens';
 import { Trail, type TrailSegment } from './Trail';
@@ -27,6 +28,16 @@ export interface HeaderProps extends ControlProps {
   /** Omit to hide the close control. */
   onClose?: (event: PressEvent) => unknown;
   /**
+   * The back control as a MODAL's dismiss, labelled: only inside a `<Form>`.
+   *
+   * A modal has two controls, its submit and its dismiss, and the dismiss is
+   * the only one left to leave the screen with — so it wears the back slot and
+   * says what it does, since leaving a form abandons what was typed into it.
+   */
+  cancel?: string;
+  /** Room the cancel control takes; wide enough for its word. */
+  cancelWidth?: number;
+  /**
    * Characters the title reserves. A compiled screen bakes its title unless it
    * is told how long a live one may be; set this where the title is a string
    * known only when the screen is shown, such as an addon's name.
@@ -40,11 +51,14 @@ export interface HeaderProps extends ControlProps {
   segments?: readonly TrailSegment[];
 }
 
+/** Room the cancel control takes in the back slot: the back glyph, a gap and its word. */
+const CANCEL_WIDTH = 54;
+
 /**
  * Ore header bar: icon-only back button, breadcrumb trail, close button. Every screen
  * in a stack wears this so the chrome does not shift as the player moves between them.
  */
-export function Header({ title, breadcrumbs, onBack, backTo, back, onClose, titleMaxLength, segments, ...layout }: HeaderProps): JSX.Element {
+export function Header({ title, breadcrumbs, onBack, backTo, back, onClose, cancel, cancelWidth, titleMaxLength, segments, ...layout }: HeaderProps): JSX.Element {
   const h = theme.components.header;
   const own: DisplayText = title ?? '';
   const trail: readonly TrailSegment[] = segments ?? [
@@ -64,15 +78,27 @@ export function Header({ title, breadcrumbs, onBack, backTo, back, onClose, titl
       background={h.textures.background}
       {...layout}
     >
-      {backTo !== undefined || back === true
-        ? <Link width={h.iconSize} height={h.iconSize} background={h.textures.back} backgroundHover={h.textures.backHover} backgroundPressed={h.textures.backPressed} {...backTo === undefined ? { back: true } : { to: backTo }} />
-        : onBack
-          ? <Button width={h.iconSize} height={h.iconSize} background={h.textures.back} backgroundHover={h.textures.backHover} backgroundPressed={h.textures.backPressed} onPress={onBack} />
-          : <Panel width={h.iconSize} height={h.iconSize} />}
+      {cancel !== undefined
+        ? (
+            // Drawn on nothing: the glyph every back control wears, with its word
+            // beside it — the same control the other screens' back is, that says
+            // what leaving a form does.
+            <Form.Button type={'exit'} variant={'transparent'} width={cancelWidth ?? CANCEL_WIDTH} height={h.iconSize} flexDirection={'row'} alignItems={'center'} gap={h.gap} paddingLeft={0} paddingRight={0} paddingTop={0} paddingBottom={0}>
+              <Image width={h.iconSize} height={h.iconSize} texture={h.textures.back} />
+              <Text color={h.textStyle.colorRgb}>{cancel}</Text>
+            </Form.Button>
+          )
+        : backTo !== undefined || back === true
+          ? <Link width={h.iconSize} height={h.iconSize} background={h.textures.back} backgroundHover={h.textures.backHover} backgroundPressed={h.textures.backPressed} {...backTo === undefined ? { back: true } : { to: backTo }} />
+          : onBack
+            ? <Button width={h.iconSize} height={h.iconSize} background={h.textures.back} backgroundHover={h.textures.backHover} backgroundPressed={h.textures.backPressed} onPress={onBack} />
+            : <Panel width={h.iconSize} height={h.iconSize} />}
       <Trail segments={trail} flexGrow={1} flexShrink={1} />
       {onClose
         ? <Button width={h.iconSize} height={h.iconSize} background={h.textures.close} backgroundHover={h.textures.closeHover} backgroundPressed={h.textures.closePressed} onPress={onClose} />
-        : <Panel width={h.iconSize} height={h.iconSize} />}
+        // As wide as the control opposite it, so the trail is centred on the bar
+        // rather than on what is left over beside a wider back control.
+        : <Panel width={cancel === undefined ? h.iconSize : cancelWidth ?? CANCEL_WIDTH} height={h.iconSize} />}
     </Panel>
   );
 }
