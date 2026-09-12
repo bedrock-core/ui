@@ -45,11 +45,18 @@
 		"controls": [
 			{
 				// The viewport clips the content; the 5-texel track sits to its right.
+				// An input panel rather than a plain one, hovering: the wheel is
+				// delivered to the scroll view through the control under the pointer,
+				// and a panel is not one — so over prose, an image or empty space the
+				// wheel reached nothing and only a button inside the content scrolled
+				// the region. `hover_enabled` is not a property a plain panel accepts;
+				// the engine rejects the whole definition.
 				"scrolling_view_port": {
-					"type": "panel",
+					"type": "input_panel",
 					"size": [ "100% - 5px", "100%" ],
 					"anchor_from": "top_left",
 					"anchor_to": "top_left",
+					"hover_enabled": true,
 					"clips_children": true,
 					"controls": [
 						{
