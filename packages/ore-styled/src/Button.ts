@@ -13,6 +13,10 @@ export interface ButtonProps extends PrimitiveButtonProps {
    * shown by an addon that has none of this one's script.
    */
   to?: ScreenKey;
+  /** With `to`: take the place of the screen this button is on rather than stacking over it. */
+  replace?: boolean;
+  /** The way back, in place of `to`: the player's own stack decides where. */
+  back?: boolean;
 }
 
 export function Button({
@@ -20,6 +24,8 @@ export function Button({
   enabled = true,
   onPress,
   to,
+  replace,
+  back,
   children,
   ...rest
 }: ButtonProps): JSX.Element {
@@ -46,5 +52,9 @@ export function Button({
     children: resolvedChildren,
   };
 
-  return to === undefined ? PrimitiveButton({ ...styled, onPress }) : Link({ ...styled, to });
+  if (to !== undefined) {
+    return Link({ ...styled, to, ...replace === true ? { replace: true } : {} });
+  }
+
+  return back === true ? Link({ ...styled, back: true }) : PrimitiveButton({ ...styled, onPress });
 }

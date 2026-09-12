@@ -9,6 +9,9 @@ const LINK_TO = 'linkTo';
 /** The prop that marks a link as the way back, rather than a key. */
 const LINK_BACK = 'linkBack';
 
+/** The prop that marks a link as replacing the screen it leaves. */
+const LINK_REPLACE = 'linkReplace';
+
 export interface LinkProps extends Omit<ButtonProps, 'onPress'> {
   /**
    * The screen to open: `<addon>:<name>`, as the build wrote it. This addon's own
@@ -24,6 +27,13 @@ export interface LinkProps extends Omit<ButtonProps, 'onPress'> {
   back?: boolean;
   /** Props the target screen is rendered with; see {@link NavigateOptions.params}. */
   params?: NavigateOptions['params'];
+  /**
+   * Take the place of the screen this link is on rather than stacking over
+   * it, so a back from the target returns to what was under THIS screen. For
+   * moving sideways — the pages of a guide, the tabs of a set — where the
+   * screens are peers and none of them is the way back to another.
+   */
+  replace?: boolean;
 }
 
 /**
@@ -42,12 +52,12 @@ export interface LinkProps extends Omit<ButtonProps, 'onPress'> {
  * rather than a dismissal — which nothing else can tell it, since closing the
  * form and pressing nothing look identical from the outside.
  */
-export const Link: FunctionComponent<LinkProps> = ({ to, back: isBack, params, ...rest }: LinkProps): JSX.Element => {
+export const Link: FunctionComponent<LinkProps> = ({ to, back: isBack, params, replace, ...rest }: LinkProps): JSX.Element => {
   const button = Button({
     ...rest,
     onPress: ({ player }: PressEvent): void => {
       if (to !== undefined) {
-        navigate(to, player, params === undefined ? {} : { params });
+        navigate(to, player, { ...params === undefined ? {} : { params }, ...replace === true ? { replace: true } : {} });
 
         return;
       }
@@ -62,12 +72,13 @@ export const Link: FunctionComponent<LinkProps> = ({ to, back: isBack, params, .
       ...button.props,
       ...to === undefined ? {} : { [LINK_TO]: to },
       ...isBack === true ? { [LINK_BACK]: true } : {},
+      ...to !== undefined && replace === true ? { [LINK_REPLACE]: true } : {},
     },
   };
 };
 
 /** Where a press leads, as the build reads it off one element. */
-export type LinkTarget = { readonly to: string } | { readonly back: true };
+export type LinkTarget = { readonly to: string; readonly replace?: true } | { readonly back: true };
 
 /**
  * Where a built button goes, when it is a `<Link>`. Undefined for an ordinary
@@ -77,7 +88,7 @@ export function linkTarget(element: JSX.Element): LinkTarget | undefined {
   const to = element.props[LINK_TO];
 
   if (typeof to === 'string') {
-    return { to };
+    return element.props[LINK_REPLACE] === true ? { to, replace: true } : { to };
   }
 
   return element.props[LINK_BACK] === true ? { back: true } : undefined;

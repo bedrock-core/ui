@@ -39,7 +39,7 @@ export interface ScreenReference {
  * unable to tell "take me back" from "I am done". As an entry it is neither
  * guess: the press is attributed, and the walk ends saying which it was.
  */
-export type ReferenceTarget = { readonly to: string } | { readonly back: true } | null;
+export type ReferenceTarget = { readonly to: string; readonly replace?: true } | { readonly back: true } | null;
 
 /** Every static screen one addon publishes, keyed as they are navigated. */
 export interface AddonReference {
@@ -141,7 +141,12 @@ export async function presentReference(
       continue;
     }
 
-    walked.push(current);
+    // A replacing press leaves nothing behind it: the next back returns to
+    // what was under this screen, not to this screen.
+    if (target.replace !== true) {
+      walked.push(current);
+    }
+
     current = target.to;
     screen = lookup(current);
   }

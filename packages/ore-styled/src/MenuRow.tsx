@@ -36,6 +36,8 @@ export interface MenuRowProps extends ControlProps {
    * index of rows be shown by an addon running none of this one's script.
    */
   to?: ScreenKey;
+  /** With `to`: take the place of the screen this row is on rather than stacking over it. */
+  replace?: boolean;
   /**
    * Characters the title reserves. A compiled screen bakes a row's text unless
    * told how long a live one may be; set this where the title is only known
@@ -69,6 +71,7 @@ export function MenuRow({
   enabled = true,
   onPress,
   to,
+  replace,
   titleMaxLength,
   subtitleMaxLength,
   ...layout
@@ -137,5 +140,5 @@ export function MenuRow({
     children: face,
   };
 
-  return to === undefined ? Button({ ...styled, onPress }) : Link({ ...styled, to });
+  return to === undefined ? Button({ ...styled, onPress }) : Link({ ...styled, to, ...replace === true ? { replace: true } : {} });
 }

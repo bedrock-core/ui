@@ -25,7 +25,7 @@ export interface StaticScreen {
   /** The value each entry is shown with, in `selection` order. */
   readonly values: readonly string[];
   /** Where each `selection` leads: another screen, back, or nowhere. */
-  readonly targets: readonly ({ readonly to: string } | { readonly back: true } | null)[];
+  readonly targets: readonly ({ readonly to: string; readonly replace?: true } | { readonly back: true } | null)[];
 }
 
 /** Why a screen is not static, in the words its author would need to hear. */
@@ -40,7 +40,7 @@ export interface NotStatic {
  * name, and anything reading this table has no bundle to resolve that against.
  */
 export function staticTable(entries: readonly EntryEntry[], ns: string): StaticScreen | NotStatic {
-  const targets: ({ to: string } | { back: true } | null)[] = [];
+  const targets: ({ to: string; replace?: true } | { back: true } | null)[] = [];
 
   for (const entry of entries) {
     if (entry.carrier !== undefined) {
@@ -60,7 +60,9 @@ export function staticTable(entries: readonly EntryEntry[], ns: string): StaticS
       return { reason: 'a press runs a handler, which only the addon that wrote it can run' };
     }
 
-    targets.push('back' in target ? target : { to: target.to.includes(':') ? target.to : `${ns}:${target.to}` });
+    targets.push('back' in target
+      ? target
+      : { to: target.to.includes(':') ? target.to : `${ns}:${target.to}`, ...target.replace === true ? { replace: true as const } : {} });
   }
 
   return { values: entries.map(entryValue), targets };
