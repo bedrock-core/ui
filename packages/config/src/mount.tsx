@@ -37,7 +37,9 @@ import {
 } from './compiled/configHost';
 import { i18n } from './i18n';
 import { declaredParts } from './declared';
+import type { DisplayText } from '@bedrock-core/i18n';
 import { addonPageReference } from './compiled/page.screen';
+import { shapedScreen } from './compiled/shaped';
 
 /** What a receiving realm forwards: who typed it, what they asked for, and untouched arguments. */
 interface OpenRequest {
@@ -47,11 +49,25 @@ interface OpenRequest {
 }
 
 /**
+ * A section the host asks its owner to draw: the screen a section is drawn on is
+ * baked into the pack of the addon that declared it, and the realm drawing
+ * config is the elected host — usually somebody else.
+ */
+interface SectionRequest {
+  playerId: string;
+  scope: SectionTarget['scope'];
+  scopeId?: string;
+  path: string;
+  trail: DisplayText[];
+}
+
+/**
  * The RPC surface every realm that mounts this UI serves, since any of them may win the
  * election later. Namespaced like the runtime's own methods (`core:config.*`).
  */
 interface HostUiRpc {
   'core:ui.open': (params: OpenRequest) => boolean;
+  'core:ui.section': (params: SectionRequest) => boolean;
 }
 
 /** Options for {@link ui}. */
@@ -87,6 +103,15 @@ export function ui(core: Runtime, options: UiOptions = {}): void {
       if (!player) { throw new Error(`core:ui.open: player '${playerId}' is not in the world`); }
 
       void openUi(core, player, openTargetFrom(command, args));
+
+      return true;
+    },
+    'core:ui.section': ({ playerId, scope, scopeId, path, trail }) => {
+      const player = world.getPlayers().find(candidate => candidate.id === playerId);
+
+      if (!player) { throw new Error(`core:ui.section: player '${playerId}' is not in the world`); }
+
+      void openUi(core, player, { kind: 'config', addonId: core.id, scope, ...scopeId === undefined ? {} : { scopeId }, path, trail });
 
       return true;
     },
@@ -319,7 +344,29 @@ function presentShaped(core: Runtime, player: Player, target: OpenTarget, values
 
   const accessor = core.config.of(addonId, { actorId: player.id });
 
-  return accessor !== undefined && presentShapedEditor(accessor, player, { addonId, scope, entityId: scopeId, path, trail }, values);
+  const level: SectionTarget = { addonId, scope, entityId: scopeId, path, trail };
+  const openers = levelOpeners(core, player);
+
+  // A section this bundle has no screen for is handed to the addon that has
+  // one: the owner draws it out of its own pack, and every press that leaves
+  // it goes back through the same funnel as any other.
+  if (shapedScreen(scope, path) === undefined && addonId !== core.id) {
+    core.rpc.typed<HostUiRpc>(addonId)['core:ui.section']({ playerId: player.id, scope, ...scopeId === undefined ? {} : { scopeId }, path, trail: [...trail] })
+      .catch((error: unknown) => {
+        console.warn(`[config] '${addonId}' did not draw its ${scope} section '${path}' (${String(error)})`);
+      });
+
+    return true;
+  }
+
+  // Up one level: the section this one sits in, or the scope's root when it
+  // sits at the top — the same step every level's own back takes.
+  const up = (): unknown => (path === ''
+    ? openers.back(level)
+    : openLevel(core, player, { ...level, path: path.slice(0, Math.max(0, path.lastIndexOf('.'))), trail: trail.slice(0, -1) }, openers));
+
+  return accessor !== undefined
+    && presentShapedEditor(accessor, player, level, values, up);
 }
 
 /**
