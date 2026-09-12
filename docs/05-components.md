@@ -52,8 +52,8 @@ Today a button is spread over eleven places, each deciding something the others 
 | `core/render/presenters/presentAction.ts` | selection → callback |
 | `container/cells/button.ts` | transport / guard semantics of a press |
 | `container/allocate.ts` `CLAIMS` | that a button takes a slot |
-| `ui-compile/nodes/button.ts` | faces, mappings, enabled gates, the transport aux literal |
-| `ui-compile/nodes/exit.ts` | the close button |
+| `ui-compiler/nodes/button.ts` | faces, mappings, enabled gates, the transport aux literal |
+| `ui-compiler/nodes/exit.ts` | the close button |
 | `components/Form/FormButton.ts` | submit / exit riding the form title |
 | `core/render/validateForm.ts`, `validateContainer.ts` | where a button may sit |
 | `core/fabric/exit.ts` | the `useExit` sentinel |

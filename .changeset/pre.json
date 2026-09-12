@@ -10,7 +10,7 @@
     "@bedrock-core/navigation": "0.9.3",
     "@bedrock-core/ore-styled": "0.10.0",
     "@bedrock-core/ui-resource-pack": "1.0.1",
-    "@bedrock-core/ui-compile": "0.0.0",
+    "@bedrock-core/ui-compiler": "0.0.0",
     "@bedrock-core/ui-runtime": "0.10.2"
   },
   "changesets": []

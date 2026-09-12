@@ -16,13 +16,13 @@ packages/ui-runtime/src/
       runtime/                        session, poll, cells/*, channels, reconcile, items, players, watch, store
     form.ts                           form-action + form-modal (the interpreter runtime is still under core/render until phase 5)
   compile.ts                          the build-time surface (as today, wider)
-packages/ui-compile/src/
+packages/ui-compiler/src/
   emit/                               jsonui.ts  document.ts  shapes.ts
   hosts/                              chest/emit.ts  form-action/emit.ts  form-modal/emit.ts
   compile.ts                          screen in, documents + placement out
 ```
 
-What moves down into `ui-runtime` is only what BOTH halves run: liveness analysis, the ordered `claim` walk that reads a tree's needs, and the needs-vs-offers check. The IR node kinds and their lowering stay in `ui-compile`, because only the build emits — the runtime never needs a node, only the order of the claims and the values on them. That keeps the runtime smaller than a shared full IR would, which is the point of [01-goals](./01-goals.md) rule 1.
+What moves down into `ui-runtime` is only what BOTH halves run: liveness analysis, the ordered `claim` walk that reads a tree's needs, and the needs-vs-offers check. The IR node kinds and their lowering stay in `ui-compiler`, because only the build emits — the runtime never needs a node, only the order of the claims and the values on them. That keeps the runtime smaller than a shared full IR would, which is the point of [01-goals](./01-goals.md) rule 1.
 
 Each host's numbering — where its claims physically land — is the host's own, next to its runtime. Contracts (`contract.ts`) are the only files both halves of a host import.
 

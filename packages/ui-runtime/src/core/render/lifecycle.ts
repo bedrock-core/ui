@@ -66,7 +66,7 @@ export function render(
   if (compiledTitle === undefined) {
     throw new UncompiledScreenError(
       `render(): this screen was not compiled, so there is no layout in the pack to show it with. `
-      + `A screen is compiled by the ui-compile filter: write it as a \`*.screen.tsx\` under \`BP/scripts\`, `
+      + `A screen is compiled by the ui-compiler filter: write it as a \`*.screen.tsx\` under \`BP/scripts\`, `
       + `and import \`@bedrock-core/generated/ui\` once so the build's registrations run.`,
     );
   }

@@ -1,6 +1,6 @@
 # @bedrock-core/ui v2 — working plan
 
-Temporary. These pages are the design the v2 rewrite of `ui-runtime`, `ui-compile` and the
+Temporary. These pages are the design the v2 rewrite of `ui-runtime`, `ui-compiler` and the
 render pack follows. They are deleted, or moved to the docs site, once the code is the
 documentation. Nothing here is user-facing.
 

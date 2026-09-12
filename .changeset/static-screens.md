@@ -1,6 +1,6 @@
 ---
 '@bedrock-core/ui-runtime': minor
-'@bedrock-core/ui-compile': minor
+'@bedrock-core/ui-compiler': minor
 '@bedrock-core/guides': major
 ---
 
@@ -25,7 +25,7 @@ the marker is for the ones where it matters.
 New in `@bedrock-core/ui-runtime`: `registerStaticScreens`, `staticScreen`, `staticScreens`, and
 `navigate()` showing a static screen straight from its table. `addonReference(ns)` returns what the
 build baked rather than walking components at startup, and `screenReference()` is gone with the
-walk. `@bedrock-core/ui-compile` exports `staticTable` and `wantsStatic`, and a compiled screen
+walk. `@bedrock-core/ui-compiler` exports `staticTable` and `wantsStatic`, and a compiled screen
 carries `table` when it is one.
 
 In `@bedrock-core/guides`, `openGuide(ns, player)` no longer takes the manifest: it navigates to

@@ -330,7 +330,7 @@ export function createContainerScreen(
     if (typeof layout !== 'number') {
       report(new ContainerScreenError(
         `${entity.typeId} has no \`${LAYOUT_PROPERTY}\` property, so its screen cannot be routed.\n`
-        + '  The build stamps it on the entity: rebuild the pack with the ui-compile filter.',
+        + '  The build stamps it on the entity: rebuild the pack with the ui-compiler filter.',
       ));
 
       return;
@@ -376,7 +376,7 @@ export function createContainerScreen(
     if (container.size !== allocation.size) {
       report(new ContainerScreenError(
         `${entity.typeId} has ${container.size} inventory slots and its screen needs ${allocation.size}.\n`
-        + '  The build sizes the entity\'s inventory to the screen: rebuild the pack with the ui-compile filter.',
+        + '  The build sizes the entity\'s inventory to the screen: rebuild the pack with the ui-compiler filter.',
       ));
       cleanupComponentTree(owner);
       clearSession(owner);

@@ -4,7 +4,7 @@ Temporary. Delete items as they land. The docs site has one section per package 
 
 ## Comments: history and spike narration
 
-Rewrite as present-tense facts, dropping spike names and dates; the measurements themselves stay in `docs/spikes/`. `ui-compile` and `ui-runtime` are done; what is left is below.
+Rewrite as present-tense facts, dropping spike names and dates; the measurements themselves stay in `docs/spikes/`. `ui-compiler` and `ui-runtime` are done; what is left is below.
 
 | Location | Text | Action |
 | --- | --- | --- |
@@ -31,7 +31,7 @@ Tests:
 ## JSDoc
 
 - `/** */` on every export; 7 exports in `packages/ui-runtime/src` carry a `//` line instead.
-- `ore-styled`: 11 of 28 exports have no JSDoc — the user-facing library, first in line. Then `i18n` (5) and `ui-compile`, whose count needs retaking since the faces / connectors / nodes split.
+- `ore-styled`: 11 of 28 exports have no JSDoc — the user-facing library, first in line. Then `i18n` (5) and `ui-compiler`, whose count needs retaking since the faces / connectors / nodes split.
 - `@example` convention: fenced ```ts or ```tsx, imports from the public package name, `console.warn`, a `Player` parameter, no spike names or dates. Today only `navigation/src/types.ts`, `traversal.ts` and `context.ts` carry one, in three different shapes.
 - Add those rules to `.github/copilot-instructions.md`.
 

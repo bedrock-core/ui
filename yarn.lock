@@ -200,9 +200,9 @@ __metadata:
   languageName: node
   linkType: soft
 
-"@bedrock-core/ui-compile@workspace:packages/ui-compile":
+"@bedrock-core/ui-compiler@workspace:packages/ui-compiler":
   version: 0.0.0-use.local
-  resolution: "@bedrock-core/ui-compile@workspace:packages/ui-compile"
+  resolution: "@bedrock-core/ui-compiler@workspace:packages/ui-compiler"
   dependencies:
     "@bedrock-core/ui-runtime": "workspace:*"
     typescript: "npm:^6.0.3"

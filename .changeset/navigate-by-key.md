@@ -4,7 +4,7 @@
 '@bedrock-core/guides': major
 '@bedrock-core/ore-styled': minor
 '@bedrock-core/config': major
-'@bedrock-core/ui-compile': minor
+'@bedrock-core/ui-compiler': minor
 ---
 
 **Breaking.** Screens are navigated by key, and a screen of links can be shown by an addon that
@@ -30,7 +30,7 @@ generated module augments so an addon's own keys are typed. `registerCompiledScr
 `{ key, title, snapshot }` instead of positional arguments — it is called by generated code, which
 the build rewrites.
 
-Keys autocomplete: the ui-compile filter writes `packs/data/ui/screens.generated.d.ts` back into the
+Keys autocomplete: the ui-compiler filter writes `packs/data/ui/screens.generated.d.ts` back into the
 project — the way the i18n and guides filters commit their declarations — so the editor offers this
 addon's keys in `navigate()` and `<Link to>` while another addon's key, which this build never saw,
 is still accepted.

@@ -102,7 +102,7 @@ export class TranslationKeysError extends Error {
  *
  * A screen is shown from its layout in the pack, picked by the title the build
  * registered it under. Without that there is nothing to show, so this names the
- * two things that produce one: the ui-compile filter seeing the screen, and the
+ * two things that produce one: the ui-compiler filter seeing the screen, and the
  * generated module being imported so its registrations run.
  */
 export class UncompiledScreenError extends Error {

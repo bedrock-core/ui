@@ -18,9 +18,9 @@
 				"runWith": "nodejs",
 				"script": "../../../regolith-filters/i18n/main.ts"
 			},
-			"ui-compile": {
+			"ui-compiler": {
 				"runWith": "nodejs",
-				"script": "../../../regolith-filters/ui-compile/main.ts"
+				"script": "../../../regolith-filters/ui-compiler/main.ts"
 			},
 			"references": {
 				"runWith": "nodejs",
@@ -50,7 +50,7 @@
 						}
 					},
 					{
-						"filter": "ui-compile",
+						"filter": "ui-compiler",
 						"settings": {
 							"namespace": "core"
 						}
@@ -81,7 +81,7 @@
 						}
 					},
 					{
-						"filter": "ui-compile",
+						"filter": "ui-compiler",
 						"settings": {
 							"namespace": "core",
 							"stamp": true

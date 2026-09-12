@@ -473,7 +473,7 @@ describe('refusing to serve', () => {
     interact(target, viewer);
     await vi.advanceTimersByTimeAsync(TICK * 2);
 
-    expect(error).toHaveBeenCalledWith(expect.stringMatching(/core:ui_layout.*\n.*ui-compile/));
+    expect(error).toHaveBeenCalledWith(expect.stringMatching(/core:ui_layout.*\n.*ui-compiler/));
     expect(target.container.getItem(0)).toBeUndefined();
     expect(effectRuns).toBe(0);
   });

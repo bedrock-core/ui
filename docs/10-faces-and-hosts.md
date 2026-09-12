@@ -232,7 +232,7 @@ outright rather than drawing an inert one.
 ## The gallery
 
 Every screen type is looked at as faces only before any host serves it. `gallery: true` on the
-ui-compile filter makes the build write two extra things:
+ui-compiler filter makes the build write two extra things:
 
 - **A preview per screen.** The face document regenerated under the namespace
   `<ns>_<name>__preview`, written as `<name>.preview.json` and gated on its own title like any
@@ -250,7 +250,7 @@ ui-compile filter makes the build write two extra things:
   is itself a face-only screen with presses, which is the same shape a guide home and a
   cross-addon reference have.
 
-The gallery is the ui-compile filter's `gallery: true` setting: turn it on in the profile a pack
+The gallery is the ui-compiler filter's `gallery: true` setting: turn it on in the profile a pack
 is developed under and leave it off in the one it ships from. It stays, the way a component
 storybook does. *Decided.*
 

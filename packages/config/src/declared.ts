@@ -23,7 +23,7 @@ export interface DeclaredParts {
 
 let parts: DeclaredParts = {};
 
-/** Called by the module the ui-compile filter generates; see {@link DeclaredParts}. */
+/** Called by the module the ui-compiler filter generates; see {@link DeclaredParts}. */
 export function registerDeclared(declared: DeclaredParts): void {
   parts = { ...parts, ...declared };
 }

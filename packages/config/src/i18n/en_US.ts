@@ -22,7 +22,7 @@ export default {
   },
 
   errors: {
-    notCompiled: 'This addon was built without its screens. Rebuild its pack with the ui-compile filter.',
+    notCompiled: 'This addon was built without its screens. Rebuild its pack with the ui-compiler filter.',
   },
 
   config: {

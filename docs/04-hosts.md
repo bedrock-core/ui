@@ -1,6 +1,6 @@
 # 04 — Hosts
 
-A host is one Minecraft screen the library draws on, and the transport that screen offers. Every screen-specific fact in the codebase lives in a host: the routing trick, the carriers, the inputs, the vanilla file that is hooked, the chrome, the runtime loop. A host is a folder in each package — `packages/ui-runtime/src/hosts/<id>/` for the contract the registry reads, the allocation walk and the runtime that serves the screen, `packages/ui-compile/src/hosts/<id>/` for the emitter and the router. Three of them: `chest`, and the two form hosts sharing `hosts/form/`.
+A host is one Minecraft screen the library draws on, and the transport that screen offers. Every screen-specific fact in the codebase lives in a host: the routing trick, the carriers, the inputs, the vanilla file that is hooked, the chrome, the runtime loop. A host is a folder in each package — `packages/ui-runtime/src/hosts/<id>/` for the contract the registry reads, the allocation walk and the runtime that serves the screen, `packages/ui-compiler/src/hosts/<id>/` for the emitter and the router. Three of them: `chest`, and the two form hosts sharing `hosts/form/`.
 
 ## The interface
 
@@ -30,7 +30,7 @@ interface HostContract {
   check?(tree: JSX.Element): void;
 }
 
-// build half: packages/ui-compile/src/hosts/<id>/emit.ts
+// build half: packages/ui-compiler/src/hosts/<id>/emit.ts
 interface HostEmit {
   id: string;
   /** Controls put under every screen's canvas, before its content. */
@@ -46,7 +46,7 @@ interface HostEmit {
 }
 ```
 
-The rest of a host is modules rather than one interface: the allocation walk both halves run is `hosts/<id>/allocate.ts`, the constants the emitted JSON UI and the runtime agree on are `hosts/<id>/contract.ts`, the routers are `ui-compile/src/hosts/chest/index.ts` and `ui-compile/src/hosts/form/router.ts`, and the runtime loops are `hosts/chest/runtime/` and `hosts/form/runtime.ts`.
+The rest of a host is modules rather than one interface: the allocation walk both halves run is `hosts/<id>/allocate.ts`, the constants the emitted JSON UI and the runtime agree on are `hosts/<id>/contract.ts`, the routers are `ui-compiler/src/hosts/chest/index.ts` and `ui-compiler/src/hosts/form/router.ts`, and the runtime loops are `hosts/chest/runtime/` and `hosts/form/runtime.ts`.
 
 The host registry is a list, like `NODE_DEFINITIONS` and `CELLS`: adding a host is adding a folder and a list entry, never a `switch`.
 
@@ -83,7 +83,7 @@ What each rule rests on is called out with it.
 
 ## The chest host
 
-The runtime half is `packages/ui-runtime/src/hosts/chest/`: `host.ts` is the contract the registry reads, `contract.ts` the constants the emitted JSON UI and the runtime agree on (the items, the sentinel slots, the layout key, the entity property), `allocate.ts` the walk, `charset.ts` the glyph table live text decodes through, and `runtime/` the loop — `cells/`, `poll`, `channels`, `reconcile`, `session`, `items`, `players`, `watch`, `store`. The build half is `packages/ui-compile/src/hosts/chest/`: `emit.ts` for the mechanisms, `index.ts` for the hook and the router, with the JSON UI each mechanism writes in `connectors/chest/`. Liveness and the claim walk are the shared IR's (`core/ir/`), not the chest's. The engine rules all of it rests on are in [spikes/jsonui-container-facts](./spikes/jsonui-container-facts.md) and in those modules' comments.
+The runtime half is `packages/ui-runtime/src/hosts/chest/`: `host.ts` is the contract the registry reads, `contract.ts` the constants the emitted JSON UI and the runtime agree on (the items, the sentinel slots, the layout key, the entity property), `allocate.ts` the walk, `charset.ts` the glyph table live text decodes through, and `runtime/` the loop — `cells/`, `poll`, `channels`, `reconcile`, `session`, `items`, `players`, `watch`, `store`. The build half is `packages/ui-compiler/src/hosts/chest/`: `emit.ts` for the mechanisms, `index.ts` for the hook and the router, with the JSON UI each mechanism writes in `connectors/chest/`. Liveness and the claim walk are the shared IR's (`core/ir/`), not the chest's. The engine rules all of it rests on are in [spikes/jsonui-container-facts](./spikes/jsonui-container-facts.md) and in those modules' comments.
 
 A container screen gets no navigation key. It is reached by interacting with the entity that carries its layout key, so there is nothing for `<Link to>` or `navigate()` to name; only form screens appear in `SCREEN_KEYS` and in the reference feed.
 

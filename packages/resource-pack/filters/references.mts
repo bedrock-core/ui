@@ -9,7 +9,7 @@
 // from the render pack the client already has, none of this pack's script
 // involved.
 //
-// Runs after ui-compile, which wrote the registration module this reads, and
+// Runs after ui-compiler, which wrote the registration module this reads, and
 // before the bundler. The references are built by the same library the
 // screens were compiled against, in the same way an addon builds its own at
 // startup; the result is written into the config package's source, where it
@@ -18,7 +18,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { evaluateEntry } from '../../../../regolith-filters/ui-compile/lib/load.ts';
+import { evaluateEntry } from '../../../../regolith-filters/ui-compiler/lib/load.ts';
 
 const projectRoot = process.env['ROOT_DIR'];
 
@@ -85,7 +85,7 @@ const references = await evaluateEntry<References>({
 });
 
 if (Object.keys(references.screens.screens).length === 0) {
-  console.error(`❌ references: no compiled screens under "${NAMESPACE}" were registered — did ui-compile run?`);
+  console.error(`❌ references: no compiled screens under "${NAMESPACE}" were registered — did ui-compiler run?`);
   process.exit(1);
 }
 

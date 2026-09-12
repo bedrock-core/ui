@@ -3,7 +3,7 @@
  *
  * Every value here is baked into a layout at build time and written into a
  * container at runtime, so it lives in one place and both sides import it —
- * the ui-compile filter bundles the project's own copy of this module, which
+ * the ui-compiler filter bundles the project's own copy of this module, which
  * is what keeps a screen compiled against the runtime it ships with.
  *
  * The items the protocol rides are all vanilla BLOCKS from the legacy id

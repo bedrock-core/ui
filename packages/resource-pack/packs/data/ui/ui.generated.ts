@@ -1,4 +1,4 @@
-// Placeholder. The `ui-compile` filter replaces this in the build workspace
+// Placeholder. The `ui-compiler` filter replaces this in the build workspace
 // with one `registerCompiledScreen` call per compiled screen and the gallery
 // it generates; what is committed here is only what the editor and `tsc` read
 // before Regolith has ever run — the same arrangement the i18n and guides
@@ -14,7 +14,7 @@ import type { Player } from '@minecraft/server';
 export function openGallery(player: Player, options: RenderOptions = {}): boolean {
   void player;
   void options;
-  console.warn('[ui] this build has no gallery: set `gallery: true` on the ui-compile filter');
+  console.warn('[ui] this build has no gallery: set `gallery: true` on the ui-compiler filter');
 
   return false;
 }

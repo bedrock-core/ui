@@ -89,7 +89,7 @@ const stampPath = path.join('ui', 'core-ui', 'screens', 'core', 'core_build.json
 const built = stampIn(path.join(packRoot, '.regolith', 'tmp', 'RP', stampPath));
 
 if (built === undefined) {
-  fail('the build wrote no stamp — the development profile needs `"stamp": true` on the ui-compile filter');
+  fail('the build wrote no stamp — the development profile needs `"stamp": true` on the ui-compiler filter');
 }
 
 const candidates = [

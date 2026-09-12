@@ -48,7 +48,7 @@
 			   dropdown_area host BY NAME. It took the client down. So the compiled
 			   popup hangs OUTSIDE the cell: the compiler emits one
 			   `dropdown_popup_router` per dropdown at the screen root (see
-			   ui-compile hosts/form/emit.ts), carrying that cell's row index,
+			   ui-compiler hosts/form/emit.ts), carrying that cell's row index,
 			   `$compiled`, `$open_gate: "#custom_dropdown"`, `$popup_texture` and
 			   `$popup_size` — the same overlay position the interpreted router gets
 			   from modal_container's popup_overlay factory, which cannot pass

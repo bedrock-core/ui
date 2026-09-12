@@ -32,7 +32,7 @@ Screens that are *not* discovered (a component handed to `render()` from an ordi
 One Regolith entry, `core`, runs the whole stack in the only order it supports, with the namespace declared once under `shared`:
 
 ```
-manifest -> generator -> guides -> i18n -> ui-compile -> bundler
+manifest -> generator -> guides -> i18n -> ui-compiler -> bundler
 ```
 
 Each stage runs in its own Node process out of its own folder, exactly as Regolith would run it — same cwd, same `ROOT_DIR`, same settings JSON, same exit code — so `core` only assembles the settings and enforces the order. Per-stage settings sit under the stage's key and are merged over `shared`; `false` skips a stage; `generator` is opt-in because it writes types into the project. A stage whose inputs are absent reports that it has nothing to do and the run continues, so a project may use part of the stack.
@@ -54,14 +54,14 @@ A project that needs a filter of its own between two stages lists the six one by
 
 ## Filter internals
 
-The filter bundles each screen together with the **project's** copy of `ui-runtime` and `ui-compile` (esbuild, game modules aliased to a stub), so a screen compiles against the library the addon ships — unchanged. One esbuild build with every screen as an entry point replaces today's build-per-screen. The compiler's own error messages are relayed unchanged.
+The filter bundles each screen together with the **project's** copy of `ui-runtime` and `ui-compiler` (esbuild, game modules aliased to a stub), so a screen compiles against the library the addon ships — unchanged. One esbuild build with every screen as an entry point replaces today's build-per-screen. The compiler's own error messages are relayed unchanged.
 
 ## Working loop
 
 What has to be true before a change is worth a look in game, and how each rule earned its place.
 
 1. **One deploy path.** `yarn preflight` — tests, lint, `regolith run` on the development profile, then a read-back of the pack the game will load. The `build` profile fills `packages/resource-pack/build/` for CI and nothing else. Two builds landing in two folders cost two rounds of "the change did nothing".
-2. **A build stamp on the HUD.** The development profile sets `"stamp": true` on `ui-compile`, which bakes `ui <hash6> HH:MM` at the HUD's top-left — a hash of every compiled screen plus the clock. Preflight fails when the deployed stamp is not the one it just built; a `regolith watch` holding the session lock fails the same way, named.
+2. **A build stamp on the HUD.** The development profile sets `"stamp": true` on `ui-compiler`, which bakes `ui <hash6> HH:MM` at the HUD's top-left — a hash of every compiled screen plus the clock. Preflight fails when the deployed stamp is not the one it just built; a `regolith watch` holding the session lock fails the same way, named.
 3. **Console, not chat.** `render(Screen, player, { debug: true })` logs what each present wrote (`[ui] <title> entries [...]`) and the `debug` diff to the content log, where a line copies with a click.
 4. **Probe first, build second.** A JSON UI behaviour not in [06-render-pack](./06-render-pack.md)'s rules or a findings page gets a probe matrix before a feature stands on it: one atom per probe, lettered, readable as colours and text without debug mode, one deploy, one reading. `#size_binding` under a modification insert cost four rounds of reasoning and one matrix.
 5. **Structured readings.** A test request names where to look, what working looks like, and what failing looks like.

@@ -1,6 +1,6 @@
 ---
 '@bedrock-core/ui-runtime': minor
-'@bedrock-core/ui-compile': minor
+'@bedrock-core/ui-compiler': minor
 ---
 
 The build now catches text that a container screen would silently freeze.

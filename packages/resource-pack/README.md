@@ -68,7 +68,7 @@ file tagged for the wrong versions. CurseForge exposes no API for a project's de
 that page is written by hand and kept version-free.
 
 The behavior pack is build input rather than an artifact: it carries the framework’s own screen
-and the guide components, which `ui-compile` bakes into the resource pack. Nothing registers the
+and the guide components, which `ui-compiler` bakes into the resource pack. Nothing registers the
 framework, so the pack ships no script at all, and `build/@bedrock-core_ui_bp` is never released.
 
 ## Development
@@ -83,7 +83,7 @@ yarn build            # Build all packages (including this addon)
 yarn watch            # Rebuild and deploy to com.mojang on change
 ```
 
-The filter chain is `guides` → `i18n` → `ui-compile` → `references`. There is no bundler stage:
+The filter chain is `guides` → `i18n` → `ui-compiler` → `references`. There is no bundler stage:
 the pack has no runtime script to bundle. The generated
 bundles are reached through `tsconfig.json` path aliases — `@bedrock-core/generated/i18n`,
 `@bedrock-core/generated/guides` and `@bedrock-core/generated/ui` — resolving to the filters'

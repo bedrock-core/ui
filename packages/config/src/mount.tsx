@@ -424,7 +424,7 @@ async function prefetchScopeValues(
  *
  * Every screen the config UI needs is compiled into an addon's own pack from
  * what it declared, so reaching here means a pack that was built without the
- * ui-compile filter, or one built against a library that did not yet shape the
+ * ui-compiler filter, or one built against a library that did not yet shape the
  * screen this target wants. Either is a build to fix, which is why it is said
  * here rather than papered over.
  */
@@ -433,6 +433,6 @@ function missing(player: Player, target: OpenTarget): void {
     ? `${target.addonId} ${target.scope ?? 'config'}${target.path === undefined || target.path === '' ? '' : ` ${target.path}`}`
     : target.kind;
 
-  console.error(`[config] no compiled screen for ${what} — build this pack with the ui-compile filter`);
+  console.error(`[config] no compiled screen for ${what} — build this pack with the ui-compiler filter`);
   player.sendMessage({ translate: i18n.key($ => $.errors.notCompiled) });
 }

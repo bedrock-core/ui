@@ -1,6 +1,6 @@
 import path from 'path';
 import { defineConfig } from 'vitest/config';
-import { desugarJsxConditionals } from '../../../regolith-filters/ui-compile/lib/sugar.ts';
+import { desugarJsxConditionals } from '../../../regolith-filters/ui-compiler/lib/sugar.ts';
 
 export default defineConfig({
   plugins: [

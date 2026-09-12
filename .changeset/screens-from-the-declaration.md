@@ -1,6 +1,6 @@
 ---
 '@bedrock-core/config': minor
-'@bedrock-core/ui-compile': minor
+'@bedrock-core/ui-compiler': minor
 ---
 
 An addon's screens follow from what it declared.

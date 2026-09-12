@@ -14,7 +14,7 @@ packs/data/guides/<locale>/**.mdx
       ├─→ @bedrock-core/generated/guides    (manifest: sidebar tree, pages, prev/next)
       └─→ BP/scripts/guides/*.screen.tsx    (one screen module per page + the index)
                 │
-                ▼  this package, through the ui-compile filter
+                ▼  this package, through the ui-compiler filter
       one compiled screen per page, navigated by key
 ```
 

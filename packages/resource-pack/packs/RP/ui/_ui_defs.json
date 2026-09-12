@@ -2,7 +2,7 @@
 	"ui_defs": [
 		// Vanilla's two hooks: the server form every compiled form screen is shown
 		// through, and the chest every compiled container screen is opened from.
-		// Each addon's ui-compile build ships its own copy of these paths, and the
+		// Each addon's ui-compiler build ships its own copy of these paths, and the
 		// engine stacks every pack's.
 		"ui/server_form.json",
 		"ui/chest_screen.json",
@@ -35,7 +35,7 @@
 		// The CHEST host: the cells, the text hosts, the transport-hiding item
 		// renderer, the chrome, and the root every addon's router adds its own
 		// screens to. The screens and the routers themselves are emitted by the
-		// ui-compile filter into each addon's pack, which registers them there.
+		// ui-compiler filter into each addon's pack, which registers them there.
 		"ui/core-ui/hosts/chest/cell.json",
 		"ui/core-ui/hosts/chest/text.json",
 		"ui/core-ui/hosts/chest/gated_item.json",

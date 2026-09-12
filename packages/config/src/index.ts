@@ -10,7 +10,7 @@
  * ui(core);                         // registers the commands and joins the host election
  * ```
  *
- * The addon declares; the build does the rest. The ui-compile filter reads that
+ * The addon declares; the build does the rest. The ui-compiler filter reads that
  * register call and compiles what follows from it — the addon's page in the
  * shared list, drawn from its manifest, and one config screen per section of its
  * schema — and `ui()` announces those along with the i18n bundle and guide the
@@ -39,14 +39,14 @@ export { CONFIG_SCOPES } from './types';
 export type { ConfigScope, EntrySchema, FlatSchemaLike } from './types';
 
 /**
- * The config screens an addon's own schema becomes, for the ui-compile filter's
+ * The config screens an addon's own schema becomes, for the ui-compiler filter's
  * `screens` setting: one per section that holds settings, shaped for it.
  */
 export { configScreens, leafName, registerConfigScreens, type LeafModel, type LeafProps } from './compiled/shaped';
 
 /**
  * What a build declares on its addon's behalf: the page drawn from its manifest,
- * its i18n bundle, its guide manifest. The ui-compile filter generates the
+ * its i18n bundle, its guide manifest. The ui-compiler filter generates the
  * module that calls these; `ui()` publishes what they carry.
  */
 export { addonPageScreen, type AddonPageInfo } from './compiled/page.screen';
