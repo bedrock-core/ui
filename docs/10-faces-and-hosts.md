@@ -144,14 +144,15 @@ face (a gate reading a carried `visible`; a one-child `stack_panel` host carryin
 chest cell over a container slot; a text carrier in place of a static label; a native field
 placed by its row index). Nothing outside the sockets is touched.
 
-The **rect guard** proves it: after the host emits, every control's `size`, `offset` and
-`anchor_from` / `anchor_to` are diffed against the face document, and any difference is a
-build error naming the control and the host. The guard runs in the compile tests and in
-`yarn preflight`. *Decided.*
+The **rect guard** proves it: each socket's placement — `size`, `offset`, `anchor_from` /
+`anchor_to`, `layer` — is diffed against the face entry the host was handed, and any difference
+is a build error naming the control and the host. It runs on every fill, so a host that moves
+something never reaches a pack. *Decided.*
 
-`HostEmit` ([04-hosts](./04-hosts.md)) keeps its shape, with one change of input: `readCarrier`
-and `wireInput` receive the socket's face control and return the control that stands in its
-place. *Proposed* names.
+`HostEmit` ([04-hosts](./04-hosts.md)) is where a host says how: `fill` holds one function per
+socket kind, each taking the node, the socket's face entry and the emit context, and returning
+the entry that stands in its place. A kind absent from `fill` is a kind the host cannot serve.
+`wrapVisible` is the same shape for the gate around a carried `visible`.
 
 ## Roots
 
@@ -230,9 +231,8 @@ outright rather than drawing an inert one.
 
 ## The gallery
 
-Every screen type is looked at as faces only before any host serves it. The dev profile
-(the `development` profile in `packages/resource-pack/config.json`, the one that stamps the
-HUD) makes the build write two extra things:
+Every screen type is looked at as faces only before any host serves it. `gallery: true` on the
+ui-compile filter makes the build write two extra things:
 
 - **A preview per screen.** The face document regenerated under the namespace
   `<ns>_<name>__preview`, written as `<name>.preview.json` and gated on its own title like any
@@ -242,14 +242,17 @@ HUD) makes the build write two extra things:
   channel; `Tabs` and `Disclosure` work because they are local. A preview shows the reference
   render: reference strings, reference visibility, fields as static twins.
 - **A gallery screen.** `<ns>_gallery`, a compiled screen the filter writes and compiles last:
-  a scroll of buttons, one per compiled screen of the addon whatever its root, each opening
-  that screen's preview with `showCompiledTitle` and no entries. `openGallery(player)` is
-  exported from `@bedrock-core/generated/ui`; a build without the gallery exports one that warns.
-  The gallery is itself a face-only screen with presses, which is the same shape a guide home
-  and a cross-addon reference have, so `<Link>` replaces its handlers in phase C.
+  a scroll of `<Link>`s, one per compiled screen of the addon whatever its root, each naming
+  that screen's preview key. A preview is registered as a compiled screen whose tree is empty —
+  the title is the whole of what reaches the layout — so a press is rendered through the
+  session and leaves the gallery cleanly. `openGallery(player)` is exported from
+  `@bedrock-core/generated/ui`; a build without the gallery exports one that warns. The gallery
+  is itself a face-only screen with presses, which is the same shape a guide home and a
+  cross-addon reference have.
 
-The gallery is the `gallery: true` setting of the ui-compile filter, on in the reference pack's
-development profile only, and stays, the way a component storybook does. *Decided.*
+The gallery is the ui-compile filter's `gallery: true` setting: turn it on in the profile a pack
+is developed under and leave it off in the one it ships from. It stays, the way a component
+storybook does. *Decided.*
 
 ## References and navigation
 
