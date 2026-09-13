@@ -24,9 +24,11 @@ export {
 export type { CompiledScreen, CompiledSnapshot, StaticScreenRecord } from './render/screens';
 
 // Navigating by key, and what resolves one.
-export { back, closeUi, navigate, openScreen, setNavigator } from './navigate';
+export { back, closeUi, handOff, navigate, openScreen, screenOwner, setNavigator } from './navigate';
 export { clearHistory, historyOf, shownKey } from './history';
-export type { NavigateOptions, Navigator, ScreenKey, ScreenKeys } from './navigate';
+export type { NavigateOptions, Navigated, NavigationDriver, Navigator, Returner, ScreenKey, ScreenKeys } from './navigate';
+export { returnAddressOf, setReturnAddress, takeReturnAddress } from './returnAddress';
+export type { ReturnAddress } from './returnAddress';
 
 // A screen as another addon can show it.
 export { addonReference, isAddonReference, isScreenReference, presentReference } from './reference';

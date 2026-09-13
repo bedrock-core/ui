@@ -10,7 +10,8 @@ import { Text } from '../../components/Text';
 import { titleFor } from '../../hosts/form/contract';
 import type { FunctionComponent } from '../../jsx';
 import { clearHistory, historyOf } from '../history';
-import { back, navigate, setNavigator } from '../navigate';
+import { back, navigate, openScreen, setNavigator, type Navigated } from '../navigate';
+import { setReturnAddress, type ReturnAddress } from '../returnAddress';
 import { addonReference, presentReference, type ScreenReference } from '../reference';
 import { registerCompiledScreen, registerStaticScreens } from '../render/screens';
 
@@ -136,6 +137,81 @@ describe('navigating by key', () => {
 
     expect(navigate('elsewhere:home', player)).toBe(true);
     expect(seen).toEqual(['elsewhere:home']);
+  });
+});
+
+describe('crossing into another addon\'s realm', () => {
+  it('leaves the stack alone when another realm takes over the screen', () => {
+    const player = nextPlayer();
+    const Here: FunctionComponent = () => Screen({ children: Panel({ children: Text({ children: 'here' }) }) });
+
+    registerCompiledScreen(Here, { key: 'cross:here', title: titleFor('cross_here') });
+
+    setNavigator({
+      show: (key): Navigated => (key === 'cross:here' ? openScreen(key, player) : 'handed-off'),
+    });
+
+    navigate('cross:here', player);
+    // The screen being left travelled with the request as the return address, so this realm
+    // must not also stack it — the player would pass it twice on the way back.
+    expect(navigate('other:leaf', player)).toBe(true);
+    expect(historyOf(player.id)).toHaveLength(0);
+
+    clearHistory(player.id);
+  });
+
+  it('sends the player back to the realm they came from once the local stack is empty', () => {
+    const player = nextPlayer();
+    const First: FunctionComponent = () => Screen({ children: Panel({ children: Text({ children: 'first' }) }) });
+    const Second: FunctionComponent = () => Screen({ children: Panel({ children: Text({ children: 'second' }) }) });
+    const sent: ReturnAddress[] = [];
+
+    registerCompiledScreen(First, { key: 'guest:first', title: titleFor('guest_first') });
+    registerCompiledScreen(Second, { key: 'guest:second', title: titleFor('guest_second') });
+
+    setNavigator({
+      show: (key, who, options): Navigated => openScreen(key, who, options),
+      sendBack: (address): boolean => {
+        sent.push(address);
+
+        return true;
+      },
+    });
+
+    setReturnAddress(player.id, { realm: 'economy', target: { kind: 'screen', key: 'economy:list' } });
+
+    navigate('guest:first', player);
+    navigate('guest:second', player);
+
+    // This realm's own stack first.
+    expect(back(player)).toBe(true);
+    expect(sent).toHaveLength(0);
+
+    // Its bottom is the hop, not the end.
+    expect(back(player)).toBe(true);
+    expect(sent).toEqual([{ realm: 'economy', target: { kind: 'screen', key: 'economy:list' } }]);
+
+    // And exactly once: the realm returned to sets its own address as it shows the player.
+    expect(back(player)).toBe(false);
+    expect(sent).toHaveLength(1);
+
+    clearHistory(player.id);
+  });
+
+  it('ends at the bottom of the stack when nothing asked this realm to show anything', () => {
+    const player = nextPlayer();
+    const Only: FunctionComponent = () => Screen({ children: Panel({ children: Text({ children: 'only' }) }) });
+
+    registerCompiledScreen(Only, { key: 'alone:only', title: titleFor('alone_only') });
+
+    setNavigator({
+      show: (key, who, options): Navigated => openScreen(key, who, options),
+      sendBack: (): boolean => true,
+    });
+
+    navigate('alone:only', player);
+
+    expect(back(player)).toBe(false);
   });
 });
 

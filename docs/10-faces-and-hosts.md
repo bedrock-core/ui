@@ -351,21 +351,21 @@ What stays a component: anything with a live value or a press of its own. A moda
 
 Found in game 2026-09-11: `[config] no shaped item screen for server list 'bannedItems'`.
 
-A config screen shaped for a schema is compiled into the OWNING addon's pack, and the elected host
-draws every addon's config — so the host has a screen for its own lists and none for anybody
-else's. The generic editor that preceded them had no such hole: one shape served any schema.
+A config screen shaped for a schema is compiled into the OWNING addon's pack, so a realm has a
+screen for its own lists and none for anybody else's. The generic editor that preceded them had no
+such hole: one shape served any schema.
 
-Answered for the list item, which is where it bites first, because a list item is the one editor a
-section cannot draw inline: `list_item_text` and `list_item_choice` ship in the library set, baked
-into every addon by the same setting that bakes the rest, and the host falls back to them whenever
-the owner's shaped screen is not in its bundle. An item is one field, so the generic one costs
-nothing the shaped one saved — the trail already names the list, the value travels per present, and
-a dropdown's options travel with it because the engine reads those off the modal row.
+Two answers, and the stack uses both. A section is drawn by its OWNER: the realm that cannot draw
+it asks that addon over `core:ui.show`, which needs the owner's realm to be alive — the dependency
+references exist to remove, accepted here because a section's controls are its schema's and nothing
+generic can stand in for them.
 
-The same question is still open for every OTHER shaped screen: a section's editor drawn by a host
-that is not its owner has no screen either. The two ways out are unchanged — a generic fallback per
-kind, as here, or the host asking the owning realm to draw its own, which reintroduces the
-dependency on that realm being alive that references exist to remove.
+A list ITEM takes the other way out, because it is the one editor a section cannot draw inline and
+because one field is all it ever is: `list_item_text` and `list_item_choice` ship in the library
+set, baked into every addon by the same setting that bakes the rest, and a realm falls back to them
+whenever the owner's shaped screen is not in its bundle. The trail already names the list, the value
+travels per present, and a dropdown's options travel with it because the engine reads those off the
+modal row.
 
 ## Layout stays the build's
 

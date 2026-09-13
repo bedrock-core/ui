@@ -6,6 +6,7 @@ import { triggerCleanup } from './render/session';
 import { presentReference, type ScreenReference } from './reference';
 import { render, type RenderOptions } from './render';
 import { screenForKey, staticScreen } from './render/screens';
+import { takeReturnAddress, type ReturnAddress } from './returnAddress';
 
 /**
  * Navigating by KEY rather than by component.
@@ -16,17 +17,23 @@ import { screenForKey, staticScreen } from './render/screens';
  * into the compiled title. So a press that opens a screen names the key, and
  * what resolves it is decided by whoever is listening.
  *
- * Two resolutions, in order:
+ * Three resolutions, in order:
  *
  * 1. **This bundle.** The key was registered by the generated module, so the
  *    component is in hand and the screen renders exactly as `render()` draws it.
- * 2. **Somebody else's.** The key belongs to an addon whose script this realm is
- *    not running. It is still drawable — the layout is in the pack every client
- *    holds — from a replicated reference: the title, the entry values, and where
- *    each press leads. That resolution needs the feed, so it is installed by
- *    whoever owns it ({@link setNavigator}) rather than reached for from here.
+ * 2. **Somebody else's, statically.** The key belongs to an addon whose script
+ *    this realm is not running, and the screen is one whose every press is a
+ *    link. It is drawable here — the layout is in the pack every client holds —
+ *    from a replicated reference: the title, the entry values, and where each
+ *    press leads.
+ * 3. **Somebody else's, drawn by them.** Nothing static describes the screen,
+ *    so the only realm that can draw it is the one whose bundle built it. It is
+ *    ASKED to, and the screen the player is leaving travels with the request as
+ *    a {@link ReturnAddress} so a `back()` over there comes back here.
  *
- * The default navigator is step 1 alone, which is what an addon with no server
+ * Steps 2 and 3 both cross this realm's edge, so both are installed by whoever
+ * owns that edge ({@link setNavigator}) rather than reached for from here. The
+ * default navigator is step 1 alone, which is what an addon with no server
  * framework gets: its own screens navigate, a foreign key warns.
  */
 
@@ -66,8 +73,41 @@ export interface NavigateOptions extends RenderOptions {
   replace?: boolean;
 }
 
-/** What resolves a key into a screen shown to a player. Returns whether it was shown. */
-export type Navigator = (key: string, player: Player, options: NavigateOptions) => boolean;
+/**
+ * What resolving a key did.
+ *
+ * `true` is a screen shown in this realm, so the one being left goes behind the
+ * player. `false` is a key nothing could draw. `'handed-off'` is another realm
+ * drawing it: the screen being left travelled with the request as the return
+ * address, so it must NOT also go on this realm's stack — the player would
+ * otherwise pass it twice on the way back.
+ */
+export type Navigated = boolean | 'handed-off';
+
+/** What resolves a key into a screen shown to a player. */
+export type Navigator = (key: string, player: Player, options: NavigateOptions) => Navigated;
+
+/** What sends a player back to the realm that asked this one to show a screen. */
+export type Returner = (address: ReturnAddress, player: Player) => boolean;
+
+/** Everything this realm uses to reach a screen it cannot draw itself. */
+export interface NavigationDriver {
+  /** Resolves a key into a screen shown to a player. */
+  show: Navigator;
+  /**
+   * Shows the player what the realm they came from had on screen, when
+   * `back()` runs out of screens here. Absent in a realm with no way to reach
+   * another, where the bottom of the stack is simply the bottom.
+   */
+  sendBack?: Returner;
+}
+
+/** The addon half of a key, or undefined for a bare key naming one of this bundle's own. */
+export function screenOwner(key: string): string | undefined {
+  const separator = key.indexOf(':');
+
+  return separator === -1 ? undefined : key.slice(0, separator);
+}
 
 /**
  * Opens the screen `key` names IN THIS BUNDLE, or false when this bundle
@@ -118,16 +158,27 @@ const localOnly: Navigator = (key, player, options) => {
 };
 
 let navigator: Navigator = localOnly;
+let returner: Returner | undefined;
 
 /**
  * Installs what resolves a key, replacing the local-only default.
  *
- * `@bedrock-core/navigation` installs one that keeps a per-player stack and
- * falls back to the replicated references; a realm running neither keeps the
- * default. Called with `undefined` to put the default back.
+ * `@bedrock-core/navigation` installs one that falls back to the replicated
+ * references and then to the owning realm; a realm running neither keeps the
+ * default. Called with a bare function when resolving is all it can do, with a
+ * {@link NavigationDriver} when it can also cross back, and with `undefined` to
+ * put the default back.
  */
-export function setNavigator(next: Navigator | undefined): void {
-  navigator = next ?? localOnly;
+export function setNavigator(next: Navigator | NavigationDriver | undefined): void {
+  if (typeof next === 'function') {
+    navigator = next;
+    returner = undefined;
+
+    return;
+  }
+
+  navigator = next?.show ?? localOnly;
+  returner = next?.sendBack;
 }
 
 /**
@@ -147,13 +198,15 @@ export function navigate(key: ScreenKey, player: Player, options: NavigateOption
 
   const shown = navigator(key, player, options);
 
-  if (!shown && options.replace !== true) {
-    // Nothing was drawn, so nothing was left: the stack must not gain a step
-    // that would send a later `back()` to the screen the player is still on.
+  if (shown !== true && options.replace !== true) {
+    // Either nothing was drawn — so nothing was left, and the stack must not
+    // gain a step that would send a later `back()` to the screen the player is
+    // still on — or another realm is drawing it, and the screen being left is
+    // already the return address it was asked with.
     popHistory(player.id);
   }
 
-  return shown;
+  return shown !== false;
 }
 
 /**
@@ -164,15 +217,35 @@ export function navigate(key: ScreenKey, player: Player, options: NavigateOption
  * going back means showing that screen again rather than restoring a tree. What
  * it was showing at the time is not restored either: a screen is drawn from its
  * own state, and the state of the one being returned to went with its fibers.
+ *
+ * This realm's own stack first. Underneath it is the realm the player came from,
+ * if another one asked this realm to show them a screen: the bottom of the local
+ * stack is then a hop rather than the end, and the return address is what it
+ * leads to.
  */
 export function back(player: Player, options: Omit<NavigateOptions, 'replace'> = {}): boolean {
   const key = popHistory(player.id);
 
   if (key === undefined) {
+    return returnToSender(player);
+  }
+
+  return navigator(key, player, { ...options, replace: true }) !== false;
+}
+
+/** The one hop out of this realm: whoever asked shows the player what they left. */
+function returnToSender(player: Player): boolean {
+  if (returner === undefined) {
     return false;
   }
 
-  return navigator(key, player, { ...options, replace: true });
+  const address = takeReturnAddress(player.id);
+
+  if (address === undefined) {
+    return false;
+  }
+
+  return returner(address, player);
 }
 
 /**
@@ -184,7 +257,25 @@ export function back(player: Player, options: Omit<NavigateOptions, 'replace'> =
  * when the player dismisses the last form the session simply shows itself again
  * — the way out of a guide lands back on the list that opened it.
  */
+/**
+ * Ends this realm's session for a player another realm is now drawing for.
+ *
+ * The forms on screen are NOT closed: the realm that took the handoff has
+ * already opened its own, and closing them would close that one. What ends is
+ * this realm's side — its component tree, its input lock and the stack it kept
+ * — so the session it rendered earlier cannot present itself again over a
+ * player who has moved on.
+ *
+ * The return address survives, because it is how the player comes back.
+ */
+export function handOff(player: Player): void {
+  triggerCleanup(playerOwner(player), false);
+}
+
 export function closeUi(player: Player): void {
   clearHistory(player.id);
+  // The realm they came from is forgotten with the rest of where they have
+  // been: a player who left the UI is not one step from another realm's screen.
+  takeReturnAddress(player.id);
   triggerCleanup(playerOwner(player), true);
 }
