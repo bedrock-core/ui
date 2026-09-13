@@ -111,7 +111,7 @@ export {
   addonReference,
   back,
   clearHistory,
-  closeUi,
+  closeUi, handOff,
   historyOf,
   shownKey,
   isAddonReference,
@@ -120,15 +120,19 @@ export {
   openScreen,
   presentReference,
   registerStaticScreens,
+  returnAddressOf,
+  screenOwner,
   setNavigator,
+  setReturnAddress,
+  takeReturnAddress,
   compiledKeyOf,
   screenForKey,
   compiledScreens,
 } from './core';
 
 export type {
-  AddonReference, CompiledScreen, NavigateOptions, Navigator, ReferenceTarget,
-  ScreenKey, ScreenKeys, ScreenReference, WalkResult,
+  AddonReference, CompiledScreen, Navigated, NavigateOptions, NavigationDriver, Navigator,
+  ReferenceTarget, ReturnAddress, Returner, ScreenKey, ScreenKeys, ScreenReference, WalkResult,
 } from './core';
 
 export {
@@ -177,3 +181,7 @@ export type {
 
 export { TranslationContext, useTranslation, useTranslationResolver } from './data/Translation';
 export type { TranslationResolver } from '@bedrock-core/i18n';
+
+// Entity API, usable on its own: no screen, no component, no host.
+export { containerInventory, inventoryOf } from './entity';
+export type { Inventory, InventorySlot, SlotContainer, SlotLayout } from './entity';

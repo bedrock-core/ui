@@ -32,6 +32,10 @@
 			"types": "./src/hosts/chest/index.ts",
 			"import": "./src/hosts/chest/index.ts"
 		},
+		"./entity": {
+			"types": "./src/entity/index.ts",
+			"import": "./src/entity/index.ts"
+		},
 		"./compile": {
 			"types": "./src/compile.ts",
 			"import": "./src/compile.ts"

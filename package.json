@@ -54,6 +54,10 @@
 			"types": "./src/container.ts",
 			"import": "./src/container.ts"
 		},
+		"./entity": {
+			"types": "./src/entity.ts",
+			"import": "./src/entity.ts"
+		},
 		"./jsx-runtime": {
 			"types": "./src/jsx/jsx-runtime.ts",
 			"import": "./src/jsx/jsx-runtime.ts"

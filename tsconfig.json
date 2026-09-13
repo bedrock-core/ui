@@ -33,6 +33,12 @@
 			"@bedrock-core/ui-runtime/container": [
 				"./packages/ui-runtime/src/hosts/chest/index.ts"
 			],
+			"@bedrock-core/ui/entity": [
+				"./packages/ui-runtime/src/entity/index.ts"
+			],
+			"@bedrock-core/ui-runtime/entity": [
+				"./packages/ui-runtime/src/entity/index.ts"
+			],
 			"@bedrock-core/ui/jsx-runtime": [
 				"./packages/ui-runtime/src/jsx/jsx-runtime.ts"
 			],
