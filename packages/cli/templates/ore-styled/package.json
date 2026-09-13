@@ -14,6 +14,7 @@
 		"loopback:preview": "CheckNetIsolation.exe LoopbackExempt -a -p=S-1-15-2-424268864-5579737-879501358-346833251-474568803-887069379-4040235476"
 	},
 	"dependencies": {
+		"@bedrock-core/config": "^0.2.0",
 		"@bedrock-core/server": "^0.1.0",
 		"@bedrock-core/ui": "^0.11.0",
 		"@minecraft/server": "2.9.0",

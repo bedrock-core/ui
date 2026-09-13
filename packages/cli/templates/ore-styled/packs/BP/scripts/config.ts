@@ -11,7 +11,7 @@
  * decides how the screen reads.
  *
  * Export the type so other addons can read your config with full typing via
- * `core.config.of<ExampleConfigDef>(...)`.
+ * `configOf(core).of<ExampleConfigDef>(...)`.
  */
 export const configDef = {
   server: {
