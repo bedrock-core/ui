@@ -14,7 +14,7 @@
  *   anything else changed, at any level             → meta patch
  *   nothing changed                                 → no-op
  *
- * A minor on `config` or a major on `flexbox` is a *patch* to the meta: what
+ * A minor on `navigation` or a major on `flexbox` is a *patch* to the meta: what
  * ships is the meta's support for that package, not a new framework line. That
  * also removes the old `MAX_BUMP` clamp — the meta can't outrun the runtime, so
  * a dependency reaching 1.0.0 no longer drags the framework with it, and
@@ -33,12 +33,9 @@ import { readFileSync } from 'node:fs';
 /** The package whose MAJOR.MINOR the meta's version *is*. */
 const RUNTIME_PATH = 'packages/ui-runtime/package.json';
 
-/** The root meta's real (non-peer) dependencies, in `packages/<dir>` form. */
+/** The root meta's real dependencies that live in this repo, in `packages/<dir>` form. */
 const META_DEP_DIRS = [
-	'config',
 	'flexbox',
-	'guides',
-	'i18n',
 	'navigation',
 	'ore-styled',
 	'ui-runtime',

@@ -8,14 +8,8 @@ Rewrite as present-tense facts, dropping spike names and dates; the measurements
 
 | Location | Text | Action |
 | --- | --- | --- |
-| `packages/config/src/i18n/en_US.ts:1-14` | "used to hardcode these in English … Now it goes through" | strings are keyed under the `core` namespace and published when the UI mounts |
-| `packages/config/src/screens/ConfirmReset.tsx:15` | "used to patch on the press" | a confirmation step in front of the one irreversible action |
-| `packages/config/src/screens/ConfigList.tsx:23,30` | "which is why it used to be"; "there was no gesture left" | rewrite 23; drop 30 |
-| `packages/config/src/commands/lists.ts:1-16` | "used to be left out of the command enum" | chat is the only place a list is edited |
-| `packages/config/src/commands/parse.ts:20` | "Lists used to be filtered out here" | every declared key is offered; `add` / `remove` / comma `set` are the list spellings |
 | `scripts/bump-meta.mjs:17-21` | "removes the old `MAX_BUMP` clamp" | drop the clause |
 | `packages/ui-runtime/scripts/generate-font-metrics.mjs:22` | "clipped the bottom of wrap_box'd headings" | the box height is the measured height and clips children |
-| `packages/resource-pack/packs/RP/ui/core-ui/common/control.json:3-39` | "Stage 1, in-game proven by the S1/S2 spikes"; "S1-verified"; "S2-verified"; "moved UP"; "no longer decodes"; "the old copy/paste didn't" | present tense; drop verification tags |
 | `…/common/label_router.json:1-11`, `…/common/button_router.json:1-9` | "Stage 1 perf shape"; "no longer knows about regions" | the region gate lives in the routers; the base control does not decode regions |
 | `…/screens/scroll_pool.json:66,236-240` | "S4 spike"; "SPIKE S5"; "previously collapsed"; "The bet:" | drop tags and the bet; rewrite the rest |
 | `…/screens/scroll.json:37` | "worked but this didn't until renamed" | drop the clause |
@@ -26,7 +20,6 @@ Tests:
 | Location | Text | Action |
 | --- | --- | --- |
 | `packages/flexbox/src/__tests__/layout.test.ts:168,803` | "Regression: …"; "The bug was that deriveSize summed" | the invariant |
-| `packages/config/src/config/__tests__/schema.test.ts:191` | "forced the old read-only fallback" | rewrite |
 
 ## JSDoc
 

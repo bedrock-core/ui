@@ -49,6 +49,6 @@
 		"@bedrock-core/ui-runtime": "*"
 	},
 	"dependencies": {
-		"@bedrock-core/i18n": "workspace:*"
+		"@bedrock-core/i18n": "*"
 	}
 }

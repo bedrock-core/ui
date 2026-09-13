@@ -1,6 +1,5 @@
 ---
 '@bedrock-core/ui-runtime': major
-'@bedrock-core/config': major
 ---
 
 **Breaking.** A screen is drawn from the pack, or not at all.

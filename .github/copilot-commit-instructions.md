@@ -23,9 +23,9 @@ Use [Conventional Commits](https://www.conventionalcommits.org/) with the follow
 
 ## Scope
 **REQUIRED** - Use the package name:
-- `web` - Changes in apps/web
-- `config` - Changes in packages/config
-- `root` - Changes in root-level files (turbo.json, pnpm-workspace.yaml, etc.)
+- the package's own name without the scope — `ui-runtime`, `ui-compiler`, `ore-styled`,
+  `navigation`, `flexbox`, `cli`, `resource-pack`
+- `root` - Changes in root-level files (package.json, tsconfig.json, scripts/)
 
 ## Title (First Line)
 - **Keep it short** (50 characters or less)

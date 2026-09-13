@@ -31,6 +31,11 @@ import {
 // and therefore the one module a generated registration module can augment.
 export type { NavigateOptions, ScreenKey, ScreenKeys } from '@bedrock-core/ui-runtime';
 
+// The cross-addon feeds a key resolves through: an addon's compiled screens as
+// references, and its page in the shared addon list.
+export { ScreensRegistry, isAddonScreens, screens, type AddonScreens } from './screens';
+export { PagesRegistry, isAddonPageReference, pages, type AddonPageReference } from './pages';
+
 /**
  * Shows the screen `key` names to `player`, putting the one they are on behind
  * them.
@@ -133,7 +138,7 @@ export function useNavigation(): Navigation {
  * reads the feed:
  *
  * ```ts
- * provideReferences(key => core.screens.find(key));
+ * provideReferences(key => screens(core).find(key));
  * ```
  *
  * Until it is called, a key this bundle did not compile warns and shows nothing.

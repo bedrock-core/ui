@@ -1,5 +1,4 @@
 ---
-'@bedrock-core/config': minor
 '@bedrock-core/ui-compiler': minor
 ---
 

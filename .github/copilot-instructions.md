@@ -43,17 +43,20 @@ exports (`.`, `./navigation`, `./ore-styled`, `./guides`, `./config`, `./flexbox
   - Exports: `Button`, `Card`, `Checkbox`, `RadioGroup`/`Radio`, `Toggle`, `ToggleButtonGroup`/`ToggleButtonItem`, `Divider`, `Header`, `MenuRow`, `Input`, `Dropdown`, `Slider`, `Form` (styled modal fields), `theme`
   - Renders through the same `@bedrock-core/ui` render pack — no separate pack
 
-- **`packages/i18n`** – Localization engine (`@bedrock-core/i18n`)
+- **`@bedrock-core/i18n`** – Localization engine, in the `server` repository
+  (`server/packages/i18n`), resolved here through the root `portal:` link
   - Typed keys, `{{var}}` interpolation, CLDR plural categories; zero runtime dependencies
   - Three verbs: `key()` (client-resolved key), `raw()` (client-resolved `RawMessage`), `t()` (server-resolved string), plus `forPlayer` / `forLocale` binders
   - Exports: `createI18n`, `createResourceBundle`, `resolveDisplay`, `realKeyFor`, `pickLocale`, `pluralCategory`, `interpolate`/`templateVars`/`toPositional`, `type DisplayText`
   - Build half is the `i18n` Regolith filter (replaced the removed `translation-keys` filter)
 
-- **`packages/guides`** – MDX in-game guides (`@bedrock-core/guides`)
+- **`@bedrock-core/guides`** – MDX in-game guides, in the `apps` repository
+  (`apps/packages/guides`), resolved here through the root `portal:` link
   - `createGuide(manifest)` renders a compiled guide IR as a self-contained screen
   - Exports: `createGuide`, `GuideBlockList`, `isGuideManifest`, plus the IR types
 
-- **`packages/config`** – Shared addon list + config + guide UI (`@bedrock-core/config`)
+- **`@bedrock-core/config`** – Shared addon list + config + guide UI, in the `apps`
+  repository (`apps/packages/config`), resolved here through the root `portal:` link
   - `ui(core)` mounts `<ns>:config` / `:configat` / `:guide` / `:list` under the addon's namespace
   - Exports: `ui`, `App`, `registerAddonCommands`, `allowedScopes`/`clampTarget`/`isOperator`, `CONFIG_SCOPES`
 

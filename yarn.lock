@@ -74,19 +74,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@bedrock-core/config@workspace:*, @bedrock-core/config@workspace:packages/config":
+"@bedrock-core/config@portal:../apps/packages/config::locator=%40bedrock-core%2Fui%40workspace%3A.":
   version: 0.0.0-use.local
-  resolution: "@bedrock-core/config@workspace:packages/config"
-  dependencies:
-    "@bedrock-core/guides": "workspace:*"
-    "@bedrock-core/i18n": "workspace:*"
-    "@bedrock-core/navigation": "workspace:*"
-    "@bedrock-core/ore-styled": "workspace:*"
-    "@bedrock-core/server-runtime": "npm:^0.1.0"
-    "@bedrock-core/ui-runtime": "workspace:*"
-    "@minecraft/server": "npm:^2.9.0"
-    typescript: "npm:^6.0.3"
-    vitest: "npm:^4.1.5"
+  resolution: "@bedrock-core/config@portal:../apps/packages/config::locator=%40bedrock-core%2Fui%40workspace%3A."
   peerDependencies:
     "@bedrock-core/guides": "*"
     "@bedrock-core/i18n": "*"
@@ -95,7 +85,7 @@ __metadata:
     "@bedrock-core/server-runtime": "*"
     "@bedrock-core/ui-runtime": "*"
     "@minecraft/server": "*"
-  languageName: unknown
+  languageName: node
   linkType: soft
 
 "@bedrock-core/db@portal:../server/packages/db::locator=%40bedrock-core%2Fui%40workspace%3A.":
@@ -117,42 +107,39 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@bedrock-core/guides@workspace:*, @bedrock-core/guides@workspace:packages/guides":
+"@bedrock-core/guides@portal:../apps/packages/guides::locator=%40bedrock-core%2Fui%40workspace%3A.":
   version: 0.0.0-use.local
-  resolution: "@bedrock-core/guides@workspace:packages/guides"
-  dependencies:
-    "@bedrock-core/navigation": "workspace:*"
-    "@bedrock-core/ore-styled": "workspace:*"
-    "@bedrock-core/ui-runtime": "workspace:*"
-    typescript: "npm:^6.0.3"
-    vitest: "npm:^4.1.5"
+  resolution: "@bedrock-core/guides@portal:../apps/packages/guides::locator=%40bedrock-core%2Fui%40workspace%3A."
   peerDependencies:
+    "@bedrock-core/i18n": "*"
     "@bedrock-core/navigation": "*"
     "@bedrock-core/ore-styled": "*"
     "@bedrock-core/ui-runtime": "*"
-  languageName: unknown
+  languageName: node
   linkType: soft
 
-"@bedrock-core/i18n@workspace:*, @bedrock-core/i18n@workspace:packages/i18n":
+"@bedrock-core/i18n@portal:../server/packages/i18n::locator=%40bedrock-core%2Fui%40workspace%3A.":
   version: 0.0.0-use.local
-  resolution: "@bedrock-core/i18n@workspace:packages/i18n"
-  dependencies:
-    "@minecraft/server": "npm:2.9.0"
-    typescript: "npm:^6.0.3"
-    vitest: "npm:^4.1.5"
+  resolution: "@bedrock-core/i18n@portal:../server/packages/i18n::locator=%40bedrock-core%2Fui%40workspace%3A."
   peerDependencies:
     "@minecraft/server": ">=2.9.0"
-  languageName: unknown
+  languageName: node
   linkType: soft
 
 "@bedrock-core/navigation@workspace:*, @bedrock-core/navigation@workspace:packages/navigation":
   version: 0.0.0-use.local
   resolution: "@bedrock-core/navigation@workspace:packages/navigation"
   dependencies:
+    "@bedrock-core/server-runtime": "npm:^0.1.0"
+    "@bedrock-core/sync": "npm:^0.1.0"
     "@bedrock-core/ui-runtime": "workspace:*"
+    "@minecraft/server": "npm:^2.9.0"
     typescript: "npm:^6.0.3"
   peerDependencies:
+    "@bedrock-core/server-runtime": "*"
+    "@bedrock-core/sync": "*"
     "@bedrock-core/ui-runtime": "*"
+    "@minecraft/server": "*"
   languageName: unknown
   linkType: soft
 
@@ -171,7 +158,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bedrock-core/ore-styled@workspace:packages/ore-styled"
   dependencies:
-    "@bedrock-core/i18n": "workspace:*"
+    "@bedrock-core/i18n": "npm:*"
     "@bedrock-core/ui-runtime": "workspace:*"
     typescript: "npm:^6.0.3"
     vitest: "npm:^4.1.5"
@@ -185,7 +172,7 @@ __metadata:
   resolution: "@bedrock-core/server-runtime@portal:../server/packages/server-runtime::locator=%40bedrock-core%2Fui%40workspace%3A."
   dependencies:
     "@bedrock-core/db": "workspace:^"
-    "@bedrock-core/i18n": "npm:^0.1.0"
+    "@bedrock-core/i18n": "workspace:^"
     "@bedrock-core/sync": "workspace:^"
   peerDependencies:
     "@minecraft/server": ">=2.9.0"
@@ -214,9 +201,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bedrock-core/ui-resource-pack@workspace:packages/resource-pack"
   dependencies:
-    "@bedrock-core/config": "workspace:*"
-    "@bedrock-core/guides": "workspace:*"
-    "@bedrock-core/i18n": "workspace:*"
+    "@bedrock-core/config": "npm:*"
+    "@bedrock-core/guides": "npm:*"
+    "@bedrock-core/i18n": "npm:*"
     "@bedrock-core/navigation": "workspace:*"
     "@bedrock-core/ore-styled": "workspace:*"
     "@bedrock-core/ui": "workspace:*"
@@ -237,7 +224,7 @@ __metadata:
   resolution: "@bedrock-core/ui-runtime@workspace:packages/ui-runtime"
   dependencies:
     "@bedrock-core/flexbox": "workspace:*"
-    "@bedrock-core/i18n": "workspace:*"
+    "@bedrock-core/i18n": "npm:*"
     "@minecraft/server": "npm:^2.9.0"
     "@minecraft/server-ui": "npm:^2.1.0"
     "@vitest/coverage-v8": "npm:^4.1.5"
@@ -254,10 +241,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bedrock-core/ui@workspace:."
   dependencies:
-    "@bedrock-core/config": "workspace:*"
+    "@bedrock-core/config": "npm:*"
     "@bedrock-core/flexbox": "workspace:*"
-    "@bedrock-core/guides": "workspace:*"
-    "@bedrock-core/i18n": "workspace:*"
+    "@bedrock-core/guides": "npm:*"
+    "@bedrock-core/i18n": "npm:*"
     "@bedrock-core/navigation": "workspace:*"
     "@bedrock-core/ore-styled": "workspace:*"
     "@bedrock-core/ui-runtime": "workspace:*"

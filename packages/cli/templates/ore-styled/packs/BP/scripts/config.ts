@@ -1,5 +1,5 @@
 /**
- * Config schema, declared via the `config` field of `core.register()` in
+ * Config schema, declared as `config: config(configDef)` in `core.register()` in
  * main.ts. Every leaf gets a widget in the shared config UI (server, per-
  * dimension and per-player scopes), values persist across restarts, and
  * `register()` returns them under `config`, fully typed over this shape.

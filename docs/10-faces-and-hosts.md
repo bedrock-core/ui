@@ -267,8 +267,8 @@ same shape.
   file is — which is how a screen links to a sibling without repeating a namespace it does not
   choose; a published reference carries the addon half filled in. *Built.*
 - **The reference feed.** `core-ui/reference` replaced `core-guide/reference`: one record per
-  static screen — `{ key, title, values, targets }` — published by the owning addon under
-  `core.screens` and replicated by sync. `navigate('<ns>:<screen>')` resolves a key against this
+  static screen — `{ key, title, values, targets }` — published by the owning addon through
+  `@bedrock-core/navigation`'s `screens(core)` and replicated by sync. `navigate('<ns>:<screen>')` resolves a key against this
   bundle's compiled screens first and, through whatever `provideReferences` installed, the
   replicated references second; a foreign screen is shown by title with its baked values and
   followed link by link (`presentReference`). The stack is a stack of KEYS — `back()` shows the

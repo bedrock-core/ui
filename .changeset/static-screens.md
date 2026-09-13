@@ -1,7 +1,6 @@
 ---
 '@bedrock-core/ui-runtime': minor
 '@bedrock-core/ui-compiler': minor
-'@bedrock-core/guides': major
 ---
 
 A screen that cannot change ships as a table, not as a component.

@@ -1,5 +1,5 @@
 import { SCROLL_SLOT_TYPE, SCROLL_TRACK_WIDTH } from '@bedrock-core/ui-runtime/compile';
-import { scrollContent, scrollFace } from '../../faces';
+import { panelFace, scrollContent, scrollFace } from '../../faces';
 import { boxOf } from '../utils/shared';
 
 /**
@@ -72,6 +72,18 @@ export const scrollDefinition: NodeDefinition<ScrollNode> = {
     // for a scrolling list. Baked content otherwise.
     const soleStack = sole !== undefined && node.children.length === 1
       && (sole.kind === 'list' || (sole.kind === 'panel' && sole.stack === true));
+
+    // Content the build can see fitting is drawn as itself: a region whose
+    // content cannot run past the viewport has nothing to scroll, and a
+    // scrollbar beside it is a track the player can never use. A stack is the
+    // exception — its height is what it holds at show time, not what the
+    // layout measured — so a list keeps its region whatever it holds now.
+    if (!soleStack && node.extent <= node.rect.height) {
+      return panelFace({
+        ...boxOf(node),
+        children: node.children.map(child => ctx.emitNode(child)),
+      });
+    }
 
     // The column the layout gave the content: the viewport less the track.
     const width = Math.max(0, node.rect.width - SCROLL_TRACK_WIDTH);

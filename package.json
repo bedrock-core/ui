@@ -76,12 +76,9 @@
 		"packages/ui-runtime",
 		"packages/navigation",
 		"packages/ore-styled",
-		"packages/guides",
-		"packages/config",
 		"packages/resource-pack",
 		"packages/cli",
 		"packages/flexbox",
-		"packages/i18n",
 		"packages/ui-compiler"
 	],
 	"scripts": {
@@ -102,10 +99,10 @@
 		"clean": "node scripts/clean.mjs"
 	},
 	"dependencies": {
-		"@bedrock-core/config": "workspace:*",
+		"@bedrock-core/config": "*",
 		"@bedrock-core/flexbox": "workspace:*",
-		"@bedrock-core/guides": "workspace:*",
-		"@bedrock-core/i18n": "workspace:*",
+		"@bedrock-core/guides": "*",
+		"@bedrock-core/i18n": "*",
 		"@bedrock-core/navigation": "workspace:*",
 		"@bedrock-core/ore-styled": "workspace:*",
 		"@bedrock-core/ui-runtime": "workspace:*"
@@ -134,8 +131,10 @@
 		"@minecraft/server-ui": "*"
 	},
 	"resolutions": {
+		"@bedrock-core/config": "portal:../apps/packages/config",
 		"@bedrock-core/db": "portal:../server/packages/db",
-		"@bedrock-core/i18n": "workspace:*",
+		"@bedrock-core/guides": "portal:../apps/packages/guides",
+		"@bedrock-core/i18n": "portal:../server/packages/i18n",
 		"@bedrock-core/observable": "portal:../server/packages/observable",
 		"@bedrock-core/server-runtime": "portal:../server/packages/server-runtime",
 		"@bedrock-core/sync": "portal:../server/packages/sync",

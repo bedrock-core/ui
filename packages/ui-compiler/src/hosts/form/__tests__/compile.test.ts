@@ -85,14 +85,9 @@ describe('compiling a form screen', () => {
   });
 
   it('draws a scroll region, which is a shape no host owns', () => {
+    const rows = Array.from({ length: 20 }, (_unused, index) => Text({ children: `row ${String(index)}` }));
     const Scrolling = (): JSX.Element => Screen({ children: Panel({
-      children: [
-        Scroll({
-          width: 120,
-          height: 60,
-          children: [Text({ children: 'a long list' }), Text({ children: 'that scrolls' })],
-        }),
-      ],
+      children: [Scroll({ width: 120, height: 60, children: rows })],
     }) });
 
     const compiledScroll = compileFormScreen(Scrolling, { namespace: 'a', name: 'scrolly' });
@@ -101,6 +96,17 @@ describe('compiling a form screen', () => {
     // binds nothing, so there is no per-host version of it.
     expect(JSON.stringify(compiledScroll.document)).toContain('@core_ui_shapes.scroll');
     expect(JSON.stringify(compiledScroll.document)).not.toContain('core_ui_chest');
+  });
+
+  it('draws content that fits as itself, with no region around it', () => {
+    const Fits = (): JSX.Element => Screen({ children: Panel({
+      children: [Scroll({ width: 120, height: 60, children: [Text({ children: 'one line' })] })],
+    }) });
+
+    // Nothing can run past the viewport, so there is nothing to scroll and the
+    // track beside it would be one the player can never use.
+    expect(JSON.stringify(compileFormScreen(Fits, { namespace: 'a', name: 'fits' }).document))
+      .not.toContain('@core_ui_shapes.scroll');
   });
 
   it('emits a region per <Scroll>, however many a screen declares', () => {

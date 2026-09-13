@@ -41,10 +41,16 @@
     "lint": "eslint ."
   },
   "devDependencies": {
+    "@bedrock-core/server-runtime": "^0.1.0",
+    "@bedrock-core/sync": "^0.1.0",
     "@bedrock-core/ui-runtime": "workspace:*",
+    "@minecraft/server": "^2.9.0",
     "typescript": "^6.0.3"
   },
   "peerDependencies": {
-    "@bedrock-core/ui-runtime": "*"
+    "@bedrock-core/server-runtime": "*",
+    "@bedrock-core/sync": "*",
+    "@bedrock-core/ui-runtime": "*",
+    "@minecraft/server": "*"
   }
 }

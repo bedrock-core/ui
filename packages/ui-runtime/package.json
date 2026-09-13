@@ -73,6 +73,6 @@
 	},
 	"dependencies": {
 		"@bedrock-core/flexbox": "workspace:*",
-		"@bedrock-core/i18n": "workspace:*"
+		"@bedrock-core/i18n": "*"
 	}
 }

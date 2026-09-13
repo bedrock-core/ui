@@ -33,7 +33,7 @@ const REGISTRATION = 'data/ui/ui.generated.ts';
 const I18N_BUNDLE = 'data/i18n/i18n.generated.json';
 const GUIDES_BUNDLE = 'data/guides/guides.generated.json';
 const PAGE = 'BP/scripts/screens/framework.screen.tsx';
-const OUTPUT = path.resolve(projectRoot, '..', 'config', 'src', 'generated', 'framework.generated.ts');
+const OUTPUT = path.resolve(projectRoot, '..', '..', '..', 'apps', 'packages', 'config', 'src', 'generated', 'framework.generated.ts');
 
 for (const required of [REGISTRATION, I18N_BUNDLE, PAGE]) {
   if (!fs.existsSync(required)) {

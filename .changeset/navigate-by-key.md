@@ -1,9 +1,7 @@
 ---
 '@bedrock-core/ui-runtime': major
 '@bedrock-core/navigation': major
-'@bedrock-core/guides': major
 '@bedrock-core/ore-styled': minor
-'@bedrock-core/config': major
 '@bedrock-core/ui-compiler': minor
 ---
 

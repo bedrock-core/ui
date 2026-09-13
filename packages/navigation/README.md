@@ -33,6 +33,8 @@ It also ships inside the umbrella package as `@bedrock-core/ui/navigation`.
 - `useNavigation()` — all of it bound to the player the screen is being shown to, plus `key` and
   `history` for the screen itself
 - `provideReferences(lookup)` — what resolves a key this bundle did not compile
+- `screens(core)` / `pages(core)` — the cross-addon feeds a foreign key resolves through: every
+  static screen an addon compiled, and its page in the shared addon list
 - `ScreenKey` / `ScreenKeys` — the key type each addon's generated module augments, so its own keys
   autocomplete while another addon's still pass
 
@@ -83,11 +85,11 @@ shown with and the key each press leads to — and a realm holding that table ca
 pack every client already has:
 
 ```ts
-import { provideReferences } from '@bedrock-core/navigation';
+import { provideReferences, screens } from '@bedrock-core/navigation';
 
-core.register({ ..., screens: uiReference() });     // in the owning addon
+screens(core).provide(uiReference());               // in the owning addon
 
-provideReferences(key => core.screens.find(key));   // in the realm that shows them
+provideReferences(key => screens(core).find(key));  // in the realm that shows them
 ```
 
 `@bedrock-core/config` installs a lookup of its own when the shared UI is mounted, so an addon using

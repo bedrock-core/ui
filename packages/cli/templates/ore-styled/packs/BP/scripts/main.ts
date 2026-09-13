@@ -2,18 +2,16 @@
  * Entry point — the full bedrock-core stack in one file:
  *
  * - `core.register()` brings the addon online: display fields are i18n keys
- *   (other addons render them per player language), the i18n bundle and guide
- *   manifest ride along, and the returned `config` accessors are typed by configDef.
+ *   (other addons render them per player language), and the `config`
+ *   declaration hands back accessors typed by configDef.
  * - `ui(core)` mounts the shared config UI (config + guides for EVERY
  *   bedrock-core addon in the world) — command registration is first-wins, so
  *   with several addons installed exactly one serves the UI for all of them.
  * - A button push opens this addon's own custom UI (./UI/Example).
  */
 import { render } from '@bedrock-core/ui';
-import { core } from '@bedrock-core/server';
+import { config as declareConfig, core } from '@bedrock-core/server';
 import { ui } from '@bedrock-core/ui/config';
-import bundle from '@bedrock-core/generated/i18n';
-import guides from '@bedrock-core/generated/guides';
 import { ButtonPushAfterEvent, Entity, Player, world } from '@minecraft/server';
 import { MinecraftEntityTypes } from '@minecraft/vanilla-data';
 import { configDef } from './config';
@@ -31,9 +29,7 @@ const { config } = core.register({
     version: '1.0.0',
     description: i18n.key($ => $.meta.description),
   },
-  translations: bundle,
-  guide: guides,
-  config: configDef,
+  config: declareConfig(configDef),
 });
 
 ui(core);

@@ -53,7 +53,7 @@ The JSON UI decoders live in a **render pack** (`core-ui-v*.mcpack`, attached to
 
 ### Localization
 
-- Typed keys, interpolation and plurals, resolved on the **client** in each player's own language ([@bedrock-core/i18n](./packages/i18n/README.md)) — nested TypeScript resources are the source of truth, and the `i18n` regolith filter generates the `.lang` files, the runtime bundle and the key types from them
+- Typed keys, interpolation and plurals, resolved on the **client** in each player's own language ([@bedrock-core/i18n](https://github.com/bedrock-core/server/blob/main/packages/i18n/README.md)) — nested TypeScript resources are the source of truth, and the `i18n` regolith filter generates the `.lang` files, the runtime bundle and the key types from them
 - `Text` takes a literal string, a translation key or a `RawMessage` interchangeably — no prop to declare, no wiring beyond the addon's one `createI18n(bundle)` call
 - Bundles replicate across addons, so one realm can render another's strings
 
@@ -72,8 +72,8 @@ The JSON UI decoders live in a **render pack** (`core-ui-v*.mcpack`, attached to
 
 ### Guides & Config
 
-- In-game guides authored in MDX ([@bedrock-core/guides](./packages/guides/README.md)) — the `guides` regolith filter compiles `packs/data/guides/<locale>/**.mdx` into a guide manifest plus `.lang` files and writes one screen module per page, which the build bakes into the pack; every press inside a guide is a link, so any realm can show another addon's guide, prose localized per player language
-- Shared addon list + config + guide UI ([@bedrock-core/config](./packages/config/README.md)) — `ui(core)` mounts `<namespace>:config` / `:configat` / `:guide` / `:list` under the addon's own namespace, and whichever realm runs the newest runtime serves the config and guide screens for every registered addon
+- In-game guides authored in MDX ([@bedrock-core/guides](../apps/packages/guides/README.md)) — the `guides` regolith filter compiles `packs/data/guides/<locale>/**.mdx` into a guide manifest plus `.lang` files and writes one screen module per page, which the build bakes into the pack; every press inside a guide is a link, so any realm can show another addon's guide, prose localized per player language
+- Shared addon list + config + guide UI ([@bedrock-core/config](../apps/packages/config/README.md)) — `ui(core)` mounts `<namespace>:config` / `:configat` / `:guide` / `:list` under the addon's own namespace, and whichever realm runs the newest runtime serves the config and guide screens for every registered addon
 
 ### 🚀 Future Considerations
 

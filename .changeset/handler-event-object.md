@@ -1,7 +1,6 @@
 ---
 '@bedrock-core/ui-runtime': minor
 '@bedrock-core/ore-styled': minor
-'@bedrock-core/config': minor
 ---
 
 **Breaking.** Every handler now takes one event object instead of positional arguments.
