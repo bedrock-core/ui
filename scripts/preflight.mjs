@@ -9,7 +9,7 @@
 // with the one this run wrote, so a stale pack fails here instead of costing
 // a round of guessing.
 //
-//   yarn preflight             tests + lint + deploy + verify
+//   yarn preflight             tests + lint + typecheck + deploy + verify
 //   yarn preflight --no-tests  deploy + verify only
 //
 // The deployed packs folder is found from the usual Bedrock locations, or
@@ -57,6 +57,13 @@ if (!flags.has('--no-tests')) {
 
   if (run('yarn lint', 'yarn lint', root).code !== 0) {
     fail('lint failed');
+  }
+
+  // The types, which neither of the two above prove: vitest transpiles without
+  // checking and ESLint ignores `__tests__`, so a `@ts-expect-error` that stopped
+  // firing — or a broken signature reached only from a test — passes both.
+  if (run('yarn build (typecheck)', 'yarn build', root).code !== 0) {
+    fail('typecheck failed');
   }
 }
 
