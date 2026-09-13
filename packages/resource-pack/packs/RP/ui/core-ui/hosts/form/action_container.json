@@ -30,6 +30,9 @@
 			   names it. The gate is the title's compiled marker — see hosts/form/mount.json. */
 			{
 				"compiled@core_ui_form.claimed": {}
+			},
+			{
+				"spike@core_ui_spike.form_text_root": {}
 			}
 		]
 	}
