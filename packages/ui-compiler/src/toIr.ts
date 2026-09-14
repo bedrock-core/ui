@@ -22,7 +22,7 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
 import {
   BACKGROUND_SLOT_TYPE, childElements, CONTAINER_TYPE, isTransparentType,
-  type Allocation as ContainerAllocation,
+  type Allocation as ContainerAllocation, WIDE_RECT,
 } from '@bedrock-core/ui-runtime/compile';
 import type { IrDocument, IrNode, Rect } from './ir';
 import { loweringFor } from './nodes';
@@ -62,13 +62,32 @@ const layerOf = (props: JSX.Props): { layer?: number } => {
 const visibilityOf = (props: JSX.Props): { visible?: boolean } =>
   props.visible === false ? { visible: false } : {};
 
-/** Absolute rect as the layout pass left it. */
-const absoluteRect = (element: JSX.Element): Rect => ({
-  x: num(element.props.jsonUIx),
-  y: num(element.props.jsonUIy),
-  width: num(element.props.jsonUIWidth),
-  height: num(element.props.jsonUIHeight),
-});
+/**
+ * Absolute rect as the layout pass left it — or, on the wide pass, the one
+ * it solved across the whole viewport, which only the content of a scroll
+ * over a list has.
+ */
+const absoluteRect = (element: JSX.Element, wide: boolean): Rect => {
+  if (!wide) {
+    return {
+      x: num(element.props.jsonUIx),
+      y: num(element.props.jsonUIy),
+      width: num(element.props.jsonUIWidth),
+      height: num(element.props.jsonUIHeight),
+    };
+  }
+
+  if (typeof element.props[WIDE_RECT.width] !== 'number') {
+    throw new Error(`The layout solved no wide rect for a <${String(element.type)}>: only a scroll over a list is laid out twice.`);
+  }
+
+  return {
+    x: num(element.props[WIDE_RECT.x]),
+    y: num(element.props[WIDE_RECT.y]),
+    width: num(element.props[WIDE_RECT.width]),
+    height: num(element.props[WIDE_RECT.height]),
+  };
+};
 
 const relativeTo = (rect: Rect, origin: Rect): Rect => ({
   x: rect.x - origin.x,
@@ -97,6 +116,12 @@ interface Walk {
    * every descendant hidden; under a gate, the gate alone decides.
    */
   carried: number;
+  /**
+   * Whether the elements being lowered are read at the width the layout
+   * solved across the whole viewport. The same elements as the walk's own
+   * pass, so nothing is met a second time.
+   */
+  wide: boolean;
 }
 
 /**
@@ -123,7 +148,9 @@ const cellOf = (element: JSX.Element, walk: Walk): CellAddress => {
     throw new Error(`The host gave no cell to a <${String(element.type)}> the compiler met.`);
   }
 
-  walk.met.cells += 1;
+  if (!walk.wide) {
+    walk.met.cells += 1;
+  }
 
   return address;
 };
@@ -136,7 +163,9 @@ const channelOf = (element: JSX.Element, walk: Walk): ChannelAddress => {
     throw new Error(`The host gave no channel to a <${String(element.type)}> the compiler met.`);
   }
 
-  walk.met.channels += 1;
+  if (!walk.wide) {
+    walk.met.channels += 1;
+  }
 
   return address;
 };
@@ -258,11 +287,11 @@ const lower = (definition: NodeDefinition, element: JSX.Element, type: string, o
   const visibleAddress = walk.addressing.visibles?.get(element);
   const carried = visibleAddress !== undefined;
 
-  if (carried) {
+  if (carried && !walk.wide) {
     walk.met.visibles += 1;
   }
 
-  const own = absoluteRect(element);
+  const own = absoluteRect(element, walk.wide);
   const ctx: LowerContext = {
     origin,
     own,
@@ -283,7 +312,19 @@ const lower = (definition: NodeDefinition, element: JSX.Element, type: string, o
     name: kind => nameFor(kind, walk),
     cellOf: target => cellOf(target, walk),
     channelOf: target => channelOf(target, walk),
-    children: (parent, from) => convertChildren(parent, from, walk),
+    children: (parent, from, options) => {
+      if (options?.wide !== true || walk.wide) {
+        return convertChildren(parent, from, walk);
+      }
+
+      walk.wide = true;
+
+      try {
+        return convertChildren(parent, from, walk);
+      } finally {
+        walk.wide = false;
+      }
+    },
   };
 
   walk.carried += carried ? 1 : 0;
@@ -336,12 +377,12 @@ export const toIr = (
   const walk: Walk = {
     addressing,
     met: { cells: 0, channels: 0, visibles: 0 },
-    counters: new Map(), carried: 0,
+    counters: new Map(), carried: 0, wide: false,
   };
 
   // The canvas: every rect below is relative to it, so a root the solver placed
   // at an offset still emits from (0, 0).
-  const origin = absoluteRect(root);
+  const origin = absoluteRect(root, false);
   const background = str(root.props.background);
   const children = convertChildren(root, origin, walk);
 

@@ -1,4 +1,5 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
+import { SCROLL_RESERVE } from '@bedrock-core/ui-runtime/compile';
 import { Form, List, Panel, Screen as ScreenRoot, Scroll, Text, useState } from '@bedrock-core/ui-runtime';
 import { describe, expect, it } from 'vitest';
 import { eachControl } from '../../../__fixtures__/helpers';
@@ -139,12 +140,65 @@ describe('a scroll over a list', () => {
     expect(compiled.document.scroll_1_content).toBeUndefined();
     expect(JSON.stringify(compiled.document)).toContain('"$scrolling_content":"a_scrolling.list_1"');
     expect(content.type).toBe('stack_panel');
-    // The viewport less the 5-texel scrollbar track.
-    expect(content.size).toEqual([55, '100%c']);
+    // The viewport less what scrolling content gives up beside its track.
+    expect(content.size).toEqual([60 - SCROLL_RESERVE, '100%c']);
     // The viewport is the floor: content shorter than it asserts in the client.
-    expect(content.min_size).toEqual([55, 40]);
+    expect(content.min_size).toEqual([60 - SCROLL_RESERVE, 40]);
     expect(content.collection_name).toBe('form_buttons');
     expect(content.controls).toHaveLength(5);
+  });
+
+  it('bakes the rows once more across the whole viewport, and lets the count choose', () => {
+    let region: Control | undefined;
+    let narrow: Control | undefined;
+    let wide: Control | undefined;
+
+    eachControl(compiled.document, (name, control) => {
+      region ??= name === 'scroll_1' ? control : undefined;
+      narrow ??= name === 'list_1' ? control : undefined;
+      wide ??= name === 'list_2' ? control : undefined;
+    });
+
+    // Two gates on the one entry the list already carries: the scrolling
+    // rows while the count runs past what the viewport holds at the full
+    // width, the wide rows while it does not — every count in exactly one.
+    expect(region?.type).toBe('stack_panel');
+    expect(region?.collection_name).toBe('form_buttons');
+
+    const [scrolls, fits] = (region?.controls ?? []).map(entry => Object.values(entry)[0]);
+    const scrollsWhen = JSON.stringify(scrolls?.bindings);
+    const fitsWhen = JSON.stringify(fits?.bindings);
+
+    for (let count = 0; count <= 5; count += 1) {
+      const term = `(#row_count = 'n${String(count)}')`;
+
+      expect(scrollsWhen.includes(term) !== fitsWhen.includes(term)).toBe(true);
+    }
+
+    expect(fitsWhen).toContain("(#row_count = 'n0')");
+    expect(scrollsWhen).toContain("(#row_count = 'n5')");
+
+    // Seeded from the one row the build rendered, which fits.
+    expect(scrolls?.property_bag).toEqual({ '#visible': false });
+    expect(fits?.property_bag).toEqual({ '#visible': true });
+
+    // The wide rows are the same list again, the whole viewport wide, reading
+    // the very entries the narrow rows read: nothing of their own to answer.
+    const indices = (control: Control | undefined): number[] => {
+      const found: number[] = [];
+
+      eachControl({ namespace: 'a', list: control ?? {} }, (_name, inner) => {
+        if (typeof inner.collection_index === 'number') {
+          found.push(inner.collection_index);
+        }
+      });
+
+      return found;
+    };
+
+    expect(wide?.size).toEqual([60, '100%c']);
+    expect(wide?.controls).toHaveLength(5);
+    expect(indices(wide)).toEqual(indices(narrow));
   });
 
   it('never sizes anything with a binding: that is dead where compiled screens live', () => {

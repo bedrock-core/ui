@@ -8,6 +8,7 @@ import { listCount } from '../../components/List';
 import { visiblesAt } from '../../core/ir';
 import type { CompiledSnapshot } from '../../core/render/screens';
 import { serializeProps } from '../../core/payload';
+import { FLAG_OFF, FLAG_ON } from './contract';
 import { emitLabel } from '../../core/writers';
 import { allocateModal, type ModalRow } from './allocate';
 import { debugDiff } from './debug';
@@ -92,16 +93,20 @@ const writerProps = (props: JSX.Props): SerializableProps => Object.fromEntries(
 function writeRow(row: ModalRow, form: ModalFormData, context: ModalSerializationContext): void {
   const { element } = row;
 
+  // One row is one entry of the form's collection, whatever it answers with.
+  context.modalRowIndex++;
+
   if (row.kind === 'text') {
     emitLabel(liveText(element, row.length ?? 0), form, context);
 
     return;
   }
 
-  // A carried visible: one label row holding '0' or '1'. Nothing draws it —
-  // a compiled modal mounts no row factory — the compiled gate reads it.
+  // A carried visible: one label row holding the form contract's flag, the
+  // same letter a compiled gate compares against on an action form. Nothing
+  // draws it — a compiled modal mounts no row factory — the gate reads it.
   if (row.kind === 'bool') {
-    emitLabel(element.props.visible === false ? '0' : '1', form, context);
+    emitLabel(element.props.visible === false ? FLAG_OFF : FLAG_ON, form, context);
 
     return;
   }
@@ -144,18 +149,13 @@ function writeRow(row: ModalRow, form: ModalFormData, context: ModalSerializatio
   // (modal_container's `live_sliders`), and a cell built in row order has no
   // way to know the rect the build solved for it. Its block is what tells it.
   const carried = type === MODAL_SLIDER_SLOT_TYPE
-    ? serializeProps({ type, row: context.modalControlIndex })[0]
+    ? serializeProps({ type, row: context.modalRowIndex })[0]
     : BARE;
 
   descriptor.writer(carried, form, context, callbacks, writerProps(props), nativeArgs, props.children);
 }
 
-/**
- * One control's answer in the author's own units.
- *
- * A control whose engine units differ from the author's registered how to map
- * back; everything else answers in the units it was written in.
- */
+/** One control's answer in the author's own units. */
 const answer = (
   entry: ModalControlEntry,
   raw: string | number | boolean | undefined,
@@ -229,7 +229,7 @@ export async function presentCompiledModal(
     }
   }
 
-  const context: ModalSerializationContext = { mode: 'modal', modalControls: new Map(), modalControlIndex: 0 };
+  const context: ModalSerializationContext = { mode: 'modal', modalControls: new Map(), modalControlIndex: 0, modalRowIndex: -1 };
   const form = new ModalFormData();
 
   // The compiled title names the screen. Everything the interpreted title
@@ -272,13 +272,6 @@ export async function presentCompiledModal(
     }
 
     const values = collectValues(context, response.formValues);
-
-    // What the engine answered with, against what was written: the one line that
-    // says whether a field's value reached the name it was declared under.
-    console.warn(
-      `[ui] ${title} answered ${String(response.formValues?.length ?? 0)} value(s) for `
-      + `${String(context.modalControlIndex)} row(s); read ${JSON.stringify(values)}`,
-    );
 
     if (config.onSubmit) {
       return runInteractiveCallback(player, () => config.onSubmit?.({ player, values }));

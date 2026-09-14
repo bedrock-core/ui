@@ -1,4 +1,5 @@
 import { Button, Container, Panel, Scroll, Slot, Text } from '@bedrock-core/ui-runtime';
+import { SCROLL_RESERVE } from '@bedrock-core/ui-runtime/compile';
 import type { JSX } from '@bedrock-core/ui-runtime';
 import { describe, expect, it } from 'vitest';
 import { definition, find } from '../__fixtures__/helpers';
@@ -48,8 +49,8 @@ describe('a scroll region', () => {
     expect(panel.$scrolling_content).toBe('core_ui_list.scroll_1_content');
 
     // The content is as tall as its last row reaches, well past the viewport,
-    // and as wide as the viewport less the 5-texel scrollbar track.
-    expect(content.size?.[0]).toBe(315);
+    // The viewport less what scrolling content gives up beside its track.
+    expect(content.size?.[0]).toBe(320 - SCROLL_RESERVE);
     expect(content.size?.[1]).toBeGreaterThan(60);
     expect(rows).toHaveLength(12);
 

@@ -37,11 +37,10 @@ export interface ModalControlEntry {
   name: string;
   /**
    * Turns what the engine answers back into what the author asked for, where
-   * the two are not the same unit.
-   *
-   * A slider is the case: the engine holds a STOP INDEX and the author wrote a
-   * range, so the form is given the index range and the answer is mapped back
-   * here. Absent means the answer is already the author's value.
+   * the two are not the same unit. A slider over a fractional range is the
+   * case: the engine steps in whole numbers, so the form is given a count of
+   * stops and the answer is mapped back here. Absent means the answer is
+   * already the author's value.
    */
   decode?: (raw: string | number | boolean | undefined) => string | number | boolean | undefined;
 }
@@ -77,8 +76,19 @@ export interface ModalSerializationContext {
    */
   modalControls: Map<number, ModalControlEntry>;
 
-  /** Current modal-control ordinal counter. */
+  /** Current modal-control ordinal counter: a slot of the ANSWER. */
   modalControlIndex: number;
+
+  /**
+   * Current row of the form's own collection.
+   *
+   * Not the same counter as the ordinal above. A row is one entry of
+   * `custom_form`, which is what a compiled control's `collection_index` names
+   * and what the pack reads; an ordinal is one slot of `formValues`, and a
+   * slider answers in two of those. They agree until the first slider and
+   * diverge after it.
+   */
+  modalRowIndex: number;
 }
 
 /**

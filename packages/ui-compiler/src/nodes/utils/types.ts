@@ -154,8 +154,14 @@ export interface LowerContext {
   cellOf(element: JSX.Element): CellAddress;
   /** Where the host put this element's live value. Throws when the walks disagree. */
   channelOf(element: JSX.Element): ChannelAddress;
-  /** Lowers an element's children, positioned against the given origin. */
-  children(parent: JSX.Element, origin: Rect): IrNode[];
+  /**
+   * Lowers an element's children, positioned against the given origin.
+   *
+   * `wide` lowers them from the rects the layout solved across the whole
+   * viewport instead of its own — only the content of a scroll over a list
+   * has them — meeting no cell, channel or visible a second time.
+   */
+  children(parent: JSX.Element, origin: Rect, options?: { wide?: boolean }): IrNode[];
 }
 
 /**
@@ -168,12 +174,13 @@ export interface LowerContext {
  *  - `grid`    — a grid of cells over a foreign collection.
  *  - `field`   — a native control the engine owns while the screen is open.
  *  - `list`    — a variable count of rows behind one carried int.
+ *  - `fits`    — a region over a list, drawn at two widths behind that list's count.
  *  - `visible` — a subtree whose visibility is carried.
  *
  * A host serves the kinds it has a mechanism for and refuses the rest at
  * build, by name.
  */
-export type SocketKind = 'press' | 'text' | 'texture' | 'slot' | 'grid' | 'field' | 'list' | 'visible';
+export type SocketKind = 'press' | 'text' | 'texture' | 'slot' | 'grid' | 'field' | 'list' | 'fits' | 'visible';
 
 /** One place a host has to supply a mechanism: the node, and which mechanism. */
 export interface Socket {

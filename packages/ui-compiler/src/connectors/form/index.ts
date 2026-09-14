@@ -13,8 +13,9 @@ export {
 } from './entry';
 export { field, type NativeField } from './field';
 export {
-  dropdownWidget, inputWidget, popupHostOf, sliderWidget, toggleWidget,
+  dropdownWidget, inputWidget, popupHostOf, toggleWidget,
 } from './widget';
+export { fits, type Fits } from './fits';
 export { list, type Count } from './list';
 export { popupOverlay, type Popup } from './popup';
 export { press, pressDefs, type PressLook } from './press';

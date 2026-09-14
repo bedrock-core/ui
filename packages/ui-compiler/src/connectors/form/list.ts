@@ -23,14 +23,16 @@ export interface Count {
  * equality on the raw string fails CLOSED, since an entry that never resolves
  * matches no term and the row stays hidden.
  */
-const showsRow = (index: number, max: number): string => {
+export const countAmong = (from: number, to: number): string => {
   const terms = Array.from(
-    { length: max - index },
-    (_, offset) => `(#row_count = '${FORM_COUNT_PREFIX}${String(index + 1 + offset)}')`,
+    { length: Math.max(0, to - from + 1) },
+    (_, offset) => `(#row_count = '${FORM_COUNT_PREFIX}${String(from + offset)}')`,
   );
 
   return terms.length === 1 ? terms[0] ?? '' : `(${terms.join(' or ')})`;
 };
+
+const showsRow = (index: number, max: number): string => countAmong(index + 1, max);
 
 /**
  * A variable count: the rows the face drew, each behind a gate on one entry.

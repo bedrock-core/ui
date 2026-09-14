@@ -18,7 +18,7 @@ export {
 // for external consumers (layout phase, tests). The restriction pass builds its own set
 // in validateForm.ts.
 export { MODAL_TOGGLE_SLOT_TYPE } from './FormToggle';
-export { MODAL_SLIDER_SLOT_TYPE, SLIDER_STOPS } from './FormSlider';
+export { MODAL_SLIDER_SLOT_TYPE } from './FormSlider';
 export { MODAL_DROPDOWN_SLOT_TYPE } from './FormDropdown';
 export { MODAL_INLINE_SELECT_SLOT_TYPE } from './FormInlineSelect';
 export { MODAL_OPTION_SLOT_TYPE } from './FormOption';

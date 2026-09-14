@@ -299,8 +299,8 @@ describe('an inline select on a compiled modal', () => {
       'core_ui_form_components.compiled_option_toggle',
       'core_ui_form_components.compiled_option_toggle',
     ]);
-    // A radio group of this row's own: two inline selects on one screen select apart.
-    expect(toggles.map(([, toggle]) => toggle.toggle_name)).toEqual(['custom_dropdown_radio_toggle_0', 'custom_dropdown_radio_toggle_0']);
+    // The engine's own name: the only one a press on an option reaches the form through.
+    expect(toggles.map(([, toggle]) => toggle.toggle_name)).toEqual(['custom_dropdown_radio_toggle', 'custom_dropdown_radio_toggle']);
     expect(toggles[0]?.[1].controls?.map(entry => Object.keys(entry)[0])).toEqual([
       'unchecked', 'checked', 'unchecked_hover', 'checked_hover',
       'unchecked_locked', 'checked_locked', 'unchecked_locked_hover', 'checked_locked_hover',

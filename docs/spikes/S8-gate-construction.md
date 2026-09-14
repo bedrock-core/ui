@@ -98,30 +98,9 @@ old renderer safe is exactly what S9 has to measure.
 
 ## What it means
 
-**Unverified.** The points below were written from the probe's supposed result and are retained
-only as hypotheses to test, not as findings:
-
 1. **Every compiled screen of every installed addon is built on every server form open** — ours
-   and other people's alike. That is a standing cost, not only a correctness problem, and it is
-   the thing to measure next (see S5).
-2. **A compiled control may only hold state that is valid with no form field.** Today the slider
-   is the only control that validates on construction, which is why it is the only one that
-   crashed; anything added later that validates on construction inherits this rule.
-3. **A statically placed slider cannot display a stored value.** The only channel is a collection
-   read, and the read is evaluated on screens whose row does not exist. Measured in both
-   directions: a count read alone, and a value read alone against vanilla's seeds, each raise an
-   assertion. Until S9 answers, the value reaches the player through the row's label text, which
-   is per-present and costs the engine's slider nothing.
-
-## S9 — put the compiled fields back behind the engine's own collection
-
-The interpreted renderer's safety came free: a field was a factory cell over `custom_form`, so it
-existed exactly when its row did. A compiled screen gave that up to place controls at solved
-positions.
-
-The question S9 has to answer is whether both are possible at once — each compiled field mounted
-inside a `collection_panel` over `custom_form` at its own row index, positioned by the build the
-way it is now. On an action form `custom_form` has no rows, so nothing is built and `:list` is
-safe by construction rather than by every control being defensive. What it does NOT settle on its
-own is another addon's MODAL form, which has rows of its own for our cells to land on; whether a
-row that is not a slider yields a value the slider can survive is the second measurement.
+   and other people's alike. That is a standing cost as well as a correctness constraint.
+2. **A statically placed compiled control may only hold state that is valid with no form field
+   behind it.** The slider is the one control that validates on construction, so it is the one
+   that cannot be placed statically at all: it is built by the engine instead, one cell per
+   slider row, at the socket the build solved for it — see S9.

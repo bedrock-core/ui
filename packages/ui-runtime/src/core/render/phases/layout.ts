@@ -5,7 +5,8 @@ import {
   MODAL_DROPDOWN_SLOT_TYPE, MODAL_FORM_BUTTON_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE,
   MODAL_INPUT_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
 } from '../../../components/Form';
-import { SCROLL_SLOT_TYPE, SCROLL_TRACK_WIDTH, type ScrollAxis } from '../../../components/Scroll';
+import { LIST_SLOT_TYPE } from '../../../components/List';
+import { SCROLL_RESERVE, SCROLL_SLOT_TYPE, type ScrollAxis, WIDE_RECT } from '../../../components/Scroll';
 import type { JSX } from '../../../jsx';
 import { ellipsizeText, measureText, wrapText } from '../../../util/textMetrics';
 import { isTransparentType } from '../../componentRegistry';
@@ -394,11 +395,30 @@ function buildNode(element: JSX.Element): LayoutNode {
 
 // ─── Apply LayoutNode results back to JSX element tree ─────────────────────────
 
+/** The props one pass writes a solved rect to. */
+interface RectTarget {
+  x: string;
+  y: string;
+  width: string;
+  height: string;
+}
+
+/** The layout's own rect: what every later phase and the compiler read. */
+const OWN_RECT: RectTarget = { x: 'jsonUIx', y: 'jsonUIy', width: 'jsonUIWidth', height: 'jsonUIHeight' };
+
+function writeRect(element: JSX.Element, node: LayoutNode, target: RectTarget): void {
+  element.props[target.x] = node.layout.x;
+  element.props[target.y] = node.layout.y;
+  element.props[target.width] = node.layout.width;
+  element.props[target.height] = node.layout.height;
+}
+
 function applyToTree(
   element: JSX.Element,
   parentNode: LayoutNode,
   cursor: { index: number },
   regionIndex = 0,
+  target: RectTarget = OWN_RECT,
 ): void {
   // A <Scroll> consumes its leaf node (its viewport rect) but isn't descended here —
   // its content is laid out region-locally in a separate pass.
@@ -406,10 +426,7 @@ function applyToTree(
     const node = parentNode.children[cursor.index++];
 
     if (node) {
-      element.props.jsonUIx = node.layout.x;
-      element.props.jsonUIy = node.layout.y;
-      element.props.jsonUIWidth = node.layout.width;
-      element.props.jsonUIHeight = node.layout.height;
+      writeRect(element, node, target);
     }
 
     return;
@@ -420,10 +437,10 @@ function applyToTree(
 
     if (Array.isArray(ch)) {
       ch.filter(isElement).forEach((c) => {
-        applyToTree(c, parentNode, cursor, regionIndex);
+        applyToTree(c, parentNode, cursor, regionIndex, target);
       });
     } else if (isElement(ch)) {
-      applyToTree(ch, parentNode, cursor, regionIndex);
+      applyToTree(ch, parentNode, cursor, regionIndex, target);
     }
 
     return;
@@ -435,24 +452,24 @@ function applyToTree(
     return;
   }
 
-  element.props.jsonUIx = node.layout.x;
-  element.props.jsonUIy = node.layout.y;
-  element.props.jsonUIWidth = node.layout.width;
-  element.props.jsonUIHeight = node.layout.height;
-  // Tag the element with the region (scroll) it belongs to. The `region` key was
-  // seeded by withControl (default 0), so reassigning it keeps the canonical
-  // field order intact for serialization.
-  element.props.region = regionIndex;
+  writeRect(element, node, target);
+
+  // Tag the element with the region (scroll) it belongs to — by the layout's
+  // own pass only. The `region` key was seeded by withControl (default 0), so
+  // reassigning it keeps the canonical field order intact for serialization.
+  if (target === OWN_RECT) {
+    element.props.region = regionIndex;
+  }
 
   const ch = element.props.children;
   const childCursor = { index: 0 };
 
   if (Array.isArray(ch)) {
     ch.filter(isElement).forEach((c) => {
-      applyToTree(c, node, childCursor, regionIndex);
+      applyToTree(c, node, childCursor, regionIndex, target);
     });
   } else if (isElement(ch)) {
-    applyToTree(ch, node, childCursor, regionIndex);
+    applyToTree(ch, node, childCursor, regionIndex, target);
   }
 }
 
@@ -552,19 +569,48 @@ function layoutScrollContent(slot: JSX.Element, axis: ScrollAxis, viewportWidth:
 
     extent = syntheticRoot.children.reduce((max, c) => Math.max(max, c.layout.x + c.layout.width), 0);
   } else {
-    // Vertical: lay content in a column whose width is the viewport width less
-    // the scrollbar track, so percentages / stretch / text-wrap resolve against
-    // the column the region actually shows. The flex engine floors the root
-    // height to refHeight — pass the viewport height so the extent floors to
-    // the viewport (not the canonical 210), then grows with content.
-    const childNodes = roots.map(r => buildNode(r));
-    const columnWidth = Math.max(0, viewportWidth - SCROLL_TRACK_WIDTH);
+    // Vertical: lay content in a column, so percentages / stretch / text-wrap
+    // resolve against the column the region actually shows. The flex engine
+    // floors the root height to refHeight — pass the viewport height so the
+    // extent floors to the viewport (not the canonical 210), then grows with
+    // content.
+    //
+    // THE COLUMN IS THE WHOLE VIEWPORT UNLESS THE CONTENT SCROLLS. A track
+    // only exists beside content that runs past the viewport, so content that
+    // fits is laid out across the full width and keeps it. Content that does
+    // not is laid out AGAIN, one track narrower — narrowing can only make it
+    // taller, so what overflowed still overflows and the two passes cannot
+    // disagree. A list is laid out narrow as its own rect — what it holds at
+    // show time is not what the build measured — and keeps the wide pass
+    // beside it (below), for the build to bake as the other width.
+    const column = (width: number): { root: LayoutNode; extent: number } => {
+      const root = createNode({ flexDirection: 'column', width }, roots.map(r => buildNode(r)));
 
-    syntheticRoot = createNode({ flexDirection: 'column', width: columnWidth }, childNodes);
+      flexComputeLayout(root, width, viewportHeight);
 
-    flexComputeLayout(syntheticRoot, columnWidth, viewportHeight);
+      return { root, extent: root.layout.height };
+    };
 
-    extent = syntheticRoot.layout.height;
+    const soleList = roots.length === 1 && roots[0]?.type === LIST_SLOT_TYPE;
+    const full = column(viewportWidth);
+    const scrolls = soleList || full.extent > viewportHeight;
+    const laid = scrolls ? column(Math.max(0, viewportWidth - SCROLL_RESERVE)) : full;
+
+    syntheticRoot = laid.root;
+    extent = laid.extent;
+
+    if (soleList) {
+      // The same rows solved across the whole viewport, under their own
+      // props. The narrow pass stays the layout's own: live text wrapped at
+      // the narrow width fits the wide one too.
+      const wide = { index: 0 };
+
+      roots.forEach((r) => {
+        applyToTree(r, full.root, wide, index, WIDE_RECT);
+      });
+
+      slot.props[WIDE_RECT.marker] = true;
+    }
   }
 
   const cursor = { index: 0 };

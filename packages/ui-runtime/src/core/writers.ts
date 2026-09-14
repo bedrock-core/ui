@@ -1,6 +1,5 @@
 import type { RawMessage } from '@minecraft/server';
 import type { ModalFormData } from '@minecraft/server-ui';
-import { SLIDER_STOPS } from '../components/Form/FormSlider';
 import { isModalContext } from './guards';
 import type { FormTarget, ModalControlEntry, SerializationContext } from './types';
 
@@ -71,6 +70,9 @@ function recordModalOrdinal(
   }
 }
 
+/** Whether a number is one the engine's slider can stand on: a whole one. */
+const whole = (value: number): boolean => Number.isInteger(value);
+
 /**
  * Emit a native modal toggle → `ModalFormData.toggle`. Records the ordinal, then makes
  * the typed call.
@@ -121,24 +123,33 @@ export function emitSlider(
   defaultValue: number,
   valueStep: number | undefined,
 ): void {
-  // STOP INDICES, not the author's range. The engine holds a slider as a stop
-  // index and a count, and the compiled screen states that count itself — so
-  // the two only agree if the form is given the same units the screen was built
-  // in. Handed the author's range instead, the engine reports a raw value
-  // against a count of stops, and a value past the count is an assertion
-  // (SliderComponent::_setCurrentStep).
+  // The engine's slider steps in WHOLE numbers: a fractional step, or a range
+  // that does not start and end on one, is a thumb that cannot move. A whole
+  // range goes through as written, so the engine's own value text is the
+  // author's number. Anything else is given as a count of stops from zero,
+  // one per step, and the answer is mapped back to the author's range on
+  // submit, snapped to their step.
   const unit = valueStep !== undefined && valueStep > 0 ? valueStep : 1;
-  const span = Math.max(unit, max - min);
-  const at = (value: number): number => Math.max(0, Math.min(SLIDER_STOPS, Math.round((value - min) / span * SLIDER_STOPS)));
 
-  // Back to the author's own range, snapped to their step, so what a caller
-  // reads is the number they asked for and not a position in ours.
+  if (whole(min) && whole(max) && whole(unit)) {
+    recordModalOrdinal(ctx, name);
+    form.slider(payload, min, max, { defaultValue, valueStep: unit });
+
+    return;
+  }
+
+  const stops = Math.max(1, Math.round((max - min) / unit));
+  const at = (value: number): number => Math.max(0, Math.min(stops, Math.round((value - min) / unit)));
+  // Snapped to the step's own precision, so 0.05 comes back as 0.05 and not
+  // as the float sum that printed it.
+  const decimals = Math.min(20, Math.max(0, (String(unit).split('.')[1] ?? '').length));
+
   recordModalOrdinal(ctx, name, raw => (
     typeof raw === 'number'
-      ? Math.min(max, min + Math.round(raw / SLIDER_STOPS * span / unit) * unit)
+      ? Math.min(max, Number((min + raw * unit).toFixed(decimals)))
       : raw
   ));
-  form.slider(payload, 0, SLIDER_STOPS, { defaultValue: at(defaultValue), valueStep: 1 });
+  form.slider(payload, 0, stops, { defaultValue: at(defaultValue), valueStep: 1 });
 }
 
 /**

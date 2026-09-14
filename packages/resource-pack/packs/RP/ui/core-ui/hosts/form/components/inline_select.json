@@ -15,6 +15,12 @@
 	// fixed HERE — a $variable set where a compiled screen mounts a control does not
 	// reach the bindings of the definition it references — so the mount carries only
 	// literals: the row, the rect, the faces.
+	/* NO BINDINGS OF ITS OWN. This toggle sits inside the native dropdown's content
+	   control, where the engine resolves its machinery by name, and declaring a
+	   `collection_details` binding on it here — named for `custom_dropdown`, ahead
+	   of the state read — takes the client down on the first form opened, with
+	   nothing in any log. Measured 2026-09-14. Whatever gives these options their
+	   row has to come from outside that subtree. */
 	"compiled_option_toggle@core_ui_form_components.toggle_base": {
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",

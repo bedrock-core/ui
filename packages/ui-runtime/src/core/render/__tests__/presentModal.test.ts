@@ -42,9 +42,7 @@ describe('a modal present', () => {
       Form.Input({ name: 'nick' }),
     ]);
 
-    // A slider answers as a POSITION in the shared stop count, so 70% of 0..10
-    // arrives as 700_000 and is mapped back to the 7 the author's range means.
-    __setModalFormResponses({ canceled: false, formValues: [true, 700_000, 1, 'Steve'] });
+    __setModalFormResponses({ canceled: false, formValues: [true, 7, 1, 'Steve'] });
 
     await present(player, tree, titleFor('modal_case'));
 

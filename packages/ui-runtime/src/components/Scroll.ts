@@ -8,12 +8,40 @@ export const SCROLL_SLOT_TYPE = 'scroll-slot';
 export type ScrollAxis = 'x' | 'y';
 
 /**
- * Texels the scrollbar track takes at the right edge of a vertical scroll
- * region (`core_ui_shapes.scroll`: the viewport is `100% - 5px`). Content is
- * laid out that much narrower, so its right edge meets the track instead of
- * running under it and being clipped.
+ * Texels the scrollbar track takes near the right edge of a vertical scroll
+ * region (`core_ui_shapes.scroll`). Content is laid out narrower by the track
+ * and the clear space either side of it, so its right edge meets the gutter
+ * instead of running under the bar and being clipped.
  */
 export const SCROLL_TRACK_WIDTH = 5;
+
+/**
+ * Clear space either side of the track: between the content and the bar, and
+ * between the bar and the region's right edge, the same on both so the bar
+ * sits centred in its column. Reserved only where the track is. The render
+ * pack's `core_ui_shapes.scroll` insets its viewport and bar by the same
+ * numbers.
+ */
+export const SCROLL_GUTTER = 3;
+
+/** What scrolling content gives up on its right: the track and the space either side of it. */
+export const SCROLL_RESERVE = SCROLL_TRACK_WIDTH + 2 * SCROLL_GUTTER;
+
+/**
+ * The props the content of a scroll over ONE `<List>` carries beside its
+ * layout rect: the same content solved across the whole viewport, with no
+ * track. How many rows a list shows is only known when the screen is
+ * shown, so the build keeps both widths and the client draws the one the
+ * count calls for. `marker` is set on the scroll itself once the wide rects
+ * exist.
+ */
+export const WIDE_RECT = {
+  marker: 'jsonUIWide',
+  x: 'jsonUIWideX',
+  y: 'jsonUIWideY',
+  width: 'jsonUIWideWidth',
+  height: 'jsonUIWideHeight',
+} as const;
 
 /**
  * `<Scroll>` — one independent scroll region. Each `<Scroll>` in a render becomes its own

@@ -1,5 +1,5 @@
 import {
-  dropdownWidget, field, inputWidget, list, popupHostOf, popupOverlay, press, pressDefs, select,
+  dropdownWidget, field, fits, inputWidget, list, popupHostOf, popupOverlay, press, pressDefs, select,
   type SelectOption, text, textDef, texture, TEXTURE_DEF, toggleWidget, visible,
 } from '../../connectors/form';
 import type { TextStyle } from '../../faces';
@@ -10,6 +10,7 @@ import type { Binding, ControlEntry } from '../../jsonui';
 import { type InlineOption, inlineOptionFace } from '../../nodes/primitives/select';
 import type { ImageNode } from '../../nodes/primitives/image';
 import type { ListNode } from '../../nodes/primitives/list';
+import type { ScrollNode } from '../../nodes/primitives/scroll';
 import { faceId, sizeOf } from '../../nodes/utils/shared';
 import { isLive, runOf, type TextNode, textSignature } from '../../nodes/primitives/text';
 import type { Emit, HostEmit, IrNode } from '../../nodes/utils/types';
@@ -246,6 +247,16 @@ export const FORM_EMIT: HostEmit = {
 
     list: (node: ListNode, entry, ctx): ControlEntry =>
       list({ address: node.countEntry, initial: node.initial, max: node.rows.length }, entry, ctx),
+
+    fits: (node: ScrollNode, entry, ctx): ControlEntry => {
+      if (node.wide === undefined) {
+        throw new Error(`"${node.name}" asked which width to show, but was laid out at one.`);
+      }
+
+      const { list: rows, fit } = node.wide;
+
+      return fits({ address: rows.countEntry, initial: rows.initial, max: rows.rows.length, fit }, entry, ctx);
+    },
 
     field: nativeField,
 

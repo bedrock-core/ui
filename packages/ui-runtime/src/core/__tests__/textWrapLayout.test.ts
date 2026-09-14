@@ -1,3 +1,4 @@
+import { SCROLL_RESERVE } from '../../components/Scroll';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { JSX } from '../../jsx';
 import { withControl } from '../../components/control';
@@ -216,21 +217,40 @@ describe('text_wrap element type (localized overflow text)', () => {
 // ─── Scroll regions ───────────────────────────────────────────────────────────
 
 describe('text wrapping inside scroll regions', () => {
-  it('wraps at the scroll viewport width', () => {
+  const inScroll = (height: number): JSX.Element => {
     const t = text(DESC, { wordBreak: 'break-word' });
     const content = el('panel', { flexDirection: 'column' }, t);
     const scroll: JSX.Element = {
       type: 'scroll-slot',
-      props: { ...withControl({ width: 120, height: 100 }), __axis: 'y', children: content },
+      props: { ...withControl({ width: 120, height }), __axis: 'y', children: content },
     };
-    const tree = el('panel', { width: 320, height: 210, flexDirection: 'column' }, [scroll]);
 
-    computeLayout(tree);
+    computeLayout(el('panel', { width: 320, height: 210, flexDirection: 'column' }, [scroll]));
 
-    // The column is the viewport less the 5-texel scrollbar track.
-    expect(asNum(t.props.jsonUIWidth)).toBe(115);
+    return t;
+  };
 
-    const expected = measureText({ text: wrapText(DESC, 115, undefined, 1), fontSize: 1 });
+  it('wraps at the whole viewport width when the content fits', () => {
+    // No track is coming for content that does not scroll, so the column is
+    // the viewport itself and the text keeps every texel of it.
+    const t = inScroll(100);
+
+    expect(asNum(t.props.jsonUIWidth)).toBe(120);
+
+    const expected = measureText({ text: wrapText(DESC, 120, undefined, 1), fontSize: 1 });
+
+    expect(asNum(t.props.jsonUIHeight)).toBe(expected.height);
+  });
+
+  it('wraps one track narrower when the content scrolls', () => {
+    // Too tall for the viewport: the column is laid out again, giving up the
+    // track and the clear space before it, and the text wraps against that.
+    const t = inScroll(10);
+    const narrow = 120 - SCROLL_RESERVE;
+
+    expect(asNum(t.props.jsonUIWidth)).toBe(narrow);
+
+    const expected = measureText({ text: wrapText(DESC, narrow, undefined, 1), fontSize: 1 });
 
     expect(asNum(t.props.jsonUIHeight)).toBe(expected.height);
   });

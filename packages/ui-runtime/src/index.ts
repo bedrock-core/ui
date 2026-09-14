@@ -185,3 +185,6 @@ export type { TranslationResolver } from '@bedrock-core/i18n';
 // Entity API, usable on its own: no screen, no component, no host.
 export { containerInventory, inventoryOf } from './entity';
 export type { Inventory, InventorySlot, SlotContainer, SlotLayout } from './entity';
+
+// What scrolling content gives up beside its track, for a screen that sizes its own rows.
+export { SCROLL_RESERVE, SCROLL_TRACK_WIDTH } from './components/Scroll';

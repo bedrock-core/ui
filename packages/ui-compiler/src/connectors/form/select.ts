@@ -5,6 +5,15 @@ import type { Connector, ControlEntry } from '../types';
 /** The shared toggle each option mounts, with its bindings already fixed. */
 export const OPTION_TOGGLE = 'core_ui_form_components.compiled_option_toggle';
 
+/**
+ * The name the ENGINE listens to. A modal's dropdown takes its answer from a
+ * press on a toggle of this exact name under its content control, the way
+ * vanilla's `server_form.json` names its option radios; any other name is a
+ * toggle the engine never hears, and the option's state — read back off the
+ * row each frame — never moves. Every inline select on a screen shares it.
+ */
+export const OPTION_GROUP = 'custom_dropdown_radio_toggle';
+
 /** The dropdown that owns the row's collection and never opens. */
 export const STUB = 'core_ui_form_components.inline_dropdown_toggle_stub';
 
@@ -58,12 +67,13 @@ const LOOKS: readonly [string, keyof Omit<SelectOption, 'rect'>][] = [
  * toggle with the four looks the build drew for it. The toggle's own bindings
  * live in its definition, where the variables they read are fixed.
  *
- * The radio group is named after the ROW. Every chooser on a screen is visible
- * at once, and toggles sharing a group name select together — which is exactly
- * what happened the first time they all shared one name.
+ * The toggles wear the engine's own name ({@link OPTION_GROUP}): the press has
+ * to be heard by the dropdown that owns the row, and only that name is. What
+ * keeps two choosers on one screen apart is the data, not the group — each
+ * option's state is the row's own, read back through its collection index.
  */
 export const select: Connector<Select> = (data, face) => {
-  const group = `custom_dropdown_radio_toggle_${String(data.address)}`;
+  const group = OPTION_GROUP;
   const content = `content_${String(data.address)}`;
   const offscreen = `offscreen_${String(data.address)}`;
 

@@ -12,7 +12,7 @@
 // them: the widget is the engine's, instantiated by vanilla's row factory.
 export {
   MODAL_DROPDOWN_SLOT_TYPE, MODAL_FORM_BUTTON_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE,
-  MODAL_INPUT_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE, SLIDER_STOPS,
+  MODAL_INPUT_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
 } from './components/Form';
 
 export { buildContainerTree, buildScreenOnce, buildScreenTree } from './hosts/chest/build';
@@ -73,7 +73,7 @@ export {
 export type { GroupOptionDefaults, OptionData } from './components/Form/optionPayload';
 export type { EmbedPlacement } from './components/Embed';
 export { PANEL_TYPE } from './components/Panel';
-export { SCROLL_SLOT_TYPE, SCROLL_TRACK_WIDTH } from './components/Scroll';
+export { SCROLL_RESERVE, SCROLL_SLOT_TYPE, SCROLL_TRACK_WIDTH, WIDE_RECT } from './components/Scroll';
 export { SWAP_LOOK_SLOT_TYPE, SWAP_SLOT_TYPE } from './components/Swap';
 export type { SwapState } from './components/Swap';
 export { LIST_SLOT_TYPE, listCapacity, listCount } from './components/List';

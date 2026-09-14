@@ -279,7 +279,7 @@ const oreTheme: Theme = {
       },
     },
     toggleButton: {
-      height: 36,
+      height: 27,
       paddingX: 8,
       textures: {
         normal: `${BASE}/toggle-button/background`,
@@ -336,7 +336,7 @@ const oreTheme: Theme = {
     },
     form: {
       labelGap: 2,
-      labelStyle: { font: 'mojangles', scale: 1, bold: true, color: '§f', disabledColor: '§8' },
+      labelStyle: { font: 'mojangles', scale: 1, bold: false, color: '§f', disabledColor: '§8' },
     },
     slider: {
       height: 20,
