@@ -8,6 +8,30 @@ import { FormControlBase } from './shared';
 /** Host type for the native modal slider slot (modal-only). */
 export const MODAL_SLIDER_SLOT_TYPE = 'modal-slider';
 
+/**
+ * The stop count EVERY compiled slider is given, whatever range its author
+ * wrote. The value travels as a position in this count and is mapped back on
+ * submit.
+ *
+ * One count for all of them is what makes a compiled slider safe. Every
+ * addon's compiled screens are injected into the one vanilla `server_form`
+ * screen and are all laid out whenever any form opens, and each field carries
+ * the `collection_index` its own screen solved — so a slider routinely reads a
+ * row belonging to a screen nobody opened, or to another addon entirely. A
+ * slider VALIDATES what it is handed (`_setCurrentStep`: `0 <= step < steps`),
+ * so a stranger's number is an assertion on somebody else's screen.
+ *
+ * Sharing the count makes the collision harmless instead of fatal: every
+ * compiled slider's value is below every compiled slider's count, so whatever
+ * is read is in range. Addons cannot coordinate — each compiles alone, knowing
+ * nothing of what else is installed — so a shared CONSTANT is the only thing
+ * they can agree on without a registry.
+ *
+ * High enough that a slider from an addon outside this framework, publishing a
+ * raw value in its own units, is below it too.
+ */
+export const SLIDER_STOPS = 1_000_000;
+
 export interface FormSliderProps extends FormControlBase, StateBackgroundProps {
   /** Minimum selectable value. */
   min: number;

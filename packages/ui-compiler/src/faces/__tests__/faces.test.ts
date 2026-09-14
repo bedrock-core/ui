@@ -121,9 +121,10 @@ describe('a toggle', () => {
 
 describe('a slider', () => {
   it('travels the width less the thumb, so both ends sit flush', () => {
+    // Eleven stops, so ten gaps for the thumb to cross.
     const at = (value: number): unknown => {
       const control = drawn(sliderFace({
-        name: 's', rect: { ...RECT, width: 116 }, track: 'track', thumb: 'thumb', steps: 10, value,
+        name: 's', rect: { ...RECT, width: 116 }, track: 'track', thumb: 'thumb', steps: 11, value,
       }), 's');
 
       return childrenOf(control)[1]?.['thumb']?.offset;

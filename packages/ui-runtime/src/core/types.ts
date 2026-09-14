@@ -35,6 +35,15 @@ export type ModalValue = string | number | boolean | undefined;
 export interface ModalControlEntry {
   /** Result key — the control's `name` prop. */
   name: string;
+  /**
+   * Turns what the engine answers back into what the author asked for, where
+   * the two are not the same unit.
+   *
+   * A slider is the case: the engine holds a STOP INDEX and the author wrote a
+   * range, so the form is given the index range and the answer is mapped back
+   * here. Absent means the answer is already the author's value.
+   */
+  decode?: (raw: string | number | boolean | undefined) => string | number | boolean | undefined;
 }
 
 /** Discriminant tags for the two serialization contexts. */

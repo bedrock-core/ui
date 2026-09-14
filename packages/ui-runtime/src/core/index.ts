@@ -27,7 +27,7 @@ export type { CompiledScreen, CompiledSnapshot, StaticScreenRecord } from './ren
 export { back, closeUi, handOff, navigate, openScreen, screenOwner, setNavigator } from './navigate';
 export { clearHistory, historyOf, shownKey } from './history';
 export type { NavigateOptions, Navigated, NavigationDriver, Navigator, Returner, ScreenKey, ScreenKeys } from './navigate';
-export { returnAddressOf, setReturnAddress, takeReturnAddress } from './returnAddress';
+export { returnPathOf, pathThrough, setReturnPath, clearReturnPath, takeReturnStep } from './returnAddress';
 export type { ReturnAddress } from './returnAddress';
 
 // A screen as another addon can show it.

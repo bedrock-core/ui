@@ -8,7 +8,7 @@ import type { CompiledSnapshot } from '../../core/render/screens';
 import { runInteractiveCallback, type PresentResult } from '../../core/render/present';
 import type { JSX } from '../../jsx';
 import { allocate, type EntryEntry } from './allocate';
-import { COUNT_PREFIX, ENTRY_TEXT, FLAG_OFF, FLAG_ON } from './contract';
+import { COUNT_PREFIX, FLAG_OFF, FLAG_ON } from './contract';
 import { debugDiff } from './debug';
 
 /**
@@ -120,7 +120,7 @@ export async function showCompiledTitle(player: Player, title: string, values: r
   form.title(title);
 
   for (const value of values) {
-    form.button(ENTRY_TEXT, value);
+    form.button(value);
   }
 
   const response = await form.show(player);
@@ -151,9 +151,9 @@ export async function presentCompiledForm(
 
   // Every entry is a button() call, so the collection index a control was
   // compiled with and the selection a press comes back as are the same number.
-  // The value rides the icon path; the text is the decoders' decoy.
+  // The value rides the entry's text; no icon is ever set.
   for (const value of values) {
-    form.button(ENTRY_TEXT, value);
+    form.button(value);
   }
 
   if (debug) {

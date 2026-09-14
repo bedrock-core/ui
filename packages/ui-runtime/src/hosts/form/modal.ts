@@ -3,9 +3,11 @@ import { ModalFormData } from '@minecraft/server-ui';
 import {
   collectFormButtons, type FormConfig, type FormValues, MODAL_FORM_SLOT_TYPE,
 } from '../../components/Form';
+import { MODAL_SLIDER_SLOT_TYPE } from '../../components/Form';
 import { listCount } from '../../components/List';
 import { visiblesAt } from '../../core/ir';
 import type { CompiledSnapshot } from '../../core/render/screens';
+import { serializeProps } from '../../core/payload';
 import { emitLabel } from '../../core/writers';
 import { allocateModal, type ModalRow } from './allocate';
 import { debugDiff } from './debug';
@@ -16,7 +18,7 @@ import { childElements } from '../../core/guards';
 import { runInteractiveCallback, type PresentResult } from '../../core/render/present';
 import { isSwapPending } from '../../core/render/session';
 import { isHandler } from '../../core/events';
-import type { ModalSerializationContext, SerializablePrimitive, SerializableProps } from '../../core/types';
+import type { ModalControlEntry, ModalSerializationContext, SerializablePrimitive, SerializableProps } from '../../core/types';
 import type { JSX } from '../../jsx';
 
 /**
@@ -128,13 +130,36 @@ function writeRow(row: ModalRow, form: ModalFormData, context: ModalSerializatio
     }
   }
 
-  // The props go through, though the payload does not. A chooser's OPTIONS are
-  // DATA rather than layout: the render pack decodes each one's own blob for
-  // its face and its label, on either path, and the popup those rows fill is
-  // the same popup. What a compiled screen saves is the CELL block — the
-  // field's own geometry, state and textures — which is what BARE drops.
-  descriptor.writer(BARE, form, context, callbacks, writerProps(props), nativeArgs, props.children);
+  // The props go through, though the payload usually does not. A chooser's
+  // OPTIONS are DATA rather than layout: the render pack decodes each one's own
+  // blob for its face and its label, on either path, and the popup those rows
+  // fill is the same popup. What a compiled screen saves is the CELL block —
+  // the field's own geometry, state and textures — which is what BARE drops.
+  //
+  // A SLIDER IS THE EXCEPTION. It is the one field a compiled screen cannot
+  // place: a slider takes its step range from the form field behind it, and a
+  // statically placed one is laid out on every form in the world, including
+  // forms that have no such field — where any write to its value asserts. So
+  // the engine's own factory builds it instead, one cell per slider ROW
+  // (modal_container's `live_sliders`), and a cell built in row order has no
+  // way to know the rect the build solved for it. Its block is what tells it.
+  const carried = type === MODAL_SLIDER_SLOT_TYPE
+    ? serializeProps({ type, row: context.modalControlIndex })[0]
+    : BARE;
+
+  descriptor.writer(carried, form, context, callbacks, writerProps(props), nativeArgs, props.children);
 }
+
+/**
+ * One control's answer in the author's own units.
+ *
+ * A control whose engine units differ from the author's registered how to map
+ * back; everything else answers in the units it was written in.
+ */
+const answer = (
+  entry: ModalControlEntry,
+  raw: string | number | boolean | undefined,
+): string | number | boolean | undefined => (entry.decode === undefined ? raw : entry.decode(raw));
 
 /**
  * Re-key positional `formValues` by each control's name.
@@ -153,10 +178,25 @@ function collectValues(
     return values;
   }
 
-  for (const [ordinal, entry] of context.modalControls) {
-    if (entry.name !== '') {
-      values[entry.name] = formValues[ordinal];
-    }
+  const named = [...context.modalControls].filter(([, entry]) => entry.name !== '');
+
+  // Whether a row that carries no control — a label — takes a slot of its own
+  // is the engine's to decide, and it has decided both ways across versions.
+  // The response says which: as many slots as rows written means every row has
+  // one and an ordinal IS the position; as many as named controls means only
+  // the interactive rows are there and the Nth named control is the Nth value.
+  // Anything else is a truncated answer: read by ordinal, which is what a short
+  // response is short OF, and let the missing ones come back undefined.
+  if (formValues.length === named.length && named.length !== context.modalControlIndex) {
+    named.forEach(([, entry], position) => {
+      values[entry.name] = answer(entry, formValues[position]);
+    });
+
+    return values;
+  }
+
+  for (const [ordinal, entry] of named) {
+    values[entry.name] = answer(entry, formValues[ordinal]);
   }
 
   return values;
@@ -232,6 +272,13 @@ export async function presentCompiledModal(
     }
 
     const values = collectValues(context, response.formValues);
+
+    // What the engine answered with, against what was written: the one line that
+    // says whether a field's value reached the name it was declared under.
+    console.warn(
+      `[ui] ${title} answered ${String(response.formValues?.length ?? 0)} value(s) for `
+      + `${String(context.modalControlIndex)} row(s); read ${JSON.stringify(values)}`,
+    );
 
     if (config.onSubmit) {
       return runInteractiveCallback(player, () => config.onSubmit?.({ player, values }));

@@ -36,7 +36,7 @@ export type { NavigateOptions, ScreenKey, ScreenKeys } from '@bedrock-core/ui-ru
 
 // Where a player came from when another realm asked this one to show them a
 // screen: recorded by whatever serves that request, read by `back()`.
-export { returnAddressOf, setReturnAddress } from '@bedrock-core/ui-runtime';
+export { pathThrough, returnPathOf, setReturnPath } from '@bedrock-core/ui-runtime';
 export type { ReturnAddress } from '@bedrock-core/ui-runtime';
 
 // The cross-addon feeds a key resolves through: an addon's compiled screens as
@@ -154,7 +154,7 @@ export interface CrossRealm {
    */
   ask(owner: string, key: string, player: Player): boolean;
   /** Shows the player what the realm they came from had on screen. */
-  sendBack(address: ReturnAddress, player: Player): boolean;
+  sendBack(address: ReturnAddress, rest: readonly ReturnAddress[], player: Player): boolean;
 }
 
 /**
@@ -206,6 +206,6 @@ export function provideReferences(
     },
     sendBack: crossRealm === undefined
       ? undefined
-      : (address, player): boolean => crossRealm.sendBack(address, player),
+      : (address, rest, player): boolean => crossRealm.sendBack(address, rest, player),
   });
 }

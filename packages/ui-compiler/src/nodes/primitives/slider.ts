@@ -31,9 +31,9 @@ export interface SliderNode extends FieldBase {
   trackHeight?: number;
   thumbWidth?: number;
   thumbHeight?: number;
-  /** The discrete step count, baked from min, max and step. */
+  /** How many stops the travel has, baked from min, max and step. */
   steps: number;
-  /** The default as a step index over that count. */
+  /** The default as a stop index, which the engine holds below the count. */
   value: number;
 }
 
@@ -43,17 +43,26 @@ declare module '../utils/types' {
   }
 }
 
-/** The engine's discrete step count, from the author's range. */
+/**
+ * How many stops the engine's slider has, from the author's range.
+ *
+ * The engine counts STOPS, not the gaps between them, and holds the current one
+ * strictly below the count (`_setCurrentStep`: `step >= 0 && step < steps`). A
+ * range of 0 to 100 by 1 therefore has 101 stops, not 100 — the end of the range
+ * is a stop like every other, and leaving it out puts the maximum one past what
+ * the engine will accept.
+ */
 const stepsOf = (element: JSX.Element): number => {
   const args = element.nativeArgs;
   const min = num(args?.['min'], 0);
   const max = num(args?.['max'], 1);
   const step = num(args?.['step'], 0);
+  const gaps = Math.max(1, Math.round(step > 0 ? (max - min) / step : max - min));
 
-  return Math.max(1, Math.round(step > 0 ? (max - min) / step : max - min));
+  return gaps + 1;
 };
 
-/** The default value as a step index over that count. */
+/** The default value as a stop index, kept below the count the engine holds it against. */
 const valueOf = (element: JSX.Element): number => {
   const args = element.nativeArgs;
   const min = num(args?.['min'], 0);
@@ -62,7 +71,7 @@ const valueOf = (element: JSX.Element): number => {
   const unit = step > 0 ? step : 1;
   const start = Math.min(Math.max(num(args?.['defaultValue'], min), min), max);
 
-  return Math.max(0, Math.min(stepsOf(element), Math.round((start - min) / unit)));
+  return Math.max(0, Math.min(stepsOf(element) - 1, Math.round((start - min) / unit)));
 };
 
 export const sliderDefinition: NodeDefinition<SliderNode> = {

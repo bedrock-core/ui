@@ -11,7 +11,7 @@ import { titleFor } from '../../hosts/form/contract';
 import type { FunctionComponent } from '../../jsx';
 import { clearHistory, historyOf } from '../history';
 import { back, navigate, openScreen, setNavigator, type Navigated } from '../navigate';
-import { setReturnAddress, type ReturnAddress } from '../returnAddress';
+import { setReturnPath, type ReturnAddress } from '../returnAddress';
 import { addonReference, presentReference, type ScreenReference } from '../reference';
 import { registerCompiledScreen, registerStaticScreens } from '../render/screens';
 
@@ -164,21 +164,21 @@ describe('crossing into another addon\'s realm', () => {
     const player = nextPlayer();
     const First: FunctionComponent = () => Screen({ children: Panel({ children: Text({ children: 'first' }) }) });
     const Second: FunctionComponent = () => Screen({ children: Panel({ children: Text({ children: 'second' }) }) });
-    const sent: ReturnAddress[] = [];
+    const sent: { step: ReturnAddress; rest: readonly ReturnAddress[] }[] = [];
 
     registerCompiledScreen(First, { key: 'guest:first', title: titleFor('guest_first') });
     registerCompiledScreen(Second, { key: 'guest:second', title: titleFor('guest_second') });
 
     setNavigator({
       show: (key, who, options): Navigated => openScreen(key, who, options),
-      sendBack: (address): boolean => {
-        sent.push(address);
+      sendBack: (step, rest): boolean => {
+        sent.push({ step, rest });
 
         return true;
       },
     });
 
-    setReturnAddress(player.id, { realm: 'economy', target: { kind: 'screen', key: 'economy:list' } });
+    setReturnPath(player.id, [{ realm: 'economy', target: { kind: 'screen', key: 'economy:list' } }]);
 
     navigate('guest:first', player);
     navigate('guest:second', player);
@@ -189,13 +189,44 @@ describe('crossing into another addon\'s realm', () => {
 
     // Its bottom is the hop, not the end.
     expect(back(player)).toBe(true);
-    expect(sent).toEqual([{ realm: 'economy', target: { kind: 'screen', key: 'economy:list' } }]);
+    expect(sent).toEqual([{ step: { realm: 'economy', target: { kind: 'screen', key: 'economy:list' } }, rest: [] }]);
 
     // And exactly once: the realm returned to sets its own address as it shows the player.
     expect(back(player)).toBe(false);
     expect(sent).toHaveLength(1);
 
     clearHistory(player.id);
+  });
+
+  it('walks back through every realm the player crossed, nearest first', () => {
+    const player = nextPlayer();
+    const sent: { step: ReturnAddress; rest: readonly ReturnAddress[] }[] = [];
+
+    setNavigator({
+      show: (key, who, options): Navigated => openScreen(key, who, options),
+      sendBack: (step, rest): boolean => {
+        sent.push({ step, rest });
+        // The realm returned to keeps what is left, exactly as one serving a request does.
+        setReturnPath(player.id, rest);
+
+        return true;
+      },
+    });
+
+    // economy → shop → here: the path travels with the request, oldest first.
+    setReturnPath(player.id, [
+      { realm: 'economy', target: { kind: 'list', addonId: 'economy' } },
+      { realm: 'shop', target: { kind: 'list', addonId: 'shop' } },
+    ]);
+
+    expect(back(player)).toBe(true);
+    expect(back(player)).toBe(true);
+    // Nothing left to cross, and nothing left over.
+    expect(back(player)).toBe(false);
+
+    expect(sent.map(hop => hop.step.realm)).toEqual(['shop', 'economy']);
+    expect(sent[0]?.rest).toEqual([{ realm: 'economy', target: { kind: 'list', addonId: 'economy' } }]);
+    expect(sent[1]?.rest).toEqual([]);
   });
 
   it('ends at the bottom of the stack when nothing asked this realm to show anything', () => {

@@ -15,18 +15,6 @@
 export const COLLECTION = 'form_buttons';
 
 /**
- * The TEXT every compiled entry is shown with.
- *
- * A form entry carries two strings: its text and its icon path. The text is
- * this fixed payload — one that resolves to a hidden panel — which leaves the
- * icon path (`#form_button_texture`) free to carry the value a compiled
- * control reads. The library's `server_form` hook compares each entry's text
- * against this exact string and draws no icon image when they match, so an
- * entry carrying a channel never draws its channel as a texture.
- */
-export const ENTRY_TEXT = 'bcuiv0008s:panel;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;0b:false1';
-
-/**
  * The alphabet a carried flag is written in — a visible, a press's enabled.
  *
  * Letters, not digits: a compiled control reads its entry through string

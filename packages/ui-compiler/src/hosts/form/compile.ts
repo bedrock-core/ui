@@ -209,13 +209,14 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
     collection: modal ? MODAL_COLLECTION : FORM_COLLECTION,
   });
   const face = faceOf(ir);
-  const document = fill(face, FORM_EMIT);
+  const title = formTitleFor(namespace);
+  const document = fill(face, FORM_EMIT, title);
 
   return {
     name: spec.name,
     addon: spec.namespace,
     namespace,
-    title: formTitleFor(namespace),
+    title,
     ...embedded === undefined ? {} : { marker: embedMarker(spec.namespace), embed: embedded },
     document,
     face,

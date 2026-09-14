@@ -165,9 +165,9 @@ describe('a form live text', () => {
 
     // Localized: a live key resolves on the client, a literal renders as itself.
     expect(run).toMatchObject({ type: 'label', text: '#entry_value', localize: true });
-    // The value rides the entry's icon path: one plain collection binding, no expression.
+    // The value rides the entry's text: one plain collection binding, no expression.
     expect(run.bindings).toContainEqual({
-      binding_name: '#form_button_texture',
+      binding_name: '#form_button_text',
       binding_name_override: '#entry_value',
       binding_type: 'collection',
       binding_collection_name: FORM_COLLECTION,

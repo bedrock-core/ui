@@ -97,7 +97,7 @@ describe('render, on a screen the build compiled', () => {
 
     // The title picks the layout; the one entry is the button's enabled flag.
     expect(form?.titleText).toBe('bcuiv0008core1:shop_home');
-    expect(form?.icons).toEqual(['t']);
+    expect(form?.buttons).toEqual(['t']);
   });
 
   it('refuses a screen the build never compiled, naming what produces one', () => {

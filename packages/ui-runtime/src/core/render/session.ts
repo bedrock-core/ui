@@ -1,6 +1,5 @@
 import { uiManager } from '@minecraft/server-ui';
 import type { JSX } from '../../jsx';
-import { stopInputLock } from '../../util/inputLock';
 import { clearHistory } from '../history';
 import { getFibersForOwner, type Owner } from '../fabric';
 import type { CompiledSnapshot } from './screens';
@@ -291,11 +290,43 @@ export function isInInteractiveTransaction(owner: Owner): boolean {
   return session?.suppress ?? false;
 }
 
+/**
+ * How many sessions have been torn down and started.
+ *
+ * Which path a render took — absorbed into a live chain, or a fresh start over
+ * a cleaned one — is otherwise invisible from outside: both end with the same
+ * screen on the same player. The swap tests read these.
+ */
+const counters = new Map<string, { cleanups: number; starts: number }>();
+
+const countsFor = (id: string): { cleanups: number; starts: number } => {
+  const found = counters.get(id) ?? { cleanups: 0, starts: 0 };
+
+  counters.set(id, found);
+
+  return found;
+};
+
+/** Test hook: one owner's sessions torn down and started since the last reset. */
+export function __sessionCounters(id: string): { cleanups: number; starts: number } {
+  return { ...countsFor(id) };
+}
+
+/** Test hook: forget every count, between cases. */
+export function __resetSessionCounters(): void {
+  counters.clear();
+}
+
+/** Counted where a fresh start happens, which is the lifecycle's business. */
+export function noteSessionStart(id: string): void {
+  countsFor(id).starts++;
+}
+
 export function triggerCleanup(owner: Owner, shouldClose: boolean = false): void {
-  // The input lock and the form on screen belong to a player; an entity's
-  // session has neither.
+  countsFor(owner.id).cleanups++;
+
+  // The form on screen belongs to a player; an entity's session has none.
   if (owner.kind === 'player') {
-    stopInputLock(owner.player);
     // Where the player had been is gone with the session: a screen nobody is
     // looking at any more is not one `back()` can return to.
     clearHistory(owner.player.id);

@@ -104,7 +104,7 @@ describe('presenting a compiled modal', () => {
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
 
-  it('sends one bare row per native field, in document order', async () => {
+  it('sends one bare row per native field except the slider, in document order', async () => {
     // Every kind the engine draws, so the ordinal a compiled control was baked
     // against is checked against the real thing rather than against toggles
     // alone. `Form.Option` takes no row of its own — the dropdown's writer
@@ -134,7 +134,12 @@ describe('presenting a compiled modal', () => {
     const rows = __lastModalForm()?.rows ?? [];
 
     expect(rows.map(row => row.kind)).toEqual(['toggle', 'slider', 'textField', 'dropdown']);
-    expect(rows.every(row => row.label === '')).toBe(true);
+
+    // Bare everywhere the pack already knows the field's look — and NOT on the
+    // slider, which the engine's own factory builds from its row and which
+    // therefore has to be told the box the build solved for it.
+    expect(rows.filter(row => row.kind !== 'slider').every(row => row.label === '')).toBe(true);
+    expect(rows.find(row => row.kind === 'slider')?.label).not.toBe('');
   });
 
   it('sends the options a chooser has, because they are data and not layout', async () => {

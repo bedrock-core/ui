@@ -131,7 +131,7 @@ describe('the texture carrier', () => {
     const image = find(compiled.document, (_name, control) => control.type === 'image' && control.texture === '#texture');
 
     expect(image).toBeDefined();
-    expect(JSON.stringify(image?.bindings)).toContain('#form_button_texture');
+    expect(JSON.stringify(image?.bindings)).toContain('#form_button_text');
 
     const host = find(compiled.document, (_name, control) => control.collection_name === 'form_buttons');
 

@@ -53,7 +53,7 @@ describe('carried visible on the action form', () => {
 
     expect(inner?.collection_index).toBe(0);
     expect(inner?.property_bag?.['#visible']).toBe(true);
-    expect(JSON.stringify(inner?.bindings)).toContain('#form_button_texture');
+    expect(JSON.stringify(inner?.bindings)).toContain('#form_button_text');
     expect(JSON.stringify(inner?.bindings)).toContain("(not (#vis_value = 'f'))");
   });
 

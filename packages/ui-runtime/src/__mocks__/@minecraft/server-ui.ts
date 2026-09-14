@@ -169,10 +169,10 @@ function remember(form: ActionFormData): void {
 export class ActionFormData {
   /** What `title()` was called with, so a test can read the screen key off it. */
   titleText: string | RawMessage = '';
-  /** What every `button()` was called with, in order — the entries a compiled screen wrote. */
+  /** What every `button()` was called with, in order — the entries a compiled screen wrote, values and all. */
   buttons: (string | RawMessage)[] = [];
 
-  /** The icon path of every `button()`, in order — where a compiled entry's value rides. */
+  /** The icon path of every `button()`, in order. A compiled screen sets none. */
   icons: (string | undefined)[] = [];
 
   constructor() {

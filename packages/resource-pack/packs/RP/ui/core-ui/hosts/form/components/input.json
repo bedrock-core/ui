@@ -162,7 +162,10 @@
 									"#anchored_offset_value_y": 0.0
 								},
 								"$native_binding": "#custom_input_text",
-								"$native_target": "#item_name"
+								"$native_target": "#item_name",
+								"$payload_collection": "custom_form",
+								"$cell_details_binding_type": "collection_details",
+								"$details_collection": "custom_form"
 							}
 						},
 						{
@@ -193,7 +196,10 @@
 														"anchor_from": "left_middle",
 														"anchor_to": "left_middle",
 														"$native_binding": "#custom_placeholder_text",
-														"$native_target": "#placeholder"
+														"$native_target": "#placeholder",
+														"$payload_collection": "custom_form",
+														"$cell_details_binding_type": "collection_details",
+								"$details_collection": "custom_form"
 													}
 												}
 											]

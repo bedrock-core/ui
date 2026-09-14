@@ -1,5 +1,6 @@
 import type { DropdownNode } from '../../nodes/primitives/dropdown';
 import type { InputNode } from '../../nodes/primitives/input';
+import { SLIDER_STOPS } from '@bedrock-core/ui-runtime/compile';
 import type { SliderNode } from '../../nodes/primitives/slider';
 import type { ToggleNode } from '../../nodes/primitives/toggle';
 import type { Control } from '../../jsonui';
@@ -44,13 +45,13 @@ const sliderBoxes = (node: SliderNode): Record<string, unknown> => {
   const thumb = node.thumbWidth ?? THUMB_WIDTH;
 
   return {
-    // Baked, never read from the row: a compiled slider exists behind its
-    // title gate on screens with no row at all, and an unresolved steps read
-    // is a division by zero inside the engine's percentage. The starting value
-    // is baked too — the engine seeds the row from the form data and owns the
-    // drag — so the control needs no collection reads at all.
-    $steps: node.steps,
-    $value: node.value,
+    // THE SHARED COUNT, not this slider's own. Every compiled slider in every
+    // installed addon carries the same one, which is what makes reading a row
+    // safe at all — see SLIDER_STOPS. The starting position is the build's
+    // value as a place in that count, so the thumb is right before any row has
+    // been read.
+    $steps: SLIDER_STOPS,
+    $value: Math.round(node.value / Math.max(1, node.steps - 1) * SLIDER_STOPS),
     // The engine bounds the thumb's CENTRE to the control's width, so the box
     // the slider lives in is narrower than the track by one thumb — then the
     // thumb's EDGE meets the track ends at min and max. The same expression
@@ -72,10 +73,22 @@ export const toggleWidget = (node: ToggleNode): { definition: string; props: Con
   props: { size: ['100%', '100%'], ...node.mount },
 });
 
-/** The row a slider mounts, with every box it would otherwise decode. */
-export const sliderWidget = (node: SliderNode): { definition: string; props: Control } => ({
+/**
+ * The row a slider mounts, with every box it would otherwise decode.
+ *
+ * `$screen_title` is what lets it read its row at all. Every compiled screen is
+ * laid out whenever any form opens, and each field carries the
+ * `collection_index` its OWN screen solved — so off its own screen a field reads
+ * a stranger's row. Most fields can survive that; a slider validates what it is
+ * handed, so it has to know whether the row in front of it is its own.
+ */
+export const sliderWidget = (node: SliderNode, screen: string): { definition: string; props: Control } => ({
   definition: SLIDER_ROW,
-  props: { $scale: node.scale, ...sliderBoxes(node), ...node.mount },
+  // QUOTED, because the variable is substituted into a binding EXPRESSION and
+  // the engine parses what lands there: bare, a title reads as an identifier
+  // rather than a string, and the comparison is against something else entirely.
+  // Every screen gate writes the same comparison the same way.
+  props: { $screen_title: `'${screen}'`, $scale: node.scale, ...sliderBoxes(node), ...node.mount },
 });
 
 /** The row an input mounts, with the engine pointed at the static labels. */

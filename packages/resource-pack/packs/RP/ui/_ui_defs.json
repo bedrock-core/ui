@@ -12,10 +12,6 @@
 		// nothing, it just clips and scrolls.
 		"ui/core-ui/shapes/scroll.json",
 
-		// S7, measuring which of an entry's two strings can carry a value.
-		// Gated on its own title marker; no shipped screen reaches it.
-		"ui/core-ui/spikes/form_text.json",
-
 		// The FORM host: the two containers the screen factory routes into, the
 		// mount a compiled screen hangs from, and the pieces a modal's own rows
 		// are drawn with.
@@ -23,6 +19,7 @@
 		"ui/core-ui/hosts/form/action_container.json",
 		"ui/core-ui/hosts/form/modal_container.json",
 		"ui/core-ui/hosts/form/mount.json",
+		"ui/core-ui/hosts/form/control.json",
 		"ui/core-ui/hosts/form/cursor.json",
 		// The faces a field wears, and the label a row draws its text with.
 		"ui/core-ui/hosts/form/state.json",

@@ -45,7 +45,7 @@ describe('presenting a compiled form', () => {
     await presentCompiledForm(player, tree, TITLE);
 
     // The layout is already in the pack; a static screen has nothing to say.
-    expect(__lastActionForm()?.icons).toEqual([]);
+    expect(__lastActionForm()?.buttons).toEqual([]);
   });
 
   it('carries a live string whole — a form entry has no alphabet to lose', async () => {
@@ -55,7 +55,9 @@ describe('presenting a compiled form', () => {
 
     await presentCompiledForm(player, tree, TITLE);
 
-    expect(__lastActionForm()?.icons).toEqual(['§aholding §fdiamond']);
+    expect(__lastActionForm()?.buttons).toEqual(['§aholding §fdiamond']);
+    // The value is the entry's whole text, and no icon is set beside it.
+    expect(__lastActionForm()?.icons).toEqual([undefined]);
   });
 
   it('cuts a live string to the room the screen reserved for it', async () => {
@@ -65,7 +67,7 @@ describe('presenting a compiled form', () => {
 
     await presentCompiledForm(player, tree, TITLE);
 
-    expect(__lastActionForm()?.icons).toEqual(['far ']);
+    expect(__lastActionForm()?.buttons).toEqual(['far ']);
   });
 
   it('says whether each press may happen, which is all a press entry carries', async () => {
@@ -78,7 +80,7 @@ describe('presenting a compiled form', () => {
 
     await presentCompiledForm(player, tree, TITLE);
 
-    expect(__lastActionForm()?.icons).toEqual(['t', 'f']);
+    expect(__lastActionForm()?.buttons).toEqual(['t', 'f']);
   });
 
   it('runs the handler of the entry the engine named', async () => {
@@ -117,7 +119,7 @@ describe('presenting a compiled form', () => {
     const outcome = presentCompiledForm(player, tree, TITLE);
 
     // The button is written first even though the text is above it on screen.
-    expect(__lastActionForm()?.icons).toEqual(['t', 'live']);
+    expect(__lastActionForm()?.buttons).toEqual(['t', 'live']);
 
     __resolveShow({ canceled: false, selection: 0 });
 

@@ -3,7 +3,21 @@
 	"label_static@core_ui_components.label": {
 		"$font_type|default": "default",
 		"font_type": "$font_type",
+		/* A derivation REPLACES the base's bindings, so the details slot the base
+		   declares has to be declared again here — a collection binding resolves
+		   its row only while the SAME control carries `collection_details`, and
+		   without it this label reads nothing and the field it draws for renders
+		   empty while its own widget still works. Shape as the base's: the
+		   collection binding first, details second with an empty name. */
+		"$cell_details_binding_type|default": "none",
+		"$details_collection|default": "",
 		"bindings": [
+			{
+				/* Details FIRST and named, the form `components/toggle.json` proves for a
+				   control the pack places on `custom_form`. */
+				"binding_type": "$cell_details_binding_type",
+				"binding_collection_name": "$details_collection"
+			},
 			{
 				/* the native text channel, the one binding a static label still needs */
 				"binding_name": "$native_binding",

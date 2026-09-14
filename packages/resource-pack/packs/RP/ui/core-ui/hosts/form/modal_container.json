@@ -36,7 +36,7 @@
 			{
 				"compiled_content@core_ui_form.claimed_modal": {}
 			},
-			{
+{
 				/* Dropdown popup OVERLAY at the content root — OUTSIDE the scroll, so an open
 				   popup never scrolls with the form and is always form-wide/host-anchored
 				   (the engine's own popup box is cell-relative: a 50%-wide dropdown got a

@@ -27,6 +27,10 @@ export type ControlType
     | 'scrollbar_box'
     | 'dropdown'
     | 'input_panel'
+    // A panel whose children the ENGINE builds, one per entry of the collection
+    // it names — with `control_ids` choosing the definition by the entry's own
+    // type. The only way a control can exist exactly when its row does.
+    | 'collection_panel'
     | 'screen'
     | 'custom';
 
@@ -146,6 +150,14 @@ export interface Control {
 
   /* collections */
   collection_name?: string;
+  /**
+   * What the ENGINE builds a collection's children from, on a
+   * `collection_panel`. `control_ids` maps an entry's own TYPE to the
+   * definition built for it, so a cell exists exactly when an entry of that
+   * type does — which is the only way to hold a control that validates itself
+   * against the entry behind it.
+   */
+  factory?: { name: string; control_name?: string; control_ids?: Record<string, string> };
   /**
    * Undocumented by Mojang. Accepted ONLY on a direct child of a control that
    * declares `collection_name`; anywhere else the engine rejects it outright.

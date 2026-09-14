@@ -3,7 +3,6 @@ import { uiManager } from '@minecraft/server-ui';
 import { registerNativeComponents } from '../../components';
 import { DefaultTranslations } from '../../data/Translation';
 import type { FunctionComponent, JSX } from '../../jsx';
-import { startInputLock } from '../../util/inputLock';
 import { playerOwner } from '../fabric';
 import { noteShown } from '../history';
 import { present } from './present';
@@ -21,8 +20,7 @@ import {
   type SessionCompiled,
   setBuildRunner,
   setSessionRoot,
-  triggerCleanup,
-} from './session';
+  triggerCleanup, noteSessionStart } from './session';
 import { buildTree, cleanupComponentTree } from './tree';
 import { UncompiledScreenError } from '../types';
 
@@ -123,7 +121,7 @@ export function render(
   // Wipe any fibers a dead session left behind (a 'none' verdict or a crashed
   // build) so a different app can never resurrect their hook state through the
   // player-scoped fiber ids.
-  startInputLock(player);
+  noteSessionStart(player.id);
   cleanupComponentTree(owner);
 
   // Register this player's session root and a background build runner

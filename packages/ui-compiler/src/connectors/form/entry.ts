@@ -67,16 +67,18 @@ export const entryHost = (
 /**
  * The string an addressed value travels on, per collection.
  *
- * An action form's entries carry the value in their ICON PATH, a modal's rows
- * in their text. An action-form entry's text is a fixed decoy the library's
- * `server_form` hook recognises, so the icon path is left for the value, which
- * a compiled control reads by a plain collection binding. Plain is the
+ * Both collections carry the value in the entry's TEXT — an action form's
+ * entries under `#form_button_text`, a modal's rows under `#custom_text`, the
+ * only string each collection has. The icon path is never set, so vanilla's own
+ * button draws no image and nothing has to hide one.
+ *
+ * A compiled control reads whichever by a plain collection binding. Plain is the
  * requirement, not a preference: an expression over an entry string — a `-` or
  * a `'%.Ns' *` format — copies it into the engine's 1024-byte stack string and
  * asserts when it does not fit, whatever gate the control sits behind.
  */
 export const payloadBindingFor = (collection: string): string =>
-  (collection === MODAL_COLLECTION ? '#custom_text' : '#form_button_texture');
+  (collection === MODAL_COLLECTION ? '#custom_text' : '#form_button_text');
 
 /** Reads the entry's own string, which is the only thing a form entry carries. */
 export const entryText = (name: string, collection: string = FORM_COLLECTION): Binding[] => [

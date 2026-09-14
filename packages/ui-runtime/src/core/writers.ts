@@ -1,7 +1,8 @@
 import type { RawMessage } from '@minecraft/server';
 import type { ModalFormData } from '@minecraft/server-ui';
+import { SLIDER_STOPS } from '../components/Form/FormSlider';
 import { isModalContext } from './guards';
-import type { FormTarget, SerializationContext } from './types';
+import type { FormTarget, ModalControlEntry, SerializationContext } from './types';
 
 /**
  * The typed calls a modal's fields are made with.
@@ -59,9 +60,13 @@ export function emitLabel(payload: string | RawMessage, form: FormTarget, ctx?: 
  * native control's label string, so the RP decodes real geometry and styling from it
  * (`use_anchored_offset` + `#size_binding_*`), exactly like the ActionForm slots.
  */
-function recordModalOrdinal(ctx: SerializationContext | undefined, name: string): void {
+function recordModalOrdinal(
+  ctx: SerializationContext | undefined,
+  name: string,
+  decode?: ModalControlEntry['decode'],
+): void {
   if (ctx && isModalContext(ctx)) {
-    ctx.modalControls.set(ctx.modalControlIndex, { name });
+    ctx.modalControls.set(ctx.modalControlIndex, { name, ...decode === undefined ? {} : { decode } });
     ctx.modalControlIndex++;
   }
 }
@@ -116,8 +121,24 @@ export function emitSlider(
   defaultValue: number,
   valueStep: number | undefined,
 ): void {
-  recordModalOrdinal(ctx, name);
-  form.slider(payload, min, max, { defaultValue, valueStep });
+  // STOP INDICES, not the author's range. The engine holds a slider as a stop
+  // index and a count, and the compiled screen states that count itself — so
+  // the two only agree if the form is given the same units the screen was built
+  // in. Handed the author's range instead, the engine reports a raw value
+  // against a count of stops, and a value past the count is an assertion
+  // (SliderComponent::_setCurrentStep).
+  const unit = valueStep !== undefined && valueStep > 0 ? valueStep : 1;
+  const span = Math.max(unit, max - min);
+  const at = (value: number): number => Math.max(0, Math.min(SLIDER_STOPS, Math.round((value - min) / span * SLIDER_STOPS)));
+
+  // Back to the author's own range, snapped to their step, so what a caller
+  // reads is the number they asked for and not a position in ours.
+  recordModalOrdinal(ctx, name, raw => (
+    typeof raw === 'number'
+      ? Math.min(max, min + Math.round(raw / SLIDER_STOPS * span / unit) * unit)
+      : raw
+  ));
+  form.slider(payload, 0, SLIDER_STOPS, { defaultValue: at(defaultValue), valueStep: 1 });
 }
 
 /**

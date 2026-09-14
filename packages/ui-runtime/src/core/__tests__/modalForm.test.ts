@@ -3,7 +3,7 @@ import type { Player } from '@minecraft/server';
 import type { ModalFormData } from '@minecraft/server-ui';
 import { registerNativeComponents } from '../../components';
 import { Form } from '../../components/Form';
-import { MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE } from '../../components/Form';
+import { MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE, SLIDER_STOPS } from '../../components/Form';
 import { Panel } from '../../components/Panel';
 import { isElement } from '../guards';
 import { playerOwner } from '../fabric';
@@ -159,12 +159,26 @@ describe("a modal's native controls", () => {
 
     const slider = form.calls.find(c => c.kind === 'slider');
 
-    // Range, step and default reach the native call as direct args through
-    // emitSlider; the label is bare, because the pack draws the row.
+    // A POSITION in the shared stop count, not the author's range: every
+    // compiled slider is given the same count so that reading a stranger's row
+    // stays in range. 5 is halfway through 1..9, so it is half of the count. The
+    // label is bare, because the pack draws the row.
     expect(slider?.args[0]).toBe('');
-    expect(slider?.args[1]).toBe(1);
-    expect(slider?.args[2]).toBe(9);
-    expect(slider?.args[3]).toMatchObject({ defaultValue: 5, valueStep: 2 });
+    expect(slider?.args[1]).toBe(0);
+    expect(slider?.args[2]).toBe(SLIDER_STOPS);
+    expect(slider?.args[3]).toMatchObject({ defaultValue: SLIDER_STOPS / 2, valueStep: 1 });
+  });
+
+  it('maps a slider answer back from its stop index to the author value', () => {
+    const ctx = modalCtx();
+
+    emit(el(Form.Slider({ name: 'v', min: 1, max: 9, step: 2, defaultValue: 5 })), new FakeModalForm(), ctx);
+
+    const decode = ctx.modalControls.get(0)?.decode;
+
+    expect(decode?.(0)).toBe(1);
+    expect(decode?.(SLIDER_STOPS / 2)).toBe(5);
+    expect(decode?.(SLIDER_STOPS)).toBe(9);
   });
 
   it('maps dropdown defaultValue option to its index', () => {
@@ -321,7 +335,9 @@ describe("a modal's native controls", () => {
     emit(tree, form, ctx);
 
     expect(ctx.modalControls.get(0)).toEqual({ name: 'sound' });
-    expect(ctx.modalControls.get(1)).toEqual({ name: 'volume' });
+    // The slider registers a decode beside its name: the engine answers in stop
+    // indices and the author asked in their own range.
+    expect(ctx.modalControls.get(1)).toMatchObject({ name: 'volume' });
     expect(ctx.modalControlIndex).toBe(2);
   });
 
@@ -351,7 +367,7 @@ describe("a modal's native controls", () => {
 
     expect(form.labels).toHaveLength(1);
     expect(ctx.modalControls.get(1)).toEqual({ name: 'sound' });
-    expect(ctx.modalControls.get(2)).toEqual({ name: 'volume' });
+    expect(ctx.modalControls.get(2)).toMatchObject({ name: 'volume' });
     expect(ctx.modalControlIndex).toBe(3);
 
     // End-to-end: a formValues array shaped like the real engine's (null for the

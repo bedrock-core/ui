@@ -211,6 +211,14 @@ export interface Emit {
   ns: string;
   facesNs: string;
   collection: string;
+  /**
+   * What the runtime shows this screen with, where the host has such a thing.
+   *
+   * A control that reads a row needs it: every compiled screen in the pack is
+   * laid out whenever ANY form opens, so a read has to be able to tell its own
+   * screen's rows from another screen's. Empty where the host has no title.
+   */
+  screen: string;
   /** The screen this document is being filled for. */
   host: HostEmit;
   /** The host renderer that hides the runtime's transport item, if the host has one. */

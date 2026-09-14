@@ -6,7 +6,7 @@ import { triggerCleanup } from './render/session';
 import { presentReference, type ScreenReference } from './reference';
 import { render, type RenderOptions } from './render';
 import { screenForKey, staticScreen } from './render/screens';
-import { takeReturnAddress, type ReturnAddress } from './returnAddress';
+import { clearReturnPath, takeReturnStep, type ReturnAddress } from './returnAddress';
 
 /**
  * Navigating by KEY rather than by component.
@@ -87,8 +87,13 @@ export type Navigated = boolean | 'handed-off';
 /** What resolves a key into a screen shown to a player. */
 export type Navigator = (key: string, player: Player, options: NavigateOptions) => Navigated;
 
-/** What sends a player back to the realm that asked this one to show a screen. */
-export type Returner = (address: ReturnAddress, player: Player) => boolean;
+/**
+ * What sends a player back to the realm they came from.
+ *
+ * `rest` is the way back from THERE — the realms behind that one, which travel
+ * with the request so the realm receiving it can walk the chain further home.
+ */
+export type Returner = (address: ReturnAddress, rest: readonly ReturnAddress[], player: Player) => boolean;
 
 /** Everything this realm uses to reach a screen it cannot draw itself. */
 export interface NavigationDriver {
@@ -233,19 +238,22 @@ export function back(player: Player, options: Omit<NavigateOptions, 'replace'> =
   return navigator(key, player, { ...options, replace: true }) !== false;
 }
 
-/** The one hop out of this realm: whoever asked shows the player what they left. */
+/**
+ * The hop out of this realm: the realm the player came from shows them what
+ * they left, and is handed the way back from there.
+ */
 function returnToSender(player: Player): boolean {
   if (returner === undefined) {
     return false;
   }
 
-  const address = takeReturnAddress(player.id);
+  const back = takeReturnStep(player.id);
 
-  if (address === undefined) {
+  if (back === undefined) {
     return false;
   }
 
-  return returner(address, player);
+  return returner(back.step, back.rest, player);
 }
 
 /**
@@ -274,8 +282,8 @@ export function handOff(player: Player): void {
 
 export function closeUi(player: Player): void {
   clearHistory(player.id);
-  // The realm they came from is forgotten with the rest of where they have
+  // The realms they came through are forgotten with the rest of where they have
   // been: a player who left the UI is not one step from another realm's screen.
-  takeReturnAddress(player.id);
+  clearReturnPath(player.id);
   triggerCleanup(playerOwner(player), true);
 }

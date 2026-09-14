@@ -19,7 +19,7 @@ export interface SliderFace extends Box {
   trackHeight?: number;
   thumbWidth?: number;
   thumbHeight?: number;
-  /** How many discrete stops the travel is cut into, baked from min, max and step. */
+  /** How many stops the travel has, baked from min, max and step. */
   steps: number;
   /** Which stop the build rendered with, and so where the face draws the thumb. */
   value: number;
@@ -36,7 +36,9 @@ export const sliderFace: Face<SliderFace> = (data) => {
   const trackHeight = data.trackHeight ?? TRACK_HEIGHT;
   const thumbWidth = data.thumbWidth ?? THUMB_WIDTH;
   const thumbHeight = data.thumbHeight ?? THUMB_HEIGHT;
-  const steps = Math.max(1, data.steps);
+  // The thumb crosses the GAPS between stops, which is one fewer than the stops
+  // themselves — at the last stop it has travelled the whole width.
+  const gaps = Math.max(1, data.steps - 1);
   const travel = Math.max(0, data.rect.width - thumbWidth);
   const middle = { anchor_from: 'left_middle', anchor_to: 'left_middle' } as const;
 
@@ -56,7 +58,7 @@ export const sliderFace: Face<SliderFace> = (data) => {
       type: 'image',
       texture: styled(data.thumb),
       size: [thumbWidth, thumbHeight],
-      offset: [Math.round(travel * Math.min(steps, data.value) / steps), 0],
+      offset: [Math.round(travel * Math.min(gaps, data.value) / gaps), 0],
       ...middle,
       keep_ratio: false,
       layer: 2,

@@ -1,32 +1,148 @@
 {
 	"namespace": "core_ui_form_components",
-	"slider": {
-		// A control the pack PLACES owns its row: the compiled screen gives it a
-		// `collection_index`, and the `collection_details` binding below is what
-		// makes that index resolve. Everything else about it is literal — the box
-		// is the screen's, and what it draws arrives as variables.
+	/* The slider a FACTORY builds, one per slider row of the form that is open.
+	  
+	   This is the only slider that reaches a screen. A compiled screen cannot host
+	   a native one: every addon's compiled screens are laid out whenever any form
+	   opens, so a statically placed slider meets forms that have no field behind
+	   it, and the engine takes a slider's step range from that field — with no
+	   field there is no range, and ANY write to `#slider_value` fails
+	   `_setCurrentStep`, a write of 0 included. A factory cell exists only where a
+	   slider ROW exists, so the field is always there and the write is always
+	   legal.
+	  
+	   It decodes its box from its own row because a cell is built in row order and
+	   cannot know the rect the build solved for it. Everything else it needs is
+	   already in the payload the runtime has never stopped sending.
+	  
+	   `$compiled: false` is set HERE because a factory names its cell rather than
+	   mounting it, so there is nowhere to pass a variable in. */
+	/* The slider the FACTORY builds, one per slider row of the form that is open.
+	  
+	   This is the only slider that reaches a screen. A compiled screen cannot host
+	   a native one: every addon's compiled screens are laid out whenever any form
+	   opens, so a statically placed slider meets forms with no field behind it,
+	   and the engine takes a slider's step range from that field — with no field
+	   there is no range, and ANY write to `#slider_value` fails `_setCurrentStep`,
+	   a write of 0 included. A factory cell exists only where a slider ROW exists,
+	   so the field is always there and the write is always legal.
+	  
+	   It decodes its box from its own row, because a cell built in row order
+	   cannot know the rect the build solved for it — which is why `writeRow` sends
+	   a slider its control block where every other compiled field carries none.
+	  
+	   No `#type` check: the factory's `control_ids` already picked this cell by
+	   ROW TYPE, so the row in front of it is a slider by construction.
+	  
+	   `$compiled: false` is set HERE because a factory names its cell rather than
+	   mounting it, so there is nowhere to pass a variable in. */
+	/* The cell the factory builds for one row of the form — a bare frame.
+	  
+	   A slider cannot be PLACED by the build: it takes its step range from the
+	   form field behind it, and every compiled screen is laid out whenever any
+	   form opens, so a placed one meets forms with no such field and any write to
+	   its value asserts. The engine's factory builds it instead, one cell per
+	   row, so the field is always there.
+	  
+	   The factory sits at the slider's own rect, emitted into the screen by the
+	   build — so nothing here decodes geometry, the cell fills the box it was
+	   given, and inside a scroll it scrolls with the content.
+	  
+	   WHAT IS NOT HERE is the gate that picks one row. A factory makes a cell for
+	   every row, and a cell's own `visible` is ignored — measured: the bindings
+	   parse, the comparison is sound, and the engine draws the cell anyway. So
+	   the build wraps this body in a child that carries the gate, which is a
+	   plain control and hides normally. */
+	"slider_live": {
 		"type": "panel",
 		"size": [ "100%", "100%" ],
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
-		"bindings": [
-			{ "binding_type": "collection_details", "binding_collection_name": "custom_form" }
+		"controls": [ { "body@core_ui_form_components.slider_body": {} } ]
+	},
+	/* The slider itself, at whatever size its parent was given. */
+	"slider_body": {
+		"type": "panel",
+		"size": [ "100%", "100%" ],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"controls": [
+			{
+				/* The travel inset: the engine bounds the thumb's CENTRE to this
+				   control's width, so it is one thumb narrower than the track and the
+				   thumb's EDGE meets the ends. Percentages of the box the build gave
+				   us, so no width has to travel. */
+				"travel": {
+					"type": "panel",
+					"size": [ "100% - 16px", "100%" ],
+					"anchor_from": "center",
+					"anchor_to": "center",
+					"controls": [
+						{
+							"slider@core_ui_form_components.slider_control_compiled": {
+								/* The STATIC branch. Both halves of every face are in the tree
+								   and `ignored` keeps one of them at load time, so a mount that
+								   does not say which it is loses the static ones — and the
+								   names the slider points its faces at stop resolving. */
+								"$compiled": true,
+								"$bg_control": "slider_background_static",
+								"$bg_hover_control": "slider_background_hover_static",
+								"$prog_control": "slider_progress_static",
+								"$prog_hover_control": "slider_progress_hover_static",
+								"$box_default": "default_static",
+								"$box_hover": "hover_static",
+								"$box_locked": "locked_static",
+								"$box_indent": "indent_static",
+								"$bar_size": [ "100%", 6 ],
+								"$thumb_size": [ 16, 16 ],
+								"$track": "textures/ui/ore-styled/slider/track",
+								"$track_hover": "textures/ui/ore-styled/slider/track",
+								"$progress": "textures/ui/ore-styled/slider/progress",
+								"$progress_hover": "textures/ui/ore-styled/slider/progress",
+								"$thumb": "textures/ui/ore-styled/slider/thumb",
+								"$thumb_hover": "textures/ui/ore-styled/slider/thumb_hover",
+								"$thumb_locked": "textures/ui/ore-styled/slider/thumb_disabled"
+							}
+						}
+					]
+				}
+			}
+		]
+	},
+	"slider_router": {
+		"type": "panel",
+		// Components must be inside a panel with size [1,1] so size_binding values map 1:1 to pixels.
+		"size": [
+			1,
+			1
 		],
+		"controls": [
+			{
+				"slider@core_ui_form_components.slider": {}
+			}
+		]
+	},
+	"slider@core_ui_common.control": {
+		// Extends the shared base (core_ui_common.control): the base owns the whole generic
+		// control-block decode; this modal cell just points it at the modal payload
+		// (custom_form / #custom_text / per-cell collection_details) and supplies its type
+		// gate. (Regions are an ActionForm/scroll concept — the region gate lives in the
+		// ActionForm routers, so modal cells like this one never see it.)
 		"layer": 50,
-		"$travel_size|default": [
-			1,
-			0
-		],
-		"$bar_size|default": [
-			1,
-			0
-		],
-		"$thumb_size|default": [
-			1,
-			0
-		],
+		"$payload_collection": "custom_form",
+		/* A SLIDER row's own text. server_form publishes each row type's label
+		   under its own name — custom_slider binds #custom_slider_text, while
+		   dropdown and input rows use #custom_text — and the whole decode hangs
+		   off this one read. Set HERE rather than at the mount: a hard assignment
+		   in a definition wins over what a mount passes in. */
+		"$payload_binding": "#custom_slider_text",
+		"$cell_details_binding_type": "collection_details",
+		"$travel_size|default": [ 1, 0 ],
+		"$bar_size|default": [ 1, 0 ],
+		"$thumb_size|default": [ 1, 0 ],
 		"$steps|default": 1,
 		"$value|default": 0,
+		"$compiled|default": false,
 		/* Restated at every hop. A $variable set where a control is MOUNTED does
 		   not reach a definition it merely REFERENCES by name: slider_control
 		   resolved its own scope, so the sizes it was handed were never seen and
@@ -41,6 +157,16 @@
 		"$thumb|default": "#texture",
 		"$thumb_hover|default": "#texture",
 		"$thumb_locked|default": "#texture",
+		/* ALWAYS SHOWN. The base gates a cell on the control block's `visible`
+		   field, read at a direct offset that no longer matches what the runtime
+		   writes — measured: the type field decodes as `modal-slider`, the visible
+		   field decodes as nothing, so every cell hid itself.
+		  
+		   Nothing is lost by dropping it. That gate exists to pick ONE variant out
+		   of the several a row could be; the factory's `control_ids` has already
+		   picked by row type, and a cell exists only for a row on the form being
+		   shown. */
+		"$type_gate": "(#pre_visible or (not #pre_visible))",
 		"controls": [
 			{
 				/* Travel inset: the engine bounds the thumb's CENTER travel to the slider
@@ -63,15 +189,17 @@
 							// the slider inside it never appears. This one is told its size.
 							// `ignored` keeps exactly one of the two, decided at load time.
 							"travel_area_static": {
+								"ignored": "(not $compiled)",
 								"type": "panel",
 								"size": "$travel_size",
 								"anchor_from": "center",
 								"anchor_to": "center",
 								"controls": [
-									{
+{
 										"slider@core_ui_form_components.slider_control_compiled": {
 											"$steps": "$steps",
 											"$value": "$value",
+											"$compiled": true,
 											"$bg_control": "slider_background_static",
 											"$bg_hover_control": "slider_background_hover_static",
 											"$prog_control": "slider_progress_static",
@@ -80,6 +208,93 @@
 											"$box_hover": "hover_static",
 											"$box_locked": "locked_static",
 											"$box_indent": "indent_static",
+											"$bar_size": "$bar_size",
+											"$thumb_size": "$thumb_size",
+											"$track": "$track",
+											"$track_hover": "$track_hover",
+											"$progress": "$progress",
+											"$progress_hover": "$progress_hover",
+											"$thumb": "$thumb",
+											"$thumb_hover": "$thumb_hover",
+											"$thumb_locked": "$thumb_locked"
+										}
+									}
+								]
+							}
+						},
+						{
+							"travel_area": {
+								"ignored": "$compiled",
+								"type": "panel",
+								"size": [
+									1,
+									0
+								],
+								"anchor_from": "center",
+								"anchor_to": "center",
+								"property_bag": {
+									"#size_binding_x": 0.0,
+									"#size_binding_y": 0.0
+								},
+								"bindings": [
+									{
+										"binding_name": "#custom_text",
+										"binding_type": "collection",
+										"binding_collection_name": "custom_form"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.2020s' * #custom_text)",
+										"target_property_name": "#skip_travelw",
+										"binding_condition": "visible"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#custom_text - #skip_travelw)",
+										"target_property_name": "#rem_travelw",
+										"binding_condition": "visible"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #rem_travelw)",
+										"target_property_name": "#raw_travelw",
+										"binding_condition": "visible"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "((('%.82s' * #raw_travelw) - ('%.2s' * #raw_travelw) - ';') * 1)",
+										"target_property_name": "#size_binding_x",
+										"binding_condition": "visible"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.175s' * #custom_text)",
+										"target_property_name": "#skip_travelh",
+										"binding_condition": "visible"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#custom_text - #skip_travelh)",
+										"target_property_name": "#rem_travelh",
+										"binding_condition": "visible"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #rem_travelh)",
+										"target_property_name": "#raw_travelh",
+										"binding_condition": "visible"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "((('%.82s' * #raw_travelh) - ('%.2s' * #raw_travelh) - ';') * 1)",
+										"target_property_name": "#size_binding_y",
+										"binding_condition": "visible"
+									}
+								],
+								"controls": [
+									{
+										"slider@core_ui_form_components.slider_control": {
+											"$compiled": false,
 											"$bar_size": "$bar_size",
 											"$thumb_size": "$thumb_size",
 											"$track": "$track",
@@ -114,10 +329,27 @@
 		"$steps|default": 1,
 		"$value|default": 0,
 		"property_bag": {
-			"#slider_steps": "$steps",
-			"#slider_value": "$value"
+			"#slider_steps": 1,
+			"#slider_value": 0
 		},
-		"bindings": []
+		/* IT READS ITS ROW. This twin is only ever built as a cell of the slider
+		   factory, which the engine creates one of per slider ROW — so the form
+		   field behind it always exists, its step range is real, and the writes
+		   that assert on a statically placed slider are legal here. */
+		"bindings": [
+			{
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form",
+				"binding_name": "#custom_slider_steps",
+				"binding_name_override": "#slider_steps"
+			},
+			{
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form",
+				"binding_name": "#custom_slider_value",
+				"binding_name_override": "#slider_value"
+			}
+		]
 	},
 	"slider_control": {
 		"type": "slider",
@@ -149,14 +381,9 @@
 		   now did. `bar_default_size_static` gates on $compiled and sizes itself
 		   from $bar_size; neither was declared HERE, only forwarded in, and the
 		   level where both ARE declared (the cell) is the level that worked. */
-		"$bar_size|default": [
-			1,
-			0
-		],
-		"$thumb_size|default": [
-			1,
-			0
-		],
+		"$compiled|default": false,
+		"$bar_size|default": [ 1, 0 ],
+		"$thumb_size|default": [ 1, 0 ],
 		"slider_name": "custom_slider",
 		"slider_track_button": "custom_slider",
 		// var-driven so the step mappings' direction guards (below) can read it.
@@ -287,15 +514,235 @@
 				   via bindings — probe-verified) → texture image fills it. */
 				"bar_default_anchor": {
 					"type": "panel",
+					/* The whole control. A [1,1] frame exists so a size read out of a
+					   payload lands in pixels; nothing here reads one — the build gave
+					   this control its box — so the bar is a percentage of it. */
 					"size": [
-						1,
-						1
+						"100%",
+						"100%"
 					],
 					"anchor_from": "center",
 					"anchor_to": "center",
 					"controls": [
 						{
+							"bar_default_size": {
+								"ignored": "$compiled",
+								"type": "panel",
+								"size": [
+									1,
+									0
+								],
+								"anchor_from": "center",
+								"anchor_to": "center",
+								"property_bag": {
+									"#size_binding_x": 0.0,
+									"#size_binding_y": 0.0
+								},
+								"bindings": [
+									{
+										"binding_name": "#custom_text",
+										"binding_type": "collection",
+										"binding_collection_name": "custom_form"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.92s' * #custom_text)",
+										"target_property_name": "#skip_bar_default_szw",
+										"binding_condition": "visible"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#custom_text - #skip_bar_default_szw)",
+										"target_property_name": "#rem_bar_default_szw",
+										"binding_condition": "visible"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #rem_bar_default_szw)",
+										"target_property_name": "#raw_bar_default_szw",
+										"binding_condition": "visible"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "((('%.82s' * #raw_bar_default_szw) - ('%.2s' * #raw_bar_default_szw) - ';') * 1)",
+										"target_property_name": "#size_binding_x",
+										"binding_condition": "visible"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.1771s' * #custom_text)",
+										"target_property_name": "#skip_bar_default_szh",
+										"binding_condition": "visible"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#custom_text - #skip_bar_default_szh)",
+										"target_property_name": "#rem_bar_default_szh",
+										"binding_condition": "visible"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #rem_bar_default_szh)",
+										"target_property_name": "#raw_bar_default_szh",
+										"binding_condition": "visible"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "((('%.82s' * #raw_bar_default_szh) - ('%.2s' * #raw_bar_default_szh) - ';') * 1)",
+										"target_property_name": "#size_binding_y",
+										"binding_condition": "visible"
+									}
+								],
+								"controls": [
+									{
+										"bar_default": {
+											"type": "image",
+											"size": [
+												"100%",
+												"100%"
+											],
+											"layer": 1,
+											"texture": "$track",
+											"bindings": [
+												{
+													"binding_name": "#custom_text",
+													"binding_type": "collection",
+													"binding_collection_name": "custom_form"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "('%.440s' * #custom_text)",
+													"target_property_name": "#skip_bar_default_tex",
+													"binding_condition": "visible"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "(#custom_text - #skip_bar_default_tex)",
+													"target_property_name": "#rem_bar_default_tex",
+													"binding_condition": "visible"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "('%.83s' * #rem_bar_default_tex)",
+													"target_property_name": "#raw_bar_default_tex",
+													"binding_condition": "visible"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "(('%.82s' * #raw_bar_default_tex) - ('%.2s' * #raw_bar_default_tex) - ';')",
+													"target_property_name": "#texture",
+													"binding_condition": "visible"
+												}
+											],
+											"controls": [
+												{
+													"sizing_panel": {
+														"type": "panel",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"anchor_from": "center",
+														"anchor_to": "center",
+														"controls": [
+															{
+																"slider_background": {
+																	"type": "image",
+																	"size": [
+																		"100%",
+																		"100%"
+																	],
+																	"layer": 1,
+																	"texture": "$track",
+																	"bindings": [
+																		{
+																			"binding_name": "#custom_text",
+																			"binding_type": "collection",
+																			"binding_collection_name": "custom_form"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "('%.440s' * #custom_text)",
+																			"target_property_name": "#skip_bar_default_trk",
+																			"binding_condition": "visible"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "(#custom_text - #skip_bar_default_trk)",
+																			"target_property_name": "#rem_bar_default_trk",
+																			"binding_condition": "visible"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "('%.83s' * #rem_bar_default_trk)",
+																			"target_property_name": "#raw_bar_default_trk",
+																			"binding_condition": "visible"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "(('%.82s' * #raw_bar_default_trk) - ('%.2s' * #raw_bar_default_trk) - ';')",
+																			"target_property_name": "#texture",
+																			"binding_condition": "visible"
+																		}
+																	]
+																}
+															},
+															{
+																"slider_progress": {
+																	"type": "image",
+																	"size": [
+																		"100%",
+																		"100%"
+																	],
+																	"layer": 3,
+																	"texture": "$progress",
+																	"bindings": [
+																		{
+																			"binding_name": "#custom_text",
+																			"binding_type": "collection",
+																			"binding_collection_name": "custom_form"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "('%.1273s' * #custom_text)",
+																			"target_property_name": "#skip_bar_default_prog",
+																			"binding_condition": "visible"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "(#custom_text - #skip_bar_default_prog)",
+																			"target_property_name": "#rem_bar_default_prog",
+																			"binding_condition": "visible"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "('%.83s' * #rem_bar_default_prog)",
+																			"target_property_name": "#raw_bar_default_prog",
+																			"binding_condition": "visible"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "(('%.82s' * #raw_bar_default_prog) - ('%.2s' * #raw_bar_default_prog) - ';')",
+																			"target_property_name": "#texture",
+																			"binding_condition": "visible"
+																		}
+																	],
+																	"clip_direction": "left",
+																	"clip_pixelperfect": false
+																}
+															}
+														]
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						},
+						{
 							"bar_default_size_static": {
+								"ignored": "(not $compiled)",
 								"type": "panel",
 								"size": "$bar_size",
 								"anchor_from": "center",
@@ -364,15 +811,232 @@
 				"bar_hover_anchor": {
 					"type": "panel",
 					"size": [
-						1,
-						1
+						"100%",
+						"100%"
 					],
 					"anchor_from": "center",
 					"anchor_to": "center",
 					"visible": false,
 					"controls": [
 						{
+							"bar_hover_size": {
+								"ignored": "$compiled",
+								"type": "panel",
+								"size": [
+									1,
+									0
+								],
+								"anchor_from": "center",
+								"anchor_to": "center",
+								"property_bag": {
+									"#size_binding_x": 0.0,
+									"#size_binding_y": 0.0
+								},
+								"bindings": [
+									{
+										"binding_name": "#custom_text",
+										"binding_type": "collection",
+										"binding_collection_name": "custom_form"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.92s' * #custom_text)",
+										"target_property_name": "#skip_bar_hover_szw",
+										"binding_condition": "visible"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#custom_text - #skip_bar_hover_szw)",
+										"target_property_name": "#rem_bar_hover_szw",
+										"binding_condition": "visible"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #rem_bar_hover_szw)",
+										"target_property_name": "#raw_bar_hover_szw",
+										"binding_condition": "visible"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "((('%.82s' * #raw_bar_hover_szw) - ('%.2s' * #raw_bar_hover_szw) - ';') * 1)",
+										"target_property_name": "#size_binding_x",
+										"binding_condition": "visible"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.1771s' * #custom_text)",
+										"target_property_name": "#skip_bar_hover_szh",
+										"binding_condition": "visible"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#custom_text - #skip_bar_hover_szh)",
+										"target_property_name": "#rem_bar_hover_szh",
+										"binding_condition": "visible"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "('%.83s' * #rem_bar_hover_szh)",
+										"target_property_name": "#raw_bar_hover_szh",
+										"binding_condition": "visible"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "((('%.82s' * #raw_bar_hover_szh) - ('%.2s' * #raw_bar_hover_szh) - ';') * 1)",
+										"target_property_name": "#size_binding_y",
+										"binding_condition": "visible"
+									}
+								],
+								"controls": [
+									{
+										"bar_hover": {
+											"type": "image",
+											"size": [
+												"100%",
+												"100%"
+											],
+											"layer": 1,
+											"texture": "$track_hover",
+											"bindings": [
+												{
+													"binding_name": "#custom_text",
+													"binding_type": "collection",
+													"binding_collection_name": "custom_form"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "('%.1024s' * #custom_text)",
+													"target_property_name": "#skip_bar_hover_tex",
+													"binding_condition": "visible"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "(#custom_text - #skip_bar_hover_tex)",
+													"target_property_name": "#rem_bar_hover_tex",
+													"binding_condition": "visible"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "('%.83s' * #rem_bar_hover_tex)",
+													"target_property_name": "#raw_bar_hover_tex",
+													"binding_condition": "visible"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "(('%.82s' * #raw_bar_hover_tex) - ('%.2s' * #raw_bar_hover_tex) - ';')",
+													"target_property_name": "#texture",
+													"binding_condition": "visible"
+												}
+											],
+											"controls": [
+												{
+													"sizing_panel": {
+														"type": "panel",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"anchor_from": "center",
+														"anchor_to": "center",
+														"controls": [
+															{
+																"slider_background_hover": {
+																	"type": "image",
+																	"size": [
+																		"100%",
+																		"100%"
+																	],
+																	"layer": 1,
+																	"texture": "$track_hover",
+																	"bindings": [
+																		{
+																			"binding_name": "#custom_text",
+																			"binding_type": "collection",
+																			"binding_collection_name": "custom_form"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "('%.1024s' * #custom_text)",
+																			"target_property_name": "#skip_bar_hover_trk",
+																			"binding_condition": "visible"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "(#custom_text - #skip_bar_hover_trk)",
+																			"target_property_name": "#rem_bar_hover_trk",
+																			"binding_condition": "visible"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "('%.83s' * #rem_bar_hover_trk)",
+																			"target_property_name": "#raw_bar_hover_trk",
+																			"binding_condition": "visible"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "(('%.82s' * #raw_bar_hover_trk) - ('%.2s' * #raw_bar_hover_trk) - ';')",
+																			"target_property_name": "#texture",
+																			"binding_condition": "visible"
+																		}
+																	]
+																}
+															},
+															{
+																"slider_progress_hover": {
+																	"type": "image",
+																	"size": [
+																		"100%",
+																		"100%"
+																	],
+																	"layer": 3,
+																	"texture": "$progress_hover",
+																	"bindings": [
+																		{
+																			"binding_name": "#custom_text",
+																			"binding_type": "collection",
+																			"binding_collection_name": "custom_form"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "('%.1356s' * #custom_text)",
+																			"target_property_name": "#skip_bar_hover_prog",
+																			"binding_condition": "visible"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "(#custom_text - #skip_bar_hover_prog)",
+																			"target_property_name": "#rem_bar_hover_prog",
+																			"binding_condition": "visible"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "('%.83s' * #rem_bar_hover_prog)",
+																			"target_property_name": "#raw_bar_hover_prog",
+																			"binding_condition": "visible"
+																		},
+																		{
+																			"binding_type": "view",
+																			"source_property_name": "(('%.82s' * #raw_bar_hover_prog) - ('%.2s' * #raw_bar_hover_prog) - ';')",
+																			"target_property_name": "#texture",
+																			"binding_condition": "visible"
+																		}
+																	],
+																	"clip_direction": "left",
+																	"clip_pixelperfect": false
+																}
+															}
+														]
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						},
+						{
 							"bar_hover_size_static": {
+								"ignored": "(not $compiled)",
 								"type": "panel",
 								"size": "$bar_size",
 								"anchor_from": "center",
@@ -461,7 +1125,7 @@
 					"locked_control": "$box_locked",
 					"indent_control": "$box_indent",
 					"controls": [
-						{
+{
 							/* [1,1] anchor: #size_binding maps 1:1 to px ONLY against a [1,1]
 							   parent — directly inside the 16x16 box the bound values were
 							   multiplied by the box dims (in-game: enormous thumb). */
@@ -475,7 +1139,249 @@
 								"anchor_to": "center",
 								"controls": [
 									{
+										"thumb_size": {
+											"ignored": "$compiled",
+											"type": "panel",
+											"size": [
+												1,
+												0
+											],
+											"anchor_from": "center",
+											"anchor_to": "center",
+											"property_bag": {
+												"#size_binding_x": 0.0,
+												"#size_binding_y": 0.0
+											},
+											"bindings": [
+												{
+													"binding_name": "#custom_text",
+													"binding_type": "collection",
+													"binding_collection_name": "custom_form"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "('%.1854s' * #custom_text)",
+													"target_property_name": "#skip_boxw",
+													"binding_condition": "visible"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "(#custom_text - #skip_boxw)",
+													"target_property_name": "#rem_boxw",
+													"binding_condition": "visible"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "('%.83s' * #rem_boxw)",
+													"target_property_name": "#raw_boxw",
+													"binding_condition": "visible"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "((('%.82s' * #raw_boxw) - ('%.2s' * #raw_boxw) - ';') * 1)",
+													"target_property_name": "#size_binding_x",
+													"binding_condition": "visible"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "('%.1937s' * #custom_text)",
+													"target_property_name": "#skip_boxh",
+													"binding_condition": "visible"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "(#custom_text - #skip_boxh)",
+													"target_property_name": "#rem_boxh",
+													"binding_condition": "visible"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "('%.83s' * #rem_boxh)",
+													"target_property_name": "#raw_boxh",
+													"binding_condition": "visible"
+												},
+												{
+													"binding_type": "view",
+													"source_property_name": "((('%.82s' * #raw_boxh) - ('%.2s' * #raw_boxh) - ';') * 1)",
+													"target_property_name": "#size_binding_y",
+													"binding_condition": "visible"
+												}
+											],
+											"controls": [
+												{
+													"default": {
+														"type": "image",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"layer": 2,
+														"texture": "$thumb",
+														"bindings": [
+															{
+																"binding_name": "#custom_text",
+																"binding_type": "collection",
+																"binding_collection_name": "custom_form"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "('%.1439s' * #custom_text)",
+																"target_property_name": "#skip_th",
+																"binding_condition": "visible"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "(#custom_text - #skip_th)",
+																"target_property_name": "#rem_th",
+																"binding_condition": "visible"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "('%.83s' * #rem_th)",
+																"target_property_name": "#raw_th",
+																"binding_condition": "visible"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "(('%.82s' * #raw_th) - ('%.2s' * #raw_th) - ';')",
+																"target_property_name": "#texture",
+																"binding_condition": "visible"
+															}
+														]
+													}
+												},
+												{
+													"hover": {
+														"type": "image",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"layer": 2,
+														"texture": "$thumb_hover",
+														"bindings": [
+															{
+																"binding_name": "#custom_text",
+																"binding_type": "collection",
+																"binding_collection_name": "custom_form"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "('%.1522s' * #custom_text)",
+																"target_property_name": "#skip_thh",
+																"binding_condition": "visible"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "(#custom_text - #skip_thh)",
+																"target_property_name": "#rem_thh",
+																"binding_condition": "visible"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "('%.83s' * #rem_thh)",
+																"target_property_name": "#raw_thh",
+																"binding_condition": "visible"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "(('%.82s' * #raw_thh) - ('%.2s' * #raw_thh) - ';')",
+																"target_property_name": "#texture",
+																"binding_condition": "visible"
+															}
+														]
+													}
+												},
+												{
+													"locked": {
+														"type": "image",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"layer": 2,
+														"texture": "$thumb_locked",
+														"bindings": [
+															{
+																"binding_name": "#custom_text",
+																"binding_type": "collection",
+																"binding_collection_name": "custom_form"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "('%.1688s' * #custom_text)",
+																"target_property_name": "#skip_thl",
+																"binding_condition": "visible"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "(#custom_text - #skip_thl)",
+																"target_property_name": "#rem_thl",
+																"binding_condition": "visible"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "('%.83s' * #rem_thl)",
+																"target_property_name": "#raw_thl",
+																"binding_condition": "visible"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "(('%.82s' * #raw_thl) - ('%.2s' * #raw_thl) - ';')",
+																"target_property_name": "#texture",
+																"binding_condition": "visible"
+															}
+														]
+													}
+												},
+												{
+													"indent": {
+														"type": "image",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"layer": 2,
+														"texture": "$thumb",
+														"bindings": [
+															{
+																"binding_name": "#custom_text",
+																"binding_type": "collection",
+																"binding_collection_name": "custom_form"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "('%.1605s' * #custom_text)",
+																"target_property_name": "#skip_thp",
+																"binding_condition": "visible"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "(#custom_text - #skip_thp)",
+																"target_property_name": "#rem_thp",
+																"binding_condition": "visible"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "('%.83s' * #rem_thp)",
+																"target_property_name": "#raw_thp",
+																"binding_condition": "visible"
+															},
+															{
+																"binding_type": "view",
+																"source_property_name": "(('%.82s' * #raw_thp) - ('%.2s' * #raw_thp) - ';')",
+																"target_property_name": "#texture",
+																"binding_condition": "visible"
+															}
+														]
+													}
+												}
+											]
+										}
+									},
+									{
 										"thumb_size_static": {
+											"ignored": "(not $compiled)",
 											"type": "panel",
 											"size": "$thumb_size",
 											"anchor_from": "center",
