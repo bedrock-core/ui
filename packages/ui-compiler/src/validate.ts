@@ -3,7 +3,7 @@
  *
  * Every one is a measured engine rule that only holds for static trees, which
  * is why it is checked here, once, with no host in the loop
- * ([10-faces-and-hosts](../docs/10-faces-and-hosts.md)):
+ * ([faces and hosts](../../../docs/README.md#faces-and-hosts)):
  *
  *  1. A face carries no binding that reads a host. A `view` binding between
  *     siblings is the client's own (a disclosure reading its toggle) and is

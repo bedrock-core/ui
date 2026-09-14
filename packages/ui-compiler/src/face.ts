@@ -1,7 +1,7 @@
 /**
  * IR -> the face document: every node drawn as its look, and nothing else.
  *
- * The first of the two passes ([10-faces-and-hosts](../docs/10-faces-and-hosts.md)).
+ * The first of the two passes ([faces and hosts](../../../docs/README.md#faces-and-hosts)).
  * What comes out is complete and drawable on its own — the layout baked as
  * literal rects, every look referenced from the addon's shared faces, every
  * socket drawn at rest — and carries no binding that reads a host. The host

@@ -8,7 +8,8 @@ import type { FaceEmit, IrNode, NodeBase, NodeDefinition, Rect } from '../utils/
 
 /**
  * What a button looks like in each state. The look is the same on every host;
- * only what a press IS differs, and that is the host's ([10-faces-and-hosts](../../../docs/10-faces-and-hosts.md)).
+ * only what a press IS differs, and that is the host's
+ * ([faces and hosts](../../../../../docs/README.md#faces-and-hosts)).
  */
 export interface ButtonFace {
   texture: string;

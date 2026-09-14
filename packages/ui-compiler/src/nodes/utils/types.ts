@@ -7,11 +7,11 @@
  * walks in `toIr.ts`, `face.ts` and `fill.ts` own order and bookkeeping, and
  * dispatch through the definitions instead of switching on kinds.
  *
- * A node is two things ([03-ir](../../../docs/03-ir.md)): what the player sees
+ * A node is two things ([look vs mechanism](../../../../../docs/README.md#look-vs-mechanism)): what the player sees
  * and what it physically is on the screen it is drawn on. The kind owns the
  * first — its {@link NodeDefinition.face} — and says through
  * {@link NodeDefinition.socket} when it has a second, which a host supplies
- * ([10-faces-and-hosts](../../../docs/10-faces-and-hosts.md)).
+ * ([faces and hosts](../../../../../docs/README.md#faces-and-hosts)).
  */
 
 import type { JSX } from '@bedrock-core/ui-runtime';

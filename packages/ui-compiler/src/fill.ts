@@ -1,7 +1,7 @@
 /**
  * The face document -> the screen a host serves.
  *
- * The second of the two passes ([10-faces-and-hosts](../docs/10-faces-and-hosts.md)).
+ * The second of the two passes ([faces and hosts](../../../docs/README.md#faces-and-hosts)).
  * The host receives every socket's face entry, in document order, and hands
  * back the control that stands in its place: a wrapper around the face (a
  * gate, an index host) or a replacement for it (a cell over a container
