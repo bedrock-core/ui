@@ -42,8 +42,8 @@
 	},
 	"devDependencies": {
 		"@bedrock-core/ui-runtime": "workspace:*",
-		"typescript": "^6.0.3",
-		"vitest": "^4.1.5"
+		"typescript": "*",
+		"vitest": "*"
 	},
 	"peerDependencies": {
 		"@bedrock-core/ui-runtime": "*"

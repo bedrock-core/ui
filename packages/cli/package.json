@@ -1,53 +1,53 @@
 {
-  "name": "@bedrock-core/cli",
-  "version": "0.10.3",
-  "description": "CLI tool to scaffold Minecraft Bedrock addon projects with @bedrock-core/ui",
-  "keywords": [
-    "cli",
-    "scaffold",
-    "ui",
-    "minecraft",
-    "bedrock",
-    "addon",
-    "generator"
-  ],
-  "license": "MIT",
-  "author": "DrAv0011",
-  "contributors": [
-    {
-      "name": "DrAv0011",
-      "email": "contact@drav.dev",
-      "url": "https://drav.dev"
-    }
-  ],
-  "repository": "github:bedrock-core/ui",
-  "type": "module",
-  "bin": "./dist/index.js",
-  "publishConfig": {
-    "access": "public"
-  },
-  "files": [
-    "dist",
-    "templates"
-  ],
-  "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "lint": "eslint .",
-    "prepack": "npm run build"
-  },
-  "dependencies": {
-    "chalk": "^5.6.2",
-    "commander": "^14.0.3",
-    "fs-extra": "^11.3.5",
-    "ora": "^9.4.0",
-    "prompts": "^2.4.2",
-    "validate-npm-package-name": "^7.0.2"
-  },
-  "devDependencies": {
-    "@types/fs-extra": "^11.0.4",
-    "@types/node": "^25.6.2",
-    "@types/prompts": "^2.4.9",
-    "@types/validate-npm-package-name": "^4.0.2",
-    "typescript": "^6.0.3"
-  }
+	"name": "@bedrock-core/cli",
+	"version": "0.10.3",
+	"description": "CLI tool to scaffold Minecraft Bedrock addon projects with @bedrock-core/ui",
+	"keywords": [
+		"cli",
+		"scaffold",
+		"ui",
+		"minecraft",
+		"bedrock",
+		"addon",
+		"generator"
+	],
+	"license": "MIT",
+	"author": "DrAv0011",
+	"contributors": [
+		{
+			"name": "DrAv0011",
+			"email": "contact@drav.dev",
+			"url": "https://drav.dev"
+		}
+	],
+	"repository": "github:bedrock-core/ui",
+	"type": "module",
+	"bin": "./dist/index.js",
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"dist",
+		"templates"
+	],
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"lint": "eslint .",
+		"prepack": "npm run build"
+	},
+	"dependencies": {
+		"chalk": "^5.6.2",
+		"commander": "^14.0.3",
+		"fs-extra": "^11.3.5",
+		"ora": "^9.4.0",
+		"prompts": "^2.4.2",
+		"validate-npm-package-name": "^7.0.2"
+	},
+	"devDependencies": {
+		"@types/fs-extra": "*",
+		"@types/node": "*",
+		"@types/prompts": "*",
+		"@types/validate-npm-package-name": "*",
+		"typescript": "*"
+	}
 }
