@@ -21,9 +21,8 @@ openGuide('my_addon', player, { manifest: guides });
   your guide, drawn from the pack every client already holds
 
 :::info
-MDX components ride the IR as `cmp` nodes — an unregistered one renders a placeholder:
+MDX components ride the IR as `cmp` nodes. Name a `componentsModule` in the guides filter's
+settings to draw them; without one, a `cmp` block renders a placeholder.
 :::
-
-<GuideDemoButton label="Try me" />
 
 Back to [Installation](./installation.mdx) or the [Introduction](../intro.mdx).

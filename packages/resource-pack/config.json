@@ -11,16 +11,16 @@
 		"dataPath": "./packs/data",
 		"filterDefinitions": {
 			"guides": {
-				"runWith": "nodejs",
-				"script": "../../../regolith-filters/guides/main.ts"
+				"url": "github.com/bedrock-core/regolith-filters",
+				"version": "1.2.0"
 			},
 			"i18n": {
-				"runWith": "nodejs",
-				"script": "../../../regolith-filters/i18n/main.ts"
+				"url": "github.com/bedrock-core/regolith-filters",
+				"version": "1.1.0"
 			},
 			"ui-compiler": {
-				"runWith": "nodejs",
-				"script": "../../../regolith-filters/ui-compiler/main.ts"
+				"url": "github.com/bedrock-core/regolith-filters",
+				"version": "0.1.0"
 			},
 			"references": {
 				"runWith": "nodejs",
@@ -40,19 +40,21 @@
 						"filter": "guides",
 						"settings": {
 							"namespace": "core",
-							"componentsModule": "BP/scripts/guides/components.tsx"
+							"pretty": false
 						}
 					},
 					{
 						"filter": "i18n",
 						"settings": {
-							"namespace": "core"
+							"namespace": "core",
+							"pretty": false
 						}
 					},
 					{
 						"filter": "ui-compiler",
 						"settings": {
-							"namespace": "core"
+							"namespace": "core",
+							"pretty": false
 						}
 					},
 					{
@@ -71,20 +73,28 @@
 						"filter": "guides",
 						"settings": {
 							"namespace": "core",
-							"componentsModule": "BP/scripts/guides/components.tsx"
+							"pretty": {
+								"indent": "tab"
+							}
 						}
 					},
 					{
 						"filter": "i18n",
 						"settings": {
-							"namespace": "core"
+							"namespace": "core",
+							"pretty": {
+								"indent": "tab"
+							}
 						}
 					},
 					{
 						"filter": "ui-compiler",
 						"settings": {
 							"namespace": "core",
-							"stamp": true
+							"stamp": true,
+							"pretty": {
+								"indent": "tab"
+							}
 						}
 					},
 					{

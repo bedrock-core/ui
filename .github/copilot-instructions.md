@@ -332,9 +332,7 @@ export const panelWriter: Writer = (payload, form, ctx) => {
 
 ### Resource-Pack (Test Addon)
 
-- **`packs/BP/scripts/main.ts`** – Entry point: a bamboo button opens the gallery, a mangrove button the guide
-- **`packs/BP/scripts/screens/*.screen.tsx`** – The compiled screens, one per family, each previewed in the gallery
-- **`packs/BP/scripts/guides/components.tsx`** – The `cmp` blocks the guide pages may use
+- **`packs/BP/scripts/screens/*.screen.tsx`** – The compiled screens, one per family
 - **`packs/BP/scripts/i18n.ts`** – The addon's `createI18n(bundle)` call (also the measurement wiring)
 - **`packs/data/i18n/<locale>.ts`** / **`packs/data/guides/<locale>/**.mdx`** – Sources for the `i18n` and `guides` filters
 - **`packs/RP/ui/_ui_defs.json`** – Declares which JSON UI files to load
