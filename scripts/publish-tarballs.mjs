@@ -13,6 +13,11 @@
 // partial release (or after a manual bootstrap publish) is safe — the same job
 // `--tolerate-republish` did in the all-yarn flow.
 //
+// `0.0.0` is the placeholder a package that has never shipped sits at, and it is
+// skipped too: a package reaches its first release by having its version set by
+// hand, because a changeset describes the delta between two released versions
+// and there is no first one to diff against.
+//
 // Usage: node scripts/publish-tarballs.mjs [excluded-package-name ...]
 //        node scripts/publish-tarballs.mjs --only <package-name>
 import { execFileSync } from 'node:child_process';
@@ -38,11 +43,11 @@ const rows = run('yarn', ['workspaces', 'list', '--json', '-v'])
 
 const byLocation = new Map(rows.map(row => [row.location, row]));
 const pending = rows.filter((row) => {
-	// `--only` may name the root workspace — in the ui repo the ROOT is the meta
-	// package. The default sweep still skips it: the meta is released separately,
-	// after its sub-packages, by the workflow step that owns the .mcpack.
+	// The root is included when it is a package in its own right — a repo whose root
+	// is the meta, or a single-package repo. The topological sort below puts it after
+	// everything it depends on, so one sweep releases the whole repo in order. A
+	// private root, as in the apps workspace, drops out on the `private` check.
 	if (only !== undefined) return row.name === only;
-	if (row.location === '.') return false;
 	const manifest = JSON.parse(readFileSync(join(row.location, 'package.json'), 'utf-8'));
 	return manifest.private !== true && !exclude.has(row.name);
 });
@@ -67,6 +72,11 @@ let published = 0;
 for (const row of ordered) {
 	const { name } = row;
 	const { version } = JSON.parse(readFileSync(join(row.location, 'package.json'), 'utf-8'));
+
+	if (version === '0.0.0') {
+		console.log(`skip    ${name}@${version} — unreleased placeholder; set its version to publish it`);
+		continue;
+	}
 
 	let exists = false;
 	try {

@@ -99,7 +99,7 @@
 		"gamelog": "node scripts/gamelog.mjs",
 		"changeset": "changeset",
 		"version-packages": "changeset version && node scripts/bump-meta.mjs && node scripts/sync-cli-template.mjs && node scripts/sync-pack-version.mjs",
-		"release": "yarn build:libs && node scripts/publish-tarballs.mjs && changeset tag",
+		"release": "yarn lint && yarn build:libs && yarn test && node scripts/publish-tarballs.mjs && changeset tag && node scripts/tag-meta.mjs",
 		"clean": "node scripts/clean.mjs"
 	},
 	"dependencies": {
