@@ -44,5 +44,9 @@ export { Form } from './Form/Form';
 export type { FormProps } from './Form/Form';
 export type { FormButtonProps } from './Form/FormButton';
 
+// The canvas every bedrock-core screen is baked at, and the card inside it: two packs meet
+// in one frame and neither can ask the other at runtime, so the geometry lives here.
+export { BODY, FRAME, HEADER_GAP, HEADER_HEIGHT, PADDING, PADDING_BOTTOM } from './frame';
+
 export { theme } from './tokens';
 export type { Theme as OreTheme, ButtonTextStyle } from './tokens';
