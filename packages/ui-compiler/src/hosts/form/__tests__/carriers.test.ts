@@ -291,7 +291,7 @@ describe('text alignment', () => {
     expect(alignments).toContain('right');
   });
 
-  it('is part of what the preview draws', () => {
-    expect(labels(compiled.preview.document).map(label => label.text_alignment)).toEqual(['center', 'right']);
+  it('is part of what the face pass draws', () => {
+    expect(labels(compiled.face.document).map(label => label.text_alignment)).toEqual(['center', 'right']);
   });
 });

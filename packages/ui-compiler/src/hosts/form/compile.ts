@@ -4,9 +4,9 @@ import {
   ContainerScreenError, embedMarker, embedPlacementOf, type EmbedPlacement, FORM_COLLECTION, formTitleFor, hostFor, probeLiveness, shapeOf,
   visiblesAt, type EntryEntry, type ModalRow,
 } from '@bedrock-core/ui-runtime/compile';
-import { checkLiveness, previewOf } from '../../compile';
+import { checkLiveness } from '../../compile';
 import { staticTable, wantsStatic, type StaticScreen } from '../../static';
-import { BACKDROP_DEFINITION, type FaceDocument, faceOf, facesNamespaceOf, type Preview } from '../../face';
+import { BACKDROP_DEFINITION, type FaceDocument, faceOf, facesNamespaceOf } from '../../face';
 import { fill } from '../../fill';
 import type { Control, Document } from '../../jsonui';
 import { MODAL_COLLECTION } from '../../connectors/form';
@@ -54,13 +54,11 @@ export interface CompiledFormScreen {
   embed?: EmbedPlacement;
   /** The JSON UI document: `screen` (+ `backdrop`) and its shared definitions. */
   document: Document;
-  /** The screen as faces alone, before the host stood its mechanisms in: what the gallery draws. */
+  /** The screen as faces alone, before the host stood its mechanisms in. */
   face: FaceDocument;
   /** The namespace of the addon's shared faces, and the looks this screen contributes to it. */
   facesNamespace: string;
   faces: Record<string, Control>;
-  /** The screen as faces alone under its preview namespace, for the gallery. */
-  preview: Preview;
   /** Every entry the runtime has to emit, in order. The nth is `response.selection` n. */
   entries: readonly EntryEntry[];
   /**
@@ -222,7 +220,6 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
     face,
     facesNamespace: face.facesNamespace,
     faces: face.faces,
-    preview: previewOf(ir),
     entries,
     snapshot: {
       // Carrier-aware: the bool channels are in the fingerprint, so a runtime

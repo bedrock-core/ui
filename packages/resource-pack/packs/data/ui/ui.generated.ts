@@ -1,20 +1,9 @@
 // Placeholder. The `ui-compiler` filter replaces this in the build workspace
-// with one `registerCompiledScreen` call per compiled screen and the gallery
-// it generates; what is committed here is only what the editor and `tsc` read
-// before Regolith has ever run — the same arrangement the i18n and guides
-// bundles use.
+// with one `registerCompiledScreen` call per compiled screen; what is committed
+// here is only what the editor and `tsc` read before Regolith has ever run —
+// the same arrangement the i18n and guides bundles use.
 //
 // Importing it is what registers the addon's screens. Without the import
 // nothing is registered, and `render()` refuses every screen: a screen is drawn
 // from the pack, and the registration is what says which compiled screen it is.
-import type { RenderOptions } from '@bedrock-core/ui';
-import type { Player } from '@minecraft/server';
-
-/** Opens the gallery of every compiled screen as faces alone. Built only with `gallery: true`. */
-export function openGallery(player: Player, options: RenderOptions = {}): boolean {
-  void player;
-  void options;
-  console.warn('[ui] this build has no gallery: set `gallery: true` on the ui-compiler filter');
-
-  return false;
-}
+export {};

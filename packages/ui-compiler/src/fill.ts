@@ -155,8 +155,8 @@ const guard = (socket: Socket, before: ControlEntry, after: ControlEntry, host: 
  * @returns The screen document the host serves.
  */
 export const fill = (face: FaceDocument, host: HostEmit, title = ''): Document => {
-  // The face document stays what it is — the gallery draws it — so the host
-  // works on a copy.
+  // The face document stays what it is — one face pass feeds every host that
+  // serves the screen — so the host works on a copy.
   const document = structuredClone(face.document);
   const context: Emit = {
     ns: face.namespace,

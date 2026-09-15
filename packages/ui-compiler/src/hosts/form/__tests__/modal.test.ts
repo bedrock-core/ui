@@ -262,7 +262,7 @@ describe('an inline select on a compiled modal', () => {
   };
 
   it('draws every option row in place, the default one selected', () => {
-    const rows = named(compiled.preview.document, name => name.startsWith('option_'));
+    const rows = named(compiled.face.document, name => name.startsWith('option_'));
 
     expect(rows.map(([name]) => name)).toEqual(['option_0', 'option_1']);
     expect(rows[0]?.[1].offset).toEqual([0, 0]);

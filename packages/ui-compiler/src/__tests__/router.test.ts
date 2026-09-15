@@ -2,7 +2,7 @@ import {
   COLLECTION, ContainerScreenError, MAX_LAYOUT, PROTOCOL_ITEM_AUX, splitKey,
 } from '@bedrock-core/ui-runtime/compile';
 import { describe, expect, it } from 'vitest';
-import { buildRouter, type CompiledScreen, previewOf } from '../compile';
+import { buildRouter, type CompiledScreen } from '../compile';
 import { faceOf } from '../face';
 import { CHEST_HOST, MOUNT_ANCHOR, routerFileOf } from '../hosts/chest';
 import {
@@ -22,11 +22,6 @@ const screen = (name: string, layoutId: number, hasBackdrop = false, addon = 'co
   }),
   facesNamespace: `${addon}_faces`,
   faces: {},
-  preview: previewOf({
-    namespace: `${addon}_${name}`,
-    collection: 'container_items',
-    root: { kind: 'panel', name: 'root', rect: { x: 0, y: 0, width: 320, height: 210 }, children: [] },
-  }),
   document: { namespace: `${addon}_${name}` },
   allocation: { sentinels: 2, drawn: 0, channels: 0, size: 2 },
   hasBackdrop,

@@ -7,14 +7,14 @@
 import type { FunctionComponent } from '@bedrock-core/ui-runtime';
 import {
   allocate, buildContainerTree, buildScreenOnce, containerEntity, containerRoot,
-  ContainerScreenError, formTitleFor, layoutKey, probeLiveness, type Probe,
+  ContainerScreenError, layoutKey, probeLiveness, type Probe,
 } from '@bedrock-core/ui-runtime/compile';
 import {
-  BACKDROP_DEFINITION, type FaceDocument, faceOf, facesNamespaceOf, type Preview, previewNamespaceOf,
+  BACKDROP_DEFINITION, type FaceDocument, faceOf, facesNamespaceOf,
 } from './face';
 import { fill } from './fill';
 import { CHEST_EMIT, CHEST_HOST, type ChestHost, chestRouter, type ChestRouting } from './hosts/chest';
-import type { Allocation, IrDocument } from './ir';
+import type { Allocation } from './ir';
 import type { Control, Document } from './jsonui';
 import { chestAddressing, toIr } from './toIr';
 
@@ -44,13 +44,11 @@ export interface CompiledScreen {
   entity: string;
   /** The JSON UI document: `screen` (+ `backdrop` when the screen has a Background) and its shared definitions. */
   document: Document;
-  /** The screen as faces alone, before the host stood its mechanisms in: what the gallery draws. */
+  /** The screen as faces alone, before the host stood its mechanisms in. */
   face: FaceDocument;
   /** The namespace of the addon's shared faces, and the looks this screen contributes to it. */
   facesNamespace: string;
   faces: Record<string, Control>;
-  /** The screen as faces alone under its preview namespace, for the gallery. */
-  preview: Preview;
   /** Counts the filter reports and stamps: drawn cells, bank slots, and the inventory size the entity needs. */
   allocation: Allocation;
   hasBackdrop: boolean;
@@ -127,25 +125,6 @@ export const checkLiveness = (probe: Probe, name: string, options: { carriedVisi
 };
 
 /**
- * The screen's preview: the same tree drawn as faces under the preview
- * namespace, so every name it mints is its own. The faces it shares are the
- * ones the screen itself shares — a look does not know which screen draws it.
- *
- * @param ir - The solved IR the screen was compiled from.
- */
-export const previewOf = (ir: IrDocument): Preview => {
-  const namespace = previewNamespaceOf(ir.namespace);
-  const face = faceOf({ ...ir, namespace });
-
-  return {
-    namespace,
-    title: formTitleFor(namespace),
-    document: face.document,
-    hasBackdrop: face.document[BACKDROP_DEFINITION] !== undefined,
-  };
-};
-
-/**
  * Compiles one screen: build the tree, allocate its cells and channels, solve
  * the IR, emit JSON UI.
  *
@@ -191,7 +170,6 @@ export function compileScreen(
   });
   const face = faceOf(ir);
   const document = fill(face, CHEST_EMIT);
-  const preview = previewOf(ir);
   const drawn = allocation.slots.length;
   const counts: Allocation = {
     sentinels: allocation.sentinels.length,
@@ -210,7 +188,6 @@ export function compileScreen(
     face,
     facesNamespace: face.facesNamespace,
     faces: face.faces,
-    preview,
     allocation: counts,
     hasBackdrop: document[BACKDROP_DEFINITION] !== undefined,
     hasText: allocation.channels.some(channel => channel.carrier === 'text'),

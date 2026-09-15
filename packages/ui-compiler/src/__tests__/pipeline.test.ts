@@ -290,27 +290,17 @@ describe('the compiler, end to end', () => {
   });
 });
 
-describe('the preview', () => {
+describe('the face pass', () => {
   const compiled = compileScreen(Demo, { name: 'demo' });
-  const { preview, face } = compiled;
+  const { face } = compiled;
 
-  it('is the face document under its own namespace, titled for the gallery', () => {
-    expect(preview.namespace).toBe('core_ui_demo__preview');
-    expect(preview.document.namespace).toBe('core_ui_demo__preview');
-    expect(preview.title).toContain('core_ui_demo__preview');
-    expect(preview.hasBackdrop).toBe(compiled.hasBackdrop);
-
-    // The same drawing, renamed: nothing in it names the served screen, so
-    // the two never collide on a form where both are constructed.
-    const json = JSON.stringify(preview.document);
-
-    expect(json.replaceAll('core_ui_demo__preview', '')).not.toContain('core_ui_demo');
-    expect(json).not.toContain('binding');
-    expect(json.replaceAll('core_ui_demo__preview', 'core_ui_demo')).toBe(JSON.stringify(face.document));
+  it('draws the screen complete and static, with no binding that reads a host', () => {
+    expect(face.document.namespace).toBe('core_ui_demo');
+    expect(JSON.stringify(face.document)).not.toContain('binding');
   });
 
   it('draws the same shared faces the screen draws', () => {
-    const referenced = new Set([...JSON.stringify(preview.document).matchAll(/core_ui_faces\.([A-Za-z0-9_]+)/g)].map(match => match[1]));
+    const referenced = new Set([...JSON.stringify(face.document).matchAll(/core_ui_faces\.([A-Za-z0-9_]+)/g)].map(match => match[1]));
 
     for (const id of referenced) {
       expect(names(compiled.faces)).toContain(id);

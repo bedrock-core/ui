@@ -357,7 +357,7 @@ The split buys four things:
   can evaluate a collection row that is not there.
 - **Visibility first.** A carried `visible` is a host gate *around* the face. Whatever is inside
   is evaluated after the gate, never before.
-- **A host with no channels draws faces alone** — the book, and the gallery.
+- **A host with no channels draws faces alone** — the book.
 
 One engine fact shapes the split: a `$variable` as an `@` base mounts nothing, so a face document
 cannot leave a named hole for another file to fill. The face pass hands the host a complete
@@ -457,7 +457,7 @@ inside a node can see what sits beside it.
 ### Fields are primitives
 
 A modal field is two halves and they belong in two layers. An input is a primitive like any other
-and has a face — a box, a placeholder, a style — that draws on any screen and in the gallery. What
+and has a face — a box, a placeholder, a style — that draws on any screen. What
 makes it a *modal* field is the connector: `connectors/form/widget.ts` names the row the engine's
 own widget is mounted from and what that row reads, and the modal is the only host that has one. A
 host with no connector for a kind refuses it by name.
@@ -477,28 +477,6 @@ The **rect guard** proves it: each socket's placement — `size`, `offset`, `anc
 `anchor_to`, `layer` — is diffed against the face entry the host was handed, and any difference is a
 build error naming the control and the host. It runs on every fill, so a host that moves something
 never reaches a pack.
-
-### The gallery
-
-Every screen type is looked at as faces only before any host serves it. `gallery: true` on the
-ui-compiler filter makes the build write two extra things:
-
-- **A preview per screen.** The face document regenerated under the namespace
-  `<ns>_<name>__preview`, written as `<name>.preview.json` and gated on its own title like any
-  compiled form screen. Its own namespace, because every gated compiled screen is constructed on
-  every form open and a name a binding looks up is found screen-wide. Chest screens preview at the
-  chest canvas, centred on the form. Nothing in a preview needs an entity, an entry or a channel;
-  `Tabs` and `Disclosure` work because they are local. A preview shows the reference render:
-  reference strings, reference visibility, fields as static twins.
-- **A gallery screen.** `<ns>_gallery`, compiled last: a scroll of `<Link>`s, one per compiled
-  screen of the addon whatever its root, each naming that screen's preview key. A preview is
-  registered as a compiled screen whose tree is empty — the title is the whole of what reaches the
-  layout — so a press is rendered through the session and leaves the gallery cleanly.
-  `openGallery(player)` is exported from `@bedrock-core/generated/ui`; a build without the gallery
-  exports one that warns.
-
-Turn it on in the profile a pack is developed under and leave it off in the one it ships from. It
-stays, the way a component storybook does.
 
 ### Static screens and references
 
@@ -536,8 +514,7 @@ are one path.
   its own — a modal never qualifies, and neither does a config editor, a list or the addon page.
 - **`Embed` is a component embed.** An embedded page is a component drawn into the area a host
   leaves for it, not a screen laid over the host's frame. Its canvas is that area: `<Embed>` takes
-  the area's size and the tree fills it, so the page holds no coordinate of the host's frame and the
-  gallery shows it as its own canvas. Where the area sits inside the frame is the host's constant and
+  the area's size and the tree fills it, so the page holds no coordinate of the host's frame. Where the area sits inside the frame is the host's constant and
   goes on the mount: the router places an embedded root at the area's offset within the centred
   frame. The contract between two packs is the area rect and the slot count.
 
@@ -1234,7 +1211,5 @@ apply command is in root `PLAN.md` §4.
   the host pass wraps or replaces it, never moves it.
 - **Swap** — a client-side switch a compiled screen owns outright: content changes with nothing
   reaching script.
-- **Gallery** — the dev-profile screen that opens every compiled screen as faces only, for visual
-  sign-off before any host serves it.
 - **Static screen** — every string baked, every press a `<Link>`; shippable as a table and presentable
   by any addon.

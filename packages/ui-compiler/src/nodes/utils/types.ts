@@ -56,8 +56,8 @@ export interface NodeBase {
    *
    * The address and nothing else. What the build rendered with is already on
    * the node, as its own `visible`, and both readers take it from there: the
-   * FACE draws it, because a face with no host behind it — a gallery preview —
-   * has nothing else to hide it; and the GATE seeds itself with it, so nothing
+   * FACE draws it, because a face has no host behind it yet and so nothing
+   * else to hide it; and the GATE seeds itself with it, so nothing
    * flashes before the first binding resolves. The gate then clears the face's
    * copy as it wraps it, which is the handoff rather than waste: from that
    * moment the entry decides, and a face still saying `visible: false` would

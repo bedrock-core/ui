@@ -302,8 +302,8 @@ const lower = (definition: NodeDefinition, element: JSX.Element, type: string, o
       // The build's inherit pass stamps `visible: false` down a hidden
       // subtree, so a subtree hidden at build and shown by its gate at runtime
       // would bake every descendant hidden and the gate would open onto
-      // nothing. The subtree's ROOT keeps its own, because a face drawn with
-      // no host — a gallery preview — has no gate to hide it.
+      // nothing. The subtree's ROOT keeps its own, because a face drawn
+      // before any host has no gate to hide it.
       ...walk.carried > 0 && !carried ? {} : visibilityOf(element.props),
       ...carried ? { carriedVisible: visibleAddress } : {},
       ...followsOf(element.props),
