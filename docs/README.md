@@ -935,6 +935,18 @@ caption name with it.
 18. **A label draws nothing for a number.** A binding result that is only digits is a number to the
     engine, and the label stays blank (`": 63"` draws, `"63"` does not). Keep a non-digit in front — a
     `§r` reset code draws as nothing — when text is sliced down to a number.
+19. **A toggle's default is not bindable.** `toggle_group_default_selected` and `toggle_default_state`
+    read their literal alone: a `#property` in either place is ignored and the group opens on index 0,
+    whatever an entry carries. Which tab a screen opens on is therefore not data the entry can set
+    directly. It can set it through a **hidden member of the group**: a fourth toggle, `visible: false`,
+    on by default, that is the group's literal default. An invisible toggle is still a member — it
+    reports `#toggle_state` through `source_control_name`, and a press on any visible tab turns it off.
+    A pane is then `visible` while `(hidden on and my entry flag) or (my tab on)`: the flag picks the
+    opening pane, the first press hands over to the tabs, and nothing reaches script.
+20. **One compiled screen of 430 controls opens and switches with nothing to feel.** Six guide-sized
+    panes under one `<Tabs>` — the whole framework guide's worth of controls — opened with no visible
+    hitch, switched instantly, and made no other form slower to open, with no assertion in the log.
+    Merging a group of static action-form screens into one is paid in pack size, not at runtime.
 
 ### Versioning — a window, as in `@bedrock-core/sync`
 
