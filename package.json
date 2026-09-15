@@ -34,14 +34,6 @@
 			"types": "./src/ore-styled.ts",
 			"import": "./src/ore-styled.ts"
 		},
-		"./guides": {
-			"types": "./src/guides.ts",
-			"import": "./src/guides.ts"
-		},
-		"./config": {
-			"types": "./src/config.ts",
-			"import": "./src/config.ts"
-		},
 		"./flexbox": {
 			"types": "./src/flexbox.ts",
 			"import": "./src/flexbox.ts"
@@ -103,9 +95,7 @@
 		"clean": "node scripts/clean.mjs"
 	},
 	"dependencies": {
-		"@bedrock-core/config": "*",
 		"@bedrock-core/flexbox": "workspace:*",
-		"@bedrock-core/guides": "*",
 		"@bedrock-core/i18n": "*",
 		"@bedrock-core/navigation": "workspace:*",
 		"@bedrock-core/ore-styled": "workspace:*",
@@ -135,7 +125,7 @@
 		"@minecraft/server-ui": "*"
 	},
 	"resolutions": {
-		"@bedrock-core/config": "portal:../apps/packages/config",
+		"@bedrock-core/catalog": "portal:../apps/packages/catalog",
 		"@bedrock-core/db": "portal:../server/packages/db",
 		"@bedrock-core/guides": "portal:../apps/packages/guides",
 		"@bedrock-core/i18n": "portal:../server/packages/i18n",

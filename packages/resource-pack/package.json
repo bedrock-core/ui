@@ -13,7 +13,7 @@
 		"loopback:preview": "CheckNetIsolation.exe LoopbackExempt -a -p=S-1-15-2-424268864-5579737-879501358-346833251-474568803-887069379-4040235476"
 	},
 	"dependencies": {
-		"@bedrock-core/config": "*",
+		"@bedrock-core/catalog": "*",
 		"@bedrock-core/guides": "*",
 		"@bedrock-core/i18n": "*",
 		"@bedrock-core/navigation": "workspace:*",

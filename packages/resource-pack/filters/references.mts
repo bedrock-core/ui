@@ -1,18 +1,18 @@
 // The framework's screens, reduced to references.
 //
 // The framework has no realm: nothing calls `core.register()` for it, so the
-// screens it owns — its guide and its page in the addon list — cannot be
+// screens it owns — its guide and its page in the catalog — cannot be
 // published the way an addon publishes its own. They are baked into this
 // pack instead, and what presenting them needs (each screen's title, the
 // values its entries are shown with, where every press leads) is emitted
-// here as data that `@bedrock-core/config` ships, so every realm shows them
+// here as data that `@bedrock-core/catalog` ships, so every realm shows them
 // from the render pack the client already has, none of this pack's script
 // involved.
 //
 // Runs after ui-compiler, which wrote the registration module this reads, and
 // before the bundler. The references are built by the same library the
 // screens were compiled against, in the same way an addon builds its own at
-// startup; the result is written into the config package's source, where it
+// startup; the result is written into the catalog package's source, where it
 // is committed like any generated resource.
 
 import fs from 'node:fs';
@@ -33,7 +33,7 @@ const REGISTRATION = 'data/ui/ui.generated.ts';
 const I18N_BUNDLE = 'data/i18n/i18n.generated.json';
 const GUIDES_BUNDLE = 'data/guides/guides.generated.json';
 const PAGE = 'BP/scripts/screens/framework.screen.tsx';
-const OUTPUT = path.resolve(projectRoot, '..', '..', '..', 'apps', 'packages', 'config', 'src', 'generated', 'framework.generated.ts');
+const OUTPUT = path.resolve(projectRoot, '..', '..', '..', 'apps', 'packages', 'catalog', 'src', 'generated', 'framework.generated.ts');
 
 for (const required of [REGISTRATION, I18N_BUNDLE, PAGE]) {
   if (!fs.existsSync(required)) {
@@ -57,7 +57,7 @@ createI18n(i18nBundle);
 
 import ${JSON.stringify(path.resolve(REGISTRATION))};
 import { addonReference } from '@bedrock-core/ui';
-import { addonPageReference } from '@bedrock-core/config/compiled';
+import { addonPageReference } from '@bedrock-core/navigation';
 import Page from ${JSON.stringify(path.resolve(PAGE))};
 
 export default {
@@ -103,7 +103,7 @@ fs.writeFileSync(
     '// pack the client already has.',
     '',
     "import type { AddonReference } from '@bedrock-core/ui-runtime';",
-    'import type { AddonPageReference } from \'../compiled/page.screen\';',
+    'import type { AddonPageReference } from \'@bedrock-core/navigation\';',
     '',
     '/** The namespace the framework\'s screens are compiled under: what its page\'s marker names. */',
     `export const FRAMEWORK_NAMESPACE = ${JSON.stringify(NAMESPACE)};`,

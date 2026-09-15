@@ -1,11 +1,11 @@
 /** @jsxImportSource @bedrock-core/ui */
-import { AddonPage } from '@bedrock-core/config/compiled';
-import { i18n } from '@bedrock-core/config/i18n/index';
+import { AddonPage } from '@bedrock-core/catalog';
+import { i18n } from '@bedrock-core/catalog/i18n/index';
 import { Screen, type JSX } from '@bedrock-core/ui';
 import manifest from '../../../RP/manifest.json';
 
 /**
- * The framework's own page in the addon list.
+ * The framework's own page in the shared catalog.
  *
  * Nothing registers the framework, so no addon's pack can carry its page;
  * this one is baked into the render pack, and the host shows it from the

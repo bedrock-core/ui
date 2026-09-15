@@ -1,18 +1,19 @@
 /**
  * Entry point — the full bedrock-core stack in one file:
  *
- * - `core.register()` brings the addon online: display fields are i18n keys
- *   (other addons render them per player language), and the `config`
- *   declaration hands back accessors typed by configDef.
- * - `ui(core)` mounts the shared config UI (config + guides for EVERY
- *   bedrock-core addon in the world) — command registration is first-wins, so
- *   with several addons installed exactly one serves the UI for all of them.
+ * - `core.register()` brings the addon online and installs everything the addon
+ *   declares. Display fields are i18n keys, so other addons render them per
+ *   player language, and each field hands back an accessor typed by what it
+ *   was given.
+ * - `catalog`, `config` and `guides` are the bedrock-core apps: each registers
+ *   its own command under this addon's namespace and serves its own screens.
  * - A button push opens this addon's own custom UI (./UI/Example).
  */
 import { render } from '@bedrock-core/ui';
 import { core } from '@bedrock-core/server';
-import { config as declareConfig } from '@bedrock-core/config/server';
-import { ui } from '@bedrock-core/ui/config';
+import { registerCatalog } from '@bedrock-core/catalog';
+import { registerConfig } from '@bedrock-core/config';
+import { registerGuides } from '@bedrock-core/guides';
 import { ButtonPushAfterEvent, Entity, Player, world } from '@minecraft/server';
 import { MinecraftEntityTypes } from '@minecraft/vanilla-data';
 import { configDef } from './config';
@@ -30,10 +31,10 @@ const { config } = core.register({
     version: '1.0.0',
     description: i18n.key($ => $.meta.description),
   },
-  config: declareConfig(configDef),
+  catalog: registerCatalog(),
+  config: registerConfig(configDef),
+  guides: registerGuides(),
 });
-
-ui(core);
 
 // Server-resolved text: t() returns the filled string in this player's
 // language (locale chain: per-player override → client locale → default).

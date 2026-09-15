@@ -78,7 +78,7 @@ your editor until you do.
 │   │   ├── blocks/               # generator: multi-file template sample
 │   │   ├── entities/             # generator: single-file template sample
 │   │   ├── scripts/
-│   │   │   ├── main.ts           # Entry point — core.register(), ui(core)
+│   │   │   ├── main.ts           # Entry point — one core.register() call
 │   │   │   ├── config.ts         # Config schema (typed accessors)
 │   │   │   └── UI/
 │   │   │       ├── Example.tsx   # Example UI component

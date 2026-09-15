@@ -81,17 +81,17 @@
 			"@bedrock-core/i18n/*": [
 				"../server/packages/i18n/src/*"
 			],
-			"@bedrock-core/config": [
-				"../apps/packages/config/src/index.ts"
-			],
-			"@bedrock-core/config/*": [
-				"../apps/packages/config/src/*"
-			],
 			"@bedrock-core/server-runtime": [
 				"../server/packages/server-runtime/src/index.ts"
 			],
 			"@bedrock-core/sync": [
 				"../server/packages/sync/src/index.ts"
+			],
+			"@bedrock-core/catalog": [
+				"../apps/packages/catalog/src/index.ts"
+			],
+			"@bedrock-core/catalog/*": [
+				"../apps/packages/catalog/src/*"
 			]
 		}
 	},
