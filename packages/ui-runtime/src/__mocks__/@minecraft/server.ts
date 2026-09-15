@@ -69,6 +69,11 @@ export interface EntitySpawnAfterEvent {
   readonly cause: string;
 }
 
+export interface PlayerLeaveAfterEvent {
+  readonly playerId: string;
+  readonly playerName: string;
+}
+
 class World {
   readonly beforeEvents = {
     playerInteractWithEntity: new MockSignal<PlayerInteractWithEntityBeforeEvent>(),
@@ -79,12 +84,18 @@ class World {
     entityContainerClosed: new MockSignal<EntityContainerClosedAfterEvent>(),
     playerSpawn: new MockSignal<PlayerSpawnAfterEvent>(),
     entitySpawn: new MockSignal<EntitySpawnAfterEvent>(),
+    playerLeave: new MockSignal<PlayerLeaveAfterEvent>(),
     worldLoad: new MockSignal<Record<string, never>>(),
   };
 
   getAllPlayers(): Player[] {
     // Return a single mock player for testing
     return [Reflect.construct(Player, [])];
+  }
+
+  /** The engine's filtered read; the mock takes no options and answers the same one player. */
+  getPlayers(): Player[] {
+    return this.getAllPlayers();
   }
 }
 
