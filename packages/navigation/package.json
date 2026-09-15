@@ -1,56 +1,56 @@
 {
-  "name": "@bedrock-core/navigation",
-  "version": "0.9.3",
-  "description": "@bedrock-core/ui navigation system",
-  "keywords": [
-    "ui",
-    "navigation",
-    "minecraft",
-    "bedrock",
-    "typescript",
-    "framework"
-  ],
-  "license": "MIT",
-  "author": "DrAv0011",
-  "contributors": [
-    {
-      "name": "DrAv0011",
-      "email": "contact@drav.dev",
-      "url": "https://drav.dev"
-    }
-  ],
-  "repository": "github:bedrock-core/ui",
-  "type": "module",
-  "main": "src/index.ts",
-  "types": "src/index.ts",
-  "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts"
-    }
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "files": [
-    "src"
-  ],
-  "sideEffects": false,
-  "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "lint": "eslint ."
-  },
-  "devDependencies": {
-    "@bedrock-core/server-runtime": "^0.1.0",
-    "@bedrock-core/sync": "^0.1.0",
-    "@bedrock-core/ui-runtime": "workspace:*",
-    "@minecraft/server": "^2.9.0",
-    "typescript": "^6.0.3"
-  },
-  "peerDependencies": {
-    "@bedrock-core/server-runtime": "*",
-    "@bedrock-core/sync": "*",
-    "@bedrock-core/ui-runtime": "*",
-    "@minecraft/server": "*"
-  }
+	"name": "@bedrock-core/navigation",
+	"version": "0.9.3",
+	"description": "@bedrock-core/ui navigation system",
+	"keywords": [
+		"ui",
+		"navigation",
+		"minecraft",
+		"bedrock",
+		"typescript",
+		"framework"
+	],
+	"license": "MIT",
+	"author": "DrAv0011",
+	"contributors": [
+		{
+			"name": "DrAv0011",
+			"email": "contact@drav.dev",
+			"url": "https://drav.dev"
+		}
+	],
+	"repository": "github:bedrock-core/ui",
+	"type": "module",
+	"main": "src/index.ts",
+	"types": "src/index.ts",
+	"exports": {
+		".": {
+			"types": "./src/index.ts",
+			"import": "./src/index.ts"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"src"
+	],
+	"sideEffects": false,
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"lint": "eslint ."
+	},
+	"devDependencies": {
+		"@bedrock-core/server-runtime": "*",
+		"@bedrock-core/sync": "*",
+		"@bedrock-core/ui-runtime": "workspace:*",
+		"@minecraft/server": "*",
+		"typescript": "*"
+	},
+	"peerDependencies": {
+		"@bedrock-core/server-runtime": "*",
+		"@bedrock-core/sync": "*",
+		"@bedrock-core/ui-runtime": "*",
+		"@minecraft/server": ">=2.9.0 || >=2.10.0-0"
+	}
 }

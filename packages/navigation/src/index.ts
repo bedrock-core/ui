@@ -17,17 +17,10 @@ import {
   clearHistory,
   historyOf as runtimeHistoryOf,
   navigate as runtimeNavigate,
-  openScreen,
-  screenOwner,
   shownKey,
-  presentReference,
-  setNavigator,
   usePlayer,
   type NavigateOptions,
-  type Navigated,
-  type ReturnAddress,
   type ScreenKey,
-  type ScreenReference,
 } from '@bedrock-core/ui-runtime';
 
 // The key types live with `render()`, which is what every addon already imports
@@ -42,7 +35,25 @@ export type { ReturnAddress } from '@bedrock-core/ui-runtime';
 // The cross-addon feeds a key resolves through: an addon's compiled screens as
 // references, and its page in the shared addon list.
 export { ScreensRegistry, isAddonScreens, screens, type AddonScreens } from './screens';
-export { PagesRegistry, isAddonPageReference, pages, type AddonPageReference } from './pages';
+export { PagesRegistry, addonPageReference, isAddonPageReference, pages, pageTargeted } from './pages';
+export type { AddonPageReference, PageTarget, TargetedPress } from './pages';
+
+// What resolves a key this bundle did not compile.
+export { provideReferences } from './references';
+export type { CrossRealm } from './references';
+
+// The realm's one UI presence: the transport a foreign screen is fetched over, the
+// navigator, the way back, and where this realm has each player.
+export { methodFor, uiOf } from './ui';
+export type { ReferenceSource, TargetOpener, UiPresence } from './ui';
+
+// Where the UI opens, as data that crosses a realm.
+export { isScreenTarget, isUiReturn, isUiTarget } from './target';
+export type { ScreenTarget, UiReturn, UiTarget } from './target';
+
+// What the build declared for this addon, for the realm to publish.
+export { declaredParts, registerDeclared } from './declared';
+export type { DeclaredParts } from './declared';
 
 /**
  * Shows the screen `key` names to `player`, putting the one they are on behind
@@ -135,77 +146,4 @@ export function useNavigation(): Navigation {
     key: shownKey(player.id),
     history: runtimeHistoryOf(player.id),
   };
-}
-
-/**
- * Reaching the realm that owns a screen, for the screens no reference describes.
- *
- * A screen whose presses run its owner's own handlers cannot be replicated —
- * there is nothing to replicate but the script — so the only realm that can
- * draw it is the one whose bundle built it. Both calls here cross the edge of
- * this realm, which is why they are supplied by whoever has a transport rather
- * than reached for from the navigation package.
- */
-export interface CrossRealm {
-  /**
-   * Asks the realm of `owner` to show `key` to `player`, saying where a `back()`
-   * that runs out of screens over there should return to. True when the request
-   * went out.
-   */
-  ask(owner: string, key: string, player: Player): boolean;
-  /** Shows the player what the realm they came from had on screen. */
-  sendBack(address: ReturnAddress, rest: readonly ReturnAddress[], player: Player): boolean;
-}
-
-/**
- * Installs what resolves a key this bundle did not compile.
- *
- * The realm holds every addon's replicated reference — the title, the entry
- * values and where each press leads — so a foreign key is shown from that and
- * followed for as long as its presses are links. Called once with whatever
- * reads the feed:
- *
- * ```ts
- * provideReferences(key => screens(core).find(key));
- * ```
- *
- * A screen no reference describes needs its owner's script, so it is drawn
- * where that script runs. Pass `crossRealm` to reach it; without one, such a
- * key warns exactly as an unknown key does.
- *
- * Until this is called, a key this bundle did not compile warns and shows nothing.
- */
-export function provideReferences(
-  lookup: (key: string) => ScreenReference | undefined,
-  crossRealm?: CrossRealm,
-): void {
-  setNavigator({
-    show: (key, player, options): Navigated => {
-      if (openScreen(key, player, options)) {
-        return true;
-      }
-
-      if (lookup(key) !== undefined) {
-        // A foreign screen is SHOWN, not rendered: there is no component here, so
-        // the walk drives the client directly — title, values, and the key each
-        // press leads to — for as long as the presses are links.
-        void presentReference(lookup, key, player);
-
-        return true;
-      }
-
-      const owner = screenOwner(key);
-
-      if (owner !== undefined && crossRealm?.ask(owner, key, player) === true) {
-        return 'handed-off';
-      }
-
-      console.warn(`[ui] no screen "${key}": this bundle did not compile it and no addon has published a reference for it`);
-
-      return false;
-    },
-    sendBack: crossRealm === undefined
-      ? undefined
-      : (address, rest, player): boolean => crossRealm.sendBack(address, rest, player),
-  });
 }

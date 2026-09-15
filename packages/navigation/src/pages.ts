@@ -1,43 +1,83 @@
 /**
- * An addon's page in the shared addon list, as a reference.
+ * An addon's page in the shared catalog, as a reference.
  *
- * The page is a compiled screen baked into the addon's own pack, drawn into the list by every
- * client that holds the pack. What the realm drawing the list needs is small — per reserved
+ * The page is a compiled screen baked into the addon's own pack, drawn into the catalog by every
+ * client that holds the pack. What the realm drawing the catalog needs is small — per reserved
  * entry, the value it is shown with and where a press leads — and that is what an addon
- * announces under `core-addon/page`:
+ * announces under `core-addon/page`.
  *
- * ```ts
- * import { pages } from '@bedrock-core/navigation';
- * import { addonPageReference } from '@bedrock-core/config/compiled';
- * import AddonPage from './screens/addon.screen';
+ * Every addon publishes one, whether or not it installed a catalog of its own: the page follows
+ * from the manifest, the build compiles it, and the realm announces it on the first tick. So an
+ * addon that browses nothing is still something another addon's catalog can draw a page for.
  *
- * pages(core).provide(addonPageReference(AddonPage));
- * ```
- *
- * The page follows from the manifest, so an addon's build compiles one and `ui()` announces it;
- * declaring is all it takes.
- *
- * The announcement carries the envelope only; `@bedrock-core/config` owns the real shape and
- * narrows it at the point of use.
+ * Where a press leads is the NAME OF AN APP, not a screen — `config`, `guide` — because the page
+ * is drawn in one realm and answered in another, and only the owning realm knows what its config
+ * screen looks like. A browser that cannot reach that app draws the entry as unreachable.
  */
 import { Announcement, isRecord, type Runtime } from '@bedrock-core/server-runtime';
 import type { State } from '@bedrock-core/sync';
+import { compiledSnapshotOf, compiledValuesOf, type FunctionComponent, type PressEvent } from '@bedrock-core/ui-runtime';
+import { buildScreenTree } from '@bedrock-core/ui-runtime/compile';
 
-/** The envelope a page reference travels in. The renderer owns the real shape. */
+/** Where a press on the page leads: the app the owning realm is asked for. */
+export type PageTarget = string;
+
+/** A press handler that names its target, so the reference can read it off the built tree. */
+export interface TargetedPress {
+  (event: PressEvent): void;
+  pageTarget: PageTarget;
+}
+
+/**
+ * A press that opens `app` in the realm that owns the page.
+ *
+ * The handler body is empty on purpose: the page's own script never runs — it is drawn from the
+ * pack by whichever realm holds the catalog — so the name is the whole of what a press carries.
+ */
+export function pageTargeted(app: PageTarget): TargetedPress {
+  return Object.assign((_event: PressEvent): void => {}, { pageTarget: app });
+}
+
+function targetOf(handler: unknown): PageTarget | null {
+  if (typeof handler !== 'function' || !('pageTarget' in handler)) { return null; }
+
+  const { pageTarget } = handler;
+
+  return typeof pageTarget === 'string' ? pageTarget : null;
+}
+
+/**
+ * A page reduced to what a host needs to draw it: per entry after the marker, the value it is
+ * shown with and where a press on it leads.
+ */
 export interface AddonPageReference {
   v: 1;
-  /** Per reserved entry, the value it is shown with. `string[]` to the renderer. */
-  values: unknown;
-  /** Per reserved entry, where a press leads. To the renderer. */
-  targets: unknown;
+  /** Slot `i + 1` is shown with `values[i]`. */
+  values: string[];
+  /** Which app a press on slot `i + 1` opens; null where it leads nowhere. */
+  targets: (PageTarget | null)[];
 }
 
 /** The envelope check {@link PagesRegistry} reads through. */
 export function isAddonPageReference(value: unknown): value is AddonPageReference {
-  return isRecord(value) && 'values' in value && 'targets' in value;
+  return isRecord(value) && Array.isArray(value['values']) && Array.isArray(value['targets']);
 }
 
-/** Each addon's page in the shared list, announced. */
+/**
+ * The reference of a page screen: built once the way the compile built it, its entries read off
+ * the tree and each press's target read off its handler.
+ */
+export function addonPageReference(Page: FunctionComponent): AddonPageReference {
+  const { entries, values } = compiledValuesOf(buildScreenTree(Page), compiledSnapshotOf(Page));
+
+  return {
+    v: 1,
+    values,
+    targets: entries.map(entry => (entry.role === 'button' ? targetOf(entry.element.props.onPress) : null)),
+  };
+}
+
+/** Each addon's page in the shared catalog, announced. */
 export class PagesRegistry extends Announcement<AddonPageReference> {
   constructor(state: State, addonId: string) {
     super(state, addonId, 'addon/page', isAddonPageReference);
