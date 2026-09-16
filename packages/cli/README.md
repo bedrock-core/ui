@@ -7,41 +7,27 @@ Scaffolds a complete Minecraft Bedrock addon project with the whole
 ESLint, localization, an in-game guide, the render pack, and a working example screen — in one
 command.
 
-## Usage
+## Install
 
 ```bash
 npx @bedrock-core/cli
 ```
 
-It prompts for a project name, an author and a description, then generates:
-
-- ✅ Behavior Pack with TypeScript setup
-- ✅ Resource Pack for your own textures and `.lang` files (the JSON UI decoders live in the render pack below)
-- ✅ Regolith configuration — the `generator` → `guides` → `i18n` → `bundler` filter chain
-- ✅ Localization scaffolding (`packs/data/i18n/`) wired to [`@bedrock-core/i18n`](https://bedrock-core.drav.dev/docs/ui/i18n)
-- ✅ An in-game guide scaffold (`packs/data/guides/`)
-- ✅ TypeScript and ESLint configs
-- ✅ A working example screen built with [`@bedrock-core/ore-styled`](https://bedrock-core.drav.dev/docs/ui/ore-styled)
-
-It also downloads the latest render pack (`.mcpack`) from the
-[releases page](https://github.com/bedrock-core/ui/releases/latest) into the project — open it to
-import it into Minecraft. If the download fails the CLI tells you where to get it manually.
-
-## After generation
+It prompts for a project name, an author and a description, then scaffolds a Regolith project on
+the `core` filter — TypeScript, ESLint, localization, an in-game guide, the render pack download,
+and three example screens (`home`, `plan`, `profile_form`) built with
+[`@bedrock-core/ore-styled`](https://bedrock-core.drav.dev/docs/ore-styled).
 
 ```bash
 cd your-addon
-yarn install          # or npm install
-yarn regolith-install # install the Regolith filters
-yarn build            # build the addon
-yarn watch            # rebuild and redeploy on change
+yarn install
+yarn regolith-install
+yarn build
 ```
 
 ## Documentation
 
-- [CLI](https://bedrock-core.drav.dev/docs/ui/cli) — every prompt, the full scaffold layout, and
-  what to do next
-- [Get started](https://bedrock-core.drav.dev/docs/ui/get-started/overview) — the framework itself
+https://bedrock-core.drav.dev/docs/cli
 
 ## License
 

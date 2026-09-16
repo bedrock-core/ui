@@ -1,6 +1,6 @@
 ---
-'@bedrock-core/ui-runtime': major
-'@bedrock-core/navigation': major
+'@bedrock-core/ui-runtime': minor
+'@bedrock-core/navigation': minor
 ---
 
 **Breaking.** State is readonly.

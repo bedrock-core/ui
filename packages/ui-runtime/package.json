@@ -1,6 +1,6 @@
 {
 	"name": "@bedrock-core/ui-runtime",
-	"version": "0.10.2",
+	"version": "0.11.0",
 	"description": "@bedrock-core/ui runtime",
 	"keywords": [
 		"ui",
@@ -64,6 +64,7 @@
 		"coverage": "vitest run --coverage"
 	},
 	"devDependencies": {
+		"@bedrock-core/i18n": "*",
 		"@minecraft/server": "*",
 		"@minecraft/server-ui": "*",
 		"@vitest/coverage-v8": "*",
@@ -72,11 +73,16 @@
 		"vitest": "*"
 	},
 	"peerDependencies": {
+		"@bedrock-core/i18n": "*",
 		"@minecraft/server": ">=2.9.0 || >=2.10.0-0",
 		"@minecraft/server-ui": "*"
 	},
+	"peerDependenciesMeta": {
+		"@bedrock-core/i18n": {
+			"optional": true
+		}
+	},
 	"dependencies": {
-		"@bedrock-core/flexbox": "workspace:*",
-		"@bedrock-core/i18n": "*"
+		"@bedrock-core/flexbox": "workspace:*"
 	}
 }

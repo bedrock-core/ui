@@ -116,7 +116,13 @@ if (described !== lang) {
 
 // Tabs — the pack files are tab-indented; preserve it.
 const manifest = JSON.parse(readFileSync(MANIFEST, 'utf8'));
-const [major, minor, patch] = manifest.header.version;
+// A format version 3 manifest carries every version as a SemVer string.
+const [major, minor, patch] = String(manifest.header.version).split('.').map(Number);
+
+if (![major, minor, patch].every(Number.isInteger)) {
+	console.error(`sync-pack-version: header.version ${JSON.stringify(manifest.header.version)} is not "major.minor.patch".`);
+	process.exit(1);
+}
 const packHash = hashPack();
 const record = existsSync(RECORD) ? JSON.parse(readFileSync(RECORD, 'utf8')) : {};
 
@@ -135,7 +141,7 @@ if (major !== targetMajor || minor !== targetMinor) {
 	process.exit(0);
 }
 
-manifest.header.version = next;
+manifest.header.version = next.join('.');
 writeFileSync(MANIFEST, JSON.stringify(manifest, null, '\t') + '\n');
 
 // The behavior pack DEPENDS on the render pack by version, and the game resolves that

@@ -38,10 +38,6 @@
 			"types": "./src/flexbox.ts",
 			"import": "./src/flexbox.ts"
 		},
-		"./i18n": {
-			"types": "./src/i18n.ts",
-			"import": "./src/i18n.ts"
-		},
 		"./container": {
 			"types": "./src/container.ts",
 			"import": "./src/container.ts"
@@ -96,9 +92,9 @@
 	},
 	"dependencies": {
 		"@bedrock-core/flexbox": "workspace:*",
-		"@bedrock-core/i18n": "*",
 		"@bedrock-core/navigation": "workspace:*",
 		"@bedrock-core/ore-styled": "workspace:*",
+		"@bedrock-core/ui-compiler": "workspace:*",
 		"@bedrock-core/ui-runtime": "workspace:*"
 	},
 	"devDependencies": {
@@ -121,8 +117,14 @@
 		"vitest": "^4.1.5"
 	},
 	"peerDependencies": {
+		"@bedrock-core/i18n": "*",
 		"@minecraft/server": ">=2.9.0 || >=2.10.0-0",
 		"@minecraft/server-ui": "*"
+	},
+	"peerDependenciesMeta": {
+		"@bedrock-core/i18n": {
+			"optional": true
+		}
 	},
 	"resolutions": {
 		"@bedrock-core/catalog": "portal:../apps/packages/catalog",

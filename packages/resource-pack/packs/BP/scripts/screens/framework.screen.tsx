@@ -14,15 +14,13 @@ import manifest from '../../../RP/manifest.json';
  */
 const { key } = i18n;
 
-const [major, minor, patch] = manifest.header.version;
-
 export default function FrameworkPage(): JSX.Element {
   return (
     <Screen>
       <AddonPage
         addon={{
           packName: key($ => $.framework.name),
-          version: `${String(major)}.${String(minor)}.${String(patch)}`,
+          version: manifest.header.version,
           creator: key($ => $.framework.creator),
           description: key($ => $.framework.description),
           icon: 'textures/ui/bedrock-core/icon',

@@ -64,6 +64,17 @@ __metadata:
     "@bedrock-core/server-runtime": "*"
     "@bedrock-core/ui-runtime": "*"
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
+  peerDependenciesMeta:
+    "@bedrock-core/i18n":
+      optional: true
+    "@bedrock-core/navigation":
+      optional: true
+    "@bedrock-core/ore-styled":
+      optional: true
+    "@bedrock-core/server-runtime":
+      optional: true
+    "@bedrock-core/ui-runtime":
+      optional: true
   languageName: node
   linkType: soft
 
@@ -116,6 +127,17 @@ __metadata:
     "@bedrock-core/server-runtime": "*"
     "@bedrock-core/ui-runtime": "*"
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
+  peerDependenciesMeta:
+    "@bedrock-core/i18n":
+      optional: true
+    "@bedrock-core/navigation":
+      optional: true
+    "@bedrock-core/ore-styled":
+      optional: true
+    "@bedrock-core/server-runtime":
+      optional: true
+    "@bedrock-core/ui-runtime":
+      optional: true
   languageName: node
   linkType: soft
 
@@ -141,6 +163,13 @@ __metadata:
     "@bedrock-core/sync": "*"
     "@bedrock-core/ui-runtime": "*"
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
+  peerDependenciesMeta:
+    "@bedrock-core/server-runtime":
+      optional: true
+    "@bedrock-core/sync":
+      optional: true
+    "@bedrock-core/ui-runtime":
+      optional: true
   languageName: unknown
   linkType: soft
 
@@ -164,7 +193,13 @@ __metadata:
     typescript: "npm:*"
     vitest: "npm:*"
   peerDependencies:
+    "@bedrock-core/i18n": "*"
     "@bedrock-core/ui-runtime": "*"
+  peerDependenciesMeta:
+    "@bedrock-core/i18n":
+      optional: true
+    "@bedrock-core/ui-runtime":
+      optional: true
   languageName: unknown
   linkType: soft
 
@@ -191,7 +226,7 @@ __metadata:
   languageName: node
   linkType: soft
 
-"@bedrock-core/ui-compiler@workspace:packages/ui-compiler":
+"@bedrock-core/ui-compiler@workspace:*, @bedrock-core/ui-compiler@workspace:packages/ui-compiler":
   version: 0.0.0-use.local
   resolution: "@bedrock-core/ui-compiler@workspace:packages/ui-compiler"
   dependencies:
@@ -236,8 +271,12 @@ __metadata:
     typescript: "npm:*"
     vitest: "npm:*"
   peerDependencies:
+    "@bedrock-core/i18n": "*"
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
     "@minecraft/server-ui": "*"
+  peerDependenciesMeta:
+    "@bedrock-core/i18n":
+      optional: true
   languageName: unknown
   linkType: soft
 
@@ -246,9 +285,9 @@ __metadata:
   resolution: "@bedrock-core/ui@workspace:."
   dependencies:
     "@bedrock-core/flexbox": "workspace:*"
-    "@bedrock-core/i18n": "npm:*"
     "@bedrock-core/navigation": "workspace:*"
     "@bedrock-core/ore-styled": "workspace:*"
+    "@bedrock-core/ui-compiler": "workspace:*"
     "@bedrock-core/ui-runtime": "workspace:*"
     "@changesets/changelog-github": "npm:^0.7.0"
     "@changesets/cli": "npm:^2.31.0"
@@ -268,8 +307,12 @@ __metadata:
     typescript-eslint: "npm:^8.59.2"
     vitest: "npm:^4.1.5"
   peerDependencies:
+    "@bedrock-core/i18n": "*"
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
     "@minecraft/server-ui": "*"
+  peerDependenciesMeta:
+    "@bedrock-core/i18n":
+      optional: true
   languageName: unknown
   linkType: soft
 

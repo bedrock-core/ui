@@ -30,6 +30,8 @@ export interface HeaderProps extends ControlProps {
    * none of this one's script — can be backed out of as well.
    */
   backTo?: ScreenKey;
+  /** With `backTo`: the back control takes the place of this screen rather than stacking over it. */
+  backReplace?: boolean;
   /**
    * A back control that returns wherever the player came from, without naming
    * it: the stack decides. What a screen that may be reached from several
@@ -52,7 +54,7 @@ export interface HeaderProps extends ControlProps {
  * Ore header bar: icon-only back button, breadcrumb trail, close button. Every screen
  * in a stack wears this so the chrome does not shift as the player moves between them.
  */
-export function Header({ title, breadcrumbs, trail, onBack, backTo, back, onClose, cancel, ...layout }: HeaderProps): JSX.Element {
+export function Header({ title, breadcrumbs, trail, onBack, backTo, backReplace, back, onClose, cancel, ...layout }: HeaderProps): JSX.Element {
   const h = theme.components.header;
   // A composed trail is live and reserves its room; a title and its
   // breadcrumbs are the author's own and bake as they are written.
@@ -83,7 +85,7 @@ export function Header({ title, breadcrumbs, trail, onBack, backTo, back, onClos
             </Form.Button>
           )
         : backTo !== undefined || back === true
-          ? <Link width={h.iconSize} height={h.iconSize} background={h.textures.back} backgroundHover={h.textures.backHover} backgroundPressed={h.textures.backPressed} {...backTo === undefined ? { back: true } : { to: backTo }} />
+          ? <Link width={h.iconSize} height={h.iconSize} background={h.textures.back} backgroundHover={h.textures.backHover} backgroundPressed={h.textures.backPressed} {...backTo === undefined ? { back: true } : { to: backTo, ...backReplace === true ? { replace: true } : {} }} />
           : onBack
             ? <Button width={h.iconSize} height={h.iconSize} background={h.textures.back} backgroundHover={h.textures.backHover} backgroundPressed={h.textures.backPressed} onPress={onBack} />
             : <Panel width={h.iconSize} height={h.iconSize} />}

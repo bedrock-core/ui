@@ -20,8 +20,8 @@ for you when it scaffolds a project.
 | | |
 | --- | --- |
 | UUID | `761ecd37-ad1c-4a64-862a-d6cc38767426` (never changes) |
-| Version | `1.10.0` — tracks the library release it ships in (see below) |
-| Protocol | `bcuiv0008` (also stated in the pack description, visible in-game) |
+| Version | tracks the library release it ships in (see below) |
+| Protocol | stated in the pack description, visible in-game |
 | Scope | `world` — one copy is shared by every `@bedrock-core/ui` addon in the world |
 
 Take the pack from the same release as the library: the pack and the runtime are two halves of one
@@ -94,3 +94,7 @@ Regolith has ever run.
 guide pages the guides filter writes. Everything else an addon draws — its config screens, its
 addon page, its routers — is compiled into that addon’s own pack under its own namespace, not
 this one.
+
+## Documentation
+
+https://bedrock-core.drav.dev/docs/ui/guides/render-pack

@@ -19,7 +19,6 @@
 		"@bedrock-core/guides": "^0.1.0",
 		"@bedrock-core/server": "^0.1.0",
 		"@bedrock-core/ui": "^0.11.0",
-		"@bedrock-core/ui-compiler": "^0.1.0",
 		"@minecraft/server": "2.10.0",
 		"@minecraft/server-ui": "2.2.0",
 		"@minecraft/vanilla-data": "1.26.50"

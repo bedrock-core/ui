@@ -2,11 +2,9 @@
 
 ![Logo](https://raw.githubusercontent.com/bedrock-core/ui/main/assets/logo/title.png)
 
-> ⚠️ Beta Status: Active development. Breaking changes may occur until 1.0.0. Pin exact versions for stability.
-
-The core of `@bedrock-core/ui`: a JSX runtime, the component primitives, the hook system, and the
-serializer that packs a laid-out tree into the payload string Minecraft's own server forms carry.
-A JSON UI **render pack** decodes those bytes in-game and paints the screen, which is what buys
+Beta. The core of `@bedrock-core/ui`: a JSX runtime, the component primitives, the hook system,
+and the serializer that packs a laid-out tree into the payload string Minecraft's own server forms
+carry. A JSON UI render pack decodes those bytes in-game and paints the screen, which is what buys
 layouts `@minecraft/server-ui` cannot express.
 
 ## Install
@@ -23,24 +21,7 @@ Point TypeScript at the JSX runtime (`@bedrock-core/ui-runtime` works as the imp
 ```
 
 The matching render pack (`core-ui-v*.mcpack`) ships with every release and must be installed in
-the world — see [Render pack](https://bedrock-core.drav.dev/docs/ui/ui-runtime/render-pack).
-
-## What it gives you
-
-- **Components** — `Panel`, `Text`, `Image`, `Button`, `Fragment`, `Background`, `Scroll`,
-  the modal-backed `Input` / `Dropdown` / `Slider`, and the `Form` namespace
-  (`Form.Toggle`, `.Slider`, `.Dropdown`, `.InlineSelect`, `.Input`, `.Option`, `.Button`)
-- **Hooks** — `useState`, `useReducer`, `useRef`, `useEffect`, `useContext`, `useEvent`,
-  `usePlayer`, `useExit`
-- **Two backends** — an `ActionFormData` screen by default; a `<Form>` anywhere on the tree
-  switches the render to a native `ModalFormData` with one atomic submit
-- **Flex layout** — [`@bedrock-core/flexbox`](https://bedrock-core.drav.dev/docs/ui/flexbox)
-  resolves every box to absolute texels before serialization
-- **Localization with no wiring** — `Text` accepts a literal, a translation key or a `RawMessage`
-  on one channel; `render()` injects the viewing player's resolver at every root
-- **Extension points** — `createContext`, and `registerComponent` for
-  [custom native components](https://bedrock-core.drav.dev/docs/ui/ui-runtime/api/custom-native-components)
-  your own resource pack decodes
+the world.
 
 ## Usage
 
@@ -72,58 +53,9 @@ export function openCounter(player: Player): void {
 }
 ```
 
-## Wire format
-
-A compiled screen's layout is a definition in the pack, so almost nothing about it travels. What
-does is here, and what decodes it is the JSON UI under `packs/RP/ui/core-ui/`.
-
-**The title names the screen.** `bcuiv0008core<encoding>:<addon>_<name>` — vanilla's header, the
-marker that says compiled, the encoding, and the screen's own key. The header is kept because
-vanilla's `long_form` hides itself when it is present and the library's container sizes itself to
-the screen only then; a title without it is left untouched. The key is the namespaced name rather
-than a number: a title is a string, so the name travels and stays readable in a crash log.
-
-**Entries carry what changed.** Each form entry is one short value — a flag, a count, a live
-string — read by the compiled screen's own gates. Nothing carries geometry, faces or state; those
-were baked.
-
-**Option blobs are the one fixed-width payload left** (`src/core/payload.ts`). A chooser's options
-are DATA the build cannot know, and they reach the pack through `ModalFormData`'s own `items`
-array, one packed string each. Every field is `type prefix` + `value padded with ';'` + a `1-byte
-marker`, so the pack can slice each at a known offset:
-
-| Type | Prefix | Value | Marker | Full | Notes |
-|---|---|---|---|---|---|
-| String | `s:` | 80 | 1 | 83 | hard 80-**byte** cap; over it `serializeProps()` throws |
-| Number | `n:` | 80 | 1 | 83 | integer texels — JSON UI ignores decimal points |
-| Boolean | `b:` | 5 | 1 | 8 | `'true'` / `'false'` |
-| Reserved | — | var | — | var | no prefix/marker, so JSON UI can skip it wholesale |
-| Tail | — | var | — | var | last field only, uncapped |
-
-Markers come from the ordered alphabet `0-9A-Za-z-_`, so a blob carries at most **64** fields.
-They exist because JSON UI's subtraction removes *all* occurrences of a substring: without a
-unique marker per field, stripping one would strip a later identical one too.
-
-**Decoding** is a progressive slice-then-subtract — three bindings per field, and why padding is
-stripped only after the full segment is isolated:
-
-```jsonc
-// 1. slice the FULL field (prefix + value + marker) off the previous remainder
-{ "binding_type": "view", "source_property_name": "('%.{FULL}s' * #rem_after_{PREV})", "target_property_name": "#raw_{FIELD}" },
-// 2. subtract it to make the next remainder
-{ "binding_type": "view", "source_property_name": "(#rem_after_{PREV} - #raw_{FIELD})", "target_property_name": "#rem_after_{FIELD}" },
-// 3. drop the marker ({FULL} - 1), then the prefix and the ';' padding
-{ "binding_type": "view", "source_property_name": "(('%.{FULL-1}s' * #raw_{FIELD}) - ('%.2s' * #raw_{FIELD}) - ';')", "target_property_name": "#{FIELD}" }
-```
-
-`{PREV}` is the previous field's name — `header` for the first.
-
 ## Documentation
 
-- [ui-runtime](https://bedrock-core.drav.dev/docs/ui/ui-runtime) — [components](https://bedrock-core.drav.dev/docs/ui/ui-runtime/components), [hooks](https://bedrock-core.drav.dev/docs/ui/ui-runtime/hooks), [API](https://bedrock-core.drav.dev/docs/ui/ui-runtime/api)
-- [Render pack](https://bedrock-core.drav.dev/docs/ui/ui-runtime/render-pack) — protocol versions, the control block, upgrading
-- [Custom native components](https://bedrock-core.drav.dev/docs/ui/ui-runtime/api/custom-native-components) — writers, routers, and the performance rules that come with them
-- [Bedrock Wiki — JSON UI](https://wiki.bedrock.dev/json-ui/json-ui-intro) and [string operations](https://wiki.bedrock.dev/json-ui/string-to-number)
+https://bedrock-core.drav.dev/docs/ui
 
 ## License
 

@@ -17,20 +17,6 @@ It also ships inside the umbrella package as `@bedrock-core/ui/ore-styled`. Thes
 through the render pack, so the `core-ui-v*.mcpack` from the matching
 [release](https://github.com/bedrock-core/ui/releases/latest) has to be installed in the world.
 
-## What it gives you
-
-- **Controls** — `Button`, `Card`, `Toggle`, `Checkbox`, `RadioGroup`/`Radio`,
-  `ToggleButtonGroup`/`ToggleButtonItem`, `Input`, `Dropdown`, `Slider`, `Divider`
-- **Chrome** — `Header` (back button, breadcrumb trail, close button) and `MenuRow` (thumbnail,
-  title, muted subtitle, `›` chevron, nesting depth)
-- **`Form`** — a native `ModalFormData` modal with an atomic single-submit lifecycle, plus styled,
-  labelled fields: `Form.Toggle`, `.Checkbox`, `.Radio`, `.ToggleButton`, `.Slider`, `.Dropdown`,
-  `.Input`, `.Button`
-- **`theme`** — the design tokens (typed `OreTheme`) for styling your own components to match
-
-`Header` and `MenuRow` take `DisplayText`, so a literal, a translation key or a `RawMessage` all
-work and localize per player with no extra wiring.
-
 ## Usage
 
 ```tsx
@@ -54,19 +40,9 @@ export function Settings(): JSX.Element {
 }
 ```
 
-`<Form>` is the other root — a screen starts with `<Screen>` or `<Form>`, never both — with one
-rule of its own: every field value arrives once, in `onSubmit`, keyed by its `name`, and the form
-must declare exactly one `Form.Button type="submit"` (plus at most one `type="exit"`), placed
-anywhere in the flow. Mix a modal `<Form>` and a `<Screen>` across separate `render()` calls —
-via navigation, say — never nested.
-
 ## Documentation
 
-- [ore-styled](https://bedrock-core.drav.dev/docs/ui/ore-styled) — every component, its props and
-  its variants, one page each
-- [`theme`](https://bedrock-core.drav.dev/docs/ui/ore-styled/theme) — the token set
-- [`Form`](https://bedrock-core.drav.dev/docs/ui/ore-styled/Form) — the modal lifecycle and each
-  styled field
+https://bedrock-core.drav.dev/docs/ore-styled
 
 ## License
 

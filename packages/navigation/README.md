@@ -2,8 +2,9 @@
 
 ![Logo](https://raw.githubusercontent.com/bedrock-core/ui/main/assets/logo/title.png)
 
-Going from one screen to another in [`@bedrock-core/ui`](https://github.com/bedrock-core/ui), by
-key.
+> ⚠️ Beta Status: Active development. Breaking changes will occur until 1.0.0. Pin exact versions for stability. Still not convinced of current navigation API, it had to change because of the compiler, but I'm still not satisfied with what it can offer.
+
+Going from one screen to another in [`@bedrock-core/ui`](https://github.com/bedrock-core/ui), by key.
 
 A compiled screen is drawn from the pack by its title, and its shape is frozen at build. That rules
 out the navigator every React app has — a stack of components swapped inside one root — and leaves
@@ -21,28 +22,6 @@ yarn add @bedrock-core/navigation
 
 It also ships inside the umbrella package as `@bedrock-core/ui/navigation`.
 
-## What it gives you
-
-- `navigate(key, player, options?)` — show that screen, putting the current one behind the player.
-  `options.params` fills what a generic screen's layout reserved
-- `replace(key, player)` — show it in the current screen's place, leaving the stack as deep as it is
-- `reset(key, player)` — show it as the only screen the player has been on
-- `back(player)` — show the screen navigated from; `false` when there is none
-- `canGoBack(player)` / `currentKey(player)` / `historyOf(player)` — where the player is and what is
-  behind them
-- `useNavigation()` — all of it bound to the player the screen is being shown to, plus `key` and
-  `history` for the screen itself
-- `provideReferences(lookup)` — what resolves a key this bundle did not compile
-- `screens(core)` / `pages(core)` — the cross-addon feeds a foreign key resolves through: every
-  static screen an addon compiled, and its page in the shared addon list
-- `ScreenKey` / `ScreenKeys` — the key type each addon's generated module augments, so its own keys
-  autocomplete while another addon's still pass
-
-Coming from the stack navigator this replaced: `push` is `navigate` (it always stacks),
-`goBack` is `back`, `reset` takes a key rather than a route array, and `setParams` is a
-`replace(key, player, { params })` — a compiled screen is drawn from the pack each time it is shown,
-so new params mean showing it again rather than mutating a route entry.
-
 ## Usage
 
 A press that opens another screen is a `<Link>`, not a handler — where it leads is then data the
@@ -57,49 +36,17 @@ export default function Home(): JSX.Element {
     <Screen>
       <Panel flexDirection={'column'} gap={4}>
         <Link to={'shop:catalogue'}><Text>{'Catalogue'}</Text></Link>
-        <Link to={'other_addon:guide_home'}><Text>{'Their guide'}</Text></Link>
       </Panel>
     </Screen>
   );
 }
 ```
 
-From script, or inside a screen:
-
-```ts
-import { back, navigate, useNavigation } from '@bedrock-core/navigation';
-
-navigate('shop:catalogue', player);
-back(player);
-
-// inside a screen
-const navigation = useNavigation();
-
-navigation.navigate('shop:catalogue');
-```
-
-## Resolving another addon's screens
-
-An addon publishes every static screen it compiled — per screen the title, the value each entry is
-shown with and the key each press leads to — and a realm holding that table can show them from the
-pack every client already has:
-
-```ts
-import { provideReferences, screens } from '@bedrock-core/navigation';
-
-screens(core).provide(uiReference());               // in the owning addon
-
-provideReferences(key => screens(core).find(key));  // in the realm that shows them
-```
-
-`@bedrock-core/config` installs a lookup of its own when the shared UI is mounted, so an addon using
-it needs neither call.
-
-Until something is installed, a key this bundle did not compile warns and shows nothing.
+From script, `navigate(key, player)` shows a screen and `back(player)` returns to the one before it.
 
 ## Documentation
 
-- [navigation](https://bedrock-core.drav.dev/docs/ui/navigation) — keys, the stack, and references
+https://bedrock-core.drav.dev/docs/navigation
 
 ## License
 

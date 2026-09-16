@@ -7,11 +7,9 @@
 
 declare module '@bedrock-core/ui-runtime' {
   interface ScreenKeys {
-    "core:guide_commands": true;
-    "core:guide_getting_started_first_screen": true;
-    "core:guide_getting_started_installation": true;
     "core:guide_home": true;
     "core:guide_home_back": true;
+    "core:guide_index": true;
     "core:guide_intro": true;
     "core:framework": true;
   }

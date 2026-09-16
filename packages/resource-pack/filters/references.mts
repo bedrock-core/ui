@@ -33,9 +33,10 @@ const REGISTRATION = 'data/ui/ui.generated.ts';
 const I18N_BUNDLE = 'data/i18n/i18n.generated.json';
 const GUIDES_BUNDLE = 'data/guides/guides.generated.json';
 const PAGE = 'BP/scripts/screens/framework.screen.tsx';
+const MANIFEST = 'RP/manifest.json';
 const OUTPUT = path.resolve(projectRoot, '..', '..', '..', 'apps', 'packages', 'catalog', 'src', 'generated', 'framework.generated.ts');
 
-for (const required of [REGISTRATION, I18N_BUNDLE, PAGE]) {
+for (const required of [REGISTRATION, I18N_BUNDLE, PAGE, MANIFEST]) {
   if (!fs.existsSync(required)) {
     console.error(`❌ references: ${required} is missing — the filters before this one did not write it`);
     process.exit(1);
@@ -84,6 +85,15 @@ const references = await evaluateEntry<References>({
   return process.exit(1);
 });
 
+// The framework's version is the render pack's: the pack is what draws the page and what a player
+// has installed, so the catalog row and the page show the one number.
+const frameworkVersion: unknown = (JSON.parse(fs.readFileSync(MANIFEST, 'utf-8')) as { header?: { version?: unknown } }).header?.version;
+
+if (typeof frameworkVersion !== 'string') {
+  console.error(`❌ references: ${MANIFEST} has no header.version string`);
+  process.exit(1);
+}
+
 if (Object.keys(references.screens.screens).length === 0) {
   console.error(`❌ references: no compiled screens under "${NAMESPACE}" were registered — did ui-compiler run?`);
   process.exit(1);
@@ -112,6 +122,9 @@ fs.writeFileSync(
     `export const FRAMEWORK_SCREENS: AddonReference = ${JSON.stringify(references.screens, null, 2)};`,
     '',
     `export const FRAMEWORK_PAGE: AddonPageReference = ${JSON.stringify(references.page, null, 2)};`,
+    '',
+    "/** The render pack's version: what the framework's row and page both show. */",
+    `export const FRAMEWORK_VERSION = ${JSON.stringify(frameworkVersion)};`,
     '',
   ].join('\n'),
   'utf-8',

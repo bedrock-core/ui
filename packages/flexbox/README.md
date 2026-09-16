@@ -21,20 +21,6 @@ yarn add @bedrock-core/flexbox
 
 It also ships inside the umbrella package as `@bedrock-core/ui/flexbox`.
 
-## What it gives you
-
-- `createNode(style?, children?, measure?)` — build a layout node
-- `computeLayout(root, refWidth?, refHeight?)` — solve the tree in place
-- The CSS subset that matters: `flexDirection`, `wrap`, `justifyContent`, `alignItems`,
-  `alignContent`, `alignSelf`, `flex`/`flexGrow`/`flexShrink`/`flexBasis`, `gap`/`rowGap`/
-  `columnGap`, padding and margin (texels or percent), `min`/`max` constraints, `aspectRatio`,
-  `position: 'absolute'` with `top`/`right`/`bottom`/`left` insets, `zIndex`, `display: 'none'`
-- **Content measurement** — a leaf whose height depends on the width it is granted (wrapping text)
-  supplies a `MeasureFunc`, and the solver runs a bounded fixpoint around it
-- `SCREEN` / `CANONICAL_SCREEN` reference dimensions, plus the `isPercent` / `resolveSize` helpers
-
-## Usage
-
 ```ts
 import { computeLayout, createNode } from '@bedrock-core/flexbox';
 
@@ -61,11 +47,7 @@ targets — `computeLayout(root, SCREEN.DESKTOP.width, SCREEN.DESKTOP.height)`.
 
 ## Documentation
 
-- [flexbox](https://bedrock-core.drav.dev/docs/ui/flexbox) — overview and screen constants
-- [`createNode`](https://bedrock-core.drav.dev/docs/ui/flexbox/createNode) — the full `FlexStyle`
-  reference: every property, its type, its default
-- [`computeLayout`](https://bedrock-core.drav.dev/docs/ui/flexbox/computeLayout) — signature,
-  worked examples, and the `isPercent` / `resolveSize` utilities
+https://bedrock-core.drav.dev/docs/flexbox
 
 ## License
 
