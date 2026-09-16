@@ -32,6 +32,7 @@ export type {
   BackgroundProps,
   ButtonProps,
   ContainerHandlers,
+  ContainerHost,
   ContainerProps,
   ControlProps,
   Display,
@@ -169,6 +170,7 @@ export type {
   ModalValue,
   PressEvent,
   RenderOptions,
+  ScreenHost,
   SlotEvent,
   UiEvent,
   Writer,
@@ -180,11 +182,16 @@ export type {
 } from './jsx';
 
 export { TranslationContext, useTranslation, useTranslationResolver } from './data/Translation';
-export type { TranslationResolver } from '@bedrock-core/i18n';
+export type { DisplayText, TranslationResolver } from '@bedrock-core/i18n';
+
+// The glyph table a server measures with before it sends a string: the same one
+// the layout uses at build time, so what was solved for and what is sent agree.
+export { measureText, WIDEST_GLYPH } from './util/textMetrics';
+export type { MeasureTextOptions } from './util/textMetrics';
 
 // Entity API, usable on its own: no screen, no component, no host.
-export { containerInventory, inventoryOf } from './entity';
-export type { Inventory, InventorySlot, SlotContainer, SlotLayout } from './entity';
+export { inventoryOf } from './entity';
+export type { ContainerSide, NamedContainer, NamedSlot, SlotLayout } from './entity';
 
 // What scrolling content gives up beside its track, for a screen that sizes its own rows.
 export { SCROLL_RESERVE, SCROLL_TRACK_WIDTH } from './components/Scroll';

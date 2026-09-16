@@ -15,16 +15,16 @@ export const move = (host: PollHost, entry: SlotEntry, before: ItemStack | undef
   const actor = actorOf(host.ledger, host.viewers, before, after);
 
   host.handle(() => {
-    if (!validPlayer(actor) || !validHost(host.entity)) {
+    if (!validPlayer(actor) || !validHost(host.host)) {
       return;
     }
 
     if (after) {
       if (isHandler<InsertHandler>(onInsert) && validStack(after)) {
-        onInsert({ player: actor, stack: after, host: host.entity });
+        onInsert({ player: actor, stack: after, host: host.host, container: host.cells });
       }
     } else if (isHandler<RemoveHandler>(onRemove) && validStack(before)) {
-      onRemove({ player: actor, stack: before, host: host.entity });
+      onRemove({ player: actor, stack: before, host: host.host, container: host.cells });
     }
   });
 

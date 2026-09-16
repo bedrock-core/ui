@@ -1,4 +1,5 @@
 import type { Player } from '@minecraft/server';
+import type { DisplayText } from '@bedrock-core/i18n';
 import { showCompiledTitle } from '../hosts/form/runtime';
 import { staticScreens } from './render/screens';
 
@@ -25,7 +26,7 @@ export interface ScreenReference {
   /** The compiled title the client picks the layout by. */
   readonly title: string;
   /** The value each entry is shown with, in `selection` order. */
-  readonly values: readonly string[];
+  readonly values: readonly DisplayText[];
   /** Where each `selection` leads: another screen, back, or nowhere describable. */
   readonly targets: readonly ReferenceTarget[];
 }

@@ -17,6 +17,8 @@
  * size — which is what the layout key rides, over two slots.
  */
 
+import { ContainerScreenError } from '../../core/types';
+
 /** The numeric id of a legacy-range block, as the engine publishes it through `#item_id_aux`. */
 const aux = (id: number): number => id * 65536;
 
@@ -100,13 +102,39 @@ export const layoutKey = (namespace: string, name: string): number => {
 export const COUNT_ITEM = 'minecraft:paper';
 
 /**
- * Entity property the build stamps with a screen's layout key, and the runtime
- * reads at open. The entity owns its screen, so it carries the key to it.
+ * Where the build stamps a screen's layout key, and the runtime reads it at
+ * open. The host owns its screen, so it carries the key to it: an entity
+ * property on an entity, and a block STATE of the same name on a block — a
+ * state declared with the one value, as a string, since a block has one screen
+ * and an integer state is stored by value in bits the key would overflow.
  */
 export const LAYOUT_PROPERTY = 'core:ui_layout';
 
-/** Dynamic property a screen's hook state is persisted under, on its entity. */
+/** Dynamic property a screen's hook state is persisted under, on its host. */
 export const STATE_PROPERTY = 'core:ui_state';
+
+/**
+ * Slots a block container can have. `minecraft:block_entity.container.slot_count`
+ * takes 1..54, which is the whole of a screen's allocation: its sentinels, its
+ * drawn cells and the bank behind them. An entity's inventory has no such cap,
+ * so a screen that outgrows a block still fits an entity.
+ */
+export const BLOCK_SLOT_LIMIT = 54;
+
+/**
+ * A block-hosted screen that does not fit its block, said once for the build
+ * and the runtime alike: the build refuses to compile one, and
+ * `createContainerScreen` refuses to serve one.
+ */
+export const blockCapacityError = (name: string, size: number): ContainerScreenError =>
+  new ContainerScreenError(
+    `"${name}" needs ${size} container slots and a block holds ${BLOCK_SLOT_LIMIT}.\n`
+    + '  Every element of a compiled screen costs container slots: 2 for the routing\n'
+    + '  sentinel, 1 for each own <Slot> and each Button, and one per character of\n'
+    + '  every live <Text maxLength>.\n'
+    + '  Two ways out: draw fewer of them and shorten the live text, or host the\n'
+    + '  screen on an entity with `<Container entity>`, whose inventory has no limit.',
+  );
 
 /** Dynamic property marking an item the runtime placed, where the item can hold one. */
 export const OWNED_PROPERTY = 'core:ui_owned';

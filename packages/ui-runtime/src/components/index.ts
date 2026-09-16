@@ -12,8 +12,8 @@ export {
 export { Background, BACKGROUND_SLOT_TYPE, type BackgroundProps } from './Background';
 export { Button, BUTTON_TYPE, isExitButton, type ButtonProps } from './Button';
 export {
-  Container, CONTAINER_TYPE, containerEntity, containerHandlers,
-  type ContainerHandlers, type ContainerProps,
+  Container, CONTAINER_TYPE, containerHandlers, containerHost,
+  type ContainerHandlers, type ContainerHost, type ContainerProps,
 } from './Container';
 export { Expect, EXPECT_SLOT_TYPE, expectedHost, type ExpectProps } from './Expect';
 export {

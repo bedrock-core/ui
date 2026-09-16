@@ -59,6 +59,23 @@ export interface EntityContainerClosedAfterEvent {
   readonly closeSource: { entity?: unknown };
 }
 
+/** The block half of the same three events: interact, opened, closed. */
+export interface PlayerInteractWithBlockBeforeEvent {
+  cancel: boolean;
+  readonly player: unknown;
+  readonly block: unknown;
+}
+
+export interface BlockContainerOpenedAfterEvent {
+  readonly block: unknown;
+  readonly openSource: { entity?: unknown };
+}
+
+export interface BlockContainerClosedAfterEvent {
+  readonly block: unknown;
+  readonly closeSource: { entity?: unknown };
+}
+
 export interface PlayerSpawnAfterEvent {
   readonly initialSpawn: boolean;
   readonly player: unknown;
@@ -77,11 +94,14 @@ export interface PlayerLeaveAfterEvent {
 class World {
   readonly beforeEvents = {
     playerInteractWithEntity: new MockSignal<PlayerInteractWithEntityBeforeEvent>(),
+    playerInteractWithBlock: new MockSignal<PlayerInteractWithBlockBeforeEvent>(),
   };
 
   readonly afterEvents = {
     entityContainerOpened: new MockSignal<EntityContainerOpenedAfterEvent>(),
     entityContainerClosed: new MockSignal<EntityContainerClosedAfterEvent>(),
+    blockContainerOpened: new MockSignal<BlockContainerOpenedAfterEvent>(),
+    blockContainerClosed: new MockSignal<BlockContainerClosedAfterEvent>(),
     playerSpawn: new MockSignal<PlayerSpawnAfterEvent>(),
     entitySpawn: new MockSignal<EntitySpawnAfterEvent>(),
     playerLeave: new MockSignal<PlayerLeaveAfterEvent>(),
@@ -181,6 +201,12 @@ export enum EntityComponentTypes {
   Item = 'minecraft:item',
 }
 
+/** Mirror of the engine enum: the block components a block-hosted screen reads. */
+export enum BlockComponentTypes {
+  DynamicProperties = 'minecraft:dynamic_properties',
+  Inventory = 'minecraft:inventory',
+}
+
 /** Mirror of the engine enum: the item components the container runtime reads. */
 export enum ItemComponentTypes {
   Durability = 'minecraft:durability',
@@ -197,6 +223,8 @@ export interface ItemTypeShape {
   maxAmount: number;
   /** Present for damageable types. */
   maxDurability?: number;
+  /** The item tags every stack of the type carries. */
+  tags?: string[];
 }
 
 const ITEM_TYPES = new Map<string, ItemTypeShape>([
@@ -225,8 +253,11 @@ export class ItemStack {
   lockMode: ItemLockMode = ItemLockMode.none;
   keepOnDeath = false;
   private _lore: string[] = [];
+  private _canDestroy: string[] = [];
+  private _canPlaceOn: string[] = [];
   private readonly _properties = new Map<string, boolean | number | string>();
   private readonly _durability: ItemDurabilityComponent | undefined;
+  private readonly _tags: string[];
 
   constructor(typeId: string, amount: number = 1) {
     const shape = ITEM_TYPES.get(typeId);
@@ -234,6 +265,7 @@ export class ItemStack {
     this.typeId = typeId;
     this.maxAmount = shape?.maxAmount ?? 64;
     this.amount = amount;
+    this._tags = [...shape?.tags ?? []];
     this._durability = shape?.maxDurability === undefined
       ? undefined
       : new ItemDurabilityComponent(shape.maxDurability);
@@ -250,6 +282,8 @@ export class ItemStack {
     copy.lockMode = this.lockMode;
     copy.keepOnDeath = this.keepOnDeath;
     copy._lore = [...this._lore];
+    copy._canDestroy = [...this._canDestroy];
+    copy._canPlaceOn = [...this._canPlaceOn];
 
     for (const [key, value] of this._properties) {
       copy._properties.set(key, value);
@@ -290,6 +324,45 @@ export class ItemStack {
   getComponent(componentId: string): ItemDurabilityComponent | undefined {
     return componentId === ItemComponentTypes.Durability ? this._durability : undefined;
   }
+
+  getDynamicPropertyIds(): string[] {
+    return [...this._properties.keys()];
+  }
+
+  clearDynamicProperties(): void {
+    this._properties.clear();
+  }
+
+  getTags(): string[] {
+    return [...this._tags];
+  }
+
+  hasTag(tag: string): boolean {
+    return this._tags.includes(tag);
+  }
+
+  /** The same type and the same custom data: what the engine compares, amount aside. */
+  isStackableWith(itemStack: ItemStack): boolean {
+    return this.typeId === itemStack.typeId
+      && this.nameTag === itemStack.nameTag
+      && this._lore.join(' ') === itemStack._lore.join(' ');
+  }
+
+  getCanDestroy(): string[] {
+    return [...this._canDestroy];
+  }
+
+  setCanDestroy(blockIdentifiers?: string[]): void {
+    this._canDestroy = blockIdentifiers ? [...blockIdentifiers] : [];
+  }
+
+  getCanPlaceOn(): string[] {
+    return [...this._canPlaceOn];
+  }
+
+  setCanPlaceOn(blockIdentifiers?: string[]): void {
+    this._canPlaceOn = blockIdentifiers ? [...blockIdentifiers] : [];
+  }
 }
 
 /** A live view of one container slot, the way the engine hands one out. */
@@ -302,8 +375,13 @@ export class ContainerSlot {
     this._slot = slot;
   }
 
+  /** The stack itself rather than a copy, so a write through the slot lands in the container. */
+  private get _stack(): ItemStack | undefined {
+    return this._container.__peek(this._slot);
+  }
+
   get amount(): number {
-    return this._container.getItem(this._slot)?.amount ?? 0;
+    return this._stack?.amount ?? 0;
   }
 
   /** Writes the stack size in place, without replacing the stack. */
@@ -311,8 +389,120 @@ export class ContainerSlot {
     this._container.__setAmount(this._slot, value);
   }
 
+  get isStackable(): boolean {
+    return this._stack?.isStackable ?? false;
+  }
+
+  get isValid(): boolean {
+    return this._container.isValid && this._slot >= 0 && this._slot < this._container.size;
+  }
+
+  get maxAmount(): number {
+    return this._stack?.maxAmount ?? 0;
+  }
+
   get typeId(): string | undefined {
-    return this._container.getItem(this._slot)?.typeId;
+    return this._stack?.typeId;
+  }
+
+  get keepOnDeath(): boolean {
+    return this._stack?.keepOnDeath ?? false;
+  }
+
+  set keepOnDeath(value: boolean) {
+    const stack = this._stack;
+
+    if (stack) {
+      stack.keepOnDeath = value;
+    }
+  }
+
+  get lockMode(): ItemLockMode {
+    return this._stack?.lockMode ?? ItemLockMode.none;
+  }
+
+  set lockMode(value: ItemLockMode) {
+    const stack = this._stack;
+
+    if (stack) {
+      stack.lockMode = value;
+    }
+  }
+
+  get nameTag(): string | undefined {
+    return this._stack?.nameTag;
+  }
+
+  set nameTag(value: string | undefined) {
+    const stack = this._stack;
+
+    if (stack) {
+      stack.nameTag = value;
+    }
+  }
+
+  getItem(): ItemStack | undefined {
+    return this._container.getItem(this._slot);
+  }
+
+  setItem(itemStack?: ItemStack): void {
+    this._container.setItem(this._slot, itemStack);
+  }
+
+  hasItem(): boolean {
+    return this._stack !== undefined;
+  }
+
+  getLore(): string[] {
+    return this._stack?.getLore() ?? [];
+  }
+
+  setLore(loreList?: string[]): void {
+    this._stack?.setLore(loreList);
+  }
+
+  getTags(): string[] {
+    return this._stack?.getTags() ?? [];
+  }
+
+  hasTag(tag: string): boolean {
+    return this._stack?.hasTag(tag) ?? false;
+  }
+
+  isStackableWith(itemStack: ItemStack): boolean {
+    return this._stack?.isStackableWith(itemStack) ?? false;
+  }
+
+  getDynamicProperty(identifier: string): boolean | number | string | undefined {
+    return this._stack?.getDynamicProperty(identifier);
+  }
+
+  setDynamicProperty(identifier: string, value?: boolean | number | string): void {
+    this._stack?.setDynamicProperty(identifier, value);
+  }
+
+  getDynamicPropertyIds(): string[] {
+    return this._stack?.getDynamicPropertyIds() ?? [];
+  }
+
+  clearDynamicProperties(): void {
+    this._stack?.clearDynamicProperties();
+  }
+
+  getCanDestroy(): string[] {
+    return this._stack?.getCanDestroy() ?? [];
+  }
+
+  setCanDestroy(blockIdentifiers?: string[]): void {
+    this._stack?.setCanDestroy(blockIdentifiers);
+  }
+
+  getCanPlaceOn(): string[] {
+    return this._stack?.getCanPlaceOn() ?? [];
+  }
+
+  setCanPlaceOn(blockIdentifiers?: string[]): void {
+    this._stack?.setCanPlaceOn(blockIdentifiers);
   }
 }
 
@@ -362,6 +552,23 @@ export class Container {
     }
   }
 
+  /** Moves a stack into another slot, sending whatever stood there back the other way. */
+  moveItem(fromSlot: number, toSlot: number, toContainer: Container): void {
+    const moved = this.getItem(fromSlot);
+    const standing = toContainer.getItem(toSlot);
+
+    toContainer.setItem(toSlot, moved);
+    this.setItem(fromSlot, standing);
+  }
+
+  swapItems(slot: number, otherSlot: number, otherContainer: Container): void {
+    const mine = this.getItem(slot);
+    const theirs = otherContainer.getItem(otherSlot);
+
+    this.setItem(slot, theirs);
+    otherContainer.setItem(otherSlot, mine);
+  }
+
   /** The in-place amount write behind `ContainerSlot.amount`, which replaces no stack. */
   __setAmount(slot: number, amount: number): void {
     const item = this._items[slot];
@@ -369,5 +576,10 @@ export class Container {
     if (item) {
       item.amount = amount;
     }
+  }
+
+  /** The stored stack itself, for the writes `ContainerSlot` makes in place. */
+  __peek(slot: number): ItemStack | undefined {
+    return this._items[slot];
   }
 }

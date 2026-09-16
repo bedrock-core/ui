@@ -26,9 +26,11 @@ export {
   BLANK_CODE, BLANK_VALUE, CHARSET, charsetLang, encode, MAX_CODE, UNKNOWN_CODE,
 } from './charset';
 export {
-  COLLECTION, COUNT_ITEM, GUARD_ITEM, GUARD_ITEM_AUX, joinKey, KEY_PREFIX, LAYOUT_PROPERTY, layoutKey,
-  MAX_LAYOUT, OWNED_LORE, OWNED_PROPERTY, PROTOCOL_ITEM, PROTOCOL_ITEM_AUX, SENTINEL_SLOTS, splitKey,
-  STATE_PROPERTY, TRANSPORT_ITEM, TRANSPORT_ITEM_AUX,
+  BLOCK_SLOT_LIMIT, blockCapacityError, COLLECTION, COUNT_ITEM, GUARD_ITEM, GUARD_ITEM_AUX, joinKey, KEY_PREFIX,
+  LAYOUT_PROPERTY, layoutKey, MAX_LAYOUT, OWNED_LORE, OWNED_PROPERTY, PROTOCOL_ITEM,
+  PROTOCOL_ITEM_AUX, SENTINEL_SLOTS, splitKey, STATE_PROPERTY, TRANSPORT_ITEM, TRANSPORT_ITEM_AUX,
 } from './contract';
 export { createContainerScreen } from './runtime/session';
 export type { ContainerScreen, ContainerScreenConfig } from './runtime/session';
+export type { ContainerHost } from '../../components/Container';
+export type { ScreenHost } from '../../core/events';

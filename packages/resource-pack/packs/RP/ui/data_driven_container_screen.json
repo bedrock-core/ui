@@ -1,0 +1,82 @@
+// The data-driven container screen, hooked for compiled screens.
+//
+// This is the screen a CUSTOM BLOCK opens: a block with
+// `minecraft:block_entity.container` gets this file rather than the chest's,
+// and every addon's plain block container opens it too. So the edits here are
+// the same two the chest gets, and nothing of vanilla's is re-declared beyond
+// the screen definition itself.
+//
+// Vanilla's content is switched off the way vanilla's own derived screens
+// switch theirs: the screen names a different $screen_content. Ours is the
+// data-driven container root, which holds vanilla's own panel by reference
+// behind a gate that opens for any block container no compiled screen claims,
+// and the library's chrome behind the opposite gate. A modification cannot do
+// this: `variables` is not an array modifications reach, and a `controls`
+// insert on the screen creates an array that shadows the one the screen
+// inherits from common.base_screen, leaving every block container empty.
+//
+// Two definitions get a visibility binding: the title label and the slot grid,
+// shown for an ordinary block container, hidden while the sentinel in slot 0
+// carries the protocol key. Their panel, panel_top_half, is where every
+// addon's build inserts its root, in its own copy of this file — an array
+// vanilla itself declares, so the inserts stack in whatever order the packs
+// sit — and the root mounts that panel a second time, claimed, with nothing
+// but the roots left visible in it.
+//
+// The override name is this file's own (#core_ui_ddc_aux) rather than the
+// chest file's: container_label derives from chest.chest_label, which the
+// chest hook also binds, and two independent names cannot collide whichever
+// way the engine resolves the inheritance.
+{
+	"namespace": "data_driven_container",
+
+	"screen@common.inventory_screen_common": {
+		"$close_on_player_hurt|default": true,
+		"$use_custom_pocket_toast|default": false,
+		"close_on_player_hurt": "$close_on_player_hurt",
+		"use_custom_pocket_toast": "$use_custom_pocket_toast",
+		"variables": [
+			{
+				"requires": "$desktop_screen",
+				"$screen_content": "core_ui_router.block_root",
+				"$screen_bg_content": "common.screen_background",
+				"$screen_background_alpha": 0.4
+			},
+			{
+				"requires": "$pocket_screen",
+				"$use_custom_pocket_toast": true,
+				"$screen_content": "core_ui_router.block_root_pocket"
+			}
+		]
+	},
+
+	// The literal is the runtime's protocol aux (8978432): a $variable inside
+	// an inserted binding's source_property_name is dropped by the engine.
+	"container_label": {
+		"modifications": [
+			{
+				"array_name": "bindings",
+				"operation": "insert_back",
+				"value": [
+					{ "binding_type": "collection_details", "binding_collection_name": "container_items" },
+					{ "binding_name": "#item_id_aux", "binding_name_override": "#core_ui_ddc_aux", "binding_type": "collection", "binding_collection_name": "container_items" },
+					{ "binding_type": "view", "source_property_name": "(not (#core_ui_ddc_aux = 8978432))", "target_property_name": "#visible" }
+				]
+			}
+		]
+	},
+
+	"item_grid": {
+		"modifications": [
+			{
+				"array_name": "bindings",
+				"operation": "insert_back",
+				"value": [
+					{ "binding_type": "collection_details", "binding_collection_name": "container_items" },
+					{ "binding_name": "#item_id_aux", "binding_name_override": "#core_ui_ddc_aux", "binding_type": "collection", "binding_collection_name": "container_items" },
+					{ "binding_type": "view", "source_property_name": "(not (#core_ui_ddc_aux = 8978432))", "target_property_name": "#visible" }
+				]
+			}
+		]
+	}
+}

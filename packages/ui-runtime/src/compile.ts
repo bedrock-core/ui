@@ -31,6 +31,7 @@ export type { Allocation, CellRole, ChannelEntry, SlotEntry } from './hosts/ches
 export { allocate as allocateForm, allocateModal, type ModalRow } from './hosts/form/allocate';
 // What each entry is shown with: the build bakes it for a screen that never changes.
 export { entryValue } from './hosts/form/runtime';
+export type { DisplayText } from '@bedrock-core/i18n';
 export type { EntryEntry, Placement as FormPlacement } from './hosts/form/allocate';
 
 // The liveness seam the compiled snapshot rides: the build detects a carried
@@ -51,9 +52,9 @@ export {
   BLANK_CODE, BLANK_VALUE, CHARSET, charsetLang, encode, MAX_CODE, UNKNOWN_CODE,
 } from './hosts/chest/charset';
 export {
-  COLLECTION, COUNT_ITEM, GUARD_ITEM, GUARD_ITEM_AUX, joinKey, KEY_PREFIX, LAYOUT_PROPERTY, layoutKey,
-  MAX_LAYOUT, OWNED_LORE, OWNED_PROPERTY, PROTOCOL_ITEM, PROTOCOL_ITEM_AUX, SENTINEL_SLOTS, splitKey,
-  STATE_PROPERTY, TRANSPORT_ITEM, TRANSPORT_ITEM_AUX,
+  BLOCK_SLOT_LIMIT, blockCapacityError, COLLECTION, COUNT_ITEM, GUARD_ITEM, GUARD_ITEM_AUX, joinKey, KEY_PREFIX,
+  LAYOUT_PROPERTY, layoutKey, MAX_LAYOUT, OWNED_LORE, OWNED_PROPERTY, PROTOCOL_ITEM,
+  PROTOCOL_ITEM_AUX, SENTINEL_SLOTS, splitKey, STATE_PROPERTY, TRANSPORT_ITEM, TRANSPORT_ITEM_AUX,
 } from './hosts/chest/contract';
 
 // What the compiler reads off a built tree: every component owns the shape of
@@ -62,7 +63,8 @@ export { BACKGROUND_SLOT_TYPE } from './components/Background';
 export { BUTTON_TYPE, isExitButton } from './components/Button';
 export { linkTarget } from './components/Link';
 export type { LinkTarget } from './components/Link';
-export { CONTAINER_TYPE, containerEntity, containerHandlers, containerRoot } from './components/Container';
+export { CONTAINER_TYPE, containerHandlers, containerHost, containerRoot } from './components/Container';
+export type { ContainerHost } from './components/Container';
 export { declaredStatic, SCREEN_TYPE } from './components/Screen';
 export { hostFor, rootOf } from './hosts';
 export { IMAGE_TYPE, liveTexture } from './components/Image';

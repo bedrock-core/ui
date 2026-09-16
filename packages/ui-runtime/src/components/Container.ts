@@ -13,9 +13,31 @@ import { type ControlProps, withControl } from './control';
  */
 export { CONTAINER_TYPE };
 
+/**
+ * What a container screen opens from: a custom entity, or a custom block.
+ *
+ * The two are interchangeable everywhere above this — the same components, the
+ * same allocation, the same protocol items and the same poll-and-undo runtime —
+ * so everything that reads the host reads this pair rather than an entity type.
+ */
+export interface ContainerHost {
+  readonly kind: 'entity' | 'block';
+  /** The entity type or the block type, e.g. `core:furnace`. */
+  readonly type: string;
+}
+
 export interface ContainerProps extends ControlProps {
-  /** Type of the entity the screen opens from, e.g. `core:furnace`. */
-  entity: string;
+  /**
+   * Type of the entity the screen opens from, e.g. `core:furnace`. Exactly one
+   * of `entity` and `block`.
+   */
+  entity?: string;
+  /**
+   * Type of the block the screen opens from, e.g. `core:workbench`. The build
+   * gives that block its container and stamps the layout key on it; a player
+   * opens the screen by interacting with a placed one.
+   */
+  block?: string;
   /**
    * Ran when a player opens the screen. One layout serves every viewer, so
    * this is where a screen learns who is looking and what it belongs to —
@@ -42,23 +64,63 @@ export interface ContainerHandlers {
  *
  * It is also the screen's own panel — every control prop applies, so a
  * `background` draws the frame and `padding`/`gap` lay the children out — and
- * it is the one place a container screen states its entity.
+ * it is the one place a container screen states what it opens from.
  */
 export const Container: FunctionComponent<ContainerProps> = (
-  { entity, onOpen, onClose, children, ...rest }: ContainerProps,
+  { entity, block, onOpen, onClose, children, ...rest }: ContainerProps,
 ): JSX.Element => HostContext({
   value: 'chest',
   children: {
     type: CONTAINER_TYPE,
     props: {
       ...withControl(rest),
-      __container: { entity },
+      __container: hostOf(entity, block),
       onOpen,
       onClose,
       children,
     },
   },
 });
+
+/** A stated host type, once the blanks are ruled out. */
+const stated = (value: string | undefined): string | undefined =>
+  (typeof value === 'string' && value !== '' ? value : undefined);
+
+/**
+ * The host a `<Container>` names.
+ *
+ * A screen opens from one thing, and which one decides everything downstream:
+ * what the build stamps, which vanilla screen the layout is routed onto, and
+ * which events the runtime listens for. Naming both, or neither, has no answer
+ * — so it is refused here rather than resolved to whichever was checked first.
+ *
+ * @throws ContainerScreenError unless exactly one of the two is named.
+ */
+function hostOf(entity: string | undefined, block: string | undefined): ContainerHost {
+  const entityType = stated(entity);
+  const blockType = stated(block);
+
+  if (entityType !== undefined && blockType !== undefined) {
+    throw new ContainerScreenError(
+      `\`<Container>\` names both an entity (${entityType}) and a block (${blockType}). `
+      + 'A screen opens from one host: keep the one it belongs to and drop the other.',
+    );
+  }
+
+  if (entityType !== undefined) {
+    return { kind: 'entity', type: entityType };
+  }
+
+  if (blockType !== undefined) {
+    return { kind: 'block', type: blockType };
+  }
+
+  throw new ContainerScreenError(
+    '`<Container>` needs `entity` or `block`: the type of the entity or the block the screen '
+    + 'opens from, e.g. `core:furnace`. The build sizes that host\'s container and the runtime '
+    + 'serves the screen when a player interacts with it.',
+  );
+}
 
 const isHandler = (value: unknown): value is (...args: unknown[]) => void => typeof value === 'function';
 
@@ -76,17 +138,21 @@ export function containerHandlers(element: JSX.Element): ContainerHandlers {
   };
 }
 
-/** The entity type a built `<Container>` names, read off the host element. */
-export function containerEntity(element: JSX.Element): string | undefined {
+/** The host a built `<Container>` names, read off the host element. */
+export function containerHost(element: JSX.Element): ContainerHost | undefined {
   const config = element.props.__container;
 
-  if (typeof config !== 'object' || config === null || !('entity' in config)) {
+  if (typeof config !== 'object' || config === null || !('kind' in config) || !('type' in config)) {
     return undefined;
   }
 
-  const { entity } = config;
+  const { kind, type } = config;
 
-  return typeof entity === 'string' ? entity : undefined;
+  if ((kind !== 'entity' && kind !== 'block') || typeof type !== 'string' || type === '') {
+    return undefined;
+  }
+
+  return { kind, type };
 }
 
 /**

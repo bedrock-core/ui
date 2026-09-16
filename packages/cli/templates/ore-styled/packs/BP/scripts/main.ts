@@ -7,7 +7,7 @@
  *   was given.
  * - `catalog`, `config` and `guides` are the bedrock-core apps: each registers
  *   its own command under this addon's namespace and serves its own screens.
- * - A button push opens this addon's own custom UI (./UI/Example).
+ * - A button push opens this addon's own custom UI (./UI/screens/home.screen).
  */
 import { render } from '@bedrock-core/ui';
 import { core } from '@bedrock-core/server';
@@ -18,7 +18,7 @@ import { ButtonPushAfterEvent, Entity, Player, world } from '@minecraft/server';
 import { MinecraftEntityTypes } from '@minecraft/vanilla-data';
 import { configDef } from './config';
 import { i18n } from './UI/i18n';
-import { Example } from './UI/Example';
+import Home from './UI/screens/home.screen';
 
 const isPlayer = (entity: Entity): entity is Player => entity.typeId === MinecraftEntityTypes.Player;
 
@@ -53,6 +53,6 @@ world.afterEvents.buttonPush.subscribe(({ source }: ButtonPushAfterEvent): void 
     return;
   }
 
-  // Present the Example UI for this player
-  render(Example, source);
+  // Present the Home screen for this player
+  render(Home, source);
 });

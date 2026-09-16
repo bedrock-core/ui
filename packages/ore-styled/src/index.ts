@@ -23,7 +23,11 @@ export type { HeaderProps } from './Header';
 export { MenuRow } from './MenuRow';
 export type { MenuRowProps } from './MenuRow';
 export { Trail } from './Trail';
-export type { TrailProps, TrailSegment } from './Trail';
+export type { TrailProps } from './Trail';
+
+// Composing a header's trail: what it says, and what it gives up to fit.
+export { trailMaxLength, trailText, trailWidth } from './trailComposition';
+export type { TrailBack, TrailMessage, TrailOptions } from './trailComposition';
 
 export { Input } from './Input';
 export type { InputProps } from './Input';

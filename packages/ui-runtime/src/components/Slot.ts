@@ -37,6 +37,16 @@ export interface SlotSource {
 }
 
 export interface SlotProps extends ControlProps {
+  /**
+   * What addon logic calls this cell: `container.getItem('output')` reaches it
+   * by this name instead of by a counted index. Own slots only — a foreign
+   * slot draws someone else's collection, so the screen has no cell of its own
+   * to name — and unique within a screen. Both are build-time errors.
+   *
+   * Most cells want no name: an unnamed cell is found by walking the
+   * container's indices, which is what a grid of interchangeable inputs wants.
+   */
+  name?: string;
   /** Defaults to `both`: ordinary storage. Enforced at runtime, and ignored on a foreign or locked slot. */
   role?: SlotRole;
   /** Ran after an item arrives: `event.stack` is what was put in, `event.player` who put it there. */
@@ -77,8 +87,13 @@ export interface SlotProps extends ControlProps {
  * Handlers are props, like anywhere else in this library. They are matched to
  * the cell by its position in the tree, which is stable because a compiled
  * screen cannot change shape — so nothing is named and nothing is registered.
+ *
+ * A `name` is the other direction: what the screen's own logic calls the cell,
+ * so `container.getItem('output')` reaches it without counting container
+ * indices.
  */
 export const Slot: FunctionComponent<SlotProps> = ({
+  name,
   role,
   onInsert,
   onRemove,
@@ -112,6 +127,7 @@ export const Slot: FunctionComponent<SlotProps> = ({
     type: SLOT_TYPE,
     props: {
       ...withControl({ width: SLOT_CELL, height: SLOT_CELL, ...rest }),
+      name,
       role: role ?? 'both',
       onInsert,
       onRemove,
@@ -126,6 +142,17 @@ export function slotRole(element: JSX.Element): SlotRole {
   const { role } = element.props;
 
   return role === 'input' || role === 'output' ? role : 'both';
+}
+
+/**
+ * The name a built `<Slot>` carries, or undefined when the author gave none.
+ * Only a name something could be looked up by counts, so a blank one reads as
+ * absent.
+ */
+export function slotName(element: JSX.Element): string | undefined {
+  const { name } = element.props;
+
+  return typeof name === 'string' && name !== '' ? name : undefined;
 }
 
 /** Whether a built `<Slot>` lets the player move items through it. */

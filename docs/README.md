@@ -800,19 +800,33 @@ buttons refuses a `Slider` outright rather than drawing an inert one.
 ### The event object
 
 Every handler receives one object. `player` is always present: the viewer on a player-owned screen, the
-actor on an entity-owned one. `host` is present only on entity-owned screens.
+actor on an entity-owned one. `host` and `container` are present only on entity-owned screens.
 
 ```ts
-interface UiEvent        { player: Player; host?: Entity }   // Form.onCancel
+interface UiEvent        { player: Player; host?: Entity; container?: NamedContainer }  // Form.onCancel
 type      PressEvent   = UiEvent                             // Button.onPress
-interface ContainerEvent extends UiEvent { host: Entity }    // Container.onOpen / onClose
+interface ContainerEvent extends UiEvent { host: Entity; container: NamedContainer }  // Container.onOpen / onClose
 interface SlotEvent      extends ContainerEvent { stack: ItemStack }  // Slot.onInsert / onRemove
 interface SubmitEvent    extends UiEvent { values: FormValues }       // Form.onSubmit
 interface ChangeEvent<T> extends UiEvent { value: T }        // Tabs.onChange
 ```
 
-A screen an entity owns always has that entity, so those events narrow `host` from optional to required
-rather than declaring a second field. `useExit()` returns a handler value like any other; the IR
+A screen an entity owns always has that entity, so those events narrow `host` and `container` from
+optional to required rather than declaring a second field. `container` is the screen's own cells — the
+drawn `<Slot>`s in document order, by index or by the `name` each declared — so a handler written inside
+the component reaches them without importing the screen object.
+
+`NamedContainer` is the engine's own
+[`Container`](https://learn.microsoft.com/minecraft/creator/scriptapi/minecraft/server/container),
+member for member, with two additions: every slot parameter takes an index **or a name**, and the view
+masks what the runtime owns, so a marker reads as an empty slot through every reader. `getSlot()` hands
+back the engine's
+[`ContainerSlot`](https://learn.microsoft.com/minecraft/creator/scriptapi/minecraft/server/containerslot)
+plus a `name`. `weight` and `containerRules` are left off — a view over part of a container has no
+honest answer for either. The same wrapper is what `inventoryOf(entity, layout)` gives for a whole
+entity inventory, unmasked.
+
+`useExit()` returns a handler value like any other; the IR
 recognises it as input `exit` and the host decides what a close is (the native close on a form, the
 client-side close button on a chest).
 
@@ -1008,7 +1022,7 @@ would close that circle. The registry only ever needs the contract.
 | Call | Host | Notes |
 | --- | --- | --- |
 | `render(Screen, player)` | form-action / form-modal, by the root element | picks the compiled layout by the screen's key; refuses a screen the build never compiled |
-| `createContainerScreen(Screen, options)` | chest | |
+| `createContainerScreen(Screen, options)` | chest | returns `container(host)`, the screen's own cells on one entity |
 | hooks | all | `useExit` returns a value the IR recognises; `usePlayer` throws on entity-owned hosts |
 | handlers | all | the event object |
 

@@ -1,10 +1,14 @@
 /**
- * The chest host: the vanilla screen every compiled layout is served through.
+ * The chest host: the vanilla screens every compiled layout is served through.
  *
  * `container_type: container` on an entity's `minecraft:inventory` is the only
- * one that routes to the chest screen, so every compiled screen opens as a
- * chest. Two kinds of edit to vanilla's chest file put a layout there, and
- * both are of a kind the engine stacks across packs in whatever order they sit.
+ * one that routes to the chest screen, so an entity-hosted screen opens as a
+ * chest; a block's `minecraft:block_entity.container` opens the data-driven
+ * container screen instead. The two are the same screen to everything above
+ * this — the same collection, the same protocol items, the same layout keys —
+ * so both are hooked the same way and both mount the one router root. Two
+ * kinds of edit to a vanilla file put a layout there, and both are of a kind
+ * the engine stacks across packs in whatever order they sit.
  *
  *  - The render pack's static copy of `chest_screen.json` points the chest
  *    screen's `$screen_content` at the CHEST ROOT, the way vanilla's own
@@ -86,8 +90,12 @@ export interface ChestHost {
 
 export const CHEST_HOST: ChestHost = {
   id: 'chest',
+  // One per vanilla screen a compiled layout can be opened on: the chest, for a
+  // screen an entity hosts, and the data-driven container, for a screen a block
+  // hosts. Both take the same root, so an addon's router serves either.
   hooks: [
     { file: 'ui/chest_screen.json', namespace: 'chest', target: 'small_chest_panel_top_half' },
+    { file: 'ui/data_driven_container_screen.json', namespace: 'data_driven_container', target: 'panel_top_half' },
   ],
   routerDir: 'ui/core-ui/screens',
   routerNamespace: 'core_ui_router',

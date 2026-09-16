@@ -1,3 +1,4 @@
+import type { DisplayText } from '@bedrock-core/i18n';
 import type { FunctionComponent } from '../../jsx';
 import { isHandler } from '../events';
 
@@ -91,7 +92,7 @@ const statics = new Map<string, StaticScreenRecord>();
 export interface StaticScreenRecord {
   readonly key: string;
   readonly title: string;
-  readonly values: readonly string[];
+  readonly values: readonly DisplayText[];
   readonly targets: readonly ({ readonly to: string } | { readonly back: true } | null)[];
 }
 

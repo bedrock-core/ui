@@ -16,7 +16,7 @@
  */
 import { Announcement, isRecord, type Runtime } from '@bedrock-core/server-runtime';
 import type { State } from '@bedrock-core/sync';
-import { compiledSnapshotOf, compiledValuesOf, type FunctionComponent, type PressEvent } from '@bedrock-core/ui-runtime';
+import { compiledSnapshotOf, compiledValuesOf, type DisplayText, type FunctionComponent, type PressEvent } from '@bedrock-core/ui-runtime';
 import { buildScreenTree } from '@bedrock-core/ui-runtime/compile';
 
 /** Where a press on the page leads: the app the owning realm is asked for. */
@@ -53,7 +53,7 @@ function targetOf(handler: unknown): PageTarget | null {
 export interface AddonPageReference {
   v: 1;
   /** Slot `i + 1` is shown with `values[i]`. */
-  values: string[];
+  values: DisplayText[];
   /** Which app a press on slot `i + 1` opens; null where it leads nowhere. */
   targets: (PageTarget | null)[];
 }

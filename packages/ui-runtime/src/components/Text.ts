@@ -1,4 +1,5 @@
 import { interpolate, type DisplayText } from '@bedrock-core/i18n';
+import type { RawMessage } from '@minecraft/server';
 import { FunctionComponent, JSX } from '../jsx';
 import { useTranslationResolver } from '../data/Translation';
 import { ControlProps, withControl } from './control';
@@ -202,19 +203,23 @@ export const Text: FunctionComponent<TextProps> = ({
   let isLocalized: boolean;
   let resolvedText: string;
 
+  // One part as the server reads it: a literal as written, a key through the
+  // resolver. `score` and `selector` parts have no server value and measure as
+  // '' — the client fills those.
+  const partText = (part: RawMessage): string =>
+    part.text ?? (part.translate !== undefined ? (resolver?.(part.translate) ?? part.translate) : '');
+
   if (rawChild !== undefined) {
     isLocalized = true;
     resolvedText = translateKey !== undefined
       ? (resolver?.(translateKey) ?? translateKey)
-      : rawChild.text ?? '';
+      : rawChild.rawtext !== undefined
+        ? rawChild.rawtext.map(partText).join('')
+        : rawChild.text ?? '';
 
     if (translateKey !== undefined && hasArgs && withArgs !== undefined) {
-      // Metrics fill: rawtext parameters resolve one translate level here;
-      // score/selector parts have no server value and measure as ''.
-      const params = Array.isArray(withArgs)
-        ? withArgs
-        : (withArgs.rawtext ?? []).map(param =>
-            param.text ?? (param.translate !== undefined ? (resolver?.(param.translate) ?? param.translate) : ''));
+      // Metrics fill: rawtext parameters resolve one translate level here.
+      const params = Array.isArray(withArgs) ? withArgs : (withArgs.rawtext ?? []).map(partText);
 
       resolvedText = interpolate(resolvedText, params);
     }
@@ -240,10 +245,19 @@ export const Text: FunctionComponent<TextProps> = ({
   //    tail region (a §r part guards digit-leading resolutions the same way
   //    safeLabelText guards literal text). Argless translate collapses to its key.
   //  - literal text: as-is, digit-guarded.
+  //  - a message already holding parts is SPLICED in rather than nested, so one
+  //    flat rawtext travels — which is what a trail composed of several keys is.
   const tail: DisplayText = rawChild !== undefined
     ? (translateKey !== undefined && !hasArgs
         ? translateKey
-        : { rawtext: [{ text: '§r' }, rawChild] })
+        : {
+            rawtext: [
+              { text: '§r' },
+              ...translateKey === undefined && rawChild.text === undefined && rawChild.rawtext !== undefined
+                ? rawChild.rawtext
+                : [rawChild],
+            ],
+          })
     : isLocalized && stringChild !== undefined
       ? stringChild
       : safeLabelText(resolvedText);

@@ -1,4 +1,6 @@
-import type { Entity, Player } from '@minecraft/server';
+import type { Player } from '@minecraft/server';
+import type { ScreenHost } from '../../../core/events';
+import type { NamedContainer } from '../../../entity';
 import type { SlotEntry } from '../allocate';
 import { cellFor } from './cells';
 import type { ItemContainer } from './items';
@@ -24,8 +26,8 @@ export {
 /** What one poll runs against: a session, seen from the drawn range. */
 export interface PollHost {
   readonly container: ItemContainer;
-  /** The entity that owns the screen, handed to slot handlers as their host. */
-  readonly entity: Entity;
+  /** The entity or block that owns the screen, handed to slot handlers as their host. */
+  readonly host: ScreenHost;
   /** Everyone with the screen open. Never empty while a poll runs. */
   readonly viewers: readonly Player[];
   readonly watch: Watch;
@@ -37,9 +39,15 @@ export interface PollHost {
    */
   readonly slots: readonly SlotEntry[];
   /**
+   * The screen's own cells, as the handlers reach them: the drawn `<Slot>`s
+   * in document order, with the sentinel, the buttons and the bank invisible.
+   * Read per event rather than kept, so it follows the latest render.
+   */
+  readonly cells: NamedContainer<string>;
+  /**
    * Runs a handler, then settles the container: buttons come and go with the
    * state the handler changed, channels take their new values, the button
-   * slots are re-read, and the state is written to the entity.
+   * slots are re-read, and the state is written to the host.
    */
   handle(run: () => void): void;
   /** Says what just happened and where everything ended up, when debugging. */

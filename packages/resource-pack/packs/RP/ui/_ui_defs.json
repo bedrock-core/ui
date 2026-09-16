@@ -1,11 +1,13 @@
 {
 	"ui_defs": [
-		// Vanilla's two hooks: the server form every compiled form screen is shown
-		// through, and the chest every compiled container screen is opened from.
-		// Each addon's ui-compiler build ships its own copy of these paths, and the
-		// engine stacks every pack's.
+		// Vanilla's three hooks: the server form every compiled form screen is shown
+		// through, and the two container screens a compiled container screen is
+		// opened from — the chest for a screen an entity hosts, the data-driven
+		// container for one a block hosts. Each addon's ui-compiler build ships its
+		// own copy of these paths, and the engine stacks every pack's.
 		"ui/server_form.json",
 		"ui/chest_screen.json",
+		"ui/data_driven_container_screen.json",
 
 		// Shapes: controls that are the same wherever they are drawn, so no host
 		// owns them. A scrolling region is one — it reads nothing and binds

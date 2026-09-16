@@ -8,7 +8,7 @@ import {
 import { LIST_SLOT_TYPE } from '../../../components/List';
 import { SCROLL_RESERVE, SCROLL_SLOT_TYPE, type ScrollAxis, WIDE_RECT } from '../../../components/Scroll';
 import type { JSX } from '../../../jsx';
-import { ellipsizeText, measureText, wrapText } from '../../../util/textMetrics';
+import { ellipsizeText, measureText, wrapText, WIDEST_GLYPH } from '../../../util/textMetrics';
 import { isTransparentType } from '../../componentRegistry';
 import { isElement } from '../../guards';
 
@@ -137,13 +137,6 @@ function extractTextMetrics(props: JSX.Props): TextMetricsData {
     hug: hug === true,
   };
 }
-
-/**
- * The glyph a reservation is measured with. Every capital, digit and most
- * lowercase glyphs share the widest advance in both fonts, so a run of this
- * one is the widest string `maxLength` characters can be.
- */
-const WIDEST_GLYPH = 'W';
 
 /**
  * Whether a `maxLength` text reserves room for its widest possible content.

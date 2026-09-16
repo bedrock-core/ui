@@ -6,8 +6,9 @@
 
 import type { FunctionComponent } from '@bedrock-core/ui-runtime';
 import {
-  allocate, buildContainerTree, buildScreenOnce, containerEntity, containerRoot,
-  ContainerScreenError, layoutKey, probeLiveness, type Probe,
+  allocate, BLOCK_SLOT_LIMIT, blockCapacityError, buildContainerTree, buildScreenOnce,
+  type ContainerHost, containerHost, containerRoot, ContainerScreenError, layoutKey,
+  probeLiveness, type Probe,
 } from '@bedrock-core/ui-runtime/compile';
 import {
   BACKDROP_DEFINITION, type FaceDocument, faceOf, facesNamespaceOf,
@@ -40,8 +41,8 @@ export interface CompiledScreen {
   namespace: string;
   /** The key the router picks this layout by: derived from the namespace, so it is the same on every build. */
   layoutId: number;
-  /** The entity type the screen's `<Container>` names. */
-  entity: string;
+  /** What the screen's `<Container>` opens from: a custom entity, or a custom block. */
+  host: ContainerHost;
   /** The JSON UI document: `screen` (+ `backdrop` when the screen has a Background) and its shared definitions. */
   document: Document;
   /** The screen as faces alone, before the host stood its mechanisms in. */
@@ -125,6 +126,23 @@ export const checkLiveness = (probe: Probe, name: string, options: { carriedVisi
 };
 
 /**
+ * What a block can hold.
+ *
+ * A block container is fixed at 54 slots by the engine, and a screen spends
+ * every one of them: two on the routing sentinel, one per drawn cell, and the
+ * rest on the bank the live values ride. An entity's inventory has no such cap,
+ * which is the way out when a screen is genuinely too big. The message is the
+ * runtime's, so the build and `createContainerScreen` refuse in one voice.
+ *
+ * @throws ContainerScreenError when a block-hosted screen needs more.
+ */
+const checkCapacity = (host: ContainerHost, size: number, name: string): void => {
+  if (host.kind === 'block' && size > BLOCK_SLOT_LIMIT) {
+    throw blockCapacityError(name, size);
+  }
+};
+
+/**
  * Compiles one screen: build the tree, allocate its cells and channels, solve
  * the IR, emit JSON UI.
  *
@@ -151,17 +169,21 @@ export function compileScreen(
 
   const tree = buildContainerTree(Screen);
 
-  // The root and the entity are the CHEST's questions — what counts as a
+  // The root and the host are the CHEST's questions — what counts as a
   // screen's root differs per host, so the walk below is handed the answer
   // rather than asked to find it.
   const root = containerRoot(tree);
-  const entity = containerEntity(root);
+  const screenHost = containerHost(root);
 
-  if (entity === undefined || entity === '') {
-    throw new ContainerScreenError('`<Container>` needs `entity`: the type of the entity the screen opens from.');
+  if (screenHost === undefined) {
+    throw new ContainerScreenError(
+      '`<Container>` needs `entity` or `block`: the type of the entity or the block the screen opens from.',
+    );
   }
 
   const allocation = allocate(tree);
+
+  checkCapacity(screenHost, allocation.size, spec.name);
   const ir = toIr(root, chestAddressing(allocation), {
     namespace,
     faces: facesNamespaceOf(addon),
@@ -183,7 +205,7 @@ export function compileScreen(
     addon,
     namespace,
     layoutId: layoutKey(addon, spec.name),
-    entity,
+    host: screenHost,
     document,
     face,
     facesNamespace: face.facesNamespace,

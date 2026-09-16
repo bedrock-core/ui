@@ -17,7 +17,7 @@ export type { Context, ContextProps } from './types';
 
 export { isContextProvider } from './guards';
 
-export { BUILD_OWNER, entityOwner, playerOwner, requirePlayer } from './owner';
+export { blockKey, blockOwner, BUILD_OWNER, entityOwner, playerOwner, requirePlayer } from './owner';
 
 export { isContainerExit } from './exit';
 

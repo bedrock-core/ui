@@ -1,3 +1,4 @@
+import type { DisplayText } from '@bedrock-core/i18n';
 import type { PressEvent } from '../core/events';
 import { concreteRoots } from '../core/guards';
 import type { FunctionComponent, JSX } from '../jsx';
@@ -44,7 +45,7 @@ export interface EmbedSlotsProps extends ControlProps {
   /** How many entries are reserved. A constant of the embedding screen: the embedded one is baked against it. */
   count: number;
   /** What each slot carries this present — the marker first, then the embedded screen's values. Padded with ''. */
-  values: readonly string[];
+  values: readonly DisplayText[];
   /** A press on slot `index` (never 0, the marker). */
   onPress?: (index: number, event: PressEvent) => unknown | Promise<unknown>;
 }
@@ -61,11 +62,20 @@ export function embedSlotIndex(element: JSX.Element): number {
   return typeof slot === 'number' ? slot : 0;
 }
 
+/** A slot carrying a message the client resolves rather than a plain string. */
+const isMessage = (value: unknown): value is Exclude<DisplayText, string> =>
+  typeof value === 'object' && value !== null
+  && ('rawtext' in value || 'translate' in value || 'text' in value);
+
 /** What one slot carries this present. */
-export function embedSlotValue(element: JSX.Element): string {
+export function embedSlotValue(element: JSX.Element): DisplayText {
   const { value } = element.props;
 
-  return typeof value === 'string' ? value : '';
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  return isMessage(value) ? value : '';
 }
 
 export const EmbedSlots: FunctionComponent<EmbedSlotsProps> = ({ count, values, onPress, ...rest }: EmbedSlotsProps): JSX.Element => {

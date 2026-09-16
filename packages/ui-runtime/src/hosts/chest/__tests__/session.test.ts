@@ -144,6 +144,27 @@ const Screen = (): JSX.Element => {
 
 const SIZE = 9;
 
+const machineOpen = vi.fn();
+const machineInsert = vi.fn();
+const machinePress = vi.fn();
+
+/**
+ * A machine: an input, a button and the result cell the author named. The
+ * sentinel takes 0 and 1, the cells 2, 3 and 4, so the two OWN cells are view
+ * index 0 and 1 — `output` being the second.
+ */
+const Machine = (): JSX.Element => Container({
+  entity: 'core:machine',
+  onOpen: machineOpen,
+  children: [
+    Slot({ role: 'input', onInsert: machineInsert }),
+    Button({ onPress: machinePress }),
+    Slot({ name: 'output', role: 'output' }),
+  ],
+});
+
+const MACHINE_SIZE = 5;
+
 const interact = (target: FakeEntity, viewer: FakePlayer): void => {
   world.beforeEvents.playerInteractWithEntity.__emit({ cancel: false, player: viewer.player, target: target.entity });
 };
@@ -172,6 +193,9 @@ beforeEach(() => {
   effectRuns = 0;
   cleanups = 0;
   onInsert.mockReset();
+  machineOpen.mockReset();
+  machineInsert.mockReset();
+  machinePress.mockReset();
   error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 });
 
@@ -186,7 +210,7 @@ describe('createContainerScreen', () => {
   it('reads the entity off the screen and listens for it', () => {
     screen = createContainerScreen(Screen);
 
-    expect(screen.entity).toBe('core:test');
+    expect(screen.host).toEqual({ kind: 'entity', type: 'core:test' });
     expect(world.beforeEvents.playerInteractWithEntity.__count).toBe(1);
     expect(world.afterEvents.entityContainerOpened.__count).toBe(1);
     expect(world.afterEvents.entityContainerClosed.__count).toBe(1);
@@ -487,7 +511,7 @@ describe('refusing to serve', () => {
     interact(target, viewer);
     await vi.advanceTimersByTimeAsync(TICK * 2);
 
-    expect(error).toHaveBeenCalledWith(expect.stringMatching(/10 inventory slots and its screen needs 9/));
+    expect(error).toHaveBeenCalledWith(expect.stringMatching(/10 container slots and its screen needs 9/));
     expect(target.container.getItem(0)).toBeUndefined();
     expect(getFibersForOwner(entityOwner(target.entity))).toHaveLength(0);
   });
@@ -502,6 +526,77 @@ describe('refusing to serve', () => {
     await vi.advanceTimersByTimeAsync(TICK * 2);
 
     expect(target.container.getItem(0)).toBeUndefined();
+    expect(error).not.toHaveBeenCalled();
+  });
+});
+
+describe('reaching the cells', () => {
+  it('opens the entity own cells from the screen, with nobody viewing', () => {
+    screen = createContainerScreen<'output'>(Machine);
+
+    const target = createEntity('m1', MACHINE_SIZE, 3, 'core:machine');
+    const cells = screen.container(target.entity);
+
+    // Two own cells, and neither the sentinel nor the button is among them.
+    expect(cells.size).toBe(2);
+    expect(cells.isValid).toBe(true);
+    expect(cells.names).toEqual({ output: 1 });
+
+    cells.setItem('output', new ItemStack('minecraft:crafting_table', 1));
+
+    expect(target.container.getItem(4)?.typeId).toBe('minecraft:crafting_table');
+
+    cells.setItem('output');
+
+    expect(isGuard(target.container.getItem(4)!)).toBe(true);
+    expect(cells.getItem('output')).toBeUndefined();
+  });
+
+  it('carries the cells on every event a handler is given', async () => {
+    screen = createContainerScreen(Machine);
+
+    const target = createEntity('m1', MACHINE_SIZE, 3, 'core:machine');
+    const viewer = createPlayer('p1');
+
+    interact(target, viewer);
+    await vi.advanceTimersByTimeAsync(TICK);
+
+    expect(machineOpen.mock.calls[0]?.[0]?.container?.size).toBe(2);
+
+    target.container.setItem(2, new ItemStack('minecraft:oak_planks', 4));
+    await vi.advanceTimersByTimeAsync(TICK);
+
+    expect(machineInsert.mock.calls[0]?.[0]?.container?.getItem(0)?.typeId).toBe('minecraft:oak_planks');
+
+    press(target, viewer, 3);
+    await vi.advanceTimersByTimeAsync(TICK);
+
+    // The guard reads as nothing through the view, which is what a handler
+    // asks before it writes a result.
+    expect(machinePress.mock.calls[0]?.[0]?.container?.getItem('output')).toBeUndefined();
+  });
+
+  it('does not read what the screen moved as a player move', async () => {
+    screen = createContainerScreen(Machine);
+
+    const target = createEntity('m1', MACHINE_SIZE, 3, 'core:machine');
+    const viewer = createPlayer('p1');
+
+    interact(target, viewer);
+    await vi.advanceTimersByTimeAsync(TICK);
+
+    target.container.setItem(2, new ItemStack('minecraft:oak_planks', 4));
+    await vi.advanceTimersByTimeAsync(TICK);
+
+    expect(machineInsert).toHaveBeenCalledTimes(1);
+
+    // The machine consumes its own input. An input slot undoes a take, so a
+    // write the poll did not know about would be put straight back.
+    screen.container(target.entity).setItem(0);
+    await vi.advanceTimersByTimeAsync(TICK);
+
+    expect(target.container.getItem(2)).toBeUndefined();
+    expect(machineInsert).toHaveBeenCalledTimes(1);
     expect(error).not.toHaveBeenCalled();
   });
 });

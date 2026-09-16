@@ -1,4 +1,5 @@
-import type { Entity, ItemStack, Player } from '@minecraft/server';
+import type { Block, Entity, ItemStack, Player } from '@minecraft/server';
+import type { NamedContainer } from '../entity/container';
 
 /**
  * What a handler is called with.
@@ -14,23 +15,47 @@ import type { Entity, ItemStack, Player } from '@minecraft/server';
  * on a container screen the player who moved the item — traced by the poll,
  * since a container reports no actor of its own.
  */
+
+/**
+ * What a container screen belongs to: the custom entity or the custom block a
+ * player opened it from. Both carry the screen's container, its state and its
+ * place in the world, so a handler reads either the same way.
+ */
+export type ScreenHost = Entity | Block;
 export interface UiEvent {
   /** The player the event is about. Never invalid: the runtime checks before calling. */
   readonly player: Player;
-  /** The entity that owns the screen, on a host whose screens belong to one. */
-  readonly host?: Entity;
+  /** The entity or block that owns the screen, on a host whose screens belong to one. */
+  readonly host?: ScreenHost;
+  /**
+   * The screen's own cells, on a host that has any — the vanilla `Container`
+   * over them, where index `i` is the `i`-th own `<Slot>` in document order
+   * and a name reaches the one the author named. Present exactly when
+   * {@link host} is.
+   *
+   * It is how a handler written INSIDE the component reaches the screen's
+   * cells: the component cannot import the screen object without a cycle, so
+   * the cells come to it on the event instead. Names are plain strings here —
+   * typing them would mean a generic on every handler prop in the library, and
+   * the screen object offers the typed container for code that wants one.
+   */
+  readonly container?: NamedContainer<string>;
 }
 
-/** A button press. `host` is present exactly when the screen belongs to an entity. */
+/**
+ * A button press. `host` and `container` are present exactly when the screen
+ * belongs to an entity.
+ */
 export type PressEvent = UiEvent;
 
 /**
- * Something that happened on a screen an entity owns, so the entity is always
- * there — the screen's own state, its container and its world position all
- * hang off it.
+ * Something that happened on a screen an entity or a block owns, so the host is
+ * always there — the screen's own state, its container and its world position
+ * all hang off it.
  */
 export interface ContainerEvent extends UiEvent {
-  readonly host: Entity;
+  readonly host: ScreenHost;
+  readonly container: NamedContainer<string>;
 }
 
 /** An item arrived in a slot, or left one. */

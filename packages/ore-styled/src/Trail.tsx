@@ -4,76 +4,83 @@ import { Panel, Text, useTranslationResolver } from '@bedrock-core/ui-runtime';
 import type { DisplayText } from '@bedrock-core/i18n';
 import { theme } from './tokens';
 
-/**
- * One segment of a trail: what it says, and how many characters it reserves
- * when it is only known at show time. A segment with `maxLength` is live; a
- * compiled screen keeps its box and shows whatever it is sent — a key the
- * client resolves, or a literal. Without it the segment bakes.
- */
-export type TrailSegment = DisplayText | { text: DisplayText; maxLength: number };
-
 export interface TrailProps extends ControlProps {
-  /** The segments in order, `a > b > c`. A live segment sent empty hides with its separator. */
-  segments: readonly TrailSegment[];
+  /**
+   * The whole trail as ONE value, drawn by one label: what a screen whose trail
+   * is only known when it is shown wears. `trailText` composes one, and the
+   * client resolves it in the reader's own language.
+   */
+  text?: DisplayText;
+  /**
+   * Characters the trail reserves, which is what makes the label live: a
+   * compiled screen keeps one entry for it and shows whatever it is sent.
+   * `trailMaxLength` derives it from the room the header's controls leave.
+   */
+  maxLength?: number;
+  /**
+   * A trail known at build time, in place of `text`: one baked label per
+   * segment, so each key still resolves on the client. A trail that is one
+   * label has to be composed by whoever knows what it says, which a baked
+   * trail's author already did.
+   */
+  segments?: readonly DisplayText[];
 }
-
-const isLive = (segment: TrailSegment): segment is { text: DisplayText; maxLength: number } =>
-  typeof segment === 'object' && 'maxLength' in segment;
-
-const textOf = (segment: TrailSegment): DisplayText => (isLive(segment) ? segment.text : segment);
 
 /**
  * The breadcrumb trail every header wears, as a row of its own so any screen
  * can show one: `title > scope > entity`, the separators in the trail's
  * lighter colour.
  *
- * Each segment is a `Text` of its own, so a key stays a key all the way to
- * the client and resolves in the player's language — one label cannot hold
- * two keys. A literal takes the trail colour as a code; a key or a live
- * segment is coloured through the label, since a code in front of a key
- * stops it resolving.
+ * The row is a stack of hugging labels: a trail's text is only known when the
+ * screen is shown, so the box a compiled screen solved for it would be as wide
+ * as the longest name it may ever hold and every shorter one would leave the
+ * rest as air. A label draws at the width of its glyphs, the engine packs
+ * them, and the stack hangs from the middle of the header — so the trail is
+ * centred on what it actually says.
  *
- * The row is a stack of hugging labels: a segment's text is only known when
- * the screen is shown, so the box a compiled screen solved for it would be as
- * wide as the longest name it may ever hold and every shorter one would leave
- * the rest as air. Each label draws at the width of its glyphs, the engine
- * packs them, an empty segment takes no room at all, and the stack hangs from
- * the middle of the header — so the trail is centred on what it actually says.
+ * A LIVE trail is one label. The client resolves a message on a form entry
+ * before the binding sees it, so every segment travels together and the
+ * composition — including which segments were dropped to make it fit — is
+ * decided by the server that knows what they say.
+ *
+ * A BAKED trail is one label per segment, because a baked label can hold one
+ * key and no more: the build would otherwise have to resolve the segments
+ * itself and freeze its own language into the pack.
  */
-export function Trail({ segments, ...layout }: TrailProps): JSX.Element {
+export function Trail({ text, maxLength, segments, ...layout }: TrailProps): JSX.Element {
   const resolver = useTranslationResolver();
   const { font, scale, color, colorRgb, separator } = theme.components.header.textStyle;
 
   const isLiteral = (value: DisplayText): value is string => typeof value === 'string' && resolver?.(value) === undefined;
 
-  const parts = segments.flatMap((segment, index): JSX.Element[] => {
-    const live = isLive(segment);
-    const text = textOf(segment);
-    const shown = !live || (typeof text === 'string' ? text !== '' : true);
-
-    return [
-      ...index === 0
-        ? []
-        : [
-            // A live segment's separator follows it: carried, so an empty segment takes no room.
-            <Text font={font} scale={scale} hug={true} visible={shown} liveVisible={live}>{`${separator} > `}</Text>,
-          ],
-      <Text
-        font={font}
-        scale={scale}
-        maxLines={1}
-        hug={true}
-        color={!live && isLiteral(text) ? undefined : colorRgb}
-        {...live ? { maxLength: segment.maxLength } : {}}
-      >
-        {!live && isLiteral(text) ? `${color}${text}` : text}
-      </Text>,
-    ];
-  });
+  // A literal takes the trail colour as a code; a key takes it through the
+  // label, since a code in front of a key stops it resolving.
+  const baked = (segments ?? []).flatMap((segment, index): JSX.Element[] => [
+    ...index === 0
+      ? []
+      : [<Text font={font} scale={scale} hug={true}>{`${separator} > `}</Text>],
+    <Text
+      font={font}
+      scale={scale}
+      maxLines={1}
+      hug={true}
+      color={isLiteral(segment) ? undefined : colorRgb}
+    >
+      {isLiteral(segment) ? `${color}${segment}` : segment}
+    </Text>,
+  ]);
 
   return (
     <Panel stack={true} flexDirection={'row'} justifyContent={'center'} alignItems={'center'} {...layout}>
-      {parts}
+      {segments === undefined
+        ? (
+            // No colour on the label: a composed trail carries the trail's own
+            // codes between its parts, one per segment and one per separator.
+            <Text font={font} scale={scale} hug={true} {...maxLength === undefined ? {} : { maxLength }}>
+              {text ?? ''}
+            </Text>
+          )
+        : baked}
     </Panel>
   );
 }

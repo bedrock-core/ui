@@ -15,6 +15,7 @@ import {
   createLedger, createWatch, fingerprint, poll, type PollHost, reclaim, resync, retrieve, sweep,
 } from '../runtime/poll';
 import { buttonSlots, reconcile, writeButtons } from '../runtime/reconcile';
+import { screenContainer } from '../runtime/view';
 
 /** The mock container, typed as the engine's: that is what it stands in for at runtime. */
 const createContainer = (size: number): EngineContainer => new MockContainer(size) as unknown as EngineContainer;
@@ -93,8 +94,17 @@ const Screen = (): JSX.Element => Container({
   ],
 });
 
-/** A stand-in host entity: the poll only hands it to the slot handlers. */
-const HOST = { typeId: 'core:test', isValid: true } as unknown as Entity;
+/** The container the stand-in host entity currently owns; `rig` points it at its own. */
+let hostContainer: EngineContainer | undefined;
+
+/** A stand-in host entity: handed to the slot handlers, and the view's way to the container. */
+const HOST = {
+  id: 'host',
+  typeId: 'core:test',
+  isValid: true,
+  getComponent: (componentId: string): unknown =>
+    (componentId === EntityComponentTypes.Inventory && hostContainer ? { container: hostContainer } : undefined),
+} as unknown as Entity;
 
 interface Rig {
   readonly container: EngineContainer;
@@ -109,6 +119,7 @@ const rig = (...viewers: FakePlayer[]): Rig => {
   const container = createContainer(allocation.size);
   const watch = createWatch();
 
+  hostContainer = container;
   reconcile(container, allocation, 1, new Map());
   resync(container, watch, allocation.slots.map(entry => entry.slot));
 
@@ -120,11 +131,12 @@ const rig = (...viewers: FakePlayer[]): Rig => {
 
   const host: PollHost = {
     container,
-    entity: HOST,
+    host: HOST,
     viewers: viewers.map(viewer => viewer.player),
     watch,
     ledger: createLedger(),
     slots: allocation.slots,
+    cells: screenContainer(HOST, allocation.slots, watch),
     handle,
     trace: vi.fn(),
   };
@@ -154,7 +166,7 @@ describe('a press', () => {
 
     expect(viewer.cursor.item).toBeUndefined();
     expect(onPress).toHaveBeenCalledTimes(1);
-    expect(onPress).toHaveBeenCalledWith({ player: viewer.player, host: HOST });
+    expect(onPress).toHaveBeenCalledWith({ player: viewer.player, host: HOST, container: expect.anything() });
     expect(handle).toHaveBeenCalledTimes(1);
 
     const item = container.getItem(2);
@@ -177,7 +189,7 @@ describe('a press', () => {
     poll(host);
 
     expect(viewer.inventory.getItem(4)).toBeUndefined();
-    expect(onPress).toHaveBeenCalledWith({ player: viewer.player, host: HOST });
+    expect(onPress).toHaveBeenCalledWith({ player: viewer.player, host: HOST, container: expect.anything() });
   });
 
   it('hands back an item swapped into the button and restores the transport', () => {
@@ -206,7 +218,7 @@ describe('a press', () => {
     lift(container, 2, second);
     poll(host);
 
-    expect(onPress).toHaveBeenCalledWith({ player: second.player, host: HOST });
+    expect(onPress).toHaveBeenCalledWith({ player: second.player, host: HOST, container: expect.anything() });
     expect(second.cursor.item).toBeUndefined();
   });
 
@@ -231,7 +243,7 @@ describe('a press', () => {
     container.setItem(2, undefined);
     poll(host);
 
-    expect(onPress).toHaveBeenCalledWith({ player: viewer.player, host: HOST });
+    expect(onPress).toHaveBeenCalledWith({ player: viewer.player, host: HOST, container: expect.anything() });
     expect(container.getItem(2)?.typeId).toBe(TRANSPORT_ITEM);
   });
 });
@@ -542,7 +554,7 @@ describe('handler guards', () => {
   it('never hands a handler an entity that is no longer valid', () => {
     const viewer = createPlayer('p1');
     const { container, host } = rig(viewer);
-    const dead = { ...host, entity: { typeId: 'core:test', isValid: false } as unknown as Entity };
+    const dead = { ...host, host: { typeId: 'core:test', isValid: false } as unknown as Entity };
 
     lift(container, 2, viewer);
     poll(dead);

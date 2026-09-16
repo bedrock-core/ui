@@ -61,8 +61,10 @@ if (!flags.has('--no-tests')) {
 
   // The types, which neither of the two above prove: vitest transpiles without
   // checking and ESLint ignores `__tests__`, so a `@ts-expect-error` that stopped
-  // firing — or a broken signature reached only from a test — passes both.
-  if (run('yarn build (typecheck)', 'yarn build', root).code !== 0) {
+  // firing — or a broken signature reached only from a test — passes both. The
+  // libraries only: the render pack's build is a Regolith export through the
+  // pinned filters, and the deploy below is what proves the pack.
+  if (run('yarn build:libs (typecheck)', 'yarn build:libs', root).code !== 0) {
     fail('typecheck failed');
   }
 }

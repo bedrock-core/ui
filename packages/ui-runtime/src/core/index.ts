@@ -38,7 +38,7 @@ export type { AddonReference, ReferenceTarget, ScreenReference, WalkResult } fro
 export type { Immutable, ReducerSlot, StateSlot, StateUpdate } from './immutable';
 
 // What every handler is called with.
-export type { ContainerEvent, PressEvent, SlotEvent, UiEvent } from './events';
+export type { ContainerEvent, PressEvent, ScreenHost, SlotEvent, UiEvent } from './events';
 
 // Component registry (custom native component registration)
 export {

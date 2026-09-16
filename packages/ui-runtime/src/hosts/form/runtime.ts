@@ -1,4 +1,5 @@
 import type { Player } from '@minecraft/server';
+import type { DisplayText } from '@bedrock-core/i18n';
 import { ActionFormData } from '@minecraft/server-ui';
 import { isHandler, type PressEvent } from '../../core/events';
 import { embedSlotValue, isEmbedSlot } from '../../components/Embed';
@@ -32,12 +33,20 @@ import { debugDiff } from './debug';
  * see, and a key is not what they see — the label resolves it — so cutting it
  * to that many characters leaves a key nothing resolves, which the client then
  * paints verbatim. That is a translated name coming out as `addon.meta.na`.
+ *
+ * A MESSAGE travels whole for the same reason, and for one more: the client
+ * resolves it in its own language before the binding sees it, so several keys —
+ * a whole breadcrumb trail — ride one entry (measured, S7).
  */
-export const liveText = (element: JSX.Element, length: number): string => {
+export const liveText = (element: JSX.Element, length: number): DisplayText => {
   const { value, __textMetrics: metrics } = element.props;
   const tail = typeof value === 'object' && value !== null && 'tail' in value ? value.tail : undefined;
   const isKey = typeof metrics === 'object' && metrics !== null && !Array.isArray(metrics)
     && Reflect.get(metrics, 'isKey') === true;
+
+  if (typeof tail === 'object' && tail !== null) {
+    return tail;
+  }
 
   if (typeof tail !== 'string') {
     return '';
@@ -54,7 +63,7 @@ export const liveText = (element: JSX.Element, length: number): string => {
  * attributed — so it carries the one thing about a press that changes: whether
  * it may happen at all. `FLAG_OFF` is what the compiled button reads as disabled.
  */
-export const entryValue = (entry: EntryEntry): string => {
+export const entryValue = (entry: EntryEntry): DisplayText => {
   if (entry.carrier === 'text' && entry.length !== undefined) {
     return liveText(entry.element, entry.length);
   }
@@ -97,7 +106,7 @@ export const entryValue = (entry: EntryEntry): string => {
  * What a compiled screen sends: its entries in order, and the value each is
  * shown with. The whole of what presenting the screen by its title needs.
  */
-export const compiledValuesOf = (tree: JSX.Element, snapshot?: CompiledSnapshot): { entries: readonly EntryEntry[]; values: string[] } => {
+export const compiledValuesOf = (tree: JSX.Element, snapshot?: CompiledSnapshot): { entries: readonly EntryEntry[]; values: DisplayText[] } => {
   // The snapshot's ordinals mark the elements the build compiled bool
   // carriers for; walking them back onto this render's tree is what keeps the
   // entry count identical to the one the layout was baked against.
@@ -114,7 +123,7 @@ export const compiledValuesOf = (tree: JSX.Element, snapshot?: CompiledSnapshot)
  * its pack holds for that title, so a realm that has only the title and the
  * values (a guide's replicated reference) can show another addon's screen.
  */
-export async function showCompiledTitle(player: Player, title: string, values: readonly string[]): Promise<number | undefined> {
+export async function showCompiledTitle(player: Player, title: string, values: readonly DisplayText[]): Promise<number | undefined> {
   const form = new ActionFormData();
 
   form.title(title);

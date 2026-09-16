@@ -1,40 +1,24 @@
 {
-	"format_version": 2,
+	"format_version": 3,
 	"header": {
 		"name": "pack.name",
 		"description": "pack.description",
 		"uuid": "6c4a78bf-e298-4c9b-bcd7-a517eebccc92",
 		"pack_scope": "world",
-		"version": [
-			1,
-			0,
-			0
-		],
-		"min_engine_version": [
-			1,
-			26,
-			30
-		]
+		"version": "1.0.0",
+		"min_engine_version": "1.26.50"
 	},
 	"modules": [
 		{
 			"type": "data",
 			"uuid": "129c1a5a-bd1d-443d-8f53-26fe97b7403d",
-			"version": [
-				1,
-				0,
-				0
-			]
+			"version": "1.0.0"
 		}
 	],
 	"dependencies": [
 		{
 			"uuid": "761ecd37-ad1c-4a64-862a-d6cc38767426",
-			"version": [
-				1,
-				11,
-				0
-			]
+			"version": "1.11.0"
 		}
 	],
 	"metadata": {

@@ -3,19 +3,19 @@
 	"dependencies": [
 		{
 			"uuid": "{{RP_HEADER_UUID}}",
-			"version": [1, 0, 0]
+			"version": "1.0.0"
 		},
 		{
 			"uuid": "761ecd37-ad1c-4a64-862a-d6cc38767426",
-			"version": [1, 10, 0]
+			"version": "1.10.0"
 		},
 		{
 			"module_name": "@minecraft/server",
-			"version": "2.9.0"
+			"version": "2.10.0"
 		},
 		{
 			"module_name": "@minecraft/server-ui",
-			"version": "2.1.0"
+			"version": "2.2.0"
 		},
 		{
 			"module_name": "@minecraft/server-gametest",

@@ -111,5 +111,91 @@
 			{ "vanilla@core_ui_router.vanilla_host_pocket": {} },
 			{ "claimed@core_ui_router.claimed_host": {} }
 		]
+	},
+
+	// The same two roots for the screen a custom BLOCK opens. A block with
+	// `minecraft:block_entity.container` gets the data-driven container screen
+	// rather than the chest's, and everything about the routing is the same:
+	// the same collection, the same sentinel, the same gates. Only the panels
+	// referenced differ — vanilla's own behind the inverted gate, and the
+	// data-driven top half behind the claimed one, which is the array every
+	// addon's build inserts its root into.
+	//
+	// Pocket has no top half of its own: pocket_containers.data_driven_container_panel
+	// lays the whole screen out as two halves, so the claimed path mounts the
+	// desktop top half there too — it is the insertion point, not a layout, and
+	// its own label and grid hide themselves on the key.
+	"block_vanilla_host_desktop": {
+		"type": "stack_panel",
+		"orientation": "vertical",
+		"size": [ "100%", "100%" ],
+		"collection_name": "container_items",
+		"controls": [
+			{ "gate@core_ui_router.block_vanilla_gate_desktop": { "collection_index": 0 } }
+		]
+	},
+
+	"block_vanilla_host_pocket": {
+		"type": "stack_panel",
+		"orientation": "vertical",
+		"size": [ "100%", "100%" ],
+		"collection_name": "container_items",
+		"controls": [
+			{ "gate@core_ui_router.block_vanilla_gate_pocket": { "collection_index": 0 } }
+		]
+	},
+
+	"block_claimed_host": {
+		"type": "stack_panel",
+		"orientation": "vertical",
+		"size": [ "100%", "100%" ],
+		"collection_name": "container_items",
+		"controls": [
+			{ "gate@core_ui_router.block_claimed_gate": { "collection_index": 0 } }
+		]
+	},
+
+	"block_vanilla_gate_desktop@core_ui_router.vanilla_gate": {
+		"controls": [
+			{ "vanilla@data_driven_container.desktop_panel": {} }
+		]
+	},
+
+	"block_vanilla_gate_pocket@core_ui_router.vanilla_gate": {
+		"controls": [
+			{ "vanilla@pocket_containers.data_driven_container_panel": {} }
+		]
+	},
+
+	"block_claimed_gate@core_ui_router.claimed_gate": {
+		"controls": [
+			{ "chrome@core_ui_chest.chrome": {} },
+			{
+				"roots@data_driven_container.panel_top_half": {
+					"size": [ "100%", "100%" ],
+					"offset": [ 0, 0 ],
+					"anchor_from": "center",
+					"anchor_to": "center"
+				}
+			}
+		]
+	},
+
+	"block_root": {
+		"type": "panel",
+		"size": [ "100%", "100%" ],
+		"controls": [
+			{ "vanilla@core_ui_router.block_vanilla_host_desktop": {} },
+			{ "claimed@core_ui_router.block_claimed_host": {} }
+		]
+	},
+
+	"block_root_pocket": {
+		"type": "panel",
+		"size": [ "100%", "100%" ],
+		"controls": [
+			{ "vanilla@core_ui_router.block_vanilla_host_pocket": {} },
+			{ "claimed@core_ui_router.block_claimed_host": {} }
+		]
 	}
 }

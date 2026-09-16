@@ -1,2 +1,2 @@
-export { containerInventory, inventoryOf } from './inventory';
-export type { Inventory, InventorySlot, SlotContainer, SlotLayout } from './inventory';
+export { inventoryOf } from './container';
+export type { ContainerSide, NamedContainer, NamedSlot, SlotLayout } from './container';

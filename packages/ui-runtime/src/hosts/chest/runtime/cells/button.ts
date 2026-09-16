@@ -33,8 +33,8 @@ const press = (host: PollHost, entry: SlotEntry, after: ItemStack | undefined): 
   const { onPress } = element.props;
 
   host.handle(() => {
-    if (isHandler<PressHandler>(onPress) && validPlayer(actor) && validHost(host.entity)) {
-      onPress({ player: actor, host: host.entity });
+    if (isHandler<PressHandler>(onPress) && validPlayer(actor) && validHost(host.host)) {
+      onPress({ player: actor, host: host.host, container: host.cells });
     }
   });
   host.trace(`press slot ${slot}`);

@@ -38,7 +38,8 @@
 	"sideEffects": false,
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
-		"lint": "eslint ."
+		"lint": "eslint .",
+		"test": "vitest run"
 	},
 	"devDependencies": {
 		"@bedrock-core/ui-runtime": "workspace:*",

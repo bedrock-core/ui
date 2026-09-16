@@ -59,6 +59,13 @@ function isColorCode(code: string): boolean {
  */
 const FIT_TOLERANCE = 0.5;
 
+/**
+ * The glyph a reservation is measured with. Every capital, digit and most
+ * lowercase glyphs share the widest advance in both fonts, so a run of this
+ * one is the widest string a character count can be.
+ */
+export const WIDEST_GLYPH = 'W';
+
 function baseGlyphWidth(codePoint: number, profile: ProfileName): number {
   const metrics = BASE_METRICS[profile];
   const width = metrics.glyphWidths[String(codePoint)];

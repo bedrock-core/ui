@@ -58,7 +58,7 @@ describe('the reference screen', () => {
     addon: 'core_ui',
     namespace: demoScreen.namespace,
     layoutId: layoutKey('core_ui', 'demo'),
-    entity: demoEntity,
+    host: { kind: 'entity', type: demoEntity },
     document,
     face,
     facesNamespace: face.facesNamespace,
@@ -136,6 +136,7 @@ describe('the chest hook', () => {
   const UI_DIR = path.resolve(CHEST_DIR, '../../..');
   const root = readJsonc(path.join(CHEST_DIR, ROUTER_FILE));
   const hook = readJsonc(path.join(UI_DIR, 'chest_screen.json'));
+  const blockHook = readJsonc(path.join(UI_DIR, 'data_driven_container_screen.json'));
   const { router, hooks } = buildRouter([]);
   const inverted = {
     binding_type: 'view',
@@ -163,13 +164,18 @@ describe('the chest hook', () => {
       `roots@chest.${CHEST_HOST.hooks[0]?.target ?? ''}`,
     ]);
 
-    // Referenced, never re-emitted: those three names are the only vanilla ones in the file.
-    const vanilla = JSON.stringify(root).match(/"[^"]*@(common|chest|pocket_containers)\.[^"]*"/g) ?? [];
+    // Referenced, never re-emitted: these are the only vanilla names in the
+    // file, and every one of them is a reference.
+    const vanilla = JSON.stringify(root)
+      .match(/"[^"]*@(common|chest|pocket_containers|data_driven_container)\.[^"]*"/g) ?? [];
 
     expect(vanilla).toEqual([
       '"vanilla@chest.small_chest_panel"',
       '"vanilla@pocket_containers.small_chest_panel"',
       '"roots@chest.small_chest_panel_top_half"',
+      '"vanilla@data_driven_container.desktop_panel"',
+      '"vanilla@pocket_containers.data_driven_container_panel"',
+      '"roots@data_driven_container.panel_top_half"',
     ]);
 
     expect(entries(definition(root, 'chest_root')).map(([child]) => child)).toEqual([
@@ -222,4 +228,71 @@ describe('the chest hook', () => {
     expect(Object.keys(addonHook?.document ?? {})).toEqual(['namespace', 'small_chest_panel_top_half']);
   });
 
+  /**
+   * The screen a custom BLOCK opens, held to exactly what the chest is held to.
+   * Every other addon's plain block container opens this same screen, so the
+   * file may only switch the content and gate two definitions — nothing of
+   * vanilla's re-declared, nothing removed, nothing inserted into an array the
+   * target does not declare.
+   */
+  describe('on the data-driven container', () => {
+    const blockInverted = {
+      binding_type: 'view',
+      source_property_name: `(not (#core_ui_ddc_aux = ${PROTOCOL_ITEM_AUX}))`,
+      target_property_name: '#visible',
+    };
+
+    it("points the screen's content at the block roots, and gates the top half's label and grid", () => {
+      expect(blockHook.namespace).toBe('data_driven_container');
+      expect(Object.keys(defs(blockHook))).toEqual(['screen@common.inventory_screen_common']);
+      expect(definition(blockHook, 'screen@common.inventory_screen_common').variables).toEqual([
+        {
+          requires: '$desktop_screen',
+          $screen_content: 'core_ui_router.block_root',
+          $screen_bg_content: 'common.screen_background',
+          $screen_background_alpha: 0.4,
+        },
+        {
+          requires: '$pocket_screen',
+          $use_custom_pocket_toast: true,
+          $screen_content: 'core_ui_router.block_root_pocket',
+        },
+      ]);
+
+      for (const name of ['container_label', 'item_grid']) {
+        const [only, ...rest] = modification(blockHook, name).modifications;
+
+        expect(rest).toEqual([]);
+        expect(only?.array_name).toBe('bindings');
+        expect(only?.operation).toBe('insert_back');
+        expect(only?.value).toContainEqual(blockInverted);
+      }
+
+      expect(JSON.stringify(blockHook)).not.toContain('"remove"');
+      expect(JSON.stringify(blockHook)).not.toContain('"array_name":"controls"');
+    });
+
+    it('is the top half the addon hooks insert their roots into', () => {
+      const addonHook = hooks[1];
+
+      expect(addonHook?.file).toBe('ui/data_driven_container_screen.json');
+      expect(Object.keys(addonHook?.document ?? {})).toEqual(['namespace', 'panel_top_half']);
+      expect(CHEST_HOST.hooks[1]?.target).toBe('panel_top_half');
+    });
+
+    it('mounts the same chrome and the same claimed gate the chest mounts', () => {
+      expect(entries(definition(root, 'block_claimed_gate@core_ui_router.claimed_gate')).map(([name]) => name)).toEqual([
+        'chrome@core_ui_chest.chrome',
+        `roots@data_driven_container.${CHEST_HOST.hooks[1]?.target ?? ''}`,
+      ]);
+      expect(entries(definition(root, 'block_root')).map(([name]) => name)).toEqual([
+        'vanilla@core_ui_router.block_vanilla_host_desktop',
+        'claimed@core_ui_router.block_claimed_host',
+      ]);
+      expect(entries(definition(root, 'block_root_pocket')).map(([name]) => name)).toEqual([
+        'vanilla@core_ui_router.block_vanilla_host_pocket',
+        'claimed@core_ui_router.block_claimed_host',
+      ]);
+    });
+  });
 });

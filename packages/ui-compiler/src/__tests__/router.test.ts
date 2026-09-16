@@ -9,12 +9,18 @@ import {
   child, definition, defs, eachControl, entries, isModified, modification,
 } from '../__fixtures__/helpers';
 
-const screen = (name: string, layoutId: number, hasBackdrop = false, addon = 'core'): CompiledScreen => ({
+const screen = (
+  name: string,
+  layoutId: number,
+  hasBackdrop = false,
+  addon = 'core',
+  kind: 'entity' | 'block' = 'entity',
+): CompiledScreen => ({
   name,
   addon,
   namespace: `${addon}_${name}`,
   layoutId,
-  entity: `${addon}:${name}`,
+  host: { kind, type: `${addon}:${name}` },
   face: faceOf({
     namespace: `${addon}_${name}`,
     collection: 'container_items',
@@ -31,11 +37,12 @@ const screen = (name: string, layoutId: number, hasBackdrop = false, addon = 'co
 describe('the chest routing', () => {
   const { hooks, router, routerFile } = buildRouter([screen('furnace', 3, true), screen('crate', 7)]);
 
-  it('names the host: vanilla\'s chest screen for the hook, the addon\'s own file for the router', () => {
+  it('names the hosts: the two vanilla container screens for the hooks, the addon\'s own file for the router', () => {
     expect(CHEST_HOST).toMatchObject({
       id: 'chest',
       hooks: [
         { file: 'ui/chest_screen.json', namespace: 'chest', target: 'small_chest_panel_top_half' },
+        { file: 'ui/data_driven_container_screen.json', namespace: 'data_driven_container', target: 'panel_top_half' },
       ],
       routerDir: 'ui/core-ui/screens',
       routerNamespace: 'core_ui_router',
@@ -49,12 +56,19 @@ describe('the chest routing', () => {
     expect(routerFileOf('drav0011_shop')).toBe('ui/core-ui/screens/drav0011_shop_router.json');
   });
 
-  it('hooks the chest top half, a definition that declares its own controls, with one modification and defines nothing', () => {
+  it('hooks both top halves, definitions that declare their own controls, with one modification each and defines nothing', () => {
     // A definition in a vanilla file would replace vanilla's and every other
     // pack's; a modification stacks with them in any pack order. And the
     // array has to be the target's own: an insert on a definition that only
     // inherits it creates one that shadows the inherited one.
-    expect(hooks.map(hook => hook.file)).toEqual(['ui/chest_screen.json']);
+    //
+    // One root, both screens: a block's container opens the data-driven
+    // container screen and an entity's opens the chest, and the routing that
+    // picks a layout is the same on either.
+    expect(hooks.map(hook => hook.file)).toEqual([
+      'ui/chest_screen.json',
+      'ui/data_driven_container_screen.json',
+    ]);
 
     for (const [index, hook] of hooks.entries()) {
       const { namespace, target } = CHEST_HOST.hooks[index] ?? { namespace: '', target: '' };
@@ -173,7 +187,23 @@ describe('the chest routing', () => {
     expect(modification(shop.hooks[0]?.document ?? { namespace: '' }, 'small_chest_panel_top_half').modifications[0]?.value).toEqual([
       { 'drav0011_shop@core_ui_router.drav0011_shop_root': {} },
     ]);
+    expect(modification(shop.hooks[1]?.document ?? { namespace: '' }, 'panel_top_half').modifications[0]?.value).toEqual([
+      { 'drav0011_shop@core_ui_router.drav0011_shop_root': {} },
+    ]);
     expect(Object.keys(defs(shop.router)).some(name => name in defs(router))).toBe(false);
+  });
+
+  it('routes a block-hosted screen through the same gates as an entity-hosted one', () => {
+    const blocks = buildRouter([screen('workbench', 11, false, 'core', 'block')]);
+
+    expect(Object.keys(defs(blocks.router))).toEqual([
+      'core_low_gate_workbench', 'core_low_host_workbench',
+      'core_gate_workbench', 'core_host_workbench', 'core_root',
+    ]);
+    expect(blocks.hooks.map(hook => hook.file)).toEqual([
+      'ui/chest_screen.json',
+      'ui/data_driven_container_screen.json',
+    ]);
   });
 
   it('references nothing of vanilla\'s: the chest panels are the chest root\'s business', () => {

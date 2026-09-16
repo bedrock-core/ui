@@ -1,4 +1,4 @@
-import type { JSX } from '@bedrock-core/ui-runtime';
+import type { DisplayText, JSX } from '@bedrock-core/ui-runtime';
 import {
   declaredStatic, entryValue, isExitButton, linkTarget, rootOf, type EntryEntry,
 } from '@bedrock-core/ui-runtime/compile';
@@ -23,7 +23,7 @@ import {
  */
 export interface StaticScreen {
   /** The value each entry is shown with, in `selection` order. */
-  readonly values: readonly string[];
+  readonly values: readonly DisplayText[];
   /** Where each `selection` leads: another screen, back, or nowhere. */
   readonly targets: readonly ({ readonly to: string; readonly replace?: true } | { readonly back: true } | null)[];
 }

@@ -66,13 +66,13 @@ describe('the compiler, end to end', () => {
   const compiled = compileScreen(Demo, { name: 'demo' });
   const { document, faces } = compiled;
 
-  it('names the screen, its namespace and its entity', () => {
+  it('names the screen, its namespace and its host', () => {
     expect(compiled).toMatchObject({
       name: 'demo',
       addon: 'core_ui',
       namespace: 'core_ui_demo',
       layoutId: layoutKey('core_ui', 'demo'),
-      entity: 'core:demo',
+      host: { kind: 'entity', type: 'core:demo' },
       hasBackdrop: true,
       hasText: true,
     });
@@ -232,10 +232,32 @@ describe('the compiler, end to end', () => {
     expect(compiled.allocation.channels).toBe(8);
   });
 
-  it('refuses a container that names no entity, since nothing could serve it', () => {
+  it('refuses a container that names no host, since nothing could serve it', () => {
     const Screen = (): JSX.Element => Container({ entity: '', children: [] });
 
-    expect(() => compileScreen(Screen, { name: 'nameless' })).toThrow(/needs `entity`/);
+    expect(() => compileScreen(Screen, { name: 'nameless' })).toThrow(/needs `entity` or `block`/);
+  });
+
+  it('refuses a container that names both an entity and a block', () => {
+    const Screen = (): JSX.Element => Container({ entity: 'core:both', block: 'core:both', children: [] });
+
+    expect(() => compileScreen(Screen, { name: 'both' })).toThrow(/names both an entity/);
+  });
+
+  it('names the block a block-hosted screen opens from, and sizes it against the block cap', () => {
+    const Block = (): JSX.Element => Container({ block: 'core:workbench', children: [Text({ children: 'shop' })] });
+
+    expect(compileScreen(Block, { name: 'workbench' }).host).toEqual({ kind: 'block', type: 'core:workbench' });
+
+    // 54 slots is the whole allocation, sentinel and bank included: a live
+    // string costs one slot per character, so this one cannot be a block's.
+    const Wide = (): JSX.Element => Container({
+      block: 'core:wide',
+      children: [Text({ maxLength: 60, children: 'x' })],
+    });
+
+    expect(() => compileScreen(Wide, { name: 'wide' })).toThrow(/a block holds 54/);
+    expect(() => compileScreen(Wide, { name: 'wide' })).toThrow(/host the[\s\S]*screen on an entity/);
   });
 
   it('still rejects a hook that needs a player, because there is not one', () => {
