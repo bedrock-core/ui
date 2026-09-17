@@ -14,6 +14,7 @@ import { Button } from '../../../components/Button';
 import { Form } from '../../../components/Form';
 import { Panel } from '../../../components/Panel';
 import { Screen } from '../../../components/Screen';
+import { Toggle } from '../../../components/Toggle';
 import { Text } from '../../../components/Text';
 import { useEffect, useExit, useState } from '../../../hooks';
 import type { FunctionComponent, JSX } from '../../../jsx';
@@ -288,7 +289,7 @@ describe('render() swap — cross-app handoff', () => {
       onSubmit,
       onCancel,
       children: [
-        el(Form.Toggle, { name: 'x', defaultValue: false }),
+        el(Toggle, { name: 'x', defaultValue: false }),
         el(Form.Button, { type: 'submit', label: 'Save' }),
       ],
     });

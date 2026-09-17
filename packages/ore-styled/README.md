@@ -33,7 +33,7 @@ export function Settings(): JSX.Element {
       <Card>
         <Text>{'Settings'}</Text>
         <Toggle on={enabled} onChange={setEnabled} />
-        <Checkbox checked={accepted} onChange={setAccepted} label={'I agree'} />
+        <Checkbox on={accepted} onChange={setAccepted} label={'I agree'} />
       </Card>
     </Screen>
   );

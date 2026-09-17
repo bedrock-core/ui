@@ -11,10 +11,9 @@ import {
  * next, so the build already knows everything showing it requires — the title,
  * the value each entry carries, and where each press leads.
  *
- * Such a screen needs no component in the shipped addon. The alternative is what
- * a guide used to cost: the page's blocks shipped as data, its views shipped as
- * code, and the whole tree rebuilt on every open to reproduce a layout that was
- * baked into the pack months earlier.
+ * Such a screen needs no component in the shipped addon: it ships as a table,
+ * so opening it is one form call instead of rebuilding a tree whose layout is
+ * already baked into the pack.
  *
  * The test is the entries, because an entry is exactly what a present carries.
  * An entry with a carrier holds a value that changes; an entry whose press is

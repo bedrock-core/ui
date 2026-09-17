@@ -322,6 +322,20 @@ export function noteSessionStart(id: string): void {
   countsFor(id).starts++;
 }
 
+/**
+ * Ends an owner's rendered session and keeps where the player has been.
+ *
+ * What a screen shown by TITLE does before it shows: the rendered session is
+ * otherwise still live, and presents its last screen again over the one the
+ * player moved to. The form on screen is left alone — the press that got here
+ * already closed it — and the stack survives, because `back()` from the screen
+ * being shown returns through it.
+ */
+export function endSession(owner: Owner): void {
+  cleanupComponentTree(owner);
+  clearSession(owner);
+}
+
 export function triggerCleanup(owner: Owner, shouldClose: boolean = false): void {
   countsFor(owner.id).cleanups++;
 

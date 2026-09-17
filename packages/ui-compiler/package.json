@@ -33,7 +33,11 @@
 		"access": "public"
 	},
 	"files": [
-		"src"
+		"src",
+		"!src/**/__tests__/**",
+		"!src/**/*.test.ts",
+		"!src/**/*.test.tsx",
+		"!src/__fixtures__/**"
 	],
 	"sideEffects": false,
 	"scripts": {
@@ -46,6 +50,7 @@
 		"@bedrock-core/ui-runtime": "workspace:*"
 	},
 	"devDependencies": {
+		"eslint": "*",
 		"typescript": "*",
 		"vitest": "*"
 	}

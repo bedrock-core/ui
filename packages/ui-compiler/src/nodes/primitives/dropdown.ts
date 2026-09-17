@@ -61,7 +61,7 @@ export const dropdownDefinition: NodeDefinition<DropdownNode> = {
       scale: scaleOf(element.props),
       ...backgroundOf(element.props),
       text: currentOptionLabel(element),
-      // `popupHeight` is FormDropdown's own computation (rows x 17 + the fused
+      // `popupHeight` is `Dropdown`'s own computation (rows x 17 + the fused
       // border + padding), baked as given.
       popup: { texture: str(element.props.popupBackground), height: num(element.props.popupHeight, 20) },
     };

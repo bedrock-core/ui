@@ -15,13 +15,12 @@ export {
   Container, CONTAINER_TYPE, containerHandlers, containerHost,
   type ContainerHandlers, type ContainerHost, type ContainerProps,
 } from './Container';
+export { Dropdown, type DropdownProps } from './Dropdown';
 export { Expect, EXPECT_SLOT_TYPE, expectedHost, type ExpectProps } from './Expect';
 export {
   Form, ModalContext, MODAL_FORM_SLOT_TYPE,
   type FormConfig, type FormProps, type FormValues,
   type FormButtonKind, type FormButtonProps,
-  type FormDropdownProps, type FormInlineSelectProps, type FormOptionProps,
-  type FormInputProps, type FormSliderProps, type FormToggleProps,
   type SubmitEvent,
 } from './Form';
 export { Fragment, type FragmentProps } from './Fragment';
@@ -31,15 +30,21 @@ export {
   type EmbedArea, type EmbedFrame, type EmbedPlacement, type EmbedProps, type EmbedSlotsProps,
 } from './Embed';
 export { Hotbar, PlayerInventory } from './Inventory';
+export { Input, type InputProps } from './Input';
 export { Link, linkTarget, type LinkProps, type LinkTarget } from './Link';
 export { List, LIST_SLOT_TYPE, listCapacity, listCount, type ListProps } from './List';
+export { Option, type OptionProps } from './Option';
 export { Panel, PANEL_TYPE, type PanelProps } from './Panel';
 export { Tabs, DEFAULT_TAB_HEIGHT } from './Tabs';
 export type { TabsProps, TabProps } from './Tabs';
 export { Disclosure, DEFAULT_DISCLOSURE_HEADER_HEIGHT } from './Disclosure';
 export type { DisclosureProps } from './Disclosure';
+export {
+  Select, type MultipleSelectProps, type SelectBaseProps, type SelectOptionStyle, type SelectProps, type SingleSelectProps,
+} from './Select';
 export { declaredStatic, Screen, SCREEN_TYPE, type ScreenProps } from './Screen';
 export { Scroll, SCROLL_SLOT_TYPE, type ScrollAxis, type ScrollProps } from './Scroll';
+export { Slider, type SliderProps } from './Slider';
 export {
   Slot, SLOT_CELL, SLOT_TYPE, slotInteractive, slotRole, slotSource, isForeignSlot,
   type SlotProps, type SlotRole, type SlotSource,
@@ -52,24 +57,24 @@ export {
   TEXT_SHADOW_TYPE, TEXT_WRAP_TYPE, TEXT_SHADOW_WRAP_TYPE,
   type TextFont, type TextOverflow, type TextAlign, type TextProps, type TextStyle, type TextWordBreak,
 } from './Text';
+export { Toggle, type ToggleProps } from './Toggle';
 
 import { registerComponent } from '../core/componentRegistry';
 import { BACKGROUND_SLOT_TYPE } from './Background';
 import { } from './Button';
-import {
-  MODAL_FORM_SLOT_TYPE,
-  MODAL_TOGGLE_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE,
-  MODAL_DROPDOWN_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE,
-  MODAL_FORM_BUTTON_SLOT_TYPE,
-  formToggleWriter, formSliderWriter, formDropdownWriter, formInlineSelectWriter,
-  formInputWriter, formButtonWriter,
-} from './Form';
+import { MODAL_FORM_SLOT_TYPE, MODAL_FORM_BUTTON_SLOT_TYPE, formButtonWriter } from './Form';
 import { EXPECT_SLOT_TYPE } from './Expect';
 import { } from './Image';
 import { } from './Panel';
 import { SCREEN_TYPE } from './Screen';
 import { SCROLL_SLOT_TYPE } from './Scroll';
 import { TEXT_SHADOW_TYPE, TEXT_SHADOW_WRAP_TYPE, TEXT_WRAP_TYPE } from './Text';
+import { MODAL_DROPDOWN_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE } from '../core/fields';
+import { toggleWriter } from './Toggle';
+import { sliderWriter } from './Slider';
+import { dropdownWriter } from './Dropdown';
+import { selectWriter } from './Select';
+import { inputWriter } from './Input';
 
 let registered = false;
 
@@ -133,11 +138,11 @@ export function registerNativeComponents(): void {
 
   // Native modal controls — each writer (co-located with its Form.* component) calls
   // the component-supplied `build` against the ModalFormData.
-  registerComponent(MODAL_TOGGLE_SLOT_TYPE, { writer: formToggleWriter });
-  registerComponent(MODAL_SLIDER_SLOT_TYPE, { writer: formSliderWriter });
-  registerComponent(MODAL_DROPDOWN_SLOT_TYPE, { writer: formDropdownWriter });
-  registerComponent(MODAL_INLINE_SELECT_SLOT_TYPE, { writer: formInlineSelectWriter });
-  registerComponent(MODAL_INPUT_SLOT_TYPE, { writer: formInputWriter });
+  registerComponent(MODAL_TOGGLE_SLOT_TYPE, { writer: toggleWriter });
+  registerComponent(MODAL_SLIDER_SLOT_TYPE, { writer: sliderWriter });
+  registerComponent(MODAL_DROPDOWN_SLOT_TYPE, { writer: dropdownWriter });
+  registerComponent(MODAL_INLINE_SELECT_SLOT_TYPE, { writer: selectWriter });
+  registerComponent(MODAL_INPUT_SLOT_TYPE, { writer: inputWriter });
   // Form action button: participates in layout but consumes NO ModalFormData entry —
   // the presenter encodes it into the form TITLE payload (see FormButton).
   registerComponent(MODAL_FORM_BUTTON_SLOT_TYPE, { writer: formButtonWriter });

@@ -2,8 +2,14 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import type { Player } from '@minecraft/server';
 import type { ModalFormData } from '@minecraft/server-ui';
 import { registerNativeComponents } from '../../components';
+import { Toggle } from '../../components/Toggle';
+import { Slider } from '../../components/Slider';
+import { Dropdown } from '../../components/Dropdown';
+import { Input } from '../../components/Input';
+import { Select } from '../../components/Select';
 import { Form } from '../../components/Form';
-import { MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE } from '../../components/Form';
+import { Option } from '../../components';
+import { MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE } from '../../core/fields';
 import { Panel } from '../../components/Panel';
 import { isElement } from '../guards';
 import { playerOwner } from '../fabric';
@@ -16,6 +22,7 @@ import { getComponentDescriptor, isTransparentType } from '../componentRegistry'
 import { emitLabel } from '../writers';
 import { collectFormButtons } from '../../components/Form';
 import { ModalFormError, type ModalSerializationContext } from '../types';
+import { lowerField } from '../../__fixtures__/lowerField';
 
 beforeAll(() => {
   registerNativeComponents();
@@ -116,9 +123,9 @@ function el(node: JSX.Element): JSX.Element {
   return node;
 }
 
-/** Build `Form.Option` children for a dropdown from plain strings (value = label). */
+/** Build `Option` children for a dropdown from plain strings (value = label). */
 function ddOpts(values: string[]): JSX.Element[] {
-  return values.map(v => Form.Option({ value: v, label: v }));
+  return values.map(v => Option({ value: v, label: v }));
 }
 
 /** The native `items` array (arg 1) for the first control of `kind`, narrowed to string[]. */
@@ -139,10 +146,10 @@ describe("a modal's native controls", () => {
       type: 'fragment',
       props: {
         children: [
-          el(Form.Toggle({ name: 'sound', defaultValue: true })),
-          el(Form.Slider({ name: 'volume', min: 0, max: 10, defaultValue: 7 })),
-          el(Form.Dropdown({ name: 'mode', children: ddOpts(['A', 'B']), defaultValue: 'B' })),
-          el(Form.Input({ name: 'nick', defaultValue: 'x' })),
+          el(lowerField(Toggle, { name: 'sound', defaultValue: true })),
+          el(lowerField(Slider, { name: 'volume', min: 0, max: 10, defaultValue: 7 })),
+          el(lowerField(Dropdown, { name: 'mode', children: ddOpts(['A', 'B']), defaultValue: 'B' })),
+          el(lowerField(Input, { name: 'nick', defaultValue: 'x' })),
         ],
       },
     };
@@ -155,7 +162,7 @@ describe("a modal's native controls", () => {
   it('passes native args through each control emitter', () => {
     const form = new FakeModalForm();
 
-    emit(el(Form.Slider({ name: 'v', min: 1, max: 9, step: 2, defaultValue: 5 })), form, modalCtx());
+    emit(el(lowerField(Slider, { name: 'v', min: 1, max: 9, step: 2, defaultValue: 5 })), form, modalCtx());
 
     const slider = form.calls.find(c => c.kind === 'slider');
 
@@ -170,7 +177,7 @@ describe("a modal's native controls", () => {
   it('maps dropdown defaultValue option to its index', () => {
     const form = new FakeModalForm();
 
-    emit(el(Form.Dropdown({ name: 'm', children: ddOpts(['A', 'B', 'C']), defaultValue: 'C' })), form, modalCtx());
+    emit(el(lowerField(Dropdown, { name: 'm', children: ddOpts(['A', 'B', 'C']), defaultValue: 'C' })), form, modalCtx());
 
     const dropdown = form.calls.find(c => c.kind === 'dropdown');
 
@@ -196,7 +203,7 @@ describe("a modal's native controls", () => {
     const form = new FakeModalForm();
 
     emit(
-      el(Form.Dropdown({
+      el(lowerField(Dropdown, {
         name: 'm',
         children: ddOpts(['Alpha', 'Beta']),
         optionBackground: 'textures/ui/opt_bg',
@@ -242,21 +249,21 @@ describe("a modal's native controls", () => {
   });
 
   // Inline-select (radio / toggle-button) reuses the native dropdown() call. Options are now
-  // `Form.Option` CHILDREN whose flex geometry (filled by the layout phase — simulated here by
+  // `Option` CHILDREN whose flex geometry (filled by the layout phase — simulated here by
   // setting jsonUI* on the built option element) is packed into each blob AFTER the bullet fields:
   // bullet[839]/bulletSel[922] then optionX[1005]/optionY[1088]/optionWidth[1171]/optionHeight[1254].
-  it('emits an inline-select as a native dropdown, packing each Form.Option geometry into its blob', () => {
+  it('emits an inline-select as a native dropdown, packing each Option geometry into its blob', () => {
     const form = new FakeModalForm();
 
     // Build the two option children and stamp post-layout geometry (as computeLayout would).
-    const red = el(Form.Option({ value: 'red', label: 'Red', bullet: 'textures/ui/radio_off', bulletSelected: 'textures/ui/radio_on' }));
-    const blue = el(Form.Option({ value: 'blue', label: 'Blue', bullet: 'textures/ui/radio_off', bulletSelected: 'textures/ui/radio_on' }));
+    const red = el(Option({ value: 'red', label: 'Red', bullet: 'textures/ui/radio_off', bulletSelected: 'textures/ui/radio_on' }));
+    const blue = el(Option({ value: 'blue', label: 'Blue', bullet: 'textures/ui/radio_off', bulletSelected: 'textures/ui/radio_on' }));
 
     // Distinct values per field so indexOf can't collide with an earlier identical number.
     Object.assign(red.props, { jsonUIx: 41, jsonUIy: 42, jsonUIWidth: 43, jsonUIHeight: 44 });
     Object.assign(blue.props, { jsonUIx: 51, jsonUIy: 52, jsonUIWidth: 53, jsonUIHeight: 54 });
 
-    const group = el(Form.InlineSelect({ name: 'team', defaultValue: 'blue', children: [red, blue] }));
+    const group = el(lowerField(Select, { name: 'team', defaultValue: 'blue', children: [red, blue] }));
 
     emit(group, form, modalCtx());
 
@@ -278,6 +285,36 @@ describe("a modal's native controls", () => {
 
     // Second option carries its own geometry (genuinely per-option).
     expect(itemsArg(form, 'dropdown')[1].indexOf('n:52')).toBe(1088); // optionY
+  });
+
+  it('emits a multiple select as one native toggle per option, every one under the select name', () => {
+    const form = new FakeModalForm();
+    const ctx = modalCtx();
+
+    const group = el(lowerField(Select, {
+      name: 'notices',
+      multiple: true,
+      defaultValue: ['leave', 'buy'],
+      children: [
+        Option({ value: 'join', label: 'Join' }),
+        Option({ value: 'leave', label: 'Leave' }),
+        Option({ value: 'buy', label: 'Buy' }),
+      ],
+    }));
+
+    emit(group, form, ctx);
+
+    expect(form.calls.map(call => call.kind)).toEqual(['toggle', 'toggle', 'toggle']);
+    expect(form.calls.map(call => call.args[1])).toEqual([
+      { defaultValue: false },
+      { defaultValue: true },
+      { defaultValue: true },
+    ]);
+    expect([...ctx.modalControls.values()]).toEqual([
+      { name: 'notices', member: 0 },
+      { name: 'notices', member: 1 },
+      { name: 'notices', member: 2 },
+    ]);
   });
 
   // Toggle textures: button-identical common block ([440] base=unchecked, [1024]
@@ -312,8 +349,8 @@ describe("a modal's native controls", () => {
       type: 'fragment',
       props: {
         children: [
-          el(Form.Toggle({ name: 'sound' })),
-          el(Form.Slider({ name: 'volume', min: 0, max: 1 })),
+          el(lowerField(Toggle, { name: 'sound' })),
+          el(lowerField(Slider, { name: 'volume', min: 0, max: 1 })),
         ],
       },
     };
@@ -341,8 +378,8 @@ describe("a modal's native controls", () => {
           // a background-less panel cell renders nothing and is skipped by serialize()
           // entirely (no label emitted, no formValues slot consumed).
           el(Panel({ children: [], background: 'textures/ui/unstyled' })),
-          el(Form.Toggle({ name: 'sound' })),
-          el(Form.Slider({ name: 'volume', min: 0, max: 1 })),
+          el(lowerField(Toggle, { name: 'sound' })),
+          el(lowerField(Slider, { name: 'volume', min: 0, max: 1 })),
         ],
       },
     };
@@ -374,9 +411,9 @@ describe("a modal's native controls", () => {
       type: Form,
       props: {
         children: [
-          Form.Toggle({ name: 'a' }),
-          Form.Toggle({ name: 'b' }),
-          Form.Slider({ name: 'c', min: 0, max: 1 }),
+          lowerField(Toggle, { name: 'a' }),
+          lowerField(Toggle, { name: 'b' }),
+          lowerField(Slider, { name: 'c', min: 0, max: 1 }),
         ],
       },
     };
@@ -423,8 +460,8 @@ describe("a modal's native controls", () => {
       type: Form,
       props: {
         children: [
-          Form.Input({ name: 'nick', placeholder: 'type…', defaultValue: 'seed' }),
-          Form.Dropdown({ name: 'mode', children: ddOpts(['A', 'B', 'C']), defaultValue: 'C' }),
+          lowerField(Input, { name: 'nick', placeholder: 'type…', defaultValue: 'seed' }),
+          lowerField(Dropdown, { name: 'mode', children: ddOpts(['A', 'B', 'C']), defaultValue: 'C' }),
         ],
       },
     };

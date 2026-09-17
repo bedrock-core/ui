@@ -1,6 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import type { FormInputProps as PrimitiveInputProps, JSX } from '@bedrock-core/ui-runtime';
-import { Form as PrimitiveForm, useMechanism } from '@bedrock-core/ui-runtime';
+import type { InputProps as PrimitiveInputProps, JSX } from '@bedrock-core/ui-runtime';
+import { Input as PrimitiveInput, useMechanism } from '@bedrock-core/ui-runtime';
 import { theme } from './tokens';
 import { labeledColumn } from './Form/label';
 
@@ -11,7 +11,7 @@ export interface InputProps extends PrimitiveInputProps {
 
 /**
  * The theme's text field: the theme's field-box faces on the native
- * `Form.Input`. There is no dedicated focused-state texture, so the pressed
+ * `Input`. There is no dedicated focused-state texture, so the pressed
  * (selected) face reuses hover — same rule as the ActionForm-side `Input`.
  *
  * The texture props and the field's `font`/`scale` are the theme's DEFAULTS, not a
@@ -32,7 +32,7 @@ export function Input({
   const ts = theme.components.field.textStyle;
 
   const control = (
-    <PrimitiveForm.Input
+    <PrimitiveInput
       name={name}
       placeholder={placeholder}
       defaultValue={defaultValue}

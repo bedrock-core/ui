@@ -36,6 +36,8 @@ export interface ContainerProps extends ControlProps {
    * Type of the block the screen opens from, e.g. `core:workbench`. The build
    * gives that block its container and stamps the layout key on it; a player
    * opens the screen by interacting with a placed one.
+   *
+   * @experimental Block containers are an experimental game feature.
    */
   block?: string;
   /**

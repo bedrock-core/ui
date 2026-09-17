@@ -34,6 +34,8 @@ import type { FormTarget, ModalControlEntry, SerializationContext } from './type
  * @param payload - Serialized component payload.
  * @param form - Target form.
  * @param ctx - Serialization context; advances the modal ordinal when present.
+ *
+ * @experimental Bound to the serialized payload format rather than the component API.
  */
 export function emitLabel(payload: string | RawMessage, form: FormTarget, ctx?: SerializationContext): void {
   if (ctx && isModalContext(ctx)) {
@@ -63,9 +65,14 @@ function recordModalOrdinal(
   ctx: SerializationContext | undefined,
   name: string,
   decode?: ModalControlEntry['decode'],
+  member?: number,
 ): void {
   if (ctx && isModalContext(ctx)) {
-    ctx.modalControls.set(ctx.modalControlIndex, { name, ...decode === undefined ? {} : { decode } });
+    ctx.modalControls.set(ctx.modalControlIndex, {
+      name,
+      ...decode === undefined ? {} : { decode },
+      ...member === undefined ? {} : { member },
+    });
     ctx.modalControlIndex++;
   }
 }
@@ -77,7 +84,7 @@ const whole = (value: number): boolean => Number.isInteger(value);
  * Emit a native modal toggle → `ModalFormData.toggle`. Records the ordinal, then makes
  * the typed call.
  *
- * Parameter order mirrors {@link emitButton} (`payload, form, ctx, …`), then this
+ * Parameter order is shared by every `emit*` helper (`payload, form, ctx, …`), then this
  * control's own args.
  *
  * @param payload - The control's serialized control-block payload (native label channel).
@@ -85,6 +92,9 @@ const whole = (value: number): boolean => Number.isInteger(value);
  * @param ctx - Serialization context tracking the modal ordinal → name registry.
  * @param name - Result key for this control (its `name` prop).
  * @param defaultValue - Initial on/off state.
+ * @param member - The option index, when the toggle is one member of a multiple select.
+ *
+ * @experimental Bound to the serialized payload format rather than the component API.
  */
 export function emitToggle(
   payload: string | RawMessage,
@@ -92,8 +102,9 @@ export function emitToggle(
   ctx: SerializationContext | undefined,
   name: string,
   defaultValue: boolean,
+  member?: number,
 ): void {
-  recordModalOrdinal(ctx, name);
+  recordModalOrdinal(ctx, name, undefined, member);
   form.toggle(payload, { defaultValue });
 }
 
@@ -101,7 +112,7 @@ export function emitToggle(
  * Emit a native modal slider → `ModalFormData.slider`. Records the ordinal, then makes
  * the typed call.
  *
- * Parameter order mirrors {@link emitButton} (`payload, form, ctx, …`), then this
+ * Parameter order is shared by every `emit*` helper (`payload, form, ctx, …`), then this
  * control's own args.
  *
  * @param payload - The control's serialized control-block payload (native label channel).
@@ -112,6 +123,8 @@ export function emitToggle(
  * @param max - Maximum selectable value.
  * @param defaultValue - Initial value.
  * @param valueStep - Increment between values, or `undefined` for the native default.
+ *
+ * @experimental Bound to the serialized payload format rather than the component API.
  */
 export function emitSlider(
   payload: string | RawMessage,
@@ -157,7 +170,7 @@ export function emitSlider(
  * the typed call. `options` (a non-primitive array) arrives as a direct argument, so it
  * never passes through the serializer's primitive-only payload channel.
  *
- * Parameter order mirrors {@link emitButton} (`payload, form, ctx, …`), then this
+ * Parameter order is shared by every `emit*` helper (`payload, form, ctx, …`), then this
  * control's own args.
  *
  * @param payload - The control's serialized control-block payload (native label channel).
@@ -166,6 +179,8 @@ export function emitSlider(
  * @param name - Result key for this control (its `name` prop).
  * @param options - Selectable option values.
  * @param defaultValueIndex - Initial selection as an index into `options`.
+ *
+ * @experimental Bound to the serialized payload format rather than the component API.
  */
 export function emitDropdown(
   payload: string | RawMessage,
@@ -183,7 +198,7 @@ export function emitDropdown(
  * Emit a native modal text field → `ModalFormData.textField`. Records the ordinal, then
  * makes the typed call.
  *
- * Parameter order mirrors {@link emitButton} (`payload, form, ctx, …`), then this
+ * Parameter order is shared by every `emit*` helper (`payload, form, ctx, …`), then this
  * control's own args.
  *
  * @param payload - The control's serialized control-block payload (native label channel).
@@ -192,6 +207,8 @@ export function emitDropdown(
  * @param name - Result key for this control (its `name` prop).
  * @param placeholder - Text shown when the field is empty.
  * @param defaultValue - Initial text.
+ *
+ * @experimental Bound to the serialized payload format rather than the component API.
  */
 export function emitInput(
   payload: string | RawMessage,

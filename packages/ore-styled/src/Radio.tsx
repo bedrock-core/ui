@@ -1,6 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import type { FormInlineSelectProps as PrimitiveInlineSelectProps, JSX, Spacing } from '@bedrock-core/ui-runtime';
-import { Button, Form as PrimitiveForm, Fragment, Panel, Text, useMechanism, useState } from '@bedrock-core/ui-runtime';
+import type { SingleSelectProps, JSX, Spacing } from '@bedrock-core/ui-runtime';
+import { Button, Fragment, Option, Panel, Select as PrimitiveSelect, Text, useMechanism, useState } from '@bedrock-core/ui-runtime';
 import { labeledColumn } from './Form/label';
 import { theme } from './tokens';
 
@@ -10,7 +10,7 @@ export interface RadioOption {
   label: string;
 }
 
-export interface RadioProps extends Omit<PrimitiveInlineSelectProps, 'children'> {
+export interface RadioProps extends Omit<SingleSelectProps, 'children' | 'multiple'> {
   // `children` is the one omission: this layer owns the option children, built
   // from `options` below, so a caller-supplied child could only fight the array.
   /** The options, top to bottom. */
@@ -54,7 +54,7 @@ export function Radio({
 
   const control = useMechanism('Select') === 'field'
     ? (
-        <PrimitiveForm.InlineSelect
+        <PrimitiveSelect
           name={name}
           defaultValue={defaultValue}
           enabled={enabled}
@@ -62,7 +62,7 @@ export function Radio({
           flexDirection={'column'}
           gap={gap}
           {...own}
-          // Group-level option defaults; each `Form.Option` inherits these.
+          // Group-level option defaults; each `Option` inherits these.
           optionBackground={optionBackground ?? ''}
           optionHover={optionHover ?? ''}
           optionSelected={optionSelected ?? ''}
@@ -77,9 +77,9 @@ export function Radio({
           optionAlign={optionAlign ?? 'left'}
         >
           {options.map(o => (
-            <PrimitiveForm.Option value={o.value} label={o.label} width={'100%'} height={rowHeight} />
+            <Option value={o.value} label={o.label} width={'100%'} height={rowHeight} />
           ))}
-        </PrimitiveForm.InlineSelect>
+        </PrimitiveSelect>
       )
     : (
         <Pressed

@@ -1,5 +1,5 @@
 import {
-  dropdownWidget, field, fits, inputWidget, list, popupHostOf, popupOverlay, press, pressDefs, select,
+  dropdownWidget, field, fits, inputWidget, list, multiSelect, popupHostOf, popupOverlay, press, pressDefs, select,
   type SelectOption, text, textDef, texture, TEXTURE_DEF, toggleWidget, visible,
 } from '../../connectors/form';
 import type { TextStyle } from '../../faces';
@@ -196,7 +196,9 @@ const sliderSocket = (address: number, ns: string, entry: ControlEntry): Control
 const nativeField = (node: IrNode, entry: ControlEntry, ctx: Emit): ControlEntry => {
   switch (node.kind) {
     case 'select':
-      return select(
+      // Several choices are a toggle per option, each answering in a row of its
+      // own; one is the dropdown the options answer through together.
+      return (node.multiple ? multiSelect : select)(
         { name: node.name, address: node.address, options: node.options.map(looksOf) },
         entry,
         ctx,

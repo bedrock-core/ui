@@ -1,16 +1,14 @@
 import type { FlexStyle, LayoutNode, MeasureFunc } from '@bedrock-core/flexbox';
 import { CANONICAL_SCREEN, createNode, computeLayout as flexComputeLayout } from '@bedrock-core/flexbox';
 import { isTextElementType, safeLabelText, type TextFont, type TextOverflow, type TextWordBreak } from '../../../components/Text';
-import {
-  MODAL_DROPDOWN_SLOT_TYPE, MODAL_FORM_BUTTON_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE,
-  MODAL_INPUT_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
-} from '../../../components/Form';
+import { MODAL_FORM_BUTTON_SLOT_TYPE } from '../../../components/Form';
 import { LIST_SLOT_TYPE } from '../../../components/List';
 import { SCROLL_RESERVE, SCROLL_SLOT_TYPE, type ScrollAxis, WIDE_RECT } from '../../../components/Scroll';
 import type { JSX } from '../../../jsx';
 import { ellipsizeText, measureText, wrapText, WIDEST_GLYPH } from '../../../util/textMetrics';
 import { isTransparentType } from '../../componentRegistry';
 import { isElement } from '../../guards';
+import { MODAL_DROPDOWN_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE } from '../../fields';
 
 /**
  * Per-scroll geometry, measured by this pass.
@@ -300,7 +298,7 @@ function withIntrinsicSize(element: JSX.Element, style: FlexStyle): FlexStyle {
   if (modalDefaultHeight !== undefined) {
     const next: FlexStyle = { ...style };
 
-    // The inline select is a real flex CONTAINER — its Form.Option children are laid out by
+    // The inline select is a real flex CONTAINER — its Option children are laid out by
     // our engine, so when it HAS options its height must come from content flow (auto), not
     // the native-row default. Defaulting it pinned the group at 17px and flex-SHRANK a column
     // of 17px rows into it (in-game: 3 radio rows squashed to ~5px each; a row-direction

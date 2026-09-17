@@ -1,6 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import type { FormDropdownProps as PrimitiveDropdownProps, JSX } from '@bedrock-core/ui-runtime';
-import { Form as PrimitiveForm, Image, Panel, useMechanism } from '@bedrock-core/ui-runtime';
+import type { DropdownProps as PrimitiveDropdownProps, JSX } from '@bedrock-core/ui-runtime';
+import { Dropdown as PrimitiveDropdown, Image, Option, Panel, useMechanism } from '@bedrock-core/ui-runtime';
 import { theme } from './tokens';
 import { labeledColumn, rowSizing } from './Form/label';
 
@@ -14,14 +14,14 @@ export interface DropdownProps extends Omit<PrimitiveDropdownProps, 'children'> 
   label?: string;
   /**
    * Selectable options — the ore layer keeps the simple string-array API and maps each
-   * entry to a primitive `Form.Option` child (value = label = the string).
+   * entry to a primitive `Option` child (value = label = the string).
    */
   options: string[];
 }
 
 /**
  * The theme's dropdown: the theme's closed-box faces plus the popup surfaces
- * (popup container + option default/hover/selected) on the native `Form.Dropdown`.
+ * (popup container + option default/hover/selected) on the native `Dropdown`.
  * Option labels use the theme dropdown text style, left-aligned.
  *
  * The closed-box face shows the selected value on the left and the arrow on the
@@ -55,7 +55,7 @@ export function Dropdown({
 
   const control = (
     <Panel {...(label === undefined ? { ...rowSizing(layout), ...layout } : { width: '100%' })}>
-      <PrimitiveForm.Dropdown
+      <PrimitiveDropdown
         name={name}
         defaultValue={defaultValue}
         enabled={enabled}
@@ -78,9 +78,9 @@ export function Dropdown({
         currentInsetY={currentInsetY}
       >
         {options.map(o => (
-          <PrimitiveForm.Option value={o} label={o} />
+          <Option value={o} label={o} />
         ))}
-      </PrimitiveForm.Dropdown>
+      </PrimitiveDropdown>
       <Panel
         position={'absolute'}
         top={0}

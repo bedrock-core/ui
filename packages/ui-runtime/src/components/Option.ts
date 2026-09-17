@@ -1,18 +1,11 @@
-import { FunctionComponent, JSX } from '../../jsx';
-import { withControl, type ControlProps } from '../control';
-import { labelFontFields, type LabelFont } from './controlPayload';
+import { FunctionComponent, JSX } from '../jsx';
+import { withControl, type ControlProps } from './control';
+import { labelFontFields, type LabelFont } from './Form/controlPayload';
+import { MODAL_OPTION_SLOT_TYPE } from '../core/fields';
 
-/**
- * Host type for `Form.Option` — LAYOUT-ONLY: the flex engine lays it out (so it gets
- * computed x/y/w/h like any element), but it is never a control of its own. Its data
- * and geometry are read off the laid-out child by the parent select — the compile
- * places the rows it describes, and the runtime packs it into the native option blob.
- */
-export const MODAL_OPTION_SLOT_TYPE = 'modal-option';
-
-export interface FormOptionProps extends ControlProps {
+export interface OptionProps extends ControlProps {
   /**
-   * The option's value. `Form.Dropdown` / `Form.Radio` / `Form.ToggleButton` report the
+   * The option's value. `Dropdown` / `Select` report the
    * SELECTED option's INDEX on submit (native dropdown behavior); `value` is what a
    * `defaultValue` match tests against and is the caller's stable identifier.
    */
@@ -26,6 +19,12 @@ export interface FormOptionProps extends ControlProps {
   scale?: number;
   /** Label alignment — TS-computed into the label-group x/y. Falls back to the group's `optionAlign`. */
   align?: 'left' | 'center' | 'right';
+  /** Label colour, RGB in 0..1. Falls back to the group's `optionColor`. */
+  color?: readonly [number, number, number];
+  /** Label colour while selected. Falls back to the group's `optionColorSelected`, then to `color`. */
+  colorSelected?: readonly [number, number, number];
+  /** How far the label sits lower while selected, in px. Falls back to the group's `optionDropSelected`. */
+  dropSelected?: number;
   // --- row faces ---
   /** Per-option idle row/segment background texture. Falls back to the group's `optionBackground`. */
   background?: string;
@@ -49,22 +48,22 @@ export interface FormOptionProps extends ControlProps {
 }
 
 /**
- * One option of a `Form.Radio` / `Form.ToggleButton`. LAYOUT-ONLY: the flex engine lays it out
+ * One option of a `Select`. LAYOUT-ONLY: the flex engine lays it out
  * (so it gets a computed `x/y/width/height` like any element — position it with the usual
  * `ControlProps`/`LayoutProps`: `flex`, `gap`, `width`, `paddingTop`, …), but it is NOT emitted
  * as a native control. The parent inline-select's writer reads each option element's post-layout
  * geometry + its `label`/`value`/style off `props` and packs them into that option's native blob,
  * which the RP option row decodes to SELF-POSITION via `use_anchored_offset`.
  *
- * So authoring `<Form.Radio><Form.Option value="a" label="A" /> …</Form.Radio>` gives every option
+ * So authoring `<Form.Radio><Option value="a" label="A" /> …</Form.Radio>` gives every option
  * real, fully-customizable flex layout — the same layout system every other component uses — while
  * selection + the single submitted index still ride the one native `dropdown()` the group emits.
  */
-export const FormOption: FunctionComponent<FormOptionProps> = ({
+export const Option: FunctionComponent<OptionProps> = ({
   value, label, background, backgroundHover, backgroundSelected,
   bullet, bulletSelected, bulletHover, bulletSelectedHover, bulletWidth, bulletHeight,
-  font, scale, align, ...layout
-}: FormOptionProps): JSX.Element => {
+  font, scale, align, color, colorSelected, dropSelected, ...layout
+}: OptionProps): JSX.Element => {
   // Pre-resolve the font fields here (the writer wants fontType/fontScaleFactor, not the raw
   // LabelFont), only when the caller set them — otherwise the group's resolved values are used.
   const fontFields = font !== undefined || scale !== undefined
@@ -91,6 +90,9 @@ export const FormOption: FunctionComponent<FormOptionProps> = ({
       bulletWidth,
       bulletHeight,
       align,
+      color,
+      colorSelected,
+      dropSelected,
       // Resolved font fields (or undefined → inherit the group's), so the writer needn't re-map.
       __optionFontType: fontFields?.fontType,
       __optionFontScale: fontFields?.fontScaleFactor,

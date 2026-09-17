@@ -77,12 +77,12 @@ export const VOCABULARY_MAX = 1;
  * container sizes itself to the screen only then. A compiled screen wants
  * exactly that, so it keeps the header and adds its own marker after it.
  */
-export const PROTOCOL_HEADER = 'bcuiv0008';
+export const PROTOCOL_HEADER = 'corev0009';
 
 /** What marks a title as a compiled screen rather than a serialized one. */
 export const COMPILED_MARKER = 'core';
 
-/** `bcuiv0008core1:` — what every compiled title of encoding 1 starts with. */
+/** `corev0009core1:` — what every compiled title of encoding 1 starts with. */
 export const compiledPrefix = (encoding: number): string =>
   `${PROTOCOL_HEADER}${COMPILED_MARKER}${encoding}:`;
 

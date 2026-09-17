@@ -25,7 +25,7 @@ export const FIELD_MARKERS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmn
 export const PAD_CHAR = ';';
 
 // Protocol version tag (format: 'v' + 4 hex digits)
-// e.g., 'bcuiv0007'
+// e.g., 'corev0009'
 // Increment when making backward-incompatible changes to the payload layout.
 // v0006: added the common `region` field (carved from the reserved block) and
 // generalized the title metadata to carry one extent per region.
@@ -36,8 +36,9 @@ export const PAD_CHAR = ';';
 // text of TERMINAL payloads (Text cells) is a variable-length TAIL — unpadded,
 // unprefixed, uncapped. A RawMessage tail turns the form text into a rawtext
 // pair [{ text: <fixed fields> }, <tail>], resolved by the CLIENT.
-export const VERSION = 'v0008';
-export const PROTOCOL_HEADER = `bcui${VERSION}`;
+// v0009: the header prefix is `core`, like every identifier the library mints.
+export const VERSION = 'v0009';
+export const PROTOCOL_HEADER = `core${VERSION}`;
 export const PROTOCOL_HEADER_LENGTH = 9; // bytes, all characters are single-byte ASCII
 
 // Public protocol constants (exported for tests and decoders)

@@ -2,11 +2,7 @@ import { BUTTON_TYPE } from '../../components/Button';
 import { EMBED_SLOT_TYPE } from '../../components/Embed';
 import { EXPECT_SLOT_TYPE, expectedHost } from '../../components/Expect';
 import { LIST_SLOT_TYPE } from '../../components/List';
-import {
-  MODAL_DROPDOWN_SLOT_TYPE, MODAL_FORM_BUTTON_SLOT_TYPE,
-  MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE, MODAL_OPTION_SLOT_TYPE,
-  MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
-} from '../../components/Form';
+import { MODAL_FORM_BUTTON_SLOT_TYPE } from '../../components/Form';
 import { SCROLL_SLOT_TYPE } from '../../components/Scroll';
 import { SWAP_SLOT_TYPE } from '../../components/Swap';
 import { isForeignSlot, SLOT_TYPE } from '../../components/Slot';
@@ -17,6 +13,7 @@ import type { JSX } from '../../jsx';
 import { childElements } from '../guards';
 import { CONTAINER_TYPE, isHostRoot, MODAL_FORM_SLOT_TYPE, SCREEN_TYPE } from '../roots';
 import { ContainerScreenError, ScreenRootError } from '../types';
+import { MODAL_DROPDOWN_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE, MODAL_OPTION_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE } from '../fields';
 
 /**
  * The one thing a built tree is checked against: what it holds, against what

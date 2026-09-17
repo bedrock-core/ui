@@ -1,5 +1,7 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
-import { Form, Panel, Scroll, Text } from '@bedrock-core/ui-runtime';
+import { Form, Panel, Scroll, Text, Dropdown, Input, Option, Slider, Toggle } from '@bedrock-core/ui-runtime';
+import type { FunctionComponent } from '@bedrock-core/ui-runtime';
+import { jsx } from '@bedrock-core/ui-runtime/jsx-runtime';
 import { describe, expect, it } from 'vitest';
 import { compileFormScreen } from '../compile';
 
@@ -23,13 +25,13 @@ describe('fields inside a scroll on a compiled modal', () => {
             width: 283,
             children: [
               Text({ children: '§fTALL' }),
-              Form.Toggle({ name: 'a' }),
-              Form.Slider({ name: 'b', min: 0, max: 10 }),
-              Form.Input({ name: 'c' }),
-              Form.Dropdown({ name: 'd', children: [Form.Option({ value: 'x', label: 'X' }), Form.Option({ value: 'y', label: 'Y' })] }),
-              Form.Toggle({ name: 'e' }),
-              Form.Toggle({ name: 'f' }),
-              Form.Toggle({ name: 'g' }),
+              jsx(Toggle, { name: 'a' }),
+              jsx(Slider as unknown as FunctionComponent, { name: 'b', min: 0, max: 10 }),
+              jsx(Input as unknown as FunctionComponent, { name: 'c' }),
+              jsx(Dropdown as unknown as FunctionComponent, { name: 'd', children: [Option({ value: 'x', label: 'X' }), Option({ value: 'y', label: 'Y' })] }),
+              jsx(Toggle, { name: 'e' }),
+              jsx(Toggle, { name: 'f' }),
+              jsx(Toggle, { name: 'g' }),
             ],
           }),
         }),

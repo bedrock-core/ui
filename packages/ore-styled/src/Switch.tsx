@@ -1,6 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import type { ControlProps, JSX } from '@bedrock-core/ui-runtime';
-import { Button, Form, ModalFormError, Panel, useMechanism, useState } from '@bedrock-core/ui-runtime';
+import { Button, ModalFormError, Panel, Toggle as PrimitiveToggle, useMechanism, useState } from '@bedrock-core/ui-runtime';
 import { fieldLabel, rowSizing } from './Form/label';
 
 /**
@@ -96,7 +96,7 @@ export function Switch(
 
   const control = useMechanism('Toggle') === 'field'
     ? (
-        <Form.Toggle
+        <PrimitiveToggle
           name={named(name, label)}
           defaultValue={defaultValue}
           enabled={enabled}

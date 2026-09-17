@@ -104,8 +104,9 @@ const actionAddressing = (entries: readonly EntryEntry[]): Addressing => ({
  * A screen is one or the other; the two numberings never meet in one map.
  */
 const modalAddressing = (rows: readonly ModalRow[]): Addressing => ({
+  // A multiple select owns a row per option; its cell is the first of them.
   cells: new Map(rows
-    .filter(row => row.kind === 'field')
+    .filter(row => row.kind === 'field' && (row.member ?? 0) === 0)
     .map(row => [row.element, { address: row.row, role: 'button' as const }])),
   channels: new Map(rows
     .filter(row => row.kind === 'text' || row.kind === 'int' || row.kind === 'texture')

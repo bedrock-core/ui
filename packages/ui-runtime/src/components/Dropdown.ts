@@ -1,16 +1,18 @@
 import { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
-import { isModalForm } from '../../core/guards';
-import { ModalFormError, type Writer } from '../../core/types';
-import { emitDropdown } from '../../core/writers';
-import { FunctionComponent, JSX } from '../../jsx';
-import { measureText } from '../../util/textMetrics';
-import { resolveStateBackgrounds, UNSTYLED_TEXTURE, withControl, type StateBackgroundProps } from '../control';
-import { labelFontFields, type LabelFont } from './controlPayload';
+import { isModalForm } from '../core/guards';
+import { ModalFormError, type Writer } from '../core/types';
+import { emitDropdown } from '../core/writers';
+import { FunctionComponent, JSX } from '../jsx';
+import { measureText } from '../util/textMetrics';
+import { resolveStateBackgrounds, UNSTYLED_TEXTURE, withControl, type StateBackgroundProps } from './control';
+import { labelFontFields, type LabelFont } from './Form/controlPayload';
 import {
   fallbackGroupDefaults, isGroupDefaults, NO_OPTION_GEOMETRY, optionElements, optionLabelPosition,
   readOption, serializeSelectOption, type GroupOptionDefaults,
-} from './optionPayload';
-import { FormControlBase } from './shared';
+} from './Form/optionPayload';
+import { FormControlBase } from './Form/shared';
+import { MODAL_DROPDOWN_SLOT_TYPE } from '../core/fields';
+import { useMechanism } from '../hooks/useMechanism';
 
 /**
  * Fixed option row height (px) — the RP `dropdown_option_radio` renders every row at this
@@ -34,13 +36,10 @@ const POPUP_PADDING = 1;
 /** Popup height cap: half the canonical screen — longer lists get the scrollbar. */
 const POPUP_MAX_HEIGHT = CANONICAL_SCREEN.height / 2;
 
-/** Host type for the native modal dropdown slot (modal-only). */
-export const MODAL_DROPDOWN_SLOT_TYPE = 'modal-dropdown';
-
-export interface FormDropdownProps extends FormControlBase, StateBackgroundProps {
+export interface DropdownProps extends FormControlBase, StateBackgroundProps {
   /**
-   * Initial selection as an option VALUE (matched against each `Form.Option`'s `value`,
-   * mapped to its index). Defaults to the first option. `Form.onSubmit` reports the
+   * Initial selection as an option VALUE (matched against each `Option`'s `value`,
+   * mapped to its index). Defaults to the first option. `onSubmit` reports the
    * selected option's INDEX (native behavior).
    */
   defaultValue?: string;
@@ -52,7 +51,7 @@ export interface FormDropdownProps extends FormControlBase, StateBackgroundProps
    * dropdown is open. Defaults to the unstyled placeholder texture.
    */
   popupBackground?: string;
-  // --- Group-level option style defaults (each Form.Option may override its own) ---
+  // --- Group-level option style defaults (each Option may override its own) ---
   /** Default option row background texture (idle). Defaults to the unstyled placeholder. */
   optionBackground?: string;
   /** Default option row hover-state texture. Defaults to the resolved option background. */
@@ -81,32 +80,32 @@ export interface FormDropdownProps extends FormControlBase, StateBackgroundProps
   /** Current-value Y offset (px). Default: vertically centered (−lineHeight/2). */
   currentInsetY?: number;
   /**
-   * The selectable options, authored as `Form.Option` children (same authoring shape as
-   * `Form.Radio` / `Form.ToggleButton`). Popup rows flow at the fixed row height, so an
+   * The selectable options, authored as `Option` children (same authoring shape as
+   * `Select`). Popup rows flow at the fixed row height, so an
    * option's layout props are ignored here — only its `value`/`label`/style are read.
    */
   children?: JSX.Node;
 }
 
 /**
- * Option dropdown field → `ModalFormData.dropdown`. Result (`Form.onSubmit`): the
+ * Option dropdown field → `ModalFormData.dropdown`. Result (`onSubmit`): the
  * selected option's `index` (number, native behavior). Modal-only; render inside a
  * `<Form>`. Accepts the same control/layout props as any component; geometry is
  * computed by the layout phase and encoded into the label payload for the RP to
  * position/style the native widget.
  *
- * Options are `Form.Option` CHILDREN. Each carries its OWN encoded payload (label group +
+ * Options are `Option` CHILDREN. Each carries its OWN encoded payload (label group +
  * background states) as the native option string — the RP option rows self-decode it per
  * row, so option styling is genuinely per-option (not read uniformly from the cell).
  */
-export const FormDropdown: FunctionComponent<FormDropdownProps> = ({
+const nativeDropdown = ({
   name, defaultValue,
   backgroundHover, backgroundPressed, backgroundLocked, popupBackground,
   optionBackground, optionHover, optionSelected,
   optionFont, optionScale, optionAlign,
   currentColor, currentFont, currentScale, currentInsetX, currentInsetY,
   children, ...layout
-}: FormDropdownProps): JSX.Element => {
+}: DropdownProps): JSX.Element => {
   const optionLabelFont = labelFontFields({ font: optionFont, scale: optionScale });
   // Closed-box current-value label style (rides the CELL payload, not the option blob —
   // it decorates #dropdown_option_text after the RP decodes the option text out of it).
@@ -178,10 +177,19 @@ export const FormDropdown: FunctionComponent<FormDropdownProps> = ({
   };
 };
 
+/**
+ * A choice behind a popup. Only a `<Form>` draws one; any other screen refuses it at build.
+ */
+export const Dropdown: FunctionComponent<DropdownProps> = (props: DropdownProps): JSX.Element => {
+  useMechanism('Dropdown');
+
+  return nativeDropdown(props);
+};
+
 /** Serializes a `modal-dropdown` into the native modal dropdown control. */
-export const formDropdownWriter: Writer = (payload, form, ctx, _callbacks, props, nativeArgs, children) => {
+export const dropdownWriter: Writer = (payload, form, ctx, _callbacks, props, nativeArgs, children) => {
   if (!isModalForm(form)) {
-    throw new ModalFormError('Form.Dropdown must be rendered inside a `<Form>`.');
+    throw new ModalFormError('Dropdown must be rendered inside a `<Form>`.');
   }
 
   const name = typeof nativeArgs?.name === 'string' ? nativeArgs.name : '';

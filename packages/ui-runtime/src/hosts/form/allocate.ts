@@ -1,14 +1,12 @@
-import {
-  MODAL_DROPDOWN_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE,
-  MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
-} from '../../components/Form';
 import { entryBaseOf } from '../../components/Embed';
+import { selectMembers } from '../../components/Form/optionPayload';
 import { liveTexture } from '../../components/Image';
 import { listCapacity } from '../../components/List';
 import { liveTextLength } from '../../components/Text';
 import { type Analysis, type CellRole, claim } from '../../core/ir';
 import { childElements } from '../../core/guards';
 import type { JSX } from '../../jsx';
+import { MODAL_DROPDOWN_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE } from '../../core/fields';
 
 /**
  * How a form lays a screen's needs out in its own entries.
@@ -118,6 +116,8 @@ export interface ModalRow {
   readonly kind: 'field' | 'text' | 'bool' | 'int' | 'texture';
   /** Characters reserved when the row carries live text. */
   readonly length?: number;
+  /** Which option the row answers for, when the element is a multiple select: one row per option. */
+  readonly member?: number;
 }
 
 /** The host types the ENGINE draws. Nothing else can, which is why they take rows. */
@@ -150,7 +150,14 @@ export const allocateModal = (tree: JSX.Element, visibles: ReadonlySet<JSX.Eleme
     }
 
     if (typeof type === 'string') {
-      if (NATIVE_FIELDS.has(type)) {
+      const members = selectMembers(node);
+
+      if (members !== undefined) {
+        // Contiguous, so the build can place option `m` at the first row plus `m`.
+        for (let member = 0; member < members; member++) {
+          rows.push({ element: node, row: rows.length, kind: 'field', member });
+        }
+      } else if (NATIVE_FIELDS.has(type)) {
         rows.push({ element: node, row: rows.length, kind: 'field' });
       } else if (listCapacity(node) !== undefined) {
         rows.push({ element: node, row: rows.length, kind: 'int' });

@@ -1,6 +1,7 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
 import { SCROLL_RESERVE } from '@bedrock-core/ui-runtime/compile';
-import { Form, List, Panel, Screen as ScreenRoot, Scroll, Text, useState } from '@bedrock-core/ui-runtime';
+import { Form, List, Panel, Screen as ScreenRoot, Scroll, Text, useState, Toggle } from '@bedrock-core/ui-runtime';
+import { jsx } from '@bedrock-core/ui-runtime/jsx-runtime';
 import { describe, expect, it } from 'vitest';
 import { eachControl } from '../../../__fixtures__/helpers';
 import type { Control, Document } from '../../../jsonui';
@@ -215,7 +216,7 @@ describe('carriers on the modal', () => {
       onSubmit: ({ values }): void => { setNick(String(values.nick ?? '')); },
       children: Panel({
         children: [
-          Form.Toggle({ name: 'sound' }),
+          jsx(Toggle, { name: 'sound' }),
           Text({ maxLength: 10, children: `saved ${nick}` }),
           Panel({ visible: open, children: [Text({ children: 'EXTRA' })] }),
           Form.Button({ type: 'submit', label: 'Save' }),

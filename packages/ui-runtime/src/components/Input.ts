@@ -1,19 +1,18 @@
-import { isModalForm } from '../../core/guards';
-import { ModalFormError, type Writer } from '../../core/types';
-import { emitInput } from '../../core/writers';
-import { FunctionComponent, JSX } from '../../jsx';
-import { measureText } from '../../util/textMetrics';
-import { resolveStateBackgrounds, withControl, type StateBackgroundProps } from '../control';
-import { labelPayloadFields, type LabelFont } from './controlPayload';
-import { FormControlBase } from './shared';
-
-/** Host type for the native modal text-field slot (modal-only). */
-export const MODAL_INPUT_SLOT_TYPE = 'modal-input';
+import { isModalForm } from '../core/guards';
+import { ModalFormError, type Writer } from '../core/types';
+import { emitInput } from '../core/writers';
+import { FunctionComponent, JSX } from '../jsx';
+import { measureText } from '../util/textMetrics';
+import { resolveStateBackgrounds, withControl, type StateBackgroundProps } from './control';
+import { labelPayloadFields, type LabelFont } from './Form/controlPayload';
+import { FormControlBase } from './Form/shared';
+import { MODAL_INPUT_SLOT_TYPE } from '../core/fields';
+import { useMechanism } from '../hooks/useMechanism';
 
 /** Default left inset (px) of the field text from the box edge (the old text_area inset). */
 const FIELD_TEXT_INSET_X = 8;
 
-export interface FormInputProps extends FormControlBase, StateBackgroundProps {
+export interface InputProps extends FormControlBase, StateBackgroundProps {
   /** Placeholder shown inside the native text field when empty. */
   placeholder?: string;
   /** Initial text. Defaults to `''`. */
@@ -35,16 +34,16 @@ export interface FormInputProps extends FormControlBase, StateBackgroundProps {
 }
 
 /**
- * Text field → `ModalFormData.textField`. Result (`Form.onSubmit`): `string`.
+ * Text field → `ModalFormData.textField`. Result (`onSubmit`): `string`.
  * Modal-only; render inside a `<Form>`. Accepts the same control/layout props as any
  * component; geometry is computed by the layout phase and encoded into the label
  * payload for the RP to position/style the native widget.
  */
-export const FormInput: FunctionComponent<FormInputProps> = ({
+const nativeInput = ({
   name, placeholder, defaultValue, font, scale,
   textOffsetX, textOffsetY, placeholderOffsetX, placeholderOffsetY,
   backgroundHover, backgroundPressed, backgroundLocked, ...layout
-}: FormInputProps): JSX.Element => {
+}: InputProps): JSX.Element => {
   const box = resolveStateBackgrounds({ background: layout.background, backgroundHover, backgroundPressed, backgroundLocked });
   // Vertical-centering default: the labels hang from a [1,1] frame at the box's
   // left-middle, so y = -lineHeight/2 centers a single line on the box.
@@ -86,10 +85,19 @@ export const FormInput: FunctionComponent<FormInputProps> = ({
   };
 };
 
+/**
+ * A text field. Only a `<Form>` draws one; any other screen refuses it at build.
+ */
+export const Input: FunctionComponent<InputProps> = (props: InputProps): JSX.Element => {
+  useMechanism('Input');
+
+  return nativeInput(props);
+};
+
 /** Serializes a `modal-input` into the native modal text field control. */
-export const formInputWriter: Writer = (payload, form, ctx, _callbacks, _props, nativeArgs) => {
+export const inputWriter: Writer = (payload, form, ctx, _callbacks, _props, nativeArgs) => {
   if (!isModalForm(form)) {
-    throw new ModalFormError('Form.Input must be rendered inside a `<Form>`.');
+    throw new ModalFormError('Input must be rendered inside a `<Form>`.');
   }
 
   const name = typeof nativeArgs?.name === 'string' ? nativeArgs.name : '';

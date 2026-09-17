@@ -17,7 +17,7 @@
 		   bisected "Progress out of range" assertion turned out to be the compiled
 		   slider's, not this panel's. */
 		"$allow_scrolling_even_when_content_fits": false,
-		"$protocol_header": "bcuiv0008",
+		"$protocol_header": "corev0009",
 		"modifications": [
 			{
 				"array_name": "bindings",
@@ -42,7 +42,7 @@
 		   bisected "Progress out of range" assertion turned out to be the compiled
 		   slider's, not this panel's. */
 		"$allow_scrolling_even_when_content_fits": false,
-		"$protocol_header": "bcuiv0008",
+		"$protocol_header": "corev0009",
 		"modifications": [
 			{
 				"array_name": "bindings",
@@ -61,7 +61,7 @@
 		]
 	},
 	"main_screen_content": {
-		"$protocol_header": "bcuiv0008",
+		"$protocol_header": "corev0009",
 		"size": [
 			"0px",
 			"0px"

@@ -1,9 +1,6 @@
 import type { Player } from '@minecraft/server';
 import { ModalFormData } from '@minecraft/server-ui';
-import {
-  collectFormButtons, type FormConfig, type FormValues, MODAL_FORM_SLOT_TYPE,
-} from '../../components/Form';
-import { MODAL_SLIDER_SLOT_TYPE } from '../../components/Form';
+import { collectFormButtons, type FormConfig, type FormValues, MODAL_FORM_SLOT_TYPE } from '../../components/Form';
 import { listCount } from '../../components/List';
 import { visiblesAt } from '../../core/ir';
 import type { CompiledSnapshot } from '../../core/render/screens';
@@ -21,6 +18,7 @@ import { isSwapPending } from '../../core/render/session';
 import { isHandler } from '../../core/events';
 import type { ModalControlEntry, ModalSerializationContext, SerializablePrimitive, SerializableProps } from '../../core/types';
 import type { JSX } from '../../jsx';
+import { MODAL_SLIDER_SLOT_TYPE } from '../../core/fields';
 
 /**
  * A COMPILED modal: the same native fields, with none of the layout on the wire.
@@ -118,6 +116,12 @@ function writeRow(row: ModalRow, form: ModalFormData, context: ModalSerializatio
     return;
   }
 
+  // A multiple select owns one row per option, and its writer emits all of
+  // them on its first: the later rows only keep the row count in step.
+  if (row.member !== undefined && row.member > 0) {
+    return;
+  }
+
   const { type, props, nativeArgs } = element;
   const descriptor = typeof type === 'string' ? getComponentDescriptor(type) : undefined;
 
@@ -162,6 +166,31 @@ const answer = (
 ): string | number | boolean | undefined => (entry.decode === undefined ? raw : entry.decode(raw));
 
 /**
+ * Put one control's answer under its name.
+ *
+ * A member of a multiple select shares its name with the other members, so its
+ * answer is gathered instead: the array exists as soon as one member is read,
+ * which keeps a select with nothing on as `[]` rather than absent, and members
+ * arrive in option order, so the indices come out sorted.
+ */
+const record = (values: FormValues, entry: ModalControlEntry, raw: string | number | boolean | undefined): void => {
+  if (entry.member === undefined) {
+    values[entry.name] = answer(entry, raw);
+
+    return;
+  }
+
+  const gathered = values[entry.name];
+  const members = Array.isArray(gathered) ? gathered : [];
+
+  if (raw === true) {
+    members.push(entry.member);
+  }
+
+  values[entry.name] = members;
+};
+
+/**
  * Re-key positional `formValues` by each control's name.
  *
  * The registry is ordinal → name and the response is positional, so a row with
@@ -189,14 +218,14 @@ function collectValues(
   // response is short OF, and let the missing ones come back undefined.
   if (formValues.length === named.length && named.length !== context.modalControlIndex) {
     named.forEach(([, entry], position) => {
-      values[entry.name] = answer(entry, formValues[position]);
+      record(values, entry, formValues[position]);
     });
 
     return values;
   }
 
   for (const [ordinal, entry] of named) {
-    values[entry.name] = answer(entry, formValues[ordinal]);
+    record(values, entry, formValues[ordinal]);
   }
 
   return values;

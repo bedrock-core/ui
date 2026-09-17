@@ -14,7 +14,7 @@ import type { Control } from '../../jsonui';
  */
 
 /** The definition each kind mounts: the library's own wrapper, with nothing to decode. */
-const TOGGLE_ROW = 'core_ui_form_components.toggle';
+export const TOGGLE_ROW = 'core_ui_form_components.toggle';
 const DROPDOWN_ROW = 'core_ui_form_components.dropdown';
 const INPUT_ROW = 'core_ui_form_components.input';
 

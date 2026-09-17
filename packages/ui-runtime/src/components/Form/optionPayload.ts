@@ -2,7 +2,8 @@ import { serializeProps } from '../../core/payload';
 import { JSX } from '../../jsx';
 import { measureText } from '../../util/textMetrics';
 import { labelFontFields, type LabelFont } from './controlPayload';
-import { FormOption, MODAL_OPTION_SLOT_TYPE } from './FormOption';
+import { MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_OPTION_SLOT_TYPE } from '../../core/fields';
+import { Option } from '../Option';
 
 /** Host `type` tag for a per-option payload blob (decoded per-row by the RP option controls). */
 export const DROPDOWN_OPTION_TYPE = 'dropdown-option';
@@ -37,10 +38,23 @@ export interface OptionStyle {
   bulletHoverTexture: string;
   /** Selected bullet glyph shown on hover. Empty falls back to `bulletSelectedTexture`. */
   bulletSelectedHoverTexture: string;
+  /** Label colour, RGB in 0..1. Absent leaves the label's own. Compiled screens only; never serialized. */
+  color?: readonly [number, number, number];
+  /** Label colour while selected. Compiled screens only; never serialized. */
+  colorSelected?: readonly [number, number, number];
+  /** How far the label sits lower while selected, in px. Compiled screens only; never serialized. */
+  dropSelected?: number;
+}
+
+/** Three finite numbers, the shape a label colour takes. */
+function readColor(v: unknown): readonly [number, number, number] | undefined {
+  return Array.isArray(v) && v.length === 3 && v.every(channel => typeof channel === 'number' && Number.isFinite(channel))
+    ? [Number(v[0]), Number(v[1]), Number(v[2])]
+    : undefined;
 }
 
 /**
- * Per-option flex geometry (px) computed by the layout phase for a `Form.Option`. Packed into the
+ * Per-option flex geometry (px) computed by the layout phase for a `Option`. Packed into the
  * option blob AFTER the style fields so the RP option row SELF-POSITIONS via `use_anchored_offset`
  * (x/y) at its flex-computed size (width/height). The dropdown popup passes all zeros (its rows
  * still flow at the fixed row height).
@@ -91,8 +105,8 @@ export function isStringArray(value: unknown): value is string[] {
 }
 
 /**
- * Group-level option style defaults a `Form.Dropdown` / `Form.Radio` / `Form.ToggleButton`
- * resolves; every `Form.Option` child inherits any field it doesn't override.
+ * Group-level option style defaults a `Dropdown` / `Form.Radio` / `Form.ToggleButton`
+ * resolves; every `Option` child inherits any field it doesn't override.
  */
 export interface GroupOptionDefaults {
   background: string;
@@ -107,13 +121,16 @@ export interface GroupOptionDefaults {
   fontType: string;
   fontScaleFactor: number;
   align: 'left' | 'center' | 'right';
+  color?: readonly [number, number, number];
+  colorSelected?: readonly [number, number, number];
+  dropSelected?: number;
 }
 
 export function isGroupDefaults(v: unknown): v is GroupOptionDefaults {
   return typeof v === 'object' && v !== null && 'background' in v && 'fontType' in v;
 }
 
-/** One option's resolved data, read off its (post-layout) `Form.Option` element. */
+/** One option's resolved data, read off its (post-layout) `Option` element. */
 export interface OptionData {
   value: string;
   text: string;
@@ -134,22 +151,22 @@ function readAlign(v: unknown, fallback: 'left' | 'center' | 'right'): 'left' | 
 }
 
 /**
- * Narrow a child node to a `Form.Option` element. Matches BOTH forms the lazy JSX
- * runtime produces: the un-invoked element (`type` === the `FormOption` function —
+ * Narrow a child node to a `Option` element. Matches BOTH forms the lazy JSX
+ * runtime produces: the un-invoked element (`type` === the `Option` function —
  * what a COMPONENT sees in its `children` prop, since buildTree invokes function
  * components later) and the invoked slot element (`type` === 'modal-option' — what a
- * WRITER sees post-walk). FormDropdown counts options at component time for
+ * WRITER sees post-walk). Dropdown counts options at component time for
  * popupHeight; matching only the invoked form counted 0 there (popup rendered at the
  * 9px chrome height).
  */
 export function isOptionElement(node: unknown): node is JSX.Element {
   return (
     typeof node === 'object' && node !== null && 'type' in node
-    && ((node).type === MODAL_OPTION_SLOT_TYPE || (node).type === FormOption)
+    && ((node).type === MODAL_OPTION_SLOT_TYPE || (node).type === Option)
   );
 }
 
-/** The `Form.Option` elements among a `children` value (nested arrays flattened). */
+/** The `Option` elements among a `children` value (nested arrays flattened). */
 export function optionElements(children: unknown): JSX.Element[] {
   const arr = Array.isArray(children) ? children.flat(Infinity) : children === undefined ? [] : [children];
 
@@ -157,12 +174,25 @@ export function optionElements(children: unknown): JSX.Element[] {
 }
 
 /**
- * Extract one option's value/text/style/geometry from its (post-layout) `Form.Option` element.
+ * How many modal rows a multiple select answers in: one native toggle per option.
+ * Undefined for every other element, a single select included, which answers in one.
+ */
+export function selectMembers(element: JSX.Element): number | undefined {
+  return element.type === MODAL_INLINE_SELECT_SLOT_TYPE && element.nativeArgs?.['multiple'] === true
+    ? optionElements(element.props.children).length
+    : undefined;
+}
+
+/**
+ * Extract one option's value/text/style/geometry from its (post-layout) `Option` element.
  * Geometry is RELATIVE to the group cell's own box (`groupX`/`groupY`): the layout phase
  * computes ABSOLUTE screen coords, but the RP option row anchors inside the group box.
  */
 export function readOption(el: JSX.Element, defaults: GroupOptionDefaults, groupX = 0, groupY = 0): OptionData {
   const p = el.props;
+  const color = readColor(p.color) ?? defaults.color;
+  const colorSelected = readColor(p.colorSelected) ?? defaults.colorSelected;
+  const dropSelected = typeof p.dropSelected === 'number' ? p.dropSelected : defaults.dropSelected;
 
   return {
     value: readString(p.value, ''),
@@ -182,6 +212,9 @@ export function readOption(el: JSX.Element, defaults: GroupOptionDefaults, group
       bulletHeight: readNumber(p.bulletHeight, defaults.bulletHeight),
       bulletHoverTexture: readString(p.bulletHover, defaults.bulletHoverTexture),
       bulletSelectedHoverTexture: readString(p.bulletSelectedHover, defaults.bulletSelectedHoverTexture),
+      ...color === undefined ? {} : { color },
+      ...colorSelected === undefined ? {} : { colorSelected },
+      ...dropSelected === undefined ? {} : { dropSelected },
     },
     geometry: {
       x: readNumber(p.jsonUIx) - groupX,
@@ -229,7 +262,7 @@ export function optionLabelPosition(
 }
 
 /**
- * Encode one option into its own `bcuiv0007` payload blob — the string handed to the native
+ * Encode one option into its own `corev0009` payload blob — the string handed to the native
  * `ModalFormData.dropdown` as this option's entry. The engine surfaces it per-row as
  * `#custom_radio_text`, and the RP option controls decode it via the shared `'%.Ns'` slicing
  * grammar. Because each option gets its OWN payload, the 64-field marker budget resets per

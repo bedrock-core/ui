@@ -1,7 +1,7 @@
 import type { ControlProps } from '../control';
 
 /**
- * Common props for every modal field control (`Form.Toggle` / `Slider` / `Dropdown`
+ * Common props for every modal field control (`Toggle` / `Slider` / `Dropdown`
  * / `Input`). Each control is a pure DECLARATION: it owns a `name` (its result key)
  * and builds the typed native call. There is no `onChange` / controlled value — the
  * native modal is atomic and returns every value at once on submit, which

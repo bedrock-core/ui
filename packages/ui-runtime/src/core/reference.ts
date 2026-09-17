@@ -1,7 +1,11 @@
 import type { Player } from '@minecraft/server';
 import type { DisplayText } from '@bedrock-core/i18n';
 import { showCompiledTitle } from '../hosts/form/runtime';
+import { playerOwner } from './fabric';
+import { noteShown } from './history';
+import { navigate } from './navigate';
 import { staticScreens } from './render/screens';
+import { endSession } from './render/session';
 
 /**
  * A screen as another addon can show it.
@@ -108,8 +112,17 @@ export type WalkResult = 'back' | 'done';
  * one has nothing left to return to and ends the walk with `'back'`, which is
  * how whoever opened it knows to show what the player came from.
  *
- * @param lookup - What resolves a key into a reference; a key it does not know
- *   ends the walk.
+ * Shown by title rather than rendered, so whatever session the player was in
+ * ends first: it would otherwise present its last screen again over this one.
+ * Where they have been is kept, for `back()`.
+ *
+ * A link to a key the table does not describe — a screen with handlers of its
+ * own, or one only its owner's realm can draw — is still a link: the walk ends
+ * by navigating to it, with the screen it leaves recorded as the one shown, so
+ * `back()` from there returns here.
+ *
+ * @param lookup - What resolves a key into a reference; a link to a key it does
+ *   not know is navigated to instead.
  * @param key - Where to start.
  * @param player - Who is shown the screens.
  */
@@ -122,7 +135,14 @@ export async function presentReference(
   let current = key;
   let screen = lookup(current);
 
+  if (screen !== undefined) {
+    endSession(playerOwner(player));
+  }
+
   while (screen !== undefined) {
+    // The screen the player is on, so a navigation away from it puts it behind them.
+    noteShown(player.id, current);
+
     const selection = await showCompiledTitle(player, screen.title, [...screen.values]);
     const target = selection === undefined ? null : screen.targets[selection] ?? null;
 
@@ -150,6 +170,10 @@ export async function presentReference(
 
     current = target.to;
     screen = lookup(current);
+
+    if (screen === undefined) {
+      navigate(current, player, target.replace === true ? { replace: true } : {});
+    }
   }
 
   return 'done';

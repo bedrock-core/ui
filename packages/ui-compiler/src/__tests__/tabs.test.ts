@@ -169,3 +169,48 @@ describe('compiling Tabs', () => {
     expect(JSON.stringify(lookOf(second ?? {}, 'unchecked'))).toContain('"b"');
   });
 });
+
+describe('the faces a tab header is drawn on', () => {
+  /** One tab, with whatever faces the group is given. */
+  const tabbed = (faces: Record<string, string>, name: string): ReturnType<typeof compileFormScreen> =>
+    compileFormScreen((): JSX.Element => ScreenRoot({ children: Panel({
+      children: Tabs({
+        width: 200,
+        height: 80,
+        ...faces,
+        children: [Tabs.Tab({ header: Text({ children: 'One' }), children: Text({ children: 'pane' }) })],
+      }),
+    }) }), { namespace: 'a', name });
+
+  /** The look a state mounts, as JSON, on the one tab of a compiled screen. */
+  const look = (screen: ReturnType<typeof compileFormScreen>, name: string, state: string): string => {
+    let toggle: Control | undefined;
+
+    eachControl(screen.document, (_key, control) => {
+      if (control.type === 'toggle') {
+        toggle = control;
+      }
+    });
+
+    const entry = (toggle?.controls ?? []).find(row => state in row);
+    const mount = Object.keys((entry?.[state]?.controls ?? [])[0] ?? {})[0] ?? '';
+
+    return JSON.stringify(defs(screen.document)[mount.split('@')[1]?.replace(`a_${name}.`, '') ?? ''] ?? {});
+  };
+
+  it('is unstyled when the group names none, as every primitive is', () => {
+    const plain = tabbed({}, 'plain');
+
+    for (const state of ['unchecked', 'unchecked_hover', 'checked']) {
+      expect(look(plain, 'plain', state)).toContain('textures/ui/unstyled');
+    }
+  });
+
+  it("is the group's own at rest, under the pointer and when chosen", () => {
+    const styled = tabbed({ tabBackground: 'mine/rest', tabHover: 'mine/hover', tabSelected: 'mine/chosen' }, 'styled');
+
+    expect(look(styled, 'styled', 'unchecked')).toContain('mine/rest');
+    expect(look(styled, 'styled', 'unchecked_hover')).toContain('mine/hover');
+    expect(look(styled, 'styled', 'checked')).toContain('mine/chosen');
+  });
+});

@@ -1,5 +1,5 @@
 /** @jsxImportSource @bedrock-core/ui */
-import { AddonPage } from '@bedrock-core/catalog';
+import { AddonPage } from '@bedrock-core/catalog/compiled';
 import { i18n } from '@bedrock-core/catalog/i18n/index';
 import { Screen, type JSX } from '@bedrock-core/ui';
 import manifest from '../../../RP/manifest.json';

@@ -33,8 +33,8 @@ export interface FieldBase extends NodeBase {
  * factor a 1.0 scale means is 2, not 1.
  *
  * The number is the one the COMPONENT already worked out. A field's own `scale`
- * prop is consumed where the element is built — `FormInput` folds it into the
- * value and placeholder label groups, `FormDropdown` into the current-value
+ * prop is consumed where the element is built — `Input` folds it into the
+ * value and placeholder label groups, `Dropdown` into the current-value
  * group — so it never reaches these props at all, and re-deriving it from a
  * `scale` that is always undefined would ignore whatever the author (or the
  * style package) asked for.

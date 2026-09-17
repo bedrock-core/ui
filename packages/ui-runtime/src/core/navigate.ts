@@ -124,7 +124,13 @@ export function openScreen(key: string, player: Player, options: NavigateOptions
   // shown from its table, exactly as another addon's screen is, and its links
   // are followed the same way.
   if (staticScreen(key) !== undefined) {
-    void presentReference(ownTable, key, player);
+    // A back press on the first screen of the walk has nothing behind it in the
+    // walk, so it is the player's own way back.
+    void presentReference(ownTable, key, player).then((ended) => {
+      if (ended === 'back') {
+        back(player);
+      }
+    });
 
     return true;
   }

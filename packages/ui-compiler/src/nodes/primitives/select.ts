@@ -11,19 +11,22 @@ import { boxOf, str } from '../utils/shared';
 import type { LowerContext, NodeDefinition } from '../utils/types';
 
 /**
- * Every option at once, the chosen one marked: a chooser that opens nothing.
+ * Every option at once, the chosen ones marked: a chooser that opens nothing.
  *
- * The engine's dropdown still owns the answer — an inline select is its
- * options placed by the compile instead of by the popup — so this is a native
- * field like the rest, drawn rather than opened.
+ * The engine still owns the answer, so this is a native field like the rest,
+ * drawn rather than opened. One choice is the engine's dropdown with its
+ * options placed by the compile instead of by the popup; several are a native
+ * toggle per option, each placed at its option's rect.
  */
 export interface SelectNode extends FieldBase {
   kind: 'select';
   /** The surface behind the options; absent leaves the face's blank canvas. */
   background?: string;
-  /** The options, placed, and which one is marked at rest. */
+  /** Whether any number may be chosen: a native toggle per option rather than one chooser. */
+  multiple: boolean;
+  /** The options, placed, and which ones are marked at rest. */
   options: InlineOption[];
-  selected: number;
+  selected: number[];
 }
 
 /**
@@ -44,6 +47,11 @@ export interface InlineOption {
   labelY: number;
   fontType: string;
   fontScaleFactor: number;
+  /** The label's colour, and its colour while selected; absent leaves the label's own. */
+  color?: readonly [number, number, number];
+  colorSelected?: readonly [number, number, number];
+  /** How far the label sits lower while selected, in px. */
+  dropSelected?: number;
   /** Row faces per state; `''` draws nothing. */
   background: string;
   backgroundHover: string;
@@ -93,6 +101,9 @@ const optionsOf = (element: JSX.Element, ctx: LowerContext): InlineOption[] => {
       labelY: label.y,
       fontType: style.fontType,
       fontScaleFactor: style.fontScaleFactor,
+      ...style.color === undefined ? {} : { color: style.color },
+      ...style.colorSelected === undefined ? {} : { colorSelected: style.colorSelected },
+      ...style.dropSelected === undefined ? {} : { dropSelected: style.dropSelected },
       background: style.background,
       backgroundHover: style.backgroundHover,
       backgroundSelected: style.backgroundSelected,
@@ -106,12 +117,24 @@ const optionsOf = (element: JSX.Element, ctx: LowerContext): InlineOption[] => {
   });
 };
 
-/** Which option is marked at rest: the default value's, else the first. */
-const selectedOf = (element: JSX.Element): number => {
-  const value = str(element.nativeArgs?.['defaultValue']);
-  const index = optionElements(element.props.children).findIndex(option => str(option.props.value) === value);
+/** Whether the select takes any number of choices. */
+const isMultiple = (element: JSX.Element): boolean => element.nativeArgs?.['multiple'] === true;
 
-  return Math.max(0, index);
+/**
+ * Which options are marked at rest. One choice marks the default value's, else
+ * the first; several mark every default value's, which may be none.
+ */
+const selectedOf = (element: JSX.Element): number[] => {
+  const values = optionElements(element.props.children).map(option => str(option.props.value));
+  const defaults = element.nativeArgs?.['defaultValue'];
+
+  if (isMultiple(element)) {
+    const on = new Set(Array.isArray(defaults) ? defaults.map(value => str(value)) : []);
+
+    return values.flatMap((value, index) => (on.has(value) ? [index] : []));
+  }
+
+  return [Math.max(0, values.indexOf(str(defaults)))];
 };
 
 /** One placed option, as the face layer takes it. */
@@ -130,7 +153,13 @@ const faceOf = (option: InlineOption, name: string): OptionFace => ({
   label: option.label,
   labelX: option.labelX,
   labelY: option.labelY,
-  style: { fontType: option.fontType, fontScaleFactor: option.fontScaleFactor },
+  style: {
+    fontType: option.fontType,
+    fontScaleFactor: option.fontScaleFactor,
+    ...option.color === undefined ? {} : { color: option.color },
+  },
+  ...option.colorSelected === undefined ? {} : { colorSelected: option.colorSelected },
+  ...option.dropSelected === undefined ? {} : { dropSelected: option.dropSelected },
 });
 
 /**
@@ -155,6 +184,7 @@ export const selectDefinition: NodeDefinition<SelectNode> = {
       address: ctx.cellOf(element).address,
       scale: scaleOf(element.props),
       ...backgroundOf(element.props),
+      multiple: isMultiple(element),
       options: optionsOf(element, ctx),
       selected: selectedOf(element),
     };

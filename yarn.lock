@@ -88,6 +88,7 @@ __metadata:
     "@types/validate-npm-package-name": "npm:*"
     chalk: "npm:^5.6.2"
     commander: "npm:^14.0.3"
+    eslint: "npm:*"
     fs-extra: "npm:^11.3.5"
     ora: "npm:^9.4.0"
     prompts: "npm:^2.4.2"
@@ -112,6 +113,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bedrock-core/flexbox@workspace:packages/flexbox"
   dependencies:
+    eslint: "npm:*"
     typescript: "npm:*"
     vitest: "npm:*"
   languageName: unknown
@@ -157,6 +159,7 @@ __metadata:
     "@bedrock-core/sync": "npm:*"
     "@bedrock-core/ui-runtime": "workspace:*"
     "@minecraft/server": "npm:*"
+    eslint: "npm:*"
     typescript: "npm:*"
   peerDependencies:
     "@bedrock-core/server-runtime": "*"
@@ -190,6 +193,7 @@ __metadata:
   dependencies:
     "@bedrock-core/i18n": "npm:*"
     "@bedrock-core/ui-runtime": "workspace:*"
+    eslint: "npm:*"
     typescript: "npm:*"
     vitest: "npm:*"
   peerDependencies:
@@ -231,6 +235,7 @@ __metadata:
   resolution: "@bedrock-core/ui-compiler@workspace:packages/ui-compiler"
   dependencies:
     "@bedrock-core/ui-runtime": "workspace:*"
+    eslint: "npm:*"
     typescript: "npm:*"
     vitest: "npm:*"
   languageName: unknown
@@ -267,6 +272,7 @@ __metadata:
     "@minecraft/server": "npm:*"
     "@minecraft/server-ui": "npm:*"
     "@vitest/coverage-v8": "npm:*"
+    eslint: "npm:*"
     opentype.js: "npm:*"
     typescript: "npm:*"
     vitest: "npm:*"

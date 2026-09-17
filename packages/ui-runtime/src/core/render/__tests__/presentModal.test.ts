@@ -2,10 +2,16 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { Player } from '@minecraft/server';
 import { __resetModalFormMock, __setModalFormResponses } from '../../../__mocks__/@minecraft/server-ui';
 import { registerNativeComponents } from '../../../components';
+import { Toggle } from '../../../components/Toggle';
+import { Slider } from '../../../components/Slider';
+import { Dropdown } from '../../../components/Dropdown';
+import { Input } from '../../../components/Input';
 import { Form, MODAL_FORM_SLOT_TYPE, type FormConfig } from '../../../components/Form';
+import { Option } from '../../../components';
 import type { JSX } from '../../../jsx';
 import { titleFor } from '../../../hosts/form/contract';
 import { present } from '../present';
+import { lowerField } from '../../../__fixtures__/lowerField';
 
 beforeAll(() => {
   registerNativeComponents();
@@ -36,10 +42,10 @@ describe('a modal present', () => {
   it('re-keys formValues by control name and passes them to onSubmit', async () => {
     const onSubmit = vi.fn();
     const tree = modalTree({ onSubmit }, [
-      Form.Toggle({ name: 'sound', defaultValue: false }),
-      Form.Slider({ name: 'volume', min: 0, max: 10 }),
-      Form.Dropdown({ name: 'mode', children: [Form.Option({ value: 'A', label: 'A' }), Form.Option({ value: 'B', label: 'B' })] }),
-      Form.Input({ name: 'nick' }),
+      lowerField(Toggle, { name: 'sound', defaultValue: false }),
+      lowerField(Slider, { name: 'volume', min: 0, max: 10 }),
+      lowerField(Dropdown, { name: 'mode', children: [Option({ value: 'A', label: 'A' }), Option({ value: 'B', label: 'B' })] }),
+      lowerField(Input, { name: 'nick' }),
     ]);
 
     __setModalFormResponses({ canceled: false, formValues: [true, 7, 1, 'Steve'] });
@@ -52,7 +58,7 @@ describe('a modal present', () => {
   it('calls onCancel when the player dismisses', async () => {
     const onSubmit = vi.fn();
     const onCancel = vi.fn();
-    const tree = modalTree({ onSubmit, onCancel }, [Form.Toggle({ name: 'x' })]);
+    const tree = modalTree({ onSubmit, onCancel }, [lowerField(Toggle, { name: 'x' })]);
 
     __setModalFormResponses({ canceled: true });
 
@@ -65,8 +71,8 @@ describe('a modal present', () => {
   it('skips unnamed controls and out-of-range values', async () => {
     const onSubmit = vi.fn();
     const tree = modalTree({ onSubmit }, [
-      Form.Toggle({ name: 'a' }),
-      Form.Toggle({ name: 'b' }),
+      lowerField(Toggle, { name: 'a' }),
+      lowerField(Toggle, { name: 'b' }),
     ]);
 
     // Only one value returned for two controls.

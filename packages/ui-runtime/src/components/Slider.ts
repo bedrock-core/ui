@@ -1,14 +1,13 @@
-import { isModalForm } from '../../core/guards';
-import { ModalFormError, type Writer } from '../../core/types';
-import { emitSlider } from '../../core/writers';
-import { FunctionComponent, JSX } from '../../jsx';
-import { resolveStateBackgrounds, withControl, type StateBackgroundProps } from '../control';
-import { FormControlBase } from './shared';
+import { isModalForm } from '../core/guards';
+import { ModalFormError, type Writer } from '../core/types';
+import { emitSlider } from '../core/writers';
+import { FunctionComponent, JSX } from '../jsx';
+import { resolveStateBackgrounds, withControl, type StateBackgroundProps } from './control';
+import { FormControlBase } from './Form/shared';
+import { MODAL_SLIDER_SLOT_TYPE } from '../core/fields';
+import { useMechanism } from '../hooks/useMechanism';
 
-/** Host type for the native modal slider slot (modal-only). */
-export const MODAL_SLIDER_SLOT_TYPE = 'modal-slider';
-
-export interface FormSliderProps extends FormControlBase, StateBackgroundProps {
+export interface SliderProps extends FormControlBase, StateBackgroundProps {
   /** Minimum selectable value. */
   min: number;
   /** Maximum selectable value. */
@@ -54,17 +53,17 @@ const DEFAULT_THUMB_WIDTH = 16;
 const DEFAULT_THUMB_HEIGHT = 16;
 
 /**
- * Numeric slider field → `ModalFormData.slider`. Result (`Form.onSubmit`): `number`.
+ * Numeric slider field → `ModalFormData.slider`. Result (`onSubmit`): `number`.
  * Modal-only; render inside a `<Form>`. Accepts the same control/layout props as any
  * component; geometry is computed by the layout phase and encoded into the label
  * payload for the RP to position/style the native widget.
  */
-export const FormSlider: FunctionComponent<FormSliderProps> = ({
+const nativeSlider = ({
   name, min, max, step, defaultValue,
   backgroundHover, backgroundPressed, backgroundLocked,
   progress, progressHover, thumb, thumbHover, thumbPressed, thumbLocked,
   trackHeight, thumbWidth, thumbHeight, ...layout
-}: FormSliderProps): JSX.Element => {
+}: SliderProps): JSX.Element => {
   // Track mirrors Button; progress and thumb follow the same rule against their own
   // bases (a single `background` styles the whole slider when nothing else is given).
   const track = resolveStateBackgrounds({ background: layout.background, backgroundHover, backgroundPressed, backgroundLocked });
@@ -121,10 +120,19 @@ export const FormSlider: FunctionComponent<FormSliderProps> = ({
   };
 };
 
+/**
+ * A numeric slider. Only a `<Form>` draws one; any other screen refuses it at build.
+ */
+export const Slider: FunctionComponent<SliderProps> = (props: SliderProps): JSX.Element => {
+  useMechanism('Slider');
+
+  return nativeSlider(props);
+};
+
 /** Serializes a `modal-slider` into the native modal slider control. */
-export const formSliderWriter: Writer = (payload, form, ctx, _callbacks, _props, nativeArgs) => {
+export const sliderWriter: Writer = (payload, form, ctx, _callbacks, _props, nativeArgs) => {
   if (!isModalForm(form)) {
-    throw new ModalFormError('Form.Slider must be rendered inside a `<Form>`.');
+    throw new ModalFormError('Slider must be rendered inside a `<Form>`.');
   }
 
   const name = typeof nativeArgs?.name === 'string' ? nativeArgs.name : '';

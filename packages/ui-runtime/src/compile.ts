@@ -10,10 +10,8 @@
 
 // The native modal fields. A compiled screen lays them out but does not draw
 // them: the widget is the engine's, instantiated by vanilla's row factory.
-export {
-  MODAL_DROPDOWN_SLOT_TYPE, MODAL_FORM_BUTTON_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE,
-  MODAL_INPUT_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
-} from './components/Form';
+export { MODAL_FORM_BUTTON_SLOT_TYPE } from './components/Form';
+export { MODAL_DROPDOWN_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE } from './core/fields';
 
 export { buildContainerTree, buildScreenOnce, buildScreenTree } from './hosts/chest/build';
 

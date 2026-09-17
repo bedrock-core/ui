@@ -22,6 +22,10 @@ export interface OptionFace extends Box, OptionStates {
   labelX: number;
   labelY: number;
   style: TextStyle;
+  /** The label's colour while selected; the style's own otherwise. */
+  colorSelected?: readonly [number, number, number];
+  /** How far the label sits lower while selected, in px. */
+  dropSelected?: number;
   bulletWidth: number;
   bulletHeight: number;
   /** Which of the four looks this face draws. Defaults to resting. */
@@ -67,9 +71,19 @@ export const optionParts = (data: OptionFace): ControlEntry[] => {
         } satisfies Control,
       }];
 
+  // The label says which state it is in as well as the surface does: its own
+  // colour while selected, and a drop that reads as pressed.
+  const color = selected ? data.colorSelected ?? data.style.color : data.style.color;
+  const drop = selected ? data.dropSelected ?? 0 : 0;
+
   const label: ControlEntry[] = data.label === ''
     ? []
-    : [{ label: placedCaption({ ...data.style, text: data.label, localize: false }, { x: data.labelX, y: data.labelY }) }];
+    : [{
+        label: placedCaption(
+          { ...data.style, ...color === undefined ? {} : { color }, text: data.label, localize: false },
+          { x: data.labelX, y: data.labelY + drop },
+        ),
+      }];
 
   return [...surface(background, { layer: 1, anchored: true }), ...glyph, ...label];
 };

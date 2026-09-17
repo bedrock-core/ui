@@ -35,7 +35,7 @@ describe('compiling a form screen', () => {
       name: 'home',
       addon: 'drav0011_shop',
       namespace: 'drav0011_shop_home',
-      title: 'bcuiv0008core1:drav0011_shop_home',
+      title: 'corev0009core1:drav0011_shop_home',
       hasBackdrop: false,
     });
   });

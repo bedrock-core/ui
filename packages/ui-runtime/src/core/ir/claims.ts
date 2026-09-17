@@ -1,12 +1,12 @@
 import { buttonCell, BUTTON_TYPE } from '../../components/Button';
 import { isEmbedSlot } from '../../components/Embed';
-import { MODAL_DROPDOWN_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE } from '../../components/Form';
 import { liveTexture } from '../../components/Image';
 import { listCapacity } from '../../components/List';
 import { slotCell, type SlotRole } from '../../components/Slot';
 import type { JSX } from '../../jsx';
 import { childElements } from '../guards';
 import { analyze, type Analysis } from './analyze';
+import { MODAL_DROPDOWN_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE } from '../fields';
 
 /**
  * What a built tree asks its host for, in document order.

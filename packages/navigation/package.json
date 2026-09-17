@@ -33,7 +33,10 @@
 		"access": "public"
 	},
 	"files": [
-		"src"
+		"src",
+		"!src/**/__tests__/**",
+		"!src/**/*.test.ts",
+		"!src/**/*.test.tsx"
 	],
 	"sideEffects": false,
 	"scripts": {
@@ -45,6 +48,7 @@
 		"@bedrock-core/sync": "*",
 		"@bedrock-core/ui-runtime": "workspace:*",
 		"@minecraft/server": "*",
+		"eslint": "*",
 		"typescript": "*"
 	},
 	"peerDependencies": {

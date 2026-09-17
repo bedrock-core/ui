@@ -9,9 +9,6 @@
  * the key. A level holding only sub-groups is rendered as a list of buttons,
  * and the level holding the settings is the form — so structure here is what
  * decides how the screen reads.
- *
- * Export the type so other addons can read your config with full typing via
- * `configOf(core).of<ExampleConfigDef>(...)`.
  */
 export const configDef = {
   server: {
@@ -19,7 +16,7 @@ export const configDef = {
       $label: 'General',
       $description: 'Basic behavior for everyone on the world.',
       greetingEnabled: { type: 'boolean' as const, default: true, label: 'Greeting Enabled' },
-      greetingColor: { type: 'enum' as const, default: 'yellow' as const, options: ['yellow', 'green', 'aqua'] as const, label: 'Greeting Color' },
+      greetingColor: { type: 'select' as const, default: 'yellow' as const, options: ['yellow', 'green', 'aqua'] as const, label: 'Greeting Color' },
     },
   },
   player: {

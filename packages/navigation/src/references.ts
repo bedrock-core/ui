@@ -8,6 +8,7 @@
  */
 import type { Player } from '@minecraft/server';
 import {
+  back,
   openScreen,
   presentReference,
   screenOwner,
@@ -58,8 +59,12 @@ export function provideReferences(
       if (lookup(key) !== undefined) {
         // A foreign screen is SHOWN, not rendered: there is no component here, so the walk drives
         // the client directly — title, values, and the key each press leads to — for as long as
-        // the presses are links.
-        void presentReference(lookup, key, player);
+        // the presses are links. A back press on its first screen is the player's own way back.
+        void presentReference(lookup, key, player).then((ended) => {
+          if (ended === 'back') {
+            back(player);
+          }
+        });
 
         return true;
       }

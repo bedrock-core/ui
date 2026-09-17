@@ -76,7 +76,7 @@ describe('a form placement', () => {
 
 describe('a compiled title', () => {
   it('carries the interpreter header, so the library container still sizes itself', () => {
-    expect(titleFor('drav0011_shop_home')).toBe('bcuiv0008core1:drav0011_shop_home');
+    expect(titleFor('drav0011_shop_home')).toBe('corev0009core1:drav0011_shop_home');
   });
 
   it('round-trips the screen key', () => {
@@ -84,11 +84,11 @@ describe('a compiled title', () => {
   });
 
   it('is not confused by an interpreter title, which carries scroll metadata instead', () => {
-    expect(keyFrom('bcuiv0008s:scrolls;;;;;;;')).toBeUndefined();
+    expect(keyFrom('corev0009s:scrolls;;;;;;;')).toBeUndefined();
     expect(keyFrom('some other form')).toBeUndefined();
   });
 
   it('refuses an encoding this build cannot write', () => {
-    expect(keyFrom('bcuiv0008core9:whatever')).toBeUndefined();
+    expect(keyFrom('corev0009core9:whatever')).toBeUndefined();
   });
 });

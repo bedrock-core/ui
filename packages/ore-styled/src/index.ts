@@ -38,8 +38,9 @@ export type { DropdownProps } from './Dropdown';
 export { Slider } from './Slider';
 export type { SliderProps } from './Slider';
 
-export { ToggleButtonGroup } from './ToggleButton';
-export type { ToggleButtonGroupProps, ToggleButtonOption } from './ToggleButton';
+export { Tabs } from './Tabs/Tabs';
+export type { TabsProps } from './Tabs/Tabs';
+export type { TabProps } from './Tabs/Tab';
 export { ToggleButtons } from './ToggleButtons';
 export type { ToggleButtonsProps, ToggleButtonsOption } from './ToggleButtons';
 

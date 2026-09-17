@@ -13,13 +13,14 @@ export {
 } from './entry';
 export { field, type NativeField } from './field';
 export {
-  dropdownWidget, inputWidget, popupHostOf, toggleWidget,
+  dropdownWidget, inputWidget, popupHostOf, TOGGLE_ROW, toggleWidget,
 } from './widget';
 export { fits, type Fits } from './fits';
 export { list, type Count } from './list';
+export { multiSelect, type MultiSelect } from './multiselect';
 export { popupOverlay, type Popup } from './popup';
 export { press, pressDefs, type PressLook } from './press';
-export { select, OPTION_TOGGLE, STUB, type Select, type SelectOption } from './select';
+export { optionStates, select, OPTION_TOGGLE, STUB, type Select, type SelectOption } from './select';
 export { text, textDef, type TextCarrier } from './text';
 export { texture, textureDef, TEXTURE_DEF } from './texture';
 export { visible, type Gate } from './visible';

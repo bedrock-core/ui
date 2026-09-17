@@ -15,7 +15,7 @@ describe('an addon\'s compiled form router', () => {
   it('gives every screen a gate on its FULL title, so one name cannot prefix another', () => {
     expect(control(routing.router, 'drav0011_shop_gate_home').bindings).toContainEqual({
       binding_type: 'view',
-      source_property_name: "(#title_text = 'bcuiv0008core1:drav0011_shop_home')",
+      source_property_name: "(#title_text = 'corev0009core1:drav0011_shop_home')",
       target_property_name: '#visible',
     });
   });

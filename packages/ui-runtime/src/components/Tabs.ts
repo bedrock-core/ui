@@ -1,6 +1,6 @@
 import { childElements } from '../core/guards';
 import type { FunctionComponent, JSX } from '../jsx';
-import { type ControlProps, withControl } from './control';
+import { type ControlProps, UNSTYLED_TEXTURE, withControl } from './control';
 import { PANEL_TYPE } from './Panel';
 import { Swap } from './Swap';
 
@@ -51,6 +51,12 @@ export interface TabProps extends ControlProps {
 export interface TabsProps extends ControlProps {
   /** Height of the header row. The panes take what is left. */
   tabHeight?: number;
+  /** The face every header is drawn on while its tab is not chosen. */
+  tabBackground?: string;
+  /** The face while the pointer is over a tab that is not chosen. Falls back to `tabBackground`. */
+  tabHover?: string;
+  /** The face while its tab is the chosen one. Falls back to `tabBackground`. */
+  tabSelected?: string;
   children?: JSX.Node;
 }
 
@@ -91,10 +97,21 @@ const lookOf = (tab: JSX.Element, state: 'header' | 'headerSelected'): JSX.Node 
   return isElement(drawn) ? drawn : lookOf(tab, 'header');
 };
 
+/** A header drawn on a face: the look fills the tab, and the author's header sits on it. */
+const onFace = (background: string, header: JSX.Node): JSX.Element => ({
+  type: PANEL_TYPE,
+  props: {
+    ...withControl({ width: '100%', height: '100%', background }),
+    children: header,
+  },
+});
+
 const TabsRoot: FunctionComponent<TabsProps> = (
-  { tabHeight = DEFAULT_TAB_HEIGHT, children, ...layout }: TabsProps,
+  { tabHeight = DEFAULT_TAB_HEIGHT, tabBackground, tabHover, tabSelected, children, ...layout }: TabsProps,
 ): JSX.Element => {
   const tabs = childElements(children).filter(isTab);
+  // Unstyled unless the author says otherwise: the library ships no look of its own.
+  const rest = tabBackground ?? UNSTYLED_TEXTURE;
 
   return {
     type: PANEL_TYPE,
@@ -110,8 +127,9 @@ const TabsRoot: FunctionComponent<TabsProps> = (
           flexGrow: 1,
           height: tabHeight,
           children: [
-            Swap.Look({ state: 'off', children: lookOf(tab, 'header') }),
-            Swap.Look({ state: 'on', draws: paneId(index), children: lookOf(tab, 'headerSelected') }),
+            Swap.Look({ state: 'off', children: onFace(rest, lookOf(tab, 'header')) }),
+            Swap.Look({ state: 'offHover', children: onFace(tabHover ?? rest, lookOf(tab, 'header')) }),
+            Swap.Look({ state: 'on', draws: paneId(index), children: onFace(tabSelected ?? rest, lookOf(tab, 'headerSelected')) }),
           ],
         })),
         ...tabs.map((tab, index): JSX.Element => ({

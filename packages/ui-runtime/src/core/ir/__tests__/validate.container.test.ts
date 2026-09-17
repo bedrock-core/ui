@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { Button } from '../../../components/Button';
 import { Container } from '../../../components/Container';
 import { Form } from '../../../components/Form';
+import { Toggle } from '../../../components/Toggle';
 import { Image } from '../../../components/Image';
 import { Panel } from '../../../components/Panel';
 import { Screen } from '../../../components/Screen';
@@ -15,6 +16,7 @@ import type { JSX } from '../../../jsx';
 import { playerOwner } from '../../fabric';
 import { ContainerScreenError, ScreenRootError } from '../../types';
 import { buildTree } from '../../render/tree';
+import { lowerField } from '../../../__fixtures__/lowerField';
 
 const player = { id: 'validate-container' } as unknown as Player;
 
@@ -91,7 +93,7 @@ describe('the container path', () => {
   });
 
   it('rejects a <Form>: a root cannot sit below the root', () => {
-    const Screen = screen(Form({ children: [Form.Toggle({ name: 't' })] }));
+    const Screen = screen(Form({ children: [lowerField(Toggle, { name: 't' })] }));
 
     expect(() => buildContainerTree(Screen)).toThrow(/`<Form>` cannot sit inside a container screen/);
   });

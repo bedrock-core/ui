@@ -7,7 +7,7 @@ import { FormButton } from './FormButton';
  * `onSubmit`, `onCancel` — with the submit button this layer styles.
  *
  * The FIELDS are not members of it. `Toggle`, `Checkbox`, `Radio`,
- * `ToggleButtonGroup`, `Slider`, `Dropdown` and `Input` each serve every host
+ * `ToggleButtons`, `Slider`, `Dropdown` and `Input` each serve every host
  * they can be drawn on, so each is written once and imported by its own name;
  * inside a `<Form>` they become the engine's own fields, and outside one they
  * become whatever that screen offers, or say so at build.

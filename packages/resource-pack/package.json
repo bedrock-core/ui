@@ -3,7 +3,6 @@
 	"version": "1.0.1",
 	"private": true,
 	"description": "The @bedrock-core/ui render pack: the JSON UI hosts, shapes and faces every addon draws through",
-	"main": "main.js",
 	"scripts": {
 		"regolith-install": "regolith install-all",
 		"build": "regolith run build",

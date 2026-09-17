@@ -36,6 +36,8 @@ const registry = new Map<string, ComponentDescriptor>();
  *
  * @param type - The component `type` string.
  * @param descriptor - What the type is; see {@link ComponentDescriptor}.
+ *
+ * @experimental Bound to the serialized payload format rather than the component API.
  */
 export function registerComponent(type: string, descriptor: ComponentDescriptor): void {
   if (registry.has(type)) {

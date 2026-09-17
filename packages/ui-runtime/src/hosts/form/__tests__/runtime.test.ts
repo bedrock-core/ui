@@ -36,7 +36,7 @@ describe('presenting a compiled form', () => {
 
     await presentCompiledForm(player, tree, TITLE);
 
-    expect(__lastActionForm()?.titleText).toBe('bcuiv0008core1:drav0011_shop_home');
+    expect(__lastActionForm()?.titleText).toBe('corev0009core1:drav0011_shop_home');
   });
 
   it('writes nothing for a screen that is only static', async () => {

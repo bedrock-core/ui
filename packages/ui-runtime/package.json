@@ -53,7 +53,11 @@
 		"access": "public"
 	},
 	"files": [
-		"src"
+		"src",
+		"!src/**/__tests__/**",
+		"!src/**/*.test.ts",
+		"!src/**/*.test.tsx",
+		"!src/__fixtures__/**"
 	],
 	"sideEffects": false,
 	"scripts": {
@@ -68,6 +72,7 @@
 		"@minecraft/server": "*",
 		"@minecraft/server-ui": "*",
 		"@vitest/coverage-v8": "*",
+		"eslint": "*",
 		"opentype.js": "*",
 		"typescript": "*",
 		"vitest": "*"

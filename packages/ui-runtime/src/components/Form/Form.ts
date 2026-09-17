@@ -6,12 +6,6 @@ import { MODAL_FORM_SLOT_TYPE } from '../../core/roots';
 import { ModalValue } from '../../core/types';
 import { FunctionComponent, JSX } from '../../jsx';
 import { FormButton, type FormButtonProps } from './FormButton';
-import { FormDropdown, type FormDropdownProps } from './FormDropdown';
-import { FormInlineSelect, type FormInlineSelectProps } from './FormInlineSelect';
-import { FormInput, type FormInputProps } from './FormInput';
-import { FormOption, type FormOptionProps } from './FormOption';
-import { FormSlider, type FormSliderProps } from './FormSlider';
-import { FormToggle, type FormToggleProps } from './FormToggle';
 
 /**
  * The host `type` string emitted by {@link Form}. It carries no geometry of its
@@ -20,8 +14,11 @@ import { FormToggle, type FormToggleProps } from './FormToggle';
  */
 export { MODAL_FORM_SLOT_TYPE };
 
-/** The result object handed to {@link FormProps.onSubmit}, keyed by each control's `name`. */
-export type FormValues = Record<string, ModalValue>;
+/**
+ * The result object handed to {@link FormProps.onSubmit}, keyed by each control's `name`.
+ * A multiple select answers with the indices of the options that are on.
+ */
+export type FormValues = Record<string, ModalValue | number[]>;
 
 /** A submitted form: every control's value keyed by its `name`, and who submitted. */
 export interface SubmitEvent extends UiEvent {
@@ -53,8 +50,8 @@ export const ModalContext = createContext<FormConfig | null>(null);
 
 export interface FormProps extends FormConfig {
   /**
-   * Modal contents: the field declarations (`Form.Toggle` / `Form.Slider` /
-   * `Form.Dropdown` / `Form.Input`), decorative nodes (`Image` / `Panel` / `Text`),
+   * Modal contents: the fields (`Toggle` / `Select` / `Slider` / `Dropdown` /
+   * `Input`), decorative nodes (`Image` / `Panel` / `Text`),
    * and the form's action buttons — exactly ONE `Form.Button type="submit"` (required)
    * and optionally one `Form.Button type="exit"`, positioned anywhere in the flow.
    * A regular `Button` is rejected.
@@ -63,12 +60,7 @@ export interface FormProps extends FormConfig {
 }
 
 interface FormComponent extends FunctionComponent<FormProps> {
-  Toggle: FunctionComponent<FormToggleProps>;
-  Slider: FunctionComponent<FormSliderProps>;
-  Dropdown: FunctionComponent<FormDropdownProps>;
-  InlineSelect: FunctionComponent<FormInlineSelectProps>;
-  Option: FunctionComponent<FormOptionProps>;
-  Input: FunctionComponent<FormInputProps>;
+  /** The modal's own submit (`type="submit"`) and dismiss (`type="exit"`) buttons. */
   Button: FunctionComponent<FormButtonProps>;
 }
 
@@ -78,23 +70,22 @@ interface FormComponent extends FunctionComponent<FormProps> {
  * / dropdown / text-field fields with hardcoded submit + esc) instead of the
  * all-buttons ActionForm. Values arrive once, on submit, via {@link FormConfig.onSubmit}.
  *
- * Field declarations are the `Form.*` members; a heading is authored as a `<Text>`
+ * Fields are the top-level `Toggle`, `Select`, `Slider`, `Dropdown` and `Input`; a heading is authored as a `<Text>`
  * (the modal has no `title`/`body` prop). Exactly one `Form.Button type="submit"` is
  * required (and at most one `type="exit"`), positioned anywhere in the flow:
  *
  * ```tsx
  * <Form onSubmit={v => { v.sound; v.volume; }}>
  *   <Text>Settings</Text>
- *   <Form.Toggle   name="sound"  defaultValue={true} />
- *   <Form.Slider   name="volume" min={0} max={10} />
- *   <Form.Dropdown name="mode"   options={['A', 'B']} />
- *   <Form.Input    name="nick" />
- *   <Form.Button   type="submit" label="Save" />
+ *   <Toggle      name="sound"  defaultValue={true} />
+ *   <Slider      name="volume" min={0} max={10} />
+ *   <Input       name="nick" />
+ *   <Form.Button type="submit">Save</Form.Button>
  * </Form>
  * ```
  *
- * Restrictions (a runtime pass during build): a modal tree may contain only `Form.*`
- * controls and decorative nodes — no regular `Button`, no nested `<Form>`, and not
+ * Restrictions (a runtime pass during build): a modal tree may contain only fields,
+ * `Form.Button` and decorative nodes — no regular `Button`, no nested `<Form>`, and not
  * mixed with ActionForm-only roots. Mix the two form kinds across separate `render()`
  * calls (e.g. via navigation), never nested.
  */
@@ -124,19 +115,8 @@ const FormRoot: FunctionComponent<FormProps> = ({
   });
 };
 
-/**
- * The `Form` root plus its field-control members. Assembled with `Object.assign` so
- * the namespace shape is built structurally (no narrowing cast).
- */
-export const Form: FormComponent = Object.assign(FormRoot, {
-  Toggle: FormToggle,
-  Slider: FormSlider,
-  Dropdown: FormDropdown,
-  InlineSelect: FormInlineSelect,
-  Option: FormOption,
-  Input: FormInput,
-  Button: FormButton,
-});
+/** The `Form` root with its one member, `Form.Button`. */
+export const Form: FormComponent = Object.assign(FormRoot, { Button: FormButton });
 
 /**
  * The `<Form>` marker on a built tree and the config it carries, or `undefined`

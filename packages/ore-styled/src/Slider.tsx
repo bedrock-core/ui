@@ -1,6 +1,6 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import type { FormSliderProps as PrimitiveSliderProps, JSX } from '@bedrock-core/ui-runtime';
-import { Form as PrimitiveForm, useMechanism } from '@bedrock-core/ui-runtime';
+import type { SliderProps as PrimitiveSliderProps, JSX } from '@bedrock-core/ui-runtime';
+import { Slider as PrimitiveSlider, useMechanism } from '@bedrock-core/ui-runtime';
 import { theme } from './tokens';
 import { labeledColumn } from './Form/label';
 
@@ -11,7 +11,7 @@ export interface SliderProps extends PrimitiveSliderProps {
 
 /**
  * The theme's slider: the theme's track / progress / thumb textures and
- * geometry on the native `Form.Slider`. The modal slider has no disabled-progress
+ * geometry on the native `Slider`. The modal slider has no disabled-progress
  * state (track + thumb carry the locked faces), so `progressDisabled` is unused here.
  *
  * The texture props — plus the thumb/track geometry that sizes them, which a
@@ -34,7 +34,7 @@ export function Slider({
   const s = theme.components.slider;
 
   const control = (
-    <PrimitiveForm.Slider
+    <PrimitiveSlider
       name={name}
       min={min}
       max={max}

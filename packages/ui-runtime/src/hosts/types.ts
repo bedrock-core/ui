@@ -47,7 +47,7 @@ export type Capability = CarrierKind | InputKind | DrawKind;
  * A component as the author writes it, which is what a host answers about.
  *
  * The library's own kinds, not the styled layer's: a `Checkbox` asks about a
- * `Toggle` and a `Radio` or `ToggleButtonGroup` about a `Select`, because
+ * `Toggle` and a `Radio` or `ToggleButtons` about a `Select`, because
  * that is what each one IS once the look is set aside. Everything absent —
  * panels, text, images, fragments — draws on every host and asks nothing.
  */

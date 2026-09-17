@@ -4,6 +4,7 @@ import {
   __lastActionForm, __pendingShowCount, __resetFormMocks, __resolveShow, __setDeferredShows,
 } from '../../__mocks__/@minecraft/server-ui';
 import { registerNativeComponents } from '../../components';
+import { Button } from '../../components/Button';
 import { Panel } from '../../components/Panel';
 import { Screen } from '../../components/Screen';
 import { Text } from '../../components/Text';
@@ -274,6 +275,104 @@ describe('a screen as another addon can show it', () => {
     await new Promise(resolve => setTimeout(resolve, 0));
 
     expect(__lastActionForm()?.titleText).toBe(titleFor('docs_standalone'));
+  });
+
+  it('navigates from a static screen to a screen with handlers of its own, and back', async () => {
+    const player = nextPlayer();
+    const Live: FunctionComponent = () => Screen({ children: Panel({ children: Text({ children: 'live' }) }) });
+
+    registerStaticScreens([
+      { key: 'mix:index', title: titleFor('mix_index'), values: [''], targets: [{ to: 'mix:live' }] },
+    ]);
+    registerCompiledScreen(Live, { key: 'mix:live', title: titleFor('mix_live') });
+
+    __setDeferredShows(true);
+
+    expect(navigate('mix:index', player)).toBe(true);
+
+    await untilShown();
+    // The index's only press links to a screen no table describes.
+    __resolveShow({ canceled: false, selection: 0 });
+
+    await untilShown();
+
+    expect(__lastActionForm()?.titleText).toBe(titleFor('mix_live'));
+    expect(historyOf(player.id)).toEqual(['mix:index']);
+
+    expect(back(player)).toBe(true);
+
+    await untilShown();
+
+    expect(__lastActionForm()?.titleText).toBe(titleFor('mix_index'));
+
+    clearHistory(player.id);
+  });
+
+  it('takes a back press on the first screen of its own static walk back through the stack', async () => {
+    const player = nextPlayer();
+    const Start: FunctionComponent = () => Screen({ children: Panel({ children: Text({ children: 'start' }) }) });
+
+    registerCompiledScreen(Start, { key: 'mixb:start', title: titleFor('mixb_start') });
+    registerStaticScreens([
+      { key: 'mixb:page', title: titleFor('mixb_page'), values: [''], targets: [{ back: true }] },
+    ]);
+
+    navigate('mixb:start', player);
+
+    __setDeferredShows(true);
+
+    navigate('mixb:page', player);
+
+    expect(historyOf(player.id)).toEqual(['mixb:start']);
+
+    await untilShown();
+    // Nothing is behind the page inside the walk, so the back press is the stack's.
+    __resolveShow({ canceled: false, selection: 0 });
+
+    await untilShown();
+
+    expect(__lastActionForm()?.titleText).toBe(titleFor('mixb_start'));
+    expect(historyOf(player.id)).toHaveLength(0);
+
+    clearHistory(player.id);
+  });
+
+  it('ends the screen a press left before a static screen shows, so it does not present again over it', async () => {
+    const player = nextPlayer();
+    const Menu: FunctionComponent = () => Screen({
+      children: Panel({
+        children: Button({ onPress: ({ player: who }) => { navigate('race:static', who); }, children: Text({ children: 'go' }) }),
+      }),
+    });
+
+    registerCompiledScreen(Menu, { key: 'race:menu', title: titleFor('race_menu') });
+    registerStaticScreens([
+      { key: 'race:static', title: titleFor('race_static'), values: [''], targets: [{ back: true }] },
+    ]);
+
+    __setDeferredShows(true);
+    navigate('race:menu', player);
+
+    await untilShown();
+    // The menu's press navigates to the static screen.
+    __resolveShow({ canceled: false, selection: 0 });
+
+    for (let tick = 0; tick < 10; tick += 1) {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
+
+    // Only the static screen is up: the menu's session did not present itself again.
+    expect(__pendingShowCount()).toBe(1);
+    expect(__lastActionForm()?.titleText).toBe(titleFor('race_static'));
+
+    // Its back press returns to the menu through the stack the session left intact.
+    __resolveShow({ canceled: false, selection: 0 });
+
+    await untilShown();
+
+    expect(__lastActionForm()?.titleText).toBe(titleFor('race_menu'));
+
+    clearHistory(player.id);
   });
 
   it('follows the links of a foreign screen until one leads nowhere', async () => {

@@ -43,6 +43,12 @@ export interface ModalControlEntry {
    * already the author's value.
    */
   decode?: (raw: string | number | boolean | undefined) => string | number | boolean | undefined;
+  /**
+   * The option this control answers for, when it is one toggle of a multiple
+   * select. Every member shares the select's `name`, and the answers are
+   * gathered into one array of the indices that are on.
+   */
+  member?: number;
 }
 
 /** Discriminant tags for the two serialization contexts. */
@@ -169,6 +175,11 @@ export class ContainerScreenError extends Error {
   }
 }
 
+/**
+ * Writes one component into a form.
+ *
+ * @experimental Bound to the serialized payload format rather than the component API.
+ */
 export type Writer = (
   payload: string | RawMessage,
   form: FormTarget,
@@ -178,7 +189,7 @@ export type Writer = (
   nativeArgs?: Record<string, unknown>,
   // The element's built children (post-layout). Only writers that read child geometry rather
   // than have the walk serialize them use it — e.g. `Form.Radio`/`Form.ToggleButton` reading each
-  // laid-out `Form.Option`'s x/y/w/h. Typed `unknown` to avoid a JSX import here; the writer
+  // laid-out `Option`'s x/y/w/h. Typed `unknown` to avoid a JSX import here; the writer
   // narrows it. Most writers ignore it (children are serialized by the walk in `serialize`).
   children?: unknown,
 ) => void;

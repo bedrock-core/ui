@@ -61,7 +61,7 @@ describe('the compiled-screen registry', () => {
 
     registerCompiledScreen(Fresh, { key: 'a:b', title: titleFor('a_b') });
 
-    expect(compiledTitleOf(Fresh)).toBe('bcuiv0008core1:a_b');
+    expect(compiledTitleOf(Fresh)).toBe('corev0009core1:a_b');
   });
 
   it('accepts the same registration twice, which a reload does', () => {
@@ -96,7 +96,7 @@ describe('render, on a screen the build compiled', () => {
     const form = __lastActionForm();
 
     // The title picks the layout; the one entry is the button's enabled flag.
-    expect(form?.titleText).toBe('bcuiv0008core1:shop_home');
+    expect(form?.titleText).toBe('corev0009core1:shop_home');
     expect(form?.buttons).toEqual(['t']);
   });
 

@@ -20,7 +20,7 @@
 		],
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
-		"$protocol_header": "bcuiv0008",
+		"$protocol_header": "corev0009",
 		"bindings": [
 			{
 				"binding_name": "#title_text"

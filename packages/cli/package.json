@@ -48,6 +48,7 @@
 		"@types/node": "*",
 		"@types/prompts": "*",
 		"@types/validate-npm-package-name": "*",
+		"eslint": "*",
 		"typescript": "*"
 	}
 }

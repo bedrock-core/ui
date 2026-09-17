@@ -247,7 +247,7 @@ describe('the compositions', () => {
     });
 
     const control = drawn(selectFace({
-      name: 'view', rect: RECT, selected: 1, options: [option('first', 0), option('second', 18)],
+      name: 'view', rect: RECT, selected: [1], options: [option('first', 0), option('second', 18)],
     }), 'view');
 
     const rows = childrenOf(control);

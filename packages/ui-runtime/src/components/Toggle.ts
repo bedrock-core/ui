@@ -1,14 +1,15 @@
-import { isModalForm } from '../../core/guards';
-import { ModalFormError, type Writer } from '../../core/types';
-import { emitToggle } from '../../core/writers';
-import { FunctionComponent, JSX } from '../../jsx';
-import { resolveStateBackgrounds, withControl, type StateBackgroundProps } from '../control';
-import { FormControlBase } from './shared';
+import { isModalForm } from '../core/guards';
+import { ModalFormError, type Writer } from '../core/types';
+import { emitToggle } from '../core/writers';
+import type { FunctionComponent, JSX } from '../jsx';
+import { resolveStateBackgrounds, withControl, type StateBackgroundProps } from './control';
+import { FormControlBase } from './Form/shared';
+import { MODAL_TOGGLE_SLOT_TYPE } from '../core/fields';
+import { useMechanism } from '../hooks/useMechanism';
+import { useState } from '../hooks/useState';
+import { Button } from './Button';
 
-/** Host type for the native modal toggle slot (modal-only; the restriction pass rejects it elsewhere). */
-export const MODAL_TOGGLE_SLOT_TYPE = 'modal-toggle';
-
-export interface FormToggleProps extends FormControlBase, StateBackgroundProps {
+interface NativeToggleProps extends FormControlBase, StateBackgroundProps {
   /** Initial on/off state. Defaults to `false`. */
   defaultValue?: boolean;
   // The StateBackgroundProps surfaces style the UNCHECKED (off) side; the checked
@@ -23,16 +24,16 @@ export interface FormToggleProps extends FormControlBase, StateBackgroundProps {
 }
 
 /**
- * Boolean toggle field → `ModalFormData.toggle`. Result (`Form.onSubmit`): `boolean`.
+ * Boolean toggle field → `ModalFormData.toggle`. Result (`onSubmit`): `boolean`.
  * Modal-only; render inside a `<Form>`. Accepts the same control/layout props as any
  * component; geometry is computed by the layout phase and encoded into the label
  * payload for the RP to position/style the native widget.
  */
-export const FormToggle: FunctionComponent<FormToggleProps> = ({
+const nativeToggle = ({
   name, defaultValue,
   backgroundHover, backgroundPressed, backgroundLocked,
   checkedBackground, checkedHover, checkedLocked, ...layout
-}: FormToggleProps): JSX.Element => {
+}: NativeToggleProps): JSX.Element => {
   // Unchecked side mirrors Button; checked side follows the same rule against its
   // own base (single `background` styles both sides when nothing else is given).
   const unchecked = resolveStateBackgrounds({ background: layout.background, backgroundHover, backgroundPressed, backgroundLocked });
@@ -62,10 +63,48 @@ export const FormToggle: FunctionComponent<FormToggleProps> = ({
   };
 };
 
+export interface ToggleProps extends Omit<NativeToggleProps, 'name'> {
+  /** Result key inside a `<Form>`, where it is required; unused where a press is the answer. */
+  name?: string;
+  /** The state, held by the caller instead of the control. Only where a press reaches script. */
+  on?: boolean;
+  /** Called with the new state, where a press reaches script. */
+  onChange?: (on: boolean) => void;
+}
+
+/**
+ * A boolean. Inside a `<Form>` it is the engine's own toggle, answered on submit under `name`;
+ * where a press reaches script (`<Screen>`, `<Container>`) it is a button that flips its state and
+ * calls `onChange`.
+ */
+export const Toggle: FunctionComponent<ToggleProps> = ({ on, onChange, ...props }: ToggleProps): JSX.Element => {
+  const mechanism = useMechanism('Toggle');
+  const [internal, setInternal] = useState(props.defaultValue ?? false);
+
+  if (mechanism === 'field') {
+    return nativeToggle({ ...props, name: props.name ?? '' });
+  }
+
+  const current = on ?? internal;
+  const { name: _name, defaultValue: _default, checkedBackground, checkedHover, checkedLocked, ...rest } = props;
+  const checkedBase = checkedBackground ?? rest.background;
+
+  return Button({
+    ...rest,
+    background: current ? checkedBase : rest.background,
+    backgroundHover: current ? checkedHover ?? checkedBase : rest.backgroundHover,
+    backgroundLocked: current ? checkedLocked ?? checkedBase : rest.backgroundLocked,
+    onPress: () => {
+      setInternal(!current);
+      onChange?.(!current);
+    },
+  });
+};
+
 /** Serializes a `modal-toggle` into the native modal toggle control. */
-export const formToggleWriter: Writer = (payload, form, ctx, _callbacks, _props, nativeArgs) => {
+export const toggleWriter: Writer = (payload, form, ctx, _callbacks, _props, nativeArgs) => {
   if (!isModalForm(form)) {
-    throw new ModalFormError('Form.Toggle must be rendered inside a `<Form>`.');
+    throw new ModalFormError('`Toggle` must be rendered inside a `<Form>`.');
   }
 
   const name = typeof nativeArgs?.name === 'string' ? nativeArgs.name : '';

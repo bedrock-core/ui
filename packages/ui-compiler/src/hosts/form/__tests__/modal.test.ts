@@ -1,5 +1,7 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
-import { Form, Panel, Text } from '@bedrock-core/ui-runtime';
+import { Form, Panel, Text, Dropdown, Option, Select, Toggle } from '@bedrock-core/ui-runtime';
+import type { FunctionComponent } from '@bedrock-core/ui-runtime';
+import { jsx } from '@bedrock-core/ui-runtime/jsx-runtime';
 import { describe, expect, it } from 'vitest';
 import { drawnFace, eachControl } from '../../../__fixtures__/helpers';
 import type { Control } from '../../../jsonui';
@@ -20,7 +22,7 @@ const Settings = (): JSX.Element => Form({
     gap: 4,
     children: [
       Text({ children: '§fSETTINGS' }),
-      Form.Toggle({ name: 'sound', defaultValue: true }),
+      jsx(Toggle, { name: 'sound', defaultValue: true }),
       Form.Button({ type: 'submit', label: 'Save' }),
     ],
   }),
@@ -69,8 +71,8 @@ describe('compiling a modal screen', () => {
       children: Panel({
         children: [
           Text({ children: 'heading' }),
-          Form.Toggle({ name: 'a' }),
-          Form.Toggle({ name: 'b' }),
+          jsx(Toggle, { name: 'a' }),
+          jsx(Toggle, { name: 'b' }),
           Form.Button({ type: 'submit', label: 'Save' }),
         ],
       }),
@@ -153,13 +155,13 @@ describe('compiling a modal screen', () => {
       children: Panel({
         width: 328,
         children: [
-          Form.Toggle({ name: 'sound' }),
-          Form.Dropdown({
+          jsx(Toggle, { name: 'sound' }),
+          jsx(Dropdown as unknown as FunctionComponent, {
             name: 'mode',
             popupBackground: 'mine/popup',
             children: [
-              Form.Option({ value: 'easy', label: 'Easy' }),
-              Form.Option({ value: 'hard', label: 'Hard' }),
+              Option({ value: 'easy', label: 'Easy' }),
+              Option({ value: 'hard', label: 'Hard' }),
             ],
           }),
           Form.Button({ type: 'submit', label: 'Save' }),
@@ -208,7 +210,7 @@ describe('compiling a modal screen', () => {
     const Styled = (): JSX.Element => Form({
       children: Panel({
         children: [
-          Form.Toggle({ name: 'a', background: 'mine/off', checkedBackground: 'mine/on' }),
+          jsx(Toggle, { name: 'a', background: 'mine/off', checkedBackground: 'mine/on' }),
           Form.Button({ type: 'submit', label: 'Save' }),
         ],
       }),
@@ -227,7 +229,7 @@ describe('an inline select on a compiled modal', () => {
     children: Panel({
       padding: 6,
       children: [
-        Form.InlineSelect({
+        jsx(Select, {
           name: 'view',
           defaultValue: 'third',
           bullet: 'mine/off',
@@ -238,8 +240,8 @@ describe('an inline select on a compiled modal', () => {
           gap: 2,
           width: 120,
           children: [
-            Form.Option({ value: 'first', label: 'First person', width: '100%', height: 17 }),
-            Form.Option({ value: 'third', label: 'Third person', width: '100%', height: 17 }),
+            Option({ value: 'first', label: 'First person', width: '100%', height: 17 }),
+            Option({ value: 'third', label: 'Third person', width: '100%', height: 17 }),
           ],
         }),
         Form.Button({ type: 'submit', label: 'Save' }),
@@ -311,5 +313,107 @@ describe('an inline select on a compiled modal', () => {
     const [field] = named(compiled.document, name => name === 'field');
 
     expect(JSON.stringify(field?.[1])).not.toContain('"$');
+  });
+});
+
+describe('a multiple select on a compiled modal', () => {
+  const OFF: readonly [number, number, number] = [0, 0, 0];
+  const ON: readonly [number, number, number] = [1, 1, 1];
+
+  const Picker = (): JSX.Element => Form({
+    children: Panel({
+      padding: 6,
+      children: [
+        jsx(Toggle, { name: 'sound' }),
+        jsx(Select, {
+          name: 'notices',
+          multiple: true,
+          defaultValue: ['join', 'buy'],
+          optionBackground: 'mine/off',
+          optionSelected: 'mine/on',
+          optionAlign: 'center',
+          optionColor: OFF,
+          optionColorSelected: ON,
+          optionDropSelected: 1,
+          flexDirection: 'row',
+          width: 150,
+          children: [
+            Option({ value: 'join', label: 'Join', flexGrow: 1, height: 20 }),
+            Option({ value: 'leave', label: 'Leave', flexGrow: 1, height: 20 }),
+            Option({ value: 'buy', label: 'Buy', flexGrow: 1, height: 20 }),
+          ],
+        }),
+        jsx(Toggle, { name: 'music' }),
+        Form.Button({ type: 'submit', label: 'Save' }),
+      ],
+    }),
+  });
+
+  const compiled = compileFormScreen(Picker, { namespace: 'a', name: 'notices' });
+
+  const named = (document: Record<string, unknown>, wanted: (name: string) => boolean): [string, Control][] => {
+    const found: [string, Control][] = [];
+
+    eachControl(document as Parameters<typeof eachControl>[0], (name, control) => {
+      if (wanted(name)) {
+        found.push([name, control]);
+      }
+    });
+
+    return found;
+  };
+
+  const labelOf = (look: Control | undefined): Control | undefined =>
+    look?.controls?.find(entry => 'label' in entry)?.['label'];
+
+  it('draws every default value selected, and the rest at rest', () => {
+    const rows = named(compiled.face.document, name => name.startsWith('option_'));
+    const surfaces = rows.map(([, row]) => JSON.stringify(row.controls));
+
+    expect(rows).toHaveLength(3);
+    expect(surfaces[0]).toContain('mine/on');
+    expect(surfaces[1]).toContain('mine/off');
+    expect(surfaces[2]).toContain('mine/on');
+  });
+
+  it('stands the engine toggle of each option in, in the rows after the field before it', () => {
+    const hosts = named(compiled.document, name => /^option_\d$/.test(name));
+    const toggles = named(compiled.document, name => name === 'toggle@core_ui_form_components.toggle');
+
+    expect(hosts.map(([, host]) => host.collection_name)).toEqual(['custom_form', 'custom_form', 'custom_form']);
+    // No dropdown: each option owns a row of its own and answers there.
+    expect(named(compiled.document, name => name.startsWith('stub@'))).toHaveLength(0);
+    expect(toggles.map(([, toggle]) => toggle.collection_index)).toEqual([1, 2, 3]);
+    expect(toggles[0]?.[1].controls?.map(entry => Object.keys(entry)[0])).toEqual([
+      'unchecked', 'checked', 'unchecked_hover', 'checked_hover',
+      'unchecked_locked', 'checked_locked', 'unchecked_locked_hover', 'checked_locked_hover',
+    ]);
+
+    // The toggle after the select answers in the row after its last option.
+    const fields = named(compiled.document, name => name === 'field@core_ui_form_components.toggle');
+
+    expect(fields.map(([, field]) => field.collection_index)).toEqual([0, 4]);
+  });
+
+  it('colours and drops the label with the state it is drawn in', () => {
+    const [[, toggle] = ['', {} as Control]] = named(compiled.document, name => name === 'toggle@core_ui_form_components.toggle');
+    const looks = Object.fromEntries((toggle.controls ?? []).map(entry => Object.entries(entry)[0] ?? ['', {}]));
+    const rest = labelOf(looks['unchecked']);
+    const selected = labelOf(looks['checked']);
+
+    expect(rest?.text).toBe('Join');
+    expect(rest?.color).toEqual(OFF);
+    expect(selected?.color).toEqual(ON);
+    expect(selected?.offset?.[1]).toBe(Number(rest?.offset?.[1]) + 1);
+    expect(selected?.offset?.[0]).toBe(rest?.offset?.[0]);
+  });
+
+  it('carries no variable into the mounted subtree', () => {
+    // The select's own control: the one holding the option hosts.
+    const [[, field] = ['', {} as Control]] = named(compiled.document, name => name.startsWith('field_'))
+      .filter(([, control]) => control.controls?.some(entry => 'option_0' in entry) === true);
+
+    expect(field.controls).toHaveLength(3);
+    expect(JSON.stringify(field)).not.toContain('"$');
   });
 });

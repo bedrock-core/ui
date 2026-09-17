@@ -53,6 +53,12 @@ const LOOKS: readonly [string, keyof Omit<SelectOption, 'rect'>][] = [
   ['checked_locked_hover', 'selected'],
 ];
 
+/** An option's four looks as the eight state children of the toggle that stands it in. */
+export const optionStates = (option: SelectOption): ControlEntry[] =>
+  LOOKS.map(([state, look]): ControlEntry => ({
+    [state]: { type: 'panel', size: FULL, ...topLeft, controls: [...option[look]] },
+  }));
+
 /**
  * A chooser whose options are all visible at once, with the rows placed by the
  * build.
@@ -95,9 +101,7 @@ export const select: Connector<Select> = (data, face) => {
             [`toggle@${OPTION_TOGGLE}`]: {
               size: FULL,
               toggle_name: group,
-              controls: LOOKS.map(([state, look]): ControlEntry => ({
-                [state]: { type: 'panel', size: FULL, ...topLeft, controls: [...option[look]] },
-              })),
+              controls: optionStates(option),
             },
           }],
         },
