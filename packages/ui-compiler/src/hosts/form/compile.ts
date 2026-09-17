@@ -12,6 +12,8 @@ import type { Control, Document } from '../../jsonui';
 import { MODAL_COLLECTION } from '../../connectors/form';
 import type { Addressing } from '../../nodes/utils/types';
 import { toIr } from '../../toIr';
+import { langOf, type ScreenLang } from '../../lang';
+import { checkTrans, transRecords } from '../../trans';
 import { FORM_EMIT } from './emit';
 
 /**
@@ -68,6 +70,8 @@ export interface CompiledFormScreen {
    */
   snapshot: CompiledSnapshot;
   hasBackdrop: boolean;
+  /** The strings the text this screen composed per language adds to each language, by key. */
+  lang: ScreenLang;
   /**
    * The screen as a table, when nothing about it can change: the value each
    * entry carries and where each press leads. Present means the shipped addon
@@ -190,14 +194,17 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
   const read = modal ? { reason: 'a modal builds its fields per present' } : staticTable(entries, spec.namespace);
   const table = 'reason' in read ? undefined : read;
 
+  checkTrans(tree, spec.name);
+
   if (table === undefined && wantsStatic(tree)) {
     const why = 'reason' in read ? read.reason : 'it is not static';
 
     throw new ContainerScreenError(
       `"${spec.name}" declares \`<Screen static>\`, but ${why}.\n`
-      + '  A static screen is shown from what the build knows — its title, its baked values and'
-      + '  the key each press leads to — so it can carry no live value and no handler of its\n'
-      + '  own. Drop the marker, or make every press a link and every string baked.',
+      + '  A static screen is shown from what the build knows — its title, its baked values and\n'
+      + '  the key and params each press leads to — so it can carry no live value, no handler of\n'
+      + '  its own and no params that are not plain data. Drop the marker, or make every press a\n'
+      + '  link with plain-data params and every string baked.',
     );
   }
 
@@ -228,8 +235,12 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
       shape: shapeOf(tree, analyze(tree, visibles)),
       baked: bakedTexts(tree),
       vis: probe.liveVisibles,
+      // A screen rendered at runtime draws its translated texts as laid out here. A static one is
+      // never rendered at runtime, so it carries none.
+      ...table === undefined && transRecords(tree).length > 0 ? { trans: transRecords(tree) } : {},
     },
     ...table === undefined ? {} : { table },
+    lang: langOf(ir.root),
     hasBackdrop: document[BACKDROP_DEFINITION] !== undefined,
   };
 }

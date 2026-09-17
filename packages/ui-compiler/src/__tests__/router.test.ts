@@ -32,6 +32,7 @@ const screen = (
   allocation: { sentinels: 2, drawn: 0, channels: 0, size: 2 },
   hasBackdrop,
   hasText: false,
+  lang: {},
 });
 
 describe('the chest routing', () => {

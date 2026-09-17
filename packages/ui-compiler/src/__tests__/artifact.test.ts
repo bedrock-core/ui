@@ -66,6 +66,7 @@ describe('the reference screen', () => {
     allocation: demoCounts,
     hasBackdrop: true,
     hasText: true,
+    lang: {},
   };
 
   it('is addressable by the chest router', () => {

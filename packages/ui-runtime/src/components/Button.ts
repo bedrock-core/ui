@@ -13,11 +13,18 @@ export interface ButtonProps extends ControlProps, StateBackgroundProps {
    * `event.host` is that entity; on a form there is none.
    */
   onPress?: (event: PressEvent) => unknown | Promise<unknown>;
+  /**
+   * Draw the press around what its children draw rather than in the box the
+   * layout solved, so it covers exactly the glyphs the client shows — whichever
+   * language it shows them in. For a link inside a line of text in a
+   * `<Panel stack>`, whose children hug their own glyphs; compiled forms only.
+   */
+  hug?: boolean;
   // state textures serialize at [1024-1106] hover / [1107-1189] pressed /
   // [1190-1272] locked, resolved by the shared `state ?? base ?? unstyled` rule
 }
 
-export const Button: FunctionComponent<ButtonProps> = ({ onPress, backgroundHover, backgroundPressed, backgroundLocked, children, ...rest }: ButtonProps): JSX.Element => {
+export const Button: FunctionComponent<ButtonProps> = ({ onPress, backgroundHover, backgroundPressed, backgroundLocked, hug, children, ...rest }: ButtonProps): JSX.Element => {
   const states = resolveStateBackgrounds({ background: rest.background, backgroundHover, backgroundPressed, backgroundLocked });
 
   return {
@@ -28,6 +35,8 @@ export const Button: FunctionComponent<ButtonProps> = ({ onPress, backgroundHove
       backgroundPressed: states.backgroundPressed,
       backgroundLocked: states.backgroundLocked,
       onPress: onPress ?? ((): void => {}),
+      // Private: the build reads it off the element, and no payload has a field for it.
+      ...hug === true ? { __hug: true } : {},
       children,
     },
   };

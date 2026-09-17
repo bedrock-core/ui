@@ -1,8 +1,9 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import type { ControlProps, JSX } from '@bedrock-core/ui-runtime';
-import { Panel, Text, useTranslationResolver } from '@bedrock-core/ui-runtime';
+import { Panel, Text, useComposed } from '@bedrock-core/ui-runtime';
 import type { DisplayText } from '@bedrock-core/i18n';
 import { theme } from './tokens';
+import { trailLine } from './trailComposition';
 
 export interface TrailProps extends ControlProps {
   /**
@@ -18,10 +19,9 @@ export interface TrailProps extends ControlProps {
    */
   maxLength?: number;
   /**
-   * A trail known at build time, in place of `text`: one baked label per
-   * segment, so each key still resolves on the client. A trail that is one
-   * label has to be composed by whoever knows what it says, which a baked
-   * trail's author already did.
+   * A trail known at build time, in place of `text`. The build composes it in
+   * every language the pack ships, collapsed to the room the trail is laid out
+   * with, and one label draws the client's own.
    */
   segments?: readonly DisplayText[];
 }
@@ -43,35 +43,17 @@ export interface TrailProps extends ControlProps {
  * composition — including which segments were dropped to make it fit — is
  * decided by the server that knows what they say.
  *
- * A BAKED trail is one label per segment, because a baked label can hold one
- * key and no more: the build would otherwise have to resolve the segments
- * itself and freeze its own language into the pack.
+ * A BAKED trail is one label too, composed by the build for every language
+ * from that language's strings and collapsed to the width the trail was laid
+ * out at: which segments fit depends on what they say, and what they say is
+ * different in every language.
  */
 export function Trail({ text, maxLength, segments, ...layout }: TrailProps): JSX.Element {
-  const resolver = useTranslationResolver();
-  const { font, scale, color, colorRgb, separator } = theme.components.header.textStyle;
-
-  const isLiteral = (value: DisplayText): value is string => typeof value === 'string' && resolver?.(value) === undefined;
-
-  // A literal takes the trail colour as a code; a key takes it through the
-  // label, since a code in front of a key stops it resolving.
-  const baked = (segments ?? []).flatMap((segment, index): JSX.Element[] => [
-    ...index === 0
-      ? []
-      : [<Text font={font} scale={scale} hug={true}>{`${separator} > `}</Text>],
-    <Text
-      font={font}
-      scale={scale}
-      maxLines={1}
-      hug={true}
-      color={isLiteral(segment) ? undefined : colorRgb}
-    >
-      {isLiteral(segment) ? `${color}${segment}` : segment}
-    </Text>,
-  ]);
+  const { font, scale } = theme.components.header.textStyle;
+  const composed = useComposed((resolve, width) => trailLine(segments ?? [], resolve, width));
 
   return (
-    <Panel stack={true} flexDirection={'row'} justifyContent={'center'} alignItems={'center'} {...layout}>
+    <Panel stack={true} flexDirection={'row'} justifyContent={'center'} alignItems={'center'} {...layout} {...segments === undefined ? {} : composed.box}>
       {segments === undefined
         ? (
             // No colour on the label: a composed trail carries the trail's own
@@ -80,7 +62,7 @@ export function Trail({ text, maxLength, segments, ...layout }: TrailProps): JSX
               {text ?? ''}
             </Text>
           )
-        : baked}
+        : <Text font={font} scale={scale} hug={true} {...composed.text} />}
     </Panel>
   );
 }

@@ -14,6 +14,7 @@ import {
   screenOwner,
   setNavigator,
   type Navigated,
+  type NavigateOptions,
   type ReturnAddress,
   type ScreenReference,
 } from '@bedrock-core/ui-runtime';
@@ -26,10 +27,10 @@ import {
  */
 export interface CrossRealm {
   /**
-   * Asks the realm of `owner` to show `key` to `player`, saying where a `back()` that runs out of
-   * screens over there should return to. True when the request went out.
+   * Asks the realm of `owner` to show `key` to `player` with `params`, saying where a `back()` that
+   * runs out of screens over there should return to. True when the request went out.
    */
-  ask(owner: string, key: string, player: Player): boolean;
+  ask(owner: string, key: string, player: Player, params?: NavigateOptions['params']): boolean;
   /** Shows the player what the realm they came from had on screen. */
   sendBack(address: ReturnAddress, rest: readonly ReturnAddress[], player: Player): boolean;
 }
@@ -60,6 +61,7 @@ export function provideReferences(
         // A foreign screen is SHOWN, not rendered: there is no component here, so the walk drives
         // the client directly — title, values, and the key each press leads to — for as long as
         // the presses are links. A back press on its first screen is the player's own way back.
+        // Its values were baked with no props, so params have nothing to fill.
         void presentReference(lookup, key, player).then((ended) => {
           if (ended === 'back') {
             back(player);
@@ -71,7 +73,7 @@ export function provideReferences(
 
       const owner = screenOwner(key);
 
-      if (owner !== undefined && crossRealm?.ask(owner, key, player) === true) {
+      if (owner !== undefined && crossRealm?.ask(owner, key, player, options.params) === true) {
         return 'handed-off';
       }
 

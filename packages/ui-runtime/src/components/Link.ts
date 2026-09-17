@@ -12,6 +12,9 @@ const LINK_BACK = 'linkBack';
 /** The prop that marks a link as replacing the screen it leaves. */
 const LINK_REPLACE = 'linkReplace';
 
+/** The prop a link's params travel on, so a described press opens its target with them. */
+const LINK_PARAMS = 'linkParams';
+
 export interface LinkProps extends Omit<ButtonProps, 'onPress'> {
   /**
    * The screen to open: `<addon>:<name>`, as the build wrote it. This addon's own
@@ -25,7 +28,11 @@ export interface LinkProps extends Omit<ButtonProps, 'onPress'> {
    * addon could not name it even if it wanted to.
    */
   back?: boolean;
-  /** Props the target screen is rendered with; see {@link NavigateOptions.params}. */
+  /**
+   * Props the target screen is rendered with; see {@link NavigateOptions.params}.
+   * A static screen writes them into its table, so there they must be plain data:
+   * strings, finite numbers, booleans, null, and arrays and objects of those.
+   */
   params?: NavigateOptions['params'];
   /**
    * Take the place of the screen this link is on rather than stacking over
@@ -72,23 +79,36 @@ export const Link: FunctionComponent<LinkProps> = ({ to, back: isBack, params, r
       ...button.props,
       ...to === undefined ? {} : { [LINK_TO]: to },
       ...isBack === true ? { [LINK_BACK]: true } : {},
+      ...to !== undefined && params !== undefined ? { [LINK_PARAMS]: params } : {},
       ...to !== undefined && replace === true ? { [LINK_REPLACE]: true } : {},
     },
   };
 };
 
 /** Where a press leads, as the build reads it off one element. */
-export type LinkTarget = { readonly to: string; readonly replace?: true } | { readonly back: true };
+export type LinkTarget = { readonly to: string; readonly params?: NavigateOptions['params']; readonly replace?: true } | { readonly back: true };
+
+const isParams = (value: unknown): value is NonNullable<NavigateOptions['params']> =>
+  typeof value === 'object' && value !== null;
 
 /**
  * Where a built button goes, when it is a `<Link>`. Undefined for an ordinary
  * button: what its press does is script the build cannot read.
+ *
+ * The params come back as the author wrote them. Whether they can be described
+ * — written into a table, sent to another realm — is for whoever describes them.
  */
 export function linkTarget(element: JSX.Element): LinkTarget | undefined {
   const to = element.props[LINK_TO];
 
   if (typeof to === 'string') {
-    return element.props[LINK_REPLACE] === true ? { to, replace: true } : { to };
+    const params = element.props[LINK_PARAMS];
+
+    return {
+      to,
+      ...isParams(params) ? { params } : {},
+      ...element.props[LINK_REPLACE] === true ? { replace: true as const } : {},
+    };
   }
 
   return element.props[LINK_BACK] === true ? { back: true } : undefined;

@@ -23,7 +23,7 @@
  */
 
 // Primitives: leaves.
-export { stateFace } from './primitives/button';
+export { CONTENT_LAYER, stateFace } from './primitives/button';
 export { dropdownFace, type DropdownFace } from './primitives/dropdown';
 export { imageFace, type ImageFace } from './primitives/image';
 export { inputFace, type InputFace } from './primitives/input';

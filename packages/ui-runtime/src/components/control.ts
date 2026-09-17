@@ -51,6 +51,8 @@ export function withControl(props: JSX.Props): JSX.Props {
     liveVisible,
     enabled,
     background,
+    __widthSlot,
+    __trans,
     // Layout props
     width,
     height,
@@ -93,6 +95,10 @@ export function withControl(props: JSX.Props): JSX.Props {
   return {
     visible: visible ?? true,
     ...liveVisible === true ? { liveVisible: true } : {},
+    // Internal to the build's composing components: the slot the layout records this box's width
+    // under, and a translated text's layout as the build recorded it.
+    ...typeof __widthSlot === 'number' ? { __widthSlot } : {},
+    ...__trans === undefined ? {} : { __trans },
     enabled: enabled ?? true,
 
     background: background ?? '',

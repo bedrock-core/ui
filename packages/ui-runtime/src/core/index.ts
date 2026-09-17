@@ -33,6 +33,7 @@ export type { ReturnAddress } from './returnAddress';
 // A screen as another addon can show it.
 export { addonReference, isAddonReference, isScreenReference, presentReference } from './reference';
 export type { AddonReference, ReferenceTarget, ScreenReference, WalkResult } from './reference';
+export { whyNotPlainData } from './plainData';
 
 // How a screen reads its own state.
 export type { Immutable, ReducerSlot, StateSlot, StateUpdate } from './immutable';

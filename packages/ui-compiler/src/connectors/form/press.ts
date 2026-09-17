@@ -7,8 +7,11 @@ import type { Addressed, Connector, Definitions, Emit } from '../types';
 export interface PressLook {
   /** The screen-local definition name this look is emitted under, e.g. `press_1`. */
   definition: string;
-  /** The button's box. The definition is sized to it, so one look serves one size. */
-  size: [number, number];
+  /**
+   * The button's box. The definition is sized to it, so one look serves one size — or all of
+   * the box its host stands in, for a hugging button, whose host is sized to its text.
+   */
+  size: [number, number] | ['100%', '100%'];
   rest: string;
   hover: string;
   pressed: string;

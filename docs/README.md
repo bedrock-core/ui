@@ -13,6 +13,7 @@ folder holds the measurements the code's comments cite.
 | [S7-entry-field](./spikes/S7-entry-field.md) | Which of a form entry's two strings carries a value. |
 | [S8-gate-construction](./spikes/S8-gate-construction.md) | Whether a gate can keep a compiled screen from being built, not just from being drawn. |
 | [S9-row-typed-factory](./spikes/S9-row-typed-factory.md) | Whether a row-typed factory can give a compiled slider its value back. |
+| [S10-lang-pieces](./spikes/S10-lang-pieces.md) | Whether a compiled line can hold pieces whose text differs per language. |
 | [jsonui-container-facts](./spikes/jsonui-container-facts.md) | The rules the container backend is built on: slot addressing, what a slot publishes, and what the Script API allows around a container. |
 
 Each spike is one probe in a test addon, driven by a custom command, with its numbers recorded

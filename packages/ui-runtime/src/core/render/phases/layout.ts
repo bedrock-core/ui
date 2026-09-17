@@ -6,6 +6,7 @@ import { LIST_SLOT_TYPE } from '../../../components/List';
 import { SCROLL_RESERVE, SCROLL_SLOT_TYPE, type ScrollAxis, WIDE_RECT } from '../../../components/Scroll';
 import type { JSX } from '../../../jsx';
 import { ellipsizeText, measureText, wrapText, WIDEST_GLYPH } from '../../../util/textMetrics';
+import { recordWidth } from '../buildPass';
 import { isTransparentType } from '../../componentRegistry';
 import { isElement } from '../../guards';
 import { MODAL_DROPDOWN_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE } from '../../fields';
@@ -668,6 +669,8 @@ function dumpLayoutNode(node: LayoutNode, depth = 0): void {
  * - Overflow text commit: re-derive the wrapped/truncated display string at the
  *   node's FINAL granted width (the same width its measure closure last saw) so
  *   the emitted text is the processed one.
+ * - Composing widths: a box whose text the build composes per language records
+ *   the width it was given, for the next pass of the render to compose at.
  */
 function resolveDerivedProps(element: JSX.Node): void {
   if (Array.isArray(element)) {
@@ -705,6 +708,14 @@ function resolveDerivedProps(element: JSX.Node): void {
         element.props.value = { tail: safeLabelText(processOverflowText(td, width)) };
       }
     }
+  }
+
+  // A box whose text is composed per language is composed at the width solved here, on the next
+  // pass of the same build render.
+  const slot = element.props.__widthSlot;
+
+  if (typeof slot === 'number') {
+    recordWidth(slot, asNumber(element.props.jsonUIWidth) ?? 0);
   }
 
   resolveDerivedProps(element.props.children);

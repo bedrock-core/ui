@@ -114,8 +114,19 @@ export function MenuRow({
 
   if (chevron) { children.push(<Text>{`${subtitleColor}>`}</Text>); }
 
+  // A button's children are baked into its face, and a live line cannot be. So a row with one
+  // draws its lines above the press instead: the button fills the row beneath them, and a
+  // press on the lines reaches it.
+  const live = titleMaxLength !== undefined || subtitleMaxLength !== undefined;
+
   const face = (
-    <Panel flexDirection={'row'} alignItems={'center'} gap={row.gap} width={'100%'}>
+    <Panel
+      flexDirection={'row'}
+      alignItems={'center'}
+      gap={row.gap}
+      width={'100%'}
+      {...live ? { padding: row.padding, zIndex: 2 } : {}}
+    >
       {children}
     </Panel>
   );
@@ -140,5 +151,28 @@ export function MenuRow({
     children: face,
   };
 
-  return to === undefined ? Button({ ...styled, onPress }) : Link({ ...styled, to, ...replace === true ? { replace: true } : {} });
+  if (!live) {
+    return to === undefined ? Button({ ...styled, onPress }) : Link({ ...styled, to, ...replace === true ? { replace: true } : {} });
+  }
+
+  const { background, backgroundHover, backgroundPressed, backgroundLocked } = styled;
+  const surface = {
+    position: 'absolute' as const,
+    left: 0,
+    top: 0,
+    width: '100%' as const,
+    height: '100%' as const,
+    background,
+    backgroundHover,
+    backgroundPressed,
+    backgroundLocked,
+    enabled,
+  };
+
+  return (
+    <Panel alignSelf={'stretch'} marginLeft={styled.marginLeft} {...layout}>
+      {to === undefined ? Button({ ...surface, onPress }) : Link({ ...surface, to, ...replace === true ? { replace: true } : {} })}
+      {face}
+    </Panel>
+  );
 }

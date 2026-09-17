@@ -1,3 +1,4 @@
+import { ContainerScreenError } from '@bedrock-core/ui-runtime/compile';
 import {
   CELL, foreignSlot, grid, press, pressDefs, slot, text, textDef, TEXT_DEF,
 } from '../../connectors/chest';
@@ -125,11 +126,17 @@ export const CHEST_EMIT: HostEmit = {
   },
 
   fill: {
-    press: (node: ButtonNode, entry, ctx): ControlEntry => press(
-      { name: node.name, address: pressAddress(node), definition: ctx.faceNames.get(faceId('button', faceSignature(node))) ?? 'press_1' },
-      entry,
-      ctx,
-    ),
+    press: (node: ButtonNode, entry, ctx): ControlEntry => {
+      if (node.hug === true) {
+        throw new ContainerScreenError(`A container screen cannot hug a button to its text (${node.name}): a slot is a fixed cell.`);
+      }
+
+      return press(
+        { name: node.name, address: pressAddress(node), definition: ctx.faceNames.get(faceId('button', faceSignature(node))) ?? 'press_1' },
+        entry,
+        ctx,
+      );
+    },
 
     text: (node: TextNode, entry, ctx): ControlEntry => text(
       {

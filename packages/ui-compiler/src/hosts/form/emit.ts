@@ -3,7 +3,7 @@ import {
   type SelectOption, text, textDef, texture, TEXTURE_DEF, toggleWidget, visible,
 } from '../../connectors/form';
 import type { TextStyle } from '../../faces';
-import { type ButtonNode, faceSignature, pressAddress } from '../../nodes/primitives/button';
+import { type ButtonNode, faceSignature, lookOf, pressAddress, pressSizeOf } from '../../nodes/primitives/button';
 import { MODAL_COLLECTION } from '../../connectors/form/entry';
 import { collectKind } from '../../nodes';
 import type { Binding, ControlEntry } from '../../jsonui';
@@ -51,7 +51,7 @@ const definitionOf = (names: Map<string, string>, signature: string, fallback: s
 
 /** The shared faces of one button look, fully qualified, as the face pass named them. */
 const facesOf = (node: ButtonNode, ctx: Emit): { id: string; rest: string; hover: string; pressed: string; disabled: string } => {
-  const id = faceId('button', faceSignature(node));
+  const id = faceId('button', faceSignature(lookOf(node)));
 
   return {
     id,
@@ -236,7 +236,7 @@ export const FORM_EMIT: HostEmit = {
 
   fill: {
     press: (node: ButtonNode, entry, ctx): ControlEntry => press(
-      { name: node.name, address: pressAddress(node), definition: definitionOf(ctx.faceNames, faceId('button', faceSignature(node)), 'press_1') },
+      { name: node.name, address: pressAddress(node), definition: definitionOf(ctx.faceNames, faceId('button', faceSignature(lookOf(node))), 'press_1') },
       entry,
       ctx,
     ),
@@ -313,13 +313,13 @@ export const FORM_EMIT: HostEmit = {
     // mechanism definition — only the shared faces, which the face pass has
     // already emitted.
     for (const node of collectKind(root, 'button').filter(button => button.action === undefined)) {
-      const id = faceId('button', faceSignature(node));
+      const id = faceId('button', faceSignature(lookOf(node)));
 
       if (!ctx.faceNames.has(id)) {
         const definition = `press_${ctx.faceNames.size + 1}`;
 
         ctx.faceNames.set(id, definition);
-        Object.assign(document, pressDefs({ definition, size: sizeOf(node.rect), ...facesOf(node, ctx) }, ctx));
+        Object.assign(document, pressDefs({ definition, size: pressSizeOf(node), ...facesOf(node, ctx) }, ctx));
       }
     }
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { collapseTrail, trailMaxLength, trailText, trailWidth, type TrailMeasure } from '../trailComposition';
+import { collapseTrail, trailLine, trailMaxLength, trailText, trailWidth, type TrailMeasure } from '../trailComposition';
+import { theme } from '../tokens';
 
 /**
  * A trail gives way in one order, so the order is what is tested: the last
@@ -78,5 +79,20 @@ describe('a composed trail', () => {
   it('reserves fewer characters under the labelled cancel than under the icon back', () => {
     expect(trailWidth('cancel')).toBeLessThan(trailWidth('icon'));
     expect(trailMaxLength('cancel')).toBeLessThan(trailMaxLength('icon'));
+  });
+});
+
+describe('a baked trail in one language', () => {
+  const { color, separator } = theme.components.header.textStyle;
+  const strings: Record<string, string> = { 'guide.title': 'Guia', 'guide.page': 'Pagina' };
+  const resolve = (key: string): string | undefined => strings[key];
+
+  it('resolves every segment in that language, the trail colours between them', () => {
+    expect(trailLine(['guide.title', 'Literal', 'guide.page'], resolve, undefined))
+      .toBe(`${color}Guia${separator} > ${color}Literal${separator} > ${color}Pagina`);
+  });
+
+  it('collapses the way a live trail does when it has no room', () => {
+    expect(trailLine(['guide.title', 'Literal', 'guide.page'], resolve, 1)).toBe(`${color}...${separator} > ${color}Pagina`);
   });
 });

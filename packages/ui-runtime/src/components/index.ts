@@ -35,6 +35,7 @@ export { Link, linkTarget, type LinkProps, type LinkTarget } from './Link';
 export { List, LIST_SLOT_TYPE, listCapacity, listCount, type ListProps } from './List';
 export { Option, type OptionProps } from './Option';
 export { Panel, PANEL_TYPE, type PanelProps } from './Panel';
+export { Trans, type TransProps } from './Trans';
 export { Tabs, DEFAULT_TAB_HEIGHT } from './Tabs';
 export type { TabsProps, TabProps } from './Tabs';
 export { Disclosure, DEFAULT_DISCLOSURE_HEADER_HEIGHT } from './Disclosure';

@@ -3,6 +3,7 @@ import {
   isTextElementType, labelFontFields, liveTextLength, TEXT_SHADOW_TYPE, TEXT_SHADOW_WRAP_TYPE,
 } from '@bedrock-core/ui-runtime/compile';
 import { textFace } from '../../faces';
+import { composedKey } from '../utils/composed';
 import { boxOf, num, str, tailOf } from '../utils/shared';
 import type { LabelStyle, LowerContext, NodeBase, NodeDefinition, Rect } from '../utils/types';
 
@@ -36,6 +37,11 @@ export interface TextNode extends NodeBase, LabelStyle {
   text: string;
   /** True when `text` is a translation key the client resolves. */
   localize: boolean;
+  /**
+   * What a text the build composed says in each language: `text` is then the
+   * key the build minted for it, and the screen writes these under it.
+   */
+  translations?: Readonly<Record<string, string>>;
 }
 
 /** Whether a host has to carry this string, which is what `maxLength` declares. */
@@ -59,7 +65,7 @@ declare module '../utils/types' {
 }
 
 /** What `<Text>` recorded about its string for the layout pass. */
-const textMetricsOf = (value: unknown): { isKey: boolean; resolvedText: string; hug: boolean } => {
+const textMetricsOf = (value: unknown): { isKey: boolean; resolvedText: string; hug: boolean; translations?: Record<string, string> } => {
   if (typeof value !== 'object' || value === null) {
     return { isKey: false, resolvedText: '', hug: false };
   }
@@ -68,8 +74,22 @@ const textMetricsOf = (value: unknown): { isKey: boolean; resolvedText: string; 
   const resolvedText = 'resolvedText' in value && typeof value.resolvedText === 'string'
     ? value.resolvedText
     : '';
+  const translations = 'translations' in value ? stringsOf(value.translations) : undefined;
 
-  return { isKey, resolvedText, hug: 'hug' in value && value.hug === true };
+  return { isKey, resolvedText, hug: 'hug' in value && value.hug === true, ...translations === undefined ? {} : { translations } };
+};
+
+/** A record of strings by locale, when that is what a value is. */
+const stringsOf = (value: unknown): Record<string, string> | undefined => {
+  if (typeof value !== 'object' || value === null) {
+    return undefined;
+  }
+
+  const entries = Object.entries(value);
+
+  return entries.every((entry): entry is [string, string] => typeof entry[1] === 'string')
+    ? Object.fromEntries(entries)
+    : undefined;
 };
 
 const bakedOf = (element: JSX.Element, base: Omit<TextNode, 'kind' | 'text' | 'localize' | 'fontType' | 'fontScaleFactor'>): TextNode => {
@@ -83,9 +103,11 @@ const bakedOf = (element: JSX.Element, base: Omit<TextNode, 'kind' | 'text' | 'l
     ...base,
     // A string tail is what the label shows: a literal, or a key the engine
     // resolves. A RawMessage tail would be resolved by the client in a form;
-    // here the build's own resolution is baked instead.
-    text: tail ?? metrics.resolvedText,
-    localize: tail !== undefined && metrics.isKey,
+    // here the build's own resolution is baked instead. A composed text is
+    // drawn through the key minted for what it says in every language.
+    ...metrics.translations === undefined
+      ? { text: tail ?? metrics.resolvedText, localize: tail !== undefined && metrics.isKey }
+      : { text: composedKey(metrics.translations), localize: true, translations: metrics.translations },
     fontType: str(props.fontType, defaults.fontType),
     fontScaleFactor: num(props.fontScaleFactor, defaults.fontScaleFactor),
     ...metrics.hug ? { hug: true as const } : {},

@@ -63,6 +63,11 @@ export interface NavigateOptions extends RenderOptions {
    * Props the screen is rendered with. A compiled screen's SHAPE is frozen, so
    * these fill what the layout already reserved — a generic screen's labels and
    * values — and can never add or drop a cell.
+   *
+   * A static screen takes none: it has no component, and its values were baked
+   * with no props. Params that leave this bundle — in a static screen's table, or
+   * to the realm that draws another addon's screen — must be plain data
+   * ({@link whyNotPlainData}).
    */
   params?: Readonly<Record<string, unknown>>;
   /**
@@ -122,7 +127,8 @@ export function screenOwner(key: string): string | undefined {
 export function openScreen(key: string, player: Player, options: NavigateOptions = {}): boolean {
   // A screen the build described in full has no component to render: it is
   // shown from its table, exactly as another addon's screen is, and its links
-  // are followed the same way.
+  // are followed the same way. Its values were baked with no props, so params
+  // have nothing to fill and are not passed.
   if (staticScreen(key) !== undefined) {
     // A back press on the first screen of the walk has nothing behind it in the
     // walk, so it is the player's own way back.

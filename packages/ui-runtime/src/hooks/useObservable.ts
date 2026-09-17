@@ -15,15 +15,19 @@ export interface ObservableLike<T> {
 }
 
 /**
- * Re-renders the component when an observable changes.
+ * Reads an observable, and keeps the component's copy of it current.
  *
- * With a `select` the component only re-renders when the selected slice changes, so a screen that
- * shows a count is not woken by every mutation of the collection behind it. Equality is `Object.is`,
- * applied by the state slot, so a slice that reads equal schedules nothing.
+ * A change lands the way a state change does, because it IS one: the value goes into a state slot.
+ * A form keeps it, and the player sees it on the next screen a press brings up — an open form
+ * cannot change. A container screen updates its live values at once.
+ *
+ * With a `select` only a change to the selected slice counts, so a screen that shows a count is not
+ * woken by every mutation of the collection behind it. Equality is `Object.is`, applied by the state
+ * slot, so a slice that reads equal schedules nothing.
  *
  * ```tsx
- * const phase = useObservable(phaseObs);              // re-renders on any change
- * const count = useObservable(playersObs, p => p.size); // only when the size changes
+ * const phase = useObservable(phaseObs);                // any change
+ * const count = useObservable(playersObs, p => p.size); // only a change of size
  * ```
  *
  * `select` is read through a ref rather than a dependency, so passing an inline arrow — the usual
@@ -71,8 +75,8 @@ export function useObservable<T, S = T>(source: ObservableLike<T>, select?: (val
   }, [source]);
 
   // The slot is readonly because STATE is readonly: a value written in place would
-  // re-render nothing. This one is the source's, not the component's � it changes by
-  // the source publishing a new value, and the observable owns what may touch it � so
+  // update nothing. This one is the source's, not the component's — it changes by
+  // the source publishing a new value, and the observable owns what may touch it — so
   // it is handed back with the type the source declared.
   // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- the slot holds exactly what `read` returned
   return slice as S;

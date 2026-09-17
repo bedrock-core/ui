@@ -40,6 +40,8 @@ import {
   screenOwner,
   setReturnPath,
   shownKey,
+  whyNotPlainData,
+  type NavigateOptions,
   type ScreenReference,
 } from '@bedrock-core/ui-runtime';
 import { Announcement, type Runtime } from '@bedrock-core/server-runtime';
@@ -47,7 +49,7 @@ import { declaredParts } from './declared';
 import { addonPageReference, pages } from './pages';
 import { provideReferences } from './references';
 import { screens } from './screens';
-import { isScreenTarget, isUiReturn, isUiTarget, type UiReturn, type UiTarget } from './target';
+import { isScreenTarget, isUiReturn, isUiTarget, type ScreenTarget, type UiReturn, type UiTarget } from './target';
 
 declare module '@bedrock-core/server-runtime' {
   interface RuntimeSlots {
@@ -220,13 +222,13 @@ class UiRealm implements UiPresence {
     // then whatever any addon published, then the owning realm itself for a screen no reference
     // can describe.
     provideReferences(key => this.reference(key), {
-      ask: (owner, key, player): boolean => {
+      ask: (owner, key, player, params): boolean => {
         // Only a realm that is online can draw anything, and asking ourselves for a key we have
         // already failed to resolve is a loop. Either way the caller says "no such screen"
         // immediately rather than spending an RPC timeout on the same answer.
         if (owner === this._core.id || this._core.registry.get(owner) === undefined) { return false; }
 
-        void this.ask(owner, player, { kind: 'screen', key }, this.returnTo(player));
+        void this.ask(owner, player, screenTarget(key, params), this.returnTo(player));
 
         return true;
       },
@@ -243,14 +245,14 @@ class UiRealm implements UiPresence {
       },
     });
 
-    // One compiled screen by its key, shown in PLACE of whatever the player is on: arriving here
-    // is either a press in this realm, which already put the screen it left behind them, or
-    // another realm handing the player over, which sent the way back as the return address.
+    // One compiled screen by its key and params, shown in PLACE of whatever the player is on:
+    // arriving here is either a press in this realm, which already put the screen it left behind
+    // them, or another realm handing the player over, which sent the way back as the return address.
     this.serve('screen', (player, target) => {
       if (!isScreenTarget(target)) { return; }
 
       this.showing(player, target);
-      navigate(target.key, player, { replace: true });
+      navigate(target.key, player, { replace: true, ...target.params === undefined ? {} : { params: target.params } });
     });
 
     // A player who left takes their place with them; nothing else prunes this map.
@@ -451,6 +453,27 @@ class UiRealm implements UiPresence {
 
     return isScreenReference(published) ? published : undefined;
   }
+}
+
+/**
+ * A screen target for a key, carrying its params when they can cross a realm.
+ *
+ * The request travels as JSON, so params that are not plain data would arrive changed or not at
+ * all. They stay behind with a warning instead of going half-intact: the screen still opens, drawn
+ * as it is without them.
+ */
+function screenTarget(key: string, params: NavigateOptions['params']): ScreenTarget {
+  if (params === undefined) { return { kind: 'screen', key }; }
+
+  const why = whyNotPlainData(params, 'params');
+
+  if (why !== undefined) {
+    console.warn(`[ui] "${key}" opens in its owner's realm without its params, which are not plain data: ${why}`);
+
+    return { kind: 'screen', key };
+  }
+
+  return { kind: 'screen', key, params };
 }
 
 /**

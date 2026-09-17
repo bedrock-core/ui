@@ -1,7 +1,8 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
 import { BUTTON_TYPE, isExitButton, MODAL_FORM_BUTTON_SLOT_TYPE } from '@bedrock-core/ui-runtime/compile';
-import { FULL, panelFace, stateFace, topLeft } from '../../faces';
-import type { ButtonMapping, Control } from '../../jsonui';
+import { ContainerScreenError } from '@bedrock-core/ui-runtime/compile';
+import { CONTENT_LAYER, FULL, offsetOf, panelFace, stateFace, topLeft } from '../../faces';
+import type { ButtonMapping, Control, ControlEntry } from '../../jsonui';
 import { shapeOf } from '../index';
 import { boxOf, entryControl, faceId, shareFace, sizeOf, str } from '../utils/shared';
 import type { FaceEmit, IrNode, NodeBase, NodeDefinition, Rect } from '../utils/types';
@@ -61,6 +62,12 @@ export interface ButtonNode extends NodeBase {
   label?: string;
   face: ButtonFace;
   children: IrNode[];
+  /**
+   * Drawn around what its children draw rather than in the rect the layout
+   * solved: the children at their own size, and the press sized to them — so
+   * it covers the glyphs the client actually shows. Declared by `<Button hug>`.
+   */
+  hug?: true;
 }
 
 /**
@@ -115,6 +122,25 @@ export interface FacedNode {
 export const faceSignature = (node: FacedNode): string => (node.label !== undefined && node.label !== ''
   ? JSON.stringify({ face: node.face, size: sizeOf(node.rect), label: node.label })
   : JSON.stringify({ face: node.face, size: sizeOf(node.rect), children: node.children.map(shapeOf) }));
+
+/** As wide and as tall as its biggest child, which a hugging button's press is sized from. */
+const HUG_PIECE: ['100%cm', '100%cm'] = ['100%cm', '100%cm'];
+
+/** As big as its sibling: a hugging button's press, sized to the children beside it. */
+const HUG_PRESS: ['100%sm', '100%sm'] = ['100%sm', '100%sm'];
+
+/**
+ * The look a button's press is drawn with. A hugging button's children are
+ * drawn beside its press rather than in it, and its size is its children's, so
+ * every hugging button of one look shares one — whatever it says, and however
+ * wide that is in any language.
+ */
+export const lookOf = (node: ButtonNode): FacedNode => (node.hug === true
+  ? { face: node.face, rect: { x: 0, y: 0, width: 0, height: 0 }, children: [], ...node.action === undefined ? {} : { action: node.action } }
+  : node);
+
+/** The size a button's press definition is drawn at: the rect, or all of a hugging button's press. */
+export const pressSizeOf = (node: ButtonNode): [number, number] | ['100%', '100%'] => (node.hug === true ? FULL : sizeOf(node.rect));
 
 /** The shared definitions one button look has, fully qualified. */
 export interface ButtonFaces {
@@ -258,6 +284,7 @@ export const buttonDefinition: NodeDefinition<ButtonNode> = {
       // undetermined press needs a cell the runtime can hear.
       ...action === undefined ? { address: ctx.cellOf(element).address } : { action },
       ...typeof props.label === 'string' ? { label: props.label } : {},
+      ...props.__hug === true ? { hug: true as const } : {},
       face: faceOf(props),
       // Baked into the face, relative to the button like any other child.
       children: ctx.children(element, ctx.own),
@@ -271,6 +298,10 @@ export const buttonDefinition: NodeDefinition<ButtonNode> = {
   socket: node => (node.action === undefined ? 'press' : undefined),
 
   face(node, ctx) {
+    if (node.hug === true) {
+      return hugFace(node, ctx);
+    }
+
     const faces = shareButtonFaces(node, ctx);
 
     if (node.action !== undefined) {
@@ -303,3 +334,41 @@ export const buttonDefinition: NodeDefinition<ButtonNode> = {
     return panelFace({ ...boxOf(node), children: [{ [`face@${faces.rest}`]: {} }] });
   },
 };
+
+/**
+ * A hugging button: its children at their own size, and beside them the press
+ * that stands where the button's name is, sized to them.
+ *
+ * The shape pressable text is made of in the engine — a panel as big as its
+ * biggest child, holding the label and a button as big as its sibling — so the
+ * press follows the glyphs the client draws rather than the ones the build
+ * measured. The press sits under the children, which are raised to the layer a
+ * button's caption is drawn at: the press's own face textures sit a layer inside it,
+ * so a smaller lift would tie with them and the face could draw over the text.
+ */
+const hugFace = (node: ButtonNode, ctx: FaceEmit): ControlEntry => {
+  if (node.action !== undefined) {
+    throw new ContainerScreenError(`A hugging button cannot close or submit (${node.name}): only a press script or a link hears can hug its text.`);
+  }
+
+  const faces = shareButtonFaces(lookOf(node), ctx);
+
+  return {
+    [`${node.name}_piece`]: {
+      type: 'panel',
+      size: HUG_PIECE,
+      offset: offsetOf(node.rect),
+      ...topLeft,
+      ...node.layer === undefined ? {} : { layer: node.layer },
+      ...node.visible === false ? { visible: false } : {},
+      controls: [
+        ...node.children.map(child => raise(ctx.emitNode(child), CONTENT_LAYER)),
+        { [node.name]: { type: 'panel', size: HUG_PRESS, ...topLeft, layer: 1, controls: [{ [`face@${faces.rest}`]: {} }] } },
+      ],
+    },
+  };
+};
+
+/** One entry, at a layer. */
+const raise = (entry: ControlEntry, layer: number): ControlEntry =>
+  Object.fromEntries(Object.entries(entry).map(([name, control]) => [name, { ...control, layer }]));

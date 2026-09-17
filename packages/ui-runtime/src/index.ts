@@ -28,6 +28,7 @@ export {
   Slider,
   Text,
   Toggle,
+  Trans,
   withControl,
 } from './components';
 
@@ -90,11 +91,13 @@ export type {
   TextOverflow,
   TextAlign,
   TextProps,
+  TransProps,
   TextStyle,
   TextWordBreak,
 } from './components';
 
 export {
+  useComposed,
   useContext,
   useEffect,
   useEvent,
@@ -106,7 +109,7 @@ export {
   useRef,
   useState,
 } from './hooks';
-export type { ObservableLike } from './hooks';
+export type { Compose, Composed, ObservableLike } from './hooks';
 
 // Error classes, caught with `instanceof`.
 export {
@@ -139,6 +142,7 @@ export {
   compiledKeyOf,
   screenForKey,
   compiledScreens,
+  whyNotPlainData,
 } from './core';
 
 export type {

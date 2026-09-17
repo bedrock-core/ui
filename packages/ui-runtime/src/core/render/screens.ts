@@ -1,6 +1,8 @@
 import type { DisplayText } from '@bedrock-core/i18n';
 import type { FunctionComponent } from '../../jsx';
+import type { ComposedRecord } from './buildPass';
 import { isHandler } from '../events';
+import type { ReferenceTarget } from '../reference';
 
 /**
  * Which screens the build compiled, and what to show them with.
@@ -48,6 +50,11 @@ export interface CompiledSnapshot {
   readonly baked: readonly string[];
   /** Ordinals of the elements whose `visible` is carried. */
   readonly vis: readonly number[];
+  /**
+   * Every `<Trans>` as the build laid it out, on a screen rendered at runtime: its pieces exist only
+   * in the build's layout, and a press among them is an entry the runtime has to emit in its place.
+   */
+  readonly trans?: readonly ComposedRecord[];
 }
 
 /**
@@ -93,7 +100,7 @@ export interface StaticScreenRecord {
   readonly key: string;
   readonly title: string;
   readonly values: readonly DisplayText[];
-  readonly targets: readonly ({ readonly to: string } | { readonly back: true } | null)[];
+  readonly targets: readonly ReferenceTarget[];
 }
 
 /**

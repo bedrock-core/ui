@@ -1,10 +1,12 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
-import { Container, Text } from '@bedrock-core/ui-runtime';
+import { Container, Panel, Screen as ScreenRoot, Text } from '@bedrock-core/ui-runtime';
 import { describe, expect, it } from 'vitest';
 import { Button } from '../../../ore-styled/src/Button';
 import { Card } from '../../../ore-styled/src/Card';
+import { MenuRow } from '../../../ore-styled/src/MenuRow';
 import { theme } from '../../../ore-styled/src/tokens';
 import { compileScreen } from '../compile';
+import { compileFormScreen } from '../hosts/form/compile';
 import { child, definition, drawnFace, find } from '../__fixtures__/helpers';
 
 /** A styled screen: the components an addon actually writes with. */
@@ -50,5 +52,26 @@ describe('ore-styled components in a container screen', () => {
     const [, card] = find(document, name => name === 'panel_1');
 
     expect(child(card, 'bg').texture).toBe(theme.components.card.variants.raised.textures.background);
+  });
+});
+
+describe('a menu row with a live line', () => {
+  // A button's children are baked into its face, so a live title cannot be one of them.
+  const Rows = (): JSX.Element => ScreenRoot({
+    children: Panel({
+      width: 200,
+      children: [
+        MenuRow({ title: 'live title', titleMaxLength: 16, onPress: () => undefined }),
+        MenuRow({ title: 'live subtitle', subtitle: 'sub', subtitleMaxLength: 12, to: 'a:elsewhere' }),
+        MenuRow({ title: 'baked' }),
+      ],
+    }),
+  });
+
+  it('compiles, with the line drawn above the press rather than inside it', () => {
+    const { snapshot } = compileFormScreen(Rows, { namespace: 'a', name: 'rows' });
+
+    // Every row still takes a press, and the two live lines ride entries of their own.
+    expect(snapshot.shape.startsWith('button,button,button | text:16,text:12 |')).toBe(true);
   });
 });

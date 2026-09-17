@@ -5,9 +5,9 @@
  * another realm. What travels is plain data, read by whichever realm ends up showing it — and
  * what comes back the other way when the player leaves it.
  *
- * The `kind` is open. This package knows one of them, `screen`, because a key is the whole of
- * what a cross-realm `navigate()` carries; every other kind belongs to the app that serves it,
- * and an app narrows the ones it draws. A kind nothing in this realm serves is a visible
+ * The `kind` is open. This package knows one of them, `screen`, because a key and its params are
+ * the whole of what a cross-realm `navigate()` carries; every other kind belongs to the app that
+ * serves it, and an app narrows the ones it draws. A kind nothing in this realm serves is a visible
  * failure rather than a guess at the nearest screen.
  */
 import type { ReturnAddress } from '@bedrock-core/ui-runtime';
@@ -32,6 +32,8 @@ export interface UiTarget {
 export interface ScreenTarget extends UiTarget {
   readonly kind: 'screen';
   readonly key: string;
+  /** The props the screen is rendered with. Plain data, since a target crosses realms as JSON. */
+  readonly params?: Readonly<Record<string, unknown>>;
 }
 
 /**
@@ -51,9 +53,13 @@ export function isUiTarget(value: unknown): value is UiTarget {
   return kind !== 'screen' || ('key' in value && typeof value.key === 'string');
 }
 
-/** Whether a target names one compiled screen. */
+/** Whether a target names one compiled screen, with params that are an object when it has any. */
 export function isScreenTarget(target: UiTarget): target is ScreenTarget {
-  return target.kind === 'screen' && typeof target.key === 'string';
+  const { params } = target;
+
+  return target.kind === 'screen'
+    && typeof target.key === 'string'
+    && (params === undefined || (typeof params === 'object' && params !== null && !Array.isArray(params)));
 }
 
 /** One realm a player crossed, with a target this UI can read back. */

@@ -18,6 +18,8 @@ import { CHEST_EMIT, CHEST_HOST, type ChestHost, chestRouter, type ChestRouting 
 import type { Allocation } from './ir';
 import type { Control, Document } from './jsonui';
 import { chestAddressing, toIr } from './toIr';
+import { langOf, type ScreenLang } from './lang';
+import { checkTrans } from './trans';
 
 export interface ScreenSpec {
   /** Screen name from the file name, e.g. `furnace`. */
@@ -55,6 +57,8 @@ export interface CompiledScreen {
   hasBackdrop: boolean;
   /** Whether any text channel exists, so the filter knows to emit the character table. */
   hasText: boolean;
+  /** The strings the text this screen composed per language adds to each language, by key. */
+  lang: ScreenLang;
 }
 
 /** Namespaces are dotted into references, so a name is an identifier, not a path. */
@@ -181,6 +185,8 @@ export function compileScreen(
     );
   }
 
+  checkTrans(tree, spec.name);
+
   const allocation = allocate(tree);
 
   checkCapacity(screenHost, allocation.size, spec.name);
@@ -213,6 +219,7 @@ export function compileScreen(
     allocation: counts,
     hasBackdrop: document[BACKDROP_DEFINITION] !== undefined,
     hasText: allocation.channels.some(channel => channel.carrier === 'text'),
+    lang: langOf(ir.root),
   };
 }
 

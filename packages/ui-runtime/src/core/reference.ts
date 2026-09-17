@@ -43,8 +43,12 @@ export interface ScreenReference {
  * — so a back control that is only a close leaves whoever opened the screen
  * unable to tell "take me back" from "I am done". As an entry it is neither
  * guess: the press is attributed, and the walk ends saying which it was.
+ *
+ * `params` are the props the press opens its target with, as the link wrote
+ * them. A reference is written by the build and read by other realms, so they
+ * are plain data.
  */
-export type ReferenceTarget = { readonly to: string; readonly replace?: true } | { readonly back: true } | null;
+export type ReferenceTarget = { readonly to: string; readonly params?: Readonly<Record<string, unknown>>; readonly replace?: true } | { readonly back: true } | null;
 
 /** Every static screen one addon publishes, keyed as they are navigated. */
 export interface AddonReference {
@@ -118,8 +122,8 @@ export type WalkResult = 'back' | 'done';
  *
  * A link to a key the table does not describe — a screen with handlers of its
  * own, or one only its owner's realm can draw — is still a link: the walk ends
- * by navigating to it, with the screen it leaves recorded as the one shown, so
- * `back()` from there returns here.
+ * by navigating to it with the link's params, with the screen it leaves recorded
+ * as the one shown, so `back()` from there returns here.
  *
  * @param lookup - What resolves a key into a reference; a link to a key it does
  *   not know is navigated to instead.
@@ -171,8 +175,13 @@ export async function presentReference(
     current = target.to;
     screen = lookup(current);
 
+    // A described target is shown from values baked with no props, so only a
+    // screen the walk hands on has anything for the params to fill.
     if (screen === undefined) {
-      navigate(current, player, target.replace === true ? { replace: true } : {});
+      navigate(current, player, {
+        ...target.params === undefined ? {} : { params: target.params },
+        ...target.replace === true ? { replace: true } : {},
+      });
     }
   }
 

@@ -2,6 +2,7 @@ import { interpolate, type DisplayText } from '@bedrock-core/i18n';
 import type { RawMessage } from '@minecraft/server';
 import { FunctionComponent, JSX } from '../jsx';
 import { useTranslationResolver } from '../data/Translation';
+import { buildLocales } from '../core/render/buildPass';
 import { ControlProps, withControl } from './control';
 import { labelFontFields, type LabelFont } from './Form/controlPayload';
 
@@ -151,6 +152,18 @@ export interface TextProps extends ControlProps {
 export type TextAlign = 'left' | 'center' | 'right';
 
 /**
+ * What only the composing parts of the library hand a `<Text>`: the string in
+ * each language the pack ships, by locale, in place of `children`, for text the
+ * build composes because what it says decides its shape — a trail collapsed to
+ * its room, a piece of a `<Trans>` line. No `.lang` holds such a string, so the
+ * build mints a key for it and writes each language's string under it.
+ * `useComposed` and `<Trans>` set it; an author never does.
+ */
+interface ComposedTextProps {
+  __translations?: Readonly<Record<string, string>>;
+}
+
+/**
  * Make raw text safe to render as a Bedrock JSON UI label. JSON UI feeds a
  * label's `text` through a numeric string-format path, so a value that starts
  * with a digit (or a leading `-`) renders blank or garbled. Prefixing a
@@ -164,6 +177,7 @@ export function safeLabelText(text: string): string {
 
 export const Text: FunctionComponent<TextProps> = ({
   children,
+  __translations: translations,
   font,
   scale,
   wordBreak,
@@ -177,7 +191,7 @@ export const Text: FunctionComponent<TextProps> = ({
   textAlign,
   hug,
   ...rest
-}: TextProps): JSX.Element => {
+}: TextProps & ComposedTextProps): JSX.Element => {
   const resolvedScale = scale ?? 1.0;
   // Shared mapping (controlPayload): font alias + scale over the font_size:small 0.5× base.
   const labelFont = labelFontFields({ font, scale });
@@ -209,7 +223,14 @@ export const Text: FunctionComponent<TextProps> = ({
   const partText = (part: RawMessage): string =>
     part.text ?? (part.translate !== undefined ? (resolver?.(part.translate) ?? part.translate) : '');
 
-  if (rawChild !== undefined) {
+  // Composed per language: laid out in the default language, and never rewritten
+  // by the layout, since the build draws it through a key of its own.
+  const composed = translations === undefined ? undefined : composedValues(translations);
+
+  if (composed !== undefined) {
+    isLocalized = true;
+    resolvedText = composed.shown;
+  } else if (rawChild !== undefined) {
     isLocalized = true;
     resolvedText = translateKey !== undefined
       ? (resolver?.(translateKey) ?? translateKey)
@@ -319,10 +340,24 @@ export const Text: FunctionComponent<TextProps> = ({
         // Drawn at the width of its glyphs: the box the layout solves is only
         // what the engine starts from, and the stack above re-places the row.
         ...hug === true ? { hug: true } : {},
+        // Every language's string, for the build to write under the key it mints.
+        ...composed === undefined ? {} : { translations: composed.values },
       },
     },
   };
 };
+
+/**
+ * A composed text's strings, each guarded the way a literal label is, and the one it is laid out
+ * with: the default language's, or the first one given outside a build.
+ */
+function composedValues(translations: Readonly<Record<string, string>>): { shown: string; values: Record<string, string> } {
+  const values = Object.fromEntries(Object.entries(translations).map(([locale, value]) => [locale, safeLabelText(value)]));
+  const preferred = buildLocales()?.defaultLocale;
+  const shown = (preferred === undefined ? undefined : values[preferred]) ?? Object.values(values)[0] ?? '';
+
+  return { shown, values };
+}
 
 /**
  * Characters a built `<Text>` reserved with `maxLength`, or undefined when the

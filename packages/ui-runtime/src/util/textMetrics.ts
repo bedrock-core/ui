@@ -274,6 +274,61 @@ export function wrapText(
   return result;
 }
 
+/** One line of a wrapped text, as the indices of the source string it holds: `[start, end)`. */
+export interface LineRange {
+  start: number;
+  end: number;
+}
+
+/**
+ * Where `wrapText` breaks `text`, as ranges of the SOURCE string rather than of the wrapped one:
+ * a break the wrap inserted, a space it turned into one, and a hyphen it added mid-word are not
+ * characters of the source, so a position in it still names the same glyph.
+ */
+export function lineRanges(
+  text: string,
+  maxWidth: number,
+  font?: TextFont,
+  fontSize = 1.0,
+): LineRange[] {
+  const wrapped = wrapText(text, maxWidth, font, fontSize);
+  const lines: LineRange[] = [];
+  let start = 0;
+  let i = 0;
+
+  for (let j = 0; j < wrapped.length; j++) {
+    const out = wrapped[j];
+
+    if (out === '\n') {
+      lines.push({ start, end: i });
+
+      // A break in the source, or the space the wrap broke the line at, is a character the
+      // next line starts after; a break the wrap inserted before a word is not.
+      if (text[i] === '\n' || text[i] === ' ') {
+        i++;
+      }
+
+      start = i;
+      continue;
+    }
+
+    // A space the wrap dropped from the start of a line.
+    while (text[i] === ' ' && out !== ' ') {
+      i++;
+    }
+
+    if (out === text[i]) {
+      i++;
+    }
+
+    // Anything else is the hyphen of a word broken across lines, which the source never had.
+  }
+
+  lines.push({ start, end: text.length });
+
+  return lines;
+}
+
 /**
  * Approximate intrinsic text dimensions for Bedrock UI labels.
  * Formatting sequences (e.g. §a, §l) are treated as zero-width control codes.

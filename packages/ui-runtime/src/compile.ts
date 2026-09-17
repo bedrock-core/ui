@@ -61,6 +61,7 @@ export { BACKGROUND_SLOT_TYPE } from './components/Background';
 export { BUTTON_TYPE, isExitButton } from './components/Button';
 export { linkTarget } from './components/Link';
 export type { LinkTarget } from './components/Link';
+export { whyNotPlainData } from './core/plainData';
 export { CONTAINER_TYPE, containerHandlers, containerHost, containerRoot } from './components/Container';
 export type { ContainerHost } from './components/Container';
 export { declaredStatic, SCREEN_TYPE } from './components/Screen';
@@ -92,3 +93,10 @@ export { UNSTYLED_TEXTURE } from './components/control';
 export { labelFontFields } from './components/Form/controlPayload';
 export { TEXT_SHADOW_TYPE, TEXT_SHADOW_WRAP_TYPE } from './components/Text';
 export { isTransparentType } from './core/componentRegistry';
+
+// Every language the pack ships, registered by the build before it renders a screen, so text
+// whose shape depends on what it says is composed for each of them.
+export { buildLocales, setBuildLocales } from './core/render/buildPass';
+export type { BuildLocales, ComposedRecord } from './core/render/buildPass';
+export { EMPTY_PIECE, parseTrans, splitTrans, TransError } from './util/trans';
+export type { TransLayout, TransPiece } from './util/trans';

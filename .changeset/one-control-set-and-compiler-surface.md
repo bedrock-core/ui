@@ -17,7 +17,9 @@ because both halves name it the same way. Versioning them apart said otherwise.
 from a form, a compiled section or a container screen. `ToggleButtons` makes one choice, or any
 number with `multiple`, and looks the same either way: a chosen segment wears the pressed face, a
 white label and a one-pixel drop on every host. `Tabs` takes a label per `Tabs.Tab` and draws its
-headers on the theme's `tabs` faces, which started as copies of the toggle buttons'.
+headers on the theme's `tabs` faces, which started as copies of the toggle buttons'. A `MenuRow`
+with `titleMaxLength` or `subtitleMaxLength` draws its lines above its press, so a live row
+compiles.
 
 `@bedrock-core/ui-compiler` publishes the compiler surface an addon's build calls: `toIr` and the
 IR node types, `emit` and the JSON UI document types, `compileScreen` and `buildRouter` for the

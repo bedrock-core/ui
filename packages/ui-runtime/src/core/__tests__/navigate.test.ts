@@ -11,7 +11,7 @@ import { Text } from '../../components/Text';
 import { titleFor } from '../../hosts/form/contract';
 import type { FunctionComponent } from '../../jsx';
 import { clearHistory, historyOf } from '../history';
-import { back, navigate, openScreen, setNavigator, type Navigated } from '../navigate';
+import { back, navigate, openScreen, setNavigator, type Navigated, type NavigateOptions } from '../navigate';
 import { setReturnPath, type ReturnAddress } from '../returnAddress';
 import { addonReference, presentReference, type ScreenReference } from '../reference';
 import { registerCompiledScreen, registerStaticScreens } from '../render/screens';
@@ -304,6 +304,80 @@ describe('a screen as another addon can show it', () => {
     await untilShown();
 
     expect(__lastActionForm()?.titleText).toBe(titleFor('mix_index'));
+
+    clearHistory(player.id);
+  });
+
+  it('opens a screen with handlers of its own with the params its static link carries', async () => {
+    const player = nextPlayer();
+    const received: unknown[] = [];
+    const Target: FunctionComponent = ({ message }) => {
+      received.push(message);
+
+      return Screen({ children: Panel({ children: Text({ maxLength: 32, children: typeof message === 'string' ? message : '(none)' }) }) });
+    };
+
+    registerStaticScreens([
+      {
+        key: 'mixp:index',
+        title: titleFor('mixp_index'),
+        values: [''],
+        targets: [{ to: 'mixp:target', params: { message: 'sent through params' } }],
+      },
+    ]);
+    registerCompiledScreen(Target, { key: 'mixp:target', title: titleFor('mixp_target') });
+
+    __setDeferredShows(true);
+
+    expect(navigate('mixp:index', player)).toBe(true);
+
+    await untilShown();
+    __resolveShow({ canceled: false, selection: 0 });
+
+    await untilShown();
+
+    expect(__lastActionForm()?.titleText).toBe(titleFor('mixp_target'));
+    expect(received).toContain('sent through params');
+    expect(received).not.toContain(undefined);
+    expect(historyOf(player.id)).toEqual(['mixp:index']);
+
+    clearHistory(player.id);
+  });
+
+  it('hands a static link\'s params and replace on to the navigator together', async () => {
+    const player = nextPlayer();
+    const handed: { key: string; options: NavigateOptions }[] = [];
+
+    setNavigator({
+      show: (key, who, options): Navigated => {
+        if (openScreen(key, who, options)) { return true; }
+
+        handed.push({ key, options });
+
+        return 'handed-off';
+      },
+    });
+    registerStaticScreens([
+      {
+        key: 'mixr:index',
+        title: titleFor('mixr_index'),
+        values: [''],
+        targets: [{ to: 'elsewhere:page', params: { id: 'diamond' }, replace: true }],
+      },
+    ]);
+
+    __setDeferredShows(true);
+
+    navigate('mixr:index', player);
+
+    await untilShown();
+    __resolveShow({ canceled: false, selection: 0 });
+
+    for (let tick = 0; tick < 10 && handed.length === 0; tick += 1) {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
+
+    expect(handed).toEqual([{ key: 'elsewhere:page', options: { params: { id: 'diamond' }, replace: true } }]);
 
     clearHistory(player.id);
   });

@@ -120,6 +120,25 @@ export function collapseTrail(shown: readonly string[], width: number, measure: 
   return compose(from);
 }
 
+/**
+ * A trail the build knows, as the one line a language draws it as: every
+ * segment resolved through `resolve`, collapsed to `width` the way
+ * {@link trailText} collapses a live one, the trail's colours as codes.
+ *
+ * @param segments - The trail in order, `a > b > c`.
+ * @param resolve - One language's strings.
+ * @param width - The room the trail has, or none to keep every segment.
+ */
+export function trailLine(segments: readonly DisplayText[], resolve: TranslationResolver, width: number | undefined): string {
+  const { color, separator } = theme.components.header.textStyle;
+  const shown = segments.map(segment => resolveDisplay(resolve, segment)).filter(text => text !== '');
+  const slots = width === undefined ? shown.map((_segment, index) => index) : collapseTrail(shown, width, headerWidth);
+
+  return slots
+    .map((slot, at) => `${at === 0 ? color : `${separator}${SEPARATOR}${color}`}${slot === 'gap' ? ELLIPSIS : shown[slot] ?? ''}`)
+    .join('');
+}
+
 /** Options for {@link trailText}. */
 export interface TrailOptions {
   /** The back control the header wears: a labelled cancel leaves the trail less room than the icon. */

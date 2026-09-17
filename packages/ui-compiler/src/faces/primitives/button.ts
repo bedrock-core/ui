@@ -2,7 +2,7 @@ import { FULL, styled, topLeft } from '../utils/place';
 import type { Control, ControlEntry } from '../utils/types';
 
 /** The layer a button's baked children are drawn at, clear of every state's texture. */
-const CONTENT_LAYER = 12;
+export const CONTENT_LAYER = 12;
 
 /**
  * One of a button's looks: the texture, and the children over it.
