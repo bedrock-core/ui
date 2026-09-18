@@ -27,12 +27,11 @@
  *  - Each addon's ROUTER, a file of its own, holds that root: one gated host
  *    per compiled screen.
  *
- * The routing reads the sentinel, the protocol item in the first two slots.
- * Its item id is the protocol key, shared by every compiled screen; the two
- * stack sizes are the layout key, high half then low, so each binding reads
- * a plain number straight back. A vanilla chest has no marker there, fails
- * the first check, and renders untouched — absence IS the vanilla path, so
- * nothing has to special-case it.
+ * The routing reads the sentinel, the protocol item in slot 0. Its max
+ * durability is the protocol key, shared by every compiled screen; its current
+ * durability is the layout key, so one binding reads each straight back. A
+ * vanilla chest has no sentinel there, fails the check, and renders untouched
+ * — absence IS the vanilla path, so nothing has to special-case it.
  *
  * Every number in a binding here is a literal on purpose. A `$variable` inside
  * a `source_property_name` is silently dropped in a subtree the engine
@@ -41,15 +40,13 @@
  */
 
 import {
-  CANONICAL_SCREEN, COLLECTION, ContainerScreenError, MAX_LAYOUT, PROTOCOL_ITEM_AUX, SENTINEL_SLOTS,
-  splitKey,
+  CANONICAL_SCREEN, COLLECTION, ContainerScreenError, IDENTITY, MAX_LAYOUT, SENTINEL_SLOTS,
 } from '@bedrock-core/ui-runtime/compile';
 import { BACKDROP_DEFINITION, SCREEN_DEFINITION } from '../../face';
 import type { Binding, Control, ControlEntry, Document } from '../../jsonui';
-import { CHEST } from '../../connectors/chest';
 
 export { CHEST_EMIT } from './emit';
-export { CELL, hidesTransport, TEXT_DEF, textDef } from '../../connectors/chest';
+export { CELL, TEXT_DEF, textDef } from '../../connectors/chest';
 
 /** One vanilla file an addon hooks: the definition in it that every addon's root is inserted into. */
 export interface ChestHook {
@@ -84,8 +81,6 @@ export interface ChestHost {
   readonly containerType: string;
   /** The canvas a screen is laid out against, in texels. */
   readonly canvas: { readonly width: number; readonly height: number };
-  /** The renderer that hides the runtime's transport item, fully qualified. */
-  readonly ownedItemRenderer: string;
 }
 
 export const CHEST_HOST: ChestHost = {
@@ -102,7 +97,6 @@ export const CHEST_HOST: ChestHost = {
   collection: COLLECTION,
   containerType: 'container',
   canvas: CANONICAL_SCREEN,
-  ownedItemRenderer: `${CHEST}.gated_item`,
 };
 
 /** What the router needs to know about a compiled screen. */
@@ -160,14 +154,14 @@ const indexHost = (child: string, collection: string, index: number): Control =>
 const sentinelBindings = (collection: string): Binding[] => [
   { binding_type: 'collection_details', binding_collection_name: collection },
   {
-    binding_name: '#item_id_aux',
-    binding_name_override: '#aux',
+    binding_name: '#item_durability_total_amount',
+    binding_name_override: '#identity',
     binding_type: 'collection',
     binding_collection_name: collection,
   },
   {
-    binding_name: '#inventory_stack_count',
-    binding_name_override: '#count',
+    binding_name: '#item_durability_current_amount',
+    binding_name_override: '#layout',
     binding_type: 'collection',
     binding_collection_name: collection,
   },
@@ -198,7 +192,7 @@ const checkKeys = (screens: readonly RoutedScreen[]): void => {
     if (!Number.isInteger(screen.layoutId) || screen.layoutId < 1 || screen.layoutId > MAX_LAYOUT) {
       throw new ContainerScreenError(
         `Layout id ${screen.layoutId} (${screen.name}) is outside 1..${MAX_LAYOUT}: `
-        + 'the key rides two stack sizes of 2..64.',
+        + 'the key rides the sentinel\'s current durability.',
       );
     }
 
@@ -256,27 +250,19 @@ export const chestRouter = (screens: readonly RoutedScreen[], addon: string, hos
 
   const ns = host.routerNamespace;
   const { collection } = host;
-  const claimed = `(#aux = ${PROTOCOL_ITEM_AUX})`;
+  const claimed = `(#identity = ${IDENTITY.sentinel})`;
   const router: Document = { namespace: ns };
 
   // Every definition carries the addon's name: the router shares its
   // namespace with the chest root and with every other addon's router, and
   // the engine keeps one definition per name.
   //
-  // A screen is gated twice, once per sentinel slot: the outer gate reads the
-  // high half of the key off the first, and hosts the inner gate, which reads
-  // the low half off the second. Both check the protocol id. Two nested gates
-  // are an AND without an expression that would have to read two slots at
-  // once, which no single control can.
-  //
-  // The stack size is a STRING in a binding expression — measured: of every
-  // numeric form, only `(#count = '19')` held on a stack of 19; arithmetic on
-  // it and comparisons against a number are all false — so each key half is
-  // compared as a quoted literal.
-  const [highSlot, lowSlot] = SENTINEL_SLOTS;
+  // A screen is gated once, on the sentinel: its identity and the layout key
+  // both ride durability, which is a number in a binding expression, so both
+  // are compared unquoted. An empty slot or a player's item fails both.
+  const [sentinelSlot] = SENTINEL_SLOTS;
 
   for (const screen of screens) {
-    const { high, low } = splitKey(screen.layoutId);
     const mounted: ControlEntry[] = [
       ...screen.hasBackdrop
         ? [{ [`backdrop@${screen.namespace}.${BACKDROP_DEFINITION}`]: {} }]
@@ -289,12 +275,8 @@ export const chestRouter = (screens: readonly RoutedScreen[], addon: string, hos
       },
     ];
 
-    router[`${addon}_low_gate_${screen.name}`] = gate(collection, `(${claimed} and (#count = '${low}'))`, mounted, 5);
-    router[`${addon}_low_host_${screen.name}`] = indexHost(`gate@${ns}.${addon}_low_gate_${screen.name}`, collection, lowSlot);
-    router[`${addon}_gate_${screen.name}`] = gate(collection, `(${claimed} and (#count = '${high}'))`, [
-      { [`low@${ns}.${addon}_low_host_${screen.name}`]: {} },
-    ]);
-    router[`${addon}_host_${screen.name}`] = indexHost(`gate@${ns}.${addon}_gate_${screen.name}`, collection, highSlot);
+    router[`${addon}_gate_${screen.name}`] = gate(collection, `(${claimed} and (#layout = ${screen.layoutId}))`, mounted, 5);
+    router[`${addon}_host_${screen.name}`] = indexHost(`gate@${ns}.${addon}_gate_${screen.name}`, collection, sentinelSlot);
   }
 
   // The addon's root fills the screen like the chest root does; only the host

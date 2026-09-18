@@ -12,9 +12,11 @@ import { inventoryOf } from '../../../entity';
 import type { JSX } from '../../../jsx';
 import { allocate } from '../allocate';
 import { buildContainerTree } from '../build';
-import { guard, isGuard, transport } from '../runtime/items';
+import { protocolItems } from '../runtime/items';
 import { screenContainer } from '../runtime/view';
 import { createWatch, fingerprint, resync } from '../runtime/watch';
+
+const items = protocolItems('core');
 
 /** The mock container, typed as the engine's: that is what it stands in for at runtime. */
 const createContainer = (size: number): EngineContainer => new MockContainer(size) as unknown as EngineContainer;
@@ -33,8 +35,8 @@ const createEntity = (container: EngineContainer | undefined): Entity => {
 
 /**
  * An input, a button, ordinary storage and a named output, plus a live label:
- * the sentinel takes 0 and 1, the cells 2–5 and the label the bank at 6–9.
- * The three own cells are therefore container 2, 4 and 5.
+ * the sentinel takes 0, the cells 1–4 and the label the bank at 5–8.
+ * The three own cells are therefore container 1, 3 and 4.
  */
 const Screen = (): JSX.Element => Container({
   entity: 'core:test',
@@ -47,7 +49,7 @@ const Screen = (): JSX.Element => Container({
   ],
 });
 
-const SIZE = 10;
+const SIZE = 9;
 
 /** An item that never stacks, so a fill takes one cell per unit. */
 const UNSTACKABLE = 'minecraft:netherite_pickaxe';
@@ -56,7 +58,7 @@ const UNSTACKABLE = 'minecraft:netherite_pickaxe';
 const settled = (): EngineContainer => {
   const container = createContainer(SIZE);
 
-  container.setItem(5, guard());
+  container.setItem(4, items.guard());
 
   return container;
 };
@@ -64,7 +66,7 @@ const settled = (): EngineContainer => {
 const rig = (container: EngineContainer | undefined = settled()) => {
   const { slots } = allocate(buildContainerTree(Screen));
 
-  return { container, slots, cells: screenContainer(createEntity(container), slots) };
+  return { container, slots, cells: screenContainer(createEntity(container), slots, items) };
 };
 
 describe('a named slot', () => {
@@ -72,10 +74,10 @@ describe('a named slot', () => {
     const { slots } = allocate(buildContainerTree(Screen));
 
     expect(slots.map(entry => [entry.slot, entry.role, entry.name])).toEqual([
-      [2, 'input', undefined],
-      [3, 'button', undefined],
-      [4, 'both', undefined],
-      [5, 'output', 'output'],
+      [1, 'input', undefined],
+      [2, 'button', undefined],
+      [3, 'both', undefined],
+      [4, 'output', 'output'],
     ]);
   });
 
@@ -115,11 +117,11 @@ describe('the container over a screen own cells', () => {
     cells.setItem(0, new ItemStack('minecraft:coal', 1));
     cells.setItem(1, new ItemStack('minecraft:paper', 2));
 
-    // View 0 and 1 are container 2 and 4: the sentinel, the button slot and
+    // View 0 and 1 are container 1 and 3: the sentinel, the button slot and
     // the bank are not addressable through the view at all.
-    expect(container.getItem(2)?.typeId).toBe('minecraft:coal');
-    expect(container.getItem(4)?.typeId).toBe('minecraft:paper');
-    expect(container.getItem(3)).toBeUndefined();
+    expect(container.getItem(1)?.typeId).toBe('minecraft:coal');
+    expect(container.getItem(3)?.typeId).toBe('minecraft:paper');
+    expect(container.getItem(2)).toBeUndefined();
     expect(cells.getSlot(3).isValid).toBe(false);
   });
 
@@ -128,7 +130,7 @@ describe('the container over a screen own cells', () => {
 
     cells.setItem('output', new ItemStack('minecraft:crafting_table', 1));
 
-    expect(container.getItem(5)?.typeId).toBe('minecraft:crafting_table');
+    expect(container.getItem(4)?.typeId).toBe('minecraft:crafting_table');
     expect(cells.names).toEqual({ output: 2 });
     expect(cells.getSlot(2).name).toBe('output');
     expect(cells.getSlot(0).name).toBeUndefined();
@@ -139,7 +141,7 @@ describe('the container over a screen own cells', () => {
 
     // The guard in the output cell, and a transport a previous layout left
     // in an ordinary cell: both are the runtime's, so both read as empty.
-    container.setItem(4, transport());
+    container.setItem(3, items.transport());
 
     const output = cells.getSlot('output');
 
@@ -158,7 +160,7 @@ describe('the container over a screen own cells', () => {
     expect(cells.firstEmptySlot()).toBe(0);
 
     // The cell still holds the marker; it is the view that does not show it.
-    expect(isGuard(container.getItem(5)!)).toBe(true);
+    expect(items.isGuard(container.getItem(4)!)).toBe(true);
   });
 
   it('puts the guard back the moment an output cell is emptied', () => {
@@ -167,34 +169,34 @@ describe('the container over a screen own cells', () => {
     cells.setItem('output', new ItemStack('minecraft:crafting_table', 1));
     cells.setItem('output');
 
-    expect(isGuard(container.getItem(5)!)).toBe(true);
+    expect(items.isGuard(container.getItem(4)!)).toBe(true);
     expect(cells.getItem('output')).toBeUndefined();
 
     // An ordinary cell just empties.
     cells.setItem(0, new ItemStack('minecraft:coal', 1));
     cells.getSlot(0).setItem();
 
-    expect(container.getItem(2)).toBeUndefined();
+    expect(container.getItem(1)).toBeUndefined();
   });
 
   it('clears the screen own cells and leaves the rest of the container alone', () => {
     const { container, cells } = rig();
 
-    container.setItem(0, new ItemStack('minecraft:command_block', 4));
-    container.setItem(3, transport());
-    container.setItem(6, new ItemStack('minecraft:paper', 7));
+    container.setItem(0, items.sentinel(4));
+    container.setItem(2, items.transport());
+    container.setItem(5, new ItemStack('minecraft:paper', 7));
     cells.setItem(0, new ItemStack('minecraft:coal', 1));
     cells.setItem(1, new ItemStack('minecraft:coal', 1));
     cells.setItem('output', new ItemStack('minecraft:crafting_table', 1));
 
     cells.clearAll();
 
-    expect(container.getItem(2)).toBeUndefined();
-    expect(container.getItem(4)).toBeUndefined();
-    expect(isGuard(container.getItem(5)!)).toBe(true);
-    expect(container.getItem(0)?.amount).toBe(4);
-    expect(container.getItem(3)?.typeId).toBe('minecraft:repeating_command_block');
-    expect(container.getItem(6)?.amount).toBe(7);
+    expect(container.getItem(1)).toBeUndefined();
+    expect(container.getItem(3)).toBeUndefined();
+    expect(items.isGuard(container.getItem(4)!)).toBe(true);
+    expect(items.valueOf(container.getItem(0)!)).toBe(4);
+    expect(items.isTransport(container.getItem(2)!)).toBe(true);
+    expect(container.getItem(5)?.amount).toBe(7);
   });
 
   it('fills the own cells in view order, topping up before taking an empty one', () => {
@@ -203,8 +205,8 @@ describe('the container over a screen own cells', () => {
     cells.setItem(0, new ItemStack('minecraft:coal', 60));
 
     expect(cells.addItem(new ItemStack('minecraft:coal', 10))).toBeUndefined();
-    expect(container.getItem(2)?.amount).toBe(64);
-    expect(container.getItem(4)?.amount).toBe(6);
+    expect(container.getItem(1)?.amount).toBe(64);
+    expect(container.getItem(3)?.amount).toBe(6);
   });
 
   it('never fills an output cell, and answers with what did not fit', () => {
@@ -213,15 +215,15 @@ describe('the container over a screen own cells', () => {
 
     // Two fillable cells take one each; the output cell is the screen's
     // result, so the third never lands there.
-    expect(container.getItem(2)?.typeId).toBe(UNSTACKABLE);
-    expect(container.getItem(4)?.typeId).toBe(UNSTACKABLE);
-    expect(isGuard(container.getItem(5)!)).toBe(true);
+    expect(container.getItem(1)?.typeId).toBe(UNSTACKABLE);
+    expect(container.getItem(3)?.typeId).toBe(UNSTACKABLE);
+    expect(items.isGuard(container.getItem(4)!)).toBe(true);
     expect(over?.amount).toBe(1);
   });
 
   it('reads empty and writes nowhere once the entity has no container', () => {
     const { slots } = allocate(buildContainerTree(Screen));
-    const cells = screenContainer(createEntity(undefined), slots);
+    const cells = screenContainer(createEntity(undefined), slots, items);
 
     expect(cells.isValid).toBe(false);
     expect(cells.size).toBe(0);
@@ -240,7 +242,7 @@ describe('the container over a screen own cells', () => {
     cells.setItem(0, new ItemStack('minecraft:coal', 4));
     cells.getSlot(0).amount = 9;
 
-    expect(container.getItem(2)?.amount).toBe(9);
+    expect(container.getItem(1)?.amount).toBe(9);
   });
 
   it('exposes the same cells with no names when the screen declares none', () => {
@@ -250,7 +252,7 @@ describe('the container over a screen own cells', () => {
     });
     const { slots } = allocate(buildContainerTree(Unnamed));
     const container = createContainer(4);
-    const cells = screenContainer(createEntity(container), slots);
+    const cells = screenContainer(createEntity(container), slots, items);
 
     cells.setItem(1, new ItemStack('minecraft:coal', 1));
 
@@ -268,22 +270,22 @@ describe('the container over a screen own cells', () => {
 
     resync(container, watch, slots.map(entry => entry.slot));
 
-    const cells = screenContainer(createEntity(container), slots, watch);
+    const cells = screenContainer(createEntity(container), slots, items, watch);
 
     cells.setItem(0, new ItemStack('minecraft:coal', 4));
 
-    expect(watch.expected[2]).toBe(fingerprint(container, 2));
-    expect(watch.held[2]?.typeId).toBe('minecraft:coal');
+    expect(watch.expected[1]).toBe(fingerprint(container, 1));
+    expect(watch.held[1]?.typeId).toBe('minecraft:coal');
 
     cells.getSlot(0).amount = 9;
 
-    expect(watch.expected[2]).toBe(fingerprint(container, 2));
+    expect(watch.expected[1]).toBe(fingerprint(container, 1));
 
     // Emptying the result cell settles it on the guard, watch included.
     cells.setItem('output', new ItemStack('minecraft:crafting_table', 1));
     cells.setItem('output');
 
-    expect(watch.expected[5]).toBe(fingerprint(container, 5));
+    expect(watch.expected[4]).toBe(fingerprint(container, 4));
   });
 
   it('moves and transfers between the screen cells and a plain container', () => {
@@ -294,14 +296,14 @@ describe('the container over a screen own cells', () => {
     cells.moveItem(0, 0, bag);
 
     expect(bag.getItem(0)?.amount).toBe(2);
-    expect(container.getItem(2)).toBeUndefined();
+    expect(container.getItem(1)).toBeUndefined();
 
     // A result leaving the output cell settles it back on the guard.
     cells.setItem('output', new ItemStack('minecraft:crafting_table', 1));
     cells.moveItem('output', 1, bag);
 
     expect(bag.getItem(1)?.typeId).toBe('minecraft:crafting_table');
-    expect(isGuard(container.getItem(5)!)).toBe(true);
+    expect(items.isGuard(container.getItem(4)!)).toBe(true);
 
     // The guard is the runtime's, so the cell has nothing to move.
     cells.moveItem('output', 2, bag);
@@ -315,8 +317,8 @@ describe('the container over a screen own cells', () => {
     carried.setItem(2, new ItemStack(UNSTACKABLE, 3));
 
     expect(carried.transferItem(2, cells)?.amount).toBe(1);
-    expect(container.getItem(2)?.typeId).toBe(UNSTACKABLE);
-    expect(container.getItem(4)?.typeId).toBe(UNSTACKABLE);
-    expect(isGuard(container.getItem(5)!)).toBe(true);
+    expect(container.getItem(1)?.typeId).toBe(UNSTACKABLE);
+    expect(container.getItem(3)?.typeId).toBe(UNSTACKABLE);
+    expect(items.isGuard(container.getItem(4)!)).toBe(true);
   });
 });

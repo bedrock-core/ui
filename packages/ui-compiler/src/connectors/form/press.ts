@@ -1,7 +1,7 @@
-import { FORM_DETAILS_BINDING } from '@bedrock-core/ui-runtime/compile';
+import { FORM_DETAILS_BINDING, FORM_LOOK_PREFIX } from '@bedrock-core/ui-runtime/compile';
 import { FULL, topLeft } from '../../faces';
-import { ENTRY_PROPERTY, entryHost, whenEnabled } from './entry';
-import type { Addressed, Connector, Definitions, Emit } from '../types';
+import { ENTRY_PROPERTY, entryHost, entryValueBinding, whenEnabled } from './entry';
+import type { Addressed, Connector, ControlEntry, Definitions, Emit } from '../types';
 
 /** One button look, as the face pass shared it: every state, qualified. */
 export interface PressLook {
@@ -17,7 +17,68 @@ export interface PressLook {
   pressed: string;
   /** The look while it cannot be pressed. Falls back to the resting one. */
   disabled: string;
+  /**
+   * Every look this button takes, when its look follows state, and the entry
+   * that names which one it is wearing.
+   *
+   * The button itself is emitted once: only what it DRAWS is drawn per look,
+   * inside the state controls, so nothing about the press is duplicated — one
+   * control owns the entry, as the engine requires.
+   */
+  looks?: { address: number; states: readonly Omit<PressLook, 'definition' | 'size' | 'looks'>[] };
 }
+
+/** The property a gate reads the worn look from. */
+const LOOK_PROPERTY = '#look';
+
+/** One look's face, drawn while the entry names it. */
+const lookGate = (index: number, address: number, face: string, collection: string): ControlEntry => ({
+  [`look_${String(index)}`]: {
+    type: 'panel',
+    size: FULL,
+    ...topLeft,
+    collection_index: address,
+    // Seeded with what the build drew, so a frame-late binding shows the
+    // compiled look rather than nothing.
+    property_bag: { '#visible': index === 0 },
+    visible: '#visible',
+    bindings: [
+      entryValueBinding(LOOK_PROPERTY, collection),
+      {
+        binding_type: 'view',
+        source_property_name: `(${LOOK_PROPERTY} = '${FORM_LOOK_PREFIX}${String(index)}')`,
+        target_property_name: '#visible',
+      },
+    ],
+    controls: [{ [`face@${face}`]: {} }],
+  },
+});
+
+/**
+ * What one state of a button draws: its face, or a gate per look.
+ *
+ * The gates hang under a stack that declares the collection, because
+ * `collection_index` is legal only on a direct child of one. A closed gate
+ * draws nothing and takes no space, so the open one fills the button.
+ */
+const stateControl = (
+  name: string,
+  look: PressLook,
+  pick: (state: Omit<PressLook, 'definition' | 'size' | 'looks'>) => string,
+  fallback: string,
+  collection: string,
+): ControlEntry => (look.looks === undefined
+  ? { [`${name}@${fallback}`]: {} }
+  : {
+      [name]: {
+        type: 'stack_panel',
+        orientation: 'vertical',
+        size: FULL,
+        ...topLeft,
+        collection_name: collection,
+        controls: look.looks.states.map((state, index) => lookGate(index, look.looks?.address ?? 0, pick(state), collection)),
+      },
+    });
 
 /**
  * A press on a form: the entry the engine hands back when the button is
@@ -65,9 +126,9 @@ export const pressDefs = (look: PressLook, ctx: Emit): Definitions => {
       // and reaches script as a dismissal.
       bindings: [{ ...FORM_DETAILS_BINDING }],
       controls: [
-        { [`default@${look.rest}`]: {} },
-        { [`hover@${look.hover}`]: {} },
-        { [`pressed@${look.pressed}`]: {} },
+        stateControl('default', look, state => state.rest, look.rest, ctx.collection),
+        stateControl('hover', look, state => state.hover, look.hover, ctx.collection),
+        stateControl('pressed', look, state => state.pressed, look.pressed, ctx.collection),
       ],
     },
 
@@ -97,7 +158,7 @@ export const pressDefs = (look: PressLook, ctx: Emit): Definitions => {
             property_bag: { '#visible': false },
             visible: '#visible',
             bindings: whenEnabled(false),
-            controls: [{ [`face@${look.disabled}`]: {} }],
+            controls: [stateControl('face', look, state => state.disabled, look.disabled, ctx.collection)],
           },
         },
       ],

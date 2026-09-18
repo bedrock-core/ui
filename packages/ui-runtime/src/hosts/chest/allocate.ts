@@ -1,6 +1,7 @@
 import type { JSX } from '../../jsx';
 import { slotName } from '../../components/Slot';
-import { type Analysis, type CellRole, claim } from '../../core/ir';
+import { BUTTON_TYPE } from '../../components/Button';
+import { analyze, type Analysis, type CellRole, claim, lookIndexOf, variantsAt, type VariantTable } from '../../core/ir';
 import { SENTINEL_SLOTS } from './contract';
 
 /**
@@ -25,18 +26,31 @@ export interface SlotEntry {
    * — and a cell the author left unnamed is reached by iterating instead.
    */
   readonly name?: string;
+  /**
+   * Which of its looks a button is wearing, when its face follows state: the
+   * row of the build's table this render matches. Absent on a button drawn
+   * one way, which holds a single item.
+   */
+  readonly look?: number;
 }
 
 /**
  * A run of bank slots carrying one live value. A text run takes a slot per
- * character.
+ * character; a look takes one, whose stack size says which look is worn.
  */
-export interface ChannelEntry {
+export type ChannelEntry = {
   readonly element: JSX.Element;
   readonly slot: number;
   readonly carrier: 'text';
   readonly length: number;
-}
+} | {
+  readonly element: JSX.Element;
+  readonly slot: number;
+  readonly carrier: 'enum';
+  readonly length: 1;
+  /** The row of the build's table this render matches. */
+  readonly look: number;
+};
 
 /**
  * How a screen carves up its container.
@@ -65,26 +79,44 @@ export interface Allocation {
  * has to be kept in step. An own slot's `name` rides along as a label addon
  * logic looks a cell up by; no pass here matches on it.
  */
-export const allocate = (tree: JSX.Element, analysis?: Analysis): Allocation => {
-  const { cells, channels } = claim(tree, analysis);
-  const slots: SlotEntry[] = cells.map(({ element, role }, index) => ({
-    element,
-    slot: SENTINEL_SLOTS.length + index,
-    role,
-    name: slotName(element),
-  }));
+export const allocate = (tree: JSX.Element, analysis?: Analysis, looks: readonly VariantTable[] = []): Allocation => {
+  // A button's look rides its own slot, so it adds nothing to the numbering:
+  // only the entry learns which look it is. Any other element's look takes a
+  // bank slot of its own, claimed in the walk like any channel.
+  const tables = variantsAt(tree, looks);
+  const apart = new Map([...tables].filter(([element]) => element.type !== BUTTON_TYPE));
+  const { cells, channels } = claim(tree, analysis ?? analyze(tree, undefined, apart));
+  const slots: SlotEntry[] = cells.map(({ element, role }, index) => {
+    const table = role === 'button' ? tables.get(element) : undefined;
+
+    return {
+      element,
+      slot: SENTINEL_SLOTS.length + index,
+      role,
+      name: slotName(element),
+      ...table === undefined ? {} : { look: lookIndexOf(table, tree) },
+    };
+  });
 
   // Channels start past the drawn range. A text run takes a slot per
   // character, so the next channel starts past the whole run.
   let next = SENTINEL_SLOTS.length + slots.length;
 
-  const bank: ChannelEntry[] = channels.map(({ element, carrier, length }) => {
+  const bank: ChannelEntry[] = channels.map(({ element, carrier, length, looks: table }) => {
+    if (carrier === 'enum' && table !== undefined) {
+      const entry: ChannelEntry = { element, slot: next, carrier, length: 1, look: lookIndexOf(table, tree) };
+
+      next += 1;
+
+      return entry;
+    }
+
     // Needs vs offers, at the seam it bites: the chest carries text — a slot
-    // per character — and nothing else yet. A bool claim can only appear here
-    // if a caller marked a carried visible on a chest tree, which the build
-    // refuses long before this; the throw keeps the runtime as honest.
+    // per character — and looks, and nothing else yet. A bool claim can only
+    // appear here if a caller marked a carried visible on a chest tree, which
+    // the build refuses long before this; the throw keeps the runtime as honest.
     if (carrier !== 'text') {
-      throw new Error(`A chest screen has no carrier for a live ${carrier}; only text travels over slots.`);
+      throw new Error(`A chest screen has no carrier for a live ${carrier}; only text and looks travel over slots.`);
     }
 
     const entry: ChannelEntry = { element, slot: next, carrier, length };

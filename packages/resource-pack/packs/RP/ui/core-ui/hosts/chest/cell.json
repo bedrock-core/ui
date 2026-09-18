@@ -448,12 +448,12 @@
 	// flips the toggle: the fake hides, the real cell shows, and it hovers,
 	// tooltips and takes like any slot.
 	//
-	// The toggle reads the guard's item id — the only kind of check a slot
-	// answers: a container slot publishes NUMBERS, never text. The gates ride
-	// wrapper panels rather than the cell, because bindings on an instance
+	// The toggle reads the guard's max durability — the only kind of check a
+	// slot answers: a container slot publishes NUMBERS, never text. The gates
+	// ride wrapper panels rather than the cell, because bindings on an instance
 	// REPLACE the base's own, which the item render depends on. The literal is
-	// the runtime's guard aux (12386304), a legacy-range block whose id never
-	// shifts, whatever items other addons register.
+	// the guard's identity (32717), fixed by its item definition, whatever
+	// items other addons register.
 	"output_slot": {
 		"type": "panel",
 		"size": [ 18, 18 ],
@@ -464,8 +464,8 @@
 					"size": [ "100%", "100%" ],
 					"bindings": [
 						{ "binding_type": "collection_details", "binding_collection_name": "container_items" },
-						{ "binding_name": "#item_id_aux", "binding_name_override": "#aux", "binding_type": "collection", "binding_collection_name": "container_items" },
-						{ "binding_type": "view", "source_property_name": "(not (#aux = 12386304))", "target_property_name": "#visible" }
+						{ "binding_name": "#item_durability_total_amount", "binding_name_override": "#identity", "binding_type": "collection", "binding_collection_name": "container_items" },
+						{ "binding_type": "view", "source_property_name": "(not (#identity = 32717))", "target_property_name": "#visible" }
 					],
 					"controls": [
 						{ "item@core_ui_chest.cell": { "$item_collection_name": "container_items" } }
@@ -478,8 +478,8 @@
 					"size": [ "100%", "100%" ],
 					"bindings": [
 						{ "binding_type": "collection_details", "binding_collection_name": "container_items" },
-						{ "binding_name": "#item_id_aux", "binding_name_override": "#aux", "binding_type": "collection", "binding_collection_name": "container_items" },
-						{ "binding_type": "view", "source_property_name": "(#aux = 12386304)", "target_property_name": "#visible" }
+						{ "binding_name": "#item_durability_total_amount", "binding_name_override": "#identity", "binding_type": "collection", "binding_collection_name": "container_items" },
+						{ "binding_type": "view", "source_property_name": "(#identity = 32717)", "target_property_name": "#visible" }
 					],
 					"controls": [
 						{

@@ -32,7 +32,7 @@
 		]
 	},
 	// Textureless native text field, flattened from vanilla common.text_edit_box.
-	// READ: #custom_input_text (content) / #custom_placeholder_text / #custom_input_enabled,
+	// READ: #custom_input_text (content) / #custom_placeholder_text,
 	// all collection bindings on custom_form. WRITE-BACK: the engine writes the typed text
 	// to the current row via text_edit_box_grid_collection_name:"custom_form" (the edit_box
 	// analogue of the toggle's toggle_grid_collection_name).
@@ -47,7 +47,9 @@
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
 		"layer": 2,
-		"enabled": "#enabled",
+		// Whether the field takes input; nothing binds `#enabled` (see toggle.json).
+		"$field_enabled|default": true,
+		"enabled": "$field_enabled",
 		"text_box_name": "custom_input",
 		"text_edit_box_grid_collection_name": "custom_form",
 		"max_length": 100,
@@ -112,15 +114,6 @@
 				"handle_select": false,
 				"handle_deselect": false,
 				"mapping_type": "focused"
-			}
-		],
-		"bindings": [
-			{
-				/* enabled state for this cell */
-				"binding_type": "collection",
-				"binding_collection_name": "custom_form",
-				"binding_name": "#custom_input_enabled",
-				"binding_name_override": "#enabled"
 			}
 		],
 		"controls": [

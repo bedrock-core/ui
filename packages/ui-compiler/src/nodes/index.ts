@@ -68,7 +68,7 @@ export const loweringFor = (type: string): NodeDefinition | undefined =>
 export const childrenOf = (node: IrNode): IrNode[] => definitionFor(node.kind).children?.(node) ?? [];
 
 /** The mechanism a node's kind declares it needs from its host, if any. */
-export const socketOf = (node: IrNode): Exclude<SocketKind, 'visible'> | undefined =>
+export const socketOf = (node: IrNode): Exclude<SocketKind, 'visible' | 'look'> | undefined =>
   definitionFor(node.kind).socket?.(node);
 
 /**
@@ -92,7 +92,7 @@ export const socketsOf = (node: IrNode): Socket[] => {
 const isKind = <K extends IrNode['kind']>(node: IrNode, kind: K): node is Extract<IrNode, { kind: K }> =>
   node.kind === kind;
 
-/** Every node of a kind, in document order, buttons' faces included. */
+/** Every node of a kind, in document order, buttons' faces and the versions of a carried look included. */
 export const collectKind = <K extends IrNode['kind']>(
   node: IrNode,
   kind: K,
@@ -102,7 +102,7 @@ export const collectKind = <K extends IrNode['kind']>(
     into.push(node);
   }
 
-  for (const child of childrenOf(node)) {
+  for (const child of [...node.carriedLook?.looks ?? [], ...childrenOf(node)]) {
     collectKind(child, kind, into);
   }
 

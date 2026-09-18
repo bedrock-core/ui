@@ -6,9 +6,9 @@ import {
 import {
   allocate, buildContainerTree, ContainerScreenError, KEY_PREFIX, layoutKey, MAX_LAYOUT, ScreenRootError,
 } from '@bedrock-core/ui-runtime/compile';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { compileScreen } from '../compile';
-import { child, definition, defs, drawnFace, find, findAll, names } from '../__fixtures__/helpers';
+import { child, definition, defs, drawnFace, eachControl, find, findAll, names } from '../__fixtures__/helpers';
 
 /** Knows one key, so the build can tell a key from a literal. */
 const resolver: TranslationResolver = key => (key === 'core.demo.subtitle' ? 'Subtitle' : undefined);
@@ -112,9 +112,9 @@ describe('the compiler, end to end', () => {
     // The faces are the addon's, named by their look; each button's mechanism
     // on the chest references them.
     const faceOf = (mechanism: string): { rest: string; disabled: string } => {
-      const cell = definition(document, mechanism);
-      const [enabled, disabled] = cell.controls ?? [];
-      const rest = String(enabled?.['enabled']?.controls?.[0]?.['item@core_ui_chest.cell']?.$background_images).replace('core_ui_faces.', '');
+      const [disabled] = definition(document, mechanism).controls ?? [];
+      const [state] = definition(document, `${mechanism}_states@core_ui_chest.slot_button`).controls ?? [];
+      const rest = Object.keys(state?.['default']?.controls?.[0]?.['gate']?.controls?.[0] ?? {})[0]?.replace('face@core_ui_faces.', '') ?? '';
       const off = Object.keys(disabled?.['disabled']?.controls?.[0] ?? {})[0]?.replace('face@core_ui_faces.', '') ?? '';
 
       return { rest, disabled: off };
@@ -144,7 +144,7 @@ describe('the compiler, end to end', () => {
       .map(([, control]) => control.$slot);
 
     expect(indices).toEqual(allocation.slots.map(entry => entry.slot));
-    expect(indices).toEqual([2, 3, 4, 5, 6]);
+    expect(indices).toEqual([1, 2, 3, 4, 5]);
 
     const [, locked] = find(document, name => name.startsWith('slot_1@'));
 
@@ -161,7 +161,7 @@ describe('the compiler, end to end', () => {
 
     expect(cells).toEqual(Array.from({ length: 8 }, (_unused, cell) => (run?.slot ?? 0) + cell));
 
-    expect(compiled.allocation).toEqual({ sentinels: 2, drawn: 5, channels: 8, size: 15 });
+    expect(compiled.allocation).toEqual({ sentinels: 1, drawn: 5, channels: 8, size: 14 });
   });
 
   it('decodes text through the shared character table', () => {
@@ -214,6 +214,87 @@ describe('the compiler, end to end', () => {
     const Screen = (): JSX.Element => Container({ entity: 'core:state', children: [{ type: Stateful, props: {} }] });
 
     expect(() => compileScreen(Screen, { name: 'state' })).toThrow(/maxLength/);
+  });
+
+  it('refuses a look it cannot copy, naming the prop', () => {
+    // A live label is drawn through its channel, so it cannot be drawn once per
+    // look the way a plain element is: its colour would stay the build's.
+    const Stateful = (): JSX.Element => {
+      const [on] = useState(true);
+
+      return Text({ maxLength: 4, color: on ? [1, 1, 1] : [0, 0, 0], children: 'live' });
+    };
+
+    const Screen = (): JSX.Element => Container({ entity: 'core:look', children: [{ type: Stateful, props: {} }] });
+
+    expect(() => compileScreen(Screen, { name: 'look' })).toThrow(ContainerScreenError);
+    expect(() => compileScreen(Screen, { name: 'look' })).toThrow(/__color: \[1,1,1\] became \[0,0,0\]/);
+  });
+
+  it('carries any other element\'s look in a bank slot of its own', () => {
+    const Stateful = (): JSX.Element => {
+      const [on] = useState(true);
+
+      return Panel({ background: on ? 'textures/ui/on' : 'textures/ui/off', children: Text({ children: 'inside' }) });
+    };
+
+    const Screen = (): JSX.Element => Container({ entity: 'core:look', children: [{ type: Stateful, props: {} }] });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const compiled = compileScreen(Screen, { name: 'look' });
+    const warned = warn.mock.calls.map(([message]) => String(message));
+    const gates: string[] = [];
+    let inside = 0;
+
+    warn.mockRestore();
+
+    eachControl(compiled.document, (_name, control) => {
+      for (const binding of control.bindings ?? []) {
+        if (binding.source_property_name?.includes('#core_look') === true) {
+          gates.push(binding.source_property_name);
+        }
+      }
+
+      if (control.text === 'inside') {
+        inside += 1;
+      }
+    });
+
+    expect(warned.filter(message => message.includes('baked prop'))).toEqual([]);
+    // The sentinel, then the one bank slot the look rides.
+    expect(compiled.allocation).toMatchObject({ sentinels: 1, drawn: 0, channels: 1, size: 2 });
+    expect(gates).toEqual(['(#core_look = 0)', '(#core_look = 1)']);
+    expect(inside).toBe(1);
+  });
+
+  it('carries a button\'s look in its own item\'s durability, rather than reporting it', () => {
+    const Stateful = (): JSX.Element => {
+      const [on] = useState(true);
+
+      return Button({ background: on ? 'textures/ui/on' : 'textures/ui/off', children: Text({ children: 'flip' }) });
+    };
+
+    const Screen = (): JSX.Element => Container({ entity: 'core:look', children: [{ type: Stateful, props: {} }] });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const compiled = compileScreen(Screen, { name: 'look' });
+    const gates: string[] = [];
+
+    eachControl(compiled.document, (_name, control) => {
+      for (const binding of control.bindings ?? []) {
+        if (binding.source_property_name?.includes('#core_look') === true) {
+          gates.push(binding.source_property_name);
+        }
+      }
+    });
+
+    expect(warn).not.toHaveBeenCalledWith(expect.stringMatching(/baked prop/));
+    expect(compiled.looks).toHaveLength(1);
+    expect(compiled.looks[0]?.combinations).toHaveLength(2);
+    // Every state draws both looks — rest, hover, pressed and disabled — each
+    // shown while the item's current durability is its index: 0 for the
+    // build's look, 1 for the other.
+    expect(new Set(gates)).toEqual(new Set(['(#core_look = 0)', '(#core_look = 1)']));
+    expect(gates).toHaveLength(8);
+    warn.mockRestore();
   });
 
   it('builds the layout from a hook\'s INITIAL value', () => {
@@ -276,7 +357,7 @@ describe('the compiler, end to end', () => {
     const Static = (): JSX.Element => Container({ entity: 'core:static', children: [Text({ children: 'title' })] });
     const result = compileScreen(Static, { name: 'static' });
 
-    expect(result.allocation).toEqual({ sentinels: 2, drawn: 0, channels: 0, size: 2 });
+    expect(result.allocation).toEqual({ sentinels: 1, drawn: 0, channels: 0, size: 1 });
     expect(result.hasText).toBe(false);
     expect(result.hasBackdrop).toBe(false);
     expect(Object.keys(defs(result.document))).toEqual(['screen']);

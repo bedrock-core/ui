@@ -70,6 +70,23 @@ export interface NodeBase {
    */
   carriedVisible?: number;
   /**
+   * The versions of this node its state draws, when a look that follows state
+   * is carried for it: one node per look, the build's own first, each lowered
+   * from the element as that look renders it and without its children, which
+   * are drawn once beside them. The face stacks them; the host shows the one
+   * its carrier names.
+   *
+   * On every node rather than declared by a kind, for the reason
+   * {@link carriedVisible} is: any element with no mechanism of its own can
+   * have its look carried. A button carries its looks in its face instead.
+   */
+  carriedLook?: { readonly address: number; readonly looks: readonly IrNode[] };
+  /**
+   * Set on one version of a carried look: which one it is, and where the
+   * choice is carried. What the host's gate reads.
+   */
+  lookGate?: { readonly address: number; readonly index: number };
+  /**
    * The `id` of a swap this node is drawn while ON.
    *
    * The one place something reads a swap back rather than being drawn inside
@@ -124,6 +141,20 @@ export interface CellAddress {
   readonly role: CellRole;
 }
 
+/**
+ * Where the choice between an element's looks rides, and the element as each
+ * look draws it.
+ *
+ * A look is the element itself, rebuilt with the values the probe saw — its own
+ * props and its children's, because what a button draws inside it is part of
+ * its face. A lowering then reads a look exactly as it reads the element, and
+ * nothing below has to know a look came from a probe rather than an author.
+ */
+export interface LookAddress {
+  readonly address: number;
+  readonly looks: readonly JSX.Element[];
+}
+
 /** Where a live value travels, and how much room it was given. */
 export interface ChannelAddress {
   readonly address: number;
@@ -136,6 +167,8 @@ export interface Addressing {
   readonly channels: ReadonlyMap<JSX.Element, ChannelAddress>;
   /** Where the host put each carried `visible`: the entry its bool rides. */
   readonly visibles?: ReadonlyMap<JSX.Element, number>;
+  /** Where the host put each carried look: the entry that says which one is worn. */
+  readonly looks?: ReadonlyMap<JSX.Element, LookAddress>;
 }
 
 /** What a lowering sees: the element's solved geometry, and the walk's services. */
@@ -154,6 +187,8 @@ export interface LowerContext {
   cellOf(element: JSX.Element): CellAddress;
   /** Where the host put this element's live value. Throws when the walks disagree. */
   channelOf(element: JSX.Element): ChannelAddress;
+  /** The looks this element takes and the entry naming which one, or nothing when it holds still. */
+  lookOf(element: JSX.Element): LookAddress | undefined;
   /**
    * Lowers an element's children, positioned against the given origin.
    *
@@ -180,7 +215,7 @@ export interface LowerContext {
  * A host serves the kinds it has a mechanism for and refuses the rest at
  * build, by name.
  */
-export type SocketKind = 'press' | 'text' | 'texture' | 'slot' | 'grid' | 'field' | 'list' | 'fits' | 'visible';
+export type SocketKind = 'press' | 'text' | 'texture' | 'slot' | 'grid' | 'field' | 'list' | 'fits' | 'visible' | 'look';
 
 /** One place a host has to supply a mechanism: the node, and which mechanism. */
 export interface Socket {
@@ -228,8 +263,6 @@ export interface Emit {
   screen: string;
   /** The screen this document is being filled for. */
   host: HostEmit;
-  /** The host renderer that hides the runtime's transport item, if the host has one. */
-  ownedRenderer?: string;
   /** Face id -> this screen's mechanism definition for that look. */
   faceNames: Map<string, string>;
   /** Text run signature -> this screen's carrier definition for that style. */
@@ -257,7 +290,7 @@ export interface HostEmit {
   chrome?(): ControlEntry[];
   /** Mechanism, by socket kind. A kind absent here is one the host cannot serve. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- each entry is narrowed by its own kind, as NODE_DEFINITIONS is
-  readonly fill: Partial<Record<Exclude<SocketKind, 'visible'>, (node: any, entry: ControlEntry, ctx: Emit) => ControlEntry>>;
+  readonly fill: Partial<Record<Exclude<SocketKind, 'visible' | 'look'>, (node: any, entry: ControlEntry, ctx: Emit) => ControlEntry>>;
   /**
    * The gate around a node whose `visible` is carried: reads the node's
    * entry and shows or hides the whole subtree. Receives the face entry with
@@ -265,6 +298,12 @@ export interface HostEmit {
    * re-based inside it.
    */
   wrapVisible?(node: IrNode, entry: ControlEntry, ctx: Emit): ControlEntry;
+  /**
+   * The gate around one version of a carried look (a node with a
+   * {@link NodeBase.lookGate}): shown while the carrier names that version.
+   * Receives the version's face entry and returns it gated, in place.
+   */
+  wrapLook?(node: IrNode, entry: ControlEntry, ctx: Emit): ControlEntry;
   /**
    * Controls put under the canvas AFTER its content — chrome that must sit
    * over everything the screen drew, and that only exists because of what the
@@ -297,7 +336,7 @@ export interface NodeDefinition<N extends IrNode = IrNode> {
    * The mechanism this node needs from its host, if any. A node with none
    * draws the same on every host and is never touched by one.
    */
-  socket?(node: N): Exclude<SocketKind, 'visible'> | undefined;
+  socket?(node: N): Exclude<SocketKind, 'visible' | 'look'> | undefined;
   /**
    * The look: one node becomes one entry in its parent's `controls`, static
    * and the same on every host. A socket's face is what the node looks like

@@ -26,7 +26,12 @@
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
 		"layer": 2,
-		"enabled": "#enabled",
+		// Whether the field takes input. `ModalFormData` has no disabled field, so
+		// the row always reports enabled, and a binding from it would overwrite
+		// this every frame: an author's `enabled: false` arrives as `$field_enabled`
+		// and nothing binds `#enabled`.
+		"$field_enabled|default": true,
+		"enabled": "$field_enabled",
 		"focus_enabled": true,
 		"focus_magnet_enabled": true,
 		"focus_wrap_enabled": true,
@@ -46,12 +51,6 @@
 				"binding_collection_name": "custom_form",
 				"binding_name": "#custom_toggle_state",
 				"binding_name_override": "#toggle_state"
-			},
-			{
-				"binding_type": "collection",
-				"binding_collection_name": "custom_form",
-				"binding_name": "#custom_toggle_enabled",
-				"binding_name_override": "#enabled"
 			}
 		],
 		"controls": [
@@ -68,6 +67,8 @@
 	"toggle_base": {
 		"type": "toggle",
 		"layer": 1,
+		"$field_enabled|default": true,
+		"enabled": "$field_enabled",
 		"sound_name": "random.click",
 		"sound_volume": 1.0,
 		"sound_pitch": 1.0,

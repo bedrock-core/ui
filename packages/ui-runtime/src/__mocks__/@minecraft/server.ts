@@ -86,6 +86,11 @@ export interface EntitySpawnAfterEvent {
   readonly cause: string;
 }
 
+export interface EntityItemDropAfterEvent {
+  readonly entity: unknown;
+  readonly items: unknown[];
+}
+
 export interface PlayerLeaveAfterEvent {
   readonly playerId: string;
   readonly playerName: string;
@@ -104,6 +109,7 @@ class World {
     blockContainerClosed: new MockSignal<BlockContainerClosedAfterEvent>(),
     playerSpawn: new MockSignal<PlayerSpawnAfterEvent>(),
     entitySpawn: new MockSignal<EntitySpawnAfterEvent>(),
+    entityItemDrop: new MockSignal<EntityItemDropAfterEvent>(),
     playerLeave: new MockSignal<PlayerLeaveAfterEvent>(),
     worldLoad: new MockSignal<Record<string, never>>(),
   };

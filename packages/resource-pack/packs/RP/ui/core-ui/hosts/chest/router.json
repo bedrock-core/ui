@@ -9,13 +9,14 @@
 	// which is where every addon's build inserts its root. Its own label and
 	// grid hide themselves on the same key, so only the roots show there.
 	//
-	// The routing reads the sentinel in slot 0: its item id is the protocol
-	// key every compiled screen shares. A vanilla chest has no marker there,
-	// fails the check, and renders untouched — absence IS the vanilla path.
+	// The routing reads the sentinel in slot 0: its max durability is the
+	// protocol key every compiled screen shares. A vanilla chest has no sentinel
+	// there, fails the check, and renders untouched — absence IS the vanilla
+	// path.
 	//
-	// The literal is the runtime's protocol aux (8978432). A `$variable` in a
-	// binding's source_property_name is dropped by the engine, so it is written
-	// out here and pinned by a test against the runtime constant.
+	// The literal is the sentinel's max durability (32749). A `$variable`
+	// in a binding's source_property_name is dropped by the engine, so it is
+	// written out here and pinned by a test against the runtime constant.
 
 	// `collection_index` is accepted only on a direct child of a control that
 	// declares `collection_name`, so anything reading the sentinel sits under a
@@ -57,8 +58,8 @@
 		"size": [ "100%", "100%" ],
 		"bindings": [
 			{ "binding_type": "collection_details", "binding_collection_name": "container_items" },
-			{ "binding_name": "#item_id_aux", "binding_name_override": "#aux", "binding_type": "collection", "binding_collection_name": "container_items" },
-			{ "binding_type": "view", "source_property_name": "(not (#aux = 8978432))", "target_property_name": "#visible" }
+			{ "binding_name": "#item_durability_total_amount", "binding_name_override": "#identity", "binding_type": "collection", "binding_collection_name": "container_items" },
+			{ "binding_type": "view", "source_property_name": "(not (#identity = 32749))", "target_property_name": "#visible" }
 		]
 	},
 
@@ -90,8 +91,8 @@
 		],
 		"bindings": [
 			{ "binding_type": "collection_details", "binding_collection_name": "container_items" },
-			{ "binding_name": "#item_id_aux", "binding_name_override": "#aux", "binding_type": "collection", "binding_collection_name": "container_items" },
-			{ "binding_type": "view", "source_property_name": "(#aux = 8978432)", "target_property_name": "#visible" }
+			{ "binding_name": "#item_durability_total_amount", "binding_name_override": "#identity", "binding_type": "collection", "binding_collection_name": "container_items" },
+			{ "binding_type": "view", "source_property_name": "(#identity = 32749)", "target_property_name": "#visible" }
 		]
 	},
 

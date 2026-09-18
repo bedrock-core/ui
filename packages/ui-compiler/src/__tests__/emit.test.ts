@@ -1,4 +1,4 @@
-import { KEY_PREFIX, TRANSPORT_ITEM_AUX } from '@bedrock-core/ui-runtime/compile';
+import { IDENTITY, KEY_PREFIX } from '@bedrock-core/ui-runtime/compile';
 import { describe, expect, it } from 'vitest';
 import { demoScreen } from '../__fixtures__/demo';
 import { emit as emitDocument } from '../emit';
@@ -187,16 +187,12 @@ describe('emit', () => {
     expect(hotbar).toMatchObject({ type: 'grid', offset: [79, 183], size: [162, 18], grid_dimensions: [9, 1], collection_name: 'hotbar_items' });
   });
 
-  it('draws an owned grid with the router\'s transport-hiding renderer', () => {
+  it('draws the player\'s inventory with the plain item cell', () => {
     const [, inventory] = find(doc, name => name === 'grid_1');
     const template = inventory.grid_item_template ?? '';
     const [, cell] = find(doc, name => name === `${template.slice('core_ui_demo.'.length)}@core_ui_chest.cell`);
 
-    expect(cell).toEqual({
-      $item_collection_name: 'inventory_items',
-      $item_renderer: 'core_ui_chest.gated_item',
-      $durability_bar_required: false,
-    });
+    expect(cell).toEqual({ $item_collection_name: 'inventory_items' });
   });
 
   it('passes layer and visibility through only when set', () => {
@@ -351,12 +347,12 @@ describe('emit / buttons', () => {
     compiled(screenOf([button('a', 1, look, children)]));
 
   const gatesOn = (target: Control, expression: string): void => {
-    // The enabled flag is the slot holding the TRANSPORT, by its item id —
-    // the guard that fills a disabled button is a different block. No channel
-    // carries it.
+    // The disabled flag is the slot holding the GUARD, by its max durability —
+    // so a slot emptied for a moment by a press still reads enabled. No
+    // channel carries it.
     expect(target.bindings).toContainEqual({
-      binding_name: '#item_id_aux',
-      binding_name_override: '#btn_aux',
+      binding_name: '#item_durability_total_amount',
+      binding_name_override: '#btn_identity',
       binding_type: 'collection',
       binding_collection_name: 'container_items',
     });
@@ -367,7 +363,8 @@ describe('emit / buttons', () => {
     });
   };
 
-  const ENABLED = `(#btn_aux = ${TRANSPORT_ITEM_AUX})`;
+  const DISABLED = `(#btn_identity = ${IDENTITY.guard})`;
+  const ENABLED = `(not ${DISABLED})`;
 
   it('draws its resting face at rest, and the chest stands a slot host in its place', () => {
     const id = idOf(face);
@@ -387,17 +384,17 @@ describe('emit / buttons', () => {
     expect(host).toMatchObject({ offset: [0, 0], size: [60, 20], anchor_from: 'top_left', $slot: 1, $cell: 'core_ui_test.press_1' });
   });
 
-  it('hides the transport item and sizes the cell to the button', () => {
+  it('hides the transport item, keeps the button mounted, and sizes the cell to the button', () => {
     const id = idOf(face);
     const cell = definition(withFace(face).doc, 'press_1');
-    const enabled = child(cell, 'enabled');
     const disabled = child(cell, 'disabled');
-    const item = child(enabled, 'item@core_ui_chest.cell');
+    const item = child(cell, 'item@core_ui_chest.cell');
 
-    // The press surface exists only while the transport is in the slot: a
-    // disabled button has no button, so its guard is never auto-placed.
-    gatesOn(enabled, ENABLED);
-    gatesOn(disabled, `(not ${ENABLED})`);
+    // The button is never hidden — hiding a focused control breaks the chest
+    // screen's input — so only the disabled face is gated at this level.
+    expect((cell.controls ?? []).map(entry => Object.keys(entry)[0])).toEqual(['disabled', 'item@core_ui_chest.cell']);
+    expect(item.bindings).toBeUndefined();
+    gatesOn(disabled, DISABLED);
     // No disabled look was given, so the disabled state is the resting face.
     expect(disabled.controls).toEqual([{ [`face@core_ui_test_faces.${id}`]: {} }]);
 
@@ -406,7 +403,8 @@ describe('emit / buttons', () => {
       size: [60, 20],
       $cell_image_size: [60, 20],
       $item_collection_name: 'container_items',
-      $background_images: `core_ui_test_faces.${id}`,
+      // The resting face is the button's default state, not the cell's background.
+      $background_images: 'core_ui_chest.empty',
       $item_renderer: 'core_ui_chest.empty',
       $button_ref: 'core_ui_test.press_1_states',
       $stack_count_required: false,
@@ -415,30 +413,32 @@ describe('emit / buttons', () => {
     });
   });
 
-  it('routes every press to auto-place and keeps the self-routed entries', () => {
+  it('routes every press to a drop and keeps the self-routed entries', () => {
     const states = definition(withFace(face).doc, 'press_1_states@core_ui_chest.slot_button');
     const routes = states.button_mappings ?? [];
 
-    expect(routes.length).toBe(13);
+    expect(routes.length).toBe(12);
 
     for (const route of routes) {
       if (route.from_button_id !== undefined) {
-        expect(route.to_button_id).toBe('button.container_auto_place');
+        expect(route.to_button_id).toBe('button.drop_one');
       }
     }
 
-    expect(routes.map(route => route.to_button_id)).toContain('button.shape_drawing');
+    expect(routes.map(route => route.to_button_id)).not.toContain('button.shape_drawing');
     expect(routes.map(route => route.to_button_id)).toContain('button.container_slot_hovered');
   });
 
-  it('gates hover and pressed on the slot holding a transport, one level down', () => {
+  it('gates every state face on the slot not holding the guard, one level down', () => {
     const id = idOf(face);
     const states = definition(withFace(face).doc, 'press_1_states@core_ui_chest.slot_button');
 
     // The gate sits on a panel INSIDE the state control, never on the state
     // control itself: the button toggles that one's visibility as the pointer
     // moves, and a binding on the same control would overwrite it.
-    for (const state of ['hover', 'pressed']) {
+    expect(states).toMatchObject({ default_control: 'default', hover_control: 'hover', pressed_control: 'pressed' });
+
+    for (const state of ['default', 'hover', 'pressed']) {
       const outer = child(states, state);
 
       expect(outer.type).toBe('panel');
@@ -446,6 +446,7 @@ describe('emit / buttons', () => {
       gatesOn(child(outer, 'gate'), ENABLED);
     }
 
+    expect(child(child(states, 'default'), 'gate').controls).toEqual([{ [`face@core_ui_test_faces.${id}`]: {} }]);
     expect(child(child(states, 'hover'), 'gate').controls).toEqual([{ [`face@core_ui_test_faces.${id}_hover`]: {} }]);
     expect(child(child(states, 'pressed'), 'gate').controls).toEqual([{ [`face@core_ui_test_faces.${id}_pressed`]: {} }]);
   });
@@ -464,7 +465,7 @@ describe('emit / buttons', () => {
     expect(JSON.stringify(faces)).not.toContain('binding');
   });
 
-  it('swaps in the disabled look while the slot holds no transport', () => {
+  it('swaps in the disabled look while the slot holds the guard', () => {
     const look = { ...face, disabled: 't/off' };
     const id = idOf(look);
     const { faces, doc } = withFace(look);
@@ -473,7 +474,7 @@ describe('emit / buttons', () => {
 
     const disabled = child(definition(doc, 'press_1'), 'disabled');
 
-    gatesOn(disabled, `(not ${ENABLED})`);
+    gatesOn(disabled, DISABLED);
     expect(disabled.controls).toEqual([{ [`face@core_ui_test_faces.${id}_disabled`]: {} }]);
   });
 
@@ -542,7 +543,6 @@ describe('emit / buttons', () => {
 describe('emit / slot roles and locking', () => {
   const of = (role: 'both' | 'input' | 'output', interactive = true): Document => emit(screenOf(
     [{ kind: 'slot', name: 'a', rect: { x: 0, y: 0, width: 18, height: 18 }, address: 1, role, interactive }],
-    { ownedItemRenderer: 'core_ui_chest.gated_item' },
   ));
 
   const placed = (doc: Document): Control => child(definition(doc, 'screen'), 'a@core_ui_chest.slot_host');
@@ -553,7 +553,7 @@ describe('emit / slot roles and locking', () => {
 
   it('mounts the static guard-toggled cell for an output slot', () => {
     // The real/fake pair lives in the library's static file, gated on the
-    // guard's item id; the screen only points at it.
+    // guard's max durability; the screen only points at it.
     expect(placed(of('output')).$cell).toBe('core_ui_chest.output_slot');
   });
 
@@ -663,7 +663,6 @@ describe('emit / grids', () => {
       columns: 9,
       rows: 3,
       interactive: true,
-      hideOwned: false,
       ...over,
     }], extra));
 
@@ -677,57 +676,37 @@ describe('emit / grids', () => {
       size: [162, 54],
       grid_dimensions: [9, 3],
       collection_name: 'container_items',
-      grid_item_template: 'core_ui_test.grid_cell__container_items__take__plain',
+      grid_item_template: 'core_ui_test.grid_cell__container_items__take',
     });
-    expect(definition(doc, 'grid_cell__container_items__take__plain@core_ui_chest.cell'))
+    expect(definition(doc, 'grid_cell__container_items__take@core_ui_chest.cell'))
       .toEqual({ $item_collection_name: 'container_items' });
-  });
-
-  it('draws a hideOwned grid with the host\'s transport-hiding renderer', () => {
-    // The opt-in still exists, for a collection that is not the player's.
-    const doc = grid({ collection: 'container_items', hideOwned: true }, { ownedItemRenderer: 'core_ui_chest.gated_item' });
-
-    expect(find(doc, name => name === 'g')[1].grid_item_template).toBe('core_ui_test.grid_cell__container_items__take__owned');
-    expect(definition(doc, 'grid_cell__container_items__take__owned@core_ui_chest.cell')).toEqual({
-      $item_collection_name: 'container_items',
-      $item_renderer: 'core_ui_chest.gated_item',
-      $durability_bar_required: false,
-    });
   });
 
   it('withholds focus on a display-only grid, so no cell can be moved', () => {
     const doc = grid({ collection: 'container_items', interactive: false });
 
-    expect(find(doc, name => name === 'g')[1].grid_item_template).toBe('core_ui_test.grid_cell__container_items__display__plain');
-    expect(definition(doc, 'grid_cell__container_items__display__plain@core_ui_chest.cell')).toEqual({
+    expect(find(doc, name => name === 'g')[1].grid_item_template).toBe('core_ui_test.grid_cell__container_items__display');
+    expect(definition(doc, 'grid_cell__container_items__display@core_ui_chest.cell')).toEqual({
       $item_collection_name: 'container_items',
       $button_ref: 'core_ui_chest.display_states',
     });
   });
 
-  it('hides the transport in the player own collections without being asked', () => {
-    // A press auto-places the transport into the player's inventory for a tick.
-    // Whether that shows is not the author's decision to get right: the
-    // transport is the library's own mechanism, and `<SlotGrid>` defaults
-    // hideOwned to false — so asking would have meant a command block flashing
-    // in the hotbar of every screen that drew one without knowing to opt in.
+  it('draws the player\'s own collections with the plain item cell', () => {
+    // A press drops the transport, so nothing of the runtime's ever lands in
+    // the player's inventory, and their grids draw every item as it is.
     for (const collection of ['inventory_items', 'hotbar_items']) {
-      const doc = grid({ collection, hideOwned: false }, { ownedItemRenderer: 'core_ui_chest.gated_item' });
+      const doc = grid({ collection });
 
       expect(find(doc, name => name === 'g')[1].grid_item_template)
-        .toBe(`core_ui_test.grid_cell__${collection}__take__owned`);
-      expect(definition(doc, `grid_cell__${collection}__take__owned@core_ui_chest.cell`)).toEqual({
+        .toBe(`core_ui_test.grid_cell__${collection}__take`);
+      expect(definition(doc, `grid_cell__${collection}__take@core_ui_chest.cell`)).toEqual({
         $item_collection_name: collection,
-        $item_renderer: 'core_ui_chest.gated_item',
-        $durability_bar_required: false,
       });
     }
   });
 
-  it('hides the transport in a foreign Slot over a player collection too', () => {
-    // A single placed slot is gated exactly like a grid: without it, a screen
-    // drawing one hotbar cell shows the transport item in it for the tick
-    // after every press.
+  it('draws a foreign Slot over a player collection with the plain item cell too', () => {
     const doc = emit(screenOf(
       [{
         kind: 'slot',
@@ -738,9 +717,10 @@ describe('emit / grids', () => {
         interactive: true,
         source: { collection: 'hotbar_items', index: 0, interactive: true },
       }],
-      { ownedItemRenderer: 'core_ui_chest.gated_item' },
     ));
 
-    expect(JSON.stringify(definition(doc, 'slot__hotbar_items'))).toContain('core_ui_chest.gated_item');
+    expect(child(definition(doc, 'slot__hotbar_items'), 'item@core_ui_chest.cell')).toEqual({
+      $item_collection_name: 'hotbar_items',
+    });
   });
 });

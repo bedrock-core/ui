@@ -23,4 +23,5 @@ export { press, pressDefs, type PressLook } from './press';
 export { optionStates, select, OPTION_TOGGLE, STUB, type Select, type SelectOption } from './select';
 export { text, textDef, type TextCarrier } from './text';
 export { texture, textureDef, TEXTURE_DEF } from './texture';
+export { look, type LookVersion } from './look';
 export { visible, type Gate } from './visible';

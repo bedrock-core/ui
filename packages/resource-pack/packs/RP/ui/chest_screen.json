@@ -39,8 +39,9 @@
 		]
 	},
 
-	// The literal is the runtime's protocol aux (8978432): a $variable inside
-	// an inserted binding's source_property_name is dropped by the engine.
+	// The literal is the sentinel's max durability (32749), the runtime's
+	// protocol key: a $variable inside an inserted binding's
+	// source_property_name is dropped by the engine.
 	"chest_label": {
 		"modifications": [
 			{
@@ -48,8 +49,8 @@
 				"operation": "insert_back",
 				"value": [
 					{ "binding_type": "collection_details", "binding_collection_name": "container_items" },
-					{ "binding_name": "#item_id_aux", "binding_name_override": "#core_ui_aux", "binding_type": "collection", "binding_collection_name": "container_items" },
-					{ "binding_type": "view", "source_property_name": "(not (#core_ui_aux = 8978432))", "target_property_name": "#visible" }
+					{ "binding_name": "#item_durability_total_amount", "binding_name_override": "#core_ui_identity", "binding_type": "collection", "binding_collection_name": "container_items" },
+					{ "binding_type": "view", "source_property_name": "(not (#core_ui_identity = 32749))", "target_property_name": "#visible" }
 				]
 			}
 		]
@@ -62,8 +63,8 @@
 				"operation": "insert_back",
 				"value": [
 					{ "binding_type": "collection_details", "binding_collection_name": "container_items" },
-					{ "binding_name": "#item_id_aux", "binding_name_override": "#core_ui_aux", "binding_type": "collection", "binding_collection_name": "container_items" },
-					{ "binding_type": "view", "source_property_name": "(not (#core_ui_aux = 8978432))", "target_property_name": "#visible" }
+					{ "binding_name": "#item_durability_total_amount", "binding_name_override": "#core_ui_identity", "binding_type": "collection", "binding_collection_name": "container_items" },
+					{ "binding_type": "view", "source_property_name": "(not (#core_ui_identity = 32749))", "target_property_name": "#visible" }
 				]
 			}
 		]

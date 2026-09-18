@@ -1,6 +1,6 @@
 import type { ItemStack } from '@minecraft/server';
 import type { SlotEntry } from '../../allocate';
-import { isOwned, type ItemContainer } from '../items';
+import type { ItemContainer, ProtocolItems } from '../items';
 import { actorOf } from '../players';
 import type { PollHost } from '../poll';
 import { resync } from '../watch';
@@ -38,10 +38,10 @@ export const move = (host: PollHost, entry: SlotEntry, before: ItemStack | undef
  * A slot that keeps the player's own item between opens loses only what the
  * runtime owns — a transport left by a layout that had a button there.
  */
-export const keepPlayerItem = (container: ItemContainer, { slot }: SlotEntry): void => {
+export const keepPlayerItem = (container: ItemContainer, { slot }: SlotEntry, items: ProtocolItems): void => {
   const item = container.getItem(slot);
 
-  if (item && isOwned(item)) {
+  if (item && items.isOwned(item)) {
     container.setItem(slot, undefined);
   }
 };

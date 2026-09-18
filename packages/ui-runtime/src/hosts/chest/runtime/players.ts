@@ -1,6 +1,5 @@
 import { type Container, EntityComponentTypes, type ItemStack, type Player } from '@minecraft/server';
-import type { SlotEntry } from '../allocate';
-import { isGuard, isOwned, isTransport, type ItemContainer } from './items';
+import type { ProtocolItems } from './items';
 
 /**
  * The player's half of a container transaction: what is on their cursor and
@@ -141,86 +140,6 @@ export const writeCursor = (player: Player, stack: ItemStack): boolean => {
 };
 
 /**
- * Takes back the copy a player is holding.
- *
- * Refilling a slot on its own DUPLICATES it — observed in game: the restored
- * item appeared while the original surfaced elsewhere a tick later. The cursor
- * turned out to be readable, so the reclaim can finish in the same tick, and
- * it is searched FIRST because a click is what leaves a copy in flight there.
- * Every viewer's cursor is checked before any viewer's inventory, since the
- * cursor is where the copy is when the press was a click.
- *
- * The container half comes last, skips every BUTTON, and stops at the DRAWN
- * range. None of those three is an optimisation:
- *
- *  - a button slot holds a transport item of exactly this type, put there
- *    deliberately, so finding one there deletes a working button rather than
- *    the copy — and the screen loses a button for every press;
- *  - everything in the bank is claimed too — the sentinel is the protocol
- *    item, every channel cell is the count item — so a whole-container scan
- *    finds a channel before it finds the copy and deletes that instead. Deleting the sentinel takes the routing key with
- *    it, the router stops recognising the screen, and the player is looking
- *    at a plain chest full of pickaxes and paper.
- *
- * @returns the viewer the copy was found on, which is who pressed the button.
- *   Undefined when it was found in the container or not at all.
- */
-export const reclaim = (
-  container: ItemContainer,
-  viewers: readonly Player[],
-  slots: readonly SlotEntry[],
-  skip: number,
-): Player | undefined => {
-  // In flight between slots, which is where a click puts it. Readable through
-  // the cursor component, which is unused under touch controls — the
-  // inventory pass below and the close sweep back that case up.
-  for (const viewer of viewers) {
-    const cursor = cursorOf(viewer);
-    const held = cursor?.item;
-
-    if (cursor && held && isTransport(held)) {
-      cursor.clear();
-
-      return viewer;
-    }
-  }
-
-  for (const viewer of viewers) {
-    const inventory = inventoryOf(viewer);
-
-    if (!inventory) {
-      continue;
-    }
-
-    for (let slot = 0; slot < inventory.size; slot += 1) {
-      const item = inventory.getItem(slot);
-
-      if (item && isTransport(item)) {
-        inventory.setItem(slot, undefined);
-
-        return viewer;
-      }
-    }
-  }
-
-  for (const entry of slots) {
-    if (entry.slot === skip || entry.role === 'button') {
-      continue;
-    }
-
-    const item = container.getItem(entry.slot);
-
-    if (item && isTransport(item)) {
-      container.setItem(entry.slot, undefined);
-
-      return undefined;
-    }
-  }
-
-  return undefined;
-};
-
-/**
  * Pulls an output placeholder back off whoever is holding it — cursor first,
  * then inventory — so no one walks away with the invisible marker after a take
  * or a swap left it on them.
@@ -228,11 +147,11 @@ export const reclaim = (
  * @returns the viewer it came off, which is who moved it. Undefined when no
  *   viewer held one: the placeholder left the slot by the screen's own hand.
  */
-export const reclaimGuard = (viewers: readonly Player[]): Player | undefined => {
+export const reclaimGuard = (viewers: readonly Player[], items: ProtocolItems): Player | undefined => {
   for (const viewer of viewers) {
     const cursor = cursorOf(viewer);
 
-    if (cursor?.item && isGuard(cursor.item)) {
+    if (cursor?.item && items.isGuard(cursor.item)) {
       cursor.clear();
 
       return viewer;
@@ -249,7 +168,7 @@ export const reclaimGuard = (viewers: readonly Player[]): Player | undefined => 
     for (let slot = 0; slot < inventory.size; slot += 1) {
       const item = inventory.getItem(slot);
 
-      if (item && isGuard(item)) {
+      if (item && items.isGuard(item)) {
         inventory.setItem(slot, undefined);
 
         return viewer;
@@ -261,20 +180,24 @@ export const reclaimGuard = (viewers: readonly Player[]): Player | undefined => 
 };
 
 /** Anything of ours that got away, whatever route it took. */
-export const sweep = (player: Player): void => {
+export const sweep = (player: Player, items: ProtocolItems): void => {
   const inventory = inventoryOf(player);
 
   if (inventory) {
     for (let slot = 0; slot < inventory.size; slot += 1) {
       const item = inventory.getItem(slot);
 
-      if (item && isOwned(item)) {
+      if (item && items.isOwned(item)) {
         inventory.setItem(slot, undefined);
       }
     }
   }
 
-  cursorOf(player)?.clear();
+  const cursor = cursorOf(player);
+
+  if (cursor?.item && items.isOwned(cursor.item)) {
+    cursor.clear();
+  }
 };
 
 /** Hands an item back, or drops it, rather than destroying what is theirs. */
@@ -294,10 +217,10 @@ export const give = (player: Player, stack: ItemStack): void => {
  * Takes a player's OWN item back off them, so a refused move is UNDONE rather
  * than copied.
  *
- * {@link reclaim} cannot do this job: it only ever removes something the
- * runtime marked, and an item sitting in an input slot was put there by the
- * player and carries no mark. Restoring the slot without this MINTS a second
- * one — a duplication bug rather than a cosmetic one.
+ * An item sitting in an input slot was put there by the player and is of no
+ * type of ours, so nothing marks it as the one taken. Restoring the slot
+ * without this MINTS a second one — a duplication bug rather than a cosmetic
+ * one.
  *
  * Viewers are searched in the order given: the caller puts the actor first,
  * so the stack comes back off the one who took it.

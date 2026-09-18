@@ -55,12 +55,6 @@ export interface IrDocument {
   faces?: string;
   /** The collection every addressed control reads from, e.g. `container_items`. */
   collection: string;
-  /**
-   * The host's item renderer that hides the runtime's transport item, fully
-   * qualified (e.g. `chest.core_ui_gated_item`). A `hideOwned` grid draws its
-   * cells with it. Present only when the host provides one.
-   */
-  ownedItemRenderer?: string;
   /** The canvas: every rect below is relative to it, and it sits at (0, 0). */
   root: PanelNode;
   /**

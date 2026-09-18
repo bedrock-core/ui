@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
-import { layoutKey, PROTOCOL_ITEM_AUX } from '@bedrock-core/ui-runtime/compile';
+import { IDENTITY, layoutKey } from '@bedrock-core/ui-runtime/compile';
 import { describe, expect, it } from 'vitest';
 import { demoCounts, demoEntity, demoScreen } from '../__fixtures__/demo';
 import { buildRouter, type CompiledScreen } from '../compile';
@@ -67,13 +67,14 @@ describe('the reference screen', () => {
     hasBackdrop: true,
     hasText: true,
     lang: {},
+    looks: [],
   };
 
   it('is addressable by the chest router', () => {
     // If either half moves, the container renders empty with nothing in the
     // log to explain why.
     const { router } = buildRouter([compiled]);
-    const gate = definition(router, 'core_ui_low_gate_demo');
+    const gate = definition(router, 'core_ui_gate_demo');
 
     for (const entry of gate.controls ?? []) {
       for (const name of Object.keys(entry)) {
@@ -141,7 +142,7 @@ describe('the chest hook', () => {
   const { router, hooks } = buildRouter([]);
   const inverted = {
     binding_type: 'view',
-    source_property_name: `(not (#core_ui_aux = ${PROTOCOL_ITEM_AUX}))`,
+    source_property_name: `(not (#core_ui_identity = ${IDENTITY.sentinel}))`,
     target_property_name: '#visible',
   };
 
@@ -150,12 +151,12 @@ describe('the chest hook', () => {
     expect(router.namespace).toBe(root.namespace);
     expect(definition(root, 'vanilla_gate').bindings).toContainEqual({
       binding_type: 'view',
-      source_property_name: `(not (#aux = ${PROTOCOL_ITEM_AUX}))`,
+      source_property_name: `(not (#identity = ${IDENTITY.sentinel}))`,
       target_property_name: '#visible',
     });
     expect(definition(root, 'claimed_gate').bindings).toContainEqual({
       binding_type: 'view',
-      source_property_name: `(#aux = ${PROTOCOL_ITEM_AUX})`,
+      source_property_name: `(#identity = ${IDENTITY.sentinel})`,
       target_property_name: '#visible',
     });
     expect(entries(definition(root, 'vanilla_gate_desktop@core_ui_router.vanilla_gate'))).toEqual([['vanilla@chest.small_chest_panel', {}]]);
@@ -239,7 +240,7 @@ describe('the chest hook', () => {
   describe('on the data-driven container', () => {
     const blockInverted = {
       binding_type: 'view',
-      source_property_name: `(not (#core_ui_ddc_aux = ${PROTOCOL_ITEM_AUX}))`,
+      source_property_name: `(not (#core_ui_ddc_identity = ${IDENTITY.sentinel}))`,
       target_property_name: '#visible',
     };
 

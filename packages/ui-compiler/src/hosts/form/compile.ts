@@ -2,8 +2,9 @@ import type { FunctionComponent } from '@bedrock-core/ui-runtime';
 import {
   allocateForm, allocateModal, analyze, bakedTexts, buildScreenOnce, type CompiledSnapshot, concreteRoots,
   ContainerScreenError, embedMarker, embedPlacementOf, type EmbedPlacement, FORM_COLLECTION, formTitleFor, hostFor, probeLiveness, shapeOf,
-  visiblesAt, type EntryEntry, type ModalRow,
+  variantsAt, visiblesAt, type EntryEntry, type ModalRow,
 } from '@bedrock-core/ui-runtime/compile';
+import type { JSX } from '@bedrock-core/ui-runtime';
 import { checkLiveness } from '../../compile';
 import { staticTable, wantsStatic, type StaticScreen } from '../../static';
 import { BACKDROP_DEFINITION, type FaceDocument, faceOf, facesNamespaceOf } from '../../face';
@@ -13,6 +14,7 @@ import { MODAL_COLLECTION } from '../../connectors/form';
 import type { Addressing } from '../../nodes/utils/types';
 import { toIr } from '../../toIr';
 import { langOf, type ScreenLang } from '../../lang';
+import { carriedPositions, drawnPerLook, looksOf } from '../../looks';
 import { checkTrans, transRecords } from '../../trans';
 import { FORM_EMIT } from './emit';
 
@@ -89,7 +91,7 @@ const NAME = /^[A-Za-z0-9_-]+$/;
  * an entry is the same thing whichever it carries — a press's index, a live
  * string, or a carried visible's bool.
  */
-const actionAddressing = (entries: readonly EntryEntry[]): Addressing => ({
+const actionAddressing = (entries: readonly EntryEntry[], tree: JSX.Element): Addressing => ({
   cells: new Map(entries
     .filter(entry => entry.role !== undefined)
     .map(entry => [entry.element, { address: entry.entry, role: entry.role ?? 'button' }] as const)),
@@ -99,6 +101,12 @@ const actionAddressing = (entries: readonly EntryEntry[]): Addressing => ({
   visibles: new Map(entries
     .filter(entry => entry.carrier === 'bool')
     .map(entry => [entry.element, entry.entry])),
+  looks: new Map(entries
+    .filter(entry => entry.carrier === 'enum' && entry.looks !== undefined)
+    .map(entry => [entry.element, {
+      address: entry.entry,
+      looks: looksOf(tree, entry.looks ?? { position: 0, type: '', props: [], combinations: [] }),
+    }])),
 });
 
 /**
@@ -166,9 +174,6 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
   // `visible`: the form has a carrier for it, so a probe that moved one is a
   // finding rather than an error.
   const probe = probeLiveness(() => buildScreenOnce(Screen));
-
-  checkLiveness(probe, spec.name, { carriedVisible: true });
-
   const tree = buildScreenOnce(Screen);
   const visibles = visiblesAt(tree, probe.liveVisibles);
   const host = hostFor(tree);
@@ -178,6 +183,16 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
   }
 
   const modal = host.id === 'form-modal';
+  // A look that follows state is drawn once per look and chosen by an entry,
+  // which only a host with an enum carrier can do. A modal's rows are the
+  // engine's, so it carries none.
+  const looks = modal ? new Map() : drawnPerLook(variantsAt(tree, probe.variants));
+  const analysis = analyze(tree, visibles, looks);
+
+  checkLiveness(probe, spec.name, {
+    carriedVisible: true,
+    carriedLooks: carriedPositions(looks.values()),
+  });
   const embedded = embedPlacementOf(tree);
 
   if (embedded !== undefined && modal) {
@@ -187,7 +202,7 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
   // The action form's needs are entries; the modal's are rows. One tree is
   // exactly one of the two, and each side of the branch is the same function
   // its runtime writes with — the numbering cannot drift from the bake.
-  const entries = modal ? [] : allocateForm(tree, analyze(tree, visibles)).entries;
+  const entries = modal ? [] : allocateForm(tree, analysis).entries;
   // A screen with nothing live is shown from a table rather than from a
   // component. A modal is never one: its fields are the engine's, built per
   // present, so there is always something for the runtime to do.
@@ -208,7 +223,7 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
     );
   }
 
-  const addressing = modal ? modalAddressing(allocateModal(tree, visibles)) : actionAddressing(entries);
+  const addressing = modal ? modalAddressing(allocateModal(tree, visibles)) : actionAddressing(entries, tree);
   const ir = toIr(formRoot(tree), addressing, {
     namespace,
     faces: facesNamespaceOf(spec.namespace),
@@ -232,9 +247,14 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
     snapshot: {
       // Carrier-aware: the bool channels are in the fingerprint, so a runtime
       // whose visibles do not match the bake diffs loudly in `debug`.
-      shape: shapeOf(tree, analyze(tree, visibles)),
+      shape: shapeOf(tree, analysis),
       baked: bakedTexts(tree),
       vis: probe.liveVisibles,
+      // The looks each element takes, so a screen rendered at runtime writes
+      // the same choice the build drew and gated.
+      // Only the ones it draws: the runtime spends an entry on every table it is
+      // handed, so a table the build did not carry would shift every entry after it.
+      ...looks.size > 0 ? { looks: [...looks.values()] } : {},
       // A screen rendered at runtime draws its translated texts as laid out here. A static one is
       // never rendered at runtime, so it carries none.
       ...table === undefined && transRecords(tree).length > 0 ? { trans: transRecords(tree) } : {},

@@ -18,7 +18,8 @@ export type { RenderOptions } from './render';
 
 // What the build's generated module calls to say a screen was compiled.
 export {
-  compiledKeyOf, compiledScreens, compiledSnapshotOf, compiledTitleOf, registerCompiledScreen,
+  compiledKeyOf, compiledScreens, compiledSnapshotOf, compiledTitleOf, containerLooksOf, registerCompiledScreen,
+  registerContainerLooks,
   registerStaticScreens, screenForKey, staticScreen, staticScreens,
 } from './render/screens';
 export type { CompiledScreen, CompiledSnapshot, StaticScreenRecord } from './render/screens';

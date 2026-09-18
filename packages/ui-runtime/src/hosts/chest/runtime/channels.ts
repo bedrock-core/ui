@@ -1,13 +1,14 @@
 import type { JSX } from '../../../jsx';
 import type { ChannelEntry } from '../allocate';
 import { encode } from '../charset';
-import { type ItemContainer, writeCell } from './items';
+import { type ItemContainer, type ProtocolItems, writeCell, writeLook } from './items';
 
 /**
  * Writing live values into the bank.
  *
  * A channel is a run of bank slots the layout reads and no cell draws: a
- * string rides one slot's stack size per character. The value comes off the
+ * string rides one slot's stack size per character, a look one slot's
+ * current durability. The value comes off the
  * element the allocation attached to the channel, so the walk that numbered
  * the slots is the walk that fills them, and nothing is addressed by name.
  */
@@ -39,8 +40,19 @@ export const writeChannels = (
   container: ItemContainer,
   channels: readonly ChannelEntry[],
   written: Written,
+  items: ProtocolItems,
 ): void => {
   for (const channel of channels) {
+    // A look is one slot whose current durability names it, as a button's does.
+    if (channel.carrier === 'enum') {
+      if (written.get(channel.slot) !== channel.look) {
+        written.set(channel.slot, channel.look);
+        writeLook(container, items, channel.slot, channel.look);
+      }
+
+      continue;
+    }
+
     for (const [cell, code] of encode(textOf(channel.element), channel.length).entries()) {
       const slot = channel.slot + cell;
 
@@ -49,7 +61,7 @@ export const writeChannels = (
       }
 
       written.set(slot, code);
-      writeCell(container, slot, code);
+      writeCell(container, items, slot, code);
     }
   }
 };

@@ -1,6 +1,5 @@
 import { EntityComponentTypes, ItemComponentTypes, type Player } from '@minecraft/server';
-import { PROTOCOL_ITEM } from '../contract';
-import { isOwned, type ItemContainer } from './items';
+import type { ItemContainer, ProtocolItems } from './items';
 
 /**
  * What the runtime did, and what the world looked like afterwards.
@@ -13,7 +12,7 @@ import { isOwned, type ItemContainer } from './items';
  * routing key with it and leaves the player looking at a plain chest.
  */
 
-/** Short enough to read in a log line: `NP` for netherite_pickaxe, `PA` for paper. */
+/** Short enough to read in a log line: `NP` for netherite_pickaxe. */
 const abbreviate = (typeId: string): string => {
   const bare = typeId.replace('minecraft:', '');
   const parts = bare.split('_');
@@ -21,21 +20,30 @@ const abbreviate = (typeId: string): string => {
   return parts.map(part => part.slice(0, 2).toUpperCase()).join('').slice(0, 4);
 };
 
-const cell = (container: ItemContainer, slot: number): string => {
+/**
+ * One slot: a protocol item as its role and the value it carries (`T3`, a
+ * transport wearing look 3), a player's item as `!` and its abbreviated type.
+ */
+const cell = (container: ItemContainer, items: ProtocolItems, slot: number): string => {
   const item = container.getItem(slot);
 
   if (!item) {
     return '-';
   }
 
-  const owned = isOwned(item) ? '' : '!';
+  const count = item.amount > 1 ? `x${item.amount}` : '';
+  const role = items.roleOf(item);
+
+  if (role !== undefined) {
+    return `${role.slice(0, 1).toUpperCase()}${items.valueOf(item)}${count}`;
+  }
+
   const damage = item.getComponent(ItemComponentTypes.Durability)?.damage;
 
-  return `${owned}${abbreviate(item.typeId)}${item.amount > 1 ? `x${item.amount}` : ''}`
-    + `${damage ? `/${damage}` : ''}`;
+  return `!${abbreviate(item.typeId)}${count}${damage ? `/${damage}` : ''}`;
 };
 
-const viewerLine = (viewer: Player): string => {
+const viewerLine = (viewer: Player, items: ProtocolItems): string => {
   const inventory = viewer.getComponent(EntityComponentTypes.Inventory)?.container;
   let escaped = 0;
   let carried = 0;
@@ -50,7 +58,7 @@ const viewerLine = (viewer: Player): string => {
 
       carried += 1;
 
-      if (isOwned(item)) {
+      if (items.isOwned(item)) {
         escaped += 1;
       }
     }
@@ -59,12 +67,14 @@ const viewerLine = (viewer: Player): string => {
   const held = viewer.getComponent(EntityComponentTypes.CursorInventory)?.item;
 
   return `  ${viewer.name}: inv ${carried} item(s)${escaped > 0 ? `, ${escaped} OURS` : ''}`
-    + ` cur ${held ? `${abbreviate(held.typeId)}${isOwned(held) ? ' OURS' : ''}` : '-'}`;
+    + ` cur ${held ? `${abbreviate(held.typeId)}${items.isOwned(held) ? ' OURS' : ''}` : '-'}`;
 };
 
 export interface SnapshotOptions {
   /** Container indices carrying the routing keys. */
   sentinels: readonly number[];
+  /** The screen's protocol items. */
+  items: ProtocolItems;
   /** Slots the layout draws. */
   drawn: readonly number[];
 }
@@ -80,7 +90,8 @@ export const snapshot = (
   viewers: readonly Player[],
   options: SnapshotOptions,
 ): void => {
-  const drawn = options.drawn.map(slot => `${slot}=${cell(container, slot)}`).join(' ');
+  const { items } = options;
+  const drawn = options.drawn.map(slot => `${slot}=${cell(container, items, slot)}`).join(' ');
 
   // The bank is summarised rather than listed: it is most of the container,
   // and the only thing worth knowing is whether it still holds what was
@@ -93,16 +104,20 @@ export const snapshot = (
     }
   }
 
-  const routed = options.sentinels.every(slot => container.getItem(slot)?.typeId === PROTOCOL_ITEM);
+  const routed = options.sentinels.every((slot) => {
+    const item = container.getItem(slot);
+
+    return item !== undefined && items.roleOf(item) === 'sentinel';
+  });
 
   // The content log, never chat. A snapshot per action would bury everything
   // a player is actually there to read, and the log is where a developer
   // already is.
   console.warn([
     `[core.ui] ${label}`,
-    `  key  ${routed ? options.sentinels.map(slot => cell(container, slot)).join(' ') : 'MISSING - screen unrouted'}`,
+    `  key  ${routed ? options.sentinels.map(slot => cell(container, items, slot)).join(' ') : 'MISSING - screen unrouted'}`,
     `  draw ${drawn}`,
     `  bank ${bankUsed} used of ${container.size - options.drawn.length - options.sentinels.length}`,
-    ...viewers.map(viewerLine),
+    ...viewers.map(viewer => viewerLine(viewer, items)),
   ].join('\n'));
 };

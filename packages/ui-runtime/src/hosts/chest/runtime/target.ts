@@ -122,8 +122,9 @@ const blockTarget = (block: Block): HostTarget => {
     isValid: () => readOr(() => block.isValid, false),
     container: () => containerOf(block),
 
-    // The state's one value is a string (an integer state is stored by value
-    // in the block's state bits, which a layout key overflows), so it is parsed.
+    // The state is a string (an integer state is stored by value in the
+    // block's state bits, which a layout key overflows), so it is parsed; its
+    // other value, `none`, parses to no key.
     layout: (): number | undefined => {
       const states = readOr(() => block.permutation.getAllStates(), undefined);
       const value = states?.[LAYOUT_PROPERTY];

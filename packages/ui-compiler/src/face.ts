@@ -26,7 +26,7 @@
 import { ContainerScreenError } from '@bedrock-core/ui-runtime/compile';
 import type { IrDocument, PanelNode } from './ir';
 import type { Control, ControlEntry, Document } from './jsonui';
-import { definitionFor, socketsOf } from './nodes';
+import { childrenOf, definitionFor, socketsOf } from './nodes';
 import { FULL, over, shownWhileOn, sizeOf, surface, topLeft } from './faces';
 import { swapControlName } from './nodes/primitives/swap';
 import type { FaceEmit, IrNode, Socket } from './nodes/utils/types';
@@ -60,8 +60,6 @@ export interface FaceDocument {
   root: PanelNode;
   /** The collection the host's mechanisms read from. */
   collection: string;
-  /** The host renderer that hides the runtime's transport item, if the host has one. */
-  ownedRenderer?: string;
 }
 
 /**
@@ -91,9 +89,43 @@ export const faceOf = (doc: IrDocument): FaceDocument => {
   const emitNode = (node: IrNode): ControlEntry => {
     sockets.push(...socketsOf(node));
 
-    const drawn = definitionFor(node.kind).face(node, context);
+    const drawn = node.carriedLook === undefined ? definitionFor(node.kind).face(node, context) : versionsOf(node, node.carriedLook.looks);
 
     return node.follows === undefined ? drawn : following(node, node.follows, drawn);
+  };
+
+  /**
+   * A node whose look is carried: every version at the place its look puts
+   * it, the build's own showing, and the node's children drawn once over them.
+   * The host gates each version on the carrier; the box is the node's, so the
+   * children keep the place the build solved for them.
+   */
+  const versionsOf = (node: IrNode, looks: readonly IrNode[]): ControlEntry => {
+    const versions = looks.map((version, index): ControlEntry => {
+      sockets.push({ node: version, kind: 'look' });
+
+      const [[key, control] = ['', {}]] = Object.entries(definitionFor(version.kind).face(version, context));
+
+      return {
+        [key]: {
+          ...control,
+          offset: [version.rect.x - node.rect.x, version.rect.y - node.rect.y],
+          ...index === 0 ? {} : { visible: false },
+        },
+      };
+    });
+
+    return {
+      [node.name]: {
+        type: 'panel',
+        size: sizeOf(node.rect),
+        offset: [node.rect.x, node.rect.y],
+        ...topLeft,
+        ...node.layer === undefined ? {} : { layer: node.layer },
+        ...node.visible === false ? { visible: false } : {},
+        controls: over(versions, childrenOf(node).map(child => emitNode(child))),
+      },
+    };
   };
 
   /** A node drawn while the swap it names is on. */
@@ -165,6 +197,5 @@ export const faceOf = (doc: IrDocument): FaceDocument => {
     sockets,
     root,
     collection: doc.collection,
-    ...doc.ownedItemRenderer === undefined ? {} : { ownedRenderer: doc.ownedItemRenderer },
   };
 };

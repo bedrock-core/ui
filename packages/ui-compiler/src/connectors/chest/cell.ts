@@ -1,12 +1,11 @@
-import { TRANSPORT_ITEM_AUX } from '@bedrock-core/ui-runtime/compile';
+import { IDENTITY } from '@bedrock-core/ui-runtime/compile';
 import { topLeft } from '../../faces';
 import { entryControl } from '../../nodes/utils/shared';
 import type { Binding, ButtonMapping, Control, ControlEntry } from '../../jsonui';
 
 /**
  * The namespace of the library's own container definitions — the cells, text
- * hosts, scroll, transport-hiding renderer and chrome — shipped as static
- * files in the render pack. A compiled screen references them by name and
+ * hosts, scroll and chrome — shipped as static files in the render pack. A compiled screen references them by name and
  * emits only what varies per screen.
  */
 export const CHEST = 'core_ui_chest';
@@ -100,60 +99,63 @@ export const placed = (face: ControlEntry): Control => {
 };
 
 /**
- * A button slot's routes: every item-moving route becomes AUTO-PLACE.
+ * A button slot's routes: every item-moving route drops the transport.
  *
- * Vanilla's default, take-to-cursor, hangs the transport item on the mouse
- * where the engine draws it HARDCODED — no JSON UI control renders the held
- * stack, so nothing can hide it there. Auto-place sends it to the player's
- * inventory instead, which IS ours to draw: the router's own grids render a
- * transport as nothing, so the press becomes invisible end to end.
+ * A drop never reaches the cursor or the inventory, so nothing of the
+ * runtime's is ever drawn under the pointer or in a hotbar, and it works with
+ * a full inventory. The item has no icon, so nothing shows on the ground
+ * either, and `entityItemDrop` names the player who pressed. Every input
+ * drops one — click, right click, shift-click, Q, a tap on touch, a
+ * controller press — measured.
  *
- * The drop routes fold in too, because Q over a button would throw the
- * transport on the GROUND — the one place the runtime cannot reach it. So does
- * the double-click coalesce, which would otherwise gather transports from
- * every other button onto the cursor.
- *
- * Two costs, both accepted: a press with a completely FULL inventory has
- * nowhere to auto-place and does nothing, and a double-click auto-places twice,
- * harmlessly, since the slot is already empty the second time.
+ * Shape drawing, the drag that spreads a held stack over several slots, is
+ * left off: a button takes no share of a stack, and a drag begun on one while
+ * clicks pile up could leave the screen mid-drag — hovering, but taking no
+ * click and showing no tooltip until the next press.
  */
-export const BUTTON_MAPPINGS: ButtonMapping[] = PROTOTYPE_MAPPINGS.map(mapping => (
-  isSelfRouted(mapping) ? mapping : { ...mapping, to_button_id: 'button.container_auto_place' }
-));
+export const BUTTON_MAPPINGS: ButtonMapping[] = PROTOTYPE_MAPPINGS
+  .filter(mapping => mapping.to_button_id !== 'button.shape_drawing')
+  .map(mapping => (isSelfRouted(mapping) ? mapping : { ...mapping, to_button_id: 'button.drop_one' }));
 
 /**
- * Where a button's enabled state is read from: whether its slot holds the
- * TRANSPORT, by its item id.
+ * Where a button's disabled state is read from: whether its slot holds the
+ * GUARD, by its max durability.
  *
- * The runtime keeps a transport in the slot exactly while the button is
- * enabled and the guard while it is not. The two are different blocks, so the
- * id alone tells them apart, and a legacy-range block's id never shifts.
+ * The runtime keeps a transport in the slot while the button is enabled and
+ * the guard while it is not. Each role's item has a max durability of its own,
+ * fixed by the item's definition, so that alone tells them apart.
+ *
+ * Gated on the guard rather than the transport, so a slot that is empty —
+ * between a press dropping the transport and the runtime putting it back —
+ * still reads enabled. Hiding the press surface there would hide the control
+ * the chest screen has focused, and a dangling focus stops the whole screen
+ * taking input and showing tooltips — seen in game.
  */
-const ENABLED_PROPERTY = `(#btn_aux = ${TRANSPORT_ITEM_AUX})`;
+const DISABLED_PROPERTY = `(#btn_identity = ${IDENTITY.guard})`;
 
 /**
- * Reads the slot item's id, which the enabled test compares against the
- * transport's. Every control that draws differently by state carries its own
- * copy, since a binding cannot be shared.
+ * Reads the slot item's max durability, which the enabled test compares
+ * against the guard's. Every control that draws differently by state
+ * carries its own copy, since a binding cannot be shared.
  */
 const enabledBindings = (collection: string): Binding[] => [
   { binding_type: 'collection_details', binding_collection_name: collection },
   {
-    binding_name: '#item_id_aux',
-    binding_name_override: '#btn_aux',
+    binding_name: '#item_durability_total_amount',
+    binding_name_override: '#btn_identity',
     binding_type: 'collection',
     binding_collection_name: collection,
   },
 ];
 
-/** Visible only while the slot holds the transport, which is what enabled means here. */
+/** Visible unless the slot holds the guard, which is what disabled means here. */
 export const whenEnabled = (collection: string): Binding[] => [
   ...enabledBindings(collection),
-  { binding_type: 'view', source_property_name: ENABLED_PROPERTY, target_property_name: '#visible' },
+  { binding_type: 'view', source_property_name: `(not ${DISABLED_PROPERTY})`, target_property_name: '#visible' },
 ];
 
-/** Visible only while it does not. */
+/** Visible only while it does. */
 export const whenDisabled = (collection: string): Binding[] => [
   ...enabledBindings(collection),
-  { binding_type: 'view', source_property_name: `(not ${ENABLED_PROPERTY})`, target_property_name: '#visible' },
+  { binding_type: 'view', source_property_name: DISABLED_PROPERTY, target_property_name: '#visible' },
 ];

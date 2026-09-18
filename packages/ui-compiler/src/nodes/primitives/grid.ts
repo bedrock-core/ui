@@ -18,8 +18,6 @@ export interface GridNode extends NodeBase {
   rows: number;
   /** Whether the player can move items through the cells. */
   interactive: boolean;
-  /** Draw the cell that hides the runtime's transport item (inventory/hotbar). */
-  hideOwned: boolean;
 }
 
 declare module '../utils/types' {
@@ -44,7 +42,6 @@ export const gridDefinition: NodeDefinition<GridNode> = {
       columns: config.columns,
       rows: config.rows,
       interactive: config.interactive,
-      hideOwned: config.hideOwned,
     };
   },
 

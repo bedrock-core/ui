@@ -162,6 +162,7 @@ export {
   isModalForm,
   registerComponent,
   registerCompiledScreen,
+  registerContainerLooks,
   compiledSnapshotOf,
   compiledTitleOf,
   render,

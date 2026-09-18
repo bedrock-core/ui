@@ -1,4 +1,5 @@
 import type { DisplayText } from '@bedrock-core/i18n';
+import type { VariantTable } from '../ir/probe';
 import type { FunctionComponent } from '../../jsx';
 import type { ComposedRecord } from './buildPass';
 import { isHandler } from '../events';
@@ -50,6 +51,12 @@ export interface CompiledSnapshot {
   readonly baked: readonly string[];
   /** Ordinals of the elements whose `visible` is carried. */
   readonly vis: readonly number[];
+  /**
+   * The looks each element the build drew more than once takes, in the order
+   * it drew them. The runtime reads the same props off its own render and
+   * says which one is current, so both sides name the same drawing.
+   */
+  readonly looks?: readonly VariantTable[];
   /**
    * Every `<Trans>` as the build laid it out, on a screen rendered at runtime: its pieces exist only
    * in the build's layout, and a press among them is an entry the runtime has to emit in its place.
@@ -128,6 +135,29 @@ export function registerCompiledScreen(screen: FunctionComponent, record: Compil
 
   compiled.set(screen, record);
   byKey.set(record.key, { screen, record });
+}
+
+/** Container screen -> the looks its buttons take, as the build tabled them. */
+const containerLooks = new WeakMap<FunctionComponent, readonly VariantTable[]>();
+
+/**
+ * Records the looks a compiled container screen's buttons take.
+ *
+ * Called by the module the build generates, never by hand. A chest button
+ * whose face follows state is drawn once per look, and the runtime says which
+ * one it is wearing by the size of the stack in its slot; this is the table
+ * both sides count from.
+ *
+ * @param screen - The screen component, exactly as `createContainerScreen` is handed it.
+ * @param looks - The build's tables, the build's own look first in each.
+ */
+export function registerContainerLooks(screen: FunctionComponent, looks: readonly VariantTable[]): void {
+  containerLooks.set(screen, looks);
+}
+
+/** The looks a container screen's buttons take, or none when the build drew each one way. */
+export function containerLooksOf(screen: FunctionComponent): readonly VariantTable[] {
+  return containerLooks.get(screen) ?? [];
 }
 
 /** The key a compiled screen is navigated by, or undefined when it was not compiled. */

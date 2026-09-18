@@ -36,12 +36,14 @@ export type { EntryEntry, Placement as FormPlacement } from './hosts/form/alloca
 // visible by probing, records the ordinals, and the runtime marks the same
 // elements back onto its tree. The fingerprint and the baked strings are what
 // `debug` diffs a render against.
-export { bakedTexts, shapeOf } from './core/ir/probe';
+export { bakedTexts, bakedWalk, lookIndexOf, shapeOf, variantsAt, walkWithOwners } from './core/ir/probe';
+export { hasMechanism } from './core/ir/claims';
+export type { VariantTable } from './core/ir/probe';
 export type { CompiledSnapshot } from './core/render/screens';
 export {
   COLLECTION as FORM_COLLECTION, compiledPrefix, DETAILS_BINDING as FORM_DETAILS_BINDING,
   COUNT_PREFIX as FORM_COUNT_PREFIX, ENCODING_MAX, ENCODING_MIN, FLAG_OFF as FORM_FLAG_OFF,
-  FLAG_ON as FORM_FLAG_ON, keyFrom as formKeyFrom, titleFor as formTitleFor,
+  FLAG_ON as FORM_FLAG_ON, keyFrom as formKeyFrom, LOOK_PREFIX as FORM_LOOK_PREFIX, titleFor as formTitleFor,
   VOCABULARY_MAX, VOCABULARY_MIN,
 } from './hosts/form/contract';
 export { analyze, claim, visiblesAt } from './core/ir';
@@ -50,10 +52,10 @@ export {
   BLANK_CODE, BLANK_VALUE, CHARSET, charsetLang, encode, MAX_CODE, UNKNOWN_CODE,
 } from './hosts/chest/charset';
 export {
-  BLOCK_SLOT_LIMIT, blockCapacityError, COLLECTION, COUNT_ITEM, GUARD_ITEM, GUARD_ITEM_AUX, joinKey, KEY_PREFIX,
-  LAYOUT_PROPERTY, layoutKey, MAX_LAYOUT, OWNED_LORE, OWNED_PROPERTY, PROTOCOL_ITEM,
-  PROTOCOL_ITEM_AUX, SENTINEL_SLOTS, splitKey, STATE_PROPERTY, TRANSPORT_ITEM, TRANSPORT_ITEM_AUX,
+  BLANK_ICON, BLOCK_SLOT_LIMIT, blockCapacityError, COLLECTION, IDENTITY, KEY_PREFIX, LAYOUT_PROPERTY, layoutKey,
+  LOOK_LIMIT, MAX_LAYOUT, namespaceOf, protocolItemDefinitions, protocolItemId, SENTINEL_SLOTS, STATE_PROPERTY,
 } from './hosts/chest/contract';
+export type { ProtocolItemDefinition, ProtocolRole } from './hosts/chest/contract';
 
 // What the compiler reads off a built tree: every component owns the shape of
 // its own props, so the readers live beside the components.

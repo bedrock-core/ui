@@ -190,8 +190,8 @@ export interface Control {
   sound_pitch?: number;
   /**
    * Documented. Routes input on this control to engine actions. A derived
-   * control's array REPLACES its base's, which is what lets a button slot swap
-   * vanilla's take-to-cursor for auto-place wholesale.
+   * control's array REPLACES its base's, which is what lets a button slot
+   * reroute every item-moving action of vanilla's slot wholesale.
    */
   button_mappings?: ButtonMapping[];
 

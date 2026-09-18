@@ -1,7 +1,7 @@
 import type { ItemStack, Player } from '@minecraft/server';
 import type { PressEvent, ScreenHost, SlotEvent } from '../../../../core/events';
 import type { CellRole, SlotEntry } from '../../allocate';
-import type { ItemContainer } from '../items';
+import type { ItemContainer, ProtocolItems } from '../items';
 import type { PollHost } from '../poll';
 
 /**
@@ -19,7 +19,7 @@ export interface CellBehavior {
    * Makes the slot agree with its element. Runs for every drawn cell at open,
    * and for buttons after every render. Writes only what the runtime owns.
    */
-  settle?(container: ItemContainer, entry: SlotEntry): void;
+  settle?(container: ItemContainer, entry: SlotEntry, items: ProtocolItems): void;
   /** The slot changed since the last poll, from `before` to `after`. */
   changed(host: PollHost, entry: SlotEntry, before: ItemStack | undefined, after: ItemStack | undefined): void;
 }

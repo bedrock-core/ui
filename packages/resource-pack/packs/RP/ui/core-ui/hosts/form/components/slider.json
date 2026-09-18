@@ -139,7 +139,9 @@
 		"anchor_from": "top_left",
 		"anchor_to": "top_left",
 		"layer": 2,
-		"enabled": "#enabled",
+		// The row decides, unless the compile pinned a disabled field (see toggle.json).
+		"$field_enabled|default": "#enabled",
+		"enabled": "$field_enabled",
 		// The faces are variables the mount fills: the slider is the one field whose
 		// surfaces are its own rather than `state_face`'s.
 		"$track|default": "#texture",

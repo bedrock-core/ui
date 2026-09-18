@@ -43,6 +43,7 @@ export const toggleDefinition: NodeDefinition<ToggleNode> = {
       rect: ctx.rect,
       ...ctx.decoration,
       address: ctx.cellOf(element).address,
+      enabled: element.props.enabled !== false,
       mount,
       scale: scaleOf(element.props),
       off: mount['$off'] ?? '',

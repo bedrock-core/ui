@@ -13,7 +13,7 @@
  * The build freezes the layout; the runtime drives everything alive in it,
  * with one blunt fact to work with: an item moving is the only signal a
  * container gives back. No click event, no lock that makes a slot read-only,
- * no way to veto a move. Buttons are items taken and put back, and a role is
+ * no way to veto a move. Buttons are items dropped and put back, and a role is
  * enforced a tick later rather than prevented.
  */
 
@@ -26,10 +26,10 @@ export {
   BLANK_CODE, BLANK_VALUE, CHARSET, charsetLang, encode, MAX_CODE, UNKNOWN_CODE,
 } from './charset';
 export {
-  BLOCK_SLOT_LIMIT, blockCapacityError, COLLECTION, COUNT_ITEM, GUARD_ITEM, GUARD_ITEM_AUX, joinKey, KEY_PREFIX,
-  LAYOUT_PROPERTY, layoutKey, MAX_LAYOUT, OWNED_LORE, OWNED_PROPERTY, PROTOCOL_ITEM,
-  PROTOCOL_ITEM_AUX, SENTINEL_SLOTS, splitKey, STATE_PROPERTY, TRANSPORT_ITEM, TRANSPORT_ITEM_AUX,
+  BLANK_ICON, BLOCK_SLOT_LIMIT, blockCapacityError, COLLECTION, IDENTITY, KEY_PREFIX, LAYOUT_PROPERTY, layoutKey,
+  LOOK_LIMIT, MAX_LAYOUT, namespaceOf, protocolItemDefinitions, protocolItemId, SENTINEL_SLOTS, STATE_PROPERTY,
 } from './contract';
+export type { ProtocolItemDefinition, ProtocolRole } from './contract';
 export { createContainerScreen } from './runtime/session';
 export type { ContainerScreen, ContainerScreenConfig } from './runtime/session';
 export type { ContainerHost } from '../../components/Container';

@@ -10,5 +10,7 @@
 export { analyze } from './analyze';
 export type { Analysis } from './analyze';
 
-export { claim, visibleCandidates, visiblesAt } from './claims';
+export { claim, hasMechanism, visibleCandidates, visiblesAt } from './claims';
+export { bakedWalk, lookIndexOf, variantsAt } from './probe';
+export type { VariantTable } from './probe';
 export type { CellClaim, CellRole, ChannelClaim, Claims } from './claims';

@@ -1,6 +1,5 @@
 import type { ItemStack } from '@minecraft/server';
 import type { SlotEntry } from '../../allocate';
-import { guard, isGuard, isOwned } from '../items';
 import {
   actorOf, give, reclaimGuard, retrieve, startingWith, writeCursor,
 } from '../players';
@@ -38,12 +37,14 @@ const handleOutput = (
   // leaves by a player's hand while something else arrives. A machine write
   // never moves the guard onto anyone, so finding it there is the tell, and
   // the swap is reversed.
-  if ((before === undefined || isGuard(before)) && after !== undefined && !isGuard(after)) {
-    const swapper = reclaimGuard(host.viewers);
+  const { items } = host;
+
+  if ((before === undefined || items.isGuard(before)) && after !== undefined && !items.isGuard(after)) {
+    const swapper = reclaimGuard(host.viewers, items);
 
     if (swapper !== undefined) {
       give(swapper, after);
-      host.container.setItem(slot, guard());
+      host.container.setItem(slot, items.guard());
       resync(host.container, host.watch, [slot]);
       host.trace(`output slot ${slot} — swap over the guard reversed`);
 
@@ -58,7 +59,7 @@ const handleOutput = (
 
   // A real result the player took (the guard is not one). A swap takes it
   // onto the cursor while placing the player's item; a plain take empties the slot.
-  const taken = before !== undefined && !isGuard(before) ? before : undefined;
+  const taken = before !== undefined && !items.isGuard(before) ? before : undefined;
   const actor = actorOf(host.ledger, host.viewers, taken, after);
 
   // A swap over a result is REVERSED, not accepted as a take: the result comes
@@ -67,7 +68,7 @@ const handleOutput = (
   // write it, into their inventory otherwise. Only a result that could not be
   // found on any viewer stays taken, rather than being restored into a
   // duplicate.
-  if (taken !== undefined && after !== undefined && !isGuard(after)) {
+  if (taken !== undefined && after !== undefined && !items.isGuard(after)) {
     const holder = retrieve(startingWith(actor, host.viewers), taken);
 
     if (holder !== undefined) {
@@ -87,9 +88,9 @@ const handleOutput = (
 
   // Whatever left the guard onto a player is pulled back, so no one walks
   // off holding the invisible marker.
-  reclaimGuard(host.viewers);
+  reclaimGuard(host.viewers, items);
 
-  host.container.setItem(slot, guard());
+  host.container.setItem(slot, items.guard());
   resync(host.container, host.watch, [slot]);
 
   if (taken !== undefined) {
@@ -112,11 +113,11 @@ const handleOutput = (
 export const outputCell: CellBehavior = {
   role: 'output',
 
-  settle(container, { slot }) {
+  settle(container, { slot }, items) {
     const item = container.getItem(slot);
 
-    if (item === undefined || isOwned(item)) {
-      container.setItem(slot, guard());
+    if (item === undefined || items.isOwned(item)) {
+      container.setItem(slot, items.guard());
     }
   },
 

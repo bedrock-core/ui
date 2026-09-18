@@ -3,7 +3,7 @@ import { selectMembers } from '../../components/Form/optionPayload';
 import { liveTexture } from '../../components/Image';
 import { listCapacity } from '../../components/List';
 import { liveTextLength } from '../../components/Text';
-import { type Analysis, type CellRole, claim } from '../../core/ir';
+import { type Analysis, type CellRole, claim, lookIndexOf, type VariantTable } from '../../core/ir';
 import { childElements } from '../../core/guards';
 import type { JSX } from '../../jsx';
 import { MODAL_DROPDOWN_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE } from '../../core/fields';
@@ -40,10 +40,14 @@ export interface EntryEntry {
   readonly entry: number;
   /** What the cell is, when it takes a press. Absent for an entry that only carries a value. */
   readonly role?: CellRole;
-  /** What the entry carries, when it carries one: a live string, a visible bool, a list count, or a texture path. */
-  readonly carrier?: 'text' | 'bool' | 'int' | 'texture';
-  /** Characters reserved when the entry carries live text, digits for a count. */
+  /** What the entry carries, when it carries one: a live string, a visible bool, a list count, a texture path, or which look an element wears. */
+  readonly carrier?: 'text' | 'bool' | 'int' | 'texture' | 'enum';
+  /** Characters reserved when the entry carries live text, digits for a count, looks drawn for an enum. */
   readonly length?: number;
+  /** The looks the element takes, when the entry carries which one it wears. */
+  readonly looks?: VariantTable;
+  /** Which of those looks this render is wearing. */
+  readonly look?: number;
 }
 
 /**
@@ -72,12 +76,13 @@ export const allocate = (tree: JSX.Element, analysis?: Analysis): Placement => {
   const base = entryBaseOf(tree);
   const entries: EntryEntry[] = [
     ...cells.map(({ element, role }, index) => ({ element, entry: base + index, role })),
-    ...channels.map(({ element, carrier, length }, index) => ({
+    ...channels.map(({ element, carrier, length, looks }, index) => ({
       element,
       entry: base + cells.length + index,
       carrier,
       // A bool needs no width; text and a count's digits reserve one.
       ...carrier === 'bool' ? {} : { length },
+      ...looks === undefined ? {} : { looks, look: lookIndexOf(looks, tree) },
     })),
   ];
 

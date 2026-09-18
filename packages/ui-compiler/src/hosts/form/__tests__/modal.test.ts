@@ -64,6 +64,29 @@ describe('compiling a modal screen', () => {
     expect(child?.collection_index).toBe(0);
   });
 
+  it('pins a disabled field, which the row would report enabled', () => {
+    // `ModalFormData` has no disabled field, so the widget would take input
+    // whatever the author said; the mount carries the author's word instead.
+    const Locked = (): JSX.Element => Form({
+      children: Panel({
+        children: [
+          jsx(Toggle, { name: 'open' }),
+          jsx(Toggle, { name: 'shut', enabled: false }),
+        ],
+      }),
+    });
+    const locked = compileFormScreen(Locked, { namespace: 'demo', name: 'locked' });
+    const pinned: unknown[] = [];
+
+    eachControl(locked.document, (name, control) => {
+      if (name === 'field@core_ui_form_components.toggle') {
+        pinned.push(control['$field_enabled']);
+      }
+    });
+
+    expect(pinned).toEqual([undefined, false]);
+  });
+
   it('numbers rows the way the runtime writes them', () => {
     // One numbering, shared: the index baked here is the index the presenter
     // writes the row at and the slot `formValues` answers in.

@@ -1,6 +1,7 @@
 import { liveTextLength } from '../../components/Text';
 import { childElements } from '../guards';
 import type { JSX } from '../../jsx';
+import type { VariantTable } from './probe';
 
 /**
  * What in a built tree is live: decided once, the same way, by the build and
@@ -28,9 +29,22 @@ export interface Analysis {
    * text has, with the snapshot standing where `maxLength` stands.
    */
   readonly visibles: ReadonlySet<JSX.Element>;
+  /**
+   * Elements whose baked props follow state, with the looks each one takes.
+   *
+   * Read the same way `visibles` is: the BUILD probes for them and hands the
+   * runtime the element positions through the compiled snapshot, because a
+   * look that moves cannot be read off an element any more than a carried
+   * `visible` can.
+   */
+  readonly variants: ReadonlyMap<JSX.Element, VariantTable>;
 }
 
-export const analyze = (tree: JSX.Element, visibles: ReadonlySet<JSX.Element> = new Set()): Analysis => {
+export const analyze = (
+  tree: JSX.Element,
+  visibles: ReadonlySet<JSX.Element> = new Set(),
+  variants: ReadonlyMap<JSX.Element, VariantTable> = new Map(),
+): Analysis => {
   const texts = new Map<JSX.Element, number>();
 
   const visit = (element: JSX.Element): void => {
@@ -47,5 +61,5 @@ export const analyze = (tree: JSX.Element, visibles: ReadonlySet<JSX.Element> = 
 
   visit(tree);
 
-  return { texts, visibles };
+  return { texts, visibles, variants };
 };

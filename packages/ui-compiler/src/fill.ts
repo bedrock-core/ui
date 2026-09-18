@@ -164,7 +164,6 @@ export const fill = (face: FaceDocument, host: HostEmit, title = ''): Document =
     collection: face.collection,
     screen: title,
     host,
-    ...face.ownedRenderer === undefined ? {} : { ownedRenderer: face.ownedRenderer },
     faceNames: new Map(),
     textNames: new Map(),
     defs: {},
@@ -175,7 +174,9 @@ export const fill = (face: FaceDocument, host: HostEmit, title = ''): Document =
   for (const socket of face.sockets) {
     const found = locate(document, socket.node.name);
     const entry = entryAt(document, found);
-    const mechanism = socket.kind === 'visible' ? host.wrapVisible : host.fill[socket.kind];
+    const mechanism = socket.kind === 'visible'
+      ? host.wrapVisible
+      : socket.kind === 'look' ? host.wrapLook : host.fill[socket.kind];
 
     if (mechanism === undefined) {
       throw new ContainerScreenError(

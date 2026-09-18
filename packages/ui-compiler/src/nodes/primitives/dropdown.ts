@@ -57,6 +57,7 @@ export const dropdownDefinition: NodeDefinition<DropdownNode> = {
       rect: ctx.rect,
       ...ctx.decoration,
       address: ctx.cellOf(element).address,
+      enabled: element.props.enabled !== false,
       mount: dropdownMount(element.props),
       scale: scaleOf(element.props),
       ...backgroundOf(element.props),

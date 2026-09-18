@@ -117,9 +117,12 @@ function Pressed({ options, defaultValue, value, onChange, enabled, gap, rowHeig
     <Panel flexDirection={'column'} gap={gap} {...layout}>
       {options.map((option) => {
         const isChosen = option.value === chosen;
+        // The chosen row IS the answer: pressing it again changes nothing, so
+        // it takes no press.
+        const pressable = enabled && !isChosen;
 
         function handle(): void {
-          if (enabled) {
+          if (pressable) {
             setInternal(option.value);
             onChange?.(option.value);
           }
@@ -133,10 +136,13 @@ function Pressed({ options, defaultValue, value, onChange, enabled, gap, rowHeig
                 height={r.size}
                 background={isChosen ? r.textures.selected : r.textures.unselected}
                 backgroundHover={isChosen ? r.textures.selectedHover : r.textures.unselectedHover}
-                backgroundPressed={isChosen ? r.textures.unselected : r.textures.selected}
-                backgroundLocked={isChosen ? r.textures.selectedDisabled : r.textures.unselectedDisabled}
+                backgroundPressed={r.textures.selected}
+                // Locked, the chosen row reads disabled only when the whole
+                // group is; in a live group it is locked only because it takes
+                // no press.
+                backgroundLocked={isChosen ? (enabled ? r.textures.selected : r.textures.selectedDisabled) : r.textures.unselectedDisabled}
                 onPress={handle}
-                enabled={enabled}
+                enabled={pressable}
               />
               <Text>{option.label}</Text>
             </Fragment>

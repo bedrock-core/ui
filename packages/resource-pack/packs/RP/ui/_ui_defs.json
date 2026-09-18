@@ -41,7 +41,6 @@
 		// ui-compiler filter into each addon's pack, which registers them there.
 		"ui/core-ui/hosts/chest/cell.json",
 		"ui/core-ui/hosts/chest/text.json",
-		"ui/core-ui/hosts/chest/gated_item.json",
 		"ui/core-ui/hosts/chest/chrome.json",
 		"ui/core-ui/hosts/chest/router.json"
 	]

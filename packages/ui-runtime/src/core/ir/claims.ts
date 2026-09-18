@@ -3,9 +3,11 @@ import { isEmbedSlot } from '../../components/Embed';
 import { liveTexture } from '../../components/Image';
 import { listCapacity } from '../../components/List';
 import { slotCell, type SlotRole } from '../../components/Slot';
+import { isTextElementType, liveTextLength } from '../../components/Text';
 import type { JSX } from '../../jsx';
 import { childElements } from '../guards';
 import { analyze, type Analysis } from './analyze';
+import type { VariantTable } from './probe';
 import { MODAL_DROPDOWN_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE } from '../fields';
 
 /**
@@ -35,9 +37,15 @@ export interface CellClaim {
 /** An element that needs a channel for a value that changes at runtime. */
 export interface ChannelClaim {
   readonly element: JSX.Element;
-  readonly carrier: 'text' | 'bool' | 'int' | 'texture';
-  /** How much it reserves — characters for text, 1 for a bool, digits for an int, 0 for a texture path (uncapped). */
+  readonly carrier: 'text' | 'bool' | 'int' | 'texture' | 'enum';
+  /**
+   * How much it reserves — characters for text, 1 for a bool, digits for an
+   * int, 0 for a texture path (uncapped), and for an `enum` how many looks the
+   * element takes, which is how many the host draws and gates.
+   */
   readonly length: number;
+  /** The looks the element takes, for the `enum` carrier that says which one it wears. */
+  readonly looks?: VariantTable;
 }
 
 export interface Claims {
@@ -72,6 +80,21 @@ const roleOf = (element: JSX.Element): CellRole | undefined => {
 };
 
 /**
+ * Whether an element is drawn through a mechanism of its own: a cell it is
+ * pressed or filled through, or a channel its value travels on — a list's
+ * count, a live texture, a live string.
+ *
+ * Such an element is the host's to draw, so a look that follows state cannot
+ * be drawn by copying it once per look: two copies would be two presses on one
+ * cell, or two readers of one channel. Its box is placed by the host, too.
+ */
+export const hasMechanism = (element: JSX.Element): boolean =>
+  roleOf(element) !== undefined
+  || listCapacity(element) !== undefined
+  || liveTexture(element)
+  || (typeof element.type === 'string' && isTextElementType(element.type) && liveTextLength(element) !== undefined);
+
+/**
  * Reads a built tree's needs, in document order.
  *
  * @param tree - A built tree, as `buildTree` leaves it.
@@ -93,6 +116,16 @@ export const claim = (tree: JSX.Element, analysis: Analysis = analyze(tree)): Cl
     // the walk rather than of the maps.
     if (analysis.visibles.has(element)) {
       channels.push({ element, carrier: 'bool', length: 1 });
+    }
+
+    // The looks this element takes, found by the build's probe rather than
+    // declared: the host draws one per combination and the entry says which.
+    // Before the content, like the gate above: which face is drawn is decided
+    // ahead of what it holds.
+    const looks = analysis.variants.get(element);
+
+    if (looks !== undefined) {
+      channels.push({ element, carrier: 'enum', length: looks.combinations.length, looks });
     }
 
     // A list's count, declared by `max` the way `maxLength` declares text.

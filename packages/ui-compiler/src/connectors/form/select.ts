@@ -1,5 +1,6 @@
 import { FULL, topLeft, type Rect } from '../../faces';
 import { MODAL_COLLECTION, placed } from './entry';
+import { pinnedEnabled } from '../../nodes/utils/fields';
 import type { Connector, ControlEntry } from '../types';
 
 /** The shared toggle each option mounts, with its bindings already fixed. */
@@ -31,6 +32,8 @@ export interface Select {
   name: string;
   /** The row in `custom_form` the answer arrives in. */
   address: number;
+  /** Whether the options take input; a disabled chooser pins every option. */
+  enabled: boolean;
   options: readonly SelectOption[];
 }
 
@@ -101,6 +104,7 @@ export const select: Connector<Select> = (data, face) => {
             [`toggle@${OPTION_TOGGLE}`]: {
               size: FULL,
               toggle_name: group,
+              ...pinnedEnabled(data),
               controls: optionStates(option),
             },
           }],

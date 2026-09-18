@@ -1,21 +1,14 @@
-import { ItemLockMode, ItemStack } from '@minecraft/server';
+import { ItemComponentTypes, ItemStack } from '@minecraft/server';
 import { MAX_CODE } from '../charset';
-import {
-  COUNT_ITEM, GUARD_ITEM, OWNED_LORE, OWNED_PROPERTY, PROTOCOL_ITEM, splitKey, TRANSPORT_ITEM,
-} from '../contract';
+import { IDENTITY, PROTOCOL_ROLES, type ProtocolRole, protocolItemId } from '../contract';
 
 /**
  * The items the runtime places, and how they are told apart from a player's.
  *
- * Two constraints shaped this, both measured in game:
- *
- *  - `setDynamicProperty` throws on any STACKABLE item, so a marker made from a
- *    normal vanilla stack cannot carry one. Lore works everywhere and is the
- *    portable half — and a stack carrying lore never merges with a player's
- *    plain stack of the same block, which is what keeps a marker a marker.
- *  - No `ItemLockMode` makes a container slot read-only. `slot` binds the item
- *    to a PLAYER slot instead: the take still succeeds, and the copy can then
- *    never be put back. Everything here is deliberately unlocked.
+ * Each is a custom item the addon registers under its host's namespace (see
+ * `protocolItemDefinitions`), so its TYPE alone says it is ours: no player can
+ * hold one by any other route. Its current durability carries a value — the
+ * layout key, a look — which a compiled screen reads straight off the slot.
  */
 
 /**
@@ -31,77 +24,99 @@ export interface ItemContainer {
 }
 
 /**
- * Claims an item for the runtime. Never locks it: a lock does not protect a
- * container slot and makes an escape unrecoverable for the player.
+ * How many items a button's slot holds, transports or guards. A press drops one
+ * and the stack is topped up in place, so the slot is never empty and keeps its
+ * item however fast the clicks come.
  */
-export const claim = (stack: ItemStack): ItemStack => {
-  // The property where it fits, lore only where it does not. Lore is visible:
-  // it is part of the item's tooltip, so an unstackable item carries the
-  // property and keeps its hover text clean.
-  if (stack.maxAmount === 1) {
-    stack.setDynamicProperty(OWNED_PROPERTY, true);
-  } else {
-    stack.setLore([...stack.getLore(), OWNED_LORE]);
-  }
+export const BUTTON_STACK = 64;
 
-  stack.lockMode = ItemLockMode.none;
+/** One namespace's protocol items: how to make each, and how to recognise them. */
+export interface ProtocolItems {
+  /** Anything the runtime placed, wherever it turned up. */
+  isOwned(stack: ItemStack): boolean;
+  /** The item behind an enabled button. */
+  isTransport(stack: ItemStack): boolean;
+  /** The item behind a disabled button or an empty output slot. */
+  isGuard(stack: ItemStack): boolean;
+  /** A bank cell. */
+  isCount(stack: ItemStack): boolean;
+  /** Which of ours an item is, or undefined for a player's. */
+  roleOf(stack: ItemStack): ProtocolRole | undefined;
+  /** The sentinel, its current durability the layout key. */
+  sentinel(layout: number): ItemStack;
+  /** A button's stack of transports, wearing look `look`. */
+  transport(look?: number): ItemStack;
+  /** `amount` guards, wearing look `look`: one in an output slot, a stack in a disabled button's. */
+  guard(look?: number, amount?: number): ItemStack;
+  /** A bank cell: `amount` items, carrying `value` as its current durability. */
+  count(amount: number, value?: number): ItemStack;
+  /** The value an item carries: its current durability. */
+  valueOf(stack: ItemStack): number;
+}
+
+/** Sets the current durability of a protocol item to `value`, counting down from its identity. */
+const carry = (stack: ItemStack, role: ProtocolRole, value: number): ItemStack => {
+  const durability = stack.getComponent(ItemComponentTypes.Durability);
+
+  if (durability !== undefined) {
+    durability.damage = IDENTITY[role] - value;
+  }
 
   return stack;
 };
 
-/** True for anything the runtime placed, however it escaped. */
-export const isOwned = (stack: ItemStack): boolean =>
-  stack.getLore().includes(OWNED_LORE) || stack.getDynamicProperty(OWNED_PROPERTY) === true;
+const cache = new Map<string, ProtocolItems>();
 
-/** A claimed marker with a blank name, so nothing about it shows on hover. */
-const marker = (typeId: string, amount: number): ItemStack => {
-  const stack = new ItemStack(typeId, amount);
+/**
+ * The protocol items of one namespace: the one its screen's host is declared
+ * in, which is the one the build registered them under.
+ */
+export const protocolItems = (namespace: string): ProtocolItems => {
+  const cached = cache.get(namespace);
 
-  stack.nameTag = ' ';
+  if (cached !== undefined) {
+    return cached;
+  }
 
-  return claim(stack);
+  const ids = {
+    sentinel: protocolItemId(namespace, 'sentinel'),
+    transport: protocolItemId(namespace, 'transport'),
+    guard: protocolItemId(namespace, 'guard'),
+    count: protocolItemId(namespace, 'count'),
+  } satisfies Record<ProtocolRole, string>;
+  const roles = new Map<string, ProtocolRole>(PROTOCOL_ROLES.map(role => [ids[role], role]));
+
+  /** A blank-named item of one role, so nothing about it shows on hover. */
+  const make = (role: ProtocolRole, amount: number, value: number): ItemStack => {
+    const stack = new ItemStack(ids[role], amount);
+
+    stack.nameTag = ' ';
+
+    return carry(stack, role, value);
+  };
+
+  const items: ProtocolItems = {
+    isOwned: stack => roles.has(stack.typeId),
+    isTransport: stack => stack.typeId === ids.transport,
+    isGuard: stack => stack.typeId === ids.guard,
+    isCount: stack => stack.typeId === ids.count,
+    roleOf: stack => roles.get(stack.typeId),
+    sentinel: layout => make('sentinel', 1, layout),
+    transport: (look = 0) => make('transport', BUTTON_STACK, look),
+    guard: (look = 0, amount = 1) => make('guard', amount, look),
+    count: (amount, value = 0) => make('count', amount, value),
+
+    valueOf: (stack) => {
+      const durability = stack.getComponent(ItemComponentTypes.Durability);
+
+      return durability === undefined ? 0 : durability.maxDurability - durability.damage;
+    },
+  };
+
+  cache.set(namespace, items);
+
+  return items;
 };
-
-/**
- * The sentinel: two stacks of the protocol item whose sizes spell the layout
- * key, high half first. Their item id is the protocol key.
- */
-export const sentinel = (layout: number): readonly [ItemStack, ItemStack] => {
-  const { high, low } = splitKey(layout);
-
-  return [marker(PROTOCOL_ITEM, high), marker(PROTOCOL_ITEM, low)];
-};
-
-/**
- * The transport item behind a button.
- *
- * Nothing draws it — the compiler replaces a button's item renderer with an
- * empty control and turns off the count and the bars — so it exists purely so
- * that taking it produces a transaction the script can see. Its item id is
- * what the screen's own inventory and hotbar grids key on to draw a mid-flight
- * copy as nothing. The blank name covers the last visible surface: without
- * it, the tooltip on hover names the block out loud.
- */
-export const transport = (): ItemStack => marker(TRANSPORT_ITEM, 1);
-
-/** True for the item behind a button: the transport block, placed by the runtime. */
-export const isTransport = (stack: ItemStack): boolean =>
-  stack.typeId === TRANSPORT_ITEM && isOwned(stack);
-
-/**
- * An output slot's placeholder. It keeps the slot from ever being empty, so a
- * shift-click cannot auto-place a stack into it — the engine only auto-places
- * into an empty or matching slot, and a lore-marked stack matches nothing.
- *
- * It is never seen and never touched, because the compiled output cell reads
- * its aux and swaps the WHOLE cell for an empty fake while it sits there:
- * nothing rendered, nothing hoverable, no button to take it with.
- */
-export const guard = (): ItemStack => marker(GUARD_ITEM, 1);
-
-/** True for an output slot's placeholder. */
-export const isGuard = (stack: ItemStack): boolean =>
-  stack.typeId === GUARD_ITEM && isOwned(stack);
 
 /**
  * Writes one character cell.
@@ -110,14 +125,20 @@ export const isGuard = (stack: ItemStack): boolean =>
  * rides the stack size, which is a settable property, so it lands with ONE
  * native call and nothing allocated.
  */
-export const writeCell = (container: ItemContainer, slot: number, code: number): void => {
+export const writeCell = (container: ItemContainer, items: ProtocolItems, slot: number, code: number): void => {
   const amount = Math.max(1, Math.min(MAX_CODE, Math.round(code)));
+  const item = container.getItem(slot);
 
-  if (container.getItem(slot)?.typeId === COUNT_ITEM) {
+  if (item !== undefined && items.isCount(item) && items.valueOf(item) === 0) {
     container.getSlot(slot).amount = amount;
 
     return;
   }
 
-  container.setItem(slot, claim(new ItemStack(COUNT_ITEM, amount)));
+  container.setItem(slot, items.count(amount));
+};
+
+/** Writes one look cell: a single bank item whose current durability names the look worn. */
+export const writeLook = (container: ItemContainer, items: ProtocolItems, slot: number, look: number): void => {
+  container.setItem(slot, items.count(1, look));
 };

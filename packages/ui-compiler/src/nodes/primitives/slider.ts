@@ -90,6 +90,7 @@ export const sliderDefinition: NodeDefinition<SliderNode> = {
       rect: ctx.rect,
       ...ctx.decoration,
       address: ctx.cellOf(element).address,
+      enabled: element.props.enabled !== false,
       mount,
       scale: scaleOf(element.props),
       ...track === undefined ? {} : { track },

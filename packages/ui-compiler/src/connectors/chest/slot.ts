@@ -4,36 +4,14 @@ import { CELL, CELL_VAR, placed, SLOT_VAR } from './cell';
 import type { Connector, Control, Emit } from '../types';
 
 /**
- * The collections the PLAYER owns, as opposed to the screen's own container.
- *
- * A press auto-places the runtime's transport into the player's inventory and
- * the script pulls it back a tick later, so for that tick the transport is
- * genuinely sitting in one of these — whichever slot happened to be free. Any
- * cell drawing one of them therefore hides it.
- *
- * This is NOT an author's choice. The transport is the library's own
- * mechanism, and nobody writing a screen should have to know it exists to keep
- * a command block from flashing in their hotbar. `hideOwned` stays as the way
- * to ask for the same gate over some other collection.
- */
-const PLAYER_COLLECTIONS: ReadonlySet<string> = new Set(['inventory_items', 'hotbar_items']);
-
-/** Whether a cell over this collection must hide the runtime's transport. */
-export const hidesTransport = (collection: string, hideOwned = false): boolean =>
-  hideOwned || PLAYER_COLLECTIONS.has(collection);
-
-/**
- * What a cell needs to draw the given collection: its item, and nothing that
- * reveals the runtime's transport.
+ * What a cell needs to draw the given collection.
  *
  * A display-only cell rides the inert button, which withholds focus — no take,
  * no place, no drop — since the engine's slot has no take-only or place-only
- * action to bake instead. `renderer`, when given, hides a transport item for a
- * player's own grids.
+ * action to bake instead.
  */
-export const containerItemVars = (collection: string, interactive: boolean, renderer?: string): Control => ({
+export const containerItemVars = (collection: string, interactive: boolean): Control => ({
   $item_collection_name: collection,
-  ...renderer === undefined ? {} : { $item_renderer: renderer, $durability_bar_required: false },
   ...interactive ? {} : { $button_ref: CELL.displayStates },
 });
 
@@ -83,11 +61,7 @@ export const ensureForeignCell = (ctx: Emit, collection: string, interactive: bo
     type: 'panel',
     size: [18, 18],
     controls: [{
-      [`item@${CELL.item}`]: containerItemVars(
-        collection,
-        interactive,
-        hidesTransport(collection) ? ctx.ownedRenderer : undefined,
-      ),
+      [`item@${CELL.item}`]: containerItemVars(collection, interactive),
     }],
   };
 

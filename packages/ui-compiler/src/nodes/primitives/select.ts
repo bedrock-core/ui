@@ -182,6 +182,7 @@ export const selectDefinition: NodeDefinition<SelectNode> = {
       rect: ctx.rect,
       ...ctx.decoration,
       address: ctx.cellOf(element).address,
+      enabled: element.props.enabled !== false,
       scale: scaleOf(element.props),
       ...backgroundOf(element.props),
       multiple: isMultiple(element),

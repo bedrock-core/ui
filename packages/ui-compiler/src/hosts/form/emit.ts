@@ -1,9 +1,9 @@
 import {
-  dropdownWidget, field, fits, inputWidget, list, multiSelect, popupHostOf, popupOverlay, press, pressDefs, select,
+  dropdownWidget, field, fits, inputWidget, list, look, multiSelect, popupHostOf, popupOverlay, press, pressDefs, select,
   type SelectOption, text, textDef, texture, TEXTURE_DEF, toggleWidget, visible,
 } from '../../connectors/form';
 import type { TextStyle } from '../../faces';
-import { type ButtonNode, faceSignature, lookOf, pressAddress, pressSizeOf } from '../../nodes/primitives/button';
+import { type ButtonNode, type FacedNode, faceSignature, lookOf, pressAddress, pressSizeOf } from '../../nodes/primitives/button';
 import { MODAL_COLLECTION } from '../../connectors/form/entry';
 import { collectKind } from '../../nodes';
 import type { Binding, ControlEntry } from '../../jsonui';
@@ -12,6 +12,7 @@ import type { ImageNode } from '../../nodes/primitives/image';
 import type { ListNode } from '../../nodes/primitives/list';
 import type { ScrollNode } from '../../nodes/primitives/scroll';
 import { faceId, sizeOf } from '../../nodes/utils/shared';
+import { pinnedEnabled } from '../../nodes/utils/fields';
 import { isLive, runOf, type TextNode, textSignature } from '../../nodes/primitives/text';
 import type { Emit, HostEmit, IrNode } from '../../nodes/utils/types';
 
@@ -49,17 +50,48 @@ const styleOf = (node: TextNode): TextStyle => ({
 const definitionOf = (names: Map<string, string>, signature: string, fallback: string): string =>
   names.get(signature) ?? fallback;
 
-/** The shared faces of one button look, fully qualified, as the face pass named them. */
-const facesOf = (node: ButtonNode, ctx: Emit): { id: string; rest: string; hover: string; pressed: string; disabled: string } => {
-  const id = faceId('button', faceSignature(lookOf(node)));
+/**
+ * The shared faces of one look, fully qualified, as the face pass named them.
+ *
+ * Takes the look the FACE PASS drew, not the node: a hugging button's face is
+ * shared without its children (they are drawn beside the press, not in it), so
+ * naming it from the node would name a definition nothing emitted.
+ */
+const facesFor = (faced: FacedNode, ctx: Emit): { id: string; rest: string; hover: string; pressed: string; disabled: string } => {
+  const id = faceId('button', faceSignature(faced));
 
   return {
     id,
     rest: `${ctx.facesNs}.${id}`,
     hover: `${ctx.facesNs}.${id}_hover`,
     pressed: `${ctx.facesNs}.${id}_pressed`,
-    disabled: `${ctx.facesNs}.${node.face.disabled === undefined ? id : `${id}_disabled`}`,
+    disabled: `${ctx.facesNs}.${faced.face.disabled === undefined ? id : `${id}_disabled`}`,
   };
+};
+
+/** The shared faces of the look the build drew this button in. */
+const facesOf = (node: ButtonNode, ctx: Emit): { id: string; rest: string; hover: string; pressed: string; disabled: string } =>
+  facesFor(lookOf(node), ctx);
+
+/**
+ * How a button's press definition is found again.
+ *
+ * A button whose look holds still shares one definition with every button of
+ * the same look. One whose look follows state has the entry that names the
+ * look baked into its gates, so it keeps a definition of its own.
+ */
+const pressKey = (node: ButtonNode): string =>
+  (node.looks === undefined ? faceId('button', faceSignature(lookOf(node))) : `looks:${node.name}`);
+
+/** One version of a carried look, gated on the entry naming the look worn. */
+const wrapLook = (node: IrNode, entry: ControlEntry, ctx: Emit): ControlEntry => {
+  const gate = node.lookGate;
+
+  if (gate === undefined) {
+    throw new Error(`wrapLook was handed "${node.name}", which is no version of a carried look.`);
+  }
+
+  return look({ name: node.name, address: gate.address, index: gate.index }, entry, ctx);
 };
 
 /** The screen's dropdown popups, read off the tree the face pass drew. */
@@ -199,7 +231,7 @@ const nativeField = (node: IrNode, entry: ControlEntry, ctx: Emit): ControlEntry
       // Several choices are a toggle per option, each answering in a row of its
       // own; one is the dropdown the options answer through together.
       return (node.multiple ? multiSelect : select)(
-        { name: node.name, address: node.address, options: node.options.map(looksOf) },
+        { name: node.name, address: node.address, enabled: node.enabled, options: node.options.map(looksOf) },
         entry,
         ctx,
       );
@@ -234,9 +266,11 @@ export const FORM_EMIT: HostEmit = {
 
   wrapVisible,
 
+  wrapLook,
+
   fill: {
     press: (node: ButtonNode, entry, ctx): ControlEntry => press(
-      { name: node.name, address: pressAddress(node), definition: definitionOf(ctx.faceNames, faceId('button', faceSignature(lookOf(node))), 'press_1') },
+      { name: node.name, address: pressAddress(node), definition: definitionOf(ctx.faceNames, pressKey(node), 'press_1') },
       entry,
       ctx,
     ),
@@ -302,7 +336,7 @@ export const FORM_EMIT: HostEmit = {
                 ...rowGate(node.address),
                 { binding_type: 'view', source_property_name: '((not #mine) * 1000)', target_property_name: '#anchored_offset_value_y' },
               ],
-              controls: [{ 'body@core_ui_form_components.slider_body': {} }],
+              controls: [{ 'body@core_ui_form_components.slider_body': pinnedEnabled(node) }],
             },
           }],
         },
@@ -313,13 +347,27 @@ export const FORM_EMIT: HostEmit = {
     // mechanism definition — only the shared faces, which the face pass has
     // already emitted.
     for (const node of collectKind(root, 'button').filter(button => button.action === undefined)) {
-      const id = faceId('button', faceSignature(lookOf(node)));
+      const key = pressKey(node);
 
-      if (!ctx.faceNames.has(id)) {
+      if (!ctx.faceNames.has(key)) {
         const definition = `press_${ctx.faceNames.size + 1}`;
 
-        ctx.faceNames.set(id, definition);
-        Object.assign(document, pressDefs({ definition, size: pressSizeOf(node), ...facesOf(node, ctx) }, ctx));
+        ctx.faceNames.set(key, definition);
+        Object.assign(document, pressDefs({
+          definition,
+          size: pressSizeOf(node),
+          ...facesOf(node, ctx),
+          // A look that follows state draws every face it takes, gated on the
+          // entry that names which one is worn.
+          ...node.looks === undefined
+            ? {}
+            : {
+                looks: {
+                  address: node.looks.address,
+                  states: node.looks.faces.map(look => facesFor({ ...lookOf(node), ...look }, ctx)),
+                },
+              },
+        }, ctx));
       }
     }
 

@@ -13,12 +13,13 @@ import { cleanupComponentTree } from '../../../core/render/tree';
 import { ContainerScreenError } from '../../../core/types';
 import type { FunctionComponent } from '../../../jsx';
 import { allocate, type Allocation } from '../allocate';
-import { BLOCK_SLOT_LIMIT, blockCapacityError } from '../contract';
+import { BLOCK_SLOT_LIMIT, blockCapacityError, namespaceOf } from '../contract';
 import { buildContainerTree } from '../build';
 import type { NamedContainer } from '../../../entity';
 import { writeChannels, type Written } from './channels';
-import { isOwned } from './items';
+import { protocolItems } from './items';
 import { snapshot } from './debug';
+import { containerLooksOf } from '../../../core/render/screens';
 import {
   createLedger, createWatch, type Ledger, poll, resync, sweep, type Watch,
 } from './poll';
@@ -45,9 +46,9 @@ import { screenContainer } from './view';
  * The single hard truth this is built around: **an item moving is the only
  * signal a container gives back**. There is no click event, no lock that
  * makes a slot read-only, and no way to veto a move. So a press is an item
- * taken and put straight back — invisible, because a button draws a button
- * rather than an item — and a role is enforced a tick later rather than
- * prevented.
+ * dropped and put straight back — invisible, because the item has no icon and
+ * a button draws a button rather than an item — and a role is enforced a tick
+ * later rather than prevented.
  */
 
 export interface ContainerScreenConfig {
@@ -101,6 +102,10 @@ interface Session {
   readonly watch: Watch;
   /** What every viewer carried at the last poll, so a move is traced to its mover. */
   readonly ledger: Ledger;
+  /** Viewers whose transport drop was heard since the last poll: who pressed. */
+  readonly drops: Player[];
+  /** Presses waiting for the drop event that names the presser, by button slot. */
+  readonly waiting: Map<number, number>;
   readonly written: Written;
   /** The latest render's cells and channels. Replaced by every render. */
   allocation: Allocation;
@@ -153,6 +158,10 @@ export function createContainerScreen<N extends string = string>(
   // reached with no session open.
   const shape = allocate(built);
 
+  // The items the build registered for this screen: under the namespace of
+  // the entity or block it opens from.
+  const items = protocolItems(namespaceOf(host.type));
+
   // A block's container is capped where an entity's is not, so a screen that
   // outgrew its block is refused here as well as at the build: the two can
   // disagree when the pack carries a stamp from an older screen.
@@ -173,7 +182,7 @@ export function createContainerScreen<N extends string = string>(
   const cellsOf = (target: HostTarget): NamedContainer<N> => {
     const session = sessions.get(target.id);
 
-    return screenContainer<N>(target.host, session?.allocation.slots ?? shape.slots, session?.watch);
+    return screenContainer<N>(target.host, session?.allocation.slots ?? shape.slots, items, session?.watch);
   };
 
   const trace = (session: Session, label: string): void => {
@@ -187,6 +196,7 @@ export function createContainerScreen<N extends string = string>(
       // The host is named on every line: several of them may be open at once,
       // and two blocks of one type are told apart only by where they stand.
       snapshot(`${label} on ${session.target.label}`, container, viewersOf(session), {
+        items,
         sentinels: session.allocation.sentinels,
         drawn: session.allocation.slots.map(entry => entry.slot),
       });
@@ -212,10 +222,10 @@ export function createContainerScreen<N extends string = string>(
 
     const tree = buildContainerTree(Screen, session.owner);
 
-    session.allocation = allocate(tree);
+    session.allocation = allocate(tree, undefined, containerLooksOf(Screen));
     session.handlers = containerHandlers(containerRoot(tree));
-    writeButtons(container, session.allocation.slots);
-    writeChannels(container, session.allocation.channels, session.written);
+    writeButtons(container, session.allocation.slots, items);
+    writeChannels(container, session.allocation.channels, session.written, items);
     resync(container, session.watch, buttonSlots(session.allocation.slots));
     session.persisted = persistState(session.target.store, session.owner, session.persisted);
   };
@@ -284,7 +294,7 @@ export function createContainerScreen<N extends string = string>(
     // next time they spawn.
     for (const viewer of session.viewers.values()) {
       if (viewer.isValid) {
-        sweep(viewer);
+        sweep(viewer, items);
       }
     }
 
@@ -299,7 +309,7 @@ export function createContainerScreen<N extends string = string>(
     session.viewers.delete(id);
 
     if (viewer?.isValid) {
-      sweep(viewer);
+      sweep(viewer, items);
 
       const { onClose } = session.handlers;
 
@@ -346,6 +356,9 @@ export function createContainerScreen<N extends string = string>(
       viewers: viewersOf(session),
       watch: session.watch,
       ledger: session.ledger,
+      items,
+      drops: session.drops,
+      waiting: session.waiting,
       get slots() {
         return session.allocation.slots;
       },
@@ -423,7 +436,7 @@ export function createContainerScreen<N extends string = string>(
     try {
       const tree = buildContainerTree(Screen, owner);
 
-      allocation = allocate(tree);
+      allocation = allocate(tree, undefined, containerLooksOf(Screen));
       handlers = containerHandlers(containerRoot(tree));
     } catch (error: unknown) {
       report(error);
@@ -450,6 +463,8 @@ export function createContainerScreen<N extends string = string>(
       viewers: new Map([[player.id, player]]),
       watch: createWatch(),
       ledger: createLedger(),
+      drops: [],
+      waiting: new Map(),
       written: new Map(),
       allocation,
       handlers,
@@ -458,7 +473,7 @@ export function createContainerScreen<N extends string = string>(
     };
 
     sessions.set(target.id, session);
-    reconcile(container, allocation, layout, session.written);
+    reconcile(container, allocation, layout, session.written, items);
     resync(container, session.watch, allocation.slots.map(entry => entry.slot));
 
     try {
@@ -523,21 +538,51 @@ export function createContainerScreen<N extends string = string>(
     ? serveEntity(host.type, open, close)
     : serveBlock(host.type, open, close);
 
-  // A player who logs out inside the one-tick window between a press and its
-  // reclaim carries the transport off with them, and by the time the close
-  // event fires they are gone and unreadable. The inventory is readable again
-  // the moment they are back, so that is when it is swept. The mark on the
-  // item is what makes this possible without remembering who held what.
+  // A player who logs out while an output's guard is on their cursor carries
+  // it off with them, and by the time the close event fires they are gone and
+  // unreadable. The inventory is readable again the moment they are back, so
+  // that is when it is swept. The item's type is what makes this possible
+  // without remembering who held what.
   const onSpawn = world.afterEvents.playerSpawn.subscribe((event) => {
     if (event.initialSpawn) {
-      sweep(event.player);
+      sweep(event.player, items);
     }
   });
 
-  // A marker that reaches the ground — dropped off the cursor, thrown, spilled
-  // by a death — is an item entity anyone could pick up later, outside every
-  // sweep. It is destroyed the moment it spawns, so no marker ever exists in
-  // the world as anything but a slot of ours.
+  // A press drops the transport, and the drop event is the one place the
+  // pressing player is named. It is heard after the poll within the same tick,
+  // so it is queued on the session the player is viewing and the poll takes it
+  // on its next pass.
+  const onDrop = world.afterEvents.entityItemDrop.subscribe((event) => {
+    const { entity } = event;
+
+    if (!isPlayer(entity)) {
+      return;
+    }
+
+    const pressed = event.items.some((dropped) => {
+      const stack = dropped.isValid ? dropped.getComponent(EntityComponentTypes.Item)?.itemStack : undefined;
+
+      return stack !== undefined && items.isTransport(stack);
+    });
+
+    if (!pressed) {
+      return;
+    }
+
+    for (const session of sessions.values()) {
+      if (session.viewers.has(entity.id)) {
+        session.drops.push(entity);
+
+        return;
+      }
+    }
+  });
+
+  // An item of ours that reaches the ground — every press drops one — is an
+  // item entity anyone could pick up. It is removed on the next tick: the
+  // drop event, which fires after this one, still reads it, and nobody can
+  // pick up an item that young.
   const onItemSpawn = world.afterEvents.entitySpawn.subscribe((event) => {
     const { entity } = event;
 
@@ -547,14 +592,19 @@ export function createContainerScreen<N extends string = string>(
 
     const stack = entity.getComponent(EntityComponentTypes.Item)?.itemStack;
 
-    if (stack !== undefined && isOwned(stack)) {
-      entity.remove();
+    if (stack !== undefined && items.isOwned(stack)) {
+      system.run(() => {
+        if (entity.isValid) {
+          entity.remove();
+        }
+      });
     }
   });
 
   const detach = (): void => {
     detachHost();
     world.afterEvents.playerSpawn.unsubscribe(onSpawn);
+    world.afterEvents.entityItemDrop.unsubscribe(onDrop);
     world.afterEvents.entitySpawn.unsubscribe(onItemSpawn);
 
     for (const session of [...sessions.values()]) {

@@ -2,12 +2,15 @@ import { FULL, topLeft } from '../../faces';
 import { MODAL_COLLECTION, placed } from './entry';
 import { optionStates, type SelectOption } from './select';
 import { TOGGLE_ROW } from './widget';
+import { pinnedEnabled } from '../../nodes/utils/fields';
 import type { Connector, ControlEntry } from '../types';
 
 export interface MultiSelect {
   name: string;
   /** The row the first option answers in; option `m` answers `m` rows after it. */
   address: number;
+  /** Whether the options take input; a disabled chooser pins every option. */
+  enabled: boolean;
   options: readonly SelectOption[];
 }
 
@@ -39,6 +42,7 @@ export const multiSelect: Connector<MultiSelect> = (data, face) => ({
           [`toggle@${TOGGLE_ROW}`]: {
             collection_index: data.address + member,
             size: FULL,
+            ...pinnedEnabled(data),
             controls: optionStates(option),
           },
         }],

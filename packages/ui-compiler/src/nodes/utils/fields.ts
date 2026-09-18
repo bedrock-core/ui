@@ -23,7 +23,20 @@ export interface FieldBase extends NodeBase {
   address: number;
   /** `font_scale_factor` for the labels inside the widget, over the `small` base. */
   scale: number;
+  /** Whether the field takes input; see {@link pinnedEnabled}. */
+  enabled: boolean;
 }
+
+/**
+ * What a disabled field's widget is mounted with.
+ *
+ * `ModalFormData` has no disabled field, so the row always reports the widget
+ * enabled. The widget reads `$field_enabled` before the row, and the compile
+ * pins it for the fields the author disabled; an enabled field sets nothing
+ * and keeps following its row.
+ */
+export const pinnedEnabled = (node: { enabled: boolean }): { $field_enabled?: false } =>
+  (node.enabled ? {} : { $field_enabled: false });
 
 /**
  * What a label inside one of these widgets is scaled by.

@@ -36,10 +36,12 @@ describe('ore-styled components in a container screen', () => {
     expect(allocation).toMatchObject({ drawn: 2, channels: 0 });
 
     // Two looks, so two face families and two mechanisms, in document order.
+    // The resting face is the button's `default` state, gated inside.
     const [go, stop] = ['press_1', 'press_2'].map((mechanism) => {
-      const [enabled] = definition(document, mechanism).controls ?? [];
+      const [rest] = definition(document, `${mechanism}_states@core_ui_chest.slot_button`).controls ?? [];
+      const [face] = rest?.['default']?.controls?.[0]?.['gate']?.controls ?? [];
 
-      return String(enabled?.['enabled']?.controls?.[0]?.['item@core_ui_chest.cell']?.$background_images).replace('core_ui_faces.', '');
+      return Object.keys(face ?? {})[0]?.replace('face@core_ui_faces.', '') ?? '';
     });
 
     expect(child(drawnFace(faces, go ?? ''), 'bg').texture).toBe(primary.textures.default);

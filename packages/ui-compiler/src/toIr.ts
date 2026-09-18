@@ -22,9 +22,10 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
 import {
   BACKGROUND_SLOT_TYPE, childElements, CONTAINER_TYPE, isTransparentType,
-  type Allocation as ContainerAllocation, WIDE_RECT,
+  type Allocation as ContainerAllocation, BUTTON_TYPE, type VariantTable, WIDE_RECT,
 } from '@bedrock-core/ui-runtime/compile';
 import type { IrDocument, IrNode, Rect } from './ir';
+import { looksOf } from './looks';
 import { loweringFor } from './nodes';
 import type { LookNode, SwapNode } from './nodes/primitives/swap';
 import { FOLLOWS_PREVIOUS, followsOf, num, str } from './nodes/utils/shared';
@@ -312,6 +313,7 @@ const lower = (definition: NodeDefinition, element: JSX.Element, type: string, o
     name: kind => nameFor(kind, walk),
     cellOf: target => cellOf(target, walk),
     channelOf: target => channelOf(target, walk),
+    lookOf: target => walk.addressing.looks?.get(target),
     children: (parent, from, options) => {
       if (options?.wide !== true || walk.wide) {
         return convertChildren(parent, from, walk);
@@ -329,11 +331,68 @@ const lower = (definition: NodeDefinition, element: JSX.Element, type: string, o
 
   walk.carried += carried ? 1 : 0;
 
+  let node: IrNode;
+
   try {
-    return definition.lower(element, type, ctx);
+    node = definition.lower(element, type, ctx);
   } finally {
     walk.carried -= carried ? 1 : 0;
   }
+
+  // A button draws its looks inside its face; any other element whose look is
+  // carried is drawn once per look, beside itself.
+  const look = element.type === BUTTON_TYPE ? undefined : walk.addressing.looks?.get(element);
+
+  if (look === undefined) {
+    return node;
+  }
+
+  return {
+    ...node,
+    carriedLook: {
+      address: look.address,
+      looks: look.looks.map((version, index) =>
+        lowerLook(definition, version, type, origin, walk, { of: node.name, address: look.address, index })),
+    },
+  };
+};
+
+/**
+ * One version of a carried look: the element as that look renders it, lowered
+ * on its own at the place that look puts it. Its children are left out — the
+ * node it is a version of draws them once, whichever version is showing — and
+ * so is its visibility, which is the gate's.
+ */
+const lowerLook = (
+  definition: NodeDefinition,
+  element: JSX.Element,
+  type: string,
+  origin: Rect,
+  walk: Walk,
+  version: { of: string; address: number; index: number },
+): IrNode => {
+  if (definition.lower === undefined) {
+    throw new UnsupportedNodeError(type);
+  }
+
+  const bare: JSX.Element = childElements(element.props.children).length === 0
+    ? element
+    : { ...element, props: { ...element.props, children: undefined } };
+  const own = absoluteRect(bare, walk.wide);
+  const name = `${version.of}_look_${String(version.index)}`;
+  const ctx: LowerContext = {
+    origin,
+    own,
+    rect: relativeTo(own, origin),
+    decoration: { ...layerOf(bare.props) },
+    name: () => name,
+    cellOf: target => cellOf(target, walk),
+    channelOf: target => channelOf(target, walk),
+    lookOf: () => undefined,
+    children: () => [],
+  };
+
+  return { ...definition.lower(bare, type, ctx), name, lookGate: { address: version.address, index: version.index } };
 };
 
 export interface ToIrOptions {
@@ -343,18 +402,39 @@ export interface ToIrOptions {
   faces?: string;
   /** The collection every addressed control reads from. */
   collection: string;
-  /** The host's transport-hiding renderer, when it has one. */
-  ownedItemRenderer?: string;
 }
 
 /**
  * Where the chest put a built tree's cells and channels, as addresses the IR
  * can carry without knowing they are container indices.
  */
-export const chestAddressing = (allocation: ContainerAllocation): Addressing => ({
-  cells: new Map(allocation.slots.map(entry => [entry.element, { address: entry.slot, role: entry.role }])),
-  channels: new Map(allocation.channels.map(entry => [entry.element, { address: entry.slot, length: entry.length }])),
-});
+export const chestAddressing = (
+  allocation: ContainerAllocation,
+  tree?: JSX.Element,
+  looks: ReadonlyMap<JSX.Element, VariantTable> = new Map(),
+): Addressing => {
+  // A button's look rides the size of the stack in its own slot; any other
+  // element's rides a bank slot of its own. Either way the look is addressed by
+  // the slot whose size names it.
+  const lookSlots = new Map([
+    ...allocation.slots.map(entry => [entry.element, entry.slot] as const),
+    ...allocation.channels.filter(entry => entry.carrier === 'enum').map(entry => [entry.element, entry.slot] as const),
+  ]);
+
+  return {
+    cells: new Map(allocation.slots.map(entry => [entry.element, { address: entry.slot, role: entry.role }])),
+    channels: new Map(allocation.channels
+      .filter(entry => entry.carrier === 'text')
+      .map(entry => [entry.element, { address: entry.slot, length: entry.length }])),
+    looks: new Map(tree === undefined
+      ? []
+      : [...looks].flatMap(([element, table]) => {
+          const slot = lookSlots.get(element);
+
+          return slot === undefined ? [] : [[element, { address: slot, looks: looksOf(tree, table) }] as const];
+        })),
+  };
+};
 
 /**
  * Converts a screen's canvas into an {@link IrDocument}.
@@ -404,7 +484,6 @@ export const toIr = (
     namespace: options.namespace,
     ...options.faces === undefined ? {} : { faces: options.faces },
     collection: options.collection,
-    ...options.ownedItemRenderer === undefined ? {} : { ownedItemRenderer: options.ownedItemRenderer },
     root: {
       kind: 'panel',
       name: 'root',

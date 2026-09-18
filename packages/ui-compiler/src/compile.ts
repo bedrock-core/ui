@@ -4,11 +4,11 @@
  * every compiled screen is built from the same results.
  */
 
-import type { FunctionComponent } from '@bedrock-core/ui-runtime';
+import type { FunctionComponent, JSX } from '@bedrock-core/ui-runtime';
 import {
   allocate, BLOCK_SLOT_LIMIT, blockCapacityError, buildContainerTree, buildScreenOnce,
-  type ContainerHost, containerHost, containerRoot, ContainerScreenError, layoutKey,
-  probeLiveness, type Probe,
+  BUTTON_TYPE, type ContainerHost, containerHost, containerRoot, ContainerScreenError, layoutKey, LOOK_LIMIT,
+  probeLiveness, type Probe, variantsAt, type VariantTable,
 } from '@bedrock-core/ui-runtime/compile';
 import {
   BACKDROP_DEFINITION, type FaceDocument, faceOf, facesNamespaceOf,
@@ -20,6 +20,7 @@ import type { Control, Document } from './jsonui';
 import { chestAddressing, toIr } from './toIr';
 import { langOf, type ScreenLang } from './lang';
 import { checkTrans } from './trans';
+import { carriedPositions, drawnPerLook } from './looks';
 
 export interface ScreenSpec {
   /** Screen name from the file name, e.g. `furnace`. */
@@ -59,6 +60,12 @@ export interface CompiledScreen {
   hasText: boolean;
   /** The strings the text this screen composed per language adds to each language, by key. */
   lang: ScreenLang;
+  /**
+   * The looks its elements take, the build's own first in each: what the
+   * runtime is handed to say which one each wears, by the size of a button's
+   * own stack or of a bank slot for anything else.
+   */
+  looks: readonly VariantTable[];
 }
 
 /** Namespaces are dotted into references, so a name is an identifier, not a path. */
@@ -91,7 +98,11 @@ const checkSpec = (spec: ScreenSpec): void => {
  * anything reported here really did change between two renders; the fix is
  * always the same, and the observed strings show what to size it for.
  */
-export const checkLiveness = (probe: Probe, name: string, options: { carriedVisible?: boolean } = {}): void => {
+export const checkLiveness = (
+  probe: Probe,
+  name: string,
+  options: { carriedVisible?: boolean; carriedLooks?: ReadonlySet<number> } = {},
+): void => {
   if (probe.shape !== undefined) {
     throw new ContainerScreenError(
       `"${name}" renders a different screen when its state changes.\n`
@@ -113,6 +124,37 @@ export const checkLiveness = (probe: Probe, name: string, options: { carriedVisi
     );
   }
 
+  // A look the host draws per value and chooses between is not baked at all.
+  const baked = probe.props.filter(prop => options.carriedLooks?.has(prop.position) !== true);
+
+  if (probe.geometry.length > 0) {
+    const boxes = probe.geometry.slice(0, 3)
+      .map(prop => `<${prop.type}> #${String(prop.position)} ${prop.prop} ${prop.before} to ${prop.after}`);
+
+    console.warn(
+      `"${name}" lays ${probe.geometry.length} box(es) out differently when its state changes; the build's placement is kept.\n`
+      + `    ${boxes.join(', ')}${probe.geometry.length > boxes.length ? ', and more' : ''}`,
+    );
+  }
+
+  if (baked.length > 0) {
+    const moved = baked.map(prop =>
+      `    <${prop.type}> #${String(prop.position)} ${prop.prop}: ${prop.before} became ${prop.after}`);
+
+    // Everything a look can be drawn from is carried by now, so what is left
+    // here is a screen that would show the build's value however its state
+    // moved — and say nothing about it.
+    throw new ContainerScreenError(
+      `"${name}" changes ${baked.length} prop(s) with state that the screen cannot follow.\n`
+      + '  A look is drawn once per value it takes, but only on an element with no mechanism of\n'
+      + '  its own: a press, a slot, a live string (`maxLength`), a live image (`live`) or a list\n'
+      + '  is drawn by the host, which keeps the look the build gave it. Keep these the same for\n'
+      + '  every state, and put what changes on a plain element beside it — a panel, an image\n'
+      + '  or a baked string, whose look is carried:\n'
+      + moved.join('\n'),
+    );
+  }
+
   if (probe.frozen.length === 0) {
     return;
   }
@@ -127,6 +169,26 @@ export const checkLiveness = (probe: Probe, name: string, options: { carriedVisi
     + '  reserves a container slot per character:\n'
     + lines.join('\n'),
   );
+};
+
+/**
+ * How many looks an element can wear on a chest.
+ *
+ * A look rides the size of a stack — the button's own, or a bank slot's for
+ * anything else — which runs from two to 64, so there is room for 63.
+ *
+ * @throws ContainerScreenError when an element takes more.
+ */
+const checkLooks = (looks: ReadonlyMap<JSX.Element, VariantTable>, name: string): void => {
+  for (const table of looks.values()) {
+    if (table.combinations.length > LOOK_LIMIT) {
+      throw new ContainerScreenError(
+        `"${name}" draws a <${table.type}> ${String(table.combinations.length)} different ways, and a container screen carries ${String(LOOK_LIMIT)} at most.\n`
+        + '  A look rides the size of a stack, which runs from 2 to 64.\n'
+        + '  Draw fewer versions of it.',
+      );
+    }
+  }
 };
 
 /**
@@ -169,9 +231,20 @@ export function compileScreen(
 
   // Before anything is baked: does this screen actually hold still? Everything
   // downstream assumes it does.
-  checkLiveness(probeLiveness(() => buildScreenOnce(Screen)), spec.name);
-
+  const probe = probeLiveness(() => buildScreenOnce(Screen));
   const tree = buildContainerTree(Screen);
+  // A button's look rides the size of the stack in its own slot, so a button's
+  // look is carried only where there is a slot: one that closes the screen has
+  // none, and keeps the build's look. Any other element's look takes a bank
+  // slot of its own, which the allocation below spends.
+  const pressed = new Set(allocate(tree).slots.filter(entry => entry.role === 'button').map(entry => entry.element));
+  const looks = new Map([...drawnPerLook(variantsAt(tree, probe.variants))]
+    .filter(([element]) => element.type !== BUTTON_TYPE || pressed.has(element)));
+
+  checkLooks(looks, spec.name);
+  checkLiveness(probe, spec.name, { carriedLooks: carriedPositions(looks.values()) });
+
+  const allocation = allocate(tree, undefined, [...looks.values()]);
 
   // The root and the host are the CHEST's questions — what counts as a
   // screen's root differs per host, so the walk below is handed the answer
@@ -186,15 +259,11 @@ export function compileScreen(
   }
 
   checkTrans(tree, spec.name);
-
-  const allocation = allocate(tree);
-
   checkCapacity(screenHost, allocation.size, spec.name);
-  const ir = toIr(root, chestAddressing(allocation), {
+  const ir = toIr(root, chestAddressing(allocation, tree, looks), {
     namespace,
     faces: facesNamespaceOf(addon),
     collection: host.collection,
-    ownedItemRenderer: host.ownedItemRenderer,
   });
   const face = faceOf(ir);
   const document = fill(face, CHEST_EMIT);
@@ -220,6 +289,7 @@ export function compileScreen(
     hasBackdrop: document[BACKDROP_DEFINITION] !== undefined,
     hasText: allocation.channels.some(channel => channel.carrier === 'text'),
     lang: langOf(ir.root),
+    looks: [...looks.values()],
   };
 }
 

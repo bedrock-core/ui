@@ -1,6 +1,6 @@
 import { collectionKey } from '../../nodes/utils/shared';
 import { CELL, placed } from './cell';
-import { containerItemVars, hidesTransport } from './slot';
+import { containerItemVars } from './slot';
 import type { Connector, Emit } from '../types';
 
 /** A block of cells over a collection the screen does not own. */
@@ -10,8 +10,6 @@ export interface Grid {
   columns: number;
   rows: number;
   interactive: boolean;
-  /** Ask for the transport gate over a collection that is not the player's own. */
-  hideOwned: boolean;
 }
 
 /**
@@ -32,27 +30,18 @@ export const grid: Connector<Grid> = (data, face, ctx) => ({
 });
 
 /**
- * A grid's cell template, registered once per collection, interactivity and
- * owned-hiding. The item cell is used directly as the template, exactly as the
- * router's own redrawn grids do.
+ * A grid's cell template, registered once per collection and interactivity.
+ * The item cell is used directly as the template, exactly as the router's own
+ * redrawn grids do.
  */
 const ensureGridCell = (ctx: Emit, data: Grid): string => {
-  // One answer, used for both the name and the renderer: a definition keyed
-  // 'plain' that carried the gated renderer would be shared by cells that must
-  // not have it.
-  const gated = hidesTransport(data.collection, data.hideOwned);
   const name = [
     'grid_cell',
     collectionKey(data.collection),
     data.interactive ? 'take' : 'display',
-    gated ? 'owned' : 'plain',
   ].join('__');
 
-  ctx.defs[`${name}@${CELL.item}`] ??= containerItemVars(
-    data.collection,
-    data.interactive,
-    gated ? ctx.ownedRenderer : undefined,
-  );
+  ctx.defs[`${name}@${CELL.item}`] ??= containerItemVars(data.collection, data.interactive);
 
   return `${ctx.ns}.${name}`;
 };

@@ -41,7 +41,6 @@ export const demoEntity = 'core:demo';
 export const demoScreen: IrDocument = {
   namespace: 'core_ui_demo',
   collection: 'container_items',
-  ownedItemRenderer: 'core_ui_chest.gated_item',
   backdrop: 'textures/ui/demo_backdrop',
   root: {
     kind: 'panel',
@@ -165,7 +164,6 @@ export const demoScreen: IrDocument = {
         columns: 9,
         rows: 3,
         interactive: true,
-        hideOwned: true,
       },
       {
         kind: 'grid',
@@ -175,7 +173,6 @@ export const demoScreen: IrDocument = {
         columns: 9,
         rows: 1,
         interactive: true,
-        hideOwned: true,
       },
     ],
   },

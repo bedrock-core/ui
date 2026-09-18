@@ -4,12 +4,12 @@ import { ActionFormData } from '@minecraft/server-ui';
 import { isHandler, type PressEvent } from '../../core/events';
 import { embedSlotValue, isEmbedSlot } from '../../components/Embed';
 import { listCount } from '../../components/List';
-import { analyze, visiblesAt } from '../../core/ir';
+import { analyze, variantsAt, visiblesAt } from '../../core/ir';
 import type { CompiledSnapshot } from '../../core/render/screens';
 import { runInteractiveCallback, type PresentResult } from '../../core/render/present';
 import type { JSX } from '../../jsx';
 import { allocate, type EntryEntry } from './allocate';
-import { COUNT_PREFIX, FLAG_OFF, FLAG_ON } from './contract';
+import { COUNT_PREFIX, FLAG_OFF, FLAG_ON, LOOK_PREFIX } from './contract';
 import { debugDiff } from './debug';
 
 /**
@@ -89,6 +89,13 @@ export const entryValue = (entry: EntryEntry): DisplayText => {
     return `${COUNT_PREFIX}${String(listCount(entry.element) ?? 0)}`;
   }
 
+  // Which of the looks the build drew this element is wearing now. A look the
+  // build never saw falls back to the one it baked, which is the reference
+  // render's and the first in the table.
+  if (entry.carrier === 'enum') {
+    return `${LOOK_PREFIX}${String(entry.look ?? 0)}`;
+  }
+
   return entry.element.props.enabled === false ? FLAG_OFF : FLAG_ON;
 };
 
@@ -110,7 +117,11 @@ export const compiledValuesOf = (tree: JSX.Element, snapshot?: CompiledSnapshot)
   // The snapshot's ordinals mark the elements the build compiled bool
   // carriers for; walking them back onto this render's tree is what keeps the
   // entry count identical to the one the layout was baked against.
-  const { entries } = allocate(tree, analyze(tree, visiblesAt(tree, snapshot?.vis ?? [])));
+  const { entries } = allocate(tree, analyze(
+    tree,
+    visiblesAt(tree, snapshot?.vis ?? []),
+    variantsAt(tree, snapshot?.looks ?? []),
+  ));
 
   return { entries, values: entries.map(entryValue) };
 };

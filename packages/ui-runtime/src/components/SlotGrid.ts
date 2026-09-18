@@ -14,12 +14,6 @@ export interface SlotGridProps extends ControlProps {
   rows: number;
   /** The player can move items through it unless this is false. Default `true`. */
   interactive?: boolean;
-  /**
-   * Draw the cell that hides the runtime's transport item. For the player's own
-   * inventory and hotbar, where a button's transport is auto-placed for a tick.
-   * Default `false`.
-   */
-  hideOwned?: boolean;
 }
 
 /** What a built {@link SlotGrid} declares, read back by the compiler. */
@@ -28,7 +22,6 @@ export interface SlotGridConfig {
   columns: number;
   rows: number;
   interactive: boolean;
-  hideOwned: boolean;
 }
 
 /**
@@ -45,7 +38,6 @@ export const SlotGrid: FunctionComponent<SlotGridProps> = ({
   columns,
   rows,
   interactive = true,
-  hideOwned = false,
   ...rest
 }: SlotGridProps): JSX.Element => {
   if (typeof collection !== 'string' || collection === '') {
@@ -68,20 +60,18 @@ export const SlotGrid: FunctionComponent<SlotGridProps> = ({
       columns,
       rows,
       interactive,
-      hideOwned,
     },
   };
 };
 
 /** The configuration a built `<SlotGrid>` carries, mirroring `slotInteractive`. */
 export function slotGridConfig(element: JSX.Element): SlotGridConfig {
-  const { collection, columns, rows, interactive, hideOwned } = element.props;
+  const { collection, columns, rows, interactive } = element.props;
 
   return {
     collection: typeof collection === 'string' ? collection : '',
     columns: typeof columns === 'number' ? columns : 0,
     rows: typeof rows === 'number' ? rows : 0,
     interactive: interactive !== false,
-    hideOwned: hideOwned === true,
   };
 }

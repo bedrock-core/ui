@@ -29,6 +29,13 @@ export const FLAG_OFF = 'f';
 export const COUNT_PREFIX = 'n';
 
 /**
+ * Which look an element wears travels as `k` + the look's place in the table
+ * the build recorded, for the same reason again: the gate that shows one look
+ * compares the whole string.
+ */
+export const LOOK_PREFIX = 'k';
+
+/**
  * How a control is bound to the entry it draws.
  *
  * A control the pack places itself owns an entry only when THE CONTROL ITSELF

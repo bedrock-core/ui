@@ -121,30 +121,6 @@
 
 	"selected_icon_panel": {
 		"type": "panel",
-
-		// The transport gate, in the one place an item is drawn WITHOUT going
-		// through a grid cell.
-		//
-		// A press auto-places the runtime's transport into the player's
-		// inventory, and the script pulls it back a tick later. Grid cells hide
-		// it meanwhile — that is all `gated_item` is for — but the cursor
-		// preview draws `#inventory_selected_item` directly, so when the
-		// transport lands in the selected slot it is drawn: a command block,
-		// under the pointer, for one tick.
-		//
-		// Seeded visible for the same reason the rest of the pack seeds toward
-		// working: if the binding ever fails to resolve, a preview that draws
-		// the held item beats one that silently never appears.
-		"property_bag": { "#visible": true },
-		"visible": "#visible",
-		"bindings": [
-			{ "binding_name": "#inventory_selected_item", "binding_name_override": "#selected_aux", "binding_condition": "always" },
-			{
-				"binding_type": "view",
-				"source_property_name": "(not (#selected_aux = 12320768))",
-				"target_property_name": "#visible"
-			}
-		],
 		"controls": [
 			{ "selected_item_icon@core_ui_chest.selected_icon": {} },
 			{ "selected_stack_size_text@core_ui_chest.selected_stack_size_text": {} },

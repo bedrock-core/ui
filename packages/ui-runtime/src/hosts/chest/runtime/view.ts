@@ -4,7 +4,7 @@ import {
   type ContainerSource, namedContainer, type NamedContainer, nameTable,
 } from '../../../entity/container';
 import type { SlotEntry } from '../allocate';
-import { guard, isOwned } from './items';
+import type { ProtocolItems } from './items';
 import { containerOf } from './target';
 import { resync, type Watch } from './watch';
 
@@ -58,6 +58,7 @@ const namesOf = <N extends string>(cells: readonly SlotEntry[]): Readonly<Record
  *   container.
  * @param slots - The drawn cells of any render. The shape of a compiled screen
  *   is frozen, so every render numbers the same cells the same way.
+ * @param items - The screen's protocol items, which the view hides.
  * @param watch - The live session's, when there is one. A write through the
  *   view is the SCREEN moving an item, and the poll would otherwise read it on
  *   the next tick as a player move and run the cell's handler for it.
@@ -65,6 +66,7 @@ const namesOf = <N extends string>(cells: readonly SlotEntry[]): Readonly<Record
 export const screenContainer = <N extends string = string>(
   host: ScreenHost,
   slots: readonly SlotEntry[],
+  items: ProtocolItems,
   watch?: Watch,
 ): NamedContainer<N> => {
   const cells = ownCells(slots);
@@ -73,8 +75,8 @@ export const screenContainer = <N extends string = string>(
     open: () => containerOf(host),
     size: () => cells.length,
     map: (_container: Container, index: number): number => cells[index]?.slot ?? -1,
-    hidden: isOwned,
-    vacated: (index: number) => (cells[index]?.role === 'output' ? guard() : undefined),
+    hidden: items.isOwned,
+    vacated: (index: number) => (cells[index]?.role === 'output' ? items.guard() : undefined),
     fillable: (index: number): boolean => cells[index]?.role !== 'output',
 
     wrote: (container: Container, slot: number): void => {

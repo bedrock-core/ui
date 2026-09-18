@@ -15,8 +15,10 @@ import { ContainerScreenError, ScreenRootError } from '../../../core/types';
 import { useEffect, useState } from '../../../hooks';
 import type { JSX } from '../../../jsx';
 import { CHARSET } from '../charset';
-import { LAYOUT_PROPERTY, PROTOCOL_ITEM, STATE_PROPERTY, TRANSPORT_ITEM } from '../contract';
-import { isGuard, isTransport, transport } from '../runtime/items';
+import { LAYOUT_PROPERTY, STATE_PROPERTY } from '../contract';
+import { protocolItems } from '../runtime/items';
+
+const items = protocolItems('core');
 import { type ContainerScreen, createContainerScreen } from '../runtime/session';
 
 /** One tick of the system shim, in fake-timer milliseconds. */
@@ -118,7 +120,8 @@ const onInsert = vi.fn();
 
 /**
  * A counter button, a button that goes dark after the first press, an input
- * slot, and a four-cell readout: slots 1, 2, 3 and 4–7, size 8.
+ * slot, and a four-cell readout: slots 1, 2, 3 and 4–7 after the sentinel,
+ * size 8.
  */
 const Screen = (): JSX.Element => {
   const [count, setCount] = useState(0);
@@ -142,7 +145,7 @@ const Screen = (): JSX.Element => {
   });
 };
 
-const SIZE = 9;
+const SIZE = 8;
 
 const machineOpen = vi.fn();
 const machineInsert = vi.fn();
@@ -150,7 +153,7 @@ const machinePress = vi.fn();
 
 /**
  * A machine: an input, a button and the result cell the author named. The
- * sentinel takes 0 and 1, the cells 2, 3 and 4, so the two OWN cells are view
+ * sentinel takes 0, the cells 1, 2 and 3, so the two OWN cells are view
  * index 0 and 1 — `output` being the second.
  */
 const Machine = (): JSX.Element => Container({
@@ -163,7 +166,7 @@ const Machine = (): JSX.Element => Container({
   ],
 });
 
-const MACHINE_SIZE = 5;
+const MACHINE_SIZE = 4;
 
 const interact = (target: FakeEntity, viewer: FakePlayer): void => {
   world.beforeEvents.playerInteractWithEntity.__emit({ cancel: false, player: viewer.player, target: target.entity });
@@ -179,10 +182,28 @@ const stateOf = (target: FakeEntity): string | undefined => {
   return typeof value === 'string' ? value : undefined;
 };
 
-/** Lifts the transport out of a button, the way a click does. */
+/** An item entity lying in the world, holding `stack`. */
+const itemEntity = (stack: ItemStack): { readonly remove: ReturnType<typeof vi.fn>; readonly entity: Entity } => {
+  const remove = vi.fn();
+  const entity = {
+    typeId: 'minecraft:item',
+    isValid: true,
+    remove,
+    getComponent: (id: string): unknown => (id === EntityComponentTypes.Item ? { itemStack: stack } : undefined),
+  } as unknown as Entity;
+
+  return { remove, entity };
+};
+
+/** Presses a button the way every input does: its transport is dropped, and the drop event names the player. */
 const press = (target: FakeEntity, viewer: FakePlayer, slot: number): void => {
-  viewer.cursor.hold(target.container.getItem(slot));
+  const dropped = target.container.getItem(slot);
+
   target.container.setItem(slot, undefined);
+
+  if (dropped !== undefined) {
+    world.afterEvents.entityItemDrop.__emit({ entity: viewer.player, items: [itemEntity(dropped).entity] });
+  }
 };
 
 let screen: ContainerScreen | undefined;
@@ -256,14 +277,14 @@ describe('a session', () => {
     await vi.advanceTimersByTimeAsync(TICK);
 
     const key = target.container.getItem(0);
-    const first = target.container.getItem(2);
+    const first = target.container.getItem(1);
 
-    expect(key?.typeId).toBe(PROTOCOL_ITEM);
-    expect(target.container.getItem(1)?.typeId).toBe(PROTOCOL_ITEM);
-    expect(first && isTransport(first)).toBe(true);
-    expect(target.container.getItem(3)?.typeId).toBe(TRANSPORT_ITEM);
-    expect(target.container.getItem(4)).toBeUndefined();
-    expect([5, 6, 7, 8].map(slot => target.container.getItem(slot)?.amount)).toEqual([
+    expect(key && items.roleOf(key)).toBe('sentinel');
+    expect(key && items.valueOf(key)).toBe(3);
+    expect(first && items.isTransport(first)).toBe(true);
+    expect(items.isTransport(target.container.getItem(2)!)).toBe(true);
+    expect(target.container.getItem(3)).toBeUndefined();
+    expect([4, 5, 6, 7].map(slot => target.container.getItem(slot)?.amount)).toEqual([
       code('n'), code(' '), code('0'), 1,
     ]);
     expect(effectRuns).toBe(1);
@@ -279,23 +300,22 @@ describe('a session', () => {
     interact(target, viewer);
     await vi.advanceTimersByTimeAsync(TICK);
 
-    press(target, viewer, 2);
+    press(target, viewer, 1);
     await vi.advanceTimersByTimeAsync(TICK);
 
-    expect(viewer.cursor.item).toBeUndefined();
-    expect(target.container.getItem(7)?.amount).toBe(code('1'));
-    expect(isGuard(target.container.getItem(3)!)).toBe(true);
+    expect(target.container.getItem(6)?.amount).toBe(code('1'));
+    expect(items.isGuard(target.container.getItem(2)!)).toBe(true);
 
-    const first = target.container.getItem(2);
+    const first = target.container.getItem(1);
 
-    expect(first && isTransport(first)).toBe(true);
+    expect(first && items.isTransport(first)).toBe(true);
     expect(stateOf(target)).toContain('[[0,1]]');
 
     // Nothing left in flight: the next tick is quiet.
     await vi.advanceTimersByTimeAsync(TICK);
 
     expect(stateOf(target)).toContain('[[0,1]]');
-    expect(target.container.getItem(7)?.amount).toBe(code('1'));
+    expect(target.container.getItem(6)?.amount).toBe(code('1'));
     expect(error).not.toHaveBeenCalled();
   });
 
@@ -308,7 +328,7 @@ describe('a session', () => {
     interact(target, viewer);
     await vi.advanceTimersByTimeAsync(TICK);
 
-    target.container.setItem(4, new ItemStack('minecraft:coal', 2));
+    target.container.setItem(3, new ItemStack('minecraft:coal', 2));
     await vi.advanceTimersByTimeAsync(TICK);
 
     expect(onInsert).toHaveBeenCalledTimes(1);
@@ -317,11 +337,11 @@ describe('a session', () => {
     expect(onInsert.mock.calls[0]?.[0]?.host).toBe(target.entity);
 
     // An input slot keeps what it was given: the take is undone a tick later.
-    viewer.cursor.hold(target.container.getItem(4));
-    target.container.setItem(4, undefined);
+    viewer.cursor.hold(target.container.getItem(3));
+    target.container.setItem(3, undefined);
     await vi.advanceTimersByTimeAsync(TICK);
 
-    expect(target.container.getItem(4)?.typeId).toBe('minecraft:coal');
+    expect(target.container.getItem(3)?.typeId).toBe('minecraft:coal');
     expect(viewer.cursor.item).toBeUndefined();
   });
 
@@ -334,7 +354,7 @@ describe('a session', () => {
 
     interact(target, viewer);
     await vi.advanceTimersByTimeAsync(TICK);
-    press(target, viewer, 2);
+    press(target, viewer, 1);
     await vi.advanceTimersByTimeAsync(TICK);
 
     expect(getFibersForOwner(owner).length).toBeGreaterThan(0);
@@ -345,19 +365,40 @@ describe('a session', () => {
     expect(getFibersForOwner(owner)).toHaveLength(0);
 
     // The interval is gone: a change in the container is nobody's business.
-    press(target, viewer, 2);
+    press(target, viewer, 1);
     await vi.advanceTimersByTimeAsync(TICK * 3);
 
     expect(stateOf(target)).toContain('[[0,1]]');
-    expect(viewer.cursor.item?.typeId).toBe(TRANSPORT_ITEM);
+    expect(target.container.getItem(1)).toBeUndefined();
 
-    viewer.cursor.clear();
     interact(target, viewer);
     await vi.advanceTimersByTimeAsync(TICK);
 
     expect(effectRuns).toBe(2);
-    expect(target.container.getItem(7)?.amount).toBe(code('1'));
-    expect(isGuard(target.container.getItem(3)!)).toBe(true);
+    expect(target.container.getItem(6)?.amount).toBe(code('1'));
+    expect(items.isGuard(target.container.getItem(2)!)).toBe(true);
+  });
+
+  it('names the viewer the drop event names, among several', async () => {
+    const pressed = vi.fn();
+    const Counter = (): JSX.Element => Container({ entity: 'core:test', children: [Button({ onPress: pressed })] });
+
+    screen = createContainerScreen(Counter);
+
+    const target = createEntity('e1', 2, 3);
+    const first = createPlayer('p1');
+    const second = createPlayer('p2');
+
+    interact(target, first);
+    await vi.advanceTimersByTimeAsync(TICK);
+    world.afterEvents.entityContainerOpened.__emit({ entity: target.entity, openSource: { entity: second.player } });
+
+    press(target, second, 1);
+    await vi.advanceTimersByTimeAsync(TICK);
+
+    expect(pressed).toHaveBeenCalledTimes(1);
+    expect(pressed.mock.calls[0]?.[0]?.player).toBe(second.player);
+    expect(items.isTransport(target.container.getItem(1)!)).toBe(true);
   });
 
   it('keeps serving while any viewer remains, and sweeps the one who left', async () => {
@@ -374,14 +415,14 @@ describe('a session', () => {
 
     expect(effectRuns).toBe(1);
 
-    first.inventory.setItem(2, target.container.getItem(2));
+    first.inventory.setItem(2, target.container.getItem(1));
     closeFor(target, first);
 
     expect(first.inventory.getItem(2)).toBeUndefined();
     expect(cleanups).toBe(0);
     expect(getFibersForOwner(owner).length).toBeGreaterThan(0);
 
-    press(target, second, 2);
+    press(target, second, 1);
     await vi.advanceTimersByTimeAsync(TICK);
 
     expect(stateOf(target)).toContain('[[0,1]]');
@@ -404,13 +445,13 @@ describe('a session', () => {
 
     screen = createContainerScreen(Eager);
 
-    const target = createEntity('e1', 3, 3);
+    const target = createEntity('e1', 2, 3);
     const viewer = createPlayer('p1');
 
     interact(target, viewer);
     await vi.advanceTimersByTimeAsync(TICK);
 
-    expect(target.container.getItem(2)?.amount).toBe(code('b'));
+    expect(target.container.getItem(1)?.amount).toBe(code('b'));
     expect(stateOf(target)).toContain('[[0,"b"]]');
   });
 
@@ -430,26 +471,19 @@ describe('a session', () => {
     expect(getFibersForOwner(entityOwner(target.entity))).toHaveLength(0);
   });
 
-  it('destroys a marker the moment it becomes an item entity, and nothing else', () => {
+  it('removes an item of ours on the tick after it lands in the world, and nothing else', async () => {
     screen = createContainerScreen(Screen);
 
-    const dropped = (stack: ItemStack): { readonly remove: ReturnType<typeof vi.fn>; readonly entity: Entity } => {
-      const remove = vi.fn();
-      const entity = {
-        typeId: 'minecraft:item',
-        isValid: true,
-        remove,
-        getComponent: (id: string): unknown => (id === EntityComponentTypes.Item ? { itemStack: stack } : undefined),
-      } as unknown as Entity;
-
-      return { remove, entity };
-    };
-
-    const marker = dropped(transport());
-    const stone = dropped(new ItemStack('minecraft:stone', 3));
+    const marker = itemEntity(items.transport());
+    const stone = itemEntity(new ItemStack('minecraft:stone', 3));
 
     world.afterEvents.entitySpawn.__emit({ entity: marker.entity, cause: 'Spawned' });
     world.afterEvents.entitySpawn.__emit({ entity: stone.entity, cause: 'Spawned' });
+
+    // Not yet: the drop event that names the presser still reads it this tick.
+    expect(marker.remove).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(TICK);
 
     expect(marker.remove).toHaveBeenCalledTimes(1);
     expect(stone.remove).not.toHaveBeenCalled();
@@ -461,13 +495,12 @@ describe('a session', () => {
     const viewer = createPlayer('p1');
 
     viewer.inventory.setItem(0, new ItemStack('minecraft:stone', 1));
-    viewer.inventory.setItem(1, new ItemStack(PROTOCOL_ITEM, 1));
-
-    viewer.inventory.setItem(2, transport());
+    viewer.inventory.setItem(1, new ItemStack('minecraft:command_block', 1));
+    viewer.inventory.setItem(2, items.transport());
     world.afterEvents.playerSpawn.__emit({ initialSpawn: true, player: viewer.player });
 
     expect(viewer.inventory.getItem(0)?.typeId).toBe('minecraft:stone');
-    expect(viewer.inventory.getItem(1)?.typeId).toBe(PROTOCOL_ITEM);
+    expect(viewer.inventory.getItem(1)?.typeId).toBe('minecraft:command_block');
     expect(viewer.inventory.getItem(2)).toBeUndefined();
   });
 
@@ -511,7 +544,7 @@ describe('refusing to serve', () => {
     interact(target, viewer);
     await vi.advanceTimersByTimeAsync(TICK * 2);
 
-    expect(error).toHaveBeenCalledWith(expect.stringMatching(/10 container slots and its screen needs 9/));
+    expect(error).toHaveBeenCalledWith(expect.stringMatching(/9 container slots and its screen needs 8/));
     expect(target.container.getItem(0)).toBeUndefined();
     expect(getFibersForOwner(entityOwner(target.entity))).toHaveLength(0);
   });
@@ -544,11 +577,11 @@ describe('reaching the cells', () => {
 
     cells.setItem('output', new ItemStack('minecraft:crafting_table', 1));
 
-    expect(target.container.getItem(4)?.typeId).toBe('minecraft:crafting_table');
+    expect(target.container.getItem(3)?.typeId).toBe('minecraft:crafting_table');
 
     cells.setItem('output');
 
-    expect(isGuard(target.container.getItem(4)!)).toBe(true);
+    expect(items.isGuard(target.container.getItem(3)!)).toBe(true);
     expect(cells.getItem('output')).toBeUndefined();
   });
 
@@ -563,12 +596,12 @@ describe('reaching the cells', () => {
 
     expect(machineOpen.mock.calls[0]?.[0]?.container?.size).toBe(2);
 
-    target.container.setItem(2, new ItemStack('minecraft:oak_planks', 4));
+    target.container.setItem(1, new ItemStack('minecraft:oak_planks', 4));
     await vi.advanceTimersByTimeAsync(TICK);
 
     expect(machineInsert.mock.calls[0]?.[0]?.container?.getItem(0)?.typeId).toBe('minecraft:oak_planks');
 
-    press(target, viewer, 3);
+    press(target, viewer, 2);
     await vi.advanceTimersByTimeAsync(TICK);
 
     // The guard reads as nothing through the view, which is what a handler
@@ -585,7 +618,7 @@ describe('reaching the cells', () => {
     interact(target, viewer);
     await vi.advanceTimersByTimeAsync(TICK);
 
-    target.container.setItem(2, new ItemStack('minecraft:oak_planks', 4));
+    target.container.setItem(1, new ItemStack('minecraft:oak_planks', 4));
     await vi.advanceTimersByTimeAsync(TICK);
 
     expect(machineInsert).toHaveBeenCalledTimes(1);
@@ -595,7 +628,7 @@ describe('reaching the cells', () => {
     screen.container(target.entity).setItem(0);
     await vi.advanceTimersByTimeAsync(TICK);
 
-    expect(target.container.getItem(2)).toBeUndefined();
+    expect(target.container.getItem(1)).toBeUndefined();
     expect(machineInsert).toHaveBeenCalledTimes(1);
     expect(error).not.toHaveBeenCalled();
   });

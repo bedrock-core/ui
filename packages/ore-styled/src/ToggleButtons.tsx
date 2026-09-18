@@ -148,9 +148,13 @@ function Pressed({ options, multiple, defaultValue, value, onChange, enabled, ga
     <Panel flexDirection={'row'} gap={gap} alignSelf={'stretch'} {...layout}>
       {options.map((option) => {
         const isChosen = chosen.includes(option.value);
+        // One choice: the chosen segment IS the answer, so pressing it again
+        // changes nothing and it takes no press. Several: it lets go when
+        // pressed, so it stays live.
+        const pressable = enabled && (multiple || !isChosen);
 
         function handle(): void {
-          if (!enabled) {
+          if (!pressable) {
             return;
           }
 
@@ -177,11 +181,14 @@ function Pressed({ options, multiple, defaultValue, value, onChange, enabled, ga
             paddingTop={isChosen ? tb.selectedDrop * 2 : 0}
             paddingLeft={tb.paddingX}
             paddingRight={tb.paddingX}
+            // A chosen segment wears the pressed face in every state. Locked, it
+            // reads disabled only when the whole group is; a chosen segment of a
+            // live one-choice group is locked only because it takes no press.
             background={isChosen ? tb.textures.pressed : tb.textures.normal}
             backgroundHover={isChosen ? tb.textures.pressed : tb.textures.hover}
-            backgroundPressed={isChosen ? tb.textures.disabledPressed : tb.textures.pressed}
-            backgroundLocked={isChosen ? tb.textures.disabledPressed : tb.textures.disabled}
-            enabled={enabled}
+            backgroundPressed={tb.textures.pressed}
+            backgroundLocked={isChosen ? (enabled ? tb.textures.pressed : tb.textures.disabledPressed) : tb.textures.disabled}
+            enabled={pressable}
             onPress={handle}
           >
             <Text font={ts.font} scale={ts.scale} color={enabled ? (isChosen ? ts.selected : ts.unselected) : ts.disabled}>

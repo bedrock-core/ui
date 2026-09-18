@@ -5,7 +5,7 @@ import { CONTENT_LAYER, FULL, offsetOf, panelFace, stateFace, topLeft } from '..
 import type { ButtonMapping, Control, ControlEntry } from '../../jsonui';
 import { shapeOf } from '../index';
 import { boxOf, entryControl, faceId, shareFace, sizeOf, str } from '../utils/shared';
-import type { FaceEmit, IrNode, NodeBase, NodeDefinition, Rect } from '../utils/types';
+import type { FaceEmit, IrNode, LowerContext, NodeBase, NodeDefinition, Rect } from '../utils/types';
 
 /**
  * What a button looks like in each state. The look is the same on every host;
@@ -61,6 +61,15 @@ export interface ButtonNode extends NodeBase {
    */
   label?: string;
   face: ButtonFace;
+  /**
+   * The faces this button takes when its look follows state, the build's own
+   * first, and the entry that says which one it is wearing.
+   *
+   * Every one of them is drawn: a compiled screen cannot change a texture, so
+   * it draws each look and shows the one the entry names. Absent on a button
+   * whose look holds still, which is nearly all of them.
+   */
+  looks?: { address: number; faces: readonly { face: ButtonFace; children: IrNode[] }[] };
   children: IrNode[];
   /**
    * Drawn around what its children draw rather than in the rect the layout
@@ -267,6 +276,26 @@ const actionOf = (element: JSX.Element, type: string): ButtonAction | undefined 
   return isExitButton(element) ? 'close' : undefined;
 };
 
+/**
+ * The faces a button takes, when the build saw its look follow state.
+ *
+ * Each look is read with the same `faceOf` the element itself is read with, so
+ * a texture the author resolved through a theme lands here the way the
+ * reference render's did.
+ */
+const variantFaces = (element: JSX.Element, ctx: LowerContext): { looks?: ButtonNode['looks'] } => {
+  const carried = ctx.lookOf(element);
+
+  return carried === undefined
+    ? {}
+    : {
+        looks: {
+          address: carried.address,
+          faces: carried.looks.map(look => ({ face: faceOf(look.props), children: ctx.children(look, ctx.own) })),
+        },
+      };
+};
+
 export const buttonDefinition: NodeDefinition<ButtonNode> = {
   kind: 'button',
   types: [BUTTON_TYPE, MODAL_FORM_BUTTON_SLOT_TYPE],
@@ -286,6 +315,7 @@ export const buttonDefinition: NodeDefinition<ButtonNode> = {
       ...typeof props.label === 'string' ? { label: props.label } : {},
       ...props.__hug === true ? { hug: true as const } : {},
       face: faceOf(props),
+      ...variantFaces(element, ctx),
       // Baked into the face, relative to the button like any other child.
       children: ctx.children(element, ctx.own),
     };
@@ -303,6 +333,12 @@ export const buttonDefinition: NodeDefinition<ButtonNode> = {
     }
 
     const faces = shareButtonFaces(node, ctx);
+
+    // Every look this button takes is drawn, so the host has a face to show
+    // for whichever the entry names. The resting one is `faces` above.
+    for (const look of node.looks?.faces ?? []) {
+      shareButtonFaces({ ...lookOf(node), ...look }, ctx);
+    }
 
     if (node.action !== undefined) {
       // A real JSON UI button rather than a cell: the route is the engine's,

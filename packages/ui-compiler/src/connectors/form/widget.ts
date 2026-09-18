@@ -2,6 +2,7 @@ import type { DropdownNode } from '../../nodes/primitives/dropdown';
 import type { InputNode } from '../../nodes/primitives/input';
 import type { ToggleNode } from '../../nodes/primitives/toggle';
 import type { Control } from '../../jsonui';
+import { pinnedEnabled } from '../../nodes/utils/fields';
 
 /**
  * What the engine's own widget is handed when the modal stands it in a field's
@@ -26,13 +27,13 @@ export const toggleWidget = (node: ToggleNode): { definition: string; props: Con
   definition: TOGGLE_ROW,
   // The toggle mounts a payload-free twin of the shared one, so there is no
   // decode to replace.
-  props: { size: ['100%', '100%'], ...node.mount },
+  props: { size: ['100%', '100%'], ...node.mount, ...pinnedEnabled(node) },
 });
 
 /** The row an input mounts, with the engine pointed at the static labels. */
 export const inputWidget = (node: InputNode): { definition: string; props: Control } => ({
   definition: INPUT_ROW,
-  props: { $scale: node.scale, ...node.mount },
+  props: { $scale: node.scale, ...node.mount, ...pinnedEnabled(node) },
 });
 
 /** The row a dropdown mounts, told where the screen hosts its popup. */
@@ -41,5 +42,5 @@ export const dropdownWidget = (node: DropdownNode, ns: string): { definition: st
   // The engine hosts the popup box in the control this names, found BY NAME
   // across the screen: the screen's own popup host, so the name resolves
   // wherever the screen is mounted.
-  props: { $scale: node.scale, $dropdown_area: popupHostOf(ns), ...node.mount },
+  props: { $scale: node.scale, $dropdown_area: popupHostOf(ns), ...node.mount, ...pinnedEnabled(node) },
 });

@@ -1,7 +1,7 @@
 import type { Allocation, SlotEntry } from '../allocate';
 import { cellFor } from './cells';
 import { writeChannels, type Written } from './channels';
-import { type ItemContainer, sentinel } from './items';
+import type { ItemContainer, ProtocolItems } from './items';
 
 /**
  * Making a container agree with a render.
@@ -9,7 +9,7 @@ import { type ItemContainer, sentinel } from './items';
  * Nothing here clears the whole container: the drawn slots hold the players'
  * own items between opens, and the bank holds the channels of the last
  * session, which the next one overwrites cell by cell. Only what the runtime
- * placed is ever removed, and the runtime knows its own items by their mark.
+ * placed is ever removed, and the runtime knows its own items by their type.
  * What each cell writes to its own slot is that cell's business.
  */
 
@@ -26,10 +26,10 @@ export const buttonSlots = (slots: readonly SlotEntry[]): number[] =>
  * The caller re-reads the button slots afterwards: they are in the drawn
  * range, and a write here would otherwise look like a press on the next poll.
  */
-export const writeButtons = (container: ItemContainer, slots: readonly SlotEntry[]): void => {
+export const writeButtons = (container: ItemContainer, slots: readonly SlotEntry[], items: ProtocolItems): void => {
   for (const entry of slots) {
     if (entry.role === 'button') {
-      cellFor(entry.role).settle?.(container, entry);
+      cellFor(entry.role).settle?.(container, entry, items);
     }
   }
 };
@@ -47,16 +47,17 @@ export const reconcile = (
   allocation: Allocation,
   layout: number,
   written: Written,
+  items: ProtocolItems,
 ): void => {
   written.clear();
 
-  for (const [index, stack] of sentinel(layout).entries()) {
-    container.setItem(allocation.sentinels[index] ?? index, stack);
+  for (const slot of allocation.sentinels) {
+    container.setItem(slot, items.sentinel(layout));
   }
 
   for (const entry of allocation.slots) {
-    cellFor(entry.role).settle?.(container, entry);
+    cellFor(entry.role).settle?.(container, entry, items);
   }
 
-  writeChannels(container, allocation.channels, written);
+  writeChannels(container, allocation.channels, written, items);
 };

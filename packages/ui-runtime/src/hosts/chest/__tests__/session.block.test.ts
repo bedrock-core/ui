@@ -14,8 +14,8 @@ import { ContainerScreenError } from '../../../core/types';
 import { useState } from '../../../hooks';
 import type { JSX } from '../../../jsx';
 import { CHARSET } from '../charset';
-import { LAYOUT_PROPERTY, PROTOCOL_ITEM, STATE_PROPERTY, TRANSPORT_ITEM } from '../contract';
-import { isTransport } from '../runtime/items';
+import { LAYOUT_PROPERTY, STATE_PROPERTY } from '../contract';
+import { protocolItems } from '../runtime/items';
 import { type ContainerScreen, createContainerScreen } from '../runtime/session';
 
 /**
@@ -38,6 +38,8 @@ const code = (glyph: string): number => CHARSET.indexOf(glyph) + 1;
 const createContainer = (size: number): EngineContainer => new MockContainer(size) as unknown as EngineContainer;
 
 const BLOCK_TYPE = 'core:test_block';
+
+const items = protocolItems('core');
 
 interface FakeBlock {
   readonly container: EngineContainer;
@@ -158,7 +160,7 @@ const createPlayer = (id: string): FakePlayer => {
 
 const onPress = vi.fn();
 
-/** A button and a four-cell readout: sentinel 0-1, button 2, channel 3-6. Size 7. */
+/** A button and a four-cell readout: sentinel 0, button 1, channel 2-5. Size 6. */
 const Workbench = (): JSX.Element => {
   const [count, setCount] = useState(0);
 
@@ -177,7 +179,7 @@ const Workbench = (): JSX.Element => {
   });
 };
 
-const SIZE = 7;
+const SIZE = 6;
 
 const interact = (target: FakeBlock, viewer: FakePlayer): void => {
   world.beforeEvents.playerInteractWithBlock.__emit({ cancel: false, player: viewer.player, block: target.block });
@@ -187,10 +189,21 @@ const closeFor = (target: FakeBlock, viewer: FakePlayer): void => {
   world.afterEvents.blockContainerClosed.__emit({ block: target.block, closeSource: { entity: viewer.player } });
 };
 
-/** Lifts the transport out of a button, the way a click does. */
+/** Presses a button the way every input does: its transport is dropped, and the drop event names the player. */
 const press = (target: FakeBlock, viewer: FakePlayer, slot: number): void => {
-  viewer.cursor.hold(target.container.getItem(slot));
+  const dropped = target.container.getItem(slot);
+
   target.container.setItem(slot, undefined);
+
+  if (dropped !== undefined) {
+    const entity = {
+      typeId: 'minecraft:item',
+      isValid: true,
+      getComponent: (id: string): unknown => (id === EntityComponentTypes.Item ? { itemStack: dropped } : undefined),
+    };
+
+    world.afterEvents.entityItemDrop.__emit({ entity: viewer.player, items: [entity] });
+  }
 };
 
 const stateOf = (target: FakeBlock): string | undefined => {
@@ -259,7 +272,7 @@ describe('a block-hosted screen', () => {
     });
 
     expect(() => createContainerScreen(Wide)).toThrow(ContainerScreenError);
-    expect(() => createContainerScreen(Wide)).toThrow(/needs 62 container slots and a block holds 54/);
+    expect(() => createContainerScreen(Wide)).toThrow(/needs 61 container slots and a block holds 54/);
     expect(() => createContainerScreen(Wide)).toThrow(/host the[\s\S]*screen on an entity/);
 
     // The same screen on an entity is served without complaint.
@@ -289,10 +302,10 @@ describe('a block-hosted screen', () => {
 
     await vi.advanceTimersByTimeAsync(TICK);
 
-    expect(target.container.getItem(0)?.typeId).toBe(PROTOCOL_ITEM);
-    expect(target.container.getItem(1)?.typeId).toBe(PROTOCOL_ITEM);
-    expect(target.container.getItem(2)?.typeId).toBe(TRANSPORT_ITEM);
-    expect([3, 4, 5, 6].map(slot => target.container.getItem(slot)?.amount)).toEqual([
+    expect(items.roleOf(target.container.getItem(0)!)).toBe('sentinel');
+    expect(items.valueOf(target.container.getItem(0)!)).toBe(7);
+    expect(items.isTransport(target.container.getItem(1)!)).toBe(true);
+    expect([2, 3, 4, 5].map(slot => target.container.getItem(slot)?.amount)).toEqual([
       code('n'), code(' '), code('0'), 1,
     ]);
 
@@ -309,18 +322,18 @@ describe('a block-hosted screen', () => {
     interact(target, viewer);
     await vi.advanceTimersByTimeAsync(TICK);
 
-    press(target, viewer, 2);
+    press(target, viewer, 1);
     await vi.advanceTimersByTimeAsync(TICK);
 
     expect(onPress).toHaveBeenCalledTimes(1);
     expect(onPress.mock.calls[0]?.[0]?.host).toBe(target.block);
     expect(onPress.mock.calls[0]?.[0]?.player).toBe(viewer.player);
-    expect(target.container.getItem(5)?.amount).toBe(code('1'));
+    expect(target.container.getItem(4)?.amount).toBe(code('1'));
     expect(stateOf(target)).toContain('[[0,1]]');
 
-    const transport = target.container.getItem(2);
+    const transport = target.container.getItem(1);
 
-    expect(transport && isTransport(transport)).toBe(true);
+    expect(transport && items.isTransport(transport)).toBe(true);
     expect(error).not.toHaveBeenCalled();
   });
 
@@ -335,7 +348,7 @@ describe('a block-hosted screen', () => {
     interact(second, viewer);
     await vi.advanceTimersByTimeAsync(TICK);
 
-    press(first, viewer, 2);
+    press(first, viewer, 1);
     await vi.advanceTimersByTimeAsync(TICK);
 
     expect(stateOf(first)).toContain('[[0,1]]');
@@ -356,14 +369,14 @@ describe('a block-hosted screen', () => {
 
     interact(target, viewer);
     await vi.advanceTimersByTimeAsync(TICK);
-    press(target, viewer, 2);
+    press(target, viewer, 1);
     await vi.advanceTimersByTimeAsync(TICK);
     closeFor(target, viewer);
 
     interact(target, viewer);
     await vi.advanceTimersByTimeAsync(TICK);
 
-    expect(target.container.getItem(5)?.amount).toBe(code('1'));
+    expect(target.container.getItem(4)?.amount).toBe(code('1'));
   });
 
   it('opens from the after event too, for anything that skips the interact', async () => {
@@ -374,7 +387,7 @@ describe('a block-hosted screen', () => {
 
     world.afterEvents.blockContainerOpened.__emit({ block: target.block, openSource: { entity: viewer.player } });
 
-    expect(target.container.getItem(0)?.typeId).toBe(PROTOCOL_ITEM);
+    expect(items.roleOf(target.container.getItem(0)!)).toBe('sentinel');
   });
 
   it('leaves a block of another type alone', async () => {
@@ -413,7 +426,7 @@ describe('a block-hosted screen', () => {
     interact(target, viewer);
     await vi.advanceTimersByTimeAsync(TICK * 2);
 
-    expect(error).toHaveBeenCalledWith(expect.stringMatching(/8 container slots and its screen needs 7/));
+    expect(error).toHaveBeenCalledWith(expect.stringMatching(/7 container slots and its screen needs 6/));
     expect(error).toHaveBeenCalledWith(expect.stringMatching(/slot_count/));
 
     // The message names the block, not just its type: two of them may stand
@@ -440,7 +453,7 @@ describe('a block-hosted screen', () => {
     interact(target, viewer);
     await vi.advanceTimersByTimeAsync(TICK);
 
-    expect(target.container.getItem(0)?.typeId).toBe(PROTOCOL_ITEM);
+    expect(items.roleOf(target.container.getItem(0)!)).toBe('sentinel');
   });
 
   it('ends the session when the chunk goes while the screen is open', async () => {

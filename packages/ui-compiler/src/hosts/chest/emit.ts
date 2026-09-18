@@ -1,16 +1,16 @@
 import { ContainerScreenError } from '@bedrock-core/ui-runtime/compile';
 import {
-  CELL, foreignSlot, grid, press, pressDefs, slot, text, textDef, TEXT_DEF,
+  CELL, foreignSlot, grid, look, press, pressDefs, slot, text, textDef, TEXT_DEF,
 } from '../../connectors/chest';
 import type { TextStyle } from '../../faces';
 import type { ControlEntry } from '../../jsonui';
 import { collectKind } from '../../nodes';
-import { type ButtonNode, faceSignature, pressAddress } from '../../nodes/primitives/button';
+import { type ButtonNode, type FacedNode, faceSignature, lookOf, pressAddress } from '../../nodes/primitives/button';
 import type { GridNode } from '../../nodes/primitives/grid';
 import { faceId } from '../../nodes/utils/shared';
 import type { SlotNode } from '../../nodes/primitives/slot';
 import { isLive, runOf, type TextNode, textSignature } from '../../nodes/primitives/text';
-import type { Emit, HostEmit } from '../../nodes/utils/types';
+import type { Emit, HostEmit, IrNode } from '../../nodes/utils/types';
 
 /**
  * How the chest draws the sockets whose mechanism is its own.
@@ -30,17 +30,25 @@ import type { Emit, HostEmit } from '../../nodes/utils/types';
  */
 
 /** The shared faces of one button look, fully qualified, as the face pass named them. */
-const facesOf = (node: ButtonNode, ctx: Emit): { id: string; rest: string; hover: string; pressed: string; disabled: string } => {
-  const id = faceId('button', faceSignature(node));
+const facesFor = (faced: FacedNode, ctx: Emit): { id: string; rest: string; hover: string; pressed: string; disabled: string } => {
+  const id = faceId('button', faceSignature(faced));
 
   return {
     id,
     rest: `${ctx.facesNs}.${id}`,
     hover: `${ctx.facesNs}.${id}_hover`,
     pressed: `${ctx.facesNs}.${id}_pressed`,
-    disabled: `${ctx.facesNs}.${node.face.disabled === undefined ? id : `${id}_disabled`}`,
+    disabled: `${ctx.facesNs}.${faced.face.disabled === undefined ? id : `${id}_disabled`}`,
   };
 };
+
+/**
+ * What a button's press definition is shared by: its look, for a button drawn
+ * one way. A button whose look follows state draws every look it takes, which
+ * no other button shares, so its definition is its own.
+ */
+const pressKey = (node: ButtonNode): string =>
+  (node.looks === undefined ? faceId('button', faceSignature(lookOf(node))) : `looks:${node.name}`);
 
 /**
  * Which cell a slot host instantiates: an inert cell for a locked slot, the
@@ -66,6 +74,17 @@ const styleOf = (node: TextNode): TextStyle => ({
 
 export const CHEST_EMIT: HostEmit = {
   id: 'chest',
+
+  /** One version of a carried look, gated on the size of the stack in its bank slot. */
+  wrapLook: (node: IrNode, entry, ctx): ControlEntry => {
+    const gate = node.lookGate;
+
+    if (gate === undefined) {
+      throw new Error(`wrapLook was handed "${node.name}", which is no version of a carried look.`);
+    }
+
+    return look({ name: node.name, address: gate.address, index: gate.index }, entry, ctx);
+  },
 
   /**
    * A full-canvas button that swallows a click so it never falls through to the
@@ -97,16 +116,19 @@ export const CHEST_EMIT: HostEmit = {
     // mechanism definition — only the shared faces, which the face pass has
     // already emitted.
     for (const node of collectKind(root, 'button').filter(button => button.action === undefined)) {
-      const id = faceId('button', faceSignature(node));
+      const key = pressKey(node);
 
-      if (!ctx.faceNames.has(id)) {
-        const definition = `press_${ctx.faceNames.size + 1}`;
+      if (!ctx.faceNames.has(key)) {
+        const definition = `press_${String(ctx.faceNames.size + 1)}`;
 
-        ctx.faceNames.set(id, definition);
+        ctx.faceNames.set(key, definition);
         Object.assign(document, pressDefs({
           definition,
           size: [node.rect.width, node.rect.height],
-          ...facesOf(node, ctx),
+          ...facesFor(lookOf(node), ctx),
+          ...node.looks === undefined
+            ? {}
+            : { looks: node.looks.faces.map(look => facesFor({ ...lookOf(node), ...look }, ctx)) },
         }, ctx));
       }
     }
@@ -132,7 +154,7 @@ export const CHEST_EMIT: HostEmit = {
       }
 
       return press(
-        { name: node.name, address: pressAddress(node), definition: ctx.faceNames.get(faceId('button', faceSignature(node))) ?? 'press_1' },
+        { name: node.name, address: pressAddress(node), definition: ctx.faceNames.get(pressKey(node)) ?? 'press_1' },
         entry,
         ctx,
       );
@@ -168,7 +190,6 @@ export const CHEST_EMIT: HostEmit = {
         columns: node.columns,
         rows: node.rows,
         interactive: node.interactive,
-        hideOwned: node.hideOwned,
       },
       entry,
       ctx,
