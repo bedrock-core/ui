@@ -89,8 +89,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ inputs.ui_version }}
         run: |
-          gh release view "$TAG"
-          gh release upload "$TAG" "$GITHUB_WORKSPACE/core-ui-${VERSION}.mcpack" --clobber
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY"
+          gh release upload "$TAG" "$GITHUB_WORKSPACE/core-ui-${VERSION}.mcpack" --clobber --repo "$GITHUB_REPOSITORY"
 
       - name: Keep a workflow artifact
         uses: actions/upload-artifact@v6
