@@ -2,10 +2,10 @@
 	"protocol": "v0009",
 	"packVersion": [
 		1,
-		11,
+		12,
 		0
 	],
-	"packHash": "b1b29e5cfcd2db34d35fa7487e3becc425d627414241af0f920f1cf9f9f3146b",
+	"packHash": "1c606b95a08fdcd114d1b9baed0ea226cafe48e48614d738f3f91759bde85a9a",
 	"encoding": {
 		"min": 1,
 		"max": 1

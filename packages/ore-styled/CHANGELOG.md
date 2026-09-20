@@ -1,5 +1,114 @@
 # @bedrock-core/ore-styled
 
+## 0.11.0
+
+### Minor Changes
+
+- [#13](https://github.com/bedrock-core/ui/pull/13) [`4ba50cc`](https://github.com/bedrock-core/ui/commit/4ba50cc651643037f0b3ba5d2207ff8e5b7f51d2) Thanks [@drav0011](https://github.com/drav0011)! - **Breaking.** Every handler now takes one event object instead of positional arguments.
+  
+  ```tsx
+  // before
+  <Button onPress={(player, host) => …} />
+  <Slot onInsert={(player, stack, host) => …} />
+  <Container onOpen={(player, host) => …} />
+  <Form onSubmit={values => …} onCancel={() => …} />
+  
+  // after
+  <Button onPress={({ player, host }) => …} />
+  <Slot onInsert={({ player, stack, host }) => …} />
+  <Container onOpen={({ player, host }) => …} />
+  <Form onSubmit={({ player, values }) => …} onCancel={({ player }) => …} />
+  ```
+  
+  `player` is always the player the event is about — the viewer on a form, and on a container screen the player who moved the item. `host` is the entity that owns the screen, so it is present exactly on screens an entity owns; `Form.onSubmit` now carries the submitting player alongside `values`, which a form previously had to reach through `usePlayer()`.
+  
+  What a handler receives can now gain a field without changing a single call site, which is why this lands before 1.0: a form knows its viewer and no entity, a container screen knows both, and each host added after this knows something else again. The new types — `UiEvent`, `PressEvent`, `ContainerEvent`, `SlotEvent`, `SubmitEvent` — are exported from the package root.
+  
+  Custom native components (`registerComponent`, `ComponentDescriptor`, `Writer`, the `emit*` helpers) are now marked **experimental**: they are bound to the serialization wire format rather than to the component API, and that format changes with compiled screens. Everything else in the package is the supported component API.
+
+- [#13](https://github.com/bedrock-core/ui/pull/13) [`440714e`](https://github.com/bedrock-core/ui/commit/440714e5ef61af2b6da28d613d5d9ae385bf60d4) Thanks [@drav0011](https://github.com/drav0011)! - `Header` takes `backReplace`: with `backTo`, the back control opens that screen in place of the current one rather than stacking over it.
+
+- [#13](https://github.com/bedrock-core/ui/pull/13) [`440714e`](https://github.com/bedrock-core/ui/commit/440714e5ef61af2b6da28d613d5d9ae385bf60d4) Thanks [@drav0011](https://github.com/drav0011)! - `@bedrock-core/i18n` is a peer dependency. An addon installs it once, beside `@bedrock-core/server`, so the instance `createI18n()` creates is the one `core.register()` publishes and the one text measurement reads. `@bedrock-core/ui` no longer re-exports it: import `createI18n` from `@bedrock-core/server/i18n`, or from `@bedrock-core/i18n` directly.
+
+- [#13](https://github.com/bedrock-core/ui/pull/13) [`83a14ae`](https://github.com/bedrock-core/ui/commit/83a14ae1005117f3e999ea7fe064b02f3736bf7a) Thanks [@drav0011](https://github.com/drav0011)! - **Breaking.** Screens are navigated by key, and a screen of links can be shown by an addon that
+  has none of its script.
+  
+  Every compiled screen has a key — `<addon>:<name>`, written by the build beside the title it is
+  drawn by — and a press that opens another screen names that key rather than closing over a handler:
+  
+  ```tsx
+  <Link to="shop:home">Shop</Link>
+  ```
+  
+  Because the target is data on the tree, the build can read it. `addonReference(ns)` reduces this
+  addon's static screens to what showing them needs — per screen the title, the value each entry
+  carries, and the key each press leads to — and a realm that holds that table can show another
+  addon's screens from the pack every client already has, following the links as it goes
+  (`presentReference`). That is now how a guide is read across addons.
+  
+  New in `@bedrock-core/ui-runtime`: `Link`, `navigate`, `back`, `openScreen`, `setNavigator`,
+  `addonReference`, `screenReference`, `presentReference`, `isAddonReference`, `isScreenReference`,
+  `compiledKeyOf`, `screenForKey`, `compiledScreens`, and the `ScreenKeys` interface a build's
+  generated module augments so an addon's own keys are typed. `registerCompiledScreen` now takes
+  `{ key, title, snapshot }` instead of positional arguments — it is called by generated code, which
+  the build rewrites.
+  
+  Keys autocomplete: the ui-compiler filter writes `packs/data/ui/screens.generated.d.ts` back into the
+  project — the way the i18n and guides filters commit their declarations — so the editor offers this
+  addon's keys in `navigate()` and `<Link to>` while another addon's key, which this build never saw,
+  is still accepted.
+  
+  `@bedrock-core/navigation` is the key navigator: `navigate('<addon>:<screen>')`, `replace`, `reset`,
+  `back(player)`, `canGoBack`, `currentKey`, `historyOf`, `useNavigation()` inside a screen, and
+  `provideReferences(lookup)` to say what resolves a key this bundle did not compile. Coming from the
+  stack navigator: `push` is `navigate` (it always stacks), `goBack` is `back`, `reset` takes a key
+  instead of a route array, and `setParams` is `replace(key, player, { params })` — a compiled screen
+  is drawn from the pack each time it is shown, so new params mean showing it again. The stack is a stack of KEYS — a compiled screen's shape
+  is frozen, so a stack of components swapped inside one root cannot exist; `createStackNavigator`,
+  `NavigationContainer`, `useRoute`, `stackReducer` and their types are gone.
+  
+  `@bedrock-core/guides`: `createGuide` is removed — a guide is its compiled screens, and a page is a
+  screen rather than a state of one. `guideReference`, `presentGuideReference`, `isGuideReference` and
+  `GuideReference` go with it: a guide's screens ride the ordinary screen table. `openGuide(ns, player)`
+  is a `navigate()`, so it opens this bundle's guide or another addon's the same way. The views take
+  link keys (`linkTo`, `homeTo`) instead of open-page callbacks.
+  
+  `@bedrock-core/ore-styled`: `Button` and `MenuRow` take `to`, and render a link instead of a plain
+  button when given one.
+  
+  `@bedrock-core/config` resolves keys for the whole realm: it installs `provideReferences` over the
+  framework's own table and every addon's published one, publishes this addon's screens with
+  `core.register({ screens })`, and opens a guide by navigating to its index key.
+
+- [#13](https://github.com/bedrock-core/ui/pull/13) [`acaca00`](https://github.com/bedrock-core/ui/commit/acaca00dabac57daeefec9980930b71b088f02e8) Thanks [@drav0011](https://github.com/drav0011)! - These three packages are one surface, and they move together.
+  
+  `@bedrock-core/ui-runtime` is the API an addon writes against, `@bedrock-core/ui-compiler` is what
+  turns that into the JSON UI in its pack, and `@bedrock-core/ore-styled` is the control set both
+  agree on. A screen is drawn from the pack, so the three are one surface in practice: a component
+  the runtime accepts is only real if the compiler can emit it, and a control only exists at all
+  because both halves name it the same way. Versioning them apart said otherwise.
+  
+  `@bedrock-core/ore-styled` is one control per kind, whatever screen draws it. `Button`, `Checkbox`,
+  `Radio`, `Toggle`, `Input`, `Dropdown`, `Slider`, `ToggleButtons`, `Tabs`, `Card`, `Divider`, `Header`,
+  `MenuRow`, `Trail` and `Form` are the set, and a control renders the same whether it was reached
+  from a form, a compiled section or a container screen. `ToggleButtons` makes one choice, or any
+  number with `multiple`, and looks the same either way: a chosen segment wears the pressed face, a
+  white label and a one-pixel drop on every host. `Tabs` takes a label per `Tabs.Tab` and draws its
+  headers on the theme's `tabs` faces, which started as copies of the toggle buttons'. A `MenuRow`
+  with `titleMaxLength` or `subtitleMaxLength` draws its lines above its press, so a live row
+  compiles.
+  
+  `@bedrock-core/ui-compiler` publishes the compiler surface an addon's build calls: `toIr` and the
+  IR node types, `emit` and the JSON UI document types, `compileScreen` and `buildRouter` for the
+  chest host, `compileFormScreen` for the form host, and `faceOf` and the face documents.
+
+- [#13](https://github.com/bedrock-core/ui/pull/13) [`166a5d5`](https://github.com/bedrock-core/ui/commit/166a5d50bd6d3485e2daec6d86268741d01600a6) Thanks [@drav0011](https://github.com/drav0011)! - Text whose shape depends on what it says can be composed by the build in every language the pack ships.
+  
+  - `<Trans>` draws a translated text whose tags are components, as react-i18next's does: `i18nKey` (or `translations` by locale) and `components` by tag name or index. A `<Text>` component styles its tag's content, and any other component is a press hugging it; `<br/>`, `<strong>` and `<i>` are built in. The build breaks the text into the same number of lines in every language, and each component lands exactly where its text is drawn. A screen whose presses run handlers carries the layout in its snapshot, so a render at runtime emits the same entries.
+  - `useComposed` composes a string per language at the width the layout gives a box.
+  - `<Button hug>` sizes a press to the text inside it.
+  - A baked breadcrumb trail (`Trail segments`, `Header title` and `breadcrumbs`) is one label per language, collapsed the way a live trail is.
+
 ## 0.10.0
 
 ### Minor Changes
