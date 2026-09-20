@@ -68,15 +68,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@bedrock-core/db@portal:../server/packages/db::locator=%40bedrock-core%2Fui%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@bedrock-core/db@portal:../server/packages/db::locator=%40bedrock-core%2Fui%40workspace%3A."
+"@bedrock-core/db@npm:0.1.0":
+  version: 0.1.0
+  resolution: "@bedrock-core/db@npm:0.1.0"
   dependencies:
-    "@bedrock-core/observable": "workspace:^"
+    "@bedrock-core/observable": "npm:^0.1.0"
   peerDependencies:
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
+  checksum: 10c0/9d349bfe614d91b734c0cc2c437bf6aeee61f4cdb251dbe2711ba63b583c0a7661795880f465d341612dfe87047d01a824e9441ad2c71f0619ee554ed120f7fc
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "@bedrock-core/flexbox@workspace:*, @bedrock-core/flexbox@workspace:packages/flexbox":
   version: 0.0.0-use.local
@@ -88,13 +89,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@bedrock-core/i18n@portal:../server/packages/i18n::locator=%40bedrock-core%2Fui%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@bedrock-core/i18n@portal:../server/packages/i18n::locator=%40bedrock-core%2Fui%40workspace%3A."
+"@bedrock-core/i18n@npm:0.2.0":
+  version: 0.2.0
+  resolution: "@bedrock-core/i18n@npm:0.2.0"
   peerDependencies:
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
+  checksum: 10c0/9beea9c21e01357d26c9ab248f3e98a7bc7cd721101f3ffd8982a2cbac45c77a293c6a8496251f5bf49a74900541ec6652ea8e88d844b4886c7d23e0cbb6e176
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "@bedrock-core/navigation@workspace:*, @bedrock-core/navigation@workspace:packages/navigation":
   version: 0.0.0-use.local
@@ -121,16 +123,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@bedrock-core/observable@portal:../server/packages/observable::locator=%40bedrock-core%2Fui%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@bedrock-core/observable@portal:../server/packages/observable::locator=%40bedrock-core%2Fui%40workspace%3A."
+"@bedrock-core/observable@npm:0.1.0":
+  version: 0.1.0
+  resolution: "@bedrock-core/observable@npm:0.1.0"
   peerDependencies:
     "@minecraft/server-ui": ">=2.1.0"
   peerDependenciesMeta:
     "@minecraft/server-ui":
       optional: true
+  checksum: 10c0/ad254ba4ec486fe581c8e27230ef64d873da3a3ecaed5cb08f3dee94580419278e3740c9ace32937c3323bfa63238707629751dbc3a9a111477c62d949dbeb84
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "@bedrock-core/ore-styled@workspace:*, @bedrock-core/ore-styled@workspace:packages/ore-styled":
   version: 0.0.0-use.local
@@ -147,28 +150,30 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@bedrock-core/server-runtime@portal:../server/packages/server-runtime::locator=%40bedrock-core%2Fui%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@bedrock-core/server-runtime@portal:../server/packages/server-runtime::locator=%40bedrock-core%2Fui%40workspace%3A."
+"@bedrock-core/server-runtime@npm:0.2.0":
+  version: 0.2.0
+  resolution: "@bedrock-core/server-runtime@npm:0.2.0"
   dependencies:
-    "@bedrock-core/db": "workspace:^"
-    "@bedrock-core/i18n": "workspace:^"
-    "@bedrock-core/observable": "workspace:^"
-    "@bedrock-core/sync": "workspace:^"
+    "@bedrock-core/db": "npm:^0.1.0"
+    "@bedrock-core/i18n": "npm:^0.2.0"
+    "@bedrock-core/observable": "npm:^0.1.0"
+    "@bedrock-core/sync": "npm:^0.2.0"
   peerDependencies:
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
+  checksum: 10c0/1681cd0624ced6c0c5729f655f50626d383159365bef9972b12c2f87f809e63d38055938e82163ca9b1d51d16573f5a4ffaa1d41e59bd3ac7159d4124e57bb66
   languageName: node
-  linkType: soft
+  linkType: hard
 
-"@bedrock-core/sync@portal:../server/packages/sync::locator=%40bedrock-core%2Fui%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@bedrock-core/sync@portal:../server/packages/sync::locator=%40bedrock-core%2Fui%40workspace%3A."
+"@bedrock-core/sync@npm:0.2.0":
+  version: 0.2.0
+  resolution: "@bedrock-core/sync@npm:0.2.0"
   dependencies:
-    "@bedrock-core/observable": "workspace:^"
+    "@bedrock-core/observable": "npm:^0.1.0"
   peerDependencies:
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
+  checksum: 10c0/6156530e71f13d60ac75313a184edd0e22de05329607c8408cccfa9e16b1c29afe61a3061207d89c61d2f41d5a11872180d45e737ce6035a6bd8c0673b71e695
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "@bedrock-core/ui-compiler@workspace:*, @bedrock-core/ui-compiler@workspace:packages/ui-compiler":
   version: 0.0.0-use.local

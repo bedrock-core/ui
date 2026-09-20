@@ -129,11 +129,11 @@
 		}
 	},
 	"resolutions": {
-		"@bedrock-core/db": "portal:../server/packages/db",
-		"@bedrock-core/i18n": "portal:../server/packages/i18n",
-		"@bedrock-core/observable": "portal:../server/packages/observable",
-		"@bedrock-core/server-runtime": "portal:../server/packages/server-runtime",
-		"@bedrock-core/sync": "portal:../server/packages/sync",
+		"@bedrock-core/db": "0.1.0",
+		"@bedrock-core/i18n": "0.2.0",
+		"@bedrock-core/observable": "0.1.0",
+		"@bedrock-core/server-runtime": "0.2.0",
+		"@bedrock-core/sync": "0.2.0",
 		"@minecraft/server": "2.10.0",
 		"@minecraft/server-ui": "2.2.0",
 		"@minecraft/vanilla-data": "1.26.50",
