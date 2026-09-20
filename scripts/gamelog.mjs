@@ -58,6 +58,26 @@ const assertions = (file) => {
   return found;
 };
 
+/** Count the engine-wide FocusManager diagnostic on the form host without failing the release gate. */
+const focusErrors = (file) => {
+  const found = new Map();
+
+  for (const line of linesOf(file)) {
+    if (
+      !line.includes("FocusComponent's visual tree pointer seems to be dangling")
+      || !line.includes('referencing screen: third_party_server_screen')
+    ) {
+      continue;
+    }
+
+    const key = bare(line);
+
+    found.set(key, (found.get(key) ?? 0) + 1);
+  }
+
+  return found;
+};
+
 /** What our own scripts logged: `[ui]` lines land in the debug log under SCRIPTING. */
 const scriptLines = (file) => linesOf(file)
   .filter(line => line.includes('[ui]'))
@@ -76,14 +96,23 @@ let total = 0;
 for (const file of scanned) {
   const found = assertions(file);
   const fired = [...found.values()].reduce((sum, count) => sum + count, 0);
+  const focus = focusErrors(file);
+  const focusFired = [...focus.values()].reduce((sum, count) => sum + count, 0);
 
   total += fired;
 
-  if (fired > 0 || !flags.has('--all')) {
-    console.info(`\n${file}: ${found.size} distinct assertion(s), fired ${fired} time(s)`);
+  if (fired > 0 || focusFired > 0 || !flags.has('--all')) {
+    console.info(
+      `\n${file}: ${found.size} distinct assertion(s), fired ${fired} time(s); `
+      + `${focus.size} distinct FocusManager diagnostic(s), fired ${focusFired} time(s)`,
+    );
   }
 
   for (const [entry, count] of found) {
+    console.info(`\n×${count} ${entry}`);
+  }
+
+  for (const [entry, count] of focus) {
     console.info(`\n×${count} ${entry}`);
   }
 }
@@ -101,10 +130,14 @@ if (!flags.has('--all')) {
 
   if (contentLog !== undefined) {
     const problems = linesOf(contentLog)
-      .filter(line => /\[Scripting\]\[(error|warning)\]/.test(line) && !line.includes('Custom Command alias'));
+      .filter(line => (
+        /\[(Scripting|Packs)\]\[(error|warning)\]/.test(line)
+        && !line.includes('Custom Command alias')
+      ));
 
     if (problems.length > 0) {
-      console.info(`\n${contentLog}: ${problems.length} script error/warning line(s)`);
+      total += problems.length;
+      console.info(`\n${contentLog}: ${problems.length} pack/script error/warning line(s)`);
 
       for (const line of problems) {
         console.info(`  ${line}`);
@@ -113,5 +146,7 @@ if (!flags.has('--all')) {
   }
 }
 
-console.info(total === 0 ? '\n✔ no assertions' : `\n✖ ${total} assertion(s) — each one is a Marketplace rejection`);
+console.info(total === 0
+  ? '\n✔ no release-blocking log errors'
+  : `\n✖ ${total} release-blocking log error(s)`);
 process.exit(total === 0 ? 0 : 1);
