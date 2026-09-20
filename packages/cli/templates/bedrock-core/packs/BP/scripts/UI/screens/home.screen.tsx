@@ -8,8 +8,7 @@ import {
   theme,
   Toggle,
 } from '@bedrock-core/ui/ore-styled';
-import { Fragment, type JSX, Panel, Screen, Text, usePlayer, useState, useTranslation } from '@bedrock-core/ui';
-import { useNavigation } from '@bedrock-core/ui/navigation';
+import { Fragment, type JSX, Panel, Screen, Text, useState } from '@bedrock-core/ui';
 import { i18n } from '../i18n';
 
 const { fontColor, spacing } = theme.tokens;
@@ -20,22 +19,16 @@ const { fontColor, spacing } = theme.tokens;
  * anywhere else in this addon.
  */
 export default function Home(): JSX.Element {
-  const player = usePlayer();
-  const navigation = useNavigation();
   const [enabled, setEnabled] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const [plan, setPlan] = useState('basic');
-
-  // The typed verbs, bound to this player's language (../i18n.ts).
-  const { t, key } = useTranslation(i18n);
 
   return (
     <Screen>
       <Panel flexDirection={'column'} padding={spacing.md} gap={spacing.md}>
         {/* A key() string as a child is auto-detected and resolved CLIENT-side. */}
-        <Text>{key($ => $.meta.name)}</Text>
-        {/* t() resolves + fills server-side in this player's language. */}
-        <Text>{`${fontColor.muted}${t($ => $.example.greeting, { name: player.name })}`}</Text>
+        <Text>{i18n.key($ => $.meta.name)}</Text>
+        <Text>{i18n.key($ => $.meta.description)}</Text>
 
         <Card>
           <Text>{'Preferences'}</Text>
@@ -64,12 +57,8 @@ export default function Home(): JSX.Element {
           />
         </Card>
 
-        {/* A live value (plan) rides along as a param, so this press calls navigate() directly. */}
-        <Button
-          onPress={(): void => {
-            navigation.navigate('{{CREATOR_ID}}_{{PACK_ID}}:plan', { params: { plan } });
-          }}
-        >
+        {/* A static target compiles to a plain link with no handler. */}
+        <Button to={'{{CREATOR_ID}}_{{PACK_ID}}:plan'}>
           {`${fontColor.default}See your plan ->`}
         </Button>
 

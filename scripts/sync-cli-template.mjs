@@ -10,7 +10,7 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 
-const TEMPLATE = 'packages/cli/templates/ore-styled/package.json';
+const TEMPLATE = 'packages/cli/templates/bedrock-core/package.json';
 
 const rootVersion = JSON.parse(readFileSync('package.json', 'utf8')).version;
 const range = `^${rootVersion}`;

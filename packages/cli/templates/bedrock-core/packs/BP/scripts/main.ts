@@ -18,7 +18,7 @@ import { ButtonPushAfterEvent, Entity, Player, world } from '@minecraft/server';
 import { MinecraftEntityTypes } from '@minecraft/vanilla-data';
 import { configDef } from './config';
 import { i18n } from './UI/i18n';
-import Home from './UI/screens/home.screen';
+import homeScreen from './UI/screens/home.screen';
 
 const isPlayer = (entity: Entity): entity is Player => entity.typeId === MinecraftEntityTypes.Player;
 
@@ -53,6 +53,6 @@ world.afterEvents.buttonPush.subscribe(({ source }: ButtonPushAfterEvent): void 
     return;
   }
 
-  // Present the Home screen for this player
-  render(Home, source);
+  // Present the home screen for this player
+  render(homeScreen, source);
 });

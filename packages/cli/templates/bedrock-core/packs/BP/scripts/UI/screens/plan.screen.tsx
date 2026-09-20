@@ -4,21 +4,15 @@ import { type JSX, Panel, Screen, Text } from '@bedrock-core/ui';
 
 const { fontColor, spacing } = theme.tokens;
 
-export interface PlanProps {
-  /** Carried across from Home's navigate() call — see `NavigateOptions.params`. */
-  plan: string;
-}
-
 /** Compiled as `{{CREATOR_ID}}_{{PACK_ID}}:plan`. */
-export default function Plan({ plan }: PlanProps): JSX.Element {
+export default function Plan(): JSX.Element {
   return (
     <Screen>
       <Panel flexDirection={'column'} padding={spacing.md} gap={spacing.md}>
         <Text>{'§lYour plan'}</Text>
 
         <Card>
-          {/* `plan` differs by call, exactly like state does, so it also needs maxLength. */}
-          <Text maxLength={40}>{`${fontColor.muted}Selected plan: ${fontColor.default}§l${plan}`}</Text>
+          <Text>{`${fontColor.muted}Add the selected plan details here.`}</Text>
           <Divider />
           <Text>{`${fontColor.disabled}What the plan includes goes here.`}</Text>
         </Card>

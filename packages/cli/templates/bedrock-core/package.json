@@ -14,11 +14,13 @@
 		"loopback:preview": "CheckNetIsolation.exe LoopbackExempt -a -p=S-1-15-2-424268864-5579737-879501358-346833251-474568803-887069379-4040235476"
 	},
 	"dependencies": {
-		"@bedrock-core/catalog": "^0.1.0",
+		"@bedrock-core/catalog": "^0.1.1",
 		"@bedrock-core/config": "^0.3.0",
 		"@bedrock-core/guides": "^0.2.0",
+		"@bedrock-core/i18n": "^0.2.0",
 		"@bedrock-core/server": "^0.2.0",
 		"@bedrock-core/ui": "^0.12.1",
+		"@minecraft/common": "1.2.0",
 		"@minecraft/server": "2.10.0",
 		"@minecraft/server-ui": "2.2.0",
 		"@minecraft/vanilla-data": "1.26.50"
@@ -29,7 +31,7 @@
 		"@minecraft/server-gametest": "1.0.0-beta.1.26.50-stable",
 		"@stylistic/eslint-plugin": "^5.10.0",
 		"eslint": "^10.4.1",
-		"eslint-plugin-minecraft-linting": "^1.2.7",
+		"eslint-plugin-minecraft-linting": "^2.0.12",
 		"typescript": "^6.0.3",
 		"typescript-eslint": "^8.60.1"
 	},

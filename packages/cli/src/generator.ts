@@ -26,7 +26,7 @@ const dirname = path.dirname(filename);
  * Get the template directory path.
  */
 function getTemplateDir(): string {
-  return path.resolve(dirname, '../templates/ore-styled');
+  return path.resolve(dirname, '../templates/bedrock-core');
 }
 
 /**
