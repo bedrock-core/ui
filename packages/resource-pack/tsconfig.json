@@ -1,39 +1,22 @@
 {
-	"extends": "../../tsconfig.json",
 	"compilerOptions": {
-		"rootDir": "../..",
-		"outDir": "packs/BP/scripts/",
+		"target": "esnext",
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"resolveJsonModule": true,
+		"noEmit": true,
+		"allowImportingTsExtensions": true,
+		"strict": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		"skipLibCheck": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"jsx": "react-jsx",
+		"jsxImportSource": "@bedrock-core/ui",
 		"paths": {
-			"@bedrock-core/ui": [
-				"../../packages/ui-runtime/src/index.ts"
-			],
-			"@bedrock-core/ui/*": [
-				"../../packages/ui-runtime/src/*"
-			],
-			"@bedrock-core/ui/container": [
-				"../../packages/ui-runtime/src/hosts/chest/index.ts"
-			],
-			"@bedrock-core/ui-runtime/container": [
-				"../../packages/ui-runtime/src/hosts/chest/index.ts"
-			],
-			"@bedrock-core/ui-runtime": [
-				"../../packages/ui-runtime/src/index.ts"
-			],
-			"@bedrock-core/ui-runtime/*": [
-				"../../packages/ui-runtime/src/*"
-			],
-			"@bedrock-core/ui/jsx-runtime": [
-				"../../packages/ui-runtime/src/jsx/jsx-runtime.ts"
-			],
-			"@bedrock-core/ui/jsx-dev-runtime": [
-				"../../packages/ui-runtime/src/jsx/jsx-dev-runtime.ts"
-			],
-			"@bedrock-core/i18n": [
-				"../../../server/packages/i18n/src/index.ts"
-			],
-			"@bedrock-core/i18n/*": [
-				"../../../server/packages/i18n/src/*"
-			],
 			"@bedrock-core/generated/i18n": [
 				"./packs/data/i18n/i18n.generated.json"
 			],
@@ -48,5 +31,9 @@
 	"include": [
 		"packs/BP/scripts/**/*",
 		"packs/data/**/*"
+	],
+	"exclude": [
+		"node_modules",
+		"build"
 	]
 }

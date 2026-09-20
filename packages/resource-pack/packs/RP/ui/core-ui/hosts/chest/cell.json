@@ -438,44 +438,33 @@
 		]
 	},
 
-	// Two copies of the cell share an output slot, toggled by what it holds.
-	//
-	// While the slot holds its guard, the REAL cell — the only item cell in
-	// here — is invisible, and with it everything that can feed the engine's
-	// hover text: no item render, no slot button, no tooltip. What shows instead
-	// is the fake: the same cell face the real cell draws and nothing else,
-	// so the slot looks like any empty slot. A real result
-	// flips the toggle: the fake hides, the real cell shows, and it hovers,
-	// tooltips and takes like any slot.
-	//
-	// The toggle reads the guard's max durability — the only kind of check a
-	// slot answers: a container slot publishes NUMBERS, never text. The gates
-	// ride wrapper panels rather than the cell, because bindings on an instance
-	// REPLACE the base's own, which the item render depends on. The literal is
-	// the guard's identity (32717), fixed by its item definition, whatever
-	// items other addons register.
+	// The real output cell stays mounted while its invisible guard is present, so
+	// taking a result never destroys the focused control. A guard-only input
+	// overlay paints the empty face above it and consumes presses and hover, which
+	// keeps the guard's durability bar and tooltip out of the chest UI.
 	"output_slot": {
 		"type": "panel",
 		"size": [ 18, 18 ],
 		"controls": [
 			{
-				"result": {
-					"type": "panel",
-					"size": [ "100%", "100%" ],
-					"bindings": [
-						{ "binding_type": "collection_details", "binding_collection_name": "container_items" },
-						{ "binding_name": "#item_durability_total_amount", "binding_name_override": "#identity", "binding_type": "collection", "binding_collection_name": "container_items" },
-						{ "binding_type": "view", "source_property_name": "(not (#identity = 32717))", "target_property_name": "#visible" }
-					],
-					"controls": [
-						{ "item@core_ui_chest.cell": { "$item_collection_name": "container_items" } }
-					]
+				"item@core_ui_chest.cell": {
+					"$item_collection_name": "container_items"
 				}
 			},
 			{
-				"empty_slot": {
-					"type": "panel",
+				"empty_guard": {
+					"type": "input_panel",
 					"size": [ "100%", "100%" ],
+					"layer": 30,
+					"focus_enabled": false,
+					"button_mappings": [
+						{
+							"from_button_id": "button.menu_select",
+							"to_button_id": "button.menu_select",
+							"mapping_type": "pressed",
+							"consume_event": true
+						}
+					],
 					"bindings": [
 						{ "binding_type": "collection_details", "binding_collection_name": "container_items" },
 						{ "binding_name": "#item_durability_total_amount", "binding_name_override": "#identity", "binding_type": "collection", "binding_collection_name": "container_items" },

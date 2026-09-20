@@ -15,14 +15,14 @@
  * Usage:
  *   node scripts/curseforge-upload.mjs --file <mcpack> --changelog-file <md> --tag <tag> [--dry-run]
  *
- * Reads `CURSEFORGE_TOKEN` from the environment (not needed for --dry-run
- * unless the game versions still have to be resolved).
+ * Reads `CURSEFORGE_TOKEN` from the environment (not needed for --dry-run).
  */
 import { basename } from 'node:path';
 import { readFileSync } from 'node:fs';
 
 const CONFIG = 'packages/resource-pack/curseforge.json';
 const RECORD = 'packages/resource-pack/protocol.json';
+const MANIFEST = 'packages/resource-pack/packs/RP/manifest.json';
 
 function fail(message) {
 	console.error(`curseforge-upload: ${message}`);
@@ -63,79 +63,32 @@ if (!config.projectId) {
 	fail(`"projectId" is not set in ${CONFIG} — take the numeric id from the CurseForge project URL`);
 }
 
-if (!Array.isArray(config.gameVersionSlugs) || config.gameVersionSlugs.length === 0) {
-	fail(`"gameVersionSlugs" in ${CONFIG} is empty — CurseForge rejects a file with no game version`);
+if (!['alpha', 'beta', 'release'].includes(config.releaseType)) {
+	fail(`"releaseType" in ${CONFIG} must be "alpha", "beta" or "release"`);
 }
 
 const { packVersion } = JSON.parse(readFileSync(RECORD, 'utf8'));
 const displayName = `Core UI ${packVersion.join('.')}`;
 const base = `https://${config.gameEndpoint}.curseforge.com/api`;
+const manifest = JSON.parse(readFileSync(MANIFEST, 'utf8'));
+const minimumEngine = manifest.header?.min_engine_version;
 
-/**
- * Resolve the configured slugs to the numeric ids the upload expects.
- *
- * An unresolved slug is fatal on purpose: CurseForge would happily take the
- * upload with whatever ids did resolve, and the file would land tagged for the
- * wrong Minecraft versions — silently, and only visible on the public page.
- * A red build is the cheaper failure.
- */
-async function resolveGameVersions() {
-	const response = await fetch(`${base}/game/versions`, { headers: { 'X-Api-Token': token } });
-
-	if (!response.ok) {
-		fail(`GET /game/versions → ${response.status} ${response.statusText}\n${await response.text()}`);
-	}
-
-	const versions = await response.json();
-	const bySlug = new Map(versions.map((version) => [version.slug, version]));
-	const ids = [];
-	const missing = [];
-
-	for (const slug of config.gameVersionSlugs) {
-		const version = bySlug.get(slug);
-
-		if (version) { ids.push(version.id); }
-		else { missing.push(slug); }
-	}
-
-	if (missing.length > 0) {
-		// CurseForge returns every version of every type — thousands of rows,
-		// mostly Java. Narrow to the type the slugs that DID resolve belong to;
-		// when none resolved, sample each type so the right one is pickable.
-		const types = new Set(ids.map((id) => versions.find((v) => v.id === id).gameVersionTypeID));
-		const grouped = new Map();
-
-		for (const version of versions) {
-			if (types.size > 0 && !types.has(version.gameVersionTypeID)) { continue; }
-
-			const slugs = grouped.get(version.gameVersionTypeID) ?? [];
-
-			slugs.push(version.slug);
-			grouped.set(version.gameVersionTypeID, slugs);
-		}
-
-		const hint = [...grouped]
-			.map(([type, slugs]) => {
-				const sorted = slugs.sort();
-				const shown = types.size > 0 ? sorted : sorted.slice(0, 8);
-				const more = sorted.length - shown.length;
-
-				return `  type ${type}: ${shown.join(', ')}${more > 0 ? ` … (+${more})` : ''}`;
-			})
-			.join('\n');
-
-		fail(`unknown game version slug(s) in ${CONFIG}: ${missing.join(', ')}\nknown slugs:\n${hint}`);
-	}
-
-	return ids;
+if (typeof minimumEngine !== 'string' || !/^1\.\d+\.\d+$/.test(minimumEngine)) {
+	fail(`${MANIFEST} header.min_engine_version must be a Bedrock version such as "1.26.50"`);
 }
 
-const gameVersions = token ? await resolveGameVersions() : [];
+// CurseForge displays current Bedrock releases without Minecraft's leading
+// `1.` (manifest 1.26.50 is CurseForge 26.50). Extra names can be declared for
+// a compatibility range, but the pack's actual minimum is always included.
+const gameVersionNames = [...new Set([
+	...(Array.isArray(config.gameVersionNames) ? config.gameVersionNames : []),
+	minimumEngine.slice(2),
+])];
 const metadata = {
 	changelog: readFileSync(args['changelog-file'], 'utf8'),
 	changelogType: 'markdown',
 	displayName,
-	gameVersions,
+	gameVersionNames,
 	releaseType: config.releaseType,
 };
 const pack = readFileSync(args.file);
@@ -154,17 +107,24 @@ form.append('file', new Blob([pack]), basename(args.file));
 
 const upload = await fetch(`${base}/projects/${config.projectId}/upload-file`, {
 	method: 'POST',
-	headers: { 'X-Api-Token': token },
+	headers: { Accept: 'application/json', 'X-Api-Token': token },
 	body: form,
 });
 const body = await upload.text();
 
 if (!upload.ok) { fail(`upload-file → ${upload.status} ${upload.statusText}\n${body}`); }
 
-const { id } = JSON.parse(body);
-// The public file URL is keyed by the project SLUG, which the API never returns;
-// /projects/<id> is the id-addressable redirect CurseForge does expose.
-const url = `https://www.curseforge.com/projects/${config.projectId}`;
+let id;
+
+try {
+	({ id } = JSON.parse(body));
+} catch {
+	fail(`upload-file returned invalid JSON\n${body}`);
+}
+
+if (!Number.isInteger(id)) { fail(`upload-file response has no numeric file id\n${body}`); }
+
+const projectSettingsUrl = `https://authors.curseforge.com/#/projects/${config.projectId}/general`;
 
 console.log(`curseforge-upload: ${displayName} uploaded from ${args.tag} — file ${id}`);
 
@@ -173,6 +133,6 @@ if (process.env.GITHUB_STEP_SUMMARY) {
 
 	appendFileSync(
 		process.env.GITHUB_STEP_SUMMARY,
-		`### CurseForge\n\n\`${displayName}\` uploaded as file \`${id}\` from \`${args.tag}\` — [project](${url}).\n`,
+		`### CurseForge\n\n\`${displayName}\` uploaded as file \`${id}\` from \`${args.tag}\` — [project settings](${projectSettingsUrl}).\n`,
 	);
 }

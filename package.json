@@ -68,26 +68,28 @@
 		"packages/ui-runtime",
 		"packages/navigation",
 		"packages/ore-styled",
-		"packages/resource-pack",
 		"packages/cli",
 		"packages/flexbox",
 		"packages/ui-compiler"
 	],
 	"scripts": {
-		"regolith-install": "yarn workspaces foreach -i -A --topological --jobs=1 run regolith-install",
 		"build": "yarn workspaces foreach -ptA run build",
-		"build:libs": "yarn workspaces foreach -A -pt --no-private --exclude '@bedrock-core/ui' run build",
+		"build:libs": "yarn workspaces foreach -A -pt --no-private --exclude '@bedrock-core/ui' --exclude '@bedrock-core/cli' run build",
 		"prepack": "yarn build:libs",
 		"watch": "concurrently \"nodemon\"",
 		"lint": "yarn workspaces foreach -ptA run lint",
+		"lint:libs": "yarn workspaces foreach -A -pt --no-private --exclude '@bedrock-core/ui' --exclude '@bedrock-core/cli' run lint",
 		"test": "yarn workspaces foreach -ptA run test",
+		"test:libs": "yarn workspaces foreach -A -pt --no-private --exclude '@bedrock-core/ui' --exclude '@bedrock-core/cli' run test",
 		"coverage": "yarn workspaces foreach -ptA run coverage",
-		"deploy": "yarn workspace @bedrock-core/ui-resource-pack exec regolith run",
+		"deploy": "yarn --cwd packages/resource-pack deploy",
 		"preflight": "node scripts/preflight.mjs",
 		"gamelog": "node scripts/gamelog.mjs",
 		"changeset": "changeset",
 		"version-packages": "changeset version && node scripts/bump-meta.mjs && node scripts/sync-cli-template.mjs && node scripts/sync-pack-version.mjs",
-		"release": "yarn lint && yarn build:libs && yarn test && node scripts/publish-tarballs.mjs && changeset tag && node scripts/tag-meta.mjs",
+		"release": "yarn release:libraries",
+		"release:libraries": "yarn lint:libs && yarn build:libs && yarn test:libs && node scripts/publish-tarballs.mjs @bedrock-core/cli && node scripts/tag-packages.mjs @bedrock-core/cli",
+		"release:cli": "yarn workspace @bedrock-core/cli lint && yarn workspace @bedrock-core/cli build && node scripts/publish-tarballs.mjs --only @bedrock-core/cli && node scripts/tag-packages.mjs --only @bedrock-core/cli",
 		"clean": "node scripts/clean.mjs"
 	},
 	"dependencies": {
@@ -99,7 +101,7 @@
 	},
 	"devDependencies": {
 		"@changesets/changelog-github": "^0.7.0",
-		"@changesets/cli": "^2.31.0",
+		"@changesets/cli": "3.0.3",
 		"@eslint/css": "^1.2.0",
 		"@eslint/js": "^10.0.1",
 		"@eslint/json": "^1.2.0",
@@ -127,9 +129,7 @@
 		}
 	},
 	"resolutions": {
-		"@bedrock-core/catalog": "portal:../apps/packages/catalog",
 		"@bedrock-core/db": "portal:../server/packages/db",
-		"@bedrock-core/guides": "portal:../apps/packages/guides",
 		"@bedrock-core/i18n": "portal:../server/packages/i18n",
 		"@bedrock-core/observable": "portal:../server/packages/observable",
 		"@bedrock-core/server-runtime": "portal:../server/packages/server-runtime",

@@ -54,18 +54,19 @@ pack-only revisions — so no pack change can ship unversioned.
 
 ## What ships
 
-**Only `packs/RP` is published.** The release workflow builds this project and zips the resource
-pack output (`build/@bedrock-core_ui_rp`) into the `.mcpack` — see the *Package Resource Pack* step
-in [`publish.yml`](../../.github/workflows/publish.yml). Nothing else in this package is an
-artifact.
+**Only `packs/RP` is published.** The separate resource-pack workflow builds this project and
+zips `build/@bedrock-core_ui_rp` into the `.mcpack` — see
+[`resource-pack.yml`](../../.github/workflows/resource-pack.yml). Nothing else in this package is
+an artifact.
 
 The same `.mcpack` is then pushed to CurseForge by
 [`curseforge.yml`](../../.github/workflows/curseforge.yml), which downloads it back off the release
-and uploads it with the release notes as the file's changelog. The project id, release type and
-supported game versions live in [`curseforge.json`](./curseforge.json) — that file is the only place
-to declare a new Minecraft version, and an unrecognized slug fails the job rather than shipping a
-file tagged for the wrong versions. CurseForge exposes no API for a project's description page, so
-that page is written by hand and kept version-free.
+and uploads it with the release notes as the file's changelog. The numeric project id and release
+type live in [`curseforge.json`](./curseforge.json), so changing the CurseForge project name or slug
+does not require a repository change. The workflow reads the supported Bedrock version
+from `packs/RP/manifest.json` (`1.26.50` becomes CurseForge `26.50`); additional compatible version
+names can be listed in `gameVersionNames`. CurseForge exposes no API for a project's description
+page, so that page is written by hand and kept version-free.
 
 The behavior pack is build input rather than an artifact: it carries the framework’s own screen
 and the guide components, which `ui-compiler` bakes into the resource pack. Nothing registers the
@@ -73,14 +74,14 @@ framework, so the pack ships no script at all, and `build/@bedrock-core_ui_bp` i
 
 ## Development
 
-Part of the monorepo; run commands from the **root workspace**:
+The resource pack is an independent Yarn project. Run its commands from this directory:
 
 ```bash
-# From repository root
-yarn install          # Install all workspace dependencies
-yarn regolith-install # Install the Regolith filters (once, and after filter version bumps)
-yarn build            # Build all packages (including this addon)
-yarn watch            # Rebuild and deploy to com.mojang on change
+# From packages/resource-pack
+yarn install           # Install artifact-owned local development links
+yarn regolith-install  # Install the pinned released Regolith filters
+yarn build             # Build the release artifact locally
+yarn deploy            # Build and deploy to com.mojang
 ```
 
 The filter chain is `guides` → `i18n` → `ui-compiler` → `references`. There is no bundler stage:

@@ -24,6 +24,10 @@ and JSON generation — all wired and ready.
    yarn regolith-install
    ```
 
+   The command installs all seven released filters declared in `config.json`: `core` and
+   manifest, generator, guides, i18n, ui-compiler and bundler. Regolith does not install
+   the stages that `core` delegates to automatically.
+
 3. **Install the render pack:**
 
    ```txt

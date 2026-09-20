@@ -12,13 +12,17 @@
 // Runs after ui-compiler, which wrote the registration module this reads, and
 // before the bundler. The references are built by the same library the
 // screens were compiled against, in the same way an addon builds its own at
-// startup; the result is written into the catalog package's source, where it
-// is committed like any generated resource.
+// startup. The result stays in the artifact project's cache. `sync-framework`
+// copies it into Apps before Catalog is released; the artifact workflow later
+// verifies it against the copy installed from npm.
 
+import crypto from 'node:crypto';
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
-import { evaluateEntry } from '../../../../regolith-filters/ui-compiler/lib/load.ts';
+import { build, type Plugin } from 'esbuild';
 
 const projectRoot = process.env['ROOT_DIR'];
 
@@ -34,7 +38,93 @@ const I18N_BUNDLE = 'data/i18n/i18n.generated.json';
 const GUIDES_BUNDLE = 'data/guides/guides.generated.json';
 const PAGE = 'BP/scripts/screens/framework.screen.tsx';
 const MANIFEST = 'RP/manifest.json';
-const OUTPUT = path.resolve(projectRoot, '..', '..', '..', 'apps', 'packages', 'catalog', 'src', 'generated', 'framework.generated.ts');
+const OUTPUT = path.resolve(projectRoot, '.regolith', 'cache', 'references', 'framework.generated.ts');
+
+/** Every runtime export declared by a Minecraft type-only package. */
+function gameExports(specifier: string, from: string): string[] {
+  try {
+    const manifest = createRequire(path.join(from, 'resolve.cjs')).resolve(`${specifier}/package.json`);
+    const declarations = fs.readFileSync(path.join(path.dirname(manifest), 'index.d.ts'), 'utf-8');
+    const names = new Set<string>();
+    const declared = /^export\s+(?:declare\s+)?(?:abstract\s+)?(?:class|const|let|var|function|enum|interface|type)\s+([A-Za-z_$][\w$]*)/gm;
+
+    for (const match of declarations.matchAll(declared)) {
+      if (match[1] !== undefined) names.add(match[1]);
+    }
+
+    return [...names];
+  } catch {
+    return [];
+  }
+}
+
+/** Replaces Minecraft's type-only packages while evaluating pure build-time UI code. */
+function gameStubPlugin(from: string): Plugin {
+  const anything = [
+    'const handler = {',
+    "  get: (target, key) => key === '__esModule' ? true : typeof key === 'symbol' ? undefined : anything(),",
+    '  apply: () => anything(),',
+    '  construct: () => anything(),',
+    '};',
+    'const anything = () => new Proxy(function stub() {}, handler);',
+  ].join('\n');
+
+  return {
+    name: 'minecraft-stub',
+    setup(pluginBuild) {
+      pluginBuild.onResolve({ filter: /^@minecraft\/server(-ui|-net|-admin)?$/ }, args => ({
+        path: args.path,
+        namespace: 'minecraft-stub',
+      }));
+      pluginBuild.onLoad({ filter: /.*/, namespace: 'minecraft-stub' }, args => ({
+        contents: [
+          anything,
+          ...gameExports(args.path, from).map(name => `export const ${name} = anything();`),
+          'export default anything();',
+        ].join('\n'),
+        loader: 'js',
+        resolveDir: from,
+      }));
+    },
+  };
+}
+
+/** Bundle and execute the reference entry against this artifact project's npm dependencies. */
+async function evaluateEntry<T>(contents: string): Promise<T> {
+  const result = await build({
+    stdin: {
+      contents,
+      resolveDir: process.cwd(),
+      sourcefile: 'references.entry.ts',
+      loader: 'ts',
+    },
+    bundle: true,
+    format: 'esm',
+    platform: 'node',
+    alias: Object.fromEntries(
+      [['@bedrock-core/generated/i18n', I18N_BUNDLE], ['@bedrock-core/generated/guides', GUIDES_BUNDLE]]
+        .filter(([, file]) => fs.existsSync(file as string))
+        .map(([specifier, file]) => [specifier, path.resolve(file as string)]),
+    ),
+    plugins: [gameStubPlugin(process.cwd())],
+    write: false,
+    logLevel: 'silent',
+  });
+  const [output] = result.outputFiles;
+
+  if (output === undefined) throw new Error('esbuild produced no reference bundle');
+
+  const cacheDir = path.join(projectRoot, '.regolith', 'cache', 'references');
+  const hash = crypto.createHash('sha1').update(output.text).digest('hex').slice(0, 16);
+  const file = path.join(cacheDir, `${hash}.mjs`);
+
+  fs.mkdirSync(cacheDir, { recursive: true });
+  fs.writeFileSync(file, output.text, 'utf-8');
+
+  const mod = await import(pathToFileURL(file).href) as { default: T };
+
+  return mod.default;
+}
 
 for (const required of [REGISTRATION, I18N_BUNDLE, PAGE, MANIFEST]) {
   if (!fs.existsSync(required)) {
@@ -67,19 +157,7 @@ export default {
 };
 `;
 
-const references = await evaluateEntry<References>({
-  contents: entry,
-  resolveDir: process.cwd(),
-  sourcefile: 'references.entry.ts',
-  loader: 'ts',
-  cacheDir: path.join(projectRoot, '.regolith', 'cache', 'references'),
-  aliases: Object.fromEntries(
-    [['@bedrock-core/generated/i18n', I18N_BUNDLE], ['@bedrock-core/generated/guides', GUIDES_BUNDLE]]
-      .filter(([, file]) => fs.existsSync(file as string))
-      .map(([specifier, file]) => [specifier, path.resolve(file as string)]),
-  ),
-  key: 'references',
-}).catch((error: unknown) => {
+const references = await evaluateEntry<References>(entry).catch((error: unknown) => {
   console.error(`❌ references: ${String(error instanceof Error ? error.message : error)}`);
 
   return process.exit(1);

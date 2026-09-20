@@ -27,9 +27,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: curseforge-${{ inputs.tag }}
+  cancel-in-progress: false
+
 jobs:
   upload:
     name: Upload .mcpack to CurseForge
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -51,9 +56,12 @@ jobs:
           gh release view "$TAG" --json body -q .body > .curseforge/changelog.md
           shopt -s nullglob
           packs=(.curseforge/*.mcpack)
-          if [[ ${#packs[@]} -eq 0 ]]; then
-            echo "No .mcpack attached to $TAG — nothing to upload."
+          if [[ ${#packs[@]} -ne 1 ]]; then
+            echo "Expected exactly one .mcpack attached to $TAG; found ${#packs[@]}."
             exit 1
+          fi
+          if [[ ! -s .curseforge/changelog.md ]]; then
+            printf 'Release `%s`.\n' "$TAG" > .curseforge/changelog.md
           fi
           echo "file=${packs[0]}" >> "$GITHUB_OUTPUT"
 

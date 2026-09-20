@@ -25,6 +25,9 @@ yarn regolith-install
 yarn build
 ```
 
+The template's `filterDefinitions` pins `core` and all six stages it delegates to, so
+`yarn regolith-install` installs the complete stack before the first build.
+
 ## Documentation
 
 https://bedrock-core.drav.dev/docs/cli

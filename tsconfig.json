@@ -64,12 +64,6 @@
 			"@bedrock-core/ore-styled/*": [
 				"./packages/ore-styled/src/*"
 			],
-			"@bedrock-core/guides": [
-				"../apps/packages/guides/src/index.ts"
-			],
-			"@bedrock-core/guides/*": [
-				"../apps/packages/guides/src/*"
-			],
 			"@bedrock-core/flexbox": [
 				"./packages/flexbox/src/index.ts"
 			],
@@ -87,12 +81,6 @@
 			],
 			"@bedrock-core/sync": [
 				"../server/packages/sync/src/index.ts"
-			],
-			"@bedrock-core/catalog": [
-				"../apps/packages/catalog/src/index.ts"
-			],
-			"@bedrock-core/catalog/*": [
-				"../apps/packages/catalog/src/*"
 			]
 		}
 	},

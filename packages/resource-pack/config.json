@@ -25,18 +25,6 @@
 			"references": {
 				"runWith": "nodejs",
 				"script": "./filters/references.mts"
-			},
-			"guides-local": {
-				"runWith": "nodejs",
-				"script": "../../../regolith-filters/guides/main.ts"
-			},
-			"i18n-local": {
-				"runWith": "nodejs",
-				"script": "../../../regolith-filters/i18n/main.ts"
-			},
-			"ui-compiler-local": {
-				"runWith": "nodejs",
-				"script": "../../../regolith-filters/ui-compiler/main.ts"
 			}
 		},
 		"formatVersion": "1.4.0",
@@ -82,7 +70,7 @@
 				},
 				"filters": [
 					{
-						"filter": "guides-local",
+						"filter": "guides",
 						"settings": {
 							"namespace": "core",
 							"pretty": {
@@ -91,7 +79,7 @@
 						}
 					},
 					{
-						"filter": "i18n-local",
+						"filter": "i18n",
 						"settings": {
 							"namespace": "core",
 							"pretty": {
@@ -100,7 +88,7 @@
 						}
 					},
 					{
-						"filter": "ui-compiler-local",
+						"filter": "ui-compiler",
 						"settings": {
 							"namespace": "core",
 							"stamp": true,
