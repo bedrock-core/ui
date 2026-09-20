@@ -18,7 +18,7 @@
 		"@bedrock-core/config": "^0.3.0",
 		"@bedrock-core/guides": "^0.2.0",
 		"@bedrock-core/server": "^0.2.0",
-		"@bedrock-core/ui": "^0.12.0",
+		"@bedrock-core/ui": "^0.12.1",
 		"@minecraft/server": "2.10.0",
 		"@minecraft/server-ui": "2.2.0",
 		"@minecraft/vanilla-data": "1.26.50"

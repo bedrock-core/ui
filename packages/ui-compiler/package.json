@@ -1,6 +1,6 @@
 {
 	"name": "@bedrock-core/ui-compiler",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Compiles a solved @bedrock-core/ui tree into static JSON UI",
 	"keywords": [
 		"ui",
