@@ -1,4 +1,4 @@
-import { FunctionComponent, JSX } from '@bedrock-core/ui/jsx-runtime';
+import type { FunctionComponent, JSX } from '../../jsx/jsx-runtime';
 import { EventSignal } from '../../hooks';
 import { Player } from '@minecraft/server';
 import type { Owner } from './owner';
