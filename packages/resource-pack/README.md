@@ -78,7 +78,7 @@ The resource pack is an independent Yarn project. Run its commands from this dir
 
 ```bash
 # From packages/resource-pack
-yarn install           # Install artifact-owned local development links
+yarn install           # Install exact released package versions
 yarn regolith-install  # Install the pinned released Regolith filters
 yarn build             # Build the release artifact locally
 yarn deploy            # Build and deploy to com.mojang

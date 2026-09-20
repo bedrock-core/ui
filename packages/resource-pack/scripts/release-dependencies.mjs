@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** Remove the artifact project's local development links in an ephemeral CI checkout. */
+/** Validate that an artifact build uses exact published package versions. */
 import { readFileSync, writeFileSync } from 'node:fs';
 
 const file = new URL('../package.json', import.meta.url);
@@ -14,4 +14,4 @@ for (const [name, range] of Object.entries(manifest.dependencies ?? {})) {
 }
 
 writeFileSync(file, `${JSON.stringify(manifest, null, '\t')}\n`);
-console.log('release-dependencies: local links removed; artifact install will use published packages');
+console.log('release-dependencies: artifact install will use exact published packages');

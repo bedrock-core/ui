@@ -1,8 +1,8 @@
 name: Release resource pack
 
-# Run after UI, Server and Apps packages are public. This builds from the UI
-# release tag, checks the generated framework reference against the published
-# Catalog package, and attaches the .mcpack to the existing UI GitHub release.
+# Run after UI, Server and Apps packages are public. This builds the artifact
+# source from main with exact published package versions, checks the generated
+# framework reference against Catalog, and attaches the .mcpack to the UI release.
 on:
   workflow_dispatch:
     inputs:
@@ -10,7 +10,12 @@ on:
         description: UI npm/release version, without the package name
         type: string
         required: true
-        default: 0.12.0
+        default: 0.12.1
+      catalog_version:
+        description: Catalog npm version containing the matching framework snapshot
+        type: string
+        required: true
+        default: 0.1.1
       ship_to_curseforge:
         description: Upload the attached pack to CurseForge after the build
         type: boolean
@@ -30,11 +35,10 @@ jobs:
     env:
       TAG: '@bedrock-core/ui@${{ inputs.ui_version }}'
     steps:
-      - name: Checkout UI release
+      - name: Checkout resource-pack source
         uses: actions/checkout@v7
         with:
           path: ui
-          ref: '@bedrock-core/ui@${{ inputs.ui_version }}'
 
       - run: corepack enable
 
@@ -50,7 +54,12 @@ jobs:
             github.com/bedrock-core/regolith-filters
 
       - name: Select published dependencies
-        run: yarn release-dependencies
+        env:
+          UI_VERSION: ${{ inputs.ui_version }}
+          CATALOG_VERSION: ${{ inputs.catalog_version }}
+        run: |
+          node --input-type=module -e "import { readFileSync, writeFileSync } from 'node:fs'; const file = 'package.json'; const manifest = JSON.parse(readFileSync(file, 'utf8')); for (const name of ['@bedrock-core/ui', '@bedrock-core/ui-runtime']) manifest.dependencies[name] = process.env.UI_VERSION; manifest.dependencies['@bedrock-core/catalog'] = process.env.CATALOG_VERSION; writeFileSync(file, JSON.stringify(manifest, null, '\t') + '\n');"
+          yarn release-dependencies
         working-directory: ui/packages/resource-pack
 
       - name: Install released pack dependencies

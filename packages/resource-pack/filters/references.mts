@@ -101,6 +101,7 @@ async function evaluateEntry<T>(contents: string): Promise<T> {
     bundle: true,
     format: 'esm',
     platform: 'node',
+    tsconfig: path.join(projectRoot, 'tsconfig.json'),
     alias: Object.fromEntries(
       [['@bedrock-core/generated/i18n', I18N_BUNDLE], ['@bedrock-core/generated/guides', GUIDES_BUNDLE]]
         .filter(([, file]) => fs.existsSync(file as string))
