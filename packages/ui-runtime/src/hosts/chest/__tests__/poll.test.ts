@@ -11,7 +11,7 @@ import { allocate, type Allocation } from '../allocate';
 import { buildContainerTree } from '../build';
 import { protocolItems, BUTTON_STACK } from '../runtime/items';
 import {
-  createLedger, createWatch, fingerprint, poll, type PollHost, resync, retrieve, sweep,
+  createLedger, createWatch, poll, type PollHost, resync, retrieve, sameStack, sweep,
 } from '../runtime/poll';
 import { buttonSlots, reconcile, writeButtons } from '../runtime/reconcile';
 import { screenContainer } from '../runtime/view';
@@ -211,7 +211,7 @@ describe('a press', () => {
     const item = container.getItem(1);
 
     expect(item && items.isTransport(item)).toBe(true);
-    expect(host.watch.expected[1]).toBe(fingerprint(container, 1));
+    expect(sameStack(host.watch.held[1], container.getItem(1))).toBe(true);
 
     // Settled: a second poll sees nothing.
     poll(host);
@@ -308,7 +308,7 @@ describe('an input slot', () => {
     expect(container.getItem(2)?.amount).toBe(3);
     expect(onInsert).not.toHaveBeenCalled();
     expect(host.handle).not.toHaveBeenCalled();
-    expect(host.watch.expected[2]).toBe(fingerprint(container, 2));
+    expect(sameStack(host.watch.held[2], container.getItem(2))).toBe(true);
   });
 
   it('takes a partial back from a merged stack and returns the change from a larger cursor', () => {
@@ -343,7 +343,7 @@ describe('an input slot', () => {
     poll(host);
 
     expect(container.getItem(2)).toBeUndefined();
-    expect(host.watch.expected[2]).toBe('');
+    expect(host.watch.held[2]).toBeUndefined();
     expect(host.trace).toHaveBeenCalledWith(expect.stringMatching(/NOT undone/));
   });
 
@@ -382,7 +382,7 @@ describe('an input slot', () => {
     expect(call?.[0]?.stack?.amount).toBe(4);
     expect(call?.[0]?.host).toBe(HOST);
     expect(host.handle).toHaveBeenCalledTimes(1);
-    expect(host.watch.expected[2]).toBe(fingerprint(container, 2));
+    expect(sameStack(host.watch.held[2], container.getItem(2))).toBe(true);
   });
 });
 
@@ -407,7 +407,7 @@ describe('an output slot', () => {
     expect(container.getItem(3)?.amount).toBe(2);
     expect(viewer.inventory.getItem(0)).toBeUndefined();
     expect(onTake).not.toHaveBeenCalled();
-    expect(host.watch.expected[3]).toBe(fingerprint(container, 3));
+    expect(sameStack(host.watch.held[3], container.getItem(3))).toBe(true);
   });
 
   it('reverses a swap over a result: nothing is taken and the result stands again', () => {
@@ -503,6 +503,27 @@ describe('an ordinary slot', () => {
 
     expect(onInsert).toHaveBeenCalledTimes(1);
     expect(onRemove).not.toHaveBeenCalled();
+  });
+
+  it('notices a same-type swap when an unstackable item carries different custom data', () => {
+    const viewer = createPlayer('p1');
+    const { container, host } = rig(viewer);
+    const original = new ItemStack('minecraft:netherite_pickaxe');
+
+    original.nameTag = 'Original';
+    original.setLore(['first']);
+    container.setItem(4, original);
+    resync(container, host.watch, [4]);
+
+    const replacement = original.clone();
+
+    replacement.nameTag = 'Replacement';
+    replacement.setLore(['second']);
+    container.setItem(4, replacement);
+    poll(host);
+
+    expect(onInsert).toHaveBeenCalledTimes(1);
+    expect(onInsert.mock.calls[0]?.[0]?.stack?.nameTag).toBe('Replacement');
   });
 
   it('traces a removal to the viewer who gained the item since the last poll', () => {

@@ -10,30 +10,78 @@ import type { ItemContainer } from './items';
  * slot's cell decide what the change meant.
  */
 
-/** `typeId|amount|damage` — enough to notice any move, cheap enough per tick. */
-export const fingerprint = (container: ItemContainer, slot: number): string => {
-  const item = container.getItem(slot);
+const safe = <T>(read: () => T): T | undefined => {
+  try {
+    return read();
+  } catch {
+    return undefined;
+  }
+};
 
-  if (!item) {
-    return '';
+/**
+ * State Minecraft does not expose through one canonical comparison for an unstackable item.
+ *
+ * Stackable items use `isStackableWith`, which compares their complete custom data natively.
+ * Minecraft deliberately returns false from that method for every unstackable item, so those
+ * need their mutable script-visible state compared explicitly instead.
+ */
+const unstackableState = (item: ItemStack): string => JSON.stringify({
+  nameTag: item.nameTag,
+  lore: safe(() => item.getRawLore()) ?? safe(() => item.getLore()),
+  canDestroy: safe(() => item.getCanDestroy()),
+  canPlaceOn: safe(() => item.getCanPlaceOn()),
+  keepOnDeath: item.keepOnDeath,
+  lockMode: item.lockMode,
+  dynamicProperties: safe(() => item.getDynamicPropertyIds().sort().map(id => [id, item.getDynamicProperty(id)])),
+  book: safe(() => {
+    const book = item.getComponent(ItemComponentTypes.Book);
+
+    return book && {
+      author: book.author,
+      isSigned: book.isSigned,
+      rawContents: book.rawContents,
+      title: book.title,
+    };
+  }),
+  durability: safe(() => {
+    const durability = item.getComponent(ItemComponentTypes.Durability);
+
+    return durability && { damage: durability.damage, unbreakable: durability.unbreakable };
+  }),
+  dye: safe(() => item.getComponent(ItemComponentTypes.Dyeable)?.color),
+  enchantments: safe(() => item.getComponent(ItemComponentTypes.Enchantable)?.getEnchantments()
+    .map(({ level, type }) => [type.id, level] as const)
+    .sort(([a], [b]) => a.localeCompare(b))),
+});
+
+/** Whether two readings describe the same stack, including custom data and item components. */
+export const sameStack = (before: ItemStack | undefined, after: ItemStack | undefined): boolean => {
+  if (before === undefined || after === undefined) {
+    return before === after;
   }
 
-  return `${item.typeId}|${item.amount}|${item.getComponent(ItemComponentTypes.Durability)?.damage ?? 0}`;
+  if (before.typeId !== after.typeId || before.amount !== after.amount) {
+    return false;
+  }
+
+  if (before.isStackable && after.isStackable) {
+    return before.isStackableWith(after);
+  }
+
+  return unstackableState(before) === unstackableState(after);
 };
 
 /**
  * What each drawn slot held last time it was looked at, by container index.
  *
- * A fingerprint says THAT a slot changed; enforcing a role needs to know WHICH
- * WAY — an input slot cares about items leaving, an output slot about items
- * arriving — and that is only answerable against the previous contents.
+ * The saved stack says both whether a slot changed and which way it changed —
+ * an input slot cares about items leaving, an output slot about items arriving.
  */
 export interface Watch {
-  expected: string[];
   held: (ItemStack | undefined)[];
 }
 
-export const createWatch = (): Watch => ({ expected: [], held: [] });
+export const createWatch = (): Watch => ({ held: [] });
 
 /**
  * Re-reads drawn slots after the runtime, or a player, changed them.
@@ -43,7 +91,6 @@ export const createWatch = (): Watch => ({ expected: [], held: [] });
  */
 export const resync = (container: ItemContainer, watch: Watch, slots: readonly number[]): void => {
   for (const slot of slots) {
-    watch.expected[slot] = fingerprint(container, slot);
     watch.held[slot] = container.getItem(slot);
   }
 };

@@ -14,7 +14,7 @@ import { allocate } from '../allocate';
 import { buildContainerTree } from '../build';
 import { protocolItems } from '../runtime/items';
 import { screenContainer } from '../runtime/view';
-import { createWatch, fingerprint, resync } from '../runtime/watch';
+import { createWatch, resync, sameStack } from '../runtime/watch';
 
 const items = protocolItems('core');
 
@@ -274,18 +274,18 @@ describe('the container over a screen own cells', () => {
 
     cells.setItem(0, new ItemStack('minecraft:coal', 4));
 
-    expect(watch.expected[1]).toBe(fingerprint(container, 1));
+    expect(sameStack(watch.held[1], container.getItem(1))).toBe(true);
     expect(watch.held[1]?.typeId).toBe('minecraft:coal');
 
     cells.getSlot(0).amount = 9;
 
-    expect(watch.expected[1]).toBe(fingerprint(container, 1));
+    expect(sameStack(watch.held[1], container.getItem(1))).toBe(true);
 
     // Emptying the result cell settles it on the guard, watch included.
     cells.setItem('output', new ItemStack('minecraft:crafting_table', 1));
     cells.setItem('output');
 
-    expect(watch.expected[4]).toBe(fingerprint(container, 4));
+    expect(sameStack(watch.held[4], container.getItem(4))).toBe(true);
   });
 
   it('moves and transfers between the screen cells and a plain container', () => {

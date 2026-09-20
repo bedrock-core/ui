@@ -144,11 +144,6 @@ __metadata:
   peerDependencies:
     "@bedrock-core/i18n": "*"
     "@bedrock-core/ui-runtime": "*"
-  peerDependenciesMeta:
-    "@bedrock-core/i18n":
-      optional: true
-    "@bedrock-core/ui-runtime":
-      optional: true
   languageName: unknown
   linkType: soft
 

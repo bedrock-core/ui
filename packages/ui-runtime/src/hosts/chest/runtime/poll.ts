@@ -6,7 +6,7 @@ import { cellFor } from './cells';
 import { firePending } from './cells/button';
 import type { ItemContainer, ProtocolItems } from './items';
 import { cursorOf, type Ledger, remember } from './players';
-import { fingerprint, type Watch } from './watch';
+import { sameStack, type Watch } from './watch';
 
 /**
  * Watching the drawn range, and letting each cell answer for its slot.
@@ -19,7 +19,7 @@ import { fingerprint, type Watch } from './watch';
  * forbidden move is put back a tick later.
  */
 
-export { createWatch, fingerprint, resync, type Watch } from './watch';
+export { createWatch, resync, sameStack, type Watch } from './watch';
 export {
   actorOf, createLedger, give, type Ledger, remember, retrieve, sweep,
 } from './players';
@@ -99,11 +99,13 @@ export const poll = (host: PollHost): void => {
     const entry = host.slots[index];
     const { slot, role } = entry;
 
-    if (fingerprint(container, slot) === watch.expected[slot]) {
+    const current = container.getItem(slot);
+
+    if (sameStack(watch.held[slot], current)) {
       continue;
     }
 
-    cellFor(role).changed(host, entry, watch.held[slot], container.getItem(slot));
+    cellFor(role).changed(host, entry, watch.held[slot], current);
   }
 
   // Nothing of ours belongs on a cursor: a press drops its item, and an output
