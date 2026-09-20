@@ -52,7 +52,10 @@ for (const workspace of workspaces) {
 	run('git', ['tag', tag], { stdio: 'inherit' });
 	console.log(`tag     ${tag}`);
 
-	if (process.env.CHANGESETS_OUTPUT) {
+	// Changesets inventories only child workspaces. Reporting the repository-root
+	// UI meta package aborts the action with "Package @bedrock-core/ui not found".
+	// Its tag and release are completed separately from the child workspace releases.
+	if (process.env.CHANGESETS_OUTPUT && workspace.location !== '.') {
 		appendFileSync(
 			process.env.CHANGESETS_OUTPUT,
 			`${JSON.stringify({ type: 'git-tag', tag, packageName: manifest.name })}\n`,
