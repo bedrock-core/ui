@@ -1,5 +1,12 @@
 # @bedrock-core/ui-compiler
 
+## 0.1.1
+
+### Patch Changes
+
+- Updated dependencies [[`e04d422`](https://github.com/bedrock-core/ui/commit/e04d42249e644ff4807f0e77cf32e723b4233096)]:
+  - @bedrock-core/ui-runtime@0.12.1
+
 ## 0.1.0
 
 ### Minor Changes

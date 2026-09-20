@@ -1,5 +1,11 @@
 # @bedrock-core/ui-runtime
 
+## 0.12.1
+
+### Patch Changes
+
+- [`e04d422`](https://github.com/bedrock-core/ui/commit/e04d42249e644ff4807f0e77cf32e723b4233096) Thanks [@drav0011](https://github.com/drav0011)! - Remove the undeclared dependency on the `@bedrock-core/ui` umbrella package from Runtime's internal JSX types, so `@bedrock-core/ui-runtime` typechecks when installed directly.
+
 ## 0.12.0
 
 ### Minor Changes
