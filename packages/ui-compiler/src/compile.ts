@@ -1,0 +1,317 @@
+/**
+ * The whole compiler, end to end: a screen component in, a JSON UI document
+ * out, plus the counts the filter reports and stamps. The router that reaches
+ * every compiled screen is built from the same results.
+ */
+
+import type { FunctionComponent, JSX } from '@bedrock-core/ui-runtime';
+import {
+  allocate, BLOCK_SLOT_LIMIT, blockCapacityError, buildContainerTree, buildScreenOnce,
+  BUTTON_TYPE, type ContainerHost, containerHost, containerRoot, ContainerScreenError, layoutKey, LOOK_LIMIT,
+  probeLiveness, type Probe, variantsAt, type VariantTable,
+} from '@bedrock-core/ui-runtime/compile';
+import {
+  BACKDROP_DEFINITION, type FaceDocument, faceOf, facesNamespaceOf,
+} from './face';
+import { fill } from './fill';
+import { CHEST_EMIT, CHEST_HOST, type ChestHost, chestRouter, type ChestRouting } from './hosts/chest';
+import type { Allocation } from './ir';
+import type { Control, Document } from './jsonui';
+import { chestAddressing, toIr } from './toIr';
+import { langOf, type ScreenLang } from './lang';
+import { checkTrans } from './trans';
+import { carriedPositions, drawnPerLook } from './looks';
+
+export interface ScreenSpec {
+  /** Screen name from the file name, e.g. `furnace`. */
+  name: string;
+  /**
+   * The addon's namespace, e.g. `core`. The screen is emitted into the JSON UI
+   * namespace `<namespace>_<name>`, so an addon's screens carry its own name
+   * rather than the library's. Defaults to `core_ui`.
+   */
+  namespace?: string;
+}
+
+/** The default namespace prefix when a spec names none. */
+const DEFAULT_NAMESPACE = 'core_ui';
+
+export interface CompiledScreen {
+  name: string;
+  /** The addon's namespace the screen was compiled under. */
+  addon: string;
+  /** The JSON UI namespace: `<addon>_<name>`. */
+  namespace: string;
+  /** The key the router picks this layout by: derived from the namespace, so it is the same on every build. */
+  layoutId: number;
+  /** What the screen's `<Container>` opens from: a custom entity, or a custom block. */
+  host: ContainerHost;
+  /** The JSON UI document: `screen` (+ `backdrop` when the screen has a Background) and its shared definitions. */
+  document: Document;
+  /** The screen as faces alone, before the host stood its mechanisms in. */
+  face: FaceDocument;
+  /** The namespace of the addon's shared faces, and the looks this screen contributes to it. */
+  facesNamespace: string;
+  faces: Record<string, Control>;
+  /** Counts the filter reports and stamps: drawn cells, bank slots, and the inventory size the entity needs. */
+  allocation: Allocation;
+  hasBackdrop: boolean;
+  /** Whether any text channel exists, so the filter knows to emit the character table. */
+  hasText: boolean;
+  /** The strings the text this screen composed per language adds to each language, by key. */
+  lang: ScreenLang;
+  /**
+   * The looks its elements take, the build's own first in each: what the
+   * runtime is handed to say which one each wears, by the size of a button's
+   * own stack or of a bank slot for anything else.
+   */
+  looks: readonly VariantTable[];
+}
+
+/** Namespaces are dotted into references, so a name is an identifier, not a path. */
+const NAME = /^[A-Za-z0-9_-]+$/;
+
+const checkSpec = (spec: ScreenSpec): void => {
+  const namespace = spec.namespace ?? DEFAULT_NAMESPACE;
+
+  if (!NAME.test(namespace)) {
+    throw new ContainerScreenError(
+      `"${namespace}" cannot namespace a screen: it becomes part of the JSON UI namespace `
+      + `${namespace}_${spec.name}, which allows letters, digits, "_" and "-" only.`,
+    );
+  }
+
+  if (!NAME.test(spec.name)) {
+    throw new ContainerScreenError(
+      `"${spec.name}" cannot name a screen: it becomes the JSON UI namespace ${namespace}_${spec.name}, `
+      + 'which allows letters, digits, "_" and "-" only.',
+    );
+  }
+};
+
+/**
+ * What the build found moving, said in the author's terms.
+ *
+ * A compiled screen is baked, so a string that changes at runtime is not a
+ * detail to warn about — it is a screen that will be wrong and will not say
+ * so. The probe renders the component with each state slot perturbed, so
+ * anything reported here really did change between two renders; the fix is
+ * always the same, and the observed strings show what to size it for.
+ */
+export const checkLiveness = (
+  probe: Probe,
+  name: string,
+  options: { carriedVisible?: boolean; carriedLooks?: ReadonlySet<number> } = {},
+): void => {
+  if (probe.shape !== undefined) {
+    throw new ContainerScreenError(
+      `"${name}" renders a different screen when its state changes.\n`
+      + '  A compiled screen is numbered once, at build time, so it cannot add, drop or\n'
+      + '  reorder a cell afterwards. Change what a control SHOWS instead of whether it is\n'
+      + '  there: `enabled` on a button, `visible` on a panel, `maxLength` on live text.\n'
+      + `    was: ${probe.shape.before}\n`
+      + `    now: ${probe.shape.after}`,
+    );
+  }
+
+  // A live visible is a carrier on a host that has one and an error on a host
+  // that does not: the chest would bake the build's value and hide nothing.
+  if (options.carriedVisible !== true && probe.liveVisibles.length > 0) {
+    throw new ContainerScreenError(
+      `"${name}" changes ${probe.liveVisibles.length} element(s)' \`visible\` with state, and this host has no carrier for it.\n`
+      + '  A chest screen bakes `visible`, so the build\'s value would show forever.\n'
+      + '  Keep it static here, or serve the screen from a form host, which carries it as an entry.',
+    );
+  }
+
+  // A look the host draws per value and chooses between is not baked at all.
+  const baked = probe.props.filter(prop => options.carriedLooks?.has(prop.position) !== true);
+
+  if (probe.geometry.length > 0) {
+    const boxes = probe.geometry.slice(0, 3)
+      .map(prop => `<${prop.type}> #${String(prop.position)} ${prop.prop} ${prop.before} to ${prop.after}`);
+
+    console.warn(
+      `"${name}" lays ${probe.geometry.length} box(es) out differently when its state changes; the build's placement is kept.\n`
+      + `    ${boxes.join(', ')}${probe.geometry.length > boxes.length ? ', and more' : ''}`,
+    );
+  }
+
+  if (baked.length > 0) {
+    const moved = baked.map(prop =>
+      `    <${prop.type}> #${String(prop.position)} ${prop.prop}: ${prop.before} became ${prop.after}`);
+
+    // Everything a look can be drawn from is carried by now, so what is left
+    // here is a screen that would show the build's value however its state
+    // moved — and say nothing about it.
+    throw new ContainerScreenError(
+      `"${name}" changes ${baked.length} prop(s) with state that the screen cannot follow.\n`
+      + '  A look is drawn once per value it takes, but only on an element with no mechanism of\n'
+      + '  its own: a press, a slot, a live string (`maxLength`), a live image (`live`) or a list\n'
+      + '  is drawn by the host, which keeps the look the build gave it. Keep these the same for\n'
+      + '  every state, and put what changes on a plain element beside it — a panel, an image\n'
+      + '  or a baked string, whose look is carried:\n'
+      + moved.join('\n'),
+    );
+  }
+
+  if (probe.frozen.length === 0) {
+    return;
+  }
+
+  const lines = probe.frozen.map(text =>
+    `    "${text.before}" became "${text.after}" — needs maxLength={${text.longest}} or more`);
+
+  throw new ContainerScreenError(
+    `"${name}" has ${probe.frozen.length} <Text> that change${probe.frozen.length === 1 ? 's' : ''} with state but ${probe.frozen.length === 1 ? 'is' : 'are'} baked into the layout.\n`
+    + '  Baked text is written into JSON UI at build time and never changes again, so the\n'
+    + '  screen would show the build\'s string forever. Give each one `maxLength`, which\n'
+    + '  reserves a container slot per character:\n'
+    + lines.join('\n'),
+  );
+};
+
+/**
+ * How many looks an element can wear on a chest.
+ *
+ * A look rides the size of a stack — the button's own, or a bank slot's for
+ * anything else — which runs from two to 64, so there is room for 63.
+ *
+ * @throws ContainerScreenError when an element takes more.
+ */
+const checkLooks = (looks: ReadonlyMap<JSX.Element, VariantTable>, name: string): void => {
+  for (const table of looks.values()) {
+    if (table.combinations.length > LOOK_LIMIT) {
+      throw new ContainerScreenError(
+        `"${name}" draws a <${table.type}> ${String(table.combinations.length)} different ways, and a container screen carries ${String(LOOK_LIMIT)} at most.\n`
+        + '  A look rides the size of a stack, which runs from 2 to 64.\n'
+        + '  Draw fewer versions of it.',
+      );
+    }
+  }
+};
+
+/**
+ * What a block can hold.
+ *
+ * A block container is fixed at 54 slots by the engine, and a screen spends
+ * every one of them: two on the routing sentinel, one per drawn cell, and the
+ * rest on the bank the live values ride. An entity's inventory has no such cap,
+ * which is the way out when a screen is genuinely too big. The message is the
+ * runtime's, so the build and `createContainerScreen` refuse in one voice.
+ *
+ * @throws ContainerScreenError when a block-hosted screen needs more.
+ */
+const checkCapacity = (host: ContainerHost, size: number, name: string): void => {
+  if (host.kind === 'block' && size > BLOCK_SLOT_LIMIT) {
+    throw blockCapacityError(name, size);
+  }
+};
+
+/**
+ * Compiles one screen: build the tree, allocate its cells and channels, solve
+ * the IR, emit JSON UI.
+ *
+ * @param Screen - The screen component. The component itself, not the result
+ *   of calling it: hooks resolve against the build owner.
+ * @param spec - The screen's name and the addon namespace it is emitted under.
+ * @param host - The host the screen is served through. Defaults to the chest.
+ * @throws ContainerScreenError when the spec or the tree breaks the container rules.
+ * @throws UnsupportedNodeError for a control with no compiled form.
+ */
+export function compileScreen(
+  Screen: FunctionComponent,
+  spec: ScreenSpec,
+  host: ChestHost = CHEST_HOST,
+): CompiledScreen {
+  checkSpec(spec);
+
+  const addon = spec.namespace ?? DEFAULT_NAMESPACE;
+  const namespace = `${addon}_${spec.name}`;
+
+  // Before anything is baked: does this screen actually hold still? Everything
+  // downstream assumes it does.
+  const probe = probeLiveness(() => buildScreenOnce(Screen));
+  const tree = buildContainerTree(Screen);
+  // A button's look rides the size of the stack in its own slot, so a button's
+  // look is carried only where there is a slot: one that closes the screen has
+  // none, and keeps the build's look. Any other element's look takes a bank
+  // slot of its own, which the allocation below spends.
+  const pressed = new Set(allocate(tree).slots.filter(entry => entry.role === 'button').map(entry => entry.element));
+  const looks = new Map([...drawnPerLook(variantsAt(tree, probe.variants))]
+    .filter(([element]) => element.type !== BUTTON_TYPE || pressed.has(element)));
+
+  checkLooks(looks, spec.name);
+  checkLiveness(probe, spec.name, { carriedLooks: carriedPositions(looks.values()) });
+
+  const allocation = allocate(tree, undefined, [...looks.values()]);
+
+  // The root and the host are the CHEST's questions — what counts as a
+  // screen's root differs per host, so the walk below is handed the answer
+  // rather than asked to find it.
+  const root = containerRoot(tree);
+  const screenHost = containerHost(root);
+
+  if (screenHost === undefined) {
+    throw new ContainerScreenError(
+      '`<Container>` needs `entity` or `block`: the type of the entity or the block the screen opens from.',
+    );
+  }
+
+  checkTrans(tree, spec.name);
+  checkCapacity(screenHost, allocation.size, spec.name);
+  const ir = toIr(root, chestAddressing(allocation, tree, looks), {
+    namespace,
+    faces: facesNamespaceOf(addon),
+    collection: host.collection,
+  });
+  const face = faceOf(ir);
+  const document = fill(face, CHEST_EMIT);
+  const drawn = allocation.slots.length;
+  const counts: Allocation = {
+    sentinels: allocation.sentinels.length,
+    drawn,
+    channels: allocation.size - allocation.sentinels.length - drawn,
+    size: allocation.size,
+  };
+
+  return {
+    name: spec.name,
+    addon,
+    namespace,
+    layoutId: layoutKey(addon, spec.name),
+    host: screenHost,
+    document,
+    face,
+    facesNamespace: face.facesNamespace,
+    faces: face.faces,
+    allocation: counts,
+    hasBackdrop: document[BACKDROP_DEFINITION] !== undefined,
+    hasText: allocation.channels.some(channel => channel.carrier === 'text'),
+    lang: langOf(ir.root),
+    looks: [...looks.values()],
+  };
+}
+
+/**
+ * The documents that route one addon's compiled screens onto the host's
+ * vanilla screen: the hook, written into the vanilla file, and the addon's
+ * router that the chest root gains by modification.
+ *
+ * @param screens - Every compiled screen of the addon, in any order.
+ * @param host - The host the screens were compiled for. Defaults to the chest.
+ * @throws ContainerScreenError when a layout key is out of range or shared, or the screens span addons.
+ */
+export function buildRouter(screens: readonly CompiledScreen[], host: ChestHost = CHEST_HOST): ChestRouting {
+  const addon = screens[0]?.addon ?? DEFAULT_NAMESPACE;
+  const foreign = screens.find(screen => screen.addon !== addon);
+
+  if (foreign !== undefined) {
+    throw new ContainerScreenError(
+      `Screens "${screens[0]?.name}" (${addon}) and "${foreign.name}" (${foreign.addon}) belong to different addons; `
+      + 'a router covers one addon.',
+    );
+  }
+
+  return chestRouter(screens, addon, host);
+}

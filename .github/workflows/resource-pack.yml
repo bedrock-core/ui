@@ -1,0 +1,100 @@
+name: Release resource pack
+
+# Run after UI, Server and Apps packages are public. This builds from the UI
+# release tag, checks the generated framework reference against the published
+# Catalog package, and attaches the .mcpack to the existing UI GitHub release.
+on:
+  workflow_dispatch:
+    inputs:
+      ui_version:
+        description: UI npm/release version, without the package name
+        type: string
+        required: true
+        default: 0.12.0
+      ship_to_curseforge:
+        description: Upload the attached pack to CurseForge after the build
+        type: boolean
+        required: true
+        default: false
+
+concurrency: resource-pack-${{ inputs.ui_version }}
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build and attach .mcpack
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      TAG: '@bedrock-core/ui@${{ inputs.ui_version }}'
+    steps:
+      - name: Checkout UI release
+        uses: actions/checkout@v7
+        with:
+          path: ui
+          ref: '@bedrock-core/ui@${{ inputs.ui_version }}'
+
+      - run: corepack enable
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Set up Regolith
+        uses: bedrock-core/setup-regolith@1.0.1
+        with:
+          regolith-version: '1.8.0'
+          resolvers: |
+            github.com/bedrock-core/regolith-filters
+
+      - name: Select published dependencies
+        run: yarn release-dependencies
+        working-directory: ui/packages/resource-pack
+
+      - name: Install released pack dependencies
+        run: yarn install --no-immutable
+        working-directory: ui/packages/resource-pack
+
+      - name: Install Regolith filters
+        run: yarn regolith-install
+        working-directory: ui/packages/resource-pack
+
+      - name: Build resource pack
+        run: yarn build
+        working-directory: ui/packages/resource-pack
+
+      - name: Verify the published Catalog framework snapshot
+        run: yarn verify-framework
+        working-directory: ui/packages/resource-pack
+
+      - name: Package resource pack
+        env:
+          VERSION: ${{ inputs.ui_version }}
+        run: zip -r "$GITHUB_WORKSPACE/core-ui-${VERSION}.mcpack" .
+        working-directory: ui/packages/resource-pack/build/@bedrock-core_ui_rp
+
+      - name: Attach pack to the existing UI release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ inputs.ui_version }}
+        run: |
+          gh release view "$TAG"
+          gh release upload "$TAG" "$GITHUB_WORKSPACE/core-ui-${VERSION}.mcpack" --clobber
+
+      - name: Keep a workflow artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: core-ui-${{ inputs.ui_version }}
+          path: core-ui-${{ inputs.ui_version }}.mcpack
+          if-no-files-found: error
+
+  curseforge:
+    name: Ship to CurseForge
+    needs: build
+    if: inputs.ship_to_curseforge
+    uses: ./.github/workflows/curseforge.yml
+    with:
+      tag: '@bedrock-core/ui@${{ inputs.ui_version }}'
+    secrets: inherit

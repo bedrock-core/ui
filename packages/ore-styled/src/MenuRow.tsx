@@ -1,7 +1,7 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import type { ControlProps, JSX } from '@bedrock-core/ui-runtime';
+import type { ControlProps, JSX, PressEvent, ScreenKey } from '@bedrock-core/ui-runtime';
 import type { DisplayText } from '@bedrock-core/i18n';
-import { Button, Image, Panel, Text, useTranslationResolver } from '@bedrock-core/ui-runtime';
+import { Button, Image, Link, Panel, Text, useTranslationResolver } from '@bedrock-core/ui-runtime';
 import { theme } from './tokens';
 
 export interface MenuRowProps extends ControlProps {
@@ -29,7 +29,27 @@ export interface MenuRowProps extends ControlProps {
    * disappeared as soon as two levels sat next to each other.
    */
   depth?: number;
-  onPress?: () => unknown | Promise<unknown>;
+  onPress?: (event: PressEvent) => unknown | Promise<unknown>;
+  /**
+   * The screen this row opens, `<addon>:<name>`. A row with one is a `<Link>`,
+   * so where it leads is data rather than a handler — which is what lets an
+   * index of rows be shown by an addon running none of this one's script.
+   */
+  to?: ScreenKey;
+  /** With `to`: take the place of the screen this row is on rather than stacking over it. */
+  replace?: boolean;
+  /**
+   * Characters the title reserves. A compiled screen bakes a row's text unless
+   * told how long a live one may be; set this where the title is only known
+   * when the screen is shown.
+   */
+  titleMaxLength?: number;
+  /**
+   * Characters the subtitle reserves. Setting it also keeps the subtitle line
+   * in the row when the subtitle is empty, so a compiled row has the same
+   * shape whatever it is shown with.
+   */
+  subtitleMaxLength?: number;
 }
 
 /**
@@ -50,6 +70,10 @@ export function MenuRow({
   depth = 0,
   enabled = true,
   onPress,
+  to,
+  replace,
+  titleMaxLength,
+  subtitleMaxLength,
   ...layout
 }: MenuRowProps): JSX.Element {
   const row = theme.components.menuRow;
@@ -62,19 +86,23 @@ export function MenuRow({
   // untouched — a color prefix would break key resolution.
   const resolver = useTranslationResolver();
 
-  const line = (source: DisplayText, color: string, shadow: boolean): JSX.Element => {
+  const line = (source: DisplayText, color: string, shadow: boolean, maxLength: number | undefined): JSX.Element => {
     const literal = typeof source === 'string' && (source === '' || resolver?.(source) === undefined);
 
     return (
-      <Text font={font} scale={scale} shadow={shadow} maxLines={1} overflow={'ellipsis'}>
+      <Text font={font} scale={scale} shadow={shadow} maxLines={1} overflow={'ellipsis'} {...maxLength === undefined ? {} : { maxLength }}>
         {literal ? `${color}${source}` : source}
       </Text>
     );
   };
 
-  const lines: JSX.Element[] = [line(title, titleColor, true)];
+  const lines: JSX.Element[] = [line(title, titleColor, true, titleMaxLength)];
 
-  if (subtitle) { lines.push(line(subtitle, subtitleColor, false)); }
+  if (subtitleMaxLength !== undefined) {
+    lines.push(line(subtitle ?? '', subtitleColor, false, subtitleMaxLength));
+  } else if (subtitle) {
+    lines.push(line(subtitle, subtitleColor, false, undefined));
+  }
 
   const children: JSX.Element[] = [];
 
@@ -86,29 +114,65 @@ export function MenuRow({
 
   if (chevron) { children.push(<Text>{`${subtitleColor}>`}</Text>); }
 
-  return (
-    <Button
-      // A selected row wears the selected face in EVERY state, and `undefined` is how it does
-      // that: `resolveStateBackgrounds` fills each missing state from the base, so one texture
-      // covers hover, press and locked. Leaving the ordinary hover face on meant pointing at
-      // the current row washed the selection out — hover is LIGHTER than the selected fill.
-      background={selected ? row.textures.backgroundSelected : row.textures.background}
-      backgroundHover={selected ? undefined : row.textures.backgroundHover}
-      backgroundPressed={selected ? undefined : row.textures.backgroundPressed}
-      backgroundLocked={selected ? undefined : row.textures.background}
-      padding={row.padding}
-      // Cross-axis stretch rather than `width: '100%'` — an explicit full width plus the
-      // indent margin would overflow its container by exactly the indent.
-      alignSelf={'stretch'}
-      marginLeft={depth * theme.tokens.spacing.lg}
-      justifyContent={'flex-start'}
-      enabled={enabled}
-      onPress={onPress}
-      {...layout}
+  // A button's children are baked into its face, and a live line cannot be. So a row with one
+  // draws its lines above the press instead: the button fills the row beneath them, and a
+  // press on the lines reaches it.
+  const live = titleMaxLength !== undefined || subtitleMaxLength !== undefined;
+
+  const face = (
+    <Panel
+      flexDirection={'row'}
+      alignItems={'center'}
+      gap={row.gap}
+      width={'100%'}
+      {...live ? { padding: row.padding, zIndex: 2 } : {}}
     >
-      <Panel flexDirection={'row'} alignItems={'center'} gap={row.gap} width={'100%'}>
-        {children}
-      </Panel>
-    </Button>
+      {children}
+    </Panel>
+  );
+
+  const styled = {
+    // A selected row wears the selected face in EVERY state, and `undefined` is how it does
+    // that: `resolveStateBackgrounds` fills each missing state from the base, so one texture
+    // covers hover, press and locked. Leaving the ordinary hover face on meant pointing at
+    // the current row washed the selection out — hover is LIGHTER than the selected fill.
+    background: selected ? row.textures.backgroundSelected : row.textures.background,
+    backgroundHover: selected ? undefined : row.textures.backgroundHover,
+    backgroundPressed: selected ? undefined : row.textures.backgroundPressed,
+    backgroundLocked: selected ? undefined : row.textures.background,
+    padding: row.padding,
+    // Cross-axis stretch rather than `width: '100%'` — an explicit full width plus the
+    // indent margin would overflow its container by exactly the indent.
+    alignSelf: 'stretch' as const,
+    marginLeft: depth * theme.tokens.spacing.lg,
+    justifyContent: 'flex-start' as const,
+    enabled,
+    ...layout,
+    children: face,
+  };
+
+  if (!live) {
+    return to === undefined ? Button({ ...styled, onPress }) : Link({ ...styled, to, ...replace === true ? { replace: true } : {} });
+  }
+
+  const { background, backgroundHover, backgroundPressed, backgroundLocked } = styled;
+  const surface = {
+    position: 'absolute' as const,
+    left: 0,
+    top: 0,
+    width: '100%' as const,
+    height: '100%' as const,
+    background,
+    backgroundHover,
+    backgroundPressed,
+    backgroundLocked,
+    enabled,
+  };
+
+  return (
+    <Panel alignSelf={'stretch'} marginLeft={styled.marginLeft} {...layout}>
+      {to === undefined ? Button({ ...surface, onPress }) : Link({ ...surface, to, ...replace === true ? { replace: true } : {} })}
+      {face}
+    </Panel>
   );
 }

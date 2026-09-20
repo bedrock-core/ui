@@ -1,34 +1,21 @@
 import type { FormProps, JSX } from '@bedrock-core/ui-runtime';
 import { Form as PrimitiveForm } from '@bedrock-core/ui-runtime';
 import { FormButton } from './FormButton';
-import { FormCheckbox } from './FormCheckbox';
-import { FormDropdown } from './FormDropdown';
-import { FormInput } from './FormInput';
-import { FormRadio } from './FormRadio';
-import { FormSlider } from './FormSlider';
-import { FormToggle } from './FormToggle';
-import { FormToggleButton } from './FormToggleButton';
 
 /**
- * Ore-styled native modal form: the runtime `<Form>` root (unchanged — config,
- * onSubmit, onCancel) with ore-styled field members, mirroring the runtime's
- * namespace shape so a form switches styled ↔ unstyled by changing only the import.
- * Every field takes a `label` (composed here — the primitives are label-free):
- * Input/Dropdown/Slider render it above the control, Toggle as a settings row.
+ * The native modal root, themed: the runtime `<Form>` unchanged — config,
+ * `onSubmit`, `onCancel` — with the submit button this layer styles.
+ *
+ * The FIELDS are not members of it. `Toggle`, `Checkbox`, `Radio`,
+ * `ToggleButtons`, `Slider`, `Dropdown` and `Input` each serve every host
+ * they can be drawn on, so each is written once and imported by its own name;
+ * inside a `<Form>` they become the engine's own fields, and outside one they
+ * become whatever that screen offers, or say so at build.
  */
 function FormRoot(props: FormProps): JSX.Element {
   return PrimitiveForm(props);
 }
 
-export const Form = Object.assign(FormRoot, {
-  Toggle: FormToggle,
-  Checkbox: FormCheckbox,
-  Radio: FormRadio,
-  ToggleButton: FormToggleButton,
-  Slider: FormSlider,
-  Dropdown: FormDropdown,
-  Input: FormInput,
-  Button: FormButton,
-});
+export const Form = Object.assign(FormRoot, { Button: FormButton });
 
 export type { FormProps };

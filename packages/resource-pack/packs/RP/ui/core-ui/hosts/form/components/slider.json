@@ -1,0 +1,493 @@
+{
+	"namespace": "core_ui_form_components",
+	/* The cell the factory builds for one row of the form — a bare frame.
+	  
+	   A slider cannot be PLACED by the build: it takes its step range from the
+	   form field behind it, and every compiled screen is laid out whenever any
+	   form opens, so a placed one meets forms with no such field and any write to
+	   its value asserts. The engine's factory builds it instead, one cell per
+	   row, so the field is always there.
+	  
+	   The factory sits at the slider's own rect, emitted into the screen by the
+	   build — so nothing here decodes geometry, the cell fills the box it was
+	   given, and inside a scroll it scrolls with the content.
+	  
+	   WHAT IS NOT HERE is the gate that picks one row. A factory makes a cell for
+	   every row, and a cell's own `visible` is ignored — measured: the bindings
+	   parse, the comparison is sound, and the engine draws the cell anyway. So
+	   the build wraps this body in a child that carries the gate, which is a
+	   plain control and hides normally. */
+	"slider_live": {
+		"type": "panel",
+		"size": [ "100%", "100%" ],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"controls": [ { "body@core_ui_form_components.slider_body": {} } ]
+	},
+	/* The live value, written by the ENGINE and read back off the row.
+	  
+	   A slider's row text is `<label>: <value>`, and the label is the block the
+	   build sends — nine bytes of header and two fields of eighty-three — so
+	   everything past byte 175 is the engine's own rendering of the number,
+	   updated as the thumb moves, behind the ": " it joins with.
+	   `#custom_slider_text_value` is not readable here: a label bound to it drew
+	   nothing (measured 2026-09-14).
+	  
+	   Read with a plain collection binding and no `collection_details` of its
+	   own, the way the slider control beside it reads its steps and value; then
+	   the block and the separator are taken off with a reset code kept IN FRONT.
+	   Bare digits are a number to the binding engine, and a label draws nothing
+	   for a number (measured 2026-09-14: ": 63" drew, "63" did not); the code
+	   keeps the result a string and draws as nothing.
+	  
+	   That is the only per-player text a compiled slider has: the field's own
+	   caption is baked into the screen and cannot carry a value. */
+	"slider_value": {
+		"type": "panel",
+		"size": [ "100%", "100%" ],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"controls": [ { "shown@core_ui_form_components.slider_value_label": {} } ]
+	},
+	/* A PLAIN label, not the shared one: that base scales its text from a
+	   `#font_scale_factor` it decodes out of a payload, and a derivation that
+	   replaces its bindings leaves the scale unwritten — at 0, which is an
+	   invisible label. Everything this needs is stated here.
+	  
+	   At the cell's top-right corner. The build sizes the cell over the whole
+	   setting — caption, note and track — and keeps the end of the caption row
+	   clear, so this is the far end of the caption's line. */
+	"slider_value_label": {
+		"type": "label",
+		"font_size": "small",
+		"font_scale_factor": 2,
+		"color": [ 1, 1, 1, 1 ],
+		"text_alignment": "right",
+		"size": [ "default", "default" ],
+		"offset": [ 0, 0 ],
+		"anchor_from": "top_right",
+		"anchor_to": "top_right",
+		"layer": 5,
+		"localize": false,
+		"text": "#shown",
+		"property_bag": { "#raw": "", "#joined": "", "#shown": "" },
+		"bindings": [
+			{
+				"binding_name": "#custom_slider_text",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form",
+				"binding_name_override": "#raw"
+			},
+			{ "binding_type": "view", "source_property_name": "('§r' + (#raw - ('%.175s' * #raw)))", "target_property_name": "#joined" },
+			{ "binding_type": "view", "source_property_name": "(#joined - ': ')", "target_property_name": "#shown" }
+		]
+	},
+	/* The slider itself, at whatever size its parent was given. */
+	"slider_body": {
+		"type": "panel",
+		"size": [ "100%", "100%" ],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"controls": [
+			{ "value@core_ui_form_components.slider_value": {} },
+			{
+				/* The travel inset: the engine bounds the thumb's CENTRE to this
+				   control's width, so it is one thumb narrower than the track and the
+				   thumb's EDGE meets the ends. Percentages of the box the build gave
+				   us, so no width has to travel.
+				  
+				   At the BOTTOM of the cell, one thumb tall: the cell spans the whole
+				   setting so the value can sit on the caption line, and the track is
+				   the last thing in it. */
+				"travel": {
+					"type": "panel",
+					"size": [ "100% - 16px", 16 ],
+					"anchor_from": "bottom_middle",
+					"anchor_to": "bottom_middle",
+					"controls": [
+						{
+							"slider@core_ui_form_components.slider_control": {
+								/* WIDER THAN THE CONTROL IT SITS IN, by one thumb. The engine
+								   bounds the thumb's CENTRE to the control's width, so the control
+								   is inset by a thumb and the thumb's EDGE meets the ends — which
+								   leaves the track, if it matched the control, short by that same
+								   thumb at both ends. It overflows symmetrically instead, so the
+								   bar spans the whole box the build gave the cell. */
+								"$bar_size": [ "100% + 16px", 6 ],
+								"$thumb_size": [ 16, 16 ],
+								"$track": "textures/ui/ore-styled/slider/track",
+								"$track_hover": "textures/ui/ore-styled/slider/track",
+								"$progress": "textures/ui/ore-styled/slider/progress",
+								"$progress_hover": "textures/ui/ore-styled/slider/progress",
+								"$thumb": "textures/ui/ore-styled/slider/thumb",
+								"$thumb_hover": "textures/ui/ore-styled/slider/thumb_hover",
+								"$thumb_locked": "textures/ui/ore-styled/slider/thumb_disabled"
+							}
+						}
+					]
+				}
+			}
+		]
+	},
+	"slider_control": {
+		"type": "slider",
+		// Fills the travel inset it is mounted in; the bar and thumb sizes come from the mount.
+		"size": [
+			"100%",
+			"100%"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"layer": 2,
+		// The row decides, unless the compile pinned a disabled field (see toggle.json).
+		"$field_enabled|default": "#enabled",
+		"enabled": "$field_enabled",
+		// The faces are variables the mount fills: the slider is the one field whose
+		// surfaces are its own rather than `state_face`'s.
+		"$track|default": "#texture",
+		"$track_hover|default": "#texture",
+		"$progress|default": "#texture",
+		"$progress_hover|default": "#texture",
+		"$thumb|default": "#texture",
+		"$thumb_hover|default": "#texture",
+		"$thumb_locked|default": "#texture",
+		"$bar_size|default": [ 1, 0 ],
+		"$thumb_size|default": [ 1, 0 ],
+		"slider_name": "custom_slider",
+		"slider_track_button": "custom_slider",
+		// var-driven so the step mappings' direction guards (below) can read it.
+		"$slider_direction|default": "horizontal",
+		"slider_direction": "$slider_direction",
+		"slider_collection_name": "custom_form",
+		"slider_box_control": "slider_box",
+		"default_control": "bar_default_anchor",
+		"hover_control": "bar_hover_anchor",
+		"background_control": "slider_background",
+		"background_hover_control": "slider_background_hover",
+		"progress_control": "slider_progress",
+		"progress_hover_control": "slider_progress_hover",
+		"slider_small_decrease_button": "slider.small_decrease",
+		"slider_small_increase_button": "slider.small_increase",
+		"slider_selected_button": "slider.selected",
+		"slider_deselected_button": "slider.deselected",
+		"always_listen_to_input": false,
+		"always_handle_pointer": true,
+		"focus_enabled": true,
+		"default_focus_precedence": 0,
+		"property_bag": {
+			"#slider_steps": 1,
+			"#slider_value": 0
+		},
+		/* Mappings copied from vanilla common.slider (ui_common.json:1025-1069). The
+		   menu_left/right → small_decrease/increase pair is what gives d-pad discrete
+		   steps once selected (we had only select + ok, so the pad did nothing). The
+		   vertical up/down variants are kept behind vanilla's direction guard even though
+		   we're always horizontal — harmless and matches vanilla verbatim. `ignore_input_scope`
+		   lets the step fire while the slider is the focused/selected control.
+		   menu_cancel → deselected mirrors vanilla so the pad can exit the selected state. */
+		"button_mappings": [
+			{
+				"from_button_id": "button.menu_select",
+				"to_button_id": "custom_slider",
+				"mapping_type": "pressed",
+				"button_up_right_of_first_refusal": true
+			},
+			{
+				"from_button_id": "button.menu_ok",
+				"to_button_id": "slider.selected",
+				"mapping_type": "focused"
+			},
+			{
+				"from_button_id": "button.menu_cancel",
+				"to_button_id": "slider.deselected",
+				"mapping_type": "focused"
+			},
+			{
+				"ignored": "($slider_direction = 'vertical')",
+				"from_button_id": "button.menu_left",
+				"to_button_id": "slider.small_decrease",
+				"mapping_type": "pressed",
+				"ignore_input_scope": true
+			},
+			{
+				"ignored": "($slider_direction = 'horizontal')",
+				"from_button_id": "button.menu_up",
+				"to_button_id": "slider.small_decrease",
+				"mapping_type": "pressed",
+				"ignore_input_scope": true
+			},
+			{
+				"ignored": "($slider_direction = 'vertical')",
+				"from_button_id": "button.menu_right",
+				"to_button_id": "slider.small_increase",
+				"mapping_type": "pressed",
+				"ignore_input_scope": true
+			},
+			{
+				"ignored": "($slider_direction = 'horizontal')",
+				"from_button_id": "button.menu_down",
+				"to_button_id": "slider.small_increase",
+				"mapping_type": "pressed",
+				"ignore_input_scope": true
+			}
+		],
+		/* IT READS ITS ROW. This control is only ever built as a cell of the slider
+		   factory, which the engine creates one of per slider ROW — so the form
+		   field behind it always exists, its step range is real, and the reads and
+		   the write-back that assert on a statically placed slider are legal here. */
+		"bindings": [
+			{
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form",
+				"binding_name": "#custom_slider_steps",
+				"binding_name_override": "#slider_steps"
+			},
+			{
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form",
+				"binding_name": "#custom_slider_value",
+				"binding_name_override": "#slider_value"
+			}
+		],
+		"controls": [
+			{
+				"bar_default_anchor": {
+					"type": "panel",
+					/* The whole control; the bar is a percentage of it. */
+					"size": [
+						"100%",
+						"100%"
+					],
+					"anchor_from": "center",
+					"anchor_to": "center",
+					"controls": [
+						{
+							"bar_default_size": {
+								"type": "panel",
+								"size": "$bar_size",
+								"anchor_from": "center",
+								"anchor_to": "center",
+								"controls": [
+									{
+										"bar_default": {
+											"type": "image",
+											"size": [
+												"100%",
+												"100%"
+											],
+											"layer": 1,
+											"texture": "$track",
+											"controls": [
+												{
+													"sizing_panel": {
+														"type": "panel",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"anchor_from": "center",
+														"anchor_to": "center",
+														"controls": [
+															{
+																"slider_background": {
+																	"type": "image",
+																	"size": [
+																		"100%",
+																		"100%"
+																	],
+																	"layer": 1,
+																	"texture": "$track"
+																}
+															},
+															{
+																"slider_progress": {
+																	"type": "image",
+																	"size": [
+																		"100%",
+																		"100%"
+																	],
+																	"layer": 3,
+																	"texture": "$progress",
+																	"clip_direction": "left",
+																	"clip_pixelperfect": false
+																}
+															}
+														]
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"bar_hover_anchor": {
+					"type": "panel",
+					"size": [
+						"100%",
+						"100%"
+					],
+					"anchor_from": "center",
+					"anchor_to": "center",
+					"visible": false,
+					"controls": [
+						{
+							"bar_hover_size": {
+								"type": "panel",
+								"size": "$bar_size",
+								"anchor_from": "center",
+								"anchor_to": "center",
+								"controls": [
+									{
+										"bar_hover": {
+											"type": "image",
+											"size": [
+												"100%",
+												"100%"
+											],
+											"layer": 1,
+											"texture": "$track_hover",
+											"controls": [
+												{
+													"sizing_panel": {
+														"type": "panel",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"anchor_from": "center",
+														"anchor_to": "center",
+														"controls": [
+															{
+																"slider_background_hover": {
+																	"type": "image",
+																	"size": [
+																		"100%",
+																		"100%"
+																	],
+																	"layer": 1,
+																	"texture": "$track_hover"
+																}
+															},
+															{
+																"slider_progress_hover": {
+																	"type": "image",
+																	"size": [
+																		"100%",
+																		"100%"
+																	],
+																	"layer": 3,
+																	"texture": "$progress_hover",
+																	"clip_direction": "left",
+																	"clip_pixelperfect": false
+																}
+															}
+														]
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				/* The draggable handle. `slider_box` must be a DIRECT child for the
+				   engine to move it (a carrier parent froze it), and its own size is the
+				   fixed HITBOX; the visual thumb is the mount's `$thumb_size`, drawn
+				   inside and moving with the box. */
+				"slider_box": {
+					"type": "slider_box",
+					"size": [
+						16,
+						16
+					],
+					"anchor_from": "center",
+					"anchor_to": "center",
+					"layer": 4,
+					"default_control": "default",
+					"hover_control": "hover",
+					"locked_control": "locked",
+					"indent_control": "indent",
+					"controls": [
+{
+							/* A 1x1 anchor the visual thumb centres on. */
+							"thumb_anchor": {
+								"type": "panel",
+								"size": [
+									1,
+									1
+								],
+								"anchor_from": "center",
+								"anchor_to": "center",
+								"controls": [
+									{
+										"thumb_size": {
+											"type": "panel",
+											"size": "$thumb_size",
+											"anchor_from": "center",
+											"anchor_to": "center",
+											"controls": [
+												{
+													"default": {
+														"type": "image",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"layer": 2,
+														"texture": "$thumb"
+													}
+												},
+												{
+													"hover": {
+														"type": "image",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"layer": 2,
+														"texture": "$thumb_hover"
+													}
+												},
+												{
+													"locked": {
+														"type": "image",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"layer": 2,
+														"texture": "$thumb_locked"
+													}
+												},
+												{
+													"indent": {
+														"type": "image",
+														"size": [
+															"100%",
+															"100%"
+														],
+														"layer": 2,
+														"texture": "$thumb"
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		]
+	}
+}

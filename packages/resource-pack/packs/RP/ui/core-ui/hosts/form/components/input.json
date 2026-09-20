@@ -1,0 +1,246 @@
+{
+	"namespace": "core_ui_form_components",
+	"input": {
+		// A control the pack PLACES owns its row: the compiled screen gives it a
+		// `collection_index`, and the `collection_details` binding below is what
+		// makes that index resolve. Everything else about it is literal — the box
+		// is the screen's, and what it draws arrives as variables.
+		"type": "panel",
+		"size": [ "100%", "100%" ],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"bindings": [
+			{ "binding_type": "collection_details", "binding_collection_name": "custom_form" }
+		],
+		"layer": 50,
+		/* WHAT A COMPILED SCREEN GIVES THIS CELL, and why every hop restates it.
+		   A $variable set where a control is MOUNTED does not reach a definition
+		   the control merely REFERENCES by name — that definition resolves its
+		   own scope, so it sees its own `|default` instead. The label two hops
+		   down fell back to `#font_scale_factor`, which a compiled screen never
+		   writes, and drew at the engine's 1.0 over a `small` base: half size.
+		   So each hop forwards by name, the way flow_button_anchor does. */
+		"$scale|default": "#font_scale_factor",
+		"$static_texture|default": "",
+		"controls": [
+			{
+				"input@core_ui_form_components.input_control": {
+					"$scale": "$scale",
+					"$static_texture": "$static_texture"
+				}
+			}
+		]
+	},
+	// Textureless native text field, flattened from vanilla common.text_edit_box.
+	// READ: #custom_input_text (content) / #custom_placeholder_text,
+	// all collection bindings on custom_form. WRITE-BACK: the engine writes the typed text
+	// to the current row via text_edit_box_grid_collection_name:"custom_form" (the edit_box
+	// analogue of the toggle's toggle_grid_collection_name).
+	"input_control": {
+		"type": "edit_box",
+		"$scale|default": "#font_scale_factor",
+		"$static_texture|default": "",
+		"size": [
+			"100%",
+			"100%"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"layer": 2,
+		// Whether the field takes input; nothing binds `#enabled` (see toggle.json).
+		"$field_enabled|default": true,
+		"enabled": "$field_enabled",
+		"text_box_name": "custom_input",
+		"text_edit_box_grid_collection_name": "custom_form",
+		"max_length": 100,
+		"text_type": "ExtendedASCII",
+		"text_control": "display_text_static",
+		"place_holder_control": "place_holder_static",
+		"default_control": "default",
+		"hover_control": "hover",
+		"pressed_control": "pressed",
+		"locked_control": "locked",
+		"focus_enabled": true,
+		/* Selection state machinery, copied from vanilla common.text_edit_box
+		   (ui_common.json:1636-1685) with its $var defaults hardcoded. Without these
+		   the edit box never enters its SELECTED state: no cursor, the placeholder
+		   never hides, and typing only works through hover capture. */
+		"button_mappings": [
+			{
+				"from_button_id": "button.menu_select",
+				"to_button_id": "button.text_edit_box_selected",
+				"handle_select": true,
+				"handle_deselect": false,
+				"mapping_type": "pressed"
+			},
+			{
+				"from_button_id": "button.menu_select",
+				"to_button_id": "button.text_edit_box_selected",
+				"handle_select": false,
+				"handle_deselect": true,
+				"mapping_type": "global",
+				/* deselect the textbox and allow selecting another control with the
+				   same mouse press (vanilla comment) */
+				"consume_event": false
+			},
+			{
+				"from_button_id": "button.menu_ok",
+				"to_button_id": "button.text_edit_box_selected",
+				"handle_select": true,
+				"handle_deselect": true,
+				"mapping_type": "pressed"
+			},
+			{
+				"from_button_id": "button.menu_ok",
+				"to_button_id": "button.text_edit_box_selected",
+				"handle_select": false,
+				"handle_deselect": true,
+				"mapping_type": "global"
+			},
+			{
+				"from_button_id": "button.menu_cancel",
+				"to_button_id": "button.text_edit_box_deselected",
+				"handle_select": false,
+				"handle_deselect": true,
+				"mapping_type": "global"
+			},
+			{
+				"to_button_id": "button.text_edit_box_hovered",
+				"mapping_type": "pressed"
+			},
+			{
+				"from_button_id": "button.menu_clear",
+				"to_button_id": "button.text_edit_box_clear",
+				"handle_select": false,
+				"handle_deselect": false,
+				"mapping_type": "focused"
+			}
+		],
+		"controls": [
+			{
+				"text_area": {
+					"type": "panel",
+					// Clip bounds for the field text (was also the 8px offset host — the inset now
+					// rides the label GROUP x/y from the payload; TS defaults x=8, y=centered).
+					"layer": 5,
+					"size": [
+						"100% - 4px",
+						"100%"
+					],
+					"anchor_from": "left_middle",
+					"anchor_to": "left_middle",
+					"clips_children": true,
+					"controls": [
+						{
+							/* The compiled twin: label_static, so the group decode above never
+							   runs — its bindings write #font_scale_factor out of a payload a
+							   compiled screen does not send, over the $scale the mount passed
+							   (measured on this very label: 'steve' at half size). Same recipe
+							   otherwise, and it is the $text_ctrl name on a compiled screen so
+							   the engine's caret-follow scroll drives THIS copy. */
+							"display_text_static@core_ui_components.label_static": {
+								"$scale": "$scale",
+								"localize": false,
+								"text": "#item_name",
+								"layer": 1,
+								"use_anchored_offset": false,
+								"size": ["default", "default"],
+								"min_size": ["100%", 0],
+								"offset": [8, 0],
+								"anchor_from": "left_middle",
+								"anchor_to": "left_middle",
+								"property_bag": {
+									"#property_field": "#item_name",
+									"#anchored_offset_value_x": 0.0,
+									"#anchored_offset_value_y": 0.0
+								},
+								"$native_binding": "#custom_input_text",
+								"$native_target": "#item_name",
+								"$payload_collection": "custom_form",
+								"$cell_details_binding_type": "collection_details",
+								"$details_collection": "custom_form"
+							}
+						},
+						{
+							"place_holder_visibility": {
+								"type": "panel",
+								"size": ["100%", "100%"],
+								"controls": [
+									{
+										/* placeholder label: own GROUP at [1688] (x/y at [1937]/[2020]) */
+										"placeholder_frame": {
+											"type": "panel",
+											"size": [1, 1],
+											"anchor_from": "left_middle",
+											"anchor_to": "left_middle",
+											"controls": [
+												{
+													/* Compiled twin — the interpreted one above places itself by the
+													   group's decoded x/y, which a compiled screen does not send, so
+													   this one takes the value label's fixed inset instead. */
+													"place_holder_static@core_ui_components.label_static": {
+														"$scale": "$scale",
+														"localize": false,
+														"text": "#placeholder",
+														"color": [0.7, 0.7, 0.7, 1],
+														"layer": 1,
+														"use_anchored_offset": false,
+														"offset": [8, 0],
+														"anchor_from": "left_middle",
+														"anchor_to": "left_middle",
+														"$native_binding": "#custom_placeholder_text",
+														"$native_target": "#placeholder",
+														"$payload_collection": "custom_form",
+														"$cell_details_binding_type": "collection_details",
+								"$details_collection": "custom_form"
+													}
+												}
+											]
+										}
+									}
+								],
+								"bindings": [
+									{
+										/* show placeholder only while the field is empty — gate directly on the
+										   live typed-content channel (no sibling lookup: the old
+										   source_control_name gate broke once display_text moved into a frame). */
+										"binding_type": "collection",
+										"binding_condition": "always",
+										"binding_collection_name": "custom_form",
+										"binding_name": "#custom_input_text"
+									},
+									{
+										"binding_type": "view",
+										"source_property_name": "(#custom_input_text = '')",
+										"target_property_name": "#visible"
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				/* The four background states, each told its own texture. */
+				"default@core_ui_common.modal_state_face": {
+					"$static_texture": "$static_texture"
+				}
+			},
+			{
+				"hover@core_ui_common.modal_state_face": {
+					"$static_texture": "$static_texture"
+				}
+			},
+			{
+				"pressed@core_ui_common.modal_state_face": {
+					"$static_texture": "$static_texture"
+				}
+			},
+			{
+				"locked@core_ui_common.modal_state_face": {
+					"$static_texture": "$static_texture"
+				}
+			}
+		]
+	}
+}

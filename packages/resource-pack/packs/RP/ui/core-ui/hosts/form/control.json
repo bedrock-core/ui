@@ -1,0 +1,14 @@
+{
+	/* Where a factory sends a row it draws nothing for.
+	  
+	   `control_ids` names a definition per row TYPE, and a socket wants exactly
+	   one of them — every other type still has to point somewhere. */
+	"namespace": "core_ui_common",
+	"unused": {
+		"type": "panel",
+		"size": [
+			0,
+			0
+		]
+	}
+}

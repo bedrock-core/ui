@@ -24,14 +24,30 @@ Releasing is a single manual **"Publish Release"** GitHub Action
 1. runs `changeset version` — consumes the pending changesets, bumps the changed
    sub-packages **and their dependents** (`updateInternalDependencies: patch`),
    and writes CHANGELOGs;
-2. bumps the root **`@bedrock-core/ui`** meta package manually (Changesets can't
-   see the workspace root) whenever any of its six dependencies changed —
-   `scripts/bump-meta.mjs`;
+2. sets the root **`@bedrock-core/ui`** meta package's version (Changesets can't
+   see the workspace root) — `scripts/bump-meta.mjs`;
 3. publishes the changed packages to npm and tags each
    `@bedrock-core/<name>@<version>`;
 4. when the meta bumped, rebuilds the demo `.mcpack` and attaches it to the
    `@bedrock-core/ui@<version>` release.
 
+`server` and `apps` are checked out beside this repo for the install: the root
+`resolutions` reach their packages through `portal:` entries.
+
+## The meta is the runtime
+
+**`@bedrock-core/ui`'s version IS `@bedrock-core/ui-runtime`'s**, character for
+character, prerelease tag included. The runtime is what the meta is; every other
+package it re-exports is support around it, so `@bedrock-core/ui@1.0.0-rc.1` is
+`@bedrock-core/ui-runtime@1.0.0-rc.1` and there is no second number to reconcile.
+
+A release the runtime does not move leaves the meta where it is: what shipped was
+a package the meta curates, and the curated set is republished with the runtime
+that next moves.
+
 > The root `@bedrock-core/ui` is **not** a valid changeset target — do not select
-> it. It is versioned automatically from its dependencies. Only add a changeset
-> for it if you intend the meta bump script to be bypassed (you generally don't).
+> it. It follows the runtime, and a changeset for it would only fight the script.
+
+`0.0.0` is what an unreleased package sits at, and `publish-tarballs.mjs` skips
+it, so a package reaches its first release by having its `version` set by hand in
+the commit that means to ship it.

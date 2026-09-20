@@ -1,49 +1,30 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import type { ControlProps, JSX } from '@bedrock-core/ui-runtime';
-import { Button, useState } from '@bedrock-core/ui-runtime';
+import type { JSX } from '@bedrock-core/ui-runtime';
+import { type BooleanProps, Switch } from './Switch';
 import { theme } from './tokens';
 
-export interface ToggleProps extends ControlProps {
-  on?: boolean;
-  defaultOn?: boolean;
-  onChange?: (on: boolean) => void;
-  disabled?: boolean;
-}
+export type ToggleProps = BooleanProps;
 
-export function Toggle({
-  on,
-  defaultOn = false,
-  onChange,
-  disabled = false,
-  ...layout
-}: ToggleProps): JSX.Element {
-  const [internal, setInternal] = useState(defaultOn);
-  const isOn = on ?? internal;
+/**
+ * A switch: the caption on the left, the switch pinned to the right.
+ *
+ * The settings-row reading order. What it IS — a boolean on whatever screen
+ * it is drawn — is {@link Switch}; this is the theme's switch shape over it.
+ */
+export function Toggle(props: ToggleProps): JSX.Element {
+  const t = theme.components.toggle;
 
-  function handle(): void {
-    if (disabled) {
-      return;
-    }
-
-    const next = !isOn;
-
-    setInternal(next);
-    onChange?.(next);
-  }
-
-  const t = theme.components.toggle.textures;
-
-  return (
-    <Button
-      width={theme.components.toggle.width}
-      height={theme.components.toggle.height}
-      background={isOn ? t.on : t.off}
-      backgroundHover={isOn ? t.onHover : t.offHover}
-      backgroundPressed={isOn ? t.off : t.on}
-      backgroundLocked={isOn ? t.onDisabled : t.offDisabled}
-      onPress={handle}
-      enabled={!disabled}
-      {...layout}
-    />
-  );
+  return Switch(props, {
+    width: t.width,
+    height: t.height,
+    caption: 'before',
+    faces: {
+      background: t.textures.off,
+      backgroundHover: t.textures.offHover,
+      backgroundLocked: t.textures.offDisabled,
+      checkedBackground: t.textures.on,
+      checkedHover: t.textures.onHover,
+      checkedLocked: t.textures.onDisabled,
+    },
+  });
 }

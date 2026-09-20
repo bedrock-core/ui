@@ -1,0 +1,78 @@
+name: Release CLI
+
+# The CLI is last: its template pins the final package versions and its smoke
+# test creates and builds a new project using only published packages/filters.
+on:
+  workflow_dispatch:
+
+concurrency: cli-release-${{ github.ref }}
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  publish:
+    name: Verify fresh scaffold and publish CLI
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ui
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: ui
+          fetch-depth: 0
+
+      - run: corepack enable
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: ui/yarn.lock
+          registry-url: https://registry.npmjs.org
+          scope: '@bedrock-core'
+
+      - name: Set up Regolith
+        uses: bedrock-core/setup-regolith@1.0.1
+        with:
+          regolith-version: '1.8.0'
+          resolvers: |
+            github.com/bedrock-core/regolith-filters
+
+      - run: yarn install --immutable
+
+      - name: Check that nothing is pending
+        run: |
+          pending=$(ls .changeset/*.md 2>/dev/null | grep -v '/README\.md$' || true)
+          if [ -n "$pending" ]; then
+            echo "Unreleased changesets are pending; merge the Version PR before publishing:"
+            echo "$pending"
+            exit 1
+          fi
+
+      - name: Build CLI
+        run: yarn workspace @bedrock-core/cli build
+
+      - name: Create a fresh project
+        run: |
+          mkdir -p "$RUNNER_TEMP/cli-smoke"
+          cd "$RUNNER_TEMP/cli-smoke"
+          node "$GITHUB_WORKSPACE/ui/packages/cli/dist/index.js" release-smoke --author bedrock-core --description "Release smoke test"
+
+      - name: Install and build fresh project
+        run: |
+          corepack yarn install
+          regolith install-all
+          regolith run build
+          regolith run build-test
+        working-directory: ${{ runner.temp }}/cli-smoke/release-smoke
+
+      - uses: changesets/action@v2
+        with:
+          cwd: ui
+          publish-script: yarn release:cli
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,172 +1,90 @@
-name: Publish Release
+name: Release libraries
 
-# Manual, no-input release. Author changesets during development (`yarn changeset`);
-# when you're ready, run this workflow on the branch you want to release from.
-# It versions + publishes exactly the packages that changed, tags each one, and —
-# when the @bedrock-core/ui meta package bumps — attaches the demo .mcpack.
+# Pushes maintain the Changesets version PR. Manual runs publish the UI npm
+# libraries only. The render-pack artifact and CLI each have their own later
+# workflow because both must consume the packages already released before them.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 permissions:
   contents: write
-  id-token: write   # OIDC for npm trusted publishing — no npm token anywhere
+  pull-requests: write
+  id-token: write
 
 jobs:
-  publish-release:
-    name: Version, publish & tag changed packages
+  version:
+    name: Open or refresh the Version PR
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    env:
-      # No npm token: publishes authenticate via OIDC trusted publishing (the
-      # id-token permission above + a trusted publisher configured per package on
-      # npmjs.com pointing at this repo and workflow file).
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    defaults:
+      run:
+        working-directory: ui
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
+          path: ui
           fetch-depth: 0
 
-      # ── PREREQUISITE: @bedrock-core/server-runtime ────────────────────────────
-      # `guides` + `config` depend on @bedrock-core/server-runtime, resolved
-      # locally via `resolutions` → portal:../server-public. That package is NOT
-      # yet on npm and the sibling repo is absent in CI, so `yarn install` below
-      # FAILS until one of these is done:
-      #   (1) Publish @bedrock-core/server-runtime (+ sync) to npm and drop the
-      #       two portal: entries from the root package.json "resolutions".
-      #   (2) Check out server-public alongside this repo. The portal is
-      #       `../server-public` (a sibling ABOVE the workspace), so both repos
-      #       must share a parent: change the checkout above to `path: ui`, add a
-      #       second `actions/checkout` with `path: server-public`, and set
-      #       `working-directory: ui` on every step below.
-      # This workflow cannot go green until the blocker is resolved.
+      - run: corepack enable
 
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Use Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
-          cache: 'yarn'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: ui/yarn.lock
+
+      - run: yarn install --immutable
+
+      - uses: changesets/action@v2
+        with:
+          cwd: ui
+          version-script: yarn version-packages
+          commit-message: 'chore(release): version packages'
+          pr-title: 'chore(release): version packages'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    name: Publish UI libraries to npm
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ui
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: ui
+          fetch-depth: 0
+
+      - run: corepack enable
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: ui/yarn.lock
+          registry-url: https://registry.npmjs.org
           scope: '@bedrock-core'
 
-      # Trusted publishing needs the OIDC exchange in the npm CLI, which shipped in
-      # npm 11.5.1 — newer than what the runner's Node bundles.
-      - name: Update npm for trusted publishing
-        run: npm install -g npm@latest
+      - run: yarn install --immutable
 
-      - name: Install deps
-        run: yarn install --immutable
-
-      - name: Detect pending changesets
-        id: detect
+      - name: Check that nothing is pending
         run: |
-          shopt -s nullglob
-          pending=()
-          for f in .changeset/*.md; do
-            [[ "$(basename "$f")" == "README.md" ]] && continue
-            pending+=("$f")
-          done
-          if [[ ${#pending[@]} -eq 0 ]]; then
-            echo "No pending changesets — nothing to release."
-            echo "has=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "Found ${#pending[@]} pending changeset(s)."
-            echo "has=true" >> "$GITHUB_OUTPUT"
+          pending=$(ls .changeset/*.md 2>/dev/null | grep -v '/README\.md$' || true)
+          if [ -n "$pending" ]; then
+            echo "Unreleased changesets are pending; merge the Version PR before publishing:"
+            echo "$pending"
+            exit 1
           fi
 
-      - name: Capture current meta version
-        if: steps.detect.outputs.has == 'true'
-        id: prev
-        run: echo "ui=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
-
-      - name: Version packages
-        if: steps.detect.outputs.has == 'true'
-        run: yarn version-packages
-
-      - name: Refresh lockfile
-        if: steps.detect.outputs.has == 'true'
-        run: yarn install --mode update-lockfile
-
-      - name: Lint
-        if: steps.detect.outputs.has == 'true'
-        run: yarn lint
-
-      - name: Build libraries
-        if: steps.detect.outputs.has == 'true'
-        run: yarn build:libs
-
-      - name: Commit version bumps
-        if: steps.detect.outputs.has == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "chore(release): version packages"
-
-      # publish-tarballs, NOT `changeset publish`: changesets shells out to npm from
-      # the workspace directory, which ships `workspace:*` ranges verbatim — that is
-      # exactly how ui-runtime@0.10.0 went out uninstallable. The script packs with
-      # yarn (rewriting the protocols) and publishes the tarball with npm (OIDC).
-      - name: Publish sub-packages
-        if: steps.detect.outputs.has == 'true'
-        run: node scripts/publish-tarballs.mjs && yarn changeset tag
-
-      - name: Publish & tag meta package
-        if: steps.detect.outputs.has == 'true'
-        id: meta
-        run: |
-          NEXT=$(node -p "require('./package.json').version")
-          echo "ui=$NEXT" >> "$GITHUB_OUTPUT"
-          if [[ "$NEXT" != "${{ steps.prev.outputs.ui }}" ]]; then
-            echo "Meta bumped ${{ steps.prev.outputs.ui }} → $NEXT — publishing."
-            node scripts/publish-tarballs.mjs --only @bedrock-core/ui
-            # `changeset tag` in the previous step already tags EVERY package at its
-            # current version, the meta included — creating it again is a hard error.
-            git rev-parse -q --verify "refs/tags/@bedrock-core/ui@$NEXT" >/dev/null               || git tag "@bedrock-core/ui@$NEXT"
-            echo "bumped=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "Meta unchanged ($NEXT) — not publishing."
-            echo "bumped=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Push commit & tags
-        if: steps.detect.outputs.has == 'true'
-        run: |
-          git push
-          git push --tags
-
-      # ── .mcpack demo — only when the @bedrock-core/ui meta package was released ──
-      - name: Set up Regolith
-        if: steps.meta.outputs.bumped == 'true'
-        uses: bedrock-core/setup-regolith@1.0.1
+      - uses: changesets/action@v2
         with:
-          regolith-version: '1.8.0'
-          resolvers: |
-            github.com/bedrock-core/regolith-filters
-
-      - name: Install Regolith filters
-        if: steps.meta.outputs.bumped == 'true'
-        run: yarn regolith-install
-
-      - name: Build resource pack
-        if: steps.meta.outputs.bumped == 'true'
-        run: yarn workspace @bedrock-core/ui-resource-pack build
-
-      - name: Package Resource Pack (.mcpack)
-        if: steps.meta.outputs.bumped == 'true'
+          cwd: ui
+          publish-script: yarn release:libraries
         env:
-          TAG: ${{ steps.meta.outputs.ui }}
-        working-directory: packages/resource-pack/build/@bedrock-core_ui_rp
-        run: zip -r "$GITHUB_WORKSPACE/core-ui-${TAG}.mcpack" .
-
-      - name: Create @bedrock-core/ui GitHub Release
-        if: steps.meta.outputs.bumped == 'true'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: '@bedrock-core/ui@${{ steps.meta.outputs.ui }}'
-          name: '@bedrock-core/ui@${{ steps.meta.outputs.ui }}'
-          generate_release_notes: true
-          files: |
-            core-ui-${{ steps.meta.outputs.ui }}.mcpack
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

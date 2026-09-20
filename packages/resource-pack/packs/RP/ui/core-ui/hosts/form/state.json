@@ -1,0 +1,42 @@
+{
+	"namespace": "core_ui_common",
+	// One shared face: a full-size image drawn from the texture it is handed.
+	//
+	// Every state-styled control wears four of these — default, hover, pressed,
+	// locked — and each is a CHILD, so it has to be told its own texture rather
+	// than inherit one: computed bindings do not propagate down.
+	//
+	// The library ships no look of its own, here or anywhere. The texture is the
+	// author's prop, given as a variable where the control is mounted.
+	"state_face": {
+		"type": "panel",
+		"size": [ "100%", "100%" ],
+		"anchor_from": "center",
+		"anchor_to": "center",
+		"$static_texture|default": "textures/ui/unstyled",
+		"controls": [
+			{
+				"bg_static": {
+					"type": "image",
+					"size": [ "100%", "100%" ],
+					"anchor_from": "center",
+					"anchor_to": "center",
+					"keep_ratio": false,
+					"texture": "$static_texture"
+				}
+			}
+		]
+	},
+	// The same face, by the name a modal cell's children mount it under.
+	"modal_state_face@core_ui_common.state_face": {},
+	// A bare image for a surface that has one state rather than four.
+	"static_face": {
+		"type": "image",
+		"size": [ "100%", "100%" ],
+		"anchor_from": "center",
+		"anchor_to": "center",
+		"keep_ratio": false,
+		"$face_texture|default": "textures/ui/unstyled",
+		"texture": "$face_texture"
+	}
+}

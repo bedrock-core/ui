@@ -17,7 +17,6 @@ describe('componentRegistry', () => {
     expect(types).toContain('panel');
     expect(types).toContain('text');
     expect(types).toContain('image');
-    expect(types).toContain('item_renderer');
   });
 
   it('marks fragment / context-provider as transparent and renderables as not', () => {
@@ -48,8 +47,11 @@ describe('componentRegistry', () => {
     expect(() => registerComponent('test-duplicate', { writer: noopWriter })).toThrow(/already registered/);
   });
 
-  it('throws when a descriptor has neither a writer nor transparent', () => {
-    expect(() => registerComponent('test-empty', {})).toThrow(/writer or be transparent/);
+  it('takes a descriptor with neither, which is a control the compiled layout draws', () => {
+    registerComponent('test-drawn', {});
+
+    expect(getComponentDescriptor('test-drawn')).toEqual({});
+    expect(isTransparentType('test-drawn')).toBe(false);
   });
 
   it('returns undefined for unknown types', () => {

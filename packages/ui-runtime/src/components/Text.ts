@@ -1,8 +1,8 @@
 import { interpolate, type DisplayText } from '@bedrock-core/i18n';
+import type { RawMessage } from '@minecraft/server';
 import { FunctionComponent, JSX } from '../jsx';
 import { useTranslationResolver } from '../data/Translation';
-import { type Writer } from '../core/types';
-import { emitLabel } from '../core/writers';
+import { buildLocales } from '../core/render/buildPass';
 import { ControlProps, withControl } from './control';
 import { labelFontFields, type LabelFont } from './Form/controlPayload';
 
@@ -90,6 +90,21 @@ export interface TextProps extends ControlProps {
    */
   maxLines?: number;
 
+  /**
+   * The most characters the text will ever need.
+   *
+   * In a container screen this is what makes the text LIVE: a compiled layout
+   * cannot grow, so a string that changes at runtime has to reserve its cells
+   * before the build knows what it will say — one container slot per
+   * character, decoded through the character table. Leave it off for text that
+   * never changes, which is baked and may use any character at all.
+   *
+   * In a server form the text is live anyway; a literal string is cut to this
+   * length so the two backends agree on what fits. Keys and messages the client
+   * resolves are left whole.
+   */
+  maxLength?: number;
+
   /** Fine-tune X nudge (px) of the rendered label inside its layout box. Default `0`. */
   offsetX?: number;
   /** Fine-tune Y nudge (px) of the rendered label inside its layout box. Default `0`. */
@@ -101,6 +116,51 @@ export interface TextProps extends ControlProps {
    * which the RP routes to a label variant with a literal `shadow: true`.
    */
   shadow?: boolean;
+
+  /**
+   * Glyph colour as RGB in 0..1 (JSON UI `color`). For text a `§` code cannot
+   * colour: a localization key, whose value the client resolves and which
+   * cannot carry a code of its own. Honoured by compiled screens; a serialized
+   * screen's payload has no field for it and paints the default.
+   */
+  color?: readonly [number, number, number];
+
+  /**
+   * Where the glyphs sit in the label's box (JSON UI `text_alignment`), which
+   * only shows when the box is wider than the text: give the text a `width`,
+   * or let it grow. Default `'left'`. Honoured by compiled screens; a
+   * serialized screen's payload has no field for it.
+   */
+  textAlign?: TextAlign;
+
+  /**
+   * Draw the label at the width of its glyphs rather than in the box the
+   * layout solved for it, and let the engine place what follows.
+   *
+   * For a row of strings whose lengths are only known when the screen is shown
+   * — a breadcrumb trail, a run of names — inside a `<Panel stack>`: the box a
+   * compiled screen solves is as wide as the longest string it may ever hold,
+   * so a short one would leave the rest of that box as air. A hugging label
+   * holds no air, and an empty one takes no room at all.
+   *
+   * Only inside a stack. Anywhere else the neighbours keep the places the
+   * layout gave them and a hugging label simply draws narrower than its box.
+   */
+  hug?: boolean;
+}
+
+export type TextAlign = 'left' | 'center' | 'right';
+
+/**
+ * What only the composing parts of the library hand a `<Text>`: the string in
+ * each language the pack ships, by locale, in place of `children`, for text the
+ * build composes because what it says decides its shape — a trail collapsed to
+ * its room, a piece of a `<Trans>` line. No `.lang` holds such a string, so the
+ * build mints a key for it and writes each language's string under it.
+ * `useComposed` and `<Trans>` set it; an author never does.
+ */
+interface ComposedTextProps {
+  __translations?: Readonly<Record<string, string>>;
 }
 
 /**
@@ -117,16 +177,21 @@ export function safeLabelText(text: string): string {
 
 export const Text: FunctionComponent<TextProps> = ({
   children,
+  __translations: translations,
   font,
   scale,
   wordBreak,
   overflow,
   maxLines,
+  maxLength,
   offsetX,
   offsetY,
   shadow,
+  color,
+  textAlign,
+  hug,
   ...rest
-}: TextProps): JSX.Element => {
+}: TextProps & ComposedTextProps): JSX.Element => {
   const resolvedScale = scale ?? 1.0;
   // Shared mapping (controlPayload): font alias + scale over the font_size:small 0.5× base.
   const labelFont = labelFontFields({ font, scale });
@@ -152,19 +217,30 @@ export const Text: FunctionComponent<TextProps> = ({
   let isLocalized: boolean;
   let resolvedText: string;
 
-  if (rawChild !== undefined) {
+  // One part as the server reads it: a literal as written, a key through the
+  // resolver. `score` and `selector` parts have no server value and measure as
+  // '' — the client fills those.
+  const partText = (part: RawMessage): string =>
+    part.text ?? (part.translate !== undefined ? (resolver?.(part.translate) ?? part.translate) : '');
+
+  // Composed per language: laid out in the default language, and never rewritten
+  // by the layout, since the build draws it through a key of its own.
+  const composed = translations === undefined ? undefined : composedValues(translations);
+
+  if (composed !== undefined) {
+    isLocalized = true;
+    resolvedText = composed.shown;
+  } else if (rawChild !== undefined) {
     isLocalized = true;
     resolvedText = translateKey !== undefined
       ? (resolver?.(translateKey) ?? translateKey)
-      : rawChild.text ?? '';
+      : rawChild.rawtext !== undefined
+        ? rawChild.rawtext.map(partText).join('')
+        : rawChild.text ?? '';
 
     if (translateKey !== undefined && hasArgs && withArgs !== undefined) {
-      // Metrics fill: rawtext parameters resolve one translate level here;
-      // score/selector parts have no server value and measure as ''.
-      const params = Array.isArray(withArgs)
-        ? withArgs
-        : (withArgs.rawtext ?? []).map(param =>
-            param.text ?? (param.translate !== undefined ? (resolver?.(param.translate) ?? param.translate) : ''));
+      // Metrics fill: rawtext parameters resolve one translate level here.
+      const params = Array.isArray(withArgs) ? withArgs : (withArgs.rawtext ?? []).map(partText);
 
       resolvedText = interpolate(resolvedText, params);
     }
@@ -178,6 +254,10 @@ export const Text: FunctionComponent<TextProps> = ({
 
     isLocalized = hit !== undefined;
     resolvedText = hit ?? candidate;
+
+    if (!isLocalized && maxLength !== undefined) {
+      resolvedText = resolvedText.slice(0, Math.max(0, Math.floor(maxLength)));
+    }
   }
 
   // The payload's variable-length text tail (v0008) — uncapped:
@@ -186,10 +266,19 @@ export const Text: FunctionComponent<TextProps> = ({
   //    tail region (a §r part guards digit-leading resolutions the same way
   //    safeLabelText guards literal text). Argless translate collapses to its key.
   //  - literal text: as-is, digit-guarded.
+  //  - a message already holding parts is SPLICED in rather than nested, so one
+  //    flat rawtext travels — which is what a trail composed of several keys is.
   const tail: DisplayText = rawChild !== undefined
     ? (translateKey !== undefined && !hasArgs
         ? translateKey
-        : { rawtext: [{ text: '§r' }, rawChild] })
+        : {
+            rawtext: [
+              { text: '§r' },
+              ...translateKey === undefined && rawChild.text === undefined && rawChild.rawtext !== undefined
+                ? rawChild.rawtext
+                : [rawChild],
+            ],
+          })
     : isLocalized && stringChild !== undefined
       ? stringChild
       : safeLabelText(resolvedText);
@@ -224,6 +313,10 @@ export const Text: FunctionComponent<TextProps> = ({
       fontScaleFactor: labelFont.fontScaleFactor,
       labelX: offsetX ?? 0, // [1190] → label anchored X offset
       labelY: offsetY ?? 0, // [1273] → label anchored Y offset
+      // Under a private name: a colour is drawn by the compiled label alone,
+      // and a plain prop would be offered to every other reader of the element.
+      ...color === undefined ? {} : { __color: color },
+      ...textAlign === undefined ? {} : { __textAlign: textAlign },
       value: { tail },
       __textMetrics: {
         font,
@@ -241,12 +334,47 @@ export const Text: FunctionComponent<TextProps> = ({
         // string committed — a JSON UI label is content-sized and never wraps
         // on its own, so the `\n`s must be in the string.
         isKey: isLocalized,
+        // The container backend's reservation. Here rather than a plain prop so
+        // it never becomes a payload field.
+        ...maxLength === undefined ? {} : { maxLength },
+        // Drawn at the width of its glyphs: the box the layout solves is only
+        // what the engine starts from, and the stack above re-places the row.
+        ...hug === true ? { hug: true } : {},
+        // Every language's string, for the build to write under the key it mints.
+        ...composed === undefined ? {} : { translations: composed.values },
       },
     },
   };
 };
 
-/** Serializes a `text` or `text_shadow` into the static (label) slot. */
-export const textWriter: Writer = (payload, form, ctx) => {
-  emitLabel(payload, form, ctx);
-};
+/**
+ * A composed text's strings, each guarded the way a literal label is, and the one it is laid out
+ * with: the default language's, or the first one given outside a build.
+ */
+function composedValues(translations: Readonly<Record<string, string>>): { shown: string; values: Record<string, string> } {
+  const values = Object.fromEntries(Object.entries(translations).map(([locale, value]) => [locale, safeLabelText(value)]));
+  const preferred = buildLocales()?.defaultLocale;
+  const shown = (preferred === undefined ? undefined : values[preferred]) ?? Object.values(values)[0] ?? '';
+
+  return { shown, values };
+}
+
+/**
+ * Characters a built `<Text>` reserved with `maxLength`, or undefined when the
+ * label is baked — how the container backend tells live text from static.
+ */
+export function liveTextLength(element: JSX.Element): number | undefined {
+  if (!isTextElementType(element.type)) {
+    return undefined;
+  }
+
+  const metrics = element.props.__textMetrics;
+
+  if (typeof metrics !== 'object' || metrics === null || !('maxLength' in metrics)) {
+    return undefined;
+  }
+
+  const { maxLength } = metrics;
+
+  return typeof maxLength === 'number' && maxLength >= 1 ? Math.floor(maxLength) : undefined;
+}

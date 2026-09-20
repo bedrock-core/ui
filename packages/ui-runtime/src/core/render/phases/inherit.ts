@@ -80,10 +80,10 @@ export function applyInheritance(element: JSX.Element, context: TraversalContext
 
     // Rule 3: Layout phase has already computed absolute Pocket-space coordinates.
     // Quantize to integer texels for stable JSON UI behavior.
-    const xValue = props.jsonUIx ?? 0;
-    const yValue = props.jsonUIy ?? 0;
-    const widthValue = props.jsonUIWidth ?? 100;
-    const heightValue = props.jsonUIHeight ?? 100;
+    const xValue = computed(props.jsonUIx, 0);
+    const yValue = computed(props.jsonUIy, 0);
+    const widthValue = computed(props.jsonUIWidth, 100);
+    const heightValue = computed(props.jsonUIHeight, 100);
 
     newProps.jsonUIx = toPocketUnit(xValue);
     newProps.jsonUIy = toPocketUnit(yValue);
@@ -122,4 +122,9 @@ export function applyInheritance(element: JSX.Element, context: TraversalContext
     nativeArgs: element.nativeArgs,
     props: newProps,
   };
+}
+
+/** One of the layout phase's computed values, or what it would be for a control it never reached. */
+function computed(value: unknown, fallback: number): number {
+  return typeof value === 'number' ? value : fallback;
 }

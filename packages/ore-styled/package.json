@@ -33,22 +33,26 @@
 	},
 	"files": [
 		"src",
-		"tsconfig.json"
+		"tsconfig.json",
+		"!src/**/__tests__/**",
+		"!src/**/*.test.ts",
+		"!src/**/*.test.tsx"
 	],
 	"sideEffects": false,
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
-		"lint": "eslint ."
+		"lint": "eslint .",
+		"test": "vitest run"
 	},
 	"devDependencies": {
+		"@bedrock-core/i18n": "*",
 		"@bedrock-core/ui-runtime": "workspace:*",
-		"typescript": "^6.0.3",
-		"vitest": "^4.1.5"
+		"eslint": "*",
+		"typescript": "*",
+		"vitest": "*"
 	},
 	"peerDependencies": {
+		"@bedrock-core/i18n": "*",
 		"@bedrock-core/ui-runtime": "*"
-	},
-	"dependencies": {
-		"@bedrock-core/i18n": "workspace:*"
 	}
 }

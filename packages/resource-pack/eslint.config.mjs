@@ -1,13 +1,6 @@
-import stylistic from "@stylistic/eslint-plugin";
 import minecraftLinting from "eslint-plugin-minecraft-linting";
 import { defineConfig } from "eslint/config";
-import { dirname } from "path";
-import tseslint from "typescript-eslint";
-import { fileURLToPath } from "url";
 import baseConfig from '../../eslint.config.mjs';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 export default defineConfig([
   ...baseConfig,
@@ -15,24 +8,10 @@ export default defineConfig([
   {
     files: ["**/*.ts", "**/*.tsx"],
     ignores: ["**/*.d.ts"],
-    plugins: { 
-      "@stylistic": stylistic,
-      "@typescript-eslint": tseslint.plugin,
+    plugins: {
       "@minecraft": minecraftLinting
     },
-
-    languageOptions: {
-      parser: tseslint.parser,
-      ecmaVersion: "latest",
-      sourceType: "module",
-      parserOptions: {
-        projectService: true,
-        tsconfigRootDir: __dirname,
-      },
-    },
-
     rules: {
-      ...baseConfig.rules,
       "@minecraft/avoid-unnecessary-command": "error",
     }
   },

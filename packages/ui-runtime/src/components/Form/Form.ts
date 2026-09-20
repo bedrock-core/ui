@@ -1,37 +1,44 @@
+import type { UiEvent } from '../../core/events';
 import { createContext } from '../../core/fabric/context';
+import { isElement } from '../../core/guards';
+import { HostContext } from '../../core/hostContext';
+import { MODAL_FORM_SLOT_TYPE } from '../../core/roots';
 import { ModalValue } from '../../core/types';
 import { FunctionComponent, JSX } from '../../jsx';
 import { FormButton, type FormButtonProps } from './FormButton';
-import { FormDropdown, type FormDropdownProps } from './FormDropdown';
-import { FormInlineSelect, type FormInlineSelectProps } from './FormInlineSelect';
-import { FormInput, type FormInputProps } from './FormInput';
-import { FormOption, type FormOptionProps } from './FormOption';
-import { FormSlider, type FormSliderProps } from './FormSlider';
-import { FormToggle, type FormToggleProps } from './FormToggle';
 
 /**
- * The host `type` string emitted by {@link Form}. The serializer treats it as
- * transparent (no payload, children only); the presenter detects it on the built
- * tree to switch from the ActionForm backend to the native `ModalFormData` one.
+ * The host `type` string emitted by {@link Form}. It carries no geometry of its
+ * own — the children are the screen — and it is the root that names the modal
+ * host, so a screen built on it compiles to a native `ModalFormData`.
  */
-export const MODAL_FORM_SLOT_TYPE = 'modal-form';
-
-/** The result object handed to {@link FormProps.onSubmit}, keyed by each control's `name`. */
-export type FormValues = Record<string, ModalValue>;
+export { MODAL_FORM_SLOT_TYPE };
 
 /**
- * Resolved chrome + lifecycle the presenter reads off the `modal-form` node. The
- * callbacks are not primitives, so the serializer keeps them as callbacks and walks
- * the children.
+ * The result object handed to {@link FormProps.onSubmit}, keyed by each control's `name`.
+ * A multiple select answers with the indices of the options that are on.
+ */
+export type FormValues = Record<string, ModalValue | number[]>;
+
+/** A submitted form: every control's value keyed by its `name`, and who submitted. */
+export interface SubmitEvent extends UiEvent {
+  readonly values: FormValues;
+}
+
+/**
+ * Resolved chrome + lifecycle carried on the `modal-form` node: the build reads
+ * the chrome, and the runtime holds the callbacks to call when the native form
+ * comes back.
  */
 export interface FormConfig {
   /**
-   * Called once when the player submits, with every control's value keyed by its
-   * `name`. The native modal is atomic — this is the only place values arrive.
+   * Called once when the player submits, with every control's value keyed by
+   * its `name` in `event.values`. The native modal is atomic — this is the only
+   * place values arrive.
    */
-  onSubmit?: (values: FormValues) => void;
+  onSubmit?: (event: SubmitEvent) => void;
   /** Called when the player dismisses the modal (X / Esc / a `Form.Button` exit). */
-  onCancel?: () => void;
+  onCancel?: (event: UiEvent) => void;
 }
 
 /**
@@ -43,8 +50,8 @@ export const ModalContext = createContext<FormConfig | null>(null);
 
 export interface FormProps extends FormConfig {
   /**
-   * Modal contents: the field declarations (`Form.Toggle` / `Form.Slider` /
-   * `Form.Dropdown` / `Form.Input`), decorative nodes (`Image` / `Panel` / `Text`),
+   * Modal contents: the fields (`Toggle` / `Select` / `Slider` / `Dropdown` /
+   * `Input`), decorative nodes (`Image` / `Panel` / `Text`),
    * and the form's action buttons — exactly ONE `Form.Button type="submit"` (required)
    * and optionally one `Form.Button type="exit"`, positioned anywhere in the flow.
    * A regular `Button` is rejected.
@@ -53,12 +60,7 @@ export interface FormProps extends FormConfig {
 }
 
 interface FormComponent extends FunctionComponent<FormProps> {
-  Toggle: FunctionComponent<FormToggleProps>;
-  Slider: FunctionComponent<FormSliderProps>;
-  Dropdown: FunctionComponent<FormDropdownProps>;
-  InlineSelect: FunctionComponent<FormInlineSelectProps>;
-  Option: FunctionComponent<FormOptionProps>;
-  Input: FunctionComponent<FormInputProps>;
+  /** The modal's own submit (`type="submit"`) and dismiss (`type="exit"`) buttons. */
   Button: FunctionComponent<FormButtonProps>;
 }
 
@@ -68,23 +70,22 @@ interface FormComponent extends FunctionComponent<FormProps> {
  * / dropdown / text-field fields with hardcoded submit + esc) instead of the
  * all-buttons ActionForm. Values arrive once, on submit, via {@link FormConfig.onSubmit}.
  *
- * Field declarations are the `Form.*` members; a heading is authored as a `<Text>`
+ * Fields are the top-level `Toggle`, `Select`, `Slider`, `Dropdown` and `Input`; a heading is authored as a `<Text>`
  * (the modal has no `title`/`body` prop). Exactly one `Form.Button type="submit"` is
  * required (and at most one `type="exit"`), positioned anywhere in the flow:
  *
  * ```tsx
  * <Form onSubmit={v => { v.sound; v.volume; }}>
  *   <Text>Settings</Text>
- *   <Form.Toggle   name="sound"  defaultValue={true} />
- *   <Form.Slider   name="volume" min={0} max={10} />
- *   <Form.Dropdown name="mode"   options={['A', 'B']} />
- *   <Form.Input    name="nick" />
- *   <Form.Button   type="submit" label="Save" />
+ *   <Toggle      name="sound"  defaultValue={true} />
+ *   <Slider      name="volume" min={0} max={10} />
+ *   <Input       name="nick" />
+ *   <Form.Button type="submit">Save</Form.Button>
  * </Form>
  * ```
  *
- * Restrictions (a runtime pass during build): a modal tree may contain only `Form.*`
- * controls and decorative nodes — no regular `Button`, no nested `<Form>`, and not
+ * Restrictions (a runtime pass during build): a modal tree may contain only fields,
+ * `Form.Button` and decorative nodes — no regular `Button`, no nested `<Form>`, and not
  * mixed with ActionForm-only roots. Mix the two form kinds across separate `render()`
  * calls (e.g. via navigation), never nested.
  */
@@ -95,32 +96,61 @@ const FormRoot: FunctionComponent<FormProps> = ({
 }: FormProps): JSX.Element => {
   const config: FormConfig = { onSubmit, onCancel };
 
-  // Provide the config to descendants (so the restriction pass sees the modal scope)
-  // and emit the transparent `modal-form` marker the presenter detects. The marker
-  // carries the config so the presenter reads chrome + lifecycle without re-walking
-  // providers.
-  return ModalContext({
-    value: config,
-    children: {
-      type: MODAL_FORM_SLOT_TYPE,
-      props: {
-        __formConfig: config,
-        children,
+  // Provide the host (so every component below lowers to a native field) and the
+  // config (so the restriction pass sees the modal scope), then emit the
+  // transparent `modal-form` marker the presenter detects. The marker carries the
+  // config so the presenter reads chrome + lifecycle without re-walking providers.
+  return HostContext({
+    value: 'form-modal',
+    children: ModalContext({
+      value: config,
+      children: {
+        type: MODAL_FORM_SLOT_TYPE,
+        props: {
+          __formConfig: config,
+          children,
+        },
       },
-    },
+    }),
   });
 };
 
+/** The `Form` root with its one member, `Form.Button`. */
+export const Form: FormComponent = Object.assign(FormRoot, { Button: FormButton });
+
 /**
- * The `Form` root plus its field-control members. Assembled with `Object.assign` so
- * the namespace shape is built structurally (no narrowing cast).
+ * The `<Form>` marker on a built tree and the config it carries, or `undefined`
+ * when the tree is an ordinary ActionForm tree. What makes a screen a modal
+ * lives with the component that makes it one, so the host registry and the
+ * presenter read the same answer.
+ *
+ * The marker is transparent, so it sits a couple of provider levels below the
+ * root — walk children until it is found.
+ *
+ * @param node - Tree node to search from, typically the built root.
  */
-export const Form: FormComponent = Object.assign(FormRoot, {
-  Toggle: FormToggle,
-  Slider: FormSlider,
-  Dropdown: FormDropdown,
-  InlineSelect: FormInlineSelect,
-  Option: FormOption,
-  Input: FormInput,
-  Button: FormButton,
-});
+export function findModalConfig(node: JSX.Node): FormConfig | undefined {
+  if (!isElement(node)) {
+    return undefined;
+  }
+
+  if (node.type === MODAL_FORM_SLOT_TYPE) {
+    const config = node.props.__formConfig;
+
+    // __formConfig is always a FormConfig (set by <Form>); narrow the unknown prop.
+    return config && typeof config === 'object' ? config : undefined;
+  }
+
+  const { children } = node.props;
+  const childArray = Array.isArray(children) ? children : [children];
+
+  for (const child of childArray) {
+    const found = findModalConfig(child);
+
+    if (found) {
+      return found;
+    }
+  }
+
+  return undefined;
+}

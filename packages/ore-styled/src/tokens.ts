@@ -54,7 +54,7 @@ export interface Theme {
       gap: number;
       /** Edge of the square back/close controls (px). */
       iconSize: number;
-      textStyle: { font: TextFont; scale: number; color: string; separator: string };
+      textStyle: { font: TextFont; scale: number; color: string; colorRgb: readonly [number, number, number]; separator: string };
       textures: {
         background: string;
         back: string; backHover: string; backPressed: string;
@@ -68,7 +68,16 @@ export interface Theme {
       /** Edge of a row's leading thumbnail (px). */
       iconSize: number;
       textures: { background: string; backgroundHover: string; backgroundPressed: string; backgroundSelected: string };
-      textStyle: { font: TextFont; scale: number; color: string; disabledColor: string; muted: string; mutedDisabled: string };
+      textStyle: {
+        font: TextFont;
+        scale: number;
+        color: string;
+        disabledColor: string;
+        muted: string;
+        mutedDisabled: string;
+        /** The muted grey a key or a live line takes, which a code cannot colour: `§7` as RGB in 0..1. */
+        mutedRgb: readonly [number, number, number];
+      };
     };
     radio: {
       size: number;
@@ -80,8 +89,18 @@ export interface Theme {
     };
     tabs: {
       height: number;
-      padding: { x: number; y: number };
-      textures: { active: string; inactive: string; inactiveHover: string; bar: string };
+      paddingX: number;
+      /** How far the chosen tab's label sits lower. */
+      selectedDrop: number;
+      textures: { normal: string; hover: string; pressed: string; disabled: string; disabledPressed: string };
+      /** One font for every tab, and a colour per state as RGB in 0..1. */
+      textStyle: {
+        font: TextFont;
+        scale: number;
+        selected: readonly [number, number, number];
+        unselected: readonly [number, number, number];
+        disabled: readonly [number, number, number];
+      };
     };
     toggle: {
       width: number;
@@ -94,8 +113,20 @@ export interface Theme {
     toggleButton: {
       height: number;
       paddingX: number;
+      /** How far a chosen segment's label sits lower, which is what reads as pressed. */
+      selectedDrop: number;
       textures: { normal: string; hover: string; pressed: string; disabled: string; disabledPressed: string };
-      textStyle: { selected: ButtonTextStyle; unselected: ButtonTextStyle };
+      /**
+       * One font for every segment, and a colour per state as RGB in 0..1: a segment's label is
+       * drawn inside a native control's faces on a modal, where a `§` code cannot change with state.
+       */
+      textStyle: {
+        font: TextFont;
+        scale: number;
+        selected: readonly [number, number, number];
+        unselected: readonly [number, number, number];
+        disabled: readonly [number, number, number];
+      };
     };
     itemSlot: {
       size: number;
@@ -208,7 +239,9 @@ const oreTheme: Theme = {
       padding: 4,
       gap: 4,
       iconSize: 15,
-      textStyle: { font: 'minecraftTen', scale: 1.2, color: '§0', separator: '§8' },
+      // `color` is the § code a literal takes; `colorRgb` the same black for a
+      // localized key, which no code can colour.
+      textStyle: { font: 'minecraftTen', scale: 1.2, color: '§0', colorRgb: [0, 0, 0], separator: '§8' },
       textures: {
         background: `${BASE}/header/background`,
         back: `${BASE}/button/back/background`,
@@ -231,7 +264,7 @@ const oreTheme: Theme = {
       },
       // Full scale for the subtitle too — a sub-1 scale lands on a fractional
       // font_scale_factor and reads mushy in game; the §7 grey already separates it.
-      textStyle: { font: 'mojangles', scale: 1, color: '§f', disabledColor: '§8', muted: '§7', mutedDisabled: '§8' },
+      textStyle: { font: 'mojangles', scale: 1, color: '§f', disabledColor: '§8', muted: '§7', mutedDisabled: '§8', mutedRgb: [2 / 3, 2 / 3, 2 / 3] },
     },
     radio: {
       size: 12,
@@ -245,15 +278,20 @@ const oreTheme: Theme = {
         selectedDisabled: `${BASE}/radio/selected_disabled`,
       },
     },
+    // Started as a copy of the toggle buttons' values and textures.
     tabs: {
-      height: 20,
-      padding: { x: 8, y: 2 },
+      height: 27,
+      paddingX: 8,
+      selectedDrop: 1,
       textures: {
-        active: `${BASE}/tabs/tab_active`,
-        inactive: `${BASE}/tabs/tab_inactive`,
-        inactiveHover: `${BASE}/tabs/tab_inactive_hover`,
-        bar: `${BASE}/tabs/bar`,
+        normal: `${BASE}/tabs/background`,
+        hover: `${BASE}/tabs/background_hover`,
+        pressed: `${BASE}/tabs/background_pressed`,
+        disabled: `${BASE}/tabs/background_disabled`,
+        disabledPressed: `${BASE}/tabs/background_disabled_pressed`,
       },
+      // White whichever way a tab is: the face is what says which is chosen.
+      textStyle: { font: 'mojangles', scale: 1, selected: [1, 1, 1], unselected: [1, 1, 1], disabled: [1 / 3, 1 / 3, 1 / 3] },
     },
     toggle: {
       width: 27,
@@ -268,8 +306,9 @@ const oreTheme: Theme = {
       },
     },
     toggleButton: {
-      height: 36,
+      height: 27,
       paddingX: 8,
+      selectedDrop: 1,
       textures: {
         normal: `${BASE}/toggle-button/background`,
         hover: `${BASE}/toggle-button/background_hover`,
@@ -277,10 +316,8 @@ const oreTheme: Theme = {
         disabled: `${BASE}/toggle-button/background_disabled`,
         disabledPressed: `${BASE}/toggle-button/background_disabled_pressed`,
       },
-      textStyle: {
-        selected: { font: 'mojangles', scale: 1, color: '§f', disabledColor: '§8' },
-        unselected: { font: 'mojangles', scale: 1, color: '§0', disabledColor: '§8' },
-      },
+      // White, black and the dark grey of `§8`.
+      textStyle: { font: 'mojangles', scale: 1, selected: [1, 1, 1], unselected: [0, 0, 0], disabled: [1 / 3, 1 / 3, 1 / 3] },
     },
     itemSlot: {
       size: 18,
@@ -325,7 +362,7 @@ const oreTheme: Theme = {
     },
     form: {
       labelGap: 2,
-      labelStyle: { font: 'mojangles', scale: 1, bold: true, color: '§f', disabledColor: '§8' },
+      labelStyle: { font: 'mojangles', scale: 1, bold: false, color: '§f', disabledColor: '§8' },
     },
     slider: {
       height: 20,

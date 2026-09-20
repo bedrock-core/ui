@@ -4,6 +4,7 @@
  */
 
 import { vi } from 'vitest';
+import type { RawMessage } from '@minecraft/server';
 
 export enum FormCancelationReason {
   UserBusy = 'UserBusy',
@@ -31,9 +32,9 @@ export interface FormResponse {
 }
 
 // ─── Controllable ModalFormData.show responses (for tests) ──────────────────────
-// showModalForm constructs its own ModalFormData, so tests can't reach the
-// instance. Enqueue responses here; each show() dequeues one (falling back to a
-// confirmed-empty response).
+// A modal is created inside the present, so a test cannot reach the instance.
+// Enqueue responses here; each show() dequeues one, falling back to a
+// confirmed-empty response.
 
 let modalResponseQueue: ModalFormResponse[] = [];
 
@@ -99,6 +100,8 @@ export function __rejectShow(error: unknown, index = 0): void {
 
 /** Reset ALL form-mock state: deferred mode, pending shows, modal queue. */
 export function __resetFormMocks(): void {
+  lastModal = undefined;
+  lastAction = undefined;
   deferShows = false;
   pendingShows.length = 0;
   modalResponseQueue = [];
@@ -139,7 +142,43 @@ export interface ModalFormDataDropdownOptions { defaultValueIndex?: number; tool
 export interface ModalFormDataSliderOptions { defaultValue?: number; valueStep?: number; tooltip?: string }
 export interface ModalFormDataToggleOptions { defaultValue?: boolean; tooltip?: string }
 
+/** The most recent ActionFormData a test's subject constructed, for asserting what it wrote. */
+let lastAction: ActionFormData | undefined;
+
+export function __lastActionForm(): ActionFormData | undefined {
+  return lastAction;
+}
+
+/** The most recent ModalFormData, for asserting the rows a compiled screen wrote. */
+let lastModal: ModalFormData | undefined;
+
+export function __lastModalForm(): ModalFormData | undefined {
+  return lastModal;
+}
+
+/** Records the newest instance. A function call rather than `const self = this`. */
+function rememberModal(form: ModalFormData): void {
+  lastModal = form;
+}
+
+/** Records the newest instance. A function call rather than `const self = this`. */
+function remember(form: ActionFormData): void {
+  lastAction = form;
+}
+
 export class ActionFormData {
+  /** What `title()` was called with, so a test can read the screen key off it. */
+  titleText: string | RawMessage = '';
+  /** What every `button()` was called with, in order — the entries a compiled screen wrote, values and all. */
+  buttons: (string | RawMessage)[] = [];
+
+  /** The icon path of every `button()`, in order. A compiled screen sets none. */
+  icons: (string | undefined)[] = [];
+
+  constructor() {
+    remember(this);
+  }
+
   show = vi.fn((player: unknown): Promise<FormResponse> => {
     if (deferShows) {
       return new Promise<FormResponse>((resolve, reject) => {
@@ -150,7 +189,9 @@ export class ActionFormData {
     return Promise.resolve({ canceled: false, selection: undefined });
   });
 
-  title(_text: string): this {
+  title(text: string | RawMessage): this {
+    this.titleText = text;
+
     return this;
   }
 
@@ -170,25 +211,52 @@ export class ActionFormData {
     return this;
   }
 
-  button(_text: string, _iconPath?: string): this {
+  button(text: string | RawMessage, iconPath?: string): this {
+    this.buttons.push(text);
+    this.icons.push(iconPath);
+
     return this;
   }
 }
 
+/** One call a modal recorded: which method, and the label it was given. */
+export interface ModalRow { kind: string; label: string; items?: string[] }
+
 export class ModalFormData {
-  title(_text: string): this {
+  /** What `title()` was called with, so a test can read the screen key off it. */
+  titleText: string | RawMessage = '';
+  /**
+   * Every row-producing call, in order. `formValues` is positional and a label
+   * occupies a slot in it, so the ORDER and the COUNT here are what a compiled
+   * screen's baked indices are checked against.
+   */
+  rows: ModalRow[] = [];
+
+  constructor() {
+    rememberModal(this);
+  }
+
+  title(text: string): this {
+    this.titleText = text;
+
     return this;
   }
 
-  header(_text: string): this {
+  header(text: string): this {
+    this.rows.push({ kind: 'header', label: text });
+
     return this;
   }
 
-  label(_text: string): this {
+  label(text: string): this {
+    this.rows.push({ kind: 'label', label: text });
+
     return this;
   }
 
   divider(): this {
+    this.rows.push({ kind: 'divider', label: '' });
+
     return this;
   }
 
@@ -196,19 +264,27 @@ export class ModalFormData {
     return this;
   }
 
-  toggle(_label: string, _options?: ModalFormDataToggleOptions): this {
+  toggle(label: string, _options?: ModalFormDataToggleOptions): this {
+    this.rows.push({ kind: 'toggle', label });
+
     return this;
   }
 
-  textField(_label: string, _placeholder: string, _options?: ModalFormDataTextFieldOptions): this {
+  textField(label: string, _placeholder: string, _options?: ModalFormDataTextFieldOptions): this {
+    this.rows.push({ kind: 'textField', label });
+
     return this;
   }
 
-  slider(_label: string, _min: number, _max: number, _options?: ModalFormDataSliderOptions): this {
+  slider(label: string, _min: number, _max: number, _options?: ModalFormDataSliderOptions): this {
+    this.rows.push({ kind: 'slider', label });
+
     return this;
   }
 
-  dropdown(_label: string, _items: string[], _options?: ModalFormDataDropdownOptions): this {
+  dropdown(label: string, items: string[], _options?: ModalFormDataDropdownOptions): this {
+    this.rows.push({ kind: 'dropdown', label, items: [...items] });
+
     return this;
   }
 

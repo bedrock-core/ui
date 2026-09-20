@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ellipsizeText, measureText, wrapText } from '../textMetrics';
+import { ellipsizeText, lineRanges, measureText, wrapText } from '../textMetrics';
 
 describe('measureText', () => {
   it('returns positive intrinsic dimensions', () => {
@@ -185,5 +185,28 @@ describe('ellipsizeText', () => {
       expect(ellipsizeText(text, width, font, scale)).toBe(text);
       expect(wrapText(text, width, font, scale)).toBe(text);
     }
+  });
+});
+
+describe('lineRanges', () => {
+  const text = 'one two three four five six seven eight nine ten';
+
+  it('names every wrapped line by the indices of the source it holds', () => {
+    const wrapped = wrapText(text, 60).split('\n').map(line => line.trimEnd());
+    const lines = lineRanges(text, 60).map(({ start, end }) => text.slice(start, end).trimEnd());
+
+    expect(lines).toEqual(wrapped);
+    expect(lines.length).toBeGreaterThan(1);
+  });
+
+  it('keeps a formatting code in the line it sits in', () => {
+    const styled = '§lone §9two§r three four five six seven eight nine ten';
+    const [first] = lineRanges(styled, 60);
+
+    expect(styled.slice(first?.start ?? 0, first?.end ?? 0)).toContain('§9two');
+  });
+
+  it('is one line when the text fits', () => {
+    expect(lineRanges('short', 200)).toEqual([{ start: 0, end: 5 }]);
   });
 });

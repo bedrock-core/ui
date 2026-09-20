@@ -1,0 +1,146 @@
+{
+	// A scrolling region: a viewport at the rect the layout solved, over content
+	// laid out on its own and taller than the viewport. The client scrolls it;
+	// the layout stays frozen. A compiled screen mounts it with its size and
+	// offset and names the content through `$scrolling_content`.
+	//
+	// A SHAPE, not a mechanism: no collection, no bindings, nothing about where
+	// it is drawn. A scroll region is the same control on a chest screen and on
+	// a form, which is why it lives here rather than beside one host's cells —
+	// it started in the chest's namespace only because the chest was the only
+	// host that existed.
+	"namespace": "core_ui_shapes",
+
+	"scroll": {
+		"type": "scroll_view",
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"scroll_speed": 15,
+		"scrollbar_track_button": "button.scrollbar_skip_track",
+		"scrollbar_touch_button": "button.scrollbar_touch",
+		"always_listen_to_input": true,
+		"always_handle_pointer": true,
+		// Off, as in vanilla's scrolling_panel:
+		// on, the region took every scroll and pointer event for itself — the
+		// wheel did nothing and a button inside the content could not be pressed.
+		"always_handle_scrolling": false,
+		// MEASURED with asserts on: content shorter than the viewport puts the
+		// scrollbar's slider percentage outside 0..1 — "Progress out of range",
+		// a Marketplace-blocking assertion — unless scrolling is off while the
+		// content fits. Vanilla's scrolling_panel exposes the same switch.
+		"allow_scroll_even_when_content_fits": false,
+		"scroll_content": "scrolling_content",
+		"scroll_view_port": "scrolling_view_port",
+		"scrollbar_track": "track",
+		"scrollbar_box": "box",
+		"scroll_box_and_track_panel": "bar_and_track",
+		"button_mappings": [
+			{
+				"from_button_id": "button.menu_select",
+				"to_button_id": "button.scrollbar_touch",
+				"mapping_type": "pressed",
+				"button_up_right_of_first_refusal": true
+			}
+		],
+		"controls": [
+			{
+				// The viewport clips the content; the 5-texel track sits to its right
+				// with 3 clear texels either side (the runtime's SCROLL_GUTTER), so the
+				// bar is centred in the column the content gives up.
+				// An input panel rather than a plain one, hovering: the wheel is
+				// delivered to the scroll view through the control under the pointer,
+				// and a panel is not one — so over prose, an image or empty space the
+				// wheel reached nothing and only a button inside the content scrolled
+				// the region. `hover_enabled` is not a property a plain panel accepts;
+				// the engine rejects the whole definition.
+				"scrolling_view_port": {
+					"type": "input_panel",
+					"size": [ "100% - 8px", "100%" ],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"hover_enabled": true,
+					"clips_children": true,
+					"controls": [
+						{
+							// Directly under the viewport, as vanilla's scrolling_panel
+							// mounts its content. Through an intermediate 1×1 panel the
+							// images inside the content — a card's background — stayed
+							// culled until the first scroll moved them; labels drew.
+							"scrolling_content@$scrolling_content": {
+								"layer": 1,
+								"anchor_from": "top_left",
+								"anchor_to": "top_left"
+							}
+						}
+					]
+				}
+			},
+			{ "bar_and_track@core_ui_shapes.scrollbar": { "offset": [ -3, 0 ] } }
+		]
+	},
+
+	// The bar, on its own: a scroll view names it through `scroll_box_and_track_panel`,
+	// so a view that wants the bar over its content rather than beside it mounts the
+	// same one and sizes its own viewport. The dropdown popup is the other caller.
+	"scrollbar": {
+		"type": "panel",
+		"size": [ 5, "100%" ],
+		"anchor_from": "right_middle",
+		"anchor_to": "right_middle",
+		"controls": [
+			{
+				"track": {
+					"type": "scroll_track",
+					"size": [ 5, "100%" ],
+					"anchor_from": "center",
+					"anchor_to": "center",
+					"button_mappings": [
+						{
+							"from_button_id": "button.menu_select",
+							"to_button_id": "button.scrollbar_skip_track",
+							"mapping_type": "pressed"
+						}
+					],
+					"controls": [
+						{ "bar_indent@core_ui_shapes.scroll_rail": { "anchor_from": "center", "anchor_to": "center" } }
+					]
+				}
+			},
+			{
+				"box": {
+					"type": "scrollbar_box",
+					"size": [ 5, "20%" ],
+					"anchor_from": "top_middle",
+					"anchor_to": "top_middle",
+					"draggable": "vertical",
+					"contained": true,
+					"button_mappings": [
+						{
+							"from_button_id": "button.menu_select",
+							"to_button_id": "button.menu_select",
+							"mapping_type": "pressed",
+							"button_up_right_of_first_refusal": true
+						}
+					],
+					"controls": [
+						{ "handle@core_ui_shapes.scroll_handle": { "anchor_from": "center", "anchor_to": "center" } }
+					]
+				}
+			}
+		]
+	},
+
+	"scroll_rail": {
+		"type": "image",
+		"texture": "textures/ui/ScrollRail",
+		"size": [ 3, "100%" ],
+		"layer": 3
+	},
+
+	"scroll_handle": {
+		"type": "image",
+		"texture": "textures/ui/ScrollHandle",
+		"size": [ 5, "100%" ],
+		"layer": 4
+	}
+}

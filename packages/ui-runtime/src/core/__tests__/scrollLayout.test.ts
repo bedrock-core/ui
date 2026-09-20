@@ -1,10 +1,9 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { JSX } from '../../jsx';
-import type { ScrollMetrics } from '../serializer';
+import type { ScrollMetrics } from '../render/phases/layout';
 import { withControl } from '../../components/control';
 import { registerNativeComponents } from '../../components';
-import { MAX_POOLED_SCROLLS, Scroll } from '../../components/Scroll';
-import { ScrollLimitError } from '../types';
+import { Scroll } from '../../components/Scroll';
 import { computeLayout } from '../render/phases/layout';
 
 beforeAll(() => {
@@ -157,19 +156,17 @@ describe('Scroll component', () => {
   });
 });
 
-describe('computeLayout — scroll limit', () => {
+describe('computeLayout — however many scrolls a screen declares', () => {
   function nScrolls(n: number): JSX.Element {
     return box(320, 210, 'row', Array.from({ length: n }, () => Scroll({ children: panel(10, 10) })));
   }
 
-  it(`accepts exactly MAX_POOLED_SCROLLS (${MAX_POOLED_SCROLLS}) custom scrolls`, () => {
-    const tree = nScrolls(MAX_POOLED_SCROLLS);
+  // A compiled screen emits a region per <Scroll>, so there is no pool to run
+  // out of and no number to cap at.
+  it('lays out every one of them, plus the implicit root', () => {
+    const tree = nScrolls(8);
 
     expect(() => computeLayout(tree)).not.toThrow();
-    expect(scrolls(tree)).toHaveLength(MAX_POOLED_SCROLLS + 1); // + root
-  });
-
-  it('throws a ScrollLimitError when there are more than MAX_POOLED_SCROLLS', () => {
-    expect(() => computeLayout(nScrolls(MAX_POOLED_SCROLLS + 1))).toThrow(ScrollLimitError);
+    expect(scrolls(tree)).toHaveLength(9);
   });
 });

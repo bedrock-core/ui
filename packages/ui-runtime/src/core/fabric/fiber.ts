@@ -1,15 +1,17 @@
-import { Player } from '@minecraft/server';
+import { takeStateSeed } from '../render/session';
 import { MountDispatcher, UpdateDispatcher } from './dispatcher';
+import type { Owner } from './owner';
 import { FiberRegistry, getCurrentFiber, setCurrentFiber } from './registry';
 import { Fiber, HookSlot } from './types';
 
-export function createFiber(id: string, player: Player): Fiber {
+export function createFiber(id: string, owner: Owner): Fiber {
   const fiber: Fiber = {
     id,
     hookStates: [],
     hookIndex: 0,
     dispatcher: MountDispatcher,
-    player,
+    owner,
+    seed: takeStateSeed(owner, id),
     pendingEffects: [],
     shouldRender: true,
     parent: undefined,
@@ -75,16 +77,16 @@ export function deleteFiber(id: string): void {
 }
 
 /**
- * Get all fibers for a specific player.
- * @param player - Player instance to filter fibers by
- * @returns Array of fiber IDs belonging to this player
+ * Every fiber belonging to an owner.
+ * @param owner - Whose fibers to collect
+ * @returns The fibers keyed by this owner, in registry order
  */
-export function getFibersForPlayer(player: Player): Fiber[] {
+export function getFibersForOwner(owner: Owner): Fiber[] {
   const fibers: Fiber[] = [];
 
-  FiberRegistry.forEach((element) => {
-    if (element.player.id === player.id) {
-      fibers.push(element);
+  FiberRegistry.forEach((fiber) => {
+    if (fiber.owner.id === owner.id) {
+      fibers.push(fiber);
     }
   });
 
@@ -111,8 +113,12 @@ export function activateFiber<T>(
 
     // After successful evaluation, move to Update phase for next runs
     fiber.dispatcher = UpdateDispatcher;
-    // Flush effects after execution
-    flushPendingEffects(fiber);
+
+    // A build renders once to decide a shape. An effect there would reach for
+    // a world that is not present, so the effects stay scheduled and unrun.
+    if (fiber.owner.kind !== 'build') {
+      flushPendingEffects(fiber);
+    }
 
     return result;
   } finally {

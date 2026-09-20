@@ -1,0 +1,76 @@
+name: CurseForge
+
+# Ships the .mcpack from a GitHub release to the CurseForge project, with the
+# release notes as the file's changelog.
+#
+# It takes the pack from the release instead of rebuilding it, so the job needs
+# only `gh` and Node — no `yarn install`, and therefore none of the
+# server-runtime portal: blocker that holds up publish.yml. That also makes the
+# manual trigger a working backfill for any release already published.
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: Release tag to ship, e.g. "@bedrock-core/ui@0.11.0"
+        type: string
+        required: true
+    secrets:
+      CURSEFORGE_TOKEN:
+        required: true
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to ship, e.g. "@bedrock-core/ui@0.11.0"
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: curseforge-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    name: Upload .mcpack to CurseForge
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG: ${{ inputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Use Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Fetch release asset & notes
+        id: release
+        run: |
+          mkdir -p .curseforge
+          gh release download "$TAG" --pattern '*.mcpack' --dir .curseforge
+          gh release view "$TAG" --json body -q .body > .curseforge/changelog.md
+          shopt -s nullglob
+          packs=(.curseforge/*.mcpack)
+          if [[ ${#packs[@]} -ne 1 ]]; then
+            echo "Expected exactly one .mcpack attached to $TAG; found ${#packs[@]}."
+            exit 1
+          fi
+          if [[ ! -s .curseforge/changelog.md ]]; then
+            printf 'Release `%s`.\n' "$TAG" > .curseforge/changelog.md
+          fi
+          echo "file=${packs[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload
+        env:
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+          PACK: ${{ steps.release.outputs.file }}
+        run: |
+          node scripts/curseforge-upload.mjs \
+            --file "$PACK" \
+            --changelog-file .curseforge/changelog.md \
+            --tag "$TAG"

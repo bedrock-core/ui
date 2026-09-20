@@ -1,14 +1,17 @@
 import { getCurrentFiber, invariant } from '../core';
+import type { StateSlot } from '../core';
 
 /**
  * State hook that persists a value across renders for the current component.
  *
  * @typeParam T - State value type.
  * @param initial - Initial state value or a lazy initializer function invoked once on mount.
- * @returns A tuple with the current state and a setter. The setter accepts a value
- *          or an updater function that receives the previous value.
+ * @returns A tuple with the current state and a setter. The state is deeply
+ *          readonly — a render happens because a setter ran, so a value written
+ *          in place would leave the screen drawing the old one. The setter
+ *          accepts a value or an updater function that receives the previous one.
  */
-export function useState<T>(initial: T | (() => T)): [T, (v: T | ((prev: T) => T)) => void] {
+export function useState<T>(initial: T | (() => T)): StateSlot<T> {
   const [, d] = getCurrentFiber();
 
   invariant(d, 'useState');

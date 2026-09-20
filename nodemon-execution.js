@@ -8,7 +8,7 @@ function startResourcePack() {
     child.kill();
   }
 
-  child = spawn('yarn', ['workspace', '@bedrock-core/ui-resource-pack', 'run', 'watch'], {
+  child = spawn('yarn', ['--cwd', 'packages/resource-pack', 'watch'], {
     stdio: 'inherit',
     shell: true,
   });

@@ -1,17 +1,37 @@
 import type { FlexStyle, LayoutNode, MeasureFunc } from '@bedrock-core/flexbox';
 import { CANONICAL_SCREEN, createNode, computeLayout as flexComputeLayout } from '@bedrock-core/flexbox';
 import { isTextElementType, safeLabelText, type TextFont, type TextOverflow, type TextWordBreak } from '../../../components/Text';
-import {
-  MODAL_DROPDOWN_SLOT_TYPE, MODAL_FORM_BUTTON_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE,
-  MODAL_INPUT_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE,
-} from '../../../components/Form';
-import { MAX_POOLED_SCROLLS, SCROLL_SLOT_TYPE, type ScrollAxis } from '../../../components/Scroll';
+import { MODAL_FORM_BUTTON_SLOT_TYPE } from '../../../components/Form';
+import { LIST_SLOT_TYPE } from '../../../components/List';
+import { SCROLL_RESERVE, SCROLL_SLOT_TYPE, type ScrollAxis, WIDE_RECT } from '../../../components/Scroll';
 import type { JSX } from '../../../jsx';
-import { ellipsizeText, measureText, wrapText } from '../../../util/textMetrics';
+import { ellipsizeText, measureText, wrapText, WIDEST_GLYPH } from '../../../util/textMetrics';
+import { recordWidth } from '../buildPass';
 import { isTransparentType } from '../../componentRegistry';
 import { isElement } from '../../guards';
-import type { ScrollMetrics } from '../../serializer';
-import { ScrollLimitError } from '../../types';
+import { MODAL_DROPDOWN_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE } from '../../fields';
+
+/**
+ * Per-scroll geometry, measured by this pass.
+ *
+ * A scroll is a viewport rectangle on screen plus a scrollable content `extent`
+ * along its `axis`. The compiler reads one of these per index and emits the
+ * scroll control positioned and sized from it.
+ */
+export interface ScrollMetrics {
+  /** Scroll axis: 'y' (vertical) or 'x' (horizontal). */
+  axis: 'x' | 'y';
+  /** Viewport top-left x (px, screen space). */
+  x: number;
+  /** Viewport top-left y (px, screen space). */
+  y: number;
+  /** Viewport width (px). */
+  width: number;
+  /** Viewport height (px). */
+  height: number;
+  /** Content extent (px) along the scroll axis — the scrollable length. */
+  extent: number;
+}
 
 // Set to true to log every element's computed x/y/w/h after layout.
 const DEBUG_LAYOUT = false;
@@ -63,6 +83,10 @@ interface TextMetricsData {
   wordBreak?: TextWordBreak;
   overflow?: TextOverflow;
   maxLines?: number;
+  /** Characters the text reserves room for, whatever it says right now. */
+  maxLength?: number;
+  /** Drawn at the width of its glyphs, so it reserves nothing. */
+  hug?: boolean;
 }
 
 /** The string content of a `value` prop — plain, or inside a v0008 tail wrapper. */
@@ -98,6 +122,8 @@ function extractTextMetrics(props: JSX.Props): TextMetricsData {
   const wordBreak = Reflect.get(metrics, 'wordBreak');
   const overflow = Reflect.get(metrics, 'overflow');
   const maxLines = Reflect.get(metrics, 'maxLines');
+  const maxLength = Reflect.get(metrics, 'maxLength');
+  const hug = Reflect.get(metrics, 'hug');
 
   return {
     text,
@@ -106,7 +132,39 @@ function extractTextMetrics(props: JSX.Props): TextMetricsData {
     wordBreak: wordBreak === 'break-word' ? wordBreak : undefined,
     overflow: overflow === 'ellipsis' ? overflow : undefined,
     maxLines: typeof maxLines === 'number' ? maxLines : undefined,
+    maxLength: typeof maxLength === 'number' && maxLength >= 1 ? Math.floor(maxLength) : undefined,
+    hug: hug === true,
   };
+}
+
+/**
+ * Whether a `maxLength` text reserves room for its widest possible content.
+ *
+ * A container screen's live text changes after the layout is frozen, so its
+ * box must fit the widest string `maxLength` can hold. A form cuts the literal
+ * to `maxLength` and re-measures it every render, so it reserves nothing and
+ * the box hugs the text.
+ */
+let reserveLiveText = true;
+
+/**
+ * The width a text reserves with `maxLength`: room for that many of the widest
+ * glyph, so the box holds whatever the text later says. A live text in a
+ * container screen changes after the layout is frozen, and the string the
+ * build measured is only what it said first.
+ */
+function reservedWidth(td: TextMetricsData): number {
+  // A hugging label is drawn at the width of its glyphs and the stack above it
+  // places what follows, so there is nothing to hold open.
+  if (td.maxLength === undefined || td.hug === true) {
+    return 0;
+  }
+
+  return measureText({
+    text: WIDEST_GLYPH.repeat(td.maxLength),
+    font: td.font,
+    fontSize: td.scale,
+  }).width;
 }
 
 // ─── Text overflow processing ───────────────────────────────────────────────────
@@ -188,11 +246,20 @@ function makeTextMeasure(element: JSX.Element): MeasureFunc | undefined {
     return undefined;
   }
 
-  return availableWidth => measureText({
-    text: processOverflowText(td, availableWidth),
-    font: td.font,
-    fontSize: td.scale,
-  });
+  return (availableWidth) => {
+    const measured = measureText({
+      text: processOverflowText(td, availableWidth),
+      font: td.font,
+      fontSize: td.scale,
+    });
+
+    // A live overflow text reserves its widest content the way a plain one
+    // does, within the box it was granted: the string it was measured with is
+    // only what it said first.
+    const reserved = reserveLiveText ? Math.min(reservedWidth(td), availableWidth) : 0;
+
+    return reserved > measured.width ? { ...measured, width: reserved } : measured;
+  };
 }
 
 /**
@@ -232,7 +299,7 @@ function withIntrinsicSize(element: JSX.Element, style: FlexStyle): FlexStyle {
   if (modalDefaultHeight !== undefined) {
     const next: FlexStyle = { ...style };
 
-    // The inline select is a real flex CONTAINER — its Form.Option children are laid out by
+    // The inline select is a real flex CONTAINER — its Option children are laid out by
     // our engine, so when it HAS options its height must come from content flow (auto), not
     // the native-row default. Defaulting it pinned the group at 17px and flex-SHRANK a column
     // of 17px rows into it (in-game: 3 radio rows squashed to ~5px each; a row-direction
@@ -282,7 +349,7 @@ function withIntrinsicSize(element: JSX.Element, style: FlexStyle): FlexStyle {
   const next: FlexStyle = { ...style };
 
   if (next.width === undefined) {
-    next.width = dims.width;
+    next.width = reserveLiveText ? Math.max(dims.width, reservedWidth(td)) : dims.width;
   }
 
   if (next.height === undefined) {
@@ -320,11 +387,30 @@ function buildNode(element: JSX.Element): LayoutNode {
 
 // ─── Apply LayoutNode results back to JSX element tree ─────────────────────────
 
+/** The props one pass writes a solved rect to. */
+interface RectTarget {
+  x: string;
+  y: string;
+  width: string;
+  height: string;
+}
+
+/** The layout's own rect: what every later phase and the compiler read. */
+const OWN_RECT: RectTarget = { x: 'jsonUIx', y: 'jsonUIy', width: 'jsonUIWidth', height: 'jsonUIHeight' };
+
+function writeRect(element: JSX.Element, node: LayoutNode, target: RectTarget): void {
+  element.props[target.x] = node.layout.x;
+  element.props[target.y] = node.layout.y;
+  element.props[target.width] = node.layout.width;
+  element.props[target.height] = node.layout.height;
+}
+
 function applyToTree(
   element: JSX.Element,
   parentNode: LayoutNode,
   cursor: { index: number },
   regionIndex = 0,
+  target: RectTarget = OWN_RECT,
 ): void {
   // A <Scroll> consumes its leaf node (its viewport rect) but isn't descended here —
   // its content is laid out region-locally in a separate pass.
@@ -332,10 +418,7 @@ function applyToTree(
     const node = parentNode.children[cursor.index++];
 
     if (node) {
-      element.props.jsonUIx = node.layout.x;
-      element.props.jsonUIy = node.layout.y;
-      element.props.jsonUIWidth = node.layout.width;
-      element.props.jsonUIHeight = node.layout.height;
+      writeRect(element, node, target);
     }
 
     return;
@@ -346,10 +429,10 @@ function applyToTree(
 
     if (Array.isArray(ch)) {
       ch.filter(isElement).forEach((c) => {
-        applyToTree(c, parentNode, cursor, regionIndex);
+        applyToTree(c, parentNode, cursor, regionIndex, target);
       });
     } else if (isElement(ch)) {
-      applyToTree(ch, parentNode, cursor, regionIndex);
+      applyToTree(ch, parentNode, cursor, regionIndex, target);
     }
 
     return;
@@ -361,24 +444,24 @@ function applyToTree(
     return;
   }
 
-  element.props.jsonUIx = node.layout.x;
-  element.props.jsonUIy = node.layout.y;
-  element.props.jsonUIWidth = node.layout.width;
-  element.props.jsonUIHeight = node.layout.height;
-  // Tag the element with the region (scroll) it belongs to. The `region` key was
-  // seeded by withControl (default 0), so reassigning it keeps the canonical
-  // field order intact for serialization.
-  element.props.region = regionIndex;
+  writeRect(element, node, target);
+
+  // Tag the element with the region (scroll) it belongs to — by the layout's
+  // own pass only. The `region` key was seeded by withControl (default 0), so
+  // reassigning it keeps the canonical field order intact for serialization.
+  if (target === OWN_RECT) {
+    element.props.region = regionIndex;
+  }
 
   const ch = element.props.children;
   const childCursor = { index: 0 };
 
   if (Array.isArray(ch)) {
     ch.filter(isElement).forEach((c) => {
-      applyToTree(c, node, childCursor, regionIndex);
+      applyToTree(c, node, childCursor, regionIndex, target);
     });
   } else if (isElement(ch)) {
-    applyToTree(ch, node, childCursor, regionIndex);
+    applyToTree(ch, node, childCursor, regionIndex, target);
   }
 }
 
@@ -478,17 +561,48 @@ function layoutScrollContent(slot: JSX.Element, axis: ScrollAxis, viewportWidth:
 
     extent = syntheticRoot.children.reduce((max, c) => Math.max(max, c.layout.x + c.layout.width), 0);
   } else {
-    // Vertical: lay content in a column whose width is the viewport width, so
-    // percentages / stretch / text-wrap resolve against the real column. The flex
-    // engine floors the root height to refHeight — pass the viewport height so the
-    // extent floors to the viewport (not the canonical 210), then grows with content.
-    const childNodes = roots.map(r => buildNode(r));
+    // Vertical: lay content in a column, so percentages / stretch / text-wrap
+    // resolve against the column the region actually shows. The flex engine
+    // floors the root height to refHeight — pass the viewport height so the
+    // extent floors to the viewport (not the canonical 210), then grows with
+    // content.
+    //
+    // THE COLUMN IS THE WHOLE VIEWPORT UNLESS THE CONTENT SCROLLS. A track
+    // only exists beside content that runs past the viewport, so content that
+    // fits is laid out across the full width and keeps it. Content that does
+    // not is laid out AGAIN, one track narrower — narrowing can only make it
+    // taller, so what overflowed still overflows and the two passes cannot
+    // disagree. A list is laid out narrow as its own rect — what it holds at
+    // show time is not what the build measured — and keeps the wide pass
+    // beside it (below), for the build to bake as the other width.
+    const column = (width: number): { root: LayoutNode; extent: number } => {
+      const root = createNode({ flexDirection: 'column', width }, roots.map(r => buildNode(r)));
 
-    syntheticRoot = createNode({ flexDirection: 'column', width: viewportWidth }, childNodes);
+      flexComputeLayout(root, width, viewportHeight);
 
-    flexComputeLayout(syntheticRoot, viewportWidth, viewportHeight);
+      return { root, extent: root.layout.height };
+    };
 
-    extent = syntheticRoot.layout.height;
+    const soleList = roots.length === 1 && roots[0]?.type === LIST_SLOT_TYPE;
+    const full = column(viewportWidth);
+    const scrolls = soleList || full.extent > viewportHeight;
+    const laid = scrolls ? column(Math.max(0, viewportWidth - SCROLL_RESERVE)) : full;
+
+    syntheticRoot = laid.root;
+    extent = laid.extent;
+
+    if (soleList) {
+      // The same rows solved across the whole viewport, under their own
+      // props. The narrow pass stays the layout's own: live text wrapped at
+      // the narrow width fits the wide one too.
+      const wide = { index: 0 };
+
+      roots.forEach((r) => {
+        applyToTree(r, full.root, wide, index, WIDE_RECT);
+      });
+
+      slot.props[WIDE_RECT.marker] = true;
+    }
   }
 
   const cursor = { index: 0 };
@@ -554,7 +668,9 @@ function dumpLayoutNode(node: LayoutNode, depth = 0): void {
  *   ends at min/max, for any thumb width.
  * - Overflow text commit: re-derive the wrapped/truncated display string at the
  *   node's FINAL granted width (the same width its measure closure last saw) so
- *   the serializer emits the processed text.
+ *   the emitted text is the processed one.
+ * - Composing widths: a box whose text the build composes per language records
+ *   the width it was given, for the next pass of the render to compose at.
  */
 function resolveDerivedProps(element: JSX.Node): void {
   if (Array.isArray(element)) {
@@ -579,7 +695,7 @@ function resolveDerivedProps(element: JSX.Node): void {
     const width = asNumber(element.props.jsonUIWidth) ?? 0;
 
     if (hasOverflowProps(td) && width > 0) {
-      // Mutate props.value so the serializer sees the processed text — a JSON UI
+      // Mutate props.value so what is emitted is the processed text — a JSON UI
       // label is content-sized and never wraps on its own, so the line breaks
       // MUST be baked into the emitted string.
       // Skip for localization keys — props.value must stay as the key for RP lookup.
@@ -592,6 +708,14 @@ function resolveDerivedProps(element: JSX.Node): void {
         element.props.value = { tail: safeLabelText(processOverflowText(td, width)) };
       }
     }
+  }
+
+  // A box whose text is composed per language is composed at the width solved here, on the next
+  // pass of the same build render.
+  const slot = element.props.__widthSlot;
+
+  if (typeof slot === 'number') {
+    recordWidth(slot, asNumber(element.props.jsonUIWidth) ?? 0);
   }
 
   resolveDerivedProps(element.props.children);
@@ -609,23 +733,20 @@ function resolveDerivedProps(element: JSX.Node): void {
  * extent }` is written to `tree.props.jsonUIScrolls` (index 0 = main) for the presenter.
  *
  * @param tree Root JSX element after Phase 1 (function components expanded).
+ * @param maxScrolls How many `<Scroll>`s the backend can show. The form render pack pools a
+ *   fixed number of viewports; a compiled container screen emits one per scroll.
+ * @param reserve Whether `maxLength` text reserves its widest possible width. True for a
+ *   container build (live text grows); false for a form (the literal is cut and measured).
  * @returns The same element tree, mutated in-place with layout values.
  */
-export function computeLayout(tree: JSX.Element): JSX.Element {
+export function computeLayout(
+  tree: JSX.Element,
+  reserve: boolean = true,
+): JSX.Element {
+  reserveLiveText = reserve;
   const slots: JSX.Element[] = [];
 
   findScrolls(tree, slots);
-
-  // Fail loudly rather than silently dropping scrolls: the RP only pools
-  // MAX_POOLED_SCROLLS custom viewports (indices 1..MAX_POOLED_SCROLLS, a deliberate
-  // perf cap — every mounted slot re-instantiates the full collection), so any beyond
-  // that would never render.
-  if (slots.length > MAX_POOLED_SCROLLS) {
-    throw new ScrollLimitError(
-      `Too many <Scroll>s: found ${slots.length}, but a render supports at most ${MAX_POOLED_SCROLLS} `
-      + `(plus the implicit root scroll). Scrolls beyond the ${MAX_POOLED_SCROLLS}th would not render.`,
-    );
-  }
 
   // ── Main pass (index 0): whole tree, <Scroll>s as leaf boxes ────────────────────
   const concreteRoots = collectConcrete(tree);

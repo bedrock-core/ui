@@ -4,9 +4,9 @@ Essential knowledge for AI agents working on this Minecraft Bedrock UI serializa
 
 ## Monorepo Structure
 
-This is a **monorepo with nine independent packages** (using Yarn workspaces). The root
+This is a **monorepo with seven independent packages** (using Yarn workspaces). The root
 `@bedrock-core/ui` package is a thin facade: `src/*.ts` re-export the packages behind subpath
-exports (`.`, `./navigation`, `./ore-styled`, `./guides`, `./config`, `./flexbox`, `./i18n`).
+exports (`.`, `./navigation`, `./ore-styled`, `./flexbox`, `./container`, `./entity`).
 
 - **`packages/ui-runtime`** – Core framework library (`@bedrock-core/ui-runtime`)
   - Pure TypeScript serialization, components, hooks, and rendering logic
@@ -40,22 +40,26 @@ exports (`.`, `./navigation`, `./ore-styled`, `./guides`, `./config`, `./flexbox
 
 - **`packages/ore-styled`** – Ore-UI styled component library (`@bedrock-core/ore-styled`)
   - Pre-built compound components matching Minecraft's Ore-UI visual language
-  - Exports: `Button`, `Card`, `Checkbox`, `RadioGroup`/`Radio`, `Toggle`, `ToggleButtonGroup`/`ToggleButtonItem`, `Divider`, `Header`, `MenuRow`, `Input`, `Dropdown`, `Slider`, `Form` (styled modal fields), `ItemSlot`, `ItemContainer`, `EquipmentSlots`, `theme`
+  - Exports: `Button`, `Card`, `Checkbox`, `RadioGroup`/`Radio`, `Toggle`, `ToggleButtons`, `Divider`, `Header`, `MenuRow`, `Input`, `Dropdown`, `Slider`, `Form` (styled modal fields), `theme`
   - Renders through the same `@bedrock-core/ui` render pack — no separate pack
 
-- **`packages/i18n`** – Localization engine (`@bedrock-core/i18n`)
+- **`@bedrock-core/i18n`** – Localization engine, in the `server` repository
+  (`server/packages/i18n`), resolved here through the root `portal:` link
   - Typed keys, `{{var}}` interpolation, CLDR plural categories; zero runtime dependencies
   - Three verbs: `key()` (client-resolved key), `raw()` (client-resolved `RawMessage`), `t()` (server-resolved string), plus `forPlayer` / `forLocale` binders
   - Exports: `createI18n`, `createResourceBundle`, `resolveDisplay`, `realKeyFor`, `pickLocale`, `pluralCategory`, `interpolate`/`templateVars`/`toPositional`, `type DisplayText`
   - Build half is the `i18n` Regolith filter (replaced the removed `translation-keys` filter)
 
-- **`packages/guides`** – MDX in-game guides (`@bedrock-core/guides`)
-  - `createGuide(manifest)` renders a compiled guide IR as a self-contained screen
-  - Exports: `createGuide`, `GuideBlockList`, `isGuideManifest`, plus the IR types
-
-- **`packages/config`** – Shared addon list + config + guide UI (`@bedrock-core/config`)
-  - `ui(core)` mounts `<ns>:config` / `:configat` / `:guide` / `:list` under the addon's namespace
-  - Exports: `ui`, `App`, `registerAddonCommands`, `allowedScopes`/`clampTarget`/`isOperator`, `CONFIG_SCOPES`
+- **`@bedrock-core/catalog`**, **`@bedrock-core/config`**, **`@bedrock-core/guides`** – the apps, in
+  the `apps` repository (`apps/packages/*`), resolved here through the root `portal:` link
+  - Each is a field of `core.register()`: `registerCatalog()`, `registerConfig(definition)`,
+    `registerGuides()`; each registers its own command under the addon's namespace
+    (`<ns>:catalog`, `<ns>:config` / `:configat`, `<ns>:guide`) and hands back `open(player)`
+  - Roots export only the field, its types and the `catalogOf` / `guidesOf` reader, plus what
+    generated code imports: `AddonPage` on `@bedrock-core/catalog/compiled` (the render pack's
+    framework page), the three guide screen factories and `openGuide` on `@bedrock-core/guides`
+  - `@bedrock-core/config/server` is the settings subsystem alone: `registerConfig`, `configOf`,
+    the schema and accessor types
 
 ## Research Guidelines
 
@@ -130,8 +134,7 @@ render(root, player) → buildTree() → computeLayout() → present() → [user
   - Must use `withControl(rest)` to apply standard control props
   - Children passed via props, not rest parameters
   - Pattern: `export const Panel = ({ children, ...rest }): JSX.Element => ({ type: 'panel', props: { ...withControl(rest), children } })`
-  - Available components: `Panel`, `Text`, `Image`, `Button`, `Fragment`, `Background`, `Scroll`, `ItemRenderer`, the modal-backed primitives `Input` / `Dropdown` / `Slider`, and `Form` with `Form.Toggle` / `.Slider` / `.Dropdown` / `.InlineSelect` / `.Option` / `.Input` / `.Button`
-  - `ItemRenderer` requires `ItemAuxContext` (experimental — reliable only in single-addon worlds)
+  - Available components: `Panel`, `Text`, `Image`, `Button`, `Fragment`, `Background`, `Scroll`, the modal-backed primitives `Input` / `Dropdown` / `Slider`, and `Form` with `Form.Toggle` / `.Slider` / `.Dropdown` / `.InlineSelect` / `.Option` / `.Input` / `.Button`
   - `Text` children are `DisplayText`: a literal string, a translation key, or a `RawMessage` — auto-detected, no prop to declare
 
 - **Fiber System** (`src/core/fabric/`): Manages component instances and hook state
@@ -147,7 +150,7 @@ render(root, player) → buildTree() → computeLayout() → present() → [user
 
 **Payload Structure:**
 ```
-bcuiv0008 + [type field] + [control fields] + [reserved] + [component-specific fields] + [tail?]
+corev0009 + [type field] + [control fields] + [reserved] + [component-specific fields] + [tail?]
  └─ 9 chars (header)
 ```
 
@@ -171,7 +174,7 @@ return `{ rawtext: [{ text: <fixed fields> }, <tail>] }` so the **client** resol
 
 **Constants (never change):**
 ```ts
-const PROTOCOL_HEADER = 'bcuiv0008';    // 9 chars
+const PROTOCOL_HEADER = 'corev0009';    // 9 chars
 const PAD_CHAR = ';';                  // Only padding char
 const FIELD_MARKERS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_';
 const VERSION = 'v0008';               // Only update with migrations
@@ -179,7 +182,7 @@ const VERSION = 'v0008';               // Only update with migrations
 
 **Byte Allocation Map (1024-byte control block)** — authoritative source is the doc comment above
 `withControl()` in `src/components/control.ts`:
-- [0-8]: Protocol header (9 bytes: "bcuiv0008")
+- [0-8]: Protocol header (9 bytes: "corev0009")
 - [9-91]: Type field (string, 83 bytes)
 - [92-174]: Width (number, 83 bytes)
 - [175-257]: Height (number, 83 bytes)
@@ -212,7 +215,7 @@ Shared writer: `src/components/Form/controlPayload.ts` (`labelPayloadFields`).
 The protocol carries **two distinct payloads**: each form-entry *label* holds a component's control block (above), while the form *title* (`#title_text`) holds screen-level metadata — a flat list of scroll viewports plus an optional backdrop. Produced by `serializeScrollMetadata(scrolls, background?)` (ActionForm) and `serializeModalTitle(scrolls, extraFields, background?)` (modal), both in `serializer.ts`.
 
 ```
-bcuiv0008 + [ 'scrolls': string, 83 bytes ] + per scroll i, 498 bytes:
+corev0009 + [ 'scrolls': string, 83 bytes ] + per scroll i, 498 bytes:
  └─ 9 chars (header)   └─ fixed field-0 marker    [ axis(s) x(n) y(n) width(n) height(n) extent(n) ]
 ```
 
@@ -220,7 +223,7 @@ bcuiv0008 + [ 'scrolls': string, 83 bytes ] + per scroll i, 498 bytes:
 - Geometry is consumed RP-side via `use_anchored_offset` (viewport position) and `#size_binding_*` (viewport size); the content panel uses the `[1,1]` size_anchor trick to overflow only the scroll axis by `extent`.
 - A `<Background>` texture is ONE string field at the fixed `BACKGROUND_TITLE_SKIP` = `83 + 5×498` = **2573** bytes after the header, with the gap padded by reserved `;` bytes. Both backends target that offset so a single static `core_ui_common.form_background` serves both. Omitted entirely when empty.
 - The modal title additionally carries the two `Form.Button` blocks (submit at `[590]` abs, exit at `[1353]` abs, 763 bytes each — see `src/components/Form/FormButton.ts`) between the scroll block and the background field.
-- No bcui guard is needed inside the containers; `server_form.json` gates on `$protocol_header` (`bcuiv0008`) and collapses to `0px` for foreign forms.
+- No header guard is needed inside the containers; `server_form.json` gates on `$protocol_header` (`corev0009`) and collapses to `0px` for foreign forms.
 - `MAX_SCROLLS` (4) is what the title format can carry; `MAX_POOLED_SCROLLS` (2) is what the RP actually mounts, and the layout pass throws a `ScrollLimitError` past it.
 
 > **Field numbering note:** The title payload's field indices are **separate from the component control block's** (field 0 = type at byte 9, field 1 = width at byte 92, etc.). These are two completely different payloads with independent byte layouts. Do not conflate them.
@@ -319,7 +322,7 @@ export const panelWriter: Writer = (payload, form, ctx) => {
 - **`src/core/fabric/context.ts`** – `createContext()`, `Context<T>`, Provider implementation
 - **`src/core/componentRegistry.ts`** – `registerComponent()` / descriptors: the custom native component API
 - **`src/core/writers.ts`** – Form-slot emitters (`emitLabel`, `emitButton`, `emitHeader`, …) used by writers
-- **`src/components/*.ts`** – Component functions (Panel, Text, Image, Button, Fragment, Background, Scroll, Input, Dropdown, Slider, ItemRenderer)
+- **`src/components/*.ts`** – Component functions (Panel, Text, Image, Button, Fragment, Background, Scroll, Input, Dropdown, Slider)
 - **`src/components/Form/*`** – The modal backend: `Form` + its field members, `controlPayload.ts` (shared label group)
 - **`src/components/control.ts`** – `withControl()` function (canonical ordering, defaults, byte map)
 - **`src/jsx/jsx-runtime.ts`** – Custom JSX runtime: `jsx`, `jsxs`, `jsxDEV`, `Fragment`
@@ -330,13 +333,11 @@ export const panelWriter: Writer = (payload, form, ctx) => {
 
 ### Resource-Pack (Test Addon)
 
-- **`packs/BP/scripts/main.ts`** – Entry point, opens the demo UI
-- **`packs/BP/scripts/UI/App.tsx`** – Navigator + route map for the demo screens
-- **`packs/BP/scripts/UI/screens/*.tsx`** – One screen per feature (hooks, flex, scrolls, forms, i18n, …)
-- **`packs/BP/scripts/UI/i18n.ts`** – The addon's `createI18n(bundle)` call (also the measurement wiring)
+- **`packs/BP/scripts/screens/*.screen.tsx`** – The compiled screens, one per family
+- **`packs/BP/scripts/i18n.ts`** – The addon's `createI18n(bundle)` call (also the measurement wiring)
 - **`packs/data/i18n/<locale>.ts`** / **`packs/data/guides/<locale>/**.mdx`** – Sources for the `i18n` and `guides` filters
 - **`packs/RP/ui/_ui_defs.json`** – Declares which JSON UI files to load
-- **`packs/RP/ui/server_form.json`** – Entry screen; gates on `$protocol_header` (`bcuiv0008`)
+- **`packs/RP/ui/server_form.json`** – Entry screen; gates on `$protocol_header` (`corev0009`)
 - **`packs/RP/ui/core-ui/common/control.json`** – Decodes the control block via byte offset bindings
 - **`packs/RP/ui/core-ui/common/*_router.json`** – label / button / header / dropdown routers
 - **`packs/RP/ui/core-ui/components/*.json`** – Component decoders (text.json holds the merged label cell; there is no panel.json)
@@ -416,7 +417,7 @@ Reserved blocks need no extraction — subtract the fixed byte count from the re
 ## Breaking Change Guards
 
 - **Never** modify `TYPE_WIDTH`, `PAD_CHAR`, or canonical field order
-- **Never** change the 9-char header format (`bcui` + version)
+- **Never** change the 9-char header format (`core` + version)
 - **Always** append new fields to end; claim future space by extending the `$reserved` field in `withControl()` (the reserved block in `control.ts` is where unallocated bytes are held — there is no standalone `reserveBytes()` function)
 - **Always** increment `VERSION` when making protocol-breaking changes (with migration docs)
 - **Test rigorously** – serialization format is frozen once clients decode it
@@ -445,7 +446,7 @@ replaced by the v0007 scroll-component model. `render()` takes exactly `(root, p
 
 ## Integration Points
 
-- **Framework imports:** `import { render, Text, Panel } from '@bedrock-core/ui'` (subpaths: `@bedrock-core/ui/ore-styled`, `/navigation`, `/i18n`, `/guides`, `/config`, `/flexbox`)
+- **Framework imports:** `import { render, Text, Panel } from '@bedrock-core/ui'` (subpaths: `@bedrock-core/ui/ore-styled`, `/navigation`, `/flexbox`, `/container`, `/entity`)
 - **Minecraft APIs:** `@minecraft/server` for events, `@minecraft/server-ui` for forms
 - **Build system (addon):** Regolith — `guides` → `i18n` → `bundler` (the removed `translation-keys` filter is superseded by `i18n`)
 - **Resource Pack bindings:** JSON UI string manipulation for fixed-width field extraction
@@ -463,5 +464,5 @@ replaced by the v0007 scroll-component model. `render()` takes exactly `(root, p
 2. **Byte map:** `packages/ui-runtime/src/components/control.ts` (`withControl` doc comment — authoritative)
 3. **Working component example:** `packages/ui-runtime/src/components/Panel.ts`
 4. **Test patterns:** `packages/ui-runtime/src/core/__tests__/serializer.test.ts`
-5. **Addon integration:** `packages/resource-pack/packs/BP/scripts/UI/App.tsx`
+5. **Addon integration:** `packages/resource-pack/packs/BP/scripts/main.ts`
 6. **JSON UI decoder:** `packages/resource-pack/packs/RP/ui/core-ui/components/text.json`

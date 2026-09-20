@@ -3,30 +3,81 @@ import { uiManager } from '@minecraft/server-ui';
 import { registerNativeComponents } from '../../components';
 import { DefaultTranslations } from '../../data/Translation';
 import type { FunctionComponent, JSX } from '../../jsx';
-import { startInputLock } from '../../util';
-import { present } from './presenters';
+import { playerOwner } from '../fabric';
+import { noteShown } from '../history';
+import { present } from './present';
+import { compiledKeyOf, compiledSnapshotOf, compiledTitleOf } from './screens';
 import {
   beginPresentChain,
   consumeSwap,
   endPresentChain,
-  getPlayerRoot,
+  getSessionCompiled,
+  getSessionRoot,
   hasLiveChain,
   isChainCurrent,
   isSwapPending,
   requestSwap,
+  type SessionCompiled,
   setBuildRunner,
-  setPlayerRoot,
-  triggerCleanup,
-} from './session';
+  setSessionRoot,
+  triggerCleanup, noteSessionStart } from './session';
 import { buildTree, cleanupComponentTree } from './tree';
+import { UncompiledScreenError } from '../types';
 
+export interface RenderOptions {
+  /**
+   * Diff every present of a compiled screen against the snapshot its build
+   * recorded, and warn on drift: a baked prop that changed, a shape that no
+   * longer matches, a live string past its reservation. The runtime half of
+   * the liveness guard — probing at build cannot see a threshold no probe
+   * crossed, so this is where such a miss becomes loud instead of silent.
+   */
+  debug?: boolean;
+}
+
+/**
+ * Shows a screen to one player and keeps it shown across its state changes.
+ *
+ * A screen is drawn from the pack, by the title its compiled layout is picked
+ * by. So a screen has to BE compiled — a `*.screen.tsx` under `BP/scripts`, or
+ * one of the screens a build compiles from what the addon declared — and a root
+ * the build never saw is refused here rather than drawn some other way.
+ */
 export function render(
   root: JSX.Element | FunctionComponent,
   player: Player,
+  options: RenderOptions = {},
 ): void {
   // Ensure the built-in native components are registered before the first build/
   // serialize. Idempotent — safe to call on every render.
   registerNativeComponents();
+
+  // A form belongs to the player it is shown to: that is what its fibers and
+  // session are keyed by, and what its hooks may reach.
+  const owner = playerOwner(player);
+
+  // Whether the build compiled this screen. Read from the component itself,
+  // before it is wrapped for translations, because the component is the only
+  // thing both halves of the build hold in common.
+  const compiledTitle = compiledTitleOf(root);
+
+  if (compiledTitle === undefined) {
+    throw new UncompiledScreenError(
+      `render(): this screen was not compiled, so there is no layout in the pack to show it with. `
+      + `A screen is compiled by the ui-compiler filter: write it as a \`*.screen.tsx\` under \`BP/scripts\`, `
+      + `and import \`@bedrock-core/generated/ui\` once so the build's registrations run.`,
+    );
+  }
+
+  // What the player is now looking at, for `back()`. Recorded on every path
+  // into render(), not only on `navigate()`, so a screen opened directly is
+  // still somewhere a later navigation can return to.
+  noteShown(player.id, compiledKeyOf(root));
+
+  // Stored with the root: a later render() swaps a different root into this
+  // chain, and each pass shows whatever root it finds the way THAT root was
+  // compiled.
+  const shown: SessionCompiled = { title: compiledTitle, snapshot: compiledSnapshotOf(root), debug: options.debug === true };
 
   // Convert function component to JSX element if needed, then wrap it so
   // TranslationContext is populated at every root — the default i18n
@@ -35,26 +86,26 @@ export function render(
   const rootElement: JSX.Element = {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- the expander invokes the wrapper with exactly these props
     type: DefaultTranslations as FunctionComponent,
-    props: { player, children: userRoot },
+    props: { owner, children: userRoot },
   };
 
   // ── Supersede: a present chain is already live for this player. Swap the new
   // app into it instead of spawning a competing chain — one UI slot per player.
-  if (hasLiveChain(player)) {
+  if (hasLiveChain(owner)) {
     // The old app dies NOW: hook cleanups run and its fibers leave the registry,
     // so the chain's next verdict/build sees only the new app — no dead-fiber
     // 'cleanup' poisoning, no hook-state bleed between same-named roots, no stale
     // exit flag blocking background passes. Only THIS player's fibers are touched.
-    cleanupComponentTree(player);
+    cleanupComponentTree(owner);
 
     // A hook cleanup may have called exit() outside a transaction, tearing the
     // whole session down mid-swap. Fall through to a fresh start in that case.
-    if (hasLiveChain(player)) {
-      setPlayerRoot(player, rootElement);
-      setBuildRunner(player, () => {
-        buildTree(rootElement, player);
+    if (hasLiveChain(owner)) {
+      setSessionRoot(owner, rootElement, shown);
+      setBuildRunner(owner, () => {
+        buildTree(rootElement, owner, compiledTitle !== undefined);
       });
-      requestSwap(player);
+      requestSwap(owner);
 
       // A form on screen resolves its pending show() as canceled and the chain
       // absorbs the swap; with no form up this is a no-op and the chain's next
@@ -70,63 +121,68 @@ export function render(
   // Wipe any fibers a dead session left behind (a 'none' verdict or a crashed
   // build) so a different app can never resurrect their hook state through the
   // player-scoped fiber ids.
-  startInputLock(player);
-  cleanupComponentTree(player);
+  noteSessionStart(player.id);
+  cleanupComponentTree(owner);
 
   // Register this player's session root and a background build runner
-  setPlayerRoot(player, rootElement);
-  setBuildRunner(player, () => {
-    buildTree(rootElement, player);
+  setSessionRoot(owner, rootElement, shown);
+  setBuildRunner(owner, () => {
+    buildTree(rootElement, owner, compiledTitle !== undefined);
   });
 
-  const token = beginPresentChain(player);
+  const token = beginPresentChain(owner);
 
   // Build and present one snapshot, then re-enter on the outcome. The root is
   // read fresh from the session each pass so a swapped-in app is picked up.
   const presentOnce = (): void => {
-    if (!isChainCurrent(player, token)) {
+    if (!isChainCurrent(owner, token)) {
       return;
     }
 
-    const rootNow = getPlayerRoot(player);
+    const rootNow = getSessionRoot(owner);
 
     if (!rootNow) {
-      endPresentChain(player, token);
+      endPresentChain(owner, token);
 
       return;
     }
 
     // Normally a no-op (the swap already wiped at render() time); corrects the
     // pathological case of a swap landing while the old app was mid-build.
-    if (consumeSwap(player)) {
-      cleanupComponentTree(player);
+    if (consumeSwap(owner)) {
+      cleanupComponentTree(owner);
     }
 
+    const current = getSessionCompiled(owner);
+    // A handoff swapped another root into this chain, and that root's own title
+    // is what shows it. It went through the same refusal above, so falling back
+    // to this render's title is only for a chain that has not been swapped.
+    const title = current.title ?? compiledTitle;
     let tree: JSX.Element;
 
     try {
-      tree = buildTree(rootNow, player);
+      tree = buildTree(rootNow, owner, true);
     } catch (err: unknown) {
       console.error(`[ui-runtime] buildTree error: ${String(err)}`);
 
       // Tear down rather than stranding the player input-locked on a session
       // whose chain just died.
-      endPresentChain(player, token);
-      triggerCleanup(player);
+      endPresentChain(owner, token);
+      triggerCleanup(owner);
 
       return;
     }
 
-    present(player, tree)
+    present(player, tree, title, { snapshot: current.snapshot, debug: current.debug })
       .then((result) => {
         // Superseded or torn down while the form was up — this outcome is void.
-        if (!isChainCurrent(player, token)) {
+        if (!isChainCurrent(owner, token)) {
           return;
         }
 
         // A pending swap absorbs ANY outcome: the close that produced it was
         // programmatic (app handoff), not the player dismissing.
-        if (isSwapPending(player)) {
+        if (isSwapPending(owner)) {
           presentOnce();
 
           return;
@@ -139,24 +195,24 @@ export function render(
           return;
         }
 
-        endPresentChain(player, token);
+        endPresentChain(owner, token);
 
         if (result === 'cleanup') {
-          triggerCleanup(player);
+          triggerCleanup(owner);
         }
         // none: do nothing; user dismissed without callbacks
       })
       .catch((err: unknown) => {
         console.error(`[ui-runtime] present error: ${String(err)}`);
 
-        if (!isChainCurrent(player, token)) {
+        if (!isChainCurrent(owner, token)) {
           return;
         }
 
-        endPresentChain(player, token);
+        endPresentChain(owner, token);
 
         try {
-          triggerCleanup(player);
+          triggerCleanup(owner);
         } catch {
           // Best effort — the player is likely gone (PlayerQuit).
         }

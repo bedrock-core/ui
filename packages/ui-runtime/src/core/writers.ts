@@ -1,72 +1,23 @@
 import type { RawMessage } from '@minecraft/server';
 import type { ModalFormData } from '@minecraft/server-ui';
-import { isActionContext, isActionForm, isModalContext } from './guards';
-import { ModalFormError, type FormTarget, type SerializationContext } from './types';
+import { isModalContext } from './guards';
+import type { FormTarget, ModalControlEntry, SerializationContext } from './types';
 
 /**
- * Slot helpers for native component writers.
+ * The typed calls a modal's fields are made with.
  *
- * The RP renders everything through just two ActionForm primitives:
- *   - `form.button()` → routed by `button_router` (interactive controls)
- *   - `form.label()`  → routed by `label_router` (static controls)
+ * A modal's fields are the ENGINE's, not the pack's: each one exists because a
+ * `ModalFormData` method was called, and these are those calls. Every emitter
+ * owns the ordinal → `name` bookkeeping, so the positional `response.formValues`
+ * can be fanned back out by name, and takes its native args (min/max/options/…)
+ * as direct arguments rather than through the payload — which is primitives
+ * only, and could not carry a dropdown's option array at all.
  *
- * A writer picks one slot in a single call. `emitButton` also owns the
- * button-index / `onPress` callback bookkeeping so every interactive writer
- * (built-in or custom) stays consistent with the presenter's selection mapping.
- *
- * Modal forms reuse the same serialize walk but emit through `ModalFormData`'s
- * typed controls. Each native control has its OWN emitter here — `emitToggle`,
- * `emitSlider`, `emitDropdown`, `emitInput` — exactly like `emitButton`/`emitLabel`
- * own the ActionForm slots. Each emitter owns the ordinal → `name` bookkeeping (so the
- * presenter can fan `response.formValues` back out) AND makes the typed native call,
- * taking its native args (min/max/options/…) as direct function arguments — so a
- * non-primitive like the dropdown's `options` array never has to pass through the
- * serializer's primitive-only payload channel. Decorative nodes (image/panel) keep using
- * `emitLabel`, which works on both form types — only the logic controls differ between
- * the two backends.
+ * {@link emitLabel} is the odd one: a label consumes a `formValues` slot of its
+ * own (the engine returns `null` there), so it has to advance the ordinal
+ * without claiming a name. A compiled modal uses it for the rows that carry a
+ * value rather than a field — live text, a carried visible, a list's count.
  */
-
-type Callbacks = Record<string, (...args: unknown[]) => void>;
-
-/**
- * Emit an interactive (button-slot) control. Registers `callbacks.onPress`
- * against the current button index, advances the index, then writes the button.
- *
- * @param payload - Serialized component payload.
- * @param form - Target form.
- * @param ctx - Serialization context tracking the button index → callback map.
- * @param callbacks - Function props collected for this element (e.g. `onPress`).
- * @param icon - Optional icon path passed to `form.button` (e.g. item aux id).
- */
-export function emitButton(
-  payload: string | RawMessage,
-  form: FormTarget,
-  ctx: SerializationContext | undefined,
-  callbacks: Callbacks,
-  icon?: string,
-): void {
-  // A real button is an ActionForm-only primitive. The modal path forbids buttons
-  // (only the hardcoded submit + esc exist), so reaching here with a ModalFormData
-  // means the restriction pass missed a `<Button>` — fail loud rather than crash on
-  // a missing `.button()` method.
-  if (!isActionForm(form)) {
-    throw new ModalFormError(
-      'emitButton(): a button-slot control reached the modal form path. Modal forms '
-      + 'accept only toggle/slider/dropdown/input/label plus the hardcoded submit/esc '
-      + 'buttons — move interactive `Button`s out of the `<ModalForm>`.',
-    );
-  }
-
-  if (ctx && isActionContext(ctx)) {
-    if (callbacks.onPress) {
-      ctx.buttonCallbacks.set(ctx.buttonIndex, callbacks.onPress);
-    }
-
-    ctx.buttonIndex++;
-  }
-
-  form.button(payload, icon);
-}
 
 /**
  * Emit a static (label-slot) control. `label()` exists on both `ActionFormData`
@@ -83,6 +34,8 @@ export function emitButton(
  * @param payload - Serialized component payload.
  * @param form - Target form.
  * @param ctx - Serialization context; advances the modal ordinal when present.
+ *
+ * @experimental Bound to the serialized payload format rather than the component API.
  */
 export function emitLabel(payload: string | RawMessage, form: FormTarget, ctx?: SerializationContext): void {
   if (ctx && isModalContext(ctx)) {
@@ -90,25 +43,6 @@ export function emitLabel(payload: string | RawMessage, form: FormTarget, ctx?: 
   }
 
   form.label(payload);
-}
-
-/**
- * Emit a static control through the ActionForm HEADER slot. The native factory routes
- * header entries to their own control_id, so a header-slot cell instantiates ONLY the
- * slim `header_router` (one component variant) instead of the full label_router variant
- * fan-out — engine-level type routing, no `#type` gating cost at all. Used for `image`.
- *
- * On the modal backend this falls back to the label slot: modal headers' payload
- * channel + formValues behavior are unproven, while modal labels are (see emitLabel).
- */
-export function emitHeader(payload: string | RawMessage, form: FormTarget, ctx?: SerializationContext): void {
-  if (!isActionForm(form)) {
-    emitLabel(payload, form, ctx);
-
-    return;
-  }
-
-  form.header(payload);
 }
 
 /**
@@ -127,18 +61,30 @@ export function emitHeader(payload: string | RawMessage, form: FormTarget, ctx?:
  * native control's label string, so the RP decodes real geometry and styling from it
  * (`use_anchored_offset` + `#size_binding_*`), exactly like the ActionForm slots.
  */
-function recordModalOrdinal(ctx: SerializationContext | undefined, name: string): void {
+function recordModalOrdinal(
+  ctx: SerializationContext | undefined,
+  name: string,
+  decode?: ModalControlEntry['decode'],
+  member?: number,
+): void {
   if (ctx && isModalContext(ctx)) {
-    ctx.modalControls.set(ctx.modalControlIndex, { name });
+    ctx.modalControls.set(ctx.modalControlIndex, {
+      name,
+      ...decode === undefined ? {} : { decode },
+      ...member === undefined ? {} : { member },
+    });
     ctx.modalControlIndex++;
   }
 }
+
+/** Whether a number is one the engine's slider can stand on: a whole one. */
+const whole = (value: number): boolean => Number.isInteger(value);
 
 /**
  * Emit a native modal toggle → `ModalFormData.toggle`. Records the ordinal, then makes
  * the typed call.
  *
- * Parameter order mirrors {@link emitButton} (`payload, form, ctx, …`), then this
+ * Parameter order is shared by every `emit*` helper (`payload, form, ctx, …`), then this
  * control's own args.
  *
  * @param payload - The control's serialized control-block payload (native label channel).
@@ -146,6 +92,9 @@ function recordModalOrdinal(ctx: SerializationContext | undefined, name: string)
  * @param ctx - Serialization context tracking the modal ordinal → name registry.
  * @param name - Result key for this control (its `name` prop).
  * @param defaultValue - Initial on/off state.
+ * @param member - The option index, when the toggle is one member of a multiple select.
+ *
+ * @experimental Bound to the serialized payload format rather than the component API.
  */
 export function emitToggle(
   payload: string | RawMessage,
@@ -153,8 +102,9 @@ export function emitToggle(
   ctx: SerializationContext | undefined,
   name: string,
   defaultValue: boolean,
+  member?: number,
 ): void {
-  recordModalOrdinal(ctx, name);
+  recordModalOrdinal(ctx, name, undefined, member);
   form.toggle(payload, { defaultValue });
 }
 
@@ -162,7 +112,7 @@ export function emitToggle(
  * Emit a native modal slider → `ModalFormData.slider`. Records the ordinal, then makes
  * the typed call.
  *
- * Parameter order mirrors {@link emitButton} (`payload, form, ctx, …`), then this
+ * Parameter order is shared by every `emit*` helper (`payload, form, ctx, …`), then this
  * control's own args.
  *
  * @param payload - The control's serialized control-block payload (native label channel).
@@ -173,6 +123,8 @@ export function emitToggle(
  * @param max - Maximum selectable value.
  * @param defaultValue - Initial value.
  * @param valueStep - Increment between values, or `undefined` for the native default.
+ *
+ * @experimental Bound to the serialized payload format rather than the component API.
  */
 export function emitSlider(
   payload: string | RawMessage,
@@ -184,8 +136,33 @@ export function emitSlider(
   defaultValue: number,
   valueStep: number | undefined,
 ): void {
-  recordModalOrdinal(ctx, name);
-  form.slider(payload, min, max, { defaultValue, valueStep });
+  // The engine's slider steps in WHOLE numbers: a fractional step, or a range
+  // that does not start and end on one, is a thumb that cannot move. A whole
+  // range goes through as written, so the engine's own value text is the
+  // author's number. Anything else is given as a count of stops from zero,
+  // one per step, and the answer is mapped back to the author's range on
+  // submit, snapped to their step.
+  const unit = valueStep !== undefined && valueStep > 0 ? valueStep : 1;
+
+  if (whole(min) && whole(max) && whole(unit)) {
+    recordModalOrdinal(ctx, name);
+    form.slider(payload, min, max, { defaultValue, valueStep: unit });
+
+    return;
+  }
+
+  const stops = Math.max(1, Math.round((max - min) / unit));
+  const at = (value: number): number => Math.max(0, Math.min(stops, Math.round((value - min) / unit)));
+  // Snapped to the step's own precision, so 0.05 comes back as 0.05 and not
+  // as the float sum that printed it.
+  const decimals = Math.min(20, Math.max(0, (String(unit).split('.')[1] ?? '').length));
+
+  recordModalOrdinal(ctx, name, raw => (
+    typeof raw === 'number'
+      ? Math.min(max, Number((min + raw * unit).toFixed(decimals)))
+      : raw
+  ));
+  form.slider(payload, 0, stops, { defaultValue: at(defaultValue), valueStep: 1 });
 }
 
 /**
@@ -193,7 +170,7 @@ export function emitSlider(
  * the typed call. `options` (a non-primitive array) arrives as a direct argument, so it
  * never passes through the serializer's primitive-only payload channel.
  *
- * Parameter order mirrors {@link emitButton} (`payload, form, ctx, …`), then this
+ * Parameter order is shared by every `emit*` helper (`payload, form, ctx, …`), then this
  * control's own args.
  *
  * @param payload - The control's serialized control-block payload (native label channel).
@@ -202,6 +179,8 @@ export function emitSlider(
  * @param name - Result key for this control (its `name` prop).
  * @param options - Selectable option values.
  * @param defaultValueIndex - Initial selection as an index into `options`.
+ *
+ * @experimental Bound to the serialized payload format rather than the component API.
  */
 export function emitDropdown(
   payload: string | RawMessage,
@@ -219,7 +198,7 @@ export function emitDropdown(
  * Emit a native modal text field → `ModalFormData.textField`. Records the ordinal, then
  * makes the typed call.
  *
- * Parameter order mirrors {@link emitButton} (`payload, form, ctx, …`), then this
+ * Parameter order is shared by every `emit*` helper (`payload, form, ctx, …`), then this
  * control's own args.
  *
  * @param payload - The control's serialized control-block payload (native label channel).
@@ -228,6 +207,8 @@ export function emitDropdown(
  * @param name - Result key for this control (its `name` prop).
  * @param placeholder - Text shown when the field is empty.
  * @param defaultValue - Initial text.
+ *
+ * @experimental Bound to the serialized payload format rather than the component API.
  */
 export function emitInput(
   payload: string | RawMessage,

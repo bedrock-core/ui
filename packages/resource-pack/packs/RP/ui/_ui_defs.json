@@ -1,43 +1,47 @@
 {
 	"ui_defs": [
+		// Vanilla's three hooks: the server form every compiled form screen is shown
+		// through, and the two container screens a compiled container screen is
+		// opened from — the chest for a screen an entity hosts, the data-driven
+		// container for one a block hosts. Each addon's ui-compiler build ships its
+		// own copy of these paths, and the engine stacks every pack's.
 		"ui/server_form.json",
-		// Animations
-		"ui/core-ui/animations/screen_events.json",
-		// Shared bases every component extends (all namespace core_ui_common):
-		//   control    — the generic control-block decode (position/size/visible/region)
-		//   state.json — state_face / modal_state_face (self-decoding bg faces)
-		"ui/core-ui/common/control.json",
-		"ui/core-ui/common/state.json",
-		"ui/core-ui/common/action_container.json",
-		"ui/core-ui/common/modal_container.json",
-		"ui/core-ui/common/form_background.json",
-		"ui/core-ui/common/label_router.json",
-		"ui/core-ui/common/button_router.json",
-		"ui/core-ui/common/header_router.json",
-		"ui/core-ui/common/dropdown_router.json",
-		"ui/core-ui/common/cursor.json",
-		// -----------------------------------------------
-		// After the initial reserved bytes for the common, rest of bytes 
-		// after 1024 for its own use and 
-		// available in #serialized_data binding
-		// Scrolls
-		"ui/core-ui/screens/scroll.json",
-		"ui/core-ui/screens/scroll_pool.json",
-		// Components (panel.json is gone: panel cells render through the merged
-		// label_cell's cell_bg leaf in text.json)
-		"ui/core-ui/components/button.json",
-		"ui/core-ui/components/text.json",
-		"ui/core-ui/components/image.json",
-		"ui/core-ui/components/item_renderer.json",
-		// Form components
-		"ui/core-ui/form_components/toggle.json",
-		"ui/core-ui/form_components/input.json",
-		"ui/core-ui/form_components/slider.json",
-		// Shared bases + option faces used by the dropdown + inline-select primitives.
-		"ui/core-ui/form_components/form_shared.json",
-		// Router for native-dropdown cells (fans #type → dropdown popup | inline radio/toggle-button).
-		"ui/core-ui/form_components/dropdown.json",
-		"ui/core-ui/form_components/inline_select.json",
-		"ui/core-ui/form_components/label.json"
+		"ui/chest_screen.json",
+		"ui/data_driven_container_screen.json",
+
+		// Shapes: controls that are the same wherever they are drawn, so no host
+		// owns them. A scrolling region is one — it reads nothing and binds
+		// nothing, it just clips and scrolls.
+		"ui/core-ui/shapes/scroll.json",
+
+		// The FORM host: the two containers the screen factory routes into, the
+		// mount a compiled screen hangs from, and the pieces a modal's own rows
+		// are drawn with.
+		"ui/core-ui/hosts/form/animations.json",
+		"ui/core-ui/hosts/form/action_container.json",
+		"ui/core-ui/hosts/form/modal_container.json",
+		"ui/core-ui/hosts/form/mount.json",
+		"ui/core-ui/hosts/form/control.json",
+		"ui/core-ui/hosts/form/cursor.json",
+		// The faces a field wears, and the label a row draws its text with.
+		"ui/core-ui/hosts/form/state.json",
+		"ui/core-ui/hosts/form/text.json",
+		// One per native field the engine makes: the pack says what it looks like.
+		"ui/core-ui/hosts/form/components/toggle.json",
+		"ui/core-ui/hosts/form/components/input.json",
+		"ui/core-ui/hosts/form/components/slider.json",
+		"ui/core-ui/hosts/form/components/dropdown.json",
+		"ui/core-ui/hosts/form/components/inline_select.json",
+		// The option faces the dropdown popup and the inline select share.
+		"ui/core-ui/hosts/form/components/form_shared.json",
+
+		// The CHEST host: the cells, the text hosts, the transport-hiding item
+		// renderer, the chrome, and the root every addon's router adds its own
+		// screens to. The screens and the routers themselves are emitted by the
+		// ui-compiler filter into each addon's pack, which registers them there.
+		"ui/core-ui/hosts/chest/cell.json",
+		"ui/core-ui/hosts/chest/text.json",
+		"ui/core-ui/hosts/chest/chrome.json",
+		"ui/core-ui/hosts/chest/router.json"
 	]
 }

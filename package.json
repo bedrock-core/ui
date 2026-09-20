@@ -1,131 +1,155 @@
 {
-  "name": "@bedrock-core/ui",
-  "version": "0.11.0",
-  "description": "Customizable UI system for Minecraft Bedrock server forms cross-addon compatible.",
-  "keywords": [
-    "ui",
-    "api",
-    "minecraft",
-    "bedrock",
-    "typescript",
-    "framework"
-  ],
-  "license": "MIT",
-  "author": "DrAv0011",
-  "contributors": [
-    {
-      "name": "DrAv0011",
-      "email": "contact@drav.dev",
-      "url": "https://drav.dev"
-    }
-  ],
-  "repository": "github:bedrock-core/ui",
-  "type": "module",
-  "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts"
-    },
-    "./navigation": {
-      "types": "./src/navigation.ts",
-      "import": "./src/navigation.ts"
-    },
-    "./ore-styled": {
-      "types": "./src/ore-styled.ts",
-      "import": "./src/ore-styled.ts"
-    },
-    "./guides": {
-      "types": "./src/guides.ts",
-      "import": "./src/guides.ts"
-    },
-    "./config": {
-      "types": "./src/config.ts",
-      "import": "./src/config.ts"
-    },
-    "./flexbox": {
-      "types": "./src/flexbox.ts",
-      "import": "./src/flexbox.ts"
-    },
-    "./i18n": {
-      "types": "./src/i18n.ts",
-      "import": "./src/i18n.ts"
-    },
-    "./jsx-runtime": {
-      "types": "./src/jsx/jsx-runtime.ts",
-      "import": "./src/jsx/jsx-runtime.ts"
-    },
-    "./jsx-dev-runtime": {
-      "types": "./src/jsx/jsx-dev-runtime.ts",
-      "import": "./src/jsx/jsx-dev-runtime.ts"
-    }
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "files": [
-    "src",
-    "README.md",
-    "LICENSE"
-  ],
-  "packageManager": "yarn@4.16.0",
-  "workspaces": [
-    "packages/ui-runtime",
-    "packages/navigation",
-    "packages/ore-styled",
-    "packages/guides",
-    "packages/config",
-    "packages/resource-pack",
-    "packages/cli",
-    "packages/flexbox",
-    "packages/i18n"
-  ],
-  "scripts": {
-    "regolith-install": "yarn workspaces foreach -i -A --topological --jobs=1 run regolith-install",
-    "build": "yarn workspaces foreach -ptA run build",
-    "build:libs": "yarn workspaces foreach -A -pt --no-private --exclude '@bedrock-core/ui' run build",
-    "prepack": "yarn build:libs",
-    "watch": "concurrently \"nodemon\"",
-    "lint": "yarn workspaces foreach -ptA run lint",
-    "test": "yarn workspaces foreach -ptA run test",
-    "coverage": "yarn workspaces foreach -ptA run coverage",
-    "changeset": "changeset",
-    "version-packages": "changeset version && node scripts/bump-meta.mjs && node scripts/sync-cli-template.mjs && node scripts/sync-pack-version.mjs",
-    "release": "yarn build:libs && node scripts/publish-tarballs.mjs && changeset tag"
-  },
-  "dependencies": {
-    "@bedrock-core/config": "workspace:*",
-    "@bedrock-core/flexbox": "workspace:*",
-    "@bedrock-core/guides": "workspace:*",
-    "@bedrock-core/i18n": "workspace:*",
-    "@bedrock-core/navigation": "workspace:*",
-    "@bedrock-core/ore-styled": "workspace:*",
-    "@bedrock-core/ui-runtime": "workspace:*"
-  },
-  "devDependencies": {
-    "@changesets/changelog-github": "^0.7.0",
-    "@changesets/cli": "^2.31.0",
-    "@eslint/css": "^1.2.0",
-    "@eslint/js": "^10.0.1",
-    "@eslint/json": "^1.2.0",
-    "@eslint/markdown": "^8.0.1",
-    "@minecraft/server": "^2.8.0",
-    "@minecraft/server-ui": "^2.1.0",
-    "@stylistic/eslint-plugin": "^5.10.0",
-    "@vitest/coverage-v8": "^4.1.5",
-    "concurrently": "^9.2.1",
-    "eslint": "^10.3.0",
-    "nodemon": "^3.1.14",
-    "typescript": "^6.0.3",
-    "typescript-eslint": "^8.59.2",
-    "vitest": "^4.1.5"
-  },
-  "peerDependencies": {
-    "@minecraft/server": "*",
-    "@minecraft/server-ui": "*"
-  },
-  "resolutions": {
-    "@minecraft/server": "2.8.0",
-    "@minecraft/server-ui": "2.1.0",
-    "@bedrock-core/i18n": "workspace:*"
-  }
+	"name": "@bedrock-core/ui",
+	"version": "0.11.0",
+	"description": "Customizable UI system for Minecraft Bedrock server forms cross-addon compatible.",
+	"keywords": [
+		"ui",
+		"api",
+		"minecraft",
+		"bedrock",
+		"typescript",
+		"framework"
+	],
+	"license": "MIT",
+	"author": "DrAv0011",
+	"contributors": [
+		{
+			"name": "DrAv0011",
+			"email": "contact@drav.dev",
+			"url": "https://drav.dev"
+		}
+	],
+	"repository": "github:bedrock-core/ui",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./src/index.ts",
+			"import": "./src/index.ts"
+		},
+		"./navigation": {
+			"types": "./src/navigation.ts",
+			"import": "./src/navigation.ts"
+		},
+		"./ore-styled": {
+			"types": "./src/ore-styled.ts",
+			"import": "./src/ore-styled.ts"
+		},
+		"./flexbox": {
+			"types": "./src/flexbox.ts",
+			"import": "./src/flexbox.ts"
+		},
+		"./container": {
+			"types": "./src/container.ts",
+			"import": "./src/container.ts"
+		},
+		"./entity": {
+			"types": "./src/entity.ts",
+			"import": "./src/entity.ts"
+		},
+		"./jsx-runtime": {
+			"types": "./src/jsx/jsx-runtime.ts",
+			"import": "./src/jsx/jsx-runtime.ts"
+		},
+		"./jsx-dev-runtime": {
+			"types": "./src/jsx/jsx-dev-runtime.ts",
+			"import": "./src/jsx/jsx-dev-runtime.ts"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"src",
+		"README.md",
+		"LICENSE"
+	],
+	"packageManager": "yarn@4.16.0",
+	"workspaces": [
+		"packages/ui-runtime",
+		"packages/navigation",
+		"packages/ore-styled",
+		"packages/cli",
+		"packages/flexbox",
+		"packages/ui-compiler"
+	],
+	"scripts": {
+		"build": "yarn workspaces foreach -ptA run build",
+		"build:libs": "yarn workspaces foreach -A -pt --no-private --exclude '@bedrock-core/ui' --exclude '@bedrock-core/cli' run build",
+		"prepack": "yarn build:libs",
+		"watch": "concurrently \"nodemon\"",
+		"lint": "yarn workspaces foreach -ptA run lint",
+		"lint:libs": "yarn workspaces foreach -A -pt --no-private --exclude '@bedrock-core/ui' --exclude '@bedrock-core/cli' run lint",
+		"test": "yarn workspaces foreach -ptA run test",
+		"test:libs": "yarn workspaces foreach -A -pt --no-private --exclude '@bedrock-core/ui' --exclude '@bedrock-core/cli' run test",
+		"coverage": "yarn workspaces foreach -ptA run coverage",
+		"deploy": "yarn --cwd packages/resource-pack deploy",
+		"preflight": "node scripts/preflight.mjs",
+		"gamelog": "node scripts/gamelog.mjs",
+		"changeset": "changeset",
+		"version-packages": "changeset version && node scripts/bump-meta.mjs && node scripts/sync-cli-template.mjs && node scripts/sync-pack-version.mjs",
+		"release": "yarn release:libraries",
+		"release:libraries": "yarn lint:libs && yarn build:libs && yarn test:libs && node scripts/publish-tarballs.mjs @bedrock-core/cli && node scripts/tag-packages.mjs @bedrock-core/cli",
+		"release:cli": "yarn workspace @bedrock-core/cli lint && yarn workspace @bedrock-core/cli build && node scripts/publish-tarballs.mjs --only @bedrock-core/cli && node scripts/tag-packages.mjs --only @bedrock-core/cli",
+		"clean": "node scripts/clean.mjs"
+	},
+	"dependencies": {
+		"@bedrock-core/flexbox": "workspace:*",
+		"@bedrock-core/navigation": "workspace:*",
+		"@bedrock-core/ore-styled": "workspace:*",
+		"@bedrock-core/ui-compiler": "workspace:*",
+		"@bedrock-core/ui-runtime": "workspace:*"
+	},
+	"devDependencies": {
+		"@changesets/changelog-github": "^0.7.0",
+		"@changesets/cli": "3.0.3",
+		"@eslint/css": "^1.2.0",
+		"@eslint/js": "^10.0.1",
+		"@eslint/json": "^1.2.0",
+		"@eslint/markdown": "^8.0.1",
+		"@minecraft/server": "*",
+		"@minecraft/server-ui": "*",
+		"@minecraft/vanilla-data": "*",
+		"@stylistic/eslint-plugin": "^5.10.0",
+		"@vitest/coverage-v8": "^4.1.5",
+		"concurrently": "^9.2.1",
+		"eslint": "^10.3.0",
+		"nodemon": "^3.1.14",
+		"typescript": "^6.0.3",
+		"typescript-eslint": "^8.59.2",
+		"vitest": "^4.1.5"
+	},
+	"peerDependencies": {
+		"@bedrock-core/i18n": "*",
+		"@minecraft/server": ">=2.9.0 || >=2.10.0-0",
+		"@minecraft/server-ui": "*"
+	},
+	"peerDependenciesMeta": {
+		"@bedrock-core/i18n": {
+			"optional": true
+		}
+	},
+	"resolutions": {
+		"@bedrock-core/db": "portal:../server/packages/db",
+		"@bedrock-core/i18n": "portal:../server/packages/i18n",
+		"@bedrock-core/observable": "portal:../server/packages/observable",
+		"@bedrock-core/server-runtime": "portal:../server/packages/server-runtime",
+		"@bedrock-core/sync": "portal:../server/packages/sync",
+		"@minecraft/server": "2.10.0",
+		"@minecraft/server-ui": "2.2.0",
+		"@minecraft/vanilla-data": "1.26.50",
+		"@eslint/js": "^10.0.1",
+		"@eslint/json": "^1.2.0",
+		"@stylistic/eslint-plugin": "^5.10.0",
+		"@types/fs-extra": "^11.0.4",
+		"@types/node": "^25.6.2",
+		"@types/prompts": "^2.4.9",
+		"@types/validate-npm-package-name": "^4.0.2",
+		"@vitest/coverage-v8": "^4.1.5",
+		"eslint": "^10.3.0",
+		"eslint-plugin-minecraft-linting": "^2.0.12",
+		"opentype.js": "^1.3.4",
+		"typescript": "^6.0.3",
+		"typescript-eslint": "^8.59.2",
+		"vitest": "^4.1.5"
+	}
 }

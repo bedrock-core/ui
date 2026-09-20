@@ -7,6 +7,7 @@
 		"allowJs": false,
 		"checkJs": false,
 		"noEmit": true,
+		"allowImportingTsExtensions": true,
 		"declaration": true,
 		"declarationMap": true,
 		"sourceMap": true,
@@ -26,6 +27,18 @@
 			],
 			"@bedrock-core/ui/*": [
 				"./packages/ui-runtime/src/*"
+			],
+			"@bedrock-core/ui/container": [
+				"./packages/ui-runtime/src/hosts/chest/index.ts"
+			],
+			"@bedrock-core/ui-runtime/container": [
+				"./packages/ui-runtime/src/hosts/chest/index.ts"
+			],
+			"@bedrock-core/ui/entity": [
+				"./packages/ui-runtime/src/entity/index.ts"
+			],
+			"@bedrock-core/ui-runtime/entity": [
+				"./packages/ui-runtime/src/entity/index.ts"
 			],
 			"@bedrock-core/ui/jsx-runtime": [
 				"./packages/ui-runtime/src/jsx/jsx-runtime.ts"
@@ -51,12 +64,6 @@
 			"@bedrock-core/ore-styled/*": [
 				"./packages/ore-styled/src/*"
 			],
-			"@bedrock-core/guides": [
-				"./packages/guides/src/index.ts"
-			],
-			"@bedrock-core/guides/*": [
-				"./packages/guides/src/*"
-			],
 			"@bedrock-core/flexbox": [
 				"./packages/flexbox/src/index.ts"
 			],
@@ -64,22 +71,16 @@
 				"./packages/flexbox/src/*"
 			],
 			"@bedrock-core/i18n": [
-				"./packages/i18n/src/index.ts"
+				"../server/packages/i18n/src/index.ts"
 			],
 			"@bedrock-core/i18n/*": [
-				"./packages/i18n/src/*"
-			],
-			"@bedrock-core/config": [
-				"./packages/config/src/index.ts"
-			],
-			"@bedrock-core/config/*": [
-				"./packages/config/src/*"
+				"../server/packages/i18n/src/*"
 			],
 			"@bedrock-core/server-runtime": [
-				"../server-public/packages/server-runtime/src/index.ts"
+				"../server/packages/server-runtime/src/index.ts"
 			],
 			"@bedrock-core/sync": [
-				"../server-public/packages/sync/src/index.ts"
+				"../server/packages/sync/src/index.ts"
 			]
 		}
 	},

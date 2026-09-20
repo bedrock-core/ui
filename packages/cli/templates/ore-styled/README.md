@@ -24,6 +24,10 @@ and JSON generation — all wired and ready.
    yarn regolith-install
    ```
 
+   The command installs all seven released filters declared in `config.json`: `core` and
+   manifest, generator, guides, i18n, ui-compiler and bundler. Regolith does not install
+   the stages that `core` delegates to automatically.
+
 3. **Install the render pack:**
 
    ```txt
@@ -51,16 +55,19 @@ and JSON generation — all wired and ready.
 | Feature | Where | What it shows |
 |---------|-------|---------------|
 | **Registration** | `packs/BP/scripts/main.ts` | `core.register()` with i18n-keyed display fields, bundle, guide and config schema |
-| **Custom UI** | `packs/BP/scripts/UI/Example.tsx` | ore-styled screens, navigation, native forms |
+| **Custom UI** | `packs/BP/scripts/UI/screens/*.screen.tsx` | ore-styled screens, navigation, native forms |
 | **Config** | `packs/BP/scripts/config.ts` | Typed schema → widgets in the shared config UI, persisted values |
 | **i18n** | `packs/data/i18n/en_US.ts` | TS-first text: `t()` server-filled, `key()`/`raw()` client-resolved, plurals, interpolation |
 | **Guides** | `packs/data/guides/en_US/` | MDX pages compiled to an in-game guide, auto-localized |
 | **Generator** | `packs/BP/blocks/`, `packs/BP/entities/` | Single-file and multi-file `.ts` → `.json` templates, typed against Mojang's official schemas |
 
-The Regolith pipeline runs **generator → guides → i18n → bundler**: JSON is
-generated from the `.ts` templates, guides compile to a manifest plus `.lang`
-entries, translations compile to `.lang` files, the typed runtime bundle and
-`.d.ts` autocompletion, and finally the scripts bundle into one `main.js`.
+The Regolith pipeline runs **manifest → generator → guides → i18n →
+ui-compiler → bundler**, in one `core` filter entry: the pack manifests are
+stamped, JSON is generated from the `.ts` templates, guides compile to a
+manifest plus `.lang` entries, translations compile to `.lang` files with the
+typed runtime bundle and `.d.ts` autocompletion, every `*.screen.tsx` under
+`packs/BP/scripts` compiles to static JSON UI, and finally the scripts bundle
+into one `main.js`.
 
 The generator also writes Minecraft document types into
 `packs/data/generated/mc/`, which is what makes `satisfies Block` and
@@ -78,10 +85,10 @@ your editor until you do.
 │   │   ├── blocks/               # generator: multi-file template sample
 │   │   ├── entities/             # generator: single-file template sample
 │   │   ├── scripts/
-│   │   │   ├── main.ts           # Entry point — core.register(), ui(core)
+│   │   │   ├── main.ts           # Entry point — one core.register() call
 │   │   │   ├── config.ts         # Config schema (typed accessors)
 │   │   │   └── UI/
-│   │   │       ├── Example.tsx   # Example UI component
+│   │   │       ├── screens/      # Compiled screens (one *.screen.tsx per screen)
 │   │   │       └── i18n.ts       # The addon's i18n instance
 │   │   └── texts/
 │   ├── RP/                       # Resource Pack

@@ -9,6 +9,14 @@ export const UNSTYLED_TEXTURE = 'textures/ui/unstyled';
 
 export interface ControlProps extends LayoutProps {
   visible?: boolean;
+  /**
+   * Carry `visible` on a compiled screen whether or not the build's liveness
+   * probe sees it flip — the probe perturbs each state slot a few ways, and a
+   * visibility that is false in every one of them is otherwise baked hidden.
+   * The conditional sugar sets this on every `{cond && <X/>}` it rewrites: a
+   * condition an author wrote is dynamic by intent.
+   */
+  liveVisible?: boolean;
   enabled?: boolean;
   background?: string;
 }
@@ -18,56 +26,33 @@ export interface ControlProps extends LayoutProps {
 export { resolveStateBackgrounds, type StateBackgroundProps } from './stateBackground';
 
 /**
- * Combines both layout and control props, applying defaults to any missing values.
- * All JSON UI components need at least these values as they define the base control properties.
+ * The props every control carries, whatever it draws.
  *
- * SERIALIZATION ORDER (must match control.json deserialization):
- * Protocol v0004 - Layout computed values: x, y, width, height calculated by flex engine
- * After protocol header (9 bytes: "bcuiv****") and type (string, 83 bytes), fields are serialized in this exact order:
+ * Two jobs. The layout phase reads `__layout` and writes the computed geometry
+ * back into `jsonUIx/y/Width/Height`, which is what the compiler emits as the
+ * control's offset and size. And the values a control has regardless of type —
+ * shown, enabled, its background, the scroll it sits in, its font — are given
+ * defaults here so every pass can read them without asking whether the author
+ * set them.
  *
- * Byte Allocation Map (1024-byte control block):
- * [0-8]:     Protocol header (9 bytes)
- * [9-91]:    Type field (string, 83 bytes)
- * [92-174]:  Field 1: width (number, 83 bytes) - computed width from layout
- * [175-257]: Field 2: height (number, 83 bytes) - computed height from layout
- * [258-340]: Field 3: x (number, 83 bytes) - computed x position from layout
- * [341-423]: Field 4: y (number, 83 bytes) - computed y position from layout
- * [424-431]: Field 5: visible (bool, 8 bytes) - visibility state
- * [432-439]: Field 6: enabled (bool, 8 bytes) - interaction enabled state
- * [440-522]: Field 7: background (string, 83 bytes) - optional background texture path
- * [523-605]: Field 8: region (number, 83 bytes) - region/scroll index this element belongs to
- * [606-688]: Field 9: fontType (string, 83 bytes) - the cell's font alias
- * [689-1023]: Reserved (335 bytes)
+ * `region` is filled in by the region-propagation pass with the nearest scroll
+ * ancestor's index; `fontType` is a valid engine alias on every control, not
+ * just text, because the label the pack mounts reads that slot for any cell.
  *
- * `region` (v0005: 501 → v0006: 418) and `fontType` (v0006: 418 → v0008: 335) were both
- * carved from the reserved block so the absolute offset of every component-specific field
- * after it (e.g. backgroundHover at [1024]) is unchanged.
- *
- * WHY fontType is COMMON rather than a Text-only field: the merged label cell mounts for
- * every cell type (core_ui_components.label_cell gates on #pre_visible alone), so its label
- * decodes the font slot no matter what the cell actually is. Reading it from the
- * component-specific region meant an image's `texture` or a button's `backgroundHover`
- * landed in the engine's `#font_type`, which logs "Could not find font alias <path>" to
- * NonAssertErrorLog (a Marketplace submission blocker). Every component now carries a
- * VALID alias at a fixed offset — non-text components default to 'default' — so the label
- * can decode it unconditionally and never see a texture path.
- *
- * Reserved calculation: 1024 - 9 (header) - 8 × 83 (type, width, height, x, y, background,
- * region, fontType) - 2 × 8 (visible, enabled) = 335 bytes, the block left for future fields.
- *
- * Component-specific properties are appended after the reserved block.
- *
- * NOTE: x, y, width, height are computed by the layout phase and should not be manually set.
- * Use flex layout properties (flexGrow, width, etc.) to control sizing instead.
+ * The geometry defaults are placeholders: use the flex props (`flexGrow`,
+ * `width`, …) rather than setting `jsonUI*` by hand.
  *
  * @param props Component properties extending ControlProps
- * @returns Object with all control properties filled with defaults and canonical ordering
+ * @returns The control's props, defaults filled in
  */
 export function withControl(props: JSX.Props): JSX.Props {
   const {
     visible,
+    liveVisible,
     enabled,
     background,
+    __widthSlot,
+    __trans,
     // Layout props
     width,
     height,
@@ -107,32 +92,23 @@ export function withControl(props: JSX.Props): JSX.Props {
     zIndex,
   } = props;
 
-  // Create object with properties in exact canonical order for stable serialization
-  // x, y will be set by layout phase (computeLayout)
   return {
-    // Defaults, computed by layout phase
-    jsonUIWidth: 100,
-    jsonUIHeight: 100,
-    jsonUIx: 0,
-    jsonUIy: 0,
-
-    // Control props
     visible: visible ?? true,
+    ...liveVisible === true ? { liveVisible: true } : {},
+    // Internal to the build's composing components: the slot the layout records this box's width
+    // under, and a translated text's layout as the build recorded it.
+    ...typeof __widthSlot === 'number' ? { __widthSlot } : {},
+    ...__trans === undefined ? {} : { __trans },
     enabled: enabled ?? true,
 
-    background: background ?? '', // [440-522] optional background texture path
-    // [523-605] region/scroll index. Defaults to 0 (single-region screens). For
-    // multi-region screens the region-propagation pass overwrites this in place
-    // (keeping the canonical key order) with the nearest slot ancestor's index.
+    background: background ?? '',
+    // The scroll this control sits in. 0 until the region-propagation pass
+    // overwrites it with the nearest scroll ancestor's index.
     region: 0,
-    // [606-688] the cell's font alias, read by the merged label cell for EVERY cell
-    // type. Must always be a valid engine alias (see the byte map above); Text
-    // overwrites it IN PLACE — re-assigning an existing key keeps its position, so the
-    // value stays at [606] and never lands in the component-specific region.
+    // A valid engine alias on every control, not only text; `Text` overwrites it.
     fontType: 'default',
-    $reserved: { bytes: 335 }, // Reserve space for future expansion (v0008: 335 bytes, carved 83 for fontType)
 
-    // Layout props (not serialized, used by layout phase) - stored with __ prefix
+    // Read by the layout phase, which writes its result back above.
     __layout: {
       display,
       width,
@@ -173,18 +149,14 @@ export function withControl(props: JSX.Props): JSX.Props {
   };
 }
 
-interface JSONUILayoutProps extends JSX.Props {
-  jsonUIx: number;
-  jsonUIy: number;
-  jsonUIWidth: number;
-  jsonUIHeight: number;
-}
-
-export function isControlled(props: JSX.Props): props is JSONUILayoutProps {
-  return (
-    typeof props.jsonUIx === 'number'
-    && typeof props.jsonUIy === 'number'
-    && typeof props.jsonUIWidth === 'number'
-    && typeof props.jsonUIHeight === 'number'
-  );
+/**
+ * Whether an element is a CONTROL — something with a box — rather than
+ * structure the passes walk through.
+ *
+ * Asked before the layout phase has run, so it cannot look at the geometry:
+ * `__layout` is what {@link withControl} puts there and what the layout phase
+ * reads, and having it is what makes an element a control.
+ */
+export function isControlled(props: JSX.Props): boolean {
+  return typeof props['__layout'] === 'object' && props['__layout'] !== null;
 }

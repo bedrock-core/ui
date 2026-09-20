@@ -19,8 +19,14 @@ export interface FormButtonProps extends ControlProps, StateBackgroundProps {
    * declare exactly ONE submit button and at most one exit button.
    */
   type: FormButtonKind;
-  /** Button text. Defaults to `'Submit'` / `'Close'` by kind. */
+  /** Button text. Defaults to `'Submit'` / `'Close'` by kind, unless the button has children. */
   label?: string;
+  /**
+   * What the button shows, laid out inside it like any other child and baked
+   * into its face: an icon beside a word, a `<Text>` whose key the client
+   * resolves. Given, `label` is not drawn.
+   */
+  children?: JSX.Node;
 }
 
 /**
@@ -42,7 +48,7 @@ function safeLabelText(text: string): string {
  * Layout defaults mirror the field controls: full row width, native row height.
  */
 export const FormButton: FunctionComponent<FormButtonProps> = ({
-  type, label,
+  type, label, children,
   backgroundHover, backgroundPressed, backgroundLocked, ...layout
 }: FormButtonProps): JSX.Element => {
   const states = resolveStateBackgrounds({ background: layout.background, backgroundHover, backgroundPressed, backgroundLocked });
@@ -61,7 +67,9 @@ export const FormButton: FunctionComponent<FormButtonProps> = ({
       backgroundPressed: states.backgroundPressed,
       backgroundLocked: states.backgroundLocked,
       buttonKind: type,
-      label: safeLabelText(label ?? (type === 'submit' ? 'Submit' : 'Close')),
+      ...children === undefined
+        ? { label: safeLabelText(label ?? (type === 'submit' ? 'Submit' : 'Close')) }
+        : { children },
     },
   };
 };

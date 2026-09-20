@@ -11,7 +11,13 @@
 		"gamepad_cursor": true
 	},
 	"long_form": {
-		"$protocol_header": "bcuiv0008",
+		/* This hidden vanilla dialog is still constructed under the library's gate;
+		   scrolling is off while its content fits, through the variable vanilla
+		   threads into common.scrolling_panel for exactly this. Precautionary: the
+		   bisected "Progress out of range" assertion turned out to be the compiled
+		   slider's, not this panel's. */
+		"$allow_scrolling_even_when_content_fits": false,
+		"$protocol_header": "corev0009",
 		"modifications": [
 			{
 				"array_name": "bindings",
@@ -30,7 +36,13 @@
 		]
 	},
 	"custom_form": {
-		"$protocol_header": "bcuiv0008",
+		/* This hidden vanilla dialog is still constructed under the library's gate;
+		   scrolling is off while its content fits, through the variable vanilla
+		   threads into common.scrolling_panel for exactly this. Precautionary: the
+		   bisected "Progress out of range" assertion turned out to be the compiled
+		   slider's, not this panel's. */
+		"$allow_scrolling_even_when_content_fits": false,
+		"$protocol_header": "corev0009",
 		"modifications": [
 			{
 				"array_name": "bindings",
@@ -49,7 +61,7 @@
 		]
 	},
 	"main_screen_content": {
-		"$protocol_header": "bcuiv0008",
+		"$protocol_header": "corev0009",
 		"size": [
 			"0px",
 			"0px"
@@ -59,18 +71,6 @@
 			"#size_binding_y": "0px"
 		},
 		"modifications": [
-			{
-				/* Full-screen <Background> backdrop — BEFORE the factory so it sits behind
-				   both containers; decodes its texture from the title's fixed 2573 slot and
-				   self-hides when absent (see core_ui_common.form_background). */
-				"array_name": "controls",
-				"operation": "insert_front",
-				"value": [
-					{
-						"form_background@core_ui_common.form_background": {}
-					}
-				]
-			},
 			{
 				"array_name": "controls",
 				"operation": "insert_back",

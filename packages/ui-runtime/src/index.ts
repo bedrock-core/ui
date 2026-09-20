@@ -1,17 +1,34 @@
 export {
   Background,
   Button,
-  Dropdown,
+  Container,
+  Embed,
+  Expect,
+  embedMarker,
+  EmbedSlots,
   Form,
   Fragment,
+  Hotbar,
   Image,
-  Input,
-  ItemRenderer,
+  Link,
   ModalContext,
   Panel,
+  PlayerInventory,
+  Screen,
   Scroll,
+  List,
+  Slot,
+  SlotGrid,
+  Tabs,
+  Disclosure,
+  Dropdown,
+  Input,
+  Option,
+  Select,
   Slider,
   Text,
+  Toggle,
+  Trans,
   withControl,
 } from './components';
 
@@ -21,58 +38,121 @@ export type {
   AlignSelf,
   BackgroundProps,
   ButtonProps,
+  ContainerHandlers,
+  ContainerHost,
+  ContainerProps,
   ControlProps,
   Display,
-  DropdownProps,
+  EmbedArea,
+  EmbedFrame,
+  EmbedPlacement,
+  EmbedProps,
+  EmbedSlotsProps,
+  ExpectProps,
   FlexDirection,
   FlexSize,
   FlexWrap,
   FormButtonKind,
   FormButtonProps,
   FormConfig,
-  FormDropdownProps,
-  FormInlineSelectProps,
-  FormOptionProps,
-  FormInputProps,
   FormProps,
-  FormSliderProps,
-  FormToggleProps,
   FormValues,
+  DropdownProps,
   FragmentProps,
-  ImageProps,
   InputProps,
-  ItemRendererProps,
+  OptionProps,
+  SelectProps,
+  SelectBaseProps,
+  SelectOptionStyle,
+  SingleSelectProps,
+  MultipleSelectProps,
+  SliderProps,
+  ToggleProps,
+  ImageProps,
   JustifyContent,
   LayoutProps,
-  ModalFieldProps,
+  LinkProps,
+  ListProps,
   PanelProps,
   Position,
+  ScreenProps,
   ScrollProps,
-  SliderProps,
+  TabProps,
+  TabsProps,
+  DisclosureProps,
+  SlotProps,
+  SlotRole,
+  SlotSource,
+  SlotGridProps,
+  SlotGridConfig,
   Spacing,
+  SubmitEvent,
   TextFont,
   TextOverflow,
+  TextAlign,
   TextProps,
+  TransProps,
   TextStyle,
   TextWordBreak,
 } from './components';
 
 export {
+  useComposed,
   useContext,
   useEffect,
   useEvent,
   useExit,
+  useMechanism,
+  useObservable,
   usePlayer,
   useReducer,
   useRef,
   useState,
 } from './hooks';
+export type { Compose, Composed, ObservableLike } from './hooks';
+
+// Error classes, caught with `instanceof`.
+export {
+  ContainerScreenError,
+  ModalFormError,
+  ScreenRootError,
+  SerializationError,
+  TranslationKeysError,
+  UncompiledScreenError,
+} from './core';
+
+export {
+  addonReference,
+  back,
+  clearHistory,
+  closeUi, handOff,
+  historyOf,
+  shownKey,
+  isAddonReference,
+  isScreenReference,
+  navigate,
+  openScreen,
+  presentReference,
+  registerStaticScreens,
+  returnPathOf,
+  screenOwner,
+  setNavigator,
+  pathThrough, setReturnPath,
+  clearReturnPath, takeReturnStep,
+  compiledKeyOf,
+  screenForKey,
+  compiledScreens,
+  whyNotPlainData,
+} from './core';
+
+export type {
+  AddonReference, CompiledScreen, Navigated, NavigateOptions, NavigationDriver, Navigator,
+  ReferenceTarget, ReturnAddress, Returner, ScreenKey, ScreenKeys, ScreenReference, WalkResult,
+} from './core';
 
 export {
   createContext,
-  emitButton,
   emitDropdown,
-  emitHeader,
   emitInput,
   emitLabel,
   emitSlider,
@@ -81,20 +161,33 @@ export {
   isActionForm,
   isModalForm,
   registerComponent,
+  registerCompiledScreen,
+  registerContainerLooks,
+  compiledSnapshotOf,
+  compiledTitleOf,
   render,
 } from './core';
 
+export { compiledValuesOf, showCompiledTitle } from './hosts/form/runtime';
+export { FLAG_OFF, FLAG_ON } from './hosts/form/contract';
+
 export type {
   ComponentDescriptor,
+  CompiledSnapshot,
+  Immutable,
+  ReducerSlot,
+  StateSlot,
+  StateUpdate,
+  ContainerEvent,
   Context,
   ContextProps,
   FormTarget,
-  ItemAuxError,
-  ModalFormError,
   ModalValue,
-  ScrollLimitError,
-  SerializationError,
-  TranslationKeysError,
+  PressEvent,
+  RenderOptions,
+  ScreenHost,
+  SlotEvent,
+  UiEvent,
   Writer,
 } from './core';
 
@@ -103,8 +196,17 @@ export type {
   JSX,
 } from './jsx';
 
-export { ItemAuxContext } from './data/ItemAux';
-export type { ItemAuxMap } from './data/ItemAux';
-
 export { TranslationContext, useTranslation, useTranslationResolver } from './data/Translation';
-export type { TranslationResolver } from '@bedrock-core/i18n';
+export type { DisplayText, TranslationResolver } from '@bedrock-core/i18n';
+
+// The glyph table a server measures with before it sends a string: the same one
+// the layout uses at build time, so what was solved for and what is sent agree.
+export { measureText, WIDEST_GLYPH } from './util/textMetrics';
+export type { MeasureTextOptions } from './util/textMetrics';
+
+// Entity API, usable on its own: no screen, no component, no host.
+export { inventoryOf } from './entity';
+export type { ContainerSide, NamedContainer, NamedSlot, SlotLayout } from './entity';
+
+// What scrolling content gives up beside its track, for a screen that sizes its own rows.
+export { SCROLL_RESERVE, SCROLL_TRACK_WIDTH } from './components/Scroll';

@@ -2,9 +2,8 @@ import { FunctionComponent, JSX } from '../jsx';
 
 /**
  * The host `type` string emitted by {@link Background}. Registered transparent, so
- * the layout / inherit / serialize passes walk straight through it (it has no
- * children and no box); the presenters find it on the built tree and encode its
- * texture into the form-title metadata.
+ * every pass walks straight through it (it has no children and no box); the host
+ * finds it on the built tree and encodes its texture into the form-title metadata.
  */
 export const BACKGROUND_SLOT_TYPE = 'background';
 
@@ -23,10 +22,9 @@ export interface BackgroundProps {
  * content, covering the whole screen. Works on both backends — an ActionForm tree
  * and inside a `<Form>` modal.
  *
- * The texture rides the title metadata: one extra field at a FIXED offset (the
- * serializer pads the title with reserved bytes so the offset is identical on both
- * backends and for any scroll count), decoded RP-side by the single static
- * `core_ui_common.form_background`. Only the first `<Background>` in a tree wins.
+ * The build emits it as the screen's own backdrop definition and the form router
+ * mounts it behind the screen, so nothing about it travels. Only the first
+ * `<Background>` in a tree wins.
  *
  * ```tsx
  * render(

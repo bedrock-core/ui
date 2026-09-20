@@ -13,12 +13,16 @@ import {
 import { Button } from '../../../components/Button';
 import { Form } from '../../../components/Form';
 import { Panel } from '../../../components/Panel';
+import { Screen } from '../../../components/Screen';
+import { Toggle } from '../../../components/Toggle';
 import { Text } from '../../../components/Text';
 import { useEffect, useExit, useState } from '../../../hooks';
 import type { FunctionComponent, JSX } from '../../../jsx';
-import { getFibersForPlayer } from '../../fabric';
-import { render } from '../lifecycle';
-import { getPlayerRoot } from '../session';
+import { getFibersForOwner, playerOwner } from '../../fabric';
+import { titleFor } from '../../../hosts/form/contract';
+import { render as renderScreen } from '../lifecycle';
+import { compiledTitleOf, registerCompiledScreen } from '../screens';
+import { getSessionRoot, __resetSessionCounters, __sessionCounters } from '../session';
 
 /**
  * Cross-app handoff ("one UI slot per player"): render() during a live session
@@ -35,22 +39,37 @@ function el(type: unknown, props: Record<string, unknown>): JSX.Element {
 
 interface TestPlayer {
   player: Player;
-  /** Spy over inputPermissions.setPermissionCategory: 2 calls = lock, +2 = restore. */
-  permissionSpy: ReturnType<typeof vi.fn>;
 }
 
 function makePlayer(id: string): TestPlayer {
-  const permissionSpy = vi.fn();
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- minimal Player stub: id + the two inputPermissions methods the input lock uses
-  const player = {
-    id,
-    inputPermissions: {
-      isPermissionCategoryEnabled: (): boolean => true,
-      setPermissionCategory: permissionSpy,
-    },
-  } as unknown as Player;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- minimal Player stub: an id is all a session is keyed by
+  const player = { id } as unknown as Player;
 
-  return { player, permissionSpy };
+  return { player };
+}
+
+/** Sessions started and torn down for one player: which path a render took. */
+function paths(id: string): { starts: number; cleanups: number } {
+  return __sessionCounters(id);
+}
+
+let compiled = 0;
+
+/**
+ * Show an app the way a built pack does.
+ *
+ * Every screen here stands for one an addon compiled, and `render()` shows a
+ * screen from its layout in the pack — so each root is registered on its way in
+ * rather than each case repeating it. What these cases are about is the chain
+ * around the present, which is the same whichever screen is in it.
+ */
+function render(root: FunctionComponent, player: Player): void {
+  if (compiledTitleOf(root) === undefined) {
+    compiled += 1;
+    registerCompiledScreen(root, { key: `swap:${String(compiled)}`, title: titleFor(`swap_${String(compiled)}`) });
+  }
+
+  renderScreen(root, player);
 }
 
 /** Flush the full microtask queue (and one macrotask turn). */
@@ -62,10 +81,12 @@ function tick(): Promise<void> {
 
 /** A minimal ActionForm app: one button at ordinal 0 wired to `onPress`. */
 function screenOf(label: string, onPress: () => unknown): JSX.Element {
-  return el(Panel, {
-    width: 220,
-    height: 120,
-    children: [el(Button, { onPress, children: el(Text, { children: label }) })],
+  return el(Screen, {
+    children: el(Panel, {
+      width: 220,
+      height: 120,
+      children: [el(Button, { onPress, children: el(Text, { children: label }) })],
+    }),
   });
 }
 
@@ -89,7 +110,7 @@ describe('render() swap — cross-app handoff', () => {
   it('T1: render(B) landing BEFORE the verdict swaps into the live chain; B keeps state on its first press', async () => {
     __setDeferredShows(true);
 
-    const { player, permissionSpy } = makePlayer('t1');
+    const { player } = makePlayer('t1');
     const cleanupA = vi.fn();
     const bValues: number[] = [];
 
@@ -125,14 +146,14 @@ describe('render() swap — cross-app handoff', () => {
     press();
     await tick();
 
-    // Swap happened inside the one chain: A cleaned up, B on screen, input lock
-    // never dropped (2 calls = the initial lock, no restore, no re-lock).
+    // Swap happened inside the one chain: A cleaned up, B on screen, and the
+    // session never torn down — one start, no cleanup, no second start.
     expect(cleanupA).toHaveBeenCalledTimes(1);
-    expect(permissionSpy).toHaveBeenCalledTimes(2);
+    expect(paths('t1')).toEqual({ starts: 1, cleanups: 0 });
     expect(bValues).toEqual([0]);
     expect(__pendingShowCount()).toBe(1);
 
-    // THE regression: B's first press must not be swallowed by a wiped session.
+    // B's first press must not be swallowed by a wiped session.
     press();
     await tick();
     expect(bValues).toEqual([0, 1]);
@@ -142,7 +163,7 @@ describe('render() swap — cross-app handoff', () => {
   it('T2: render(B) landing AFTER cleanup takes the fresh path (one lock flash), same end state', async () => {
     __setDeferredShows(true);
 
-    const { player, permissionSpy } = makePlayer('t2');
+    const { player } = makePlayer('t2');
     const bValues: number[] = [];
 
     const AppB: FunctionComponent = () => {
@@ -173,8 +194,8 @@ describe('render() swap — cross-app handoff', () => {
     await tick();
     await tick();
 
-    // Fresh path: lock (2) + restore (2) + re-lock (2).
-    expect(permissionSpy).toHaveBeenCalledTimes(6);
+    // Fresh path: started, torn down, started again.
+    expect(paths('t2')).toEqual({ starts: 2, cleanups: 1 });
     expect(bValues).toEqual([0]);
     expect(__pendingShowCount()).toBe(1);
 
@@ -186,7 +207,7 @@ describe('render() swap — cross-app handoff', () => {
   it('T2b: render(B) landing between the verdict and its chain continuation still swaps cleanly', async () => {
     __setDeferredShows(true);
 
-    const { player, permissionSpy } = makePlayer('t2b');
+    const { player } = makePlayer('t2b');
     const bodyB = vi.fn();
     const AppB: FunctionComponent = () => {
       bodyB();
@@ -215,8 +236,8 @@ describe('render() swap — cross-app handoff', () => {
     press();
     await tick();
 
-    // The pending swap absorbs the stale 'cleanup' verdict: lock never dropped.
-    expect(permissionSpy).toHaveBeenCalledTimes(2);
+    // The pending swap absorbs the stale 'cleanup' verdict: nothing was torn down.
+    expect(paths('t2b')).toEqual({ starts: 1, cleanups: 0 });
     expect(bodyB).toHaveBeenCalled();
     expect(__pendingShowCount()).toBe(1);
   });
@@ -224,7 +245,7 @@ describe('render() swap — cross-app handoff', () => {
   it('T3: an external swap closes the form without tearing down; a real ESC still tears down', async () => {
     __setDeferredShows(true);
 
-    const { player, permissionSpy } = makePlayer('t3');
+    const { player } = makePlayer('t3');
     const bodyB = vi.fn();
     const AppA: FunctionComponent = () => screenOf('A', () => undefined);
     const AppB: FunctionComponent = () => {
@@ -244,14 +265,15 @@ describe('render() swap — cross-app handoff', () => {
 
     expect(bodyB).toHaveBeenCalled();
     expect(__pendingShowCount()).toBe(1);
-    expect(permissionSpy).toHaveBeenCalledTimes(2);
+    // The external swap closed the form without tearing the session down.
+    expect(paths('t3')).toEqual({ starts: 1, cleanups: 0 });
 
     // ESC on B is the player dismissing: full teardown.
     esc();
     await tick();
-    expect(permissionSpy).toHaveBeenCalledTimes(4);
-    expect(getFibersForPlayer(player)).toHaveLength(0);
-    expect(getPlayerRoot(player)).toBeUndefined();
+    expect(paths('t3')).toEqual({ starts: 1, cleanups: 1 });
+    expect(getFibersForOwner(playerOwner(player))).toHaveLength(0);
+    expect(getSessionRoot(playerOwner(player))).toBeUndefined();
     expect(__pendingShowCount()).toBe(0);
   });
 
@@ -267,7 +289,7 @@ describe('render() swap — cross-app handoff', () => {
       onSubmit,
       onCancel,
       children: [
-        el(Form.Toggle, { name: 'x', defaultValue: false }),
+        el(Toggle, { name: 'x', defaultValue: false }),
         el(Form.Button, { type: 'submit', label: 'Save' }),
       ],
     });
@@ -301,7 +323,7 @@ describe('render() swap — cross-app handoff', () => {
   it('T5: double swap before absorption — last root wins, the middle app never runs', async () => {
     __setDeferredShows(true);
 
-    const { player, permissionSpy } = makePlayer('t5');
+    const { player } = makePlayer('t5');
     const bodyB = vi.fn();
     const bodyC = vi.fn();
     const AppA: FunctionComponent = () => screenOf('A', () => undefined);
@@ -328,8 +350,9 @@ describe('render() swap — cross-app handoff', () => {
 
     esc();
     await tick();
-    expect(getPlayerRoot(player)).toBeUndefined();
-    expect(permissionSpy).toHaveBeenCalledTimes(4);
+    expect(getSessionRoot(playerOwner(player))).toBeUndefined();
+    // A second ESC over a dead session tears nothing down twice.
+    expect(paths('t3')).toEqual({ starts: 1, cleanups: 1 });
   });
 
   it('T6: no hook-state bleed between same-named roots across a handoff', async () => {
@@ -437,7 +460,7 @@ describe('render() swap — cross-app handoff', () => {
     __setDeferredShows(true);
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
-    const { player, permissionSpy } = makePlayer('t8');
+    const { player } = makePlayer('t8');
     const Throwing: FunctionComponent = () => {
       throw new Error('boom');
     };
@@ -446,16 +469,16 @@ describe('render() swap — cross-app handoff', () => {
 
     // (a) Fresh render that throws: no frozen player, session cleared.
     render(Throwing, player);
-    expect(getPlayerRoot(player)).toBeUndefined();
-    expect(permissionSpy).toHaveBeenCalledTimes(4);
+    expect(getSessionRoot(playerOwner(player))).toBeUndefined();
+    expect(paths('t8')).toEqual({ starts: 1, cleanups: 1 });
 
     // (b) Swap to a throwing app: absorption tears down instead of stranding.
     render(AppA, player);
     await tick();
     render(Throwing, player);
     await tick();
-    expect(getPlayerRoot(player)).toBeUndefined();
-    expect(getFibersForPlayer(player)).toHaveLength(0);
+    expect(getSessionRoot(playerOwner(player))).toBeUndefined();
+    expect(getFibersForOwner(playerOwner(player))).toHaveLength(0);
 
     // Recovery: a later app renders normally.
     render(AppD, player);
@@ -466,7 +489,7 @@ describe('render() swap — cross-app handoff', () => {
   it('T9: a stale chain tail (exit-from-effect + immediate new app) cannot kill the successor', async () => {
     __setDeferredShows(true);
 
-    const { player, permissionSpy } = makePlayer('t9');
+    const { player } = makePlayer('t9');
     let exitA: (() => void) | undefined;
 
     const AppA: FunctionComponent = () => {
@@ -495,9 +518,9 @@ describe('render() swap — cross-app handoff', () => {
     // The tail must not end C's chain or clean C up.
     expect(bodyC).toHaveBeenCalled();
     expect(__pendingShowCount()).toBe(1);
-    expect(getFibersForPlayer(player).length).toBeGreaterThan(0);
-    // lock A (2) + restore on exit (2) + lock C (2), and nothing after.
-    expect(permissionSpy).toHaveBeenCalledTimes(6);
+    expect(getFibersForOwner(playerOwner(player)).length).toBeGreaterThan(0);
+    // A started, torn down on exit, C started — and nothing after.
+    expect(paths('t9')).toEqual({ starts: 2, cleanups: 1 });
   });
 
   it('T10: a rejected show() (PlayerQuit) ends the chain with best-effort cleanup and no state leak', async () => {
@@ -519,8 +542,8 @@ describe('render() swap — cross-app handoff', () => {
     __rejectShow(new FormRejectError('PlayerQuit', FormRejectReason.PlayerQuit));
     await tick();
 
-    expect(getPlayerRoot(player)).toBeUndefined();
-    expect(getFibersForPlayer(player)).toHaveLength(0);
+    expect(getSessionRoot(playerOwner(player))).toBeUndefined();
+    expect(getFibersForOwner(playerOwner(player))).toHaveLength(0);
 
     // Rejoining renders fresh — mount-phase state, nothing resurrected.
     render(AppA, player);
@@ -532,7 +555,7 @@ describe('render() swap — cross-app handoff', () => {
   it('T11: handoff inside the interactive transaction needs no exit() and never drops the lock', async () => {
     __setDeferredShows(true);
 
-    const { player, permissionSpy } = makePlayer('t11');
+    const { player } = makePlayer('t11');
     const bodyB = vi.fn();
     const AppB: FunctionComponent = () => {
       bodyB();
@@ -552,7 +575,7 @@ describe('render() swap — cross-app handoff', () => {
     await tick();
 
     expect(bodyB).toHaveBeenCalled();
-    expect(permissionSpy).toHaveBeenCalledTimes(2);
+    expect(paths('t11')).toEqual({ starts: 1, cleanups: 0 });
     expect(__pendingShowCount()).toBe(1);
   });
 
@@ -631,16 +654,16 @@ describe('render() swap — cross-app handoff', () => {
     await tick();
     expect(__pendingShowCount()).toBe(2);
 
-    const p2Fibers = getFibersForPlayer(p2.player).length;
+    const p2Fibers = getFibersForOwner(playerOwner(p2.player)).length;
 
     render(AppB, p1.player);
     await tick();
 
     // p1 swapped to B; p2's form, fibers, lock, and build count are untouched.
     expect(__pendingShowCount()).toBe(2);
-    expect(getFibersForPlayer(p2.player).length).toBe(p2Fibers);
+    expect(getFibersForOwner(playerOwner(p2.player)).length).toBe(p2Fibers);
     expect(bodyA2).toHaveBeenCalledTimes(1);
-    expect(p2.permissionSpy).toHaveBeenCalledTimes(2);
-    expect(p1.permissionSpy).toHaveBeenCalledTimes(2);
+    expect(paths('t14-two')).toEqual({ starts: 1, cleanups: 0 });
+    expect(paths('t14-one')).toEqual({ starts: 1, cleanups: 0 });
   });
 });

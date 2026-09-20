@@ -8,25 +8,40 @@ export const SCROLL_SLOT_TYPE = 'scroll-slot';
 export type ScrollAxis = 'x' | 'y';
 
 /**
- * TITLE-FORMAT constant: how many custom scroll blocks the title reserves space for.
- * Do NOT change — the fixed background offset (BACKGROUND_TITLE_SKIP) and the modal
- * flow-button blocks are laid out against this padding on both backends.
+ * Texels the scrollbar track takes near the right edge of a vertical scroll
+ * region (`core_ui_shapes.scroll`). Content is laid out narrower by the track
+ * and the clear space either side of it, so its right edge meets the gutter
+ * instead of running under the bar and being clipped.
  */
-export const MAX_SCROLLS = 4;
+export const SCROLL_TRACK_WIDTH = 5;
 
 /**
- * RUNTIME limit: how many custom `<Scroll>`s a render may actually use. The RP mounts
- * a fixed pool of pooled scroll controls (indices 1..MAX_POOLED_SCROLLS) on top of the
- * implicit root scroll (index 0), and every mounted slot re-instantiates the FULL
- * form_buttons collection — the dominant engine-side cost on big screens — so the pool
- * is kept as small as real layouts need. A render with more `<Scroll>`s throws in the
- * layout phase (the extras would otherwise silently not render).
- *
- * To grow the pool: raise this constant AND re-add the RP side — a `scroll_N` slot in
- * scroll_pool.json (block_skip 83 + 498·N) plus `label_router_rN` / `button_router_rN` /
- * `header_router_rN` variants. The title format already carries up to {@link MAX_SCROLLS}.
+ * Clear space either side of the track: between the content and the bar, and
+ * between the bar and the region's right edge, the same on both so the bar
+ * sits centred in its column. Reserved only where the track is. The render
+ * pack's `core_ui_shapes.scroll` insets its viewport and bar by the same
+ * numbers.
  */
-export const MAX_POOLED_SCROLLS = 2;
+export const SCROLL_GUTTER = 3;
+
+/** What scrolling content gives up on its right: the track and the space either side of it. */
+export const SCROLL_RESERVE = SCROLL_TRACK_WIDTH + 2 * SCROLL_GUTTER;
+
+/**
+ * The props the content of a scroll over ONE `<List>` carries beside its
+ * layout rect: the same content solved across the whole viewport, with no
+ * track. How many rows a list shows is only known when the screen is
+ * shown, so the build keeps both widths and the client draws the one the
+ * count calls for. `marker` is set on the scroll itself once the wide rects
+ * exist.
+ */
+export const WIDE_RECT = {
+  marker: 'jsonUIWide',
+  x: 'jsonUIWideX',
+  y: 'jsonUIWideY',
+  width: 'jsonUIWideWidth',
+  height: 'jsonUIWideHeight',
+} as const;
 
 /**
  * `<Scroll>` — one independent scroll region. Each `<Scroll>` in a render becomes its own
@@ -43,7 +58,6 @@ export const MAX_POOLED_SCROLLS = 2;
  * to the viewport — the protocol carries only per-scroll geometry.
  *
  * Content NOT wrapped in any `<Scroll>` falls into the root scroll, so simple UIs need none.
- * A render may contain at most {@link MAX_SCROLLS} `<Scroll>`s.
  *
  * ```tsx
  * render(

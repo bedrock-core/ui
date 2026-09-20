@@ -1,7 +1,7 @@
 {
 	"$schema": "https://raw.githubusercontent.com/Bedrock-OSS/regolith-schemas/main/config/v1.4.json",
 	"author": "DrAv0011",
-	"description": "Test addon and reference implementation for @bedrock-core/ui library",
+	"description": "The @bedrock-core/ui render pack: hosts, shapes and the framework’s own screens",
 	"name": "@bedrock-core_ui",
 	"packs": {
 		"behaviorPack": "./packs/BP",
@@ -10,17 +10,21 @@
 	"regolith": {
 		"dataPath": "./packs/data",
 		"filterDefinitions": {
-			"bundler": {
-				"url": "github.com/bedrock-core/regolith-filters",
-				"version": "1.1.1"
-			},
 			"guides": {
 				"url": "github.com/bedrock-core/regolith-filters",
-				"version": "1.1.1"
+				"version": "1.2.0"
 			},
 			"i18n": {
 				"url": "github.com/bedrock-core/regolith-filters",
-				"version": "1.0.1"
+				"version": "1.2.0"
+			},
+			"ui-compiler": {
+				"url": "github.com/bedrock-core/regolith-filters",
+				"version": "0.1.0"
+			},
+			"references": {
+				"runWith": "nodejs",
+				"script": "./filters/references.mts"
 			}
 		},
 		"formatVersion": "1.4.0",
@@ -35,20 +39,26 @@
 					{
 						"filter": "guides",
 						"settings": {
-							"namespace": "core"
+							"namespace": "core",
+							"pretty": false
 						}
 					},
 					{
 						"filter": "i18n",
 						"settings": {
-							"namespace": "core"
+							"namespace": "core",
+							"pretty": false
 						}
 					},
 					{
-						"filter": "bundler",
+						"filter": "ui-compiler",
 						"settings": {
-							"debug": false
+							"namespace": "core",
+							"pretty": false
 						}
+					},
+					{
+						"filter": "references"
 					}
 				]
 			},
@@ -62,20 +72,33 @@
 					{
 						"filter": "guides",
 						"settings": {
-							"namespace": "core"
+							"namespace": "core",
+							"pretty": {
+								"indent": "tab"
+							}
 						}
 					},
 					{
 						"filter": "i18n",
 						"settings": {
-							"namespace": "core"
+							"namespace": "core",
+							"pretty": {
+								"indent": "tab"
+							}
 						}
 					},
 					{
-						"filter": "bundler",
+						"filter": "ui-compiler",
 						"settings": {
-							"debug": true
+							"namespace": "core",
+							"stamp": true,
+							"pretty": {
+								"indent": "tab"
+							}
 						}
+					},
+					{
+						"filter": "references"
 					}
 				]
 			}

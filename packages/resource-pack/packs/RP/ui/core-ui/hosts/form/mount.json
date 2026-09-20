@@ -1,0 +1,95 @@
+{
+	// Where a COMPILED form screen is mounted.
+	//
+	// A compiled screen's layout is already in an addon's pack; nothing about it
+	// travels at runtime. All the client is told is WHICH screen, and that rides
+	// the form's title: `corev0009core<E>:<addon>_<name>`. The header leads every
+	// title the library sends, and is kept on purpose — `main_screen_content`
+	// sizes the library's own container to the screen only when it is present,
+	// and vanilla's `long_form` hides itself only then. A compiled screen wants
+	// both, so it keeps the header and adds its own marker after it.
+	//
+	// WHY THIS FILE EXISTS AT THIS PATH. Every addon's compiled screens have to
+	// reach one mount, and `modifications` resolve per FILE PATH rather than per
+	// namespace — measured. So an addon ships a copy of THIS path carrying one
+	// modifications entry, and the engine stacks every pack's copy in pack
+	// order. `compiled_root` declares its own `controls` for the same reason the
+	// chest hook targets a definition that declares its own: an insert into an
+	// array a definition merely INHERITS creates one that shadows it.
+	//
+	// Nothing vanilla is touched by any of this. The library's own container is
+	// already gated on the header, so a compiled screen is mounted by being
+	// NAMED rather than by editing a vanilla file — which is why there is no
+	// `server_form` re-declaration anywhere in the pipeline.
+	//
+	// There is no field generator here. A compiled screen PLACES each native
+	// field itself with a literal `collection_index`, so a factory would only
+	// draw a second copy at its own pitch — see `nodes/field.ts`.
+	"namespace": "core_ui_form",
+	"compiled_root": {
+		"type": "panel",
+		"size": [
+			"100%",
+			"100%"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"controls": []
+	},
+	"claimed_modal": {
+		"type": "panel",
+		"size": [
+			"100%",
+			"100%"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"property_bag": {
+			"#visible": false
+		},
+		"visible": "#visible",
+		"bindings": [
+			{
+				"binding_name": "#title_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.13s' * #title_text) = 'corev0009core')",
+				"target_property_name": "#visible"
+			}
+		],
+		"controls": [
+			{
+				"screens@core_ui_form.compiled_root": {}
+			}
+		]
+	},
+	"claimed": {
+		"type": "panel",
+		"size": [
+			"100%",
+			"100%"
+		],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"property_bag": {
+			"#visible": false
+		},
+		"visible": "#visible",
+		"bindings": [
+			{
+				"binding_name": "#title_text"
+			},
+			{
+				"binding_type": "view",
+				"source_property_name": "(('%.13s' * #title_text) = 'corev0009core')",
+				"target_property_name": "#visible"
+			}
+		],
+		"controls": [
+			{
+				"screens@core_ui_form.compiled_root": {}
+			}
+		]
+	}
+}

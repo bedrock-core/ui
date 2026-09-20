@@ -10,25 +10,33 @@
 	"regolith": {
 		"dataPath": "./packs/data",
 		"filterDefinitions": {
-			"bundler": {
+			"core": {
 				"url": "github.com/bedrock-core/regolith-filters",
-				"version": "1.1.2"
-			},
-			"generator": {
-				"url": "github.com/bedrock-core/regolith-filters",
-				"version": "1.1.0"
-			},
-			"guides": {
-				"url": "github.com/bedrock-core/regolith-filters",
-				"version": "1.1.1"
-			},
-			"i18n": {
-				"url": "github.com/bedrock-core/regolith-filters",
-				"version": "1.0.1"
+				"version": "1.0.0"
 			},
 			"manifest": {
 				"url": "github.com/bedrock-core/regolith-filters",
-				"version": "1.0.0"
+				"version": "2.0.0"
+			},
+			"generator": {
+				"url": "github.com/bedrock-core/regolith-filters",
+				"version": "1.2.0"
+			},
+			"guides": {
+				"url": "github.com/bedrock-core/regolith-filters",
+				"version": "1.2.0"
+			},
+			"i18n": {
+				"url": "github.com/bedrock-core/regolith-filters",
+				"version": "1.2.0"
+			},
+			"ui-compiler": {
+				"url": "github.com/bedrock-core/regolith-filters",
+				"version": "0.1.0"
+			},
+			"bundler": {
+				"url": "github.com/bedrock-core/regolith-filters",
+				"version": "1.2.0"
 			}
 		},
 		"formatVersion": "1.4.0",
@@ -40,26 +48,21 @@
 					"target": "local"
 				},
 				"filters": [
-					{ "filter": "manifest" },
 					{
-						"filter": "generator",
+						"filter": "core",
 						"settings": {
-							"include": ["**/*.ts"],
-							"exclude": ["BP/scripts/**", "data/**", "**/*.d.ts"],
-							"pretty": false
-						}
-					},
-					{
-						"filter": "guides",
-						"settings": {
-							"namespace": "{{CREATOR_ID}}_{{PACK_ID}}"
-						}
-					},
-					{ "filter": "i18n" },
-					{
-						"filter": "bundler",
-						"settings": {
-							"debug": false
+							"shared": {
+								"namespace": "{{CREATOR_ID}}_{{PACK_ID}}",
+								"pretty": false
+							},
+							"generator": {
+								"include": ["**/*.ts"],
+								"exclude": ["BP/scripts/**", "data/**", "**/*.d.ts"]
+							},
+							"ui-compiler": {},
+							"bundler": {
+								"debug": false
+							}
 						}
 					}
 				]
@@ -71,26 +74,23 @@
 					"target": "development"
 				},
 				"filters": [
-					{ "filter": "manifest" },
 					{
-						"filter": "generator",
+						"filter": "core",
 						"settings": {
-							"include": ["**/*.ts"],
-							"exclude": ["BP/scripts/**", "data/**", "**/*.d.ts"],
-							"pretty": true
-						}
-					},
-					{
-						"filter": "guides",
-						"settings": {
-							"namespace": "{{CREATOR_ID}}_{{PACK_ID}}"
-						}
-					},
-					{ "filter": "i18n" },
-					{
-						"filter": "bundler",
-						"settings": {
-							"debug": true
+							"shared": {
+								"namespace": "{{CREATOR_ID}}_{{PACK_ID}}",
+								"pretty": { "indent": "tab" }
+							},
+							"generator": {
+								"include": ["**/*.ts"],
+								"exclude": ["BP/scripts/**", "data/**", "**/*.d.ts"]
+							},
+							"ui-compiler": {
+								"stamp": true
+							},
+							"bundler": {
+								"debug": true
+							}
 						}
 					}
 				]
@@ -103,31 +103,24 @@
 				},
 				"filters": [
 					{
-						"filter": "manifest",
+						"filter": "core",
 						"settings": {
-							"manifestPath": "BP/manifest.test.json"
-						}
-					},
-					{
-						"filter": "generator",
-						"settings": {
-							"include": ["**/*.ts"],
-							"exclude": ["BP/scripts/**", "data/**", "**/*.d.ts"],
-							"pretty": true
-						}
-					},
-					{
-						"filter": "guides",
-						"settings": {
-							"namespace": "{{CREATOR_ID}}_{{PACK_ID}}"
-						}
-					},
-					{ "filter": "i18n" },
-					{
-						"filter": "bundler",
-						"settings": {
-							"debug": true,
-							"tsConfigPath": "tsconfig.test.json"
+							"shared": {
+								"namespace": "{{CREATOR_ID}}_{{PACK_ID}}",
+								"pretty": { "indent": "tab" }
+							},
+							"manifest": {
+								"manifestPath": "BP/manifest.test.json"
+							},
+							"generator": {
+								"include": ["**/*.ts"],
+								"exclude": ["BP/scripts/**", "data/**", "**/*.d.ts"]
+							},
+							"ui-compiler": {},
+							"bundler": {
+								"debug": true,
+								"tsConfigPath": "tsconfig.test.json"
+							}
 						}
 					}
 				]
@@ -142,31 +135,24 @@
 				},
 				"filters": [
 					{
-						"filter": "manifest",
+						"filter": "core",
 						"settings": {
-							"manifestPath": "BP/manifest.test.json"
-						}
-					},
-					{
-						"filter": "generator",
-						"settings": {
-							"include": ["**/*.ts"],
-							"exclude": ["BP/scripts/**", "data/**", "**/*.d.ts"],
-							"pretty": true
-						}
-					},
-					{
-						"filter": "guides",
-						"settings": {
-							"namespace": "{{CREATOR_ID}}_{{PACK_ID}}"
-						}
-					},
-					{ "filter": "i18n" },
-					{
-						"filter": "bundler",
-						"settings": {
-							"debug": true,
-							"tsConfigPath": "tsconfig.test.json"
+							"shared": {
+								"namespace": "{{CREATOR_ID}}_{{PACK_ID}}",
+								"pretty": { "indent": "tab" }
+							},
+							"manifest": {
+								"manifestPath": "BP/manifest.test.json"
+							},
+							"generator": {
+								"include": ["**/*.ts"],
+								"exclude": ["BP/scripts/**", "data/**", "**/*.d.ts"]
+							},
+							"ui-compiler": {},
+							"bundler": {
+								"debug": true,
+								"tsConfigPath": "tsconfig.test.json"
+							}
 						}
 					}
 				]

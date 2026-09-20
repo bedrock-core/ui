@@ -33,7 +33,10 @@
 		"access": "public"
 	},
 	"files": [
-		"src"
+		"src",
+		"!src/**/__tests__/**",
+		"!src/**/*.test.ts",
+		"!src/**/*.test.tsx"
 	],
 	"sideEffects": false,
 	"scripts": {
@@ -43,7 +46,8 @@
 		"coverage": "vitest run --coverage"
 	},
 	"devDependencies": {
-		"typescript": "^6.0.3",
-		"vitest": "^4.1.5"
+		"eslint": "*",
+		"typescript": "*",
+		"vitest": "*"
 	}
 }

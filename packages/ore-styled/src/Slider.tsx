@@ -1,79 +1,63 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
 import type { SliderProps as PrimitiveSliderProps, JSX } from '@bedrock-core/ui-runtime';
-import { Slider as PrimitiveSlider, Fragment, Panel, useState } from '@bedrock-core/ui-runtime';
+import { Slider as PrimitiveSlider, useMechanism } from '@bedrock-core/ui-runtime';
 import { theme } from './tokens';
+import { labeledColumn } from './Form/label';
 
-export interface SliderProps extends Omit<PrimitiveSliderProps, 'face'> {}
+export interface SliderProps extends PrimitiveSliderProps {
+  /** Caption rendered above the slider. */
+  label?: string;
+}
 
 /**
- * @deprecated Ore wrapper over the legacy modal-field `Slider` (one modal per field).
- * Prefer `Form.Slider` from `@bedrock-core/ore-styled`'s `Form` inside a `<Form>`.
+ * The theme's slider: the theme's track / progress / thumb textures and
+ * geometry on the native `Slider`. The modal slider has no disabled-progress
+ * state (track + thumb carry the locked faces), so `progressDisabled` is unused here.
+ *
+ * The texture props — plus the thumb/track geometry that sizes them, which a
+ * differently-shaped custom thumb needs — are the theme's DEFAULTS, not a lock: pass
+ * any of them and yours wins (same rule as the non-form components). They are
+ * destructured out of the layout rest on purpose — a labeled slider is a wrapper
+ * column plus the track, and the surfaces belong to the TRACK, never to the column
+ * panel. The "pressed thumb reuses hover" rule survives an override: a caller's
+ * `thumbHover` also becomes their dragged face unless they set `thumbPressed`.
  */
 export function Slider({
-  min,
-  max,
-  step,
-  value,
-  defaultValue,
-  onChange,
-  onCancel,
-  label,
-  title,
-  body,
-  submitLabel,
-  tooltip,
-  enabled = true,
-  ...rest
+  label, name, min, max, step, defaultValue, enabled = true,
+  background, backgroundHover, backgroundPressed, backgroundLocked,
+  progress, progressHover, thumb, thumbHover, thumbPressed, thumbLocked,
+  trackHeight, thumbWidth, thumbHeight,
+  ...layout
 }: SliderProps): JSX.Element {
-  const [internal, setInternal] = useState(defaultValue ?? min);
-  const current = value ?? internal;
+  useMechanism('Slider');
 
   const s = theme.components.slider;
-  const ratio = max > min ? (current - min) / (max - min) : 0;
-  const pct = Math.min(1, Math.max(0, ratio));
 
-  const trackTex = enabled === false ? s.textures.trackDisabled : s.textures.track;
-  const progressTex = enabled === false ? s.textures.progressDisabled : s.textures.progress;
-
-  function handleChange(next: number): void {
-    setInternal(next);
-    onChange?.(next);
-  }
-
-  // The thumb sits in-flow between the progress (filled) and track (unfilled)
-  // segments, which share the leftover width by `pct` / `1 - pct`, so the thumb
-  // travels [0 .. W-thumbWidth] (left edge flush at min, right edge flush at max,
-  // centred at 50%). Each segment also carries a half-thumb basis pulled back by a
-  // -half-thumb margin: that keeps the thumb inset while extending progress/track
-  // under it so they meet exactly at the thumb's centre (covered by the thumb).
-  const half = s.thumb.width / 2;
-
-  return (
-    <Panel height={s.height} flexDirection={'row'} alignItems={'center'} {...rest}>
-      <Panel background={progressTex} width={half} marginRight={-half} flexGrow={pct} flexShrink={0} height={s.trackHeight} />
-      <PrimitiveSlider
-        flexShrink={0}
-        width={s.thumb.width}
-        height={s.thumb.height}
-        background={s.textures.thumb}
-        backgroundHover={s.textures.thumbHover}
-        backgroundPressed={s.textures.thumbHover}
-        backgroundLocked={s.textures.thumbDisabled}
-        min={min}
-        max={max}
-        step={step}
-        value={current}
-        onChange={handleChange}
-        onCancel={onCancel}
-        label={label}
-        title={title}
-        body={body}
-        submitLabel={submitLabel}
-        tooltip={tooltip}
-        enabled={enabled}
-        face={<Fragment />}
-      />
-      <Panel background={trackTex} width={half} marginLeft={-half} flexGrow={1 - pct} flexShrink={0} height={s.trackHeight} />
-    </Panel>
+  const control = (
+    <PrimitiveSlider
+      name={name}
+      min={min}
+      max={max}
+      step={step}
+      defaultValue={defaultValue}
+      enabled={enabled}
+      height={s.height}
+      background={background ?? s.textures.track}
+      backgroundHover={backgroundHover}
+      backgroundPressed={backgroundPressed}
+      backgroundLocked={backgroundLocked ?? s.textures.trackDisabled}
+      progress={progress ?? s.textures.progress}
+      progressHover={progressHover}
+      thumb={thumb ?? s.textures.thumb}
+      thumbHover={thumbHover ?? s.textures.thumbHover}
+      thumbPressed={thumbPressed ?? thumbHover ?? s.textures.thumbHover}
+      thumbLocked={thumbLocked ?? s.textures.thumbDisabled}
+      trackHeight={trackHeight ?? s.trackHeight}
+      thumbWidth={thumbWidth ?? s.thumb.width}
+      thumbHeight={thumbHeight ?? s.thumb.height}
+      {...(label === undefined ? layout : { width: '100%' })}
+    />
   );
+
+  return labeledColumn(label, enabled, layout, control);
 }

@@ -1,0 +1,410 @@
+{
+	// Dropdown primitive (popup): closed box + floating option popup.
+	"namespace": "core_ui_form_components",
+	"dropdown": {
+		// A control the pack PLACES owns its row: the compiled screen gives it a
+		// `collection_index`, and the `collection_details` binding below is what
+		// makes that index resolve. Everything else about it is literal — the box
+		// is the screen's, and what it draws arrives as variables.
+		"type": "panel",
+		"size": [ "100%", "100%" ],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"bindings": [
+			{ "binding_type": "collection_details", "binding_collection_name": "custom_form" }
+		],
+		"layer": 50,
+		/* Restated at every hop — see the same note in slider.json. A $variable set
+		   where a control is MOUNTED does not reach a definition it merely
+		   REFERENCES by name; the referenced one resolves its own scope and takes
+		   its own `|default` instead. */
+		"$scale|default": "#font_scale_factor",
+		"$static_texture|default": "",
+		/* The control the engine hosts the popup box in, resolved BY NAME across
+		   the screen. The library's own modal container names its overlay host
+		   after vanilla's; a compiled screen may be mounted anywhere in the form
+		   (another pack's hook), so it names a host of its own at its root — an
+		   unresolved name is an assertion. */
+		"$dropdown_area|default": "inside_header_panel",
+		"controls": [
+			{
+				"dropdown_control@core_ui_form_components.dropdown_control": {
+					"$static_texture": "$static_texture",
+					"$dropdown_area": "$dropdown_area"
+				}
+			},
+			{
+				// Live current-value overlay (the engine keeps #dropdown_option_text in sync
+				// with the selected option). Layer 20 clears the closed box + faces (≤2).
+				"dropdown_current_label@core_ui_form_components.dropdown_current_label": {
+					"layer": 20,
+					"$scale": "$scale"
+				}
+			}
+			/* NO POPUP HERE. A compiled cell mounting its own dropdown_popup_router
+			   put an option factory over `custom_dropdown` — and a control named
+			   `custom_dropdown_radio_toggle` — INSIDE the native dropdown's own
+			   subtree, where the engine resolves dropdown_content_control and the
+			   dropdown_area host BY NAME. It took the client down. So the compiled
+			   popup hangs OUTSIDE the cell: the compiler emits one
+			   `dropdown_popup_router` per dropdown at the screen root (see
+			   ui-compiler hosts/form/emit.ts), carrying that cell's row index,
+			   `$compiled`, `$open_gate: "#custom_dropdown"`, `$popup_texture` and
+			   `$popup_size` — the same overlay position the interpreted router gets
+			   from modal_container's popup_overlay factory, which cannot pass
+			   per-row variables and so cannot serve the compiled path. */
+		]
+	},
+	// The dropdown assembly: closed-box toggle instance + popup content panel.
+	// TRAP: type:"dropdown" owns ALL the native open/close machinery — a hand-built
+	// rewiring froze the game on open; the native type must drive it, we only swap visuals.
+	// TRAP: dropdown_area "inside_header_panel" resolves nowhere in our screen, so the
+	// engine pins the popup box's TOP edge at the screen's vertical middle (the box's own
+	// anchors/offset are IGNORED there — probe-verified); popup_shift/popup_card position
+	// the card around that line. Naming ANY control "inside_header_panel" would hijack
+	// popup hosting to its z-position.
+	"dropdown_control": {
+		"type": "panel",
+		"$static_texture|default": "",
+		"$dropdown_area|default": "inside_header_panel",
+		"size": ["100%", "100%"],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"layer": 2,
+		"controls": [
+			{
+				"custom_dropdown@core_ui_form_components.dropdown_closed_box": {
+					"type": "dropdown",
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"dropdown_name": "custom_dropdown",
+					"dropdown_content_control": "dropdown_content",
+					"dropdown_area": "$dropdown_area",
+					"$static_texture": "$static_texture",
+					"$toggle_name": "custom_dropdown",
+					"$toggle_state_binding_name": "#custom_dropdown"
+				}
+			},
+			{
+				/* INVISIBLE input shield — the engine's own popup box. It keeps what the
+				   native machinery does well (open/close state + the dropdown_exit
+				   mappings, all mapping_type "global") but draws NOTHING: the VISUAL popup
+				   renders in the root-level popup_overlay (modal_container's
+				   inside_header_panel), OUTSIDE the scroll, gated by that row's open-state.
+				   TRAP: "modal": true must NOT be set here — a modal input panel routes ALL
+				   input to its OWN subtree, and the visuals live outside it, so every click
+				   on the popup died and only the global exit fired ("closes as if clicked
+				   outside"); wheel never reached the popup scroll either. Without modal,
+				   hit-testing routes input to the front-most control (the overlay, layer
+				   300). The box itself stays cell-relative (toggle-anchored, %-of-toggle
+				   sized) — irrelevant now that nothing renders in it. */
+				"dropdown_content": {
+					"type": "input_panel",
+					"layer": 200,
+					"size": ["100%", "1000%"],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"property_bag": { "#is_dropdown": true },
+					"bindings": [
+						{
+							"binding_type": "view",
+							"source_control_name": "custom_dropdown",
+							"source_property_name": "#toggle_state",
+							"target_property_name": "#visible",
+							"resolve_sibling_scope": true
+						}
+					],
+					"button_mappings": [
+						{ "from_button_id": "button.menu_cancel", "to_button_id": "button.dropdown_exit", "mapping_type": "global" },
+						{ "from_button_id": "button.menu_ok", "to_button_id": "button.dropdown_exit", "mapping_type": "global" },
+						{ "from_button_id": "button.menu_select", "to_button_id": "button.dropdown_exit", "mapping_type": "global" },
+						{ "from_button_id": "button.menu_up", "to_button_id": "button.menu_up", "mapping_type": "global", "scope": "view" },
+						{ "from_button_id": "button.menu_down", "to_button_id": "button.menu_down", "mapping_type": "global", "scope": "view" },
+						{ "from_button_id": "button.menu_left", "to_button_id": "button.menu_left", "mapping_type": "global", "scope": "view" },
+						{ "from_button_id": "button.menu_right", "to_button_id": "button.menu_right", "mapping_type": "global", "scope": "view" }
+					]
+				}
+			}
+		]
+	},
+	// ── Root-overlay popup router — one per custom_form row (factory cell of the
+	// popup_overlay collection in modal_container's inside_header_panel). Shows ONLY when
+	// its row is an OPEN dropdown: #type decoded from the cell payload + the row's
+	// #custom_dropdown open-state (the closed box's collection-type toggle binding writes
+	// it — vanilla server_form wiring). Cell context comes from collection_details, so all
+	// the popup chrome children (shift/bg/option rows) resolve their custom_form /
+	// custom_dropdown fetches exactly like the inline select's rows do outside any popup.
+	"dropdown_popup_router": {
+		"type": "panel",
+		"size": ["100%", "100%"],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"visible": "#visible",
+		"property_bag": { "#visible": false },
+		/* Restated here and forwarded at the card reference below — the same
+		   scope rule as everywhere: a $variable set where THIS router is mounted
+		   does not reach a definition the router references by name. */
+		"$popup_texture|default": "",
+		"$popup_size|default": [312, 20],
+		/* WHAT OPENS IT. Interpreted: this row is a dropdown (decoded #type) AND the
+		   engine says it is open. A compiled screen has no #type to decode, and the
+		   open-state channel alone is enough there — only a dropdown row ever has one. */
+		"$open_gate|default": "((#type = 'modal-dropdown') and #custom_dropdown)",
+		"bindings": [
+			{
+				"binding_type": "collection_details",
+				"binding_collection_name": "custom_form"
+			},
+			{
+				"binding_name": "#custom_text",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form"
+			},
+			{ "binding_type": "view", "source_property_name": "('%.9s' * #custom_text)", "target_property_name": "#pr_header" },
+			{ "binding_type": "view", "source_property_name": "(#custom_text - #pr_header)", "target_property_name": "#rem_hdr" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_hdr)", "target_property_name": "#raw_type" },
+			{ "binding_type": "view", "source_property_name": "(('%.82s' * #raw_type) - ('%.2s' * #raw_type) - ';')", "target_property_name": "#type" },
+			{
+				"binding_name": "#custom_dropdown",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form"
+			},
+			{ "binding_type": "view", "source_property_name": "$open_gate", "target_property_name": "#visible" }
+		],
+		"controls": [
+			{
+				/* [1,1] point at the HOST's exact center: the card anchors center→center on
+				   it, so ANY decoded height (20% or the 50% cap) stays dead-centered —
+				   h/2 above, h/2 below, symmetric by construction. The old engine-popup
+				   shift+straddle trick is gone: this is a normal tree, plain anchors work.
+				   TRAP: do NOT add an input_panel backdrop here — even at a LOWER layer
+				   than the card it ate ALL pointer input in its rect (input routing ignores
+				   layer for input_panels), killing option-row clicks. Click-outside-close
+				   doesn't need one: the invisible shield's GLOBAL menu_select→dropdown_exit
+				   mapping closes on any click. */
+				"popup_center": {
+					"type": "panel",
+					"size": [1, 1],
+					"anchor_from": "center",
+					"anchor_to": "center",
+					"controls": [
+						{
+							"popup_card_static@core_ui_form_components.dropdown_popup_card_static": {
+								"$popup_texture": "$popup_texture",
+								"$popup_size": "$popup_size"
+							}
+						}
+					]
+				}
+			}
+		]
+	},
+	"dropdown_popup_card_static": {
+		"type": "panel",
+		"$popup_size|default": [312, 20],
+		"$popup_texture|default": "",
+		"size": "$popup_size",
+		"anchor_from": "center",
+		"anchor_to": "center",
+		"controls": [
+			{
+				"background@core_ui_form_components.dropdown_popup_background_static": {
+					"$popup_texture": "$popup_texture"
+				}
+			},
+			{ "popup_scroll@core_ui_form_components.dropdown_popup_scroll": {} }
+		]
+	},
+	// ── Popup scroll: OUR scroll_view (the proven core_ui_screens.scroll shape), NOT
+	// vanilla common.scrolling_panel — the vanilla wrapper's nested stack/padding chrome
+	// offset the popup content by amounts we don't control. Everything here is top_left +
+	// 100%, so content starts exactly at the card origin and the ONLY spacing is
+	// dropdown_options' own 1px padding (mirrored in the TS popupHeight).
+	"dropdown_popup_scroll": {
+		"type": "scroll_view",
+		"size": ["100%", "100%"],
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"layer": 2,
+		"scroll_speed": 15,
+		/* GLOBAL wheel claim: while this popup is open (the only time this control exists —
+		   router gate), the wheel scrolls the POPUP no matter where the pointer is;
+		   pointer-position routing alone never delivered wheel to the overlay (the shield's
+		   modal input state gates it). The MAIN scroll must keep always_handle_scrolling
+		   FALSE or it wins the contention back. */
+		"always_handle_scrolling": true,
+		/* Engine name has no "-ing": don't rubber-band when the options fit. */
+		"allow_scroll_even_when_content_fits": false,
+		"scrollbar_track_button": "button.scrollbar_skip_track",
+		"scrollbar_touch_button": "button.scrollbar_touch",
+		"always_listen_to_input": true,
+		"always_handle_pointer": true,
+		"scroll_content": "scrolling_content",
+		"scroll_view_port": "scrolling_view_port",
+		"scrollbar_track": "track",
+		"scrollbar_box": "box",
+		"scroll_box_and_track_panel": "bar_and_track",
+		"button_mappings": [
+			{
+				"from_button_id": "button.menu_select",
+				"to_button_id": "button.scrollbar_touch",
+				"mapping_type": "pressed",
+				"button_up_right_of_first_refusal": true
+			}
+		],
+		"controls": [
+			{
+				"scrolling_view_port": {
+					"type": "panel",
+					"size": ["100%", "100%"],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left",
+					"clips_children": true,
+					"controls": [
+						{
+							/* dropdown_options is 100%c (content-sized), so it can be the
+							   scroll content DIRECTLY — no [1,1] size_anchor trick needed
+							   (that exists only for #size_binding-driven content). */
+							"scrolling_content@core_ui_form_components.dropdown_options": {
+								"anchor_from": "top_left",
+								"anchor_to": "top_left"
+							}
+						}
+					]
+				}
+			},
+			{ "bar_and_track@core_ui_shapes.scrollbar": {} }
+		]
+	},
+	// Closed-box current-value host: a [1,1] frame at the box's left-middle; the value
+	// label offsets from it by the payload currentX[1688]/currentY[1771] (TS defaults
+	// x=8, y=centered).
+	"dropdown_current_label": {
+		"type": "panel",
+		"layer": 20,
+		"$scale|default": "#font_scale_factor",
+		"size": ["100%", "100%"],
+		"controls": [
+			{
+				"display_text_static@core_ui_form_components.dropdown_current_value_text_static": {
+					"$scale": "$scale"
+				}
+			}
+		]
+	},
+	// The compiled screen's current-value text.
+	//
+	// Same option-blob decode as the label below — a chooser's OPTIONS travel on
+	// either path, because they are data rather than layout — and none of the
+	// rest. Everything the interpreted label reads after the text is CELL fields
+	// (colour, font, scale, x, y) that a compiled screen does not send; decoding
+	// them off an empty payload set the scale to 0 and the font alias to '',
+	// which is an invisible label and a "Could not find font alias" log. Style
+	// comes from the mount's own $variables, and the inset is the 8px the edit
+	// box uses with the anchor doing the centring.
+	"dropdown_current_value_text_static@core_ui_components.label": {
+		"size": ["100% - 16px", "default"],
+		"offset": [8, 0],
+		"anchor_from": "left_middle",
+		"anchor_to": "left_middle",
+		"use_anchored_offset": false,
+		"bindings": [
+			{
+				"binding_name": "#dropdown_option_text",
+				"binding_type": "collection",
+				"binding_collection_name": "custom_form"
+			},
+			{ "binding_type": "view", "source_property_name": "('%.424s' * #dropdown_option_text)", "target_property_name": "#skip_to_text" },
+			{ "binding_type": "view", "source_property_name": "(#dropdown_option_text - #skip_to_text)", "target_property_name": "#rem_at_text" },
+			{ "binding_type": "view", "source_property_name": "('%.83s' * #rem_at_text)", "target_property_name": "#raw_opt_text" },
+			{ "binding_type": "view", "source_property_name": "(('%.82s' * #raw_opt_text) - ('%.2s' * #raw_opt_text) - ';')", "target_property_name": "#text" }
+		]
+	},
+	"dropdown_closed_box@core_ui_form_components.toggle_base": {
+		"size": ["100%", "100%"],
+		"$static_texture|default": "",
+		"focus_wrap_enabled": true,
+		"$toggle_binding_type": "collection",
+		"$toggle_grid_collection_name": "custom_form",
+		// State faces: shared modal_state_face at the button-identical offsets —
+		// idle[440], hover[1024], open/pressed[1107], locked[1190].
+		"controls": [
+			{ "unchecked@core_ui_common.modal_state_face": { "$static_texture": "$static_texture" } },
+			{ "checked@core_ui_common.modal_state_face": { "$static_texture": "$static_texture" } },
+			{ "unchecked_hover@core_ui_common.modal_state_face": { "$static_texture": "$static_texture" } },
+			{ "checked_hover@core_ui_common.modal_state_face": { "$static_texture": "$static_texture" } },
+			{ "unchecked_locked@core_ui_common.modal_state_face": { "$static_texture": "$static_texture" } },
+			{ "checked_locked@core_ui_common.modal_state_face": { "$static_texture": "$static_texture" } },
+			{ "unchecked_locked_hover@core_ui_common.modal_state_face": { "$static_texture": "$static_texture" } },
+			{ "checked_locked_hover@core_ui_common.modal_state_face": { "$static_texture": "$static_texture" } }
+		]
+	},
+	// The compiled card's surface: the texture GIVEN, nothing decoded. The decoding
+	// twin below writes #texture out of the cell payload, and a compiled screen
+	// sends none — the same binding that feeds an interpreted image blanks a
+	// static one (the slider's statics hit this first).
+	"dropdown_popup_background_static": {
+		"type": "image",
+		"layer": 1,
+		"size": ["100%", "100%"],
+		"$popup_texture|default": "",
+		"texture": "$popup_texture"
+	},
+	"dropdown_options": {
+		"type": "panel",
+		"size": ["100%", "100%c"],
+		"controls": [
+			{
+				"options_inset": {
+					"type": "panel",
+					"size": ["100%-2px", "100%c"],
+					"offset": [0, 1],
+					"anchor_from": "top_middle",
+					"anchor_to": "top_middle",
+					"controls": [
+						{
+							"radio_control_group": {
+								"type": "stack_panel",
+								"orientation": "vertical",
+								"size": ["100%", "100%c"],
+								"anchor_from": "top_left",
+								"anchor_to": "top_left",
+								"factory": {
+									"name": "buttons",
+									"control_name": "core_ui_form_components.dropdown_option_radio"
+								},
+								"collection_name": "custom_dropdown",
+								"bindings": [
+									{
+										"binding_name": "#custom_dropdown_length",
+										"binding_type": "collection",
+										"binding_name_override": "#collection_length",
+										"binding_collection_name": "custom_form"
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		]
+	},
+	// One option row, built by the popup's factory — named there rather than
+	// mounted, so a `control_name` is the only thing that reaches it.
+	"dropdown_option_radio": {
+		"type": "panel",
+		"anchor_from": "top_left",
+		"anchor_to": "top_left",
+		"size": ["100%", "17px"],
+		"controls": [
+			{
+				"option_toggle@core_ui_form_components.option_toggle": {
+					"size": ["100%", "100%+1px"],
+					"anchor_from": "top_left",
+					"anchor_to": "top_left"
+				}
+			},
+			{ "label_frame@core_ui_form_components.option_label_frame": {} }
+		]
+	}
+}

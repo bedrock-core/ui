@@ -1,0 +1,201 @@
+{
+	// What a compiled screen needs from the chest screen besides its own canvas:
+	// the global key routes, and the follow-the-pointer controls without which
+	// touch cannot take, a held item has no icon on touch, and a controller has
+	// no pointer. Vanilla's chest panel carries its own copies; they are hidden
+	// with it while a compiled screen shows, so the router mounts these instead.
+	"namespace": "core_ui_chest",
+
+	"chrome": {
+		"type": "panel",
+		"size": [ "100%", "100%" ],
+		"controls": [
+			{ "routes@core_ui_chest.key_routes": {} },
+			{ "take_progress@core_ui_chest.take_progress_button": {} },
+			{ "selected_icon@core_ui_chest.selected_icon_button": {} },
+			{ "gamepad_cursor@core_ui_chest.gamepad_cursor_button": {} }
+		]
+	},
+
+	// The chest screen's global key routes. Global mappings need no area, so
+	// the panel has none: clicks fall through to the canvas and its shield.
+	"key_routes": {
+		"type": "input_panel",
+		"size": [ 0, 0 ],
+		"button_mappings": [
+			{ "from_button_id": "button.return", "to_button_id": "button.return", "mapping_type": "global" },
+			{ "from_button_id": "button.arrow_up", "to_button_id": "button.arrow_key", "mapping_type": "global" },
+			{ "from_button_id": "button.arrow_down", "to_button_id": "button.arrow_key", "mapping_type": "global" },
+			{ "from_button_id": "button.arrow_left", "to_button_id": "button.arrow_key", "mapping_type": "global" },
+			{ "from_button_id": "button.arrow_right", "to_button_id": "button.arrow_key", "mapping_type": "global" },
+			{ "from_button_id": "button.turn_up", "to_button_id": "button.scroll_up", "mapping_type": "global" },
+			{ "from_button_id": "button.turn_down", "to_button_id": "button.scroll_down", "mapping_type": "global" },
+			{ "from_button_id": "button.turn_left", "to_button_id": "button.scroll_left", "mapping_type": "global" },
+			{ "from_button_id": "button.turn_right", "to_button_id": "button.scroll_right", "mapping_type": "global" },
+			{ "from_button_id": "button.inventory_left", "to_button_id": "button.inventory_left", "mapping_type": "global" },
+			{ "from_button_id": "button.inventory_right", "to_button_id": "button.inventory_right", "mapping_type": "global" }
+		]
+	},
+
+	// Touch: the hold-to-take progress ring, following the finger.
+	"hold_icon": {
+		"type": "custom",
+		"renderer": "progress_bar_renderer",
+		"variables": [
+			{ "requires": "$desktop_screen", "$bar_offset": [ 0, -12 ] },
+			{ "requires": "$pocket_screen", "$bar_offset": [ 0, -18 ] }
+		],
+		"layer": 70,
+		"offset": "$bar_offset",
+		"size": [ 15, 3 ],
+		"bindings": [
+			{ "binding_name": "#progress_bar_visible", "binding_condition": "always" },
+			{ "binding_name": "#progress_bar_total_amount", "binding_condition": "always_when_visible" },
+			{ "binding_name": "#progress_bar_current_amount", "binding_condition": "always_when_visible" }
+		]
+	},
+
+	"take_progress_button": {
+		"type": "button",
+		"locked_control": "",
+		"default_control": "default",
+		"hover_control": "hover",
+		"pressed_control": "pressed",
+		"layer": -10,
+		"follows_cursor": true,
+		"sound_name": "random.click",
+		"sound_volume": 1.0,
+		"sound_pitch": 1.0,
+		"always_handle_pointer": true,
+		"controls": [
+			{ "default@core_ui_chest.hold_icon": {} },
+			{ "pressed@core_ui_chest.hold_icon": {} },
+			{ "hover@core_ui_chest.hold_icon": {} }
+		]
+	},
+
+	// The item on the cursor, drawn at the pointer.
+	"selected_icon@core_ui_chest.item_renderer": {
+		"layer": 50,
+		"size": [ 21, 21 ],
+		"offset": [ -1, -2 ],
+		"bindings": [
+			{ "binding_name": "#inventory_selected_item", "binding_name_override": "#item_id_aux", "binding_condition": "always_when_visible" },
+			{ "binding_name": "#inventory_selected_item_charged_item", "binding_name_override": "#charged_item", "binding_condition": "always_when_visible" },
+			{ "binding_name": "#inventory_selected_item_color", "binding_name_override": "#item_custom_color", "binding_condition": "always_when_visible" },
+			{ "binding_name": "#inventory_selected_armor_trim_material", "binding_name_override": "#armor_trim_material", "binding_condition": "always_when_visible" },
+			{ "binding_name": "#inventory_selected_banner_patterns", "binding_name_override": "#banner_patterns", "binding_condition": "always_when_visible" },
+			{ "binding_name": "#shield_base_color_hovered", "binding_name_override": "#shield_base_color", "binding_condition": "always_when_visible" },
+			{ "binding_name": "#inventory_selected_banner_colors", "binding_name_override": "#banner_colors", "binding_condition": "always_when_visible" },
+			{ "binding_name": "#inventory_selected_banner_type", "binding_name_override": "#banner_type", "binding_condition": "always_when_visible" },
+			{ "binding_name": "#inventory_selected_decorated_pot_sherds", "binding_name_override": "#decorated_pot_sherds", "binding_condition": "always_when_visible" },
+			{ "binding_name": "#inventory_selected_serialized_actor_pose", "binding_name_override": "#serialized_actor_pose", "binding_condition": "always_when_visible" }
+		]
+	},
+
+	"selected_stack_size_text": {
+		"type": "label",
+		"offset": [ -1, 0 ],
+		"anchor_to": "bottom_right",
+		"anchor_from": "bottom_right",
+		"layer": 53,
+		"shadow": true,
+		"color": "$selected_item_stack_count_color",
+		"text": "#inventory_selected_item_stack_count",
+		"bindings": [
+			{ "binding_name": "#inventory_selected_item_stack_count", "binding_condition": "always_when_visible" }
+		]
+	},
+
+	"selected_durability_bar@core_ui_chest.durability_bar": {
+		"$durability_bar_required": true,
+		"layer": 61,
+		"offset": [ "-5%", 5 ],
+		"size": [ "100%", 1 ],
+		"bindings": [
+			{ "binding_name": "#selected_item_durability_visible", "binding_name_override": "#touch_progress_bar_visible", "binding_condition": "always_when_visible" },
+			{ "binding_name": "#selected_item_durability_total_amount", "binding_name_override": "#progress_bar_total_amount", "binding_condition": "always_when_visible" },
+			{ "binding_name": "#selected_item_durability_current_amount", "binding_name_override": "#progress_bar_current_amount", "binding_condition": "always_when_visible" }
+		]
+	},
+
+	"selected_icon_panel": {
+		"type": "panel",
+		"controls": [
+			{ "selected_item_icon@core_ui_chest.selected_icon": {} },
+			{ "selected_stack_size_text@core_ui_chest.selected_stack_size_text": {} },
+			{
+				"hover_text@core_ui_chest.hover_text": {
+					"layer": 59,
+					"bindings": [
+						{ "binding_name": "#using_touch", "binding_name_override": "#visible" }
+					]
+				}
+			}
+		]
+	},
+
+	"selected_icon_button": {
+		"type": "button",
+		"anchor_from": "center",
+		"anchor_to": "center",
+		"locked_control": "",
+		"default_control": "default",
+		"hover_control": "hover",
+		"pressed_control": "pressed",
+		"layer": -10,
+		"size": [ 16, 16 ],
+		"follows_cursor": true,
+		"sound_name": "random.click",
+		"sound_volume": 1.0,
+		"sound_pitch": 1.0,
+		"always_handle_pointer": true,
+		"$durability_bar_required|default": true,
+		"controls": [
+			{ "default@core_ui_chest.selected_icon_panel": {} },
+			{ "pressed@core_ui_chest.selected_icon_panel": {} },
+			{ "hover@core_ui_chest.selected_icon_panel": {} },
+			{ "durability_bar_grabbed@core_ui_chest.selected_durability_bar": {} }
+		]
+	},
+
+	// Controller: the pointer.
+	//
+	// Seeded HIDDEN, unlike most of this pack. A binding decides visibility from
+	// the frame it first resolves, not from the frame the control is created, so
+	// an unseeded control draws until then — which is why the pointer flashed
+	// for players not using a gamepad. Appearing a frame late is invisible to a
+	// gamepad player; flashing is not invisible to anyone else.
+	"cursor_image": {
+		"type": "image",
+		"texture": "textures/ui/pointer",
+		"size": [ 14, 14 ],
+		"layer": 60,
+		"follows_cursor": true,
+		"property_bag": { "#visible": false },
+		"visible": "#visible",
+		"bindings": [
+			{ "binding_name": "#gamepad_cursor_visible", "binding_name_override": "#visible", "binding_condition": "always" }
+		]
+	},
+
+	"gamepad_cursor_button": {
+		"type": "button",
+		"visible": false,
+		"anchor_from": "center",
+		"anchor_to": "center",
+		"locked_control": "",
+		"default_control": "default",
+		"hover_control": "hover",
+		"pressed_control": "pressed",
+		"layer": -10,
+		"size": [ 16, 16 ],
+		"follows_cursor": true,
+		"always_handle_pointer": true,
+		"controls": [
+			{ "default@core_ui_chest.cursor_image": {} },
+			{ "pressed@core_ui_chest.cursor_image": {} },
+			{ "hover@core_ui_chest.cursor_image": {} }
+		]
+	}
+}

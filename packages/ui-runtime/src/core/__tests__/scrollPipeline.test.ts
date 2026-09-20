@@ -3,11 +3,12 @@ import type { Player } from '@minecraft/server';
 import { Panel } from '../../components/Panel';
 import { Scroll } from '../../components/Scroll';
 import { isElement } from '../guards';
+import { playerOwner } from '../fabric';
 import { expandAndResolveContexts } from '../render/phases/expand';
 import { computeLayout } from '../render/phases/layout';
 import { createInitialContext } from '../render/traversal';
 import type { JSX } from '../../jsx';
-import type { ScrollMetrics } from '../serializer';
+import type { ScrollMetrics } from '../render/phases/layout';
 
 function el(type: unknown, props: Record<string, unknown>): JSX.Element {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- test element factory; the { type, props } shape is a JSX.Element at runtime
@@ -79,7 +80,7 @@ describe('scroll pipeline (expand + layout)', () => {
       ],
     });
 
-    const expanded = expandAndResolveContexts(tree, createInitialContext(), player);
+    const expanded = expandAndResolveContexts(tree, createInitialContext(), playerOwner(player));
 
     computeLayout(expanded);
 
@@ -116,7 +117,7 @@ describe('scroll pipeline (expand + layout)', () => {
       children: [el(Panel, { height: 20, children: [] })],
     });
 
-    const expanded = expandAndResolveContexts(tree, createInitialContext(), player);
+    const expanded = expandAndResolveContexts(tree, createInitialContext(), playerOwner(player));
 
     computeLayout(expanded);
 

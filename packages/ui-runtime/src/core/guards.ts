@@ -1,5 +1,6 @@
 import { ActionFormData, ModalFormData } from '@minecraft/server-ui';
 import { JSX } from '../jsx';
+import { isTransparentType } from './componentRegistry';
 import {
   ActionSerializationContext, FormTarget, ModalSerializationContext,
   SerializablePrimitive, SerializationContext,
@@ -9,6 +10,37 @@ export const isFunction = <T>(value: unknown): value is (...args: unknown[]) => 
 
 export function isElement(value: unknown): value is JSX.Element {
   return !!value && typeof value === 'object' && !Array.isArray(value) && 'type' in (value);
+}
+
+/** The element children of a node, in order; strings and holes are dropped. */
+export function childElements(children: unknown): JSX.Element[] {
+  if (Array.isArray(children)) {
+    return childrenOf(children);
+  }
+
+  return isElement(children) ? [children] : [];
+}
+
+function childrenOf(children: unknown[]): JSX.Element[] {
+  return children.filter(isElement);
+}
+
+/**
+ * The elements a built tree actually renders at its top, looked at through
+ * whatever carries no box of its own — providers, fragments, the markers a
+ * backend leaves behind. What decides a screen's host is the element the
+ * author wrote at the root, and those wrappers must not hide it.
+ */
+export function concreteRoots(node: JSX.Node): JSX.Element[] {
+  if (!isElement(node)) {
+    return [];
+  }
+
+  if (typeof node.type === 'string' && isTransparentType(node.type)) {
+    return childElements(node.props.children).flatMap(concreteRoots);
+  }
+
+  return [node];
 }
 
 export function isNode(value: unknown): value is JSX.Node {
@@ -29,8 +61,8 @@ export function isNode(value: unknown): value is JSX.Node {
 
 /**
  * Narrows a {@link FormTarget} to an `ActionFormData`. The button slot
- * (`form.button()`) only exists on the ActionForm backend, so writers/presenters
- * guard on this before emitting interactive buttons.
+ * (`form.button()`) only exists on the ActionForm backend, so a host guards on
+ * this before emitting interactive buttons.
  */
 export function isActionForm(form: FormTarget): form is ActionFormData {
   return 'button' in form;

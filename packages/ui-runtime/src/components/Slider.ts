@@ -1,102 +1,146 @@
-import { usePlayer } from '../hooks/usePlayer';
-import { useState } from '../hooks/useState';
+import { isModalForm } from '../core/guards';
+import { ModalFormError, type Writer } from '../core/types';
+import { emitSlider } from '../core/writers';
 import { FunctionComponent, JSX } from '../jsx';
-import { showModalForm } from '../util/showForm';
-import { Button } from './Button';
-import { ModalFieldProps } from './modalField';
-import { Text } from './Text';
+import { resolveStateBackgrounds, withControl, type StateBackgroundProps } from './control';
+import { FormControlBase } from './Form/shared';
+import { MODAL_SLIDER_SLOT_TYPE } from '../core/fields';
+import { useMechanism } from '../hooks/useMechanism';
 
-/** @deprecated Prefer `Form.Slider` inside a `<Form>`. See {@link ModalFieldProps}. */
-export interface SliderProps extends ModalFieldProps {
+export interface SliderProps extends FormControlBase, StateBackgroundProps {
   /** Minimum selectable value. */
   min: number;
   /** Maximum selectable value. */
   max: number;
   /** Increment between selectable values. Defaults to `1` (native default). */
   step?: number;
-  /** Controlled value. When provided, the field reflects this on every render. */
-  value?: number;
-  /** Initial value for the uncontrolled case. Defaults to `min`. */
+  /** Initial value. Defaults to `min`. */
   defaultValue?: number;
-  /** Called with the new value when the player confirms the modal. */
-  onChange?: (value: number) => void;
-  /** Called when the player cancels (X / Esc) the modal. */
-  onCancel?: () => void;
+  // StateBackgroundProps styles the TRACK (bar frame + inner track): background +
+  // backgroundHover are shown; pressed/locked are carried for the shared
+  // button-identical block but the slider RP has no bar states for them.
+  /** Progress-fill texture (left of the thumb). Defaults to the resolved track base. */
+  progress?: string;
+  /** Progress-fill hover texture. Defaults to the resolved progress texture. */
+  progressHover?: string;
+  /** Thumb (draggable handle) texture. Defaults to the resolved track base. */
+  thumb?: string;
+  /** Thumb hover texture. Defaults to the resolved thumb texture. */
+  thumbHover?: string;
+  /** Thumb pressed/dragged (indent) texture. Defaults to the resolved thumb texture. */
+  thumbPressed?: string;
+  /** Thumb locked/disabled texture. Defaults to the resolved thumb texture. */
+  thumbLocked?: string;
   /**
-   * Overrides the default text face. When provided, this node is rendered inside
-   * the button instead of the value `Text`, letting styled wrappers draw a custom
-   * face (e.g. a track and thumb) while reusing the modal/state logic.
+   * Track (and progress fill) height in px. The track always spans the full control
+   * width and is vertically centered; this sets how tall it draws. Default `10`.
    */
-  face?: JSX.Node;
+  trackHeight?: number;
+  /** Thumb (draggable handle) width in px. Default `16`. */
+  thumbWidth?: number;
+  /** Thumb (draggable handle) height in px. Default `16`. */
+  thumbHeight?: number;
 }
 
 /**
- * A numeric slider rendered as a `Button` that *looks like* a field. Pressing it
- * opens a single-slider `ModalFormData`; on confirm the chosen value is committed
- * (internal state + `onChange`), on cancel nothing changes (`onCancel`). Either
- * way the root form re-presents with the current value.
- *
- * Supports both controlled (`value` + `onChange`) and uncontrolled
- * (`defaultValue`) usage, like {@link Input}.
- *
- * This is the unstyled runtime primitive (a peer of the base `Button`); supply a
- * `background` or compose a styled wrapper for a field-like appearance.
- *
- * @deprecated One-modal-per-field legacy. Use `Form.Slider` inside a `<Form>` — all
- * controls share a single modal. Kept for existing screens; slated for removal.
+ * RP defaults for the slider geometry. The thumb default matches the STATIC 16×16
+ * `slider_box` hitbox in slider.json (the hitbox can't be payload-driven — every
+ * dynamic-size mechanism is dead on `type: slider_box`, in-game verified), so the
+ * default visual thumb and its interactive core coincide exactly.
  */
-export const Slider: FunctionComponent<SliderProps> = ({
-  min,
-  max,
-  step,
-  value,
-  defaultValue,
-  onChange,
-  onCancel,
-  label,
-  title,
-  body,
-  submitLabel,
-  tooltip,
-  enabled,
-  face,
-  ...rest
+const DEFAULT_TRACK_HEIGHT = 10;
+const DEFAULT_THUMB_WIDTH = 16;
+const DEFAULT_THUMB_HEIGHT = 16;
+
+/**
+ * Numeric slider field → `ModalFormData.slider`. Result (`onSubmit`): `number`.
+ * Modal-only; render inside a `<Form>`. Accepts the same control/layout props as any
+ * component; geometry is computed by the layout phase and encoded into the label
+ * payload for the RP to position/style the native widget.
+ */
+const nativeSlider = ({
+  name, min, max, step, defaultValue,
+  backgroundHover, backgroundPressed, backgroundLocked,
+  progress, progressHover, thumb, thumbHover, thumbPressed, thumbLocked,
+  trackHeight, thumbWidth, thumbHeight, ...layout
 }: SliderProps): JSX.Element => {
-  const [internal, setInternal] = useState(defaultValue ?? min);
-  const current = value ?? internal;
-  const player = usePlayer();
+  // Track mirrors Button; progress and thumb follow the same rule against their own
+  // bases (a single `background` styles the whole slider when nothing else is given).
+  const track = resolveStateBackgrounds({ background: layout.background, backgroundHover, backgroundPressed, backgroundLocked });
+  const progressBase = progress ?? track.background;
+  const thumbBase = thumb ?? track.background;
 
-  const faceText = `${current}`;
-
-  const handlePress = async (): Promise<void> => {
-    if (enabled === false) {
-      return;
-    }
-
-    const response = await showModalForm(
-      player,
-      (form) => {
-        form.slider(label ?? '', min, max, { defaultValue: current, valueStep: step, tooltip });
-      },
-      { title: title ?? label, body, submitLabel },
-    );
-
-    if (response.canceled) {
-      onCancel?.();
-
-      return;
-    }
-
-    const next = Number(response.formValues?.[0] ?? current);
-
-    setInternal(next);
-    onChange?.(next);
+  return {
+    type: MODAL_SLIDER_SLOT_TYPE,
+    props: {
+      // Control block first so the state textures land at BUTTON-IDENTICAL byte
+      // offsets ([1024-1272] right after the reserved block), slider-specific
+      // fields after. `name` is appended LAST so it survives to the writer without
+      // disturbing the RP-read offsets; `build` is a function → routed to
+      // callbacks, not encoded. Default width to '100%' so the track fills whatever
+      // container wraps it regardless of the wrapper's flex direction — but ONLY
+      // when the caller gave no sizing (explicit width or flex sizing must win).
+      ...withControl({
+        ...(layout.width !== undefined || layout.flex !== undefined
+          || layout.flexGrow !== undefined || layout.flexBasis !== undefined
+          ? {}
+          : { width: '100%' }),
+        ...layout,
+        background: track.background,
+      }),
+      backgroundHover: track.backgroundHover, // [1024-1106] like Button
+      backgroundPressed: track.backgroundPressed, // [1107-1189] reserved (no bar state)
+      backgroundLocked: track.backgroundLocked, // [1190-1272] reserved (no bar state)
+      progress: progressBase, // [1273-1355] slider-specific
+      progressHover: progressHover ?? progressBase, // [1356-1438]
+      thumb: thumbBase, // [1439-1521]
+      thumbHover: thumbHover ?? thumbBase, // [1522-1604]
+      thumbPressed: thumbPressed ?? thumbBase, // [1605-1687] engine "indent" state
+      thumbLocked: thumbLocked ?? thumbBase, // [1688-1770]
+      // Geometry: track spans the full control width (RP), these size the rest.
+      trackHeight: trackHeight ?? DEFAULT_TRACK_HEIGHT, // [1771-1853]
+      thumbWidth: thumbWidth ?? DEFAULT_THUMB_WIDTH, // [1854-1936]
+      thumbHeight: thumbHeight ?? DEFAULT_THUMB_HEIGHT, // [1937-2019]
+      // [2020-2102] thumb-travel width = control width - thumbWidth, so the thumb's
+      // EDGE (not center) meets the track ends at min/max. Placeholder here; the
+      // layout phase fills it in-place once jsonUIWidth is known (like `region`).
+      // This MUST stay the last SERIALIZED field — the RP decodes it at [2020].
+      travelWidth: 0,
+    },
+    // Native args ride the writer-only side channel: never serialized, so they cost no
+    // payload bytes and (crucially) leave travelWidth as the last field at [2020].
+    // `defaultValue` resolves `?? min` here so the writer stays a pure reader.
+    nativeArgs: {
+      name,
+      min,
+      max,
+      step: step ?? 0, // 0 → "no step" (native valueStep undefined); see writer.
+      defaultValue: defaultValue ?? min,
+    },
   };
+};
 
-  return Button({
-    ...rest,
-    enabled,
-    onPress: handlePress,
-    children: face ?? Text({ children: faceText }),
-  });
+/**
+ * A numeric slider. Only a `<Form>` draws one; any other screen refuses it at build.
+ */
+export const Slider: FunctionComponent<SliderProps> = (props: SliderProps): JSX.Element => {
+  useMechanism('Slider');
+
+  return nativeSlider(props);
+};
+
+/** Serializes a `modal-slider` into the native modal slider control. */
+export const sliderWriter: Writer = (payload, form, ctx, _callbacks, _props, nativeArgs) => {
+  if (!isModalForm(form)) {
+    throw new ModalFormError('Slider must be rendered inside a `<Form>`.');
+  }
+
+  const name = typeof nativeArgs?.name === 'string' ? nativeArgs.name : '';
+  const min = typeof nativeArgs?.min === 'number' ? nativeArgs.min : 0;
+  const max = typeof nativeArgs?.max === 'number' ? nativeArgs.max : 0;
+  const step = typeof nativeArgs?.step === 'number' ? nativeArgs.step : 0;
+  const defaultValue = typeof nativeArgs?.defaultValue === 'number' ? nativeArgs.defaultValue : min;
+
+  // step 0 is the sentinel for "unset" → let the native default (1) apply.
+  emitSlider(payload, form, ctx, name, min, max, defaultValue, step === 0 ? undefined : step);
 };

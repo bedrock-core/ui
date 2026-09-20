@@ -1,17 +1,14 @@
 /**
- * Config schema, declared via the `config` field of `core.register()` in
+ * Config schema, declared as `config: config(configDef)` in `core.register()` in
  * main.ts. Every leaf gets a widget in the shared config UI (server, per-
  * dimension and per-player scopes), values persist across restarts, and
- * `register()` returns fully-typed accessors over this shape.
+ * `register()` returns them under `config`, fully typed over this shape.
  *
  * Groups nest as deeply as you like. Name one with `$label` / `$description`
  * and the UI titles it accordingly; leave them off and it derives a title from
  * the key. A level holding only sub-groups is rendered as a list of buttons,
  * and the level holding the settings is the form — so structure here is what
  * decides how the screen reads.
- *
- * Export the type so other addons can read your config with full typing via
- * `core.config.of<ExampleConfigDef>(...)`.
  */
 export const configDef = {
   server: {
@@ -19,7 +16,7 @@ export const configDef = {
       $label: 'General',
       $description: 'Basic behavior for everyone on the world.',
       greetingEnabled: { type: 'boolean' as const, default: true, label: 'Greeting Enabled' },
-      greetingColor: { type: 'enum' as const, default: 'yellow' as const, options: ['yellow', 'green', 'aqua'] as const, label: 'Greeting Color' },
+      greetingColor: { type: 'select' as const, default: 'yellow' as const, options: ['yellow', 'green', 'aqua'] as const, label: 'Greeting Color' },
     },
   },
   player: {

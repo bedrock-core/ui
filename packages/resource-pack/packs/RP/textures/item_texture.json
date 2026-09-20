@@ -1,0 +1,9 @@
+{
+	"resource_pack_name": "core_ui",
+	"texture_name": "atlas.items",
+	"texture_data": {
+		"core_ui_blank": {
+			"textures": "textures/core-ui/blank"
+		}
+	}
+}

@@ -1,5 +1,6 @@
 import type { RawMessage } from '@minecraft/server';
 import { ActionFormData, ModalFormData } from '@minecraft/server-ui';
+import type { PressEvent } from './events';
 
 export interface ReservedBytes { bytes: number }
 
@@ -17,9 +18,9 @@ export type SerializablePrimitive = string | number | boolean | ReservedBytes | 
 export type SerializableProps = Record<string, SerializablePrimitive>;
 
 /**
- * The native form a writer emits into. ActionForm writers use `button()`/`label()`;
- * modal writers use the typed `ModalFormData` controls (`toggle`/`slider`/…). The
- * serializer walk is shared; only the writers and the presenter response-mapping differ.
+ * The native form a writer emits into. An action form takes `button()`/`label()`;
+ * a modal takes the typed `ModalFormData` controls (`toggle`/`slider`/…). Both are
+ * filled by the host's runtime from the addresses the build allocated.
  */
 export type FormTarget = ActionFormData | ModalFormData;
 
@@ -34,6 +35,20 @@ export type ModalValue = string | number | boolean | undefined;
 export interface ModalControlEntry {
   /** Result key — the control's `name` prop. */
   name: string;
+  /**
+   * Turns what the engine answers back into what the author asked for, where
+   * the two are not the same unit. A slider over a fractional range is the
+   * case: the engine steps in whole numbers, so the form is given a count of
+   * stops and the answer is mapped back here. Absent means the answer is
+   * already the author's value.
+   */
+  decode?: (raw: string | number | boolean | undefined) => string | number | boolean | undefined;
+  /**
+   * The option this control answers for, when it is one toggle of a multiple
+   * select. Every member shares the select's `name`, and the answers are
+   * gathered into one array of the indices that are on.
+   */
+  member?: number;
 }
 
 /** Discriminant tags for the two serialization contexts. */
@@ -47,7 +62,7 @@ export interface ActionSerializationContext {
   readonly mode: 'action';
 
   /** Maps button index to their onPress callbacks. */
-  buttonCallbacks: Map<number, () => void>;
+  buttonCallbacks: Map<number, (event: PressEvent) => unknown>;
 
   /** Current button index counter. */
   buttonIndex: number;
@@ -67,8 +82,19 @@ export interface ModalSerializationContext {
    */
   modalControls: Map<number, ModalControlEntry>;
 
-  /** Current modal-control ordinal counter. */
+  /** Current modal-control ordinal counter: a slot of the ANSWER. */
   modalControlIndex: number;
+
+  /**
+   * Current row of the form's own collection.
+   *
+   * Not the same counter as the ordinal above. A row is one entry of
+   * `custom_form`, which is what a compiled control's `collection_index` names
+   * and what the pack reads; an ordinal is one slot of `formValues`, and a
+   * slider answers in two of those. They agree until the first slider and
+   * diverge after it.
+   */
+  modalRowIndex: number;
 }
 
 /**
@@ -96,25 +122,25 @@ export class TranslationKeysError extends Error {
   }
 }
 
-export class ItemAuxError extends Error {
+/**
+ * Thrown when `render()` is handed a screen the build never compiled.
+ *
+ * A screen is shown from its layout in the pack, picked by the title the build
+ * registered it under. Without that there is nothing to show, so this names the
+ * two things that produce one: the ui-compiler filter seeing the screen, and the
+ * generated module being imported so its registrations run.
+ */
+export class UncompiledScreenError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'ItemAuxError';
-  }
-}
-
-export class ScrollLimitError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ScrollLimitError';
+    this.name = 'UncompiledScreenError';
   }
 }
 
 /**
  * Thrown when a tree violates the modal-form restrictions: a regular interactive
- * control (e.g. `Button`) inside a `<ModalForm>`, a nested `<ModalForm>`, a modal
- * form mixed with ActionForm-only roots, or a modal-only control used outside any
- * `<ModalForm>`. A modal renders the native `ModalFormData`, which only supports
+ * control (e.g. `Button`) inside a `<Form>`, or a modal-only control used outside
+ * any `<Form>`. A modal renders the native `ModalFormData`, which only supports
  * toggle/slider/dropdown/textField/label plus the hardcoded submit + esc buttons.
  */
 export class ModalFormError extends Error {
@@ -124,6 +150,36 @@ export class ModalFormError extends Error {
   }
 }
 
+/**
+ * Thrown when a tree has no host root, or a root below its root. A screen's
+ * root names its host — `<Screen>`, `<Form>` or `<Container>` — and there is
+ * no default, so a tree that starts with anything else has no screen to be.
+ */
+export class ScreenRootError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ScreenRootError';
+  }
+}
+
+/**
+ * Thrown when a tree breaks the container-screen rules: a `<Container>` handed
+ * to `render()`, a container-only control outside a `<Container>`, a form or a
+ * scroll inside one, a hook that needs a player where one compiled layout
+ * serves every player, or content that does not fit the canvas.
+ */
+export class ContainerScreenError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ContainerScreenError';
+  }
+}
+
+/**
+ * Writes one component into a form.
+ *
+ * @experimental Bound to the serialized payload format rather than the component API.
+ */
 export type Writer = (
   payload: string | RawMessage,
   form: FormTarget,
@@ -133,7 +189,7 @@ export type Writer = (
   nativeArgs?: Record<string, unknown>,
   // The element's built children (post-layout). Only writers that read child geometry rather
   // than have the walk serialize them use it — e.g. `Form.Radio`/`Form.ToggleButton` reading each
-  // laid-out `Form.Option`'s x/y/w/h. Typed `unknown` to avoid a JSX import here; the writer
+  // laid-out `Option`'s x/y/w/h. Typed `unknown` to avoid a JSX import here; the writer
   // narrows it. Most writers ignore it (children are serialized by the walk in `serialize`).
   children?: unknown,
 ) => void;

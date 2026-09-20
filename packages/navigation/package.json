@@ -1,50 +1,71 @@
 {
-  "name": "@bedrock-core/navigation",
-  "version": "0.9.3",
-  "description": "@bedrock-core/ui navigation system",
-  "keywords": [
-    "ui",
-    "navigation",
-    "minecraft",
-    "bedrock",
-    "typescript",
-    "framework"
-  ],
-  "license": "MIT",
-  "author": "DrAv0011",
-  "contributors": [
-    {
-      "name": "DrAv0011",
-      "email": "contact@drav.dev",
-      "url": "https://drav.dev"
-    }
-  ],
-  "repository": "github:bedrock-core/ui",
-  "type": "module",
-  "main": "src/index.ts",
-  "types": "src/index.ts",
-  "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts"
-    }
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "files": [
-    "src"
-  ],
-  "sideEffects": false,
-  "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "lint": "eslint ."
-  },
-  "devDependencies": {
-    "@bedrock-core/ui-runtime": "workspace:*",
-    "typescript": "^6.0.3"
-  },
-  "peerDependencies": {
-    "@bedrock-core/ui-runtime": "*"
-  }
+	"name": "@bedrock-core/navigation",
+	"version": "0.9.3",
+	"description": "@bedrock-core/ui navigation system",
+	"keywords": [
+		"ui",
+		"navigation",
+		"minecraft",
+		"bedrock",
+		"typescript",
+		"framework"
+	],
+	"license": "MIT",
+	"author": "DrAv0011",
+	"contributors": [
+		{
+			"name": "DrAv0011",
+			"email": "contact@drav.dev",
+			"url": "https://drav.dev"
+		}
+	],
+	"repository": "github:bedrock-core/ui",
+	"type": "module",
+	"main": "src/index.ts",
+	"types": "src/index.ts",
+	"exports": {
+		".": {
+			"types": "./src/index.ts",
+			"import": "./src/index.ts"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"src",
+		"!src/**/__tests__/**",
+		"!src/**/*.test.ts",
+		"!src/**/*.test.tsx"
+	],
+	"sideEffects": false,
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"lint": "eslint ."
+	},
+	"devDependencies": {
+		"@bedrock-core/server-runtime": "*",
+		"@bedrock-core/sync": "*",
+		"@bedrock-core/ui-runtime": "workspace:*",
+		"@minecraft/server": "*",
+		"eslint": "*",
+		"typescript": "*"
+	},
+	"peerDependencies": {
+		"@bedrock-core/server-runtime": "*",
+		"@bedrock-core/sync": "*",
+		"@bedrock-core/ui-runtime": "*",
+		"@minecraft/server": ">=2.9.0 || >=2.10.0-0"
+	},
+	"peerDependenciesMeta": {
+		"@bedrock-core/server-runtime": {
+			"optional": true
+		},
+		"@bedrock-core/sync": {
+			"optional": true
+		},
+		"@bedrock-core/ui-runtime": {
+			"optional": true
+		}
+	}
 }

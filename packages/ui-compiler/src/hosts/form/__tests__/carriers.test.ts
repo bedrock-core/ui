@@ -1,0 +1,298 @@
+import type { JSX } from '@bedrock-core/ui-runtime';
+import { SCROLL_RESERVE } from '@bedrock-core/ui-runtime/compile';
+import { Form, List, Panel, Screen as ScreenRoot, Scroll, Text, useState, Toggle } from '@bedrock-core/ui-runtime';
+import { jsx } from '@bedrock-core/ui-runtime/jsx-runtime';
+import { describe, expect, it } from 'vitest';
+import { eachControl } from '../../../__fixtures__/helpers';
+import type { Control, Document } from '../../../jsonui';
+import { compileFormScreen } from '../compile';
+
+/**
+ * The form's carriers beyond a press: a carried visible on either form host,
+ * and live text on the modal's rows. Each is one entry (or row) of the
+ * screen's own, read back by a gate or a label the emitter bakes the index
+ * into — the compiled shape of [03-ir]'s bool and text carriers.
+ */
+
+const gates = (document: Document): Control[] => {
+  const found: Control[] = [];
+
+  eachControl(document, (name, control) => {
+    if (name.endsWith('_vis')) {
+      found.push(control);
+    }
+  });
+
+  return found;
+};
+
+describe('carried visible on the action form', () => {
+  const Screen = (): JSX.Element => {
+    const [open] = useState(true);
+
+    return ScreenRoot({ children: Panel({
+      children: [
+        Text({ children: 'HEADER' }),
+        Panel({ visible: open, children: [Text({ children: 'DETAILS' })] }),
+      ],
+    }) });
+  };
+
+  const compiled = compileFormScreen(Screen, { namespace: 'a', name: 'gated' });
+
+  it('spends one entry on the visible, and records the ordinal for the runtime', () => {
+    expect(compiled.entries).toHaveLength(1);
+    expect(compiled.entries[0]?.carrier).toBe('bool');
+    expect(compiled.snapshot.vis).toHaveLength(1);
+  });
+
+  it('wraps the subtree in a gate reading that entry', () => {
+    const [gate] = gates(compiled.document);
+
+    expect(gate?.collection_name).toBe('form_buttons');
+
+    const inner = gate?.controls?.[0]?.gate;
+
+    expect(inner?.collection_index).toBe(0);
+    expect(inner?.property_bag?.['#visible']).toBe(true);
+    expect(JSON.stringify(inner?.bindings)).toContain('#form_button_text');
+    expect(JSON.stringify(inner?.bindings)).toContain("(not (#vis_value = 'f'))");
+  });
+
+  it('bakes the fingerprint and the baked strings for debug', () => {
+    expect(compiled.snapshot.shape).toContain('bool:1');
+    expect(compiled.snapshot.baked).toEqual(['HEADER', 'DETAILS']);
+  });
+});
+
+describe('the list count on the action form', () => {
+  const Screen = (): JSX.Element => ScreenRoot({ children: Panel({
+    children: [
+      List({
+        max: 3,
+        items: ['alpha', 'beta'],
+        row: (item: string | undefined) => Text({ maxLength: 8, children: item ?? '' }),
+      }),
+    ],
+  }) });
+
+  const compiled = compileFormScreen(Screen, { namespace: 'a', name: 'listing' });
+
+  it('spends one int entry on the count, before the rows\' own channels', () => {
+    // Document order: the list's int, then the three live row texts.
+    expect(compiled.entries.map(entry => entry.carrier)).toEqual(['int', 'text', 'text', 'text']);
+    expect(compiled.snapshot.shape).toContain('int:1');
+  });
+
+  it('gates every row on the counts that show it, as string equalities', () => {
+    const json = JSON.stringify(compiled.document);
+
+    // Row i shows for counts i+1..max — enumeration on proven atoms, never a
+    // numeric ordering, and fail-closed when the entry does not resolve.
+    const count = (n: number): string => `(#row_count = 'n${String(n)}')`;
+
+    expect(json).toContain(`(${count(1)} or ${count(2)} or ${count(3)})`);
+    expect(json).toContain(`(${count(2)} or ${count(3)})`);
+    expect(json).toContain(count(3));
+  });
+
+  it('seeds the gates with the count the build rendered with', () => {
+    const seeds: boolean[] = [];
+
+    eachControl(compiled.document, (name, control) => {
+      if (name.endsWith('_row') && typeof control.property_bag?.['#visible'] === 'boolean'
+        && JSON.stringify(control.bindings).includes('#row_count')) {
+        seeds.push(control.property_bag['#visible']);
+      }
+    });
+
+    // Two items at build: rows 0 and 1 visible, row 2 hidden until the count says so.
+    expect(seeds).toEqual([true, true, false]);
+  });
+});
+
+describe('a scroll over a list', () => {
+  const Screen = (): JSX.Element => ScreenRoot({ children: Panel({
+    children: [
+      Scroll({
+        width: 60,
+        height: 40,
+        children: [
+          List({
+            max: 5,
+            items: ['alpha'],
+            row: (item: string | undefined) => Text({ maxLength: 6, children: item ?? '' }),
+          }),
+        ],
+      }),
+    ],
+  }) });
+
+  const compiled = compileFormScreen(Screen, { namespace: 'a', name: 'scrolling' });
+
+  it('takes the list stack as its content, so the extent follows the visible rows', () => {
+    // The list itself is the content definition, under the list's own name.
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- the definition is what the test is about
+    const content = compiled.document.list_1 as Control;
+
+    // Not a baked panel: the list itself, a content-sized stack of gates —
+    // an invisible child takes no space in a stack, so the scroll reaches
+    // exactly as far as the real rows.
+    expect(compiled.document.scroll_1_content).toBeUndefined();
+    expect(JSON.stringify(compiled.document)).toContain('"$scrolling_content":"a_scrolling.list_1"');
+    expect(content.type).toBe('stack_panel');
+    // The viewport less what scrolling content gives up beside its track.
+    expect(content.size).toEqual([60 - SCROLL_RESERVE, '100%c']);
+    // The viewport is the floor: content shorter than it asserts in the client.
+    expect(content.min_size).toEqual([60 - SCROLL_RESERVE, 40]);
+    expect(content.collection_name).toBe('form_buttons');
+    expect(content.controls).toHaveLength(5);
+  });
+
+  it('bakes the rows once more across the whole viewport, and lets the count choose', () => {
+    let region: Control | undefined;
+    let narrow: Control | undefined;
+    let wide: Control | undefined;
+
+    eachControl(compiled.document, (name, control) => {
+      region ??= name === 'scroll_1' ? control : undefined;
+      narrow ??= name === 'list_1' ? control : undefined;
+      wide ??= name === 'list_2' ? control : undefined;
+    });
+
+    // Two gates on the one entry the list already carries: the scrolling
+    // rows while the count runs past what the viewport holds at the full
+    // width, the wide rows while it does not — every count in exactly one.
+    expect(region?.type).toBe('stack_panel');
+    expect(region?.collection_name).toBe('form_buttons');
+
+    const [scrolls, fits] = (region?.controls ?? []).map(entry => Object.values(entry)[0]);
+    const scrollsWhen = JSON.stringify(scrolls?.bindings);
+    const fitsWhen = JSON.stringify(fits?.bindings);
+
+    for (let count = 0; count <= 5; count += 1) {
+      const term = `(#row_count = 'n${String(count)}')`;
+
+      expect(scrollsWhen.includes(term) !== fitsWhen.includes(term)).toBe(true);
+    }
+
+    expect(fitsWhen).toContain("(#row_count = 'n0')");
+    expect(scrollsWhen).toContain("(#row_count = 'n5')");
+
+    // Seeded from the one row the build rendered, which fits.
+    expect(scrolls?.property_bag).toEqual({ '#visible': false });
+    expect(fits?.property_bag).toEqual({ '#visible': true });
+
+    // The wide rows are the same list again, the whole viewport wide, reading
+    // the very entries the narrow rows read: nothing of their own to answer.
+    const indices = (control: Control | undefined): number[] => {
+      const found: number[] = [];
+
+      eachControl({ namespace: 'a', list: control ?? {} }, (_name, inner) => {
+        if (typeof inner.collection_index === 'number') {
+          found.push(inner.collection_index);
+        }
+      });
+
+      return found;
+    };
+
+    expect(wide?.size).toEqual([60, '100%c']);
+    expect(wide?.controls).toHaveLength(5);
+    expect(indices(wide)).toEqual(indices(narrow));
+  });
+
+  it('never sizes anything with a binding: that is dead where compiled screens live', () => {
+    expect(JSON.stringify(compiled.document)).not.toContain('#size_binding');
+  });
+});
+
+describe('carriers on the modal', () => {
+  const Screen = (): JSX.Element => {
+    const [nick, setNick] = useState('');
+    const [open] = useState(true);
+
+    return Form({
+      onSubmit: ({ values }): void => { setNick(String(values.nick ?? '')); },
+      children: Panel({
+        children: [
+          jsx(Toggle, { name: 'sound' }),
+          Text({ maxLength: 10, children: `saved ${nick}` }),
+          Panel({ visible: open, children: [Text({ children: 'EXTRA' })] }),
+          Form.Button({ type: 'submit', label: 'Save' }),
+        ],
+      }),
+    });
+  };
+
+  const compiled = compileFormScreen(Screen, { namespace: 'a', name: 'modal_carriers' });
+
+  it('rides rows, not entries: the modal keeps form_buttons empty', () => {
+    expect(compiled.entries).toHaveLength(0);
+    expect(compiled.snapshot.vis).toHaveLength(1);
+  });
+
+  it('reads live text out of its custom_form row', () => {
+    const json = JSON.stringify(compiled.document);
+
+    expect(json).toContain('"#custom_text"');
+    // The live label's index host reads the modal collection, at the row the
+    // runtime writes: field row 0, text row 1.
+    const hosts: Control[] = [];
+
+    eachControl(compiled.document, (_name, control) => {
+      if (control.collection_name === 'custom_form') {
+        hosts.push(control);
+      }
+    });
+
+    const indices = hosts.flatMap(host => host.controls ?? [])
+      .map(entry => Object.values(entry)[0]?.collection_index)
+      .filter((index): index is number => typeof index === 'number')
+      .sort((a, b) => a - b);
+
+    expect(indices).toEqual([0, 1, 2]);
+  });
+
+  it('gates the visible through its own custom_form row', () => {
+    const [gate] = gates(compiled.document);
+
+    expect(gate?.collection_name).toBe('custom_form');
+    expect(JSON.stringify(gate)).toContain('"collection_index": 2'.replace(': ', ':'));
+  });
+});
+
+describe('text alignment', () => {
+  const Screen = (): JSX.Element => ScreenRoot({ children: Panel({
+    width: 120,
+    children: [
+      Text({ width: 100, textAlign: 'center', children: 'Baked' }),
+      Text({ width: 100, textAlign: 'right', maxLength: 8, children: 'Live' }),
+    ],
+  }) });
+
+  const compiled = compileFormScreen(Screen, { namespace: 'a', name: 'aligned' });
+
+  const labels = (document: Document): Control[] => {
+    const found: Control[] = [];
+
+    eachControl(document, (_name, control) => {
+      if (control.type === 'label') {
+        found.push(control);
+      }
+    });
+
+    return found;
+  };
+
+  it('reaches the baked label and the live carrier alike', () => {
+    const alignments = labels(compiled.document).map(label => label.text_alignment);
+
+    expect(alignments).toContain('center');
+    expect(alignments).toContain('right');
+  });
+
+  it('is part of what the face pass draws', () => {
+    expect(labels(compiled.face.document).map(label => label.text_alignment)).toEqual(['center', 'right']);
+  });
+});

@@ -3,7 +3,7 @@
 ![Logo](https://raw.githubusercontent.com/bedrock-core/ui/main/assets/logo/title.png)
 
 The render pack every `@bedrock-core/ui` addon needs at runtime. It holds the JSON UI that
-decodes the framework's **`bcuiv0008`** payloads: the label/button/header/dropdown routers, the
+decodes the framework's **`corev0009`** payloads: the label/button/header/dropdown routers, the
 shared `control.json` decode, the component leaves and the scroll screens, under
 `packs/RP/ui/core-ui/`.
 
@@ -20,8 +20,8 @@ for you when it scaffolds a project.
 | | |
 | --- | --- |
 | UUID | `761ecd37-ad1c-4a64-862a-d6cc38767426` (never changes) |
-| Version | `1.10.0` — tracks the library release it ships in (see below) |
-| Protocol | `bcuiv0008` (also stated in the pack description, visible in-game) |
+| Version | tracks the library release it ships in (see below) |
+| Protocol | stated in the pack description, visible in-game |
 | Scope | `world` — one copy is shared by every `@bedrock-core/ui` addon in the world |
 
 Take the pack from the same release as the library: the pack and the runtime are two halves of one
@@ -54,34 +54,48 @@ pack-only revisions — so no pack change can ship unversioned.
 
 ## What ships
 
-**Only `packs/RP` is published.** The release workflow builds this project and zips the resource
-pack output (`build/@bedrock-core_ui_rp`) into the `.mcpack` — see the *Package Resource Pack* step
-in [`publish.yml`](../../.github/workflows/publish.yml). Nothing else in this package is an
-artifact.
+**Only `packs/RP` is published.** The separate resource-pack workflow builds this project and
+zips `build/@bedrock-core_ui_rp` into the `.mcpack` — see
+[`resource-pack.yml`](../../.github/workflows/resource-pack.yml). Nothing else in this package is
+an artifact.
 
-The behavior pack, the guide/i18n sources under `packs/data/`, and the demo screens are the local
-test harness this repo uses to exercise the framework — a reference implementation and a place to
-reproduce protocol bugs. They are built into `build/@bedrock-core_ui_bp` for local testing and
-deliberately never released.
+The same `.mcpack` is then pushed to CurseForge by
+[`curseforge.yml`](../../.github/workflows/curseforge.yml), which downloads it back off the release
+and uploads it with the release notes as the file's changelog. The numeric project id and release
+type live in [`curseforge.json`](./curseforge.json), so changing the CurseForge project name or slug
+does not require a repository change. The workflow reads the supported Bedrock version
+from `packs/RP/manifest.json` (`1.26.50` becomes CurseForge `26.50`); additional compatible version
+names can be listed in `gameVersionNames`. CurseForge exposes no API for a project's description
+page, so that page is written by hand and kept version-free.
+
+The behavior pack is build input rather than an artifact: it carries the framework’s own screen
+and the guide components, which `ui-compiler` bakes into the resource pack. Nothing registers the
+framework, so the pack ships no script at all, and `build/@bedrock-core_ui_bp` is never released.
 
 ## Development
 
-Part of the monorepo; run commands from the **root workspace**:
+The resource pack is an independent Yarn project. Run its commands from this directory:
 
 ```bash
-# From repository root
-yarn install          # Install all workspace dependencies
-yarn regolith-install # Install the Regolith filters (once, and after filter version bumps)
-yarn build            # Build all packages (including this addon)
-yarn watch            # Rebuild and deploy to com.mojang on change
+# From packages/resource-pack
+yarn install           # Install artifact-owned local development links
+yarn regolith-install  # Install the pinned released Regolith filters
+yarn build             # Build the release artifact locally
+yarn deploy            # Build and deploy to com.mojang
 ```
 
-The filter chain is `guides` → `i18n` → `bundler`. The generated bundles are reached through
-`tsconfig.json` path aliases — `@bedrock-core/generated/i18n` and `@bedrock-core/generated/guides`
-— resolving to the filters' output under `packs/data/`; the committed `.d.ts` files next to them
-are what the IDE reads before Regolith has ever run.
+The filter chain is `guides` → `i18n` → `ui-compiler` → `references`. There is no bundler stage:
+the pack has no runtime script to bundle. The generated
+bundles are reached through `tsconfig.json` path aliases — `@bedrock-core/generated/i18n`,
+`@bedrock-core/generated/guides` and `@bedrock-core/generated/ui` — resolving to the filters'
+output under `packs/data/`; the committed `.d.ts` files next to them are what the IDE reads before
+Regolith has ever run.
 
-`packs/BP/scripts/UI/screens/` is the reference gallery, reachable from the addon's home screen:
-hooks, flex layout, font metrics, unstyled primitives, ore-styled components, both form backends,
-three scroll variants, a stress test, and `I18nDemo` — typed keys, interpolation and plurals
-resolving per player language.
+`packs/BP/scripts/screens/framework.screen.tsx` is compiled to JSON UI at build time, as are the
+guide pages the guides filter writes. Everything else an addon draws — its config screens, its
+addon page, its routers — is compiled into that addon’s own pack under its own namespace, not
+this one.
+
+## Documentation
+
+https://bedrock-core.drav.dev/docs/ui/guides/render-pack
