@@ -64,7 +64,7 @@ jobs:
 
       - name: Install and build fresh project
         run: |
-          corepack yarn install
+          YARN_ENABLE_IMMUTABLE_INSTALLS=false corepack yarn install
           corepack yarn install --immutable
           regolith install-all
           regolith run build
