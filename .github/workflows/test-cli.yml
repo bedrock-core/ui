@@ -1,0 +1,86 @@
+name: Test CLI
+
+# Run after the package versions pinned by the CLI template are public.
+on:
+  workflow_dispatch:
+
+concurrency: cli-test-${{ github.ref }}
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Test packed CLI with npm, Yarn, pnpm and Bedrock
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: ui
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: ui
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Configure temporary paths
+        shell: bash
+        run: |
+          echo "BEDROCK_CLI_TARBALL=$RUNNER_TEMP/bedrock-core-cli.tgz" >> "$GITHUB_ENV"
+          echo "BEDROCK_CLI_SMOKE_SUMMARY=$RUNNER_TEMP/cli-smoke-summary.json" >> "$GITHUB_ENV"
+          echo "BC_BDS_HOME=$RUNNER_TEMP/cli-smoke-bds" >> "$GITHUB_ENV"
+
+      - run: corepack enable
+
+      - name: Set up Regolith
+        uses: bedrock-core/setup-regolith@1.0.1
+        with:
+          regolith-version: '1.8.0'
+          resolvers: |
+            github.com/bedrock-core/regolith-filters
+
+      - run: yarn install --immutable
+
+      - name: Check CLI
+        run: |
+          yarn workspace @bedrock-core/cli lint
+          yarn workspace @bedrock-core/cli test
+          yarn test:release
+
+      - name: Pack CLI
+        run: yarn workspace @bedrock-core/cli pack --out "$BEDROCK_CLI_TARBALL"
+
+      - name: Record source commit
+        run: echo "$GITHUB_SHA" > "$RUNNER_TEMP/cli-source-sha.txt"
+
+      - name: Test fresh projects
+        run: node scripts/smoke-cli.mjs "$BEDROCK_CLI_TARBALL" "$RUNNER_TEMP/cli-smoke"
+
+      - name: Verify tested candidate locally
+        if: ${{ always() && env.ACT }}
+        shell: bash
+        run: |
+          test -s "$BEDROCK_CLI_TARBALL"
+          test -s "$BEDROCK_CLI_SMOKE_SUMMARY"
+          test -s "$RUNNER_TEMP/cli-source-sha.txt"
+          test "$(find "$RUNNER_TEMP/cli-smoke" -name summary.json -type f | wc -l)" -ge 1
+          test "$(find "$RUNNER_TEMP/cli-smoke" -name '*-gametest.json' -type f | wc -l)" -eq 3
+          test "$(find "$BC_BDS_HOME/logs" -type f | wc -l)" -ge 3
+
+      - name: Keep tested candidate and smoke results
+        if: ${{ always() && !env.ACT }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: cli-release-candidate
+          path: |
+            ${{ runner.temp }}/bedrock-core-cli.tgz
+            ${{ runner.temp }}/cli-smoke-summary.json
+            ${{ runner.temp }}/cli-source-sha.txt
+            ${{ runner.temp }}/cli-smoke/bedrock-cli-smoke-*/summary.json
+            ${{ runner.temp }}/cli-smoke/bedrock-cli-smoke-*/*-gametest.json
+            ${{ runner.temp }}/cli-smoke-bds/logs/**
+          if-no-files-found: error
+          retention-days: 14

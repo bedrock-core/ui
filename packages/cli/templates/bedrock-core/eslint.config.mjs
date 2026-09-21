@@ -19,6 +19,8 @@ export default defineConfig([
       '**/*.*js',
       'filters/**',
       'build/**',
+      'package-lock.json',
+      'npm-shrinkwrap.json',
     ],
   },
 

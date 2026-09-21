@@ -81,15 +81,16 @@
 		"lint:libs": "yarn workspaces foreach -A -pt --no-private --exclude '@bedrock-core/ui' --exclude '@bedrock-core/cli' run lint",
 		"test": "yarn workspaces foreach -ptA run test",
 		"test:libs": "yarn workspaces foreach -A -pt --no-private --exclude '@bedrock-core/ui' --exclude '@bedrock-core/cli' run test",
+		"test:release": "node --test scripts/cli-artifact.test.mjs scripts/release-root.test.mjs",
 		"coverage": "yarn workspaces foreach -ptA run coverage",
 		"deploy": "yarn --cwd packages/resource-pack deploy",
 		"preflight": "node scripts/preflight.mjs",
 		"gamelog": "node scripts/gamelog.mjs",
 		"changeset": "changeset",
-		"version-packages": "changeset version && node scripts/bump-meta.mjs && node scripts/sync-cli-template.mjs && node scripts/sync-pack-version.mjs",
+		"version-packages": "changeset version && node scripts/bump-meta.mjs && node scripts/sync-pack-version.mjs && node scripts/sync-cli-template.mjs",
 		"release": "yarn release:libraries",
 		"release:libraries": "yarn lint:libs && yarn build:libs && yarn test:libs && node scripts/publish-tarballs.mjs @bedrock-core/cli && node scripts/tag-packages.mjs @bedrock-core/cli",
-		"release:cli": "yarn workspace @bedrock-core/cli lint && yarn workspace @bedrock-core/cli build && node scripts/publish-tarballs.mjs --only @bedrock-core/cli && node scripts/tag-packages.mjs --only @bedrock-core/cli",
+		"release:cli": "yarn test:release && yarn workspace @bedrock-core/cli lint && yarn workspace @bedrock-core/cli build && yarn workspace @bedrock-core/cli test && node scripts/publish-tarballs.mjs --only @bedrock-core/cli && node scripts/tag-packages.mjs --only @bedrock-core/cli",
 		"clean": "node scripts/clean.mjs"
 	},
 	"dependencies": {

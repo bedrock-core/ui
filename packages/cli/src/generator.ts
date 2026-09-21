@@ -1,14 +1,19 @@
 import fs from 'fs-extra';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { spawn } from 'node:child_process';
 import chalk from 'chalk';
 import ora, { type Ora } from 'ora';
-import { promptUser, type ProjectConfig } from './prompts.js';
+import { promptUser, type PackageManager, type ProjectConfig } from './prompts.js';
 import { generateManifestUUIDs, replaceVariables } from './utils.js';
 import https from 'node:https';
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }
 
 /**
@@ -51,7 +56,27 @@ async function processFile(
   variables: Record<string, string>,
 ): Promise<void> {
   const content = await fs.readFile(sourcePath, 'utf-8');
-  const processed = replaceVariables(content, variables);
+  const isJson = sourcePath.endsWith('.json');
+  const isI18nTypeScript = sourcePath.endsWith(path.join('packs', 'data', 'i18n', 'en_US.ts'));
+  const processed = replaceVariables(content, variables, (_key, value) => {
+    if (isJson) {
+      // The placeholder is already inside a JSON string literal.
+      return JSON.stringify(value).slice(1, -1);
+    }
+
+    if (isI18nTypeScript) {
+      // The metadata template uses single-quoted TypeScript strings.
+      return value
+        .replaceAll('\\', '\\\\')
+        .replaceAll(String.fromCharCode(39), '\\' + String.fromCharCode(39))
+        .replaceAll('\r', '\\r')
+        .replaceAll('\n', '\\n')
+        .replaceAll('\u2028', '\\u2028')
+        .replaceAll('\u2029', '\\u2029');
+    }
+
+    return value;
+  });
 
   await fs.writeFile(targetPath, processed, 'utf-8');
 }
@@ -64,6 +89,7 @@ async function copyTemplate(
   targetDir: string,
   variables: Record<string, string>,
   spinner: Ora,
+  packageManager: PackageManager,
 ): Promise<void> {
   const filesToProcess = [
     'config.json',
@@ -110,144 +136,206 @@ async function copyTemplate(
     }
   }
 
-  // npm strips `.gitignore` files from published tarballs, so the template
-  // ships it as `gitignore` and every scaffold gets the dot back here.
-  const plainGitignore = path.join(targetDir, 'gitignore');
+  // npm strips dot-files from published tarballs, so pack-safe names are
+  // restored when a project is generated.
+  for (const [packedName, actualName] of [['gitignore', '.gitignore'], ['yarnrc.yml', '.yarnrc.yml']]) {
+    const packedPath = path.join(targetDir, packedName);
 
-  if (await fs.pathExists(plainGitignore)) {
-    await fs.move(plainGitignore, path.join(targetDir, '.gitignore'), { overwrite: true });
+    if (await fs.pathExists(packedPath)) {
+      await fs.move(packedPath, path.join(targetDir, actualName), { overwrite: true });
+    }
+  }
+
+  await configurePackageManager(packageManager, targetDir);
+}
+
+export async function configurePackageManager(packageManager: PackageManager, targetDir: string): Promise<void> {
+  if (packageManager === 'yarn') {
+    return;
+  }
+
+  const manifestPath = path.join(targetDir, 'package.json');
+  const manifest: unknown = await fs.readJson(manifestPath);
+
+  if (!isRecord(manifest)) {
+    throw new Error(`Generated package manifest is invalid: ${manifestPath}`);
+  }
+
+  delete manifest.packageManager;
+  await fs.writeJson(manifestPath, manifest, { spaces: '\t' });
+
+  if (packageManager !== 'none') {
+    await fs.remove(path.join(targetDir, '.yarnrc.yml'));
+  }
+
+  if (packageManager === 'pnpm') {
+    await fs.writeFile(path.join(targetDir, 'pnpm-workspace.yaml'), 'nodeLinker: hoisted\n');
   }
 }
 
-/**
- * Fetch JSON helper
- */
-async function fetchJson<T>(url: string): Promise<T> {
-  return await new Promise<T>((resolve, reject) => {
-    const req = https.get(url, { headers: { ['User-Agent']: '@bedrock-core/cli' }, agent: false }, (res) => {
-      if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        // Follow redirect
-        res.destroy();
-        fetchJson<T>(res.headers.location).then(resolve).catch(reject);
+type CommandRunner = (command: string, args: string[], cwd: string) => Promise<void>;
 
-        return;
-      }
-
-      if (res.statusCode !== 200) {
-        res.destroy();
-        reject(new Error(`Request failed: ${res.statusCode} ${res.statusMessage}`));
-
-        return;
-      }
-
-      let data = '';
-
-      res.setEncoding('utf-8');
-
-      res.on('data', (chunk) => {
-        data += chunk;
-      });
-
-      res.on('end', () => {
-        res.destroy();
-
-        try {
-          resolve(JSON.parse(data));
-        } catch (e) {
-          reject(e);
-        }
-      });
+async function runCommand(command: string, args: string[], cwd: string): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    const child = spawn(command, args, {
+      cwd,
+      stdio: 'inherit',
+      shell: process.platform === 'win32',
     });
 
-    req.on('error', reject);
+    child.once('error', reject);
+    child.once('exit', code => code === 0
+      ? resolve()
+      : reject(new Error(`${command} ${args.join(' ')} exited with code ${code ?? 'unknown'}`)));
   });
 }
 
-interface ReleaseAsset {
-  name: string;
-  browser_download_url: string;
-  content_type?: string;
-  size?: number;
+export async function installDependencies(
+  packageManager: PackageManager,
+  targetDir: string,
+  run: CommandRunner = runCommand,
+): Promise<void> {
+  if (packageManager === 'none') {
+    return;
+  }
+
+  if (packageManager === 'npm') {
+    console.info(chalk.cyan('\nInstalling dependencies with npm...\n'));
+    await run('npm', ['install'], targetDir);
+
+    return;
+  }
+
+  console.info(chalk.cyan(`\nEnabling Corepack for ${packageManager === 'yarn' ? 'Yarn Berry' : 'pnpm'}...\n`));
+
+  try {
+    await run('corepack', ['enable'], targetDir);
+  } catch (error) {
+    throw new Error(
+      `Corepack could not be enabled. Run "corepack enable" with permission, then run "${packageManager} install" in the generated project.`,
+      { cause: error },
+    );
+  }
+
+  if (packageManager === 'pnpm') {
+    console.info(chalk.cyan('\nSelecting pnpm and installing dependencies...\n'));
+    await run('corepack', ['use', 'pnpm@latest'], targetDir);
+
+    return;
+  }
+
+  console.info(chalk.cyan('\nInstalling dependencies with Yarn Berry...\n'));
+  await run('yarn', ['install'], targetDir);
 }
 
-interface ReleaseResponse {
-  tag_name: string;
-  assets: ReleaseAsset[];
+export async function initializeGitRepository(
+  targetDir: string,
+  run: CommandRunner = runCommand,
+): Promise<boolean> {
+  try {
+    await run('git', ['init', '--quiet'], targetDir);
+
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
  * Download file helper
  */
-async function downloadFile(url: string, destination: string): Promise<void> {
+async function downloadFile(url: string, destination: string, redirects = 0): Promise<void> {
+  if (redirects > 5) {
+    throw new Error('Too many redirects while downloading the render pack');
+  }
+
   await fs.ensureDir(path.dirname(destination));
 
   await new Promise<void>((resolve, reject) => {
-    const file = fs.createWriteStream(destination);
-
     const req = https.get(url, { headers: { ['User-Agent']: '@bedrock-core/cli' }, agent: false }, (res) => {
       if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         // Redirect
         res.destroy();
-        file.close(() => {
-          downloadFile(res.headers.location!, destination).then(resolve).catch(reject);
-        });
+        downloadFile(new URL(res.headers.location, url).toString(), destination, redirects + 1).then(resolve).catch(reject);
 
         return;
       }
 
       if (res.statusCode !== 200) {
         res.destroy();
-        file.close(() => {
-          reject(new Error(`Download failed: ${res.statusCode} ${res.statusMessage}`));
-        });
+        reject(new Error(`Download failed: ${res.statusCode} ${res.statusMessage}`));
 
         return;
       }
 
+      const contentLength = Number(res.headers['content-length'] ?? 0);
+
+      if (contentLength > 100 * 1024 * 1024) {
+        res.destroy();
+        reject(new Error('Render pack download is too large'));
+
+        return;
+      }
+
+      const file = fs.createWriteStream(destination);
+      let size = 0;
+
+      res.on('data', (chunk: Buffer) => {
+        size += chunk.length;
+
+        if (size > 100 * 1024 * 1024) {
+          res.destroy(new Error('Render pack download is too large'));
+        }
+      });
       res.pipe(file);
 
       file.on('finish', () => {
         file.close(() => {
-          res.destroy();
           resolve();
         });
       });
+
+      res.on('error', (error) => {
+        file.destroy();
+        fs.remove(destination).catch(() => {});
+        reject(error);
+      });
+      file.on('error', (error) => {
+        res.destroy();
+        fs.remove(destination).catch(() => {});
+        reject(error);
+      });
     });
 
+    req.setTimeout(60_000, () => req.destroy(new Error('Render pack download timed out')));
     req.on('error', (err) => {
-      file.close(() => {
-        fs.unlink(destination).catch(() => {});
-        reject(err);
-      });
+      fs.remove(destination).catch(() => {});
+      reject(err);
     });
   });
 }
 
 /**
- * Download latest .mcpack release asset
+ * Download the render pack attached to the release matching the template's
+ * exact UI dependency. Releases are package-tagged in this monorepo, so the
+ * repository-wide `latest` release is not a compatible selector.
  */
-async function downloadLatestMcpack(targetDir: string, spinner: Ora): Promise<string | undefined> {
+async function downloadLatestMcpack(targetDir: string, spinner: Ora, uiVersion: string): Promise<string | undefined> {
+  const releaseTag = `@bedrock-core/ui@${uiVersion}`;
+  const expectedAssetName = `core-ui-${uiVersion}.mcpack`;
+  const assetUrl = `https://github.com/bedrock-core/ui/releases/download/${encodeURIComponent(releaseTag)}/${encodeURIComponent(expectedAssetName)}`;
+
   try {
-    spinner.text = 'Fetching latest core-ui release...';
-    const release = await fetchJson<ReleaseResponse>('https://api.github.com/repos/bedrock-core/ui/releases/latest');
-    const asset = release.assets.find(a => a.name.endsWith('.mcpack'));
-
-    if (!asset) {
-      spinner.warn('No .mcpack asset found in latest release');
-
-      return undefined;
-    }
-
-    spinner.text = `Downloading ${asset.name}...`;
+    spinner.text = `Downloading ${expectedAssetName}...`;
     const includeDir = path.join(targetDir);
 
     await fs.ensureDir(includeDir);
-    const dest = path.join(includeDir, asset.name);
+    const dest = path.join(includeDir, expectedAssetName);
 
-    await downloadFile(asset.browser_download_url, dest);
-    spinner.succeed(`Downloaded ${asset.name}`);
+    await downloadFile(assetUrl, dest);
+    spinner.succeed(`Downloaded ${expectedAssetName}`);
 
-    return asset.name;
+    return expectedAssetName;
   } catch (e) {
     spinner.warn(`Skipped downloading release asset: ${getErrorMessage(e)}`);
 
@@ -255,16 +343,51 @@ async function downloadLatestMcpack(targetDir: string, spinner: Ora): Promise<st
   }
 }
 
+async function readTemplateUiVersion(templateDir: string): Promise<string> {
+  const packageJson: unknown = await fs.readJson(path.join(templateDir, 'package.json'));
+  const dependencies = isRecord(packageJson) && isRecord(packageJson.dependencies)
+    ? packageJson.dependencies
+    : undefined;
+  const version = dependencies?.['@bedrock-core/ui'];
+
+  if (typeof version !== 'string' || !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(version)) {
+    throw new Error('Template @bedrock-core/ui dependency must be an exact SemVer for render-pack matching');
+  }
+
+  return version;
+}
+
 /**
  * Display success message with next steps
  */
-function displayNextSteps(config: ProjectConfig, mcpackName?: string): void {
+function displayNextSteps(
+  config: ProjectConfig,
+  mcpackName: string | undefined,
+  uiVersion: string,
+  gitInitialized: boolean,
+): void {
   console.info('\n' + chalk.green('✔ Project created successfully!'));
   console.info('\n' + chalk.bold('Next steps:') + '\n');
   console.info(chalk.cyan(`  cd ${config.projectName}`));
-  console.info(chalk.cyan('  yarn install') + chalk.gray(' (or npm install)'));
-  console.info(chalk.cyan('  yarn run regolith-install') + chalk.gray(' (or npm run regolith-install)'));
-  console.info(chalk.cyan('  yarn run build') + chalk.gray(' (or npm run build)'));
+
+  if (!gitInitialized) {
+    console.info(chalk.cyan('  git init') + chalk.gray(' (optional; Git was not available)'));
+  }
+
+  if (config.packageManager === 'yarn') {
+    console.info(chalk.cyan('  yarn regolith-install'));
+    console.info(chalk.cyan('  yarn build'));
+  } else if (config.packageManager === 'npm') {
+    console.info(chalk.cyan('  npm run regolith-install'));
+    console.info(chalk.cyan('  npm run build'));
+  } else if (config.packageManager === 'pnpm') {
+    console.info(chalk.cyan('  pnpm regolith-install'));
+    console.info(chalk.cyan('  pnpm build'));
+  } else {
+    console.info(chalk.cyan('  yarn install') + chalk.gray(' (or npm install / pnpm install)'));
+    console.info(chalk.cyan('  yarn regolith-install') + chalk.gray(' (or npm run regolith-install / pnpm regolith-install)'));
+    console.info(chalk.cyan('  yarn build') + chalk.gray(' (or npm run build / pnpm build)'));
+  }
 
   console.info(
     chalk.gray('  The first build writes the Minecraft document types, so the .ts templates in'),
@@ -283,15 +406,28 @@ function displayNextSteps(config: ProjectConfig, mcpackName?: string): void {
     );
   } else {
     console.info(
-      chalk.cyan('  Download latest .mcpack from: ') + chalk.gray('https://github.com/bedrock-core/ui/releases/latest'),
+      chalk.cyan('  Download the matching .mcpack from: ') + chalk.gray(`https://github.com/bedrock-core/ui/releases/tag/${encodeURIComponent(`@bedrock-core/ui@${uiVersion}`)}`),
     );
 
     console.info(chalk.cyan('  Then open the .mcpack file to import it into Minecraft.'));
   }
 
   console.info('\n' + chalk.bold('Development:') + '\n');
-  console.info(chalk.cyan('  yarn run watch') + chalk.gray(' - Watch mode for auto-rebuild'));
-  console.info(chalk.cyan('  yarn run lint') + chalk.gray(' - Lint your code'));
+
+  if (config.packageManager === 'npm') {
+    console.info(chalk.cyan('  npm run watch') + chalk.gray(' - Watch mode for auto-rebuild'));
+    console.info(chalk.cyan('  npm run lint') + chalk.gray(' - Lint your code'));
+  } else if (config.packageManager === 'pnpm') {
+    console.info(chalk.cyan('  pnpm watch') + chalk.gray(' - Watch mode for auto-rebuild'));
+    console.info(chalk.cyan('  pnpm lint') + chalk.gray(' - Lint your code'));
+  } else if (config.packageManager === 'none') {
+    console.info(chalk.cyan('  yarn watch') + chalk.gray(' (or npm run watch / pnpm watch)'));
+    console.info(chalk.cyan('  yarn lint') + chalk.gray(' (or npm run lint / pnpm lint)'));
+  } else {
+    console.info(chalk.cyan('  yarn watch') + chalk.gray(' - Watch mode for auto-rebuild'));
+    console.info(chalk.cyan('  yarn lint') + chalk.gray(' - Lint your code'));
+  }
+
   console.info('\n' + chalk.gray('Push a stone button in-game to see the example UI!'));
   console.info();
 }
@@ -303,11 +439,12 @@ export async function createProject(
   initialProjectName?: string,
   initialAuthor?: string,
   initialDescription?: string,
+  initialPackageManager?: PackageManager,
 ): Promise<void> {
   console.info(chalk.bold.cyan('\n@bedrock-core/ui') + chalk.gray(' - Project Generator\n'));
 
   // Get user input
-  const config = await promptUser(initialProjectName, initialAuthor, initialDescription);
+  const config = await promptUser(initialProjectName, initialAuthor, initialDescription, initialPackageManager);
 
   // Check if target directory exists and is not empty
   const isEmpty = await isDirectoryEmpty(config.targetDir);
@@ -335,6 +472,7 @@ export async function createProject(
   };
 
   const spinner = ora('Creating project...').start();
+  let projectCreated = false;
 
   try {
     // Get template directory
@@ -348,18 +486,36 @@ export async function createProject(
     await fs.ensureDir(config.targetDir);
 
     // Copy and process template
-    await copyTemplate(templateDir, config.targetDir, variables, spinner);
+    await copyTemplate(templateDir, config.targetDir, variables, spinner, config.packageManager);
+
+    spinner.text = 'Initializing Git repository...';
+    const gitInitialized = await initializeGitRepository(config.targetDir);
 
     spinner.succeed('Project created!');
+    projectCreated = true;
 
-    // Try fetching latest mcpack asset
-    const dlSpinner = ora('Integrating latest core-ui build...').start();
-    const mcpackName = await downloadLatestMcpack(config.targetDir, dlSpinner);
+    if (!gitInitialized) {
+      console.warn(chalk.yellow('Git was not available; the project was created without a repository.'));
+    }
 
-    // Display next steps
-    displayNextSteps(config, mcpackName);
+    // Try fetching the render pack matching the template UI version
+    const dlSpinner = ora('Integrating matching core-ui build...').start();
+    const templateUiVersion = await readTemplateUiVersion(templateDir);
+    const mcpackName = await downloadLatestMcpack(config.targetDir, dlSpinner, templateUiVersion);
+
+    try {
+      await installDependencies(config.packageManager, config.targetDir);
+    } catch (error) {
+      console.warn(chalk.yellow('\nProject files were created, but dependency installation failed.'));
+
+      throw error;
+    }
+
+    displayNextSteps(config, mcpackName, templateUiVersion, gitInitialized);
   } catch (error) {
-    spinner.fail('Failed to create project');
+    if (!projectCreated) {
+      spinner.fail('Failed to create project');
+    }
 
     throw error;
   }

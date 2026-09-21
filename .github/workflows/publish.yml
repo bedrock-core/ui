@@ -82,9 +82,17 @@ jobs:
             exit 1
           fi
 
+      - name: Check release gates
+        run: yarn test:release
+
       - uses: changesets/action@v2
         with:
           cwd: ui
           publish-script: yarn release:libraries
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Ensure root UI GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/release-root.mjs

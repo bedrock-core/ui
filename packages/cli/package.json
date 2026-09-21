@@ -32,6 +32,8 @@
 	],
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
+		"test": "npm run test:offline",
+		"test:offline": "npm run build && node --test test/offline.test.mjs",
 		"lint": "eslint .",
 		"prepack": "npm run build"
 	},

@@ -24,6 +24,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { verifiedCliTarball } from './cli-artifact.mjs';
 
 const args = process.argv.slice(2);
 const only = args[0] === '--only' ? args[1] : undefined;
@@ -89,8 +90,12 @@ for (const row of ordered) {
 		continue;
 	}
 
-	const tarball = join(outDir, `${name.replace(/[@/]/g, '_')}.tgz`);
-	run('yarn', ['workspace', name, 'pack', '--out', tarball], { stdio: 'inherit' });
+	const tarball = name === '@bedrock-core/cli'
+		? verifiedCliTarball(version)
+		: join(outDir, `${name.replace(/[@/]/g, '_')}.tgz`);
+	if (name !== '@bedrock-core/cli') {
+		run('yarn', ['workspace', name, 'pack', '--out', tarball], { stdio: 'inherit' });
+	}
 	run('npm', ['publish', tarball], { stdio: 'inherit' });
 	console.log(`publish ${name}@${version}`);
 	published++;

@@ -1,19 +1,24 @@
 name: Release CLI
 
-# The CLI is last: its template pins the final package versions and its smoke
-# test creates and builds a new project using only published packages/filters.
+# The CLI is released after its pinned packages and a Test CLI run are complete.
 on:
   workflow_dispatch:
+    inputs:
+      test_run_id:
+        description: Successful Test CLI workflow run ID for this commit
+        required: true
+        type: string
 
 concurrency: cli-release-${{ github.ref }}
 
 permissions:
+  actions: read
   contents: write
   id-token: write
 
 jobs:
   publish:
-    name: Verify fresh scaffold and publish CLI
+    name: Publish tested CLI
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     defaults:
@@ -25,24 +30,43 @@ jobs:
           path: ui
           fetch-depth: 0
 
-      - run: corepack enable
-
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-          cache: yarn
-          cache-dependency-path: ui/yarn.lock
           registry-url: https://registry.npmjs.org
           scope: '@bedrock-core'
 
-      - name: Set up Regolith
-        uses: bedrock-core/setup-regolith@1.0.1
-        with:
-          regolith-version: '1.8.0'
-          resolvers: |
-            github.com/bedrock-core/regolith-filters
+      - name: Configure temporary paths
+        shell: bash
+        run: |
+          echo "BEDROCK_CLI_TARBALL=$RUNNER_TEMP/cli-candidate/bedrock-core-cli.tgz" >> "$GITHUB_ENV"
+          echo "BEDROCK_CLI_SMOKE_SUMMARY=$RUNNER_TEMP/cli-candidate/cli-smoke-summary.json" >> "$GITHUB_ENV"
+
+      - run: corepack enable
 
       - run: yarn install --immutable
+
+      - name: Download tested CLI candidate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TEST_RUN_ID: ${{ inputs.test_run_id }}
+        run: |
+          conclusion=$(gh run view "$TEST_RUN_ID" --repo "$GITHUB_REPOSITORY" --json conclusion --jq .conclusion)
+          workflow=$(gh run view "$TEST_RUN_ID" --repo "$GITHUB_REPOSITORY" --json workflowName --jq .workflowName)
+          tested_sha=$(gh run view "$TEST_RUN_ID" --repo "$GITHUB_REPOSITORY" --json headSha --jq .headSha)
+          if [ "$conclusion" != "success" ]; then
+            echo "Test CLI run $TEST_RUN_ID did not succeed."
+            exit 1
+          fi
+          if [ "$workflow" != "Test CLI" ] || [ "$tested_sha" != "$GITHUB_SHA" ]; then
+            echo "Run $TEST_RUN_ID is not a Test CLI run for this commit."
+            exit 1
+          fi
+          gh run download "$TEST_RUN_ID" --repo "$GITHUB_REPOSITORY" --name cli-release-candidate --dir "$RUNNER_TEMP/cli-candidate"
+          if [ "$(cat "$RUNNER_TEMP/cli-candidate/cli-source-sha.txt")" != "$GITHUB_SHA" ]; then
+            echo "The tested CLI candidate belongs to a different commit."
+            exit 1
+          fi
 
       - name: Check that nothing is pending
         run: |
@@ -53,23 +77,12 @@ jobs:
             exit 1
           fi
 
-      - name: Build CLI
-        run: yarn workspace @bedrock-core/cli build
-
-      - name: Create a fresh project
+      - name: Check CLI
         run: |
-          mkdir -p "$RUNNER_TEMP/cli-smoke"
-          cd "$RUNNER_TEMP/cli-smoke"
-          node "$GITHUB_WORKSPACE/ui/packages/cli/dist/index.js" release-smoke --author bedrock-core --description "Release smoke test"
-
-      - name: Install and build fresh project
-        run: |
-          YARN_ENABLE_IMMUTABLE_INSTALLS=false corepack yarn install
-          corepack yarn install --immutable
-          regolith install-all
-          regolith run build
-          regolith run build-test
-        working-directory: ${{ runner.temp }}/cli-smoke/release-smoke
+          yarn workspace @bedrock-core/cli lint
+          yarn workspace @bedrock-core/cli build
+          yarn workspace @bedrock-core/cli test
+          yarn test:release
 
       - uses: changesets/action@v2
         with:

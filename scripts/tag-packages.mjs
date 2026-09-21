@@ -2,7 +2,7 @@
 /**
  * Tag the public packages selected by the matching publish command.
  *
- * Changesets Action v3 reads JSONL events from CHANGESETS_OUTPUT when a custom
+ * Changesets Action v2 reads JSONL events from CHANGESETS_OUTPUT when a custom
  * publish script is used. Reporting each new tag here lets the action push the
  * tags and create the corresponding GitHub releases. The CLI is deliberately
  * excluded from the library lane and tagged by its own final release workflow.
@@ -54,7 +54,8 @@ for (const workspace of workspaces) {
 
 	// Changesets inventories only child workspaces. Reporting the repository-root
 	// UI meta package aborts the action with "Package @bedrock-core/ui not found".
-	// Its tag and release are completed separately from the child workspace releases.
+	// Its tag is still created here; release-root.mjs creates the GitHub release
+	// after the Changesets action has published the child packages.
 	if (process.env.CHANGESETS_OUTPUT && workspace.location !== '.') {
 		appendFileSync(
 			process.env.CHANGESETS_OUTPUT,

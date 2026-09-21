@@ -19,7 +19,7 @@
 		"@bedrock-core/guides": "^0.2.0",
 		"@bedrock-core/i18n": "^0.2.0",
 		"@bedrock-core/server": "^0.2.0",
-		"@bedrock-core/ui": "^0.12.1",
+		"@bedrock-core/ui": "0.12.1",
 		"@minecraft/common": "1.2.0",
 		"@minecraft/server": "2.10.0",
 		"@minecraft/server-ui": "2.2.0",

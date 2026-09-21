@@ -50,8 +50,21 @@
 		"@bedrock-core/ui-runtime": "workspace:*"
 	},
 	"devDependencies": {
+		"@bedrock-core/i18n": "*",
+		"@minecraft/server": "*",
+		"@minecraft/server-ui": "*",
 		"eslint": "*",
 		"typescript": "*",
 		"vitest": "*"
+	},
+	"peerDependencies": {
+		"@bedrock-core/i18n": "*",
+		"@minecraft/server": ">=2.9.0 || >=2.10.0-0",
+		"@minecraft/server-ui": "*"
+	},
+	"peerDependenciesMeta": {
+		"@bedrock-core/i18n": {
+			"optional": true
+		}
 	}
 }

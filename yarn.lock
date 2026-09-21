@@ -179,10 +179,20 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bedrock-core/ui-compiler@workspace:packages/ui-compiler"
   dependencies:
+    "@bedrock-core/i18n": "npm:*"
     "@bedrock-core/ui-runtime": "workspace:*"
+    "@minecraft/server": "npm:*"
+    "@minecraft/server-ui": "npm:*"
     eslint: "npm:*"
     typescript: "npm:*"
     vitest: "npm:*"
+  peerDependencies:
+    "@bedrock-core/i18n": "*"
+    "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
+    "@minecraft/server-ui": "*"
+  peerDependenciesMeta:
+    "@bedrock-core/i18n":
+      optional: true
   languageName: unknown
   linkType: soft
 

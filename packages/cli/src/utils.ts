@@ -20,20 +20,24 @@ export function generateManifestUUIDs(): Record<string, string> {
   };
 }
 
+export type TemplateValueEscaper = (key: string, value: string) => string;
+
 /**
- * Replace template variables in a string
+ * Replace template variables in a string in one pass.
+ *
+ * A function replacement is intentional here: String#replace treats `$&`,
+ * `$1`, etc. in a replacement string as special tokens. It also means a
+ * placeholder that happens to occur inside user input is never processed a
+ * second time.
  */
 export function replaceVariables(
   content: string,
   variables: Record<string, string>,
+  escapeValue: TemplateValueEscaper = (_key, value) => value,
 ): string {
-  let result = content;
+  return content.replace(/\{\{([A-Za-z0-9_]+)\}\}/g, (placeholder, key: string) => {
+    const value = variables[key];
 
-  for (const [key, value] of Object.entries(variables)) {
-    const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
-
-    result = result.replace(regex, value);
-  }
-
-  return result;
+    return value === undefined ? placeholder : escapeValue(key, value);
+  });
 }

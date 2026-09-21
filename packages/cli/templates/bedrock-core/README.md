@@ -8,46 +8,59 @@ and JSON generation — all wired and ready.
 
 ## Getting Started
 
-1. **Install dependencies:**
+1. **Check prerequisites:**
+
+   Install Node.js 22.18+ and Regolith. If the CLI already installed the
+   dependencies, continue to step 3.
+
+2. **Install dependencies:**
 
    ```bash
-   npm install
-   # or
    yarn install
+   # or: npm install
+   # or: pnpm install
    ```
 
-2. **Install Regolith filters:**
+   For yarn or pnpm, run `corepack enable` once if the CLI did not do it.
+   Commit the lockfile created by your selected manager.
+
+   Yarn is configured with `nodeLinker: node-modules`; pnpm projects use
+   `nodeLinker: hoisted` in `pnpm-workspace.yaml`. Both keep dependencies in a conventional
+   `node_modules` layout.
+
+3. **Install Regolith filters:**
 
    ```bash
-   npm run regolith-install
-   # or
    yarn regolith-install
+   # or: npm run regolith-install
+   # or: pnpm regolith-install
    ```
 
    The command installs all seven released filters declared in `config.json`: `core` and
    manifest, generator, guides, i18n, ui-compiler and bundler. Regolith does not install
    the stages that `core` delegates to automatically.
 
-3. **Install the render pack:**
+4. **Install the render pack:**
 
    ```txt
-   Open the core-ui-v*.mcpack to add it to your game
+   Open the core-ui-<UI version>.mcpack to add it to your game (the current template uses
+   core-ui-0.12.1.mcpack)
    ```
 
-4. **Build the addon:**
+5. **Build the addon:**
 
    ```bash
-   npm run build
-   # or
    yarn build
+   # or: npm run build
+   # or: pnpm build
    ```
 
-5. **Watch mode (auto-rebuild on changes):**
+6. **Watch mode (auto-rebuild on changes):**
 
    ```bash
-   npm run watch
-   # or
    yarn watch
+   # or: npm run watch
+   # or: pnpm watch
    ```
 
 ## What's inside
@@ -101,7 +114,7 @@ your editor until you do.
 ├── package.json
 ├── tsconfig.json
 ├── eslint.config.mjs
-└── core-ui-v*.mcpack
+└── core-ui-0.12.1.mcpack
 ```
 
 ## Documentation

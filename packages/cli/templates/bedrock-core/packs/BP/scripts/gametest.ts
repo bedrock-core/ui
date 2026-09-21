@@ -1,7 +1,7 @@
 /**
  * GameTest entry point — bundled only by the `test` profile.
  *
- * `yarn build:test` points the bundler at tsconfig.test.json, which names THIS file as the entry
+ * The build:test script points the bundler at tsconfig.test.json, which names THIS file as the entry
  * instead of main.ts, and pairs it with manifest.test.json, the only manifest that declares
  * @minecraft/server-gametest.
  *
