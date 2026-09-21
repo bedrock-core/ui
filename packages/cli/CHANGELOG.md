@@ -1,5 +1,11 @@
 # @bedrock-core/cli
 
+## 0.11.1
+
+### Patch Changes
+
+- [`49006bc`](https://github.com/bedrock-core/ui/commit/49006bcefc0b5ab4fc2d09b92f10201af3b33977) Thanks [@drav0011](https://github.com/drav0011)! - Fix generated projects' package-safe Yarn configuration, metadata escaping, render-pack selection, starter GameTest structure, lockfile linting, and positional project-name validation. Let users install with Yarn Berry or pnpm through a one-time Corepack enable, install with npm, or use another manager after skipping installation.
+
 ## 0.11.0
 
 ### Minor Changes
