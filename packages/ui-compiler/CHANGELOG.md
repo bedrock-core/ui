@@ -1,5 +1,11 @@
 # @bedrock-core/ui-compiler
 
+## 0.1.2
+
+### Patch Changes
+
+- [`49006bc`](https://github.com/bedrock-core/ui/commit/49006bcefc0b5ab4fc2d09b92f10201af3b33977) Thanks [@drav0011](https://github.com/drav0011)! - Forward the UI runtime's Minecraft API peer dependencies through the compiler package so consumers provide the correct Bedrock runtime context.
+
 ## 0.1.1
 
 ### Patch Changes
