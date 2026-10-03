@@ -106,6 +106,7 @@ const backdropOf = (element: JSX.Element): string | undefined => {
 
 /** What the walk carries: where the host put things, and what it has met so far. */
 interface Walk {
+  onNode?: (element: JSX.Element, node: IrNode) => void;
   addressing: Addressing;
   met: { cells: number; channels: number; visibles: number };
   counters: Map<string, number>;
@@ -339,6 +340,8 @@ const lower = (definition: NodeDefinition, element: JSX.Element, type: string, o
     walk.carried -= carried ? 1 : 0;
   }
 
+  walk.onNode?.(element, node);
+
   // A button draws its looks inside its face; any other element whose look is
   // carried is drawn once per look, beside itself.
   const look = element.type === BUTTON_TYPE ? undefined : walk.addressing.looks?.get(element);
@@ -396,6 +399,8 @@ const lowerLook = (
 };
 
 export interface ToIrOptions {
+  /** Receives source identity separately from emitted JSON UI. */
+  onNode?: (element: JSX.Element, node: IrNode) => void;
   /** JSON UI namespace for the emitted file. */
   namespace: string;
   /** The namespace of the addon's shared faces, `<addon>_faces`. */
@@ -455,6 +460,7 @@ export const toIr = (
   options: ToIrOptions,
 ): IrDocument => {
   const walk: Walk = {
+    ...options.onNode === undefined ? {} : { onNode: options.onNode },
     addressing,
     met: { cells: 0, channels: 0, visibles: 0 },
     counters: new Map(), carried: 0, wide: false,
@@ -480,7 +486,7 @@ export const toIr = (
     );
   }
 
-  return {
+  const result: IrDocument = {
     namespace: options.namespace,
     ...options.faces === undefined ? {} : { faces: options.faces },
     collection: options.collection,
@@ -493,4 +499,8 @@ export const toIr = (
     },
     ...walk.backdrop === undefined ? {} : { backdrop: walk.backdrop },
   };
+
+  options.onNode?.(root, result.root);
+
+  return result;
 };

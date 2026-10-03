@@ -73,7 +73,7 @@ export interface SwitchShape {
 
 export function Switch(
   {
-    name, label, defaultValue = false, on, onChange, enabled = true,
+    name, label, testId, testRole, testName, defaultValue = false, on, onChange, enabled = true,
     background, backgroundHover, backgroundPressed, backgroundLocked,
     checkedBackground, checkedHover, checkedLocked,
     ...layout
@@ -97,6 +97,10 @@ export function Switch(
   const control = useMechanism('Toggle') === 'field'
     ? (
         <PrimitiveToggle
+          testId={testId}
+          testRole={testRole}
+          testName={testName}
+          {...{ __testRole: 'checkbox', __testName: label }}
           name={named(name, label)}
           defaultValue={defaultValue}
           enabled={enabled}
@@ -108,6 +112,10 @@ export function Switch(
       )
     : (
         <Pressed
+          testId={testId}
+          testRole={testRole}
+          testName={testName}
+          {...{ __testRole: 'checkbox', __testName: label }}
           defaultValue={defaultValue}
           on={on}
           onChange={onChange}

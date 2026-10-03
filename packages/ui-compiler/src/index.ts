@@ -39,6 +39,11 @@ export { CHEST_HOST, MOUNT_ANCHOR } from './hosts/chest';
 export type { ChestHost, RoutedScreen } from './hosts/chest';
 export { buildRouter, compileScreen } from './compile';
 export type { CompiledScreen, ScreenSpec } from './compile';
+export { TEST_METADATA_PATH, TEST_METADATA_VERSION } from './testMetadata';
+export type {
+  ScreenTestMetadata, TestControlMetadata, TestHost, TestInteraction,
+  TestMetadataFile, TestMetadataManifest, TestMetadataScreen, TestName, TestRole,
+} from './testMetadata';
 
 // The form host: a screen shown to a player, compiled the same way.
 export { compileFormScreen } from './hosts/form/compile';

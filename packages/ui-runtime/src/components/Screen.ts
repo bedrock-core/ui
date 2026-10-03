@@ -11,6 +11,8 @@ import type { FunctionComponent, JSX } from '../jsx';
 export { SCREEN_TYPE };
 
 export interface ScreenProps {
+  /** Stable screen identity in opt-in compiler test metadata. */
+  testId?: string;
   /** The screen's content, laid out against the form canvas. */
   children?: JSX.Node;
   /**
@@ -46,10 +48,10 @@ export interface ScreenProps {
  * }
  * ```
  */
-export const Screen: FunctionComponent<ScreenProps> = ({ children, static: isStatic }: ScreenProps): JSX.Element =>
+export const Screen: FunctionComponent<ScreenProps> = ({ children, testId, static: isStatic }: ScreenProps): JSX.Element =>
   HostContext({
     value: 'form-action',
-    children: { type: SCREEN_TYPE, props: { children, ...isStatic === true ? { static: true } : {} } },
+    children: { type: SCREEN_TYPE, props: { children, ...testId === undefined ? {} : { testId }, ...isStatic === true ? { static: true } : {} } },
   });
 
 /** Whether a built screen declared itself static; read by the build off the root. */

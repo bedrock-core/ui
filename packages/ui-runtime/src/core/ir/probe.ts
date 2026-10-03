@@ -194,7 +194,7 @@ export const bakedTexts = (tree: JSX.Element): string[] => {
  * underscores is the library talking to its own build — a width slot, a
  * recorded layout — rather than anything drawn.
  */
-const NOT_BAKED = new Set(['children', 'key', 'maxLength', 'visible', 'liveVisible', 'enabled']);
+const NOT_BAKED = new Set(['children', 'key', 'testId', 'testRole', 'testName', 'maxLength', 'visible', 'liveVisible', 'enabled']);
 
 /**
  * Private props that are drawn all the same.

@@ -1,3 +1,5 @@
+export type { TestProps, TestRole } from './testing';
+
 export {
   Background,
   Button,

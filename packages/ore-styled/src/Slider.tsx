@@ -23,7 +23,7 @@ export interface SliderProps extends PrimitiveSliderProps {
  * `thumbHover` also becomes their dragged face unless they set `thumbPressed`.
  */
 export function Slider({
-  label, name, min, max, step, defaultValue, enabled = true,
+  label, testId, testRole, testName, name, min, max, step, defaultValue, enabled = true,
   background, backgroundHover, backgroundPressed, backgroundLocked,
   progress, progressHover, thumb, thumbHover, thumbPressed, thumbLocked,
   trackHeight, thumbWidth, thumbHeight,
@@ -35,6 +35,10 @@ export function Slider({
 
   const control = (
     <PrimitiveSlider
+      testId={testId}
+      testRole={testRole}
+      testName={testName}
+      {...{ __testName: label }}
       name={name}
       min={min}
       max={max}

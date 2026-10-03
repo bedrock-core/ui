@@ -21,8 +21,11 @@ import { chestAddressing, toIr } from './toIr';
 import { langOf, type ScreenLang } from './lang';
 import { checkTrans } from './trans';
 import { carriedPositions, drawnPerLook } from './looks';
+import { TestMetadataCollector, type ScreenTestMetadata } from './testing';
 
 export interface ScreenSpec {
+  /** Emit a semantic sidecar for development tooling; emitted UI is unchanged. */
+  testMetadata?: boolean;
   /** Screen name from the file name, e.g. `furnace`. */
   name: string;
   /**
@@ -37,6 +40,7 @@ export interface ScreenSpec {
 const DEFAULT_NAMESPACE = 'core_ui';
 
 export interface CompiledScreen {
+  testMetadata?: ScreenTestMetadata;
   name: string;
   /** The addon's namespace the screen was compiled under. */
   addon: string;
@@ -260,7 +264,9 @@ export function compileScreen(
 
   checkTrans(tree, spec.name);
   checkCapacity(screenHost, allocation.size, spec.name);
+  const testing = spec.testMetadata === true ? new TestMetadataCollector() : undefined;
   const ir = toIr(root, chestAddressing(allocation, tree, looks), {
+    ...testing === undefined ? {} : { onNode: testing.onNode },
     namespace,
     faces: facesNamespaceOf(addon),
     collection: host.collection,
@@ -282,6 +288,7 @@ export function compileScreen(
     layoutId: layoutKey(addon, spec.name),
     host: screenHost,
     document,
+    ...testing === undefined ? {} : { testMetadata: testing.finish(tree, document, `${addon}:${spec.name}`, 'chest') },
     face,
     facesNamespace: face.facesNamespace,
     faces: face.faces,

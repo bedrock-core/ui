@@ -49,6 +49,8 @@ export interface FormConfig {
 export const ModalContext = createContext<FormConfig | null>(null);
 
 export interface FormProps extends FormConfig {
+  /** Stable screen identity in opt-in compiler test metadata. */
+  testId?: string;
   /**
    * Modal contents: the fields (`Toggle` / `Select` / `Slider` / `Dropdown` /
    * `Input`), decorative nodes (`Image` / `Panel` / `Text`),
@@ -90,6 +92,7 @@ interface FormComponent extends FunctionComponent<FormProps> {
  * calls (e.g. via navigation), never nested.
  */
 const FormRoot: FunctionComponent<FormProps> = ({
+  testId,
   onSubmit,
   onCancel,
   children,
@@ -107,6 +110,7 @@ const FormRoot: FunctionComponent<FormProps> = ({
       children: {
         type: MODAL_FORM_SLOT_TYPE,
         props: {
+          ...testId === undefined ? {} : { testId },
           __formConfig: config,
           children,
         },

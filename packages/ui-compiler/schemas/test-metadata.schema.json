@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Bedrock Core UI test metadata",
+  "description": "Build-time semantic metadata and exact UI file hashes for external tools.",
+  "type": "object",
+  "required": ["schemaVersion", "producer", "files", "screens"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "producer": { "const": "@bedrock-core/ui-compiler" },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        }
+      }
+    },
+    "screens": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file", "source", "metadata"],
+        "properties": {
+          "file": { "type": "string", "minLength": 1 },
+          "source": { "type": "string" },
+          "metadata": { "$ref": "#/definitions/screen" }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "testId": { "type": "string", "maxLength": 256, "pattern": "\\S" },
+    "name": {
+      "type": "object",
+      "required": ["kind", "value"],
+      "properties": {
+        "kind": { "enum": ["literal", "translated", "bound", "declared"] },
+        "value": { "type": "string" }
+      }
+    },
+    "control": {
+      "type": "object",
+      "required": ["node", "role", "paths", "interaction"],
+      "properties": {
+        "node": { "type": "string", "minLength": 1 },
+        "role": { "enum": ["screen", "button", "checkbox", "textbox", "slider", "combobox", "listbox", "text", "image", "group"] },
+        "testId": { "$ref": "#/definitions/testId" },
+        "name": { "$ref": "#/definitions/name" },
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "minLength": 1 }
+          }
+        },
+        "interaction": { "enum": ["form-button", "modal-button", "form-input", "form-toggle", "form-slider", "form-dropdown", "unsupported"] }
+      }
+    },
+    "screen": {
+      "type": "object",
+      "required": ["schemaVersion", "screen", "namespace", "host", "controls"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "screen": { "type": "string", "minLength": 1 },
+        "namespace": { "type": "string", "minLength": 1 },
+        "host": { "enum": ["form-action", "form-modal", "chest"] },
+        "testId": { "$ref": "#/definitions/testId" },
+        "controls": { "type": "array", "items": { "$ref": "#/definitions/control" } }
+      }
+    }
+  }
+}

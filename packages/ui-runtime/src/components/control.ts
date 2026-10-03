@@ -1,5 +1,6 @@
 import { JSX } from '../jsx/jsx-runtime';
 import type { LayoutProps } from './layout';
+import type { TestProps } from '../testing';
 
 /**
  * Blank-canvas placeholder texture (3×3 nineslice, 1px borders) — the default look
@@ -7,7 +8,7 @@ import type { LayoutProps } from './layout';
  */
 export const UNSTYLED_TEXTURE = 'textures/ui/unstyled';
 
-export interface ControlProps extends LayoutProps {
+export interface ControlProps extends LayoutProps, TestProps {
   visible?: boolean;
   /**
    * Carry `visible` on a compiled screen whether or not the build's liveness
@@ -48,6 +49,11 @@ export { resolveStateBackgrounds, type StateBackgroundProps } from './stateBackg
 export function withControl(props: JSX.Props): JSX.Props {
   const {
     visible,
+    testId,
+    testRole,
+    testName,
+    __testRole,
+    __testName,
     liveVisible,
     enabled,
     background,
@@ -93,6 +99,11 @@ export function withControl(props: JSX.Props): JSX.Props {
   } = props;
 
   return {
+    ...testId === undefined ? {} : { testId },
+    ...testRole === undefined ? {} : { testRole },
+    ...testName === undefined ? {} : { testName },
+    ...__testRole === undefined ? {} : { __testRole },
+    ...__testName === undefined ? {} : { __testName },
     visible: visible ?? true,
     ...liveVisible === true ? { liveVisible: true } : {},
     // Internal to the build's composing components: the slot the layout records this box's width

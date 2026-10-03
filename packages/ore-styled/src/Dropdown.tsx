@@ -42,7 +42,7 @@ export interface DropdownProps extends Omit<PrimitiveDropdownProps, 'children'> 
  * set `backgroundPressed`.
  */
 export function Dropdown({
-  label, name, options, defaultValue, enabled = true,
+  label, testId, testRole, testName, name, options, defaultValue, enabled = true,
   background, backgroundHover, backgroundPressed, backgroundLocked,
   popupBackground, optionBackground, optionHover, optionSelected,
   optionFont, optionScale, optionAlign,
@@ -56,6 +56,10 @@ export function Dropdown({
   const control = (
     <Panel {...(label === undefined ? { ...rowSizing(layout), ...layout } : { width: '100%' })}>
       <PrimitiveDropdown
+        testId={testId}
+        testRole={testRole}
+        testName={testName}
+        {...{ __testName: label }}
         name={name}
         defaultValue={defaultValue}
         enabled={enabled}

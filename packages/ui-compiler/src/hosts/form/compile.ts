@@ -17,6 +17,7 @@ import { langOf, type ScreenLang } from '../../lang';
 import { carriedPositions, drawnPerLook, looksOf } from '../../looks';
 import { checkTrans, transRecords } from '../../trans';
 import { FORM_EMIT } from './emit';
+import { TestMetadataCollector, type ScreenTestMetadata } from '../../testing';
 
 /**
  * Compiling a form screen.
@@ -34,6 +35,8 @@ import { FORM_EMIT } from './emit';
  */
 
 export interface FormScreenSpec {
+  /** Emit a semantic sidecar for development tooling; emitted UI is unchanged. */
+  testMetadata?: boolean;
   /** Screen name from the file name, e.g. `home`. */
   name: string;
   /** The addon's namespace, e.g. `drav0011_shop`. */
@@ -41,6 +44,7 @@ export interface FormScreenSpec {
 }
 
 export interface CompiledFormScreen {
+  testMetadata?: ScreenTestMetadata;
   name: string;
   /** The addon's namespace the screen was compiled under. */
   addon: string;
@@ -224,7 +228,9 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
   }
 
   const addressing = modal ? modalAddressing(allocateModal(tree, visibles)) : actionAddressing(entries, tree);
+  const testing = spec.testMetadata === true ? new TestMetadataCollector() : undefined;
   const ir = toIr(formRoot(tree), addressing, {
+    ...testing === undefined ? {} : { onNode: testing.onNode },
     namespace,
     faces: facesNamespaceOf(spec.namespace),
     collection: modal ? MODAL_COLLECTION : FORM_COLLECTION,
@@ -240,6 +246,7 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
     title,
     ...embedded === undefined ? {} : { marker: embedMarker(spec.namespace), embed: embedded },
     document,
+    ...testing === undefined ? {} : { testMetadata: testing.finish(tree, document, `${spec.namespace}:${spec.name}`, host.id) },
     face,
     facesNamespace: face.facesNamespace,
     faces: face.faces,

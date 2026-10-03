@@ -22,7 +22,7 @@ export interface InputProps extends PrimitiveInputProps {
  * `backgroundHover` also becomes their focused face unless they set `backgroundPressed`.
  */
 export function Input({
-  label, name, placeholder, defaultValue, enabled = true,
+  label, testId, testRole, testName, name, placeholder, defaultValue, enabled = true,
   background, backgroundHover, backgroundPressed, backgroundLocked, font, scale,
   ...layout
 }: InputProps): JSX.Element {
@@ -33,6 +33,10 @@ export function Input({
 
   const control = (
     <PrimitiveInput
+      testId={testId}
+      testRole={testRole}
+      testName={testName}
+      {...{ __testName: label }}
       name={name}
       placeholder={placeholder}
       defaultValue={defaultValue}

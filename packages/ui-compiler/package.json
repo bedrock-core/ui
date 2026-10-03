@@ -27,6 +27,13 @@
 		".": {
 			"types": "./src/index.ts",
 			"import": "./src/index.ts"
+		},
+		"./testing": {
+			"types": "./src/testMetadata.ts",
+			"import": "./src/testMetadata.ts"
+		},
+		"./testing/schema": {
+			"default": "./schemas/test-metadata.schema.json"
 		}
 	},
 	"publishConfig": {
@@ -34,6 +41,7 @@
 	},
 	"files": [
 		"src",
+		"schemas",
 		"!src/**/__tests__/**",
 		"!src/**/*.test.ts",
 		"!src/**/*.test.tsx",
