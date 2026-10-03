@@ -26,6 +26,7 @@
 import { ContainerScreenError } from '@bedrock-core/ui-runtime/compile';
 import type { IrDocument, PanelNode } from './ir';
 import type { Control, ControlEntry, Document } from './jsonui';
+import { type FlowPanel, flowPanel, flowPanels } from './flow';
 import { childrenOf, definitionFor, socketsOf } from './nodes';
 import { FULL, over, shownWhileOn, sizeOf, surface, topLeft } from './faces';
 import { swapControlName } from './nodes/primitives/swap';
@@ -156,7 +157,25 @@ export const faceOf = (doc: IrDocument): FaceDocument => {
       );
     }
 
-    return canonical(entries);
+    const flows = new Map<string, FlowPanel>();
+
+    const collect = (node: IrNode): void => {
+      const flow = node.kind === 'panel' ? flowPanel(node) : undefined;
+
+      if (flow !== undefined) { flows.set(node.name, flow); }
+
+      childrenOf(node).forEach(collect);
+    };
+
+    nodes.forEach(collect);
+
+    const content = flowPanels({ namespace: facesNamespace, content: { controls: entries } }, flows)['content'];
+
+    if (content === undefined || typeof content === 'string' || 'modifications' in content) {
+      throw new Error('unreachable: shared faces have a content control');
+    }
+
+    return canonical(content.controls ?? []);
   };
 
   const context: FaceEmit = { ns: doc.namespace, facesNs: facesNamespace, faces, defs, emitNode, shared };

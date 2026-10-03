@@ -7,7 +7,9 @@
  * gate, an index host) or a replacement for it (a cell over a container
  * slot). Whatever it hands back keeps the face's placement — size, offset,
  * anchors, layer — and the build refuses one that does not. Nothing outside
- * the sockets is touched.
+ * the sockets is touched during filling. A final pass collapses transparent
+ * layout panels whose children can keep their absolute placement, then uses
+ * native stacks for contiguous rows and columns that need no extra controls.
  *
  * Rules the mechanisms obey, all measured:
  *
@@ -24,10 +26,13 @@
  */
 
 import { ContainerScreenError } from '@bedrock-core/ui-runtime/compile';
+import { collapsePanels } from './collapse';
+import { type FlowPanel, flowPanel, flowPanels } from './flow';
 import { type FaceDocument, SCREEN_DEFINITION } from './face';
 import type { Control, ControlEntry, Document } from './jsonui';
+import { childrenOf } from './nodes';
 import { entryControl, placementOf } from './nodes/utils/shared';
-import type { Emit, HostEmit, Socket } from './nodes/utils/types';
+import type { Emit, HostEmit, IrNode, Socket } from './nodes/utils/types';
 
 /** Where an entry was found: the list it sits in and its position, or the document itself. */
 type Found
@@ -204,5 +209,27 @@ export const fill = (face: FaceDocument, host: HostEmit, title = ''): Document =
 
   Object.assign(document, context.defs);
 
-  return document;
+  const panels = new Set<string>();
+  const flows = new Map<string, FlowPanel>();
+
+  const collect = (node: IrNode): void => {
+    const flow = node.kind === 'panel' ? flowPanel(node) : undefined;
+
+    if (flow !== undefined) {
+      flows.set(node.name, flow);
+    }
+
+    if (node.kind === 'panel' && node.id === undefined && node.background === undefined
+      && node.native === undefined && node.stack === undefined && node.visible === undefined
+      && node.carriedVisible === undefined && node.carriedLook === undefined
+      && node.lookGate === undefined && node.follows === undefined) {
+      panels.add(node.name);
+    }
+
+    childrenOf(node).forEach(collect);
+  };
+
+  collect(face.root);
+
+  return flowPanels(collapsePanels(document, panels), flows);
 };

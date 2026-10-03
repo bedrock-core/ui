@@ -1,6 +1,7 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
 import { PANEL_TYPE } from '@bedrock-core/ui-runtime/compile';
 import { panelFace } from '../../faces';
+import { type Flow, flowOf } from '../../flow';
 import { nativeLayout, type NativeLayout } from '../../nativeLayout';
 import { boxOf, collapses, layerOf, offsetOf, sizeOf, str, topLeft, visibilityOf } from '../utils/shared';
 import { stackColumns, stackRows } from '../utils/stack';
@@ -24,6 +25,8 @@ const layoutOf = (props: JSX.Props): { row: boolean; centred: boolean } => {
 export interface PanelNode extends NodeBase {
   kind: 'panel';
   native?: NativeLayout;
+  /** Authored flow eligible for a native stack after redundant panels are removed. */
+  flow?: Flow;
   /** Nineslice texture drawn over the whole rect, under the children. */
   background?: string;
   /**
@@ -59,6 +62,7 @@ export const panelDefinition: NodeDefinition<PanelNode> = {
     const children = ctx.children(element, ctx.own);
     const folds = element.props.stack === true || children.some(collapses);
     const { row, centred } = layoutOf(element.props);
+    const flow = folds ? undefined : flowOf(element);
     const style = element.props.__layout;
     const native = ctx.responsive === true && typeof style === 'object' && style !== null
       ? nativeLayout(style, ctx.rect)
@@ -80,6 +84,7 @@ export const panelDefinition: NodeDefinition<PanelNode> = {
       name: ctx.name('panel'),
       rect: ctx.rect,
       ...native === undefined ? {} : { native },
+      ...flow === undefined ? {} : { flow },
       ...ctx.decoration,
       ...background === '' ? {} : { background },
       ...folds ? { stack: true as const } : {},

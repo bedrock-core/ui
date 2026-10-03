@@ -212,11 +212,12 @@ describe('emit', () => {
   });
 
   it('passes layer and visibility through only when set', () => {
-    const [, layered] = find(doc, name => name === 'panel_1');
+    const [, layered] = find(doc, name => name === 'image_1');
     const [, hidden] = find(doc, name => name === 'label_2');
     const [, plain] = find(doc, name => name === 'label_1');
 
     expect(layered.layer).toBe(2);
+    expect(layered.offset).toEqual([7, 49]);
     expect(hidden.visible).toBe(false);
     expect(plain.layer).toBeUndefined();
     expect(plain.visible).toBeUndefined();
@@ -605,7 +606,7 @@ describe('emit / panels', () => {
   it('draws nothing under a panel without a background', () => {
     const doc = emit(screenOf([{ kind: 'panel', name: 'box', rect: { x: 0, y: 0, width: 10, height: 10 }, children: [] }]));
 
-    expect(find(doc, name => name === 'box')[1].controls).toEqual([]);
+    expect(findAll(doc, name => name === 'box')).toEqual([]);
     expect(definition(doc, 'screen').controls?.some(entry => 'bg' in entry)).toBe(false);
   });
 });
