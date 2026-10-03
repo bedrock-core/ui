@@ -12,6 +12,7 @@ import type { Box } from '../../faces';
 import type { Control, ControlEntry } from '../../jsonui';
 import type { IrNode } from './types';
 import type { Rect } from './types';
+import type { NativeLayout } from '../../nativeLayout';
 
 /** A literal inside a JSON UI expression is single-quoted. */
 export const literal = (value: string): string => `'${value.replaceAll(String.fromCharCode(39), '')}'`;
@@ -25,9 +26,10 @@ export { FONT_SIZE, FULL, offsetOf, sizeOf, topLeft } from '../../faces';
  * decorations the author may have set. The one adapter between an IR node and
  * a face, so no kind restates the mapping.
  */
-export const boxOf = (node: { name: string; rect: Rect; layer?: number; visible?: boolean }): Box => ({
+export const boxOf = (node: { name: string; rect: Rect; native?: NativeLayout; layer?: number; visible?: boolean }): Box => ({
   name: node.name,
   rect: node.rect,
+  ...node.native === undefined ? {} : { native: node.native },
   ...node.layer === undefined ? {} : { layer: node.layer },
   ...node.visible === false ? { hidden: true } : {},
 });

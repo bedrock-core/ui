@@ -6,26 +6,13 @@
  * chest; a block's `minecraft:block_entity.container` opens the data-driven
  * container screen instead. The two are the same screen to everything above
  * this — the same collection, the same protocol items, the same layout keys —
- * so both are hooked the same way and both mount the one router root. Two
- * kinds of edit to a vanilla file put a layout there, and both are of a kind
- * the engine stacks across packs in whatever order they sit.
+ * so both are hooked the same way and both mount the one router root.
  *
- *  - The render pack's static copy of `chest_screen.json` points the chest
- *    screen's `$screen_content` at the CHEST ROOT, the way vanilla's own
- *    shulker-box and barrel screens point theirs elsewhere. The root holds
- *    vanilla's chest panel by reference behind a gate that opens for any
- *    chest no compiled screen claims, and behind the opposite gate the
- *    chrome plus a second reference to vanilla's chest top half, whose own
- *    label and grid that copy also gates. A modification cannot switch the
- *    content: `variables` is not an array modifications reach, and a
- *    `controls` insert on the screen creates an array that shadows the one
- *    the screen inherits, emptying every chest.
- *  - Each addon's HOOK, generated here into its own copy of the same file,
- *    inserts the addon's root into that top half — an array vanilla itself
- *    declares, so inserts from packs built apart all land, and nothing is
- *    defined that would replace another pack's.
- *  - Each addon's ROUTER, a file of its own, holds that root: one gated host
- *    per compiled screen.
+ * This module emits the addon's router and additive insertions into vanilla's
+ * top-half panels. `buildContainerPack` completes those hooks with the desktop
+ * and pocket shells, and links their templates into the addon's support file.
+ * Each shell mounts vanilla's panel for ordinary containers and the insertion
+ * panel for compiled containers, so every addon's registered root is reachable.
  *
  * The routing reads the sentinel, the protocol item in slot 0. Its max
  * durability is the protocol key, shared by every compiled screen; its current
@@ -34,9 +21,8 @@
  * — absence IS the vanilla path, so nothing has to special-case it.
  *
  * Every number in a binding here is a literal on purpose. A `$variable` inside
- * a `source_property_name` is silently dropped in a subtree the engine
- * inserted through `modifications`, which cost six in-game attempts to
- * establish.
+ * a `source_property_name` does not reliably resolve in a subtree inserted
+ * through `modifications`.
  */
 
 import {
@@ -73,7 +59,7 @@ export interface ChestHost {
   readonly hooks: readonly ChestHook[];
   /** Pack directory an addon's router document is written into. */
   readonly routerDir: string;
-  /** JSON UI namespace of the chest root and of every addon's router. */
+  /** JSON UI namespace used for the router definitions. */
   readonly routerNamespace: string;
   /** The collection every slot and channel reads from. */
   readonly collection: string;
@@ -217,9 +203,8 @@ const checkKeys = (screens: readonly RoutedScreen[]): void => {
 /**
  * The addon's hooks: its copies of vanilla's chest files, each holding one
  * modification that inserts the addon's root into the chest top half the
- * chest root mounts. Nothing is defined in them, so they stack with the
- * render pack's copies and with every other addon's, whatever order the
- * packs sit in.
+ * chest root mounts. Nothing is defined in these insertions. Pack linking adds
+ * the shell properties and resolves helper names separately.
  */
 const hooksOf = (addon: string, host: ChestHost): PlacedDocument[] => host.hooks.map(hook => ({
   file: hook.file,

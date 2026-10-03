@@ -30,6 +30,22 @@ const screenOf = (children: IrNode[], extra: Partial<IrDocument> = {}): IrDocume
 });
 
 describe('emit', () => {
+  it('emits native nested percentages and CSS-style edge placement', () => {
+    const root = screenOf([{
+      kind: 'panel', name: 'responsive', rect: { x: 0, y: 0, width: 160, height: 105 },
+      native: { size: ['50%', '50%'], anchor: 'top_right', offset: [-8, 8] },
+      children: [],
+    }]);
+    root.root.native = { size: ['100%', '100%'] };
+    const screen = definition(emit(root), 'screen');
+    const panelEntry = entries(screen).find(([name]) => name === 'responsive');
+
+    expect(screen.size).toEqual(['100%', '100%']);
+    expect(panelEntry?.[1]).toMatchObject({
+      size: ['50%', '50%'], anchor_from: 'top_right', anchor_to: 'top_right', offset: [-8, 8],
+    });
+  });
+
   const doc = emit(demoScreen);
 
   it('emits the namespace, the screen and the backdrop', () => {

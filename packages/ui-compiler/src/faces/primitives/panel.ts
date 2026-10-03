@@ -11,8 +11,8 @@ export interface PanelFace extends Box {
 /**
  * A box holding other things.
  *
- * The layout solved every child a place of its own, so a panel does no
- * arranging: it draws a background if it has one and holds what it was given.
+ * A panel draws its background and holds its children. Responsive panels retain
+ * native percentages and edge anchors so Bedrock sizes them against their parent.
  */
 export const panelFace: Face<PanelFace> = data => entry(data.name, {
   type: 'panel',

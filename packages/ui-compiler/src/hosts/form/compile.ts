@@ -26,12 +26,8 @@ import { TestMetadataCollector, type ScreenTestMetadata } from '../../testing';
  * lower, emit — with the two halves that are the host's answered by the form:
  * what a screen's root is, and where its cells and channels live.
  *
- * What is NOT here is as telling as what is. There is no entity, because a
- * form belongs to a player rather than a thing in the world. There is no
- * inventory to size and no layout key to stamp on it, because the title
- * carries the key. And there is no router: `main_screen_content` already gates
- * the library's own container on the protocol header, so a compiled screen is
- * mounted by being named in the title rather than by editing a vanilla file.
+ * The title identifies the screen. `buildFormPack` links the resulting
+ * documents with their support definitions and the addon's vanilla form hook.
  */
 
 export interface FormScreenSpec {
@@ -199,6 +195,10 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
   });
   const embedded = embedPlacementOf(tree);
 
+  if (embedded?.name !== undefined && !/^[A-Za-z0-9_-]+$/.test(embedded.name)) {
+    throw new ContainerScreenError(`Invalid embedded page name: ${embedded.name}`);
+  }
+
   if (embedded !== undefined && modal) {
     throw new ContainerScreenError('An embedded screen is drawn into an action form; it cannot be a <Form> modal.');
   }
@@ -244,7 +244,7 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
     addon: spec.namespace,
     namespace,
     title,
-    ...embedded === undefined ? {} : { marker: embedMarker(spec.namespace), embed: embedded },
+    ...embedded === undefined ? {} : { marker: embedMarker(spec.namespace, embedded.name), embed: embedded },
     document,
     ...testing === undefined ? {} : { testMetadata: testing.finish(tree, document, `${spec.namespace}:${spec.name}`, host.id) },
     face,

@@ -77,6 +77,51 @@ const buttonNode = (node: IrNode): ButtonNode => {
 };
 
 describe('toIr', () => {
+  it('keeps responsive container and nested panel sizes for native emission', () => {
+    const inner = at('panel', [0, 0, 160, 105], {
+      __layout: { position: 'absolute', top: 0, left: 0, width: '50%', height: '50%' },
+    });
+    const outer = at('panel', [0, 0, 320, 210], {
+      __layout: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' },
+    }, [inner]);
+    const doc = convert(container([outer], { __layout: { width: '100%', height: '100%' } }));
+
+    expect(doc.root.native?.size).toEqual(['100%', '100%']);
+    const panelNode = panel(doc.root.children[0]!);
+
+    expect(panelNode.native).toEqual({ size: ['100%', '100%'], anchor: 'top_left', offset: [0, 0] });
+    expect(panel(panelNode.children[0]!).native?.size).toEqual(['50%', '50%']);
+  });
+
+  it('retains right and bottom edge positioning on a panel', () => {
+    const doc = convert(container([
+      at('panel', [242, 178, 70, 20], {
+        __layout: { position: 'absolute', right: 8, bottom: 12, marginRight: 4, marginBottom: 3, width: 70, height: 20 },
+      }),
+    ], { __layout: { width: '100%', height: '100%' } }));
+
+    expect(panel(doc.root.children[0]!).native).toEqual({
+      size: [70, 20], anchor: 'bottom_right', offset: [-12, -15],
+    });
+  });
+
+  it('rejects unresolved flow and padding around responsive percentages', () => {
+    const flowing = container([at('panel', [0, 0, 20, 20], { __layout: { width: 20, height: 20 } })], {
+      __layout: { width: '100%', height: '100%' },
+    });
+    expect(() => convert(flowing)).toThrow(/absolute positioning/);
+
+    const padded = container([at('panel', [8, 8, 152, 80], {
+      __layout: { position: 'absolute', top: 8, left: 8, width: '50%', height: 80 },
+    })], { __layout: { width: '100%', height: '100%', padding: 8 } });
+    expect(() => convert(padded)).toThrow(/padded parent/);
+  });
+
+  it('rejects a fixed container larger than the safe canvas', () => {
+    expect(() => convert(container([], {}, [0, 0, 321, 210]))).toThrow(/320 × 210/);
+    expect(() => convert(container([], {}, [0, 0, 320, 211]))).toThrow(/320 × 210/);
+  });
+
   it('reads the collection and the canvas off the root', () => {
     const doc = convert(container([], { background: 'textures/ui/frame' }));
 

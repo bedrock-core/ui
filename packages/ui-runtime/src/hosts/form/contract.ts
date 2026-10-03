@@ -65,13 +65,8 @@ export const ENCODING_MIN = 1;
 export const ENCODING_MAX = 1;
 
 /**
- * The render pack's vocabulary — the definitions compiled screens reference
- * and the `$variables` they take — versioned by the same window rule. An
- * addon's screens are compiled once against one vocabulary and keep
- * referencing it for as long as they ship, and the library cannot rebuild
- * them: a definition or variable a compiled screen references is added under
- * a new version, never changed in place. `resource-pack/protocol.json`
- * declares the same window on the pack side.
+ * The helper vocabulary emitted by the matching UI compiler. Each addon's pack
+ * carries the definitions its compiled screens reference.
  */
 export const VOCABULARY_MIN = 1;
 export const VOCABULARY_MAX = 1;
@@ -89,9 +84,12 @@ export const PROTOCOL_HEADER = 'corev0009';
 /** What marks a title as a compiled screen rather than a serialized one. */
 export const COMPILED_MARKER = 'core';
 
+/** Stable vanilla-hook recognition prefix; the following encoding versions the payload. */
+export const COMPILED_HEADER = `${PROTOCOL_HEADER}${COMPILED_MARKER}`;
+
 /** `corev0009core1:` — what every compiled title of encoding 1 starts with. */
 export const compiledPrefix = (encoding: number): string =>
-  `${PROTOCOL_HEADER}${COMPILED_MARKER}${encoding}:`;
+  `${COMPILED_HEADER}${encoding}:`;
 
 /**
  * The title a compiled screen is shown with: the header, the encoding, and the

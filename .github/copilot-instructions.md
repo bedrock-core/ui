@@ -1,6 +1,6 @@
 # Copilot instructions for `@bedrock-core/ui`
 
-This repository contains the UI libraries, compiler, scaffold CLI and the independently built shared render pack. Read the nearest package source and tests before changing behavior; the public docs live in the separate `bedrock-core/docs` repository.
+This repository contains the UI libraries, compiler, scaffold CLI and the independently built shared asset pack. Read the nearest package source and tests before changing behavior; the public docs live in the separate `bedrock-core/docs` repository.
 
 ## Repository map
 
@@ -11,9 +11,9 @@ This repository contains the UI libraries, compiler, scaffold CLI and the indepe
 - `packages/ore-styled/` — styled components and design tokens.
 - `packages/flexbox/` — layout engine.
 - `packages/cli/` — `@bedrock-core/cli`; its current template is `templates/bedrock-core/`.
-- `packages/resource-pack/` — independent project that builds the world-scoped `.mcpack` from released npm packages and released Regolith filters.
+- `packages/resource-pack/` — independent project that copies UI textures into the world-scoped `.mcpack`.
 
-The UI libraries do not depend on the Apps packages. The resource-pack artifact and CLI template install the released Server and Apps packages because they compile framework screens and scaffold a full addon.
+The UI libraries do not depend on the Apps packages. The CLI template installs released Server and Apps packages to scaffold an addon. Each Catalog addon compiles its framework page and guide.
 
 ## Screen model
 
@@ -28,7 +28,7 @@ Every screen has exactly one host root:
 - `<Container entity={...}>` or `<Container block={...}>` selects the container host and names exactly one host type. A container screen has no single viewer, so `usePlayer()`, `useTranslation()` and `useNavigation()` have no valid player there. Read the player from handler events, use the free `navigate(key, player)` and `back(player)` functions, and use `i18n.key()` for static client-resolved keys.
 - `<Embed>` is a compiled area owned by one addon and mounted in an area reserved by another screen.
 
-Use `Panel`, `Text`, `Button`, fields and other public controls to compose addon components. `registerComponent`, writer functions and arbitrary host-element types are framework implementation interfaces; a native control requires matching runtime, compiler, host and render-pack support.
+Use `Panel`, `Text`, `Button`, fields and other public controls to compose addon components. `registerComponent`, writer functions and arbitrary host-element types are framework implementation interfaces; a native control requires matching runtime, compiler and host support.
 
 ## Navigation and cross-addon screens
 
@@ -40,24 +40,22 @@ Keep cross-addon data plain and explicit. The addon that compiled a screen owns 
 
 Put shared behavior in host-independent components and IR. Put form, container or future-screen mechanics in that host's build/runtime pair. A host owns its transport, allocation, routing, inputs and vanilla hook.
 
-`withControl()` normalizes the common props of framework controls and records layout input. Addon components that compose public controls do not call it. When a framework primitive changes, update its component, lowering/allocation for every supported host, compiler output, render-pack definitions and focused tests together.
+`withControl()` normalizes the common props of framework controls and records layout input. Addon components that compose public controls do not call it. When a framework primitive changes, update its component, lowering/allocation for every supported host, compiler output, support templates and focused tests together.
 
 Container screens use real inventory slots as their runtime transport. Hidden carrier items must stay invisible, unfocusable and unavailable to the cursor. Empty output cells must block interaction without exposing a durability bar or tooltip. Test insert, take, drop, rapid press, close and reopen behavior in game after container changes.
 
 ## Resource-pack contract
 
-The shared render pack is one half of the UI protocol. Changes to runtime payloads, compiler output, host routing, textures or JSON UI must be reflected in `packages/resource-pack/` and checked in game.
+Each addon owns its compiled JSON UI, vanilla hooks and required support templates. The shared resource pack contains textures and pack metadata; it has no UI directory or filters.
 
-The resource-pack project uses exact public dependency versions. Do not add workspace links or repository checkouts to its release workflow. `bedrock-core/setup-regolith` installs the released filters. The resource-pack workflow builds the artifact from main, verifies the published Catalog framework snapshot, and attaches the `.mcpack` to the existing UI release. CurseForge upload is a separate optional job.
+The resource-pack workflow copies the textures from main and attaches the `.mcpack` to each UI release, even when textures are unchanged. The pack major is the UI major plus one; the rest of the version matches. CurseForge upload is a separate optional job and reads metadata from that artifact.
 
 Run pack commands from `packages/resource-pack/`:
 
 ```bash
 yarn install
-yarn regolith-install
 yarn lint
 yarn build
-yarn verify-framework
 yarn deploy
 ```
 

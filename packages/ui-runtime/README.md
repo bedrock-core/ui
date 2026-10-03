@@ -2,10 +2,9 @@
 
 ![Logo](https://raw.githubusercontent.com/bedrock-core/ui/main/assets/logo/title.png)
 
-Beta. The core of `@bedrock-core/ui`: a JSX runtime, the component primitives, the hook system,
-and the serializer that packs a laid-out tree into the payload string Minecraft's own server forms
-carry. A JSON UI render pack decodes those bytes in-game and paints the screen, which is what buys
-layouts `@minecraft/server-ui` cannot express.
+Beta. The core of `@bedrock-core/ui`: a JSX runtime, component primitives, hooks and form/container
+hosts. Screens and their helper controls are compiled into each addon's resource pack; the runtime
+carries their current values and handles input through Minecraft's native forms and containers.
 
 ## Install
 
@@ -20,8 +19,8 @@ Point TypeScript at the JSX runtime (`@bedrock-core/ui-runtime` works as the imp
 { "compilerOptions": { "jsx": "react-jsx", "jsxImportSource": "@bedrock-core/ui" } }
 ```
 
-The matching render pack (`core-ui-v*.mcpack`) ships with every release and must be installed in
-the world.
+The shared resource pack (`core-ui-*.mcpack`) supplies textures. Enable it in the
+world alongside the addon, and compile the addon's screens with the matching UI compiler.
 
 ## Usage
 

@@ -173,6 +173,8 @@ export interface Addressing {
 
 /** What a lowering sees: the element's solved geometry, and the walk's services. */
 export interface LowerContext {
+  /** The root opted into preserving native JSON UI percentages and anchors. */
+  responsive?: boolean;
   /** Absolute rect of the parent the element is positioned against. */
   origin: Rect;
   /** Absolute rect as the layout pass left it. */

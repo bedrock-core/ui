@@ -1,7 +1,7 @@
 {
 	"$schema": "https://raw.githubusercontent.com/Bedrock-OSS/regolith-schemas/main/config/v1.4.json",
 	"author": "DrAv0011",
-	"description": "The @bedrock-core/ui render pack: hosts, shapes and the framework’s own screens",
+	"description": "Shared UI textures for Bedrock Core addons",
 	"name": "@bedrock-core_ui",
 	"packs": {
 		"behaviorPack": "./packs/BP",
@@ -9,24 +9,7 @@
 	},
 	"regolith": {
 		"dataPath": "./packs/data",
-		"filterDefinitions": {
-			"guides": {
-				"url": "github.com/bedrock-core/regolith-filters",
-				"version": "1.2.0"
-			},
-			"i18n": {
-				"url": "github.com/bedrock-core/regolith-filters",
-				"version": "1.2.0"
-			},
-			"ui-compiler": {
-				"url": "github.com/bedrock-core/regolith-filters",
-				"version": "0.1.0"
-			},
-			"references": {
-				"runWith": "nodejs",
-				"script": "./filters/references.mts"
-			}
-		},
+		"filterDefinitions": {},
 		"formatVersion": "1.4.0",
 		"profiles": {
 			"build": {
@@ -35,32 +18,7 @@
 					"readOnly": true,
 					"target": "local"
 				},
-				"filters": [
-					{
-						"filter": "guides",
-						"settings": {
-							"namespace": "core",
-							"pretty": false
-						}
-					},
-					{
-						"filter": "i18n",
-						"settings": {
-							"namespace": "core",
-							"pretty": false
-						}
-					},
-					{
-						"filter": "ui-compiler",
-						"settings": {
-							"namespace": "core",
-							"pretty": false
-						}
-					},
-					{
-						"filter": "references"
-					}
-				]
+				"filters": []
 			},
 			"default": {
 				"export": {
@@ -68,39 +26,7 @@
 					"readOnly": false,
 					"target": "development"
 				},
-				"filters": [
-					{
-						"filter": "guides",
-						"settings": {
-							"namespace": "core",
-							"pretty": {
-								"indent": "tab"
-							}
-						}
-					},
-					{
-						"filter": "i18n",
-						"settings": {
-							"namespace": "core",
-							"pretty": {
-								"indent": "tab"
-							}
-						}
-					},
-					{
-						"filter": "ui-compiler",
-						"settings": {
-							"namespace": "core",
-							"stamp": true,
-							"pretty": {
-								"indent": "tab"
-							}
-						}
-					},
-					{
-						"filter": "references"
-					}
-				]
+				"filters": []
 			}
 		}
 	}

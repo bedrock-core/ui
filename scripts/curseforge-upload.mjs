@@ -13,7 +13,7 @@
  * would mean a second build that could disagree with it.
  *
  * Usage:
- *   node scripts/curseforge-upload.mjs --file <mcpack> --changelog-file <md> --tag <tag> [--dry-run]
+ *   node scripts/curseforge-upload.mjs --file <mcpack> --manifest <json> --changelog-file <md> --tag <tag> [--dry-run]
  *
  * Reads `CURSEFORGE_TOKEN` from the environment (not needed for --dry-run).
  */
@@ -21,8 +21,6 @@ import { basename } from 'node:path';
 import { readFileSync } from 'node:fs';
 
 const CONFIG = 'packages/resource-pack/curseforge.json';
-const RECORD = 'packages/resource-pack/protocol.json';
-const MANIFEST = 'packages/resource-pack/packs/RP/manifest.json';
 
 function fail(message) {
 	console.error(`curseforge-upload: ${message}`);
@@ -49,7 +47,7 @@ function parseArgs(argv) {
 const args = parseArgs(process.argv.slice(2));
 const dryRun = args['dry-run'] === true;
 
-for (const required of ['file', 'changelog-file', 'tag']) {
+for (const required of ['file', 'manifest', 'changelog-file', 'tag']) {
 	if (typeof args[required] !== 'string') { fail(`missing --${required}`); }
 }
 
@@ -67,14 +65,13 @@ if (!['alpha', 'beta', 'release'].includes(config.releaseType)) {
 	fail(`"releaseType" in ${CONFIG} must be "alpha", "beta" or "release"`);
 }
 
-const { packVersion } = JSON.parse(readFileSync(RECORD, 'utf8'));
-const displayName = `Core UI ${packVersion.join('.')}`;
+const manifest = JSON.parse(readFileSync(args.manifest, 'utf8'));
+const displayName = `Core UI ${manifest.header.version}`;
 const base = `https://${config.gameEndpoint}.curseforge.com/api`;
-const manifest = JSON.parse(readFileSync(MANIFEST, 'utf8'));
 const minimumEngine = manifest.header?.min_engine_version;
 
 if (typeof minimumEngine !== 'string' || !/^1\.\d+\.\d+$/.test(minimumEngine)) {
-	fail(`${MANIFEST} header.min_engine_version must be a Bedrock version such as "1.26.50"`);
+	fail(`${args.manifest} header.min_engine_version must be a Bedrock version such as "1.26.50"`);
 }
 
 // CurseForge displays current Bedrock releases without Minecraft's leading

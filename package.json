@@ -81,7 +81,7 @@
 		"lint:libs": "yarn workspaces foreach -A -pt --no-private --exclude '@bedrock-core/ui' --exclude '@bedrock-core/cli' run lint",
 		"test": "yarn workspaces foreach -ptA run test",
 		"test:libs": "yarn workspaces foreach -A -pt --no-private --exclude '@bedrock-core/ui' --exclude '@bedrock-core/cli' run test",
-		"test:release": "node --test scripts/cli-artifact.test.mjs scripts/release-root.test.mjs",
+		"test:release": "node --test scripts/cli-artifact.test.mjs scripts/release-root.test.mjs scripts/sync-pack-version.test.mjs",
 		"coverage": "yarn workspaces foreach -ptA run coverage",
 		"deploy": "yarn --cwd packages/resource-pack deploy",
 		"preflight": "node scripts/preflight.mjs",

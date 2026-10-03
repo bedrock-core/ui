@@ -1,4 +1,5 @@
 import type { Control, ControlEntry } from '../../jsonui';
+import type { NativeLayout } from '../../nativeLayout';
 
 export type { Control, ControlEntry };
 
@@ -23,6 +24,7 @@ export interface Box {
   /** Unique within the document. Becomes the control name in the output. */
   name: string;
   rect: Rect;
+  native?: NativeLayout;
   layer?: number;
   hidden?: boolean;
 }

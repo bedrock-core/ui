@@ -41,7 +41,7 @@ export { hasMechanism } from './core/ir/claims';
 export type { VariantTable } from './core/ir/probe';
 export type { CompiledSnapshot } from './core/render/screens';
 export {
-  COLLECTION as FORM_COLLECTION, compiledPrefix, DETAILS_BINDING as FORM_DETAILS_BINDING,
+  COLLECTION as FORM_COLLECTION, COMPILED_HEADER as FORM_COMPILED_HEADER, compiledPrefix, DETAILS_BINDING as FORM_DETAILS_BINDING,
   COUNT_PREFIX as FORM_COUNT_PREFIX, ENCODING_MAX, ENCODING_MIN, FLAG_OFF as FORM_FLAG_OFF,
   FLAG_ON as FORM_FLAG_ON, keyFrom as formKeyFrom, LOOK_PREFIX as FORM_LOOK_PREFIX, titleFor as formTitleFor,
   VOCABULARY_MAX, VOCABULARY_MIN,

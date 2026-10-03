@@ -1,4 +1,5 @@
 export type { TestProps, TestRole } from './testing';
+export { version as UI_VERSION } from '../package.json';
 
 export {
   Background,

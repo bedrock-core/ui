@@ -4,9 +4,8 @@ import { entryControl } from '../../nodes/utils/shared';
 import type { Binding, ButtonMapping, Control, ControlEntry } from '../../jsonui';
 
 /**
- * The namespace of the library's own container definitions — the cells, text
- * hosts, scroll and chrome — shipped as static files in the render pack. A compiled screen references them by name and
- * emits only what varies per screen.
+ * Symbolic names for the compiler's container templates. Pack linking resolves
+ * these references into the addon's helper namespace.
  */
 export const CHEST = 'core_ui_chest';
 
@@ -63,9 +62,7 @@ const isSelfRouted = (mapping: ButtonMapping): boolean => mapping.from_button_id
  */
 
 /**
- * The library's own cell definitions a slot mounts, from the static
- * `core_ui_chest` file the render pack ships. One per control shape, never one
- * per node.
+ * The cell templates a slot mounts. Linking emits each required shape once.
  */
 export const CELL = {
   host: `${CHEST}.slot_host`,

@@ -1,6 +1,7 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
 import { PANEL_TYPE } from '@bedrock-core/ui-runtime/compile';
 import { panelFace } from '../../faces';
+import { nativeLayout, type NativeLayout } from '../../nativeLayout';
 import { boxOf, collapses, layerOf, offsetOf, sizeOf, str, topLeft, visibilityOf } from '../utils/shared';
 import { stackColumns, stackRows } from '../utils/stack';
 import type { IrNode, NodeBase, NodeDefinition } from '../utils/types';
@@ -22,6 +23,7 @@ const layoutOf = (props: JSX.Props): { row: boolean; centred: boolean } => {
 /** A container. Draws its background, if it has one, behind its children. */
 export interface PanelNode extends NodeBase {
   kind: 'panel';
+  native?: NativeLayout;
   /** Nineslice texture drawn over the whole rect, under the children. */
   background?: string;
   /**
@@ -57,6 +59,14 @@ export const panelDefinition: NodeDefinition<PanelNode> = {
     const children = ctx.children(element, ctx.own);
     const folds = element.props.stack === true || children.some(collapses);
     const { row, centred } = layoutOf(element.props);
+    const style = element.props.__layout;
+    const native = ctx.responsive === true && typeof style === 'object' && style !== null
+      ? nativeLayout(style, ctx.rect)
+      : undefined;
+
+    if (native !== undefined && folds) {
+      throw new Error('Responsive panel placement is not supported on a folding stack.');
+    }
 
     if (folds && background !== '') {
       throw new Error(
@@ -69,6 +79,7 @@ export const panelDefinition: NodeDefinition<PanelNode> = {
       kind: 'panel',
       name: ctx.name('panel'),
       rect: ctx.rect,
+      ...native === undefined ? {} : { native },
       ...ctx.decoration,
       ...background === '' ? {} : { background },
       ...folds ? { stack: true as const } : {},

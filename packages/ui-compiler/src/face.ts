@@ -2,8 +2,8 @@
  * IR -> the face document: every node drawn as its look, and nothing else.
  *
  * The first of the two passes ([faces and hosts](../../../docs/README.md#faces-and-hosts)).
- * What comes out is complete and drawable on its own — the layout baked as
- * literal rects, every look referenced from the addon's shared faces, every
+ * What comes out is complete and drawable on its own — fixed layout baked as
+ * literal rects and supported responsive panels left relative to their parent, every look referenced from the addon's shared faces, every
  * socket drawn at rest — and carries no binding that reads a host. The host
  * pass (`fill.ts`) stands each socket's mechanism in afterwards, and may not
  * move anything.
@@ -11,9 +11,9 @@
  * Every rule encoded here was measured in game, against a hand-written target
  * that rendered clean. They are not stylistic:
  *
- *  1. EXPLICIT PIXEL SIZES on anything under a host. A percentage child of a
- *     stack panel resolves unreliably along the stacking axis, and the solved
- *     rect is known anyway.
+ *  1. EXPLICIT PIXEL SIZES on ordinary solved controls under a host. Supported
+ *     responsive panels retain native percentages outside stack layouts.
+ *     Percentage children of stack panels resolve unreliably along the stack axis.
  *  2. `keep_ratio: false` on images. An image preserves its texture's aspect
  *     ratio by default, so a stretched image renders narrower than the box the
  *     layout solved for it.
@@ -167,7 +167,7 @@ export const faceOf = (doc: IrDocument): FaceDocument => {
     namespace: doc.namespace,
     [SCREEN_DEFINITION]: {
       type: 'panel',
-      size: sizeOf(root.rect),
+      size: root.native?.size ?? sizeOf(root.rect),
       ...topLeft,
       // The canvas keeps its children a layer above its background, exactly as
       // a panel does — see the panel face for why an equal layer is not enough.

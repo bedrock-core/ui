@@ -1,101 +1,35 @@
-# @bedrock-core/ui — render pack
+# @bedrock-core/ui resource pack
 
-![Logo](https://raw.githubusercontent.com/bedrock-core/ui/main/assets/logo/title.png)
-
-The render pack every `@bedrock-core/ui` addon needs at runtime. It holds the JSON UI that
-decodes the framework's **`corev0009`** payloads: the label/button/header/dropdown routers, the
-shared `control.json` decode, the component leaves and the scroll screens, under
-`packs/RP/ui/core-ui/`.
-
-The server side serializes a component tree into a form payload; this pack is the half that reads
-it back and draws it. Without it, an addon's screens do not render.
+The shared resource pack supplies textures for Bedrock Core addons.
 
 ## Getting the pack
 
-Addon authors do **not** build this package. Take the `core-ui-*.mcpack` attached to the matching
-[release](https://github.com/bedrock-core/ui/releases/latest) and open it to import it into
-Minecraft, then enable it in the world alongside your addon. `npx @bedrock-core/cli` downloads it
-for you when it scaffolds a project.
+Import the `core-ui-*.mcpack` attached to the matching
+[release](https://github.com/bedrock-core/ui/releases/latest), then enable it alongside
+your addon. The scaffold CLI downloads it when creating a project.
 
-| | |
+| Property | Value |
 | --- | --- |
-| UUID | `761ecd37-ad1c-4a64-862a-d6cc38767426` (never changes) |
-| Version | tracks the library release it ships in (see below) |
-| Protocol | stated in the pack description, visible in-game |
-| Scope | `world` — one copy is shared by every `@bedrock-core/ui` addon in the world |
+| UUID | `761ecd37-ad1c-4a64-862a-d6cc38767426` |
+| Scope | `world` |
+| Contents | UI textures, pack metadata and pack icon |
 
-Take the pack from the same release as the library: the pack and the runtime are two halves of one
-byte-level contract, and a mismatched pair renders garbage. Because the pack is world-scoped,
-addons shipped together must agree on a framework version.
+## Versions
 
-### How the version moves
+The pack is released with every UI release, including releases with unchanged textures.
+Its major is the UI library major plus one; its minor, patch and any prerelease suffix
+match the library version. For example, UI `0.12.2` ships texture pack `1.12.2`.
+`scripts/sync-pack-version.mjs` aligns the manifest during versioning and artifact builds.
 
-The pack's version tracks the **release it ships in**, so you can read the pairing straight off it:
+## Build and export
 
-| Component | Rule | Example |
-| --- | --- | --- |
-| **Major** | The library's major, plus one | `@bedrock-core/ui` `0.x` → pack `1.x`; `1.x` → pack `2.x` |
-| **Minor** | The library's minor | pack `1.10.x` ships with `@bedrock-core/ui` `0.10.x` |
-| **Patch** | Pack revisions inside that release line | a decoder fix shipped on the same library version |
-
-So anything that meaningfully changes the pack — a new texture, a new component leaf, a protocol
-change — arrives in a release whose minor bumps, and lands on the pack's minor with it. A pack-only
-fix takes the patch. (The major is offset by one because the pack has been on `1.x` since the
-library's `0.8` days; mirroring the major directly would send `1.10.x` → `1.0.x` when the library
-reaches 1.0, and Bedrock must never see a pack version go down.)
-
-The **protocol is deliberately not in the number** — it is recorded in
-[`protocol.json`](./protocol.json) and written into the pack description, where a player can
-actually read it.
-
-None of it is bumped by hand: [`scripts/sync-pack-version.mjs`](../../scripts/sync-pack-version.mjs)
-runs inside `yarn version-packages`, after the meta version settles, and hashes `packs/RP` to catch
-pack-only revisions — so no pack change can ship unversioned.
-
-## What ships
-
-**Only `packs/RP` is published.** The separate resource-pack workflow builds this project and
-zips `build/@bedrock-core_ui_rp` into the `.mcpack` — see
-[`resource-pack.yml`](../../.github/workflows/resource-pack.yml). Nothing else in this package is
-an artifact.
-
-The same `.mcpack` is then pushed to CurseForge by
-[`curseforge.yml`](../../.github/workflows/curseforge.yml), which downloads it back off the release
-and uploads it with the release notes as the file's changelog. The numeric project id and release
-type live in [`curseforge.json`](./curseforge.json), so changing the CurseForge project name or slug
-does not require a repository change. The workflow reads the supported Bedrock version
-from `packs/RP/manifest.json` (`1.26.50` becomes CurseForge `26.50`); additional compatible version
-names can be listed in `gameVersionNames`. CurseForge exposes no API for a project's description
-page, so that page is written by hand and kept version-free.
-
-The behavior pack is build input rather than an artifact: it carries the framework’s own screen
-and the guide components, which `ui-compiler` bakes into the resource pack. Nothing registers the
-framework, so the pack ships no script at all, and `build/@bedrock-core_ui_bp` is never released.
-
-## Development
-
-The resource pack is an independent Yarn project. Run its commands from this directory:
+Run from `packages/resource-pack`:
 
 ```bash
-# From packages/resource-pack
-yarn install           # Install exact released package versions
-yarn regolith-install  # Install the pinned released Regolith filters
-yarn build             # Build the release artifact locally
-yarn deploy            # Build and deploy to com.mojang
+yarn install
+yarn build   # Export to build/@bedrock-core_ui_rp
+yarn deploy  # Export to Minecraft development packs
 ```
 
-The filter chain is `guides` → `i18n` → `ui-compiler` → `references`. There is no bundler stage:
-the pack has no runtime script to bundle. The generated
-bundles are reached through `tsconfig.json` path aliases — `@bedrock-core/generated/i18n`,
-`@bedrock-core/generated/guides` and `@bedrock-core/generated/ui` — resolving to the filters'
-output under `packs/data/`; the committed `.d.ts` files next to them are what the IDE reads before
-Regolith has ever run.
-
-`packs/BP/scripts/screens/framework.screen.tsx` is compiled to JSON UI at build time, as are the
-guide pages the guides filter writes. Everything else an addon draws — its config screens, its
-addon page, its routers — is compiled into that addon’s own pack under its own namespace, not
-this one.
-
-## Documentation
-
-https://bedrock-core.drav.dev/docs/ui/guides/render-pack
+The resource-pack workflow packages `build/@bedrock-core_ui_rp` as the release `.mcpack`.
+CurseForge upload uses that same artifact and the settings in `curseforge.json`.

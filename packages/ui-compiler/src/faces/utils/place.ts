@@ -1,12 +1,6 @@
 import type { Box, Control, ControlEntry, Rect } from './types';
 
-/**
- * Every face anchors top-left and carries its own offset.
- *
- * The layout already solved an absolute position for everything, so nothing is
- * centred or stretched by the engine: a control sits where it was put, and the
- * rect guard refuses a host that moves it.
- */
+/** Default placement for controls whose geometry is fixed by the layout solve. */
 export const topLeft = { anchor_from: 'top_left', anchor_to: 'top_left' } as const;
 
 /** The whole of the parent. */
@@ -33,9 +27,11 @@ export const offsetOf = (rect: Rect): [number, number] => [rect.x, rect.y];
  * came from and a host can lift it off one control onto another.
  */
 export const placed = (box: Box): Record<string, unknown> => ({
-  size: sizeOf(box.rect),
-  offset: offsetOf(box.rect),
-  ...topLeft,
+  size: box.native?.size ?? sizeOf(box.rect),
+  offset: box.native?.offset ?? offsetOf(box.rect),
+  ...box.native?.anchor === undefined
+    ? topLeft
+    : { anchor_from: box.native.anchor, anchor_to: box.native.anchor },
   ...box.layer === undefined ? {} : { layer: box.layer },
   ...box.hidden === true ? { visible: false } : {},
 });

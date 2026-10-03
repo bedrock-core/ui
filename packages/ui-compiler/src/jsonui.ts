@@ -6,9 +6,6 @@
  * and six properties vanilla relies on are missing entirely. Rather than depend
  * on a type that cannot describe our own output, the emitter declares the subset
  * it actually writes, and marks which half of it Mojang documents.
- *
- * See `packages/resource-pack/SPEC-JSONUI.md` for the full audit and the list to
- * re-check on each schema bump.
  */
 
 /** Documented by Mojang. Values come from `forms/ui/ui_element.form.json`. */
@@ -24,6 +21,7 @@ export type ControlType
     | 'edit_box'
     | 'grid'
     | 'scroll_view'
+    | 'scroll_track'
     | 'scrollbar_box'
     | 'dropdown'
     | 'input_panel'
@@ -239,6 +237,7 @@ export interface Control {
 
   /* focus */
   focus_magnet_enabled?: boolean;
+  gamepad_cursor?: boolean;
   focus_wrap_enabled?: boolean;
   default_focus_precedence?: number;
 

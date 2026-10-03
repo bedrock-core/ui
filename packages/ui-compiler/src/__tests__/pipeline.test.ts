@@ -63,6 +63,34 @@ const Demo = (): JSX.Element => Container({
 });
 
 describe('the compiler, end to end', () => {
+  it('preserves a nested responsive container through the full build', () => {
+    const Responsive = (): JSX.Element => Container({
+      entity: 'core:responsive', width: '100%', height: '100%',
+      children: Panel({
+        position: 'absolute', top: 8, right: 8, marginRight: 4, marginTop: 3,
+        width: '50%', height: '50%',
+        children: Panel({
+          position: 'absolute', top: 0, left: 0, width: '50%', height: '50%',
+        }),
+      }),
+    });
+    const responsive = compileScreen(Responsive, { name: 'responsive' });
+    expect(responsive.face.root.children[0]).toMatchObject({
+      native: { anchor: 'top_right', offset: [-12, 11] },
+    });
+    const screen = definition(responsive.document, 'screen');
+    const [, faceFirst] = find(responsive.face.document, name => name === 'panel_2');
+    const [, first] = find(responsive.document, name => name === 'panel_2');
+    const [, nested] = find(responsive.document, name => name === 'panel_1');
+
+    expect(screen.size).toEqual(['100%', '100%']);
+    expect(faceFirst).toMatchObject({ anchor_from: 'top_right', offset: [-12, 11] });
+    expect(first).toMatchObject({
+      size: ['50%', '50%'], anchor_from: 'top_right', anchor_to: 'top_right', offset: [-12, 11],
+    });
+    expect(nested).toMatchObject({ size: ['50%', '50%'], anchor_from: 'top_left', offset: [0, 0] });
+  });
+
   const compiled = compileScreen(Demo, { name: 'demo' });
   const { document, faces } = compiled;
 

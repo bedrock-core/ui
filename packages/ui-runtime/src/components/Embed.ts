@@ -39,7 +39,8 @@ export const EMBED_SLOT_TYPE = 'embed-slot';
  * gate compares the entry against. The namespace is the addon's, which is
  * also what its compiled screens are emitted under.
  */
-export const embedMarker = (namespace: string): string => `core_addon:${namespace}`;
+export const embedMarker = (namespace: string, name?: string): string =>
+  `core_addon:${namespace}${name === undefined ? '' : `:${name}`}`;
 
 export interface EmbedSlotsProps extends ControlProps {
   /** How many entries are reserved. A constant of the embedding screen: the embedded one is baked against it. */
@@ -116,6 +117,8 @@ export interface EmbedArea {
 
 /** How an embedded screen sits in its host's frame; what its mount places it by. */
 export interface EmbedPlacement {
+  /** Optional page name, scoped to its addon. Omitted for the addon's default page. */
+  readonly name?: string;
   /** The host's frame, `[width, height]`. */
   readonly frame: readonly [number, number];
   /** The area's top-left within that frame, `[x, y]`. */
@@ -123,6 +126,8 @@ export interface EmbedPlacement {
 }
 
 export interface EmbedProps extends Omit<ControlProps, 'width' | 'height'> {
+  /** Distinguishes multiple embedded pages compiled into the same addon. */
+  name?: string;
   /** The host's frame: what the host bakes its own screen against. */
   frame: EmbedFrame;
   /** The area of that frame this component fills. It is the canvas everything below is laid out in. */
@@ -135,11 +140,11 @@ export interface EmbedProps extends Omit<ControlProps, 'width' | 'height'> {
  * size of the area the host leaves for it, whose pack gates it on the host's
  * marker slot and mounts it where the area sits in the host's frame.
  */
-export const Embed: FunctionComponent<EmbedProps> = ({ frame, area, children, ...rest }: EmbedProps): JSX.Element => ({
+export const Embed: FunctionComponent<EmbedProps> = ({ name, frame, area, children, ...rest }: EmbedProps): JSX.Element => ({
   type: PANEL_TYPE,
   props: {
     ...withControl({ ...rest, width: area.width, height: area.height }),
-    __embed: { frame: [frame.width, frame.height], offset: [area.x, area.y] } satisfies EmbedPlacement,
+    __embed: { ...name === undefined ? {} : { name }, frame: [frame.width, frame.height], offset: [area.x, area.y] } satisfies EmbedPlacement,
     children,
   },
 });
@@ -166,7 +171,12 @@ export function embedPlacementOf(tree: JSX.Element): EmbedPlacement | undefined 
   const frame = pair(placement.frame);
   const offset = pair(placement.offset);
 
-  return frame === undefined || offset === undefined ? undefined : { frame, offset };
+  return frame === undefined || offset === undefined
+    ? undefined
+    : {
+        frame, offset,
+        ...'name' in placement && typeof placement.name === 'string' ? { name: placement.name } : {},
+      };
 }
 
 /** Whether a built tree is an embedded screen: its concrete root is an {@link Embed}. */

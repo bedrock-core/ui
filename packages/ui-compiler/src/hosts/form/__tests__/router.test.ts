@@ -35,6 +35,20 @@ describe('an addon\'s compiled form router', () => {
     expect(without.map(entry => Object.keys(entry)[0])).toEqual(['screen@drav0011_shop_home.screen']);
   });
 
+  it('shares one cursor across standalone screens and omits it for embedded pages', () => {
+    const root = control(routing.router, 'drav0011_shop_forms');
+    const cursor = root.controls?.at(-1)?.cursor;
+    expect(cursor?.controls).toEqual([{ 'pointer@core_ui_common.gamepad_cursor_button': {} }]);
+    expect(cursor?.bindings).toContainEqual({
+      binding_type: 'view',
+      source_property_name: "((#title_text = 'corev0009core1:drav0011_shop_home') or (#title_text = 'corev0009core1:drav0011_shop_basket'))",
+      target_property_name: '#visible',
+    });
+    expect(JSON.stringify(routing.router).match(/@core_ui_common.gamepad_cursor_button/g)).toHaveLength(1);
+    const embedded = formRouter([{ name: 'page', namespace: 'addon_page', marker: 'page-marker', hasBackdrop: false }], 'addon');
+    expect(JSON.stringify(embedded.router)).not.toContain('gamepad_cursor');
+  });
+
   it('names every definition after the addon, so two addons never overwrite each other', () => {
     for (const name of Object.keys(routing.router)) {
       expect(name === 'namespace' || name.startsWith('drav0011_shop')).toBe(true);
@@ -43,21 +57,23 @@ describe('an addon\'s compiled form router', () => {
     expect(routing.routerFile).toBe('ui/core-ui/screens/drav0011_shop_forms.json');
   });
 
-  it('hooks the mount by MODIFYING its path, defining nothing there', () => {
+  it('inserts a local bridge into vanilla without replacing its controls or factory', () => {
     expect(routing.hook.file).toBe(MOUNT_FILE);
     expect(routing.hook.document.namespace).toBe(MOUNT_NAMESPACE);
 
     const target = routing.hook.document[MOUNT_TARGET] as Modified;
 
-    expect(target.modifications).toEqual([{
+    expect(target.modifications).toContainEqual({
       array_name: 'controls',
       operation: 'insert_back',
-      value: [{ 'drav0011_shop@core_ui_form.drav0011_shop_forms': {} }],
-    }]);
+      value: [{ 'drav0011_shop@drav0011_shop_compiled_form_bridge': {} }],
+    });
 
-    // A definition here would replace every other pack's copy instead of
-    // joining it; only the one modification may be in this file.
-    expect(Object.keys(routing.hook.document)).toEqual(['namespace', MOUNT_TARGET]);
+    expect(target).not.toHaveProperty('controls');
+    expect(target).not.toHaveProperty('type');
+    expect(control(routing.hook.document, 'drav0011_shop_compiled_form_bridge').controls).toEqual([
+      { 'root@drav0011_shop__forms.drav0011_shop_forms': {} },
+    ]);
   });
 
   it('refuses two screens with the same name, which would share a title', () => {

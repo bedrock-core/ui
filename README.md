@@ -4,7 +4,7 @@
 
 > ⚠️ Beta Status: Active development. Breaking changes may occur until 1.0.0. Pin exact versions for stability.
 
-Custom JSX-driven UI system for Minecraft Bedrock: components serialize into compact strings decoded by a render pack, which draws layouts beyond what native `@minecraft/server-ui` can express.
+JSX UI for Minecraft Bedrock: each addon compiles its screens and required JSON UI helpers into its own resource pack. A shared resource pack supplies textures.
 
 ![Preview](./assets/preview.png)
 

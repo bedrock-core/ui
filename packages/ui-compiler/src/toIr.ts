@@ -20,16 +20,24 @@
  */
 
 import type { JSX } from '@bedrock-core/ui-runtime';
+import { CANONICAL_SCREEN, type FlexStyle } from '@bedrock-core/flexbox';
 import {
   BACKGROUND_SLOT_TYPE, childElements, CONTAINER_TYPE, isTransparentType,
   type Allocation as ContainerAllocation, BUTTON_TYPE, type VariantTable, WIDE_RECT,
 } from '@bedrock-core/ui-runtime/compile';
 import type { IrDocument, IrNode, Rect } from './ir';
 import { looksOf } from './looks';
+import { nativeRootSize, percent } from './nativeLayout';
 import { loweringFor } from './nodes';
 import type { LookNode, SwapNode } from './nodes/primitives/swap';
 import { FOLLOWS_PREVIOUS, followsOf, num, str } from './nodes/utils/shared';
 import type { Addressing, CellAddress, ChannelAddress, LowerContext, NodeDefinition } from './nodes/utils/types';
+
+const layoutStyle = (props: JSX.Props): FlexStyle => {
+  const style = props.__layout;
+
+  return typeof style === 'object' && style !== null ? style : {};
+};
 
 /** The components a compiled screen can be made of, by the name the author writes. */
 const SUPPORTED = 'Panel, Text, Image, Button, Slot, SlotGrid, PlayerInventory, Hotbar, Background, Scroll, Tabs, List';
@@ -107,6 +115,7 @@ const backdropOf = (element: JSX.Element): string | undefined => {
 /** What the walk carries: where the host put things, and what it has met so far. */
 interface Walk {
   onNode?: (element: JSX.Element, node: IrNode) => void;
+  responsive: boolean;
   addressing: Addressing;
   met: { cells: number; channels: number; visibles: number };
   counters: Map<string, number>;
@@ -172,8 +181,52 @@ const channelOf = (element: JSX.Element, walk: Walk): ChannelAddress => {
   return address;
 };
 
-const convertChildren = (parent: JSX.Element, origin: Rect, walk: Walk): IrNode[] =>
-  resolveSiblings(childElements(parent.props.children).flatMap(child => convertChild(child, origin, walk)));
+const convertChildren = (parent: JSX.Element, origin: Rect, walk: Walk): IrNode[] => {
+  const children = childElements(parent.props.children);
+
+  if (!walk.responsive) {
+    return resolveSiblings(children.flatMap(child => convertChild(child, origin, walk)));
+  }
+
+  const style = layoutStyle(parent.props);
+  const responsiveParent = percent(style?.width) || percent(style?.height);
+  const hasPadding = style !== undefined && [style.padding, style.paddingTop, style.paddingRight,
+    style.paddingBottom, style.paddingLeft].some(value => value !== undefined && value !== 0);
+
+  for (const child of children) {
+    if (child.type === BACKGROUND_SLOT_TYPE) {
+      continue;
+    }
+
+    const childStyle = layoutStyle(child.props);
+    const childPercent = percent(childStyle.width) || percent(childStyle.height);
+
+    if (childPercent && child.type !== 'panel') {
+      throw new Error('Native percentage sizing is currently supported only on Panels.');
+    }
+
+    if (hasPadding && childPercent) {
+      throw new Error('Responsive child percentages inside a padded parent are not supported yet.');
+    }
+
+    if (responsiveParent && childStyle.position !== 'absolute') {
+      throw new Error('A responsive parent currently requires its children to use absolute positioning.');
+    }
+
+    if (responsiveParent && child.type === 'panel'
+      && ((childStyle.left === undefined && childStyle.right === undefined)
+        || (childStyle.top === undefined && childStyle.bottom === undefined))) {
+      throw new Error('A responsive child Panel needs an inset on each axis.');
+    }
+
+    if (responsiveParent && child.type !== 'panel'
+      && (childStyle.right !== undefined || childStyle.bottom !== undefined)) {
+      throw new Error('Right and bottom positioning inside a responsive parent currently requires a Panel.');
+    }
+  }
+
+  return resolveSiblings(children.flatMap(child => convertChild(child, origin, walk)));
+};
 
 /**
  * Everything that crosses siblings, resolved in the one walk that has them all.
@@ -295,6 +348,7 @@ const lower = (definition: NodeDefinition, element: JSX.Element, type: string, o
 
   const own = absoluteRect(element, walk.wide);
   const ctx: LowerContext = {
+    responsive: walk.responsive,
     origin,
     own,
     rect: relativeTo(own, origin),
@@ -384,6 +438,7 @@ const lowerLook = (
   const own = absoluteRect(bare, walk.wide);
   const name = `${version.of}_look_${String(version.index)}`;
   const ctx: LowerContext = {
+    responsive: walk.responsive,
     origin,
     own,
     rect: relativeTo(own, origin),
@@ -459,8 +514,12 @@ export const toIr = (
   addressing: Addressing,
   options: ToIrOptions,
 ): IrDocument => {
+  const rootStyle = layoutStyle(root.props);
+  const responsive = root.type === CONTAINER_TYPE
+    && (percent(rootStyle.width) || percent(rootStyle.height));
   const walk: Walk = {
     ...options.onNode === undefined ? {} : { onNode: options.onNode },
+    responsive,
     addressing,
     met: { cells: 0, channels: 0, visibles: 0 },
     counters: new Map(), carried: 0, wide: false,
@@ -469,6 +528,14 @@ export const toIr = (
   // The canvas: every rect below is relative to it, so a root the solver placed
   // at an offset still emits from (0, 0).
   const origin = absoluteRect(root, false);
+
+  if (root.type === CONTAINER_TYPE && !responsive
+    && (origin.width > CANONICAL_SCREEN.width || origin.height > CANONICAL_SCREEN.height)) {
+    throw new Error(`A fixed <Container> must fit within ${CANONICAL_SCREEN.width} × ${CANONICAL_SCREEN.height}; `
+      + 'use parent-relative percentages for a screen that adapts to the client area.');
+  }
+
+  const native = responsive ? nativeRootSize(rootStyle, origin) : undefined;
   const background = str(root.props.background);
   const children = convertChildren(root, origin, walk);
 
@@ -494,6 +561,7 @@ export const toIr = (
       kind: 'panel',
       name: 'root',
       rect: { x: 0, y: 0, width: origin.width, height: origin.height },
+      ...native === undefined ? {} : { native },
       ...background === '' ? {} : { background },
       children,
     },
