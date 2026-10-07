@@ -132,6 +132,7 @@ function Pressed({ options, defaultValue, value, onChange, enabled, gap, rowHeig
           <Panel flexDirection={'row'} alignItems={'center'} gap={r.gap} height={rowHeight}>
             <Fragment>
               <Button
+                testName={option.label}
                 width={r.size}
                 height={r.size}
                 background={isChosen ? r.textures.selected : r.textures.unselected}

@@ -7,7 +7,7 @@ import { type OptionFace, optionParts, type OptionState, selectFace } from '../.
 import type { ControlEntry } from '../../jsonui';
 import type { Rect } from '../../ir';
 import { backgroundOf, type FieldBase, scaleOf } from '../utils/fields';
-import { boxOf, str } from '../utils/shared';
+import { boxOf, str, visibilityOf } from '../utils/shared';
 import type { LowerContext, NodeDefinition } from '../utils/types';
 
 /**
@@ -39,6 +39,8 @@ export interface SelectNode extends FieldBase {
  * author's textures rather than decoding them.
  */
 export interface InlineOption {
+  visible?: false;
+  enabled?: false;
   /** The row, relative to the field's own rect. */
   rect: Rect;
   label: string;
@@ -90,11 +92,14 @@ const optionsOf = (element: JSX.Element, ctx: LowerContext): InlineOption[] => {
   return optionElements(element.props.children).map((option) => {
     const data = readOption(option, defaults, ctx.own.x, ctx.own.y);
     const { style, geometry } = data;
+    const layout = option.props.__layout;
     const label = optionLabelPosition(
       data.text, style, geometry.width, geometry.height, style.bulletTexture === '' ? LABEL_GAP : style.bulletWidth + LABEL_GAP,
     );
 
     return {
+      ...visibilityOf({ visible: option.props.visible !== false && !(typeof layout === 'object' && layout !== null && 'display' in layout && layout.display === 'none') }),
+      ...option.props.enabled === false ? { enabled: false as const } : {},
       rect: { x: geometry.x, y: geometry.y, width: geometry.width, height: geometry.height },
       label: data.text,
       labelX: label.x,
@@ -141,6 +146,7 @@ const selectedOf = (element: JSX.Element): number[] => {
 const faceOf = (option: InlineOption, name: string): OptionFace => ({
   name,
   rect: option.rect,
+  ...option.visible === false ? { hidden: true } : {},
   background: option.background,
   backgroundHover: option.backgroundHover,
   backgroundSelected: option.backgroundSelected,

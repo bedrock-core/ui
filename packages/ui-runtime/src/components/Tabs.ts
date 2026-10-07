@@ -120,6 +120,7 @@ const TabsRoot: FunctionComponent<TabsProps> = (
       ...withControl({ flexDirection: 'row', ...layout }),
       children: [
         ...tabs.map((tab, index): JSX.Element => Swap({
+          testName: `Tab ${index + 1}`,
           index,
           exclusive: true,
           // Above the panes, which reach under the headers beside their own.

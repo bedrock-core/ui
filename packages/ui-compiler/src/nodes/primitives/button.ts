@@ -33,6 +33,8 @@ export interface ButtonFace {
  */
 export interface ButtonNode extends NodeBase {
   kind: 'button';
+  /** Engine-routed presses use this flag; hosted presses read their native entry. */
+  enabled?: false;
   /**
    * Where the host put this button's cell. A container index on a chest, an
    * entry on a form. Absent on a button that only closes the screen: that
@@ -120,7 +122,7 @@ export interface FacedNode {
   children: IrNode[];
   /** A caption carried as a prop rather than as children; part of what makes a look distinct. */
   label?: string;
-  /** Set when the engine routes the press, which is also when there is no disabled state to draw. */
+  /** Set when the engine routes the press. */
   action?: ButtonAction;
 }
 
@@ -245,9 +247,7 @@ export const shareButtonFaces = (node: FacedNode, ctx: FaceEmit): ButtonFaces =>
     rest: shareFace(faces, id, look(face.texture, content)),
     hover: shareFace(faces, `${id}_hover`, look(face.hover, content)),
     pressed: shareFace(faces, `${id}_pressed`, look(face.pressed, content)),
-    // An engine-routed button is never disabled: nothing gates it, so a
-    // fourth face would be a definition no control ever names.
-    ...face.disabled === undefined || node.action !== undefined
+    ...face.disabled === undefined
       ? {}
       : { disabled: shareFace(faces, `${id}_disabled`, look(face.disabled, content)) },
   };
@@ -306,6 +306,7 @@ export const buttonDefinition: NodeDefinition<ButtonNode> = {
 
     return {
       kind: 'button',
+      ...action !== undefined && props.enabled === false ? { enabled: false as const } : {},
       name: ctx.name(action ?? 'button'),
       rect: ctx.rect,
       ...ctx.decoration,
@@ -349,15 +350,18 @@ export const buttonDefinition: NodeDefinition<ButtonNode> = {
         [node.name]: {
           ...entryControl(panelFace({ ...boxOf(node), children: [] })),
           type: 'button',
+          ...node.enabled === false ? { enabled: false } : {},
           default_control: 'default',
           hover_control: 'hover',
           pressed_control: 'pressed',
+          locked_control: 'locked',
           ...ROUTES[node.action].clicks ? { sound_name: 'random.click', sound_volume: 1, sound_pitch: 1 } : {},
           button_mappings: mappingsFor(node.action),
           controls: [
             { [`default@${faces.rest}`]: {} },
             { [`hover@${faces.hover}`]: {} },
             { [`pressed@${faces.pressed}`]: {} },
+            { [`locked@${faces.disabled ?? faces.rest}`]: {} },
           ],
         },
       };

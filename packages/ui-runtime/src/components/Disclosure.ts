@@ -81,6 +81,7 @@ export const Disclosure: FunctionComponent<DisclosureProps> = (
       stack: true,
       children: [
         Swap({
+          testName: 'Disclosure',
           defaultOn: defaultOpen,
           // Above the rows, which a header with no background of its own would
           // otherwise be drawn under.

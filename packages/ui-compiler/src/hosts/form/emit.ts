@@ -122,6 +122,8 @@ const wrapVisible = (node: IrNode, entry: ControlEntry, ctx: Emit): ControlEntry
 /** An option's four looks, drawn. */
 const looksOf = (option: InlineOption): SelectOption => ({
   rect: option.rect,
+  ...option.visible === false ? { visible: false } : {},
+  ...option.enabled === false ? { enabled: false } : {},
   rest: inlineOptionFace(option, 'rest'),
   selected: inlineOptionFace(option, 'selected'),
   hover: inlineOptionFace(option, 'hover'),

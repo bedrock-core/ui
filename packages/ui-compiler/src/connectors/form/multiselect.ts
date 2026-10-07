@@ -37,12 +37,13 @@ export const multiSelect: Connector<MultiSelect> = (data, face) => ({
         size: [option.rect.width, option.rect.height],
         offset: [option.rect.x, option.rect.y],
         ...topLeft,
+        ...option.visible === false ? { visible: false } : {},
         collection_name: MODAL_COLLECTION,
         controls: [{
           [`toggle@${TOGGLE_ROW}`]: {
             collection_index: data.address + member,
             size: FULL,
-            ...pinnedEnabled(data),
+            ...pinnedEnabled({ enabled: data.enabled && option.enabled !== false }),
             controls: optionStates(option),
           },
         }],

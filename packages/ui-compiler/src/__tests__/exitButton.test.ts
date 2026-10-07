@@ -52,7 +52,7 @@ describe('a close button', () => {
     // a label is exactly where that goes unnoticed.
     const states = (exit.controls ?? []).map(entry => Object.keys(entry)[0] ?? '');
 
-    expect(states.map(state => state.split('@')[0])).toEqual(['default', 'hover', 'pressed']);
+    expect(states.map(state => state.split('@')[0])).toEqual(['default', 'hover', 'pressed', 'locked']);
 
     for (const state of states) {
       const face = drawnFace(faces, state.split('.')[1] ?? '');

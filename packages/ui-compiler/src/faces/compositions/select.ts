@@ -34,6 +34,7 @@ export const selectFace: Face<SelectFace> = data => entry(data.name, {
       size: [option.rect.width, option.rect.height],
       offset: [option.rect.x, option.rect.y],
       ...topLeft,
+      ...option.hidden === true ? { visible: false } : {},
       controls: optionParts({ ...option, state: data.selected.includes(index) ? 'selected' : 'rest' }),
     },
   }))],

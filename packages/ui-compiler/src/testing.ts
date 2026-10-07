@@ -1,8 +1,9 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
-import { childElements, CONTAINER_TYPE, SCREEN_TYPE } from '@bedrock-core/ui-runtime/compile';
+import { childElements, optionElements, CONTAINER_TYPE, SCREEN_TYPE } from '@bedrock-core/ui-runtime/compile';
 import type { IrNode } from './ir';
 import type { Control, Document } from './jsonui';
 import { childrenOf } from './nodes';
+import { swapControlName } from './nodes/primitives/swap';
 import { TEST_METADATA_VERSION } from './testMetadata';
 import type { ScreenTestMetadata, TestControlMetadata, TestRole } from './testMetadata';
 
@@ -20,7 +21,7 @@ function testIdOf(element: JSX.Element): string | undefined {
   return value;
 }
 
-function roleOf(element: JSX.Element, node: IrNode): TestRole {
+function roleOf(element: JSX.Element, kind: IrNode['kind'] | 'option'): TestRole {
   const role = element.props.testRole;
 
   if (role !== undefined) {
@@ -31,7 +32,7 @@ function roleOf(element: JSX.Element, node: IrNode): TestRole {
     return role;
   }
 
-  return element.props.__testRole === 'checkbox' ? 'checkbox' : roles[node.kind] ?? 'group';
+  return element.props.__testRole === 'checkbox' || kind === 'option' ? 'checkbox' : roles[kind] ?? 'group';
 }
 
 function declaredNameOf(element: JSX.Element): TestControlMetadata['name'] {
@@ -48,11 +49,11 @@ function declaredNameOf(element: JSX.Element): TestControlMetadata['name'] {
 
 const roles: Partial<Record<IrNode['kind'], TestRole>> = {
   button: 'button', input: 'textbox', toggle: 'checkbox', slider: 'slider',
-  dropdown: 'combobox', select: 'listbox', text: 'text', image: 'image',
+  dropdown: 'combobox', select: 'listbox', swap: 'checkbox', text: 'text', image: 'image',
 };
 const interactions: Record<ScreenTestMetadata['host'], Partial<Record<IrNode['kind'], TestControlMetadata['interaction']>>> = {
-  'form-action': { button: 'form-button' },
-  'form-modal': { button: 'modal-button', input: 'form-input', toggle: 'form-toggle', slider: 'form-slider', dropdown: 'form-dropdown' },
+  'form-action': { button: 'form-button', swap: 'local-toggle' },
+  'form-modal': { button: 'modal-button', input: 'form-input', toggle: 'form-toggle', slider: 'form-slider', dropdown: 'form-dropdown', swap: 'local-toggle' },
   'chest': {},
 };
 
@@ -122,13 +123,13 @@ export class TestMetadataCollector {
       walk(root, ['screen']);
     }
 
-    const controls = [...this.nodes.values()].map(({ element, node }): TestControlMetadata => {
+    const controls = [...this.nodes.values()].flatMap(({ element, node }): TestControlMetadata[] => {
       const id = testIdOf(element);
-      const role = roleOf(element, node);
+      const role = roleOf(element, node.kind);
       const name = declaredNameOf(element) ?? nameOf(node);
-      const locations = paths.get(node.name) ?? [];
+      const locations = paths.get(node.kind === 'swap' ? swapControlName(String(document.namespace), node.id) : node.name) ?? [];
 
-      return {
+      const control: TestControlMetadata = {
         node: node.name, role,
         ...id === undefined ? {} : { testId: id },
         ...name === undefined ? {} : { name },
@@ -137,6 +138,28 @@ export class TestMetadataCollector {
           ? interactions[host][node.kind] ?? 'unsupported'
           : 'unsupported',
       };
+
+      if (node.kind !== 'select') { return [control]; }
+
+      // Option names repeat across fields; only descendants of this Select identify its instances.
+      const options = optionElements(element.props.children).map((option, index): TestControlMetadata => {
+        const id = testIdOf(option);
+        const optionName = declaredNameOf(option) ?? (typeof option.props.label === 'string'
+          ? { kind: 'literal' as const, value: option.props.label }
+          : undefined);
+        const locations = (paths.get(`option_${String(index)}`) ?? []).filter(location => control.paths.some(parent =>
+          parent.length < location.length && parent.every((key, offset) => location[offset] === key)));
+
+        return {
+          node: `${node.name}/option_${String(index)}`, role: roleOf(option, 'option'),
+          ...id === undefined ? {} : { testId: id },
+          ...optionName === undefined ? {} : { name: optionName },
+          paths: locations,
+          interaction: host === 'form-modal' && locations.length === 1 ? 'form-option' : 'unsupported',
+        };
+      });
+
+      return [control, ...options];
     });
 
     return { schemaVersion: TEST_METADATA_VERSION, screen, namespace: String(document.namespace), host, ...testId === undefined ? {} : { testId }, controls };

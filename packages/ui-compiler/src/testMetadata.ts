@@ -16,7 +16,7 @@ export interface TestName {
 /** The compiled screen's host. */
 export type TestHost = 'form-action' | 'form-modal' | 'chest';
 /** Identifies a concrete host mechanism, independently of a tool's supported actions. */
-export type TestInteraction = 'form-button' | 'modal-button' | 'form-input' | 'form-toggle' | 'form-slider' | 'form-dropdown' | 'unsupported';
+export type TestInteraction = 'form-button' | 'modal-button' | 'form-input' | 'form-toggle' | 'form-option' | 'form-slider' | 'form-dropdown' | 'local-toggle' | 'unsupported';
 
 /** One source control and its concrete instances in the emitted JSON UI document. */
 export interface TestControlMetadata {

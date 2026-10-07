@@ -141,7 +141,7 @@ describe('compiling a modal screen', () => {
 
     const states = (button?.controls ?? []).map(entry => Object.keys(entry)[0] ?? '');
 
-    expect(states.map(state => state.split('@')[0])).toEqual(['default', 'hover', 'pressed']);
+    expect(states.map(state => state.split('@')[0])).toEqual(['default', 'hover', 'pressed', 'locked']);
 
     for (const state of states) {
       // A button draws the child its `*_control` names and nothing else of its
@@ -245,6 +245,85 @@ describe('compiling a modal screen', () => {
     expect(json).toContain('mine/on');
     expect(json).not.toContain('ore-styled');
   });
+});
+
+describe('authored modal control restrictions', () => {
+  const named = (document: Record<string, unknown>, wanted: (name: string) => boolean): Control[] => {
+    const found: Control[] = [];
+
+    eachControl(document as Parameters<typeof eachControl>[0], (name, control) => {
+      if (wanted(name)) { found.push(control); }
+    });
+
+    return found;
+  };
+
+  for (const multiple of [false, true]) {
+    for (const restriction of [{ visible: false }, { display: 'none' as const }, { enabled: false }]) {
+      it(`preserves option indices for ${multiple ? 'multiple' : 'single'} selection with ${JSON.stringify(restriction)}`, () => {
+        const Screen = (): JSX.Element => Form({ children: Panel({ width: 240, children: [
+          jsx(Toggle, { name: 'before' }),
+          jsx(Select, { name: 'choice', multiple, width: 150, flexDirection: 'row',
+            children: [
+              Option({ value: 'a', label: 'A', width: 40, height: 20 }),
+              Option({ value: 'b', label: 'B', width: 40, height: 20, ...restriction }),
+              Option({ value: 'c', label: 'C', width: 40, height: 20 }),
+            ] }),
+          jsx(Toggle, { name: 'after' }),
+          Form.Button({ type: 'submit' }),
+        ] }) });
+        const result = compileFormScreen(Screen, { namespace: 'a', name: 'restricted_options' });
+        const hidden = 'visible' in restriction || 'display' in restriction;
+
+        for (const document of [result.document, result.face.document]) {
+          expect(named(document, name => /^option_\d+$/.test(name)).map(row => row.visible))
+            .toEqual([undefined, hidden ? false : undefined, undefined]);
+        }
+
+        const toggles = named(result.document, name => name === (multiple
+          ? 'toggle@core_ui_form_components.toggle' : 'toggle@core_ui_form_components.compiled_option_toggle'));
+
+        expect(toggles).toHaveLength(3);
+        expect(toggles.map(toggle => toggle.$field_enabled)).toEqual([undefined, 'enabled' in restriction ? false : undefined, undefined]);
+        expect(multiple ? toggles.map(toggle => toggle.collection_index) : named(result.document, name => name === 'row').map(row => row.collection_index))
+          .toEqual(multiple ? [1, 2, 3] : [0, 1, 2]);
+        expect(named(result.document, name => name === 'field@core_ui_form_components.toggle').map(field => field.collection_index))
+          .toEqual([0, multiple ? 4 : 2]);
+      });
+    }
+
+    it(`keeps all ${multiple ? 'multiple' : 'single'} options disabled when the group is disabled`, () => {
+      const Screen = (): JSX.Element => Form({ children: Panel({ children: [
+        jsx(Select, { name: 'choice', multiple, enabled: false, children: [
+          Option({ value: 'a', label: 'A', enabled: true }), Option({ value: 'b', label: 'B', enabled: false }),
+        ] }),
+        Form.Button({ type: 'submit' }),
+      ] }) });
+      const result = compileFormScreen(Screen, { namespace: 'a', name: 'disabled_group' });
+
+      expect(named(result.document, name => name.startsWith('toggle@')).map(toggle => toggle.$field_enabled)).toEqual([false, false]);
+    });
+  }
+
+  for (const kind of ['submit', 'exit'] as const) {
+    for (const locked of [undefined, 'mine/locked']) {
+      it(`disables the native ${kind} button with its ${locked ? 'authored' : 'resting'} locked face`, () => {
+        const Screen = (): JSX.Element => Form({ children: Panel({ children: [
+          Form.Button({ type: kind, enabled: false, background: 'mine/rest', ...locked === undefined ? {} : { backgroundLocked: locked } }),
+          ...kind === 'exit' ? [Form.Button({ type: 'submit' })] : [],
+        ] }) });
+        const result = compileFormScreen(Screen, { namespace: 'a', name: 'disabled_button' });
+        const [button] = named(result.document, name => name.startsWith(kind === 'exit' ? 'dismiss_' : 'submit_'));
+
+        expect(button).toMatchObject({ type: 'button', enabled: false, locked_control: 'locked' });
+        const state = button.controls?.find(entry => Object.keys(entry)[0]?.startsWith('locked@'));
+        const face = drawnFace(result.faces, Object.keys(state ?? {})[0]?.split('.').at(-1) ?? '');
+
+        expect(JSON.stringify(face)).toContain(locked ?? 'mine/rest');
+        expect(button.button_mappings?.[0]?.to_button_id).toBe(kind === 'exit' ? 'button.menu_exit' : 'button.submit_custom_form');
+      });
+    }
+  }
 });
 
 describe('an inline select on a compiled modal', () => {

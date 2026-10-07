@@ -170,6 +170,7 @@ function Pressed({ options, multiple, defaultValue, value, onChange, enabled, ga
 
         return (
           <Button
+            testName={option.label}
             width={0}
             height={segmentHeight}
             flexGrow={1}

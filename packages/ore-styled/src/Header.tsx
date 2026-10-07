@@ -87,11 +87,11 @@ export function Header({ title, breadcrumbs, trail, onBack, backTo, backReplace,
         : backTo !== undefined || back === true
           ? <Link width={h.iconSize} height={h.iconSize} background={h.textures.back} backgroundHover={h.textures.backHover} backgroundPressed={h.textures.backPressed} {...backTo === undefined ? { back: true } : { to: backTo, ...backReplace === true ? { replace: true } : {} }} />
           : onBack
-            ? <Button width={h.iconSize} height={h.iconSize} background={h.textures.back} backgroundHover={h.textures.backHover} backgroundPressed={h.textures.backPressed} onPress={onBack} />
+            ? <Button testName={'Back'} width={h.iconSize} height={h.iconSize} background={h.textures.back} backgroundHover={h.textures.backHover} backgroundPressed={h.textures.backPressed} onPress={onBack} />
             : <Panel width={h.iconSize} height={h.iconSize} />}
       <Trail {...shown} flexGrow={1} flexShrink={1} />
       {onClose
-        ? <Button width={h.iconSize} height={h.iconSize} background={h.textures.close} backgroundHover={h.textures.closeHover} backgroundPressed={h.textures.closePressed} onPress={onClose} />
+        ? <Button testName={'Close'} width={h.iconSize} height={h.iconSize} background={h.textures.close} backgroundHover={h.textures.closeHover} backgroundPressed={h.textures.closePressed} onPress={onClose} />
         // As wide as the control opposite it, so the trail is centred on the bar
         // rather than on what is left over beside a wider back control.
         : <Panel width={cancel === undefined ? h.iconSize : CANCEL_WIDTH} height={h.iconSize} />}

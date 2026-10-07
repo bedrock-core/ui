@@ -20,6 +20,8 @@ export const STUB = 'core_ui_form_components.inline_dropdown_toggle_stub';
 
 /** One option, placed, with each of its four looks already drawn. */
 export interface SelectOption {
+  visible?: false;
+  enabled?: false;
   /** Where the layout put the row, relative to the field. */
   rect: Rect;
   rest: readonly ControlEntry[];
@@ -45,7 +47,7 @@ export interface Select {
  * the pointer touches it. The locked pair look like rest and selected, since a
  * locked option still has to say which one it is.
  */
-const LOOKS: readonly [string, keyof Omit<SelectOption, 'rect'>][] = [
+const LOOKS: readonly [string, keyof Pick<SelectOption, 'rest' | 'selected' | 'hover' | 'selectedHover'>][] = [
   ['unchecked', 'rest'],
   ['checked', 'selected'],
   ['unchecked_hover', 'hover'],
@@ -93,6 +95,7 @@ export const select: Connector<Select> = (data, face) => {
       size: [option.rect.width, option.rect.height],
       offset: [option.rect.x, option.rect.y],
       ...topLeft,
+      ...option.visible === false ? { visible: false } : {},
       collection_name: 'custom_dropdown',
       controls: [{
         row: {
@@ -104,7 +107,7 @@ export const select: Connector<Select> = (data, face) => {
             [`toggle@${OPTION_TOGGLE}`]: {
               size: FULL,
               toggle_name: group,
-              ...pinnedEnabled(data),
+              ...pinnedEnabled({ enabled: data.enabled && option.enabled !== false }),
               controls: optionStates(option),
             },
           }],

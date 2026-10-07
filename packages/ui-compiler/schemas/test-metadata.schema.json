@@ -57,7 +57,7 @@
             "items": { "type": "string", "minLength": 1 }
           }
         },
-        "interaction": { "enum": ["form-button", "modal-button", "form-input", "form-toggle", "form-slider", "form-dropdown", "unsupported"] }
+        "interaction": { "enum": ["form-button", "modal-button", "form-input", "form-toggle", "form-option", "form-slider", "form-dropdown", "local-toggle", "unsupported"] }
       }
     },
     "screen": {

@@ -1,7 +1,7 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { Button, Container, Form, Link, Panel, Screen, Text } from '@bedrock-core/ui-runtime';
+import { Button, Container, Disclosure, Form, Link, Option, Panel, Screen, Select, Tabs, Text } from '@bedrock-core/ui-runtime';
 import { describe, expect, it } from 'vitest';
 import { jsx } from '@bedrock-core/ui-runtime/jsx-runtime';
 import { Input } from '../../../ore-styled/src/Input';
@@ -18,6 +18,75 @@ const sample = (): JSX.Element => Screen({ testId: 'home', children: Panel({
 }) });
 
 describe('opt-in compiler test metadata', () => {
+  for (const modal of [false, true]) {
+    it(`maps local tab and disclosure toggles to unique qualified instances on an ${modal ? 'modal' : 'action'} form`, () => {
+      const children = (): JSX.Element => Panel({ width: 240, children: [
+        ...['first', 'second'].map(testId => Tabs({ testId, width: 160, height: 80, children: [
+          Tabs.Tab({ header: Text({ children: 'One' }), children: Text({ children: 'First pane' }) }),
+          Tabs.Tab({ header: Text({ children: 'Two' }), children: Text({ children: 'Second pane' }) }),
+        ] })),
+        Disclosure({ width: 160, header: Text({ children: 'Open' }), children: Text({ children: 'Rows' }) }),
+        ...modal ? [jsx(() => Form.Button({ type: 'submit', children: Text({ children: 'Submit' }) }), {})] : [],
+      ] });
+      const source = (): JSX.Element => modal ? Form({ children: children() }) : Screen({ children: children() });
+      const plain = compileFormScreen(source, spec);
+      const compiled = compileFormScreen(source, { ...spec, testMetadata: true });
+      const toggles = compiled.testMetadata!.controls.filter(control => control.interaction === 'local-toggle');
+
+      expect(toggles.map(control => [control.role, control.name?.value])).toEqual([
+        ['checkbox', 'Tab 1'], ['checkbox', 'Tab 2'], ['checkbox', 'Tab 1'], ['checkbox', 'Tab 2'], ['checkbox', 'Disclosure'],
+      ]);
+      expect(new Set(toggles.map(control => JSON.stringify(control.paths))).size).toBe(5);
+      expect(toggles.every(control => control.paths.length === 1 && control.paths[0]!.at(-1) === `${compiled.document.namespace}_${control.node}`)).toBe(true);
+      expect(compiled.document).toEqual(plain.document);
+      expect(compiled.faces).toEqual(plain.faces);
+      expect(compiled.snapshot).toEqual(plain.snapshot);
+    });
+  }
+
+  for (const multiple of [false, true]) {
+    it(`scopes native Option identities within each ${multiple ? 'multiple' : 'single'} Select without changing output`, () => {
+      const modal = (): JSX.Element => Form({ children: Panel({ width: 250, height: 160, children: [...['first', 'second'].map(group => jsx(() => Select({
+        name: group, testId: group, ...multiple ? { multiple: true as const, defaultValue: ['a'] } : { multiple: false as const, defaultValue: 'a' }, width: 200,
+        children: ['a', 'b', 'c'].map((value, index) => Option({ value, label: value.toUpperCase(), testId: `${group}-${value}`,
+          width: 48, height: 20, ...index === 1 ? { visible: false, enabled: false } : {} })),
+      }), {})), jsx(() => Form.Button({ type: 'submit', children: Text({ children: 'Submit' }) }), {})] }) });
+      const plain = compileFormScreen(modal, spec);
+      const tested = compileFormScreen(modal, { ...spec, testMetadata: true });
+      const options = tested.testMetadata?.controls.filter(control => control.interaction === 'form-option') ?? [];
+
+      expect(options.map(control => [control.testId, control.role, control.name])).toEqual(['first', 'second'].flatMap(group =>
+        ['a', 'b', 'c'].map(value => [`${group}-${value}`, 'checkbox', { kind: 'literal', value: value.toUpperCase() }])));
+      expect(new Set(options.map(control => JSON.stringify(control.paths))).size).toBe(6);
+      expect(options.every(control => control.paths.length === 1)).toBe(true);
+
+      for (const group of ['first', 'second']) {
+        const parent = tested.testMetadata!.controls.find(control => control.testId === group)!.paths[0]!;
+
+        expect(options.filter(control => control.testId?.startsWith(group)).every(control => parent.every((key, index) => control.paths[0]?.[index] === key))).toBe(true);
+      }
+
+      expect(tested.document).toEqual(plain.document);
+      expect(tested.faces).toEqual(plain.faces);
+      expect(tested.entries.map(({ entry, role }) => ({ entry, role }))).toEqual(plain.entries.map(({ entry, role }) => ({ entry, role })));
+      expect(tested.snapshot).toEqual(plain.snapshot);
+    });
+  }
+
+  it('validates native Option annotations and retains their authored names', () => {
+    const modal = (props: Record<string, unknown> = {}): (() => JSX.Element) => () => Form({ children: Panel({
+      children: [jsx(() => Select({ name: 'choice', children: Option({ value: 'a', label: 'Alpha', ...props }) }), {}),
+        jsx(() => Form.Button({ type: 'submit', children: Text({ children: 'Submit' }) }), {})],
+    }) });
+
+    expect(compileFormScreen(modal({ testId: 'choice-a', testName: 'First choice' }), { ...spec, testMetadata: true }).testMetadata?.controls.find(control => control.testId === 'choice-a'))
+      .toMatchObject({ role: 'checkbox', interaction: 'form-option', name: { kind: 'declared', value: 'First choice' } });
+
+    for (const [props, error] of [[{ testId: ' ' }, 'testId'], [{ testRole: 'invalid' }, 'Unknown testRole'], [{ testName: 42 }, 'testName must be a string']] as const) {
+      expect(() => compileFormScreen(modal(props), { ...spec, testMetadata: true })).toThrow(error);
+    }
+  });
+
   it('exposes the versioned contract and JSON schema without loading the Minecraft runtime', () => {
     const output = execFileSync(process.execPath, ['--input-type=module', '-e', `
       import { TEST_METADATA_PATH, TEST_METADATA_VERSION } from '@bedrock-core/ui-compiler/testing';
