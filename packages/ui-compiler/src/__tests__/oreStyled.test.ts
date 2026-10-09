@@ -1,13 +1,17 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
-import { Container, Panel, Screen as ScreenRoot, Text } from '@bedrock-core/ui-runtime';
+import { Container, Form, Panel, Screen as ScreenRoot, Text } from '@bedrock-core/ui-runtime';
+import { jsx } from '@bedrock-core/ui-runtime/jsx-runtime';
 import { describe, expect, it } from 'vitest';
 import { Button } from '../../../ore-styled/src/Button';
 import { Card } from '../../../ore-styled/src/Card';
 import { MenuRow } from '../../../ore-styled/src/MenuRow';
+import { Input } from '../../../ore-styled/src/Input';
+import { Slider } from '../../../ore-styled/src/Slider';
+import { FormButton } from '../../../ore-styled/src/Form/FormButton';
 import { theme } from '../../../ore-styled/src/tokens';
 import { compileScreen } from '../compile';
 import { compileFormScreen } from '../hosts/form/compile';
-import { child, definition, drawnFace, find } from '../__fixtures__/helpers';
+import { child, definition, drawnFace, eachControl, find } from '../__fixtures__/helpers';
 
 /** A styled screen: the components an addon actually writes with. */
 const Screen = (): JSX.Element => Container({
@@ -76,4 +80,60 @@ describe('a menu row with a live line', () => {
     // Every row still takes a press, and the two live lines ride entries of their own.
     expect(snapshot.shape.startsWith('button,button,button | text:16,text:12 |')).toBe(true);
   });
+});
+
+describe('styled native input text offsets', () => {
+  for (const label of [undefined, 'Label']) {
+    for (const offset of [undefined, -1, 0, 1]) {
+      it(`keeps ${String(offset)} offsets with ${label ?? 'no label'}`, () => {
+        const NativeField = (): JSX.Element => Input({ name: 'value', label, width: 160, defaultValue: 'A', placeholder: 'B',
+          textOffsetX: offset, textOffsetY: offset, placeholderOffsetX: offset, placeholderOffsetY: offset });
+        const Submit = (): JSX.Element => Form.Button({ type: 'submit', label: 'Submit' });
+        const Field = (): JSX.Element => Form({ children: Panel({ width: 200, height: 200, children: [
+          jsx(NativeField, {}),
+          jsx(Submit, {}),
+        ] }) });
+        const result = compileFormScreen(Field, { namespace: 'a', name: 'input_offsets' });
+        const observed: { value: unknown; placeholder: unknown }[] = [];
+
+        eachControl(result.document, (_name, control) => {
+          if ('$value_offset' in control) {
+            observed.push({ value: control.$value_offset, placeholder: control.$placeholder_offset });
+          }
+        });
+
+        const expected = offset === undefined ? [8, -5] : [offset, offset];
+
+        expect(observed).toEqual([{ value: expected, placeholder: expected }]);
+      });
+    }
+  }
+});
+
+describe('native field aspect ratios', () => {
+  for (const kind of ['input', 'slider', 'button'] as const) {
+    const defaultHeight = kind === 'slider' ? 32 : 24;
+
+    for (const [aspectRatio, height, expected] of [[undefined, undefined, defaultHeight], [0.5, undefined, 96], [2, undefined, 24],
+      [0.5, 24, 24], [0, undefined, defaultHeight], [-1, undefined, defaultHeight]] as const) {
+      it(`${kind} preserves height ${String(height)} with aspect ratio ${String(aspectRatio)}`, () => {
+        const Subject = (): JSX.Element => {
+          const layout = { width: 48, aspectRatio, height };
+
+          if (kind === 'input') { return Input({ name: 'value', ...layout }); }
+
+          if (kind === 'slider') { return Slider({ name: 'value', min: 0, max: 10, ...layout }); }
+
+          return FormButton({ type: 'submit', ...layout });
+        };
+        const Submit = (): JSX.Element => Form.Button({ type: 'submit', label: 'Submit' });
+        const Field = (): JSX.Element => Form({ children: Panel({ width: 200, height: 200, children: [
+          jsx(Subject, {}), ...kind === 'button' ? [] : [jsx(Submit, {})],
+        ] }) });
+        const compiled = compileFormScreen(Field, { namespace: 'a', name: 'field_ratio' });
+
+        expect(compiled.face.root.children[0]?.rect).toMatchObject({ width: 48, height: expected });
+      });
+    }
+  }
 });

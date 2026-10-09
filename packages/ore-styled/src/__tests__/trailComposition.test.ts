@@ -93,6 +93,20 @@ describe('a baked trail in one language', () => {
   });
 
   it('collapses the way a live trail does when it has no room', () => {
-    expect(trailLine(['guide.title', 'Literal', 'guide.page'], resolve, 1)).toBe(`${color}...${separator} > ${color}Pagina`);
+    expect(trailLine(['guide.title', 'Literal', 'guide.page'], resolve, 1)).toBe(color);
+  });
+
+  it('fits an oversized final segment instead of letting it spill out of the trail', () => {
+    expect(trailLine(['Root', 'WWWWWWWWWWWWWWWWWWWW'], resolve, 40)).toBe(`${color}WWW...`);
+  });
+
+  it('keeps short single captions unchanged', () => {
+    expect(trailLine(['guide.title'], resolve, 100)).toBe(`${color}Guia`);
+  });
+
+  it('fits a live translated final segment in the cancel header caption slot', () => {
+    const message = trailText(['Root', 'long.title'], key => key === 'long.title' ? 'W'.repeat(100) : undefined, { back: 'cancel' });
+
+    expect(message.rawtext).toEqual([{ text: color }, { text: 'WWWWWWWWWWWWWWWWW...' }]);
   });
 });

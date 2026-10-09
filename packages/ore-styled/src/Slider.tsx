@@ -32,6 +32,7 @@ export function Slider({
   useMechanism('Slider');
 
   const s = theme.components.slider;
+  const aspectSized = layout.aspectRatio !== undefined && Number.isFinite(layout.aspectRatio) && layout.aspectRatio > 0;
 
   const control = (
     <PrimitiveSlider
@@ -45,7 +46,7 @@ export function Slider({
       step={step}
       defaultValue={defaultValue}
       enabled={enabled}
-      height={s.height}
+      height={aspectSized ? undefined : s.height}
       background={background ?? s.textures.track}
       backgroundHover={backgroundHover}
       backgroundPressed={backgroundPressed}

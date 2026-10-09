@@ -383,8 +383,12 @@ export function createContainerScreen<N extends string = string>(
     const existing = sessions.get(target.id);
 
     if (existing) {
+      const joined = !existing.viewers.has(player.id);
+
       existing.viewers.set(player.id, player);
-      greet(existing, player);
+
+      if (joined) { greet(existing, player); }
+
       trace(existing, `open ${player.name}`);
 
       return;

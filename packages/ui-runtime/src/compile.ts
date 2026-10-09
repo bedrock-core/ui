@@ -10,7 +10,7 @@
 
 // The native modal fields. A compiled screen lays them out but does not draw
 // them: the widget is the engine's, instantiated by vanilla's row factory.
-export { MODAL_FORM_BUTTON_SLOT_TYPE } from './components/Form';
+export { collectFormButtons, MODAL_FORM_BUTTON_SLOT_TYPE } from './components/Form';
 export { MODAL_DROPDOWN_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE } from './core/fields';
 
 export { buildContainerTree, buildScreenOnce, buildScreenTree } from './hosts/chest/build';
@@ -76,7 +76,7 @@ export {
 export type { GroupOptionDefaults, OptionData } from './components/Form/optionPayload';
 export type { EmbedPlacement } from './components/Embed';
 export { PANEL_TYPE } from './components/Panel';
-export { SCROLL_RESERVE, SCROLL_SLOT_TYPE, SCROLL_TRACK_WIDTH, WIDE_RECT } from './components/Scroll';
+export { SCROLL_RESERVE, SCROLL_SLOT_TYPE, SCROLL_TRACK_WIDTH, SCROLL_VIEWPORT, WIDE_RECT } from './components/Scroll';
 export { SWAP_LOOK_SLOT_TYPE, SWAP_SLOT_TYPE } from './components/Swap';
 export type { SwapState } from './components/Swap';
 export { LIST_SLOT_TYPE, listCapacity, listCount } from './components/List';
@@ -84,7 +84,7 @@ export { isForeignSlot, SLOT_CELL, SLOT_TYPE, slotInteractive, slotRole, slotSou
 export type { SlotSource } from './components/Slot';
 export { SLOT_GRID_TYPE, slotGridConfig } from './components/SlotGrid';
 export type { SlotGridConfig } from './components/SlotGrid';
-export { isTextElementType, liveTextLength } from './components/Text';
+export { isTextElementType, liveTextLength, safeLabelText } from './components/Text';
 export { childElements, concreteRoots, isElement } from './core/guards';
 export { ContainerScreenError, ScreenRootError } from './core/types';
 export { CANONICAL_SCREEN } from '@bedrock-core/flexbox';

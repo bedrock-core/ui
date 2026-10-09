@@ -114,4 +114,22 @@ describe('compiling a Trans', () => {
 
     expect(() => compileFormScreen(screenWith({ box: lazy(Panel, {}) }), { namespace: 'a', name: 'boxed' })).toThrow(/neither|<Text>/);
   });
+
+  it.each([
+    [{}, 10],
+    [{ height: 24 }, 24],
+    [{ height: 96 }, 96],
+    [{ aspectRatio: 2 }, 40],
+    [{ aspectRatio: 2, height: 24 }, 24],
+    [{ aspectRatio: 0 }, 10],
+    [{ aspectRatio: -1 }, 10],
+  ])('preserves composed height for %j', (layout, height) => {
+    const Sized = (): JSX.Element => ScreenRoot({ children: Panel({ width: 100, height: 200,
+      children: Trans({ translations: { en_US: 'A' }, width: 80, background: 'subject', ...layout }),
+    }) });
+    const compiled = compileFormScreen(Sized, { namespace: 'a', name: 'sized_trans' });
+    const [subject] = compiled.face.root.children;
+
+    expect(subject?.rect).toMatchObject({ width: 80, height });
+  });
 });

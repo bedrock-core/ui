@@ -1,11 +1,13 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
-import { Form, Panel, Text, Dropdown, Option, Select, Toggle } from '@bedrock-core/ui-runtime';
+import { Form, Panel, Text, Dropdown, Input, Option, Select, Slider, Toggle } from '@bedrock-core/ui-runtime';
 import type { FunctionComponent } from '@bedrock-core/ui-runtime';
 import { jsx } from '@bedrock-core/ui-runtime/jsx-runtime';
 import { describe, expect, it } from 'vitest';
 import { drawnFace, eachControl } from '../../../__fixtures__/helpers';
 import type { Control } from '../../../jsonui';
 import { compileFormScreen } from '../compile';
+import sliderTemplates from '../../../support/templates/slider';
+import type { TemplateControl } from '../../../support/types';
 
 /**
  * A compiled modal: one native field, and everything around it drawn by the pack.
@@ -30,6 +32,98 @@ const Settings = (): JSX.Element => Form({
 
 describe('compiling a modal screen', () => {
   const compiled = compileFormScreen(Settings, { namespace: 'drav0011_shop', name: 'settings' });
+
+  it('draws the numeric slider value above every track and thumb face', () => {
+    const slider = sliderTemplates['core_ui_form_components.slider_control']().control;
+    const label = sliderTemplates['core_ui_form_components.slider_value_label']().control;
+    const paintedLayers = (control: TemplateControl, inherited = 0): number[] => {
+      const layer = inherited + (typeof control.layer === 'number' ? control.layer : 0);
+
+      return [
+        ...(control.type === 'image' ? [layer] : []),
+        ...(control.controls ?? []).flatMap(entry => Object.values(entry)
+          .flatMap(child => child ? paintedLayers(child, layer) : [])),
+      ];
+    };
+
+    expect(label.layer).toBeGreaterThan(Math.max(...paintedLayers(slider)));
+  });
+
+  it('requires exactly one submit and at most one exit button', () => {
+    for (const [kinds, message] of [
+      [[], /exactly one.*submit/],
+      [['submit', 'submit'], /at most ONE.*submit/],
+      [['submit', 'exit', 'exit'], /at most ONE.*exit/],
+    ] as const) {
+      const Invalid = (): JSX.Element => Form({ children: Panel({
+        children: kinds.map(type => Form.Button({ type })),
+      }) });
+
+      expect(() => compileFormScreen(Invalid, { namespace: 'a', name: 'invalid_buttons' })).toThrow(message);
+    }
+  });
+
+  it('mounts author-supplied slider geometry and all native state textures in its row gate', () => {
+    const Styled = (): JSX.Element => Form({ children: Panel({ width: 240, height: 160, children: [
+      jsx(Slider as unknown as FunctionComponent, { name: 'amount', min: 0, max: 10, width: 160, height: 24,
+        trackHeight: 6, thumbWidth: 24, thumbHeight: 12, background: 'track', backgroundHover: 'track-hover',
+        progress: 'progress', progressHover: 'progress-hover', thumb: 'thumb', thumbHover: 'thumb-hover',
+        thumbPressed: 'thumb-pressed', thumbLocked: 'thumb-locked' }),
+      Form.Button({ type: 'submit' }),
+    ] }) });
+    const result = compileFormScreen(Styled, { namespace: 'a', name: 'slider_style' });
+    const mounts: Control[] = [];
+
+    eachControl(result.document, (name, control) => {
+      if (name === 'body@core_ui_form_components.slider_body') { mounts.push(control); }
+    });
+
+    expect(mounts).toHaveLength(1);
+    expect(mounts[0]).toMatchObject({ $travel_size: [136, 12], $bar_size: [160, 6], $thumb_size: [24, 12],
+      $track: 'track', $track_hover: 'track-hover', $progress: 'progress', $progress_hover: 'progress-hover',
+      $thumb: 'thumb', $thumb_hover: 'thumb-hover', $thumb_pressed: 'thumb-pressed', $thumb_locked: 'thumb-locked' });
+  });
+
+  it('preserves native input typography and independent value and placeholder positions', () => {
+    const Styled = (): JSX.Element => Form({ children: Panel({ width: 240, height: 160, children: [
+      jsx(Input as unknown as FunctionComponent, { name: 'text', width: 160, height: 24,
+        font: 'minecraftTen', scale: 0.75, textOffsetX: 12, textOffsetY: 3,
+        placeholderOffsetX: 5, placeholderOffsetY: -2, background: 'rest',
+        backgroundHover: 'over', backgroundPressed: 'focus', backgroundLocked: 'locked' }),
+      Form.Button({ type: 'submit' }),
+    ] }) });
+    const fields: Control[] = [];
+
+    eachControl(compileFormScreen(Styled, { namespace: 'a', name: 'input_style' }).document, (name, control) => {
+      if (name === 'field@core_ui_form_components.input') { fields.push(control); }
+    });
+
+    expect(fields).toHaveLength(1);
+    expect(fields[0]).toMatchObject({ $scale: 1.5, $value_font_type: 'MinecraftTen', $value_offset: [12, 3],
+      $placeholder_font_type: 'MinecraftTen', $placeholder_scale: 1.5, $placeholder_offset: [5, -2],
+      $static_texture: 'rest', $hover_texture: 'over', $pressed_texture: 'focus', $locked_texture: 'locked' });
+  });
+
+  it('passes the closed dropdown label font, scale, colour and position to its native mount', () => {
+    const Styled = (): JSX.Element => Form({ children: Panel({ width: 240, height: 160, children: [
+      jsx(Dropdown as unknown as FunctionComponent, { name: 'choice', width: 160, height: 24,
+        currentFont: 'minecraftTen', currentScale: 0.75, currentColor: '§e', currentInsetX: 12, currentInsetY: 3,
+        background: 'rest', backgroundHover: 'over', backgroundPressed: 'open', backgroundLocked: 'locked',
+        children: [Option({ value: 'a', label: '123' })] }),
+      Form.Button({ type: 'submit' }),
+    ] }) });
+    const result = compileFormScreen(Styled, { namespace: 'a', name: 'closed_label' });
+    const fields: Control[] = [];
+
+    eachControl(result.document, (name, control) => {
+      if (name === 'field@core_ui_form_components.dropdown') { fields.push(control); }
+    });
+
+    expect(fields).toHaveLength(1);
+    expect(fields[0]).toMatchObject({ $current_font_type: 'MinecraftTen', $current_font_scale: 1.5,
+      $current_color: '§e', $current_offset: [12, 3],
+      $static_texture: 'rest', $hover_texture: 'over', $pressed_texture: 'open', $locked_texture: 'locked' });
+  });
 
   it('compiles a lowered field', () => {
     expect(compiled.namespace).toBe('drav0011_shop_settings');
@@ -72,6 +166,7 @@ describe('compiling a modal screen', () => {
         children: [
           jsx(Toggle, { name: 'open' }),
           jsx(Toggle, { name: 'shut', enabled: false }),
+          Form.Button({ type: 'submit' }),
         ],
       }),
     });

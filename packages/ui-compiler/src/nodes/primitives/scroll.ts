@@ -1,7 +1,7 @@
-import { SCROLL_RESERVE, SCROLL_SLOT_TYPE, WIDE_RECT } from '@bedrock-core/ui-runtime/compile';
+import { SCROLL_RESERVE, SCROLL_SLOT_TYPE, SCROLL_VIEWPORT, WIDE_RECT } from '@bedrock-core/ui-runtime/compile';
 import { type Box, entry, panelFace, placed, scrollContent, scrollFace } from '../../faces';
 import type { ControlEntry } from '../../jsonui';
-import { boxOf } from '../utils/shared';
+import { boxOf, num } from '../utils/shared';
 import type { ListNode } from './list';
 
 /**
@@ -116,19 +116,25 @@ export const scrollDefinition: NodeDefinition<ScrollNode> = {
   types: [SCROLL_SLOT_TYPE],
 
   lower(element, _type, ctx): ScrollNode {
+    const rect: Rect = {
+      x: ctx.rect.x + num(element.props[SCROLL_VIEWPORT.x], ctx.own.x) - ctx.own.x,
+      y: ctx.rect.y + num(element.props[SCROLL_VIEWPORT.y], ctx.own.y) - ctx.own.y,
+      width: num(element.props[SCROLL_VIEWPORT.width], ctx.rect.width),
+      height: num(element.props[SCROLL_VIEWPORT.height], ctx.rect.height),
+    };
     const children = ctx.children(element, REGION_ORIGIN);
     const bottom = children.reduce((max, child) => Math.max(max, child.rect.y + child.rect.height), 0);
     const [sole] = children;
     const wide = element.props[WIDE_RECT.marker] === true && children.length === 1 && sole?.kind === 'list'
-      ? wideOf(ctx.children(element, REGION_ORIGIN, { wide: true }), ctx.rect.height)
+      ? wideOf(ctx.children(element, REGION_ORIGIN, { wide: true }), rect.height)
       : undefined;
 
     return {
       kind: 'scroll',
       name: ctx.name('scroll'),
-      rect: ctx.rect,
+      rect,
       ...ctx.decoration,
-      extent: Math.max(ctx.rect.height, bottom),
+      extent: Math.max(rect.height, bottom),
       children,
       ...wide === undefined ? {} : { wide },
     };

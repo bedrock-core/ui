@@ -3,7 +3,7 @@ import { CANONICAL_SCREEN, createNode, computeLayout as flexComputeLayout } from
 import { isTextElementType, safeLabelText, type TextFont, type TextOverflow, type TextWordBreak } from '../../../components/Text';
 import { MODAL_FORM_BUTTON_SLOT_TYPE } from '../../../components/Form';
 import { LIST_SLOT_TYPE } from '../../../components/List';
-import { SCROLL_RESERVE, SCROLL_SLOT_TYPE, type ScrollAxis, WIDE_RECT } from '../../../components/Scroll';
+import { SCROLL_RESERVE, SCROLL_SLOT_TYPE, SCROLL_VIEWPORT, type ScrollAxis, WIDE_RECT } from '../../../components/Scroll';
 import type { JSX } from '../../../jsx';
 import { ellipsizeText, measureText, wrapText, WIDEST_GLYPH } from '../../../util/textMetrics';
 import { recordWidth } from '../buildPass';
@@ -307,7 +307,9 @@ function withIntrinsicSize(element: JSX.Element, style: FlexStyle): FlexStyle {
     // remains only as the degenerate optionless floor, per its original intent.
     const contentSized = element.type === MODAL_INLINE_SELECT_SLOT_TYPE && hasChildElements(element);
 
-    if (next.height === undefined && !contentSized) {
+    const aspectSized = next.aspectRatio !== undefined && Number.isFinite(next.aspectRatio) && next.aspectRatio > 0;
+
+    if (next.height === undefined && !contentSized && !aspectSized) {
       next.height = modalDefaultHeight;
     }
 
@@ -367,7 +369,13 @@ function withIntrinsicSize(element: JSX.Element, style: FlexStyle): FlexStyle {
 function buildNode(element: JSX.Element): LayoutNode {
   // A <Scroll> lays out as a leaf flex box; its viewport rect comes from the parent flow.
   if (element.type === SCROLL_SLOT_TYPE) {
-    return createNode(scrollFlexStyle(element), []);
+    const style = scrollFlexStyle(element);
+    const padded = [style.padding, style.paddingTop, style.paddingRight, style.paddingBottom, style.paddingLeft]
+      .some(value => value !== undefined && value !== 0);
+
+    // A full-size proxy lets the flex engine resolve side overrides, percentages,
+    // and rounding against the same parent as the scroll's outer box.
+    return createNode(style, padded ? [createNode({ width: '100%', height: '100%', flexShrink: 0 })] : []);
   }
 
   const baseStyle = (element.props.__layout ?? {}) as FlexStyle;
@@ -419,6 +427,10 @@ function applyToTree(
 
     if (node) {
       writeRect(element, node, target);
+
+      if (target === OWN_RECT) {
+        writeRect(element, node.children[0] ?? node, SCROLL_VIEWPORT);
+      }
     }
 
     return;
@@ -830,10 +842,10 @@ export function computeLayout(
   slots.forEach((slot, k) => {
     const index = k + 1;
     const axis = scrollAxis(slot);
-    const x = asNumber(slot.props.jsonUIx) ?? 0;
-    const y = asNumber(slot.props.jsonUIy) ?? 0;
-    const width = asNumber(slot.props.jsonUIWidth) ?? CANONICAL_SCREEN.width;
-    const height = asNumber(slot.props.jsonUIHeight) ?? CANONICAL_SCREEN.height;
+    const x = asNumber(slot.props[SCROLL_VIEWPORT.x]) ?? asNumber(slot.props.jsonUIx) ?? 0;
+    const y = asNumber(slot.props[SCROLL_VIEWPORT.y]) ?? asNumber(slot.props.jsonUIy) ?? 0;
+    const width = asNumber(slot.props[SCROLL_VIEWPORT.width]) ?? asNumber(slot.props.jsonUIWidth) ?? CANONICAL_SCREEN.width;
+    const height = asNumber(slot.props[SCROLL_VIEWPORT.height]) ?? asNumber(slot.props.jsonUIHeight) ?? CANONICAL_SCREEN.height;
     const extent = layoutScrollContent(slot, axis, width, height, index);
 
     scrolls[index] = { axis, x, y, width, height, extent };

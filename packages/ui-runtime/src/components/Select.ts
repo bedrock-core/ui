@@ -167,10 +167,16 @@ const nativeSelect = ({
  */
 export const Select: FunctionComponent<SelectProps> = (props: SelectProps): JSX.Element => {
   const mechanism = useMechanism('Select');
-  const options = optionElements(props.children).map(element => ({
-    value: String(element.props.value ?? ''),
-    label: String(element.props.label ?? ''),
-  }));
+  const options = optionElements(props.children).map((element) => {
+    const layout = element.props.__layout ?? withControl(element.props).__layout;
+
+    return {
+      value: String(element.props.value ?? ''),
+      label: String(element.props.label ?? ''),
+      testId: element.props.testId,
+      layout: typeof layout === 'object' && layout !== null ? layout : {},
+    };
+  });
   const [internal, setInternal] = useState<string[]>(
     props.multiple === true ? chosenOf(props.defaultValue) : chosenOf(props.defaultValue ?? options[0]?.value),
   );
@@ -214,6 +220,9 @@ export const Select: FunctionComponent<SelectProps> = (props: SelectProps): JSX.
       const color = on ? optionColorSelected ?? optionColor : optionColor;
 
       return Button({
+        ...option.layout,
+        testId: option.testId,
+        testName: option.label,
         background: on ? optionSelected ?? optionBackground : optionBackground,
         backgroundHover: optionHover,
         children: Text({ ...color === undefined ? {} : { color }, children: option.label }),

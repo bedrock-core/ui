@@ -1,3 +1,4 @@
+import { safeLabelText } from '@bedrock-core/ui-runtime/compile';
 import { FONT_SIZE, entry, HUG, placed, topLeft } from '../utils/place';
 import type { Box, Control, Face, TextStyle } from '../utils/types';
 
@@ -51,7 +52,7 @@ export const label = (style: TextStyle & { text: string; localize: boolean }, ge
 /** Everything a label carries that is about the glyphs rather than the box. */
 const glyphs = (style: TextStyle & { text: string; localize: boolean }): Control => ({
   type: 'label',
-  text: style.text,
+  text: style.localize ? style.text : safeLabelText(style.text),
   localize: style.localize,
   ...style.fontType === undefined ? {} : { font_type: style.fontType },
   font_size: FONT_SIZE,

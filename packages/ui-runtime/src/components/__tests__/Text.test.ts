@@ -26,4 +26,21 @@ describe('Text — JSON UI label safety', () => {
   it('leaves the empty string untouched', () => {
     expect(Text({ children: '' }).props.value).toEqual({ tail: '' });
   });
+
+  it('keeps composed empty translations blank through a localized label', () => {
+    const text = Text({ font: 'mojangles', ...{ __translations: { en_US: '', es_ES: '' } } });
+
+    expect(text.props.value).toEqual({ tail: '§r' });
+    expect(text.props.__textMetrics).toMatchObject({
+      resolvedText: '§r', isKey: true, translations: { en_US: '§r', es_ES: '§r' },
+    });
+  });
+
+  it('preserves nonempty languages when another composed translation is empty', () => {
+    const text = Text({ font: 'mojangles', ...{ __translations: { en_US: '', es_ES: 'Hoja', fr_FR: '50' } } });
+
+    expect(text.props.__textMetrics).toMatchObject({
+      translations: { en_US: '§r', es_ES: 'Hoja', fr_FR: '§r50' },
+    });
+  });
 });

@@ -13,7 +13,7 @@ export default {
             type: 'image',
             size: ['100%', '100%'],
             offset: [0, 0],
-            fill: false,
+            fill: true,
             anchor_to: 'center',
             anchor_from: 'center',
             texture: '#texture',
@@ -153,6 +153,7 @@ export default {
       $payload_binding: '#custom_radio_text',
       $cell_details_binding_type: 'collection_details',
       $label_skip: '(\'%.92s\' * #payload)',
+      $text_source: '(\'§r\' + ((\'%.82s\' * #raw_label_text) - (\'%.2s\' * #raw_label_text) - \';\'))',
     },
   }),
 } satisfies TemplateModule;

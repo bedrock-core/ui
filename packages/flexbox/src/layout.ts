@@ -578,24 +578,10 @@ function solve(
     const parent = parentOf.get(node);
     const pW = parent?.layout.width ?? refWidth;
     const pH = parent?.layout.height ?? refHeight;
-    // % sizes resolve against parent *content* box (outer minus padding).
-    // Parent's padding % itself uses the grandparent width — but at this depth
-    // we already resolved the parent in a previous iteration, so its padding
-    // can be resolved against the parent's own width as the safe base.
-    const parentPad = parent ? resolvePadding(parent.style, pW) : null;
-    const contentPW = parentPad ? Math.max(0, pW - parentPad.left - parentPad.right) : pW;
-    const contentPH = parentPad ? Math.max(0, pH - parentPad.top - parentPad.bottom) : pH;
     const s = node.style;
 
-    // Resolve own % sizes now that parent dimensions are final
-    if (isPercent(s.width)) {
-      node.layout.width = (parseFloat(s.width) / 100) * contentPW;
-    }
-
-    if (isPercent(s.height)) {
-      node.layout.height = (parseFloat(s.height) / 100) * contentPH;
-    }
-
+    // The parent resolves child percentages before granting flex space and
+    // rounding boundaries. Keep that grant while laying out this node's children.
     applyAspectRatio(node);
     clamp(node, pW, pH);
 
@@ -606,6 +592,7 @@ function solve(
     const pad = resolvePadding(s, pW);
 
     const dir = mainAxis(s);
+    const mainReverse = s.flexDirection === 'row-reverse' || s.flexDirection === 'column-reverse';
     // Gap percent resolves against this container's own content-box dimension
     // on the relevant axis.
     const ownContentW = Math.max(0, node.layout.width - pad.left - pad.right);
@@ -694,7 +681,7 @@ function solve(
         // same basis from child.layout. Without this, a grown item keeps its content
         // size as a floor and equal-grow siblings stay unequal.
         const measuredMain = dir === 'row' ? child.layout.width : child.layout.height;
-        const childBasis = resolveFlexBasisMain(child.style, measuredMain);
+        const childBasis = resolveFlexBasisMain(child.style, measuredMain, containerMain);
 
         if (childBasis !== measuredMain) {
           if (dir === 'row') {
@@ -716,8 +703,8 @@ function solve(
         }
       }
 
-      // Subtract gaps for non-spaced justifyContent
-      if (!isSpaced && flowCount > 1) {
+      // Reserve the minimum gap before distributing flex space.
+      if (flowCount > 1) {
         usedMain += (flowCount - 1) * mainGap;
       }
 
@@ -787,7 +774,7 @@ function solve(
         mainAvail -= childSize + childMargin;
       }
 
-      if (!isSpaced && flowCount > 1) {
+      if (flowCount > 1) {
         mainAvail -= (flowCount - 1) * mainGap;
       }
 
@@ -814,7 +801,7 @@ function solve(
           ? node.layout.width - pad.left - pad.right
           : node.layout.height - pad.top - pad.bottom;
 
-        const freeSpace = Math.max(0, containerMain - totalChildSize);
+        const freeSpace = Math.max(0, containerMain - totalChildSize - Math.max(0, flowCount - 1) * mainGap);
 
         if (jc === 'space-between') {
           spacingGap = flowCount > 1 ? freeSpace / (flowCount - 1) : 0;
@@ -835,30 +822,22 @@ function solve(
         }
       }
 
-      // ── Bresenham integer pixel distribution for flex children ───────────────
-      // Flex grow/shrink produces fractional sizes (e.g. 304/5 = 60.8).
-      // Rounding each child's size and position independently causes overlaps:
-      // the cursor accumulates floats (190.4) that round down while the prior
-      // child's rounded size still extends to 191, producing a 1px overlap.
-      //
-      // Fix: compute exact float cursor boundaries for all children, round each
-      // boundary once, then derive each flex child's integer size from the
-      // difference between consecutive rounded boundaries. This mirrors what
-      // CSS engines do and guarantees sum(sizes) = container with no overlaps.
+      // Round both ends of each allocated box on the main axis. Shared fractional
+      // boundaries preserve the total flex allocation without overlapping boxes.
+      // Margins and distributed justification remain outside each box's interval.
       if (relKids.some(c => resolveFlexGrow(c.style) > 0 || resolveFlexShrink(c.style) > 0)) {
-        const boundaries: number[] = [cursor];
+        const intervals: [number, number][] = [];
         let bc = cursor;
 
         for (const child of relKids) {
           const cm = resolveMargin(child.style, node.layout.width);
           const childMargin = dir === 'row' ? cm.left + cm.right : cm.top + cm.bottom;
           const childSize = dir === 'row' ? child.layout.width : child.layout.height;
+          const start = bc + (dir === 'row' ? cm.left : cm.top);
 
-          bc += childMargin + childSize + (isSpaced ? spacingGap : mainGap);
-          boundaries.push(bc);
+          intervals.push([start, start + childSize]);
+          bc += childMargin + childSize + mainGap + spacingGap;
         }
-
-        const rb = boundaries.map(b => Math.round(b));
 
         for (let i = 0; i < relKids.length; i++) {
           const child = relKids[i];
@@ -867,10 +846,8 @@ function solve(
             continue; // non-flex: keep explicit integer size
           }
 
-          const cm = resolveMargin(child.style, node.layout.width);
-          const childMargin = dir === 'row' ? cm.left + cm.right : cm.top + cm.bottom;
-          const gap = isSpaced ? spacingGap : mainGap;
-          const snapped = Math.max(0, rb[i + 1] - rb[i] - childMargin - gap);
+          const [start, end] = intervals[i];
+          const snapped = Math.max(0, Math.round(end) - Math.round(start));
 
           if (dir === 'row') {
             child.layout.width = snapped;
@@ -891,14 +868,14 @@ function solve(
         const cm = resolveMargin(child.style, node.layout.width);
 
         if (dir === 'row') {
-          child.layout.x = cursor + cm.left;
+          child.layout.x = cursor + (mainReverse ? cm.right : cm.left);
           cursor += child.layout.width + cm.left + cm.right;
         } else {
-          child.layout.y = cursor + cm.top;
+          child.layout.y = cursor + (mainReverse ? cm.bottom : cm.top);
           cursor += child.layout.height + cm.top + cm.bottom;
         }
 
-        cursor += isSpaced ? spacingGap : mainGap;
+        cursor += mainGap + spacingGap;
 
         // Cross-axis alignment
         const eff = resolveAlignSelf(child.style, alignItems);
@@ -941,23 +918,52 @@ function solve(
         lines.push(currentLine);
       }
 
-      // Position each line along the cross axis
+      const lineCrossSizes = lines.map(line => Math.max(...line.map((child) => {
+        const cm = resolveMargin(child.style, node.layout.width);
+
+        return dir === 'row' ? child.layout.height + cm.top + cm.bottom : child.layout.width + cm.left + cm.right;
+      })));
+      const naturalCross = lineCrossSizes.reduce((total, size) => total + size, 0) + Math.max(0, lines.length - 1) * crossGap;
+
+      if (lines.length > 0) {
+        if (dir === 'row' && s.height === undefined) {
+          node.layout.height = pad.top + naturalCross + pad.bottom;
+        } else if (dir === 'column' && s.width === undefined) {
+          node.layout.width = pad.left + naturalCross + pad.right;
+        }
+      }
+
+      const crossAvail = dir === 'row' ? node.layout.height - pad.top - pad.bottom : node.layout.width - pad.left - pad.right;
+      const crossFree = Math.max(0, crossAvail - naturalCross);
+      const alignContent = s.alignContent ?? 'stretch';
+      const crossReverse = flexWrap === 'wrap-reverse';
+      let crossSpacingGap = 0;
+      let crossOffset = 0;
+
+      if (alignContent === 'stretch' && lines.length > 0) {
+        for (let index = 0; index < lineCrossSizes.length; index++) {
+          lineCrossSizes[index] += crossFree / lines.length;
+        }
+      } else if (alignContent === 'flex-end') {
+        crossOffset = crossFree;
+      } else if (alignContent === 'center') {
+        crossOffset = crossFree / 2;
+      } else if (alignContent === 'space-between' && lines.length > 1) {
+        crossSpacingGap = crossFree / (lines.length - 1);
+      } else if (alignContent === 'space-around' && lines.length > 0) {
+        crossSpacingGap = crossFree / lines.length;
+        crossOffset = crossSpacingGap / 2;
+      }
+
+      // Position each line inside its allocated cross-axis band.
       let crossCursor = dir === 'row'
         ? node.layout.y + pad.top
         : node.layout.x + pad.left;
 
-      for (const line of lines) {
-        // Compute raw line cross-size (max child cross-size + margins)
-        let lineCrossSize = 0;
+      crossCursor += crossOffset;
 
-        for (const child of line) {
-          const cm = resolveMargin(child.style, node.layout.width);
-          const childCross = dir === 'row'
-            ? child.layout.height + cm.top + cm.bottom
-            : child.layout.width + cm.left + cm.right;
-
-          lineCrossSize = Math.max(lineCrossSize, childCross);
-        }
+      for (const [lineIndex, line] of lines.entries()) {
+        const lineCrossSize = lineCrossSizes[lineIndex];
 
         // Apply cross-axis stretch within this line
         for (const child of line) {
@@ -1020,49 +1026,56 @@ function solve(
 
           if (dir === 'row') {
             // Main axis
-            child.layout.x = lineCursor + cm.left;
-            lineCursor += child.layout.width + cm.left + cm.right + (isSpaced ? lineSpacingGap : mainGap);
+            child.layout.x = lineCursor + (mainReverse ? cm.right : cm.left);
+            lineCursor += child.layout.width + cm.left + cm.right + mainGap + lineSpacingGap;
             // Cross axis within line
             const childCross = child.layout.height + cm.top + cm.bottom;
+            const leadingMargin = crossReverse ? cm.bottom : cm.top;
 
             if (eff === 'flex-start' || eff === 'stretch') {
-              child.layout.y = crossCursor + cm.top;
+              child.layout.y = crossCursor + leadingMargin;
             } else if (eff === 'center') {
-              child.layout.y = crossCursor + (lineCrossSize - childCross) / 2 + cm.top;
+              child.layout.y = crossCursor + (lineCrossSize - childCross) / 2 + leadingMargin;
             } else if (eff === 'flex-end') {
-              child.layout.y = crossCursor + lineCrossSize - childCross + cm.top;
+              child.layout.y = crossCursor + lineCrossSize - childCross + leadingMargin;
             }
           } else {
             // Main axis
-            child.layout.y = lineCursor + cm.top;
-            lineCursor += child.layout.height + cm.top + cm.bottom + (isSpaced ? lineSpacingGap : mainGap);
+            child.layout.y = lineCursor + (mainReverse ? cm.bottom : cm.top);
+            lineCursor += child.layout.height + cm.top + cm.bottom + mainGap + lineSpacingGap;
             // Cross axis within line
             const childCross = child.layout.width + cm.left + cm.right;
+            const leadingMargin = crossReverse ? cm.right : cm.left;
 
             if (eff === 'flex-start' || eff === 'stretch') {
-              child.layout.x = crossCursor + cm.left;
+              child.layout.x = crossCursor + leadingMargin;
             } else if (eff === 'center') {
-              child.layout.x = crossCursor + (lineCrossSize - childCross) / 2 + cm.left;
+              child.layout.x = crossCursor + (lineCrossSize - childCross) / 2 + leadingMargin;
             } else if (eff === 'flex-end') {
-              child.layout.x = crossCursor + lineCrossSize - childCross + cm.left;
+              child.layout.x = crossCursor + lineCrossSize - childCross + leadingMargin;
             }
           }
         }
 
-        crossCursor += lineCrossSize + crossGap;
+        crossCursor += lineCrossSize + crossGap + crossSpacingGap;
+      }
+    }
+
+    // Reverse the logical axes without changing child identity or source order.
+    for (const child of relKids) {
+      if (mainReverse) {
+        if (dir === 'row') {
+          child.layout.x = 2 * node.layout.x + pad.left + node.layout.width - pad.right - child.layout.x - child.layout.width;
+        } else {
+          child.layout.y = 2 * node.layout.y + pad.top + node.layout.height - pad.bottom - child.layout.y - child.layout.height;
+        }
       }
 
-      // ── Correct container cross-axis size for wrapped content ──────────────
-      if (lines.length > 0) {
-        const initialCross = dir === 'row'
-          ? node.layout.y + pad.top
-          : node.layout.x + pad.left;
-        const contentCross = (crossCursor - initialCross) - crossGap;
-
-        if (dir === 'row' && node.style.height === undefined) {
-          node.layout.height = pad.top + contentCross + pad.bottom;
-        } else if (dir === 'column' && node.style.width === undefined) {
-          node.layout.width = pad.left + contentCross + pad.right;
+      if (flexWrap === 'wrap-reverse') {
+        if (dir === 'row') {
+          child.layout.y = 2 * node.layout.y + pad.top + node.layout.height - pad.bottom - child.layout.y - child.layout.height;
+        } else {
+          child.layout.x = 2 * node.layout.x + pad.left + node.layout.width - pad.right - child.layout.x - child.layout.width;
         }
       }
     }

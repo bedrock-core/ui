@@ -28,6 +28,7 @@ import {
 import type { IrDocument, IrNode, Rect } from './ir';
 import { looksOf } from './looks';
 import { nativeRootSize, percent } from './nativeLayout';
+import { flowItemOf } from './flow';
 import { loweringFor } from './nodes';
 import type { LookNode, SwapNode } from './nodes/primitives/swap';
 import { FOLLOWS_PREVIOUS, followsOf, num, str } from './nodes/utils/shared';
@@ -390,6 +391,9 @@ const lower = (definition: NodeDefinition, element: JSX.Element, type: string, o
 
   try {
     node = definition.lower(element, type, ctx);
+    const flowItem = node.kind === 'panel' || node.kind === 'image' ? flowItemOf(layoutStyle(element.props)) : undefined;
+
+    if (flowItem !== undefined) { node = { ...node, flowItem }; }
   } finally {
     walk.carried -= carried ? 1 : 0;
   }
@@ -537,7 +541,30 @@ export const toIr = (
 
   const native = responsive ? nativeRootSize(rootStyle, origin) : undefined;
   const background = str(root.props.background);
-  const children = convertChildren(root, origin, walk);
+  const rootVisibleAddress = addressing.visibles?.get(root);
+  const rootCollapsed = rootStyle.display === 'none';
+  const gatedRoot = rootVisibleAddress !== undefined || root.props.visible === false || rootCollapsed;
+
+  if (rootVisibleAddress !== undefined) {
+    walk.met.visibles += 1;
+    walk.carried += 1;
+  }
+
+  const content = convertChildren(root, origin, walk);
+
+  if (rootVisibleAddress !== undefined) { walk.carried -= 1; }
+
+  const children = gatedRoot
+    ? [{
+        kind: 'panel' as const,
+        name: 'root_visibility',
+        rect: { x: 0, y: 0, width: origin.width, height: origin.height },
+        ...rootCollapsed ? { visible: false } : visibilityOf(root.props),
+        ...rootVisibleAddress === undefined || rootCollapsed ? {} : { carriedVisible: rootVisibleAddress },
+        ...background === '' ? {} : { background },
+        children: content,
+      }]
+    : content;
 
   const expectedVisibles = addressing.visibles?.size ?? 0;
 
@@ -562,7 +589,7 @@ export const toIr = (
       name: 'root',
       rect: { x: 0, y: 0, width: origin.width, height: origin.height },
       ...native === undefined ? {} : { native },
-      ...background === '' ? {} : { background },
+      ...background === '' || gatedRoot ? {} : { background },
       children,
     },
     ...walk.backdrop === undefined ? {} : { backdrop: walk.backdrop },

@@ -11,6 +11,7 @@ import { Scroll } from '../../../components/Scroll';
 import { Slot } from '../../../components/Slot';
 import { SlotGrid } from '../../../components/SlotGrid';
 import { Text } from '../../../components/Text';
+import { Tabs } from '../../../components/Tabs';
 import { buildContainerTree } from '../../../hosts/chest/build';
 import type { JSX } from '../../../jsx';
 import { playerOwner } from '../../fabric';
@@ -24,6 +25,12 @@ const screen = (...children: JSX.Element[]): (() => JSX.Element) =>
   () => Container({ entity: 'core:test', children });
 
 describe('the form path', () => {
+  it('rejects a tab marker outside its group', () => {
+    const tree = Screen({ children: Panel({ children: Tabs.Tab({ header: Text({ children: 'Tab' }) }) }) });
+
+    expect(() => buildTree(tree, playerOwner(player))).toThrow(/<Tabs.Tab>.*direct child.*<Tabs>/);
+  });
+
   it('rejects a <Container>, pointing at createContainerScreen', () => {
     const tree = Container({ entity: 'core:test', children: [] });
 

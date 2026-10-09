@@ -1,6 +1,6 @@
 import type { FunctionComponent } from '@bedrock-core/ui-runtime';
 import {
-  allocateForm, allocateModal, analyze, bakedTexts, buildScreenOnce, type CompiledSnapshot, concreteRoots,
+  allocateForm, allocateModal, analyze, bakedTexts, buildScreenOnce, collectFormButtons, type CompiledSnapshot, concreteRoots,
   ContainerScreenError, embedMarker, embedPlacementOf, type EmbedPlacement, FORM_COLLECTION, formTitleFor, hostFor, probeLiveness, shapeOf,
   variantsAt, visiblesAt, type EntryEntry, type ModalRow,
 } from '@bedrock-core/ui-runtime/compile';
@@ -183,6 +183,11 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
   }
 
   const modal = host.id === 'form-modal';
+
+  if (modal) {
+    collectFormButtons(tree);
+  }
+
   // A look that follows state is drawn once per look and chosen by an entry,
   // which only a host with an enum carrier can do. A modal's rows are the
   // engine's, so it carries none.

@@ -189,7 +189,7 @@ export async function presentCompiledForm(
     const pressed = entries.find(entry => entry.entry === response.selection);
     const { onPress } = pressed?.element.props ?? {};
 
-    if (!isHandler<(event: PressEvent) => unknown>(onPress)) {
+    if (pressed?.element.props.enabled === false || pressed?.element.props.visible === false || !isHandler<(event: PressEvent) => unknown>(onPress)) {
       return 'none';
     }
 

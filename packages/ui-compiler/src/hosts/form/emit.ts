@@ -3,6 +3,7 @@ import {
   type SelectOption, text, textDef, texture, TEXTURE_DEF, toggleWidget, visible,
 } from '../../connectors/form';
 import type { TextStyle } from '../../faces';
+import { THUMB_HEIGHT, THUMB_WIDTH, TRACK_HEIGHT } from '../../faces/primitives/slider';
 import { type ButtonNode, type FacedNode, faceSignature, lookOf, pressAddress, pressSizeOf } from '../../nodes/primitives/button';
 import { MODAL_COLLECTION } from '../../connectors/form/entry';
 import { collectKind } from '../../nodes';
@@ -338,7 +339,12 @@ export const FORM_EMIT: HostEmit = {
                 ...rowGate(node.address),
                 { binding_type: 'view', source_property_name: '((not #mine) * 1000)', target_property_name: '#anchored_offset_value_y' },
               ],
-              controls: [{ 'body@core_ui_form_components.slider_body': pinnedEnabled(node) }],
+              controls: [{ 'body@core_ui_form_components.slider_body': {
+                ...pinnedEnabled(node), ...node.mount,
+                $travel_size: [Math.max(0, node.rect.width - (node.thumbWidth ?? THUMB_WIDTH)), node.thumbHeight ?? THUMB_HEIGHT],
+                $bar_size: [node.rect.width, node.trackHeight ?? TRACK_HEIGHT],
+                $thumb_size: [node.thumbWidth ?? THUMB_WIDTH, node.thumbHeight ?? THUMB_HEIGHT],
+              } }],
             },
           }],
         },

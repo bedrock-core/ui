@@ -1,13 +1,6 @@
-// Everything that has to be true before a change is worth a look in game:
-// the suites pass, the pack built and deployed through the one path the game
-// reads, and the pack the game will load is the pack that was just built.
-//
-// The last check is the reason this exists. A build that lands in the wrong
-// folder, or a deploy blocked by a watch holding Regolith's session lock,
-// looks exactly like "the change did nothing" in game. The build stamp the
-// filter bakes into the HUD is read back from the deployed pack and compared
-// with the one this run wrote, so a stale pack fails here instead of costing
-// a round of guessing.
+// Validate the libraries, export the shared resource pack, and compare every
+// deployed file with the build output. Missing, changed, or extra files fail
+// verification so the development folder contains exactly this build.
 //
 //   yarn preflight             tests + lint + typecheck + deploy + verify
 //   yarn preflight --no-tests  deploy + verify only
@@ -19,6 +12,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { comparePackContents } from './pack-verification.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const packRoot = path.join(root, 'packages', 'resource-pack');
@@ -55,6 +49,10 @@ if (!flags.has('--no-tests')) {
     fail('tests failed');
   }
 
+  if (run('resource-pack verification tests', 'node --test scripts/pack-verification.test.ts', root).code !== 0) {
+    fail('resource-pack verification tests failed');
+  }
+
   if (run('yarn lint', 'yarn lint', root).code !== 0) {
     fail('lint failed');
   }
@@ -62,8 +60,7 @@ if (!flags.has('--no-tests')) {
   // The types, which neither of the two above prove: vitest transpiles without
   // checking and ESLint ignores `__tests__`, so a `@ts-expect-error` that stopped
   // firing — or a broken signature reached only from a test — passes both. The
-  // libraries only: the render pack's build is a Regolith export through the
-  // pinned filters, and the deploy below is what proves the pack.
+  // libraries only: the shared texture pack is exported and verified below.
   if (run('yarn build:libs (typecheck)', 'yarn build:libs', root).code !== 0) {
     fail('typecheck failed');
   }
@@ -83,23 +80,9 @@ if (deploy.code !== 0) {
 
 // ---- 3. the pack the game will load is the pack just built ----------------
 
-const stampIn = (file) => {
-  if (!fs.existsSync(file)) {
-    return undefined;
-  }
-
-  return /"text":\s*"(ui [0-9a-f]{6} \d\d:\d\d)"/.exec(fs.readFileSync(file, 'utf-8'))?.[1];
-};
-
 const config = JSON.parse(fs.readFileSync(path.join(packRoot, 'config.json'), 'utf-8'));
 const packName = `${config.name}_rp`;
-// Under the demo addon's namespace, where the filter puts every screen it writes.
-const stampPath = path.join('ui', 'core-ui', 'screens', 'core', 'core_build.json');
-const built = stampIn(path.join(packRoot, '.regolith', 'tmp', 'RP', stampPath));
-
-if (built === undefined) {
-  fail('the build wrote no stamp — the development profile needs `"stamp": true` on the ui-compiler filter');
-}
+const built = path.join(packRoot, '.regolith', 'tmp', 'RP');
 
 const candidates = [
   process.env.BC_DEV_PACKS,
@@ -113,10 +96,20 @@ if (deployed === undefined) {
   fail(`no deployed "${packName}" under any known development_resource_packs — set BC_DEV_PACKS to the game's folder`);
 }
 
-const live = stampIn(path.join(deployed, stampPath));
+let comparison;
 
-if (live !== built) {
-  fail(`the deployed pack is stale: game has "${live ?? 'no stamp'}", this build is "${built}" (${deployed})`);
+try {
+  comparison = comparePackContents(built, deployed);
+} catch (error) {
+  fail(`pack verification failed: ${error.message}`);
 }
 
-console.log(`\n✔ preflight: the game will load build "${built}"\n  ${deployed}`);
+const differences = ['missing', 'changed', 'extra']
+  .filter(kind => comparison[kind].length > 0)
+  .map(kind => `${kind}: ${comparison[kind].slice(0, 5).join(', ')}${comparison[kind].length > 5 ? ' ...' : ''}`);
+
+if (differences.length > 0) {
+  fail(`the deployed pack differs from this build (${deployed}): ${differences.join('; ')}`);
+}
+
+console.log(`\n✔ preflight: ${comparison.files} deployed files match build ${comparison.digest.slice(0, 12)}\n  ${deployed}`);

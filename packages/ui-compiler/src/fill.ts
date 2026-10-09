@@ -222,7 +222,7 @@ export const fill = (face: FaceDocument, host: HostEmit, title = ''): Document =
     if (node.kind === 'panel' && node.id === undefined && node.background === undefined
       && node.native === undefined && node.stack === undefined && node.visible === undefined
       && node.carriedVisible === undefined && node.carriedLook === undefined
-      && node.lookGate === undefined && node.follows === undefined) {
+      && node.lookGate === undefined && node.follows === undefined && flow?.items === undefined) {
       panels.add(node.name);
     }
 

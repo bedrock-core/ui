@@ -87,6 +87,21 @@ describe('presenting a compiled modal', () => {
     expect(seen).toEqual([{ sound: true, music: false }]);
   });
 
+  it('supplies native content for a form containing only compiled buttons', async () => {
+    const seen: Record<string, unknown>[] = [];
+    const ButtonsOnly = (): JSX.Element => Form({
+      onSubmit: (event) => { seen.push(event.values); },
+      children: [Form.Button({ type: 'submit', label: 'Submit' })],
+    });
+
+    __setModalFormResponses({ canceled: false, formValues: [undefined] });
+    await present(ButtonsOnly);
+
+    expect(__lastModalForm()?.titleText).toBe(TITLE);
+    expect(__lastModalForm()?.rows).toEqual([{ kind: 'label', label: '' }]);
+    expect(seen).toEqual([{}]);
+  });
+
   it('gathers a multiple select into the indices that are on, between fields of its own', async () => {
     const seen: Record<string, unknown>[] = [];
     const Picking = (): JSX.Element => Form({

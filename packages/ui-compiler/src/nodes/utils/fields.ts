@@ -107,6 +107,18 @@ export const toggleMount = (props: JSX.Props): Record<string, string> => {
 export const surfaceMount = (props: JSX.Props): Record<string, string> =>
   ({ $static_texture: first(str(props.background), UNSTYLED_TEXTURE) });
 
+/** Native field states use their authored texture, falling back to the resting surface. */
+export const stateSurfaceMount = (props: JSX.Props): Record<string, string> => {
+  const surface = surfaceMount(props);
+  const resting = surface.$static_texture;
+
+  return { ...surface,
+    $hover_texture: first(str(props.backgroundHover), resting),
+    $pressed_texture: first(str(props.backgroundPressed), resting),
+    $locked_texture: first(str(props.backgroundLocked), resting),
+  };
+};
+
 /** The slider's own images: its track, the fill behind the thumb, and the thumb. */
 export const sliderMount = (props: JSX.Props): Record<string, string> => {
   const track = str(props.background);
@@ -122,6 +134,7 @@ export const sliderMount = (props: JSX.Props): Record<string, string> => {
       $progress_hover: first(str(props.progressHover), progress),
       $thumb: thumb,
       $thumb_hover: first(str(props.thumbHover), thumb),
+      $thumb_pressed: first(str(props.thumbPressed), thumb),
       $thumb_locked: first(str(props.thumbLocked), thumb),
     }),
   };
@@ -129,7 +142,7 @@ export const sliderMount = (props: JSX.Props): Record<string, string> => {
 
 /** A dropdown draws its own surface and the popup's. */
 export const dropdownMount = (props: JSX.Props): Record<string, string> => ({
-  ...surfaceMount(props),
+  ...stateSurfaceMount(props),
   // Everything else the popup draws — each row's face, each row's label — rides
   // that option's blob, which travels on both paths.
   ...given({ $popup_texture: str(props.popupBackground) }),

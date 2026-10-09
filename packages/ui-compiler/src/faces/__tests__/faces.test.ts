@@ -50,6 +50,21 @@ describe('where a face sits', () => {
 });
 
 describe('a string', () => {
+  it.each(['123', '-12', '0'])('keeps the literal caption %s safe without changing its colour or placement', (value) => {
+    const control = drawn(textFace({ name: 't', rect: RECT, text: value, localize: false,
+      color: [0.2, 0.8, 0.4], ...STYLE }), 't');
+
+    expect(control.text).toBe(`§r${value}`);
+    expect(control.color).toEqual([0.2, 0.8, 0.4]);
+    expect(control.offset).toEqual([10, 20]);
+    expect(control.size).toEqual([100, 30]);
+  });
+
+  it('preserves localized keys and already formatted captions', () => {
+    expect(drawn(textFace({ name: 't', rect: RECT, text: '123.key', localize: true, ...STYLE }), 't').text).toBe('123.key');
+    expect(drawn(textFace({ name: 't', rect: RECT, text: '§a123', localize: false, ...STYLE }), 't').text).toBe('§a123');
+  });
+
   it('is one face whether the build knows it or script writes it later', () => {
     const baked = drawn(textFace({ name: 't', rect: RECT, text: 'core.title', localize: true, ...STYLE }), 't');
     const live = drawn(textFace({ name: 't', rect: RECT, text: 'Steve', localize: false, ...STYLE }), 't');

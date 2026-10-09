@@ -77,6 +77,39 @@ const buttonNode = (node: IrNode): ButtonNode => {
 };
 
 describe('toIr', () => {
+  it('carries root visibility around its background and descendants', () => {
+    const descendant = at('panel', [0, 0, 20, 20], { visible: false, background: 'child' });
+    const root = container([descendant], { visible: false, background: 'root' });
+    const doc = toIr(root, { cells: new Map(), channels: new Map(), visibles: new Map([[root, 1]]) }, options);
+    const gate = panel(doc.root.children[0]!);
+
+    expect(doc.root.background).toBeUndefined();
+    expect(gate).toMatchObject({ carriedVisible: 1, visible: false, background: 'root', rect: { x: 0, y: 0, width: 320, height: 210 } });
+    expect(gate.children[0]?.visible).toBeUndefined();
+  });
+
+  it('hides a baked root background along with its children', () => {
+    const doc = convert(container([at('panel', [0, 0, 20, 20])], { visible: false, background: 'root' }));
+
+    expect(doc.root.background).toBeUndefined();
+    expect(doc.root.children[0]).toMatchObject({ kind: 'panel', visible: false, background: 'root' });
+  });
+
+  it('keeps a collapsed root background and descendants hidden even when the host carries live visibility', () => {
+    for (const carried of [false, true]) {
+      const root = container([at('panel', [8, 8, 20, 20], { background: 'child' })], {
+        visible: true, background: 'root', __layout: { display: 'none' },
+      });
+      const doc = toIr(root, { cells: new Map(), channels: new Map(), visibles: new Map(carried ? [[root, 1]] : []) }, options);
+      const gate = panel(doc.root.children[0]!);
+
+      expect(doc.root.background).toBeUndefined();
+      expect(gate).toMatchObject({ visible: false, background: 'root', rect: { x: 0, y: 0, width: 320, height: 210 } });
+      expect(gate.carriedVisible).toBeUndefined();
+      expect(gate.children).toHaveLength(1);
+    }
+  });
+
   it('keeps responsive container and nested panel sizes for native emission', () => {
     const inner = at('panel', [0, 0, 160, 105], {
       __layout: { position: 'absolute', top: 0, left: 0, width: '50%', height: '50%' },

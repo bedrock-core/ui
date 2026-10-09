@@ -1,8 +1,8 @@
 import { MODAL_INPUT_SLOT_TYPE } from '@bedrock-core/ui-runtime/compile';
 import { inputFace } from '../../faces';
 import type { ControlEntry } from '../../jsonui';
-import { backgroundOf, type FieldBase, scaleOf, surfaceMount } from '../utils/fields';
-import { boxOf, str } from '../utils/shared';
+import { backgroundOf, type FieldBase, scaleOf, stateSurfaceMount } from '../utils/fields';
+import { boxOf, num, str } from '../utils/shared';
 import type { NodeDefinition } from '../utils/types';
 
 /**
@@ -21,6 +21,8 @@ export interface InputNode extends FieldBase {
   text: string;
   /** What is drawn instead while the value is empty. */
   placeholder: string;
+  valueLabel?: { fontType: string; offset: [number, number] };
+  placeholderLabel?: { fontType: string; fontScaleFactor: number; offset: [number, number] };
 }
 
 declare module '../utils/types' {
@@ -41,11 +43,16 @@ export const inputDefinition: NodeDefinition<InputNode> = {
       ...ctx.decoration,
       address: ctx.cellOf(element).address,
       enabled: element.props.enabled !== false,
-      mount: surfaceMount(element.props),
+      mount: stateSurfaceMount(element.props),
       scale: scaleOf(element.props),
       ...backgroundOf(element.props),
       text: str(element.nativeArgs?.['defaultValue']),
       placeholder: str(element.nativeArgs?.['placeholder']),
+      valueLabel: { fontType: str(element.props.valueFontType, 'default'),
+        offset: [num(element.props.valueX, 8), num(element.props.valueY, -4)] },
+      placeholderLabel: { fontType: str(element.props.placeholderFontType, 'default'),
+        fontScaleFactor: num(element.props.placeholderFontScale, 2),
+        offset: [num(element.props.placeholderX, 8), num(element.props.placeholderY, -4)] },
     };
   },
 
@@ -57,7 +64,7 @@ export const inputDefinition: NodeDefinition<InputNode> = {
       ...node.background === undefined ? {} : { background: node.background },
       text: node.text,
       placeholder: node.placeholder,
-      style: { fontScaleFactor: node.scale },
+      style: { fontType: node.valueLabel?.fontType, fontScaleFactor: node.scale },
     });
   },
 };

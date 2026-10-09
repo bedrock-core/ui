@@ -136,18 +136,13 @@ export function resolveFlexShrink(style: FlexStyle): number {
  * equal-grow siblings end EQUAL regardless of their content width. Without this, two
  * `flex: 1` items grow from their own content sizes and stay unequal (e.g. two labeled
  * form fields whose captions differ in width). So: an item with an explicit grow and no
- * explicit `flexBasis` gets basis 0; an explicit numeric `flexBasis` wins; otherwise the
- * basis is the measured size (`flex-basis: auto`).
+ * explicit `flexBasis` gets basis 0; an explicit basis wins, with percentages resolved
+ * against the parent's content size on the main axis. `auto` keeps the measured size.
  */
-export function resolveFlexBasisMain(style: FlexStyle, measuredMain: number): number {
-  if (typeof style.flexBasis === 'number') {
-    return style.flexBasis;
-  }
+export function resolveFlexBasisMain(style: FlexStyle, measuredMain: number, parentMain: number): number {
+  const basis = resolveSize(style.flexBasis, parentMain);
 
-  // 'auto' (or a percent basis we don't resolve here) falls back to the measured size.
-  if (style.flexBasis !== undefined && style.flexBasis !== 'auto') {
-    return measuredMain;
-  }
+  if (basis !== undefined) { return basis; }
 
   if (style.flexBasis === undefined && resolveFlexGrow(style) > 0) {
     return 0;

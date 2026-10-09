@@ -16,11 +16,21 @@ export default {
       'layer': 50,
       '$scale|default': '#font_scale_factor',
       '$static_texture|default': '',
+      '$hover_texture|default': '',
+      '$pressed_texture|default': '',
+      '$locked_texture|default': '',
       '$dropdown_area|default': 'inside_header_panel',
+      '$current_font_type|default': 'default',
+      '$current_font_scale|default': 2,
+      '$current_color|default': '',
+      '$current_offset|default': [8, -4],
       'controls': [
         {
           ['dropdown_control@' + ref('core_ui_form_components.dropdown_control')]: {
             $static_texture: '$static_texture',
+            $hover_texture: '$hover_texture',
+            $pressed_texture: '$pressed_texture',
+            $locked_texture: '$locked_texture',
             $dropdown_area: '$dropdown_area',
           },
         },
@@ -28,6 +38,10 @@ export default {
           ['dropdown_current_label@' + ref('core_ui_form_components.dropdown_current_label')]: {
             layer: 20,
             $scale: '$scale',
+            $current_font_type: '$current_font_type',
+            $current_font_scale: '$current_font_scale',
+            $current_color: '$current_color',
+            $current_offset: '$current_offset',
           },
         },
       ],
@@ -37,6 +51,9 @@ export default {
     control: {
       'type': 'panel',
       '$static_texture|default': '',
+      '$hover_texture|default': '',
+      '$pressed_texture|default': '',
+      '$locked_texture|default': '',
       '$dropdown_area|default': 'inside_header_panel',
       'size': ['100%', '100%'],
       'anchor_from': 'top_left',
@@ -52,6 +69,9 @@ export default {
             dropdown_content_control: 'dropdown_content',
             dropdown_area: '$dropdown_area',
             $static_texture: '$static_texture',
+            $hover_texture: '$hover_texture',
+            $pressed_texture: '$pressed_texture',
+            $locked_texture: '$locked_texture',
             $toggle_name: 'custom_dropdown',
             $toggle_state_binding_name: '#custom_dropdown',
           },
@@ -271,11 +291,17 @@ export default {
       'type': 'panel',
       'layer': 20,
       '$scale|default': '#font_scale_factor',
-      'size': ['100%', '100%'],
+      'size': ['100%', 1],
+      'anchor_from': 'left_middle',
+      'anchor_to': 'left_middle',
       'controls': [
         {
           ['display_text_static@' + ref('core_ui_form_components.dropdown_current_value_text_static')]: {
             $scale: '$scale',
+            $current_font_type: '$current_font_type',
+            $current_font_scale: '$current_font_scale',
+            $current_color: '$current_color',
+            $current_offset: '$current_offset',
           },
         },
       ],
@@ -285,10 +311,12 @@ export default {
     base: ref('core_ui_components.label'),
     control: {
       size: ['100% - 16px', 'default'],
-      offset: [8, 0],
-      anchor_from: 'left_middle',
-      anchor_to: 'left_middle',
+      offset: '$current_offset',
+      anchor_from: 'top_left',
+      anchor_to: 'top_left',
       use_anchored_offset: false,
+      font_type: '$current_font_type',
+      font_scale_factor: '$current_font_scale',
       bindings: [
         {
           binding_name: '#dropdown_option_text',
@@ -312,7 +340,7 @@ export default {
         },
         {
           binding_type: 'view',
-          source_property_name: '((\'%.82s\' * #raw_opt_text) - (\'%.2s\' * #raw_opt_text) - \';\')',
+          source_property_name: '(\'§r\' + $current_color + ((\'%.82s\' * #raw_opt_text) - (\'%.2s\' * #raw_opt_text) - \';\'))',
           target_property_name: '#text',
         },
       ],
@@ -323,6 +351,9 @@ export default {
     control: {
       'size': ['100%', '100%'],
       '$static_texture|default': '',
+      '$hover_texture|default': '',
+      '$pressed_texture|default': '',
+      '$locked_texture|default': '',
       'focus_wrap_enabled': true,
       '$toggle_binding_type': 'collection',
       '$toggle_grid_collection_name': 'custom_form',
@@ -334,37 +365,37 @@ export default {
         },
         {
           ['checked@' + ref('core_ui_common.modal_state_face')]: {
-            $static_texture: '$static_texture',
+            $static_texture: '$pressed_texture',
           },
         },
         {
           ['unchecked_hover@' + ref('core_ui_common.modal_state_face')]: {
-            $static_texture: '$static_texture',
+            $static_texture: '$hover_texture',
           },
         },
         {
           ['checked_hover@' + ref('core_ui_common.modal_state_face')]: {
-            $static_texture: '$static_texture',
+            $static_texture: '$pressed_texture',
           },
         },
         {
           ['unchecked_locked@' + ref('core_ui_common.modal_state_face')]: {
-            $static_texture: '$static_texture',
+            $static_texture: '$locked_texture',
           },
         },
         {
           ['checked_locked@' + ref('core_ui_common.modal_state_face')]: {
-            $static_texture: '$static_texture',
+            $static_texture: '$locked_texture',
           },
         },
         {
           ['unchecked_locked_hover@' + ref('core_ui_common.modal_state_face')]: {
-            $static_texture: '$static_texture',
+            $static_texture: '$locked_texture',
           },
         },
         {
           ['checked_locked_hover@' + ref('core_ui_common.modal_state_face')]: {
-            $static_texture: '$static_texture',
+            $static_texture: '$locked_texture',
           },
         },
       ],
@@ -375,6 +406,7 @@ export default {
       'type': 'image',
       'layer': 1,
       'size': ['100%', '100%'],
+      'keep_ratio': false,
       '$popup_texture|default': '',
       'texture': '$popup_texture',
     },

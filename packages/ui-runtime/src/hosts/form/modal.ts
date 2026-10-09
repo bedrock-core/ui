@@ -280,6 +280,11 @@ export async function presentCompiledModal(
     writeRow(row, form, context);
   }
 
+  // Native modals require content even when the compiled pack draws every control.
+  if (context.modalControlIndex === 0) {
+    emitLabel(BARE, form, context);
+  }
+
   if (debug) {
     console.info(`[ui] ${title} rows ${JSON.stringify(rows.map(row => row.kind))}`);
   }

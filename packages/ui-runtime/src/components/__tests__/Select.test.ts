@@ -4,7 +4,7 @@ import { registerNativeComponents } from '..';
 import { playerOwner } from '../../core/fabric';
 import { childElements } from '../../core/guards';
 import { buildTree } from '../../core/render/tree';
-import type { JSX } from '../../jsx';
+import type { FunctionComponent, JSX } from '../../jsx';
 import { jsx } from '../../jsx/jsx-runtime';
 import { BUTTON_TYPE } from '../Button';
 import { Option } from '../Option';
@@ -56,6 +56,16 @@ const press = (button: JSX.Element | undefined): void => {
 };
 
 describe('a select where a press reaches script', () => {
+  it('preserves authored option dimensions and spacing on action buttons', () => {
+    const buttons = buttonsOf({ children: [
+      Option({ value: 'small', label: 'Small', width: 48, height: 20, marginLeft: 3 }),
+      jsx(Option as unknown as FunctionComponent, { value: 'large', label: 'Large', width: 72, height: 28, padding: 4 }),
+    ] });
+
+    expect(buttons[0]?.props.__layout).toMatchObject({ width: 48, height: 20, marginLeft: 3 });
+    expect(buttons[1]?.props.__layout).toMatchObject({ width: 72, height: 28, padding: 4 });
+  });
+
   it('calls onChange with the pressed value when it makes one choice', () => {
     const onChange = vi.fn();
     const buttons = buttonsOf({ value: 'join', onChange, children: OPTIONS });

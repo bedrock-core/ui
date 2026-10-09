@@ -24,6 +24,7 @@ export interface InputProps extends PrimitiveInputProps {
 export function Input({
   label, testId, testRole, testName, name, placeholder, defaultValue, enabled = true,
   background, backgroundHover, backgroundPressed, backgroundLocked, font, scale,
+  textOffsetX, textOffsetY, placeholderOffsetX, placeholderOffsetY,
   ...layout
 }: InputProps): JSX.Element {
   useMechanism('Input');
@@ -47,6 +48,10 @@ export function Input({
       backgroundLocked={backgroundLocked ?? t.backgroundDisabled}
       font={font ?? ts.font}
       scale={scale ?? ts.scale}
+      textOffsetX={textOffsetX}
+      textOffsetY={textOffsetY}
+      placeholderOffsetX={placeholderOffsetX}
+      placeholderOffsetY={placeholderOffsetY}
       {...(label === undefined ? layout : { width: '100%' })}
     />
   );

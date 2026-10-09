@@ -27,6 +27,14 @@ export const SCROLL_GUTTER = 3;
 /** What scrolling content gives up on its right: the track and the space either side of it. */
 export const SCROLL_RESERVE = SCROLL_TRACK_WIDTH + 2 * SCROLL_GUTTER;
 
+/** The native viewport inside the scroll's outer layout box, with padding resolved by flex layout. */
+export const SCROLL_VIEWPORT = {
+  x: 'jsonUIScrollX',
+  y: 'jsonUIScrollY',
+  width: 'jsonUIScrollWidth',
+  height: 'jsonUIScrollHeight',
+} as const;
+
 /**
  * The props the content of a scroll over ONE `<List>` carries beside its
  * layout rect: the same content solved across the whole viewport, with no
@@ -53,9 +61,10 @@ export const WIDE_RECT = {
  * parent's `flexDirection`, fix a size with `width`/`height`, or take it out of the flow with
  * `position="absolute"` + `top`/`left`. An un-sized, non-absolute scroll defaults to
  * `flexGrow: 1` so bare `<Scroll>`s share the parent's space.
+ * Padding insets the native viewport, including its scrollbar, inside that outer box.
  *
- * `visible`/`enabled`/`background` are accepted (part of `ControlProps`) but are NOT applied
- * to the viewport — the protocol carries only per-scroll geometry.
+ * Compiled screens apply `visible` to the viewport. `enabled` and `background` are
+ * accepted as control props but are not applied to the viewport.
  *
  * Content NOT wrapped in any `<Scroll>` falls into the root scroll, so simple UIs need none.
  *

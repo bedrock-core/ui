@@ -17,6 +17,7 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
 import type { CellRole } from '@bedrock-core/ui-runtime/compile';
 import type { Control, ControlEntry, Document } from '../../jsonui';
+import type { FlowItem } from '../../flow';
 
 export interface Rect {
   x: number;
@@ -38,6 +39,8 @@ export interface NodeBase {
    */
   id?: string;
   rect: Rect;
+  /** Relative size retained only when this control is a direct child of an equivalent native stack. */
+  flowItem?: FlowItem;
   /**
    * Draw order within the parent, from the author's `zIndex`.
    *

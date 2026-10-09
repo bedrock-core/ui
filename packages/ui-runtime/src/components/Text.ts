@@ -352,7 +352,8 @@ export const Text: FunctionComponent<TextProps> = ({
  * with: the default language's, or the first one given outside a build.
  */
 function composedValues(translations: Readonly<Record<string, string>>): { shown: string; values: Record<string, string> } {
-  const values = Object.fromEntries(Object.entries(translations).map(([locale, value]) => [locale, safeLabelText(value)]));
+  // A nonempty formatting reset keeps an empty localized value from falling back to its key.
+  const values = Object.fromEntries(Object.entries(translations).map(([locale, value]) => [locale, value === '' ? '§r' : safeLabelText(value)]));
   const preferred = buildLocales()?.defaultLocale;
   const shown = (preferred === undefined ? undefined : values[preferred]) ?? Object.values(values)[0] ?? '';
 

@@ -5,6 +5,7 @@ import { LIST_SLOT_TYPE } from '../../components/List';
 import { MODAL_FORM_BUTTON_SLOT_TYPE } from '../../components/Form';
 import { SCROLL_SLOT_TYPE } from '../../components/Scroll';
 import { SWAP_SLOT_TYPE } from '../../components/Swap';
+import { TAB_SLOT_TYPE } from '../../components/Tabs';
 import { isForeignSlot, SLOT_TYPE } from '../../components/Slot';
 import { SLOT_GRID_TYPE } from '../../components/SlotGrid';
 import { liveTextLength } from '../../components/Text';
@@ -104,6 +105,12 @@ type Rule = (node: JSX.Element, type: string, scope: Scope, host: HostContract, 
  * face and silently drawn its first value forever.
  */
 const RULES: readonly Rule[] = [
+  (_node, type): void => {
+    if (type === TAB_SLOT_TYPE) {
+      throw new ContainerScreenError('A `<Tabs.Tab>` must be a direct child of `<Tabs>`: its group consumes the header and pane.');
+    }
+  },
+
   (_node, type, scope, host): void => {
     if (scope.insideRoot && isHostRoot(type)) {
       throw new ScreenRootError(

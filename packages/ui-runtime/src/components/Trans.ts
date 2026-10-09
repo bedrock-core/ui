@@ -64,12 +64,13 @@ export const Trans: FunctionComponent<TransProps> = ({ i18nKey, translations, co
   };
   const where = i18nKey === undefined ? 'a <Trans>' : `<Trans i18nKey="${i18nKey}">`;
   const lineHeight = measureText({ text: 'A', font, fontSize: scale ?? 1 }).height;
+  const aspectSized = layout.aspectRatio !== undefined && Number.isFinite(layout.aspectRatio) && layout.aspectRatio > 0;
 
   const draw = (lines: readonly (readonly { chain: readonly string[]; values: Readonly<Record<string, string>> }[])[], record?: ComposedRecord): JSX.Element => ({
     type: PANEL,
     props: {
       ...layout,
-      height: lines.length * lineHeight,
+      height: layout.height ?? (aspectSized ? undefined : lines.length * lineHeight),
       ...slot === undefined || locales === undefined ? {} : { __widthSlot: slot.slot },
       ...record === undefined ? {} : { __trans: record },
       children: lines.map((pieces, index): JSX.Element => ({

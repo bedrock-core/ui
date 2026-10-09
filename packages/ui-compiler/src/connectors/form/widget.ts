@@ -33,7 +33,13 @@ export const toggleWidget = (node: ToggleNode): { definition: string; props: Con
 /** The row an input mounts, with the engine pointed at the static labels. */
 export const inputWidget = (node: InputNode): { definition: string; props: Control } => ({
   definition: INPUT_ROW,
-  props: { $scale: node.scale, ...node.mount, ...pinnedEnabled(node) },
+  props: { $scale: node.scale, ...node.mount, ...pinnedEnabled(node),
+    $value_font_type: node.valueLabel?.fontType ?? 'default',
+    $value_offset: node.valueLabel?.offset ?? [8, -4],
+    $placeholder_font_type: node.placeholderLabel?.fontType ?? 'default',
+    $placeholder_scale: node.placeholderLabel?.fontScaleFactor ?? node.scale,
+    $placeholder_offset: node.placeholderLabel?.offset ?? [8, -4],
+  },
 });
 
 /** The row a dropdown mounts, told where the screen hosts its popup. */
@@ -42,5 +48,10 @@ export const dropdownWidget = (node: DropdownNode, ns: string): { definition: st
   // The engine hosts the popup box in the control this names, found BY NAME
   // across the screen: the screen's own popup host, so the name resolves
   // wherever the screen is mounted.
-  props: { $scale: node.scale, $dropdown_area: popupHostOf(ns), ...node.mount, ...pinnedEnabled(node) },
+  props: { $scale: node.scale, $dropdown_area: popupHostOf(ns), ...node.mount, ...pinnedEnabled(node),
+    $current_font_type: node.currentLabel?.fontType ?? 'default',
+    $current_font_scale: node.currentLabel?.fontScaleFactor ?? 2,
+    $current_color: node.currentLabel?.color ?? '',
+    $current_offset: node.currentLabel?.offset ?? [8, -4],
+  },
 });

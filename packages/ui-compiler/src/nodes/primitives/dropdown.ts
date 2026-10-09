@@ -21,6 +21,8 @@ export interface DropdownNode extends FieldBase {
   background?: string;
   /** The label of the option the build started on. */
   text: string;
+  /** Closed-value typography and placement, as resolved by the runtime component. */
+  currentLabel?: { fontType: string; fontScaleFactor: number; color: string; offset: [number, number] };
   /**
    * The popup, baked for the OVERLAY the host emits at the screen root.
    *
@@ -62,6 +64,12 @@ export const dropdownDefinition: NodeDefinition<DropdownNode> = {
       scale: scaleOf(element.props),
       ...backgroundOf(element.props),
       text: currentOptionLabel(element),
+      currentLabel: {
+        fontType: str(element.props.currentFontType, 'default'),
+        fontScaleFactor: num(element.props.currentFontScale, 2),
+        color: str(element.props.currentColor),
+        offset: [num(element.props.currentX, 8), num(element.props.currentY, -4)],
+      },
       // `popupHeight` is `Dropdown`'s own computation (rows x 17 + the fused
       // border + padding), baked as given.
       popup: { texture: str(element.props.popupBackground), height: num(element.props.popupHeight, 20) },

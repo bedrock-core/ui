@@ -2,6 +2,7 @@ import { resolveDisplay, type DisplayText, type TranslationResolver } from '@bed
 import { measureText, WIDEST_GLYPH } from '@bedrock-core/ui-runtime';
 import { FRAME } from './frame';
 import { theme } from './tokens';
+import { fitCaption } from './fitCaption';
 
 /**
  * Composing a header's breadcrumb trail: what it says, and what it gives up
@@ -132,11 +133,27 @@ export function collapseTrail(shown: readonly string[], width: number, measure: 
 export function trailLine(segments: readonly DisplayText[], resolve: TranslationResolver, width: number | undefined): string {
   const { color, separator } = theme.components.header.textStyle;
   const shown = segments.map(segment => resolveDisplay(resolve, segment)).filter(text => text !== '');
-  const slots = width === undefined ? shown.map((_segment, index) => index) : collapseTrail(shown, width, headerWidth);
+  const slots = fittedSlots(shown, width);
 
   return slots
-    .map((slot, at) => `${at === 0 ? color : `${separator}${SEPARATOR}${color}`}${slot === 'gap' ? ELLIPSIS : shown[slot] ?? ''}`)
+    .map((slot, at) => `${at === 0 ? color : `${separator}${SEPARATOR}${color}`}${slot === 'gap' ? ELLIPSIS : segmentLine(shown[slot] ?? '', slots, width)}`)
     .join('');
+}
+
+/** The final segment takes the whole caption slot when even a collapsed trail cannot fit. */
+function fittedSlots(shown: readonly string[], width: number | undefined): readonly TrailSlot[] {
+  if (width === undefined) { return shown.map((_segment, index) => index); }
+
+  const slots = collapseTrail(shown, width, headerWidth);
+  const line = slots.map(slot => slot === 'gap' ? ELLIPSIS : shown[slot] ?? '').join(SEPARATOR);
+
+  return slots.length && headerWidth(line) > width ? [shown.length - 1] : slots;
+}
+
+function segmentLine(text: string, slots: readonly TrailSlot[], width: number | undefined): string {
+  const { font, scale } = theme.components.header.textStyle;
+
+  return slots.length === 1 ? fitCaption(text, width, font, scale) : text;
 }
 
 /** Options for {@link trailText}. */
@@ -179,12 +196,21 @@ export function trailText(
   const kept = segments
     .map(segment => ({ segment, text: resolveDisplay(resolve, segment) }))
     .filter(entry => entry.text !== '');
-  const slots = collapseTrail(kept.map(entry => entry.text), trailWidth(options.back ?? 'icon'), headerWidth);
+  const width = trailWidth(options.back ?? 'icon');
+  const slots = fittedSlots(kept.map(entry => entry.text), width);
   const parts: TrailMessage[] = [];
 
   for (const [at, slot] of slots.entries()) {
     parts.push({ text: at === 0 ? color : `${separator}${SEPARATOR}${color}` });
-    parts.push(slot === 'gap' ? { text: ELLIPSIS } : partOf(kept[slot]?.segment ?? '', resolve));
+
+    if (slot === 'gap') {
+      parts.push({ text: ELLIPSIS });
+    } else {
+      const entry = kept[slot];
+      const line = segmentLine(entry?.text ?? '', slots, width);
+
+      parts.push(line === entry?.text ? partOf(entry.segment, resolve) : { text: line });
+    }
   }
 
   return { rawtext: parts };

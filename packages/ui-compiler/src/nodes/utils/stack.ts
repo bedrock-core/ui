@@ -1,5 +1,5 @@
 import type { ControlEntry } from '../../jsonui';
-import { folds, topLeft } from './shared';
+import { folds, topLeft, visibilityOf } from './shared';
 import type { FaceEmit, IrNode } from './types';
 
 /**
@@ -34,7 +34,7 @@ export const stackColumns = (children: readonly IrNode[], height: number, centre
       // can be folded into the child's own box.
       return [
         column,
-        ...gap > 0 ? [{ [`${child.name}_gap`]: { type: 'panel', size: [gap, height] as [number, number], ...topLeft } } satisfies ControlEntry] : [],
+        ...gap > 0 ? [{ [`${child.name}_gap`]: { type: 'panel', size: [gap, height] as [number, number], ...topLeft, ...visibilityOf(child) } } satisfies ControlEntry] : [],
       ];
     }),
   ];
@@ -69,15 +69,15 @@ export const stackRows = (children: readonly IrNode[], width: number, ctx: FaceE
       // below would move.
       if (folds(child)) {
         const gap = pitch - child.rect.height;
-        const spacer: ControlEntry = { [`${child.name}_gap`]: { type: 'panel', size: [width, gap], ...topLeft } };
+        const spacer: ControlEntry = { [`${child.name}_gap`]: { type: 'panel', size: [width, gap], ...topLeft, ...visibilityOf(child) } };
 
         return [
-          { [`${child.name}_row`]: { type: 'panel', size: [width, '100%c'], ...topLeft, controls: [row] } },
+          { [`${child.name}_row`]: { type: 'panel', size: [width, '100%c'], ...topLeft, ...visibilityOf(child), controls: [row] } },
           ...gap > 0 ? [spacer] : [],
         ];
       }
 
-      return [{ [`${child.name}_row`]: { type: 'panel', size: [width, pitch], ...topLeft, controls: [row] } }];
+      return [{ [`${child.name}_row`]: { type: 'panel', size: [width, pitch], ...topLeft, ...visibilityOf(child), controls: [row] } }];
     }),
   ];
 };

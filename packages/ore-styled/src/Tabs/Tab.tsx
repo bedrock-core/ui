@@ -1,8 +1,9 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import type { DisplayText } from '@bedrock-core/i18n';
+import { resolveDisplay, type DisplayText } from '@bedrock-core/i18n';
 import type { JSX } from '@bedrock-core/ui-runtime';
-import { Panel, Tabs as PrimitiveTabs, Text } from '@bedrock-core/ui-runtime';
+import { Panel, Tabs as PrimitiveTabs, Text, useComposed } from '@bedrock-core/ui-runtime';
 import { theme } from '../tokens';
+import { fitCaption } from '../fitCaption';
 
 export interface TabProps {
   /** The tab's name, on its header. */
@@ -15,6 +16,7 @@ export interface TabProps {
 const header = (label: DisplayText, chosen: boolean): JSX.Element => {
   const t = theme.components.tabs;
   const ts = t.textStyle;
+  const composed = useComposed((resolve, width) => fitCaption(resolveDisplay(resolve, label), width, ts.font, ts.scale));
 
   return (
     <Panel
@@ -27,7 +29,7 @@ const header = (label: DisplayText, chosen: boolean): JSX.Element => {
       // Centred, so padding the top by twice the drop moves the caption down by the drop.
       paddingTop={chosen ? t.selectedDrop * 2 : 0}
     >
-      <Text font={ts.font} scale={ts.scale} color={chosen ? ts.selected : ts.unselected}>{label}</Text>
+      <Text width={'100%'} textAlign={'center'} font={ts.font} scale={ts.scale} color={chosen ? ts.selected : ts.unselected} {...composed.box} {...composed.text} />
     </Panel>
   );
 };

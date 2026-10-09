@@ -43,6 +43,34 @@ const unresolved = (docs: Document[]): string[] => {
 };
 
 describe('an addon-owned form pack', () => {
+  it('provides literal field defaults without reading variables from an absent ancestor', () => {
+    const support = build('alpha').support.document;
+    for (const name of ['input', 'input_control', 'dropdown', 'dropdown_control', 'dropdown_closed_box']) {
+      const control = Object.entries(support).find(([key]) => key.split('@')[0] === `core_ui_form_components_${name}`)?.[1];
+      expect(control).toMatchObject({
+        '$hover_texture|default': '', '$pressed_texture|default': '', '$locked_texture|default': '',
+      });
+    }
+    for (const name of ['input', 'input_control']) {
+      expect(support[`core_ui_form_components_${name}`]).toMatchObject({ '$placeholder_scale|default': 2 });
+    }
+  });
+
+  it('keeps native Input clipping at field height while applying top-left label offsets from its middle', () => {
+    const pack = build('alpha');
+    const input = pack.support.document.core_ui_form_components_input_control;
+    if (typeof input === 'string' || input === undefined || !('controls' in input)) { throw new Error('Input template missing'); }
+    const area = input.controls?.[0]?.text_area;
+    const frame = area?.controls?.[0]?.value_frame;
+    const value = frame?.controls?.[0]?.['display_text_static@alpha__ui_support.core_ui_components_label_static'];
+
+    expect(area).toMatchObject({ size: ['100% - 4px', '100%'], clips_children: true,
+      anchor_from: 'left_middle', anchor_to: 'left_middle' });
+    expect(frame).toMatchObject({ size: ['100%', 1], anchor_from: 'left_middle', anchor_to: 'left_middle' });
+    expect(value).toMatchObject({ $font_type: '$value_font_type', offset: '$value_offset',
+      anchor_from: 'top_left', anchor_to: 'top_left' });
+  });
+
   it('resolves action and modal support with no shared UI JSON and includes factory dependencies', () => {
     const pack = build('alpha');
     const output = documents(pack);

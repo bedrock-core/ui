@@ -204,7 +204,7 @@ export type { DisplayText, TranslationResolver } from '@bedrock-core/i18n';
 
 // The glyph table a server measures with before it sends a string: the same one
 // the layout uses at build time, so what was solved for and what is sent agree.
-export { measureText, WIDEST_GLYPH } from './util/textMetrics';
+export { ellipsizeText, measureText, WIDEST_GLYPH } from './util/textMetrics';
 export type { MeasureTextOptions } from './util/textMetrics';
 
 // Entity API, usable on its own: no screen, no component, no host.

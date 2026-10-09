@@ -70,6 +70,33 @@ const screenOf = (): IrDocument => ({
   },
 });
 
+describe('hidden children in an explicit stack', () => {
+  it('hides a pitched row with its static child', () => {
+    const source = screenOf();
+    const column = source.root.children[0]!;
+    if (column.kind !== 'panel') { throw new Error('Stack panel missing'); }
+    column.children = [label('before', 0, 'First'), { ...label('middle', 12, 'Middle'), visible: false }, label('after', 24, 'Last')];
+    const [, stack] = find(emit(source), name => name === 'column');
+    expect(child(stack, 'middle_row')).toMatchObject({ size: [100, 12], visible: false });
+    expect(child(stack, 'before_row').visible).toBeUndefined();
+    expect(child(stack, 'after_row').visible).toBeUndefined();
+  });
+
+  it('hides a horizontal spacer after its static hidden child', () => {
+    const source = screenOf();
+    const column = source.root.children[0]!;
+    if (column.kind !== 'panel') { throw new Error('Stack panel missing'); }
+    column.row = true;
+    column.children = ['before', 'middle', 'after'].map((name, index) => ({
+      ...label(name, 0, name), rect: { x: index * 12, y: 0, width: 10, height: 10 },
+      ...index === 1 ? { visible: false } : {},
+    }));
+    const [, stack] = find(emit(source), name => name === 'column_row');
+    expect(child(stack, 'middle')).toMatchObject({ visible: false });
+    expect(child(stack, 'middle_gap')).toMatchObject({ size: [2, 80], visible: false });
+  });
+});
+
 describe('a fold', () => {
   const doc = emit(screenOf());
   const [, column] = find(doc, name => name === 'column');

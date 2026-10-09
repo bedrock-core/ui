@@ -105,6 +105,19 @@ describe('presenting a compiled form', () => {
     expect(second).toHaveBeenCalledWith({ player });
   });
 
+  it.each([{ enabled: false }, { visible: false }])('ignores a returned selection on an unavailable button: %j', async (properties) => {
+    const pressed = vi.fn();
+    const tree = build((): JSX.Element => Panel({ children: [Button({ ...properties, onPress: pressed })] }));
+
+    __setDeferredShows(true);
+    const outcome = presentCompiledForm(player, tree, TITLE);
+
+    __resolveShow({ canceled: false, selection: 0 });
+    await outcome;
+
+    expect(pressed).not.toHaveBeenCalled();
+  });
+
   it('keeps a press index still when the screen gains text, since cells are placed first', async () => {
     const pressed = vi.fn();
     const tree = build((): JSX.Element => Panel({

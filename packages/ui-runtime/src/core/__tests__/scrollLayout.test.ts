@@ -156,6 +156,42 @@ describe('Scroll component', () => {
   });
 });
 
+describe('Scroll viewport padding', () => {
+  const content = (): JSX.Element => ({ type: 'panel', props: withControl({ width: '100%', height: 190 }) });
+
+  it('keeps the outer box in flow while laying out content inside its padded viewport', () => {
+    const child = content();
+    const slot = Scroll({ width: 160, height: 96, padding: 4, children: child });
+    const tree = box(200, 210, 'column', [slot]);
+
+    computeLayout(tree);
+
+    expect(slot.props).toMatchObject({ jsonUIx: 0, jsonUIy: 0, jsonUIWidth: 160, jsonUIHeight: 96 });
+    expect(scrolls(tree)[1]).toMatchObject({ x: 4, y: 4, width: 152, height: 88, extent: 190 });
+    expect(child.props).toMatchObject({ jsonUIx: 0, jsonUIy: 0, jsonUIWidth: 141, jsonUIHeight: 190 });
+  });
+
+  it('uses side overrides when positioning an absolute scroll viewport', () => {
+    const tree = box(200, 210, 'column', [Scroll({
+      width: 160, height: 96, position: 'absolute', left: 10, top: 20,
+      padding: 2, paddingTop: 5, paddingRight: 7, paddingBottom: 11, paddingLeft: 3,
+      children: content(),
+    })]);
+
+    computeLayout(tree);
+
+    expect(scrolls(tree)[1]).toMatchObject({ x: 13, y: 25, width: 150, height: 80, extent: 190 });
+  });
+
+  it('resolves percentage padding against the parent content width on every side', () => {
+    const tree = box(200, 210, 'column', [Scroll({ width: 160, height: 96, padding: '10%', children: content() })]);
+
+    computeLayout(tree);
+
+    expect(scrolls(tree)[1]).toMatchObject({ x: 20, y: 20, width: 120, height: 56, extent: 190 });
+  });
+});
+
 describe('computeLayout — however many scrolls a screen declares', () => {
   function nScrolls(n: number): JSX.Element {
     return box(320, 210, 'row', Array.from({ length: n }, () => Scroll({ children: panel(10, 10) })));

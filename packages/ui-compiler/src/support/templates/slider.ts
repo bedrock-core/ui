@@ -1,3 +1,4 @@
+import { UNSTYLED_TEXTURE } from '@bedrock-core/ui-runtime/compile';
 import type { TemplateDefinition, TemplateModule } from '../types';
 
 export default {
@@ -38,7 +39,8 @@ export default {
       offset: [0, 0],
       anchor_from: 'top_right',
       anchor_to: 'top_right',
-      layer: 5,
+      // The thumb's nested layers total 8; values remain readable across its travel.
+      layer: 9,
       localize: false,
       text: '#shown',
       property_bag: {
@@ -68,32 +70,38 @@ export default {
   }),
   'core_ui_form_components.slider_body': ({ ref }): TemplateDefinition => ({
     control: {
-      type: 'panel',
-      size: ['100%', '100%'],
-      anchor_from: 'top_left',
-      anchor_to: 'top_left',
-      controls: [
+      'type': 'panel',
+      '$travel_size|default': ['100% - 16px', 16],
+      '$bar_size|default': ['100%', 10],
+      '$thumb_size|default': [16, 16],
+      ...Object.fromEntries(['track', 'track_hover', 'progress', 'progress_hover', 'thumb', 'thumb_hover', 'thumb_pressed', 'thumb_locked']
+        .map(name => [`$${name}|default`, UNSTYLED_TEXTURE])),
+      'size': ['100%', '100%'],
+      'anchor_from': 'top_left',
+      'anchor_to': 'top_left',
+      'controls': [
         {
           ['value@' + ref('core_ui_form_components.slider_value')]: {},
         },
         {
           travel: {
             type: 'panel',
-            size: ['100% - 16px', 16],
-            anchor_from: 'bottom_middle',
-            anchor_to: 'bottom_middle',
+            size: '$travel_size',
+            anchor_from: 'center',
+            anchor_to: 'center',
             controls: [
               {
                 ['slider@' + ref('core_ui_form_components.slider_control')]: {
-                  $bar_size: ['100% + 16px', 6],
-                  $thumb_size: [16, 16],
-                  $track: 'textures/ui/ore-styled/slider/track',
-                  $track_hover: 'textures/ui/ore-styled/slider/track',
-                  $progress: 'textures/ui/ore-styled/slider/progress',
-                  $progress_hover: 'textures/ui/ore-styled/slider/progress',
-                  $thumb: 'textures/ui/ore-styled/slider/thumb',
-                  $thumb_hover: 'textures/ui/ore-styled/slider/thumb_hover',
-                  $thumb_locked: 'textures/ui/ore-styled/slider/thumb_disabled',
+                  $bar_size: '$bar_size',
+                  $thumb_size: '$thumb_size',
+                  $track: '$track',
+                  $track_hover: '$track_hover',
+                  $progress: '$progress',
+                  $progress_hover: '$progress_hover',
+                  $thumb: '$thumb',
+                  $thumb_hover: '$thumb_hover',
+                  $thumb_pressed: '$thumb_pressed',
+                  $thumb_locked: '$thumb_locked',
                 },
               },
             ],
@@ -117,6 +125,7 @@ export default {
       '$progress_hover|default': '#texture',
       '$thumb|default': '#texture',
       '$thumb_hover|default': '#texture',
+      '$thumb_pressed|default': '#texture',
       '$thumb_locked|default': '#texture',
       '$bar_size|default': [1, 0],
       '$thumb_size|default': [1, 0],
@@ -222,6 +231,8 @@ export default {
                     {
                       bar_default: {
                         type: 'image',
+                        keep_ratio: false,
+                        fill: true,
                         size: ['100%', '100%'],
                         layer: 1,
                         texture: '$track',
@@ -236,6 +247,8 @@ export default {
                                 {
                                   slider_background: {
                                     type: 'image',
+                                    keep_ratio: false,
+                                    fill: true,
                                     size: ['100%', '100%'],
                                     layer: 1,
                                     texture: '$track',
@@ -244,6 +257,8 @@ export default {
                                 {
                                   slider_progress: {
                                     type: 'image',
+                                    keep_ratio: false,
+                                    fill: true,
                                     size: ['100%', '100%'],
                                     layer: 3,
                                     texture: '$progress',
@@ -281,6 +296,8 @@ export default {
                     {
                       bar_hover: {
                         type: 'image',
+                        keep_ratio: false,
+                        fill: true,
                         size: ['100%', '100%'],
                         layer: 1,
                         texture: '$track_hover',
@@ -295,6 +312,8 @@ export default {
                                 {
                                   slider_background_hover: {
                                     type: 'image',
+                                    keep_ratio: false,
+                                    fill: true,
                                     size: ['100%', '100%'],
                                     layer: 1,
                                     texture: '$track_hover',
@@ -303,6 +322,8 @@ export default {
                                 {
                                   slider_progress_hover: {
                                     type: 'image',
+                                    keep_ratio: false,
+                                    fill: true,
                                     size: ['100%', '100%'],
                                     layer: 3,
                                     texture: '$progress_hover',
@@ -351,6 +372,8 @@ export default {
                           {
                             default: {
                               type: 'image',
+                              keep_ratio: false,
+                              fill: true,
                               size: ['100%', '100%'],
                               layer: 2,
                               texture: '$thumb',
@@ -359,6 +382,8 @@ export default {
                           {
                             hover: {
                               type: 'image',
+                              keep_ratio: false,
+                              fill: true,
                               size: ['100%', '100%'],
                               layer: 2,
                               texture: '$thumb_hover',
@@ -367,6 +392,8 @@ export default {
                           {
                             locked: {
                               type: 'image',
+                              keep_ratio: false,
+                              fill: true,
                               size: ['100%', '100%'],
                               layer: 2,
                               texture: '$thumb_locked',
@@ -375,9 +402,11 @@ export default {
                           {
                             indent: {
                               type: 'image',
+                              keep_ratio: false,
+                              fill: true,
                               size: ['100%', '100%'],
                               layer: 2,
-                              texture: '$thumb',
+                              texture: '$thumb_pressed',
                             },
                           },
                         ],

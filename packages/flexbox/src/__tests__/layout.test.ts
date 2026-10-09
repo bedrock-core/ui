@@ -202,6 +202,36 @@ describe('flex distribution', () => {
     expect(root.children[0].layout.width).toBe(50);
     expect(root.children[1].layout.width).toBe(250);
   });
+
+  it.each(['row', 'column'] as const)('resolves percentage basis from padded %s content', (flexDirection) => {
+    const root = createNode({ width: 200, height: 200, padding: 10, flexDirection }, [
+      createNode({ width: 80, height: 24, flexBasis: '50%', flexShrink: 0 }),
+      createNode({ width: 12, height: 12, flexShrink: 0 }),
+    ]);
+
+    computeLayout(root);
+
+    if (flexDirection === 'row') {
+      expect(root.children[0].layout.width).toBe(90);
+      expect(root.children[1].layout.x).toBe(100);
+    } else {
+      expect(root.children[0].layout.height).toBe(90);
+      expect(root.children[1].layout.y).toBe(100);
+    }
+  });
+
+  it('grows from a percentage basis before distributing the remaining space', () => {
+    const root = createNode({ width: 200, height: 100, padding: 10, flexDirection: 'row' }, [
+      createNode({ width: 80, height: 24, flexGrow: 1, flexBasis: '50%' }),
+      createNode({ width: 12, height: 12, flexGrow: 1 }),
+    ]);
+
+    computeLayout(root);
+
+    expect(root.children[0].layout.width).toBe(135);
+    expect(root.children[1].layout.width).toBe(45);
+    expect(root.children[1].layout.x).toBe(145);
+  });
 });
 
 // ─── justifyContent ───────────────────────────────────────────────────────────
@@ -568,6 +598,17 @@ describe('percent spacing', () => {
 
     // Inner panel's x starts at 0 within root, inner child x = 0 + 32 = 32
     expect(inner.layout.x).toBe(32);
+  });
+
+  it('uses the same resolved parent padding for child percentage sizes and placement', () => {
+    const content = createNode({ width: '100%', height: '100%', flexShrink: 0 });
+    const root = createNode({ width: 200, height: 210 }, [
+      createNode({ width: 160, height: 96, padding: '10%' }, [content]),
+    ]);
+
+    computeLayout(root);
+
+    expect(content.layout).toMatchObject({ x: 20, y: 20, width: 120, height: 56 });
   });
 
   it('"5%" margin on a child inside a 200-wide row parent resolves against parent width', () => {

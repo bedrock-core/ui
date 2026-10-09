@@ -49,20 +49,18 @@ export interface TrailProps extends ControlProps {
  * different in every language.
  */
 export function Trail({ text, maxLength, segments, ...layout }: TrailProps): JSX.Element {
-  const { font, scale } = theme.components.header.textStyle;
+  const { font, scale, colorRgb } = theme.components.header.textStyle;
   const composed = useComposed((resolve, width) => trailLine(segments ?? [], resolve, width));
 
   return (
     <Panel stack={true} flexDirection={'row'} justifyContent={'center'} alignItems={'center'} {...layout} {...segments === undefined ? {} : composed.box}>
       {segments === undefined
         ? (
-            // No colour on the label: a composed trail carries the trail's own
-            // codes between its parts, one per segment and one per separator.
-            <Text font={font} scale={scale} hug={true} {...maxLength === undefined ? {} : { maxLength }}>
+            <Text font={font} scale={scale} color={colorRgb} hug={true} {...maxLength === undefined ? {} : { maxLength }}>
               {text ?? ''}
             </Text>
           )
-        : <Text font={font} scale={scale} hug={true} {...composed.text} />}
+        : <Text font={font} scale={scale} color={colorRgb} hug={true} {...composed.text} />}
     </Panel>
   );
 }
