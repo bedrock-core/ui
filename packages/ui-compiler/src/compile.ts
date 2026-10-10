@@ -23,6 +23,7 @@ import { checkTrans } from './trans';
 import { carriedPositions, drawnPerLook } from './looks';
 import { TestMetadataCollector, type ScreenTestMetadata } from './testing';
 
+/** Container-screen identity and optional test metadata for build integrations. */
 export interface ScreenSpec {
   /** Emit a semantic sidecar for development tooling; emitted UI is unchanged. */
   testMetadata?: boolean;
@@ -39,6 +40,7 @@ export interface ScreenSpec {
 /** The default namespace prefix when a spec names none. */
 const DEFAULT_NAMESPACE = 'core_ui';
 
+/** Compiled container screen, shared faces and host data to link with buildUiPack. */
 export interface CompiledScreen {
   testMetadata?: ScreenTestMetadata;
   name: string;
@@ -57,10 +59,10 @@ export interface CompiledScreen {
   /** The namespace of the addon's shared faces, and the looks this screen contributes to it. */
   facesNamespace: string;
   faces: Record<string, Control>;
-  /** Counts the filter reports and stamps: drawn cells, bank slots, and the inventory size the entity needs. */
+  /** Counts used for host definitions: drawn cells, bank slots and the inventory size the entity needs. */
   allocation: Allocation;
   hasBackdrop: boolean;
-  /** Whether any text channel exists, so the filter knows to emit the character table. */
+  /** Whether text channels require a character table in the generated pack. */
   hasText: boolean;
   /** The strings the text this screen composed per language adds to each language, by key. */
   lang: ScreenLang;

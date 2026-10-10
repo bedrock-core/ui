@@ -30,6 +30,7 @@ import { TestMetadataCollector, type ScreenTestMetadata } from '../../testing';
  * documents with their support definitions and the addon's vanilla form hook.
  */
 
+/** Form-screen identity and optional test metadata for build integrations. */
 export interface FormScreenSpec {
   /** Emit a semantic sidecar for development tooling; emitted UI is unchanged. */
   testMetadata?: boolean;
@@ -39,6 +40,7 @@ export interface FormScreenSpec {
   namespace: string;
 }
 
+/** Compiled action or modal form, shared faces and runtime data to link with buildUiPack. */
 export interface CompiledFormScreen {
   testMetadata?: ScreenTestMetadata;
   name: string;

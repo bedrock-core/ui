@@ -5,6 +5,7 @@ import { buildFormPack } from './hosts/form/pack';
 import type { PlacedDocument } from './hosts/form/router';
 import type { Document } from './jsonui';
 
+/** Linked screens, vanilla hook merges and resource documents for one addon. */
 export interface CompiledUiPack {
   /** Final screen documents and metadata, with addon-owned helper references. */
   screens: (CompiledScreen | CompiledFormScreen)[];
