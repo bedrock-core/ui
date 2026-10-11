@@ -19,7 +19,7 @@ import { createInitialContext } from '../render/traversal';
 import { PROTOCOL_HEADER } from '../payload';
 import type { JSX } from '../../jsx';
 import { getComponentDescriptor, isTransparentType } from '../componentRegistry';
-import { emitLabel } from '../writers';
+import { emitLabel, emitSlider } from '../writers';
 import { collectFormButtons } from '../../components/Form';
 import { ModalFormError, type ModalSerializationContext } from '../types';
 import { lowerField } from '../../__fixtures__/lowerField';
@@ -138,6 +138,22 @@ function itemsArg(form: FakeModalForm, kind: string): string[] {
 }
 
 describe("a modal's native controls", () => {
+  it.each([
+    { min: 0.5, max: 2.5, step: 1, raw: 1, expected: 1.5 },
+    { min: -0.75, max: 1.25, step: 1, raw: 1, expected: 0.25 },
+    { min: 0.125, max: 1.125, step: 0.5, raw: 1, expected: 0.625 },
+    { min: 0.05, max: 0.45, step: 0.2, raw: 1, expected: 0.25 },
+    { min: 0, max: 1e-6, step: 1e-7, raw: 3, expected: 3e-7 },
+    { min: 1.2e-7, max: 1.12e-6, step: 1e-7, raw: 1, expected: 2.2e-7 },
+  ])('decodes slider $min + $raw * $step without losing authored precision', ({ min, max, step, raw, expected }) => {
+    const form = new FakeModalForm();
+    const ctx = modalCtx();
+
+    emitSlider('', asModalForm(form), ctx, 'value', min, max, min, step);
+
+    expect(ctx.modalControls.get(0)?.decode?.(raw)).toBe(expected);
+  });
+
   it('emits one native control per Form.* child, in declaration order', () => {
     const form = new FakeModalForm();
     const ctx = modalCtx();

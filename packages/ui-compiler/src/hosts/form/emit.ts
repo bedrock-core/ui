@@ -99,7 +99,7 @@ const wrapLook = (node: IrNode, entry: ControlEntry, ctx: Emit): ControlEntry =>
 const popups = (root: IrNode, ctx: Emit): ControlEntry[] => popupOverlay(
   popupHostOf(ctx.ns),
   collectKind(root, 'dropdown').map(node =>
-    ({ name: node.name, address: node.address, texture: node.popup.texture, height: node.popup.height })),
+    ({ name: node.name, address: node.address, ...node.popup })),
   root.rect.width,
 );
 

@@ -80,6 +80,13 @@ function recordModalOrdinal(
 /** Whether a number is one the engine's slider can stand on: a whole one. */
 const whole = (value: number): boolean => Number.isInteger(value);
 
+/** Decimal places in a number's value, including exponent notation. */
+const decimalPlaces = (value: number): number => {
+  const [coefficient = '', exponent = '0'] = String(value).split('e');
+
+  return Math.max(0, (coefficient.split('.')[1] ?? '').length - Number(exponent));
+};
+
 /**
  * Emit a native modal toggle → `ModalFormData.toggle`. Records the ordinal, then makes
  * the typed call.
@@ -153,9 +160,8 @@ export function emitSlider(
 
   const stops = Math.max(1, Math.round((max - min) / unit));
   const at = (value: number): number => Math.max(0, Math.min(stops, Math.round((value - min) / unit)));
-  // Snapped to the step's own precision, so 0.05 comes back as 0.05 and not
-  // as the float sum that printed it.
-  const decimals = Math.min(20, Math.max(0, (String(unit).split('.')[1] ?? '').length));
+  // Preserve the range origin and step while removing floating-point sum noise.
+  const decimals = Math.min(20, Math.max(decimalPlaces(min), decimalPlaces(unit)));
 
   recordModalOrdinal(ctx, name, raw => (
     typeof raw === 'number'

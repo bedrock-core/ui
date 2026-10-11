@@ -4,6 +4,7 @@ import type { ControlEntry } from '../types';
 
 /** Draws over everything the screen put down, the way the interpreted overlay's layer does. */
 const POPUP_LAYER = 300;
+const OPTION_ROW_HEIGHT = 17;
 
 /** One dropdown's popup: which row it belongs to, and how its card looks. */
 export interface Popup {
@@ -13,6 +14,8 @@ export interface Popup {
   address: number;
   texture: string;
   height: number;
+  /** The authored option count fixes the popup's scroll-content height. */
+  options: number;
 }
 
 /**
@@ -59,6 +62,7 @@ export const popupOverlay = (host: string, popups: readonly Popup[], width: numb
           $open_gate: '#custom_dropdown',
           $popup_texture: popup.texture,
           $popup_size: [Math.max(0, width - 16), popup.height],
+          $options_size: ['100%', popup.options * OPTION_ROW_HEIGHT],
         },
       }],
     },

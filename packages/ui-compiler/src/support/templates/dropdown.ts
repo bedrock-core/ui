@@ -153,6 +153,7 @@ export default {
       },
       '$popup_texture|default': '',
       '$popup_size|default': [312, 20],
+      '$options_size|default': ['100%', '100%c'],
       '$open_gate|default': '((#type = \'modal-dropdown\') and #custom_dropdown)',
       'bindings': [
         {
@@ -207,6 +208,7 @@ export default {
                 ['popup_card_static@' + ref('core_ui_form_components.dropdown_popup_card_static')]: {
                   $popup_texture: '$popup_texture',
                   $popup_size: '$popup_size',
+                  $options_size: '$options_size',
                 },
               },
             ],
@@ -221,6 +223,7 @@ export default {
       '$popup_size|default': [312, 20],
       '$popup_texture|default': '',
       'size': '$popup_size',
+      '$options_size|default': ['100%', '100%c'],
       'anchor_from': 'center',
       'anchor_to': 'center',
       'controls': [
@@ -230,7 +233,9 @@ export default {
           },
         },
         {
-          ['popup_scroll@' + ref('core_ui_form_components.dropdown_popup_scroll')]: {},
+          ['popup_scroll@' + ref('core_ui_form_components.dropdown_popup_scroll')]: {
+            $options_size: '$options_size',
+          },
         },
       ],
     },
@@ -238,6 +243,7 @@ export default {
   'core_ui_form_components.dropdown_popup_scroll': ({ ref }): TemplateDefinition => ({
     control: {
       type: 'scroll_view',
+      ['$options_size|default']: ['100%', '100%c'],
       size: ['100%', '100%'],
       anchor_from: 'top_left',
       anchor_to: 'top_left',
@@ -275,6 +281,7 @@ export default {
                 ['scrolling_content@' + ref('core_ui_form_components.dropdown_options')]: {
                   anchor_from: 'top_left',
                   anchor_to: 'top_left',
+                  $options_size: '$options_size',
                 },
               },
             ],
@@ -414,7 +421,8 @@ export default {
   'core_ui_form_components.dropdown_options': ({ ref }): TemplateDefinition => ({
     control: {
       type: 'panel',
-      size: ['100%', '100%c'],
+      ['$options_size|default']: ['100%', '100%c'],
+      size: '$options_size',
       controls: [
         {
           options_inset: {

@@ -1,4 +1,4 @@
-import { childElements, MODAL_DROPDOWN_SLOT_TYPE } from '@bedrock-core/ui-runtime/compile';
+import { childElements, optionElements, MODAL_DROPDOWN_SLOT_TYPE } from '@bedrock-core/ui-runtime/compile';
 import type { JSX } from '@bedrock-core/ui-runtime';
 import { dropdownFace } from '../../faces';
 import type { ControlEntry } from '../../jsonui';
@@ -30,7 +30,7 @@ export interface DropdownNode extends FieldBase {
    * mounting it inside the native dropdown's own subtree took the client down
    * — names in there are the engine's to resolve.
    */
-  popup: { texture: string; height: number };
+  popup: { texture: string; height: number; options: number };
 }
 
 declare module '../utils/types' {
@@ -72,7 +72,7 @@ export const dropdownDefinition: NodeDefinition<DropdownNode> = {
       },
       // `popupHeight` is `Dropdown`'s own computation (rows x 17 + the fused
       // border + padding), baked as given.
-      popup: { texture: str(element.props.popupBackground), height: num(element.props.popupHeight, 20) },
+      popup: { texture: str(element.props.popupBackground), height: num(element.props.popupHeight, 20), options: optionElements(element.props.children).length },
     };
   },
 

@@ -1,6 +1,6 @@
 import type { Player } from '@minecraft/server';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { __lastModalForm, __resetFormMocks, __setModalFormResponses } from '../../../__mocks__/@minecraft/server-ui';
+import { __lastModalForm, __resetFormMocks, __setModalFormResponses, ModalFormData } from '../../../__mocks__/@minecraft/server-ui';
 import { registerNativeComponents } from '../../../components';
 import { Toggle } from '../../../components/Toggle';
 import { Slider } from '../../../components/Slider';
@@ -128,6 +128,40 @@ describe('presenting a compiled modal', () => {
     // One row per option, so the field after the select answers in the slot after its last option.
     expect(__lastModalForm()?.rows.map(row => row.kind)).toEqual(['toggle', 'toggle', 'toggle', 'toggle', 'toggle']);
     expect(seen).toEqual([{ sound: true, notices: [0, 2], music: false }]);
+  });
+
+  it('preserves compiled single option indices when labels repeat and an option is hidden', async () => {
+    const seen: Record<string, unknown>[] = [];
+    const Picking = (): JSX.Element => Form({
+      onSubmit: (event) => { seen.push(event.values); },
+      children: [
+        lowerField(Toggle, { name: 'before' }),
+        lowerField(Select, {
+          name: 'choice', defaultValue: 'c',
+          children: [
+            Option({ value: 'a', label: 'Same' }),
+            Option({ value: 'b', label: 'Same', visible: false }),
+            Option({ value: 'c', label: 'Same' }),
+          ],
+        }),
+        lowerField(Toggle, { name: 'after' }),
+        Form.Button({ type: 'submit' }),
+      ],
+    });
+
+    const dropdown = vi.spyOn(ModalFormData.prototype, 'dropdown');
+
+    try {
+      __setModalFormResponses({ canceled: false, formValues: [false, 2, true] });
+      await present(Picking);
+
+      expect(__lastModalForm()?.rows.map(row => row.kind)).toEqual(['toggle', 'dropdown', 'toggle']);
+      expect(__lastModalForm()?.rows[1]?.items).toHaveLength(3);
+      expect(dropdown).toHaveBeenCalledWith(expect.any(String), expect.any(Array), { defaultValueIndex: 2 });
+      expect(seen).toEqual([{ before: false, choice: 2, after: true }]);
+    } finally {
+      dropdown.mockRestore();
+    }
   });
 
   it('answers an empty array for a multiple select with nothing on', async () => {
