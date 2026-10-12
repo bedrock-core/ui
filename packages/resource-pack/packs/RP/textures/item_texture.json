@@ -3,7 +3,7 @@
 	"texture_name": "atlas.items",
 	"texture_data": {
 		"core_ui_blank": {
-			"textures": "textures/core-ui/blank"
+			"textures": ["textures/core-ui/blank"]
 		}
 	}
 }

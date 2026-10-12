@@ -1,4 +1,2 @@
 /build
-/.regolith
-**/itemAuxMap.generated.json
-**/i18n.generated.json
+/.bedrock-core

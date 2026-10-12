@@ -1,32 +1,39 @@
 {
-	"$schema": "https://raw.githubusercontent.com/Bedrock-OSS/regolith-schemas/main/config/v1.4.json",
-	"author": "DrAv0011",
-	"description": "Shared UI textures for Bedrock Core addons",
+	"$schema": "../../../builder/schemas/config.schema.json",
+	"targetVersion": "1.26.50",
+	"namespace": "bedrock_core_ui",
 	"name": "@bedrock-core_ui",
+	"description": "Shared UI textures for @bedrock-core addons",
+	"authors": ["DrAv0011"],
 	"packs": {
-		"behaviorPack": "./packs/BP",
 		"resourcePack": "./packs/RP"
 	},
-	"regolith": {
-		"dataPath": "./packs/data",
-		"filterDefinitions": {},
-		"formatVersion": "1.4.0",
+	"bedrockCore": {
+		"formatVersion": "1.0.0",
 		"profiles": {
 			"build": {
-				"export": {
-					"build": "standard",
-					"readOnly": true,
-					"target": "local"
+				"stages": {
+					"generator": false,
+					"guides": false,
+					"i18n": false,
+					"ui-compiler": false,
+					"bundler": false
 				},
-				"filters": []
+				"export": {
+					"resourcePack": "./build/@bedrock-core_ui_rp"
+				}
 			},
 			"default": {
-				"export": {
-					"build": "standard",
-					"readOnly": false,
-					"target": "development"
+				"stages": {
+					"generator": false,
+					"guides": false,
+					"i18n": false,
+					"ui-compiler": false,
+					"bundler": false
 				},
-				"filters": []
+				"export": {
+					"resourcePack": "%APPDATA%/Minecraft Bedrock/Users/Shared/games/com.mojang/development_resource_packs/@bedrock-core_ui_rp"
+				}
 			}
 		}
 	}

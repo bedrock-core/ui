@@ -30,39 +30,35 @@ jobs:
     steps:
       - name: Checkout resource-pack source
         uses: actions/checkout@v7
-        with:
-          path: ui
-
-      - run: corepack enable
 
       - uses: actions/setup-node@v7
         with:
           node-version: 24
 
-      - name: Set up Regolith
-        uses: bedrock-core/setup-regolith@1.0.1
-        with:
-          regolith-version: '1.8.0'
+      - run: corepack enable
 
       - name: Install pack tooling
-        run: yarn install --immutable
-        working-directory: ui/packages/resource-pack
+        env:
+          YARN_ENABLE_IMMUTABLE_INSTALLS: 'false'
+        run: |
+          npm pkg delete resolutions
+          yarn install --mode=skip-build
+        working-directory: packages/resource-pack
 
       - name: Align texture pack version with the UI release
         env:
           UI_VERSION: ${{ inputs.ui_version }}
         run: node scripts/sync-pack-version.mjs "$UI_VERSION"
-        working-directory: ui
 
       - name: Build resource pack
         run: yarn build
-        working-directory: ui/packages/resource-pack
+        working-directory: packages/resource-pack
 
       - name: Package resource pack
         env:
           VERSION: ${{ inputs.ui_version }}
         run: zip -r "$GITHUB_WORKSPACE/core-ui-${VERSION}.mcpack" .
-        working-directory: ui/packages/resource-pack/build/@bedrock-core_ui_rp
+        working-directory: packages/resource-pack/build/@bedrock-core_ui_rp
 
       - name: Attach pack to the existing UI release
         env:

@@ -1,8 +1,7 @@
 name: Release libraries
 
 # Pushes maintain the Changesets version PR. Manual runs publish the UI npm
-# libraries only. The render-pack artifact and CLI each have their own later
-# workflow because both must consume the packages already released before them.
+# libraries only. The render-pack workflow consumes those released packages.
 on:
   push:
     branches: [main]

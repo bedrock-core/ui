@@ -1,6 +1,6 @@
 # Copilot instructions for `@bedrock-core/ui`
 
-This repository contains the UI libraries, compiler, scaffold CLI and the independently built shared asset pack. Read the nearest package source and tests before changing behavior; the public docs live in the separate `bedrock-core/docs` repository.
+This repository contains the UI libraries, compiler and the independently built shared asset pack. Read the nearest package source and tests before changing behavior; the public docs live in the separate `bedrock-core/docs` repository.
 
 ## Repository map
 
@@ -10,14 +10,13 @@ This repository contains the UI libraries, compiler, scaffold CLI and the indepe
 - `packages/navigation/` — screen keys, history and cross-addon screen references.
 - `packages/ore-styled/` — styled components and design tokens.
 - `packages/flexbox/` — layout engine.
-- `packages/cli/` — `@bedrock-core/cli`; its current template is `templates/bedrock-core/`.
 - `packages/resource-pack/` — independent project that copies UI textures into the world-scoped `.mcpack`.
 
-The UI libraries do not depend on the Apps packages. The CLI template installs released Server and Apps packages to scaffold an addon. Each Catalog addon compiles its framework page and guide.
+The UI libraries do not depend on the Apps packages. The addon scaffold belongs to the separate builder repository and installs released Server and Apps packages. Each Catalog addon compiles its framework page and guide.
 
 ## Screen model
 
-Screen modules end in `.screen.tsx`, default-export a component and are discovered by the Regolith `ui-compiler` filter. The build evaluates the component, solves its layout and writes JSON UI plus a generated screen module. Keep module-scope code safe on a build machine: subscriptions, world reads and scheduled game work belong in runtime entry modules.
+Screen modules end in `.screen.tsx`, default-export a component and are discovered by the builder UI compiler stage or the Regolith `ui-compiler` wrapper. The build evaluates the component, solves its layout and writes JSON UI plus a generated screen module. Keep module-scope code safe on a build machine: subscriptions, world reads and scheduled game work belong in runtime entry modules.
 
 The screen's shape is fixed at build time. State may change carried values and supported looks, but it must not add, remove or reorder controls. Conditional shapes need the compiler-supported visibility form.
 
@@ -59,13 +58,7 @@ yarn build
 yarn deploy
 ```
 
-Use `yarn deploy` after a pack-related change so the development world receives both packs for in-game verification.
-
-## CLI template
-
-The CLI template must work outside this monorepo with registry packages only. Keep released package versions, Regolith filters, generated path aliases and examples in sync. Do not commit a template lockfile whose project name is rewritten during scaffolding.
-
-The release smoke test must generate a fresh project, run an ordinary install followed by an immutable install, install every Regolith filter, build the normal and GameTest profiles, and lint the scaffold. Reject `workspace:`, `link:`, `portal:` and `file:` references and unresolved template placeholders.
+Use `yarn deploy` after a pack-related change so the development world receives the shared resource pack for in-game verification.
 
 ## Validation
 
@@ -77,7 +70,7 @@ yarn build
 yarn test
 ```
 
-For release-library checks, use `lint:libs`, `build:libs` and `test:libs`; the CLI is published separately and last. For compiler or host changes, add tests that assert user-visible validation, allocation or generated output rather than copying the implementation into assertions.
+For release-library checks, use `lint:libs`, `build:libs` and `test:libs`. For compiler or host changes, add tests that assert user-visible validation, allocation or generated output rather than copying the implementation into assertions.
 
 In-game verification is required for JSON UI, focus, cursor, tooltip, container interaction, navigation, translation and geometry behavior. Record the exact action, result and relevant client/server log lines.
 

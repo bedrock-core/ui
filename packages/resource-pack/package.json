@@ -2,17 +2,21 @@
 	"name": "@bedrock-core/ui-resource-pack",
 	"version": "1.0.1",
 	"private": true,
-	"description": "Shared UI textures for Bedrock Core addons",
+	"description": "Shared UI textures for @bedrock-core addons",
 	"packageManager": "yarn@4.16.0",
+	"engines": {
+		"node": ">=22.18.0"
+	},
 	"scripts": {
-		"build": "regolith run build",
-		"deploy": "regolith run",
-		"watch": "regolith watch",
+		"build": "core-builder build config.json build",
+		"deploy": "core-builder build config.json default",
+		"watch": "core-builder watch config.json default",
 		"lint": "eslint .",
 		"loopback": "CheckNetIsolation.exe LoopbackExempt -a -p=S-1-15-2-1958404141-86561845-1752920682-3514627264-368642714-62675701-733520436",
 		"loopback:preview": "CheckNetIsolation.exe LoopbackExempt -a -p=S-1-15-2-424268864-5579737-879501358-346833251-474568803-887069379-4040235476"
 	},
 	"devDependencies": {
+		"@bedrock-core/builder": "0.1.0-alpha.0",
 		"@eslint/js": "10.0.1",
 		"@eslint/json": "1.2.0",
 		"@stylistic/eslint-plugin": "5.10.0",
@@ -20,5 +24,16 @@
 		"eslint-plugin-minecraft-linting": "2.0.12",
 		"typescript": "6.0.3",
 		"typescript-eslint": "8.59.2"
+	},
+	"resolutions": {
+		"@bedrock-core/builder": "portal:../../../builder",
+		"@bedrock-core/builder-bundler": "portal:../../../builder/packages/bundler",
+		"@bedrock-core/builder-generator": "portal:../../../builder/packages/generator",
+		"@bedrock-core/builder-guides": "portal:../../../builder/packages/guides",
+		"@bedrock-core/builder-i18n": "portal:../../../builder/packages/i18n",
+		"@bedrock-core/builder-manifest": "portal:../../../builder/packages/manifest",
+		"@bedrock-core/builder-plugin": "portal:../../../builder/packages/plugin",
+		"@bedrock-core/builder-ui": "portal:../../../builder/packages/ui-compiler",
+		"@bedrock-core/builder-validation": "portal:../../../builder/packages/validation"
 	}
 }

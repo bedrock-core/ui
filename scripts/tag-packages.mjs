@@ -4,8 +4,7 @@
  *
  * Changesets Action v2 reads JSONL events from CHANGESETS_OUTPUT when a custom
  * publish script is used. Reporting each new tag here lets the action push the
- * tags and create the corresponding GitHub releases. The CLI is deliberately
- * excluded from the library lane and tagged by its own final release workflow.
+ * tags and create the corresponding GitHub releases.
  *
  * Usage: node scripts/tag-packages.mjs [excluded-package-name ...]
  *        node scripts/tag-packages.mjs --only <package-name>

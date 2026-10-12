@@ -5,13 +5,13 @@
 //   yarn preflight             tests + lint + typecheck + deploy + verify
 //   yarn preflight --no-tests  deploy + verify only
 //
-// The deployed packs folder is found from the usual Bedrock locations, or
-// taken from BC_DEV_PACKS when the game keeps its data elsewhere.
+// Build and development destinations come from the resource pack's profiles.
 
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 import { comparePackContents } from './pack-verification.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -68,32 +68,29 @@ if (!flags.has('--no-tests')) {
 
 // ---- 2. deploy through the profile the game reads -------------------------
 
-const deploy = run('regolith run (development profile)', 'regolith run', packRoot, { capture: true });
-
-if (deploy.output.includes('Failed to acquire session lock')) {
-  fail('Regolith\'s session lock is held — a `regolith watch` is running. Stop it, then run preflight again.');
+if (run('yarn build (resource pack)', 'yarn build', packRoot).code !== 0) {
+  fail('resource-pack build failed');
 }
 
+const deploy = run('yarn deploy (default profile)', 'yarn deploy', packRoot, { capture: true });
+
 if (deploy.code !== 0) {
-  fail('regolith run failed');
+  fail('resource-pack deployment failed');
 }
 
 // ---- 3. the pack the game will load is the pack just built ----------------
 
 const config = JSON.parse(fs.readFileSync(path.join(packRoot, 'config.json'), 'utf-8'));
-const packName = `${config.name}_rp`;
-const built = path.join(packRoot, '.regolith', 'tmp', 'RP');
+const packRequire = createRequire(path.join(packRoot, 'package.json'));
 
-const candidates = [
-  process.env.BC_DEV_PACKS,
-  process.env.APPDATA && path.join(process.env.APPDATA, 'Minecraft Bedrock', 'Users', 'Shared', 'games', 'com.mojang', 'development_resource_packs'),
-  process.env.LOCALAPPDATA && path.join(process.env.LOCALAPPDATA, 'Packages', 'Microsoft.MinecraftUWP_8wekyb3d8bbwe', 'LocalState', 'games', 'com.mojang', 'development_resource_packs'),
-].filter(Boolean);
+packRequire('./.pnp.cjs').setup();
+const { resolveExportPaths } = packRequire('@bedrock-core/builder/export');
+const built = resolveExportPaths(packRoot, config.packs, config.bedrockCore.profiles.build.export).resourcePack;
+const packName = path.basename(built);
+const deployed = resolveExportPaths(packRoot, config.packs, config.bedrockCore.profiles.default.export).resourcePack;
 
-const deployed = candidates.map(dir => path.join(dir, packName)).find(dir => fs.existsSync(dir));
-
-if (deployed === undefined) {
-  fail(`no deployed "${packName}" under any known development_resource_packs — set BC_DEV_PACKS to the game's folder`);
+if (!fs.existsSync(deployed)) {
+  fail(`no deployed "${packName}" under ${path.dirname(deployed)}`);
 }
 
 let comparison;

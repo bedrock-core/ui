@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Ensure the repository-root @bedrock-core/ui package has the GitHub release
- * that the render-pack and downstream CLI workflows consume.
+ * that the render-pack workflow and addon scaffold consume.
  *
  * Changesets inventories child workspaces only, so tag-packages deliberately
  * does not report the root package through CHANGESETS_OUTPUT. The libraries

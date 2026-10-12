@@ -51,3 +51,6 @@ that next moves.
 `0.0.0` is what an unreleased package sits at, and `publish-tarballs.mjs` skips
 it, so a package reaches its first release by having its `version` set by hand in
 the commit that means to ship it.
+
+The addon scaffold and its release workflow are maintained in the separate builder
+repository.

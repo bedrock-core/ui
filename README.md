@@ -10,8 +10,8 @@ JSX UI for Minecraft Bedrock: each addon compiles its screens and required JSON 
 
 ## Usage
 
-A screen is a `*.screen.tsx` module that default-exports a component; the `ui-compiler` Regolith
-filter compiles it into the pack. The catalog in the preview, sketched:
+A screen is a `*.screen.tsx` module that default-exports a component; the builder's
+`ui-compiler` stage compiles it into the pack. The catalog in the preview, sketched:
 
 ```tsx
 import { Button, Image, List, Panel, Screen, Scroll, Text, useExit, useState } from '@bedrock-core/ui';
