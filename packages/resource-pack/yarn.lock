@@ -120,7 +120,7 @@ __metadata:
     "@types/node": "npm:25.9.9"
     ajv: "npm:8.17.1"
   bin:
-    core-builder: ./bin/builder.ts
+    bc-builder: ./bin/builder.ts
   languageName: node
   linkType: soft
 
