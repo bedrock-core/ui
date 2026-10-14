@@ -2,6 +2,23 @@ import type { ControlEntry } from '../../jsonui';
 import { folds, topLeft, visibilityOf } from './shared';
 import type { FaceEmit, IrNode } from './types';
 
+const stackVisibilityOf = (node: IrNode): { visible?: false } =>
+  node.carriedVisible === undefined ? visibilityOf(node) : {};
+
+/** A carried row's spacing follows the same entry as its content. */
+const spacerOf = (node: IrNode, width: number, height: number, ctx: FaceEmit): ControlEntry => {
+  const name = `${node.name}_gap`;
+
+  if (node.carriedVisible !== undefined) {
+    return ctx.emitNode({
+      kind: 'panel', name, rect: { x: 0, y: 0, width, height },
+      visible: node.visible, carriedVisible: node.carriedVisible, children: [],
+    });
+  }
+
+  return { [name]: { type: 'panel', size: [width, height], ...topLeft, ...visibilityOf(node) } };
+};
+
 /**
  * A row of laid-out children as a horizontal `stack_panel`'s columns.
  *
@@ -34,7 +51,7 @@ export const stackColumns = (children: readonly IrNode[], height: number, centre
       // can be folded into the child's own box.
       return [
         column,
-        ...gap > 0 ? [{ [`${child.name}_gap`]: { type: 'panel', size: [gap, height] as [number, number], ...topLeft, ...visibilityOf(child) } } satisfies ControlEntry] : [],
+        ...gap > 0 ? [spacerOf(child, gap, height, ctx)] : [],
       ];
     }),
   ];
@@ -69,15 +86,15 @@ export const stackRows = (children: readonly IrNode[], width: number, ctx: FaceE
       // below would move.
       if (folds(child)) {
         const gap = pitch - child.rect.height;
-        const spacer: ControlEntry = { [`${child.name}_gap`]: { type: 'panel', size: [width, gap], ...topLeft, ...visibilityOf(child) } };
+        const spacer = gap > 0 ? spacerOf(child, width, gap, ctx) : undefined;
 
         return [
-          { [`${child.name}_row`]: { type: 'panel', size: [width, '100%c'], ...topLeft, ...visibilityOf(child), controls: [row] } },
-          ...gap > 0 ? [spacer] : [],
+          { [`${child.name}_row`]: { type: 'panel', size: [width, '100%c'], ...topLeft, ...stackVisibilityOf(child), controls: [row] } },
+          ...spacer === undefined ? [] : [spacer],
         ];
       }
 
-      return [{ [`${child.name}_row`]: { type: 'panel', size: [width, pitch], ...topLeft, ...visibilityOf(child), controls: [row] } }];
+      return [{ [`${child.name}_row`]: { type: 'panel', size: [width, pitch], ...topLeft, ...stackVisibilityOf(child), controls: [row] } }];
     }),
   ];
 };

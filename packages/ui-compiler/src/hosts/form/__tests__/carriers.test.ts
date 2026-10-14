@@ -65,6 +65,45 @@ describe('carried visible on the action form', () => {
   });
 });
 
+describe('carried visibility in an explicit stack', () => {
+  it.each([
+    ['column', false], ['column', true], ['row', false], ['row', true],
+  ] as const)('lets a %s item and its spacing follow the carrier when baked %s', (direction, initial) => {
+    const Screen = (): JSX.Element => {
+      const [open] = useState(initial);
+
+      return ScreenRoot({ children: jsx(Panel, {
+        width: 100, height: 80,
+        children: jsx(Panel, {
+          width: 100, height: 80, stack: true, flexDirection: direction, gap: 4,
+          children: [
+            jsx(Panel, { width: 20, height: 12, visible: open, children: Text({ children: 'A' }) }),
+            Text({ width: 20, height: 12, children: 'B' }),
+          ],
+        }),
+      }) });
+    };
+    const compiled = compileFormScreen(Screen, { namespace: 'a', name: 'stack_visibility' });
+    const wrappers = gates(compiled.document);
+    const rows: Control[] = [];
+
+    eachControl(compiled.document, (name, control) => {
+      if (name.endsWith('_row')) { rows.push(control); }
+    });
+
+    expect(compiled.snapshot.vis).toHaveLength(1);
+    expect(wrappers).toHaveLength(2);
+    for (const wrapper of wrappers) {
+      expect(wrapper.collection_name).toBe('form_buttons');
+      expect(wrapper.controls?.[0]?.gate).toMatchObject({
+        collection_index: 0, visible: '#visible', property_bag: { '#visible': initial },
+      });
+    }
+    expect(rows.every(row => row.visible !== false)).toBe(true);
+    expect(wrappers[1]?.controls?.[0]?.gate?.size).toEqual(direction === 'column' ? [100, 4] : [4, 80]);
+  });
+});
+
 describe('the list count on the action form', () => {
   const Screen = (): JSX.Element => ScreenRoot({ children: Panel({
     children: [
