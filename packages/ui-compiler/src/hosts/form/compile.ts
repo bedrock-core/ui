@@ -42,6 +42,8 @@ export interface FormScreenSpec {
 
 /** Compiled action or modal form, shared faces and runtime data to link with buildUiPack. */
 export interface CompiledFormScreen {
+  /** The native form host used by this screen. */
+  kind: 'action' | 'modal';
   testMetadata?: ScreenTestMetadata;
   name: string;
   /** The addon's namespace the screen was compiled under. */
@@ -248,6 +250,7 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
 
   return {
     name: spec.name,
+    kind: modal ? 'modal' : 'action',
     addon: spec.namespace,
     namespace,
     title,
