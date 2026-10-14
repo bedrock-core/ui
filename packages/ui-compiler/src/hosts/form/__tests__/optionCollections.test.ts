@@ -51,6 +51,7 @@ describe('compiled dropdown scroll-content bounds', () => {
     expect(groups[0]!.bindings).toEqual([
       {
         binding_name: '#custom_dropdown_length', binding_type: 'collection',
+        binding_condition: 'always',
         binding_collection_name: 'custom_form', binding_name_override: '#collection_length',
       },
     ]);

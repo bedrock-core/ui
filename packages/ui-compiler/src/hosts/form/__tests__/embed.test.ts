@@ -91,19 +91,22 @@ describe('the embedded side: entries from 1, gated by the marker', () => {
   const routing = formRouter([{
     name: compiled.name, namespace: compiled.namespace, hasBackdrop: false, marker: compiled.marker, embed: compiled.embed,
   }], 'drav0011_economy');
-  const gate = routing.router.drav0011_economy_gate_addon as Control;
-  const inner = gate.controls?.[0]?.gate;
+  const gate = routing.router.drav0011_economy_embed_selector as Control;
+  const inner = gate.controls?.[0]?.selector;
+  const cell = routing.router.drav0011_economy_screen_addon as Control;
 
   it('routes through a gate reading entry 0 rather than the title', () => {
     expect(gate.collection_name).toBe('form_buttons');
     expect(inner?.collection_index).toBe(0);
-    expect(inner?.property_bag?.['#visible']).toBe(false);
-    expect(JSON.stringify(inner?.bindings)).toContain("(#marker = 'core_addon:drav0011_economy')");
+    expect(inner).not.toHaveProperty('property_bag.#collection_length');
+    expect(inner?.factory?.control_ids).toEqual({ addon: 'drav0011_economy__forms.drav0011_economy_screen_addon' });
+    expect(inner?.property_bag?.['#route_core_addon:drav0011_economy']).toEqual(['addon']);
+    expect(JSON.stringify(inner?.bindings)).toContain("('#route_' + #marker)");
     expect(JSON.stringify(inner?.bindings)).not.toContain('#title_text');
   });
 
   it('is mounted where the area sits in the host\'s centred frame', () => {
-    const frame = inner?.controls?.[0]?.frame;
+    const frame = cell.controls?.[0]?.frame;
     const [mounted] = frame?.controls ?? [];
     const [name, screen] = Object.entries(mounted ?? {})[0] ?? [];
 
@@ -112,6 +115,7 @@ describe('the embedded side: entries from 1, gated by the marker', () => {
     expect(name).toBe('screen@drav0011_economy_addon.screen');
     expect(screen?.anchor_from).toBe('top_left');
     expect(screen?.offset).toEqual([114, 25]);
+    expect(cell.layer).toBe(2);
   });
 });
 

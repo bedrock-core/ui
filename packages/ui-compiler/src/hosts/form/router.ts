@@ -34,7 +34,7 @@ export interface PlacedDocument {
 export interface FormRouting {
   /** Additive vanilla mount and identical shared properties across addon builds. */
   readonly hook: PlacedDocument;
-  /** The addon's router: its root, and a gated host per screen. */
+  /** The addon's router: selectors and screen cells created only while selected. */
   readonly router: Document;
   /** Pack path the router is written to — the addon's own. */
   readonly routerFile: string;
@@ -43,94 +43,76 @@ export interface FormRouting {
 /** Pack path of an addon's compiled-form router. */
 export const routerFileOf = (addon: string): string => `ui/core-ui/screens/${addon}_forms.json`;
 
-/** A panel gated by an expression over the current form title. */
-const gate = (expression: string, controls: ControlEntry[]): Control => ({
-  type: 'panel',
-  size: ['100%', '100%'],
-  // Spelled out: a control anchors `center` by default, and everything under
-  // here is positioned from the canvas's top-left.
+const canvas = {
+  size: ['100%', '100%'] as [string, string],
   anchor_from: 'top_left',
   anchor_to: 'top_left',
-  property_bag: { '#visible': false },
-  visible: '#visible',
-  controls,
-  bindings: [
-    { binding_name: '#title_text' },
-    {
-      binding_type: 'view',
-      source_property_name: expression,
-      target_property_name: '#visible',
+} as const;
+
+interface Route {
+  key: string;
+  id: string;
+  cell: string;
+}
+
+/** One property lookup supplies the selected cell id, independently of route count. */
+const selector = (routes: readonly Route[], addon: string, property: '#title_text' | '#marker'): Control => {
+  const factory: Control = {
+    type: 'collection_panel',
+    ...canvas,
+    property_bag: {
+      ...property === '#marker' ? { '#marker': '' } : {},
+      '#route_': [],
+      ...Object.fromEntries(routes.map(route => [`#route_${route.key}`, [route.id]])),
     },
-  ],
-});
+    factory: {
+      name: `${addon}_${property === '#marker' ? 'embed' : 'title'}_screen`,
+      control_ids: Object.fromEntries(routes.map(route => [route.id, route.cell])),
+    },
+    bindings: [
+      ...property === '#marker'
+        ? [{ ...FORM_DETAILS_BINDING }, { ...entryValueBinding('#marker', FORM_COLLECTION), binding_condition: 'always' as const }]
+        : [{ binding_name: '#title_text', binding_condition: 'always' as const }],
+      {
+        binding_type: 'view',
+        source_property_name: `('#route_' + ${property})`,
+        target_property_name: '#collection_length',
+        binding_condition: 'always',
+      },
+    ],
+  };
 
-/** Exact titles keep addons with overlapping names independent. */
-const titleExpression = (namespace: string): string => `(#title_text = '${formTitleFor(namespace)}')`;
+  if (property === '#title_text') { return factory; }
 
-/** Draws over the host's own content, whichever pack's root comes first under the mount. */
+  // Collection indices belong directly below a collection host.
+  return {
+    type: 'stack_panel', orientation: 'vertical', ...canvas,
+    collection_name: FORM_COLLECTION,
+    controls: [{ selector: { ...factory, collection_index: 0 } }],
+  };
+};
+
+/** Embedded cells draw over their host's content regardless of addon mount order. */
 const EMBED_LAYER = 2;
 
 /**
- * A panel shown only while the form's FIRST entry carries this marker: the
- * host that embeds the screen writes it there while the screen is wanted,
- * whatever the host's own title is — an embedded screen cannot know the
- * title of every host that may draw it, and the marker is a fact about the
- * screen alone. Any other form's first entry is a button caption, which never
- * equals a marker; a form with no entries never resolves the binding, and
- * the seeded false holds.
- */
-const markerGate = (marker: string, controls: ControlEntry[]): Control => ({
-  type: 'stack_panel',
-  orientation: 'vertical',
-  size: ['100%', '100%'],
-  anchor_from: 'top_left',
-  anchor_to: 'top_left',
-  layer: EMBED_LAYER,
-  collection_name: FORM_COLLECTION,
-  controls: [{
-    gate: {
-      type: 'panel',
-      size: ['100%', '100%'],
-      anchor_from: 'top_left',
-      anchor_to: 'top_left',
-      collection_index: 0,
-      property_bag: { '#visible': false },
-      visible: '#visible',
-      controls,
-      bindings: [
-        { ...FORM_DETAILS_BINDING },
-        entryValueBinding('#marker', FORM_COLLECTION),
-        {
-          binding_type: 'view',
-          source_property_name: `(#marker = '${marker}')`,
-          target_property_name: '#visible',
-        },
-      ],
-    },
-  }],
-});
-
-/**
- * The documents that put one addon's compiled form screens on vanilla's form screen.
- *
- * @param screens - Every compiled form screen of the addon, in any order.
- * @param addon - The addon's namespace: it names the router file and every definition in it.
- * @throws ContainerScreenError when two screens share a name.
+ * Creates only the selected form screen and, when requested, one embedded screen.
+ * Title and marker dictionaries each instantiate at most one screen cell.
  */
 export const formRouter = (screens: readonly RoutedFormScreen[], addon: string): FormRouting => {
   if (!/^[A-Za-z0-9_-]+$/.test(addon)) { throw new ContainerScreenError(`Invalid UI addon namespace: ${addon}`); }
 
   const seen = new Set<string>();
+  const titles = new Set<string>();
   const markers = new Set<string>();
   const namespace = routerNamespaceOf(addon);
   const router: Document = { namespace };
+  const standalone: Route[] = [];
+  const embedded: Route[] = [];
 
-  for (const screen of screens) {
+  for (const screen of [...screens].sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0)) {
     if (seen.has(screen.name)) {
-      throw new ContainerScreenError(
-        `Two screens are named "${screen.name}"; a name becomes part of the title a screen is picked by, `
-        + 'and must be unique across the addon.',
-      );
+      throw new ContainerScreenError(`Two screens are named "${screen.name}"; names must be unique across the addon.`);
     }
 
     seen.add(screen.name);
@@ -143,53 +125,59 @@ export const formRouter = (screens: readonly RoutedFormScreen[], addon: string):
       markers.add(screen.marker);
     }
 
-    const gated = (controls: ControlEntry[]): Control => (screen.marker === undefined
-      ? gate(titleExpression(screen.namespace), controls)
-      : markerGate(screen.marker, controls));
+    const key = screen.marker ?? formTitleFor(screen.namespace);
 
-    // The vanilla hook expands the content area to the viewport for compiled
-    // titles. Each fixed-size canvas is centred within that area.
+    if (screen.marker === undefined && titles.has(key)) { throw new ContainerScreenError(`Two screens use form title "${key}".`); }
+
+    if (screen.marker === undefined) { titles.add(key); }
+
+    const cell = `${addon}_screen_${screen.name}`;
+
+    (screen.marker === undefined ? standalone : embedded).push({ key, id: screen.name, cell: `${namespace}.${cell}` });
+
     const centred = { anchor_from: 'center', anchor_to: 'center' } as const;
 
-    router[`${addon}_gate_${screen.name}`] = gated([
-      ...screen.hasBackdrop ? [{ [`backdrop@${screen.namespace}.${BACKDROP_DEFINITION}`]: {} }] : [],
-      screen.embed === undefined
-        ? { [`screen@${screen.namespace}.${SCREEN_DEFINITION}`]: centred }
-        : {
-            // An embedded screen's canvas is the area its host left for it:
-            // the host's frame is centred exactly as the host centres its
-            // own, and the screen sits in it where the area does.
-            frame: {
-              type: 'panel',
-              size: [...screen.embed.frame],
-              ...centred,
-              controls: [{
-                [`screen@${screen.namespace}.${SCREEN_DEFINITION}`]: {
-                  anchor_from: 'top_left',
-                  anchor_to: 'top_left',
-                  offset: [...screen.embed.offset],
-                },
-              }],
+    router[cell] = {
+      type: 'panel', ...canvas,
+      ...screen.marker === undefined ? {} : { layer: EMBED_LAYER },
+      controls: [
+        ...screen.hasBackdrop ? [{ [`backdrop@${screen.namespace}.${BACKDROP_DEFINITION}`]: {} }] : [],
+        screen.embed === undefined
+          ? { [`screen@${screen.namespace}.${SCREEN_DEFINITION}`]: centred }
+          : {
+              frame: {
+                type: 'panel', size: [...screen.embed.frame], ...centred,
+                controls: [{
+                  [`screen@${screen.namespace}.${SCREEN_DEFINITION}`]: {
+                    anchor_from: 'top_left', anchor_to: 'top_left', offset: [...screen.embed.offset],
+                  },
+                }],
+              },
             },
-          },
-    ]);
+        ...screen.marker === undefined ? [{ [`cursor@${namespace}.${addon}_cursor`]: {} }] : [],
+      ],
+    };
   }
 
-  const cursorTitles = screens.filter(screen => screen.marker === undefined).map(screen => titleExpression(screen.namespace));
+  if (standalone.length > 0) {
+    router[`${addon}_cursor`] = { type: 'panel', ...canvas, controls: [{ 'pointer@core_ui_common.gamepad_cursor_button': {} }] };
+  }
+
+  const selectors: ControlEntry[] = [];
+
+  for (const [routes, property, name] of [
+    [standalone, '#title_text', `${addon}_title_selector`],
+    [embedded, '#marker', `${addon}_embed_selector`],
+  ] as const) {
+    if (routes.length === 0) { continue; }
+
+    router[name] = selector(routes, addon, property);
+    selectors.push({ [`${name}@${namespace}.${name}`]: {} });
+  }
 
   router[`${addon}_forms`] = {
-    type: 'panel',
-    size: ['100%', '100%'],
-    anchor_from: 'top_left',
-    anchor_to: 'top_left',
-    controls: [
-      ...screens.map(screen => ({ [`${screen.name}@${namespace}.${addon}_gate_${screen.name}`]: {} })),
-      ...cursorTitles.length === 0
-        ? []
-        : [{
-            cursor: gate(`(${cursorTitles.join(' or ')})`, [{ 'pointer@core_ui_common.gamepad_cursor_button': {} }]),
-          }],
-    ],
+    type: 'panel', ...canvas,
+    controls: selectors,
   };
 
   const bridge = `${addon}_compiled_form_bridge`;
@@ -210,33 +198,28 @@ export const formRouter = (screens: readonly RoutedFormScreen[], addon: string):
       file: MOUNT_FILE,
       document: {
         namespace: MOUNT_NAMESPACE,
-        // All builds use the same recognition rule and viewport properties.
+        // All builds use the same recognition rule and viewport geometry.
         // Addon-specific gates belong exclusively to their own routers.
         third_party_server_screen: { gamepad_cursor: true },
         long_form: vanilla,
         custom_form: structuredClone(vanilla),
         [bridge]: {
-          type: 'panel', size: ['100%', '100%'], anchor_from: 'top_left', anchor_to: 'top_left',
-          controls: [{ [`root@${namespace}.${addon}_forms`]: {} }],
+          type: 'panel', ...canvas,
+          factory: {
+            name: 'server_form_factory',
+            control_ids: {
+              long_form: `@${namespace}.${addon}_forms`,
+              custom_form: `@${namespace}.${addon}_forms`,
+            },
+          },
         },
         [MOUNT_TARGET]: {
-          size: ['0px', '0px'],
-          property_bag: { '#size_binding_x': '0px', '#size_binding_y': '0px' },
+          size: ['100%', '100%'],
           modifications: [
             {
               array_name: 'controls',
               operation: 'insert_back',
               value: [{ [`${addon}@${bridge}`]: {} }],
-            },
-            {
-              array_name: 'bindings', operation: 'insert_back', value: [
-                { binding_name: '#title_text' },
-                ...['x', 'y'].map(axis => ({
-                  binding_type: 'view' as const,
-                  source_property_name: `((${claimed} and '100%') or '0px')`,
-                  target_property_name: `#size_binding_${axis}`,
-                })),
-              ],
             },
           ],
         },

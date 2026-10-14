@@ -116,6 +116,32 @@ describe('an addon-owned form pack', () => {
     expect(screen.entries).toBe(source.entries);
   });
 
+  it('initializes collection and view reads in lazy screen cells and preserves explicit binding conditions', () => {
+    const source = compileFormScreen(modal(), { namespace: 'alpha', name: 'settings' });
+    source.document.probe = { bindings: [
+      { binding_type: 'collection', binding_name: '#custom_text', binding_condition: 'once' },
+      { binding_type: 'view', source_property_name: '#custom_text', target_property_name: '#text', binding_condition: 'once' },
+      { binding_name: '#title_text' },
+    ] };
+    const before = JSON.stringify(source);
+    const pack = buildFormPack([source], 'alpha');
+    const bindings: Record<string, unknown>[] = [];
+    const collect = (value: unknown): void => {
+      if (value === null || typeof value !== 'object') { return; }
+      const record = value as Record<string, unknown>;
+      if (Array.isArray(record.bindings)) { bindings.push(...record.bindings as Record<string, unknown>[]); }
+      Object.values(record).forEach(collect);
+    };
+
+    documents(pack).forEach(collect);
+    const reads = bindings.filter(binding => binding.binding_type === 'collection' || binding.binding_type === 'view');
+
+    expect(reads.length).toBeGreaterThan(10);
+    expect(reads.every(binding => binding.binding_condition !== undefined)).toBe(true);
+    expect(pack.screens[0]?.document.probe).toEqual(source.document.probe);
+    expect(JSON.stringify(source)).toBe(before);
+  });
+
   it('isolates helpers and routers across addons while keeping shared vanilla properties identical', () => {
     const alpha = build('alpha');
     const beta = build('beta');
