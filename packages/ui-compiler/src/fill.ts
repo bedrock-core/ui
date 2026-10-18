@@ -203,6 +203,7 @@ export const fill = (face: FaceDocument, host: HostEmit, title = ''): Document =
 
   screen.controls = [
     ...host.chrome?.() ?? [],
+    ...context.rootControls ?? [],
     ...screen.controls ?? [],
     ...host.overlay?.(face.root, context) ?? [],
   ];

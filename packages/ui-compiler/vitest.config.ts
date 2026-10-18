@@ -14,6 +14,10 @@ export default defineConfig({
     setupFiles: [runtime('test-setup.ts')],
     // Longest specifier first: an alias matches any import it prefixes.
     alias: {
+      '@bedrock-core/navigation/runtime': fileURLToPath(new URL('../navigation/src/runtime.ts', import.meta.url)),
+      '@bedrock-core/navigation': fileURLToPath(new URL('../navigation/src/index.ts', import.meta.url)),
+      '@bedrock-core/ui/jsx-dev-runtime': runtime('jsx/jsx-dev-runtime.ts'),
+      '@bedrock-core/ui/jsx-runtime': runtime('jsx/jsx-runtime.ts'),
       '@minecraft/server': runtime('__mocks__/@minecraft/server.ts'),
       '@minecraft/server-ui': runtime('__mocks__/@minecraft/server-ui.ts'),
       '@bedrock-core/ui-runtime/jsx-dev-runtime': runtime('jsx/jsx-dev-runtime.ts'),

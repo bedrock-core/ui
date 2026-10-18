@@ -27,7 +27,7 @@ import { ContainerScreenError } from '@bedrock-core/ui-runtime/compile';
 import type { IrDocument, PanelNode } from './ir';
 import type { Control, ControlEntry, Document } from './jsonui';
 import { type FlowPanel, flowPanel, flowPanels } from './flow';
-import { childrenOf, definitionFor, socketsOf } from './nodes';
+import { childrenOf, collectKind, definitionFor, socketsOf } from './nodes';
 import { FULL, over, shownWhileOn, sizeOf, surface, topLeft } from './faces';
 import { swapControlName } from './nodes/primitives/swap';
 import type { FaceEmit, IrNode, Socket } from './nodes/utils/types';
@@ -178,22 +178,98 @@ export const faceOf = (doc: IrDocument): FaceDocument => {
     return canonical(content.controls ?? []);
   };
 
-  const context: FaceEmit = { ns: doc.namespace, facesNs: facesNamespace, faces, defs, emitNode, shared };
+  const radios = collectKind(doc.root, 'swap');
+  const radioGroups = new Map<string, ReturnType<FaceEmit['radioInputs']>>();
+  const selectionSources = new Map<string, Control>();
+
+  const radioInputs: FaceEmit['radioInputs'] = (group, index) => {
+    const key = `${group}:${index}`;
+    const cached = radioGroups.get(key);
+
+    if (cached !== undefined) { return cached; }
+
+    const inputs = radios.filter(node => node.exclusive && (node.group ?? node.id) === group && node.index === index)
+      .map(node => ({ id: node.id, on: node.on, passive: node.passive === true }));
+
+    radioGroups.set(key, inputs);
+
+    return inputs;
+  };
+
+  const context: FaceEmit = {
+    ns: doc.namespace, facesNs: facesNamespace, faces, defs, emitNode, shared,
+    radioInputs,
+    selectionSource(group, index): string {
+      const name = `${doc.namespace}_selection_${group}_${index}`;
+
+      if (selectionSources.has(name)) { return name; }
+
+      const inputs = radioInputs(group, index);
+
+      if (inputs.filter(input => input.passive).length !== 1) {
+        throw new Error(`Selection ${group}/${index} requires exactly one persistent owner. Use a unique selection group within each screen.`);
+      }
+
+      const properties = inputs.map((_, at) => `#navigation_input_${at}`);
+
+      selectionSources.set(name, {
+        type: 'panel', size: [0, 0], ...topLeft,
+        property_bag: { '#navigation_selected': inputs.some(input => input.on),
+          ...Object.fromEntries(inputs.map((input, at) => [properties[at], input.on])),
+        },
+        bindings: [
+          ...inputs.map((input, at) => ({ binding_type: 'view' as const,
+            source_control_name: swapControlName(doc.namespace, input.id), source_property_name: '#toggle_state',
+            target_property_name: properties[at],
+          })),
+          { binding_type: 'view', source_property_name: `(${properties.join(' or ')})`, target_property_name: '#navigation_selected' },
+        ],
+      });
+
+      return name;
+    },
+  };
 
   const { root } = doc;
 
+  const canvas: Control = {
+    type: 'panel',
+    size: root.native?.size ?? sizeOf(root.rect),
+    ...topLeft,
+    // The canvas keeps its children a layer above its background, exactly as
+    // a panel does — see the panel face for why an equal layer is not enough.
+    controls: over(surface(root.background), root.children.map(child => emitNode(child))),
+  };
   const document: Document = {
     namespace: doc.namespace,
-    [SCREEN_DEFINITION]: {
-      type: 'panel',
-      size: root.native?.size ?? sizeOf(root.rect),
-      ...topLeft,
-      // The canvas keeps its children a layer above its background, exactly as
-      // a panel does — see the panel face for why an equal layer is not enough.
-      controls: over(surface(root.background), root.children.map(child => emitNode(child))),
-    },
+    [SCREEN_DEFINITION]: canvas,
     ...defs,
   };
+
+  // A group's initial selections must exist even while an enclosing page is
+  // hidden. Owners have zero area and no input, so their mount is screen-wide.
+  const ownerNames = new Set(radios.filter(node => node.passive === true).map(node => swapControlName(doc.namespace, node.id)));
+  const owners: ControlEntry[] = [];
+
+  const detachOwners = (control: Control): void => {
+    if (control.controls === undefined) { return; }
+
+    control.controls = control.controls.flatMap((entry) => {
+      if (Object.keys(entry).some(name => ownerNames.has(name))) {
+        owners.push(entry);
+
+        return [];
+      }
+
+      Object.values(entry).forEach(detachOwners);
+
+      return [entry];
+    });
+  };
+
+  detachOwners(canvas);
+
+  canvas.controls = [...owners, ...[...selectionSources].map(([name, control]) => ({ [name]: control })), ...canvas.controls ?? []];
 
   if (doc.backdrop !== undefined) {
     // The whole screen, not the canvas: the router mounts it behind the

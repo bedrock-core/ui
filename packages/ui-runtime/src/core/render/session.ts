@@ -1,6 +1,7 @@
 import { uiManager } from '@minecraft/server-ui';
 import type { JSX } from '../../jsx';
-import { clearHistory } from '../history';
+import { finishRenderSession, renderSession, startRenderSession, type RenderEndReason } from './notifications';
+import { compiledKeyOf } from './screens';
 import { getFibersForOwner, type Owner } from '../fabric';
 import type { CompiledSnapshot } from './screens';
 import { cleanupComponentTree } from './tree';
@@ -20,6 +21,8 @@ export type StateSeed = ReadonlyMap<string, ReadonlyMap<number, unknown>>;
  * the chain's first root was.
  */
 export interface SessionCompiled {
+  /** Generic compiled identity of the root, retained before any provider wrappers. */
+  key?: string;
   /** Absent only for a chest session, which never presents through the chain. */
   title?: string;
   snapshot?: CompiledSnapshot;
@@ -40,6 +43,7 @@ interface SessionState {
   activeChain?: number;
   /** A root swapped into the live chain awaits its first build+show. */
   swapPending: boolean;
+  refreshPending: boolean;
   /**
    * Hook values handed over before the first build, consumed fiber by fiber
    * as they are created. Whatever is left belongs to components that did not
@@ -58,7 +62,7 @@ function getOrCreate(owner: Owner): SessionState {
   let session = sessions.get(id);
 
   if (!session) {
-    session = { pending: false, suppress: false, swapPending: false };
+    session = { pending: false, suppress: false, swapPending: false, refreshPending: false };
 
     sessions.set(id, session);
   }
@@ -75,6 +79,7 @@ export function setSessionRoot(owner: Owner, root: JSX.Element, compiled: Sessio
 
   session.root = root;
   session.compiled = compiled;
+  startRenderSession(owner, { screenKey: compiled.key ?? compiledKeyOf(root), title: compiled.title });
 }
 
 export function getSessionRoot(owner: Owner): JSX.Element | undefined {
@@ -92,7 +97,7 @@ export function setBuildRunner(owner: Owner, runBuild: () => void): void {
   session.runBuild = runBuild;
 }
 
-export function clearSession(owner: Owner): void {
+export function clearSession(owner: Owner, reason: RenderEndReason = 'closed'): void {
   const session = sessions.get(owner.id);
 
   if (!session) {
@@ -105,7 +110,9 @@ export function clearSession(owner: Owner): void {
   session.suppress = false;
   session.activeChain = undefined;
   session.swapPending = false;
+  session.refreshPending = false;
   session.seed = undefined;
+  finishRenderSession(owner.id, reason);
 }
 
 /**
@@ -158,6 +165,7 @@ export function endPresentChain(owner: Owner, token: number): void {
   if (session?.activeChain === token) {
     session.activeChain = undefined;
     session.swapPending = false;
+    session.refreshPending = false;
   }
 }
 
@@ -176,6 +184,21 @@ export function requestSwap(owner: Owner): void {
   if (session?.activeChain !== undefined) {
     session.swapPending = true;
   }
+}
+
+/** Requests another presentation of the same root, retaining its fibers and hook state. */
+export function requestRefresh(owner: Owner): void {
+  const session = sessions.get(owner.id);
+
+  if (session?.activeChain !== undefined) { session.refreshPending = true; }
+}
+
+export function isRefreshPending(owner: Owner): boolean { return sessions.get(owner.id)?.refreshPending === true; }
+
+export function consumeRefresh(owner: Owner): void {
+  const session = sessions.get(owner.id);
+
+  if (session !== undefined) { session.refreshPending = false; }
 }
 
 /** Consume a pending swap: true (clearing the flag) exactly once per swap. */
@@ -216,7 +239,7 @@ export function scheduleLogicPass(owner: Owner): void {
 
   // Skip while a swapped-in root awaits its first presentation — building it
   // early would run its mount pass before the app is ever shown.
-  if (session.swapPending) {
+  if (session.swapPending || session.refreshPending) {
     return;
   }
 
@@ -252,7 +275,7 @@ export function scheduleLogicPass(owner: Owner): void {
       return;
     }
 
-    if (state.swapPending) {
+    if (state.swapPending || state.refreshPending) {
       return;
     }
 
@@ -322,34 +345,18 @@ export function noteSessionStart(id: string): void {
   countsFor(id).starts++;
 }
 
-/**
- * Ends an owner's rendered session and keeps where the player has been.
- *
- * What a screen shown by TITLE does before it shows: the rendered session is
- * otherwise still live, and presents its last screen again over the one the
- * player moved to. The form on screen is left alone — the press that got here
- * already closed it — and the stack survives, because `back()` from the screen
- * being shown returns through it.
- */
-export function endSession(owner: Owner): void {
-  cleanupComponentTree(owner);
-  clearSession(owner);
-}
-
-export function triggerCleanup(owner: Owner, shouldClose: boolean = false): void {
+export function triggerCleanup(owner: Owner, shouldClose: boolean = false, reason: RenderEndReason = 'closed'): void {
   countsFor(owner.id).cleanups++;
-
-  // The form on screen belongs to a player; an entity's session has none.
-  if (owner.kind === 'player') {
-    // Where the player had been is gone with the session: a screen nobody is
-    // looking at any more is not one `back()` can return to.
-    clearHistory(owner.player.id);
-  }
+  const previous = renderSession(owner.id);
 
   cleanupComponentTree(owner);
-  clearSession(owner);
 
-  if (shouldClose && owner.kind === 'player') {
-    uiManager.closeAllForms(owner.player);
+  if (renderSession(owner.id)?.id !== previous?.id) { return; }
+
+  try {
+    // Release the native form before an ended observer can open its successor.
+    if (shouldClose && owner.kind === 'player') { uiManager.closeAllForms(owner.player); }
+  } finally {
+    clearSession(owner, reason);
   }
 }

@@ -1,7 +1,7 @@
 {
 	"name": "@bedrock-core/navigation",
-	"version": "0.10.0",
-	"description": "@bedrock-core/ui navigation system",
+	"version": "0.12.1",
+	"description": "Standalone UI navigation with resident pages and optional Core integration",
 	"keywords": [
 		"ui",
 		"navigation",
@@ -27,6 +27,14 @@
 		".": {
 			"types": "./src/index.ts",
 			"import": "./src/index.ts"
+		},
+		"./core": {
+			"types": "./src/core.ts",
+			"import": "./src/core.ts"
+		},
+		"./runtime": {
+			"types": "./src/runtime.ts",
+			"import": "./src/runtime.ts"
 		}
 	},
 	"publishConfig": {
@@ -41,31 +49,31 @@
 	"sideEffects": false,
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
-		"lint": "eslint ."
+		"lint": "eslint .",
+		"test": "vitest run && yarn test:types",
+		"test:types": "tsc -p type-tests/tsconfig.json --noEmit"
 	},
 	"devDependencies": {
-		"@bedrock-core/server-runtime": "*",
-		"@bedrock-core/sync": "*",
-		"@bedrock-core/ui-runtime": "workspace:*",
 		"@minecraft/server": "*",
 		"eslint": "*",
-		"typescript": "*"
+		"typescript": "*",
+		"vitest": "*"
 	},
 	"peerDependencies": {
+		"@bedrock-core/i18n": "*",
 		"@bedrock-core/server-runtime": "*",
-		"@bedrock-core/sync": "*",
-		"@bedrock-core/ui-runtime": "*",
-		"@minecraft/server": ">=2.9.0 || >=2.10.0-0"
+		"@minecraft/server": ">=2.9.0 || >=2.10.0-0",
+		"@minecraft/server-ui": "*"
 	},
 	"peerDependenciesMeta": {
+		"@bedrock-core/i18n": {
+			"optional": true
+		},
 		"@bedrock-core/server-runtime": {
 			"optional": true
-		},
-		"@bedrock-core/sync": {
-			"optional": true
-		},
-		"@bedrock-core/ui-runtime": {
-			"optional": true
 		}
+	},
+	"dependencies": {
+		"@bedrock-core/ui-runtime": "workspace:*"
 	}
 }

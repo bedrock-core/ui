@@ -9,8 +9,8 @@ import { Text, type TextFont } from './Text';
 
 // The expander calls a component with the props it is given; the element type is the loose one.
 // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- every element below hands Text the props it declares
-const TEXT = Text as FunctionComponent;
-const PANEL = Panel as FunctionComponent;
+const textType = (): FunctionComponent => Text as FunctionComponent;
+const panelType = (): FunctionComponent => Panel;
 
 /** The props a component wrapping text as a style may set: the ones that leave the text's metrics alone. */
 const STYLE_PROPS = new Set(['color', 'shadow', 'children', 'key']);
@@ -67,14 +67,14 @@ export const Trans: FunctionComponent<TransProps> = ({ i18nKey, translations, co
   const aspectSized = layout.aspectRatio !== undefined && Number.isFinite(layout.aspectRatio) && layout.aspectRatio > 0;
 
   const draw = (lines: readonly (readonly { chain: readonly string[]; values: Readonly<Record<string, string>> }[])[], record?: ComposedRecord): JSX.Element => ({
-    type: PANEL,
+    type: panelType(),
     props: {
       ...layout,
       height: layout.height ?? (aspectSized ? undefined : lines.length * lineHeight),
       ...slot === undefined || locales === undefined ? {} : { __widthSlot: slot.slot },
       ...record === undefined ? {} : { __trans: record },
       children: lines.map((pieces, index): JSX.Element => ({
-        type: PANEL,
+        type: panelType(),
         props: {
           stack: true,
           flexDirection: 'row',
@@ -102,7 +102,7 @@ export const Trans: FunctionComponent<TransProps> = ({ i18nKey, translations, co
     // The first pass, or no build at all: the default language's text with its tags taken out,
     // laid out to find the width the text is given.
     return {
-      type: TEXT,
+      type: textType(),
       props: {
         ...layout,
         ...style,
@@ -211,7 +211,7 @@ function pieceOf(
     Object.assign(styled, own);
   }
 
-  const text: JSX.Element = { type: TEXT, props: { ...style, ...styled, hug: true, __translations: values } };
+  const text: JSX.Element = { type: textType(), props: { ...style, ...styled, hug: true, __translations: values } };
   const [press] = presses;
 
   return press === undefined ? text : { ...press.element, props: { ...press.element.props, hug: true, children: text } };

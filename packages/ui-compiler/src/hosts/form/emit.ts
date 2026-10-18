@@ -7,7 +7,7 @@ import { THUMB_HEIGHT, THUMB_WIDTH, TRACK_HEIGHT } from '../../faces/primitives/
 import { type ButtonNode, type FacedNode, faceSignature, lookOf, pressAddress, pressSizeOf } from '../../nodes/primitives/button';
 import { MODAL_COLLECTION } from '../../connectors/form/entry';
 import { collectKind } from '../../nodes';
-import type { Binding, ControlEntry } from '../../jsonui';
+import type { Binding, Control, ControlEntry } from '../../jsonui';
 import { type InlineOption, inlineOptionFace } from '../../nodes/primitives/select';
 import type { ImageNode } from '../../nodes/primitives/image';
 import type { ListNode } from '../../nodes/primitives/list';
@@ -16,6 +16,8 @@ import { faceId, sizeOf } from '../../nodes/utils/shared';
 import { pinnedEnabled } from '../../nodes/utils/fields';
 import { isLive, runOf, type TextNode, textSignature } from '../../nodes/primitives/text';
 import type { Emit, HostEmit, IrNode } from '../../nodes/utils/types';
+import type { PanelNode } from '../../nodes/primitives/panel';
+import { ENTRY_PROPERTY, entrySource } from '../../connectors/form/entry';
 
 /**
  * How a form draws the kinds a chest draws with items.
@@ -117,7 +119,12 @@ const wrapVisible = (node: IrNode, entry: ControlEntry, ctx: Emit): ControlEntry
     throw new Error(`wrapVisible was handed "${node.name}", which carries no visible entry.`);
   }
 
-  return visible({ name: node.name, address }, entry, ctx);
+  const control = Object.values(entry)[0];
+  const fixedSize: Control['size'] | undefined = 'inputFill' in node && node.inputFill === true
+    ? [control?.size?.[0] ?? node.rect.width, node.rect.height]
+    : undefined;
+
+  return visible({ name: node.name, address, ...fixedSize === undefined ? {} : { fixedSize } }, entry, ctx);
 };
 
 /** An option's four looks, drawn. */
@@ -272,6 +279,38 @@ export const FORM_EMIT: HostEmit = {
   wrapLook,
 
   fill: {
+    selection: (node: PanelNode, entry, ctx): ControlEntry => {
+      const mask = node.selection?.mask;
+
+      if (mask === undefined) { throw new Error('A dynamic selection requires a membership carrier.'); }
+
+      const [name, control] = Object.entries(entry)[0];
+      const indexes = node.selection!.indexes;
+      const properties = indexes.map(index => `#navigation_selected_${index}`);
+      const source = entrySource(`selection_${name}`, mask.address, mask.initial, ctx);
+      const matches = indexes.map(index => `#mask_match_${index}`);
+      const terms = indexes.map((index, at) => `(${properties[at]} and (not ((#selection_mask - '|${index}|') = #selection_mask)))`);
+
+      return { [name]: {
+        ...control,
+        property_bag: { ...control.property_bag, '#selection_mask': mask.initial,
+          '#visible': mask.initial.includes('|0|'),
+          ...Object.fromEntries(indexes.map(index => [`#mask_match_${index}`, index === 0 && mask.initial.includes('|0|')])),
+        },
+        bindings: [
+          ...control.bindings?.filter(binding => binding.target_property_name !== '#visible') ?? [],
+          { binding_type: 'view', source_control_name: source, source_property_name: ENTRY_PROPERTY, target_property_name: '#selection_mask' },
+          ...indexes.length === 1
+            ? []
+            : terms.map((term, at) => ({ binding_type: 'view' as const,
+                source_property_name: term, target_property_name: matches[at],
+              })),
+          { binding_type: 'view', source_property_name: indexes.length === 1
+            ? terms[0]
+            : `(${matches.join(' or ')})`, target_property_name: '#visible' },
+        ],
+      } };
+    },
     press: (node: ButtonNode, entry, ctx): ControlEntry => press(
       { name: node.name, address: pressAddress(node), definition: definitionOf(ctx.faceNames, pressKey(node), 'press_1') },
       entry,

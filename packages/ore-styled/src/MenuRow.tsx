@@ -1,7 +1,9 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import type { ControlProps, JSX, PressEvent, ScreenKey } from '@bedrock-core/ui-runtime';
+import type { ControlProps, JSX, PressEvent } from '@bedrock-core/ui-runtime';
 import type { DisplayText } from '@bedrock-core/i18n';
-import { Button, Image, Link, Panel, Text, useTranslationResolver } from '@bedrock-core/ui-runtime';
+import { Button, Image, Panel, Text, useTranslationResolver } from '@bedrock-core/ui-runtime';
+import type { DestinationKey } from '@bedrock-core/navigation';
+import { Link } from '@bedrock-core/navigation';
 import { theme } from './tokens';
 
 export interface MenuRowProps extends ControlProps {
@@ -35,7 +37,7 @@ export interface MenuRowProps extends ControlProps {
    * so where it leads is data rather than a handler — which is what lets an
    * index of rows be shown by an addon running none of this one's script.
    */
-  to?: ScreenKey;
+  to?: DestinationKey;
   /** With `to`: take the place of the screen this row is on rather than stacking over it. */
   replace?: boolean;
   /**

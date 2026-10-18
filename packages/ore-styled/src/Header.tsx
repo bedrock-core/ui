@@ -1,6 +1,8 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import type { ControlProps, JSX, PressEvent, ScreenKey } from '@bedrock-core/ui-runtime';
-import { Button, Image, Link, Panel, Text } from '@bedrock-core/ui-runtime';
+import type { ControlProps, JSX, PressEvent } from '@bedrock-core/ui-runtime';
+import { Button, Image, Panel, Text } from '@bedrock-core/ui-runtime';
+import type { DestinationKey } from '@bedrock-core/navigation';
+import { Link } from '@bedrock-core/navigation';
 import { Form } from './Form/Form';
 import type { DisplayText } from '@bedrock-core/i18n';
 import { theme } from './tokens';
@@ -29,7 +31,7 @@ export interface HeaderProps extends ControlProps {
    * than a handler, so a screen shown from its reference — by an addon running
    * none of this one's script — can be backed out of as well.
    */
-  backTo?: ScreenKey;
+  backTo?: DestinationKey;
   /** With `backTo`: the back control takes the place of this screen rather than stacking over it. */
   backReplace?: boolean;
   /**

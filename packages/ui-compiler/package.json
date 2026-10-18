@@ -59,6 +59,7 @@
 	},
 	"devDependencies": {
 		"@bedrock-core/i18n": "*",
+		"@bedrock-core/navigation": "workspace:*",
 		"@minecraft/server": "*",
 		"@minecraft/server-ui": "*",
 		"eslint": "*",

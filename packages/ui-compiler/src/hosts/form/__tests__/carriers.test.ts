@@ -26,6 +26,15 @@ const gates = (document: Document): Control[] => {
   return found;
 };
 
+const sourceOf = (document: Document, gate: Control | undefined): Control | undefined => {
+  const sourceName = gate?.bindings?.find(binding => binding.source_control_name !== undefined)?.source_control_name;
+  let source: Control | undefined;
+
+  eachControl(document, (name, control) => { if (name === sourceName) { source = control; } });
+
+  return source;
+};
+
 describe('carried visible on the action form', () => {
   const Screen = (): JSX.Element => {
     const [open] = useState(true);
@@ -49,14 +58,16 @@ describe('carried visible on the action form', () => {
   it('wraps the subtree in a gate reading that entry', () => {
     const [gate] = gates(compiled.document);
 
-    expect(gate?.collection_name).toBe('form_buttons');
+    expect(gate?.collection_name).toBeUndefined();
 
     const inner = gate?.controls?.[0]?.gate;
 
-    expect(inner?.collection_index).toBe(0);
+    expect(inner?.collection_index).toBeUndefined();
     expect(inner?.property_bag?.['#visible']).toBe(true);
-    expect(JSON.stringify(inner?.bindings)).toContain('#form_button_text');
-    expect(JSON.stringify(inner?.bindings)).toContain("(not (#vis_value = 'f'))");
+    expect(sourceOf(compiled.document, inner)).toMatchObject({ collection_index: 0, bindings: [
+      { binding_name: '#form_button_text', binding_collection_name: 'form_buttons' },
+    ] });
+    expect(JSON.stringify(inner?.bindings)).toContain("(not (#entry_value = 'f'))");
   });
 
   it('bakes the fingerprint and the baked strings for debug', () => {
@@ -94,10 +105,11 @@ describe('carried visibility in an explicit stack', () => {
     expect(compiled.snapshot.vis).toHaveLength(1);
     expect(wrappers).toHaveLength(2);
     for (const wrapper of wrappers) {
-      expect(wrapper.collection_name).toBe('form_buttons');
+      expect(wrapper.collection_name).toBeUndefined();
       expect(wrapper.controls?.[0]?.gate).toMatchObject({
-        collection_index: 0, visible: '#visible', property_bag: { '#visible': initial },
+        visible: '#visible', property_bag: { '#visible': initial },
       });
+      expect(sourceOf(compiled.document, wrapper.controls?.[0]?.gate)?.collection_index).toBe(0);
     }
     expect(rows.every(row => row.visible !== false)).toBe(true);
     expect(wrappers[1]?.controls?.[0]?.gate?.size).toEqual(direction === 'column' ? [100, 4] : [4, 80]);
@@ -296,8 +308,10 @@ describe('carriers on the modal', () => {
   it('gates the visible through its own custom_form row', () => {
     const [gate] = gates(compiled.document);
 
-    expect(gate?.collection_name).toBe('custom_form');
-    expect(JSON.stringify(gate)).toContain('"collection_index": 2'.replace(': ', ':'));
+    expect(gate?.collection_name).toBeUndefined();
+    expect(sourceOf(compiled.document, gate?.controls?.[0]?.gate)).toMatchObject({ collection_index: 2, bindings: [
+      { binding_name: '#custom_text', binding_collection_name: 'custom_form' },
+    ] });
   });
 });
 

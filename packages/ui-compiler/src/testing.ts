@@ -1,5 +1,5 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
-import { childElements, optionElements, CONTAINER_TYPE, SCREEN_TYPE } from '@bedrock-core/ui-runtime/compile';
+import { childElements, optionElements, CONTAINER_TYPE, SCREEN_TYPE, isTextElementType, liveTextLength } from '@bedrock-core/ui-runtime/compile';
 import type { IrNode } from './ir';
 import type { Control, Document } from './jsonui';
 import { childrenOf } from './nodes';
@@ -47,6 +47,36 @@ function declaredNameOf(element: JSX.Element): TestControlMetadata['name'] {
   return typeof name === 'string' ? { kind: 'declared', value: name } : undefined;
 }
 
+/** A composed input can draw its caption outside its native hitbox. */
+function captionNameOf(element: JSX.Element): TestControlMetadata['name'] {
+  const names: NonNullable<TestControlMetadata['name']>[] = [];
+
+  const visit = (node: JSX.Element): void => {
+    if (isTextElementType(node.type)) {
+      const value = node.props.value;
+      const tail: unknown = typeof value === 'object' && value !== null && 'tail' in value ? value.tail : undefined;
+      const metrics = node.props.__textMetrics;
+
+      if (typeof tail === 'string') {
+        names.push({ kind: liveTextLength(node) !== undefined
+          ? 'bound'
+          : typeof metrics === 'object' && metrics !== null && 'isKey' in metrics && metrics.isKey === true ? 'translated' : 'literal',
+        value: tail.replace(/§[0-9a-z]/gi, '') });
+      }
+
+      return;
+    }
+
+    childElements(node.props.children).forEach(visit);
+  };
+
+  childElements(element.props.__testCaption).forEach(visit);
+
+  if (names.length === 1) { return names[0]; }
+
+  return names.length > 0 && names.every(name => name.kind === 'literal') ? { kind: 'literal', value: names.map(name => name.value).join(' ') } : undefined;
+}
+
 const roles: Partial<Record<IrNode['kind'], TestRole>> = {
   button: 'button', input: 'textbox', toggle: 'checkbox', slider: 'slider',
   dropdown: 'combobox', select: 'listbox', swap: 'checkbox', text: 'text', image: 'image',
@@ -80,6 +110,8 @@ export class TestMetadataCollector {
   private readonly nodes = new Map<string, { element: JSX.Element; node: IrNode }>();
 
   public readonly onNode = (element: JSX.Element, node: IrNode): void => {
+    if (node.kind === 'swap' && node.passive === true) { return; }
+
     testIdOf(element);
     this.nodes.set(node.name, { element, node });
   };
@@ -126,7 +158,7 @@ export class TestMetadataCollector {
     const controls = [...this.nodes.values()].flatMap(({ element, node }): TestControlMetadata[] => {
       const id = testIdOf(element);
       const role = roleOf(element, node.kind);
-      const name = declaredNameOf(element) ?? nameOf(node);
+      const name = declaredNameOf(element) ?? captionNameOf(element) ?? nameOf(node);
       const locations = paths.get(node.kind === 'swap' ? swapControlName(String(document.namespace), node.id) : node.name) ?? [];
 
       const control: TestControlMetadata = {

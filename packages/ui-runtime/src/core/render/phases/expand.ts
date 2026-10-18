@@ -1,194 +1,143 @@
 import type { JSX } from '../../../jsx';
 import { activateFiber, createFiber, getFiber, isContextProvider, type Owner } from '../../fabric';
-import { isElement } from '../../guards';
+import type { Fiber } from '../../fabric/types';
+import { childElements } from '../../guards';
 import { generateComponentId, type TraversalContext } from '../traversal';
+import { TREE_BOUNDARY_TYPE } from '../../../components/TreeBoundary';
+
+/** Bound recursive component definitions without exhausting the game's JavaScript stack. */
+const MAX_COMPONENT_DEPTH = 1_024;
+
+interface Expansion {
+  element: JSX.Element;
+  context: TraversalContext;
+  output: JSX.Element[];
+  index: number;
+  finish?: () => JSX.Element;
+}
 
 /**
- * Phase 1: Expand function components and resolve context providers in depth-first order.
- * This ensures context is available when function components that use useContext() are called.
- *
- * CRITICAL: Each function component now gets its own instance, hooks, and lifecycle.
- * This is the core fix for per-component instance management.
- *
- * Order of operations:
- * 1. If function component → CREATE INSTANCE, push to stack, call it, pop from stack
- * 2. If context provider → push context, process children, pop context
- * 3. For regular elements → recursively process children
- *
- * @param element - Element that may have function components or context providers
- * @param context - Traversal context with parent path and instance tracking
- * @param owner - Who the render belongs to; keys every fiber created here
- * @returns Element with all function components expanded and contexts resolved
+ * Expand components and providers in depth-first order using an explicit work stack.
+ * Component nesting consumes heap space rather than JavaScript call frames. Each
+ * descendant's identity includes its parent's key, and sibling linking is linear.
  */
-export function expandAndResolveContexts(
-  element: JSX.Element,
-  context: TraversalContext,
-  owner: Owner,
-): JSX.Element {
-  // Step 1: Handle function components - CREATE INSTANCE FOR EACH
-  if (typeof element.type === 'function') {
-    const componentFn = element.type;
+export function expandAndResolveContexts(element: JSX.Element, context: TraversalContext, owner: Owner): JSX.Element {
+  const result: JSX.Element[] = [];
+  const pending: Expansion[] = [{ element, context, output: result, index: 0 }];
+  const tails = new Map<Fiber, Fiber>();
 
-    // Generate unique ID for this component node
-    const componentName = componentFn.name || 'anonymous';
-    const rawKey = element.props.key;
-    const keyProp = typeof rawKey === 'string' || typeof rawKey === 'number' ? String(rawKey) : undefined;
-    // Auto-generate a stable key per parent path + component name to avoid
-    // sibling collisions when keys are not provided.
-    let effectiveKey = keyProp;
+  while (pending.length) {
+    const task = pending.pop()!;
 
-    if (!effectiveKey) {
-      const pathKey = [...context.parentPath, componentName].join('/');
-      const count = context.idCounters.get(pathKey) ?? 0;
-
-      effectiveKey = `__auto_${count}`;
-      context.idCounters.set(pathKey, count + 1);
+    if (task.finish !== undefined) {
+      pending.push({ ...task, element: task.finish(), finish: undefined });
+      continue;
     }
 
-    const componentId = generateComponentId(
-      owner,
-      componentFn,
-      effectiveKey,
-      context.parentPath,
-    );
+    const node = task.element;
+    const scope = task.context;
 
-    // Get or create instance for this component
-    // Create or get the fiber for this component instance
-    const fiber = getFiber(componentId) ?? createFiber(componentId, owner);
+    if (node.type === TREE_BOUNDARY_TYPE) {
+      const transform = node.props.transform;
 
-    context.visited.add(componentId);
+      if (typeof transform !== 'function') { throw new Error('TreeBoundary requires a transform function.'); }
 
-    // Link fiber into parent/child/sibling chain using traversal context
-    const parentFiber = context.parentFiber;
+      const children: JSX.Element[] = [];
 
-    if (parentFiber) {
-      fiber.parent = parentFiber;
+      pending.push({ ...task, finish: () => Reflect.apply(transform, undefined, [children]) });
+      const inputs = childElements(node.props.children);
 
-      if (!parentFiber.child) {
-        parentFiber.child = fiber;
-        fiber.index = 0;
-      } else {
-        // Append to end of siblings
-        let tail = parentFiber.child;
+      for (let index = inputs.length - 1; index >= 0; index--) {
+        pending.push({ element: inputs[index], context: scope, output: children, index });
+      }
 
-        while (tail.sibling) {
-          tail = tail.sibling;
+      continue;
+    }
+
+    if (typeof node.type === 'function') {
+      if (scope.parentPath.length >= MAX_COMPONENT_DEPTH) {
+        throw new Error(`Component nesting exceeds ${String(MAX_COMPONENT_DEPTH)} levels. Check for a component rendering itself recursively.`);
+      }
+
+      const component = node.type;
+      const name = component.name || 'anonymous';
+      const rawKey = node.props.key;
+      let key = typeof rawKey === 'string' || typeof rawKey === 'number' ? String(rawKey) : undefined;
+
+      if (!key) {
+        const path = [...scope.parentPath, name].join('/');
+        const count = scope.idCounters.get(path) ?? 0;
+
+        key = `__auto_${count}`;
+        scope.idCounters.set(path, count + 1);
+      }
+
+      const id = generateComponentId(owner, component, key, scope.parentPath);
+
+      if (scope.visited.has(id)) {
+        throw new Error(`Duplicate component identity '${id}'. Use distinct keys for sibling components.`);
+      }
+
+      const fiber = getFiber(id) ?? createFiber(id, owner);
+      const parent = scope.parentFiber;
+
+      scope.visited.add(id);
+      fiber.parent = parent;
+      fiber.sibling = undefined;
+
+      if (parent) {
+        const tail = tails.get(parent);
+
+        if (tail) {
+          tail.sibling = fiber;
+          fiber.index = tail.index + 1;
+        } else {
+          parent.child = fiber;
+          fiber.index = 0;
         }
 
-        tail.sibling = fiber;
-        fiber.index = (tail.index ?? -1) + 1;
+        tails.set(parent, fiber);
+      } else {
+        fiber.index = 0;
       }
+
+      fiber.contextSnapshot = scope.currentContext;
+
+      const rendered = activateFiber(fiber, () => component(node.props));
+
+      pending.push({ ...task, element: rendered, context: {
+        ...scope,
+        parentPath: [...scope.parentPath, `${name}:${key}`],
+        parentFiber: fiber,
+      } });
+
+      continue;
+    }
+
+    let childScope = scope;
+    let output: JSX.Element;
+
+    if (isContextProvider(node)) {
+      const values = new Map(scope.currentContext);
+
+      values.set(node.props.__context, node.props.value);
+      childScope = { ...scope, currentContext: values };
+      output = { type: 'fragment', props: { children: [] } };
     } else {
-      // Root-level fiber (no parent)
-      fiber.parent = undefined;
-      fiber.index = 0; // Position among root siblings isn't tracked globally; 0 is a sane default
+      output = { type: node.type, nativeArgs: node.nativeArgs, props: { ...node.props, children: [] } };
     }
 
-    // Attach current context snapshot so hooks can read during evaluation
-    fiber.contextSnapshot = context.currentContext;
+    const children: JSX.Element[] = [];
 
-    // Activate the fiber and run the component; effects flush after this call
-    const renderedElement = activateFiber(fiber, () => componentFn(element.props));
+    output.props.children = children;
+    task.output[task.index] = output;
 
-    // Create child context with updated path
-    const childContext: TraversalContext = {
-      ...context,
-      parentPath: [...context.parentPath, componentName],
-      parentFiber: fiber,
-    };
+    const inputs = childElements(node.props.children);
 
-    // Recursively process the rendered result (visual tree)
-    return expandAndResolveContexts(renderedElement, childContext, owner);
-  }
-
-  // Step 2: Handle context provider - push context BEFORE processing children
-  if (isContextProvider(element)) {
-    const { __context: ctxObj, value, children } = element.props;
-
-    // Derive a child context snapshot from the parent snapshot
-    const nextContext = new Map(context.currentContext);
-
-    nextContext.set(ctxObj, value);
-
-    // Child traversal context
-    const childContext: TraversalContext = {
-      ...context,
-      currentContext: nextContext,
-    };
-
-    // Process children recursively (they can now read context via useContext)
-    const childrenArray = toChildrenArray(children);
-    const resolvedChildren = childrenArray.length
-      ? processChildren(childrenArray, childContext, owner)
-      : [];
-
-    return {
-      type: 'fragment',
-      props: { children: resolvedChildren },
-    };
-  }
-
-  // Step 3: For regular elements, recursively process children
-  const children = element.props.children;
-
-  // Handle array of children
-  if (Array.isArray(children)) {
-    const processedChildren = processChildren(children, context, owner);
-
-    return {
-      type: element.type,
-      nativeArgs: element.nativeArgs,
-      props: {
-        ...element.props,
-        children: processedChildren,
-      },
-    };
-  }
-
-  // Handle single child element
-  if (isElement(children)) {
-    const processed = expandAndResolveContexts(children, context, owner);
-
-    return {
-      type: element.type,
-      nativeArgs: element.nativeArgs,
-      props: {
-        ...element.props,
-        children: [processed], // normalize to array
-      },
-    };
-  }
-
-  // Normalize null/undefined or non-element children to empty array
-  return {
-    type: element.type,
-    nativeArgs: element.nativeArgs,
-    props: {
-      ...element.props,
-      children: [],
-    },
-  };
-}
-
-function processChildren(children: JSX.Node[], context: TraversalContext, owner: Owner): JSX.Element[] {
-  return children.map((child: JSX.Node): JSX.Element | undefined => {
-    if (!isElement(child)) {
-      return undefined;
+    for (let index = inputs.length - 1; index >= 0; index--) {
+      pending.push({ element: inputs[index], context: childScope, output: children, index });
     }
-
-    return expandAndResolveContexts(child, context, owner);
-  }).filter((child: JSX.Element | undefined): child is JSX.Element => child !== undefined);
-}
-
-// Normalizes any valid JSX child(ren) into an array of elements.
-function toChildrenArray(children: JSX.Node): JSX.Node[] {
-  if (Array.isArray(children)) {
-    return children;
   }
 
-  if (isElement(children)) {
-    return [children];
-  }
-
-  return [];
+  return result[0];
 }

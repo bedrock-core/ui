@@ -31,7 +31,9 @@ export {
 } from './Embed';
 export { Hotbar, PlayerInventory } from './Inventory';
 export { Input, type InputProps } from './Input';
-export { Link, linkTarget, type LinkProps, type LinkTarget } from './Link';
+export { SelectionPanel, SELECTION_PAGE_SLOT_TYPE, type SelectionPanelProps } from './Selection';
+export { Swap, type SwapProps, type SwapState } from './Swap';
+export { resolveStateBackgrounds, type StateBackgroundProps } from './stateBackground';
 export { List, LIST_SLOT_TYPE, listCapacity, listCount, type ListProps } from './List';
 export { Option, type OptionProps } from './Option';
 export { Panel, PANEL_TYPE, type PanelProps } from './Panel';

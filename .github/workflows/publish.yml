@@ -38,6 +38,9 @@ jobs:
 
       - run: yarn install --immutable
 
+      - name: Check UI, runtime, and navigation release versions
+        run: yarn check:release-versions
+
       - uses: changesets/action@v2
         with:
           cwd: ui
@@ -71,6 +74,9 @@ jobs:
           scope: '@bedrock-core'
 
       - run: yarn install --immutable
+
+      - name: Check UI, runtime, and navigation release versions
+        run: yarn check:release-versions
 
       - name: Check that nothing is pending
         run: |

@@ -28,6 +28,9 @@
 			"@bedrock-core/ui/*": [
 				"./packages/ui-runtime/src/*"
 			],
+			"@bedrock-core/ui/navigation": [
+				"./src/navigation.ts"
+			],
 			"@bedrock-core/ui/container": [
 				"./packages/ui-runtime/src/hosts/chest/index.ts"
 			],
@@ -55,9 +58,6 @@
 			"@bedrock-core/navigation": [
 				"./packages/navigation/src/index.ts"
 			],
-			"@bedrock-core/navigation/*": [
-				"./packages/navigation/src/*"
-			],
 			"@bedrock-core/ore-styled": [
 				"./packages/ore-styled/src/index.ts"
 			],
@@ -81,6 +81,12 @@
 			],
 			"@bedrock-core/sync": [
 				"../server/packages/sync/src/index.ts"
+			],
+			"@bedrock-core/navigation/core": [
+				"./packages/navigation/src/core.ts"
+			],
+			"@bedrock-core/navigation/runtime": [
+				"./packages/navigation/src/runtime.ts"
 			]
 		}
 	},

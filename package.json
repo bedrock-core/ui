@@ -80,15 +80,16 @@
 		"lint:libs": "yarn workspaces foreach -A -pt --no-private --exclude '@bedrock-core/ui' run lint",
 		"test": "yarn workspaces foreach -ptA run test",
 		"test:libs": "yarn workspaces foreach -A -pt --no-private --exclude '@bedrock-core/ui' run test",
-		"test:release": "node --test scripts/release-root.test.mjs scripts/sync-pack-version.test.mjs",
+		"check:release-versions": "node scripts/check-release-versions.mjs",
+		"test:release": "yarn tsc -p scripts/tsconfig.json && yarn check:release-versions && node --test scripts/release-root.test.mjs scripts/release-versions.test.ts scripts/sync-pack-version.test.mjs",
 		"coverage": "yarn workspaces foreach -ptA run coverage",
 		"deploy": "yarn --cwd packages/resource-pack deploy",
 		"preflight": "node scripts/preflight.mjs",
 		"gamelog": "node scripts/gamelog.mjs",
 		"changeset": "changeset",
-		"version-packages": "changeset version && node scripts/bump-meta.mjs && node scripts/sync-pack-version.mjs",
+		"version-packages": "yarn check:release-versions && changeset version && node scripts/bump-meta.mjs && yarn check:release-versions && node scripts/sync-pack-version.mjs",
 		"release": "yarn release:libraries",
-		"release:libraries": "yarn lint:libs && yarn build:libs && yarn test:libs && node scripts/publish-tarballs.mjs && node scripts/tag-packages.mjs",
+		"release:libraries": "yarn test:release && yarn lint:libs && yarn build:libs && yarn test:libs && node scripts/publish-tarballs.mjs && node scripts/tag-packages.mjs",
 		"clean": "node scripts/clean.mjs"
 	},
 	"dependencies": {
@@ -99,6 +100,8 @@
 		"@bedrock-core/ui-runtime": "workspace:*"
 	},
 	"devDependencies": {
+		"@bedrock-core/server-runtime": "*",
+		"@bedrock-core/sync": "*",
 		"@changesets/changelog-github": "^0.7.0",
 		"@changesets/cli": "3.0.3",
 		"@eslint/css": "^1.2.0",
@@ -109,6 +112,7 @@
 		"@minecraft/server-ui": "*",
 		"@minecraft/vanilla-data": "*",
 		"@stylistic/eslint-plugin": "^5.10.0",
+		"@types/node": "*",
 		"@vitest/coverage-v8": "^4.1.5",
 		"concurrently": "^9.2.1",
 		"eslint": "^10.3.0",

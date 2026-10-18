@@ -117,10 +117,12 @@ export const compiledValuesOf = (tree: JSX.Element, snapshot?: CompiledSnapshot)
   // The snapshot's ordinals mark the elements the build compiled bool
   // carriers for; walking them back onto this render's tree is what keeps the
   // entry count identical to the one the layout was baked against.
+  const vis = snapshot?.vis;
+  const looks = snapshot?.looks;
   const { entries } = allocate(tree, analyze(
     tree,
-    visiblesAt(tree, snapshot?.vis ?? []),
-    variantsAt(tree, snapshot?.looks ?? []),
+    vis?.length ? visiblesAt(tree, vis) : undefined,
+    looks?.length ? variantsAt(tree, looks) : undefined,
   ));
 
   return { entries, values: entries.map(entryValue) };

@@ -28,10 +28,16 @@ const refuse = (where: string, rule: string): never => {
   throw new ContainerScreenError(`Face "${where}": ${rule}`);
 };
 
-/** A binding the client resolves among siblings; nothing else belongs in a face. */
-const isLocal = (binding: Binding): boolean =>
-  binding.binding_type === 'view' && binding.source_control_name !== undefined
-  && binding.binding_collection_name === undefined && binding.binding_name === undefined;
+/** A view reads another control or properties declared on its own control. */
+const isLocal = (binding: Binding, control: Control): boolean => {
+  if (binding.binding_type !== 'view' || binding.binding_collection_name !== undefined || binding.binding_name !== undefined) { return false; }
+
+  if (binding.source_control_name !== undefined) { return true; }
+
+  const properties = binding.source_property_name?.match(/#[A-Za-z0-9_]+/g) ?? [];
+
+  return properties.length > 0 && properties.every(property => Object.hasOwn(control.property_bag ?? {}, property));
+};
 
 /** Every control name in a document, at any depth: what a `source_control_name` may name. */
 const controlNames = (control: Control, into: Set<string>): Set<string> => {
@@ -47,7 +53,7 @@ const controlNames = (control: Control, into: Set<string>): Set<string> => {
 
 const checkControl = (where: string, control: Control, ns: string, facesNs: string, known: ReadonlySet<string>, controls: ReadonlySet<string>): void => {
   for (const binding of control.bindings ?? []) {
-    if (!isLocal(binding)) {
+    if (!isLocal(binding, control)) {
       refuse(where, `a face carries no binding that reads a host (${JSON.stringify(binding)}).`);
     }
 

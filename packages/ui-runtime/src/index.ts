@@ -5,19 +5,23 @@ export {
   Background,
   Button,
   Container,
+  CONTAINER_TYPE,
   Embed,
   Expect,
   embedMarker,
   EmbedSlots,
   Form,
+  MODAL_FORM_SLOT_TYPE,
   Fragment,
   Hotbar,
   Image,
-  Link,
+  SelectionPanel,
+  Swap,
   ModalContext,
   Panel,
   PlayerInventory,
   Screen,
+  SCREEN_TYPE,
   Scroll,
   List,
   Slot,
@@ -74,7 +78,9 @@ export type {
   ImageProps,
   JustifyContent,
   LayoutProps,
-  LinkProps,
+  SelectionPanelProps,
+  SwapProps,
+  SwapState,
   ListProps,
   PanelProps,
   Position,
@@ -125,33 +131,17 @@ export {
 } from './core';
 
 export {
-  addonReference,
-  back,
-  clearHistory,
-  closeUi, handOff,
-  historyOf,
-  shownKey,
-  isAddonReference,
-  isScreenReference,
-  navigate,
-  openScreen,
-  presentReference,
-  registerStaticScreens,
-  returnPathOf,
-  screenOwner,
-  setNavigator,
-  pathThrough, setReturnPath,
-  clearReturnPath, takeReturnStep,
-  compiledKeyOf,
-  screenForKey,
-  compiledScreens,
-  whyNotPlainData,
+  compiledKeyOf, compiledScreens, screenForKey, registerStaticScreens, staticScreen, staticScreens,
+  registerScreenMetadata, screenMetadata, screenMetadataFor, screenMetadataOf, isScreenMetadata, screenParametersError,
+  observeRenderLifecycle, renderSession, endRender, withActionMetadata, whyNotPlainData,
 } from './core';
-
 export type {
-  AddonReference, CompiledScreen, Navigated, NavigateOptions, NavigationDriver, Navigator,
-  ReferenceTarget, ReturnAddress, Returner, ScreenKey, ScreenKeys, ScreenReference, WalkResult,
+  ScreenMetadata, ScreenParameter, ScreenParameters, StaticScreenRecord,
+  RenderSession, RenderEndReason, RenderLifecycleEvent, RenderLifecycleListener, EndRenderOptions,
+  ActionMetadataFactory, ActionMetadataContext,
 } from './core';
+export { resolveStateBackgrounds } from './components/stateBackground';
+export type { StateBackgroundProps } from './components/stateBackground';
 
 export {
   createContext,
@@ -213,3 +203,10 @@ export type { ContainerSide, NamedContainer, NamedSlot, SlotLayout } from './ent
 
 // What scrolling content gives up beside its track, for a screen that sizes its own rows.
 export { SCROLL_RESERVE, SCROLL_TRACK_WIDTH } from './components/Scroll';
+export { TreeBoundary } from './components/TreeBoundary';
+export type { TreeBoundaryProps } from './components/TreeBoundary';
+export { useRenderOwner } from './hooks/useRenderOwner';
+export { useCompiledData } from './hooks/useCompiledData';
+export { withCompileData } from './core/render/data';
+export { refreshRender } from './core/render/control';
+export { childElements } from './core/guards';

@@ -1,5 +1,6 @@
 import type { FunctionComponent, JSX } from '@bedrock-core/ui-runtime';
-import { Button, Link, Panel, Screen as ScreenRoot, Text, Trans } from '@bedrock-core/ui-runtime';
+import { Button, Panel, Screen as ScreenRoot, Text, Trans } from '@bedrock-core/ui-runtime';
+import { createStackNavigator, createStaticNavigation, Link } from '@bedrock-core/navigation';
 import { setBuildLocales } from '@bedrock-core/ui-runtime/compile';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CONTENT_LAYER } from '../faces';
@@ -83,7 +84,7 @@ describe('compiling a Trans', () => {
   it('keeps a screen of links static, carrying no layout for a runtime render', () => {
     const compiled = compileFormScreen(screenWith(links), { namespace: 'a', name: 'help' });
 
-    expect(compiled.table?.targets).toEqual(expect.arrayContaining([{ to: 'a:shop' }, { to: 'a:rules', replace: true }]));
+    expect(compiled.table?.actions).toEqual(expect.arrayContaining([{ to: 'a:shop' }, { to: 'a:rules', replace: true }]));
     expect(compiled.snapshot.trans).toBeUndefined();
   });
 
@@ -107,6 +108,39 @@ describe('compiling a Trans', () => {
     const colored = controls(compiled, control => control.type === 'label' && JSON.stringify(control.color) === JSON.stringify([1, 0.8, 0]));
 
     expect(colored).toHaveLength(1);
+  });
+
+  it('keeps translated resident links native and sizes their input to the client text', () => {
+    const First = (): JSX.Element => Trans({ width: 160,
+      translations: { en_US: 'Read <chapter>Next</chapter>.', es_ES: 'Lee <chapter>Siguiente capitulo</chapter>.' },
+      components: { chapter: lazy(Link, { screen: 'second', background: 'native_link' }) },
+    });
+    const Second = (): JSX.Element => Link({ action: { type: 'GO_BACK' }, width: 60, height: 20,
+      children: Text({ children: 'Back' }),
+    });
+    const stack = createStackNavigator({ id: 'guide', screenOptions: { headerShown: false }, screens: { first: First, second: Second } });
+    const Navigation = createStaticNavigation(stack);
+    const compiled = compileFormScreen(() => ScreenRoot({ children: Panel({ width: 180, height: 90, children: lazy(Navigation, {}) }) }), {
+      namespace: 'a', name: 'translated_guide', testMetadata: true,
+    });
+    const inline = controls(compiled, control => control.type === 'toggle' && control.toggle_group_forced_index === 1
+      && control.focus_enabled !== false);
+    const glyphBoxes = controls(compiled, control => control.type === 'panel'
+      && JSON.stringify(control.size) === JSON.stringify(['100%sm', '100%sm']));
+
+    expect(compiled.entries.length).toBeGreaterThanOrEqual(1);
+    expect(inline.length).toBeGreaterThan(0);
+    expect(inline.every(control => JSON.stringify(control.size) === JSON.stringify(['100%', '100%']))).toBe(true);
+    expect(glyphBoxes.length).toBeGreaterThan(0);
+    expect(inline[0]?.toggle_group_forced_index).toBe(1);
+    expect(inline[0]?.button_mappings?.some(mapping => mapping.to_button_id === 'button.form_button_click')).toBe(false);
+    expect(compiled.testMetadata?.controls.filter(control => control.interaction === 'local-toggle').length).toBeGreaterThanOrEqual(2);
+    expect(Object.values(compiled.lang.en_US ?? {})).toContain('Next');
+    expect(Object.values(compiled.lang.es_ES ?? {})).toContain('Siguiente capitulo');
+    const faces = controls(compiled, control => control.controls?.some(child => child.bg?.texture === 'native_link') === true);
+
+    expect(faces.length).toBeGreaterThan(0);
+    expect(faces.every(face => JSON.stringify(face.size) === JSON.stringify(['100%', '100%']))).toBe(true);
   });
 
   it('refuses a component that is neither a style nor a press', () => {

@@ -1,7 +1,8 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { Button, Container, Disclosure, Form, Link, Option, Panel, Screen, Select, Tabs, Text } from '@bedrock-core/ui-runtime';
+import { Button, Container, Disclosure, Form, Option, Panel, Screen, Select, Tabs, Text } from '@bedrock-core/ui-runtime';
+import { Link } from '@bedrock-core/navigation';
 import { describe, expect, it } from 'vitest';
 import { jsx } from '@bedrock-core/ui-runtime/jsx-runtime';
 import { Input } from '../../../ore-styled/src/Input';

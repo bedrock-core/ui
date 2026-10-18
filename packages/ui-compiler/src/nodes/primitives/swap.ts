@@ -1,5 +1,5 @@
 import { SWAP_LOOK_SLOT_TYPE, SWAP_SLOT_TYPE, type SwapState } from '@bedrock-core/ui-runtime/compile';
-import { FULL, type SwapLooks, swap, topLeft } from '../../faces';
+import { CONTENT_LAYER, FULL, type SwapLooks, swap, topLeft } from '../../faces';
 import type { Control, ControlEntry } from '../../jsonui';
 import { layerOf, num, sizeOf, str, visibilityOf } from '../utils/shared';
 import type { FaceEmit, IrNode, NodeBase, NodeDefinition } from '../utils/types';
@@ -23,6 +23,8 @@ import type { FaceEmit, IrNode, NodeBase, NodeDefinition } from '../utils/types'
 export interface LookNode extends NodeBase {
   kind: 'look';
   state: SwapState;
+  /** Contextual inputs are layered outside the visual state faces. */
+  inputs?: true;
   /**
    * The `id` of a sibling of this look's SWAP, drawn inside this state.
    *
@@ -37,6 +39,16 @@ export interface LookNode extends NodeBase {
 }
 
 export interface SwapNode extends NodeBase {
+  /** Inline navigation caption and input follow the client's glyph dimensions. */
+  hug?: true;
+  /** Content outside the state faces so every state shares its measured size. */
+  caption?: IrNode[];
+  /** Contextual inputs sharing the caption's native box. */
+  inputs?: IrNode[];
+  inputFill?: true;
+  /** Persistent selection owner with no input or focus surface. */
+  passive?: true;
+  enabled?: false;
   /** The author's id for this swap, which a `follows` names it by. */
   id: string;
   kind: 'swap';
@@ -66,9 +78,7 @@ declare module '../utils/types' {
  * The control name a swap is emitted under, and the name a `follows` resolves.
  *
  * Carries the screen's namespace because a `source_control_name` is looked up
- * screen-wide: every gated compiled screen is constructed on every form open,
- * so an unqualified `fold` would let another addon's screen answer for this
- * one.
+ * screen-wide. Qualified names keep mounted screens and groups independent.
  */
 export const swapControlName = (ns: string, id: string): string => `${ns}_${id}`;
 
@@ -85,6 +95,24 @@ const STATES: readonly SwapState[] = [
 ];
 
 const stateOf = (value: unknown): SwapState => STATES.find(state => state === value) ?? 'off';
+
+/** Input overlays fill the caption and never contribute another measured caption. */
+const fillInput = (node: IrNode): void => {
+  if (node.kind === 'panel') {
+    if (node.selection === undefined) { throw new Error('A swap input overlay requires a selection panel.'); }
+
+    node.inputFill = true;
+    node.children.forEach(fillInput);
+  } else if (node.kind === 'button' || node.kind === 'swap') {
+    if (node.kind === 'button' && (node.children.length > 0 || node.action !== undefined)) {
+      throw new Error('A swap input button has no caption or engine action.');
+    }
+
+    node.inputFill = true;
+  } else {
+    throw new Error('A swap input overlay contains selection panels, buttons, or swaps only.');
+  }
+};
 
 /** One state's look, as the toggle mounts it: a box filling the swap, holding the definition. */
 const mount = (definition: string): Control => ({
@@ -107,6 +135,7 @@ export const lookDefinition: NodeDefinition<LookNode> = {
       rect: ctx.rect,
       ...ctx.decoration,
       state: stateOf(element.props.state),
+      ...element.props.__swapInputs === true ? { inputs: true as const } : {},
       ...typeof element.props.draws === 'string' ? { draws: element.props.draws } : {},
       children: ctx.children(element, ctx.own),
     };
@@ -130,7 +159,11 @@ const looksOf = (node: SwapNode, ctx: FaceEmit): SwapLooks => {
       type: 'panel',
       size: FULL,
       ...topLeft,
-      controls: look.children.map(child => ctx.emitNode(child)),
+      // Inline state surfaces follow the caption's client-resolved dimensions.
+      controls: look.children.map(child => Object.fromEntries(
+        Object.entries(ctx.emitNode(child)).map(([name, control]) => [name,
+          node.hug === true || node.inputFill === true ? { ...control, size: FULL, offset: [0, 0] } : control]),
+      )),
     };
 
     drawn[look.state] = mount(`${ctx.ns}.${definition}`);
@@ -152,7 +185,7 @@ export const swapDefinition: NodeDefinition<SwapNode> = {
   kind: 'swap',
   types: [SWAP_SLOT_TYPE],
 
-  children: node => node.looks,
+  children: node => [...node.looks, ...node.caption ?? [], ...node.inputs ?? []],
 
   lower(element, _type, ctx): SwapNode {
     // An id the author did not give is the minted name, which is unique within
@@ -161,6 +194,10 @@ export const swapDefinition: NodeDefinition<SwapNode> = {
     // next sibling never needs to.
     const id = str(element.props.id, ctx.name('swap'));
     const lowered = ctx.children(element, ctx.own);
+    const inputs = lowered.filter((child): child is LookNode => child.kind === 'look' && child.inputs === true)
+      .flatMap(child => child.children);
+
+    inputs.forEach(fillInput);
 
     return {
       kind: 'swap',
@@ -171,29 +208,80 @@ export const swapDefinition: NodeDefinition<SwapNode> = {
       ...typeof element.props.group === 'string' ? { group: element.props.group } : {},
       ...typeof element.props.index === 'number' ? { index: num(element.props.index) } : {},
       exclusive: element.props.exclusive === true,
+      ...element.props.passive === true ? { passive: true as const } : {},
+      ...element.props.__hug === true ? { hug: true as const } : {},
+      ...lowered.some(child => child.kind !== 'look') ? { caption: lowered.filter(child => child.kind !== 'look') } : {},
       on: element.props.defaultOn === true,
-      looks: lowered.filter((child): child is LookNode => child.kind === 'look'),
+      ...inputs.length === 0 ? {} : { inputs },
+      ...element.props.enabled === false ? { enabled: false as const } : {},
+      looks: lowered.filter((child): child is LookNode => child.kind === 'look' && child.inputs !== true),
     };
   },
 
   face(node, ctx): ControlEntry {
+    const control = swap(
+      {
+        group: `${ctx.ns}_${node.group ?? node.id}`,
+        ...node.index === undefined ? {} : { index: node.index },
+        exclusive: node.exclusive,
+        on: node.on,
+      },
+      looksOf(node, ctx),
+      {
+        size: node.inputFill === true ? FULL : sizeOf(node.rect),
+        offset: node.inputFill === true ? [0, 0] : [node.rect.x, node.rect.y], ...topLeft,
+        ...layerOf(node), ...visibilityOf(node), ...node.enabled === false ? { enabled: false } : {},
+      },
+    );
+
+    if (node.passive !== true && node.exclusive && ctx.radioInputs(node.group ?? node.id, 0).some(input => input.passive)) {
+      delete control.toggle_group_default_selected;
+      control.toggle_default_state = false;
+    }
+
+    if (node.hug === true || node.caption !== undefined || node.inputs !== undefined) {
+      const input: ControlEntry = node.inputs === undefined
+        ? { [swapControlName(ctx.ns, node.id)]: {
+            ...control, size: node.hug === true ? ['100%sm', '100%sm'] : FULL, offset: [0, 0], layer: 1,
+          } }
+        : { [`${node.name}_inputs`]: {
+            type: 'panel', size: node.hug === true ? ['100%sm', '100%sm'] : FULL, offset: [0, 0], ...topLeft, layer: 1,
+            controls: node.inputs.map(child => ctx.emitNode(child)),
+          } };
+
+      return {
+        [node.name]: {
+          type: 'panel', size: node.hug === true ? ['100%cm', '100%cm'] : sizeOf(node.rect), offset: [node.rect.x, node.rect.y],
+          ...topLeft, ...layerOf(node), ...visibilityOf(node),
+          controls: [
+            ...(node.caption ?? []).map(child => Object.fromEntries(
+              Object.entries(ctx.emitNode(child)).map(([name, caption]) => [name, { ...caption, layer: CONTENT_LAYER }]),
+            )),
+            input,
+          ],
+        },
+      };
+    }
+
+    const input = {
+      ...control,
+      ...node.passive === true ? { focus_enabled: false, focus_magnet_enabled: false, button_mappings: [] } : {},
+    };
+
+    if (node.carriedVisible !== undefined) {
+      const { visible: _visible, ...shown } = input;
+
+      return { [node.name]: { type: 'panel', size: control.size, offset: control.offset, ...topLeft,
+        ...layerOf(node), ...visibilityOf(node), controls: [{ [swapControlName(ctx.ns, node.id)]: {
+          ...shown, size: FULL, offset: [0, 0],
+        } }],
+      } };
+    }
+
     return {
-      [swapControlName(ctx.ns, node.id)]: swap(
-        {
-          group: `${ctx.ns}_${node.group ?? node.id}`,
-          ...node.index === undefined ? {} : { index: node.index },
-          exclusive: node.exclusive,
-          on: node.on,
-        },
-        looksOf(node, ctx),
-        {
-          size: sizeOf(node.rect),
-          offset: [node.rect.x, node.rect.y],
-          ...topLeft,
-          ...layerOf(node),
-          ...visibilityOf(node),
-        },
-      ),
+      [swapControlName(ctx.ns, node.id)]: {
+        ...input,
+      },
     };
   },
 };

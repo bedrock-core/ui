@@ -1,6 +1,7 @@
 import { FORM_COLLECTION, FORM_DETAILS_BINDING, FORM_FLAG_OFF } from '@bedrock-core/ui-runtime/compile';
 import { topLeft } from '../../faces';
 import type { Binding, Control, ControlEntry } from '../../jsonui';
+import type { Emit } from '../types';
 import { entryControl } from '../../nodes/utils/shared';
 
 /**
@@ -98,6 +99,20 @@ export const entryValueBinding = (name: string, collection: string): Binding => 
   binding_type: 'collection',
   binding_collection_name: collection,
 });
+
+/** Read data without putting native controls inside a collection item. */
+export const entrySource = (name: string, address: number, initial: string, ctx: Emit): string => {
+  const source = `${ctx.ns}_${name}_value`;
+
+  (ctx.rootControls ??= []).push({ [`${source}_host`]: {
+    type: 'stack_panel', orientation: 'vertical', size: [0, 0], ...topLeft, collection_name: ctx.collection,
+    controls: [{ [source]: { type: 'panel', size: [0, 0], ...topLeft, collection_index: address,
+      property_bag: { [ENTRY_PROPERTY]: initial }, bindings: [entryValueBinding(ENTRY_PROPERTY, ctx.collection)],
+    } }],
+  } });
+
+  return source;
+};
 
 /**
  * Visible only while the entry says this control may be used.

@@ -79,6 +79,8 @@ export interface ButtonNode extends NodeBase {
    * it covers the glyphs the client actually shows. Declared by `<Button hug>`.
    */
   hug?: true;
+  /** An input surface shares its enclosing caption's native dimensions. */
+  inputFill?: true;
 }
 
 /**
@@ -146,12 +148,12 @@ const HUG_PRESS: ['100%sm', '100%sm'] = ['100%sm', '100%sm'];
  * every hugging button of one look shares one — whatever it says, and however
  * wide that is in any language.
  */
-export const lookOf = (node: ButtonNode): FacedNode => (node.hug === true
+export const lookOf = (node: ButtonNode): FacedNode => (node.hug === true || node.inputFill === true
   ? { face: node.face, rect: { x: 0, y: 0, width: 0, height: 0 }, children: [], ...node.action === undefined ? {} : { action: node.action } }
   : node);
 
 /** The size a button's press definition is drawn at: the rect, or all of a hugging button's press. */
-export const pressSizeOf = (node: ButtonNode): [number, number] | ['100%', '100%'] => (node.hug === true ? FULL : sizeOf(node.rect));
+export const pressSizeOf = (node: ButtonNode): [number, number] | ['100%', '100%'] => (node.hug === true || node.inputFill === true ? FULL : sizeOf(node.rect));
 
 /** The shared definitions one button look has, fully qualified. */
 export interface ButtonFaces {
@@ -333,7 +335,7 @@ export const buttonDefinition: NodeDefinition<ButtonNode> = {
       return hugFace(node, ctx);
     }
 
-    const faces = shareButtonFaces(node, ctx);
+    const faces = shareButtonFaces(lookOf(node), ctx);
 
     // Every look this button takes is drawn, so the host has a face to show
     // for whichever the entry names. The resting one is `faces` above.
@@ -371,7 +373,9 @@ export const buttonDefinition: NodeDefinition<ButtonNode> = {
     // referenced rather than drawn — every button that looks the same draws
     // the same one. A host stands its mechanism here and reaches the other
     // states through the same faces.
-    return panelFace({ ...boxOf(node), children: [{ [`face@${faces.rest}`]: {} }] });
+    return node.inputFill === true
+      ? { [node.name]: { type: 'panel', size: FULL, ...topLeft, controls: [{ [`face@${faces.rest}`]: {} }] } }
+      : panelFace({ ...boxOf(node), children: [{ [`face@${faces.rest}`]: {} }] });
   },
 };
 

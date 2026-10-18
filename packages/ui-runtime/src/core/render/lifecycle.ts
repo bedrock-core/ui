@@ -4,12 +4,12 @@ import { registerNativeComponents } from '../../components';
 import { DefaultTranslations } from '../../data/Translation';
 import type { FunctionComponent, JSX } from '../../jsx';
 import { playerOwner } from '../fabric';
-import { noteShown } from '../history';
 import { present } from './present';
 import { compiledKeyOf, compiledSnapshotOf, compiledTitleOf } from './screens';
 import {
   beginPresentChain,
   consumeSwap,
+  consumeRefresh, isRefreshPending,
   endPresentChain,
   getSessionCompiled,
   getSessionRoot,
@@ -69,15 +69,10 @@ export function render(
     );
   }
 
-  // What the player is now looking at, for `back()`. Recorded on every path
-  // into render(), not only on `navigate()`, so a screen opened directly is
-  // still somewhere a later navigation can return to.
-  noteShown(player.id, compiledKeyOf(root));
-
   // Stored with the root: a later render() swaps a different root into this
   // chain, and each pass shows whatever root it finds the way THAT root was
   // compiled.
-  const shown: SessionCompiled = { title: compiledTitle, snapshot: compiledSnapshotOf(root), debug: options.debug === true };
+  const shown: SessionCompiled = { key: compiledKeyOf(root), title: compiledTitle, snapshot: compiledSnapshotOf(root), debug: options.debug === true };
 
   // Convert function component to JSX element if needed, then wrap it so
   // TranslationContext is populated at every root — the default i18n
@@ -102,6 +97,9 @@ export function render(
     // whole session down mid-swap. Fall through to a fresh start in that case.
     if (hasLiveChain(owner)) {
       setSessionRoot(owner, rootElement, shown);
+
+      if (getSessionRoot(owner) !== rootElement) { return; }
+
       setBuildRunner(owner, () => {
         buildTree(rootElement, owner, compiledTitle !== undefined);
       });
@@ -126,6 +124,9 @@ export function render(
 
   // Register this player's session root and a background build runner
   setSessionRoot(owner, rootElement, shown);
+
+  if (getSessionRoot(owner) !== rootElement) { return; }
+
   setBuildRunner(owner, () => {
     buildTree(rootElement, owner, compiledTitle !== undefined);
   });
@@ -153,6 +154,8 @@ export function render(
       cleanupComponentTree(owner);
     }
 
+    consumeRefresh(owner);
+
     const current = getSessionCompiled(owner);
     // A handoff swapped another root into this chain, and that root's own title
     // is what shows it. It went through the same refusal above, so falling back
@@ -168,7 +171,7 @@ export function render(
       // Tear down rather than stranding the player input-locked on a session
       // whose chain just died.
       endPresentChain(owner, token);
-      triggerCleanup(owner);
+      triggerCleanup(owner, false, 'error');
 
       return;
     }
@@ -182,7 +185,7 @@ export function render(
 
         // A pending swap absorbs ANY outcome: the close that produced it was
         // programmatic (app handoff), not the player dismissing.
-        if (isSwapPending(owner)) {
+        if (isSwapPending(owner) || isRefreshPending(owner)) {
           presentOnce();
 
           return;
@@ -198,7 +201,7 @@ export function render(
         endPresentChain(owner, token);
 
         if (result === 'cleanup') {
-          triggerCleanup(owner);
+          triggerCleanup(owner, false, 'dismissed');
         }
         // none: do nothing; user dismissed without callbacks
       })
@@ -212,7 +215,7 @@ export function render(
         endPresentChain(owner, token);
 
         try {
-          triggerCleanup(owner);
+          triggerCleanup(owner, false, 'error');
         } catch {
           // Best effort — the player is likely gone (PlayerQuit).
         }

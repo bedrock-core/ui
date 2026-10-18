@@ -2,7 +2,7 @@ import type { FunctionComponent } from '@bedrock-core/ui-runtime';
 import {
   allocateForm, allocateModal, analyze, bakedTexts, buildScreenOnce, collectFormButtons, type CompiledSnapshot, concreteRoots,
   ContainerScreenError, embedMarker, embedPlacementOf, type EmbedPlacement, FORM_COLLECTION, formTitleFor, hostFor, probeLiveness, shapeOf,
-  variantsAt, visiblesAt, type EntryEntry, type ModalRow,
+  variantsAt, visiblesAt, compileDataOf, type EntryEntry, type ModalRow,
 } from '@bedrock-core/ui-runtime/compile';
 import type { JSX } from '@bedrock-core/ui-runtime';
 import { checkLiveness } from '../../compile';
@@ -80,7 +80,7 @@ export interface CompiledFormScreen {
   lang: ScreenLang;
   /**
    * The screen as a table, when nothing about it can change: the value each
-   * entry carries and where each press leads. Present means the shipped addon
+   * entry carries and its portable action metadata. Present means the shipped addon
    * needs no component for this screen — the build knows the whole of what
    * showing it requires.
    */
@@ -262,6 +262,7 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
     faces: face.faces,
     entries,
     snapshot: {
+      ...compileDataOf(tree) === undefined ? {} : { data: compileDataOf(tree) },
       // Carrier-aware: the bool channels are in the fingerprint, so a runtime
       // whose visibles do not match the bake diffs loudly in `debug`.
       shape: shapeOf(tree, analysis),

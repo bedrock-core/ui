@@ -1,4 +1,5 @@
 import { liveTextLength } from '../../components/Text';
+import { selectionMaskLength } from '../../components/Selection';
 import { childElements } from '../guards';
 import type { JSX } from '../../jsx';
 import type { VariantTable } from './probe';
@@ -48,7 +49,7 @@ export const analyze = (
   const texts = new Map<JSX.Element, number>();
 
   const visit = (element: JSX.Element): void => {
-    const length = liveTextLength(element);
+    const length = liveTextLength(element) ?? selectionMaskLength(element);
 
     if (length !== undefined) {
       texts.set(element, length);

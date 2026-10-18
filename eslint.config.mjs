@@ -20,6 +20,7 @@ export default defineConfig([
       // sits outside each package's tsconfig project, so the typed parser can't
       // resolve it at all.
       "**/__tests__/**",
+      "**/type-tests/**",
       "**/*.test.ts",
       "**/*.test.tsx",
       "**/vitest.config.ts",

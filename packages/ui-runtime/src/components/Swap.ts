@@ -63,15 +63,22 @@ export interface SwapLookProps extends ControlProps {
 }
 
 export interface SwapProps extends ControlProps {
+  /** @internal Size an inline navigation input to its client-rendered caption. */
+  hug?: boolean;
+  /** @internal Content measured in normal flow and drawn above the toggle faces. */
+  caption?: JSX.Node;
+  /** @internal Contextual input surfaces sharing one caption and native hitbox. */
+  inputs?: JSX.Node;
+  /** @internal Persistent selection owner, excluded from focus and input. */
+  passive?: boolean;
   /**
    * What a `follows` names this swap by, unique within the screen.
    *
    * The compile mints one when this is absent, which is what a fold wants: its
    * rows follow the swap right before them and never name it. Either way the
    * compile qualifies the id with the screen's namespace before it reaches
-   * JSON UI — a `source_control_name` is looked up screen-wide, and every
-   * gated compiled screen is constructed on every form open, so an unqualified
-   * name would let another addon's screen answer for this one.
+   * JSON UI — a `source_control_name` is looked up screen-wide. Qualified names
+   * keep mounted screens and groups independent.
    */
   id?: string;
   /**
@@ -118,7 +125,7 @@ const isLook = (element: JSX.Element): boolean => {
 };
 
 const SwapRoot: FunctionComponent<SwapProps> = (
-  { id, group, index, exclusive, defaultOn, children, ...layout }: SwapProps,
+  { id, group, index, exclusive, defaultOn, passive, hug, caption, inputs, children, ...layout }: SwapProps,
 ): JSX.Element => ({
   type: SWAP_SLOT_TYPE,
   props: {
@@ -128,7 +135,18 @@ const SwapRoot: FunctionComponent<SwapProps> = (
     index,
     exclusive,
     defaultOn,
-    children: childElements(children).filter(isLook),
+    ...passive === true ? { passive: true } : {},
+    ...hug === true ? { __hug: true } : {},
+    children: [
+      ...childElements(children).filter(isLook), ...childElements(caption),
+      ...inputs === undefined
+        ? []
+        : [{
+            type: SWAP_LOOK_SLOT_TYPE,
+            props: { ...withControl({ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }),
+              __swapInputs: true, children: inputs },
+          }],
+    ],
   },
 });
 

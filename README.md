@@ -1,6 +1,6 @@
 # @bedrock-core/ui
 
-UI tools for Minecraft Bedrock addons. The packages include rendering, navigation, layout, themed components, and shared textures.
+Build Minecraft Bedrock interfaces with JSX. Create forms, menus, and containers with flexible layouts and Minecraft styling that work across addons.
 
 https://bedrock-core.drav.dev/docs/ui
 

@@ -1,6 +1,7 @@
 import type { JSX, ButtonProps as PrimitiveButtonProps } from '@bedrock-core/ui-runtime';
-import { Button as PrimitiveButton, Link, Text } from '@bedrock-core/ui-runtime';
-import type { ScreenKey } from '@bedrock-core/ui-runtime';
+import { Button as PrimitiveButton, Text } from '@bedrock-core/ui-runtime';
+import { Link } from '@bedrock-core/navigation';
+import type { DestinationKey } from '@bedrock-core/navigation';
 import { theme } from './tokens';
 
 export type ButtonVariant = 'hero' | 'primary' | 'secondary' | 'contrast' | 'danger' | 'realm' | 'transparent';
@@ -12,7 +13,7 @@ export interface ButtonProps extends PrimitiveButtonProps {
    * `<Link>`: where it leads is data the build reads, so a screen of them can be
    * shown by an addon that has none of this one's script.
    */
-  to?: ScreenKey;
+  to?: DestinationKey;
   /** With `to`: take the place of the screen this button is on rather than stacking over it. */
   replace?: boolean;
   /** The way back, in place of `to`: the player's own stack decides where. */

@@ -1,6 +1,10 @@
 import { hostFor, requireOwner } from '../../hosts';
+import { isControlled } from '../../components/control';
+import { isTextElementType, liveTextLength } from '../../components/Text';
 import type { JSX } from '../../jsx';
+import { isTransparentType } from '../componentRegistry';
 import { deleteFiber, getFibersForOwner, type Owner } from '../fabric';
+import { childElements, isElement } from '../guards';
 import { validate } from '../ir/validate';
 import { applyInheritance, computeLayout, expandAndResolveContexts } from './phases';
 import { createInitialContext, createRootContext, type TraversalContext } from './traversal';
@@ -10,16 +14,17 @@ import { getSessionCompiled } from './session';
 /** The most times one build render is laid out while composed text settles. */
 const MAX_BUILD_PASSES = 3;
 
-/** One laid-out pass of a render, with what the phases after it read. */
-interface LaidOut {
+/** One expanded render, with its host and whether its consumers need measured geometry. */
+interface PreparedTree {
   result: JSX.Element;
   context: TraversalContext;
   host: ReturnType<typeof hostFor>;
   frozen: boolean;
+  measured: boolean;
 }
 
-/** Phases 1 and 2 of {@link buildTree}: expand the element, then lay it out. */
-function layoutPass(element: JSX.Element, owner: Owner, compiled?: boolean): LaidOut {
+/** Expand a render and measure layout when its output needs geometry. */
+function prepareTree(element: JSX.Element, owner: Owner, compiled?: boolean, runtimeValues = false, bakedValueLooks = false): PreparedTree {
   // Initialize traversal context
   const context: TraversalContext = createInitialContext();
 
@@ -76,8 +81,76 @@ function layoutPass(element: JSX.Element, owner: Owner, compiled?: boolean): Lai
   //    would compile a three-scroll screen happily and then throw the first
   //    time a player opened it.
   const frozen = compiled ?? host.compiled;
+  // Action forms carry values against the pack's fixed layout. Modals still
+  // encode option geometry, and raw overflow text needs its solved width.
+  const measured = !runtimeValues || host.id !== 'form-action' || needsTextLayout(expanded, bakedValueLooks);
 
-  return { result: computeLayout(expanded, frozen), context, host, frozen };
+  return { result: measured ? computeLayout(expanded, frozen) : expanded, context, host, frozen, measured };
+}
+
+/** Literal wrapping changes the carried string, so those trees still run layout. */
+function needsTextLayout(root: JSX.Element, bakedValueLooks: boolean): boolean {
+  const pending = [root];
+
+  while (pending.length > 0) {
+    const node = pending.pop()!;
+    const metrics = node.props.__textMetrics;
+
+    if ((bakedValueLooks || liveTextLength(node) !== undefined) && isTextElementType(node.type) && typeof metrics === 'object' && metrics !== null
+      && Reflect.get(metrics, 'isKey') !== true
+      && (Reflect.get(metrics, 'wordBreak') === 'break-word' || Reflect.get(metrics, 'overflow') === 'ellipsis' || Reflect.get(metrics, 'maxLines') !== undefined)) {
+      return true;
+    }
+
+    for (const child of childElements(node.props.children)) {
+      pending.push(child);
+    }
+  }
+
+  return false;
+}
+
+/** Apply only the inherited state a compiled action form carries, without geometry or layout contexts. */
+function inheritRuntimeState(root: JSX.Element): JSX.Element {
+  const copy = (node: JSX.Element): JSX.Element => ({ type: node.type, nativeArgs: node.nativeArgs, props: { ...node.props } });
+  const result = copy(root);
+  const pending = [{ source: root, target: result, visible: true, enabled: true }];
+
+  while (pending.length > 0) {
+    const { source, target, visible, enabled } = pending.pop()!;
+    const transparent = typeof source.type === 'string' && isTransparentType(source.type);
+
+    if (!transparent && !isControlled(source.props)) {
+      continue;
+    }
+
+    if (!transparent) {
+      if (!visible) { target.props.visible = false; }
+
+      if (!enabled) { target.props.enabled = false; }
+    }
+
+    const childVisible = transparent ? visible : target.props.visible ?? true;
+    const childEnabled = transparent ? enabled : target.props.enabled ?? true;
+
+    const visit = (child: JSX.Element): JSX.Element => {
+      const next = copy(child);
+
+      pending.push({ source: child, target: next, visible: childVisible, enabled: childEnabled });
+
+      return next;
+    };
+
+    const children = source.props.children;
+
+    if (Array.isArray(children)) {
+      target.props.children = children.filter(isElement).map(visit);
+    } else if (isElement(children)) {
+      target.props.children = visit(children);
+    }
+  }
+
+  return result;
 }
 
 /**
@@ -91,8 +164,8 @@ function layoutPass(element: JSX.Element, owner: Owner, compiled?: boolean): Lai
  *
  * Four-phase tree building:
  * Phase 1: Expand function components and resolve contexts
- * Phase 2: Compute layout using flexbox algorithm (resolves sizes and positions to absolute Pocket-space texels)
- * Phase 3: Apply parent-child inheritance rules (visibility, enabled)
+ * Phase 2: Measure geometry when needed by the build, diagnostics or runtime values
+ * Phase 3: Apply parent-child inheritance rules (visibility, enabled); measured trees also quantize geometry
  * Phase 4: Enforce the rules of the backend the owner implies
  *
  * @param element - Root JSX element to build
@@ -100,7 +173,7 @@ function layoutPass(element: JSX.Element, owner: Owner, compiled?: boolean): Lai
  * @param compiled - Whether THIS screen's layout is baked into the pack. Omit
  *   to take the host's answer, which is right for every host that only ever
  *   compiles; the form host serves both kinds and has to be told.
- * @returns Fully processed JSX element tree and list of created instances
+ * @returns Processed JSX tree; compiled action sessions reuse the pack's geometry unless runtime values require measurement.
  */
 export function buildTree(element: JSX.Element, owner: Owner, compiled?: boolean): JSX.Element {
   // A build that registered the pack's languages may compose text per language
@@ -111,9 +184,15 @@ export function buildTree(element: JSX.Element, owner: Owner, compiled?: boolean
   // track that appears narrows the column.
   const rounds = buildLocales() === undefined ? 1 : MAX_BUILD_PASSES;
   // A compiled screen rendered at runtime draws its translated texts the way its build laid them out.
-  const recorded = getSessionCompiled(owner).snapshot?.trans ?? [];
+  const session = getSessionCompiled(owner);
+  const recorded = session.snapshot?.trans ?? [];
+  // A look may choose between different solved caption boxes. Those tables
+  // need the measured props, whereas value/style-only tables do not.
+  const geometryLooks = session.snapshot?.looks?.some(table => table.props.some(({ prop }) => ['jsonUIx', 'jsonUIy', 'jsonUIWidth', 'jsonUIHeight'].includes(prop))) === true;
+  const bakedValueLooks = session.snapshot?.looks?.some(table => table.props.some(({ prop }) => prop === 'value')) === true;
+  const runtimeValues = owner.kind === 'player' && compiled === true && session.snapshot !== undefined && !session.debug && !geometryLooks;
   const widths = new Map<number, number>();
-  let laid: LaidOut;
+  let prepared: PreparedTree;
   let passes = 0;
   let moved: boolean;
 
@@ -121,7 +200,7 @@ export function buildTree(element: JSX.Element, owner: Owner, compiled?: boolean
     beginWidthRound(widths, recorded);
 
     try {
-      laid = layoutPass(element, owner, compiled);
+      prepared = prepareTree(element, owner, compiled, runtimeValues, bakedValueLooks);
     } finally {
       moved = endWidthRound();
     }
@@ -129,14 +208,12 @@ export function buildTree(element: JSX.Element, owner: Owner, compiled?: boolean
     passes += 1;
   } while (moved && passes < rounds);
 
-  const { context, host, frozen } = laid;
-  let { result } = laid;
+  const { context, host, frozen, measured } = prepared;
+  let { result } = prepared;
 
   // Phase 3: Apply parent-child inheritance rules (visibility, enabled)
   // Initialize with root parent state
-  const rootContext = createRootContext(context);
-
-  result = applyInheritance(result, rootContext);
+  result = measured ? applyInheritance(result, createRootContext(context)) : inheritRuntimeState(result);
 
   // Phase 4: what the tree NEEDS against what the host OFFERS, plus the rules
   // every screen obeys — so dynamically-built or type-escaped trees fail loud,
@@ -154,15 +231,11 @@ export function buildTree(element: JSX.Element, owner: Owner, compiled?: boolean
 export function cleanupComponentTree(owner: Owner): void {
   const fibers = getFibersForOwner(owner);
 
-  // Sort by depth (deepest first) to clean up children before parents
-  const sortedFibers = fibers.sort((a, b) => {
-    const depthA = (a.id.match(/\//g) || []).length;
-    const depthB = (b.id.match(/\//g) || []).length;
+  // Measure each path once; sorting long identities must not rescan them on every comparison.
+  const sortedFibers = fibers.map(fiber => ({ fiber, depth: (fiber.id.match(/\//g) ?? []).length }))
+    .sort((a, b) => b.depth - a.depth);
 
-    return depthB - depthA;
-  });
-
-  for (const fiber of sortedFibers) {
+  for (const { fiber } of sortedFibers) {
     deleteFiber(fiber.id);
   }
 }

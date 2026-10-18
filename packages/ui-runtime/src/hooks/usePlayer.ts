@@ -1,5 +1,5 @@
 import { Player } from '@minecraft/server';
-import { getCurrentFiber, invariant } from '../core';
+import { getCurrentFiber, invariant } from '../core/fabric';
 
 /**
  * Hook that returns the Player associated with the current render session.

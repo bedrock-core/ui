@@ -24,16 +24,17 @@ export {
 } from './render/screens';
 export type { CompiledScreen, CompiledSnapshot, StaticScreenRecord } from './render/screens';
 
-// Navigating by key, and what resolves one.
-export { back, closeUi, handOff, navigate, openScreen, screenOwner, setNavigator } from './navigate';
-export { clearHistory, historyOf, shownKey } from './history';
-export type { NavigateOptions, Navigated, NavigationDriver, Navigator, Returner, ScreenKey, ScreenKeys } from './navigate';
-export { returnPathOf, pathThrough, setReturnPath, clearReturnPath, takeReturnStep } from './returnAddress';
-export type { ReturnAddress } from './returnAddress';
+export {
+  registerScreenMetadata, screenMetadata, screenMetadataFor, screenMetadataOf, isScreenMetadata, screenParametersError,
+} from './render/metadata';
+export type { ScreenMetadata, ScreenParameter, ScreenParameters } from './render/metadata';
+export { observeRenderLifecycle, renderSession } from './render/notifications';
+export type { RenderSession, RenderEndReason, RenderLifecycleEvent, RenderLifecycleListener } from './render/notifications';
+export { endRender } from './render/control';
+export type { EndRenderOptions } from './render/control';
+export { withActionMetadata } from './render/actions';
+export type { ActionMetadataFactory, ActionMetadataContext } from './render/actions';
 
-// A screen as another addon can show it.
-export { addonReference, isAddonReference, isScreenReference, presentReference } from './reference';
-export type { AddonReference, ReferenceTarget, ScreenReference, WalkResult } from './reference';
 export { whyNotPlainData } from './plainData';
 
 // How a screen reads its own state.

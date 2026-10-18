@@ -1,56 +1,43 @@
 # Changesets
 
-This folder is managed by [Changesets](https://github.com/changesets/changesets).
-It tracks pending version bumps + changelog entries for the **`packages/*`**
-libraries.
+This folder tracks pending version bumps and changelog entries for the public
+`packages/*` workspaces with [Changesets](https://changesets.dev).
 
 ## Authoring a changeset
 
-When you make a change worth releasing, run:
+Run `yarn changeset`, select the affected workspaces and a bump level, and write a
+short description of the resulting behavior. Commit the generated Markdown file
+with the code it describes.
 
-```sh
-yarn changeset
-```
+The root `@bedrock-core/ui` is not a changeset target. It follows the runtime.
 
-Pick the affected package(s) and a bump level (`patch` / `minor` / `major`),
-write a short summary, and commit the generated `.changeset/<name>.md` alongside
-your change.
+## Synchronized runtime releases
 
-## How releasing works
+`@bedrock-core/ui-runtime` and `@bedrock-core/navigation` form a
+[fixed release group](https://changesets.dev/guide/fixed-packages). A changeset for
+either package versions and publishes both at the same version, using the highest
+requested bump. Other workspaces can release independently.
 
-Releasing is a single manual **"Publish Release"** GitHub Action
-(`workflow_dispatch`, no inputs — just pick the branch). It:
+The root `@bedrock-core/ui` mirrors that version through `scripts/bump-meta.mjs`.
+All three versions match exactly, including prerelease suffixes. The root and
+navigation manifests use `workspace:*` for the runtime dependency, so Yarn packs
+an exact dependency on the corresponding released runtime.
 
-1. runs `changeset version` — consumes the pending changesets, bumps the changed
-   sub-packages **and their dependents** (`updateInternalDependencies: patch`),
-   and writes CHANGELOGs;
-2. sets the root **`@bedrock-core/ui`** meta package's version (Changesets can't
-   see the workspace root) — `scripts/bump-meta.mjs`;
-3. publishes the changed packages to npm and tags each
-   `@bedrock-core/<name>@<version>`;
-4. when the meta bumped, rebuilds the demo `.mcpack` and attaches it to the
-   `@bedrock-core/ui@<version>` release.
+`yarn check:release-versions` verifies the fixed group, versions, and dependency
+policy. Versioning and publishing stop if they disagree.
 
-`server` and `apps` are checked out beside this repo for the install: the root
-`resolutions` reach their packages through `portal:` entries.
+## Release workflows
 
-## The meta is the runtime
+1. A push to `main` refreshes the Version PR through the **Release libraries**
+   workflow. `yarn version-packages` applies Changesets, synchronizes the root
+   version, checks the release policy, and updates pack versions.
+2. Merge the Version PR before running **Release libraries** manually on `main`.
+   Publishing requires no pending changesets and passing release gates. The
+   workflow publishes the public libraries, including the navigation alias,
+   creates their version tags, and ensures the root UI GitHub release exists.
+3. The resource-pack workflow consumes the published libraries. The addon
+   scaffold is maintained in the separate builder repository.
 
-**`@bedrock-core/ui`'s version IS `@bedrock-core/ui-runtime`'s**, character for
-character, prerelease tag included. The runtime is what the meta is; every other
-package it re-exports is support around it, so `@bedrock-core/ui@1.0.0-rc.1` is
-`@bedrock-core/ui-runtime@1.0.0-rc.1` and there is no second number to reconcile.
-
-A release the runtime does not move leaves the meta where it is: what shipped was
-a package the meta curates, and the curated set is republished with the runtime
-that next moves.
-
-> The root `@bedrock-core/ui` is **not** a valid changeset target — do not select
-> it. It follows the runtime, and a changeset for it would only fight the script.
-
-`0.0.0` is what an unreleased package sits at, and `publish-tarballs.mjs` skips
-it, so a package reaches its first release by having its `version` set by hand in
-the commit that means to ship it.
-
-The addon scaffold and its release workflow are maintained in the separate builder
-repository.
+`yarn test:release` includes isolated versioning tests for runtime-only changes,
+changes to the navigation alias, mixed bumps, unrelated releases, and the complete
+prerelease lifecycle. These tests use temporary workspaces.

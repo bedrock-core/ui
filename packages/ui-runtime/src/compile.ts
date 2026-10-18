@@ -61,8 +61,9 @@ export type { ProtocolItemDefinition, ProtocolRole } from './hosts/chest/contrac
 // its own props, so the readers live beside the components.
 export { BACKGROUND_SLOT_TYPE } from './components/Background';
 export { BUTTON_TYPE, isExitButton } from './components/Button';
-export { linkTarget } from './components/Link';
-export type { LinkTarget } from './components/Link';
+export { actionMetadataOf } from './core/render/actions';
+export { compileDataOf } from './core/render/data';
+export { SELECTION_PAGE_SLOT_TYPE, selectionMaskLength } from './components/Selection';
 export { whyNotPlainData } from './core/plainData';
 export { CONTAINER_TYPE, containerHandlers, containerHost, containerRoot } from './components/Container';
 export type { ContainerHost } from './components/Container';

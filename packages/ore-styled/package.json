@@ -46,6 +46,7 @@
 	},
 	"devDependencies": {
 		"@bedrock-core/i18n": "*",
+		"@bedrock-core/navigation": "workspace:*",
 		"@bedrock-core/ui-runtime": "workspace:*",
 		"eslint": "*",
 		"typescript": "*",
@@ -53,6 +54,7 @@
 	},
 	"peerDependencies": {
 		"@bedrock-core/i18n": "*",
+		"@bedrock-core/navigation": "*",
 		"@bedrock-core/ui-runtime": "*"
 	}
 }

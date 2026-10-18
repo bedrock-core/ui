@@ -81,23 +81,20 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bedrock-core/navigation@workspace:packages/navigation"
   dependencies:
-    "@bedrock-core/server-runtime": "npm:*"
-    "@bedrock-core/sync": "npm:*"
     "@bedrock-core/ui-runtime": "workspace:*"
     "@minecraft/server": "npm:*"
     eslint: "npm:*"
     typescript: "npm:*"
+    vitest: "npm:*"
   peerDependencies:
+    "@bedrock-core/i18n": "*"
     "@bedrock-core/server-runtime": "*"
-    "@bedrock-core/sync": "*"
-    "@bedrock-core/ui-runtime": "*"
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
+    "@minecraft/server-ui": "*"
   peerDependenciesMeta:
+    "@bedrock-core/i18n":
+      optional: true
     "@bedrock-core/server-runtime":
-      optional: true
-    "@bedrock-core/sync":
-      optional: true
-    "@bedrock-core/ui-runtime":
       optional: true
   languageName: unknown
   linkType: soft
@@ -119,12 +116,14 @@ __metadata:
   resolution: "@bedrock-core/ore-styled@workspace:packages/ore-styled"
   dependencies:
     "@bedrock-core/i18n": "npm:*"
+    "@bedrock-core/navigation": "workspace:*"
     "@bedrock-core/ui-runtime": "workspace:*"
     eslint: "npm:*"
     typescript: "npm:*"
     vitest: "npm:*"
   peerDependencies:
     "@bedrock-core/i18n": "*"
+    "@bedrock-core/navigation": "*"
     "@bedrock-core/ui-runtime": "*"
   languageName: unknown
   linkType: soft
@@ -159,6 +158,7 @@ __metadata:
   resolution: "@bedrock-core/ui-compiler@workspace:packages/ui-compiler"
   dependencies:
     "@bedrock-core/i18n": "npm:*"
+    "@bedrock-core/navigation": "workspace:*"
     "@bedrock-core/ui-runtime": "workspace:*"
     "@minecraft/server": "npm:*"
     "@minecraft/server-ui": "npm:*"
@@ -205,6 +205,8 @@ __metadata:
     "@bedrock-core/flexbox": "workspace:*"
     "@bedrock-core/navigation": "workspace:*"
     "@bedrock-core/ore-styled": "workspace:*"
+    "@bedrock-core/server-runtime": "npm:*"
+    "@bedrock-core/sync": "npm:*"
     "@bedrock-core/ui-compiler": "workspace:*"
     "@bedrock-core/ui-runtime": "workspace:*"
     "@changesets/changelog-github": "npm:^0.7.0"
@@ -217,6 +219,7 @@ __metadata:
     "@minecraft/server-ui": "npm:*"
     "@minecraft/vanilla-data": "npm:*"
     "@stylistic/eslint-plugin": "npm:^5.10.0"
+    "@types/node": "npm:*"
     "@vitest/coverage-v8": "npm:^4.1.5"
     concurrently: "npm:^9.2.1"
     eslint: "npm:^10.3.0"

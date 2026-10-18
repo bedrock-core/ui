@@ -9,6 +9,7 @@ export default {
       scroll_speed: 15,
       scrollbar_track_button: 'button.scrollbar_skip_track',
       scrollbar_touch_button: 'button.scrollbar_touch',
+      touch_mode: '$touch',
       always_listen_to_input: true,
       always_handle_pointer: true,
       always_handle_scrolling: false,
@@ -26,6 +27,7 @@ export default {
           button_up_right_of_first_refusal: true,
         },
       ],
+      bindings: [{ binding_name: '#gesture_control_enabled' }],
       controls: [
         {
           scrolling_view_port: {

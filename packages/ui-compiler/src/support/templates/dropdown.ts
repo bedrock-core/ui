@@ -253,6 +253,7 @@ export default {
       allow_scroll_even_when_content_fits: false,
       scrollbar_track_button: 'button.scrollbar_skip_track',
       scrollbar_touch_button: 'button.scrollbar_touch',
+      touch_mode: '$touch',
       always_listen_to_input: true,
       always_handle_pointer: true,
       scroll_content: 'scrolling_content',
@@ -268,6 +269,7 @@ export default {
           button_up_right_of_first_refusal: true,
         },
       ],
+      bindings: [{ binding_name: '#gesture_control_enabled' }],
       controls: [
         {
           scrolling_view_port: {

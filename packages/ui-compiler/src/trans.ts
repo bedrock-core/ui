@@ -1,5 +1,5 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
-import { BUTTON_TYPE, childElements, type ComposedRecord, ContainerScreenError, isElement, isTextElementType } from '@bedrock-core/ui-runtime/compile';
+import { BUTTON_TYPE, childElements, type ComposedRecord, ContainerScreenError, isElement, isTextElementType, SWAP_SLOT_TYPE } from '@bedrock-core/ui-runtime/compile';
 
 /**
  * What the compiler reads off a `<Trans>` once it is built.
@@ -56,7 +56,7 @@ export const checkTrans = (tree: JSX.Element, screen: string): void => {
   eachTrans(tree, (element) => {
     for (const line of childElements(element.props.children)) {
       for (const piece of childElements(line.props.children)) {
-        const pressed = piece.type === BUTTON_TYPE && piece.props.__hug === true;
+        const pressed = (piece.type === BUTTON_TYPE || piece.type === SWAP_SLOT_TYPE) && piece.props.__hug === true;
 
         if (!isTextElementType(piece.type) && !pressed) {
           throw new ContainerScreenError(

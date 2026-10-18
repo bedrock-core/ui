@@ -1,29 +1,29 @@
-import { FORM_FLAG_OFF } from '@bedrock-core/ui-runtime/compile';
+import { FORM_FLAG_OFF, FORM_FLAG_ON } from '@bedrock-core/ui-runtime/compile';
 import { FULL, HUG, topLeft } from '../../faces';
-import { entryValueBinding, placed } from './entry';
+import { ENTRY_PROPERTY, entrySource, placed } from './entry';
 import type { Connector, ControlEntry } from '../types';
 
 /** A gate's payload: what it is called, and which entry it reads. */
 export interface Gate {
   name: string;
   address: number;
+  /** An overlay already owns its space and must not measure percentage children. */
+  fixedSize?: ControlEntry[string]['size'];
 }
 
 /**
  * The gate a carried `visible` draws through.
  *
- * The wrapper takes the face's placement — offset, layer, the index host the
- * entry needs — and the face sits inside the gate at (0,0) with its own
- * visibility cleared, so nothing else about it changes. The gate only READS
- * its entry, so the ancestor's `collection_index` is enough; the rule that a
- * control must own its entry is about presses. It is seeded with the value the
- * build rendered with, so a frame-late binding shows the compiled state rather
- * than a flash.
+ * A root entry source supplies the flag. The wrapper keeps the face's solved
+ * placement, and the face sits inside the gate at (0,0) with its visibility
+ * cleared. Native controls retain their collection scope while the gate reads
+ * the source's value. The compiled visibility seeds the first frame.
  *
  * The SIZE is the gate's, not the wrapper's: the wrapper is a stack sized to
  * what it holds, and a closed gate is not held. That is what lets a stack
  * above fold the row away — a wrapper as large as the face would keep the
- * face's room whether or not anything was drawn in it.
+ * face's room whether or not anything was drawn in it. An overlay keeps its
+ * enclosing size so percentage inputs have an independent measurement.
  */
 export const visible: Connector<Gate> = (data, face, ctx) => {
   const [key, control] = Object.entries(face)[0] ?? ['', {}];
@@ -32,6 +32,7 @@ export const visible: Connector<Gate> = (data, face, ctx) => {
   // alongside it: the face already draws it, and one bit with two homes is one
   // bit too many.
   const initial = control.visible !== false;
+  const source = entrySource(`visible_${data.name}`, data.address, initial ? FORM_FLAG_ON : FORM_FLAG_OFF, ctx);
   // The face's own copy is cleared as it goes inside. From here the entry
   // decides, and a face still saying `visible: false` would stay hidden when
   // the gate opened.
@@ -42,21 +43,19 @@ export const visible: Connector<Gate> = (data, face, ctx) => {
       type: 'stack_panel',
       orientation: 'vertical',
       ...placement,
-      size: HUG,
-      collection_name: ctx.collection,
+      size: data.fixedSize ?? HUG,
       controls: [{
         gate: {
           type: 'panel',
           size: control.size ?? FULL,
           ...topLeft,
-          collection_index: data.address,
           visible: '#visible',
           property_bag: { '#visible': initial },
           bindings: [
-            entryValueBinding('#vis_value', ctx.collection),
             {
               binding_type: 'view',
-              source_property_name: `(not (#vis_value = '${FORM_FLAG_OFF}'))`,
+              source_control_name: source,
+              source_property_name: `(not (${ENTRY_PROPERTY} = '${FORM_FLAG_OFF}'))`,
               target_property_name: '#visible',
             },
           ],

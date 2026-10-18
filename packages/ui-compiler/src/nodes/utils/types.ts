@@ -220,7 +220,7 @@ export interface LowerContext {
  * A host serves the kinds it has a mechanism for and refuses the rest at
  * build, by name.
  */
-export type SocketKind = 'press' | 'text' | 'texture' | 'slot' | 'grid' | 'field' | 'list' | 'fits' | 'visible' | 'look';
+export type SocketKind = 'press' | 'text' | 'texture' | 'slot' | 'grid' | 'field' | 'list' | 'fits' | 'visible' | 'look' | 'selection';
 
 /** One place a host has to supply a mechanism: the node, and which mechanism. */
 export interface Socket {
@@ -230,6 +230,10 @@ export interface Socket {
 
 /** What the face pass carries down the tree. */
 export interface FaceEmit {
+  /** Every actual radio input selecting a resident route context. */
+  radioInputs(group: string, index: number): readonly { id: string; on: boolean; passive: boolean }[];
+  /** One always-mounted aggregation of the inputs selecting a native context. */
+  selectionSource(group: string, index: number): string;
   /** The screen's JSON UI namespace. */
   ns: string;
   /** The namespace of the addon's shared faces, `<addon>_faces`. */
@@ -255,6 +259,8 @@ export interface FaceEmit {
 
 /** What the host pass carries down the tree. */
 export interface Emit {
+  /** Always-mounted data sources outside the rendered controls' collection scope. */
+  rootControls?: ControlEntry[];
   ns: string;
   facesNs: string;
   collection: string;

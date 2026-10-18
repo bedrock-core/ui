@@ -5,6 +5,7 @@ folder holds the measurements the code's comments cite.
 
 | Page | What it is |
 | --- | --- |
+| [Rendering rules](./rendering-rules.md) | Button state ownership, layers and native face regression checks. |
 | [S1-form-entry](./spikes/S1-form-entry.md) | Whether a placed control can own a form entry. |
 | [S3-modal-entry](./spikes/S3-modal-entry.md) | Whether a compiled control can own a modal field. |
 | [S4-toggle-group](./spikes/S4-toggle-group.md) | Whether a toggle group is client-only. |
