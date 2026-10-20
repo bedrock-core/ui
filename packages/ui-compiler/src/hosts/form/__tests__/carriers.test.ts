@@ -35,6 +35,38 @@ const sourceOf = (document: Document, gate: Control | undefined): Control | unde
   return source;
 };
 
+describe('form text bounds', () => {
+  it('sizes a shared live carrier from each mounted text box', () => {
+    const compiled = compileFormScreen(() => ScreenRoot({ children: Panel({ width: 200, height: 80, children: [
+      Text({ width: 40, maxLength: 40, children: 'Short' }),
+      Text({ width: 150, maxLength: 40, children: 'A longer live label' }),
+    ] }) }), { namespace: 'bounds', name: 'live' });
+    const carrier = compiled.document.text_carrier_1;
+
+    expect(carrier).toMatchObject({ type: 'label', size: ['100%', '100%'], max_size: ['100%', '100%'] });
+    const widths: number[] = [];
+
+    eachControl(compiled.document, (name, control) => {
+      if (name.startsWith('text_') && control.type === 'stack_panel' && typeof control.size?.[0] === 'number') {
+        widths.push(control.size[0]);
+      }
+    });
+    expect(widths).toEqual([40, 150]);
+  });
+
+  it('constrains localized baked labels to their authored boxes', () => {
+    const compiled = compileFormScreen(() => ScreenRoot({ children: Panel({ width: 100, height: 40,
+      children: Text({ width: 60, maxLines: 1, overflow: 'ellipsis', children: { translate: 'config.long-description' } }),
+    }) }), { namespace: 'bounds', name: 'localized' });
+    const labels: Control[] = [];
+
+    eachControl(compiled.document, (_name, control) => { if (control.type === 'label' && control.localize === true) { labels.push(control); } });
+    expect(labels).toHaveLength(1);
+    expect(labels[0].max_size).toEqual(labels[0].size);
+    expect(labels[0].size?.[0]).toBe(60);
+  });
+});
+
 describe('carried visible on the action form', () => {
   const Screen = (): JSX.Element => {
     const [open] = useState(true);

@@ -31,17 +31,8 @@ function runtimeReleaseVersion(cwd: string): string {
   const runtime = readObject(join(cwd, 'packages/ui-runtime/package.json'));
   const navigation = readObject(join(cwd, 'packages/navigation/package.json'));
   const version = manifestVersion(runtime, RUNTIME);
-  const aliasVersion = manifestVersion(navigation, NAVIGATION);
-  const { fixed } = readObject(join(cwd, '.changeset/config.json'));
 
-  if (!Array.isArray(fixed) || !fixed.some(group => Array.isArray(group)
-    && group.length === 2 && group.includes(RUNTIME) && group.includes(NAVIGATION))) {
-    throw new Error(`release-versions: ${RUNTIME} and ${NAVIGATION} must form a Changesets fixed group`);
-  }
-
-  if (aliasVersion !== version) {
-    throw new Error(`release-versions: ${NAVIGATION}@${aliasVersion} must match ${RUNTIME}@${version}`);
-  }
+  manifestVersion(navigation, NAVIGATION);
 
   for (const manifest of [readObject(join(cwd, 'package.json')), navigation]) {
     const dependencies = manifest.dependencies;
@@ -54,7 +45,7 @@ function runtimeReleaseVersion(cwd: string): string {
   return version;
 }
 
-/** UI and its navigation alias publish with the exact runtime version. */
+/** The UI umbrella mirrors its runtime; navigation has an independent version. */
 export function checkReleaseVersions(cwd = process.cwd()): string {
   const version = runtimeReleaseVersion(cwd);
   const rootVersion = manifestVersion(readObject(join(cwd, 'package.json')), UI);
@@ -66,7 +57,7 @@ export function checkReleaseVersions(cwd = process.cwd()): string {
   return version;
 }
 
-/** Changesets versions the fixed workspaces; the root mirrors their result. */
+/** Changesets versions child workspaces; the root mirrors the runtime result. */
 export function syncMetaVersion(cwd = process.cwd()): { previous: string; version: string; changed: boolean } {
   const version = runtimeReleaseVersion(cwd);
   const path = join(cwd, 'package.json');

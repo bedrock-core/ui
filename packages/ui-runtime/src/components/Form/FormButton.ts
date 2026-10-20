@@ -19,7 +19,7 @@ export interface FormButtonProps extends ControlProps, StateBackgroundProps {
    * declare exactly ONE submit button and at most one exit button.
    */
   type: FormButtonKind;
-  /** Button text. Defaults to `'Submit'` / `'Close'` by kind, unless the button has children. */
+  /** Button text. Defaults to Minecraft's localized Submit / Close text by kind, unless the button has children. */
   label?: string;
   /**
    * What the button shows, laid out inside it like any other child and baked
@@ -68,7 +68,7 @@ export const FormButton: FunctionComponent<FormButtonProps> = ({
       backgroundLocked: states.backgroundLocked,
       buttonKind: type,
       ...children === undefined
-        ? { label: safeLabelText(label ?? (type === 'submit' ? 'Submit' : 'Close')) }
+        ? { label: safeLabelText(label ?? (type === 'submit' ? 'gui.submit' : 'gui.close')), __labelLocalize: label === undefined }
         : { children },
     },
   };

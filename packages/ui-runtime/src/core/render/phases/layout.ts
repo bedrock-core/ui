@@ -526,25 +526,24 @@ function scrollFlexStyle(slot: JSX.Element): FlexStyle {
  * Collect `<Scroll>` elements in document order, descending through ALL elements
  * (concrete and transparent) but NOT into the scrolls themselves — a scroll's content is
  * its own region. Index in this list + 1 is the scroll index (index 0 is the main scroll).
+ * An explicit work stack keeps nested navigation wrappers off the JavaScript call stack.
  */
 function findScrolls(element: JSX.Node, out: JSX.Element[]): void {
-  if (Array.isArray(element)) {
-    element.forEach(c => findScrolls(c, out));
+  const pending: JSX.Node[] = [element];
 
-    return;
+  while (pending.length > 0) {
+    const node = pending.pop();
+
+    if (Array.isArray(node)) {
+      for (let index = node.length - 1; index >= 0; index--) { pending.push(node[index]); }
+    } else if (isElement(node)) {
+      if (node.type === SCROLL_SLOT_TYPE) {
+        out.push(node);
+      } else {
+        pending.push(node.props.children);
+      }
+    }
   }
-
-  if (!isElement(element)) {
-    return;
-  }
-
-  if (element.type === SCROLL_SLOT_TYPE) {
-    out.push(element);
-
-    return;
-  }
-
-  findScrolls(element.props.children, out);
 }
 
 /** Lay out a scroll's content and return its scroll extent (px) along the axis. */

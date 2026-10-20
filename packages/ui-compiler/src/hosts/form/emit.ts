@@ -5,9 +5,8 @@ import {
 import type { TextStyle } from '../../faces';
 import { THUMB_HEIGHT, THUMB_WIDTH, TRACK_HEIGHT } from '../../faces/primitives/slider';
 import { type ButtonNode, type FacedNode, faceSignature, lookOf, pressAddress, pressSizeOf } from '../../nodes/primitives/button';
-import { MODAL_COLLECTION } from '../../connectors/form/entry';
 import { collectKind } from '../../nodes';
-import type { Binding, Control, ControlEntry } from '../../jsonui';
+import type { Control, ControlEntry } from '../../jsonui';
 import { type InlineOption, inlineOptionFace } from '../../nodes/primitives/select';
 import type { ImageNode } from '../../nodes/primitives/image';
 import type { ListNode } from '../../nodes/primitives/list';
@@ -18,6 +17,7 @@ import { isLive, runOf, type TextNode, textSignature } from '../../nodes/primiti
 import type { Emit, HostEmit, IrNode } from '../../nodes/utils/types';
 import type { PanelNode } from '../../nodes/primitives/panel';
 import { ENTRY_PROPERTY, entrySource } from '../../connectors/form/entry';
+import { sliderValueControl } from './slider-value';
 
 /**
  * How a form draws the kinds a chest draws with items.
@@ -138,103 +138,7 @@ const looksOf = (option: InlineOption): SelectOption => ({
   selectedHover: inlineOptionFace(option, 'selectedHover'),
 });
 
-/**
- * A native field: the engine's own widget, standing in the face's place.
- *
- * Each kind names the row it mounts and what that row reads; the mechanism is
- * the same for all five, which is what makes them one socket rather than five.
- * A chooser is the exception — it shows every option at once, so it is placed
- * rather than mounted.
- */
-/** The definition that draws the slider standing for one row. */
-const sliderCell = (address: number): string => `slider_cell_${String(address)}`;
-
-/**
- * Reads which row a cell landed on, and shows it only in the socket that row
- * belongs to.
- *
- * The factory makes a cell for EVERY row of the form, so every slider on the
- * screen would otherwise draw in every socket — nine thumbs for three sliders,
- * each live and editing a different setting.
- *
- * The row is baked into the comparison rather than passed as a variable: a
- * factory NAMES its cell instead of mounting it, and a definition reached by
- * reference resolves `$variables` in its own scope — so a variable set on the
- * derivation reaches nothing, and the binding that reads it is dropped as
- * malformed.
- *
- * It also rides a CHILD rather than the cell itself. A factory cell's own
- * `visible` is ignored: measured with the bindings parsing cleanly and the
- * comparison sound, the engine drew every cell regardless. A plain control
- * inside it hides the way anything else does — and since a computed property
- * does not reach children, that child carries the whole chain.
- *
- * The payload it reads is the row index, and nothing else: the build places the
- * socket, so no geometry has to travel.
- */
-const rowGate = (address: number): Binding[] => [
-  { binding_type: 'collection_details', binding_collection_name: MODAL_COLLECTION },
-  {
-    binding_name: '#custom_slider_text',
-    binding_type: 'collection',
-    binding_collection_name: MODAL_COLLECTION,
-    binding_name_override: '#payload',
-  },
-  { binding_type: 'view', source_property_name: '(\'%.9s\' * #payload)', target_property_name: '#hdr' },
-  { binding_type: 'view', source_property_name: '(#payload - #hdr)', target_property_name: '#rest' },
-  { binding_type: 'view', source_property_name: '(\'%.83s\' * #rest)', target_property_name: '#raw_type' },
-  { binding_type: 'view', source_property_name: '(#rest - #raw_type)', target_property_name: '#at_row' },
-  { binding_type: 'view', source_property_name: '(\'%.83s\' * #at_row)', target_property_name: '#raw_row' },
-  {
-    binding_type: 'view',
-    source_property_name: '(((\'%.82s\' * #raw_row) - (\'%.2s\' * #raw_row) - \';\') * 1)',
-    target_property_name: '#row',
-  },
-  { binding_type: 'view', source_property_name: `(#row = ${String(address)})`, target_property_name: '#mine' },
-];
-
-/**
- * A slider's place, filled by the ENGINE rather than by the build.
- *
- * The build keeps the rect — so the slider sits where the layout put it, and
- * inside a scroll it scrolls with it — and hands the inside to a factory over
- * the form's own rows. `control_ids` is the engine picking by row TYPE, so only
- * a slider row builds a slider; the cell then hides itself unless the row is
- * the one this socket stands for.
- *
- * That is what makes a native slider possible at all on a compiled screen: it
- * validates its value against the form field behind it, and a cell exists only
- * where that field does.
- */
-const sliderSocket = (address: number, ns: string, entry: ControlEntry): ControlEntry => Object.fromEntries(
-  Object.entries(entry).map(([name, control]) => [name, {
-    ...control,
-    controls: [{
-      live_slider: {
-        type: 'collection_panel' as const,
-        size: ['100%', '100%'] as [string, string],
-        anchor_from: 'top_left' as const,
-        anchor_to: 'top_left' as const,
-        collection_name: MODAL_COLLECTION,
-        factory: {
-          name: 'buttons',
-          control_ids: {
-            slider: `@${ns}.${sliderCell(address)}`,
-            step_slider: `@${ns}.${sliderCell(address)}`,
-            label: '@core_ui_common.unused',
-            toggle: '@core_ui_common.unused',
-            dropdown: '@core_ui_common.unused',
-            input: '@core_ui_common.unused',
-            header: '@core_ui_common.unused',
-            divider: '@core_ui_common.unused',
-          },
-        },
-        bindings: [{ binding_name: '#custom_form_length', binding_name_override: '#collection_length' }],
-      },
-    }],
-  }]),
-);
-
+/** Each native widget reads the row assigned by modal allocation. */
 const nativeField = (node: IrNode, entry: ControlEntry, ctx: Emit): ControlEntry => {
   switch (node.kind) {
     case 'select':
@@ -250,13 +154,16 @@ const nativeField = (node: IrNode, entry: ControlEntry, ctx: Emit): ControlEntry
       return field({ name: node.name, address: node.address, ...toggleWidget(node) }, entry, ctx);
 
     case 'slider':
-      // The build leaves the SPACE and draws nothing. A slider takes its step
-      // range from the form field behind it, and a placed one is laid out on
-      // every form in the world — including forms that have no such field, where
-      // any write to its value asserts. So the engine's own factory builds it
-      // instead, one cell per slider ROW (modal_container's `live_sliders`), and
-      // the cell places itself at this rect by decoding its own row.
-      return sliderSocket(node.address, ctx.ns, entry);
+      return field({
+        name: node.name, address: node.address, definition: 'core_ui_form_components.slider_body',
+        props: {
+          ...pinnedEnabled(node), ...node.mount,
+          $travel_size: [Math.max(0, node.rect.width - (node.thumbWidth ?? THUMB_WIDTH)), node.thumbHeight ?? THUMB_HEIGHT],
+          $bar_size: [node.rect.width, node.trackHeight ?? TRACK_HEIGHT],
+          $thumb_size: [node.thumbWidth ?? THUMB_WIDTH, node.thumbHeight ?? THUMB_HEIGHT],
+          ...node.valueRange === undefined ? {} : { $value_content: `${ctx.ns}.slider_value_${node.address}` },
+        },
+      }, entry, ctx);
 
     case 'input':
       return field({ name: node.name, address: node.address, ...inputWidget(node) }, entry, ctx);
@@ -345,49 +252,10 @@ export const FORM_EMIT: HostEmit = {
   // One definition per distinct look, named before any is emitted so a face
   // baked inside another face can already be referenced.
   assemble(root, document, ctx): void {
-    // One cell definition per slider, each knowing which ROW it stands for.
-    //
-    // The factory the socket holds makes a cell for every row of the form, so
-    // every slider on the screen would otherwise draw in every socket. The row
-    // is the only thing that tells them apart, and a factory names its cell
-    // rather than mounting it — so the number cannot be passed in, it has to be
-    // baked into a definition of that cell's own.
     for (const node of collectKind(root, 'slider')) {
-      Object.assign(document, {
-        [`${sliderCell(node.address)}@core_ui_form_components.slider_live`]: {
-          controls: [{
-            gate: {
-              type: 'panel' as const,
-              size: ['100%', '100%'] as [string, string],
-              anchor_from: 'top_left' as const,
-              anchor_to: 'top_left' as const,
-              // MOVED AWAY, not hidden. `visible` is ignored throughout a
-              // factory-built subtree — measured on the cell and again on this
-              // child, with the bindings parsing and the comparison sound — so a
-              // cell that is not this socket's row is pushed off the screen
-              // instead. `not #mine` is 1 or 0 in arithmetic, so the offset is
-              // the condition.
-              //
-              // The multiplier is large because an anchored offset is a multiple
-              // of the control's OWN height, not the screen's: a slider row is
-              // about twenty pixels, so a small factor merely stacks the strays
-              // a row or two apart.
-              use_anchored_offset: true,
-              property_bag: { '#row': -1, '#mine': false, '#anchored_offset_value_x': 0, '#anchored_offset_value_y': 0 },
-              bindings: [
-                ...rowGate(node.address),
-                { binding_type: 'view', source_property_name: '((not #mine) * 1000)', target_property_name: '#anchored_offset_value_y' },
-              ],
-              controls: [{ 'body@core_ui_form_components.slider_body': {
-                ...pinnedEnabled(node), ...node.mount,
-                $travel_size: [Math.max(0, node.rect.width - (node.thumbWidth ?? THUMB_WIDTH)), node.thumbHeight ?? THUMB_HEIGHT],
-                $bar_size: [node.rect.width, node.trackHeight ?? TRACK_HEIGHT],
-                $thumb_size: [node.thumbWidth ?? THUMB_WIDTH, node.thumbHeight ?? THUMB_HEIGHT],
-              } }],
-            },
-          }],
-        },
-      });
+      if (node.valueRange !== undefined) {
+        document[`slider_value_${node.address}@core_ui_form_components.slider_value_label`] = sliderValueControl(node.valueRange);
+      }
     }
 
     // A button the engine routes has no press to report, so it needs no

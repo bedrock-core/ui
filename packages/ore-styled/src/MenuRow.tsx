@@ -92,7 +92,7 @@ export function MenuRow({
     const literal = typeof source === 'string' && (source === '' || resolver?.(source) === undefined);
 
     return (
-      <Text font={font} scale={scale} shadow={shadow} maxLines={1} overflow={'ellipsis'} {...maxLength === undefined ? {} : { maxLength }}>
+      <Text font={font} scale={scale} shadow={shadow} color={color === row.textStyle.muted ? row.textStyle.mutedRgb : undefined} maxLines={1} overflow={'ellipsis'} {...maxLength === undefined ? {} : { maxLength }}>
         {literal ? `${color}${source}` : source}
       </Text>
     );
@@ -127,7 +127,7 @@ export function MenuRow({
       alignItems={'center'}
       gap={row.gap}
       width={'100%'}
-      {...live ? { padding: row.padding, zIndex: 2 } : {}}
+      {...live ? { padding: row.padding, zIndex: 12 } : {}}
     >
       {children}
     </Panel>

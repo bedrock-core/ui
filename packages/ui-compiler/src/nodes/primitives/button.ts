@@ -62,6 +62,8 @@ export interface ButtonNode extends NodeBase {
    * become one component and this goes.
    */
   label?: string;
+  /** The default native form caption is a vanilla translation key. */
+  labelLocalize?: true;
   face: ButtonFace;
   /**
    * The faces this button takes when its look follows state, the build's own
@@ -124,6 +126,8 @@ export interface FacedNode {
   children: IrNode[];
   /** A caption carried as a prop rather than as children; part of what makes a look distinct. */
   label?: string;
+  /** The default native form caption is a vanilla translation key. */
+  labelLocalize?: true;
   /** Set when the engine routes the press. */
   action?: ButtonAction;
 }
@@ -133,7 +137,7 @@ export interface FacedNode {
  * with the same things baked into the face.
  */
 export const faceSignature = (node: FacedNode): string => (node.label !== undefined && node.label !== ''
-  ? JSON.stringify({ face: node.face, size: sizeOf(node.rect), label: node.label })
+  ? JSON.stringify({ face: node.face, size: sizeOf(node.rect), label: node.label, ...node.labelLocalize === true ? { labelLocalize: true } : {} })
   : JSON.stringify({ face: node.face, size: sizeOf(node.rect), children: node.children.map(shapeOf) }));
 
 /** As wide and as tall as its biggest child, which a hugging button's press is sized from. */
@@ -205,14 +209,14 @@ const mappingsFor = (action: ButtonAction): ButtonMapping[] => [
  * Sizing the label to its own content and anchoring THAT to the centre is what
  * puts the text in the middle; `text_alignment` then handles the horizontal.
  */
-const labelCaption = (label: string): Control => ({
+const labelCaption = (label: string, localize = false): Control => ({
   type: 'label',
   size: ['100%', 'default'],
   anchor_from: 'center',
   anchor_to: 'center',
   text_alignment: 'center',
   text: label,
-  localize: false,
+  localize,
 });
 
 /** One state's look: the texture, with the shared caption definition over it. */
@@ -234,7 +238,7 @@ export const shareButtonFaces = (node: FacedNode, ctx: FaceEmit): ButtonFaces =>
 
   if (content !== undefined) {
     shareFace(faces, `${id}_content`, labelled
-      ? labelCaption(node.label ?? '')
+      ? labelCaption(node.label ?? '', node.labelLocalize === true)
       : {
           type: 'panel',
           size: FULL,
@@ -315,7 +319,7 @@ export const buttonDefinition: NodeDefinition<ButtonNode> = {
       // An action the engine performs needs nothing from the host; an
       // undetermined press needs a cell the runtime can hear.
       ...action === undefined ? { address: ctx.cellOf(element).address } : { action },
-      ...typeof props.label === 'string' ? { label: props.label } : {},
+      ...typeof props.label === 'string' ? { label: props.label, ...props.__labelLocalize === true ? { labelLocalize: true as const } : {} } : {},
       ...props.__hug === true ? { hug: true as const } : {},
       face: faceOf(props),
       ...variantFaces(element, ctx),

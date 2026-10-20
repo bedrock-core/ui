@@ -145,13 +145,8 @@ function writeRow(row: ModalRow, form: ModalFormData, context: ModalSerializatio
   // fill is the same popup. What a compiled screen saves is the CELL block —
   // the field's own geometry, state and textures — which is what BARE drops.
   //
-  // A SLIDER IS THE EXCEPTION. It is the one field a compiled screen cannot
-  // place: a slider takes its step range from the form field behind it, and a
-  // statically placed one is laid out on every form in the world, including
-  // forms that have no such field — where any write to its value asserts. So
-  // the engine's own factory builds it instead, one cell per slider ROW
-  // (modal_container's `live_sliders`), and a cell built in row order has no
-  // way to know the rect the build solved for it. Its block is what tells it.
+  // Slider captions retain a compact type/row prefix before the native value.
+  // The compiled value label reads the suffix, while the widget uses its baked row.
   const carried = type === MODAL_SLIDER_SLOT_TYPE
     ? serializeProps({ type, row: context.modalRowIndex })[0]
     : BARE;

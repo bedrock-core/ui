@@ -2,19 +2,6 @@ import { UNSTYLED_TEXTURE } from '@bedrock-core/ui-runtime/compile';
 import type { TemplateDefinition, TemplateModule } from '../types';
 
 export default {
-  'core_ui_form_components.slider_live': ({ ref }): TemplateDefinition => ({
-    control: {
-      type: 'panel',
-      size: ['100%', '100%'],
-      anchor_from: 'top_left',
-      anchor_to: 'top_left',
-      controls: [
-        {
-          ['body@' + ref('core_ui_form_components.slider_body')]: {},
-        },
-      ],
-    },
-  }),
   'core_ui_form_components.slider_value': ({ ref }): TemplateDefinition => ({
     control: {
       type: 'panel',
@@ -70,6 +57,7 @@ export default {
   }),
   'core_ui_form_components.slider_body': ({ ref }): TemplateDefinition => ({
     control: {
+      '$value_content|default': ref('core_ui_form_components.slider_value'),
       'type': 'panel',
       '$travel_size|default': ['100% - 16px', 16],
       '$bar_size|default': ['100%', 10],
@@ -81,7 +69,7 @@ export default {
       'anchor_to': 'top_left',
       'controls': [
         {
-          ['value@' + ref('core_ui_form_components.slider_value')]: {},
+          'value@$value_content': {},
         },
         {
           travel: {
@@ -200,6 +188,7 @@ export default {
         },
       ],
       'bindings': [
+        { binding_type: 'collection_details', binding_collection_name: 'custom_form' },
         {
           binding_type: 'collection',
           binding_collection_name: 'custom_form',

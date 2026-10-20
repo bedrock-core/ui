@@ -1,7 +1,7 @@
 import type { Control, ControlEntry, Document } from './jsonui';
 
 const panelProperties = new Set(['type', 'size', 'offset', 'anchor_from', 'anchor_to', 'layer', 'controls']);
-const relativeProperties = ['bindings', 'variables', 'collection_index', 'min_size', 'max_size',
+const relativeProperties = ['bindings', 'variables', 'collection_index', 'min_size',
   'contained', 'inherit_max_sibling_width', 'inherit_max_sibling_height', 'use_anchored_offset',
   'draggable', 'follows_cursor', 'property_bag'];
 
@@ -26,6 +26,7 @@ interface FixedControl extends Control {
 const movable = (key: string, control: Control): control is FixedControl => !key.includes('@') && control.type !== undefined
   && pixels(control.size) && pixels(control.offset) && topLeft(control)
   && (control.layer === undefined || Number.isFinite(control.layer))
+  && (control.max_size === undefined || pixels(control.max_size))
   && !relativeProperties.some(key => key in control);
 
 /** Removing an ancestor can change a binding's lookup scope even when its box is unchanged. */

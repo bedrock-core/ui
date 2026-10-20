@@ -63,7 +63,7 @@ describe('compiling a modal screen', () => {
     }
   });
 
-  it('mounts author-supplied slider geometry and all native state textures in its row gate', () => {
+  it('mounts slider geometry and native state textures directly on the allocated row', () => {
     const Styled = (): JSX.Element => Form({ children: Panel({ width: 240, height: 160, children: [
       jsx(Slider as unknown as FunctionComponent, { name: 'amount', min: 0, max: 10, width: 160, height: 24,
         trackHeight: 6, thumbWidth: 24, thumbHeight: 12, background: 'track', backgroundHover: 'track-hover',
@@ -75,13 +75,34 @@ describe('compiling a modal screen', () => {
     const mounts: Control[] = [];
 
     eachControl(result.document, (name, control) => {
-      if (name === 'body@core_ui_form_components.slider_body') { mounts.push(control); }
+      if (name === 'field@core_ui_form_components.slider_body') { mounts.push(control); }
     });
 
     expect(mounts).toHaveLength(1);
-    expect(mounts[0]).toMatchObject({ $travel_size: [136, 12], $bar_size: [160, 6], $thumb_size: [24, 12],
+    expect(mounts[0]).toMatchObject({ collection_index: 0, $travel_size: [136, 12], $bar_size: [160, 6], $thumb_size: [24, 12],
       $track: 'track', $track_hover: 'track-hover', $progress: 'progress', $progress_hover: 'progress-hover',
       $thumb: 'thumb', $thumb_hover: 'thumb-hover', $thumb_pressed: 'thumb-pressed', $thumb_locked: 'thumb-locked' });
+    expect(JSON.stringify(result.document)).not.toContain('live_slider');
+    expect(sliderTemplates['core_ui_form_components.slider_control']().control.bindings).toContainEqual({
+      binding_type: 'collection_details', binding_collection_name: 'custom_form',
+    });
+  });
+
+  it('initializes fractional caption properties and mounts the authored value definition', () => {
+    const Fractional = (): JSX.Element => Form({ children: Panel({ width: 200, height: 100, children: [
+      jsx(Slider as unknown as FunctionComponent, { name: 'rate', min: 0, max: 1, step: 0.01, defaultValue: 0.05, width: 180, height: 20 }),
+      Form.Button({ type: 'submit' }),
+    ] }) });
+    const result = compileFormScreen(Fractional, { namespace: 'a', name: 'fractional_slider' });
+
+    expect(result.document['slider_value_0@core_ui_form_components.slider_value_label']).toMatchObject({
+      property_bag: { '#raw': '', '#shown': '', '#whole': 0, '#digit_0': 0, '#negative': 0 },
+    });
+    const mounts: Control[] = [];
+    eachControl(result.document, (name, control) => {
+      if (name === 'field@core_ui_form_components.slider_body') { mounts.push(control); }
+    });
+    expect(mounts[0]?.$value_content).toBe('a_fractional_slider.slider_value_0');
   });
 
   it('preserves native input typography and independent value and placeholder positions', () => {

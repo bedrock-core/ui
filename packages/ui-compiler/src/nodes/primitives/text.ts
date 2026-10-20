@@ -20,6 +20,8 @@ import type { LabelStyle, LowerContext, NodeBase, NodeDefinition, Rect } from '.
  */
 export interface TextNode extends NodeBase, LabelStyle {
   kind: 'text';
+  /** Keeps localized overflow text within the box solved for its line limit. */
+  bounded?: true;
   /**
    * Where the host put the run, when the string is live. On a chest it
    * occupies `address .. address + length - 1`. Absent on a baked string,
@@ -65,7 +67,7 @@ declare module '../utils/types' {
 }
 
 /** What `<Text>` recorded about its string for the layout pass. */
-const textMetricsOf = (value: unknown): { isKey: boolean; resolvedText: string; hug: boolean; translations?: Record<string, string> } => {
+const textMetricsOf = (value: unknown): { isKey: boolean; resolvedText: string; hug: boolean; bounded?: true; translations?: Record<string, string> } => {
   if (typeof value !== 'object' || value === null) {
     return { isKey: false, resolvedText: '', hug: false };
   }
@@ -76,7 +78,10 @@ const textMetricsOf = (value: unknown): { isKey: boolean; resolvedText: string; 
     : '';
   const translations = 'translations' in value ? stringsOf(value.translations) : undefined;
 
-  return { isKey, resolvedText, hug: 'hug' in value && value.hug === true, ...translations === undefined ? {} : { translations } };
+  const bounded = ('overflow' in value && value.overflow === 'ellipsis') || ('maxLines' in value && typeof value.maxLines === 'number');
+
+  return { isKey, resolvedText, hug: 'hug' in value && value.hug === true,
+    ...bounded ? { bounded: true } : {}, ...translations === undefined ? {} : { translations } };
 };
 
 /** A record of strings by locale, when that is what a value is. */
@@ -111,6 +116,7 @@ const bakedOf = (element: JSX.Element, base: Omit<TextNode, 'kind' | 'text' | 'l
     fontType: str(props.fontType, defaults.fontType),
     fontScaleFactor: num(props.fontScaleFactor, defaults.fontScaleFactor),
     ...metrics.hug ? { hug: true as const } : {},
+    ...metrics.bounded === true ? { bounded: true as const } : {},
     ...rgbOf(props.__color),
     ...alignmentOf(props.__textAlign),
   };
@@ -193,6 +199,7 @@ export const textDefinition: NodeDefinition<TextNode> = {
     return textFace({
       ...boxOf(node),
       ...node.hug === undefined ? {} : { hug: node.hug },
+      ...node.bounded === true ? { bounded: true } : {},
       text: node.text,
       localize: node.localize,
       fontType: node.fontType,

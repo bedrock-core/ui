@@ -140,7 +140,9 @@ export const scrollDefinition: NodeDefinition<ScrollNode> = {
     };
   },
 
-  children: node => (node.wide === undefined ? node.children : [...node.children, node.wide.list]),
+  children: node => (node.wide === undefined
+    ? node.children
+    : node.wide.fit >= node.wide.list.rows.length ? [node.wide.list] : [...node.children, node.wide.list]),
 
   // Which width shows is the host's to decide, and only where the choice is
   // real: a list whose every row fits the viewport never scrolls.

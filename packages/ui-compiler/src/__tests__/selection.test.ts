@@ -1,4 +1,4 @@
-import { Panel, Screen, SelectionPanel, Swap, Text, type JSX } from '@bedrock-core/ui-runtime';
+import { List, Panel, Screen, Scroll, SelectionPanel, Swap, Text, type JSX } from '@bedrock-core/ui-runtime';
 import { describe, expect, it } from 'vitest';
 import { eachControl } from '../__fixtures__/helpers';
 import { compileFormScreen } from '../hosts/form/compile';
@@ -45,6 +45,28 @@ describe('generic native selection panels', () => {
     expect(sources[0]?.bindings?.filter(binding => binding.source_property_name === '#toggle_state')).toHaveLength(3);
     expect(readers).toHaveLength(30);
     expect(compiled.entries).toHaveLength(0);
+  });
+
+  it('reads only the mounted width of native inputs in a list that fits its viewport', () => {
+    const component = (): JSX.Element => Screen({ children: Panel({ width: 120, height: 100, children: [
+      Swap({ id: 'owner', group: 'small', index: 0, exclusive: true, passive: true, defaultOn: true, width: 0, height: 0,
+        children: [Swap.Look({ state: 'on' }), Swap.Look({ state: 'off' })],
+      }),
+      Scroll({ width: 120, height: 60, children: List({ max: 1, items: ['one'],
+        row: () => Swap({ group: 'small', index: 0, exclusive: true, width: 20, height: 20,
+          children: [Swap.Look({ state: 'on' }), Swap.Look({ state: 'off' })],
+        }),
+      }) }),
+      SelectionPanel({ group: 'small', index: 0, width: 120, height: 20, children: Text({ children: 'Selected' }) }),
+    ] }) });
+    const compiled = compileFormScreen(component, { namespace: 'example', name: 'small' });
+    const controls: Control[] = [];
+
+    eachControl(compiled.document, (_name, control) => controls.push(control));
+    const source = controls.find(control => control.bindings?.at(-1)?.target_property_name === '#navigation_selected');
+
+    expect(controls.filter(control => control.type === 'toggle')).toHaveLength(2);
+    expect(source?.bindings?.filter(binding => binding.source_property_name === '#toggle_state')).toHaveLength(2);
   });
 
   it('rejects a selected panel whose native group has no persistent owner', () => {

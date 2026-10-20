@@ -114,21 +114,17 @@ export const entrySource = (name: string, address: number, initial: string, ctx:
   return source;
 };
 
-/**
- * Visible only while the entry says this control may be used.
- *
- * A `button` with `enabled` bound to false still takes the press: the property
- * greys nothing and blocks nothing here, and gating the control out is the only
- * thing that stops one. A disabled button therefore has no button at all, only
- * its face — the same shape the chest host uses, for the same reason.
- */
-export const whenEnabled = (visible: boolean): Binding[] => [
-  ...entryText(ENTRY_PROPERTY),
-  {
-    binding_type: 'view',
-    source_property_name: visible
-      ? `(not (${ENTRY_PROPERTY} = '${FORM_FLAG_OFF}'))`
-      : `(${ENTRY_PROPERTY} = '${FORM_FLAG_OFF}')`,
-    target_property_name: '#visible',
-  },
-];
+/** Selects a press surface or disabled face from its collection's enabled flag. */
+export const whenEnabled = (visible: boolean): Binding[] => {
+  // Keep the predicate in the collection's context. One extra character prevents
+  // a longer payload from matching the off flag after the bounded string copy.
+  const match = `(('%.${String(FORM_FLAG_OFF.length + 1)}s' * ${payloadBindingFor(FORM_COLLECTION)}) = '${FORM_FLAG_OFF}')`;
+
+  return [{
+    binding_type: 'collection',
+    binding_collection_name: FORM_COLLECTION,
+    binding_name: visible ? `(not ${match})` : match,
+    binding_name_override: '#visible',
+    binding_condition: 'always',
+  }];
+};

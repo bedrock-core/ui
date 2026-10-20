@@ -1,8 +1,10 @@
 import { safeLabelText } from '@bedrock-core/ui-runtime/compile';
-import { FONT_SIZE, entry, HUG, placed, topLeft } from '../utils/place';
+import { FONT_SIZE, entry, HUG, placed, sizeOf, topLeft } from '../utils/place';
 import type { Box, Control, Face, TextStyle } from '../utils/types';
 
 export interface TextFace extends Box, TextStyle {
+  /** Ellipsis or a line limit requires the client to cap localized glyphs. */
+  bounded?: boolean;
   /**
    * Drawn at the width of its glyphs rather than in the box the layout solved,
    * for a string inside a stack whose length is only known when the screen is
@@ -30,7 +32,7 @@ export interface TextFace extends Box, TextStyle {
 export const textFace: Face<TextFace> = data => (
   data.hug === true
     ? entry(data.name, { ...placed(data), type: 'panel', size: HUG, controls: [{ glyphs: hugged(data) }] })
-    : entry(data.name, { ...placed(data), ...glyphs(data) })
+    : entry(data.name, { ...placed(data), ...glyphs(data), ...data.bounded === true ? { max_size: sizeOf(data.rect) } : {} })
 );
 
 /** The label inside a hugging box: its own natural size, drawn from the top left. */

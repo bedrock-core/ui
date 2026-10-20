@@ -19,10 +19,8 @@ export interface NativeField {
 /**
  * A native modal field, placed by the pack.
  *
- * Every other kind on a compiled screen is drawn by the pack. This one cannot
- * be: a `ModalFormData` row is instantiated by VANILLA's factory, and the
- * interactive widget inside it — the thing that reads and writes the player's
- * answer — is the engine's. No definition replaces it.
+ * The selected modal screen mounts the engine widget that reads and writes
+ * its `ModalFormData` row. The pack supplies the widget's placement and look.
  *
  * So the mechanism is a placement: the index host names the row, and the
  * engine's own widget sits under it exactly where the layout put the face.

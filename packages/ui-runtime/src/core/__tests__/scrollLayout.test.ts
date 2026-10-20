@@ -81,6 +81,24 @@ describe('computeLayout — main scroll only (no <Scroll>)', () => {
 });
 
 describe('computeLayout — nested scrolls (main 0 + extras 1+)', () => {
+  it('preserves scroll order and region ownership through nested navigation wrappers', () => {
+    const first = column(160, [panel(140, 40)]);
+    const second = column(160, [panel(140, 60)]);
+    let tree = box(320, 210, 'row', [scrollSlot({}, first), scrollSlot({}, second)]);
+
+    for (let depth = 0; depth < 96; depth++) {
+      tree = { type: 'fragment', props: { children: [tree] } };
+    }
+
+    computeLayout(tree);
+
+    expect(scrolls(tree)).toHaveLength(3);
+    expect(scrolls(tree)[1]).toMatchObject({ x: 0, y: 0, width: 160, height: 210 });
+    expect(scrolls(tree)[2]).toMatchObject({ x: 160, y: 0, width: 160, height: 210 });
+    expect(first.props.region).toBe(1);
+    expect(second.props.region).toBe(2);
+  });
+
   it('a fixed-height row of two <Scroll>s → main + 2 flex-positioned scrolls', () => {
     const colA = column(160, [panel(140, 40)]);
     const colB = column(160, [panel(140, 40)]);

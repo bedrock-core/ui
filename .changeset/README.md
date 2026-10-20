@@ -11,20 +11,21 @@ with the code it describes.
 
 The root `@bedrock-core/ui` is not a changeset target. It follows the runtime.
 
-## Synchronized runtime releases
+## Package version policy
 
-`@bedrock-core/ui-runtime` and `@bedrock-core/navigation` form a
-[fixed release group](https://changesets.dev/guide/fixed-packages). A changeset for
-either package versions and publishes both at the same version, using the highest
-requested bump. Other workspaces can release independently.
+Public workspaces, including `@bedrock-core/navigation`, have independent versions.
+Each package's Changesets determine its release level. Dependency updates can
+require normal dependent-package bumps; no fixed or linked group forces
+navigation to share the runtime version.
 
-The root `@bedrock-core/ui` mirrors that version through `scripts/bump-meta.mjs`.
-All three versions match exactly, including prerelease suffixes. The root and
-navigation manifests use `workspace:*` for the runtime dependency, so Yarn packs
-an exact dependency on the corresponding released runtime.
+The root `@bedrock-core/ui` mirrors `@bedrock-core/ui-runtime` through
+`scripts/bump-meta.mjs`, including prerelease suffixes. Navigation's version does
+not determine the root version or shared UI texture-pack version.
 
-`yarn check:release-versions` verifies the fixed group, versions, and dependency
-policy. Versioning and publishing stop if they disagree.
+The root and navigation manifests use `workspace:*` for their runtime dependency,
+so Yarn packs an exact dependency on the selected released runtime.
+`yarn check:release-versions` verifies the umbrella/runtime match, named manifests
+and dependency policy. Navigation may have a different version.
 
 ## Release workflows
 
@@ -33,11 +34,11 @@ policy. Versioning and publishing stop if they disagree.
    version, checks the release policy, and updates pack versions.
 2. Merge the Version PR before running **Release libraries** manually on `main`.
    Publishing requires no pending changesets and passing release gates. The
-   workflow publishes the public libraries, including the navigation alias,
-   creates their version tags, and ensures the root UI GitHub release exists.
+   workflow publishes the public libraries, including navigation, creates their
+   version tags, and ensures the root UI GitHub release exists.
 3. The resource-pack workflow consumes the published libraries. The addon
    scaffold is maintained in the separate builder repository.
 
 `yarn test:release` includes isolated versioning tests for runtime-only changes,
-changes to the navigation alias, mixed bumps, unrelated releases, and the complete
-prerelease lifecycle. These tests use temporary workspaces.
+navigation-only changes, mixed bumps, dependency updates, unrelated releases and
+the prerelease lifecycle. These tests use temporary workspaces.

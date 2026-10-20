@@ -94,12 +94,10 @@ export const press: Connector<Addressed> = (data, face, ctx) =>
 /**
  * The definitions one button look needs.
  *
- * The press surface exists only while the entry says the button is enabled,
- * and a disabled button is its face alone — no button, so no press to refuse.
- * That is the chest's shape, arrived at for the chest's reason: `enabled` on a
- * button does not actually stop the engine handing the press to script.
+ * The active press surface and disabled face are mutually exclusive. A disabled
+ * entry draws its face without a native button that could report a press.
  *
- * The button itself carries the `collection_details` binding S1 measured, and
+ * The native button carries the `collection_details` binding, and
  * sits under the index host that names its entry. Every state is one of the
  * shared faces: a button draws the child its `*_control` names and nothing
  * else of its own, so the caption lives inside each face.
@@ -122,8 +120,7 @@ export const pressDefs = (look: PressLook, ctx: Emit): Definitions => {
         { from_button_id: 'button.menu_select', to_button_id: 'button.form_button_click', mapping_type: 'pressed' },
         { from_button_id: 'button.menu_ok', to_button_id: 'button.form_button_click', mapping_type: 'focused' },
       ],
-      // S1: without this ON THE BUTTON the press is not attributed to the entry
-      // and reaches script as a dismissal.
+      // The response index belongs to the native button that reports the press.
       bindings: [{ ...FORM_DETAILS_BINDING }],
       controls: [
         stateControl('default', look, state => state.rest, look.rest, ctx.collection),
@@ -142,9 +139,6 @@ export const pressDefs = (look: PressLook, ctx: Emit): Definitions => {
             type: 'panel',
             size: FULL,
             ...topLeft,
-            // Seeded visible: if the binding ever fails to resolve, a button
-            // that still works beats one that silently cannot be pressed.
-            property_bag: { '#visible': true },
             visible: '#visible',
             bindings: whenEnabled(true),
             controls: [{ [`press@${ctx.ns}.${definition}_states`]: {} }],
@@ -155,7 +149,6 @@ export const pressDefs = (look: PressLook, ctx: Emit): Definitions => {
             type: 'panel',
             size: FULL,
             ...topLeft,
-            property_bag: { '#visible': false },
             visible: '#visible',
             bindings: whenEnabled(false),
             controls: [stateControl('face', look, state => state.disabled, look.disabled, ctx.collection)],

@@ -37,11 +37,11 @@ function fixture(t: TestContext) {
   writeFileSync(join(dir, 'yarn.lock'), '');
   put('package.json', {
     name: UI, version: '0.12.1', packageManager: 'yarn@4.16.0',
-    workspaces: ['packages/*'], dependencies: { [RUNTIME]: 'workspace:*' },
+    workspaces: ['packages/*'], dependencies: { [RUNTIME]: 'workspace:*', [NAVIGATION]: 'workspace:*' },
   });
   put('packages/ui-runtime/package.json', { name: RUNTIME, version: '0.12.1' });
   put('packages/navigation/package.json', {
-    name: NAVIGATION, version: '0.12.1', dependencies: { [RUNTIME]: 'workspace:*' },
+    name: NAVIGATION, version: '1.4.0', dependencies: { [RUNTIME]: 'workspace:*' },
   });
   put('packages/flexbox/package.json', { name: OTHER, version: '0.12.1' });
   put('.changeset/config.json', { ...releaseConfig, changelog: false, commit: false });
@@ -49,11 +49,11 @@ function fixture(t: TestContext) {
   return { dir, put, read, run, change };
 }
 
-const scenarios: { name: string; releases: Record<string, string>; version: string }[] = [
-  { name: 'runtime-only patch', releases: { [RUNTIME]: 'patch' }, version: '0.12.2' },
-  { name: 'navigation-only minor', releases: { [NAVIGATION]: 'minor' }, version: '0.13.0' },
-  { name: 'mixed bumps take the highest', releases: { [RUNTIME]: 'patch', [NAVIGATION]: 'major' }, version: '1.0.0' },
-  { name: 'unrelated releases keep runtime and navigation stable', releases: { [OTHER]: 'patch' }, version: '0.12.1' },
+const scenarios: { name: string; releases: Record<string, string>; runtime: string; navigation: string }[] = [
+  { name: 'runtime-only patch updates the pinned dependent without aligning its version', releases: { [RUNTIME]: 'patch' }, runtime: '0.12.2', navigation: '1.4.1' },
+  { name: 'navigation-only minor keeps the UI runtime version', releases: { [NAVIGATION]: 'minor' }, runtime: '0.12.1', navigation: '1.5.0' },
+  { name: 'mixed bumps keep their own release levels', releases: { [RUNTIME]: 'patch', [NAVIGATION]: 'major' }, runtime: '0.12.2', navigation: '2.0.0' },
+  { name: 'unrelated releases keep runtime and navigation stable', releases: { [OTHER]: 'patch' }, runtime: '0.12.1', navigation: '1.4.0' },
 ];
 
 for (const scenario of scenarios) {
@@ -62,18 +62,20 @@ for (const scenario of scenarios) {
 
     f.change('release', scenario.releases);
     f.run('version');
-    assert.equal(f.read('packages/ui-runtime/package.json').version, scenario.version);
-    assert.equal(f.read('packages/navigation/package.json').version, scenario.version);
+    assert.equal(f.read('packages/ui-runtime/package.json').version, scenario.runtime);
+    assert.equal(f.read('packages/navigation/package.json').version, scenario.navigation);
     assert.equal(f.read('package.json').version, '0.12.1');
 
     execFileSync(process.execPath, [fileURLToPath(new URL('./bump-meta.mjs', import.meta.url))], { cwd: f.dir });
-    assert.equal(checkReleaseVersions(f.dir), scenario.version);
+    assert.equal(checkReleaseVersions(f.dir), scenario.runtime);
+    assert.equal(f.read('package.json').version, scenario.runtime);
+    assert.equal(f.read('packages/navigation/package.json').version, scenario.navigation);
     assert.equal(f.read('packages/navigation/package.json').dependencies[RUNTIME], 'workspace:*');
     assert.equal(syncMetaVersion(f.dir).changed, false);
   });
 }
 
-test('prerelease entry, subsequent releases, and stable exit stay synchronized', t => {
+test('prerelease counters and stable exit preserve independent package versions', t => {
   const f = fixture(t);
 
   f.change('first', { [RUNTIME]: 'minor' });
@@ -81,47 +83,51 @@ test('prerelease entry, subsequent releases, and stable exit stay synchronized',
   f.run('version');
   syncMetaVersion(f.dir);
   assert.equal(checkReleaseVersions(f.dir), '0.13.0-rc.0');
+  assert.equal(f.read('packages/navigation/package.json').version, '1.4.1-rc.0');
 
   f.change('second', { [NAVIGATION]: 'patch' });
   f.run('version');
   syncMetaVersion(f.dir);
-  assert.equal(checkReleaseVersions(f.dir), '0.13.0-rc.1');
+  assert.equal(checkReleaseVersions(f.dir), '0.13.0-rc.0');
+  assert.equal(f.read('packages/navigation/package.json').version, '1.4.1-rc.1');
 
   f.run('pre', 'exit');
   f.run('version');
   syncMetaVersion(f.dir);
   assert.equal(checkReleaseVersions(f.dir), '0.13.0');
+  assert.equal(f.read('packages/navigation/package.json').version, '1.4.1');
 });
 
-test('version drift is rejected before modifying the root', t => {
+test('a navigation version change does not modify the umbrella version', t => {
   const f = fixture(t);
   const original = readFileSync(join(f.dir, 'package.json'), 'utf8');
 
   f.put('packages/navigation/package.json', {
-    name: NAVIGATION, version: '0.12.2', dependencies: { [RUNTIME]: 'workspace:*' },
+    name: NAVIGATION, version: '2.5.3', dependencies: { [RUNTIME]: 'workspace:*' },
   });
-  assert.throws(() => checkReleaseVersions(f.dir), /navigation@0\.12\.2 must match/);
-  assert.throws(() => syncMetaVersion(f.dir), /navigation@0\.12\.2 must match/);
+  const navigation = readFileSync(join(f.dir, 'packages/navigation/package.json'), 'utf8');
+
+  assert.equal(checkReleaseVersions(f.dir), '0.12.1');
+  assert.equal(syncMetaVersion(f.dir).changed, false);
   assert.equal(readFileSync(join(f.dir, 'package.json'), 'utf8'), original);
+  assert.equal(readFileSync(join(f.dir, 'packages/navigation/package.json'), 'utf8'), navigation);
 });
 
 test('the root must match the complete runtime version, including prerelease suffix', t => {
   const f = fixture(t);
 
   f.put('packages/ui-runtime/package.json', { name: RUNTIME, version: '1.0.0-rc.1' });
-  f.put('packages/navigation/package.json', {
-    name: NAVIGATION, version: '1.0.0-rc.1', dependencies: { [RUNTIME]: 'workspace:*' },
-  });
   assert.throws(() => checkReleaseVersions(f.dir), /ui@0\.12\.1 must match/);
   assert.equal(syncMetaVersion(f.dir).version, '1.0.0-rc.1');
   assert.equal(checkReleaseVersions(f.dir), '1.0.0-rc.1');
+  assert.equal(f.read('packages/navigation/package.json').version, '1.4.0');
 });
 
-test('missing fixed release policy is rejected', t => {
+test('independent release policy does not require a fixed group', t => {
   const f = fixture(t);
 
-  f.put('.changeset/config.json', { ...releaseConfig, fixed: [] });
-  assert.throws(() => checkReleaseVersions(f.dir), /Changesets fixed group/);
+  f.put('.changeset/config.json', { ...releaseConfig, fixed: [], linked: [] });
+  assert.equal(checkReleaseVersions(f.dir), '0.12.1');
 });
 
 for (const file of ['package.json', 'packages/navigation/package.json']) {

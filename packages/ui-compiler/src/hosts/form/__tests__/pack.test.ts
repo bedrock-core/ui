@@ -77,7 +77,7 @@ describe('an addon-owned form pack', () => {
     expect(unresolved(output)).toEqual([]);
     expect(JSON.stringify(output)).not.toMatch(/core_ui_(?:common|components|form_components|shapes)\./);
     expect(pack.support.document).toHaveProperty('core_ui_form_components_dropdown_option_radio');
-    expect(pack.support.document).toHaveProperty('core_ui_form_components_slider_live');
+    expect(pack.support.document).toHaveProperty('core_ui_form_components_slider_body');
     expect(pack.support.document).toHaveProperty('core_ui_shapes_scroll');
     expect(pack.support.document).toHaveProperty('core_ui_shapes_scrollbar');
     expect(pack.support.file).toBe('ui/core-ui/support/alpha.json');

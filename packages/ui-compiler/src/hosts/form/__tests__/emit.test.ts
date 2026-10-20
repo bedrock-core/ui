@@ -84,7 +84,7 @@ describe('a form button', () => {
     expect(cell.collection_index).toBe(2);
   });
 
-  it('carries the collection_details binding ON THE BUTTON — S1: a host above it is not enough', () => {
+  it('carries the response index binding on the native button', () => {
     const states = definition(document, 'press_1_states');
 
     expect(states.type).toBe('button');
@@ -102,29 +102,39 @@ describe('a form button', () => {
     });
   });
 
-  it('has no button at all while disabled, because `enabled` does not stop a press', () => {
-    // A button with `enabled` bound false still hands the press to script and
-    // draws no disabled look, so the press surface is gated out instead — the
-    // shape the chest host uses for the same reason.
+  it('binds each face directly to the entry flag and gives only the enabled face a press surface', () => {
     const cell = definition(document, 'press_1');
     const [enabled, disabled] = cell.controls ?? [];
 
-    expect(enabled?.['enabled']?.bindings).toContainEqual({
-      binding_type: 'view',
-      source_property_name: "(not (#entry_value = 'f'))",
-      target_property_name: '#visible',
-    });
-    expect(disabled?.['disabled']?.bindings).toContainEqual({
-      binding_type: 'view',
-      source_property_name: "(#entry_value = 'f')",
-      target_property_name: '#visible',
-    });
+    expect(enabled?.['enabled']?.bindings).toEqual([{
+      binding_type: 'collection',
+      binding_collection_name: FORM_COLLECTION,
+      binding_name: "(not (('%.2s' * #form_button_text) = 'f'))",
+      binding_name_override: '#visible',
+      binding_condition: 'always',
+    }]);
+    expect(disabled?.['disabled']?.bindings).toEqual([{
+      binding_type: 'collection',
+      binding_collection_name: FORM_COLLECTION,
+      binding_name: "(('%.2s' * #form_button_text) = 'f')",
+      binding_name_override: '#visible',
+      binding_condition: 'always',
+    }]);
 
     // Only the enabled branch holds a button; the disabled branch is the
     // disabled face alone.
     expect(JSON.stringify(enabled)).toContain('press_1_states');
     expect(JSON.stringify(disabled)).not.toContain('press_1_states');
     expect(disabled?.['disabled']?.controls).toEqual([{ [`face@core_ui_test_faces.${id}_disabled`]: {} }]);
+  });
+
+  it('keeps visibility driven by each collection binding', () => {
+    const [enabled, disabled] = definition(document, 'press_1').controls ?? [];
+
+    expect(enabled?.['enabled']?.visible).toBe('#visible');
+    expect(disabled?.['disabled']?.visible).toBe('#visible');
+    expect(enabled?.['enabled']?.property_bag).toBeUndefined();
+    expect(disabled?.['disabled']?.property_bag).toBeUndefined();
   });
 
   it('draws every state through the shared faces, caption inside each', () => {

@@ -7,4 +7,4 @@ Provide static navigators, route links and whole-host navigation through `@bedro
 
 Expose generic render lifecycle notifications, screen metadata, selection panels and compiled action descriptions from the UI runtime. Plain rendering remains independent of navigation. `renderDestination()` in `@bedrock-core/navigation/runtime` preserves logical destination context in asynchronous host openers.
 
-Version the navigation library, runtime and root UI package together, including prereleases, and validate this policy before versioning and publishing.
+Version navigation independently from the UI runtime, including prereleases. The root UI package mirrors the runtime version; release checks validate that match and exact runtime dependency resolution.

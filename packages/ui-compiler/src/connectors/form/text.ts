@@ -1,4 +1,4 @@
-import { label, topLeft, type TextStyle } from '../../faces';
+import { FULL, label, topLeft, type TextStyle } from '../../faces';
 import { ENTRY_PROPERTY, entryHost, entryText } from './entry';
 import type { Addressed, Connector, Control } from '../types';
 
@@ -32,11 +32,13 @@ export const text: Connector<Addressed> = (data, face, ctx) =>
  * Localized on the client, always. A live value that is a `.lang` key resolves
  * in the player's language, and a literal renders as itself the way an
  * unmatched key does — which is what lets a reference travel as its name.
+ * Fixed labels fill and cap to their own index host; hugging labels keep their natural size.
  */
 export const textDef = (carrier: TextCarrier, collection: string): Control => ({
   ...label(
     { ...carrier.style, text: ENTRY_PROPERTY, localize: true },
-    { size: carrier.size, ...topLeft },
+    { size: carrier.size[0] === 'default' ? carrier.size : FULL,
+      ...carrier.size[0] === 'default' ? {} : { max_size: FULL }, ...topLeft },
   ),
   bindings: entryText(ENTRY_PROPERTY, collection),
 });

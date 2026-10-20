@@ -6,6 +6,9 @@ import { type FieldBase, scaleOf, sliderMount } from '../utils/fields';
 import { boxOf, num } from '../utils/shared';
 import type { NodeDefinition } from '../utils/types';
 
+/** Authored units retained when the native API uses integer stops. */
+export interface SliderValueRange { min: number; max: number; step: number }
+
 /**
  * A track and a thumb the engine drags: the value baked as a step index.
  *
@@ -35,6 +38,8 @@ export interface SliderNode extends FieldBase {
   steps: number;
   /** The default as a stop index, which the engine holds below the count. */
   value: number;
+  /** Authored units for the normalized native range's caption. */
+  valueRange?: SliderValueRange;
 }
 
 declare module '../utils/types' {
@@ -74,6 +79,17 @@ const valueOf = (element: JSX.Element): number => {
   return Math.max(0, Math.min(stepsOf(element) - 1, Math.round((start - min) / unit)));
 };
 
+/** The runtime normalizes fractional ranges to an integer count of stops. */
+const valueMappingOf = (element: JSX.Element): Pick<SliderNode, 'valueRange'> => {
+  const args = element.nativeArgs;
+  const min = num(args?.['min'], 0);
+  const max = num(args?.['max'], 1);
+  const step = num(args?.['step'], 0);
+  const unit = step > 0 ? step : 1;
+
+  return [min, max, unit].every(Number.isInteger) ? {} : { valueRange: { min, max, step: unit } };
+};
+
 export const sliderDefinition: NodeDefinition<SliderNode> = {
   kind: 'slider',
   types: [MODAL_SLIDER_SLOT_TYPE],
@@ -100,6 +116,7 @@ export const sliderDefinition: NodeDefinition<SliderNode> = {
       ...typeof props.thumbHeight === 'number' ? { thumbHeight: props.thumbHeight } : {},
       steps: stepsOf(element),
       value: valueOf(element),
+      ...valueMappingOf(element),
     };
   },
 

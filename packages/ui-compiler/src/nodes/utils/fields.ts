@@ -6,12 +6,9 @@ import type { NodeBase } from './types';
 /**
  * What the five native fields share.
  *
- * A native field is the one kind of control a compiled screen does not draw.
- * A `ModalFormData` row is instantiated by VANILLA's `collection_panel`
- * factory, and the interactive widget inside it — the thing that reads and
- * writes the player's answer — is the engine's; no definition replaces it. So
- * the compiled screen PLACES the widget and tells it which row it is, and what
- * it draws in the face document is that widget's look at rest.
+ * A native widget reads and writes a `ModalFormData` row. The selected modal
+ * screen places that widget at its authored geometry and assigns its row.
+ * The face document records the widget's look at rest.
  *
  * Which is why each of the five is a primitive of its own: a switch, a track,
  * a box of text, a closed dropdown and a column of options have nothing in

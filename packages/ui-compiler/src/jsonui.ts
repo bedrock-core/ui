@@ -102,6 +102,7 @@ export interface Control {
   use_custom_pocket_toast?: string | boolean;
   size?: [Measure, Measure];
   min_size?: [Measure, Measure];
+  max_size?: [Measure, Measure];
   offset?: [Measure, Measure];
   anchor_from?: Anchor;
   anchor_to?: Anchor;

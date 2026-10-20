@@ -55,10 +55,17 @@ describe('layout panel collapse', () => {
   it.each([
     { size: ['50%', 10] }, { offset: ['50%', 0] }, { anchor_to: 'bottom_right' },
     { bindings: [{ binding_type: 'view', source_property_name: '#position', target_property_name: '#offset' }] },
-    { collection_index: 0 }, { min_size: ['100%', 10] }, { draggable: true }, { follows_cursor: true },
+    { collection_index: 0 }, { min_size: ['100%', 10] }, { max_size: ['100%', 10] }, { draggable: true }, { follows_cursor: true },
   ] as Partial<Control>[])('preserves the parent of a relative or bound child: %j', extra => {
     const source = document(box({ controls: [{ caption: { ...label(), ...extra } }] }));
     expect(collapsePanels(source, candidates)).toEqual(source);
+  });
+
+  it('preserves a fixed label cap while promoting its unchanged box', () => {
+    const source = document(box({ controls: [{ caption: { ...label(), max_size: [40, 10] } }] }));
+    const result = collapsePanels(source, candidates);
+
+    expect(definition(result, 'screen').controls).toEqual([{ caption: { ...label(), offset: [13, 24], max_size: [40, 10] } }]);
   });
 
   it('retains inherited instances and panels outside the authored layout candidates', () => {
