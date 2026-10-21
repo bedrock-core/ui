@@ -1,5 +1,35 @@
 # @bedrock-core/navigation
 
+## 0.13.0
+
+### Minor Changes
+
+- [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56) Thanks [@drav0011](https://github.com/drav0011)! - Plan bounded local transitions through `createStaticNavigation`, with contextual links and server actions, visited-page Back, and server boundaries when the configured context budgets are reached. Compile shared selection gates and glyph-sized input overlays without duplicating page content.
+
+- [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56) Thanks [@drav0011](https://github.com/drav0011)! - Register screen host kinds and portable parameter contracts. Preserve destination parameters and confirmed client page/tab context through Back and cross-realm navigation. Add `navigation(core)` for owner discovery and host openers, and `navigateAsync()` for destination acceptance. Reject invalid inputs and retain navigation state when a host rejects a transition.
+
+- [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56) Thanks [@drav0011](https://github.com/drav0011)! - Expose a compact navigator extension API with custom layouts and shared stack or tab behavior. Keep host history and wire bookkeeping private, and consolidate destination support.
+
+- [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56) Thanks [@drav0011](https://github.com/drav0011)! - Use destination snapshots as the navigation history for Back and host transfers. Compiled reference tables supply data-only screens; `navigation(core)` handles screen ownership and cross-realm routing.
+
+- [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56) Thanks [@drav0011](https://github.com/drav0011)! - Provide static navigators, route links and whole-host navigation through `@bedrock-core/navigation` and `@bedrock-core/ui/navigation`. The optional `@bedrock-core/navigation/core` entry point provides Core screen discovery, host openers, compiled reference presentation and cross-realm transport.
+  
+  Expose generic render lifecycle notifications, screen metadata, selection panels and compiled action descriptions from the UI runtime. Plain rendering remains independent of navigation. `renderDestination()` in `@bedrock-core/navigation/runtime` preserves logical destination context in asynchronous host openers.
+  
+  Version navigation independently from the UI runtime, including prereleases. The root UI package mirrors the runtime version; release checks validate that match and exact runtime dependency resolution.
+
+- [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56) Thanks [@drav0011](https://github.com/drav0011)! - Compile bounded native navigation with shared page bodies, persistent selection owners, localized hitboxes and server-confirmed action context.
+
+- [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56) Thanks [@drav0011](https://github.com/drav0011)! - Provide static stack and top-tab navigators, typed route links and hooks, player-scoped container refs, and an integrated Core transport adapter. Share resident page bodies across a bounded native context graph, confirm logical history before server actions, and retain nested state across server checkpoints.
+  
+  Expose generic expanded-tree composition, library compilation data and render refresh controls. Preserve conditional native inputs, stateful button faces and semantic test targets in compiled navigation layouts.
+
+### Patch Changes
+
+- [`d2b14d6`](https://github.com/bedrock-core/ui/commit/d2b14d6d74934ea856460a720146bda7c45274ec) Thanks [@drav0011](https://github.com/drav0011)! - Close the outgoing native form before opening a static navigation walk, preserving Back history and keeping one form active.
+- Updated dependencies [[`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56), [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56), [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56), [`36fd254`](https://github.com/bedrock-core/ui/commit/36fd2543142bb98eb983486fec0937eb0b251bb3), [`aee2bbd`](https://github.com/bedrock-core/ui/commit/aee2bbd1c440b846b65e34afe74a507bc5374929), [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56), [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56), [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56), [`aee2bbd`](https://github.com/bedrock-core/ui/commit/aee2bbd1c440b846b65e34afe74a507bc5374929), [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56), [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56), [`161e53e`](https://github.com/bedrock-core/ui/commit/161e53e2a444678f242b70374ccfb88efbc4c3e2)]:
+  - @bedrock-core/ui-runtime@0.13.0
+
 ## 0.10.0
 
 ### Minor Changes

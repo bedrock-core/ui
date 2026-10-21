@@ -1,5 +1,17 @@
 # @bedrock-core/ore-styled
 
+## 0.11.1
+
+### Patch Changes
+
+- [`aee2bbd`](https://github.com/bedrock-core/ui/commit/aee2bbd1c440b846b65e34afe74a507bc5374929) Thanks [@drav0011](https://github.com/drav0011)! - Keep live menu text above native button states and constrain compiled labels to their own layout boxes.
+  
+  Bind compiled sliders to their native modal rows and display fractional values in their authored units.
+
+- [`161e53e`](https://github.com/bedrock-core/ui/commit/161e53e2a444678f242b70374ccfb88efbc4c3e2) Thanks [@drav0011](https://github.com/drav0011)! - Fit translated Tab and Header captions within their available width and apply the Header text color to live trails. Forward independent Input value and placeholder offsets and honor Slider aspect-ratio sizing.
+
+- [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56) Thanks [@drav0011](https://github.com/drav0011)! - Use the navigation package for Button, Header and MenuRow destination links and declare its peer dependency.
+
 ## 0.11.0
 
 ### Minor Changes
