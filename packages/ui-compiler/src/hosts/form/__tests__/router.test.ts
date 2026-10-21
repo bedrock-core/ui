@@ -198,6 +198,22 @@ describe('an addon\'s compiled form router', () => {
     });
   });
 
+  it('gates hidden native action buttons while preserving their factory and ordinary form data', () => {
+    const gate = control(routing.hook.document, 'long_form_dynamic_buttons_panel');
+
+    expect(gate).not.toHaveProperty('factory');
+    expect(gate).not.toHaveProperty('controls');
+    expect(gate.property_bag).toEqual({ '#title_text': 'corev0009core' });
+    expect(gate.bindings).toContainEqual({ binding_name: '#form_button_contents', binding_name_override: '#collection_length', binding_condition: 'always_when_visible' });
+    expect(gate.bindings).toContainEqual(expect.objectContaining({
+      source_property_name: "(not (('%.13s' * #title_text) = 'corev0009core'))", target_property_name: '#visible',
+    }));
+  });
+
+  it('preserves the vanilla modal contents factory and its data bindings', () => {
+    expect(routing.hook.document).not.toHaveProperty('generated_contents');
+  });
+
   it('emits no selector for an empty addon and rejects ambiguous routes', () => {
     expect(control(formRouter([], 'addon').router, 'addon_forms').controls).toEqual([]);
     expect(() => formRouter([screens[0]!, screens[0]!], 'a')).toThrow(/Two screens are named/);

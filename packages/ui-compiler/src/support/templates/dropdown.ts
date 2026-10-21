@@ -476,9 +476,6 @@ export default {
             anchor_to: 'top_left',
           },
         },
-        {
-          ['label_frame@' + ref('core_ui_form_components.option_label_frame')]: {},
-        },
       ],
     },
   }),

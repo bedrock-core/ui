@@ -36,7 +36,7 @@ export interface FormRouting {
   readonly hook: PlacedDocument;
   /** The addon's router: selectors and screen cells created only while selected. */
   readonly router: Document;
-  /** Pack path the router is written to â€” the addon's own. */
+  /** Pack path the router is written to — the addon's own. */
   readonly routerFile: string;
 }
 
@@ -203,6 +203,15 @@ export const formRouter = (screens: readonly RoutedFormScreen[], addon: string):
         third_party_server_screen: { gamepad_cursor: true },
         long_form: vanilla,
         custom_form: structuredClone(vanilla),
+        // Hidden vanilla action forms must not instantiate their native button widgets.
+        long_form_dynamic_buttons_panel: {
+          property_bag: { '#title_text': FORM_COMPILED_HEADER },
+          bindings: [
+            { binding_name: '#title_text', binding_condition: 'always' },
+            { binding_type: 'view', source_property_name: `(not ${claimed})`, target_property_name: '#visible', binding_condition: 'always' },
+            { binding_name: '#form_button_contents', binding_name_override: '#collection_length', binding_condition: 'always_when_visible' },
+          ],
+        },
         [bridge]: {
           type: 'panel', ...canvas,
           factory: {

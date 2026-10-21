@@ -1,8 +1,8 @@
 import { stateFor } from '../../__tests__/state';
-import type { Player } from '@minecraft/server';
+import { system, type Player } from '@minecraft/server';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
-  __lastActionForm, __pendingShowCount, __resetFormMocks, __resolveShow, __setDeferredShows,
+  uiManager, __lastActionForm, __pendingShowCount, __resetFormMocks, __resolveShow, __setDeferredShows,
 } from '../../../../ui-runtime/src/__mocks__/@minecraft/server-ui';
 import { registerNativeComponents } from '../../../../ui-runtime/src/components';
 import { Button } from '../../../../ui-runtime/src/components/Button';
@@ -47,9 +47,7 @@ const nextPlayer = (): Player => {
 
 /** Waits for the next form to reach the client, so the test can answer it. */
 const untilShown = async (): Promise<void> => {
-  for (let tick = 0; tick < 50 && __pendingShowCount() === 0; tick += 1) {
-    await new Promise(resolve => setTimeout(resolve, 0));
-  }
+  await vi.waitFor(() => { expect(__pendingShowCount()).toBeGreaterThan(0); }, { timeout: 1000, interval: 5 });
 };
 
 describe('navigating by key', () => {
@@ -284,6 +282,188 @@ describe('a screen as another addon can show it', () => {
     expect(__lastActionForm()?.titleText).toBe(titleFor('docs_standalone'));
   });
 
+  it('closes an outstanding native form before a static walk and preserves Back destinations', async () => {
+    const player = nextPlayer();
+    const Home: FunctionComponent = () => Screen({ children: Panel({ children: Text({ children: 'home' }) }) });
+    const Live: FunctionComponent = () => Screen({ children: Panel({ children: Text({ children: 'live' }) }) });
+
+    registerCompiledScreen(Home, { key: 'pending:home', title: titleFor('pending_home') });
+    registerCompiledScreen(Live, { key: 'pending:live', title: titleFor('pending_live') });
+    registerStaticScreens([
+      { key: 'pending:index', title: titleFor('pending_index'), values: ['', ''], targets: [{ to: 'pending:live' }, { back: true }] },
+    ]);
+    __setDeferredShows(true);
+
+    try {
+      navigate('pending:home', player);
+      expect(__pendingShowCount()).toBe(1);
+      navigate('pending:index', player);
+      await untilShown();
+      expect(__pendingShowCount()).toBe(1);
+      expect(__lastActionForm()?.titleText).toBe(titleFor('pending_index'));
+      expect(historyOf(player)).toEqual(['pending:home']);
+
+      __resolveShow({ canceled: false, selection: 0 });
+      await untilShown();
+      expect(__pendingShowCount()).toBe(1);
+      expect(__lastActionForm()?.titleText).toBe(titleFor('pending_live'));
+      expect(historyOf(player)).toEqual(['pending:home', 'pending:index']);
+
+      expect(back(player)).toBe(true);
+      await untilShown();
+      expect(__pendingShowCount()).toBe(1);
+      expect(__lastActionForm()?.titleText).toBe(titleFor('pending_index'));
+      expect(historyOf(player)).toEqual(['pending:home']);
+
+      __resolveShow({ canceled: false, selection: 1 });
+      await untilShown();
+      expect(__pendingShowCount()).toBe(1);
+      expect(__lastActionForm()?.titleText).toBe(titleFor('pending_home'));
+      expect(historyOf(player)).toEqual([]);
+    } finally { closeUi(player); }
+  });
+
+  it('closes a native show that becomes closable after the initial release', async () => {
+    const player = nextPlayer();
+    const Home: FunctionComponent = () => Screen({ children: Panel({ children: Text({ children: 'home' }) }) });
+
+    registerCompiledScreen(Home, { key: 'queued:home', title: titleFor('queued_home') });
+    registerStaticScreens([{ key: 'queued:index', title: titleFor('queued_index'), values: [''], targets: [null] }]);
+    __setDeferredShows(true);
+    navigate('queued:home', player);
+    const close = vi.spyOn(uiManager, 'closeAllForms').mockImplementationOnce(() => undefined);
+
+    try {
+      navigate('queued:index', player);
+      expect(__lastActionForm()?.titleText).toBe(titleFor('queued_home'));
+      await vi.waitFor(() => { expect(__lastActionForm()?.titleText).toBe(titleFor('queued_index')); });
+      expect(close.mock.calls.filter(([who]) => who === player)).toHaveLength(2);
+      expect(__pendingShowCount()).toBe(1);
+      expect(historyOf(player)).toEqual(['queued:home']);
+    } finally { closeUi(player); }
+  });
+
+  it.each((['navigate', 'render', 'close', 'handoff', 'reference'] as const).flatMap(operation =>
+    [0, 1].map(stage => ({ operation, stage }))))(
+    'does not close or reopen a delayed reference after a newer $operation at barrier $stage', async ({ operation, stage }) => {
+      const player = nextPlayer();
+      const Home: FunctionComponent = () => Screen({ children: Panel({ children: Text({ children: 'home' }) }) });
+      const Live: FunctionComponent = () => Screen({ children: Panel({ children: Text({ children: 'live' }) }) });
+      const callbacks: (() => void)[] = [];
+
+      registerCompiledScreen(Home, { key: 'supersede:home', title: titleFor('supersede_home') });
+      registerCompiledScreen(Live, { key: 'supersede:live', title: titleFor('supersede_live') });
+      registerStaticScreens([
+        { key: 'supersede:index', title: titleFor('supersede_index'), values: [''], targets: [null] },
+        { key: 'supersede:new', title: titleFor('supersede_new'), values: [''], targets: [null] },
+      ]);
+      vi.spyOn(system, 'runTimeout').mockImplementation((callback) => { callbacks.push(callback); return callbacks.length; });
+      __setDeferredShows(true);
+      setNavigator((key, target, options) => {
+        if (key !== 'supersede:index') { return openScreen(key, target, options); }
+
+        void presentReference(candidate => screenReferences()[candidate], key, target).then((ended) => {
+          if (ended === 'done') { closeUi(target); }
+        });
+
+        return true;
+      });
+
+      try {
+        navigate('supersede:home', player);
+        navigate('supersede:index', player);
+        expect(callbacks).toHaveLength(1);
+
+        if (stage === 1) {
+          callbacks.shift()?.();
+          await Promise.resolve();
+          await Promise.resolve();
+          expect(callbacks).toHaveLength(1);
+        }
+
+        if (operation === 'navigate') { navigate('supersede:live', player); }
+        if (operation === 'render') { renderDestination(Live, player, { key: 'supersede:live' }); }
+        if (operation === 'close') { closeUi(player); }
+        if (operation === 'handoff') { handOff(player); }
+        if (operation === 'reference') { void presentReference(key => screenReferences()[key], 'supersede:new', player); }
+
+        const closeCount = uiManager.closeAllForms.mock.calls.length;
+        callbacks.shift()?.();
+        await Promise.resolve();
+        await Promise.resolve();
+        expect(uiManager.closeAllForms.mock.calls).toHaveLength(closeCount);
+        expect(__lastActionForm()?.titleText).not.toBe(titleFor('supersede_index'));
+
+        if (operation === 'navigate' || operation === 'render') {
+          expect(__lastActionForm()?.titleText).toBe(titleFor('supersede_live'));
+          expect(__pendingShowCount()).toBe(1);
+        }
+      } finally { closeUi(player); }
+    },
+  );
+
+  it('keeps a host logical destination while presenting its canonical static reference', async () => {
+    const player = nextPlayer();
+    const Home: FunctionComponent = () => Screen({ children: Panel({ children: Text({ children: 'home' }) }) });
+
+    registerCompiledScreen(Home, { key: 'alias:home', title: titleFor('alias_home') });
+    registerStaticScreens([{ key: 'alias:canonical', title: titleFor('alias_canonical'), values: [''], targets: [null] }]);
+    setNavigator((key, target, options) => {
+      if (key !== 'foreign:alias') { return openScreen(key, target, options); }
+
+      void presentReference(candidate => screenReferences()[candidate], 'alias:canonical', target).then((ended) => {
+        if (ended === 'done') { closeUi(target); }
+      });
+
+      return true;
+    });
+    __setDeferredShows(true);
+
+    try {
+      navigate('alias:home', player);
+      expect(navigate('foreign:alias', player)).toBe(true);
+      await vi.waitFor(() => { expect(__lastActionForm()?.titleText).toBe(titleFor('alias_canonical')); });
+      expect(currentLocation(player)?.key).toBe('foreign:alias');
+      expect(historyOf(player)).toEqual(['alias:home']);
+      expect(__pendingShowCount()).toBe(1);
+    } finally { closeUi(player); }
+  });
+
+  it.each(['queued', 'visible'] as const)('keeps a %s static walk usable after rejected navigation', async (stage) => {
+    const player = nextPlayer();
+    const Home: FunctionComponent = () => Screen({ children: Panel({ children: Text({ children: 'home' }) }) });
+
+    registerCompiledScreen(Home, { key: 'reject:home', title: titleFor('reject_home') });
+    registerStaticScreens([{ key: 'reject:index', title: titleFor('reject_index'), values: [''], targets: [{ back: true }] }]);
+    setNavigator((key, target, options) => {
+      if (key !== 'reject:index') { return openScreen(key, target, options); }
+
+      void presentReference(candidate => screenReferences()[candidate], key, target).then((ended) => {
+        if (ended === 'done') { closeUi(target); }
+        if (ended === 'back') { back(target); }
+      });
+
+      return true;
+    });
+    __setDeferredShows(true);
+
+    try {
+      navigate('reject:home', player);
+      navigate('reject:index', player);
+
+      if (stage === 'visible') {
+        await vi.waitFor(() => { expect(__lastActionForm()?.titleText).toBe(titleFor('reject_index')); });
+      }
+
+      expect(navigate('reject:missing', player)).toBe(false);
+      await vi.waitFor(() => { expect(__lastActionForm()?.titleText).toBe(titleFor('reject_index')); });
+      expect(historyOf(player)).toEqual(['reject:home']);
+      __resolveShow({ canceled: false, selection: 0 });
+      await untilShown();
+      expect(__lastActionForm()?.titleText).toBe(titleFor('reject_home'));
+    } finally { closeUi(player); }
+  });
+
   it('navigates from a static screen to a screen with handlers of its own, and back', async () => {
     const player = nextPlayer();
     const Live: FunctionComponent = () => Screen({ children: Panel({ children: Text({ children: 'live' }) }) });
@@ -438,9 +618,7 @@ describe('a screen as another addon can show it', () => {
     // The menu's press navigates to the static screen.
     __resolveShow({ canceled: false, selection: 0 });
 
-    for (let tick = 0; tick < 10; tick += 1) {
-      await new Promise(resolve => setTimeout(resolve, 0));
-    }
+    await untilShown();
 
     // Only the static screen is up: the menu's session did not present itself again.
     expect(__pendingShowCount()).toBe(1);

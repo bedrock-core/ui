@@ -67,6 +67,9 @@ export default {
             $bullet_skip: '$bullet_skip',
           },
         },
+        {
+          ['label_frame@' + ref('core_ui_form_components.option_label_frame')]: {},
+        },
       ],
     },
   }),
