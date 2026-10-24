@@ -297,6 +297,8 @@ export interface ClientNavigationOptions {
   readonly maxDepth?: number;
   /** Flat stacks only: collapse repeated page names and discard the oldest entries beyond maxDepth. Default preserves full history. */
   readonly history?: 'recent';
+  /** Flat recent stacks: finite initial histories used by server presentations, in addition to each route's standalone entry. */
+  readonly entryStates?: readonly InitialState[];
   /** Positive integer. Maximum combined native history contexts, not a limit on registered screens. Default 64. */
   readonly maxStates?: number;
   /** Default server. Dynamic params, unsupported local actions and exhausted budgets use the server. */

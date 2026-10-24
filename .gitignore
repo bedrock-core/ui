@@ -54,7 +54,7 @@ lerna-debug.log*
 *.tmp
 *.temp
 .cache
-**.regolith/
+**/.bedrock-core/
 
 TODO
 .claude

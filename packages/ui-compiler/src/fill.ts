@@ -27,6 +27,7 @@
 
 import { ContainerScreenError } from '@bedrock-core/ui-runtime/compile';
 import { collapsePanels } from './collapse';
+import { ControlIndex } from './control-index';
 import { groupRootHelpers } from './traversal';
 import { type FlowPanel, flowPanel, flowPanels } from './flow';
 import { type FaceDocument, SCREEN_DEFINITION } from './face';
@@ -35,94 +36,7 @@ import { childrenOf } from './nodes';
 import { entryControl, placementOf } from './nodes/utils/shared';
 import type { Emit, HostEmit, IrNode, Socket } from './nodes/utils/types';
 
-/** Where an entry was found: the list it sits in and its position, or the document itself. */
-type Found
-  = | { readonly kind: 'control'; readonly list: ControlEntry[]; readonly index: number; readonly key: string }
-    | { readonly kind: 'definition'; readonly key: string };
-
-const nameOf = (key: string): string => key.split('@')[0] ?? '';
-
-const findIn = (list: ControlEntry[], name: string): Found | undefined => {
-  for (const [index, entry] of list.entries()) {
-    for (const [key, control] of Object.entries(entry)) {
-      if (nameOf(key) === name) {
-        return { kind: 'control', list, index, key };
-      }
-
-      const inner = control.controls === undefined ? undefined : findIn(control.controls, name);
-
-      if (inner !== undefined) {
-        return inner;
-      }
-    }
-  }
-
-  return undefined;
-};
-
-/**
- * Where a node's control is: a definition of its own (a scroll's content, a
- * list a scroll took as its content), or an entry somewhere under one.
- */
-const locate = (document: Document, name: string): Found => {
-  for (const key of Object.keys(document)) {
-    if (nameOf(key) === name && typeof document[key] !== 'string') {
-      return { kind: 'definition', key };
-    }
-  }
-
-  for (const [, value] of Object.entries(document)) {
-    if (typeof value === 'string' || 'modifications' in value) {
-      continue;
-    }
-
-    const found = value.controls === undefined ? undefined : findIn(value.controls, name);
-
-    if (found !== undefined) {
-      return found;
-    }
-  }
-
-  throw new Error(`The face document has no control named "${name}" for a socket to fill.`);
-};
-
 const isControl = (value: Document[string]): value is Control => typeof value !== 'string' && !('modifications' in value);
-
-const entryAt = (document: Document, found: Found): ControlEntry => {
-  if (found.kind === 'definition') {
-    const control = document[found.key];
-
-    if (control === undefined || !isControl(control)) {
-      throw new Error(`"${found.key}" is not a definition.`);
-    }
-
-    return { [found.key]: control };
-  }
-
-  const entry = found.list[found.index];
-
-  if (entry === undefined) {
-    throw new Error('unreachable: a located entry is in its list');
-  }
-
-  return entry;
-};
-
-const replaceAt = (document: Document, found: Found, entry: ControlEntry): void => {
-  if (found.kind === 'definition') {
-    const [key] = Object.keys(entry);
-
-    if (key !== found.key) {
-      delete document[found.key];
-    }
-
-    Object.assign(document, entry);
-
-    return;
-  }
-
-  found.list[found.index] = entry;
-};
 
 /**
  * The placement a mechanism keeps. A gate's wrapper is sized to what it holds
@@ -177,23 +91,26 @@ export const fill = (face: FaceDocument, host: HostEmit, title = ''): Document =
 
   host.assemble?.(face.root, document, context);
 
+  const controls = new ControlIndex(document, new Set(face.sockets.map(socket => socket.node.name)));
+
   for (const socket of face.sockets) {
-    const found = locate(document, socket.node.name);
-    const entry = entryAt(document, found);
-    const mechanism = socket.kind === 'visible'
-      ? host.wrapVisible
-      : socket.kind === 'look' ? host.wrapLook : host.fill[socket.kind];
+    controls.replace(socket.node.name, (entry) => {
+      const mechanism = socket.kind === 'visible'
+        ? host.wrapVisible
+        : socket.kind === 'look' ? host.wrapLook : host.fill[socket.kind];
 
-    if (mechanism === undefined) {
-      throw new ContainerScreenError(
-        `The ${host.id} host has no mechanism for the ${socket.kind} of "${socket.node.name}" (<${socket.node.kind}>).`,
-      );
-    }
+      if (mechanism === undefined) {
+        throw new ContainerScreenError(
+          'The ' + host.id + ' host has no mechanism for the ' + socket.kind + ' of "' + socket.node.name + '" (<' + socket.node.kind + '>).',
+        );
+      }
 
-    const filled = mechanism(socket.node, entry, context);
+      const filled = mechanism(socket.node, entry, context);
 
-    guard(socket, entry, filled, host);
-    replaceAt(document, found, filled);
+      guard(socket, entry, filled, host);
+
+      return filled;
+    });
   }
 
   const screen = document[SCREEN_DEFINITION];

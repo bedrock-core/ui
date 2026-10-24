@@ -1,6 +1,6 @@
 /**
  * Removes what an install or a build regenerates in this repository: dependency trees, package
- * builds, coverage reports, and the Regolith working trees.
+ * builds and coverage reports.
  *
  *   yarn clean
  *
@@ -11,7 +11,7 @@ import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /** Directory names a tool here rewrites from scratch, wherever they appear. */
-const DISPOSABLE = new Set(['node_modules', 'dist', 'build', 'coverage', '.nyc_output', '.cache', '.regolith']);
+const DISPOSABLE = new Set(['node_modules', 'dist', 'build', 'coverage', '.nyc_output', '.cache']);
 
 /** File suffixes that are incremental-build caches rather than sources. */
 const DISPOSABLE_SUFFIX = ['.tsbuildinfo'];

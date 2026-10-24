@@ -4,7 +4,9 @@
 	"namespace": "bedrock_core_ui",
 	"name": "@bedrock-core_ui",
 	"description": "Shared UI textures for @bedrock-core addons",
-	"authors": ["DrAv0011"],
+	"authors": [
+		"DrAv0011"
+	],
 	"packs": {
 		"resourcePack": "./packs/RP"
 	},
@@ -35,6 +37,12 @@
 					"resourcePack": "%APPDATA%/Minecraft Bedrock/Users/Shared/games/com.mojang/development_resource_packs/@bedrock-core_ui_rp"
 				}
 			}
+		},
+		"staging": {
+			"exclude": [
+				"build",
+				"dist"
+			]
 		}
 	}
 }

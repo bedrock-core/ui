@@ -11,6 +11,9 @@ import { setStateSeed, type StateSeed } from '../render/session';
 import { cleanupComponentTree } from '../render/tree';
 import { claim, hasMechanism, visibleCandidates, visibleWalk } from './claims';
 
+// The exact function is tagged: copying its metadata cannot certify a wrapper.
+const PLAYER_REQUIRED = Symbol.for('@bedrock-core/ui-runtime/player-required');
+
 /**
  * What in a screen is live, found by asking rather than by being told.
  *
@@ -839,9 +842,12 @@ export function probeLiveness(build: () => JSX.Element): Probe {
   // shape suggests, and a chooser's other options are not among them; a press
   // is how the screen itself moves, so pressing each one and rendering again
   // reaches exactly the looks a player can put it in.
-  const presses = pressesIn(reference).length;
+  const presses = pressesIn(reference);
 
-  for (let index = 0; index < Math.min(presses, PRESS_BUDGET); index += 1) {
+  for (let index = 0; index < Math.min(presses.length, PRESS_BUDGET); index += 1) {
+    // Player-gated callbacks keep their positions in the bounded press set.
+    if (Reflect.get(presses[index], PLAYER_REQUIRED) === presses[index]) { continue; }
+
     const before = rebuild();
     const press = before === undefined ? undefined : pressesIn(before)[index];
 

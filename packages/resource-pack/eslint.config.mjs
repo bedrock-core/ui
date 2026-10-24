@@ -18,7 +18,7 @@ export default defineConfig([
 
   {
     ignores: [
-      ".*/**",           // Any directory starting with dot (.yarn, .vscode, .regolith, etc.)
+      ".*/**",           // Any directory starting with dot (.yarn, .vscode, .bedrock-core, etc.)
       ".*",              // Any file starting with dot
       "node_modules/**",
       "**/*.generated.*", // Filter-generated files (i18n bundle + declarations)

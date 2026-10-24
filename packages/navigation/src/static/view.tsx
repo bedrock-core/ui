@@ -17,6 +17,15 @@ import type { TopTabNavigationOptions } from './tabs';
 import { copyData } from './definitions';
 import { navigatorLayout } from './factory';
 
+const PLAYER_REQUIRED = Symbol.for('@bedrock-core/ui-runtime/player-required');
+
+/** The callback reaches user code only through Controller.action's player guard. */
+function playerRequired(handler: (event: PressEvent) => unknown): (event: PressEvent) => unknown {
+  Object.defineProperty(handler, PLAYER_REQUIRED, { value: handler });
+
+  return handler;
+}
+
 const full = { position: 'absolute' as const, left: 0, top: 0, right: 0, bottom: 0 };
 // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- JSX stores callbacks opaquely; the expander supplies the route props validated by the static definition
 const element = (component: (props: never) => JSX.Element, props: Record<string, unknown>): JSX.Element => ({ type: component as JSX.Element['type'], props });
@@ -341,13 +350,13 @@ function mountBody(controller: Controller, plan: NativePlan, tree: BodyTree, sta
           : plan.edges[edgeKey(index, press.id)] === undefined)
       : potential;
     const serverInputs = serverContexts.map(index => contextual(index,
-      inputMetadata(press, Button({ ...props, width: '100%', height: '100%', onPress: (event) => {
+      inputMetadata(press, Button({ ...props, width: '100%', height: '100%', onPress: playerRequired((event) => {
         const state = states[index];
 
         if (state === undefined || !active.includes(index)) { return; }
 
         return controller.action(state, handler, event);
-      } })),
+      }) })),
     ));
     // Each press carries two membership masks, shared by all of its contextual hitboxes.
     const family = (local: boolean, children: JSX.Element[]): JSX.Element => SelectionPanel({

@@ -4,7 +4,7 @@ import { createStackNavigator } from '../stack';
 import { createTopTabNavigator } from '../tabs';
 import { Controller } from '../controller';
 import type { AnyStaticNavigator, ClientNavigationOptions, NavigationAction } from '../common';
-import { createModel, leaf, stateIdentity } from '../state';
+import { createModel, initialState, leaf, stateIdentity } from '../state';
 import { baseBodies, edgeKey, preparePlan, replayPlan, type BodyTree } from '../plan';
 
 const Page = () => Panel({});
@@ -44,6 +44,7 @@ function fixture(actions: Record<string, Readonly<Record<string, NavigationActio
         }
       }
     },
+    enter(names: readonly string[]) { controller.state = initialState(model, { routes: names.map(name => ({ name })) }); states = replayPlan(controller, plan, presses); index = 0; },
     checkpoint() { controller.state = states[index]!; states = replayPlan(controller, plan, presses); index = 0; },
     state: () => states[index]!,
     move(name: string) {
@@ -167,6 +168,26 @@ describe('native history planning', () => {
 
 
 describe('recent native history', () => {
+  it('prepares finite server entry histories that cannot be reached by a local link', () => {
+    const app = fixture({ Home: {}, Player: { open: push('Preferences'), back }, Preferences: { back } }, {
+      history: 'recent', maxDepth: 5, maxStates: 16,
+      entryStates: [{ routes: [{ name: 'Home' }, { name: 'Player' }] }],
+    });
+
+    app.enter(['Home', 'Player']);
+    app.move('open');
+    expect(app.state().routes.map(route => route.name)).toEqual(['Home', 'Player', 'Preferences']);
+    app.checkpoint(); app.move('back'); app.move('back');
+    expect(leaf(app.state()).name).toBe('Home');
+    app.verifyTransitions();
+  });
+
+  it('rejects an unknown entry route instead of treating it as a budget fallback', () => {
+    expect(() => fixture({ Home: {} }, {
+      history: 'recent', fallback: 'server', entryStates: [{ routes: [{ name: 'Unknown' }] }],
+    })).toThrow('Unknown');
+  });
+
   it('collapses a visited-page loop and retains Back across a server checkpoint', () => {
     const app = fixture({ A: { open: push('B') }, B: { open: push('C'), back }, C: { loop: push('B'), back } }, {
       history: 'recent', maxDepth: 5, maxStates: 64,
@@ -210,9 +231,28 @@ describe('recent native history', () => {
     app.verifyTransitions();
   });
 
+  it.each([undefined, 'server'] as const)('uses server checkpoints when recent histories exceed the budget with fallback %s', (fallback) => {
+    const app = fixture({ A: { open: push('B') }, B: { open: push('C'), back }, C: { open: push('D'), back }, D: { open: push('E'), back }, E: { back } }, {
+      history: 'recent', maxDepth: 5, maxStates: 4, fallback,
+    });
+
+    expect(app.plan.v).toBe(1);
+    expect(app.plan.contexts.length).toBeLessThanOrEqual(4);
+    app.move('open'); app.move('open'); app.move('open');
+    expect(app.has('open')).toBe(false);
+    app.move('back');
+    expect(leaf(app.state()).name).toBe('C');
+  });
+
+  it('rejects an invalid recent history budget even when server fallback is allowed', () => {
+    expect(() => fixture({ A: { open: push('B') }, B: { back } }, {
+      history: 'recent', maxStates: 0, fallback: 'server',
+    })).toThrow('Client navigation requires a positive maxStates integer');
+  });
+
   it('fails compilation rather than omitting transitions when complete recent history cannot fit', () => {
     expect(() => fixture({ A: { open: push('B') }, B: { open: push('C') }, C: { open: push('A') } }, {
-      history: 'recent', maxDepth: 5, maxStates: 4,
+      history: 'recent', maxDepth: 5, maxStates: 4, fallback: 'error',
     })).toThrow('Recent history exceeds the native state budget');
   });
 });

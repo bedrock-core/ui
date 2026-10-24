@@ -148,9 +148,15 @@ function historyDepth(state: NavigationState): number {
   return own + state.routes.reduce((depth, route) => depth + (route.state === undefined ? 0 : historyDepth(route.state)), 0);
 }
 
+class RecentHistoryBudgetError extends Error {}
+
 /** One bounded context graph covers the complete nested tree, including every tab's stack. */
 export function preparePlan(controller: Controller, trees: readonly BodyTree[], bodies: readonly Body[]): NativePlan {
-  if (controller.options.clientNavigation?.history === 'recent') { return prepareRecentPlan(controller, trees, bodies); }
+  if (controller.options.clientNavigation?.history === 'recent') {
+    try { return prepareRecentPlan(controller, trees, bodies); } catch (error) {
+      if (!(error instanceof RecentHistoryBudgetError) || controller.options.clientNavigation.fallback === 'error') { throw error; }
+    }
+  }
 
   const contexts: NativeContext[] = [{ via: [] }];
   const canonical: (NavigationState | undefined)[] = [undefined];
@@ -341,7 +347,7 @@ function prepareRecentPlan(controller: Controller, trees: readonly BodyTree[], b
 
     if (existing !== undefined) { return existing; }
 
-    if (contexts.length >= maxStates) { throw new Error('Recent history exceeds the native state budget. Reduce guide links/history or increase maxStates.'); }
+    if (contexts.length >= maxStates) { throw new RecentHistoryBudgetError('Recent history exceeds the native state budget. Reduce links/history or increase maxStates.'); }
 
     const scope = activeScope(controller.model, state);
     let body = records.find(body => body.model === scope.model.key && body.name === scope.name && sameParams(body.params, scope.params));
@@ -364,6 +370,12 @@ function prepareRecentPlan(controller: Controller, trees: readonly BodyTree[], b
   };
 
   for (const body of bodies.filter(body => body.base)) { intern(stateForBody(controller.model, body)); }
+
+  for (const entry of controller.options.clientNavigation?.entryStates ?? []) {
+    const state = controller.reduction(controller.state, { type: 'RESET', payload: entry });
+
+    if (state !== undefined) { intern(state); }
+  }
 
   for (let index = 1; index < contexts.length; index++) {
     const context = contexts[index];
