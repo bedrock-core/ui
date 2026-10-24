@@ -22,7 +22,7 @@ The public navigation entry exposes route APIs and whole-host `navigate`, `navig
 
 `Link` and intact `useLinkProps()` handlers carry readable action descriptions. Imperative hook methods and ordinary callbacks execute on the server. Published keys and `createScreenReference()` destinations always use a server handoff.
 
-The default shared budget is two local transitions and 64 native contexts for the entire tree. Each route/literal-parameter body mounts once. Small contextual inputs select the correct logical history. The context budget does not limit registered route names; mounted body count still affects cost.
+The default shared budget is two additional stack entries or tab visits and 64 native contexts for the entire tree. Replacing sibling pages does not increase history depth; the planner prepares those paths before deeper link histories. Each route/literal-parameter body mounts once. Small contextual inputs select the correct logical history. The context budget does not limit registered route names; mounted body count still affects cost.
 
 ## Planning and confirmation
 
@@ -48,7 +48,7 @@ Each context owns a passive radio input. One always-mounted source combines `#to
 
 The owner stays outside page gates at zero size with focus and button mappings disabled. Context gates use fixed overlay geometry. Native button faces fill both axes and supply every on/off, hover and locked state.
 
-Form-carried visibility and membership values use data-only sources mounted at the screen root. Rendered controls read those sources through view bindings. Native radio inputs retain one shared collection scope across pages and conditional visibility gates.
+Form-carried visibility and membership values use data-only sources in always-mounted zero-area helper groups outside page gates. These groups bound sibling counts without changing source identities or collection hosts. Rendered controls read those sources through view bindings. Native radio inputs retain one shared collection scope across pages and conditional visibility gates.
 
 A carried text mask selects a subset of a fixed index universe. Runtime masks may change membership while the compiled indexes remain stable. Shared caption frames keep labels outside the repeated contextual hitboxes.
 
@@ -56,4 +56,4 @@ A carried text mask selects a subset of a fixed index universe. Runtime masks ma
 
 Generated guides use the same static stack. Each audience owns a filtered route tree, with pages under `page:<id>` and a separate `index` route. MDX components use `Link`, `useLinkProps()` and the standard navigation hooks. Ordinary button handlers receive the confirmed state before they run.
 
-Server checkpoints retain the logical visited stack. A compiled entry supplies the initial route only when no confirmed navigator state exists.
+Guides use flat recent history: repeated page names collapse loops and at most five Back destinations are retained. Older visits are discarded. Their complete bounded graph is compiled across all entry pages; budget exhaustion is a build error. Absolute history contexts and entry masks keep reading local after explicit server actions. A compiled entry supplies the initial route only when no confirmed navigator state exists.

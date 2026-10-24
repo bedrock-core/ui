@@ -9,6 +9,7 @@ import type {
   NavigationProp, NavigationState, Route, StaticNavigationOptions,
 } from './common';
 import { copyData, isReference, type RouteDefinition } from './definitions';
+import { recentHistory } from './history';
 import { focused, initialState, restoreState, modelAt, reduce, replaceState, stateAt, type Model, type StateRoute, type StateInput } from './state';
 
 type Listener = (event: never) => void;
@@ -42,6 +43,22 @@ export class Controller {
     const checkpointed = player === undefined ? undefined : currentLocation(player)?.navigatorStates?.[model.key];
 
     if (checkpointed !== undefined) { this.state = restoreState(model, checkpointed); }
+
+    if (options.clientNavigation?.history === 'recent' && (model.definition.type !== 'stack' || model.children.size > 0)) {
+      throw new Error('Recent history requires a flat stack navigator.');
+    }
+
+    this.state = this.normalize(this.state);
+  }
+
+  private normalize(state: NavigationState): NavigationState {
+    if (this.options.clientNavigation?.history !== 'recent') { return state; }
+
+    const depth = this.options.clientNavigation.maxDepth ?? 2;
+
+    if (!Number.isSafeInteger(depth) || depth < 0) { throw new Error('Recent history requires a nonnegative maxDepth integer.'); }
+
+    return recentHistory(state, depth);
   }
 
   activate(): void {
@@ -250,7 +267,7 @@ export class Controller {
   confirm(state: NavigationState): void {
     const before = this.state;
 
-    this.state = copyData(state); this.revision++;
+    this.state = this.normalize(copyData(state)); this.revision++;
 
     if (this.player !== undefined) { checkpoint(this.player, { navigatorStates: { [this.model.key]: this.state } }); }
 
@@ -269,7 +286,7 @@ export class Controller {
         const result = reduce(model, own, action);
 
         if (result.handled) {
-          const next = replaceState(state, model.key, result.state);
+          const next = this.normalize(replaceState(state, model.key, result.state));
           let owner = this.model; let route = focused(next);
 
           while (route.state !== undefined) { owner = owner.children.get(route.name)!; route = focused(route.state); }

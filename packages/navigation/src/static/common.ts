@@ -293,8 +293,10 @@ export type AnyStaticNavigator = StaticNavigator<NavigatorType, StaticConfig>;
 export interface ClientNavigationOptions {
   /** Default auto. */
   readonly mode?: 'auto' | 'server';
-  /** Nonnegative integer. Maximum client-local pushes before a server checkpoint. Default 2. */
+  /** Nonnegative integer. Maximum additional stack entries and tab visits in a client-local history. Default 2. */
   readonly maxDepth?: number;
+  /** Flat stacks only: collapse repeated page names and discard the oldest entries beyond maxDepth. Default preserves full history. */
+  readonly history?: 'recent';
   /** Positive integer. Maximum combined native history contexts, not a limit on registered screens. Default 64. */
   readonly maxStates?: number;
   /** Default server. Dynamic params, unsupported local actions and exhausted budgets use the server. */

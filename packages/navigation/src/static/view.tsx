@@ -295,9 +295,10 @@ function mountBody(controller: Controller, plan: NativePlan, tree: BodyTree, sta
     const original = node.props.onPress;
     const handler = (event: PressEvent): unknown => typeof original === 'function' ? Reflect.apply(original, undefined, [event]) : undefined;
 
-    const candidates = potential.map((index) => {
+    const candidates = potential.flatMap(index => (index === 0 && plan.v === 2
+      ? plan.entryEdges?.[press.id] ?? [undefined]
+      : [plan.edges[edgeKey(index, press.id)]]).map((target) => {
       const state = states[index];
-      const target = plan.edges[edgeKey(index, press.id)];
       let local = false;
 
       if (target !== undefined && state !== undefined && states[target] !== undefined && press.link !== undefined && !press.link.server) {
@@ -314,13 +315,35 @@ function mountBody(controller: Controller, plan: NativePlan, tree: BodyTree, sta
       }
 
       return { index, state, target, local };
-    });
+    }));
     const contextual = (index: number, children: JSX.Element): JSX.Element => SelectionPanel({ ...full, group, index, children });
-    const localInputs = candidates.flatMap(({ index, target }) => target === undefined
-      ? []
-      : [contextual(index, visualInput(press, target, group))]);
-    const serverInputs = candidates.map(({ index, state }) => contextual(index,
+    const destinations = new Map<number, typeof candidates>();
+
+    for (const candidate of candidates) {
+      if (candidate.target === undefined) { continue; }
+
+      const members = destinations.get(candidate.target) ?? [];
+
+      members.push(candidate); destinations.set(candidate.target, members);
+    }
+
+    const localInputs = plan.v === 2
+      ? [...destinations].map(([target, members]) => SelectionPanel({ ...full, group,
+          indexes: [...new Set(members.map(member => member.index))],
+          activeIndexes: [...new Set(members.filter(member => member.local).map(member => member.index))],
+          children: visualInput(press, target, group),
+        }))
+      : candidates.flatMap(({ index, target }) => target === undefined ? [] : [contextual(index, visualInput(press, target, group))]);
+    // Complete histories do not allocate server responses for their native reading edges.
+    const serverContexts = plan.v === 2
+      ? potential.filter(index => index === 0
+          ? press.link?.action.type === 'GO_BACK' || plan.entryEdges?.[press.id] === undefined
+          : plan.edges[edgeKey(index, press.id)] === undefined)
+      : potential;
+    const serverInputs = serverContexts.map(index => contextual(index,
       inputMetadata(press, Button({ ...props, width: '100%', height: '100%', onPress: (event) => {
+        const state = states[index];
+
         if (state === undefined || !active.includes(index)) { return; }
 
         return controller.action(state, handler, event);
@@ -329,9 +352,13 @@ function mountBody(controller: Controller, plan: NativePlan, tree: BodyTree, sta
     // Each press carries two membership masks, shared by all of its contextual hitboxes.
     const family = (local: boolean, children: JSX.Element[]): JSX.Element => SelectionPanel({
       ...full, group, indexes: potential.length === 0 ? [0] : potential,
-      activeIndexes: candidates.filter(candidate => candidate.local === local).map(candidate => candidate.index), children,
+      activeIndexes: potential.filter(index => candidates.some(candidate => candidate.index === index && candidate.local) === local), children,
     });
-    const inputs = localInputs.length === 0 ? serverInputs : [family(true, localInputs), family(false, serverInputs)];
+    const inputs = localInputs.length === 0
+      ? serverInputs
+      : plan.v === 2
+        ? [...localInputs, family(false, serverInputs)]
+        : [family(true, localInputs), family(false, serverInputs)];
     const frame = Swap({ ...layout, ...swapProps(props), passive: true, hug: props.__hug === true, caption, inputs,
       children: [Swap.Look({ state: 'on' }), Swap.Look({ state: 'off' })] });
 

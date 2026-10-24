@@ -4,7 +4,7 @@ import type { Controller, PageScope } from './controller';
 import { LINK_ACTION, type LinkAction } from './context';
 import { isNavigationAction } from './actions';
 import { copyData } from './definitions';
-import { focused, initialState, leaf, modelAt, stateAt, stateIdentity, type Model, type StateInput } from './state';
+import { focused, initialState, leaf, modelAt, stateAt, stateIdentity, restoreState, isNavigationState, type Model, type StateInput } from './state';
 
 export interface Body {
   readonly id: string;
@@ -17,12 +17,14 @@ export interface NativeContext {
   readonly via: readonly string[];
   readonly origin?: string;
   readonly body?: string;
+  readonly state?: NavigationState;
 }
 export interface NativePlan {
-  readonly v: 1;
+  readonly v: 1 | 2;
   readonly bodies: readonly Body[];
   readonly contexts: readonly NativeContext[];
   readonly edges: Readonly<Record<string, number>>;
+  readonly entryEdges?: Readonly<Record<string, readonly number[]>>;
 }
 export interface Press {
   readonly id: string;
@@ -139,8 +141,17 @@ const sameParams = (a: object | undefined, b: object | undefined): boolean => JS
 
 export const edgeKey = (index: number, press: string): string => `${index}:${press}`;
 
+/** Counts retained stack entries and tab visits across the complete navigation tree. */
+function historyDepth(state: NavigationState): number {
+  const own = state.type === 'stack' ? state.routes.length - 1 : Math.max(0, (state.history?.length ?? 1) - 1);
+
+  return own + state.routes.reduce((depth, route) => depth + (route.state === undefined ? 0 : historyDepth(route.state)), 0);
+}
+
 /** One bounded context graph covers the complete nested tree, including every tab's stack. */
 export function preparePlan(controller: Controller, trees: readonly BodyTree[], bodies: readonly Body[]): NativePlan {
+  if (controller.options.clientNavigation?.history === 'recent') { return prepareRecentPlan(controller, trees, bodies); }
+
   const contexts: NativeContext[] = [{ via: [] }];
   const canonical: (NavigationState | undefined)[] = [undefined];
   const indexes = new Map<string, number>();
@@ -150,6 +161,47 @@ export function preparePlan(controller: Controller, trees: readonly BodyTree[], 
   const byId = new Map(trees.map(tree => [tree.body.id, tree]));
   const options = controller.options.clientNavigation;
   const maxStates = options?.maxStates ?? 64; const maxDepth = options?.maxDepth ?? 2;
+  const flat = controller.model.definition.type === 'stack' && controller.model.children.size === 0
+    && controller.model.routes.every(route => route.config.initialParams === undefined && route.config.if === undefined);
+
+  const plainReplacement = (press: Press): boolean => {
+    const link = press.link;
+    const action = link?.action;
+
+    if (!flat || link === undefined || link.server || link.scope !== controller.model.key || press.body.model !== controller.model.key
+      || action?.type !== 'REPLACE' || action.source !== undefined || action.target !== undefined
+      || action.payload.params !== undefined || action.payload.name === press.body.name) { return false; }
+
+    const name = action.payload.name;
+
+    return records.some(body => body.base && body.name === name)
+      && !controller.serverOnly(controller.model, press.body.name) && !controller.serverOnly(controller.model, name);
+  };
+
+  const replacements = trees.flatMap(tree => tree.presses).filter(plainReplacement);
+
+  const sharedRecipe = (press: Press): { kind: string; via: readonly string[] } | undefined => {
+    const action = press.link?.action;
+
+    if (action === undefined || !flat || action.source !== undefined || action.target !== undefined || press.link?.scope !== controller.model.key) { return undefined; }
+
+    if (plainReplacement(press) && action.type === 'REPLACE') {
+      const detour = replacements.find(other => other.link?.action.type === 'REPLACE' && other.link.action.payload.name !== action.payload.name);
+
+      // Drop the confirmed current route before replacing it, including when it has the destination's name.
+      return detour === undefined ? undefined : { kind: 'replace', via: [detour.id, press.id] };
+    }
+
+    if (action.type === 'RESET' && action.payload.routes.length === 1 && (action.payload.index ?? 0) === 0) {
+      const route = action.payload.routes[0];
+
+      if (route.params === undefined && route.state === undefined && records.some(body => body.base && body.name === route.name)) {
+        return { kind: 'reset', via: [press.id] };
+      }
+    }
+
+    return undefined;
+  };
 
   if (!Number.isSafeInteger(maxStates) || maxStates < 1 || !Number.isSafeInteger(maxDepth) || maxDepth < 0) {
     throw new Error('Client navigation requires positive maxStates and nonnegative maxDepth integers.');
@@ -172,20 +224,21 @@ export function preparePlan(controller: Controller, trees: readonly BodyTree[], 
     return body;
   };
 
-  const intern = (state: NavigationState, via: readonly string[], origin: Body): number | undefined => {
+  const intern = (state: NavigationState, via: readonly string[], origin: Body, press: Press): number | undefined => {
     const seed = seeds.get(origin.id) ?? stateIdentity(stateForBody(controller.model, origin));
 
     seeds.set(origin.id, seed);
     const identity = stateIdentity(state);
+    const shared = historyDepth(state) === 0 ? sharedRecipe(press) : undefined;
 
-    if (identity === seed) { return 0; }
+    if (shared === undefined && identity === seed) { return 0; }
 
-    const key = `${origin.id}:${identity}`;
+    const key = `${shared?.kind ?? origin.id}:${identity}`;
     const found = indexes.get(key);
 
     if (found !== undefined) { return found; }
 
-    if (contexts.length >= maxStates || via.length > maxDepth) { return undefined; }
+    if (contexts.length >= maxStates) { return undefined; }
 
     const body = bodyFor(state);
 
@@ -194,69 +247,162 @@ export function preparePlan(controller: Controller, trees: readonly BodyTree[], 
     const index = contexts.length;
 
     indexes.set(key, index);
-    contexts.push({ via, origin: origin.id, body: body.id }); canonical.push(state);
+    contexts.push({ via: shared?.via ?? via, origin: origin.id, body: body.id }); canonical.push(state);
 
     return index;
   };
 
-  const transition = (index: number, state: NavigationState, origin: Body, press: Press): void => {
-    if (press.link === undefined || press.link.server || options?.mode === 'server') { return; }
-
-    const scope = scopeOf(controller, press.body);
-
-    if (controller.serverOnly(scope.model, scope.route.name)) { return; }
-
-    let next: NavigationState | undefined;
-
-    try { next = controller.reduction(state, press.link.action, press.link.scope); } catch { return; }
-
-    if (next === undefined || controller.external(next) !== undefined) { return; }
-
-    const destination = activeScope(controller.model, next);
-
-    if (controller.serverOnly(destination.model, destination.name)) { return; }
-
-    const target = intern(next, [...contexts[index].via, press.id], origin);
-
-    if (target === undefined) {
-      if (options?.fallback === 'error') { throw new Error(`Client navigation budget exceeded by ${press.body.name}.`); }
-
-      return;
-    }
-
-    edges[edgeKey(index, press.id)] = target;
-  };
-
+  interface Transition { readonly from: number; readonly state: NavigationState; readonly press: Press }
   const initial = leaf(initialState(controller.model));
   const origins = records.filter(body => body.base).toSorted((a, b) => Number(b.name === initial.name) - Number(a.name === initial.name));
-  let expanded = 1;
 
   for (const origin of origins) {
+    const pending = new Map<number, { items: Transition[]; cursor: number }>();
+
+    const exceeded = (press: Press): void => {
+      if (options?.fallback === 'error') { throw new Error(`Client navigation budget exceeded by ${press.body.name}.`); }
+    };
+
+    const schedule = (index: number, state: NavigationState, tree: BodyTree): void => {
+      for (const press of tree.presses) {
+        if (press.link === undefined || press.link.server || options?.mode === 'server') { continue; }
+
+        const scope = scopeOf(controller, press.body);
+
+        if (controller.serverOnly(scope.model, scope.route.name)) { continue; }
+
+        let next: NavigationState | undefined;
+
+        try { next = controller.reduction(state, press.link.action, press.link.scope); } catch { continue; }
+
+        if (next === undefined || controller.external(next) !== undefined) { continue; }
+
+        const destination = activeScope(controller.model, next);
+
+        if (controller.serverOnly(destination.model, destination.name)) { continue; }
+
+        const depth = historyDepth(next);
+
+        if (depth > maxDepth) { exceeded(press); continue; }
+
+        const queue = pending.get(depth) ?? { items: [], cursor: 0 };
+
+        queue.items.push({ from: index, state: next, press }); pending.set(depth, queue);
+      }
+    };
+
     const tree = byId.get(origin.id);
 
     if (tree === undefined) { continue; }
 
-    const state = stateForBody(controller.model, origin);
+    schedule(0, stateForBody(controller.model, origin), tree);
 
-    for (const press of tree.presses) { transition(0, state, origin, press); }
+    // Prepare sibling paths before spending contexts on deeper link histories.
+    while (pending.size > 0) {
+      const depth = Math.min(...pending.keys());
+      const queue = pending.get(depth)!;
+      const { from, state, press } = queue.items[queue.cursor++];
 
-    // Fill the entry's bounded paths before spending the budget on other server entries.
-    for (; expanded < contexts.length; expanded++) {
-      const context = contexts[expanded];
-      const tree = byId.get(context.body!);
+      if (queue.cursor === queue.items.length) { pending.delete(depth); }
 
-      if (tree === undefined) { continue; }
+      const before = contexts.length;
+      const target = intern(state, [...contexts[from].via, press.id], origin, press);
 
-      const origin = records.find(body => body.id === context.origin)!;
+      if (target === undefined) { exceeded(press); continue; }
 
-      for (const press of tree.presses) { transition(expanded, canonical[expanded]!, origin, press); }
+      edges[edgeKey(from, press.id)] = target;
+
+      if (contexts.length > before) {
+        const body = byId.get(contexts[target].body!);
+
+        if (body !== undefined) { schedule(target, canonical[target]!, body); }
+      }
     }
   }
 
   return { v: 1, bodies: records, contexts, edges };
 }
 
+/** Absolute bounded histories share contexts across entry pages and server presentations. */
+function prepareRecentPlan(controller: Controller, trees: readonly BodyTree[], bodies: readonly Body[]): NativePlan {
+  const contexts: NativeContext[] = [{ via: [] }];
+  const indexes = new Map<string, number>();
+  const edges: Record<string, number> = {};
+  const entryEdges = new Map<string, Set<number>>();
+  const records = [...bodies];
+  const byId = new Map(trees.map(tree => [tree.body.id, tree]));
+  const maxStates = controller.options.clientNavigation?.maxStates ?? 64;
+
+  if (!Number.isSafeInteger(maxStates) || maxStates < 1) { throw new Error('Client navigation requires a positive maxStates integer.'); }
+
+  const intern = (state: NavigationState): number => {
+    const identity = stateIdentity(state);
+    const existing = indexes.get(identity);
+
+    if (existing !== undefined) { return existing; }
+
+    if (contexts.length >= maxStates) { throw new Error('Recent history exceeds the native state budget. Reduce guide links/history or increase maxStates.'); }
+
+    const scope = activeScope(controller.model, state);
+    let body = records.find(body => body.model === scope.model.key && body.name === scope.name && sameParams(body.params, scope.params));
+
+    if (body === undefined) {
+      const base = records.find(body => body.base && body.model === scope.model.key && body.name === scope.name);
+
+      if (base === undefined) { throw new Error(`No local body for ${scope.name}.`); }
+
+      body = { ...base, id: `page_${records.length}`, base: false, ...scope.params === undefined ? {} : { params: copyData(scope.params) } };
+      records.push(body);
+    }
+
+    const index = contexts.length;
+
+    indexes.set(identity, index);
+    contexts.push({ via: [], body: body.id, state: copyData(state) });
+
+    return index;
+  };
+
+  for (const body of bodies.filter(body => body.base)) { intern(stateForBody(controller.model, body)); }
+
+  for (let index = 1; index < contexts.length; index++) {
+    const context = contexts[index];
+    const tree = byId.get(context.body!);
+
+    if (tree === undefined) { continue; }
+
+    for (const press of tree.presses) {
+      if (press.link === undefined || press.link.server || controller.options.clientNavigation?.mode === 'server') { continue; }
+
+      const source = activeScope(controller.model, context.state!);
+
+      if (controller.serverOnly(source.model, source.name)) { continue; }
+
+      const next = controller.reduction(context.state!, press.link.action, press.link.scope);
+
+      if (next === undefined || controller.external(next) !== undefined) { continue; }
+
+      const destination = activeScope(controller.model, next);
+
+      if (controller.serverOnly(destination.model, destination.name)) { continue; }
+
+      const target = intern(next);
+
+      edges[edgeKey(index, press.id)] = target;
+      const entries = entryEdges.get(press.id) ?? new Set<number>();
+
+      entries.add(target); entryEdges.set(press.id, entries);
+    }
+  }
+
+  return { v: 2, bodies: records, contexts, edges, entryEdges: Object.fromEntries([...entryEdges].map(([press, indexes]) => [press, [...indexes]])) };
+}
+
 export function replayPlan(controller: Controller, plan: NativePlan, presses: ReadonlyMap<string, Press>): readonly (NavigationState | undefined)[] {
+  if (plan.v === 2) {
+    return [controller.state, ...plan.contexts.slice(1).map(context => restoreState(controller.model, context.state))];
+  }
+
   return plan.contexts.map((context) => {
     let state: NavigationState | undefined = controller.state;
 
@@ -273,6 +419,9 @@ export function replayPlan(controller: Controller, plan: NativePlan, presses: Re
 }
 
 export function isNativePlan(value: unknown): value is NativePlan {
-  return value !== null && typeof value === 'object' && 'v' in value && value.v === 1 && 'bodies' in value && Array.isArray(value.bodies)
-    && 'contexts' in value && Array.isArray(value.contexts) && 'edges' in value && typeof value.edges === 'object';
+  return value !== null && typeof value === 'object' && 'v' in value && (value.v === 1 || value.v === 2) && 'bodies' in value && Array.isArray(value.bodies)
+    && 'contexts' in value && Array.isArray(value.contexts) && 'edges' in value && typeof value.edges === 'object'
+    && (value.v === 1 || ('entryEdges' in value && value.entryEdges !== null && typeof value.entryEdges === 'object'
+      && value.contexts.slice(1).every((context: unknown) => context !== null && typeof context === 'object'
+        && 'state' in context && isNavigationState(context.state))));
 }

@@ -102,3 +102,44 @@ describe('generic native selection panels', () => {
     expect(() => compileFormScreen(component([1, 1]), { namespace: 'example', name: 'duplicate' })).toThrow('selection index');
   });
 });
+
+
+it('bounds native traversal pressure for large selection histories without changing their sources', () => {
+  const count = 139;
+  const component = (): JSX.Element => Screen({ children: Panel({ width: 300, height: 200, children: [
+    ...Array.from({ length: count }, (_, index) => Swap({ id: 'owner_' + index, group: 'large', index,
+      exclusive: true, passive: true, defaultOn: index === 0, width: 0, height: 0,
+      children: [Swap.Look({ state: 'on' }), Swap.Look({ state: 'off' })],
+    })),
+    ...Array.from({ length: 16 }, (_, page) => SelectionPanel({ group: 'large', index: page,
+      width: 300, height: 200, children: Array.from({ length: 32 }, (_, entry) => {
+        const index = 1 + (page * 32 + entry) % (count - 1);
+
+        return SelectionPanel({ group: 'large', indexes: [0, index], activeIndexes: [index], width: 10, height: 10,
+          children: Text({ children: 'Page ' + page + ' entry ' + entry }),
+        });
+      }),
+    })),
+  ] }) });
+  const compiled = compileFormScreen(component, { namespace: 'example', name: 'large_selection' });
+  const screen = compiled.document.screen as Control;
+  const pending = [screen];
+  let peak = pending.length;
+  const controls: Control[] = [];
+
+  while (pending.length > 0) {
+    peak = Math.max(peak, pending.length);
+    const control = pending.pop()!;
+
+    controls.push(control);
+    for (const entry of control.controls ?? []) { pending.push(...Object.values(entry)); }
+  }
+
+  expect(compiled.entries.length).toBeGreaterThanOrEqual(512);
+  expect(screen.controls!.length).toBeLessThanOrEqual(64);
+  expect(peak, 'explicit native control traversal worklist').toBeLessThanOrEqual(256);
+  expect(controls.filter(control => control.type === 'toggle')).toHaveLength(count);
+  expect(controls.filter(control => control.bindings?.at(-1)?.target_property_name === '#navigation_selected')).toHaveLength(count);
+  expect(controls.filter(control => control.type === 'stack_panel' && control.collection_name !== undefined)
+    .every(control => control.controls?.length === 1)).toBe(true);
+});

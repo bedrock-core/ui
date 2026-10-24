@@ -72,6 +72,111 @@ function pressEntry(player: Player, snapshot: Parameters<typeof compiledValuesOf
 }
 
 describe('static root runtime and refs', () => {
+  it('keeps five-level recent reading local before and after server actions', async () => {
+    const observed: NavigationState[] = [];
+    const names = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
+    const Page = (next: string) => () => {
+      const navigation = useNavigation();
+
+      return Panel({ children: [
+        node(Link, { action: { type: 'NAVIGATE', payload: { name: next } }, testName: 'Next' }),
+        node(Link, { action: { type: 'NAVIGATE', payload: { name: 'G' } }, testName: 'Loop' }),
+        node(Link, { action: CommonActions.goBack(), testName: 'Back' }),
+        node(Button, { testName: 'Save', onPress: () => observed.push(navigation.getState()) }),
+      ] });
+    };
+    const Root = createStackNavigator({ screens: Object.fromEntries(names.map((name, index) => [name, Page(names[(index + 1) % names.length])])),
+      screenOptions: { headerShown: false } });
+    const ref = createNavigationContainerRef<typeof Root>();
+    const Navigation = createStaticNavigation(Root, { clientNavigation: { history: 'recent', maxDepth: 5, maxStates: 512, fallback: 'error' } });
+    const App = () => Screen({ children: node(Navigation, { ref }) });
+    const compiled = compileFormScreen(App, { namespace: 'static_runtime', name: 'recent_checkpoint' });
+
+    registerCompiledScreen(App, { key: 'static_runtime:recent_checkpoint', title: compiled.title, snapshot: compiled.snapshot });
+    __setDeferredShows(true); render(App, one);
+    let nativeIndex = 0;
+    const local = (name: string): void => {
+      const inputs = activeInputs(one, nativeIndex, name).inputs;
+
+      expect(inputs.map(input => input.type)).toEqual(['swap-slot']);
+      nativeIndex = Number(inputs[0].props.index);
+    };
+    const first = __lastActionForm();
+
+    for (let step = 0; step < 7; step++) { local('Next'); }
+    expect(__lastActionForm()).toBe(first);
+    __resolveShow({ canceled: false, selection: pressEntry(one, compiled.snapshot, nativeIndex, 'Save') });
+    await vi.waitFor(() => expect(observed).toHaveLength(1));
+    expect(observed[0].routes.map(route => route.name)).toEqual(['C', 'D', 'E', 'F', 'G', 'H']);
+    await vi.waitFor(() => expect(__lastActionForm()).not.toBe(first));
+    const second = __lastActionForm();
+
+    nativeIndex = 0; local('Next'); local('Loop'); local('Back');
+    expect(__lastActionForm()).toBe(second);
+    __resolveShow({ canceled: false, selection: pressEntry(one, compiled.snapshot, nativeIndex, 'Save') });
+    await vi.waitFor(() => expect(observed).toHaveLength(2));
+    expect(observed[1].routes.map(route => route.name)).toEqual(['D', 'E', 'F']);
+    await vi.waitFor(() => expect(__lastActionForm()).not.toBe(second));
+    const third = __lastActionForm();
+
+    nativeIndex = 0; local('Back'); local('Next');
+    for (let step = 0; step < 30; step++) { local('Next'); }
+    expect(__lastActionForm()).toBe(third);
+    expect(__pendingShowCount()).toBe(1);
+  }, 60000);
+
+  it('confirms the linked parent and replaced page after a long native reading session', async () => {
+    const observed: NavigationState[] = [];
+    const Page = (next: string) => () => {
+      const navigation = useNavigation();
+
+      return Panel({ children: [
+        node(Link, { action: { type: 'REPLACE', payload: { name: next } }, testName: 'Next' }),
+        node(Link, { action: CommonActions.goBack(), testName: 'Back' }),
+        node(Button, { testName: 'Save', onPress: () => observed.push(navigation.getState()) }),
+      ] });
+    };
+    const Root = createStackNavigator({ screens: {
+      Home: () => Panel({ children: node(Link, { action: { type: 'PUSH', payload: { name: 'A' } }, testName: 'Open' }) }),
+      A: Page('B'), B: Page('C'), C: Page('A'),
+    }, screenOptions: { headerShown: false } });
+    const ref = createNavigationContainerRef<typeof Root>();
+    const Navigation = createStaticNavigation(Root, { clientNavigation: { maxDepth: 1, maxStates: 16 } });
+    const App = () => Screen({ children: node(Navigation, { ref }) });
+    const compiled = compileFormScreen(App, { namespace: 'static_runtime', name: 'sibling_checkpoint' });
+
+    registerCompiledScreen(App, { key: 'static_runtime:sibling_checkpoint', title: compiled.title, snapshot: compiled.snapshot });
+    __setDeferredShows(true); render(App, one);
+    const before = __lastActionForm();
+    let nativeIndex = 0;
+    const local = (name: string): void => {
+      const inputs = activeInputs(one, nativeIndex, name).inputs;
+
+      expect(inputs.map(input => input.type)).toEqual(['swap-slot']);
+      nativeIndex = Number(inputs[0].props.index);
+    };
+
+    local('Open');
+    for (let step = 0; step < 20; step++) { local('Next'); }
+    expect(__lastActionForm()).toBe(before);
+    expect(ref.forPlayer(one).getCurrentRoute()?.name).toBe('Home');
+    __resolveShow({ canceled: false, selection: pressEntry(one, compiled.snapshot, nativeIndex, 'Save') });
+    await vi.waitFor(() => expect(observed).toHaveLength(1));
+    expect(observed[0].routes.map(route => route.name)).toEqual(['Home', 'C']);
+    await vi.waitFor(() => expect(__lastActionForm()).not.toBe(before));
+    const resumed = __lastActionForm();
+
+    nativeIndex = 0;
+    for (let step = 0; step < 4; step++) { local('Next'); }
+    expect(__lastActionForm()).toBe(resumed);
+    __resolveShow({ canceled: false, selection: pressEntry(one, compiled.snapshot, nativeIndex, 'Save') });
+    await vi.waitFor(() => expect(observed).toHaveLength(2));
+    expect(observed[1].routes.map(route => route.name)).toEqual(['Home', 'A']);
+    await vi.waitFor(() => expect(__lastActionForm()).not.toBe(resumed));
+    ref.forPlayer(one).goBack();
+    await vi.waitFor(() => expect(ref.forPlayer(one).getCurrentRoute()?.name).toBe('Home'));
+  });
+
   it('uses server fallback when a retained child differs from the compiled native destination', async () => {
     const Page = () => Panel({});
     const Root = createTopTabNavigator({ screens: {

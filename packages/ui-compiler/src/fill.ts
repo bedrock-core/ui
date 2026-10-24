@@ -27,6 +27,7 @@
 
 import { ContainerScreenError } from '@bedrock-core/ui-runtime/compile';
 import { collapsePanels } from './collapse';
+import { groupRootHelpers } from './traversal';
 import { type FlowPanel, flowPanel, flowPanels } from './flow';
 import { type FaceDocument, SCREEN_DEFINITION } from './face';
 import type { Control, ControlEntry, Document } from './jsonui';
@@ -232,5 +233,10 @@ export const fill = (face: FaceDocument, host: HostEmit, title = ''): Document =
 
   collect(face.root);
 
-  return flowPanels(collapsePanels(document, panels), flows);
+  const result = flowPanels(collapsePanels(document, panels), flows);
+  const root = result[SCREEN_DEFINITION];
+
+  if (root !== undefined && isControl(root)) { groupRootHelpers(root, context.ns); }
+
+  return result;
 };
