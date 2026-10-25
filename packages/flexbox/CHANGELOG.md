@@ -1,5 +1,11 @@
 # @bedrock-core/flexbox
 
+## 1.0.1
+
+### Patch Changes
+
+- [`161e53e`](https://github.com/bedrock-core/ui/commit/161e53e2a444678f242b70374ccfb88efbc4c3e2) Thanks [@drav0011](https://github.com/drav0011)! - Preserve percentage sizes after flex allocation and resolve percentage bases against the padded content box. Correct reverse directions, wrapped line alignment, gaps, and integer box boundaries.
+
 ## 1.0.0
 
 ### Major Changes

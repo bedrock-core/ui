@@ -1,5 +1,53 @@
 # @bedrock-core/ui-compiler
 
+## 0.2.0
+
+### Minor Changes
+
+- [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56) Thanks [@drav0011](https://github.com/drav0011)! - Plan bounded local transitions through `createStaticNavigation`, with contextual links and server actions, visited-page Back, and server boundaries when the configured context budgets are reached. Compile shared selection gates and glyph-sized input overlays without duplicating page content.
+
+- [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56) Thanks [@drav0011](https://github.com/drav0011)! - Register screen host kinds and portable parameter contracts. Preserve destination parameters and confirmed client page/tab context through Back and cross-realm navigation. Add `navigation(core)` for owner discovery and host openers, and `navigateAsync()` for destination acceptance. Reject invalid inputs and retain navigation state when a host rejects a transition.
+
+- [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56) Thanks [@drav0011](https://github.com/drav0011)! - Compile bounded native navigation with shared page bodies, persistent selection owners, localized hitboxes and server-confirmed action context.
+
+- [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56) Thanks [@drav0011](https://github.com/drav0011)! - Provide static stack and top-tab navigators, typed route links and hooks, player-scoped container refs, and an integrated Core transport adapter. Share resident page bodies across a bounded native context graph, confirm logical history before server actions, and retain nested state across server checkpoints.
+  
+  Expose generic expanded-tree composition, library compilation data and render refresh controls. Preserve conditional native inputs, stateful button faces and semantic test targets in compiled navigation layouts.
+
+### Patch Changes
+
+- [`2729517`](https://github.com/bedrock-core/ui/commit/2729517b640114f13401ead1f24fcb08ae489d97) Thanks [@drav0011](https://github.com/drav0011)! - Group always-mounted state controls and data sources into bounded zero-area panels to keep native control traversal worklists small.
+
+- [`aee2bbd`](https://github.com/bedrock-core/ui/commit/aee2bbd1c440b846b65e34afe74a507bc5374929) Thanks [@drav0011](https://github.com/drav0011)! - Bind form button visibility directly to each entry's enabled flag so disabled faces and click surfaces stay in sync.
+  
+  Keep native selection bindings limited to mounted scroll variants so small navigation menus do not reference omitted controls.
+
+- [`22c6cc6`](https://github.com/bedrock-core/ui/commit/22c6cc668206ed71821181f3f05546cd9d031735) Thanks [@drav0011](https://github.com/drav0011)! - Keep carried stack rows visible to their runtime gates and let their spacing follow the same visibility entry.
+
+- [`36fd254`](https://github.com/bedrock-core/ui/commit/36fd2543142bb98eb983486fec0937eb0b251bb3) Thanks [@drav0011](https://github.com/drav0011)! - Size compiled dropdown scroll content from its authored option count so inactive inline selectors cannot add blank scrolling space to a shorter popup.
+
+- [`d2b14d6`](https://github.com/bedrock-core/ui/commit/d2b14d6d74934ea856460a720146bda7c45274ec) Thanks [@drav0011](https://github.com/drav0011)! - Bind vanilla action-form button data only while its panel is visible, keeping native buttons out of compiled action forms.
+
+- [`d2b14d6`](https://github.com/bedrock-core/ui/commit/d2b14d6d74934ea856460a720146bda7c45274ec) Thanks [@drav0011](https://github.com/drav0011)! - Render dropdown option labels within each native toggle face so text and styling use that face's collection scope.
+
+- [`856e8f5`](https://github.com/bedrock-core/ui/commit/856e8f5ce288e6a5a806c17809085337ac4a2c9f) Thanks [@drav0011](https://github.com/drav0011)! - Index host socket locations and update their positions through control replacements.
+
+- [`5e67a2f`](https://github.com/bedrock-core/ui/commit/5e67a2fa98f7e9fdbf1a4ee360b39d3bd7de2ef3) Thanks [@drav0011](https://github.com/drav0011)! - Select form screens through title and marker dictionaries, construct routers through the native form factory, and initialize collection and view bindings in viewport-sized screen cells.
+
+- [`aee2bbd`](https://github.com/bedrock-core/ui/commit/aee2bbd1c440b846b65e34afe74a507bc5374929) Thanks [@drav0011](https://github.com/drav0011)! - Localize default Form.Button Submit and Close captions with Minecraft translation keys while preserving explicit labels and authored children.
+
+- [`aee2bbd`](https://github.com/bedrock-core/ui/commit/aee2bbd1c440b846b65e34afe74a507bc5374929) Thanks [@drav0011](https://github.com/drav0011)! - Keep live menu text above native button states and constrain compiled labels to their own layout boxes.
+  
+  Bind compiled sliders to their native modal rows and display fractional values in their authored units.
+
+- [`161e53e`](https://github.com/bedrock-core/ui/commit/161e53e2a444678f242b70374ccfb88efbc4c3e2) Thanks [@drav0011](https://github.com/drav0011)! - Preserve authored geometry, typography, offsets, and state textures for native form fields. Keep slider values above their thumbs and stretch Dropdown popup backgrounds across the full popup. Apply root visibility, collapse hidden stack rows, require valid form buttons, and emit relative native stack sizing only when it preserves solved geometry.
+
+- [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56) Thanks [@drav0011](https://github.com/drav0011)! - Enable native content-drag gestures in scrolling regions and dropdown popups using the client's touch input mode and gesture setting.
+
+- [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56) Thanks [@drav0011](https://github.com/drav0011)! - Compile translated resident navigation links as native toggles sized to their client-rendered captions. Measure ordinary link content in normal flow so automatic heights and styled layouts retain usable bounds.
+- Updated dependencies [[`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56), [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56), [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56), [`36fd254`](https://github.com/bedrock-core/ui/commit/36fd2543142bb98eb983486fec0937eb0b251bb3), [`aee2bbd`](https://github.com/bedrock-core/ui/commit/aee2bbd1c440b846b65e34afe74a507bc5374929), [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56), [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56), [`856e8f5`](https://github.com/bedrock-core/ui/commit/856e8f5ce288e6a5a806c17809085337ac4a2c9f), [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56), [`aee2bbd`](https://github.com/bedrock-core/ui/commit/aee2bbd1c440b846b65e34afe74a507bc5374929), [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56), [`a2c336d`](https://github.com/bedrock-core/ui/commit/a2c336d8f344aa29b5ce41c0490ebb1c6337de56), [`161e53e`](https://github.com/bedrock-core/ui/commit/161e53e2a444678f242b70374ccfb88efbc4c3e2)]:
+  - @bedrock-core/ui-runtime@0.13.0
+
 ## 0.1.2
 
 ### Patch Changes
