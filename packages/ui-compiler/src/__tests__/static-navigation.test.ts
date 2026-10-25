@@ -47,7 +47,7 @@ describe('static navigation compilation', () => {
   it('bounds native contexts and emits one body and one caption per page', () => {
     const compiled = app();
     const plan = compiled.snapshot.data?.['navigation:root'] as NativePlan;
-    expect(plan.v).toBe(1);
+    expect(plan.v).toBe(3);
     expect(plan.contexts.length).toBeLessThanOrEqual(12);
     expect(Object.values(plan.edges).length).toBeGreaterThan(3);
     const controls: Control[] = [];
@@ -68,7 +68,7 @@ describe('static navigation compilation', () => {
     const plan = compiled.snapshot.data?.['navigation:root'] as NativePlan;
 
     expect(plan.contexts).toHaveLength(3);
-    expect(plan.contexts.map(context => context.via.length)).toEqual([0, 1, 2]);
+    expect(plan.contexts.map(context => context.checkpoint?.presses.length ?? 0)).toEqual([0, 1, 2]);
     expect(plan.bodies.find(body => body.id === plan.contexts[2].body)?.name).toBe('C');
   });
 
@@ -99,7 +99,7 @@ describe('static navigation compilation', () => {
     const compiled = compileFormScreen(() => Screen({ children: node(Navigation) }), { namespace: 'static_nav', name: 'tabs' });
     const plan = compiled.snapshot.data?.['navigation:root'] as NativePlan;
     expect(plan.bodies.filter(body => body.base).map(body => body.name)).toEqual(['Products', 'Product', 'Settings', 'About']);
-    expect(plan.contexts.length).toBeLessThanOrEqual(64);
+    expect(plan.contexts.length).toBeLessThanOrEqual(128);
     expect(Object.keys(plan.edges).length).toBeGreaterThan(0);
   });
   it('keeps published routes on the server and rejects exhausted budgets in error mode', () => {
@@ -172,8 +172,8 @@ describe('static navigation compilation', () => {
     const compiled = compileFormScreen(() => Screen({ children: node(Navigation) }), { namespace: 'static_nav', name: 'large' });
     const plan = compiled.snapshot.data?.['navigation:root'] as NativePlan;
     expect(plan.bodies).toHaveLength(1000);
-    expect(plan.contexts).toHaveLength(64);
-    expect(plan.contexts.every(context => context.via.length <= 2)).toBe(true);
+    expect(plan.contexts).toHaveLength(128);
+    expect(plan.contexts.every(context => (context.checkpoint?.presses.length ?? 0) <= 5)).toBe(true);
     const controls: Control[] = [];
     eachControl(compiled.document, (_name, control) => controls.push(control));
     expect(controls.filter(control => control.type === 'label' && String(control.text).startsWith('Unique body '))).toHaveLength(1000);

@@ -22,11 +22,11 @@ The public navigation entry exposes route APIs and whole-host `navigate`, `navig
 
 `Link` and intact `useLinkProps()` handlers carry readable action descriptions. Imperative hook methods and ordinary callbacks execute on the server. Published keys and `createScreenReference()` destinations always use a server handoff.
 
-The default shared budget is two additional stack entries or tab visits and 64 native contexts for the entire tree. Replacing sibling pages does not increase history depth; the planner prepares those paths before deeper link histories. Each route/literal-parameter body mounts once. Small contextual inputs select the correct logical history. The context budget does not limit registered route names; mounted body count still affects cost.
+The default shared budget is five additional stack entries or tab visits and 128 native contexts for the entire tree. Replacing sibling pages does not increase history depth; the planner prepares those paths before deeper link histories. Each route/literal-parameter body mounts once. Small contextual inputs select the correct logical history. The context budget does not limit registered route names; mounted body count still affects cost.
 
 ## Planning and confirmation
 
-The compiled snapshot stores finite context recipes and their page identities. Runtime rendering replays those recipes against the current server-confirmed tree. Carried masks enable only contexts that match actual parameters, availability and server-navigation policy.
+The compiled snapshot stores one finite context graph and its page identities. Application contexts replay declarative actions over the current server-confirmed tree. Recent reading contexts restore their bounded history snapshots. Carried masks enable only contexts that match actual parameters, availability and server-navigation policy.
 
 Context zero represents the confirmed entry. A server boundary confirms the selected recipe, updates logical state and refreshes the existing render session. The next presentation starts another bounded native window. It preserves mounted hook fibers within that session.
 

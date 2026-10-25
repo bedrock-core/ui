@@ -54,7 +54,7 @@ export class Controller {
   private normalize(state: NavigationState): NavigationState {
     if (this.options.clientNavigation?.history !== 'recent') { return state; }
 
-    const depth = this.options.clientNavigation.maxDepth ?? 2;
+    const depth = this.options.clientNavigation.maxDepth ?? 5;
 
     if (!Number.isSafeInteger(depth) || depth < 0) { throw new Error('Recent history requires a nonnegative maxDepth integer.'); }
 

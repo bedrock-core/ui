@@ -293,13 +293,13 @@ export type AnyStaticNavigator = StaticNavigator<NavigatorType, StaticConfig>;
 export interface ClientNavigationOptions {
   /** Default auto. */
   readonly mode?: 'auto' | 'server';
-  /** Nonnegative integer. Maximum additional stack entries and tab visits in a client-local history. Default 2. */
+  /** Nonnegative integer. Maximum additional stack entries and tab visits in a client-local history. Default 5. */
   readonly maxDepth?: number;
   /** Flat stacks only: collapse repeated page names and discard the oldest entries beyond maxDepth. Default preserves full history. */
   readonly history?: 'recent';
   /** Flat recent stacks: finite initial histories used by server presentations, in addition to each route's standalone entry. */
   readonly entryStates?: readonly InitialState[];
-  /** Positive integer. Maximum combined native history contexts, not a limit on registered screens. Default 64. */
+  /** Positive integer. Maximum combined native history contexts, not a limit on registered screens. Default 128. */
   readonly maxStates?: number;
   /** Default server. Dynamic params, unsupported local actions and exhausted budgets use the server. */
   readonly fallback?: 'server' | 'error';
@@ -309,7 +309,7 @@ export interface StaticNavigationOptions {
   /** Default resolves this bundle's own entries. Core adds discovery and cross-addon transport to the same navigation tree. */
   readonly adapter?: NavigationAdapter;
   readonly clientNavigation?: ClientNavigationOptions;
-  /** Default caller-or-close for goBack. Native form cancellation dismisses the host. Checkpoints reset local history. */
+  /** Default caller-or-close for goBack. Native form cancellation dismisses the host. Server actions retain confirmed history. */
   readonly rootBackBehavior?: 'caller-or-close' | 'close';
 }
 

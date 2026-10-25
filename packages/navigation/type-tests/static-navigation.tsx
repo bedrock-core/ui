@@ -93,7 +93,7 @@ declare module '@bedrock-core/navigation' {
 }
 
 const Navigation = createStaticNavigation(RootStack, {
-  clientNavigation: { mode: 'auto', maxDepth: 2, maxStates: 64, fallback: 'server' },
+  clientNavigation: { mode: 'auto', maxDepth: 5, maxStates: 128, fallback: 'server' },
   rootBackBehavior: 'caller-or-close',
 });
 const navigationRef = createNavigationContainerRef<typeof RootStack>();

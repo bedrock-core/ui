@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { StaticScreenProps } from '@bedrock-core/navigation';
 import type { Player } from '@minecraft/server';
 import {
   Button, Panel, Screen, Text, childElements, compiledValuesOf, endRender, registerCompiledScreen, render,
@@ -15,7 +16,7 @@ import {
   __lastActionForm, __pendingShowCount, __resetFormMocks, __resolveShow, __setDeferredShows,
 } from '../../../ui-runtime/src/__mocks__/@minecraft/server-ui';
 import type { NativePlan } from '../../../navigation/src/static/plan';
-import type { NavigationState } from '../../../navigation/src/static/common';
+import type { InitialState, NavigationState } from '../../../navigation/src/static/common';
 
 const node = (type: unknown, props: Record<string, unknown> = {}): JSX.Element => ({ type: type as FunctionComponent, props });
 const player = (id: string): Player => ({ id, inputPermissions: { isPermissionCategoryEnabled: () => true, setPermissionCategory: vi.fn() } }) as unknown as Player;
@@ -210,7 +211,7 @@ describe('static root runtime and refs', () => {
     const compiled = compileFormScreen(App, { namespace: 'static_runtime', name: 'custom_header' });
     registerCompiledScreen(App, { key: 'static_runtime:custom_header', title: compiled.title, snapshot: compiled.snapshot });
     const plan = compiled.snapshot.data?.['navigation:root'] as NativePlan;
-    const localB = plan.contexts.findIndex(context => context.origin === 'page_0' && context.body === 'page_1' && context.via.length === 1);
+    const localB = plan.contexts.findIndex(context => context.checkpoint?.entry === 'page_0' && context.body === 'page_1' && context.checkpoint?.presses.length === 1);
     expect(localB).toBeGreaterThan(0);
     __setDeferredShows(true); render(App, one);
     expect(activeInputs(one, 0, 'Custom Back').inputs).toHaveLength(0);
@@ -278,5 +279,158 @@ describe('static root runtime and refs', () => {
   });
   it('rejects lifecycle hooks on an automatically local route at build time', () => {
     expect(() => fixture(false, true)).toThrow("bedrock.navigation: 'server'");
+  });
+});
+
+
+describe('unified history planning', () => {
+  it('keeps pagination local across server returns with an unplanned saved parent', async () => {
+    const observed: NavigationState[] = [];
+    const Page = (next: string) => () => {
+      const navigation = useNavigation();
+
+      return Panel({ children: [
+        node(Link, { action: { type: 'REPLACE', payload: { name: next } }, testName: 'Next' }),
+        node(Button, { testName: 'Save', onPress: () => observed.push(navigation.getState()) }),
+      ] });
+    };
+    const Root = createStackNavigator({ screens: { Caller: () => Panel({}), A: Page('B'), B: Page('A') }, screenOptions: { headerShown: false } });
+    const ref = createNavigationContainerRef<typeof Root>();
+    const Navigation = createStaticNavigation(Root);
+    let entry: InitialState | undefined;
+    const App = () => Screen({ children: node(Navigation, { ref, initialState: entry }) });
+    const compiled = compileFormScreen(App, { namespace: 'unified_runtime', name: 'saved_parent' });
+
+    registerCompiledScreen(App, { key: 'unified_runtime:saved_parent', title: compiled.title, snapshot: compiled.snapshot });
+    entry = { routes: [{ name: 'Caller' }, { name: 'A' }] };
+    __setDeferredShows(true); render(App, one);
+
+    for (let round = 0; round < 2; round++) {
+      const before = __lastActionForm();
+      let nativeIndex = 0;
+
+      for (let step = 0; step < 40; step++) {
+        const inputs = activeInputs(one, nativeIndex, 'Next').inputs;
+
+        expect(inputs.map(input => input.type)).toEqual(['swap-slot']);
+        nativeIndex = Number(inputs[0].props.index);
+      }
+
+      expect(__lastActionForm()).toBe(before);
+      __resolveShow({ canceled: false, selection: pressEntry(one, compiled.snapshot, nativeIndex, 'Save') });
+      await vi.waitFor(() => expect(observed).toHaveLength(round + 1));
+      await vi.waitFor(() => expect(__lastActionForm()).not.toBe(before));
+      expect(observed[round].routes.map(route => route.name)).toEqual(['Caller', 'A']);
+      expect(observed[round].routes[1].key).toMatch(/A:0$/);
+    }
+
+    ref.forPlayer(one).goBack();
+    await vi.waitFor(() => expect(ref.forPlayer(one).getCurrentRoute()?.name).toBe('Caller'));
+  });
+
+  it('keeps five default levels and their Back transitions within one form presentation', () => {
+    const names = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+    const screens = Object.fromEntries(names.map((name, index) => [name, () => Panel({ children: [
+      node(Link, { action: { type: 'PUSH', payload: { name: names[(index + 1) % names.length] } }, testName: 'Next' }),
+      node(Link, { action: CommonActions.goBack(), testName: 'Back' }),
+    ] })]));
+    const Navigation = createStaticNavigation(createStackNavigator({ screens, screenOptions: { headerShown: false } }));
+    const App = () => Screen({ children: node(Navigation) });
+    const compiled = compileFormScreen(App, { namespace: 'unified_runtime', name: 'default_window' });
+
+    registerCompiledScreen(App, { key: 'unified_runtime:default_window', title: compiled.title, snapshot: compiled.snapshot });
+    __setDeferredShows(true); render(App, one);
+    const before = __lastActionForm();
+    let nativeIndex = 0;
+
+    for (const caption of [...Array<string>(5).fill('Next'), ...Array<string>(5).fill('Back')]) {
+      const inputs = activeInputs(one, nativeIndex, caption).inputs;
+
+      expect(inputs.map(input => input.type)).toEqual(['swap-slot']);
+      nativeIndex = Number(inputs[0].props.index);
+    }
+
+    expect(__lastActionForm()).toBe(before);
+  });
+
+  it('preserves both compiled entity instances when pushing the same screen twice', async () => {
+    const observed: NavigationState[] = [];
+    const Detail = (_props: StaticScreenProps<{ id: string }>) => {
+      const navigation = useNavigation();
+
+      return Panel({ children: [
+        node(Link, { action: { type: 'PUSH', payload: { name: 'Detail', params: { id: 'two' } } }, testName: 'Second item' }),
+        node(Link, { action: CommonActions.goBack(), testName: 'Back item' }),
+        node(Button, { testName: 'Save', onPress: () => observed.push(navigation.getState()) }),
+      ] });
+    };
+    const Root = createStackNavigator({ screens: {
+      Home: () => Panel({ children: node(Link, { action: { type: 'PUSH', payload: { name: 'Detail', params: { id: 'one' } } }, testName: 'First item' }) }),
+      Detail: { screen: Detail, initialParams: { id: 'one' }, getId: ({ params }: { params: { id: string } }): string => params.id },
+    }, screenOptions: { headerShown: false } });
+    const Navigation = createStaticNavigation(Root);
+    const App = () => Screen({ children: node(Navigation) });
+    const compiled = compileFormScreen(App, { namespace: 'unified_runtime', name: 'entity_instances' });
+
+    registerCompiledScreen(App, { key: 'unified_runtime:entity_instances', title: compiled.title, snapshot: compiled.snapshot });
+    __setDeferredShows(true); render(App, one);
+    let nativeIndex = 0;
+
+    for (const caption of ['First item', 'Second item', 'Back item']) {
+      const inputs = activeInputs(one, nativeIndex, caption).inputs;
+
+      expect(inputs.map(input => input.type)).toEqual(['swap-slot']);
+      nativeIndex = Number(inputs[0].props.index);
+    }
+
+    __resolveShow({ canceled: false, selection: pressEntry(one, compiled.snapshot, nativeIndex, 'Save') });
+    await vi.waitFor(() => expect(observed).toHaveLength(1));
+    expect(observed[0].routes.map(route => route.params)).toEqual([undefined, { id: 'one' }]);
+  });
+
+  it('clears saved ancestors when a local Reset starts a new stack', async () => {
+    const observed: NavigationState[] = [];
+    const B = () => {
+      const navigation = useNavigation();
+
+      return Panel({ children: node(Button, { testName: 'Save', onPress: () => observed.push(navigation.getState()) }) });
+    };
+    const Root = createStackNavigator({ screens: {
+      Caller: () => Panel({}), A: () => Panel({ children: node(Link, { action: { type: 'RESET', payload: { routes: [{ name: 'B' }] } }, testName: 'Reset' }) }), B,
+    }, screenOptions: { headerShown: false } });
+    const Navigation = createStaticNavigation(Root);
+    let entry: InitialState | undefined;
+    const App = () => Screen({ children: node(Navigation, { initialState: entry }) });
+    const compiled = compileFormScreen(App, { namespace: 'unified_runtime', name: 'reset_saved_parent' });
+
+    registerCompiledScreen(App, { key: 'unified_runtime:reset_saved_parent', title: compiled.title, snapshot: compiled.snapshot });
+    entry = { routes: [{ name: 'Caller' }, { name: 'A' }] };
+    __setDeferredShows(true); render(App, one);
+    const inputs = activeInputs(one, 0, 'Reset').inputs;
+
+    expect(inputs.map(input => input.type)).toEqual(['swap-slot']);
+    const nativeIndex = Number(inputs[0].props.index);
+
+    __resolveShow({ canceled: false, selection: pressEntry(one, compiled.snapshot, nativeIndex, 'Save') });
+    await vi.waitFor(() => expect(observed).toHaveLength(1));
+    expect(observed[0].routes.map(route => route.name)).toEqual(['B']);
+  });
+
+  it('retains a usable server input when a recent entry history was not precompiled', async () => {
+    const Root = createStackNavigator({ screens: {
+      Caller: () => Panel({}), A: () => Panel({ children: node(Link, { action: { type: 'REPLACE', payload: { name: 'B' } }, testName: 'Next' }) }), B: () => Panel({}),
+    }, screenOptions: { headerShown: false } });
+    const ref = createNavigationContainerRef<typeof Root>();
+    const Navigation = createStaticNavigation(Root, { clientNavigation: { history: 'recent', fallback: 'server' } });
+    let entry: InitialState | undefined;
+    const App = () => Screen({ children: node(Navigation, { ref, initialState: entry }) });
+    const compiled = compileFormScreen(App, { namespace: 'unified_runtime', name: 'unplanned_recent' });
+
+    registerCompiledScreen(App, { key: 'unified_runtime:unplanned_recent', title: compiled.title, snapshot: compiled.snapshot });
+    entry = { routes: [{ name: 'Caller' }, { name: 'A' }] };
+    __setDeferredShows(true); render(App, one);
+    expect(activeInputs(one, 0, 'Next').inputs.map(input => input.type)).toEqual(['button']);
+    __resolveShow({ canceled: false, selection: pressEntry(one, compiled.snapshot, 0, 'Next') });
+    await vi.waitFor(() => expect(ref.forPlayer(one).getCurrentRoute()?.name).toBe('B'));
   });
 });

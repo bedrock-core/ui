@@ -5,7 +5,7 @@ import { createTopTabNavigator } from '../tabs';
 import { Controller } from '../controller';
 import type { AnyStaticNavigator, ClientNavigationOptions, NavigationAction } from '../common';
 import { createModel, initialState, leaf, stateIdentity } from '../state';
-import { baseBodies, edgeKey, preparePlan, replayPlan, type BodyTree } from '../plan';
+import { baseBodies, edgeKey, isNativePlan, preparePlan, replayPlan, type BodyTree } from '../plan';
 
 const Page = () => Panel({});
 const replace = (name: string): NavigationAction => ({ type: 'REPLACE', payload: { name } });
@@ -52,7 +52,7 @@ function fixture(actions: Record<string, Readonly<Record<string, NavigationActio
       const tree = trees.find(tree => tree.body.name === leaf(state).name)!;
       const press = tree.presses.find(press => press.id === `${tree.body.id}/${name}`)!;
       const expected = controller.reduction(state, press.link!.action, press.link!.scope);
-      const next = plan.v === 2 && index === 0
+      const next = index === 0
         ? plan.entryEdges?.[press.id]?.find(target => stateIdentity(states[target]!) === stateIdentity(expected!))
         : plan.edges[edgeKey(index, press.id)];
 
@@ -231,17 +231,17 @@ describe('recent native history', () => {
     app.verifyTransitions();
   });
 
-  it.each([undefined, 'server'] as const)('uses server checkpoints when recent histories exceed the budget with fallback %s', (fallback) => {
+  it.each([undefined, 'server'] as const)('keeps recent histories in the shared format when the budget fills with fallback %s', (fallback) => {
     const app = fixture({ A: { open: push('B') }, B: { open: push('C'), back }, C: { open: push('D'), back }, D: { open: push('E'), back }, E: { back } }, {
       history: 'recent', maxDepth: 5, maxStates: 4, fallback,
     });
 
-    expect(app.plan.v).toBe(1);
+    expect(app.plan.v).toBe(3);
     expect(app.plan.contexts.length).toBeLessThanOrEqual(4);
-    app.move('open'); app.move('open'); app.move('open');
+    app.move('open'); app.move('open');
     expect(app.has('open')).toBe(false);
     app.move('back');
-    expect(leaf(app.state()).name).toBe('C');
+    expect(leaf(app.state()).name).toBe('B');
   });
 
   it('rejects an invalid recent history budget even when server fallback is allowed', () => {
@@ -253,6 +253,36 @@ describe('recent native history', () => {
   it('fails compilation rather than omitting transitions when complete recent history cannot fit', () => {
     expect(() => fixture({ A: { open: push('B') }, B: { open: push('C') }, C: { open: push('A') } }, {
       history: 'recent', maxDepth: 5, maxStates: 4, fallback: 'error',
-    })).toThrow('Recent history exceeds the native state budget');
+    })).toThrow('Client navigation budget exceeded');
+  });
+});
+
+
+describe('native graph contract', () => {
+  it('rejects obsolete compiled navigation data', () => {
+    const app = fixture({ Home: {} }, {});
+
+    expect(isNativePlan(app.plan)).toBe(true);
+    expect(isNativePlan({ ...app.plan, v: 1 })).toBe(false);
+    expect(isNativePlan({ ...app.plan, v: 2 })).toBe(false);
+  });
+
+  it('rejects an undeclared strict reading entry before allocating interactive controls', () => {
+    const app = fixture({ Caller: {}, A: { open: push('B') }, B: { back } }, {
+      history: 'recent', maxDepth: 5, maxStates: 16, fallback: 'error',
+    });
+
+    expect(() => app.enter(['Caller', 'A'])).toThrow('Uncompiled client navigation history');
+  });
+
+  it('allows an explicit published entry to hand off through the server', () => {
+    const navigator = createStackNavigator({ initialRouteName: 'External', screens: { External: 'foreign:entry', Home: Page } });
+    const model = createModel(navigator);
+    const controller = new Controller(model, { clientNavigation: { history: 'recent', fallback: 'error' } });
+    const bodies = baseBodies(model);
+    const trees: BodyTree[] = bodies.map(body => ({ body, element: Page(), presses: [] }));
+    const plan = preparePlan(controller, trees, bodies);
+
+    expect(() => replayPlan(controller, plan, new Map())).not.toThrow();
   });
 });
