@@ -1,6 +1,6 @@
 name: Release resource pack
 
-# Package the shared textures from main and attach them to each UI release.
+# Package the shared textures from the requested UI release tag.
 on:
   workflow_dispatch:
     inputs:
@@ -8,7 +8,6 @@ on:
         description: UI npm/release version, without the package name
         type: string
         required: true
-        default: 0.12.1
       ship_to_curseforge:
         description: Upload the attached pack to CurseForge after the build
         type: boolean
@@ -28,8 +27,11 @@ jobs:
     env:
       TAG: '@bedrock-core/ui@${{ inputs.ui_version }}'
     steps:
-      - name: Checkout resource-pack source
+      - name: Checkout versioned resource-pack source
         uses: actions/checkout@v7
+        with:
+          ref: '@bedrock-core/ui@${{ inputs.ui_version }}'
+          fetch-depth: 0
 
       - uses: actions/setup-node@v7
         with:
@@ -45,10 +47,10 @@ jobs:
           yarn install --mode=skip-build
         working-directory: packages/resource-pack
 
-      - name: Align texture pack version with the UI release
+      - name: Verify tagged UI and resource-pack versions
         env:
           UI_VERSION: ${{ inputs.ui_version }}
-        run: node scripts/sync-pack-version.mjs "$UI_VERSION"
+        run: node scripts/check-resource-pack-release.mjs "$UI_VERSION"
 
       - name: Build resource pack
         run: yarn build

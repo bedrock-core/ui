@@ -81,7 +81,7 @@
 		"test": "yarn workspaces foreach -ptA run test",
 		"test:libs": "yarn workspaces foreach -A -pt --no-private --exclude '@bedrock-core/ui' run test",
 		"check:release-versions": "node scripts/check-release-versions.mjs",
-		"test:release": "yarn tsc -p scripts/tsconfig.json && yarn check:release-versions && node --test scripts/release-root.test.mjs scripts/release-versions.test.ts scripts/sync-pack-version.test.mjs",
+		"test:release": "yarn tsc -p scripts/tsconfig.json && yarn check:release-versions && node --test scripts/release-root.test.mjs scripts/release-versions.test.ts scripts/sync-pack-version.test.mjs scripts/resource-pack-release.test.mjs",
 		"coverage": "yarn workspaces foreach -ptA run coverage",
 		"deploy": "yarn --cwd packages/resource-pack deploy",
 		"preflight": "node scripts/preflight.mjs",

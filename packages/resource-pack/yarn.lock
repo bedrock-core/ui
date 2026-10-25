@@ -128,7 +128,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bedrock-core/ui-resource-pack@workspace:."
   dependencies:
-    "@bedrock-core/builder": "npm:0.1.0-alpha.0"
+    "@bedrock-core/builder": "npm:0.1.0"
     "@eslint/js": "npm:10.0.1"
     "@eslint/json": "npm:1.2.0"
     "@stylistic/eslint-plugin": "npm:5.10.0"
