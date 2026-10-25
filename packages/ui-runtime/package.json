@@ -77,6 +77,7 @@
 	},
 	"devDependencies": {
 		"@bedrock-core/i18n": "*",
+		"@minecraft/common": "*",
 		"@minecraft/server": "*",
 		"@minecraft/server-ui": "*",
 		"@vitest/coverage-v8": "*",

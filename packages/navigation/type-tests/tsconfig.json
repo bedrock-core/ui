@@ -18,21 +18,6 @@
       ],
       "@bedrock-core/ui-runtime/*": [
         "../../ui-runtime/src/*"
-      ],
-      "@bedrock-core/i18n": [
-        "../../../../server/packages/i18n/src/index.ts"
-      ],
-      "@bedrock-core/i18n/*": [
-        "../../../../server/packages/i18n/src/*"
-      ],
-      "@bedrock-core/server-runtime": [
-        "../../../../server/packages/server-runtime/src/index.ts"
-      ],
-      "@bedrock-core/sync": [
-        "../../../../server/packages/sync/src/index.ts"
-      ],
-      "@minecraft/common": [
-        "../../../../examples/node_modules/@minecraft/common/index.d.ts"
       ]
     }
   },

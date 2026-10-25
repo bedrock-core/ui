@@ -54,6 +54,7 @@
 		"test:types": "tsc -p type-tests/tsconfig.json --noEmit"
 	},
 	"devDependencies": {
+		"@minecraft/common": "*",
 		"@minecraft/server": "*",
 		"eslint": "*",
 		"typescript": "*",

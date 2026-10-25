@@ -82,6 +82,7 @@ __metadata:
   resolution: "@bedrock-core/navigation@workspace:packages/navigation"
   dependencies:
     "@bedrock-core/ui-runtime": "workspace:*"
+    "@minecraft/common": "npm:*"
     "@minecraft/server": "npm:*"
     eslint: "npm:*"
     typescript: "npm:*"
@@ -160,6 +161,7 @@ __metadata:
     "@bedrock-core/i18n": "npm:*"
     "@bedrock-core/navigation": "workspace:*"
     "@bedrock-core/ui-runtime": "workspace:*"
+    "@minecraft/common": "npm:*"
     "@minecraft/server": "npm:*"
     "@minecraft/server-ui": "npm:*"
     eslint: "npm:*"
@@ -181,6 +183,7 @@ __metadata:
   dependencies:
     "@bedrock-core/flexbox": "workspace:*"
     "@bedrock-core/i18n": "npm:*"
+    "@minecraft/common": "npm:*"
     "@minecraft/server": "npm:*"
     "@minecraft/server-ui": "npm:*"
     "@vitest/coverage-v8": "npm:*"
@@ -215,6 +218,7 @@ __metadata:
     "@eslint/js": "npm:^10.0.1"
     "@eslint/json": "npm:^1.2.0"
     "@eslint/markdown": "npm:^8.0.1"
+    "@minecraft/common": "npm:*"
     "@minecraft/server": "npm:*"
     "@minecraft/server-ui": "npm:*"
     "@minecraft/vanilla-data": "npm:*"
@@ -757,6 +761,13 @@ __metadata:
     tinyglobby: "npm:^0.2.13"
     yaml: "npm:^2.9.0"
   checksum: 10c0/05c8ece3b3b3ff170765ecf230f0a5408543f1ad43f8b5dc97651adff0ffed3d860dabdd1e2d1068aa247832d473c4de583791675b8f3d07568da4cab2a0ebc3
+  languageName: node
+  linkType: hard
+
+"@minecraft/common@npm:1.2.0":
+  version: 1.2.0
+  resolution: "@minecraft/common@npm:1.2.0"
+  checksum: 10c0/597c3ff8ab275ba5d5fb3037e68970e59ac96e8793b7738178c95b17d22a8f48a4412425314ed494f664466dd9a342e2a9eff52af544e57689f103c2ae965e10
   languageName: node
   linkType: hard
 
