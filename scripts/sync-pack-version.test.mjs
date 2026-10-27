@@ -60,16 +60,16 @@ test('CurseForge metadata uses the supplied artifact manifest', t => {
   mkdirSync(dirname(config), { recursive: true });
   writeFileSync(config, JSON.stringify({ projectId: 1, gameEndpoint: 'minecraft', releaseType: 'release' }));
   writeFileSync(join(dir, 'manifest.json'), JSON.stringify({ header: { version: '1.12.2', min_engine_version: '1.26.50' } }));
-  writeFileSync(join(dir, 'fixture.mcpack'), 'dry-run fixture');
+  writeFileSync(join(dir, 'core-ui-0.12.2.mcpack'), 'dry-run fixture');
   writeFileSync(join(dir, 'notes.md'), 'Texture pack release.');
 
   const output = execFileSync(process.execPath, [
     fileURLToPath(new URL('./curseforge-upload.mjs', import.meta.url)),
-    '--file', 'fixture.mcpack', '--manifest', 'manifest.json',
+    '--file', 'core-ui-0.12.2.mcpack', '--manifest', 'manifest.json',
     '--changelog-file', 'notes.md', '--tag', '@bedrock-core/ui@0.12.2', '--dry-run',
   ], { cwd: dir, encoding: 'utf8' });
 
   const metadata = JSON.parse(output.slice(output.indexOf('{')));
-  assert.equal(metadata.displayName, 'Core UI 1.12.2');
+  assert.equal(metadata.displayName, 'core-ui-0.12.2.mcpack');
   assert.deepEqual(metadata.gameVersionNames, ['26.50']);
 });

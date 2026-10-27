@@ -66,7 +66,7 @@ if (!['alpha', 'beta', 'release'].includes(config.releaseType)) {
 }
 
 const manifest = JSON.parse(readFileSync(args.manifest, 'utf8'));
-const displayName = `Core UI ${manifest.header.version}`;
+const displayName = basename(args.file);
 const base = `https://${config.gameEndpoint}.curseforge.com/api`;
 const minimumEngine = manifest.header?.min_engine_version;
 
