@@ -11,6 +11,7 @@ import { compileFormScreen } from '../hosts/form/compile';
 import { buildContainerPack } from '../hosts/chest/pack';
 import { buildUiPack, type CompiledUiPack } from '../pack';
 import type { Document } from '../jsonui';
+import { child, definition, find } from '../__fixtures__/helpers';
 
 const container = (kind: 'entity' | 'block'): (() => JSX.Element) => () => Container({
   ...kind === 'entity' ? { entity: 'demo:crate' } : { block: 'demo:crate' },
@@ -128,6 +129,26 @@ describe('compiled packs with form and native container hosts', () => {
     expect(pack.screens[0]!.allocation).toBe(source.allocation);
     expect(pack.screens[0]!.layoutId).toBe(source.layoutId);
     expect(pack.screens[0]!.looks).toBe(source.looks);
+  });
+
+  it.each(['entity', 'block'] as const)('draws the held item above an empty output slot on a %s host', (kind) => {
+    const source = compileScreen(() => Container({
+      ...kind === 'entity' ? { entity: 'demo:crate' } : { block: 'demo:crate' },
+      children: Slot({ role: 'output', zIndex: 20 }),
+    }), { namespace: 'alpha', name: kind });
+    const pack = buildContainerPack([source], 'alpha');
+    const support = pack.support.document;
+    const guard = child(definition(support, 'core_ui_chest_output_slot'), 'empty_guard');
+    const cover = child(guard, 'face');
+    const [, slot] = find(source.document, name => name.startsWith('slot_'));
+    const iconName = Object.keys(support).find(name => name.split('@')[0] === 'core_ui_chest_selected_icon');
+    const cursorLayer = Number(definition(support, 'core_ui_chest_selected_icon_button').layer ?? 0)
+      + Number(definition(support, iconName ?? '').layer ?? 0);
+    const coverLayer = Number(slot.layer ?? 0) + Number(guard.layer ?? 0) + Number(cover.layer ?? 0);
+
+    expect(coverLayer).toBeLessThan(cursorLayer);
+    expect(guard.button_mappings).toContainEqual(expect.objectContaining({ consume_event: true }));
+    expect(JSON.stringify(guard.bindings)).toContain(`(#identity = ${IDENTITY.guard})`);
   });
 
   it('keeps linked testing paths addressable without mutating compilation inputs', () => {

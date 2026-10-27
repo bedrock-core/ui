@@ -609,7 +609,9 @@ export default {
                     18,
                     18,
                   ],
-                  layer: 1,
+                  // Keep the cover above the slot renderer and below the held item.
+                  // The input guard retains its higher layer to block insertion.
+                  layer: -20,
                 },
               },
             ],
