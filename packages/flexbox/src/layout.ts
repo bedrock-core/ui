@@ -1,5 +1,5 @@
 import { CANONICAL_SCREEN } from './constants';
-import type { FlexStyle, LayoutNode, MeasuredSize } from './types';
+import type { FlexStyle, LayoutNode, LayoutOptions, MeasuredSize } from './types';
 import {
   isPercent,
   resolveAlignSelf,
@@ -357,17 +357,19 @@ function collectMeasured(node: LayoutNode, out: Map<LayoutNode, MeasuredSize>): 
  * @param root     Root layout node. Its x/y default to 0,0.
  * @param refWidth  Reference width for the root's percentage resolution (default: pocket screen).
  * @param refHeight Reference height for the root's percentage resolution (default: pocket screen).
+ * @param options Pixel-grid snapping; disabled when the renderer preserves fractional geometry.
  */
 export function computeLayout(
   root: LayoutNode,
   refWidth: number = CANONICAL_SCREEN.width,
   refHeight: number = CANONICAL_SCREEN.height,
+  options: LayoutOptions = {},
 ): void {
   const measured = new Map<LayoutNode, MeasuredSize>();
 
   collectMeasured(root, measured);
 
-  solve(root, refWidth, refHeight, measured);
+  solve(root, refWidth, refHeight, measured, options.roundToPixel !== false);
 
   for (let round = 0; round < MAX_MEASURE_ROUNDS && measured.size > 0; round++) {
     let dirty = false;
@@ -392,7 +394,7 @@ export function computeLayout(
       break;
     }
 
-    solve(root, refWidth, refHeight, measured);
+    solve(root, refWidth, refHeight, measured, options.roundToPixel !== false);
   }
 }
 
@@ -412,6 +414,7 @@ function solve(
   refWidth: number,
   refHeight: number,
   measured: ReadonlyMap<LayoutNode, MeasuredSize>,
+  roundToPixel: boolean,
 ): void {
   // ── Root initialisation ─────────────────────────────────────────────────────
   const explicitRootWidth = resolveSize(root.style.width, refWidth);
@@ -825,7 +828,7 @@ function solve(
       // Round both ends of each allocated box on the main axis. Shared fractional
       // boundaries preserve the total flex allocation without overlapping boxes.
       // Margins and distributed justification remain outside each box's interval.
-      if (relKids.some(c => resolveFlexGrow(c.style) > 0 || resolveFlexShrink(c.style) > 0)) {
+      if (roundToPixel && relKids.some(c => resolveFlexGrow(c.style) > 0 || resolveFlexShrink(c.style) > 0)) {
         const intervals: [number, number][] = [];
         let bc = cursor;
 
@@ -1126,10 +1129,11 @@ function solve(
       }
     }
 
-    // ── Round to integers ───────────────────────────────────────────────────
-    node.layout.x = Math.round(node.layout.x);
-    node.layout.y = Math.round(node.layout.y);
-    node.layout.width = Math.round(node.layout.width);
-    node.layout.height = Math.round(node.layout.height);
+    if (roundToPixel) {
+      node.layout.x = Math.round(node.layout.x);
+      node.layout.y = Math.round(node.layout.y);
+      node.layout.width = Math.round(node.layout.width);
+      node.layout.height = Math.round(node.layout.height);
+    }
   }
 }

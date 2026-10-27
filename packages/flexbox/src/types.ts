@@ -97,7 +97,13 @@ export interface FlexStyle {
   zIndex?: number;
 }
 
-/** Resolved absolute layout output (in texels). All values are rounded integers. */
+/** Controls snapping of resolved geometry to the logical pixel grid. */
+export interface LayoutOptions {
+  /** Round coordinates and sizes to integers. Disable for renderers that support fractional texels. Defaults to true. */
+  roundToPixel?: boolean;
+}
+
+/** Resolved absolute layout output in texels; fractional when pixel rounding is disabled. */
 export interface ComputedLayout {
   x: number;
   y: number;

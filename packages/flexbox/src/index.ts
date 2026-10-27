@@ -12,6 +12,7 @@ export type {
   FlexWrap,
   JustifyContent,
   LayoutNode,
+  LayoutOptions,
   MeasuredSize,
   MeasureFunc,
   Percent,
