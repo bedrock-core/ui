@@ -9,7 +9,8 @@ import { FLAG_OFF, FLAG_ON } from './contract';
 import { emitLabel } from '../../core/writers';
 import { allocateModal, type ModalRow } from './allocate';
 import { debugDiff } from './debug';
-import { liveText } from './runtime';
+import { textValue } from './runtime';
+import { textChannelsAt } from '../../core/ir/text';
 import { getComponentDescriptor } from '../../core/componentRegistry';
 import { playerOwner } from '../../core/fabric';
 import { childElements } from '../../core/guards';
@@ -95,7 +96,7 @@ function writeRow(row: ModalRow, form: ModalFormData, context: ModalSerializatio
   context.modalRowIndex++;
 
   if (row.kind === 'text') {
-    emitLabel(liveText(element, row.length ?? 0), form, context);
+    emitLabel(textValue(element, row.length ?? 0), form, context);
 
     return;
   }
@@ -269,6 +270,8 @@ export async function presentCompiledModal(
   // One numbering, shared with the build: the row a compiled control was baked
   // against is the row written here and the slot the answer comes back in —
   // the snapshot's ordinals mark the carried visibles the build gave rows to.
+  if (snapshot !== undefined) { textChannelsAt(tree, snapshot.texts); }
+
   const rows = allocateModal(tree, visiblesAt(tree, snapshot?.vis ?? []));
 
   for (const row of rows) {

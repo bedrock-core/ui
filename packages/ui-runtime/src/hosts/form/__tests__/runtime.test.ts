@@ -1,3 +1,4 @@
+import { textChannelsAt } from '../../../core/ir/text';
 import type { Player } from '@minecraft/server';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
@@ -52,6 +53,7 @@ describe('presenting a compiled form', () => {
     const tree = build((): JSX.Element => Panel({
       children: [Text({ maxLength: 24, children: '§aholding §fdiamond' })],
     }));
+    textChannelsAt(tree, [0]);
 
     await presentCompiledForm(player, tree, TITLE);
 
@@ -64,6 +66,7 @@ describe('presenting a compiled form', () => {
     const tree = build((): JSX.Element => Panel({
       children: [Text({ maxLength: 4, children: 'far too long' })],
     }));
+    textChannelsAt(tree, [0]);
 
     await presentCompiledForm(player, tree, TITLE);
 
@@ -126,6 +129,7 @@ describe('presenting a compiled form', () => {
         Button({ onPress: pressed, children: Text({ children: 'go' }) }),
       ],
     }));
+    textChannelsAt(tree, [0]);
 
     __setDeferredShows(true);
 

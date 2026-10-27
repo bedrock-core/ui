@@ -48,10 +48,8 @@ export function trailWidth(back: TrailBack = 'icon'): number {
 }
 
 /**
- * Characters a live trail reserves: as many of the widest glyph as its room
- * holds, at the header's own font and scale. The reservation is what makes the
- * label live, and the widest glyph is the only count that is true whatever the
- * trail turns out to say.
+ * A conservative literal length limit for the header's available room,
+ * measured using the widest glyph at its current font and scale.
  */
 export const trailMaxLength = (back: TrailBack = 'icon'): number =>
   Math.max(1, Math.floor(trailWidth(back) / headerWidth(WIDEST_GLYPH)));

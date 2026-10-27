@@ -1,3 +1,4 @@
+import { textChannelsAt } from '../../../core/ir/text';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Button } from '../../../components/Button';
 import { EmbedSlots } from '../../../components/Embed';
@@ -13,7 +14,7 @@ import { buildScreenTree } from '../../chest/build';
 import { COUNT_PREFIX, LOOK_PREFIX } from '../contract';
 import { compiledValuesOf } from '../runtime';
 
-const empty: CompiledSnapshot = { shape: '', baked: [], vis: [], looks: [] };
+const empty: CompiledSnapshot = { shape: '', texts: [0, 1, 2, 3], vis: [], looks: [] };
 
 function fixture(): { tree: JSX.Element; onPress: () => void } {
   const onPress = vi.fn();
@@ -26,6 +27,7 @@ function fixture(): { tree: JSX.Element; onPress: () => void } {
     List({ max: 3, items: ['one'], row: (item: string | undefined) => Text({ maxLength: 8, children: item ?? '' }) }),
   ] }) }));
 
+  textChannelsAt(tree, [0, 1, 2, 3]);
   return { tree, onPress };
 }
 

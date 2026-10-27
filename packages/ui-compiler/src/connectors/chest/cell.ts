@@ -52,9 +52,8 @@ const isSelfRouted = (mapping: ButtonMapping): boolean => mapping.from_button_id
  * A chest screen carries everything through slots the runtime polls a tick at
  * a time. A press can only reach script as an item move — JSON UI's button
  * mappings produce game actions, and the container transaction is the only one
- * the server sees — and a string can only cross as numbers, one slot's stack
- * size per character. Every mechanism here is one of those two facts spelled
- * out as JSON UI.
+ * the server sees — and live strings ride a bank item's name. These templates
+ * bind those mechanisms into JSON UI.
  *
  * Every number in a binding is a literal on purpose. A `$variable` inside a
  * `source_property_name` is silently dropped in a subtree the engine inserted
@@ -76,7 +75,7 @@ export const CELL = {
   empty: `${CHEST}.empty`,
 } as const;
 
-/** The static host one character cell mounts, and the per-screen name a channel definition takes. */
+/** The static host one live text value mounts, and the per-screen name a channel definition takes. */
 export const TEXT_DEF = {
   textHost: `${CHEST}.text_host`,
   text: 'text_channel',

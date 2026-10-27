@@ -112,17 +112,6 @@ export class SerializationError extends Error {
 }
 
 /**
- * @deprecated No longer thrown: a key missing from the resolver measures as the
- * literal key string (mirroring Bedrock's unmatched-key rendering). Kept for API compat.
- */
-export class TranslationKeysError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'TranslationKeysError';
-  }
-}
-
-/**
  * Thrown when `render()` is handed a screen the build never compiled.
  *
  * A screen is shown from its layout in the pack, picked by the title the build

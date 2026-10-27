@@ -5,7 +5,7 @@ import { MODAL_FORM_BUTTON_SLOT_TYPE } from '../../../components/Form';
 import { LIST_SLOT_TYPE } from '../../../components/List';
 import { SCROLL_RESERVE, SCROLL_SLOT_TYPE, SCROLL_VIEWPORT, type ScrollAxis, WIDE_RECT } from '../../../components/Scroll';
 import type { JSX } from '../../../jsx';
-import { ellipsizeText, measureText, wrapText, WIDEST_GLYPH } from '../../../util/textMetrics';
+import { ellipsizeText, measureText, wrapText } from '../../../util/textMetrics';
 import { recordWidth } from '../buildPass';
 import { isTransparentType } from '../../componentRegistry';
 import { isElement } from '../../guards';
@@ -84,7 +84,6 @@ interface TextMetricsData {
   overflow?: TextOverflow;
   maxLines?: number;
   /** Characters the text reserves room for, whatever it says right now. */
-  maxLength?: number;
   /** Drawn at the width of its glyphs, so it reserves nothing. */
   hug?: boolean;
 }
@@ -122,7 +121,6 @@ function extractTextMetrics(props: JSX.Props): TextMetricsData {
   const wordBreak = Reflect.get(metrics, 'wordBreak');
   const overflow = Reflect.get(metrics, 'overflow');
   const maxLines = Reflect.get(metrics, 'maxLines');
-  const maxLength = Reflect.get(metrics, 'maxLength');
   const hug = Reflect.get(metrics, 'hug');
 
   return {
@@ -132,45 +130,8 @@ function extractTextMetrics(props: JSX.Props): TextMetricsData {
     wordBreak: wordBreak === 'break-word' ? wordBreak : undefined,
     overflow: overflow === 'ellipsis' ? overflow : undefined,
     maxLines: typeof maxLines === 'number' ? maxLines : undefined,
-    maxLength: typeof maxLength === 'number' && maxLength >= 1 ? Math.floor(maxLength) : undefined,
     hug: hug === true,
   };
-}
-
-/**
- * Whether a `maxLength` text reserves room for its widest possible content.
- *
- * A container screen's live text changes after the layout is frozen, so its
- * box must fit the widest string `maxLength` can hold. A form cuts the literal
- * to `maxLength` and re-measures it every render, so it reserves nothing and
- * the box hugs the text.
- */
-let reserveLiveText = true;
-
-/**
- * The width a text reserves with `maxLength`: room for that many of the widest
- * glyph, so the box holds whatever the text later says. A live text in a
- * container screen changes after the layout is frozen, and the string the
- * build measured is only what it said first.
- */
-function reservedWidth(td: TextMetricsData): number {
-  // A hugging label is drawn at the width of its glyphs and the stack above it
-  // places what follows, so there is nothing to hold open.
-  if (td.maxLength === undefined || td.hug === true) {
-    return 0;
-  }
-
-  return measureText({
-    text: WIDEST_GLYPH.repeat(td.maxLength),
-    font: td.font,
-    fontSize: td.scale,
-  }).width;
-}
-
-// ─── Text overflow processing ───────────────────────────────────────────────────
-
-function hasOverflowProps(td: TextMetricsData): boolean {
-  return td.wordBreak === 'break-word' || td.overflow === 'ellipsis' || td.maxLines !== undefined;
 }
 
 /**
@@ -178,6 +139,10 @@ function hasOverflowProps(td: TextMetricsData): boolean {
  * given available width and return the processed display string. A non-finite
  * or non-positive width (the engine's max-content probe) returns the raw text.
  */
+function hasOverflowProps(td: TextMetricsData): boolean {
+  return td.wordBreak === 'break-word' || td.overflow === 'ellipsis' || td.maxLines !== undefined;
+}
+
 function processOverflowText(td: TextMetricsData, availableWidth: number): string {
   let displayText = td.text;
 
@@ -256,9 +221,8 @@ function makeTextMeasure(element: JSX.Element): MeasureFunc | undefined {
     // A live overflow text reserves its widest content the way a plain one
     // does, within the box it was granted: the string it was measured with is
     // only what it said first.
-    const reserved = reserveLiveText ? Math.min(reservedWidth(td), availableWidth) : 0;
 
-    return reserved > measured.width ? { ...measured, width: reserved } : measured;
+    return measured;
   };
 }
 
@@ -351,7 +315,7 @@ function withIntrinsicSize(element: JSX.Element, style: FlexStyle): FlexStyle {
   const next: FlexStyle = { ...style };
 
   if (next.width === undefined) {
-    next.width = reserveLiveText ? Math.max(dims.width, reservedWidth(td)) : dims.width;
+    next.width = dims.width;
   }
 
   if (next.height === undefined) {
@@ -547,7 +511,7 @@ function findScrolls(element: JSX.Node, out: JSX.Element[]): void {
 }
 
 /** Lay out a scroll's content and return its scroll extent (px) along the axis. */
-function layoutScrollContent(slot: JSX.Element, axis: ScrollAxis, viewportWidth: number, viewportHeight: number, index: number): number {
+function layoutScrollContent(slot: JSX.Element, axis: ScrollAxis, viewportWidth: number, viewportHeight: number, index: number, roundToPixel: boolean): number {
   // `expand` normalizes children to an array, so collect concrete roots across the
   // whole child list (collectConcrete itself takes a single node).
   const rawChildren = slot.props.children;
@@ -568,7 +532,7 @@ function layoutScrollContent(slot: JSX.Element, axis: ScrollAxis, viewportWidth:
       childNodes,
     );
 
-    flexComputeLayout(syntheticRoot, viewportWidth, viewportHeight);
+    flexComputeLayout(syntheticRoot, viewportWidth, viewportHeight, { roundToPixel });
 
     extent = syntheticRoot.children.reduce((max, c) => Math.max(max, c.layout.x + c.layout.width), 0);
   } else {
@@ -589,7 +553,7 @@ function layoutScrollContent(slot: JSX.Element, axis: ScrollAxis, viewportWidth:
     const column = (width: number): { root: LayoutNode; extent: number } => {
       const root = createNode({ flexDirection: 'column', width }, roots.map(r => buildNode(r)));
 
-      flexComputeLayout(root, width, viewportHeight);
+      flexComputeLayout(root, width, viewportHeight, { roundToPixel });
 
       return { root, extent: root.layout.height };
     };
@@ -746,15 +710,13 @@ function resolveDerivedProps(element: JSX.Node): void {
  * @param tree Root JSX element after Phase 1 (function components expanded).
  * @param maxScrolls How many `<Scroll>`s the backend can show. The form render pack pools a
  *   fixed number of viewports; a compiled container screen emits one per scroll.
- * @param reserve Whether `maxLength` text reserves its widest possible width. True for a
- *   container build (live text grows); false for a form (the literal is cut and measured).
+ * @param roundToPixel Whether to snap geometry to integer texels. Compiled JSON UI keeps fractions.
  * @returns The same element tree, mutated in-place with layout values.
  */
 export function computeLayout(
   tree: JSX.Element,
-  reserve: boolean = true,
+  roundToPixel: boolean = true,
 ): JSX.Element {
-  reserveLiveText = reserve;
   const slots: JSX.Element[] = [];
 
   findScrolls(tree, slots);
@@ -776,7 +738,7 @@ export function computeLayout(
       concreteRoots.map(c => buildNode(c)),
     );
 
-    flexComputeLayout(root);
+    flexComputeLayout(root, CANONICAL_SCREEN.width, CANONICAL_SCREEN.height, { roundToPixel });
 
     if (DEBUG_LAYOUT) {
       dumpLayoutNode(root);
@@ -796,7 +758,7 @@ export function computeLayout(
 
     const root = buildNode(concreteTree);
 
-    flexComputeLayout(root);
+    flexComputeLayout(root, CANONICAL_SCREEN.width, CANONICAL_SCREEN.height, { roundToPixel });
 
     if (DEBUG_LAYOUT) {
       dumpLayoutNode(root);
@@ -845,7 +807,7 @@ export function computeLayout(
     const y = asNumber(slot.props[SCROLL_VIEWPORT.y]) ?? asNumber(slot.props.jsonUIy) ?? 0;
     const width = asNumber(slot.props[SCROLL_VIEWPORT.width]) ?? asNumber(slot.props.jsonUIWidth) ?? CANONICAL_SCREEN.width;
     const height = asNumber(slot.props[SCROLL_VIEWPORT.height]) ?? asNumber(slot.props.jsonUIHeight) ?? CANONICAL_SCREEN.height;
-    const extent = layoutScrollContent(slot, axis, width, height, index);
+    const extent = layoutScrollContent(slot, axis, width, height, index, roundToPixel);
 
     scrolls[index] = { axis, x, y, width, height, extent };
   });

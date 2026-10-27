@@ -45,12 +45,12 @@ import { registerScreenMetadata, screenMetadataOf, type ScreenMetadata } from '.
  * silently drawn wrong.
  */
 export interface CompiledSnapshot {
+  /** Compiler-detected text positions. */
+  readonly texts: readonly number[];
   /** Portable compilation data owned by optional component libraries. */
   readonly data?: Readonly<Record<string, unknown>>;
   /** The claim shape the build compiled, as the probe's one-line fingerprint. */
   readonly shape: string;
-  /** Every baked `<Text>` string, in document order. */
-  readonly baked: readonly string[];
   /** Ordinals of the elements whose `visible` is carried. */
   readonly vis: readonly number[];
   /**
@@ -134,27 +134,27 @@ export function registerCompiledScreen(screen: FunctionComponent, record: Compil
     ...record.parameters === undefined ? {} : { parameters: record.parameters } }, screen);
 }
 
-/** Container screen -> the looks its buttons take, as the build tabled them. */
 const containerLooks = new WeakMap<FunctionComponent, readonly VariantTable[]>();
+const containerTexts = new WeakMap<FunctionComponent, readonly number[]>();
 
-/**
- * Records the looks a compiled container screen's buttons take.
- *
- * Called by the module the build generates, never by hand. A chest button
- * whose face follows state is drawn once per look, and the runtime says which
- * one it is wearing by the size of the stack in its slot; this is the table
- * both sides count from.
- *
- * @param screen - The screen component, exactly as `createContainerScreen` is handed it.
- * @param looks - The build's tables, the build's own look first in each.
- */
-export function registerContainerLooks(screen: FunctionComponent, looks: readonly VariantTable[]): void {
+/** Records a compiled container's appearance tables and detected text positions. */
+export function registerContainerLooks(
+  screen: FunctionComponent,
+  looks: readonly VariantTable[],
+  texts: readonly number[] = [],
+): void {
   containerLooks.set(screen, looks);
+  containerTexts.set(screen, texts);
 }
 
-/** The looks a container screen's buttons take, or none when the build drew each one way. */
+/** Appearance tables carried by a container's slots. */
 export function containerLooksOf(screen: FunctionComponent): readonly VariantTable[] {
   return containerLooks.get(screen) ?? [];
+}
+
+/** Detected text positions supplied by the compiler, when registered. */
+export function containerTextsOf(screen: FunctionComponent): readonly number[] | undefined {
+  return containerTexts.get(screen);
 }
 
 /** The key a compiled screen is navigated by, or undefined when it was not compiled. */

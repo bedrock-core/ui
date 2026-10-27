@@ -29,7 +29,7 @@ import { buildTree, cleanupComponentTree } from '../tree';
 
 const owners: Owner[] = [];
 let sequence = 0;
-const snapshot: CompiledSnapshot = { shape: '', baked: [], vis: [] };
+const snapshot: CompiledSnapshot = { shape: '', texts: [], vis: [] };
 
 function el(type: unknown, props: Record<string, unknown> = {}): JSX.Element {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- lazy component factory uses the JSX element shape
@@ -95,6 +95,7 @@ describe('building compiled action form values', () => {
   });
 
   it('preserves entries, callbacks, localized messages, list capacity, embed slots and inherited state', () => {
+    const snapshot: CompiledSnapshot = { shape: '', texts: [0, 1, 2, 3, 4, 5], vis: [] };
     const onPress = vi.fn();
     const onEmbed = vi.fn();
     const root = el(TranslationContext, {
@@ -144,6 +145,7 @@ describe('building compiled action form values', () => {
   });
 
   it('keeps hooked component identity and state across value-only rebuilds', () => {
+    const snapshot: CompiledSnapshot = { shape: '', texts: [0], vis: [] };
     const owner = player();
     let update: ((next: number) => void) | undefined;
 
@@ -168,6 +170,7 @@ describe('building compiled action form values', () => {
   });
 
   it('expands a thousand prepared rows without measuring their layout or dropping entries', () => {
+    const snapshot: CompiledSnapshot = { shape: '', texts: Array.from({ length: 1000 }, (_, index) => index), vis: [] };
     const measure = vi.spyOn(layout, 'computeLayout');
     const onPress = vi.fn();
     const row = vi.fn((value: string | undefined): JSX.Element => el(Panel, {
@@ -205,6 +208,7 @@ describe('building compiled action form values', () => {
   });
 
   it('retains layout when look tables read solved geometry or literal overflow rewrites live text', () => {
+    const snapshot: CompiledSnapshot = { shape: '', texts: [0], vis: [] };
     const root = el(Screen, { children: el(Panel, { children: el(Text, {
       width: 20, maxLength: 48, wordBreak: 'break-word', children: 'A literal sentence that must wrap',
     }) }) });

@@ -97,11 +97,9 @@ const checkRoot = (tree: JSX.Element): void => {
  * offers real item cells, because it is the only screen with a container
  * behind it.
  *
- * What it cannot do is as load-bearing: a chest screen reports no click, no
- * text and no veto. A press is an item taken and put straight back, a role is
- * enforced by undoing a move a tick later, and a string crosses one character
- * per slot. `enum` is absent until a screen needs one — it would be N gated
- * images on one stack size, and nothing has asked yet.
+ * A press is an item transaction, and slot roles are enforced by undoing a
+ * move on the next tick. Live text travels through a dedicated item's custom
+ * name; carried looks use current durability.
  */
 export const CHEST: HostContract = {
   id: 'chest',

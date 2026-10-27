@@ -45,9 +45,10 @@ describe('the reference screen', () => {
     faces: face.faces,
     allocation: demoCounts,
     hasBackdrop: true,
-    hasText: true,
+
     lang: {},
     looks: [],
+    texts: [],
   };
 
   it('is addressable by the chest router', () => {

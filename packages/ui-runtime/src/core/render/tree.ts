@@ -1,11 +1,12 @@
 import { hostFor, requireOwner } from '../../hosts';
 import { isControlled } from '../../components/control';
-import { isTextElementType, liveTextLength } from '../../components/Text';
+import { isTextElementType } from '../../components/Text';
 import type { JSX } from '../../jsx';
 import { isTransparentType } from '../componentRegistry';
 import { deleteFiber, getFibersForOwner, type Owner } from '../fabric';
 import { childElements, isElement } from '../guards';
 import { validate } from '../ir/validate';
+import { hasTextChannel, textChannelsAt } from '../ir/text';
 import { applyInheritance, computeLayout, expandAndResolveContexts } from './phases';
 import { createInitialContext, createRootContext, type TraversalContext } from './traversal';
 import { beginWidthRound, buildLocales, endWidthRound } from './buildPass';
@@ -42,6 +43,9 @@ function prepareTree(element: JSX.Element, owner: Owner, compiled?: boolean, run
   // This creates instances for ALL components in the tree
   // Returns "LayoutProps"
   const expanded: JSX.Element = expandAndResolveContexts(element, context, owner);
+  const textPositions = getSessionCompiled(owner).snapshot?.texts;
+
+  if (textPositions !== undefined) { textChannelsAt(expanded, textPositions); }
 
   // A fiber this pass never reached is an orphan — a component whose key
   // changed, or one a serialized tree stopped rendering. Deleting it runs its
@@ -85,7 +89,7 @@ function prepareTree(element: JSX.Element, owner: Owner, compiled?: boolean, run
   // encode option geometry, and raw overflow text needs its solved width.
   const measured = !runtimeValues || host.id !== 'form-action' || needsTextLayout(expanded, bakedValueLooks);
 
-  return { result: measured ? computeLayout(expanded, frozen) : expanded, context, host, frozen, measured };
+  return { result: measured ? computeLayout(expanded, !frozen) : expanded, context, host, frozen, measured };
 }
 
 /** Literal wrapping changes the carried string, so those trees still run layout. */
@@ -96,7 +100,7 @@ function needsTextLayout(root: JSX.Element, bakedValueLooks: boolean): boolean {
     const node = pending.pop()!;
     const metrics = node.props.__textMetrics;
 
-    if ((bakedValueLooks || liveTextLength(node) !== undefined) && isTextElementType(node.type) && typeof metrics === 'object' && metrics !== null
+    if ((bakedValueLooks || hasTextChannel(node)) && isTextElementType(node.type) && typeof metrics === 'object' && metrics !== null
       && Reflect.get(metrics, 'isKey') !== true
       && (Reflect.get(metrics, 'wordBreak') === 'break-word' || Reflect.get(metrics, 'overflow') === 'ellipsis' || Reflect.get(metrics, 'maxLines') !== undefined)) {
       return true;
@@ -165,7 +169,7 @@ function inheritRuntimeState(root: JSX.Element): JSX.Element {
  * Four-phase tree building:
  * Phase 1: Expand function components and resolve contexts
  * Phase 2: Measure geometry when needed by the build, diagnostics or runtime values
- * Phase 3: Apply parent-child inheritance rules (visibility, enabled); measured trees also quantize geometry
+ * Phase 3: Apply inherited visibility/enabled state; compiled geometry retains fractional texels
  * Phase 4: Enforce the rules of the backend the owner implies
  *
  * @param element - Root JSX element to build
@@ -213,7 +217,7 @@ export function buildTree(element: JSX.Element, owner: Owner, compiled?: boolean
 
   // Phase 3: Apply parent-child inheritance rules (visibility, enabled)
   // Initialize with root parent state
-  result = measured ? applyInheritance(result, createRootContext(context)) : inheritRuntimeState(result);
+  result = measured ? applyInheritance(result, createRootContext(context), !frozen) : inheritRuntimeState(result);
 
   // Phase 4: what the tree NEEDS against what the host OFFERS, plus the rules
   // every screen obeys — so dynamically-built or type-escaped trees fail loud,

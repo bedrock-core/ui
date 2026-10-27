@@ -111,10 +111,10 @@ describe('the container path', () => {
     expect(() => buildContainerTree(Screen)).toThrow(/canvas is fixed/);
   });
 
-  it('rejects live text inside a Button for now', () => {
+  it('allows a maxLength display limit in a static button caption', () => {
     const Screen = screen(Button({ children: Text({ maxLength: 3, children: 'x' }) }));
 
-    expect(() => buildContainerTree(Screen)).toThrow(/inside a `<Button>`/);
+    expect(() => buildContainerTree(Screen)).not.toThrow();
   });
 
   it('accepts a <SlotGrid> and a foreign <Slot collection>', () => {

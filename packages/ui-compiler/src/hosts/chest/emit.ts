@@ -9,7 +9,7 @@ import { type ButtonNode, type FacedNode, faceSignature, lookOf, pressAddress } 
 import type { GridNode } from '../../nodes/primitives/grid';
 import { faceId } from '../../nodes/utils/shared';
 import type { SlotNode } from '../../nodes/primitives/slot';
-import { isLive, runOf, type TextNode, textSignature } from '../../nodes/primitives/text';
+import { runOf, type TextNode, textSignature } from '../../nodes/primitives/text';
 import type { Emit, HostEmit, IrNode } from '../../nodes/utils/types';
 
 /**
@@ -18,10 +18,8 @@ import type { Emit, HostEmit, IrNode } from '../../nodes/utils/types';
  * A chest screen carries everything through container slots the runtime polls
  * a tick at a time. A press can only reach script as an item move — JSON UI's
  * button mappings produce game actions, and the container transaction is the
- * only one the server sees — and a string can only cross as numbers, one
- * slot's stack size per character. Every mechanism here is one of those two
- * facts spelled out as JSON UI; the LOOK it draws is the face the face pass
- * already shared.
+ * only one the server sees — and live strings ride a bank item's name. The
+ * look it draws is the face the face pass already shared.
  *
  * Every number in a binding here is a literal on purpose. A `$variable`
  * inside a `source_property_name` is silently dropped in a subtree the engine
@@ -48,7 +46,8 @@ const facesFor = (faced: FacedNode, ctx: Emit): { id: string; rest: string; hove
  * no other button shares, so its definition is its own.
  */
 const pressKey = (node: ButtonNode): string =>
-  (node.looks === undefined ? faceId('button', faceSignature(lookOf(node))) : `looks:${node.name}`);
+  (node.looks === undefined ? faceId('button', faceSignature(lookOf(node))) : `looks:${node.name}`)
+  + (node.hitSlop === undefined ? '' : `:hit:${String(node.hitSlop)}`);
 
 /**
  * Which cell a slot host instantiates: an inert cell for a locked slot, the
@@ -108,7 +107,7 @@ export const CHEST_EMIT: HostEmit = {
    * The definitions a chest screen shares by reference: one per distinct button
    * look, one per distinct text channel shape. Both are mechanism — a button is
    * built on `container_item` with the item hidden, a channel reads a slot's
-   * stack size through the `.lang` table — and both draw the faces the face
+   * item name through its per-slot tooltip binding — and both draw the faces the face
    * pass shared.
    */
   assemble(root, document, ctx): void {
@@ -124,6 +123,7 @@ export const CHEST_EMIT: HostEmit = {
         ctx.faceNames.set(key, definition);
         Object.assign(document, pressDefs({
           definition,
+          ...node.hitSlop === undefined ? {} : { hitSlop: node.hitSlop },
           size: [node.rect.width, node.rect.height],
           ...facesFor(lookOf(node), ctx),
           ...node.looks === undefined
@@ -135,7 +135,7 @@ export const CHEST_EMIT: HostEmit = {
 
     // A baked string carries nothing, so it needs no carrier definition: the
     // face already drew it and nothing will ever change it.
-    for (const node of collectKind(root, 'text').filter(isLive)) {
+    for (const node of collectKind(root, 'text').filter(node => node.address !== undefined)) {
       const signature = textSignature(node);
 
       if (!ctx.textNames.has(signature)) {
@@ -165,6 +165,8 @@ export const CHEST_EMIT: HostEmit = {
         name: node.name,
         ...runOf(node),
         definition: ctx.textNames.get(textSignature(node)) ?? TEXT_DEF.text,
+        ...node.textAlignment === undefined ? {} : { align: node.textAlignment },
+        ...node.hug === true ? { hug: true as const } : {},
       },
       entry,
       ctx,

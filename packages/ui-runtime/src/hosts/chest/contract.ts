@@ -37,8 +37,8 @@ export type ProtocolRole = typeof PROTOCOL_ROLES[number];
  *  - `guard`: behind a disabled button, and an output slot's placeholder. It
  *    keeps the slot from ever being empty, so a shift-click cannot auto-place
  *    into it; a look rides it as it does the transport.
- *  - `count`: a bank cell. A character rides its stack size, a look its
- *    current durability.
+ *  - `count`: a bank cell. Text rides its custom name, a look its current
+ *    durability. Empty text is marked by current durability.
  */
 export const IDENTITY: Readonly<Record<ProtocolRole, number>> = {
   sentinel: 32749,
@@ -172,18 +172,11 @@ export const BLOCK_SLOT_LIMIT = 54;
 export const blockCapacityError = (name: string, size: number): ContainerScreenError =>
   new ContainerScreenError(
     `"${name}" needs ${size} container slots and a block holds ${BLOCK_SLOT_LIMIT}.\n`
-    + '  Every element of a compiled screen costs container slots: 1 for the routing\n'
-    + '  sentinel, 1 for each own <Slot> and each Button, and one per character of\n'
-    + '  every live <Text maxLength>.\n'
-    + '  Two ways out: draw fewer of them and shorten the live text, or host the\n'
+    + '  The routing sentinel costs 1 slot. Each own <Slot>, Button, live Text\n'
+    + '  and separately carried look costs one more slot.\n'
+    + '  Two ways out: use fewer cells or live fields, or host the\n'
     + '  screen on an entity with `<Container entity>`, whose inventory has no limit.',
   );
-
-/**
- * Prefix of the `.lang` keys a live label resolves its character codes
- * through: cell code `n` becomes `core.ui.c.n`.
- */
-export const KEY_PREFIX = 'core.ui.c.';
 
 /** The JSON UI collection a chest screen reads its slots from. */
 export const COLLECTION = 'container_items';

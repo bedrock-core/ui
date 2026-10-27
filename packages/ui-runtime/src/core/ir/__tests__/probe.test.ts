@@ -19,7 +19,7 @@ describe('probeLiveness', () => {
   it('finds nothing in a screen that holds no state', () => {
     const result = probe((): JSX.Element => Text({ children: 'BEDROCK CORE' }));
 
-    expect(result.frozen).toEqual([]);
+    expect(result.texts).toEqual([]);
     expect(result.shape).toBeUndefined();
   });
 
@@ -30,19 +30,17 @@ describe('probeLiveness', () => {
       return Text({ children: `smelted ${count}` });
     });
 
-    expect(result.frozen).toHaveLength(1);
-    expect(result.frozen[0]).toMatchObject({ position: 0, before: 'smelted 0', after: 'smelted 1' });
-    expect(result.frozen[0]?.longest).toBe('smelted 1'.length);
+    expect(result.texts).toHaveLength(1);
   });
 
-  it('leaves live text alone: it already reserved its cells', () => {
+  it('detects changing text independently of maxLength', () => {
     const result = probe((): JSX.Element => {
       const [count] = useState(0);
 
       return Text({ maxLength: 12, children: `smelted ${count}` });
     });
 
-    expect(result.frozen).toEqual([]);
+    expect(result.texts).toEqual([0]);
   });
 
   it('names only the text that moved, among several', () => {
@@ -58,7 +56,7 @@ describe('probeLiveness', () => {
       });
     });
 
-    expect(result.frozen.map(text => text.position)).toEqual([1]);
+    expect(result.texts).toEqual([1]);
   });
 
   it('leaves a button\'s caption alone: its children ARE the face, baked by definition', () => {
@@ -74,7 +72,7 @@ describe('probeLiveness', () => {
       });
     });
 
-    expect(result.frozen).toEqual([]);
+    expect(result.texts).toEqual([]);
   });
 
   it('reports a state change that adds a cell, because the shape is numbered once', () => {
@@ -99,7 +97,7 @@ describe('probeLiveness', () => {
       return Text({ children: 'steady' });
     });
 
-    expect(result.frozen).toEqual([]);
+    expect(result.texts).toEqual([]);
     expect(result.shape).toBeUndefined();
   });
 
@@ -239,6 +237,6 @@ describe('probeLiveness', () => {
       });
     });
 
-    expect(result.frozen.map(text => text.position)).toEqual([0, 1, 2]);
+    expect(result.texts).toEqual([0, 1, 2]);
   });
 });

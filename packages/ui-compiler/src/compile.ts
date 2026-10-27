@@ -8,7 +8,7 @@ import type { FunctionComponent, JSX } from '@bedrock-core/ui-runtime';
 import {
   allocate, BLOCK_SLOT_LIMIT, blockCapacityError, buildContainerTree, buildScreenOnce,
   BUTTON_TYPE, type ContainerHost, containerHost, containerRoot, ContainerScreenError, layoutKey, LOOK_LIMIT,
-  probeLiveness, type Probe, variantsAt, type VariantTable,
+  probeLiveness, textChannelsAt, type Probe, variantsAt, type VariantTable,
 } from '@bedrock-core/ui-runtime/compile';
 import {
   BACKDROP_DEFINITION, type FaceDocument, faceOf, facesNamespaceOf,
@@ -62,8 +62,6 @@ export interface CompiledScreen {
   /** Counts used for host definitions: drawn cells, bank slots and the inventory size the entity needs. */
   allocation: Allocation;
   hasBackdrop: boolean;
-  /** Whether text channels require a character table in the generated pack. */
-  hasText: boolean;
   /** The strings the text this screen composed per language adds to each language, by key. */
   lang: ScreenLang;
   /**
@@ -72,6 +70,8 @@ export interface CompiledScreen {
    * own stack or of a bank slot for anything else.
    */
   looks: readonly VariantTable[];
+  /** Text positions whose values follow state. */
+  texts: readonly number[];
 }
 
 /** Namespaces are dotted into references, so a name is an identifier, not a path. */
@@ -114,7 +114,7 @@ export const checkLiveness = (
       `"${name}" renders a different screen when its state changes.\n`
       + '  A compiled screen is numbered once, at build time, so it cannot add, drop or\n'
       + '  reorder a cell afterwards. Change what a control SHOWS instead of whether it is\n'
-      + '  there: `enabled` on a button, `visible` on a panel, `maxLength` on live text.\n'
+      + '  there: `enabled` on a button, `visible` on a panel, text children.\n'
       + `    was: ${probe.shape.before}\n`
       + `    now: ${probe.shape.after}`,
     );
@@ -153,28 +153,13 @@ export const checkLiveness = (
     throw new ContainerScreenError(
       `"${name}" changes ${baked.length} prop(s) with state that the screen cannot follow.\n`
       + '  A look is drawn once per value it takes, but only on an element with no mechanism of\n'
-      + '  its own: a press, a slot, a live string (`maxLength`), a live image (`live`) or a list\n'
+      + '  its own: a press, a slot, a detected text value, a live image (`live`) or a list\n'
       + '  is drawn by the host, which keeps the look the build gave it. Keep these the same for\n'
       + '  every state, and put what changes on a plain element beside it — a panel, an image\n'
       + '  or a baked string, whose look is carried:\n'
       + moved.join('\n'),
     );
   }
-
-  if (probe.frozen.length === 0) {
-    return;
-  }
-
-  const lines = probe.frozen.map(text =>
-    `    "${text.before}" became "${text.after}" — needs maxLength={${text.longest}} or more`);
-
-  throw new ContainerScreenError(
-    `"${name}" has ${probe.frozen.length} <Text> that change${probe.frozen.length === 1 ? 's' : ''} with state but ${probe.frozen.length === 1 ? 'is' : 'are'} baked into the layout.\n`
-    + '  Baked text is written into JSON UI at build time and never changes again, so the\n'
-    + '  screen would show the build\'s string forever. Give each one `maxLength`, which\n'
-    + '  reserves a container slot per character:\n'
-    + lines.join('\n'),
-  );
 };
 
 /**
@@ -239,6 +224,8 @@ export function compileScreen(
   // downstream assumes it does.
   const probe = probeLiveness(() => buildScreenOnce(Screen));
   const tree = buildContainerTree(Screen);
+
+  textChannelsAt(tree, probe.texts);
   // A button's look rides the size of the stack in its own slot, so a button's
   // look is carried only where there is a slot: one that closes the screen has
   // none, and keeps the build's look. Any other element's look takes a bank
@@ -296,9 +283,9 @@ export function compileScreen(
     faces: face.faces,
     allocation: counts,
     hasBackdrop: document[BACKDROP_DEFINITION] !== undefined,
-    hasText: allocation.channels.some(channel => channel.carrier === 'text'),
     lang: langOf(ir.root),
     looks: [...looks.values()],
+    texts: probe.texts,
   };
 }
 

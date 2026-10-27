@@ -1,3 +1,4 @@
+import { textChannelsAt } from '../../../core/ir/text';
 import { type Container as EngineContainer, ItemStack } from '@minecraft/server';
 import { describe, expect, it, vi } from 'vitest';
 import { Container as MockContainer } from '../../../__mocks__/@minecraft/server';
@@ -100,7 +101,9 @@ describe('writeButtons', () => {
 
 describe('reconcile', () => {
   it('writes the sentinel with the layout key as its current durability', () => {
-    const allocation = allocate(buildContainerTree(Screen));
+    const tree = buildContainerTree(Screen);
+    textChannelsAt(tree, [0]);
+    const allocation = allocate(tree);
     const container = createContainer(allocation.size);
 
     reconcile(container, allocation, 70, new Map(), items);
@@ -113,7 +116,9 @@ describe('reconcile', () => {
   });
 
   it('settles every button and channel', () => {
-    const allocation = allocate(buildContainerTree(Screen));
+    const tree = buildContainerTree(Screen);
+    textChannelsAt(tree, [0]);
+    const allocation = allocate(tree);
     const container = createContainer(allocation.size);
     const written = new Map<number, number>();
 
@@ -121,13 +126,16 @@ describe('reconcile', () => {
 
     expect(container.getItem(1)?.typeId).toBe(TRANSPORT);
     expect(items.isGuard(container.getItem(2)!)).toBe(true);
-    expect(container.getItem(4)?.amount).toBeGreaterThan(1);
-    expect(container.getItem(5)?.amount).toBeGreaterThan(1);
-    expect([...written.keys()]).toEqual([4, 5]);
+    expect(container.getItem(4)?.amount).toBe(1);
+    expect(container.getItem(4)?.nameTag).toBeDefined();
+    expect(container.getItem(5)).toBeUndefined();
+    expect([...written.keys()]).toEqual([4]);
   });
 
   it('keeps a player’s item in a drawn slot and clears an owned one', () => {
-    const allocation = allocate(buildContainerTree(Screen));
+    const tree = buildContainerTree(Screen);
+    textChannelsAt(tree, [0]);
+    const allocation = allocate(tree);
     const container = createContainer(allocation.size);
 
     container.setItem(3, new ItemStack('minecraft:stone', 12));
@@ -143,7 +151,9 @@ describe('reconcile', () => {
   });
 
   it('never clears the whole container', () => {
-    const allocation = allocate(buildContainerTree(Screen));
+    const tree = buildContainerTree(Screen);
+    textChannelsAt(tree, [0]);
+    const allocation = allocate(tree);
     const container = createContainer(allocation.size + 2);
     const clearAll = vi.spyOn(container, 'clearAll');
 

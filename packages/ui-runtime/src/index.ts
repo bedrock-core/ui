@@ -126,7 +126,6 @@ export {
   ModalFormError,
   ScreenRootError,
   SerializationError,
-  TranslationKeysError,
   UncompiledScreenError,
 } from './core';
 

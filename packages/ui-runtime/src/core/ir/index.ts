@@ -14,3 +14,5 @@ export { claim, hasMechanism, visibleCandidates, visiblesAt } from './claims';
 export { bakedWalk, lookIndexOf, variantsAt } from './probe';
 export type { VariantTable } from './probe';
 export type { CellClaim, CellRole, ChannelClaim, Claims } from './claims';
+
+export { hasTextChannel, textChannelsAt, textValues } from './text';

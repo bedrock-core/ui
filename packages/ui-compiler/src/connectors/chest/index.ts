@@ -1,10 +1,9 @@
 /**
  * What stands in a face's place on a chest screen.
  *
- * A chest carries everything through container slots the runtime polls a tick
- * at a time. A press can only reach script as an item move, and a string can
- * only cross as numbers, one slot's stack size per character — or per look.
- * Every mechanism here is one of those facts spelled out as JSON UI.
+ * A press reaches script as an item move. Live text reads an item's custom
+ * name, and a look reads its current durability. These connectors bind those
+ * values to the compiled faces.
  */
 
 export {

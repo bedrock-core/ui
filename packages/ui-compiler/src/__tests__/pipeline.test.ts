@@ -1,10 +1,11 @@
+import { dynamicText } from '../__fixtures__/dynamicText';
 import type { JSX, TranslationResolver } from '@bedrock-core/ui-runtime';
 import {
   Background, Button, Container, Hotbar, Image, Panel, PlayerInventory, Screen as ScreenRoot, Slot, Text, TranslationContext,
   usePlayer, useState,
 } from '@bedrock-core/ui-runtime';
 import {
-  allocate, buildContainerTree, ContainerScreenError, KEY_PREFIX, layoutKey, MAX_LAYOUT, ScreenRootError,
+  allocate, buildContainerTree, textChannelsAt, ContainerScreenError, layoutKey, MAX_LAYOUT, ScreenRootError,
 } from '@bedrock-core/ui-runtime/compile';
 import { describe, expect, it, vi } from 'vitest';
 import { compileScreen } from '../compile';
@@ -33,7 +34,7 @@ const Demo = (): JSX.Element => Container({
     Text({ shadow: true, font: 'minecraftTen', children: '§fBEDROCK CORE' }),
     // A lazy element, so the label expands inside the provider and reads it.
     TranslationContext({ value: resolver, children: { type: Subtitle, props: {} } }),
-    Text({ maxLength: 8, children: 'idle' }),
+    dynamicText({ maxLength: 8, children: 'idle' }),
     Panel({
       children: [
         Image({ texture: 'textures/ui/brewing_fuel_bar_empty', width: 100, height: 6 }),
@@ -102,7 +103,7 @@ describe('the compiler, end to end', () => {
       layoutId: layoutKey('core_ui', 'demo'),
       host: { kind: 'entity', type: 'core:demo' },
       hasBackdrop: true,
-      hasText: true,
+
     });
     expect(document.namespace).toBe('core_ui_demo');
   });
@@ -167,7 +168,9 @@ describe('the compiler, end to end', () => {
   });
 
   it('hands out the slot indices the runtime will read', () => {
-    const allocation = allocate(buildContainerTree(Demo));
+    const tree = buildContainerTree(Demo);
+    textChannelsAt(tree, compiled.texts);
+    const allocation = allocate(tree);
     const indices = findAll(document, name => name.includes('@core_ui_chest.slot_host'))
       .map(([, control]) => control.$slot);
 
@@ -180,26 +183,29 @@ describe('the compiler, end to end', () => {
   });
 
   it('hands out the channel indices the runtime will write', () => {
-    const allocation = allocate(buildContainerTree(Demo));
+    const tree = buildContainerTree(Demo);
+    textChannelsAt(tree, compiled.texts);
+    const allocation = allocate(tree);
     const [run] = allocation.channels;
 
     expect(run).toMatchObject({ carrier: 'text', length: 8 });
 
     const cells = findAll(document, name => name.startsWith('glyph@')).map(([, control]) => control.collection_index);
 
-    expect(cells).toEqual(Array.from({ length: 8 }, (_unused, cell) => (run?.slot ?? 0) + cell));
+    expect(cells).toEqual([run?.slot]);
 
-    expect(compiled.allocation).toEqual({ sentinels: 1, drawn: 5, channels: 8, size: 14 });
+    expect(compiled.allocation).toEqual({ sentinels: 1, drawn: 5, channels: 1, size: 7 });
   });
 
-  it('decodes text through the shared character table', () => {
+  it('binds the full item name as literal text', () => {
     const [name] = Object.keys(defs(document)).filter(key => key.startsWith('text_channel'));
 
     expect(name).toBeDefined();
     expect(definition(document, name ?? '').bindings).toContainEqual({
-      binding_type: 'view',
-      source_property_name: `('${KEY_PREFIX}' + #channel_raw)`,
-      target_property_name: '#channel_text',
+      binding_name: '#hover_text',
+      binding_name_override: '#channel_text',
+      binding_type: 'collection',
+      binding_collection_name: 'container_items',
     });
   });
 
@@ -230,7 +236,7 @@ describe('the compiler, end to end', () => {
     expect(JSON.parse(JSON.stringify(document))).toEqual(document);
   });
 
-  it('refuses baked text a state change would move, naming the maxLength it needs', () => {
+  it('detects state-driven text without a maxLength declaration', () => {
     // The build probes each state slot: this label reads one, so it would be
     // written into JSON UI once and show 'start' whatever the screen did next.
     const Stateful = (): JSX.Element => {
@@ -241,7 +247,8 @@ describe('the compiler, end to end', () => {
 
     const Screen = (): JSX.Element => Container({ entity: 'core:state', children: [{ type: Stateful, props: {} }] });
 
-    expect(() => compileScreen(Screen, { name: 'state' })).toThrow(/maxLength/);
+    expect(compileScreen(Screen, { name: 'state' }).texts).toEqual([0]);
+    expect(compileScreen(Screen, { name: 'state' }).allocation.channels).toBe(1);
   });
 
   it('refuses a look it cannot copy, naming the prop', () => {
@@ -250,7 +257,7 @@ describe('the compiler, end to end', () => {
     const Stateful = (): JSX.Element => {
       const [on] = useState(true);
 
-      return Text({ maxLength: 4, color: on ? [1, 1, 1] : [0, 0, 0], children: 'live' });
+      return dynamicText({ maxLength: 4, color: on ? [1, 1, 1] : [0, 0, 0], children: 'live' });
     };
 
     const Screen = (): JSX.Element => Container({ entity: 'core:look', children: [{ type: Stateful, props: {} }] });
@@ -329,7 +336,7 @@ describe('the compiler, end to end', () => {
     const Stateful = (): JSX.Element => {
       const [label] = useState('start');
 
-      return Text({ maxLength: 8, children: label });
+      return dynamicText({ maxLength: 8, children: label });
     };
 
     const Screen = (): JSX.Element => Container({ entity: 'core:state', children: [{ type: Stateful, props: {} }] });
@@ -337,8 +344,7 @@ describe('the compiler, end to end', () => {
 
     // The run reserves what the author declared, not what the initial value
     // happens to be — the build renders with 'start' but sizes for 8.
-    expect(compiled.hasText).toBe(true);
-    expect(compiled.allocation.channels).toBe(8);
+    expect(compiled.allocation.channels).toBe(1);
   });
 
   it('refuses a container that names no host, since nothing could serve it', () => {
@@ -358,11 +364,10 @@ describe('the compiler, end to end', () => {
 
     expect(compileScreen(Block, { name: 'workbench' }).host).toEqual({ kind: 'block', type: 'core:workbench' });
 
-    // 54 slots is the whole allocation, sentinel and bank included: a live
-    // string costs one slot per character, so this one cannot be a block's.
+    // Each live field takes one slot, regardless of its character capacity.
     const Wide = (): JSX.Element => Container({
       block: 'core:wide',
-      children: [Text({ maxLength: 60, children: 'x' })],
+      children: Array.from({ length: 54 }, () => Slot({ width: 1, height: 1 })),
     });
 
     expect(() => compileScreen(Wide, { name: 'wide' })).toThrow(/a block holds 54/);
@@ -386,7 +391,6 @@ describe('the compiler, end to end', () => {
     const result = compileScreen(Static, { name: 'static' });
 
     expect(result.allocation).toEqual({ sentinels: 1, drawn: 0, channels: 0, size: 1 });
-    expect(result.hasText).toBe(false);
     expect(result.hasBackdrop).toBe(false);
     expect(Object.keys(defs(result.document))).toEqual(['screen']);
   });

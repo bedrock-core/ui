@@ -58,8 +58,7 @@ export interface HeaderProps extends ControlProps {
  */
 export function Header({ title, breadcrumbs, trail, onBack, backTo, backReplace, back, onClose, cancel, ...layout }: HeaderProps): JSX.Element {
   const h = theme.components.header;
-  // A composed trail is live and reserves its room; a title and its
-  // breadcrumbs are the author's own and bake as they are written.
+  // Bound literal trail length to the caption room left by the header controls.
   const shown = trail === undefined
     ? { segments: [title ?? '', ...breadcrumbs ?? []] }
     : { text: trail, maxLength: trailMaxLength(cancel === undefined ? 'icon' : 'cancel') };

@@ -56,7 +56,7 @@ export {
   SlotGrid, SLOT_GRID_TYPE, slotGridConfig, type SlotGridProps, type SlotGridConfig,
 } from './SlotGrid';
 export {
-  Text, isTextElementType, liveTextLength,
+  Text, isTextElementType,
   TEXT_SHADOW_TYPE, TEXT_WRAP_TYPE, TEXT_SHADOW_WRAP_TYPE,
   type TextFont, type TextOverflow, type TextAlign, type TextProps, type TextStyle, type TextWordBreak,
 } from './Text';

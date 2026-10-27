@@ -3,7 +3,7 @@ import { isEmbedSlot } from '../../components/Embed';
 import { liveTexture } from '../../components/Image';
 import { listCapacity } from '../../components/List';
 import { slotCell, type SlotRole } from '../../components/Slot';
-import { isTextElementType, liveTextLength } from '../../components/Text';
+import { hasTextChannel } from './text';
 import type { JSX } from '../../jsx';
 import { childElements } from '../guards';
 import { analyze, type Analysis } from './analyze';
@@ -92,7 +92,7 @@ export const hasMechanism = (element: JSX.Element): boolean =>
   roleOf(element) !== undefined
   || listCapacity(element) !== undefined
   || liveTexture(element)
-  || (typeof element.type === 'string' && isTextElementType(element.type) && liveTextLength(element) !== undefined);
+  || hasTextChannel(element);
 
 /**
  * Reads a built tree's needs, in document order.
@@ -128,14 +128,14 @@ export const claim = (tree: JSX.Element, analysis: Analysis = analyze(tree)): Cl
       channels.push({ element, carrier: 'enum', length: looks.combinations.length, looks });
     }
 
-    // A list's count, declared by `max` the way `maxLength` declares text.
+    // A list's count is bounded by its declared maximum.
     const digits = listCapacity(element);
 
     if (digits !== undefined) {
       channels.push({ element, carrier: 'int', length: digits });
     }
 
-    // A live texture path, declared by `live` the way `maxLength` declares text.
+    // A texture path explicitly carried by its form entry.
     if (liveTexture(element)) {
       channels.push({ element, carrier: 'texture', length: 0 });
     }

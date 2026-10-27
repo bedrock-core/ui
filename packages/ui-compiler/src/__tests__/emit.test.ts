@@ -1,4 +1,4 @@
-import { IDENTITY, KEY_PREFIX } from '@bedrock-core/ui-runtime/compile';
+import { IDENTITY } from '@bedrock-core/ui-runtime/compile';
 import { describe, expect, it } from 'vitest';
 import { demoScreen } from '../__fixtures__/demo';
 import { emit as emitDocument } from '../emit';
@@ -255,31 +255,29 @@ describe('emit / text runs', () => {
     return definition(doc, name);
   };
 
-  it('draws one cell per character, on consecutive slots', () => {
-    // A string arrives one character at a time because a slot carries a number,
-    // not text. Consecutive slots are what let the runtime write only the cells
-    // that actually changed.
+  it('draws the complete value from one slot', () => {
     const indices = findAll(run(), name => name.startsWith('glyph@')).map(([, control]) => control.collection_index);
 
-    expect(indices).toEqual([1, 2, 3, 4]);
+    expect(indices).toEqual([1]);
   });
 
-  it('localizes the code, which is what turns a number into a glyph', () => {
+  it('uses the item name as literal text', () => {
     const def = textDef(run());
 
-    expect(def.localize).toBe(true);
+    expect(def.localize).toBe(false);
     expect(def.text).toBe('#channel_text');
     expect(def.bindings).toContainEqual({
-      binding_type: 'view',
-      source_property_name: `('${KEY_PREFIX}' + #channel_raw)`,
-      target_property_name: '#channel_text',
+      binding_name: '#hover_text',
+      binding_name_override: '#channel_text',
+      binding_type: 'collection',
+      binding_collection_name: 'container_items',
     });
   });
 
-  it('reads the stack size, the only value writable in place', () => {
+  it('reads the directly writable custom name', () => {
     expect(textDef(run()).bindings).toContainEqual({
-      binding_name: '#inventory_stack_count',
-      binding_name_override: '#channel_raw',
+      binding_name: '#hover_text',
+      binding_name_override: '#channel_text',
       binding_type: 'collection',
       binding_collection_name: 'container_items',
     });
@@ -317,8 +315,9 @@ describe('emit / text runs', () => {
     const doc = run();
     const [, status] = find(doc, name => name === 'status');
 
-    expect(status.type).toBe('stack_panel');
-    expect(status.orientation).toBe('horizontal');
+    expect(status.type).toBe('panel');
+    expect(child(status, 'glyphs').type).toBe('stack_panel');
+    expect(child(status, 'glyphs').orientation).toBe('horizontal');
 
     for (const [, cell] of findAll(doc, name => name.startsWith('cell_'))) {
       expect(cell.size).toEqual(['100%c', '100%c']);

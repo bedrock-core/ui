@@ -40,17 +40,9 @@ export interface MenuRowProps extends ControlProps {
   to?: DestinationKey;
   /** With `to`: take the place of the screen this row is on rather than stacking over it. */
   replace?: boolean;
-  /**
-   * Characters the title reserves. A compiled screen bakes a row's text unless
-   * told how long a live one may be; set this where the title is only known
-   * when the screen is shown.
-   */
+  /** Truncates a literal title to this many UTF-16 code units. */
   titleMaxLength?: number;
-  /**
-   * Characters the subtitle reserves. Setting it also keeps the subtitle line
-   * in the row when the subtitle is empty, so a compiled row has the same
-   * shape whatever it is shown with.
-   */
+  /** Truncates a literal subtitle without changing whether the line exists. */
   subtitleMaxLength?: number;
 }
 
@@ -100,10 +92,8 @@ export function MenuRow({
 
   const lines: JSX.Element[] = [line(title, titleColor, true, titleMaxLength)];
 
-  if (subtitleMaxLength !== undefined) {
-    lines.push(line(subtitle ?? '', subtitleColor, false, subtitleMaxLength));
-  } else if (subtitle) {
-    lines.push(line(subtitle, subtitleColor, false, undefined));
+  if (subtitle !== undefined) {
+    lines.push(line(subtitle, subtitleColor, false, subtitleMaxLength));
   }
 
   const children: JSX.Element[] = [];
@@ -116,18 +106,16 @@ export function MenuRow({
 
   if (chevron) { children.push(<Text>{`${subtitleColor}>`}</Text>); }
 
-  // A button's children are baked into its face, and a live line cannot be. So a row with one
-  // draws its lines above the press instead: the button fills the row beneath them, and a
-  // press on the lines reaches it.
-  const live = titleMaxLength !== undefined || subtitleMaxLength !== undefined;
-
+  // Caption values are independent of the input surface so the compiler can
+  // detect changing text without changing the row's structure.
   const face = (
     <Panel
       flexDirection={'row'}
       alignItems={'center'}
       gap={row.gap}
       width={'100%'}
-      {...live ? { padding: row.padding, zIndex: 12 } : {}}
+      padding={row.padding}
+      zIndex={12}
     >
       {children}
     </Panel>
@@ -152,10 +140,6 @@ export function MenuRow({
     ...layout,
     children: face,
   };
-
-  if (!live) {
-    return to === undefined ? Button({ ...styled, onPress }) : Link({ ...styled, to, ...replace === true ? { replace: true } : {} });
-  }
 
   const { background, backgroundHover, backgroundPressed, backgroundLocked } = styled;
   const surface = {

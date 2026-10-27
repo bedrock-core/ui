@@ -1,41 +1,25 @@
 import type { JSX } from '../../../jsx';
 import type { ChannelEntry } from '../allocate';
-import { encode } from '../charset';
-import { type ItemContainer, type ProtocolItems, writeCell, writeLook } from './items';
+import { boundedText } from '../text';
+import { type ItemContainer, type ProtocolItems, writeLook, writeText } from './items';
 
-/**
- * Writing live values into the bank.
- *
- * A channel is a run of bank slots the layout reads and no cell draws: a
- * string rides one slot's stack size per character, a look one slot's
- * current durability. The value comes off the
- * element the allocation attached to the channel, so the walk that numbered
- * the slots is the walk that fills them, and nothing is addressed by name.
- */
+/** Last successfully written text or look for each occupied bank slot. */
+export type Written = Map<number, number | string>;
 
-/** Last value written to each bank slot, so an unchanged one costs nothing. */
-export type Written = Map<number, number>;
-
-/**
- * The string a live label shows: the label's tail, less what no cell can carry.
- *
- * A formatting code has no glyph in the table, and a label guards a
- * digit-leading string with one. Dropping the pair shows the text; spending it
- * would show a blank and a letter.
- */
+/** The host-resolved display value carried by a container's item name. */
 export const textOf = (element: JSX.Element): string => {
-  const { value } = element.props;
+  const { value, __textMetrics: metrics } = element.props;
   const tail = typeof value === 'object' && value !== null && 'tail' in value ? value.tail : undefined;
+  const localized = typeof metrics === 'object' && metrics !== null && 'isKey' in metrics && metrics.isKey === true;
+  const resolved = typeof metrics === 'object' && metrics !== null && 'resolvedText' in metrics && typeof metrics.resolvedText === 'string'
+    ? metrics.resolvedText
+    : '';
+  const text = localized || typeof tail !== 'string' ? resolved : tail;
 
-  return typeof tail === 'string' ? tail.replace(/§./g, '') : '';
+  return text.replace(/^(?:\u00a7r)+/, '');
 };
 
-/**
- * Writes what a render produced, skipping anything that did not move.
- *
- * Shortening a string rewrites its tail to blanks, which is the same cost as
- * any other edit: only the cells that actually changed are touched.
- */
+/** Updates changed whole-text values and look states in their allocated slots. */
 export const writeChannels = (
   container: ItemContainer,
   channels: readonly ChannelEntry[],
@@ -53,15 +37,11 @@ export const writeChannels = (
       continue;
     }
 
-    for (const [cell, code] of encode(textOf(channel.element), channel.length).entries()) {
-      const slot = channel.slot + cell;
+    const value = boundedText(textOf(channel.element), channel.length);
 
-      if (written.get(slot) === code) {
-        continue;
-      }
-
-      written.set(slot, code);
-      writeCell(container, items, slot, code);
+    if (written.get(channel.slot) !== value) {
+      writeText(container, items, channel.slot, value);
+      written.set(channel.slot, value);
     }
   }
 };

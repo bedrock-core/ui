@@ -1,34 +1,20 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
 import {
-  isTextElementType, labelFontFields, liveTextLength, TEXT_SHADOW_TYPE, TEXT_SHADOW_WRAP_TYPE,
+  hasTextChannel, isTextElementType, labelFontFields, TEXT_SHADOW_TYPE, TEXT_SHADOW_WRAP_TYPE,
 } from '@bedrock-core/ui-runtime/compile';
 import { textFace } from '../../faces';
 import { composedKey } from '../utils/composed';
 import { boxOf, num, str, tailOf } from '../utils/shared';
 import type { LabelStyle, LowerContext, NodeBase, NodeDefinition, Rect } from '../utils/types';
 
-/**
- * A string.
- *
- * One kind for both, because a string is a string: what separates them is
- * whether script writes it while the screen is open, and that is a property
- * of THIS string rather than of a different kind of control. A string the
- * build knows is drawn as it is and asks the host for nothing. A live one
- * reserves a box for its longest form and asks for a carrier — one container
- * slot per character on a chest, an entry on a form — and the face draws the
- * value the build rendered into that same box.
- */
+/** Text is baked unless state probes detect a changing value. */
 export interface TextNode extends NodeBase, LabelStyle {
   kind: 'text';
   /** Keeps localized overflow text within the box solved for its line limit. */
   bounded?: true;
-  /**
-   * Where the host put the run, when the string is live. On a chest it
-   * occupies `address .. address + length - 1`. Absent on a baked string,
-   * which nothing carries.
-   */
+  /** Host address for a detected value; static strings have none. */
   address?: number;
-  /** How many characters the screen drew room for. Absent on a baked string. */
+  /** Display limit of a carried value. Absent on a static string. */
   length?: number;
   /**
    * Drawn at the width of its glyphs, for a string in a stack whose length is
@@ -46,15 +32,7 @@ export interface TextNode extends NodeBase, LabelStyle {
   translations?: Readonly<Record<string, string>>;
 }
 
-/** Whether a host has to carry this string, which is what `maxLength` declares. */
-export const isLive = (node: TextNode): boolean => node.address !== undefined;
-
-/**
- * The run a live string was given.
- *
- * Only a baked string has none, and that one declares no text socket, so
- * nothing that fills a carrier is ever handed one.
- */
+/** The host address and display limit of a text value. */
 export const runOf = (node: TextNode): { address: number; length: number } => ({
   address: node.address ?? 0,
   length: node.length ?? 0,
@@ -152,46 +130,28 @@ export const textDefinition: NodeDefinition<TextNode> = {
   lower(element, type, ctx: LowerContext): TextNode {
     const { props } = element;
     const shadow = type === TEXT_SHADOW_TYPE || type === TEXT_SHADOW_WRAP_TYPE;
-    const length = liveTextLength(element);
-    const defaults = labelFontFields();
 
     // The label's own nudge, applied here so the emitter sees one offset.
     const nudged: Rect = { ...ctx.rect, x: ctx.rect.x + num(props.labelX), y: ctx.rect.y + num(props.labelY) };
 
-    if (length !== undefined) {
-      const channel = ctx.channelOf(element);
-      const tail = tailOf(props.value);
-      const metrics = textMetricsOf(props.__textMetrics);
-
-      return {
-        kind: 'text',
-        name: ctx.name('text'),
-        rect: nudged,
-        ...ctx.decoration,
-        address: channel.address,
-        length: channel.length,
-        text: tail ?? metrics.resolvedText,
-        localize: tail !== undefined && metrics.isKey,
-        fontType: str(props.fontType, defaults.fontType),
-        fontScaleFactor: num(props.fontScaleFactor, defaults.fontScaleFactor),
-        ...metrics.hug ? { hug: true as const } : {},
-        ...shadow ? { shadow } : {},
-        ...rgbOf(props.__color),
-        ...alignmentOf(props.__textAlign),
-      };
-    }
-
-    return bakedOf(element, {
-      name: ctx.name('label'),
-      rect: nudged,
-      ...ctx.decoration,
+    const base = bakedOf(element, {
+      name: ctx.name(hasTextChannel(element) ? 'text' : 'label'), rect: nudged, ...ctx.decoration,
       ...shadow ? { shadow } : {},
     });
+
+    if (!hasTextChannel(element)) { return base; }
+
+    const channel = ctx.channelOf(element);
+
+    return {
+      ...base,
+      address: channel.address,
+      length: channel.length,
+    };
   },
 
-  // Only a live string asks for anything. A baked one is drawn once and
-  // forever, which is the same answer `image` gives about its own path.
-  socket: node => (isLive(node) ? 'text' : undefined),
+  // Static text is already present in the face; detected values ask for a channel.
+  socket: node => node.address === undefined ? undefined : 'text',
 
   // At rest: the string the build rendered with, in the box the layout gave
   // it. A host stands its carrier here when there is one.

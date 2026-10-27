@@ -1,3 +1,4 @@
+import { textChannelsAt } from '../text';
 import { describe, expect, it } from 'vitest';
 import { Button } from '../../../components/Button';
 import { Container } from '../../../components/Container';
@@ -34,7 +35,7 @@ describe('carried visible', () => {
 
     // Not an error: no frozen text (the strings did not change) and no shape
     // change (the subtree is still in the tree, only hidden).
-    expect(result.frozen).toEqual([]);
+    expect(result.texts).toEqual([]);
     expect(result.shape).toBeUndefined();
     expect(result.liveVisibles).toHaveLength(1);
   });
@@ -67,7 +68,8 @@ describe('carried visible', () => {
       children: [Text({ maxLength: 8, children: 'live' })],
     })));
 
-    // Mark the live text's own element as carried-visible too.
+    textChannelsAt(built, [0]);
+    // The same text also carries visibility.
     const textElement = [...analyze(built).texts.keys()][0];
 
     if (textElement === undefined) {

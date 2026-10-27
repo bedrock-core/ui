@@ -13,9 +13,8 @@ export interface TrailProps extends ControlProps {
    */
   text?: DisplayText;
   /**
-   * Characters the trail reserves, which is what makes the label live: a
-   * compiled screen keeps one entry for it and shows whatever it is sent.
-   * `trailMaxLength` derives it from the room the header's controls leave.
+   * Truncates a literal trail to the requested number of UTF-16 code units.
+   * `trailMaxLength` derives a limit from the header's available room.
    */
   maxLength?: number;
   /**

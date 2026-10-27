@@ -35,6 +35,7 @@ const text = (
   props: JSX.Props = {},
   type = 'text',
 ): JSX.Element => at(type, rect, {
+  ...'maxLength' in metrics ? { __textChannel: true } : {},
   value: { tail },
   __textMetrics: { isKey: false, resolvedText: typeof tail === 'string' ? tail : '', ...metrics },
   fontType: 'default',
@@ -413,8 +414,8 @@ describe('toIr', () => {
       text([0, 20, 24, 10], 'idle', { maxLength: 4 }),
     ]);
 
-    // Two drawn cells after the sentinel, then a four-character run.
-    expect(allocate(tree).size).toBe(7);
+    // Two drawn cells after the sentinel, then one live text field.
+    expect(allocate(tree).size).toBe(4);
     expect(convert(tree).root.children.map(node => node.kind)).toEqual(['button', 'slot', 'text']);
   });
 

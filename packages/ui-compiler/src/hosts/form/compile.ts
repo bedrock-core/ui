@@ -1,6 +1,6 @@
 import type { FunctionComponent } from '@bedrock-core/ui-runtime';
 import {
-  allocateForm, allocateModal, analyze, bakedTexts, buildScreenOnce, collectFormButtons, type CompiledSnapshot, concreteRoots,
+  allocateForm, allocateModal, analyze, textChannelsAt, buildScreenOnce, collectFormButtons, type CompiledSnapshot, concreteRoots,
   ContainerScreenError, embedMarker, embedPlacementOf, type EmbedPlacement, FORM_COLLECTION, formTitleFor, hostFor, probeLiveness, shapeOf,
   variantsAt, visiblesAt, compileDataOf, type EntryEntry, type ModalRow,
 } from '@bedrock-core/ui-runtime/compile';
@@ -179,6 +179,8 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
   // finding rather than an error.
   const probe = probeLiveness(() => buildScreenOnce(Screen));
   const tree = buildScreenOnce(Screen);
+
+  textChannelsAt(tree, probe.texts);
   const visibles = visiblesAt(tree, probe.liveVisibles);
   const host = hostFor(tree);
 
@@ -265,8 +267,8 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
       ...compileDataOf(tree) === undefined ? {} : { data: compileDataOf(tree) },
       // Carrier-aware: the bool channels are in the fingerprint, so a runtime
       // whose visibles do not match the bake diffs loudly in `debug`.
+      texts: probe.texts,
       shape: shapeOf(tree, analysis),
-      baked: bakedTexts(tree),
       vis: probe.liveVisibles,
       // The looks each element takes, so a screen rendered at runtime writes
       // the same choice the build drew and gated.

@@ -1,21 +1,11 @@
-import { liveTextLength } from '../../components/Text';
+import { textLimit } from '../../components/Text';
+import { hasTextChannel, textChannelsAt } from './text';
 import { selectionMaskLength } from '../../components/Selection';
 import { childElements } from '../guards';
 import type { JSX } from '../../jsx';
 import type { VariantTable } from './probe';
 
-/**
- * What in a built tree is live: decided once, the same way, by the build and
- * by the runtime.
- *
- * A compiled layout is frozen, so anything that changes after the build has to
- * be known before it — a live label reserves container slots. Today that
- * knowledge is explicit, `<Text maxLength>`, and this pass only collects it. It
- * is a pass rather than a predicate because it is where inference goes next:
- * the build runs real fibers, so it can re-render with each state slot
- * perturbed and diff the trees, marking whatever moved as live without the
- * author saying so.
- */
+/** Channels detected by the compiler and the runtime values that occupy them. */
 export interface Analysis {
   /** Characters reserved for each live label. */
   readonly texts: ReadonlyMap<JSX.Element, number>;
@@ -45,11 +35,14 @@ export const analyze = (
   tree: JSX.Element,
   visibles: ReadonlySet<JSX.Element> = new Set(),
   variants: ReadonlyMap<JSX.Element, VariantTable> = new Map(),
+  positions?: readonly number[],
 ): Analysis => {
+  if (positions !== undefined) { textChannelsAt(tree, positions); }
+
   const texts = new Map<JSX.Element, number>();
 
   const visit = (element: JSX.Element): void => {
-    const length = liveTextLength(element) ?? selectionMaskLength(element);
+    const length = (hasTextChannel(element) ? textLimit(element) : undefined) ?? selectionMaskLength(element);
 
     if (length !== undefined) {
       texts.set(element, length);

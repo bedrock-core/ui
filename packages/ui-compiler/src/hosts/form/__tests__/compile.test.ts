@@ -1,3 +1,4 @@
+import { dynamicText } from '../../../__fixtures__/dynamicText';
 import type { JSX } from '@bedrock-core/ui-runtime';
 import { Button, Container, Image, Panel, Screen, Scroll, Slot, Text, useExit, useState } from '@bedrock-core/ui-runtime';
 import { FORM_COLLECTION } from '@bedrock-core/ui-runtime/compile';
@@ -15,7 +16,7 @@ const Home = (): JSX.Element => Screen({ children: Panel({
   gap: 4,
   children: [
     Text({ children: '§fBEDROCK CORE' }),
-    Text({ maxLength: 12, children: 'idle' }),
+    dynamicText({ maxLength: 12, children: 'idle' }),
     Panel({
       flexDirection: 'row',
       gap: 4,
@@ -129,7 +130,7 @@ describe('compiling a form screen', () => {
       return Screen({ children: Panel({
         children: [
           Text({ children: 'static' }),
-          Text({ maxLength: 6, children: 'live' }),
+          dynamicText({ maxLength: 6, children: 'live' }),
           Image({ texture: 'textures/ui/cell_image', width: 16, height: 16 }),
           Button({ onPress: () => undefined, children: Text({ children: 'press' }) }),
           Button({ onPress: exit, children: Text({ children: 'x' }) }),
@@ -162,13 +163,13 @@ describe('compiling a form screen', () => {
       .toThrow(/only exists in a container screen/);
   });
 
-  it('refuses baked text a state change would move, the same as a container screen', () => {
+  it('detects state-driven text without a maxLength declaration', () => {
     const Stateful = (): JSX.Element => {
       const [label] = useState('start');
 
       return Screen({ children: Panel({ children: [Text({ children: label })] }) });
     };
 
-    expect(() => compileFormScreen(Stateful, { namespace: 'a', name: 'frozen' })).toThrow(/maxLength/);
+    expect(compileFormScreen(Stateful, { namespace: 'a', name: 'state' }).snapshot.texts).toEqual([0]);
   });
 });

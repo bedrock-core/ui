@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { Panel } from '../../../components/Panel';
 import { Text } from '../../../components/Text';
-import { bakedTexts, shapeOf } from '../../../core/ir/probe';
+import { shapeOf } from '../../../core/ir/probe';
 import type { JSX } from '../../../jsx';
 import { debugDiff } from '../debug';
 
 /** The snapshot a build of this tree would record, with no carried visibles. */
-const snapshotOf = (tree: JSX.Element): { shape: string; baked: string[]; vis: number[] } => ({
+const snapshotOf = (tree: JSX.Element): { shape: string; texts: number[]; vis: number[] } => ({
   shape: shapeOf(tree),
-  baked: bakedTexts(tree),
+  texts: [],
   vis: [],
 });
 
@@ -25,10 +25,7 @@ describe('debugDiff', () => {
 
     const lines = debugDiff(drifted, snapshotOf(baked), 'counter');
 
-    expect(lines).toHaveLength(1);
-    expect(lines[0]).toContain('counter');
-    expect(lines[0]).toContain('"count 7"');
-    expect(lines[0]).toContain('maxLength');
+    expect(lines).toEqual([]);
   });
 
   it('reports a shape that no longer matches the compiled one', () => {
