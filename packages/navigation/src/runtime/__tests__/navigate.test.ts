@@ -14,7 +14,7 @@ import type { FunctionComponent } from '../../../../ui-runtime/src/jsx';
 import { clearHistory, currentLocation, historyOf, navigationSnapshot, type NavigationSnapshot, type ScreenLocation } from '../history';
 import { back, closeUi, handOff, navigate, navigateAsync, openScreen, renderDestination, setNavigator, type Navigated, type NavigateOptions } from '../navigate';
 import { screenReferences, presentReference, type ScreenReference } from '../reference';
-import { observeRenderLifecycle, registerCompiledScreen, renderSession, registerStaticScreens as registerStaticLayouts } from '@bedrock-core/ui-runtime';
+import { observeRenderLifecycle, registerCompiledScreen, render, renderSession, registerStaticScreens as registerStaticLayouts } from '@bedrock-core/ui-runtime';
 
 const registerStaticScreens = (records: readonly ScreenReference[]): void => {
   registerStaticLayouts(records.map(record => ({ key: record.key, title: record.title, values: record.values, actions: record.targets })));
@@ -718,5 +718,48 @@ describe('a screen as another addon can show it', () => {
 
     await expect(walk).resolves.toBe('done');
     expect(shown).toEqual(['docs:index', 'docs:page', 'docs:index']);
+  });
+});
+
+
+describe('plain root props on Back', () => {
+  it('returns from Settings to the populated page opened by a direct render', async () => {
+    const player = nextPlayer();
+    const records = Array.from({ length: 10 }, (_, index) => ({ owner: player.id, label: `grave-${String(index)}` }));
+    const seen: Array<{ playerId: string; page: number; row: string }> = [];
+    const List: FunctionComponent = (props) => {
+      const playerId = typeof props.playerId === 'string' ? props.playerId : '';
+      const page = typeof props.page === 'number' ? props.page : 0;
+      const row = records.filter(record => record.owner === playerId)[page * 8]?.label ?? 'empty';
+
+      seen.push({ playerId, page, row });
+
+      return Screen({ children: Panel({ children: [
+        Button({ onPress: () => navigate('plain-params:settings', player), children: Text({ children: 'Settings' }) }),
+        Text({ maxLength: 24, children: row }),
+      ] }) });
+    };
+    const Settings: FunctionComponent = () => Screen({ children: Panel({
+      children: Button({ onPress: () => back(player), children: Text({ children: 'Back' }) }),
+    }) });
+
+    registerCompiledScreen(List, { key: 'plain-params:list', title: titleFor('plain_params_list') });
+    registerCompiledScreen(Settings, { key: 'plain-params:settings', title: titleFor('plain_params_settings') });
+    __setDeferredShows(true);
+    render({ type: List, props: { playerId: player.id, page: 1 } }, player);
+    await untilShown();
+
+    expect(__lastActionForm()?.buttons).toContain('grave-8');
+    __resolveShow({ canceled: false, selection: 0 });
+    await vi.waitFor(() => { expect(__lastActionForm()?.titleText).toBe(titleFor('plain_params_settings')); });
+
+    expect(navigationSnapshot(player).history).toEqual([{ key: 'plain-params:list', params: { playerId: player.id, page: 1 } }]);
+    __resolveShow({ canceled: false, selection: 0 });
+    await vi.waitFor(() => { expect(__lastActionForm()?.titleText).toBe(titleFor('plain_params_list')); });
+
+    expect(seen.at(-1)).toEqual({ playerId: player.id, page: 1, row: 'grave-8' });
+    expect(__lastActionForm()?.buttons).toContain('grave-8');
+    expect(currentLocation(player)).toEqual({ key: 'plain-params:list', params: { playerId: player.id, page: 1 } });
+    closeUi(player);
   });
 });

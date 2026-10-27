@@ -18,7 +18,7 @@ export function ensureNavigationLifecycle(): void {
 
       if (event.reason !== 'released' && openingLocation(id) === undefined) { clearHistory(id); }
     } else if (renderSession(id)?.id === event.session.id) {
-      noteShown(id, event.session.screenKey);
+      noteShown(id, event.session.screenKey, event.session.params);
     }
   }, { replay: true });
 }

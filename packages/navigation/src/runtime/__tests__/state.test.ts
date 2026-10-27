@@ -18,7 +18,7 @@ describe('complete navigation destinations', () => {
     let rendered;
 
     setNavigator((_key, shownPlayer) => {
-      noteShown(shownPlayer.id, 'private:physical');
+      noteShown(shownPlayer.id, 'private:physical', { model: { private: true } });
       rendered = currentLocation(shownPlayer);
 
       return true;

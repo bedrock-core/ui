@@ -58,7 +58,7 @@ export function withNavigationLocation<T>(playerId: string, location: ScreenLoca
 }
 
 /** Records a compiled screen identity received from a renderer or reference presenter. */
-export function noteShown(playerId: string, key: string | undefined): void {
+export function noteShown(playerId: string, key: string | undefined, params?: Readonly<Record<string, unknown>>): void {
   const destination = opening.get(playerId);
 
   if (destination !== undefined) {
@@ -70,8 +70,14 @@ export function noteShown(playerId: string, key: string | undefined): void {
   if (key === undefined) {
     shown.delete(playerId);
     changed(playerId);
-  } else if (shown.get(playerId)?.key !== key) {
-    noteLocation(playerId, { key });
+  } else if (shown.get(playerId)?.key !== key || params !== undefined) {
+    const previous = shown.get(playerId);
+
+    noteLocation(playerId, {
+      ...previous?.key === key ? previous : {},
+      key,
+      ...params === undefined ? {} : { params },
+    });
   }
 }
 

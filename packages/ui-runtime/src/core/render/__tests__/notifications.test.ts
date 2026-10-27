@@ -293,3 +293,34 @@ describe('render lifecycle notifications', () => {
     expect(renderSession(player.id)).toBe(successor);
   });
 });
+
+
+describe('portable render parameters', () => {
+  it('copies and freezes complete plain root props for navigation replay', async () => {
+    const player = nextPlayer();
+    const Root = compiled(() => screen('parameters'), 'notifications:parameters');
+    const props = { playerId: player.id, page: 2, filter: { available: true } };
+
+    render({ type: Root, props }, player);
+    await tick();
+
+    const session = renderSession(player.id);
+
+    props.page = 0;
+    props.filter.available = false;
+    expect(session?.params).toEqual({ playerId: player.id, page: 2, filter: { available: true } });
+    expect(Object.isFrozen(session?.params)).toBe(true);
+    expect(Object.isFrozen(session?.params?.filter)).toBe(true);
+  });
+
+  it('keeps private callbacks out of portable session parameters', async () => {
+    const player = nextPlayer();
+    const Root = compiled(() => screen('private callback'), 'notifications:private-parameters');
+
+    render({ type: Root, props: { playerId: player.id, onOpen: (): void => undefined } }, player);
+    await tick();
+
+    expect(renderSession(player.id)?.params).toBeUndefined();
+    expect(__lastActionForm()?.titleText).toBe(titleFor('notifications_private-parameters'));
+  });
+});
