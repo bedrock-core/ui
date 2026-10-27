@@ -743,7 +743,8 @@ describe('plain root props on Back', () => {
       children: Button({ onPress: () => back(player), children: Text({ children: 'Back' }) }),
     }) });
 
-    registerCompiledScreen(List, { key: 'plain-params:list', title: titleFor('plain_params_list') });
+    registerCompiledScreen(List, { key: 'plain-params:list', title: titleFor('plain_params_list'),
+      snapshot: { shape: '', texts: [0], vis: [] } });
     registerCompiledScreen(Settings, { key: 'plain-params:settings', title: titleFor('plain_params_settings') });
     __setDeferredShows(true);
     render({ type: List, props: { playerId: player.id, page: 1 } }, player);

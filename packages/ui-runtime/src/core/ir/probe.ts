@@ -62,7 +62,6 @@ export interface VariantTable {
 export interface Probe {
   /** Document positions of text values that changed during state probes. */
   readonly texts: readonly number[];
-  /** Baked text that a state change moved. Empty when nothing is frozen. */
   /**
    * Baked props that a state change moved: everything the build writes into
    * JSON UI except the two with carriers of their own, `text` and `visible`.

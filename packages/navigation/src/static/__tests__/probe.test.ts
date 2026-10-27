@@ -71,7 +71,7 @@ describe('navigation liveness analysis', () => {
     expect(optimized.renders).toBeGreaterThan(1);
     expect(optimized.renders).toBeLessThan(ordinary.renders);
     expect(optimized.result).toEqual(ordinary.result);
-    expect(optimized.result.frozen.length).toBeGreaterThan(0);
+    expect(optimized.result.texts.length).toBeGreaterThan(0);
     expect(optimized.result.props.some(prop => prop.prop === 'background')).toBe(true);
     expect(optimized.result.liveVisibles.length).toBeGreaterThan(0);
   });
@@ -89,7 +89,7 @@ describe('navigation liveness analysis', () => {
 
     expect(result.renders).toBeGreaterThan(1);
     expect(changed).toBe(true);
-    expect(result.result.frozen.some(text => text.before === 'before' && text.after === 'after!')).toBe(true);
+    expect(result.result.texts).toContain(0);
   });
 
   it('keeps player-gated callbacks in their original press-budget positions', () => {
