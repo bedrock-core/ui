@@ -1,0 +1,69 @@
+name: Minecraft API compatibility
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '23 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: minecraft-compatibility-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Minecraft 26.50
+            server: 2.10.0
+            server-ui: 2.2.0
+            vanilla-data: 1.26.50
+          - name: Minecraft 26.60
+            server: 2.11.0
+            server-ui: 2.3.0
+            vanilla-data: 1.26.60
+          - name: Locked dependencies
+
+    steps:
+      - uses: actions/checkout@v7
+      - run: corepack enable
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: yarn
+      - run: yarn install --immutable
+
+      - name: Select compatibility SDK
+        if: matrix.server != ''
+        env:
+          MC_SERVER: ${{ matrix.server }}
+          MC_SERVER_UI: ${{ matrix.server-ui }}
+          MC_VANILLA_DATA: ${{ matrix.vanilla-data }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs';
+          const file = JSON.parse(readFileSync('package.json', 'utf8'));
+          file.resolutions = { ...file.resolutions,
+            '@minecraft/server': process.env.MC_SERVER,
+            '@minecraft/server-ui': process.env.MC_SERVER_UI,
+            '@minecraft/vanilla-data': process.env.MC_VANILLA_DATA,
+          };
+          writeFileSync('package.json', JSON.stringify(file, null, 2) + '\n');
+          console.log(file.resolutions);
+          NODE
+          yarn install --no-immutable
+
+      - name: Check library types
+        run: yarn build:libs
+      - name: Run library unit tests
+        run: yarn test:libs

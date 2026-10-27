@@ -1,0 +1,43 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "enabledManagers": ["npm", "github-actions"],
+  "timezone": "Europe/Madrid",
+  "schedule": ["* 0-5 * * 1"],
+  "rangeStrategy": "update-lockfile",
+  "automerge": false,
+  "dependencyDashboard": true,
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "lockFileMaintenance": { "enabled": false },
+  "packageRules": [
+    {
+      "description": "Review external non-major updates together.",
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin"],
+      "matchPackageNames": ["!@minecraft/*", "!@bedrock-core/*"],
+      "groupName": "external dependencies (non-major)"
+    },
+    {
+      "description": "Check stable Minecraft SDK updates daily without changing pack manifests.",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["@minecraft/*"],
+      "schedule": ["* 0-5 * * *"],
+      "allowedVersions": "/^\\d+\\.\\d+\\.\\d+$/",
+      "ignoreUnstable": true,
+      "groupName": "Minecraft SDK (stable)",
+      "prPriority": 10
+    },
+    {
+      "description": "Keep published consumer compatibility ranges under manual control.",
+      "matchManagers": ["npm"],
+      "matchDepTypes": ["peerDependencies", "engines"],
+      "enabled": false
+    },
+    {
+      "description": "Internal Core dependencies follow the coordinated release process.",
+      "matchPackageNames": ["@bedrock-core/*", "bedrock-core/*"],
+      "enabled": false
+    }
+  ]
+}
