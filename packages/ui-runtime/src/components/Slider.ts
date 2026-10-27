@@ -6,8 +6,15 @@ import { resolveStateBackgrounds, withControl, type StateBackgroundProps } from 
 import { FormControlBase } from './Form/shared';
 import { MODAL_SLIDER_SLOT_TYPE } from '../core/fields';
 import { useMechanism } from '../hooks/useMechanism';
+import { useLiveField, type FieldChange } from './liveField';
 
-export interface SliderProps extends FormControlBase, StateBackgroundProps {
+export interface SliderProps extends Omit<FormControlBase, 'name'>, StateBackgroundProps {
+  /** Result key in a Form; optional on a live screen. */
+  name?: string;
+  /** Controlled numeric value on a live screen. */
+  value?: number;
+  /** Called when a live slider changes. */
+  onChange?: FieldChange<number>;
   /** Minimum selectable value. */
   min: number;
   /** Maximum selectable value. */
@@ -59,7 +66,7 @@ const DEFAULT_THUMB_HEIGHT = 16;
  * payload for the RP to position/style the native widget.
  */
 const nativeSlider = ({
-  name, min, max, step, defaultValue,
+  name, min, max, step, defaultValue, value: _value, onChange: _onChange,
   backgroundHover, backgroundPressed, backgroundLocked,
   progress, progressHover, thumb, thumbHover, thumbPressed, thumbLocked,
   trackHeight, thumbWidth, thumbHeight, ...layout
@@ -121,12 +128,13 @@ const nativeSlider = ({
 };
 
 /**
- * A numeric slider. Only a `<Form>` draws one; any other screen refuses it at build.
+ * A numeric field, atomic on Form and live on Experimental_OreUI.
  */
 export const Slider: FunctionComponent<SliderProps> = (props: SliderProps): JSX.Element => {
-  useMechanism('Slider');
+  const mechanism = useMechanism('Slider');
+  const element = nativeSlider(props);
 
-  return nativeSlider(props);
+  return mechanism === 'change' ? useLiveField(element, props.defaultValue ?? props.min, props.value, props.onChange) : element;
 };
 
 /** Serializes a `modal-slider` into the native modal slider control. */

@@ -186,6 +186,8 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
     throw new ContainerScreenError('`<Container>` is a container screen; compile it with compileScreen().');
   }
 
+  if (host.id === 'experimental-ore-ui') { throw new Error('Compile <Experimental_OreUI> with compileExperimentalOreScreen().'); }
+
   const modal = host.id === 'form-modal';
 
   if (modal) {

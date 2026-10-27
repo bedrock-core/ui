@@ -45,6 +45,8 @@ import { registerScreenMetadata, screenMetadataOf, type ScreenMetadata } from '.
  * silently drawn wrong.
  */
 export interface CompiledSnapshot {
+  /** Experimental Ore layout and fixed native action allocation. */
+  readonly ore?: import('../../hosts/ore/contract').OreLayout;
   /** Portable compilation data owned by optional component libraries. */
   readonly data?: Readonly<Record<string, unknown>>;
   /** The claim shape the build compiled, as the probe's one-line fingerprint. */

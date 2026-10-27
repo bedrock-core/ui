@@ -46,6 +46,7 @@ export {
   Select, type MultipleSelectProps, type SelectBaseProps, type SelectOptionStyle, type SelectProps, type SingleSelectProps,
 } from './Select';
 export { declaredStatic, Screen, SCREEN_TYPE, type ScreenProps } from './Screen';
+export { Experimental_OreUI, type ExperimentalOreUIProps } from './Experimental_OreUI';
 export { Scroll, SCROLL_SLOT_TYPE, type ScrollAxis, type ScrollProps } from './Scroll';
 export { Slider, type SliderProps } from './Slider';
 export {
@@ -70,6 +71,7 @@ import { EXPECT_SLOT_TYPE } from './Expect';
 import { } from './Image';
 import { } from './Panel';
 import { SCREEN_TYPE } from './Screen';
+import { EXPERIMENTAL_ORE_TYPE } from '../core/roots';
 import { SCROLL_SLOT_TYPE } from './Scroll';
 import { TEXT_SHADOW_TYPE, TEXT_SHADOW_WRAP_TYPE, TEXT_WRAP_TYPE } from './Text';
 import { MODAL_DROPDOWN_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE } from '../core/fields';
@@ -130,6 +132,7 @@ export function registerNativeComponents(): void {
   // form's `<Screen>` and a modal's `<Form>` have no box; their children are
   // laid out against the canvas.
   registerComponent(SCREEN_TYPE, { transparent: true });
+  registerComponent(EXPERIMENTAL_ORE_TYPE, { transparent: true });
   registerComponent(MODAL_FORM_SLOT_TYPE, { transparent: true });
 
   // The expected-host marker: draws nothing, checked against the host at build.
@@ -150,3 +153,5 @@ export function registerNativeComponents(): void {
   // the presenter encodes it into the form TITLE payload (see FormButton).
   registerComponent(MODAL_FORM_BUTTON_SLOT_TYPE, { writer: formButtonWriter });
 }
+
+export type { FieldChange } from './liveField';

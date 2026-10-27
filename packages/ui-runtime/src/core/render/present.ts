@@ -2,6 +2,7 @@ import { type Player } from '@minecraft/server';
 import { findModalConfig } from '../../components/Form';
 import { presentCompiledModal } from '../../hosts/form/modal';
 import { presentCompiledForm } from '../../hosts/form/runtime';
+import { presentExperimentalOre } from '../../hosts/ore/runtime';
 import type { JSX } from '../../jsx';
 import { getFibersForOwner, playerOwner } from '../fabric';
 import type { CompiledSnapshot } from './screens';
@@ -23,6 +24,7 @@ export { findModalConfig };
 export interface CompiledPresent {
   readonly snapshot?: CompiledSnapshot;
   readonly debug?: boolean;
+  readonly rebuild?: () => JSX.Element;
 }
 
 /**
@@ -75,6 +77,12 @@ export async function present(
   compiledTitle: string,
   compiled: CompiledPresent = {},
 ): Promise<PresentResult> {
+  if (compiled.snapshot?.ore !== undefined) {
+    if (compiled.rebuild === undefined) { throw new Error('Ore presentation requires the active session build runner.'); }
+
+    return presentExperimentalOre(player, tree, compiled.snapshot.ore, compiled.rebuild);
+  }
+
   const modalConfig = findModalConfig(tree);
 
   // A modal's typed controls are the engine's either way — there is no

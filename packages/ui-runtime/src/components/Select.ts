@@ -14,6 +14,7 @@ import { useState } from '../hooks/useState';
 import { Button } from './Button';
 import { Panel } from './Panel';
 import { Text } from './Text';
+import { Image } from './Image';
 
 /** Group-level option style defaults; each `Option` may override its own. */
 export interface SelectOptionStyle {
@@ -171,6 +172,7 @@ export const Select: FunctionComponent<SelectProps> = (props: SelectProps): JSX.
     const layout = element.props.__layout ?? withControl(element.props).__layout;
 
     return {
+      element,
       value: String(element.props.value ?? ''),
       label: String(element.props.label ?? ''),
       testId: element.props.testId,
@@ -186,6 +188,7 @@ export const Select: FunctionComponent<SelectProps> = (props: SelectProps): JSX.
   }
 
   const chosen = props.value === undefined ? internal : chosenOf(props.value);
+  const nativeDefaults = mechanism === 'change' ? nativeSelect({ ...props, name: props.name ?? '' }).nativeArgs?.groupDefaults : undefined;
   const {
     name: _name, multiple: _multiple, defaultValue: _default, value: _value, onChange: _onChange, children: _children,
     optionBackground, optionHover, optionSelected,
@@ -217,6 +220,24 @@ export const Select: FunctionComponent<SelectProps> = (props: SelectProps): JSX.
     ...layout,
     children: options.map((option) => {
       const on = chosen.includes(option.value);
+
+      if (mechanism === 'change' && isGroupDefaults(nativeDefaults)) {
+        const style = readOption(option.element, nativeDefaults).style;
+        const bullet = on ? style.bulletSelectedTexture : style.bulletTexture;
+        const label = Text({ children: option.label, font: style.fontType === 'MinecraftTen' ? 'minecraftTen' : 'mojangles',
+          scale: style.fontScaleFactor / 2, color: on ? style.colorSelected ?? style.color : style.color,
+          marginTop: on ? style.dropSelected ?? 0 : 0 });
+        const control = Button({ ...option.layout, testId: option.testId, testName: option.label,
+          flexDirection: 'row', alignItems: 'center', gap: bullet ? 4 : 0,
+          justifyContent: style.align === 'center' ? 'center' : style.align === 'right' ? 'flex-end' : 'flex-start',
+          background: on ? style.backgroundSelected : style.background, backgroundHover: style.backgroundHover,
+          children: [...bullet ? [Image({ width: style.bulletWidth, height: style.bulletHeight, live: true, texture: bullet })] : [], label],
+          onPress: () => { press(option.value); } });
+
+        return { ...control, props: { ...control.props, __resourceTextures: [style.background, style.backgroundSelected, style.backgroundHover,
+          style.bulletTexture, style.bulletSelectedTexture, style.bulletHoverTexture, style.bulletSelectedHoverTexture].filter(Boolean) } };
+      }
+
       const color = on ? optionColorSelected ?? optionColor : optionColor;
 
       return Button({

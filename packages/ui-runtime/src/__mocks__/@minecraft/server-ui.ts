@@ -137,6 +137,144 @@ export const uiManager = {
   }),
 };
 
+export class ObservableString {
+  private listeners = new Set<(value: string) => void>();
+  constructor(private value: string, readonly options?: { clientWritable: boolean }) { this.check(value); }
+  private check(value: string): void { if (value.length > 5000) { throw new Error('Observable string limit'); } }
+  getData(): string { return this.value; }
+  setData(value: string): void {
+    this.check(value);
+
+    if (value === this.value) { return; }
+
+    this.value = value;
+
+    for (const listener of this.listeners) { listener(value); }
+  }
+
+  subscribe(listener: (value: string) => void): (value: string) => void {
+    this.listeners.add(listener);
+
+    return listener;
+  }
+
+  unsubscribe(listener: (value: string) => void): boolean { return this.listeners.delete(listener); }
+}
+export class ObservableBoolean {
+  private listeners = new Set<(value: boolean) => void>();
+  constructor(private value: boolean, readonly options?: { clientWritable: boolean }) {}
+  getData(): boolean { return this.value; }
+  setData(value: boolean): void {
+    if (value === this.value) { return; }
+
+    this.value = value;
+
+    for (const listener of this.listeners) { listener(value); }
+  }
+
+  subscribe(listener: (value: boolean) => void): (value: boolean) => void {
+    this.listeners.add(listener);
+
+    return listener;
+  }
+
+  unsubscribe(listener: (value: boolean) => void): boolean { return this.listeners.delete(listener); }
+}
+export class ObservableNumber {
+  private listeners = new Set<(value: number) => void>();
+  constructor(private value: number, readonly options?: { clientWritable: boolean }) {}
+  getData(): number { return this.value; }
+  setData(value: number): void {
+    if (value === this.value) { return; }
+
+    this.value = value;
+
+    for (const listener of this.listeners) { listener(value); }
+  }
+
+  subscribe(listener: (value: number) => void): (value: number) => void {
+    this.listeners.add(listener);
+
+    return listener;
+  }
+
+  unsubscribe(listener: (value: number) => void): boolean { return this.listeners.delete(listener); }
+}
+export class ObservableUIRawMessage {
+  constructor(private value: import('@minecraft/server-ui').UIRawMessage) {}
+  getData(): import('@minecraft/server-ui').UIRawMessage { return this.value; }
+  setData(value: import('@minecraft/server-ui').UIRawMessage): void { this.value = value; }
+}
+export const __oreForms: CustomForm[] = [];
+export class CustomForm {
+  localizedLabels: ObservableUIRawMessage[] = [];
+  fields: { kind: string; label: string | ObservableString; value: ObservableString | ObservableBoolean | ObservableNumber; options?: { visible?: ObservableBoolean; disabled?: ObservableBoolean }; items?: { label: string; value: number }[] }[] = [];
+  labels: ObservableString[] = [];
+  labelOptions: ({ visible?: ObservableBoolean } | undefined)[] = [];
+  buttons: { label: string | ObservableString | ObservableUIRawMessage; onClick: () => void; options?: { disabled?: ObservableBoolean; visible?: ObservableBoolean } }[] = [];
+  show = vi.fn((): Promise<string> => {
+    if (this.showing) { throw new Error('Form already showing'); }
+
+    this.showing = true;
+
+    return new Promise((resolve) => { this.finish = resolve; });
+  });
+
+  private showing = false;
+  private finish?: (reason: string) => void;
+  constructor(readonly player: unknown, readonly title: string | ObservableString) { __oreForms.push(this); }
+  label(value: ObservableString | ObservableUIRawMessage, options?: { visible?: ObservableBoolean }): this {
+    if (value instanceof ObservableUIRawMessage) {
+      this.localizedLabels.push(value);
+
+      return this;
+    }
+
+    this.labels.push(value);
+    this.labelOptions.push(options);
+
+    return this;
+  }
+
+  button(label: string | ObservableString | ObservableUIRawMessage, onClick: () => void, options?: { disabled?: ObservableBoolean; visible?: ObservableBoolean }): this {
+    this.buttons.push({ label, onClick, options });
+
+    return this;
+  }
+
+  toggle(label: string, value: ObservableBoolean, options?: { visible?: ObservableBoolean; disabled?: ObservableBoolean }): this {
+    this.fields.push({ kind: 'toggle', label, value, options });
+
+    return this;
+  }
+
+  slider(label: string, value: ObservableNumber, _min: number, _max: number, options?: { visible?: ObservableBoolean; disabled?: ObservableBoolean }): this {
+    this.fields.push({ kind: 'slider', label, value, options });
+
+    return this;
+  }
+
+  dropdown(label: string, value: ObservableNumber, items: { label: string; value: number }[], options?: { visible?: ObservableBoolean; disabled?: ObservableBoolean }): this {
+    this.fields.push({ kind: 'dropdown', label, value, items, options });
+
+    return this;
+  }
+
+  textField(label: string | ObservableString, value: ObservableString, options?: { visible?: ObservableBoolean; disabled?: ObservableBoolean }): this {
+    this.fields.push({ kind: 'input', label, value, options });
+
+    return this;
+  }
+
+  closeButton(): this { return this; }
+  isShowing(): boolean { return this.showing; }
+  close(): void {
+    if (!this.showing) { throw new Error('Form not showing'); }
+
+    this.showing = false; this.finish?.('UserClosed');
+  }
+}
+
 export interface ModalFormDataTextFieldOptions { defaultValue?: string; tooltip?: string }
 export interface ModalFormDataDropdownOptions { defaultValueIndex?: number; tooltip?: string }
 export interface ModalFormDataSliderOptions { defaultValue?: number; valueStep?: number; tooltip?: string }

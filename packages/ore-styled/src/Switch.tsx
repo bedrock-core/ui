@@ -1,5 +1,5 @@
 /** @jsxImportSource @bedrock-core/ui-runtime */
-import type { ControlProps, JSX } from '@bedrock-core/ui-runtime';
+import type { ControlProps, JSX, ToggleProps as PrimitiveToggleProps } from '@bedrock-core/ui-runtime';
 import { Button, ModalFormError, Panel, Toggle as PrimitiveToggle, useMechanism, useState } from '@bedrock-core/ui-runtime';
 import { fieldLabel, rowSizing } from './Form/label';
 
@@ -48,7 +48,7 @@ export interface BooleanProps extends ControlProps {
    */
   on?: boolean;
   /** Called with the new state, on the hosts where a press reaches script. */
-  onChange?: (on: boolean) => void;
+  onChange?: PrimitiveToggleProps['onChange'];
   enabled?: boolean;
   /** The theme's textures are defaults, not a lock: pass one and yours wins. */
   background?: string;
@@ -94,15 +94,18 @@ export function Switch(
   const box = { width: shape.width, height: shape.height };
   const own = label === undefined ? layout : {};
 
-  const control = useMechanism('Toggle') === 'field'
+  const mechanism = useMechanism('Toggle');
+  const control = mechanism === 'field' || mechanism === 'change'
     ? (
         <PrimitiveToggle
           testId={testId}
           testRole={testRole}
           testName={testName}
           {...{ __testRole: 'checkbox', __testName: label }}
-          name={named(name, label)}
+          name={mechanism === 'field' ? named(name, label) : name}
           defaultValue={defaultValue}
+          on={on}
+          onChange={onChange}
           enabled={enabled}
           backgroundPressed={backgroundPressed}
           {...box}
@@ -169,7 +172,7 @@ function named(name: string | undefined, label: string | undefined): string {
 interface PressedProps extends ControlProps {
   defaultValue: boolean;
   on?: boolean;
-  onChange?: (on: boolean) => void;
+  onChange?: PrimitiveToggleProps['onChange'];
   enabled: boolean;
   backgroundPressed?: string;
   faces: SwitchFaces;
@@ -180,7 +183,7 @@ function Pressed({ defaultValue, on, onChange, enabled, backgroundPressed, faces
   const [internal, setInternal] = useState(defaultValue);
   const isOn = on ?? internal;
 
-  function handle(): void {
+  function handle(event: Parameters<NonNullable<PrimitiveToggleProps['onChange']>>[1]): void | Promise<void> {
     if (!enabled) {
       return;
     }
@@ -188,7 +191,8 @@ function Pressed({ defaultValue, on, onChange, enabled, backgroundPressed, faces
     const next = !isOn;
 
     setInternal(next);
-    onChange?.(next);
+
+    return onChange?.(next, event);
   }
 
   return (

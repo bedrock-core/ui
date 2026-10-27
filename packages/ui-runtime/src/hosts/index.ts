@@ -6,6 +6,7 @@ import { ContainerScreenError, ScreenRootError } from '../core/types';
 import type { JSX } from '../jsx';
 import { CHEST } from './chest/host';
 import { FORM_ACTION, FORM_MODAL } from './form/host';
+import { EXPERIMENTAL_ORE } from './ore/host';
 import type { HostContract } from './types';
 
 /**
@@ -16,7 +17,7 @@ import type { HostContract } from './types';
  * is looking at. Each host is named by one root element, so the order carries
  * no meaning.
  */
-export const HOSTS: readonly HostContract[] = [CHEST, FORM_MODAL, FORM_ACTION];
+export const HOSTS: readonly HostContract[] = [CHEST, FORM_MODAL, FORM_ACTION, EXPERIMENTAL_ORE];
 
 export { CHEST } from './chest/host';
 export { FORM_ACTION, FORM_MODAL } from './form/host';

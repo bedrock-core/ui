@@ -8,6 +8,7 @@ import { MODAL_TOGGLE_SLOT_TYPE } from '../core/fields';
 import { useMechanism } from '../hooks/useMechanism';
 import { useState } from '../hooks/useState';
 import { Button } from './Button';
+import type { FieldChange } from './liveField';
 
 interface NativeToggleProps extends FormControlBase, StateBackgroundProps {
   /** Initial on/off state. Defaults to `false`. */
@@ -66,10 +67,10 @@ const nativeToggle = ({
 export interface ToggleProps extends Omit<NativeToggleProps, 'name'> {
   /** Result key inside a `<Form>`, where it is required; unused where a press is the answer. */
   name?: string;
-  /** The state, held by the caller instead of the control. Only where a press reaches script. */
+  /** The state, held by the caller on a live or press-based screen. */
   on?: boolean;
   /** Called with the new state, where a press reaches script. */
-  onChange?: (on: boolean) => void;
+  onChange?: FieldChange<boolean>;
 }
 
 /**
@@ -86,6 +87,18 @@ export const Toggle: FunctionComponent<ToggleProps> = ({ on, onChange, ...props 
   }
 
   const current = on ?? internal;
+
+  if (mechanism === 'change') {
+    const element = nativeToggle({ ...props, name: props.name ?? '' });
+
+    return { ...element, nativeArgs: { ...element.nativeArgs, value: current,
+      onChange: async (value: boolean, event: import('../core/events').UiEvent): Promise<void> => {
+        await onChange?.(value, event);
+        setInternal(value);
+      },
+    } };
+  }
+
   const { name: _name, defaultValue: _default, checkedBackground, checkedHover, checkedLocked, ...rest } = props;
   const checkedBase = checkedBackground ?? rest.background;
 
@@ -94,9 +107,10 @@ export const Toggle: FunctionComponent<ToggleProps> = ({ on, onChange, ...props 
     background: current ? checkedBase : rest.background,
     backgroundHover: current ? checkedHover ?? checkedBase : rest.backgroundHover,
     backgroundLocked: current ? checkedLocked ?? checkedBase : rest.backgroundLocked,
-    onPress: () => {
+    onPress: ({ player }) => {
       setInternal(!current);
-      onChange?.(!current);
+
+      return onChange?.(!current, { player });
     },
   });
 };

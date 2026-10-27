@@ -183,10 +183,16 @@ describe('overflow text value commit', () => {
     expect(asNum(t.props.jsonUIHeight)).toBe(2 * LINE_HEIGHT);
     expect((t.props.value as { tail: string }).tail.split('\n')).toHaveLength(2);
 
-    const kept = wrapText(DESC, asNum(t.props.jsonUIWidth), undefined, 1).split('\n').slice(0, 2);
+    const kept = (t.props.value as { tail: string }).tail.split('\n');
+    expect(kept[0]).toBe(wrapText(DESC, asNum(t.props.jsonUIWidth), undefined, 1).split('\n')[0]);
+    expect(kept[1].endsWith('...')).toBe(true);
+    expect(measureText({text:kept[1],fontSize:1}).width).toBeLessThanOrEqual(160);
+  });
 
-    // A wrapped line fits by construction, so ellipsizeText leaves it unchanged.
-    expect(t.props.value).toEqual({ tail: kept.join('\n') });
+  it('keeps text unchanged when maxLines does not truncate it', () => {
+    const t = text('Two short lines\nfit', { wordBreak: 'break-word', maxLines: 2 });
+    computeLayout(el('panel', {width:160,height:210}, [t]));
+    expect(t.props.value).toEqual({tail:'Two short lines\nfit'});
   });
 });
 

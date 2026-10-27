@@ -198,7 +198,7 @@ function processOverflowText(td: TextMetricsData, availableWidth: number): strin
       // Always ellipsize last line when truncating — clip is unreliable because
       // the serialized string may exceed 80 bytes and Bedrock adds its own ellipsis anyway.
       kept[kept.length - 1] = ellipsizeText(
-        kept[kept.length - 1],
+        kept[kept.length - 1].trimEnd() + '...',
         availableWidth,
         td.font,
         td.scale,

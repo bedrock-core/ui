@@ -26,13 +26,14 @@ export type CarrierKind = 'bool' | 'int' | 'enum' | 'text';
  *  - `press`  — a button was pressed.
  *  - `slot`   — an item moved through a cell of the screen's own container.
  *  - `field`  — a native control the engine owns while the screen is open.
+ *  - `change` — a live control edit delivered to its handler.
  *  - `submit` / `cancel` — a form was submitted or dismissed.
  *  - `exit`   — the screen was closed.
  *
  * A component that needs one a host does not offer is refused at build, by
  * name, rather than drawn and left inert.
  */
-export type InputKind = 'press' | 'slot' | 'field' | 'submit' | 'cancel' | 'exit';
+export type InputKind = 'press' | 'slot' | 'field' | 'change' | 'submit' | 'cancel' | 'exit';
 
 /**
  * What a host can draw that is neither carried nor an input: a cell over a
@@ -65,7 +66,7 @@ export type ComponentKind
 export type Mechanism = InputKind | DrawKind | 'local';
 
 export interface HostContract {
-  readonly id: 'chest' | 'form-action' | 'form-modal';
+  readonly id: import('../core/roots').HostId;
   /** For error messages: what the author calls this screen. */
   readonly label: string;
   /**

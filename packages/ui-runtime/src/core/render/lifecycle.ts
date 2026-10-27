@@ -23,6 +23,7 @@ import {
   triggerCleanup, noteSessionStart } from './session';
 import { buildTree, cleanupComponentTree } from './tree';
 import { UncompiledScreenError } from '../types';
+import { closeExperimentalOre, handoffExperimentalOre, updateExperimentalOre } from '../../hosts/ore/runtime';
 
 export interface RenderOptions {
   /**
@@ -101,15 +102,18 @@ export function render(
       if (getSessionRoot(owner) !== rootElement) { return; }
 
       setBuildRunner(owner, () => {
-        buildTree(rootElement, owner, compiledTitle !== undefined);
+        const tree = buildTree(rootElement, owner, compiledTitle !== undefined);
+
+        updateExperimentalOre(player, tree);
       });
       requestSwap(owner);
 
-      // A form on screen resolves its pending show() as canceled and the chain
-      // absorbs the swap; with no form up this is a no-op and the chain's next
-      // verdict absorbs it instead. The input lock is left untouched, so the
-      // player's camera never flashes free between apps.
-      uiManager.closeAllForms(player);
+      // Ore destinations release the logical presentation while keeping the
+      // native form open. Other hosts release their native presentation.
+      if (shown.snapshot?.ore === undefined || !handoffExperimentalOre(player, shown.snapshot.ore)) {
+        closeExperimentalOre(player);
+        uiManager.closeAllForms(player);
+      }
 
       return;
     }
@@ -128,7 +132,9 @@ export function render(
   if (getSessionRoot(owner) !== rootElement) { return; }
 
   setBuildRunner(owner, () => {
-    buildTree(rootElement, owner, compiledTitle !== undefined);
+    const tree = buildTree(rootElement, owner, compiledTitle !== undefined);
+
+    updateExperimentalOre(player, tree);
   });
 
   const token = beginPresentChain(owner);
@@ -176,7 +182,7 @@ export function render(
       return;
     }
 
-    present(player, tree, title, { snapshot: current.snapshot, debug: current.debug })
+    present(player, tree, title, { snapshot: current.snapshot, debug: current.debug, rebuild: () => buildTree(rootNow, owner, true) })
       .then((result) => {
         // Superseded or torn down while the form was up — this outcome is void.
         if (!isChainCurrent(owner, token)) {

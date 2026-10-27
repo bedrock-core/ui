@@ -8,6 +8,7 @@
 
 /** Emitted by `<Screen>`: an action form. */
 export const SCREEN_TYPE = 'screen';
+export const EXPERIMENTAL_ORE_TYPE = 'experimental-ore-ui';
 
 /** Emitted by `<Form>`: a native modal form. */
 export const MODAL_FORM_SLOT_TYPE = 'modal-form';
@@ -16,11 +17,12 @@ export const MODAL_FORM_SLOT_TYPE = 'modal-form';
 export const CONTAINER_TYPE = 'container';
 
 /** The screens the library draws on, named. One per root. */
-export type HostId = 'form-action' | 'form-modal' | 'chest';
+export type HostId = 'form-action' | 'form-modal' | 'chest' | 'experimental-ore-ui';
 
 /** The host each root names, which is the whole of what a root decides. */
 export const HOST_OF_ROOT: Readonly<Record<string, HostId>> = {
   [SCREEN_TYPE]: 'form-action',
+  [EXPERIMENTAL_ORE_TYPE]: 'experimental-ore-ui',
   [MODAL_FORM_SLOT_TYPE]: 'form-modal',
   [CONTAINER_TYPE]: 'chest',
 };

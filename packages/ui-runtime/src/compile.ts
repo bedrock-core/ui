@@ -69,6 +69,8 @@ export { CONTAINER_TYPE, containerHandlers, containerHost, containerRoot } from 
 export type { ContainerHost } from './components/Container';
 export { declaredStatic, SCREEN_TYPE } from './components/Screen';
 export { hostFor, rootOf } from './hosts';
+export { oreLayout, oreElements, textTranslations } from './hosts/ore/contract';
+export type { OreLayout, OreNode } from './hosts/ore/contract';
 export { IMAGE_TYPE, liveTexture } from './components/Image';
 export { EMBED_SLOT_TYPE, embedMarker, embedPlacementOf, embedSlotIndex, entryBaseOf, isEmbedRoot, isEmbedSlot } from './components/Embed';
 export {

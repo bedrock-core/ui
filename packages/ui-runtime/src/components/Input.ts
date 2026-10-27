@@ -8,11 +8,18 @@ import { labelPayloadFields, type LabelFont } from './Form/controlPayload';
 import { FormControlBase } from './Form/shared';
 import { MODAL_INPUT_SLOT_TYPE } from '../core/fields';
 import { useMechanism } from '../hooks/useMechanism';
+import { useLiveField, type FieldChange } from './liveField';
 
 /** Default left inset (px) of the field text from the box edge (the old text_area inset). */
 const FIELD_TEXT_INSET_X = 8;
 
-export interface InputProps extends FormControlBase, StateBackgroundProps {
+export interface InputProps extends Omit<FormControlBase, 'name'>, StateBackgroundProps {
+  /** Result key in a Form; optional on a live screen. */
+  name?: string;
+  /** Controlled text on a live screen. Modal forms use defaultValue. */
+  value?: string;
+  /** Called for live edits; modal forms report their fields on submit. */
+  onChange?: FieldChange<string>;
   /** Placeholder shown inside the native text field when empty. */
   placeholder?: string;
   /** Initial text. Defaults to `''`. */
@@ -40,7 +47,7 @@ export interface InputProps extends FormControlBase, StateBackgroundProps {
  * payload for the RP to position/style the native widget.
  */
 const nativeInput = ({
-  name, placeholder, defaultValue, font, scale,
+  name, placeholder, defaultValue, font, scale, value: _value, onChange: _onChange,
   textOffsetX, textOffsetY, placeholderOffsetX, placeholderOffsetY,
   backgroundHover, backgroundPressed, backgroundLocked, ...layout
 }: InputProps): JSX.Element => {
@@ -86,12 +93,13 @@ const nativeInput = ({
 };
 
 /**
- * A text field. Only a `<Form>` draws one; any other screen refuses it at build.
+ * A text field, atomic on Form and live on Experimental_OreUI.
  */
 export const Input: FunctionComponent<InputProps> = (props: InputProps): JSX.Element => {
-  useMechanism('Input');
+  const mechanism = useMechanism('Input');
+  const element = nativeInput(props);
 
-  return nativeInput(props);
+  return mechanism === 'change' ? useLiveField(element, props.defaultValue ?? '', props.value, props.onChange) : element;
 };
 
 /** Serializes a `modal-input` into the native modal text field control. */

@@ -4,7 +4,7 @@ import * as compiler from '../index';
 
 describe('compiler package entry', () => {
   it('exposes complete screen compilation and pack linking operations', () => {
-    expect(Object.keys(compiler).sort()).toEqual(['buildUiPack', 'compileFormScreen', 'compileScreen']);
+    expect(Object.keys(compiler).sort()).toEqual(['buildUiPack', 'compileExperimentalOreScreen', 'compileFormScreen', 'compileScreen']);
   });
 
   it('links a screen compiled through the package entry', () => {

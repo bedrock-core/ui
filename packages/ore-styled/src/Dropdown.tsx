@@ -42,7 +42,7 @@ export interface DropdownProps extends Omit<PrimitiveDropdownProps, 'children'> 
  * set `backgroundPressed`.
  */
 export function Dropdown({
-  label, testId, testRole, testName, name, options, defaultValue, enabled = true,
+  label, testId, testRole, testName, name, options, defaultValue, value, onChange, enabled = true,
   background, backgroundHover, backgroundPressed, backgroundLocked,
   popupBackground, optionBackground, optionHover, optionSelected,
   optionFont, optionScale, optionAlign,
@@ -62,6 +62,8 @@ export function Dropdown({
         {...{ __testName: label }}
         name={name}
         defaultValue={defaultValue}
+        value={value}
+        onChange={onChange}
         enabled={enabled}
         width={'100%'}
         background={background ?? d.textures.background}

@@ -1,4 +1,5 @@
 import { uiManager } from '@minecraft/server-ui';
+import { closeExperimentalOre } from '../../hosts/ore/runtime';
 import type { JSX } from '../../jsx';
 import { finishRenderSession, renderSession, startRenderSession, type RenderEndReason } from './notifications';
 import { compiledKeyOf } from './screens';
@@ -355,7 +356,11 @@ export function triggerCleanup(owner: Owner, shouldClose: boolean = false, reaso
 
   try {
     // Release the native form before an ended observer can open its successor.
-    if (shouldClose && owner.kind === 'player') { uiManager.closeAllForms(owner.player); }
+    if (owner.kind === 'player') {
+      closeExperimentalOre(owner.player);
+
+      if (shouldClose) { uiManager.closeAllForms(owner.player); }
+    }
   } finally {
     clearSession(owner, reason);
   }

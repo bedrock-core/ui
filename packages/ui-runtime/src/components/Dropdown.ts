@@ -13,6 +13,7 @@ import {
 import { FormControlBase } from './Form/shared';
 import { MODAL_DROPDOWN_SLOT_TYPE } from '../core/fields';
 import { useMechanism } from '../hooks/useMechanism';
+import { useLiveField, type FieldChange } from './liveField';
 
 /**
  * Fixed option row height (px) — the RP `dropdown_option_radio` renders every row at this
@@ -36,7 +37,13 @@ const POPUP_PADDING = 1;
 /** Popup height cap: half the canonical screen — longer lists get the scrollbar. */
 const POPUP_MAX_HEIGHT = CANONICAL_SCREEN.height / 2;
 
-export interface DropdownProps extends FormControlBase, StateBackgroundProps {
+export interface DropdownProps extends Omit<FormControlBase, 'name'>, StateBackgroundProps {
+  /** Result key in a Form; optional on a live screen. */
+  name?: string;
+  /** Controlled option value on a live screen. */
+  value?: string;
+  /** Called with the selected Option.value on a live screen. */
+  onChange?: FieldChange<string>;
   /**
    * Initial selection as an option VALUE (matched against each `Option`'s `value`,
    * mapped to its index). Defaults to the first option. `onSubmit` reports the
@@ -99,7 +106,7 @@ export interface DropdownProps extends FormControlBase, StateBackgroundProps {
  * row, so option styling is genuinely per-option (not read uniformly from the cell).
  */
 const nativeDropdown = ({
-  name, defaultValue,
+  name, defaultValue, value: _value, onChange: _onChange,
   backgroundHover, backgroundPressed, backgroundLocked, popupBackground,
   optionBackground, optionHover, optionSelected,
   optionFont, optionScale, optionAlign,
@@ -178,12 +185,13 @@ const nativeDropdown = ({
 };
 
 /**
- * A choice behind a popup. Only a `<Form>` draws one; any other screen refuses it at build.
+ * A choice behind a popup, atomic on Form and live on Experimental_OreUI.
  */
 export const Dropdown: FunctionComponent<DropdownProps> = (props: DropdownProps): JSX.Element => {
-  useMechanism('Dropdown');
+  const mechanism = useMechanism('Dropdown');
+  const element = nativeDropdown(props);
 
-  return nativeDropdown(props);
+  return mechanism === 'change' ? useLiveField(element, props.defaultValue ?? '', props.value, props.onChange) : element;
 };
 
 /** Serializes a `modal-dropdown` into the native modal dropdown control. */

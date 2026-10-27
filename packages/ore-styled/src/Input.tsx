@@ -22,7 +22,7 @@ export interface InputProps extends PrimitiveInputProps {
  * `backgroundHover` also becomes their focused face unless they set `backgroundPressed`.
  */
 export function Input({
-  label, testId, testRole, testName, name, placeholder, defaultValue, enabled = true,
+  label, testId, testRole, testName, name, placeholder, defaultValue, value, onChange, enabled = true,
   background, backgroundHover, backgroundPressed, backgroundLocked, font, scale,
   textOffsetX, textOffsetY, placeholderOffsetX, placeholderOffsetY,
   ...layout
@@ -41,6 +41,8 @@ export function Input({
       name={name}
       placeholder={placeholder}
       defaultValue={defaultValue}
+      value={value}
+      onChange={onChange}
       enabled={enabled}
       background={background ?? t.background}
       backgroundHover={backgroundHover ?? t.backgroundHover}

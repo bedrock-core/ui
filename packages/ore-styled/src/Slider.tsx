@@ -23,7 +23,7 @@ export interface SliderProps extends PrimitiveSliderProps {
  * `thumbHover` also becomes their dragged face unless they set `thumbPressed`.
  */
 export function Slider({
-  label, testId, testRole, testName, name, min, max, step, defaultValue, enabled = true,
+  label, testId, testRole, testName, name, min, max, step, defaultValue, value, onChange, enabled = true,
   background, backgroundHover, backgroundPressed, backgroundLocked,
   progress, progressHover, thumb, thumbHover, thumbPressed, thumbLocked,
   trackHeight, thumbWidth, thumbHeight,
@@ -45,6 +45,8 @@ export function Slider({
       max={max}
       step={step}
       defaultValue={defaultValue}
+      value={value}
+      onChange={onChange}
       enabled={enabled}
       height={aspectSized ? undefined : s.height}
       background={background ?? s.textures.track}
