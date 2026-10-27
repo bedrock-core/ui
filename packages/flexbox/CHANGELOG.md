@@ -1,5 +1,11 @@
 # @bedrock-core/flexbox
 
+## 1.0.2
+
+### Patch Changes
+
+- c1f9bb6: Allow fractional layout coordinates so compiled screens preserve exact centers through nested containers.
+
 ## 1.0.1
 
 ### Patch Changes

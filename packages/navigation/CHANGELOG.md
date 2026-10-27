@@ -1,5 +1,17 @@
 # @bedrock-core/navigation
 
+## 0.13.1
+
+### Patch Changes
+
+- 223550b: Add the experimental Ore UI host with compiled client resources, reactive fields and navigation integration.
+- b0c7a7b: Capture immutable plain-data root props in render sessions so Back navigation restores the original page and inputs.
+- Updated dependencies [9842a42]
+- Updated dependencies [223550b]
+- Updated dependencies [b0c7a7b]
+- Updated dependencies [4c15d57]
+  - @bedrock-core/ui-runtime@0.14.0
+
 ## 0.13.0
 
 ### Minor Changes

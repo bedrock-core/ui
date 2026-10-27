@@ -1,5 +1,19 @@
 # @bedrock-core/ui-runtime
 
+## 0.14.0
+
+### Minor Changes
+
+- 9842a42: Detect state-driven text automatically, carry each live container value in one item name and preserve compiled text alignment, fractional geometry and button hit areas.
+- 223550b: Add the experimental Ore UI host with compiled client resources, reactive fields and navigation integration.
+
+### Patch Changes
+
+- b0c7a7b: Capture immutable plain-data root props in render sessions so Back navigation restores the original page and inputs.
+- 4c15d57: Preserve the colored center of pressed button textures by keeping their transparent top padding outside the stretched nine-slice region.
+- Updated dependencies [c1f9bb6]
+  - @bedrock-core/flexbox@1.0.2
+
 ## 0.13.0
 
 ### Minor Changes

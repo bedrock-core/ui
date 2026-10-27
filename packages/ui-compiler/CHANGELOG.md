@@ -1,5 +1,21 @@
 # @bedrock-core/ui-compiler
 
+## 0.3.0
+
+### Minor Changes
+
+- 9842a42: Detect state-driven text automatically, carry each live container value in one item name and preserve compiled text alignment, fractional geometry and button hit areas.
+- 223550b: Add the experimental Ore UI host with compiled client resources, reactive fields and navigation integration.
+
+### Patch Changes
+
+- 66f146a: Keep empty output-slot covers below cursor-held items while preserving the input guard that blocks insertion.
+- Updated dependencies [9842a42]
+- Updated dependencies [223550b]
+- Updated dependencies [b0c7a7b]
+- Updated dependencies [4c15d57]
+  - @bedrock-core/ui-runtime@0.14.0
+
 ## 0.2.0
 
 ### Minor Changes

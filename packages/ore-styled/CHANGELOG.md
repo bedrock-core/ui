@@ -1,5 +1,13 @@
 # @bedrock-core/ore-styled
 
+## 0.11.2
+
+### Patch Changes
+
+- 9842a42: Detect state-driven text automatically, carry each live container value in one item name and preserve compiled text alignment, fractional geometry and button hit areas.
+- 223550b: Add the experimental Ore UI host with compiled client resources, reactive fields and navigation integration.
+- 4c15d57: Preserve the colored center of pressed button textures by keeping their transparent top padding outside the stretched nine-slice region.
+
 ## 0.11.1
 
 ### Patch Changes
