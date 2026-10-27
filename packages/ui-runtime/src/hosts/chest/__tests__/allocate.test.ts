@@ -1,3 +1,4 @@
+import { textChannelsAt } from '../../../core/ir/text';
 import { describe, expect, it } from 'vitest';
 import { Button } from '../../../components/Button';
 import { Container } from '../../../components/Container';
@@ -32,9 +33,15 @@ const Screen = (): JSX.Element => Container({
   ],
 });
 
+const channelTree = (factory: () => JSX.Element): JSX.Element => {
+  const tree = buildContainerTree(factory);
+  textChannelsAt(tree, [1]);
+  return tree;
+};
+
 describe('allocate', () => {
   it('numbers drawn cells after the sentinel, in document order', () => {
-    const { sentinels, slots } = allocate(buildContainerTree(Screen));
+    const { sentinels, slots } = allocate(channelTree(Screen));
 
     expect(sentinels).toEqual([0]);
     expect(slots.map(({ slot, role }) => [slot, role])).toEqual([
@@ -45,17 +52,28 @@ describe('allocate', () => {
     ]);
   });
 
-  it('puts channels in the bank past the drawn range, a slot per cell', () => {
-    const { channels, size } = allocate(buildContainerTree(Screen));
+  it('puts channels in the bank past the drawn range, one slot per value', () => {
+    const { channels, size } = allocate(channelTree(Screen));
 
     expect(channels.map(({ slot, carrier, length }) => [slot, carrier, length])).toEqual([
       [5, 'text', 5],
     ]);
-    expect(size).toBe(10);
+    expect(size).toBe(6);
+  });
+
+  it('keeps one slot per detected field and caps the transport independently of maxLength', () => {
+    const screen = (): JSX.Element => Container({ entity: 'core:test',
+      children: [Text({ children: 'one' }), Text({ maxLength: 256, children: 'two' })] });
+    const tree = buildContainerTree(screen);
+    textChannelsAt(tree, [0, 1]);
+    const allocation = allocate(tree);
+
+    expect(allocation.size).toBe(3);
+    expect(allocation.channels.map(channel => [channel.slot, channel.length])).toEqual([[1, 128], [2, 128]]);
   });
 
   it('keeps every entry attached to its element', () => {
-    const { slots, channels } = allocate(buildContainerTree(Screen));
+    const { slots, channels } = allocate(channelTree(Screen));
 
     for (const { element } of [...slots, ...channels]) {
       expect(typeof element.type).toBe('string');
@@ -93,7 +111,7 @@ describe('allocate', () => {
         Slot({ role: 'output' }),
       ],
     });
-    const { slots, size } = allocate(buildContainerTree(Screen));
+    const { slots, size } = allocate(channelTree(Screen));
 
     // Only the two OWN slots are numbered; the foreign slot, the grid and the
     // PlayerInventory wrapper over it take no cell of the screen's container.
@@ -111,8 +129,8 @@ describe('allocate', () => {
   });
 
   it('is deterministic across builds of the same screen', () => {
-    const first = allocate(buildContainerTree(Screen));
-    const second = allocate(buildContainerTree(Screen));
+    const first = allocate(channelTree(Screen));
+    const second = allocate(channelTree(Screen));
 
     expect(second.slots.map(entry => entry.slot)).toEqual(first.slots.map(entry => entry.slot));
     expect(second.channels.map(entry => entry.slot)).toEqual(first.channels.map(entry => entry.slot));

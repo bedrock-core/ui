@@ -5,8 +5,8 @@ import { isTransparentType } from '../../componentRegistry';
 import { isElement } from '../../guards';
 import { type ParentState, type TraversalContext } from '../traversal';
 
-function toPocketUnit(value: number): number {
-  return Math.round(value);
+function toPocketUnit(value: number, roundToPixel: boolean): number {
+  return roundToPixel ? Math.round(value) : value;
 }
 
 /**
@@ -14,15 +14,16 @@ function toPocketUnit(value: number): number {
  * - visible: child AND parent (if parent invisible, child is invisible)
  * - enabled: child AND parent (if parent disabled, child is disabled)
  * - x/y/width/height: already resolved to absolute Pocket-space texels by the layout phase;
- *   this phase only quantizes them to integers for stable JSON UI behavior.
+ *   compiled screens preserve fractional geometry; other callers quantize by default.
  *
  * This must run AFTER tree expansion and layout so all properties are set.
  *
  * @param element - Element to apply inheritance to
  * @param context - Traversal context with parentState
+ * @param roundToPixel - Quantize geometry for integer-only consumers; false for compiled JSON UI.
  * @returns Element with inherited properties applied
  */
-export function applyInheritance(element: JSX.Element, context: TraversalContext): JSX.Element {
+export function applyInheritance(element: JSX.Element, context: TraversalContext, roundToPixel: boolean = true): JSX.Element {
   const parentState = context.parentState ?? {
     visible: true,
     enabled: true,
@@ -47,9 +48,9 @@ export function applyInheritance(element: JSX.Element, context: TraversalContext
 
     if (props.children) {
       if (Array.isArray(props.children)) {
-        newProps.children = props.children.filter(isElement).map(child => applyInheritance(child, childContext));
+        newProps.children = props.children.filter(isElement).map(child => applyInheritance(child, childContext, roundToPixel));
       } else if (isElement(props.children)) {
-        newProps.children = applyInheritance(props.children, childContext);
+        newProps.children = applyInheritance(props.children, childContext, roundToPixel);
       } else {
         newProps.children = props.children;
       }
@@ -79,16 +80,16 @@ export function applyInheritance(element: JSX.Element, context: TraversalContext
     }
 
     // Rule 3: Layout phase has already computed absolute Pocket-space coordinates.
-    // Quantize to integer texels for stable JSON UI behavior.
+    // Preserve fractional texels when the host emits native JSON UI geometry.
     const xValue = computed(props.jsonUIx, 0);
     const yValue = computed(props.jsonUIy, 0);
     const widthValue = computed(props.jsonUIWidth, 100);
     const heightValue = computed(props.jsonUIHeight, 100);
 
-    newProps.jsonUIx = toPocketUnit(xValue);
-    newProps.jsonUIy = toPocketUnit(yValue);
-    newProps.jsonUIWidth = toPocketUnit(widthValue);
-    newProps.jsonUIHeight = toPocketUnit(heightValue);
+    newProps.jsonUIx = toPocketUnit(xValue, roundToPixel);
+    newProps.jsonUIy = toPocketUnit(yValue, roundToPixel);
+    newProps.jsonUIWidth = toPocketUnit(widthValue, roundToPixel);
+    newProps.jsonUIHeight = toPocketUnit(heightValue, roundToPixel);
 
     // Create parent state for children using THIS element's absolute properties
     // Store unscaled values in parent state for visibility/enabled inheritance
@@ -110,9 +111,9 @@ export function applyInheritance(element: JSX.Element, context: TraversalContext
     // Process children with new parent state
     if (newProps.children) {
       if (Array.isArray(newProps.children)) {
-        newProps.children = newProps.children.filter(isElement).map(child => applyInheritance(child, childContext));
+        newProps.children = newProps.children.filter(isElement).map(child => applyInheritance(child, childContext, roundToPixel));
       } else if (isElement(newProps.children)) {
-        newProps.children = applyInheritance(newProps.children, childContext);
+        newProps.children = applyInheritance(newProps.children, childContext, roundToPixel);
       }
     }
   }

@@ -285,7 +285,7 @@ describe('relative sizing in automatic native stacks', () => {
     ['minimum size', [{ flexGrow: 1, minWidth: 72 }, { flexGrow: 1 }], {}, [72, 60]],
     ['maximum size', [{ flexGrow: 1, maxWidth: 36 }, { flexGrow: 1 }], {}, [36, 60]],
     ['trailing padding', [{ flexGrow: 1 }, { flexGrow: 1 }], { paddingRight: 12 }, [54, 54]],
-    ['fractional shares', [{ flexGrow: 1 }, { flexGrow: 1 }], { width: 121 }, [61, 60]],
+    ['fractional shares', [{ flexGrow: 1 }, { flexGrow: 1 }], { width: 121 }, [60.5, 60.5]],
   ] as const)('keeps solved main-axis sizes for %s', (_name, styles, parent, widths) => {
     const { get } = compile('row', [...styles], parent);
 
@@ -300,13 +300,13 @@ describe('relative sizing in automatic native stacks', () => {
     expect(get('item-1').size).toEqual([50, 12]);
   });
 
-  it('keeps solved percentages when shrinking or rounding changes their authored size', () => {
+  it('keeps exact percentages and solved shrink sizes', () => {
     const shrunk = compile('row', [{ width: '75%' }, { width: '75%' }]);
-    const rounded = compile('row', [{ width: '33.3%' }, { width: 12 }]);
+    const exact = compile('row', [{ width: '33.3%' }, { width: 12 }]);
 
     expect(shrunk.get('item-0').size).toEqual([60, 12]);
     expect(shrunk.get('item-1').size).toEqual([60, 12]);
-    expect(rounded.get('item-0').size).toEqual([40, 12]);
+    expect(exact.get('item-0').size).toEqual(['33.3%', 12]);
   });
 
   it.each([

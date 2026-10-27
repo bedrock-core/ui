@@ -1,5 +1,5 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
-import { childElements, optionElements, CONTAINER_TYPE, SCREEN_TYPE, isTextElementType, liveTextLength } from '@bedrock-core/ui-runtime/compile';
+import { childElements, optionElements, CONTAINER_TYPE, SCREEN_TYPE, hasTextChannel, isTextElementType } from '@bedrock-core/ui-runtime/compile';
 import type { IrNode } from './ir';
 import type { Control, Document } from './jsonui';
 import { childrenOf } from './nodes';
@@ -58,10 +58,8 @@ function captionNameOf(element: JSX.Element): TestControlMetadata['name'] {
       const metrics = node.props.__textMetrics;
 
       if (typeof tail === 'string') {
-        names.push({ kind: liveTextLength(node) !== undefined
-          ? 'bound'
-          : typeof metrics === 'object' && metrics !== null && 'isKey' in metrics && metrics.isKey === true ? 'translated' : 'literal',
-        value: tail.replace(/§[0-9a-z]/gi, '') });
+        names.push({ kind: hasTextChannel(node) ? 'bound' : typeof metrics === 'object' && metrics !== null && 'isKey' in metrics && metrics.isKey === true ? 'translated' : 'literal',
+          value: tail.replace(/§[0-9a-z]/gi, '') });
       }
 
       return;

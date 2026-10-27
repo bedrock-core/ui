@@ -20,7 +20,7 @@ function player(): Player {
 function compile(component: FunctionComponent): void {
   const name = `ore_${++sequence}`;
   const layout = oreLayout(buildScreenTree(component), name);
-  registerCompiledScreen(component, { kind: 'custom', key: `test:${name}`, title: name, snapshot: { ore: layout, shape: '', baked: [], vis: [] } });
+  registerCompiledScreen(component, { kind: 'custom', key: `test:${name}`, title: name, snapshot: { ore: layout, shape: '', texts: [], vis: [] } });
 }
 const tick = (): Promise<void> => new Promise(resolve => setTimeout(resolve, 0));
 function state(form = __oreForms.at(-1)!): OreState {

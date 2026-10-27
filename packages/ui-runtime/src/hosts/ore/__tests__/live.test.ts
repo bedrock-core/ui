@@ -20,7 +20,7 @@ function el(type: unknown, props: Record<string, unknown>): JSX.Element {
 }
 function open(Page: FunctionComponent) {
   const layout = oreLayout(buildScreenTree(Page), 'live_' + ++serial);
-  registerCompiledScreen(Page, { key: 'test:' + layout.screen, title: layout.title, kind: 'custom', snapshot: { ore: layout, shape: '', baked: [], vis: [] } });
+  registerCompiledScreen(Page, { key: 'test:' + layout.screen, title: layout.title, kind: 'custom', snapshot: { ore: layout, shape: '', texts: [], vis: [] } });
   const p = { id: 'live-fields-' + serial } as Player;
   players.push(p); render(Page, p);
   const form = __oreForms.at(-1)!;
@@ -100,7 +100,7 @@ describe('live Ore controls', () => {
     b.send('name', 'Second'); await tick(); expect(a.callbacks.name).toHaveBeenCalledTimes(1);
     const Next = (): JSX.Element => el(Experimental_OreUI, { children: el(Text, { width: 180, height: 20, children: 'Next' }) });
     const layout = oreLayout(buildScreenTree(Next), 'next_' + ++serial);
-    registerCompiledScreen(Next, { key: 'test:' + layout.screen, title: layout.title, kind: 'custom', snapshot: { ore: layout, shape: '', baked: [], vis: [] } });
+    registerCompiledScreen(Next, { key: 'test:' + layout.screen, title: layout.title, kind: 'custom', snapshot: { ore: layout, shape: '', texts: [], vis: [] } });
     render(Next, a.p); await tick(); a.send('name', 'Stale', 3, a.state().session - 1); await tick(); expect(a.callbacks.name).toHaveBeenCalledTimes(1);
   });
   it('keeps client-resolved translation messages on ordinary button captions', async () => {

@@ -43,6 +43,9 @@ export interface RenderOptions {
  * by. So a screen has to BE compiled — a `*.screen.tsx` under `BP/scripts`, or
  * one of the screens a build compiles from what the addon declared — and a root
  * the build never saw is refused here rather than drawn some other way.
+ *
+ * Plain-data root props are copied to immutable session metadata so navigation
+ * can reopen them. Props containing callbacks or model instances stay local.
  */
 export function render(
   root: JSX.Element | FunctionComponent,
@@ -73,7 +76,8 @@ export function render(
   // Stored with the root: a later render() swaps a different root into this
   // chain, and each pass shows whatever root it finds the way THAT root was
   // compiled.
-  const shown: SessionCompiled = { key: compiledKeyOf(root), title: compiledTitle, snapshot: compiledSnapshotOf(root), debug: options.debug === true };
+  const shown: SessionCompiled = { key: compiledKeyOf(root), title: compiledTitle, snapshot: compiledSnapshotOf(root), debug: options.debug === true,
+    ...typeof root === 'function' ? {} : { params: root.props } };
 
   // Convert function component to JSX element if needed, then wrap it so
   // TranslationContext is populated at every root — the default i18n

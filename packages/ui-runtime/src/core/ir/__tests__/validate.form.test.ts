@@ -113,7 +113,7 @@ describe('validate, on the form hosts', () => {
     expect(() => check(tree)).not.toThrow();
   });
 
-  it('bakes the button faces of a compiled form, so no live text may sit in one', () => {
+  it('allows a maxLength display limit in a compiled button caption', () => {
     const live: JSX.Element = { type: 'text', props: { __textMetrics: { maxLength: 8 } } };
     const tree = screenTree([host('panel', [host('button', [live])])]);
 
@@ -122,7 +122,7 @@ describe('validate, on the form hosts', () => {
 
     // Compiled, the face is a definition in the pack: the string it was built
     // with is the string it draws forever.
-    expect(() => check(tree, true)).toThrow(/baked into its face/);
+    expect(() => check(tree, true)).not.toThrow();
   });
 
   it('lays the scroll regions of a compiled form out flat, so none may nest', () => {

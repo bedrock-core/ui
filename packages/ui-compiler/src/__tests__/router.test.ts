@@ -31,9 +31,10 @@ const screen = (
   document: { namespace: `${addon}_${name}` },
   allocation: { sentinels: 1, drawn: 0, channels: 0, size: 1 },
   hasBackdrop,
-  hasText: false,
+
   lang: {},
   looks: [],
+  texts: [],
 });
 
 describe('the chest routing', () => {

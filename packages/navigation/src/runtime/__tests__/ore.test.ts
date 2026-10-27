@@ -16,7 +16,7 @@ function page(title: string, action?: () => unknown): FunctionComponent {
       : { type: Button as FunctionComponent, props: { width: 180, height: 30, onPress: action,
         children: { type: Text as FunctionComponent, props: { width: 160, height: 20, children: title } } } } }) });
   const layout = oreLayout(buildScreenTree(component), `nav_${title}`);
-  registerCompiledScreen(component, { kind: 'custom', key: `ore:${title}`, title, snapshot: { ore: layout, shape: '', baked: [], vis: [] } });
+  registerCompiledScreen(component, { kind: 'custom', key: `ore:${title}`, title, snapshot: { ore: layout, shape: '', texts: [], vis: [] } });
   return component;
 }
 afterEach(() => { closeUi(p); uiManager.closeAllForms(p); __oreForms.length = 0; setNavigator(undefined); });

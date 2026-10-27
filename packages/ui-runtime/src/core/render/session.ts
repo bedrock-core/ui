@@ -24,6 +24,8 @@ export type StateSeed = ReadonlyMap<string, ReadonlyMap<number, unknown>>;
 export interface SessionCompiled {
   /** Generic compiled identity of the root, retained before any provider wrappers. */
   key?: string;
+  /** Public root inputs before render-owned providers wrap the element. */
+  params?: Readonly<Record<string, unknown>>;
   /** Absent only for a chest session, which never presents through the chain. */
   title?: string;
   snapshot?: CompiledSnapshot;
@@ -80,7 +82,7 @@ export function setSessionRoot(owner: Owner, root: JSX.Element, compiled: Sessio
 
   session.root = root;
   session.compiled = compiled;
-  startRenderSession(owner, { screenKey: compiled.key ?? compiledKeyOf(root), title: compiled.title });
+  startRenderSession(owner, { screenKey: compiled.key ?? compiledKeyOf(root), title: compiled.title, params: compiled.params });
 }
 
 export function getSessionRoot(owner: Owner): JSX.Element | undefined {

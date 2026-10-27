@@ -1,4 +1,5 @@
 import { FULL } from '../../faces';
+import { hitArea, paintArea } from '../../faces/utils/hitArea';
 import { BUTTON_MAPPINGS, CELL, CELL_VAR, placed, SLOT_VAR, whenDisabled, whenEnabled } from './cell';
 import type { Addressed, Connector, Control, ControlEntry, Definitions, Emit } from '../types';
 
@@ -16,6 +17,7 @@ export interface PressLook extends PressFaces {
   /** The screen-local definition name this button is emitted under, e.g. `press_1`. */
   definition: string;
   size: [number, number];
+  hitSlop?: number;
   /**
    * Every look the button wears when its face follows state, the build's own
    * first. Each state draws all of them, and the current durability of the
@@ -82,6 +84,7 @@ export const pressDefs = (look: PressLook, ctx: Emit): Definitions => {
 
   return {
     [`${definition}_states@${CELL.slotButton}`]: {
+      ...hitArea(look.hitSlop),
       default_control: 'default',
       hover_control: 'hover',
       pressed_control: 'pressed',
@@ -92,9 +95,9 @@ export const pressDefs = (look: PressLook, ctx: Emit): Definitions => {
       sound_volume: 1,
       sound_pitch: 1,
       controls: [
-        { default: gatedState(facesIn(look, 'rest', collection), collection) },
-        { hover: gatedState(facesIn(look, 'hover', collection), collection) },
-        { pressed: gatedState(facesIn(look, 'pressed', collection), collection) },
+        { default: gatedState(facesIn(look, 'rest', collection), collection, look.hitSlop) },
+        { hover: gatedState(facesIn(look, 'hover', collection), collection, look.hitSlop) },
+        { pressed: gatedState(facesIn(look, 'pressed', collection), collection, look.hitSlop) },
       ],
     },
 
@@ -133,9 +136,10 @@ export const pressDefs = (look: PressLook, ctx: Emit): Definitions => {
 };
 
 /** One state's panel: the engine toggles it, the gate inside draws the face only while enabled. */
-const gatedState = (faces: ControlEntry[], collection: string): Control => ({
+const gatedState = (faces: ControlEntry[], collection: string, slop = 0): Control => ({
   type: 'panel',
   size: FULL,
+  ...paintArea(slop),
   controls: [{
     gate: {
       type: 'panel',

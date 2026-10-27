@@ -3,6 +3,7 @@ import { slotName } from '../../components/Slot';
 import { BUTTON_TYPE } from '../../components/Button';
 import { analyze, type Analysis, type CellRole, claim, lookIndexOf, variantsAt, type VariantTable } from '../../core/ir';
 import { SENTINEL_SLOTS } from './contract';
+import { CONTAINER_TEXT_LIMIT } from './text';
 
 /**
  * How the chest host lays a screen's needs out in one container.
@@ -10,7 +11,7 @@ import { SENTINEL_SLOTS } from './contract';
  * The walk that reads those needs is shared and host-agnostic (`core/ir`);
  * what belongs here is the chest's own arithmetic — where the routing keys
  * sit, that a drawn cell is one container slot, that a text channel is one
- * slot per character, and how big the entity's inventory has to be.
+ * named item, and how big the entity's inventory has to be.
  */
 
 export type { CellRole } from '../../core/ir';
@@ -35,8 +36,8 @@ export interface SlotEntry {
 }
 
 /**
- * A run of bank slots carrying one live value. A text run takes a slot per
- * character; a look takes one, whose stack size says which look is worn.
+ * A bank slot carrying one live value. Text uses its item name; a look uses
+ * current durability. A text length is its character limit, not a slot count.
  */
 export type ChannelEntry = {
   readonly element: JSX.Element;
@@ -98,8 +99,7 @@ export const allocate = (tree: JSX.Element, analysis?: Analysis, looks: readonly
     };
   });
 
-  // Channels start past the drawn range. A text run takes a slot per
-  // character, so the next channel starts past the whole run.
+  // Every channel takes one bank slot past the drawn range.
   let next = SENTINEL_SLOTS.length + slots.length;
 
   const bank: ChannelEntry[] = channels.map(({ element, carrier, length, looks: table }) => {
@@ -111,17 +111,16 @@ export const allocate = (tree: JSX.Element, analysis?: Analysis, looks: readonly
       return entry;
     }
 
-    // Needs vs offers, at the seam it bites: the chest carries text — a slot
-    // per character — and looks, and nothing else yet. A bool claim can only
+    // The chest carries whole text values and looks. A bool claim can only
     // appear here if a caller marked a carried visible on a chest tree, which
     // the build refuses long before this; the throw keeps the runtime as honest.
     if (carrier !== 'text') {
       throw new Error(`A chest screen has no carrier for a live ${carrier}; only text and looks travel over slots.`);
     }
 
-    const entry: ChannelEntry = { element, slot: next, carrier, length };
+    const entry: ChannelEntry = { element, slot: next, carrier, length: Math.min(length, CONTAINER_TEXT_LIMIT) };
 
-    next += length;
+    next += 1;
 
     return entry;
   });

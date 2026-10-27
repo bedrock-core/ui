@@ -1,4 +1,5 @@
 import type { Owner } from '../fabric/owner';
+import { whyNotPlainData } from '../plainData';
 
 /** Why a server-side render session ended. */
 export type RenderEndReason = 'dismissed' | 'closed' | 'released' | 'error';
@@ -10,6 +11,8 @@ export interface RenderSession {
   readonly ownerKind: 'player' | 'entity' | 'block';
   readonly screenKey?: string;
   readonly title?: string;
+  /** Root props captured only when the entire object is plain serializable data. */
+  readonly params?: Readonly<Record<string, unknown>>;
 }
 
 export type RenderLifecycleEvent
@@ -55,14 +58,31 @@ export function renderSession(ownerId: string): RenderSession | undefined {
   return active.get(ownerId);
 }
 
+function freezeData(value: unknown): void {
+  if (value === null || typeof value !== 'object') { return; }
+
+  for (const child of Object.values(value)) { freezeData(child); }
+
+  Object.freeze(value);
+}
+
 /** Internal transition shared by form and container render hosts. */
-export function startRenderSession(owner: Owner, info: { readonly screenKey?: string; readonly title?: string }): void {
+export function startRenderSession(owner: Owner, info: { readonly screenKey?: string; readonly title?: string; readonly params?: Readonly<Record<string, unknown>> }): void {
   if (owner.kind === 'build') { return; }
 
   const previous = active.get(owner.id);
+  let params: Readonly<Record<string, unknown>> | undefined;
+
+  if (info.params !== undefined && Object.keys(info.params).length > 0 && whyNotPlainData(info.params, 'params') === undefined) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- the complete object was validated as plain data before copying
+    params = JSON.parse(JSON.stringify(info.params)) as Readonly<Record<string, unknown>>;
+    freezeData(params);
+  }
+
   const session: RenderSession = Object.freeze({ id: ++nextId, ownerId: owner.id, ownerKind: owner.kind,
     ...info.screenKey === undefined ? {} : { screenKey: info.screenKey },
-    ...info.title === undefined ? {} : { title: info.title } });
+    ...info.title === undefined ? {} : { title: info.title },
+    ...params === undefined ? {} : { params } });
 
   active.set(owner.id, session);
   emit(previous === undefined ? { type: 'started', session } : { type: 'replaced', session, previous });

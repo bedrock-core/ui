@@ -79,7 +79,6 @@ export {
   ScreenRootError,
   SerializationError,
   UncompiledScreenError,
-  TranslationKeysError,
 } from './types';
 
 export {

@@ -2,6 +2,7 @@ import type { JSX } from '@bedrock-core/ui-runtime';
 import { BUTTON_TYPE, isExitButton, MODAL_FORM_BUTTON_SLOT_TYPE } from '@bedrock-core/ui-runtime/compile';
 import { ContainerScreenError } from '@bedrock-core/ui-runtime/compile';
 import { CONTENT_LAYER, FULL, offsetOf, panelFace, stateFace, topLeft } from '../../faces';
+import { paintState } from '../../faces/utils/hitArea';
 import type { ButtonMapping, Control, ControlEntry } from '../../jsonui';
 import { shapeOf } from '../index';
 import { boxOf, entryControl, faceId, shareFace, sizeOf, str } from '../utils/shared';
@@ -81,6 +82,8 @@ export interface ButtonNode extends NodeBase {
    * it covers the glyphs the client actually shows. Declared by `<Button hug>`.
    */
   hug?: true;
+  /** Clickable outset; does not change the face or its layout allocation. */
+  hitSlop?: number;
   /** An input surface shares its enclosing caption's native dimensions. */
   inputFill?: true;
 }
@@ -321,6 +324,7 @@ export const buttonDefinition: NodeDefinition<ButtonNode> = {
       ...action === undefined ? { address: ctx.cellOf(element).address } : { action },
       ...typeof props.label === 'string' ? { label: props.label, ...props.__labelLocalize === true ? { labelLocalize: true as const } : {} } : {},
       ...props.__hug === true ? { hug: true as const } : {},
+      ...typeof props.__hitSlop === 'number' ? { hitSlop: props.__hitSlop } : {},
       face: faceOf(props),
       ...variantFaces(element, ctx),
       // Baked into the face, relative to the button like any other child.
@@ -356,6 +360,12 @@ export const buttonDefinition: NodeDefinition<ButtonNode> = {
         [node.name]: {
           ...entryControl(panelFace({ ...boxOf(node), children: [] })),
           type: 'button',
+          ...node.hitSlop === undefined
+            ? {}
+            : {
+                size: [node.rect.width + node.hitSlop * 2, node.rect.height + node.hitSlop * 2],
+                offset: [node.rect.x - node.hitSlop, node.rect.y - node.hitSlop],
+              },
           ...node.enabled === false ? { enabled: false } : {},
           default_control: 'default',
           hover_control: 'hover',
@@ -368,7 +378,7 @@ export const buttonDefinition: NodeDefinition<ButtonNode> = {
             { [`hover@${faces.hover}`]: {} },
             { [`pressed@${faces.pressed}`]: {} },
             { [`locked@${faces.disabled ?? faces.rest}`]: {} },
-          ],
+          ].map(entry => paintState(entry, node.hitSlop)),
         },
       };
     }

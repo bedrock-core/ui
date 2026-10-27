@@ -20,11 +20,17 @@ export interface ButtonProps extends ControlProps, StateBackgroundProps {
    * `<Panel stack>`, whose children hug their own glyphs; compiled forms only.
    */
   hug?: boolean;
+  /** Extra clickable pixels on every side, outside the layout and background. Must be finite and nonnegative. */
+  hitSlop?: number;
   // state textures serialize at [1024-1106] hover / [1107-1189] pressed /
   // [1190-1272] locked, resolved by the shared `state ?? base ?? unstyled` rule
 }
 
-export const Button: FunctionComponent<ButtonProps> = ({ onPress, backgroundHover, backgroundPressed, backgroundLocked, hug, children, ...rest }: ButtonProps): JSX.Element => {
+export const Button: FunctionComponent<ButtonProps> = ({ onPress, backgroundHover, backgroundPressed, backgroundLocked, hug, hitSlop, children, ...rest }: ButtonProps): JSX.Element => {
+  if (hitSlop !== undefined && (!Number.isFinite(hitSlop) || hitSlop < 0)) {
+    throw new RangeError('Button hitSlop must be a finite nonnegative number.');
+  }
+
   const states = resolveStateBackgrounds({ background: rest.background, backgroundHover, backgroundPressed, backgroundLocked });
 
   return {
@@ -37,6 +43,7 @@ export const Button: FunctionComponent<ButtonProps> = ({ onPress, backgroundHove
       onPress: onPress ?? ((): void => {}),
       // Private: the build reads it off the element, and no payload has a field for it.
       ...hug === true ? { __hug: true } : {},
+      ...hitSlop === undefined || hitSlop === 0 ? {} : { __hitSlop: hitSlop },
       children,
     },
   };

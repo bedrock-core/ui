@@ -19,6 +19,7 @@ export interface ControlProps extends LayoutProps, TestProps {
    */
   liveVisible?: boolean;
   enabled?: boolean;
+  /** Texture painted over content plus padding. Margins remain outside; slice borders add no layout space. */
   background?: string;
 }
 

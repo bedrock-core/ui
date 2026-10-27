@@ -42,7 +42,7 @@ export function compileExperimentalOreScreen(Screen: FunctionComponent, spec: { 
 
   return {
     kind: 'custom', name: spec.name, addon: spec.namespace, namespace, title: `core-ore:${namespace}`,
-    ore, snapshot: { ore: serverOre, shape: ore.nodes.map(node => `${node.id}:${node.kind}`).join('|'), baked: [], vis: [],
+    ore, snapshot: { ore: serverOre, shape: ore.nodes.map(node => `${node.id}:${node.kind}`).join('|'), texts: [], vis: [],
       ...data === undefined ? {} : { data }, ...transRecords(tree).length ? { trans: transRecords(tree) } : {} },
     document: { namespace }, facesNamespace: `${spec.namespace}_faces`, faces: {}, hasBackdrop: false, lang,
   };

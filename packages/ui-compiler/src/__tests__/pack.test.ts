@@ -1,3 +1,4 @@
+import { dynamicText } from '../__fixtures__/dynamicText';
 import type { JSX } from '@bedrock-core/ui-runtime';
 import {
   Button, Container, Embed, embedMarker, Form, Hotbar, Panel, PlayerInventory, Screen, Slot, Text, Toggle,
@@ -18,7 +19,7 @@ const container = (kind: 'entity' | 'block'): (() => JSX.Element) => () => Conta
       Slot({ testId: 'input', role: 'input' }), Slot({ role: 'output' }), Slot({ interactive: false }),
       Button({ testId: 'press', onPress: () => undefined, children: Text({ children: 'Press' }) }),
     ] }),
-    Text({ testId: 'value', maxLength: 3, children: 'Ore' }),
+    dynamicText({ testId: 'value', maxLength: 3, children: 'Ore' }),
     PlayerInventory({}), Hotbar({}),
   ],
 });

@@ -1,3 +1,4 @@
+import { textChannelsAt } from '../../../core/ir/text';
 import { describe, expect, it } from 'vitest';
 import { registerNativeComponents } from '../../../components';
 import { Button } from '../../../components/Button';
@@ -51,6 +52,7 @@ describe('a form placement', () => {
       ],
     }));
 
+    textChannelsAt(tree, [0]);
     const { entries } = allocate(tree);
 
     // The button is a cell and the label a channel, so the press keeps entry 0

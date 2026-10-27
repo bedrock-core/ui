@@ -2,7 +2,8 @@ import { entryBaseOf } from '../../components/Embed';
 import { selectMembers } from '../../components/Form/optionPayload';
 import { liveTexture } from '../../components/Image';
 import { listCapacity } from '../../components/List';
-import { liveTextLength } from '../../components/Text';
+import { textLimit } from '../../components/Text';
+import { hasTextChannel } from '../../core/ir/text';
 import { type Analysis, type CellRole, claim, lookIndexOf, type VariantTable } from '../../core/ir';
 import { childElements } from '../../core/guards';
 import type { JSX } from '../../jsx';
@@ -15,7 +16,7 @@ import { MODAL_DROPDOWN_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SL
  * what belongs here is the form's arithmetic, which is almost nothing — an
  * entry is cheap and uncapped, so unlike the chest there is no packing to do
  * and no budget to spend. Where the chest counts container slots and pays a
- * slot per character, a form pays one entry per element that needs one.
+ * slot per detected text value, a form pays one entry per carried value.
  *
  * ## Why every entry is a button
  *
@@ -169,7 +170,7 @@ export const allocateModal = (tree: JSX.Element, visibles: ReadonlySet<JSX.Eleme
       } else if (liveTexture(node)) {
         rows.push({ element: node, row: rows.length, kind: 'texture' });
       } else {
-        const length = liveTextLength(node);
+        const length = hasTextChannel(node) ? textLimit(node) : undefined;
 
         if (length !== undefined) {
           rows.push({ element: node, row: rows.length, kind: 'text', length });

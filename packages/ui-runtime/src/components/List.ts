@@ -46,7 +46,7 @@ export interface ListProps<T> extends ControlProps {
 
 /**
  * How many rows are real this render — what the int entry carries.
- * Exposed for the hosts; reads the element the way `liveTextLength` does.
+ * Used by the form hosts to write the current row count.
  */
 export function listCount(element: JSX.Element): number | undefined {
   if (element.type !== LIST_SLOT_TYPE) {
@@ -60,8 +60,7 @@ export function listCount(element: JSX.Element): number | undefined {
 
 /**
  * Characters the count's carrier reserves: the digits of `max`. Also how a
- * walk recognises a list — present exactly on `<List>` elements, the way
- * `maxLength` marks live text.
+ * walk recognises a list: present exactly on `<List>` elements.
  */
 export function listCapacity(element: JSX.Element): number | undefined {
   if (element.type !== LIST_SLOT_TYPE) {

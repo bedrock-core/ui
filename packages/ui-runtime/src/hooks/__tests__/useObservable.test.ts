@@ -73,7 +73,7 @@ describe('useObservable on a form', () => {
       });
     };
 
-    registerCompiledScreen(App, { key: 'observable:form', title: titleFor('observable_form') });
+    registerCompiledScreen(App, { key: 'observable:form', title: titleFor('observable_form'), snapshot: { shape: '', texts: [0], vis: [] } });
     // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- minimal Player stub: an id is all a session is keyed by
     render(App, { id: 'observer' } as unknown as Player);
     await tick();

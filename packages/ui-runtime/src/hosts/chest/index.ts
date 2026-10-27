@@ -3,7 +3,7 @@
  * `@bedrock-core/ui/container`, and what the build imports to compile one.
  *
  * Three kinds of thing live under this folder, and the split is the point:
- * `contract.ts` and `charset.ts` are what the emitted JSON UI and the runtime
+ * `contract.ts` and `text.ts` are what the emitted JSON UI and the runtime
  * must agree on, `allocate.ts` numbers a screen's needs into container
  * indices, and `runtime/` drives a live screen. `host.ts` is the host contract
  * itself and is deliberately reachable without any of the rest — the registry
@@ -23,10 +23,7 @@ export { analyze } from '../../core/ir';
 export type { Analysis } from '../../core/ir';
 export { buildContainerTree } from './build';
 export {
-  BLANK_CODE, BLANK_VALUE, CHARSET, charsetLang, encode, MAX_CODE, UNKNOWN_CODE,
-} from './charset';
-export {
-  BLANK_ICON, BLOCK_SLOT_LIMIT, blockCapacityError, COLLECTION, IDENTITY, KEY_PREFIX, LAYOUT_PROPERTY, layoutKey,
+  BLANK_ICON, BLOCK_SLOT_LIMIT, blockCapacityError, COLLECTION, IDENTITY, LAYOUT_PROPERTY, layoutKey,
   LOOK_LIMIT, MAX_LAYOUT, namespaceOf, protocolItemDefinitions, protocolItemId, SENTINEL_SLOTS, STATE_PROPERTY,
 } from './contract';
 export type { ProtocolItemDefinition, ProtocolRole } from './contract';

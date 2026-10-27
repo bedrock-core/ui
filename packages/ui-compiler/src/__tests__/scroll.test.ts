@@ -1,3 +1,4 @@
+import { dynamicText } from '../__fixtures__/dynamicText';
 import { Button, Container, Panel, Scroll, Slot, Text } from '@bedrock-core/ui-runtime';
 import { SCROLL_RESERVE } from '@bedrock-core/ui-runtime/compile';
 import type { JSX } from '@bedrock-core/ui-runtime';
@@ -23,7 +24,7 @@ const Screen = (): JSX.Element => Container({
         ],
       })),
     }),
-    Text({ maxLength: 4, children: 'live' }),
+    dynamicText({ maxLength: 4, children: 'live' }),
   ],
 });
 
@@ -35,7 +36,7 @@ describe('a scroll region', () => {
 
     // Twelve slots and twelve buttons, then the one live text after the scroll.
     expect(allocation.drawn).toBe(24);
-    expect(allocation.channels).toBe(4);
+    expect(allocation.channels).toBe(1);
   });
 
   it('mounts vanilla\'s scrolling panel over content laid out at its own height', () => {

@@ -1,3 +1,4 @@
+import { useState } from '@bedrock-core/ui-runtime';
 import type { JSX } from '@bedrock-core/ui-runtime';
 import { Container, Form, Panel, Screen as ScreenRoot, Text } from '@bedrock-core/ui-runtime';
 import { jsx } from '@bedrock-core/ui-runtime/jsx-runtime';
@@ -63,22 +64,27 @@ describe('ore-styled components in a container screen', () => {
 
 describe('a menu row with a live line', () => {
   // A button's children are baked into its face, so a live title cannot be one of them.
-  const Rows = (): JSX.Element => ScreenRoot({
+  const Rows = (): JSX.Element => {
+    const [title] = useState('live title');
+    const [subtitle] = useState('sub');
+    return ScreenRoot({
     children: Panel({
       width: 200,
       children: [
-        MenuRow({ title: 'live title', titleMaxLength: 16, onPress: () => undefined }),
-        MenuRow({ title: 'live subtitle', subtitle: 'sub', subtitleMaxLength: 12, to: 'a:elsewhere' }),
+        MenuRow({ title, titleMaxLength: 16, onPress: () => undefined }),
+        MenuRow({ title: 'live subtitle', subtitle, subtitleMaxLength: 12, to: 'a:elsewhere' }),
         MenuRow({ title: 'baked' }),
       ],
     }),
   });
+  };
 
   it('compiles, with the line drawn above the press rather than inside it', () => {
     const { snapshot } = compileFormScreen(Rows, { namespace: 'a', name: 'rows' });
 
     // Every row still takes a press, and the two live lines ride entries of their own.
-    expect(snapshot.shape.startsWith('button,button,button | text:16,text:12 |')).toBe(true);
+    expect(snapshot.texts).toHaveLength(2);
+    expect(snapshot.shape.startsWith('button,button,button | text,text |')).toBe(true);
   });
 });
 

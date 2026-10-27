@@ -1,3 +1,4 @@
+import { registerContainerLooks } from '../../../core/render/screens';
 import {
   type Block, BlockComponentTypes, type Container as EngineContainer, EntityComponentTypes,
   ItemStack, type Player,
@@ -13,7 +14,7 @@ import { blockKey, blockOwner, getFibersForOwner } from '../../../core/fabric';
 import { ContainerScreenError } from '../../../core/types';
 import { useState } from '../../../hooks';
 import type { JSX } from '../../../jsx';
-import { CHARSET } from '../charset';
+import { TEXT_NAME_PREFIX } from '../text';
 import { LAYOUT_PROPERTY, STATE_PROPERTY } from '../contract';
 import { protocolItems } from '../runtime/items';
 import { type ContainerScreen, createContainerScreen } from '../runtime/session';
@@ -32,8 +33,6 @@ import { type ContainerScreen, createContainerScreen } from '../runtime/session'
 
 /** One tick of the system shim, in fake-timer milliseconds. */
 const TICK = 50;
-
-const code = (glyph: string): number => CHARSET.indexOf(glyph) + 1;
 
 const createContainer = (size: number): EngineContainer => new MockContainer(size) as unknown as EngineContainer;
 
@@ -179,7 +178,7 @@ const Workbench = (): JSX.Element => {
   });
 };
 
-const SIZE = 6;
+const SIZE = 3;
 
 const interact = (target: FakeBlock, viewer: FakePlayer): void => {
   world.beforeEvents.playerInteractWithBlock.__emit({ cancel: false, player: viewer.player, block: target.block });
@@ -217,6 +216,7 @@ let error: ReturnType<typeof vi.spyOn>;
 
 beforeEach(() => {
   vi.useFakeTimers();
+  registerContainerLooks(Workbench, [], [0]);
   onPress.mockReset();
   error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 });
@@ -264,21 +264,20 @@ describe('a block-hosted screen', () => {
   });
 
   it('refuses to serve a screen that does not fit a block, naming the two ways out', () => {
-    // 54 slots is the whole allocation, sentinel and bank included, so a live
-    // string of 60 characters cannot ride a block.
+    // The sentinel and 54 live fields exceed a block's 54-slot capacity.
     const Wide = (): JSX.Element => Container({
       block: BLOCK_TYPE,
-      children: [Text({ maxLength: 60, children: 'x' })],
+      children: Array.from({ length: 54 }, () => Button({ height: 1, width: 1 })),
     });
 
     expect(() => createContainerScreen(Wide)).toThrow(ContainerScreenError);
-    expect(() => createContainerScreen(Wide)).toThrow(/needs 61 container slots and a block holds 54/);
+    expect(() => createContainerScreen(Wide)).toThrow(/needs 55 container slots and a block holds 54/);
     expect(() => createContainerScreen(Wide)).toThrow(/host the[\s\S]*screen on an entity/);
 
     // The same screen on an entity is served without complaint.
     const Entity = (): JSX.Element => Container({
       entity: 'core:wide',
-      children: [Text({ maxLength: 60, children: 'x' })],
+      children: Array.from({ length: 54 }, () => Button({ height: 1, width: 1 })),
     });
 
     expect(() => createContainerScreen(Entity).detach()).not.toThrow();
@@ -305,9 +304,7 @@ describe('a block-hosted screen', () => {
     expect(items.roleOf(target.container.getItem(0)!)).toBe('sentinel');
     expect(items.valueOf(target.container.getItem(0)!)).toBe(7);
     expect(items.isTransport(target.container.getItem(1)!)).toBe(true);
-    expect([2, 3, 4, 5].map(slot => target.container.getItem(slot)?.amount)).toEqual([
-      code('n'), code(' '), code('0'), 1,
-    ]);
+    expect(target.container.getItem(2)?.nameTag).toBe(TEXT_NAME_PREFIX + 'n 0');
 
     // The state landed in the block entity's own dynamic properties.
     expect(stateOf(target)).toContain('[[0,0]]');
@@ -328,7 +325,7 @@ describe('a block-hosted screen', () => {
     expect(onPress).toHaveBeenCalledTimes(1);
     expect(onPress.mock.calls[0]?.[0]?.host).toBe(target.block);
     expect(onPress.mock.calls[0]?.[0]?.player).toBe(viewer.player);
-    expect(target.container.getItem(4)?.amount).toBe(code('1'));
+    expect(target.container.getItem(2)?.nameTag).toBe(TEXT_NAME_PREFIX + 'n 1');
     expect(stateOf(target)).toContain('[[0,1]]');
 
     const transport = target.container.getItem(1);
@@ -376,7 +373,7 @@ describe('a block-hosted screen', () => {
     interact(target, viewer);
     await vi.advanceTimersByTimeAsync(TICK);
 
-    expect(target.container.getItem(4)?.amount).toBe(code('1'));
+    expect(target.container.getItem(2)?.nameTag).toBe(TEXT_NAME_PREFIX + 'n 1');
   });
 
   it('opens from the after event too, for anything that skips the interact', async () => {
@@ -426,7 +423,7 @@ describe('a block-hosted screen', () => {
     interact(target, viewer);
     await vi.advanceTimersByTimeAsync(TICK * 2);
 
-    expect(error).toHaveBeenCalledWith(expect.stringMatching(/7 container slots and its screen needs 6/));
+    expect(error).toHaveBeenCalledWith(expect.stringMatching(/4 container slots and its screen needs 3/));
     expect(error).toHaveBeenCalledWith(expect.stringMatching(/slot_count/));
 
     // The message names the block, not just its type: two of them may stand

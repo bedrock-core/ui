@@ -1,5 +1,6 @@
 import { FORM_DETAILS_BINDING, FORM_LOOK_PREFIX } from '@bedrock-core/ui-runtime/compile';
 import { FULL, topLeft } from '../../faces';
+import { hitArea, paintState } from '../../faces/utils/hitArea';
 import { ENTRY_PROPERTY, entryHost, entryValueBinding, whenEnabled } from './entry';
 import type { Addressed, Connector, ControlEntry, Definitions, Emit } from '../types';
 
@@ -12,6 +13,7 @@ export interface PressLook {
    * the box its host stands in, for a hugging button, whose host is sized to its text.
    */
   size: [number, number] | ['100%', '100%'];
+  hitSlop?: number;
   rest: string;
   hover: string;
   pressed: string;
@@ -110,6 +112,7 @@ export const pressDefs = (look: PressLook, ctx: Emit): Definitions => {
       type: 'button',
       size: FULL,
       ...topLeft,
+      ...hitArea(look.hitSlop),
       default_control: 'default',
       hover_control: 'hover',
       pressed_control: 'pressed',
@@ -126,7 +129,7 @@ export const pressDefs = (look: PressLook, ctx: Emit): Definitions => {
         stateControl('default', look, state => state.rest, look.rest, ctx.collection),
         stateControl('hover', look, state => state.hover, look.hover, ctx.collection),
         stateControl('pressed', look, state => state.pressed, look.pressed, ctx.collection),
-      ],
+      ].map(entry => paintState(entry, look.hitSlop)),
     },
 
     [definition]: {

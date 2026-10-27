@@ -19,13 +19,13 @@ const laidOutWidth = (element: JSX.Element): number => {
 };
 
 describe('a text with maxLength', () => {
-  it('reserves room for that many of the widest glyph, whatever it says now', () => {
+  it('measures the truncated value without reserving hypothetical characters', () => {
     const short = Text({ maxLength: 8, children: 'idle' });
-    const reserved = measureText({ text: 'W'.repeat(8) }).width;
+    const measured = measureText({ text: 'idle' }).width;
 
     expect(widthOf(short)).toBeNaN();
-    expect(laidOutWidth(short)).toBe(reserved);
-    expect(laidOutWidth(short)).toBeGreaterThan(measureText({ text: 'idle' }).width);
+    expect(laidOutWidth(short)).toBe(measured);
+    expect(laidOutWidth(short)).toBeLessThan(measureText({ text: 'W'.repeat(8) }).width);
   });
 
   it('fits a text made of the widest glyph exactly', () => {

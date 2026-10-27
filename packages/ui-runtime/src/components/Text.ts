@@ -53,24 +53,10 @@ export interface TextProps extends ControlProps {
   scale?: number;
 
   /**
-   * The ONE text channel — v0008 collapsed key and text into the same wire
-   * format (the payload's uncapped variable tail, read by a `localize: true`
-   * label), so there is nothing to declare:
-   *
-   * - a **string** is auto-detected: if the active resolver knows it as a key
-   *   (`key()` output, a registry display field, any published key), it is
-   *   localized — the client resolves it in its own language. Otherwise it
-   *   paints literally, exactly as Bedrock treats an unmatched key. The check
-   *   only steers layout metrics and wrap routing; what paints is always the
-   *   client's own resolution attempt.
-   * - a **`RawMessage`** (`raw()` output) is always localized; WITH arguments
-   *   it rides the rawtext tail and the CLIENT resolves and fills it — its
-   *   own language, no length cap, `score`/`selector` parts included.
-   *
-   * Layout metrics need no wiring: the addon's `createI18n(bundle)` call
-   * registers the default translation source; `TranslationContext` overrides
-   * it for hosts resolving beyond their own bundle (config provides
-   * `core.translations.forPlayer(player)`).
+   * A literal string, translation key or RawMessage. Translation resolution
+   * supplies layout metrics. Forms let the client resolve keys and messages;
+   * compiled static keys also resolve on the client. A dynamic container value
+   * carries the display string resolved by the host's translation context.
    */
   children?: DisplayText;
 
@@ -91,17 +77,9 @@ export interface TextProps extends ControlProps {
   maxLines?: number;
 
   /**
-   * The most characters the text will ever need.
-   *
-   * In a container screen this is what makes the text LIVE: a compiled layout
-   * cannot grow, so a string that changes at runtime has to reserve its cells
-   * before the build knows what it will say — one container slot per
-   * character, decoded through the character table. Leave it off for text that
-   * never changes, which is baked and may use any character at all.
-   *
-   * In a server form the text is live anyway; a literal string is cut to this
-   * length so the two backends agree on what fits. Keys and messages the client
-   * resolves are left whole.
+   * Truncates literal text to this many UTF-16 code units without splitting a
+   * surrogate pair. The compiler detects state-driven text automatically; each
+   * detected container value carries at most 128 code units. Translation keys and client-resolved messages stay whole.
    */
   maxLength?: number;
 
@@ -128,7 +106,8 @@ export interface TextProps extends ControlProps {
   /**
    * Where the glyphs sit in the label's box (JSON UI `text_alignment`), which
    * only shows when the box is wider than the text: give the text a `width`,
-   * or let it grow. Default `'left'`. Honoured by compiled screens; a
+   * or let it grow. Live container text aligns its complete value.
+   * Default `'left'`. Honoured by compiled screens; a
    * serialized screen's payload has no field for it.
    */
   textAlign?: TextAlign;
@@ -256,7 +235,7 @@ export const Text: FunctionComponent<TextProps> = ({
     resolvedText = hit ?? candidate;
 
     if (!isLocalized && maxLength !== undefined) {
-      resolvedText = resolvedText.slice(0, Math.max(0, Math.floor(maxLength)));
+      resolvedText = resolvedText.slice(0, Math.max(0, Math.floor(maxLength))).replace(/[\uD800-\uDBFF]$/, '');
     }
   }
 
@@ -334,8 +313,7 @@ export const Text: FunctionComponent<TextProps> = ({
         // string committed — a JSON UI label is content-sized and never wraps
         // on its own, so the `\n`s must be in the string.
         isKey: isLocalized,
-        // The container backend's reservation. Here rather than a plain prop so
-        // it never becomes a payload field.
+        // A display limit, kept outside the serialized payload fields.
         ...maxLength === undefined ? {} : { maxLength },
         // Drawn at the width of its glyphs: the box the layout solves is only
         // what the engine starts from, and the stack above re-places the row.
@@ -360,22 +338,16 @@ function composedValues(translations: Readonly<Record<string, string>>): { shown
   return { shown, values };
 }
 
-/**
- * Characters a built `<Text>` reserved with `maxLength`, or undefined when the
- * label is baked — how the container backend tells live text from static.
- */
-export function liveTextLength(element: JSX.Element): number | undefined {
+/** Literal length limit, or the host's full text capacity when none is set. */
+export function textLimit(element: JSX.Element): number | undefined {
   if (!isTextElementType(element.type)) {
     return undefined;
   }
 
   const metrics = element.props.__textMetrics;
+  const limit = typeof metrics === 'object' && metrics !== null && 'maxLength' in metrics ? metrics.maxLength : undefined;
 
-  if (typeof metrics !== 'object' || metrics === null || !('maxLength' in metrics)) {
-    return undefined;
-  }
-
-  const { maxLength } = metrics;
-
-  return typeof maxLength === 'number' && maxLength >= 1 ? Math.floor(maxLength) : undefined;
+  return typeof limit === 'number' && Number.isFinite(limit)
+    ? Math.max(0, Math.floor(limit))
+    : Number.MAX_SAFE_INTEGER;
 }

@@ -18,9 +18,10 @@ export { buildContainerTree, buildScreenOnce, buildScreenTree } from './hosts/ch
 // What is live, found by rendering rather than by being told. Build-only: the
 // runtime is handed the answer.
 export { probeLiveness } from './core/ir/probe';
-export type { FrozenText, Probe, ShapeChange } from './core/ir/probe';
+export type { Probe, ShapeChange } from './core/ir/probe';
 
 export { allocate } from './hosts/chest/allocate';
+export { CONTAINER_TEXT_LIMIT, TEXT_NAME_PREFIX, TEXT_EMPTY_VALUE, boundedText } from './hosts/chest/text';
 export type { Allocation, CellRole, ChannelEntry, SlotEntry } from './hosts/chest/allocate';
 
 // The form host's half of the same seam. Named apart from the chest's rather
@@ -36,7 +37,7 @@ export type { EntryEntry, Placement as FormPlacement } from './hosts/form/alloca
 // visible by probing, records the ordinals, and the runtime marks the same
 // elements back onto its tree. The fingerprint and the baked strings are what
 // `debug` diffs a render against.
-export { bakedTexts, bakedWalk, lookIndexOf, shapeOf, variantsAt, walkWithOwners } from './core/ir/probe';
+export { bakedWalk, lookIndexOf, shapeOf, variantsAt, walkWithOwners } from './core/ir/probe';
 export { hasMechanism } from './core/ir/claims';
 export type { VariantTable } from './core/ir/probe';
 export type { CompiledSnapshot } from './core/render/screens';
@@ -49,10 +50,7 @@ export {
 export { analyze, claim, visiblesAt } from './core/ir';
 export type { Analysis, CellClaim, ChannelClaim, Claims } from './core/ir';
 export {
-  BLANK_CODE, BLANK_VALUE, CHARSET, charsetLang, encode, MAX_CODE, UNKNOWN_CODE,
-} from './hosts/chest/charset';
-export {
-  BLANK_ICON, BLOCK_SLOT_LIMIT, blockCapacityError, COLLECTION, IDENTITY, KEY_PREFIX, LAYOUT_PROPERTY, layoutKey,
+  BLANK_ICON, BLOCK_SLOT_LIMIT, blockCapacityError, COLLECTION, IDENTITY, LAYOUT_PROPERTY, layoutKey,
   LOOK_LIMIT, MAX_LAYOUT, namespaceOf, protocolItemDefinitions, protocolItemId, SENTINEL_SLOTS, STATE_PROPERTY,
 } from './hosts/chest/contract';
 export type { ProtocolItemDefinition, ProtocolRole } from './hosts/chest/contract';
@@ -87,7 +85,7 @@ export { isForeignSlot, SLOT_CELL, SLOT_TYPE, slotInteractive, slotRole, slotSou
 export type { SlotSource } from './components/Slot';
 export { SLOT_GRID_TYPE, slotGridConfig } from './components/SlotGrid';
 export type { SlotGridConfig } from './components/SlotGrid';
-export { isTextElementType, liveTextLength, safeLabelText } from './components/Text';
+export { isTextElementType, textLimit, safeLabelText } from './components/Text';
 export { childElements, concreteRoots, isElement } from './core/guards';
 export { ContainerScreenError, ScreenRootError } from './core/types';
 export { CANONICAL_SCREEN } from '@bedrock-core/flexbox';
@@ -105,3 +103,5 @@ export { buildLocales, setBuildLocales } from './core/render/buildPass';
 export type { BuildLocales, ComposedRecord } from './core/render/buildPass';
 export { EMPTY_PIECE, parseTrans, splitTrans, TransError } from './util/trans';
 export type { TransLayout, TransPiece } from './util/trans';
+
+export { hasTextChannel, textChannelsAt, textValues } from './core/ir/text';

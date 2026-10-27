@@ -13,7 +13,7 @@ import type { ListNode } from '../../nodes/primitives/list';
 import type { ScrollNode } from '../../nodes/primitives/scroll';
 import { faceId, sizeOf } from '../../nodes/utils/shared';
 import { pinnedEnabled } from '../../nodes/utils/fields';
-import { isLive, runOf, type TextNode, textSignature } from '../../nodes/primitives/text';
+import { runOf, type TextNode, textSignature } from '../../nodes/primitives/text';
 import type { Emit, HostEmit, IrNode } from '../../nodes/utils/types';
 import type { PanelNode } from '../../nodes/primitives/panel';
 import { ENTRY_PROPERTY, entrySource } from '../../connectors/form/entry';
@@ -84,7 +84,8 @@ const facesOf = (node: ButtonNode, ctx: Emit): { id: string; rest: string; hover
  * look baked into its gates, so it keeps a definition of its own.
  */
 const pressKey = (node: ButtonNode): string =>
-  (node.looks === undefined ? faceId('button', faceSignature(lookOf(node))) : `looks:${node.name}`);
+  (node.looks === undefined ? faceId('button', faceSignature(lookOf(node))) : `looks:${node.name}`)
+  + (node.hitSlop === undefined ? '' : `:hit:${String(node.hitSlop)}`);
 
 /** One version of a carried look, gated on the entry naming the look worn. */
 const wrapLook = (node: IrNode, entry: ControlEntry, ctx: Emit): ControlEntry => {
@@ -270,6 +271,7 @@ export const FORM_EMIT: HostEmit = {
         ctx.faceNames.set(key, definition);
         Object.assign(document, pressDefs({
           definition,
+          ...node.hitSlop === undefined ? {} : { hitSlop: node.hitSlop },
           size: pressSizeOf(node),
           ...facesOf(node, ctx),
           // A look that follows state draws every face it takes, gated on the
@@ -288,7 +290,7 @@ export const FORM_EMIT: HostEmit = {
 
     // A baked string carries nothing, so it needs no carrier definition: the
     // face already drew it and nothing will ever change it.
-    for (const node of collectKind(root, 'text').filter(isLive)) {
+    for (const node of collectKind(root, 'text').filter(node => node.address !== undefined)) {
       const signature = textSignature(node);
 
       if (!ctx.textNames.has(signature)) {

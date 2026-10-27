@@ -1,3 +1,4 @@
+import { registerContainerLooks } from '../../../core/render/screens';
 import {
   type Container as EngineContainer, type Entity, EntityComponentTypes, ItemStack, type Player,
 } from '@minecraft/server';
@@ -14,7 +15,7 @@ import { entityOwner, getFibersForOwner } from '../../../core/fabric';
 import { ContainerScreenError, ScreenRootError } from '../../../core/types';
 import { useEffect, useState } from '../../../hooks';
 import type { JSX } from '../../../jsx';
-import { CHARSET } from '../charset';
+import { TEXT_NAME_PREFIX } from '../text';
 import { LAYOUT_PROPERTY, STATE_PROPERTY } from '../contract';
 import { protocolItems } from '../runtime/items';
 
@@ -23,8 +24,6 @@ import { type ContainerScreen, createContainerScreen } from '../runtime/session'
 
 /** One tick of the system shim, in fake-timer milliseconds. */
 const TICK = 50;
-
-const code = (glyph: string): number => CHARSET.indexOf(glyph) + 1;
 
 /** The mock container, typed as the engine's: that is what it stands in for at runtime. */
 const createContainer = (size: number): EngineContainer => new MockContainer(size) as unknown as EngineContainer;
@@ -145,7 +144,7 @@ const Screen = (): JSX.Element => {
   });
 };
 
-const SIZE = 8;
+const SIZE = 5;
 
 const machineOpen = vi.fn();
 const machineInsert = vi.fn();
@@ -211,6 +210,7 @@ let error: ReturnType<typeof vi.spyOn>;
 
 beforeEach(() => {
   vi.useFakeTimers();
+  registerContainerLooks(Screen, [], [0]);
   effectRuns = 0;
   cleanups = 0;
   onInsert.mockReset();
@@ -264,6 +264,20 @@ describe('createContainerScreen', () => {
 });
 
 describe('a session', () => {
+  it('reads compiler text registrations loaded after the serving handle is created', async () => {
+    registerContainerLooks(Screen, [], []);
+    screen = createContainerScreen(Screen);
+    registerContainerLooks(Screen, [], [0]);
+    const target = createEntity('late-registration', SIZE, 3);
+    const viewer = createPlayer('p1');
+
+    interact(target, viewer);
+    await vi.advanceTimersByTimeAsync(TICK);
+
+    expect(target.container.getItem(4)?.nameTag).toBe(TEXT_NAME_PREFIX + 'n 0');
+    expect(error).not.toHaveBeenCalled();
+  });
+
   it('populates the container a tick after the interact, before the screen opens', async () => {
     screen = createContainerScreen(Screen);
 
@@ -284,9 +298,7 @@ describe('a session', () => {
     expect(first && items.isTransport(first)).toBe(true);
     expect(items.isTransport(target.container.getItem(2)!)).toBe(true);
     expect(target.container.getItem(3)).toBeUndefined();
-    expect([4, 5, 6, 7].map(slot => target.container.getItem(slot)?.amount)).toEqual([
-      code('n'), code(' '), code('0'), 1,
-    ]);
+    expect(target.container.getItem(4)?.nameTag).toBe(TEXT_NAME_PREFIX + 'n 0');
     expect(effectRuns).toBe(1);
     expect(stateOf(target)).toContain('[[0,0]]');
   });
@@ -303,7 +315,7 @@ describe('a session', () => {
     press(target, viewer, 1);
     await vi.advanceTimersByTimeAsync(TICK);
 
-    expect(target.container.getItem(6)?.amount).toBe(code('1'));
+    expect(target.container.getItem(4)?.nameTag).toBe(TEXT_NAME_PREFIX + 'n 1');
     expect(items.isGuard(target.container.getItem(2)!)).toBe(true);
 
     const first = target.container.getItem(1);
@@ -315,7 +327,7 @@ describe('a session', () => {
     await vi.advanceTimersByTimeAsync(TICK);
 
     expect(stateOf(target)).toContain('[[0,1]]');
-    expect(target.container.getItem(6)?.amount).toBe(code('1'));
+    expect(target.container.getItem(4)?.nameTag).toBe(TEXT_NAME_PREFIX + 'n 1');
     expect(error).not.toHaveBeenCalled();
   });
 
@@ -375,7 +387,7 @@ describe('a session', () => {
     await vi.advanceTimersByTimeAsync(TICK);
 
     expect(effectRuns).toBe(2);
-    expect(target.container.getItem(6)?.amount).toBe(code('1'));
+    expect(target.container.getItem(4)?.nameTag).toBe(TEXT_NAME_PREFIX + 'n 1');
     expect(items.isGuard(target.container.getItem(2)!)).toBe(true);
   });
 
@@ -443,6 +455,7 @@ describe('a session', () => {
       return Container({ entity: 'core:test', children: [Text({ maxLength: 1, children: label })] });
     };
 
+    registerContainerLooks(Eager, [], [0]);
     screen = createContainerScreen(Eager);
 
     const target = createEntity('e1', 2, 3);
@@ -451,7 +464,7 @@ describe('a session', () => {
     interact(target, viewer);
     await vi.advanceTimersByTimeAsync(TICK);
 
-    expect(target.container.getItem(1)?.amount).toBe(code('b'));
+    expect(target.container.getItem(1)?.nameTag).toBe(TEXT_NAME_PREFIX + 'b');
     expect(stateOf(target)).toContain('[[0,"b"]]');
   });
 
@@ -544,7 +557,7 @@ describe('refusing to serve', () => {
     interact(target, viewer);
     await vi.advanceTimersByTimeAsync(TICK * 2);
 
-    expect(error).toHaveBeenCalledWith(expect.stringMatching(/9 container slots and its screen needs 8/));
+    expect(error).toHaveBeenCalledWith(expect.stringMatching(/6 container slots and its screen needs 5/));
     expect(target.container.getItem(0)).toBeUndefined();
     expect(getFibersForOwner(entityOwner(target.entity))).toHaveLength(0);
   });

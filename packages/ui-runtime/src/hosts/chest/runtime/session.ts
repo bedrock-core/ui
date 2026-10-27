@@ -15,11 +15,12 @@ import type { FunctionComponent } from '../../../jsx';
 import { allocate, type Allocation } from '../allocate';
 import { BLOCK_SLOT_LIMIT, blockCapacityError, namespaceOf } from '../contract';
 import { buildContainerTree } from '../build';
+import { textChannelsAt } from '../../../core/ir/text';
 import type { NamedContainer } from '../../../entity';
 import { writeChannels, type Written } from './channels';
 import { protocolItems } from './items';
 import { snapshot } from './debug';
-import { containerLooksOf } from '../../../core/render/screens';
+import { containerTextsOf, containerLooksOf } from '../../../core/render/screens';
 import {
   createLedger, createWatch, type Ledger, poll, resync, sweep, type Watch,
 } from './poll';
@@ -156,6 +157,12 @@ export function createContainerScreen<N extends string = string>(
   // The shape, once. A compiled screen cannot change it, so this numbers the
   // same cells every later render does — which is what lets a host's cells be
   // reached with no session open.
+  const descriptor = {
+    texts: containerTextsOf(Screen) ?? [],
+    looks: containerLooksOf(Screen),
+  };
+
+  textChannelsAt(built, descriptor.texts);
   const shape = allocate(built);
 
   // The items the build registered for this screen: under the namespace of
@@ -222,6 +229,7 @@ export function createContainerScreen<N extends string = string>(
 
     const tree = buildContainerTree(Screen, session.owner);
 
+    textChannelsAt(tree, containerTextsOf(Screen) ?? []);
     session.allocation = allocate(tree, undefined, containerLooksOf(Screen));
     session.handlers = containerHandlers(containerRoot(tree));
     writeButtons(container, session.allocation.slots, items);
@@ -440,6 +448,7 @@ export function createContainerScreen<N extends string = string>(
     try {
       const tree = buildContainerTree(Screen, owner);
 
+      textChannelsAt(tree, containerTextsOf(Screen) ?? []);
       allocation = allocate(tree, undefined, containerLooksOf(Screen));
       handlers = containerHandlers(containerRoot(tree));
     } catch (error: unknown) {

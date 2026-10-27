@@ -8,7 +8,6 @@ import { SWAP_SLOT_TYPE } from '../../components/Swap';
 import { TAB_SLOT_TYPE } from '../../components/Tabs';
 import { isForeignSlot, SLOT_TYPE } from '../../components/Slot';
 import { SLOT_GRID_TYPE } from '../../components/SlotGrid';
-import { liveTextLength } from '../../components/Text';
 import type { ComponentKind, HostContract } from '../../hosts';
 import type { JSX } from '../../jsx';
 import { childElements } from '../guards';
@@ -138,15 +137,6 @@ const RULES: readonly Rule[] = [
       throw new ContainerScreenError(
         'A `<Scroll>` cannot sit inside another `<Scroll>` in a compiled screen: a '
         + 'region is laid out as one flat box. Split the content into sibling scrolls.',
-      );
-    }
-  },
-
-  (node, _type, scope, _host, frozen): void => {
-    if (frozen && scope.insideButton && liveTextLength(node) !== undefined) {
-      throw new ContainerScreenError(
-        'A live `<Text maxLength>` cannot sit inside a `<Button>` yet: a button\'s '
-        + 'children are baked into its face. Put the live text beside the button.',
       );
     }
   },

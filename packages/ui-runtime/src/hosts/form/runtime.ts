@@ -38,7 +38,7 @@ import { debugDiff } from './debug';
  * resolves it in its own language before the binding sees it, so several keys —
  * a whole breadcrumb trail — ride one entry (measured, S7).
  */
-export const liveText = (element: JSX.Element, length: number): DisplayText => {
+export const textValue = (element: JSX.Element, length: number): DisplayText => {
   const { value, __textMetrics: metrics } = element.props;
   const tail = typeof value === 'object' && value !== null && 'tail' in value ? value.tail : undefined;
   const isKey = typeof metrics === 'object' && metrics !== null && !Array.isArray(metrics)
@@ -65,12 +65,12 @@ export const liveText = (element: JSX.Element, length: number): DisplayText => {
  */
 export const entryValue = (entry: EntryEntry): DisplayText => {
   if (entry.carrier === 'text' && entry.length !== undefined) {
-    return liveText(entry.element, entry.length);
+    return textValue(entry.element, entry.length);
   }
 
   // A texture path travels whole: the compiled image binds the entry's string as its texture.
   if (entry.carrier === 'texture') {
-    return liveText(entry.element, Number.MAX_SAFE_INTEGER);
+    return textValue(entry.element, Number.MAX_SAFE_INTEGER);
   }
 
   // A reserved slot carries whatever the host was told the embedded screen wants there.
@@ -123,6 +123,7 @@ export const compiledValuesOf = (tree: JSX.Element, snapshot?: CompiledSnapshot)
     tree,
     vis?.length ? visiblesAt(tree, vis) : undefined,
     looks?.length ? variantsAt(tree, looks) : undefined,
+    snapshot?.texts,
   ));
 
   return { entries, values: entries.map(entryValue) };

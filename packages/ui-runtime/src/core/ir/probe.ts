@@ -1,6 +1,6 @@
 import { BUTTON_TYPE } from '../../components/Button';
 import { listCapacity } from '../../components/List';
-import { isTextElementType, liveTextLength } from '../../components/Text';
+import { isTextElementType } from '../../components/Text';
 import type { JSX } from '../../jsx';
 import { BUILD_OWNER, getFibersForOwner } from '../fabric';
 import type { Fiber } from '../fabric/types';
@@ -10,47 +10,12 @@ import { isHandler, type PressEvent } from '../events';
 import { setStateSeed, type StateSeed } from '../render/session';
 import { cleanupComponentTree } from '../render/tree';
 import { claim, hasMechanism, visibleCandidates, visibleWalk } from './claims';
+import { textElements, textValues } from './text';
 
 // The exact function is tagged: copying its metadata cannot certify a wrapper.
 const PLAYER_REQUIRED = Symbol.for('@bedrock-core/ui-runtime/player-required');
 
-/**
- * What in a screen is live, found by asking rather than by being told.
- *
- * A compiled screen is baked: its text is written into JSON UI at build time,
- * so a string that changes at runtime shows the build's value forever and says
- * nothing about it. `maxLength` is what reserves the cells a changing string
- * needs — and an author who forgets it gets a screen that looks right in every
- * screenshot and is wrong the moment anything happens.
- *
- * This is the build finding that out. It renders the screen once for the
- * reference, then re-renders it with each state slot perturbed and diffs what
- * came out. Anything that moved is live, whether or not the author said so.
- *
- * It is only ever run at BUILD time, on a machine with no world: the runtime
- * knows what is live because the build already told it.
- *
- * ## What it cannot see
- *
- * Probing is not proof. A value that only changes past a threshold no probe
- * crosses (`count > 100`) is missed, which is why `maxLength` stays an
- * explicit marker rather than becoming a hint — declaring it makes the text
- * live whatever the probes saw. The reverse never happens: everything this
- * reports really did change between two renders of the same screen.
- */
-
-/** A baked string that moved when state did. */
-export interface FrozenText {
-  /** Which baked text it is, counting in document order from 0. */
-  readonly position: number;
-  /** What the reference render produced. */
-  readonly before: string;
-  /** What a perturbed render produced instead. */
-  readonly after: string;
-  /** The longest of the two, so the message can suggest a `maxLength`. */
-  readonly longest: number;
-}
-
+/** State probes discover structural changes, visibility and finite appearance variants. */
 /** A render that produced a different set of cells or channels. */
 export interface ShapeChange {
   readonly before: string;
@@ -95,8 +60,9 @@ export interface VariantTable {
 }
 
 export interface Probe {
+  /** Document positions of text values that changed during state probes. */
+  readonly texts: readonly number[];
   /** Baked text that a state change moved. Empty when nothing is frozen. */
-  readonly frozen: readonly FrozenText[];
   /**
    * Baked props that a state change moved: everything the build writes into
    * JSON UI except the two with carriers of their own, `text` and `visible`.
@@ -136,56 +102,6 @@ interface Slot {
   readonly value: unknown;
 }
 
-/** The string a baked `<Text>` shows, whatever kind of tail it carries. */
-const bakedTextOf = (element: JSX.Element): string => {
-  const { value } = element.props;
-  const tail = typeof value === 'object' && value !== null && 'tail' in value ? value.tail : undefined;
-
-  if (typeof tail === 'string') {
-    return tail;
-  }
-
-  // A RawMessage tail is the client's to resolve; compare it structurally, so
-  // a changing key or parameter still counts as movement.
-  return tail === undefined ? '' : JSON.stringify(tail);
-};
-
-/**
- * Every string in a tree that the author could have made live, in document
- * order.
- *
- * Two kinds are left out, both because the author has already said what they
- * are. Live text reserved its cells and is not baked at all. And a button's
- * children are its FACE — baked by definition, which is why live text inside
- * one is refused outright — so a caption that moves with the button's own
- * state is the documented behaviour rather than a mistake. The ore-styled
- * button is exactly that: it colours its caption by `enabled`, and on a
- * compiled screen only the background swaps.
- */
-export const bakedTexts = (tree: JSX.Element): string[] => {
-  const found: string[] = [];
-
-  const visit = (element: JSX.Element): void => {
-    const { type } = element;
-
-    if (type === BUTTON_TYPE) {
-      return;
-    }
-
-    if (typeof type === 'string' && isTextElementType(type) && liveTextLength(element) === undefined) {
-      found.push(bakedTextOf(element));
-    }
-
-    for (const child of childElements(element.props.children)) {
-      visit(child);
-    }
-  };
-
-  visit(tree);
-
-  return found;
-};
-
 /**
  * Props no comparison should read, each because something else already owns it.
  *
@@ -219,7 +135,7 @@ const BAKED_PRIVATE = new Set(['__color', '__textAlign', '__background', '__opti
  * per look. Only an element the HOST places — a button's cell, a slot, a live
  * string — keeps the build's box, and its movement is reported apart.
  */
-const SOLVED = new Set(['jsonUIx', 'jsonUIy', 'jsonUIWidth', 'jsonUIHeight']);
+const SOLVED = new Set(['jsonUIx', 'jsonUIy', 'jsonUIWidth', 'jsonUIHeight', 'jsonUIWideX', 'jsonUIWideY', 'jsonUIWideWidth', 'jsonUIWideHeight']);
 
 /**
  * The solved position, as it is compared: from the element's parent rather
@@ -373,8 +289,7 @@ export const shapeOf = (tree: JSX.Element, analysis?: Parameters<typeof claim>[1
 
   return [
     cells.map(cell => cell.role).join(','),
-    channels.map(channel => `${channel.carrier}:${channel.length}`).join(','),
-    `text:${bakedTexts(tree).length}`,
+    channels.map(channel => channel.carrier === 'text' ? 'text' : `${channel.carrier}:${channel.length}`).join(','),
     // Every element, not only the claiming ones: a conditionally-rendered
     // panel is as much a shape change as a vanished button — `visible` is the
     // one legal way for a subtree to come and go — and the count is also what
@@ -706,16 +621,17 @@ export function probeLiveness(build: () => JSX.Element): Probe {
   const reference = build();
   const slots = slotsOf(getFibersForOwner(BUILD_OWNER));
   const referenceShape = shapeOf(reference);
-  const referenceTexts = bakedTexts(reference);
+  const referenceTexts = textValues(reference);
   const referenceProps = bakedProps(reference);
   const { elements: referenceElements, owners } = walkWithOwners(reference);
   const tried = candidatesIn(reference);
   const candidates = visibleCandidates(reference);
   const referenceVisibles = candidates.map(element => element.props.visible !== false);
 
-  const frozen = new Map<number, FrozenText>();
+  const texts = new Set<number>();
   const moved = new Map<string, FrozenProp>();
   const solved = new Map<string, FrozenProp>();
+  const changedTextLayout = new Set<number>();
   // Every render's props, per element, so a prop that moved can be read back
   // as the set of values it took rather than as the first change alone.
   const seen: Record<string, unknown>[][] = referenceProps.map(entry => [entry.props]);
@@ -739,6 +655,12 @@ export function probeLiveness(build: () => JSX.Element): Probe {
       return;
     }
 
+    bakedWalk(probed).forEach((element, position) => {
+      if (isTextElementType(element.type) && asText(element.props.__layout) !== asText(referenceElements[position]?.props.__layout)) {
+        changedTextLayout.add(position);
+      }
+    });
+
     bakedProps(probed).forEach(({ type, props }, position) => {
       const before = referenceProps[position];
 
@@ -753,7 +675,8 @@ export function probeLiveness(build: () => JSX.Element): Probe {
         const now = asText(props[prop]);
         const key = `${String(position)}.${prop}`;
         const placed = referenceElements[position];
-        const laidOut = SOLVED.has(prop) && (owners[position] ?? -1) === -1 && placed !== undefined && hasMechanism(placed);
+        const laidOut = SOLVED.has(prop) && (owners[position] ?? -1) === -1 && placed !== undefined
+          && hasMechanism(placed);
 
         if (was !== now && !moved.has(key)) {
           (laidOut ? solved : moved).set(key, { position, type, prop, before: was, after: now });
@@ -761,17 +684,8 @@ export function probeLiveness(build: () => JSX.Element): Probe {
       }
     });
 
-    bakedTexts(probed).forEach((after, position) => {
-      const before = referenceTexts[position] ?? '';
-
-      if (after !== before && !frozen.has(position)) {
-        frozen.set(position, {
-          position,
-          before,
-          after,
-          longest: Math.max(before.length, after.length),
-        });
-      }
+    textValues(probed).forEach((value, position) => {
+      if (value !== referenceTexts[position]) { texts.add(position); }
     });
 
     // Same positions on both sides — the shape check above already held.
@@ -876,10 +790,28 @@ export function probeLiveness(build: () => JSX.Element): Probe {
 
   cleanupComponentTree(BUILD_OWNER);
 
+  // A neighbouring text can move through layout reflow without changing its own appearance.
+  const dynamic = new Set(textElements(reference).filter((_element, position) => texts.has(position)));
+
+  const styledText = new Set([...moved.values()].filter(change => !SOLVED.has(change.prop)).map(change => change.position));
+
+  for (const [key, change] of moved) {
+    const element = referenceElements[change.position];
+
+    const ownStyleChanged = styledText.has(change.position);
+    const reflowed = element !== undefined && isTextElementType(element.type)
+      && !changedTextLayout.has(change.position) && !ownStyleChanged;
+
+    if (element !== undefined && (dynamic.has(element) || reflowed) && SOLVED.has(change.prop)) {
+      moved.delete(key);
+      solved.set(key, change);
+    }
+  }
+
   const props = [...moved.values()].sort((a, b) => a.position - b.position || a.prop.localeCompare(b.prop));
 
   return {
-    frozen: [...frozen.values()].sort((a, b) => a.position - b.position),
+    texts: [...texts].sort((a, b) => a - b),
     props,
     variants: variantTables(props, referenceProps, seen, owners),
     geometry: [...solved.values()].sort((a, b) => a.position - b.position || a.prop.localeCompare(b.prop)),

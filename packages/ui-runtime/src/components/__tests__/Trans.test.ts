@@ -49,7 +49,7 @@ describe('Trans on a screen rendered at runtime', () => {
       title: titleFor('trans_runtime'),
       snapshot: {
         shape: '',
-        baked: [],
+        texts: [],
         vis: [],
         trans: [{ s: 0, l: [[{ c: [], v: 'See ' }, { c: ['shop'], v: 'the shop' }, { c: [], v: ' or' }], [{ c: ['rules'], v: 'the rules' }]] }],
       },

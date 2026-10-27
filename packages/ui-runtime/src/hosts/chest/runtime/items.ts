@@ -1,6 +1,6 @@
 import { ItemComponentTypes, ItemStack } from '@minecraft/server';
-import { MAX_CODE } from '../charset';
 import { IDENTITY, PROTOCOL_ROLES, type ProtocolRole, protocolItemId } from '../contract';
+import { TEXT_EMPTY_VALUE, TEXT_NAME_PREFIX } from '../text';
 
 /**
  * The items the runtime places, and how they are told apart from a player's.
@@ -20,7 +20,7 @@ export interface ItemContainer {
   readonly size: number;
   getItem(slot: number): ItemStack | undefined;
   setItem(slot: number, stack?: ItemStack): void;
-  getSlot(slot: number): { amount: number };
+  getSlot(slot: number): { amount: number; nameTag?: string };
 }
 
 /**
@@ -118,27 +118,25 @@ export const protocolItems = (namespace: string): ProtocolItems => {
   return items;
 };
 
-/**
- * Writes one character cell.
- *
- * The cheap path, and the reason a string costs so little to update: the code
- * rides the stack size, which is a settable property, so it lands with ONE
- * native call and nothing allocated.
- */
-export const writeCell = (container: ItemContainer, items: ProtocolItems, slot: number, code: number): void => {
-  const amount = Math.max(1, Math.min(MAX_CODE, Math.round(code)));
+/** Writes one look cell: a single bank item whose current durability names the look worn. */
+export const writeLook = (container: ItemContainer, items: ProtocolItems, slot: number, look: number): void => {
+  container.setItem(slot, items.count(1, look));
+};
+
+/** Writes one whole text value; only empty-state transitions replace the carrier. */
+export const writeText = (container: ItemContainer, items: ProtocolItems, slot: number, text: string): void => {
+  const value = text === '' ? TEXT_EMPTY_VALUE : 0;
+  const name = TEXT_NAME_PREFIX + (text === '' ? ' ' : text);
   const item = container.getItem(slot);
 
-  if (item !== undefined && items.isCount(item) && items.valueOf(item) === 0) {
-    container.getSlot(slot).amount = amount;
+  if (item !== undefined && items.isCount(item) && item.amount === 1 && items.valueOf(item) === value) {
+    container.getSlot(slot).nameTag = name;
 
     return;
   }
 
-  container.setItem(slot, items.count(amount));
-};
+  const stack = items.count(1, value);
 
-/** Writes one look cell: a single bank item whose current durability names the look worn. */
-export const writeLook = (container: ItemContainer, items: ProtocolItems, slot: number, look: number): void => {
-  container.setItem(slot, items.count(1, look));
+  stack.nameTag = name;
+  container.setItem(slot, stack);
 };
