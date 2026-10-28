@@ -1,5 +1,12 @@
 # @bedrock-core/navigation
 
+## 0.13.2
+
+### Patch Changes
+
+- Updated dependencies [[`d548b7b`](https://github.com/bedrock-core/ui/commit/d548b7b157d1d5f26a4d34e66bd28c26ecc359c5)]:
+  - @bedrock-core/ui-runtime@0.14.1
+
 ## 0.13.1
 
 ### Patch Changes

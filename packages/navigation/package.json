@@ -1,6 +1,6 @@
 {
 	"name": "@bedrock-core/navigation",
-	"version": "0.13.1",
+	"version": "0.13.2",
 	"description": "Standalone UI navigation with resident pages and optional Core integration",
 	"keywords": [
 		"ui",
