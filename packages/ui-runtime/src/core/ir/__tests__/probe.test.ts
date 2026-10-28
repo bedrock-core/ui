@@ -43,6 +43,18 @@ describe('probeLiveness', () => {
     expect(result.texts).toEqual([0]);
   });
 
+  it('retains source-derived text when its external value is unavailable during the build', () => {
+    const result = probe((): JSX.Element => {
+      const value = Text({ maxLength: 48, children: '' });
+
+      value.props.__textDynamic = true;
+
+      return Panel({ children: [Text({ children: 'HEADER' }), value] });
+    });
+
+    expect(result.texts).toEqual([1]);
+  });
+
   it('names only the text that moved, among several', () => {
     const result = probe((): JSX.Element => {
       const [count] = useState(0);

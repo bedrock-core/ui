@@ -133,13 +133,14 @@ describe('the chest routing', () => {
     expect(entries(furnace).map(([name]) => name)).toEqual([
       'backdrop@core_furnace.backdrop',
       'screen@core_furnace.screen',
+      'chrome@core_ui_chest.chrome',
     ]);
     expect(child(furnace, 'screen@core_furnace.screen')).toEqual({
       anchor_from: 'center',
       anchor_to: 'center',
     });
     expect(MOUNT_ANCHOR).toBe('center');
-    expect(entries(definition(router, 'core_gate_crate')).map(([name]) => name)).toEqual(['screen@core_crate.screen']);
+    expect(entries(definition(router, 'core_gate_crate')).map(([name]) => name)).toEqual(['screen@core_crate.screen', 'chrome@core_ui_chest.chrome']);
   });
 
   it('gathers every screen under the addon\'s root, which the hooks insert', () => {
@@ -183,7 +184,7 @@ describe('the chest routing', () => {
   });
 
   it('references nothing of vanilla\'s: the chest panels are the chest root\'s business', () => {
-    expect(JSON.stringify(router)).not.toMatch(/@?(common|chest|pocket_containers)\.[a-z_]+/);
+    expect(JSON.stringify(router)).not.toMatch(/(?:@|")(common|chest|pocket_containers)\.[a-z_]+/);
     expect(JSON.stringify(router)).not.toContain('bcui');
   });
 

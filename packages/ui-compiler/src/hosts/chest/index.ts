@@ -91,6 +91,8 @@ export interface RoutedScreen {
   readonly namespace: string;
   readonly layoutId: number;
   readonly hasBackdrop: boolean;
+  /** Compiled controls used to place cursor chrome above the screen's authored layers. */
+  readonly document?: Document;
 }
 
 /** A document and the pack path it is written to. */
@@ -222,6 +224,40 @@ const hooksOf = (addon: string, host: ChestHost): PlacedDocument[] => host.hooks
   },
 }));
 
+/** The highest parent-relative layer in the authored canvas, before native cell and cursor details. */
+const contentLayer = (document?: Document): number => {
+  if (document === undefined) { return 0; }
+
+  const definitions = new Map<string, { base: string; control: Control }>();
+
+  for (const [key, value] of Object.entries(document)) {
+    if (typeof value === 'string' || 'modifications' in value) { continue; }
+
+    const [name = '', base = ''] = key.split('@');
+
+    definitions.set(String(document.namespace) + '.' + name, { base, control: value });
+  }
+
+  const resolve = (reference: string, override: Control): Control => {
+    const found = definitions.get(reference);
+
+    return found === undefined ? override : { ...resolve(found.base, found.control), ...override };
+  };
+
+  const highest = (reference: string, override: Control, parent: number): number => {
+    const control = resolve(reference, override);
+    const layer = parent + (control.layer ?? 0);
+    const children = (control.controls ?? []).flatMap(entry => Object.entries(entry)
+      .map(([key, child]) => highest(key.split('@')[1] ?? '', child, layer)));
+
+    if (control.grid_item_template !== undefined) { children.push(highest(control.grid_item_template, {}, layer)); }
+
+    return Math.max(layer, ...children);
+  };
+
+  return highest(String(document.namespace) + '.' + SCREEN_DEFINITION, {}, 0);
+};
+
 /**
  * The hooks and the router, for every compiled screen of one addon.
  *
@@ -258,6 +294,7 @@ export const chestRouter = (screens: readonly RoutedScreen[], addon: string, hos
           anchor_to: MOUNT_ANCHOR,
         },
       },
+      { 'chrome@core_ui_chest.chrome': { $cursor_visual_layer: contentLayer(screen.document) + 1 } },
     ];
 
     router[`${addon}_gate_${screen.name}`] = gate(collection, `(${claimed} and (#layout = ${screen.layoutId}))`, mounted, 5);

@@ -1,14 +1,23 @@
-import type { TemplateDefinition, TemplateModule } from '../types';
+import type { TemplateControl, TemplateDefinition, TemplateModule } from '../types';
+
+/** Cursor artwork rises independently of the buttons that forward pointer input to slots. */
+const cursorVisual = (reference: string): TemplateControl => ({
+  type: 'panel',
+  size: ['100%', '100%'],
+  layer: '$cursor_visual_layer',
+  controls: [{ ['visual@' + reference]: {} }],
+});
 
 export default {
   'core_ui_chest.chrome': ({ ref }): TemplateDefinition => ({
     control: {
-      type: 'panel',
-      size: [
+      'type': 'panel',
+      '$cursor_visual_layer|default': 0,
+      'size': [
         '100%',
         '100%',
       ],
-      controls: [
+      'controls': [
         {
           ['routes@' + ref('core_ui_chest.key_routes')]: {},
         },
@@ -145,17 +154,9 @@ export default {
       sound_volume: 1,
       sound_pitch: 1,
       always_handle_pointer: true,
-      controls: [
-        {
-          ['default@' + ref('core_ui_chest.hold_icon')]: {},
-        },
-        {
-          ['pressed@' + ref('core_ui_chest.hold_icon')]: {},
-        },
-        {
-          ['hover@' + ref('core_ui_chest.hold_icon')]: {},
-        },
-      ],
+      controls: ['default', 'pressed', 'hover'].map(state => ({
+        [state]: cursorVisual(ref('core_ui_chest.hold_icon')),
+      })),
     },
   }),
   'core_ui_chest.selected_icon': ({ ref }): TemplateDefinition => ({
@@ -280,6 +281,7 @@ export default {
   'core_ui_chest.selected_icon_panel': ({ ref }): TemplateDefinition => ({
     control: {
       type: 'panel',
+      layer: '$cursor_visual_layer',
       controls: [
         {
           ['selected_item_icon@' + ref('core_ui_chest.selected_icon')]: {},
@@ -332,7 +334,7 @@ export default {
           ['hover@' + ref('core_ui_chest.selected_icon_panel')]: {},
         },
         {
-          ['durability_bar_grabbed@' + ref('core_ui_chest.selected_durability_bar')]: {},
+          durability_bar_grabbed: cursorVisual(ref('core_ui_chest.selected_durability_bar')),
         },
       ],
     },
@@ -377,17 +379,9 @@ export default {
       ],
       follows_cursor: true,
       always_handle_pointer: true,
-      controls: [
-        {
-          ['default@' + ref('core_ui_chest.cursor_image')]: {},
-        },
-        {
-          ['pressed@' + ref('core_ui_chest.cursor_image')]: {},
-        },
-        {
-          ['hover@' + ref('core_ui_chest.cursor_image')]: {},
-        },
-      ],
+      controls: ['default', 'pressed', 'hover'].map(state => ({
+        [state]: cursorVisual(ref('core_ui_chest.cursor_image')),
+      })),
     },
   }),
 } satisfies TemplateModule;

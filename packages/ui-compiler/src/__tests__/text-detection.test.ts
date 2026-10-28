@@ -1,4 +1,4 @@
-import { Container, Panel, Text, useState, type JSX } from '@bedrock-core/ui-runtime';
+import { Button, Container, Panel, Text, useState, type JSX } from '@bedrock-core/ui-runtime';
 import { describe, expect, it } from 'vitest';
 import { compileScreen } from '../compile';
 import { findAll } from '../__fixtures__/helpers';
@@ -26,6 +26,30 @@ describe('detected text transport', () => {
     const result = compile(maxLength);
     expect(result.texts).toEqual([1]);
     expect(result.allocation.channels).toBe(1);
+  });
+
+  it('allocates source-derived text without observable build-time state', () => {
+    const result = compileScreen(() => {
+      const value = Text({ maxLength: 48, children: '' });
+      value.props.__textDynamic = true;
+      return Container({ entity: 'detect:external', children: value });
+    }, { name: 'external' });
+    expect(result.texts).toEqual([0]);
+    expect(result.allocation.channels).toBe(1);
+    expect(result.allocation.size).toBe(2);
+    expect(findAll(result.document, name => name.startsWith('glyph@'))).toHaveLength(1);
+  });
+
+  it('clears subtree channel marks when text is baked into a shared button face', () => {
+    const result = compileScreen(() => {
+      const caption = Text({ children: 'Close' });
+      caption.props.__textDynamic = true;
+      caption.props.__textChannel = true;
+      return Container({ entity: 'detect:button', children: Button({ children: caption }) });
+    }, { name: 'button' });
+
+    expect(result.texts).toEqual([]);
+    expect(result.allocation.channels).toBe(0);
   });
 
   it('spends no slot on a constant with maxLength', () => {

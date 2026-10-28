@@ -78,7 +78,7 @@ export interface TextProps extends ControlProps {
 
   /**
    * Truncates literal text to this many UTF-16 code units without splitting a
-   * surrogate pair. The compiler detects state-driven text automatically; each
+   * surrogate pair. The compiler detects runtime text dependencies automatically; each
    * detected container value carries at most 128 code units. Translation keys and client-resolved messages stay whole.
    */
   maxLength?: number;
@@ -140,6 +140,8 @@ export type TextAlign = 'left' | 'center' | 'right';
  */
 interface ComposedTextProps {
   __translations?: Readonly<Record<string, string>>;
+  /** Source-derived runtime dependency supplied by the UI build pipeline. */
+  __textDynamic?: boolean;
 }
 
 /**
@@ -163,6 +165,7 @@ export const Text: FunctionComponent<TextProps> = ({
   overflow,
   maxLines,
   maxLength,
+  __textDynamic,
   offsetX,
   offsetY,
   shadow,
@@ -296,6 +299,7 @@ export const Text: FunctionComponent<TextProps> = ({
       // and a plain prop would be offered to every other reader of the element.
       ...color === undefined ? {} : { __color: color },
       ...textAlign === undefined ? {} : { __textAlign: textAlign },
+      ...__textDynamic === true ? { __textDynamic: true } : {},
       value: { tail },
       __textMetrics: {
         font,

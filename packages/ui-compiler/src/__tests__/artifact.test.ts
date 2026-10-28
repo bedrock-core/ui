@@ -62,8 +62,12 @@ describe('the reference screen', () => {
         const [, reference] = name.split('@');
         const [namespace, target] = (reference ?? '').split('.');
 
-        expect(namespace).toBe(document.namespace);
-        expect(definition(document, target ?? '')).toBeDefined();
+        if (namespace === 'core_ui_chest') {
+          expect(target).toBe('chrome');
+        } else {
+          expect(namespace).toBe(document.namespace);
+          expect(definition(document, target ?? '')).toBeDefined();
+        }
       }
     }
 
@@ -159,10 +163,10 @@ describe('compiled container hooks', () => {
     expect(entries(get(`block_vanilla_gate_desktop@${support('vanilla_gate')}`))).toEqual([['vanilla@data_driven_container.desktop_panel', {}]]);
     expect(entries(get(`block_vanilla_gate_pocket@${support('vanilla_gate')}`))).toEqual([['vanilla@pocket_containers.data_driven_container_panel', {}]]);
     expect(entries(get('claimed_gate')).map(([name]) => name)).toEqual([
-      'chrome@addon__ui_support.core_ui_chest_chrome', `roots@chest.${CHEST_HOST.hooks[0]!.target}`,
+      `roots@chest.${CHEST_HOST.hooks[0]!.target}`,
     ]);
     expect(entries(get(`block_claimed_gate@${support('claimed_gate')}`)).map(([name]) => name)).toEqual([
-      'chrome@addon__ui_support.core_ui_chest_chrome', `roots@data_driven_container.${CHEST_HOST.hooks[1]!.target}`,
+      `roots@data_driven_container.${CHEST_HOST.hooks[1]!.target}`,
     ]);
   });
 });

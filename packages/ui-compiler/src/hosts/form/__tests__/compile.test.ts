@@ -1,6 +1,6 @@
 import { dynamicText } from '../../../__fixtures__/dynamicText';
-import type { JSX } from '@bedrock-core/ui-runtime';
-import { Button, Container, Image, Panel, Screen, Scroll, Slot, Text, useExit, useState } from '@bedrock-core/ui-runtime';
+import type { FunctionComponent, JSX } from '@bedrock-core/ui-runtime';
+import { Button, Container, Form, Image, Panel, Screen, Scroll, Slot, Text, useExit, useState } from '@bedrock-core/ui-runtime';
 import { FORM_COLLECTION } from '@bedrock-core/ui-runtime/compile';
 import { describe, expect, it } from 'vitest';
 import type { Control } from '../../../jsonui';
@@ -161,6 +161,31 @@ describe('compiling a form screen', () => {
 
     expect(() => compileFormScreen(WithSlot, { namespace: 'a', name: 'slotty' }))
       .toThrow(/only exists in a container screen/);
+  });
+
+  it('carries source-derived text supplied through runtime props', () => {
+    const External: FunctionComponent = (props) => {
+      const value = Text({ maxLength: 48, children: String(Reflect.get(props, 'value') ?? '') });
+
+      value.props.__textDynamic = true;
+
+      return Screen({ children: Panel({ children: value }) });
+    };
+
+    const compiled = compileFormScreen(External, { namespace: 'a', name: 'external' });
+
+    expect(compiled.snapshot.texts).toEqual([0]);
+    expect(compiled.entries.some(entry => entry.carrier === 'text')).toBe(true);
+  });
+
+  it('keeps source-marked modal button captions in their shared face', () => {
+    const Modal = (): JSX.Element => {
+      const caption = Text({ children: 'Save' });
+      caption.props.__textDynamic = true;
+      return Form({ children: Form.Button({ type: 'submit', children: caption }) });
+    };
+
+    expect(compileFormScreen(Modal, { namespace: 'a', name: 'submit' }).snapshot.texts).toEqual([]);
   });
 
   it('detects state-driven text without a maxLength declaration', () => {

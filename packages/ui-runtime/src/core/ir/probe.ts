@@ -60,7 +60,7 @@ export interface VariantTable {
 }
 
 export interface Probe {
-  /** Document positions of text values that changed during state probes. */
+  /** Document positions supplied by source analysis or detected by state probes. */
   readonly texts: readonly number[];
   /**
    * Baked props that a state change moved: everything the build writes into
@@ -627,7 +627,9 @@ export function probeLiveness(build: () => JSX.Element): Probe {
   const candidates = visibleCandidates(reference);
   const referenceVisibles = candidates.map(element => element.props.visible !== false);
 
-  const texts = new Set<number>();
+  const texts = new Set<number>(
+    textElements(reference).flatMap((element, position) => element.props.__textDynamic === true ? [position] : []),
+  );
   const moved = new Map<string, FrozenProp>();
   const solved = new Map<string, FrozenProp>();
   const changedTextLayout = new Set<number>();

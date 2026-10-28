@@ -6,7 +6,7 @@ import { isTransparentType } from '../componentRegistry';
 import { deleteFiber, getFibersForOwner, type Owner } from '../fabric';
 import { childElements, isElement } from '../guards';
 import { validate } from '../ir/validate';
-import { hasTextChannel, textChannelsAt } from '../ir/text';
+import { hasTextChannel, textChannelsAt, textElements } from '../ir/text';
 import { applyInheritance, computeLayout, expandAndResolveContexts } from './phases';
 import { createInitialContext, createRootContext, type TraversalContext } from './traversal';
 import { beginWidthRound, buildLocales, endWidthRound } from './buildPass';
@@ -43,7 +43,8 @@ function prepareTree(element: JSX.Element, owner: Owner, compiled?: boolean, run
   // This creates instances for ALL components in the tree
   // Returns "LayoutProps"
   const expanded: JSX.Element = expandAndResolveContexts(element, context, owner);
-  const textPositions = getSessionCompiled(owner).snapshot?.texts;
+  const textPositions = getSessionCompiled(owner).snapshot?.texts
+    ?? (owner.kind === 'build' ? textElements(expanded).flatMap((node, position) => node.props.__textDynamic === true ? [position] : []) : undefined);
 
   if (textPositions !== undefined) { textChannelsAt(expanded, textPositions); }
 

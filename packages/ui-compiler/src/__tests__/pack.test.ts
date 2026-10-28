@@ -10,8 +10,8 @@ import { compileScreen } from '../compile';
 import { compileFormScreen } from '../hosts/form/compile';
 import { buildContainerPack } from '../hosts/chest/pack';
 import { buildUiPack, type CompiledUiPack } from '../pack';
-import type { Document } from '../jsonui';
-import { child, definition, find } from '../__fixtures__/helpers';
+import type { Control, Document } from '../jsonui';
+import { child, definition } from '../__fixtures__/helpers';
 
 const container = (kind: 'entity' | 'block'): (() => JSX.Element) => () => Container({
   ...kind === 'entity' ? { entity: 'demo:crate' } : { block: 'demo:crate' },
@@ -101,6 +101,42 @@ const missingReferences = (docs: Document[]): string[] => {
   return missing;
 };
 
+/** Resolves emitted inheritance and cell variables before summing parent-relative layers. */
+const renderedLayers = (docs: readonly Document[], root: string): { path: string; layer: number }[] => {
+  const definitions = new Map<string, { base?: string; control: Control }>();
+  for (const doc of docs) {
+    for (const [key, value] of Object.entries(doc)) {
+      if (typeof value === 'string' || 'modifications' in value) continue;
+      const [name, base] = key.split('@');
+      definitions.set(String(doc.namespace) + '.' + name, { base, control: value });
+    }
+  }
+  const inherit = (reference: string, override: Control): Control => {
+    const found = definitions.get(reference);
+    return found === undefined ? override : { ...inherit(found.base ?? '', found.control), ...override };
+  };
+  const layers: { path: string; layer: number }[] = [];
+  const visit = (reference: string, override: Control, variables: Record<string, unknown>, parent: number, path: string): void => {
+    const resolved = inherit(String(variables[reference] ?? reference), override);
+    const defaults = Object.fromEntries(Object.entries(resolved)
+      .filter(([key]) => key.endsWith('|default')).map(([key, value]) => [key.slice(0, -8), value]));
+    const local = Object.fromEntries(Object.entries(resolved).filter(([key]) => key.startsWith('$') && !key.endsWith('|default')));
+    const vars = { ...defaults, ...variables, ...local };
+    const ownLayer: unknown = resolved.layer;
+    const layer = parent + Number(typeof ownLayer === 'string' ? vars[ownLayer] ?? 0 : ownLayer ?? 0);
+    layers.push({ path, layer });
+    if (resolved.grid_item_template !== undefined) visit(resolved.grid_item_template, {}, vars, layer, path + '/cell');
+    for (const entry of resolved.controls ?? []) {
+      for (const [key, childControl] of Object.entries(entry)) {
+        const [name, base = ''] = key.split('@');
+        visit(base, childControl, vars, layer, path + '/' + name);
+      }
+    }
+  };
+  visit(root, {}, {}, 0, root);
+  return layers;
+};
+
 describe('compiled packs with form and native container hosts', () => {
   it('resolves every helper without shared UI JSON and emits mixed support once', () => {
     const pack = build('alpha');
@@ -131,24 +167,51 @@ describe('compiled packs with form and native container hosts', () => {
     expect(pack.screens[0]!.looks).toBe(source.looks);
   });
 
-  it.each(['entity', 'block'] as const)('draws the held item above an empty output slot on a %s host', (kind) => {
-    const source = compileScreen(() => Container({
-      ...kind === 'entity' ? { entity: 'demo:crate' } : { block: 'demo:crate' },
-      children: Slot({ role: 'output', zIndex: 20 }),
-    }), { namespace: 'alpha', name: kind });
-    const pack = buildContainerPack([source], 'alpha');
-    const support = pack.support.document;
-    const guard = child(definition(support, 'core_ui_chest_output_slot'), 'empty_guard');
-    const cover = child(guard, 'face');
-    const [, slot] = find(source.document, name => name.startsWith('slot_'));
-    const iconName = Object.keys(support).find(name => name.split('@')[0] === 'core_ui_chest_selected_icon');
-    const cursorLayer = Number(definition(support, 'core_ui_chest_selected_icon_button').layer ?? 0)
-      + Number(definition(support, iconName ?? '').layer ?? 0);
-    const coverLayer = Number(slot.layer ?? 0) + Number(guard.layer ?? 0) + Number(cover.layer ?? 0);
+  it.each(['entity', 'block'] as const)('stacks native slot contents, empty covers and the cursor on a %s host', (kind) => {
+    for (const [parentLayer, slotLayer] of [[0, 0], [10, 20], [40, 500]]) {
+      const source = compileScreen(() => Container({
+        ...kind === 'entity' ? { entity: 'demo:crate' } : { block: 'demo:crate' },
+        children: Panel({ zIndex: parentLayer, children: Panel({
+          background: 'textures/ui/dialog_background_opaque',
+          children: [Slot({ role: 'output', zIndex: slotLayer }), PlayerInventory({}), Hotbar({})],
+        }) }),
+      }), { namespace: 'alpha', name: kind });
+      const pack = buildContainerPack([source], 'alpha');
+      const support = pack.support.document;
+      const layers = renderedLayers([
+        pack.router, support, pack.screens[0]!.document,
+        { namespace: source.facesNamespace, ...pack.screens[0]!.faces },
+      ], String(pack.router.namespace) + '.alpha_gate_' + kind);
+      const cover = layers.find(entry => entry.path.endsWith('/empty_guard/face'))!;
+      const slotPath = cover.path.slice(0, -'/empty_guard/face'.length);
+      const slotParts = layers.filter(entry => entry.path.startsWith(slotPath + '/item/')
+        && /\/item_cell\/(?:item\/[^/]+|durability_bar)$/.test(entry.path));
+      const nativeInputs = layers.filter(entry => entry.path.endsWith('/item_button_ref'));
+      const cursorInputs = layers.filter(entry => /\/chrome\/(?:selected_icon|take_progress|gamepad_cursor)$/.test(entry.path));
+      const cursor = layers.filter(entry => /\/selected_icon\/[^/]+\/selected_item_icon$/.test(entry.path));
+      const stackCounts = layers.filter(entry => /\/selected_icon\/[^/]+\/selected_stack_size_text$/.test(entry.path));
+      const pointer = layers.filter(entry => /\/gamepad_cursor\/[^/]+\/visual$/.test(entry.path));
+      const heldDurability = layers.find(entry => entry.path.endsWith('/selected_icon/durability_bar_grabbed/visual'))!;
 
-    expect(coverLayer).toBeLessThan(cursorLayer);
-    expect(guard.button_mappings).toContainEqual(expect.objectContaining({ consume_event: true }));
-    expect(JSON.stringify(guard.bindings)).toContain(`(#identity = ${IDENTITY.guard})`);
+      expect(nativeInputs).toHaveLength(3);
+      expect(cursorInputs).toHaveLength(3);
+      expect(Math.max(...cursorInputs.map(entry => entry.layer))).toBeLessThan(Math.min(...nativeInputs.map(entry => entry.layer)));
+      expect(slotParts).toHaveLength(3);
+      expect(cursor).toHaveLength(3);
+      expect(stackCounts).toHaveLength(3);
+      expect(pointer).toHaveLength(3);
+      expect(Math.max(...slotParts.map(entry => entry.layer))).toBeLessThan(cover.layer);
+      expect(cover.layer).toBeLessThan(Math.min(...cursor.map(entry => entry.layer)));
+      expect(cover.layer).toBeLessThan(Math.min(...stackCounts.map(entry => entry.layer)));
+      expect(cover.layer).toBeLessThan(Math.min(...pointer.map(entry => entry.layer)));
+      expect(cover.layer).toBeLessThan(heldDurability.layer);
+
+      const guard = child(definition(support, 'core_ui_chest_output_slot'), 'empty_guard');
+      expect(guard.button_mappings).toContainEqual(expect.objectContaining({ consume_event: true }));
+      expect(JSON.stringify(guard.bindings)).toContain('(#identity = ' + IDENTITY.guard + ')');
+      const gate = definition(pack.router, 'alpha_gate_' + kind);
+      expect(JSON.stringify(gate.bindings)).toContain('(#layout = ' + source.layoutId + ')');
+    }
   });
 
   it('keeps linked testing paths addressable without mutating compilation inputs', () => {

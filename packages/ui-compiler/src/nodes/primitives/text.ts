@@ -7,7 +7,7 @@ import { composedKey } from '../utils/composed';
 import { boxOf, num, str, tailOf } from '../utils/shared';
 import type { LabelStyle, LowerContext, NodeBase, NodeDefinition, Rect } from '../utils/types';
 
-/** Text is baked unless state probes detect a changing value. */
+/** Text is baked unless source analysis or state probes identify a runtime value. */
 export interface TextNode extends NodeBase, LabelStyle {
   kind: 'text';
   /** Keeps localized overflow text within the box solved for its line limit. */

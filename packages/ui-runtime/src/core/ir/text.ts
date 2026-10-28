@@ -1,5 +1,6 @@
 import { isTextElementType } from '../../components/Text';
 import { BUTTON_TYPE } from '../../components/Button';
+import { MODAL_FORM_BUTTON_SLOT_TYPE } from '../../components/Form/FormButton';
 import { childElements } from '../guards';
 import type { JSX } from '../../jsx';
 
@@ -8,7 +9,7 @@ export const textElements = (tree: JSX.Element): JSX.Element[] => {
   const found: JSX.Element[] = [];
 
   const visit = (element: JSX.Element): void => {
-    if (element.type === BUTTON_TYPE) { return; }
+    if (element.type === BUTTON_TYPE || element.type === MODAL_FORM_BUTTON_SLOT_TYPE) { return; }
 
     if (isTextElementType(element.type)) { found.push(element); }
 
@@ -32,6 +33,13 @@ export const textValues = (tree: JSX.Element): string[] => textElements(tree).ma
 export const textChannelsAt = (tree: JSX.Element, positions: readonly number[]): void => {
   const channels = new Set(positions);
 
+  const clear = (node: JSX.Element): void => {
+    if (isTextElementType(node.type)) { node.props.__textChannel = false; }
+
+    childElements(node.props.children).forEach(clear);
+  };
+
+  clear(tree);
   textElements(tree).forEach((element, position) => { element.props.__textChannel = channels.has(position); });
 };
 

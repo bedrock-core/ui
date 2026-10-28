@@ -102,7 +102,7 @@ export default {
       ],
     },
   }),
-  'core_ui_router.claimed_gate': ({ ref }): TemplateDefinition => ({
+  'core_ui_router.claimed_gate': (): TemplateDefinition => ({
     control: {
       type: 'panel',
       size: [
@@ -110,9 +110,6 @@ export default {
         '100%',
       ],
       controls: [
-        {
-          ['chrome@' + ref('core_ui_chest.chrome')]: {},
-        },
         {
           'roots@chest.small_chest_panel_top_half': {
             size: [
@@ -259,9 +256,6 @@ export default {
     base: ref('core_ui_router.claimed_gate'),
     control: {
       controls: [
-        {
-          ['chrome@' + ref('core_ui_chest.chrome')]: {},
-        },
         {
           'roots@data_driven_container.panel_top_half': {
             size: [
