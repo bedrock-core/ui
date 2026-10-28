@@ -1,5 +1,11 @@
 # @bedrock-core/ui-runtime
 
+## 0.14.1
+
+### Patch Changes
+
+- [`d548b7b`](https://github.com/bedrock-core/ui/commit/d548b7b157d1d5f26a4d34e66bd28c26ecc359c5) Thanks [@drav0011](https://github.com/drav0011)! - Carry source-derived runtime text dependencies through compiled screens while retaining automatic state probes and baked literal captions.
+
 ## 0.14.0
 
 ### Minor Changes
