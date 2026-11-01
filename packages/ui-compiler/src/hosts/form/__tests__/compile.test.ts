@@ -1,4 +1,4 @@
-import { dynamicText } from '../../../__fixtures__/dynamicText';
+import { DynamicText } from '../../../__fixtures__/DynamicText';
 import type { FunctionComponent, JSX } from '@bedrock-core/ui-runtime';
 import { Button, Container, Form, Image, Panel, Screen, Scroll, Slot, Text, useExit, useState } from '@bedrock-core/ui-runtime';
 import { FORM_COLLECTION } from '@bedrock-core/ui-runtime/compile';
@@ -16,7 +16,7 @@ const Home = (): JSX.Element => Screen({ children: Panel({
   gap: 4,
   children: [
     Text({ children: '§fBEDROCK CORE' }),
-    dynamicText({ maxLength: 12, children: 'idle' }),
+    DynamicText({ maxLength: 12, children: 'idle' }),
     Panel({
       flexDirection: 'row',
       gap: 4,
@@ -130,7 +130,7 @@ describe('compiling a form screen', () => {
       return Screen({ children: Panel({
         children: [
           Text({ children: 'static' }),
-          dynamicText({ maxLength: 6, children: 'live' }),
+          DynamicText({ maxLength: 6, children: 'live' }),
           Image({ texture: 'textures/ui/cell_image', width: 16, height: 16 }),
           Button({ onPress: () => undefined, children: Text({ children: 'press' }) }),
           Button({ onPress: exit, children: Text({ children: 'x' }) }),

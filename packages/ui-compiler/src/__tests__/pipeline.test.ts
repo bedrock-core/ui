@@ -1,4 +1,4 @@
-import { dynamicText } from '../__fixtures__/dynamicText';
+import { DynamicText } from '../__fixtures__/DynamicText';
 import type { JSX, TranslationResolver } from '@bedrock-core/ui-runtime';
 import {
   Background, Button, Container, Hotbar, Image, Panel, PlayerInventory, Screen as ScreenRoot, Slot, Text, TranslationContext,
@@ -34,7 +34,7 @@ const Demo = (): JSX.Element => Container({
     Text({ shadow: true, font: 'minecraftTen', children: '§fBEDROCK CORE' }),
     // A lazy element, so the label expands inside the provider and reads it.
     TranslationContext({ value: resolver, children: { type: Subtitle, props: {} } }),
-    dynamicText({ maxLength: 8, children: 'idle' }),
+    DynamicText({ maxLength: 8, children: 'idle' }),
     Panel({
       children: [
         Image({ texture: 'textures/ui/brewing_fuel_bar_empty', width: 100, height: 6 }),
@@ -257,7 +257,7 @@ describe('the compiler, end to end', () => {
     const Stateful = (): JSX.Element => {
       const [on] = useState(true);
 
-      return dynamicText({ maxLength: 4, color: on ? [1, 1, 1] : [0, 0, 0], children: 'live' });
+      return DynamicText({ maxLength: 4, color: on ? [1, 1, 1] : [0, 0, 0], children: 'live' });
     };
 
     const Screen = (): JSX.Element => Container({ entity: 'core:look', children: [{ type: Stateful, props: {} }] });
@@ -336,7 +336,7 @@ describe('the compiler, end to end', () => {
     const Stateful = (): JSX.Element => {
       const [label] = useState('start');
 
-      return dynamicText({ maxLength: 8, children: label });
+      return DynamicText({ maxLength: 8, children: label });
     };
 
     const Screen = (): JSX.Element => Container({ entity: 'core:state', children: [{ type: Stateful, props: {} }] });

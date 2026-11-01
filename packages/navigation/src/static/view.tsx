@@ -198,6 +198,7 @@ function BodyPage({ controller, body, params }: { controller: Controller; body: 
     if (entry.model.definition.type === 'tab') { chrome.push(topBar(controller, entry.model, entry.name)); }
   }
 
+  // eslint-disable-next-line core-hooks/immutability -- Availability belongs to the controller's render-owned route registry.
   if (body.base) { controller.availability.set(`${scope.model.key}/${scope.route.name}`, available); }
 
   const source = scope.definition.source;

@@ -72,6 +72,7 @@ export function useObservable<T, S = T>(source: ObservableLike<T>, select?: (val
     publish();
 
     return source.subscribe(publish);
+  // eslint-disable-next-line core-hooks/exhaustive-deps -- read uses the current selector ref; setSlice targets the same persistent state slot.
   }, [source]);
 
   // The slot is readonly because STATE is readonly: a value written in place would

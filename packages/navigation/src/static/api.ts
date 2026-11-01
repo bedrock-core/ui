@@ -13,7 +13,7 @@ import { Link as DestinationLink, type LinkProps as DestinationLinkProps } from 
 import type { PageScope } from './controller';
 import { destinationAction, plainParams, readAction } from './actions';
 
-export function currentScope(): NavigationScope {
+export function useCurrentScope(): NavigationScope {
   const context = useContext(NavigationContext);
 
   if (context === undefined) { throw new Error('Navigation hooks and route links require a mounted Navigation component.'); }
@@ -49,7 +49,7 @@ export function useNavigation<Name extends RegisteredScreenName>(name: Name): Re
 export function useNavigation(): NavigationProp<RootParams>;
 
 export function useNavigation(name?: string): unknown {
-  const context = currentScope();
+  const context = useCurrentScope();
   const model = name === undefined ? context.controller.model : findContainingModel(context, name);
 
   return context.controller.navigation(context.page, model.key);
@@ -59,7 +59,7 @@ export function useRoute<Name extends RegisteredScreenName>(name: Name): Registe
 export function useRoute(): RegisteredRoute;
 
 export function useRoute(name?: string): unknown {
-  const context = currentScope();
+  const context = useCurrentScope();
 
   if (context.page === undefined) { throw new Error('useRoute requires a screen component.'); }
 
@@ -72,15 +72,15 @@ export function useNavigationState<Name extends RegisteredScreenName, Value>(nam
 export function useNavigationState<Value>(selector: (state: NavigationState) => Value): Value;
 
 export function useNavigationState(nameOrSelector: string | ((state: never) => unknown), selector?: (state: never) => unknown): unknown {
-  const context = currentScope();
+  const context = useCurrentScope();
   const model = typeof nameOrSelector === 'string' ? findContainingModel(context, nameOrSelector) : context.controller.model;
   const select = typeof nameOrSelector === 'function' ? nameOrSelector : selector!;
 
   return Reflect.apply(select, undefined, [context.controller.getState(model.key)]);
 }
 
-function screenScope(): { readonly context: NavigationScope; readonly page: PageScope } {
-  const context = currentScope();
+function useScreenScope(): { readonly context: NavigationScope; readonly page: PageScope } {
+  const context = useCurrentScope();
 
   if (context.page === undefined) { throw new Error('Navigation lifecycle hooks require a screen scope.'); }
 
@@ -90,13 +90,13 @@ function screenScope(): { readonly context: NavigationScope; readonly page: Page
 }
 
 export function useIsFocused(): boolean {
-  const { context, page } = screenScope();
+  const { context, page } = useScreenScope();
 
   return context.controller.isFocused(page);
 }
 
 export function useFocusEffect(effect: () => void | (() => void)): void {
-  const { context, page } = screenScope();
+  const { context, page } = useScreenScope();
 
   useEffect(() => {
     let active = false; let cleanup: (() => void) | undefined;
@@ -115,12 +115,14 @@ export function useFocusEffect(effect: () => void | (() => void)): void {
     if (context.controller.isFocused(page)) { focus(); }
 
     return (): void => { releaseFocus(); releaseBlur(); blur(); };
+  // eslint-disable-next-line core-hooks/exhaustive-deps -- the compiled body fixes model/route identity while PageScope snapshots are recreated on render.
   }, [context.controller, page.body, effect]);
 }
 
 export function usePreventRemove(preventRemove: boolean, callback: (event: { readonly data: { readonly action: NavigationAction } }) => void): void {
-  const { context, page } = screenScope();
+  const { context, page } = useScreenScope();
 
+  // eslint-disable-next-line core-hooks/exhaustive-deps -- the compiled body fixes model/route identity while PageScope snapshots are recreated on render.
   useEffect(() => context.controller.prevent(page, preventRemove ? (action): void => callback({ data: { action } }) : undefined), [context.controller, page.body, preventRemove, callback]);
 }
 
@@ -169,7 +171,8 @@ export function Link(props: Omit<ButtonProps, 'onPress'> & {
 }): JSX.Element {
   if ('to' in props || 'back' in props) { return DestinationLink({ ...props, params: isDestinationParams(props.params) ? props.params : undefined }); }
 
-  const context = currentScope();
+  // eslint-disable-next-line core-hooks/rules-of-hooks -- A compiled link keeps its destination/resident overload for the mounted control; destination constructors also work without a fiber.
+  const context = useCurrentScope();
   const { screen, action, params, in: targetScope, navigation, onPress, ...rest } = props;
 
   return Button({ ...rest, onPress: describedHandler(context, { screen, action, params, in: targetScope, navigation }, onPress) });
@@ -178,7 +181,7 @@ export function Link(props: Omit<ButtonProps, 'onPress'> & {
 export function useLinkProps<const Scope extends RegisteredScreenName | undefined = undefined>(
   destination: { readonly in?: Scope } & LinkDestination<Scope> & LinkBehavior,
 ): { readonly onPress: (event: NavigationPressEvent) => void } {
-  return { onPress: describedHandler(currentScope(), destination) };
+  return { onPress: describedHandler(useCurrentScope(), destination) };
 }
 
 export function scopedModel(context: NavigationScope, key: string): Model {

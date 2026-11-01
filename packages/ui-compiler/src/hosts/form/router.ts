@@ -36,7 +36,7 @@ export interface FormRouting {
   readonly hook: PlacedDocument;
   /** The addon's router: selectors and screen cells created only while selected. */
   readonly router: Document;
-  /** Pack path the router is written to — the addon's own. */
+  /** Pack path the router is written to â€” the addon's own. */
   readonly routerFile: string;
 }
 

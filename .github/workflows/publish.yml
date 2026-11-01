@@ -1,7 +1,7 @@
 name: Release libraries
 
 # Pushes maintain the Changesets version PR. Manual runs publish the UI npm
-# libraries only. The render-pack workflow consumes those released packages.
+# libraries and the selected shared-pack artifact.
 on:
   push:
     branches: [main]
@@ -54,6 +54,8 @@ jobs:
     name: Publish UI libraries to npm
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    outputs:
+      ui_version: ${{ steps.release.outputs.ui_version }}
     defaults:
       run:
         working-directory: ui
@@ -90,6 +92,11 @@ jobs:
       - name: Check release gates
         run: yarn test:release
 
+      - name: Verify selected shared assets before publication
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/check-resource-pack-release.mjs --verify-asset
+
       - uses: changesets/action@v2
         with:
           cwd: ui
@@ -98,6 +105,17 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Ensure root UI GitHub release
+        id: release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/release-root.mjs
+
+  resource-pack:
+    name: Release selected shared assets
+    needs: publish
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/resource-pack.yml
+    with:
+      ui_version: ${{ needs.publish.outputs.ui_version }}
+      ship_to_curseforge: true
+    secrets: inherit

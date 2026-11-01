@@ -1,4 +1,4 @@
-import { dynamicText } from '../__fixtures__/dynamicText';
+import { DynamicText } from '../__fixtures__/DynamicText';
 import { Button, Container, Panel, type JSX } from '@bedrock-core/ui-runtime';
 import { IDENTITY, TEXT_EMPTY_VALUE } from '@bedrock-core/ui-runtime/compile';
 import { describe, expect, it } from 'vitest';
@@ -7,7 +7,7 @@ import { compileScreen } from '../compile';
 
 const compile = (align?: 'left' | 'center' | 'right', hug = false) => compileScreen(() => Container({
   entity: 'align:test', width: 100, height: 60,
-  children: Panel({ width: 60, stack: true, children: dynamicText({ width: 60, height: 10, maxLength: 5, textAlign: align, hug, children: '6' }) }),
+  children: Panel({ width: 60, stack: true, children: DynamicText({ width: 60, height: 10, maxLength: 5, textAlign: align, hug, children: '6' }) }),
 }), { namespace: 'align', name: 'live' });
 
 describe('whole-value live container text alignment', () => {
@@ -49,7 +49,7 @@ describe('whole-value live container text alignment', () => {
   });
 
   it('allocates one string slot without moving the drawn button address', () => {
-    const screen = (): JSX.Element => Container({ entity: 'align:test', children: [dynamicText({ width: 60, textAlign: 'center', maxLength: 5, children: '6' }), Button({ width: 20, height: 10 })] });
+    const screen = (): JSX.Element => Container({ entity: 'align:test', children: [DynamicText({ width: 60, textAlign: 'center', maxLength: 5, children: '6' }), Button({ width: 20, height: 10 })] });
     const result = compileScreen(screen, { namespace: 'align', name: 'address' });
 
     expect(result.allocation).toMatchObject({ drawn: 1, channels: 1, size: 3 });

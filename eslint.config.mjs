@@ -5,6 +5,7 @@ import { defineConfig } from 'eslint/config';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import tseslint from 'typescript-eslint';
+import coreHooks from '@bedrock-core/ui/eslint';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -72,6 +73,7 @@ export default defineConfig([
     extends: [
       js.configs.recommended,
       ...tseslint.configs.recommended,
+      coreHooks.configs.recommended,
     ],
     languageOptions: {
       parser: tseslint.parser,

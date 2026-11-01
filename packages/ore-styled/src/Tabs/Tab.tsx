@@ -13,7 +13,7 @@ export interface TabProps {
 }
 
 /** A header's caption, centred, in its state's colour, the chosen one dropped a step. */
-const header = (label: DisplayText, chosen: boolean): JSX.Element => {
+const useTabHeader = (label: DisplayText, chosen: boolean): JSX.Element => {
   const t = theme.components.tabs;
   const ts = t.textStyle;
   const composed = useComposed((resolve, width) => fitCaption(resolveDisplay(resolve, label), width, ts.font, ts.scale));
@@ -42,5 +42,5 @@ const header = (label: DisplayText, chosen: boolean): JSX.Element => {
  * theme's rather than the author's.
  */
 export function Tab({ label, children }: TabProps): JSX.Element {
-  return PrimitiveTabs.Tab({ header: header(label, false), headerSelected: header(label, true), children });
+  return PrimitiveTabs.Tab({ header: useTabHeader(label, false), headerSelected: useTabHeader(label, true), children });
 }

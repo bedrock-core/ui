@@ -134,6 +134,7 @@ export const Slider: FunctionComponent<SliderProps> = (props: SliderProps): JSX.
   const mechanism = useMechanism('Slider');
   const element = nativeSlider(props);
 
+  // eslint-disable-next-line core-hooks/rules-of-hooks -- The host root is part of the fiber path, so this field's mechanism stays fixed while mounted.
   return mechanism === 'change' ? useLiveField(element, props.defaultValue ?? props.min, props.value, props.onChange) : element;
 };
 

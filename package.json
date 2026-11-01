@@ -46,6 +46,10 @@
 			"types": "./src/entity.ts",
 			"import": "./src/entity.ts"
 		},
+		"./eslint": {
+			"types": "./eslint/index.d.ts",
+			"import": "./eslint/index.mjs"
+		},
 		"./jsx-runtime": {
 			"types": "./src/jsx/jsx-runtime.ts",
 			"import": "./src/jsx/jsx-runtime.ts"
@@ -60,6 +64,7 @@
 	},
 	"files": [
 		"src",
+		"eslint",
 		"README.md",
 		"LICENSE"
 	],
@@ -81,7 +86,8 @@
 		"test": "yarn workspaces foreach -ptA run test",
 		"test:libs": "yarn workspaces foreach -A -pt --no-private --exclude '@bedrock-core/ui' run test",
 		"check:release-versions": "node scripts/check-release-versions.mjs",
-		"test:release": "yarn tsc -p scripts/tsconfig.json && yarn check:release-versions && node --test scripts/release-root.test.mjs scripts/release-versions.test.ts scripts/sync-pack-version.test.mjs scripts/resource-pack-release.test.mjs",
+		"test:lint": "node --test scripts/eslint/*.test.mjs",
+		"test:release": "yarn test:lint && yarn tsc -p scripts/tsconfig.json && yarn check:release-versions && node --test scripts/release-root.test.mjs scripts/release-versions.test.ts scripts/sync-pack-version.test.mjs scripts/resource-pack-release.test.mjs",
 		"coverage": "yarn workspaces foreach -ptA run coverage",
 		"deploy": "yarn --cwd packages/resource-pack deploy",
 		"preflight": "node scripts/preflight.mjs",
@@ -117,6 +123,7 @@
 		"@vitest/coverage-v8": "^4.1.5",
 		"concurrently": "^9.2.1",
 		"eslint": "^10.3.0",
+		"eslint-plugin-react-hooks": "7.1.1",
 		"nodemon": "^3.1.14",
 		"typescript": "^6.0.3",
 		"typescript-eslint": "^8.59.2",
@@ -125,10 +132,18 @@
 	"peerDependencies": {
 		"@bedrock-core/i18n": "*",
 		"@minecraft/server": ">=2.9.0 || >=2.10.0-0",
-		"@minecraft/server-ui": "*"
+		"@minecraft/server-ui": "*",
+		"eslint": "^10.3.0",
+		"eslint-plugin-react-hooks": "7.1.1"
 	},
 	"peerDependenciesMeta": {
 		"@bedrock-core/i18n": {
+			"optional": true
+		},
+		"eslint": {
+			"optional": true
+		},
+		"eslint-plugin-react-hooks": {
 			"optional": true
 		}
 	},

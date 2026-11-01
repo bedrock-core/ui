@@ -8,7 +8,7 @@ import { navigate } from './navigate';
  * A screen as another addon can show it.
  *
  * The prose, the textures and the layout are already in the pack every client
- * holds — an addon's compiled screens ship with it. What a realm needs in order
+ * holds â€” an addon's compiled screens ship with it. What a realm needs in order
  * to SHOW one it did not build is small: the title the client picks the layout
  * by, the value each entry is shown with, and where each press leads. That is a
  * reference, and it is what replicates.
@@ -17,7 +17,7 @@ import { navigate } from './navigate';
  * `<Link>` or the way out: its behaviour is then data, and following it needs
  * none of the owner's script. A press running the owner's own handler cannot be
  * described, so it is `null` here and does nothing when a foreign realm draws
- * the screen — the screen still shows, and the presses that are links still
+ * the screen â€” the screen still shows, and the presses that are links still
  * work. The way out needs no entry at all: the client closes the form, and the
  * walk ends with it.
  */
@@ -36,8 +36,8 @@ export interface ScreenReference {
  * Where one press leads: another screen, the way back, or nowhere describable.
  *
  * `back` is the one a walk cannot infer. A screen closing and a press that does
- * nothing look identical from outside — the form answers `undefined` either way
- * — so a back control that is only a close leaves whoever opened the screen
+ * nothing look identical from outside â€” the form answers `undefined` either way
+ * â€” so a back control that is only a close leaves whoever opened the screen
  * unable to tell "take me back" from "I am done". As an entry it is neither
  * guess: the press is attributed, and the walk ends saying which it was.
  *
@@ -111,8 +111,8 @@ const nextTick = (): Promise<void> => new Promise((resolve) => { system.runTimeo
  * The previous render session and its native form close before the walk begins.
  * Its navigation history remains available to `back()`.
  *
- * A link to a key the table does not describe — a screen with handlers of its
- * own, or one only its owner's realm can draw — is still a link: the walk ends
+ * A link to a key the table does not describe â€” a screen with handlers of its
+ * own, or one only its owner's realm can draw â€” is still a link: the walk ends
  * by navigating to it with the link's params, with the screen it leaves recorded
  * as the one shown, so `back()` from there returns here.
  *

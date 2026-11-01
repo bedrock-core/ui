@@ -2,6 +2,14 @@ name: Release resource pack
 
 # Package the shared textures from the requested UI release tag.
 on:
+  workflow_call:
+    inputs:
+      ui_version:
+        type: string
+        required: true
+      ship_to_curseforge:
+        type: boolean
+        default: true
   workflow_dispatch:
     inputs:
       ui_version:
@@ -12,7 +20,7 @@ on:
         description: Upload the attached pack to CurseForge after the build
         type: boolean
         required: true
-        default: false
+        default: true
 
 concurrency: resource-pack-${{ inputs.ui_version }}
 
@@ -24,6 +32,8 @@ jobs:
     name: Build and attach .mcpack
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.policy.outputs.release }}
     env:
       TAG: '@bedrock-core/ui@${{ inputs.ui_version }}'
     steps:
@@ -37,9 +47,24 @@ jobs:
         with:
           node-version: 24
 
+      - name: Select resource-pack release
+        id: policy
+        env:
+          UI_VERSION: ${{ inputs.ui_version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/check-resource-pack-release.mjs "$UI_VERSION" --verify-asset
+
+      - name: Require tagged resource-pack policy
+        if: steps.policy.outputs.release == ''
+        run: |
+          echo "The selected tag does not provide a resource-pack release decision."
+          exit 1
+
       - run: corepack enable
+        if: steps.policy.outputs.release == 'true'
 
       - name: Install pack tooling
+        if: steps.policy.outputs.release == 'true'
         env:
           YARN_ENABLE_IMMUTABLE_INSTALLS: 'false'
         run: |
@@ -47,22 +72,34 @@ jobs:
           yarn install --mode=skip-build
         working-directory: packages/resource-pack
 
-      - name: Verify tagged UI and resource-pack versions
-        env:
-          UI_VERSION: ${{ inputs.ui_version }}
-        run: node scripts/check-resource-pack-release.mjs "$UI_VERSION"
-
       - name: Build resource pack
+        if: steps.policy.outputs.release == 'true'
         run: yarn build
         working-directory: packages/resource-pack
 
+      - name: Verify built pack identity
+        if: steps.policy.outputs.release == 'true'
+        env:
+          PACK_VERSION: ${{ steps.policy.outputs.pack_version }}
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { readFileSync } from 'node:fs';
+          const source = JSON.parse(readFileSync('packages/resource-pack/packs/RP/manifest.json'));
+          const built = JSON.parse(readFileSync('packages/resource-pack/build/@bedrock-core_ui_rp/manifest.json'));
+          assert.equal(built.header.uuid, source.header.uuid);
+          assert.equal(built.header.version, process.env.PACK_VERSION);
+          NODE
+
       - name: Package resource pack
+        if: steps.policy.outputs.release == 'true'
         env:
           VERSION: ${{ inputs.ui_version }}
         run: zip -r "$GITHUB_WORKSPACE/core-ui-${VERSION}.mcpack" .
         working-directory: packages/resource-pack/build/@bedrock-core_ui_rp
 
       - name: Attach pack to the existing UI release
+        if: steps.policy.outputs.release == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ inputs.ui_version }}
@@ -71,6 +108,7 @@ jobs:
           gh release upload "$TAG" "$GITHUB_WORKSPACE/core-ui-${VERSION}.mcpack" --clobber --repo "$GITHUB_REPOSITORY"
 
       - name: Keep a workflow artifact
+        if: steps.policy.outputs.release == 'true'
         uses: actions/upload-artifact@v6
         with:
           name: core-ui-${{ inputs.ui_version }}
@@ -80,7 +118,7 @@ jobs:
   curseforge:
     name: Ship to CurseForge
     needs: build
-    if: inputs.ship_to_curseforge
+    if: inputs.ship_to_curseforge && needs.build.outputs.release == 'true'
     uses: ./.github/workflows/curseforge.yml
     with:
       tag: '@bedrock-core/ui@${{ inputs.ui_version }}'

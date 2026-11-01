@@ -99,6 +99,7 @@ export const Input: FunctionComponent<InputProps> = (props: InputProps): JSX.Ele
   const mechanism = useMechanism('Input');
   const element = nativeInput(props);
 
+  // eslint-disable-next-line core-hooks/rules-of-hooks -- The host root is part of the fiber path, so this field's mechanism stays fixed while mounted.
   return mechanism === 'change' ? useLiveField(element, props.defaultValue ?? '', props.value, props.onChange) : element;
 };
 

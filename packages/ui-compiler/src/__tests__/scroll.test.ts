@@ -1,4 +1,4 @@
-import { dynamicText } from '../__fixtures__/dynamicText';
+import { DynamicText } from '../__fixtures__/DynamicText';
 import { Button, Container, Panel, Scroll, Slot, Text } from '@bedrock-core/ui-runtime';
 import { SCROLL_RESERVE } from '@bedrock-core/ui-runtime/compile';
 import type { JSX } from '@bedrock-core/ui-runtime';
@@ -24,7 +24,7 @@ const Screen = (): JSX.Element => Container({
         ],
       })),
     }),
-    dynamicText({ maxLength: 4, children: 'live' }),
+    DynamicText({ maxLength: 4, children: 'live' }),
   ],
 });
 

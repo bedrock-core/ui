@@ -9,7 +9,7 @@
  * the children and their releases.
  */
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { appendFileSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 export function rootReleaseTag(manifest) {
@@ -64,5 +64,10 @@ function runGh(args, { allowFailure = false } = {}) {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
 	const manifest = JSON.parse(readFileSync('package.json', 'utf8'));
 	const result = ensureRootRelease({ manifest });
+
+	if (process.env.GITHUB_OUTPUT) {
+		appendFileSync(process.env.GITHUB_OUTPUT, `ui_version=${manifest.version}\n`);
+	}
+
 	console.log(`${result.created ? 'created' : 'found'} GitHub release ${result.tag}`);
 }

@@ -1,4 +1,4 @@
-import { dynamicText } from '../../../__fixtures__/dynamicText';
+import { DynamicText } from '../../../__fixtures__/DynamicText';
 import type { JSX } from '@bedrock-core/ui-runtime';
 import { SCROLL_RESERVE } from '@bedrock-core/ui-runtime/compile';
 import { Form, List, Panel, Screen as ScreenRoot, Scroll, Text, useState, Toggle } from '@bedrock-core/ui-runtime';
@@ -39,8 +39,8 @@ const sourceOf = (document: Document, gate: Control | undefined): Control | unde
 describe('form text bounds', () => {
   it('sizes a shared live carrier from each mounted text box', () => {
     const compiled = compileFormScreen(() => ScreenRoot({ children: Panel({ width: 200, height: 80, children: [
-      dynamicText({ width: 40, maxLength: 40, children: 'Short' }),
-      dynamicText({ width: 150, maxLength: 40, children: 'A longer live label' }),
+      DynamicText({ width: 40, maxLength: 40, children: 'Short' }),
+      DynamicText({ width: 150, maxLength: 40, children: 'A longer live label' }),
     ] }) }), { namespace: 'bounds', name: 'live' });
     const carrier = compiled.document.text_carrier_1;
 
@@ -155,7 +155,7 @@ describe('the list count on the action form', () => {
       List({
         max: 3,
         items: ['alpha', 'beta'],
-        row: (item: string | undefined) => dynamicText({ maxLength: 8, children: item ?? '' }),
+        row: (item: string | undefined) => DynamicText({ maxLength: 8, children: item ?? '' }),
       }),
     ],
   }) });
@@ -205,7 +205,7 @@ describe('a scroll over a list', () => {
           List({
             max: 5,
             items: ['alpha'],
-            row: (item: string | undefined) => dynamicText({ maxLength: 6, children: item ?? '' }),
+            row: (item: string | undefined) => DynamicText({ maxLength: 6, children: item ?? '' }),
           }),
         ],
       }),
@@ -301,7 +301,7 @@ describe('carriers on the modal', () => {
       children: Panel({
         children: [
           jsx(Toggle, { name: 'sound' }),
-          dynamicText({ maxLength: 10, children: `saved ${nick}` }),
+          DynamicText({ maxLength: 10, children: `saved ${nick}` }),
           Panel({ visible: open, children: [Text({ children: 'EXTRA' })] }),
           Form.Button({ type: 'submit', label: 'Save' }),
         ],
@@ -353,7 +353,7 @@ describe('text alignment', () => {
     width: 120,
     children: [
       Text({ width: 100, textAlign: 'center', children: 'Baked' }),
-      dynamicText({ width: 100, textAlign: 'right', maxLength: 8, children: 'Live' }),
+      DynamicText({ width: 100, textAlign: 'right', maxLength: 8, children: 'Live' }),
     ],
   }) });
 

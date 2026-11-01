@@ -1,39 +1,44 @@
 #!/usr/bin/env node
-/**
- * Keep the shared texture pack aligned with each UI release, including releases
- * with unchanged textures. The pack major is the UI major + 1; the rest matches.
- * Runs after bump-meta.mjs during version-packages. An optional UI version
- * argument selects the release when packaging an artifact.
- */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { packDirectory, releaseFile, resourcePackHash, selectResourcePack, texturePackVersion } from './resource-pack-policy.mjs';
 
-const MANIFEST = 'packages/resource-pack/packs/RP/manifest.json';
-const BEHAVIOR_MANIFEST = 'packages/resource-pack/packs/BP/manifest.json';
+/** Prepare a new pack for minor releases and changed assets; retain unchanged patch assets. */
+export function syncPackVersion(root = process.cwd(), uiVersion, { newArtifact = false } = {}) {
+  const read = file => JSON.parse(readFileSync(join(root, file), 'utf8'));
+  const save = (file, value) => writeFileSync(join(root, file), JSON.stringify(value, null, '\t') + '\n');
+  const candidate = uiVersion ?? read('package.json').version;
+  const previous = read(releaseFile);
+  const selected = selectResourcePack(candidate, previous, resourcePackHash(root), newArtifact);
+  const manifestFile = packDirectory + '/packs/RP/manifest.json';
+  const manifest = read(manifestFile);
+  const version = texturePackVersion(selected.uiVersion);
 
-const uiVersion = process.argv[2] ?? JSON.parse(readFileSync('package.json', 'utf8')).version;
-const match = /^(\d+)\.(\d+)\.(\d+)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$/.exec(uiVersion);
+  if (manifest.header.version !== version) {
+    manifest.header.version = version;
+    save(manifestFile, manifest);
+  }
 
-if (!match) {
-	console.error(`sync-pack-version: could not parse the UI version "${uiVersion}"`);
-	process.exit(1);
+  if (selected !== previous) { save(releaseFile, selected); }
+
+  const behaviorFile = packDirectory + '/packs/BP/manifest.json';
+
+  if (existsSync(join(root, behaviorFile))) {
+    const behavior = read(behaviorFile);
+    const dependency = behavior.dependencies?.find(entry => entry.uuid === manifest.header.uuid);
+
+    if (dependency && dependency.version !== version) {
+      dependency.version = version;
+      save(behaviorFile, behavior);
+    }
+  }
+
+  return { uiVersion: candidate, assetVersion: selected.uiVersion, packVersion: version, release: selected.uiVersion === candidate };
 }
 
-const next = `${Number(match[1]) + 1}.${match[2]}.${match[3]}${match[4] ?? ''}${match[5] ?? ''}`;
-const manifest = JSON.parse(readFileSync(MANIFEST, 'utf8'));
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const args = process.argv.slice(2);
 
-if (manifest.header.version !== next) {
-	manifest.header.version = next;
-	writeFileSync(MANIFEST, JSON.stringify(manifest, null, '\t') + '\n');
+  console.info(JSON.stringify(syncPackVersion(process.cwd(), args.find(arg => arg !== '--new-artifact'), { newArtifact: args.includes('--new-artifact') })));
 }
-
-if (existsSync(BEHAVIOR_MANIFEST)) {
-	const behavior = JSON.parse(readFileSync(BEHAVIOR_MANIFEST, 'utf8'));
-	const dependency = behavior.dependencies?.find((entry) => entry.uuid === manifest.header.uuid);
-
-	if (dependency && dependency.version !== next) {
-		dependency.version = next;
-		writeFileSync(BEHAVIOR_MANIFEST, JSON.stringify(behavior, null, '\t') + '\n');
-	}
-}
-
-console.log(`sync-pack-version: UI ${uiVersion}, texture pack ${next}.`);

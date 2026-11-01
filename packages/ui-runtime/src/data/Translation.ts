@@ -84,5 +84,6 @@ export function useTranslationResolver(): TranslationResolver | null {
     return null;
   }
 
+  // eslint-disable-next-line core-hooks/rules-of-hooks -- The null branch has no active fiber and consumes no hook slots.
   return useContext(TranslationContext);
 }
