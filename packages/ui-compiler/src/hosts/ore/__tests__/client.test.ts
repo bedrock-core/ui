@@ -6,9 +6,9 @@ import type { OreNode } from '@bedrock-core/ui-runtime/compile';
 class Event {
   target?: Element;
   stopped = false; defaultPrevented = false;
-  key?: string; keyCode?: number; repeat?: boolean; shiftKey?: boolean; button?: number;
+  key?: string; keyCode?: number; repeat?: boolean; shiftKey?: boolean; button?: number; buttons?: number;
   deltaY?: number; deltaMode?: number; wheelDelta?: number; clientY?: number; clientX?: number;
-  constructor(public type: string, readonly options: { bubbles?: boolean; key?: string; repeat?: boolean; shiftKey?: boolean; button?: number; deltaY?: number; deltaMode?: number; clientY?: number; clientX?: number } = {}) { Object.assign(this, options); }
+  constructor(public type: string, readonly options: { bubbles?: boolean; key?: string; repeat?: boolean; shiftKey?: boolean; button?: number; buttons?: number; deltaY?: number; deltaMode?: number; clientY?: number; clientX?: number } = {}) { Object.assign(this, options); }
   preventDefault(): void { this.defaultPrevented = true; }
   stopPropagation(): void { this.stopped = true; }
   stopImmediatePropagation(): void { this.stopped = true; }
@@ -60,6 +60,8 @@ interface FixtureLayout { schema: string; screen: string; asset: string; title: 
 function harness(acknowledge = true, nativeTag = 'div', wrappedTargets = false, legacyMouseEvents = false, withImage = false, prepare?: (layout: FixtureLayout) => void) {
   const eventSupport = { constructor: true, legacy: true, mouseConstructor: !legacyMouseEvents, legacyMouse: true };
   const eventFactories: string[] = [], nativeEvents: string[] = [];
+  const mouseEvents: { target: string; type: string; button?: number; buttons?: number }[] = [];
+  let presses = 0, releases = 0, nativeFocusCalls = 0;
   const doc = new Element('document'), body = new Element(), root = new Element(), frame = new Element(nativeTag); root.id = 'root';
   doc.appendChild(body);
   body.appendChild(root); root.appendChild(frame);
@@ -119,6 +121,14 @@ function harness(acknowledge = true, nativeTag = 'div', wrappedTargets = false, 
   action.textContent = 'CORE_ORE_ACTION:1:n_0_0 | Count';
   ready.textContent = 'CORE_ORE_ACTION:1:ready | Enable custom view';
   const targets: string[] = [];
+  for (const [node, name] of [[actionTarget, 'action'], [readyTarget, 'ready'], [dismiss, 'dismiss']] as const) {
+    for (const type of ['mousedown', 'mouseup', 'click']) node.addEventListener(type, event => {
+      mouseEvents.push({ target: name, type, button: event.button, buttons: event.buttons });
+      if (event.button === 0 && type === 'mousedown') presses++;
+      if (event.button === 0 && type === 'mouseup') releases++;
+    });
+    node.onFocus = () => { nativeFocusCalls++; document.activeElement = node; };
+  }
   actionTarget.addEventListener('click', event => { targets.push(event.target!.tagName); calls++; if (acknowledge) ack++; publish(); });
   readyTarget.addEventListener('click', event => { targets.push(event.target!.tagName); ack++; publish(); });
   publish();
@@ -137,7 +147,7 @@ function harness(acknowledge = true, nativeTag = 'div', wrappedTargets = false, 
     createEvent: (type: string) => {
       eventFactories.push(type);
       if (!(eventSupport.legacy && (type === 'Event' || type === 'Events')) && !(eventSupport.legacyMouse && (type === 'MouseEvent' || type === 'MouseEvents'))) return null;
-      const event=new Event('',{bubbles:true});return Object.assign(event,{initMouseEvent:(name:string):void=>{event.type=name;},initEvent:(name:string):void=>{event.type=name;}});
+      const event=new Event('',{bubbles:true});return Object.assign(event,{initMouseEvent:(name:string,...args:unknown[]):void=>{event.type=name;event.button=Number(args[12]);},initEvent:(name:string):void=>{event.type=name;}});
     } });
   new Script(ORE_CLIENT_SOURCE).runInNewContext({ window, document,
     XMLHttpRequest: XHR,
@@ -158,7 +168,7 @@ function harness(acknowledge = true, nativeTag = 'div', wrappedTargets = false, 
     }
   };
   const loadImages = (): void => { for (const image of body.querySelectorAll('img')) image.dispatchEvent(new Event('load')); };
-  return { body, root, frame, carrier, nativeContent, debug, targets, document, window, packets, eventSupport, eventFactories, nativeEvents, mailboxInput, unbindNativeInput, acknowledgeField, closeCalls:()=>closeCalls, observed: () => observed, flush, scan: () => scan(), button, calls: () => calls,
+  return { body, root, frame, carrier, nativeContent, debug, targets, document, window, packets, eventSupport, eventFactories, nativeEvents, mouseEvents, presses:()=>presses, releases:()=>releases, nativeFocusCalls:()=>nativeFocusCalls, mailboxInput, unbindNativeInput, acknowledgeField, closeCalls:()=>closeCalls, observed: () => observed, flush, scan: () => scan(), button, calls: () => calls,
     serverField: (name: string, value: string | boolean | number) => { layout.nodes.find(node => node.field?.name === name)!.input = value; publish(); },
     key: (key: string, type = 'keydown', repeat = false, shiftKey = false) => doc.dispatchEvent(new Event(type, { key, repeat, shiftKey })),
     publish, values:(overrides:Record<string,Record<string,unknown>>)=>{valueOverrides=overrides;publish();}, removeCarrier: () => { nativeContent.removeChild(carrier); notify(); }, restoreCarrier: () => { nativeContent.appendChild(carrier); publish(); },
@@ -171,6 +181,40 @@ function harness(acknowledge = true, nativeTag = 'div', wrappedTargets = false, 
 }
 
 describe('standalone Ore client protocol', () => {
+  it.each([false, true])('forwards one native press and release per accepted action without moving focus (legacy=%s)', legacy => {
+    const h = harness(true, 'fast-div', true, legacy);
+    h.flush();
+    expect(h.mouseEvents.map(({ target, type }) => [target, type])).toEqual([['ready', 'click']]);
+    expect(h.presses()).toBe(0);
+    const focused = h.document.activeElement;
+
+    h.button().dispatchEvent(new Event('mousedown', { button: 0 }));
+    h.flush();
+
+    expect(h.mouseEvents.filter(event => event.target === 'action').map(event => event.type)).toEqual(['mousedown', 'mouseup', 'click']);
+    expect(h.mouseEvents.every(event => event.button === 0)).toBe(true);
+    if (!legacy) expect(h.mouseEvents.filter(event => event.target === 'action').map(event => event.buttons)).toEqual([1, 0, 0]);
+    expect(h.presses()).toBe(1);
+    expect(h.releases()).toBe(1);
+    expect(h.calls()).toBe(1);
+    expect(h.nativeFocusCalls()).toBe(0);
+    expect(h.document.activeElement).toBe(focused);
+  });
+
+  it('keeps automatic dismissal click-only after a timed-out action', () => {
+    const h = harness(false);
+    h.flush();
+    expect(h.presses()).toBe(0);
+    h.button().dispatchEvent(new Event('mousedown', { button: 0 }));
+    h.advance();
+
+    expect(h.presses()).toBe(1);
+    expect(h.releases()).toBe(1);
+    expect(h.calls()).toBe(1);
+    expect(h.closeCalls()).toBe(1);
+    expect(h.mouseEvents.filter(event => event.target === 'dismiss').map(event => event.type)).toEqual(['click']);
+  });
+
   it('switches tabs and inherited selection gates without a server callback', () => {
     const h=harness(true,'div',false,false,false,layout=>layout.nodes.push(
       {id:'n_1',kind:'switch',rect:[0,0,40,20],switch:{group:'tabs',exclusive:true,index:0,on:false,passive:false}},
@@ -261,8 +305,8 @@ describe('standalone Ore client protocol', () => {
     const h=harness();h.flush();const old=h.button();h.navigate('details');h.flush();
     expect(h.button()).not.toBe(old);
     for(const type of ['mouseenter','mouseleave','mouseup','focus','mousedown','keydown'])old.dispatchEvent(new Event(type,{key:'Enter',bubbles:true}));
-    h.flush();expect(h.calls()).toBe(0);expect(h.debug.error).toBeNull();
-    h.button().dispatchEvent(new Event('mousedown'));h.flush();expect(h.calls()).toBe(1);
+    h.flush();expect(h.calls()).toBe(0);expect(h.presses()).toBe(0);expect(h.debug.error).toBeNull();
+    h.button().dispatchEvent(new Event('mousedown'));h.flush();expect(h.calls()).toBe(1);expect(h.presses()).toBe(1);
   });
   it('uses the desktop reference at the 1440px threshold and keeps a viewport fit margin',()=>{
     const h=harness();h.window.innerWidth=2560;h.window.innerHeight=1440;h.flush();
@@ -321,7 +365,7 @@ describe('standalone Ore client protocol', () => {
     const h=harness(true,'div',false,false,false,liveFields);h.flush();
     field(h,'n_1').dispatchEvent(new Event('mousedown'));
     expect(field(h,'n_1').attrs['aria-checked']).toBe('false');h.flush();
-    expect(h.packets).toMatchObject([{session:1,sequence:1,id:'n_1',value:false}]);expect(h.calls()).toBe(0);
+    expect(h.packets).toMatchObject([{session:1,sequence:1,id:'n_1',value:false}]);expect(h.calls()).toBe(0);expect(h.presses()).toBe(0);
   });
   it.each([
     ['modern Event', true, true, true, true],
@@ -437,7 +481,11 @@ describe('standalone Ore client protocol', () => {
     const h=harness(false,'div',false,false,false,liveFields);h.flush();
     const input=field(h,'n_4').children[0];input.value='Before details';input.dispatchEvent(new Event('input'));
     h.button().dispatchEvent(new Event('mousedown'));h.button().dispatchEvent(new Event('mousedown'));
-    expect(h.packets).toHaveLength(1);expect(h.calls()).toBe(0);h.acknowledgeField();h.flush();expect(h.calls()).toBe(1);
+    expect(h.packets).toHaveLength(1);expect(h.calls()).toBe(0);expect(h.presses()).toBe(0);
+    const focused = h.document.activeElement;
+    h.acknowledgeField();h.flush();
+    expect(h.calls()).toBe(1);expect(h.presses()).toBe(1);expect(h.releases()).toBe(1);
+    expect(h.document.activeElement).toBe(focused);expect(h.nativeFocusCalls()).toBe(0);
   });
   it('waits for composition completion and discards queued edits when the screen closes',()=>{
     const h=harness(true,'div',false,false,false,liveFields);h.flush();const input=field(h,'n_4').children[0];input.focus();
@@ -561,9 +609,9 @@ describe('standalone Ore client protocol', () => {
     const h = harness(false); h.scan(); h.scan();
     h.button().dispatchEvent(new Event('mousedown')); h.scan();
     expect(h.debug.pending).toBe('n_0_0');
-    h.button().dispatchEvent(new Event('mousedown')); expect(h.calls()).toBe(1);
+    h.button().dispatchEvent(new Event('mousedown')); expect(h.calls()).toBe(1); expect(h.presses()).toBe(1);
     h.advance(); expect(h.debug.status).toBe('failed');
-    expect(h.frame.style.visibility).toBe('hidden'); expect(h.calls()).toBe(1);
+    expect(h.frame.style.visibility).toBe('hidden'); expect(h.calls()).toBe(1); expect(h.presses()).toBe(1);
   });
   it('opens a fresh custom view after a failed screen closes', () => {
     const h = harness(false); h.scan(); h.scan();
@@ -589,8 +637,8 @@ describe('standalone Ore client protocol', () => {
     expect(h.button().style.borderImageSlice).toBe('2 2 4 2 fill');
     expect(h.button().style.borderImageWidth).toBe('6px 6px 12px 6px');
     h.button().dispatchEvent(new Event('mouseenter')); expect(h.button().style.borderImageSource).toContain('/hover.png');
-    h.key('Enter'); h.key('Enter', 'keydown', true); h.flush(); expect(h.calls()).toBe(1);
-    h.key('Enter', 'keyup'); h.key(' '); h.flush(); expect(h.calls()).toBe(2);
+    h.key('Enter'); h.key('Enter', 'keydown', true); h.flush(); expect(h.calls()).toBe(1); expect(h.presses()).toBe(1);
+    h.key('Enter', 'keyup'); h.key(' '); h.flush(); expect(h.calls()).toBe(2); expect(h.presses()).toBe(2);
     h.key(' ', 'keyup'); h.key('Tab'); expect(h.debug.focused).toBe('n_0_0');
     h.key('Tab', 'keydown', false, true); expect(h.debug.focused).toBe('n_0_0');
   });
@@ -644,11 +692,12 @@ describe('standalone Ore client protocol', () => {
   it('ignores disabled or hidden controls and keeps focus on available actions', () => {
     const h = harness(); h.flush(); h.availability(false); h.flush();
     expect(h.debug.focused).toBeNull(); expect(h.button().tabIndex).toBe(-1);
-    h.button().dispatchEvent(new Event('mousedown')); expect(h.calls()).toBe(0);
+    h.button().dispatchEvent(new Event('mousedown')); expect(h.calls()).toBe(0); expect(h.presses()).toBe(0);
     h.availability(true, false); h.flush();
-    h.button().dispatchEvent(new Event('mousedown')); expect(h.calls()).toBe(0);
+    h.button().dispatchEvent(new Event('mousedown')); expect(h.calls()).toBe(0); expect(h.presses()).toBe(0);
     h.availability(true); h.flush(); h.key('TAB', 'keydown', false, true);
     expect(h.debug.focused).toBe('n_0_0');
+    h.button().dispatchEvent(new Event('mousedown', { button: 1 })); expect(h.calls()).toBe(0); expect(h.presses()).toBe(0);
   });
   it('deduplicates handled keys and normalizes native key spellings', () => {
     const h = harness(); h.flush();

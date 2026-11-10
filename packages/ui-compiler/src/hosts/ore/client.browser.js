@@ -191,7 +191,7 @@ export function runOreClient(desktopWidth, desktopHeight) {
 
     if (dismiss) {
       try {
-        dismiss.dispatchEvent(clickEvent());
+        dismiss.dispatchEvent(mouseEvent('click'));
       } catch (closeError) {
         debug.closeError = String(closeError);
       }
@@ -287,22 +287,22 @@ export function runOreClient(desktopWidth, desktopHeight) {
     else window.setTimeout(refresh, 0);
   }
 
-  function clickEvent() {
+  function mouseEvent(type) {
     try {
-      return new MouseEvent('click', {
+      return new MouseEvent(type, {
         bubbles: true,
         cancelable: true,
         button: 0,
-        buttons: 0,
+        buttons: type === 'mousedown' ? 1 : 0,
         view: window,
       });
     } catch (unsupported) {
       var event = document.createEvent('MouseEvents');
 
       if (!event || typeof event.initMouseEvent !== 'function')
-        throw new Error('Native click event unavailable');
+        throw new Error('Native mouse event unavailable');
       event.initMouseEvent(
-        'click',
+        type,
         true,
         true,
         window,
@@ -370,7 +370,18 @@ export function runOreClient(desktopWidth, desktopHeight) {
     }, 200);
 
     try {
-      native.dispatchEvent(clickEvent());
+      var click = mouseEvent('click');
+
+      if (!readiness) {
+        // Native buttons handle press feedback on down and the action on click.
+        var down = mouseEvent('mousedown'),
+          up = mouseEvent('mouseup');
+
+        native.dispatchEvent(down);
+        native.dispatchEvent(up);
+      }
+
+      native.dispatchEvent(click);
       requestRefresh();
     } catch (error) {
       fail(error);
