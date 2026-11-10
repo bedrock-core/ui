@@ -1,11 +1,12 @@
 {
 	"format_version": 3,
+	"namespace": "bedrock_core_ui",
 	"header": {
 		"name": "pack.name",
 		"description": "pack.description",
 		"uuid": "761ecd37-ad1c-4a64-862a-d6cc38767426",
 		"pack_scope": "world",
-		"version": "1.14.0",
+		"version": "1.14.1",
 		"min_engine_version": "1.26.50"
 	},
 	"modules": [

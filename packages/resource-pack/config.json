@@ -1,7 +1,6 @@
 {
 	"$schema": "../../../builder/schemas/config.schema.json",
 	"targetVersion": "1.26.50",
-	"namespace": "bedrock_core_ui",
 	"name": "@bedrock-core_ui",
 	"description": "Shared UI textures for @bedrock-core addons",
 	"authors": [
