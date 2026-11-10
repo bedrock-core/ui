@@ -65,11 +65,12 @@
 		"!src/**/__tests__/**",
 		"!src/**/*.test.ts",
 		"!src/**/*.test.tsx",
-		"!src/__fixtures__/**"
+		"!src/__fixtures__/**",
+		"!src/test-setup.ts"
 	],
 	"sideEffects": false,
 	"scripts": {
-		"build": "tsc -p tsconfig.json",
+		"build": "node ../../node_modules/typescript-native/bin/tsc -p tsconfig.json",
 		"generate:font-metrics": "node ./scripts/generate-font-metrics.mjs",
 		"lint": "eslint .",
 		"test": "vitest run",
@@ -89,14 +90,19 @@
 	"peerDependencies": {
 		"@bedrock-core/i18n": "*",
 		"@minecraft/server": ">=2.9.0 || >=2.10.0-0",
-		"@minecraft/server-ui": "*"
+		"@minecraft/server-ui": "*",
+		"vitest": "^4.1.5"
 	},
 	"peerDependenciesMeta": {
 		"@bedrock-core/i18n": {
 			"optional": true
+		},
+		"vitest": {
+			"optional": true
 		}
 	},
 	"dependencies": {
-		"@bedrock-core/flexbox": "workspace:*"
+		"@bedrock-core/flexbox": "workspace:*",
+		"@bedrock-core/observable": "^1.1.0"
 	}
 }

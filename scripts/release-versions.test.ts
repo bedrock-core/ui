@@ -1,22 +1,29 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 import type { TestContext } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { checkReleaseVersions, syncMetaVersion } from './release-versions.ts';
 
 const UI = '@bedrock-core/ui';
 const RUNTIME = '@bedrock-core/ui-runtime';
 const NAVIGATION = '@bedrock-core/navigation';
-const OTHER = '@bedrock-core/flexbox';
+const FLEXBOX = '@bedrock-core/flexbox';
 const changesetBin = fileURLToPath(import.meta.resolve('@changesets/cli/bin.js'));
+const changelog = import.meta.resolve('@changesets/cli/changelog');
 const releaseConfig = JSON.parse(readFileSync(new URL('../.changeset/config.json', import.meta.url), 'utf8'));
 
 function fixture(t: TestContext) {
-  const dir = mkdtempSync(join(tmpdir(), 'core-release-versions-'));
+  const temporaryRoot = realpathSync(tmpdir());
+  const dir = mkdtempSync(join(temporaryRoot, 'core-native-release-'));
+  const output = join(dir, 'tag-events.jsonl');
+  const env = {
+    ...process.env, CI: 'true', CHANGESETS_OUTPUT: output,
+    GIT_AUTHOR_NAME: 'Core fixture', GIT_AUTHOR_EMAIL: 'fixture@example.invalid',
+    GIT_COMMITTER_NAME: 'Core fixture', GIT_COMMITTER_EMAIL: 'fixture@example.invalid',
+  };
   const put = (file: string, value: unknown): void => {
     const target = join(dir, file);
 
@@ -25,35 +32,57 @@ function fixture(t: TestContext) {
   };
   const read = (file: string) => JSON.parse(readFileSync(join(dir, file), 'utf8'));
   const run = (...args: string[]) => execFileSync(process.execPath, [changesetBin, ...args], {
-    cwd: dir, encoding: 'utf8', env: { ...process.env, CI: 'true' },
+    cwd: dir, encoding: 'utf8', env,
   });
+  const git = (...args: string[]) => execFileSync('git', args, { cwd: dir, encoding: 'utf8', env, stdio: ['ignore', 'pipe', 'pipe'] });
   const change = (name: string, releases: Record<string, string>): void => {
     const entries = Object.entries(releases).map(([pkg, bump]) => `"${pkg}": ${bump}`).join('\n');
 
     writeFileSync(join(dir, '.changeset', `${name}.md`), `---\n${entries}\n---\n\nUpdate public APIs.\n`);
   };
 
-  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  t.after(() => {
+    const target = realpathSync(dir);
+
+    assert.equal(dirname(target), temporaryRoot);
+    rmSync(target, { recursive: true, force: true });
+  });
   writeFileSync(join(dir, 'yarn.lock'), '');
   put('package.json', {
     name: UI, version: '0.12.1', packageManager: 'yarn@4.16.0',
-    workspaces: ['packages/*'], dependencies: { [RUNTIME]: 'workspace:*', [NAVIGATION]: 'workspace:*' },
+    workspaces: ['.', 'packages/*'],
+    dependencies: { [RUNTIME]: 'workspace:*', [NAVIGATION]: 'workspace:*', [FLEXBOX]: 'workspace:*' },
   });
   put('packages/ui-runtime/package.json', { name: RUNTIME, version: '0.12.1' });
   put('packages/navigation/package.json', {
     name: NAVIGATION, version: '1.4.0', dependencies: { [RUNTIME]: 'workspace:*' },
   });
-  put('packages/flexbox/package.json', { name: OTHER, version: '0.12.1' });
-  put('.changeset/config.json', { ...releaseConfig, changelog: false, commit: false });
+  put('packages/flexbox/package.json', { name: FLEXBOX, version: '0.12.1' });
+  put('.changeset/config.json', { ...releaseConfig, changelog, commit: false });
+  git('init', '--quiet');
 
-  return { dir, put, read, run, change };
+  return { dir, output, read, run, git, change };
 }
 
-const scenarios: { name: string; releases: Record<string, string>; runtime: string; navigation: string }[] = [
-  { name: 'runtime-only patch updates the pinned dependent without aligning its version', releases: { [RUNTIME]: 'patch' }, runtime: '0.12.2', navigation: '1.4.1' },
-  { name: 'navigation-only minor keeps the UI runtime version', releases: { [NAVIGATION]: 'minor' }, runtime: '0.12.1', navigation: '1.5.0' },
-  { name: 'mixed bumps keep their own release levels', releases: { [RUNTIME]: 'patch', [NAVIGATION]: 'major' }, runtime: '0.12.2', navigation: '2.0.0' },
-  { name: 'unrelated releases keep runtime and navigation stable', releases: { [OTHER]: 'patch' }, runtime: '0.12.1', navigation: '1.4.0' },
+test('the root and runtime share a native fixed group while navigation remains independent', () => {
+  const root = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  const runtime = JSON.parse(readFileSync(new URL('../packages/ui-runtime/package.json', import.meta.url), 'utf8'));
+
+  assert.ok(root.workspaces.includes('.'));
+  assert.equal(root.version, runtime.version);
+  assert.ok(releaseConfig.fixed.some((group: string[]) => group.length === 2 && group.includes(UI) && group.includes(RUNTIME)));
+  assert.ok(releaseConfig.fixed.every((group: string[]) => !group.includes(NAVIGATION)));
+  assert.equal(root.dependencies[RUNTIME], 'workspace:*');
+  assert.equal(root.dependencies[NAVIGATION], 'workspace:*');
+});
+
+const scenarios: { name: string; releases: Record<string, string>; runtime: string; navigation: string; flexbox?: string }[] = [
+  { name: 'runtime patch versions the root and its exact dependents', releases: { [RUNTIME]: 'patch' }, runtime: '0.12.2', navigation: '1.4.1' },
+  { name: 'root patch versions the runtime through the fixed group', releases: { [UI]: 'patch' }, runtime: '0.12.2', navigation: '1.4.1' },
+  { name: 'navigation minor retains its own version and releases exact dependents', releases: { [NAVIGATION]: 'minor' }, runtime: '0.12.2', navigation: '1.5.0' },
+  { name: 'mixed runtime and navigation changes retain their release levels', releases: { [RUNTIME]: 'patch', [NAVIGATION]: 'major' }, runtime: '0.12.2', navigation: '2.0.0' },
+  { name: 'the largest fixed-group bump applies to root and runtime', releases: { [UI]: 'minor', [RUNTIME]: 'patch' }, runtime: '0.13.0', navigation: '1.4.1' },
+  { name: 'other umbrella dependencies cause normal dependent patch releases', releases: { [FLEXBOX]: 'patch' }, runtime: '0.12.2', navigation: '1.4.1', flexbox: '0.12.2' },
 ];
 
 for (const scenario of scenarios) {
@@ -62,79 +91,68 @@ for (const scenario of scenarios) {
 
     f.change('release', scenario.releases);
     f.run('version');
+    assert.equal(f.read('package.json').version, scenario.runtime);
     assert.equal(f.read('packages/ui-runtime/package.json').version, scenario.runtime);
     assert.equal(f.read('packages/navigation/package.json').version, scenario.navigation);
-    assert.equal(f.read('package.json').version, '0.12.1');
-
-    execFileSync(process.execPath, [fileURLToPath(new URL('./bump-meta.mjs', import.meta.url))], { cwd: f.dir });
-    assert.equal(checkReleaseVersions(f.dir), scenario.runtime);
-    assert.equal(f.read('package.json').version, scenario.runtime);
-    assert.equal(f.read('packages/navigation/package.json').version, scenario.navigation);
+    assert.equal(f.read('packages/flexbox/package.json').version, scenario.flexbox ?? '0.12.1');
+    assert.equal(f.read('package.json').dependencies[RUNTIME], 'workspace:*');
     assert.equal(f.read('packages/navigation/package.json').dependencies[RUNTIME], 'workspace:*');
-    assert.equal(syncMetaVersion(f.dir).changed, false);
   });
 }
 
-test('prerelease counters and stable exit preserve independent package versions', t => {
+test('native prerelease counters and stable promotion keep root and runtime equal', t => {
   const f = fixture(t);
+  const assertVersions = (runtime: string, navigation: string): void => {
+    assert.equal(f.read('package.json').version, runtime);
+    assert.equal(f.read('packages/ui-runtime/package.json').version, runtime);
+    assert.equal(f.read('packages/navigation/package.json').version, navigation);
+  };
 
   f.change('first', { [RUNTIME]: 'minor' });
   f.run('pre', 'enter', 'rc');
   f.run('version');
-  syncMetaVersion(f.dir);
-  assert.equal(checkReleaseVersions(f.dir), '0.13.0-rc.0');
-  assert.equal(f.read('packages/navigation/package.json').version, '1.4.1-rc.0');
+  assertVersions('0.13.0-rc.0', '1.4.1-rc.0');
 
   f.change('second', { [NAVIGATION]: 'patch' });
   f.run('version');
-  syncMetaVersion(f.dir);
-  assert.equal(checkReleaseVersions(f.dir), '0.13.0-rc.0');
-  assert.equal(f.read('packages/navigation/package.json').version, '1.4.1-rc.1');
+  assertVersions('0.13.0-rc.1', '1.4.1-rc.1');
 
   f.run('pre', 'exit');
   f.run('version');
-  syncMetaVersion(f.dir);
-  assert.equal(checkReleaseVersions(f.dir), '0.13.0');
-  assert.equal(f.read('packages/navigation/package.json').version, '1.4.1');
+  assertVersions('0.13.0', '1.4.1');
 });
 
-test('a navigation version change does not modify the umbrella version', t => {
+test('native versioning writes a changelog for the root package', t => {
   const f = fixture(t);
-  const original = readFileSync(join(f.dir, 'package.json'), 'utf8');
 
-  f.put('packages/navigation/package.json', {
-    name: NAVIGATION, version: '2.5.3', dependencies: { [RUNTIME]: 'workspace:*' },
+  f.change('release', { [UI]: 'patch' });
+  f.run('version');
+  const contents = readFileSync(join(f.dir, 'CHANGELOG.md'), 'utf8');
+
+  assert.match(contents, /^# @bedrock-core\/ui/);
+  assert.match(contents, /## 0\.12\.2/);
+  assert.match(contents, /Update public APIs\./);
+});
+
+test('native tagging reports the root package to Changesets Action and is idempotent', t => {
+  const f = fixture(t);
+
+  f.change('release', { [RUNTIME]: 'patch' });
+  f.run('version');
+  f.git('add', '--all');
+  f.git('commit', '--quiet', '-m', 'Release fixture');
+  f.run('git-tag');
+  const output = readFileSync(f.output, 'utf8');
+  const events = output.trim().split('\n').map(line => JSON.parse(line));
+
+  assert.deepEqual(events.find(event => event.packageName === UI), {
+    type: 'git-tag', tag: `${UI}@0.12.2`, packageName: UI,
   });
-  const navigation = readFileSync(join(f.dir, 'packages/navigation/package.json'), 'utf8');
+  assert.deepEqual(events.map(event => event.packageName).sort(), [UI, RUNTIME, NAVIGATION, FLEXBOX].sort());
+  assert.deepEqual(f.git('tag', '--list').trim().split('\n').sort(), [
+    `${UI}@0.12.2`, `${RUNTIME}@0.12.2`, `${NAVIGATION}@1.4.1`, `${FLEXBOX}@0.12.1`,
+  ].sort());
 
-  assert.equal(checkReleaseVersions(f.dir), '0.12.1');
-  assert.equal(syncMetaVersion(f.dir).changed, false);
-  assert.equal(readFileSync(join(f.dir, 'package.json'), 'utf8'), original);
-  assert.equal(readFileSync(join(f.dir, 'packages/navigation/package.json'), 'utf8'), navigation);
+  f.run('git-tag');
+  assert.equal(readFileSync(f.output, 'utf8'), output);
 });
-
-test('the root must match the complete runtime version, including prerelease suffix', t => {
-  const f = fixture(t);
-
-  f.put('packages/ui-runtime/package.json', { name: RUNTIME, version: '1.0.0-rc.1' });
-  assert.throws(() => checkReleaseVersions(f.dir), /ui@0\.12\.1 must match/);
-  assert.equal(syncMetaVersion(f.dir).version, '1.0.0-rc.1');
-  assert.equal(checkReleaseVersions(f.dir), '1.0.0-rc.1');
-  assert.equal(f.read('packages/navigation/package.json').version, '1.4.0');
-});
-
-test('independent release policy does not require a fixed group', t => {
-  const f = fixture(t);
-
-  f.put('.changeset/config.json', { ...releaseConfig, fixed: [], linked: [] });
-  assert.equal(checkReleaseVersions(f.dir), '0.12.1');
-});
-
-for (const file of ['package.json', 'packages/navigation/package.json']) {
-  test(`${file} must resolve the exact runtime version when packed`, t => {
-    const f = fixture(t);
-
-    f.put(file, { ...f.read(file), dependencies: { [RUNTIME]: 'workspace:^' } });
-    assert.throws(() => checkReleaseVersions(f.dir), /pin .* through workspace:\*/);
-  });
-}

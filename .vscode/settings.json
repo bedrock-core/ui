@@ -37,8 +37,8 @@
 		"editor.insertSpaces": false,
 		"editor.tabSize": 4
 	},
-	"typescript.tsdk": "node_modules/typescript/lib",
-	"typescript.enablePromptUseWorkspaceTsdk": true,
+	"js/ts.tsdk.path": "node_modules/typescript/lib",
+	"js/ts.tsdk.promptToUseWorkspaceVersion": true,
 	"files.associations": {
 		"*.json": "jsonc",
 		"*.mdx": "markdown"
@@ -58,10 +58,5 @@
 		"./packages/cli",
 		"./packages/ui-runtime",
 		"./packages/resource-pack"
-	],
-	"github.copilot.chat.commitMessageGeneration.instructions": [
-		{
-			"file": ".github/copilot-commit-instructions.md"
-		}
 	]
 }

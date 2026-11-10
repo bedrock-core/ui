@@ -38,9 +38,6 @@ jobs:
 
       - run: yarn install --immutable
 
-      - name: Check UI, runtime, and navigation release versions
-        run: yarn check:release-versions
-
       - uses: changesets/action@v2
         with:
           cwd: ui
@@ -77,9 +74,6 @@ jobs:
 
       - run: yarn install --immutable
 
-      - name: Check UI, runtime, and navigation release versions
-        run: yarn check:release-versions
-
       - name: Check that nothing is pending
         run: |
           pending=$(ls .changeset/*.md 2>/dev/null | grep -v '/README\.md$' || true)
@@ -104,11 +98,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Ensure root UI GitHub release
+      - name: Read UI release version
         id: release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/release-root.mjs
+        run: node -p '"ui_version=" + require("./package.json").version' >> "$GITHUB_OUTPUT"
 
   resource-pack:
     name: Release selected shared assets

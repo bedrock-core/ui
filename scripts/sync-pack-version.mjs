@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { packDirectory, releaseFile, resourcePackHash, selectResourcePack, texturePackVersion } from './resource-pack-policy.mjs';
@@ -21,18 +21,6 @@ export function syncPackVersion(root = process.cwd(), uiVersion, { newArtifact =
   }
 
   if (selected !== previous) { save(releaseFile, selected); }
-
-  const behaviorFile = packDirectory + '/packs/BP/manifest.json';
-
-  if (existsSync(join(root, behaviorFile))) {
-    const behavior = read(behaviorFile);
-    const dependency = behavior.dependencies?.find(entry => entry.uuid === manifest.header.uuid);
-
-    if (dependency && dependency.version !== version) {
-      dependency.version = version;
-      save(behaviorFile, behavior);
-    }
-  }
 
   return { uiVersion: candidate, assetVersion: selected.uiVersion, packVersion: version, release: selected.uiVersion === candidate };
 }

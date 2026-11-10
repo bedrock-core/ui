@@ -31,13 +31,12 @@ function fixture(t, uiVersion = '0.12.1') {
   } } });
   put(pack + '/packs/RP/manifest.json', { header: { uuid: 'shared-assets', version: '1.12.0', min_engine_version: '1.26.50' } });
   put(pack + '/packs/RP/textures/fixture.json', { width: 16 });
-  put(pack + '/packs/BP/manifest.json', { dependencies: [{ uuid: 'shared-assets', version: '1.11.0' }] });
   put(releaseFile, { uiVersion: '0.12.0', sourceHash: resourcePackHash(root) });
 
   return { root, put, read, pack, run: () => syncPackVersion(root) };
 }
 
-test('unchanged patches retain the asset, version and dependency', t => {
+test('unchanged patches retain the asset and version', t => {
   const f = fixture(t);
   const previous = f.read(releaseFile);
 
@@ -46,7 +45,6 @@ test('unchanged patches retain the asset, version and dependency', t => {
   assert.equal(f.run().release, false);
   assert.deepEqual(f.read(releaseFile), previous);
   assert.equal(f.read(f.pack + '/packs/RP/manifest.json').header.version, '1.12.0');
-  assert.equal(f.read(f.pack + '/packs/BP/manifest.json').dependencies[0].version, '1.12.0');
 });
 
 test('minor releases select a renamed pack even with identical assets', t => {
@@ -56,7 +54,6 @@ test('minor releases select a renamed pack even with identical assets', t => {
   assert.equal(f.run().release, true);
   assert.deepEqual(f.read(releaseFile), { uiVersion: '0.13.0', sourceHash });
   assert.equal(f.read(f.pack + '/packs/RP/manifest.json').header.version, '1.13.0');
-  assert.equal(f.read(f.pack + '/packs/BP/manifest.json').dependencies[0].version, '1.13.0');
 });
 
 test('changed patch assets get their own release and need a new version for later changes', t => {

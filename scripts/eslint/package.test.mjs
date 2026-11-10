@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 const repository = fileURLToPath(new URL('../../', import.meta.url));
 
-test('the packed UI exposes typed hook linting to an isolated consumer', t => {
+test('packed UI libraries preserve public files and expose typed hook linting to an isolated consumer', t => {
   const directory = mkdtempSync(path.join(tmpdir(), 'core-ui-eslint-package-'));
 
   t.after(() => rmSync(directory, { recursive: true, force: true }));
@@ -28,7 +28,41 @@ test('the packed UI exposes typed hook linting to an isolated consumer', t => {
   }
 
   assert.ok(entries.every(file => file.startsWith('package/') && !file.split('/').includes('..')));
-  assert.ok(entries.every(file => !file.startsWith('package/scripts/') && !file.endsWith('.test.mjs')));
+  assert.ok(entries.every(file => ['package/package.json', 'package/LICENSE', 'package/README.md', 'package/CHANGELOG.md'].includes(file)
+    || file.startsWith('package/src/') || file.startsWith('package/eslint/')), 'The UI archive must contain only its public facade and lint tooling');
+
+  const packWorkspace = name => {
+    const tarball = path.join(directory, name.split('/')[1] + '.tgz');
+
+    execFileSync(process.execPath, [yarn, 'workspace', name, 'pack', '--out', tarball], { cwd: repository, stdio: 'pipe' });
+
+    return {
+      entries: execFileSync('tar', ['-tzf', tarball], { encoding: 'utf8' }).trim().split(/\r?\n/),
+      manifest: JSON.parse(execFileSync('tar', ['-xOf', tarball, 'package/package.json'], { encoding: 'utf8' })),
+    };
+  };
+  const runtime = packWorkspace('@bedrock-core/ui-runtime');
+
+  assert.ok(runtime.entries.every(file => !file.includes('/__tests__/') && !file.includes('/__fixtures__/')
+    && !file.endsWith('/test-setup.ts') && !/\.(?:test|spec)\.[cm]?[jt]sx?$/.test(file)));
+
+  for (const name of ['server', 'server-ui']) {
+    const entry = runtime.manifest.exports['./test/' + name];
+
+    assert.ok(entry, 'The public ' + name + ' mock must remain exported');
+    for (const target of Object.values(entry)) assert.ok(runtime.entries.includes('package/' + target.replace(/^\.\//, '')));
+  }
+
+  const rootManifest = JSON.parse(readFileSync(path.join(repository, 'package.json'), 'utf8'));
+
+  assert.equal(runtime.manifest.peerDependencies.vitest, rootManifest.devDependencies.vitest);
+  assert.equal(runtime.manifest.peerDependenciesMeta.vitest.optional, true);
+  assert.equal(runtime.manifest.dependencies.vitest, undefined);
+
+  const compiler = packWorkspace('@bedrock-core/ui-compiler');
+  const flexbox = JSON.parse(readFileSync(path.join(repository, 'packages/flexbox/package.json'), 'utf8'));
+
+  assert.equal(compiler.manifest.dependencies['@bedrock-core/flexbox'], flexbox.version);
   execFileSync('tar', ['-xzf', archive, '-C', directory]);
 
   const consumer = path.join(directory, 'consumer');

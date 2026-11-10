@@ -6,9 +6,6 @@ import opentype from 'opentype.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const packageRoot = path.resolve(__dirname, '..');
-const workspaceRoot = path.resolve(packageRoot, '..', '..');
-const DEFAULT_FONT_LIST = path.resolve(workspaceRoot, 'assets', 'fonts.md');
-
 const DEFAULT_OUTPUT = path.resolve(packageRoot, 'src', 'util', 'font-metrics.generated.json');
 
 const DEFAULT_CONFIG = {
@@ -45,8 +42,7 @@ function parseArgs(argv) {
     const value = argv[i + 1];
 
     if (!value || value.startsWith('--')) {
-      args[key] = 'true';
-      continue;
+      throw new Error(`Missing value for ${arg}`);
     }
 
     args[key] = value;
@@ -75,13 +71,13 @@ async function readFontList(fontListPath) {
   const content = await fs.readFile(fontListPath, 'utf8');
   const lines = content.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
 
-  if (lines.length < 2) {
+  if (lines.length !== 2) {
     throw new Error(`Expected two font paths (mojangles, minecraftTen) in ${fontListPath}`);
   }
 
   return {
-    mojangles: lines[0],
-    minecraftTen: lines[1],
+    mojangles: path.resolve(path.dirname(fontListPath), lines[0]),
+    minecraftTen: path.resolve(path.dirname(fontListPath), lines[1]),
   };
 }
 
@@ -136,18 +132,22 @@ async function loadFont(fontPath) {
 async function main() {
   const args = parseArgs(process.argv);
   const outputPath = path.resolve(args.output ?? DEFAULT_OUTPUT);
-  const fontListPath = path.resolve(args.fonts ?? DEFAULT_FONT_LIST);
+  const fontPaths = args.fonts ? await readFontList(path.resolve(args.fonts)) : {};
 
-  const defaultPaths = await readFontList(fontListPath);
+  const missing = ['mojangles', 'minecraftTen'].filter(name => args[name] === undefined && fontPaths[name] === undefined);
+
+  if (missing.length > 0) {
+    throw new Error(`Missing font paths: ${missing.join(', ')}. Provide --mojangles <path> and --minecraftTen <path>, or --fonts <file>`);
+  }
 
   const config = {
     mojangles: {
-      path: path.resolve(args.mojangles ?? defaultPaths.mojangles),
+      path: path.resolve(args.mojangles ?? fontPaths.mojangles),
       lineHeight: Number(args.mojanglesLineHeight ?? DEFAULT_CONFIG.mojangles.lineHeight),
       fallbackWidth: Number(args.mojanglesFallbackWidth ?? DEFAULT_CONFIG.mojangles.fallbackWidth),
     },
     minecraftTen: {
-      path: path.resolve(args.minecraftTen ?? defaultPaths.minecraftTen),
+      path: path.resolve(args.minecraftTen ?? fontPaths.minecraftTen),
       lineHeight: Number(args.minecraftTenLineHeight ?? DEFAULT_CONFIG.minecraftTen.lineHeight),
       fallbackWidth: Number(args.minecraftTenFallbackWidth ?? DEFAULT_CONFIG.minecraftTen.fallbackWidth),
       pxPerEm: DEFAULT_CONFIG.minecraftTen.pxPerEm,

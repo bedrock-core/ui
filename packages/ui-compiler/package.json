@@ -49,12 +49,13 @@
 	],
 	"sideEffects": false,
 	"scripts": {
-		"build": "tsc -p tsconfig.json",
+		"build": "node ../../node_modules/typescript-native/bin/tsc -p tsconfig.json",
 		"lint": "eslint .",
 		"test": "vitest run",
 		"coverage": "vitest run --coverage"
 	},
 	"dependencies": {
+		"@bedrock-core/flexbox": "workspace:*",
 		"@bedrock-core/ui-runtime": "workspace:*"
 	},
 	"devDependencies": {
