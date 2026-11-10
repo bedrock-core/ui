@@ -365,6 +365,12 @@ export function computeLayout(
   refHeight: number = CANONICAL_SCREEN.height,
   options: LayoutOptions = {},
 ): void {
+  if (!visible(root)) {
+    Object.assign(root.layout, { x: 0, y: 0, width: 0, height: 0, zIndex: root.style.zIndex ?? 0 });
+
+    return;
+  }
+
   const measured = new Map<LayoutNode, MeasuredSize>();
 
   collectMeasured(root, measured);
@@ -525,10 +531,6 @@ function solve(
     // This makes the next iteration's percent padding resolve against
     // realistic parent dimensions rather than the content-derived ones.
     for (const node of levelOrder) {
-      if (!visible(node)) {
-        continue;
-      }
-
       // Skip wrap containers: their children are cross-stretched per-line in
       // Pass 3 (using crossCursor / lineCrossSize). Applying the full container
       // cross-size here would inflate child heights across all 3 iterations,
