@@ -246,6 +246,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@bedrock-core/navigation@workspace:packages/navigation"
   dependencies:
+    "@bedrock-core/builder-bundler": "npm:^0.2.0"
+    "@bedrock-core/observable": "npm:^1.0.0"
     "@bedrock-core/ui-runtime": "workspace:*"
     "@minecraft/common": "npm:*"
     "@minecraft/server": "npm:*"

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Button, Panel, Screen, Text, useState, type FunctionComponent, type JSX } from '@bedrock-core/ui-runtime';
-import { Link, StackActions, CommonActions, createStackNavigator, createStaticNavigation, createTopTabNavigator, useLinkProps, useRoute } from '@bedrock-core/navigation';
+import { Link, CommonActions, createStackNavigator, createStaticNavigation, createTopTabNavigator, useLinkProps, useRoute } from '@bedrock-core/navigation';
 import { createNavigatorFactory } from '@bedrock-core/navigation/runtime';
 import { compileFormScreen } from '../hosts/form/compile';
 import { eachControl } from '../__fixtures__/helpers';
@@ -116,7 +116,7 @@ describe('static navigation compilation', () => {
   });
   it('recognizes a complete useLinkProps spread and leaves wrapped handlers on the server', () => {
     const Page = (): JSX.Element => {
-      const props = useLinkProps({ action: StackActions.push('B') });
+      const props = useLinkProps({ action: { type: 'PUSH', payload: { name: 'B' } } });
       return Panel({ children: [node(Button, { ...props, children: text('Direct') }), node(Button, {
         onPress: (event: Parameters<typeof props.onPress>[0]) => props.onPress(event), children: text('Wrapped'),
       })] });

@@ -88,7 +88,7 @@
 		"build:libs": "yarn workspaces foreach -A -pt --no-private --exclude '@bedrock-core/ui' run build",
 		"prepack": "yarn build:libs",
 		"watch": "yarn --cwd packages/resource-pack watch",
-		"typecheck": "node node_modules/typescript-native/bin/tsc --noEmit",
+		"typecheck": "yarn workspace @bedrock-core/navigation build:api && node node_modules/typescript-native/bin/tsc --noEmit",
 		"lint": "yarn workspaces foreach -ptA run lint",
 		"lint:libs": "yarn workspaces foreach -A -pt --no-private --exclude '@bedrock-core/ui' run lint",
 		"test": "yarn workspaces foreach -ptA run test",

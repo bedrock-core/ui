@@ -8,4 +8,4 @@ Expose typed Core hook lint tooling through `@bedrock-core/ui/eslint` and export
 
 Publish shared resource packs for minor releases and changed patch assets, retaining the existing artifact for unchanged patches.
 
-Use Observable's `Signal`, `NativeSignal`, and `toSignal` in `useEvent` to forward native filters and release each registration.
+Connect cross-addon navigation through peer modules with observable screen metadata and runtime-owned cleanup. Use Observable's `Signal`, `NativeSignal`, and `toSignal` in `useEvent` to forward native filters and release each registration.

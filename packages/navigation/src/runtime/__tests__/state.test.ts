@@ -3,7 +3,7 @@ import type { Player } from '@minecraft/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { back, navigate, navigateAsync, setNavigator, type Navigator } from '../navigate';
 import { checkpoint, clearHistory, currentLocation, isNavigationSnapshot, navigationSnapshot, noteLocation, noteShown, restoreNavigation } from '../history';
-import { registerScreenMetadata as registerScreenDescriptor, screenParametersError as screenParameterError } from '@bedrock-core/ui-runtime';
+import { registerScreenMetadata, screenParametersError } from '@bedrock-core/ui-runtime';
 
 const player = { id: 'navigation-state' } as Player;
 
@@ -142,17 +142,17 @@ describe('public screen parameter contracts', () => {
   } as const;
 
   it('checks required, unknown, enum and nested parameters', () => {
-    expect(screenParameterError(contract, { item: 'diamond', options: { enabled: true }, values: [1, 2] })).toBeUndefined();
-    expect(screenParameterError(contract, {})).toContain('item is required');
-    expect(screenParameterError(contract, { item: 2 })).toContain('item must be string');
-    expect(screenParameterError(contract, { item: 'x', extra: 2 })).toContain('extra is not declared');
-    expect(screenParameterError(contract, { item: 'x', scope: 'world' })).toContain('not an accepted value');
-    expect(screenParameterError(contract, { item: 'x', options: { enabled: 1 } })).toContain('options.enabled');
-    expect(screenParameterError(contract, { item: 'x', values: [NaN] })).toContain('plain data');
+    expect(screenParametersError(contract, { item: 'diamond', options: { enabled: true }, values: [1, 2] })).toBeUndefined();
+    expect(screenParametersError(contract, {})).toContain('item is required');
+    expect(screenParametersError(contract, { item: 2 })).toContain('item must be string');
+    expect(screenParametersError(contract, { item: 'x', extra: 2 })).toContain('extra is not declared');
+    expect(screenParametersError(contract, { item: 'x', scope: 'world' })).toContain('not an accepted value');
+    expect(screenParametersError(contract, { item: 'x', options: { enabled: 1 } })).toContain('options.enabled');
+    expect(screenParametersError(contract, { item: 'x', values: [NaN] })).toContain('plain data');
   });
 
   it('refuses an invalid navigation before it changes history or invokes a host', () => {
-    registerScreenDescriptor({ key: 'state:contract', kind: 'custom', parameters: contract });
+    registerScreenMetadata({ key: 'state:contract', kind: 'custom', parameters: contract });
     const show = vi.fn(() => true);
 
     setNavigator(show);

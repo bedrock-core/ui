@@ -2,12 +2,12 @@ import type { Runtime } from '@bedrock-core/server-runtime';
 import type { NavigationAdapter, ScreenKey } from '../static/common';
 import { registerAdapter } from '../static/adapters';
 import { navigateAsync } from '../runtime/navigate';
-import type { ScreenMetadata as ScreenDescriptor } from '@bedrock-core/ui-runtime';
+import type { ScreenMetadata } from '@bedrock-core/ui-runtime';
 import { navigation } from './service';
 import type { OwnedScreen } from './screens';
 import { NAVIGATION_ADAPTER } from '../static/symbols';
 
-export interface CoreOwnedScreen extends Omit<ScreenDescriptor, 'key'> { readonly key: ScreenKey; readonly owner: string }
+export interface CoreOwnedScreen extends Omit<ScreenMetadata, 'key'> { readonly key: ScreenKey; readonly owner: string }
 export interface CoreScreensRegistry {
   all(owner?: string): readonly CoreOwnedScreen[];
   get(key: ScreenKey): CoreOwnedScreen | undefined;

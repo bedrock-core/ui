@@ -1,11 +1,15 @@
+import { installDeclaration, stopInstallations } from '../../../../test/install';
 import { stateFor } from './state';
-import type { Runtime } from '@bedrock-core/server-runtime';
+import type { Declaration, Runtime } from '@bedrock-core/server-runtime';
 import type { Player } from '@minecraft/server';
 import { afterEach, expect, it, vi } from 'vitest';
 
+vi.mock('@bedrock-core/server-runtime/library', async () => (await import('../../../../test/mock-registries')).registryDeclarations());
+
 const player = { id: 'cross-realm-player' } as Player;
-const handlers = new Map<string, (request: unknown) => unknown>();
-const values = new Map<string, unknown>();
+const providers = new Map<string, { screens: { get(): unknown }; open(request: unknown): Promise<boolean> }>();
+const datasets = new Map<string, Record<string, unknown>>();
+const cleanups: (() => void)[] = [];
 type RealmApi = typeof import('@bedrock-core/navigation') & Pick<typeof import('../runtime/history'), 'currentLocation' | 'navigationSnapshot'>
   & Pick<typeof import('../runtime/navigate'), 'clearPlayerNavigation' | 'setNavigator'>;
 const realms: RealmApi[] = [];
@@ -23,35 +27,51 @@ async function realm(id: string) {
 
   vi.spyOn(world, 'getPlayers').mockReturnValue([player]);
   realms.push(api);
-  const slots = new Map<string, unknown>();
-  const core = {
+  const services = new Map<string, unknown>();
+  const installations: (() => void)[] = [];
+  const core: Runtime = {
     id, registered: true,
-    slot: (key: string) => slots.get(key),
-    fill: (key: string, value: unknown) => slots.set(key, value),
-    node: { state: {
-      get: (owner: string, key: string) => values.get(`${owner}|${key}`),
-      set: (owner: string, key: string, value: unknown) => values.set(`${owner}|${key}`, value),
-      namespaces: () => [...new Set([...values.keys()].map(key => key.split('|')[0]))],
-    } },
-    registry: { get: (owner: string) => handlers.has(owner) ? { id: owner } : undefined },
-    rpc: {
-      onRequest: (_method: string, handler: (request: unknown) => unknown) => handlers.set(id, handler),
-      request: (owner: string, _method: string, request: unknown) => Promise.resolve(handlers.get(owner)?.(request)),
+    registryFixture: {
+      write: (registry: string, entries: Record<string, unknown> | undefined) => { if (entries === undefined) { datasets.delete(id + registry); } else { datasets.set(id + registry, entries); } },
+      read: (owner: string, registry: string) => datasets.get(owner + registry),
+    },
+    service: (key: string) => services.get(key),
+    provideService: (key: string, value: unknown) => services.set(key, value),
+    install: (declaration: Declaration<unknown>) => { return installDeclaration(core, declaration, installations); },
+    registry: {
+      all: () => [...providers.keys()].map(owner => ({ id: owner })),
+      get: (owner: string) => providers.has(owner) ? { id: owner } : undefined,
+    },
+    api: {
+      provideModule: (_module: string, _shape: unknown, provided: { screens: { get(): unknown }; open(request: unknown): Promise<boolean> }) => {
+        providers.set(id, provided);
+        return () => { providers.delete(id); };
+      },
+      createModule: (owner: string) => ({
+        screens: { get: () => providers.get(owner)?.screens.get() },
+        open: (request: unknown) => Promise.resolve(providers.get(owner)?.open(request) ?? false),
+      }),
     },
   } as unknown as Runtime;
+
+  cleanups.push(() => {
+    stopInstallations(installations);
+    services.clear();
+  });
 
   return { api, service: adapter.navigation(core) };
 }
 
 afterEach(() => {
+  for (const cleanup of cleanups.splice(0)) { cleanup(); }
   for (const api of realms) {
     api.clearPlayerNavigation(player.id);
     api.setNavigator(undefined);
   }
 
   realms.length = 0;
-  handlers.clear();
-  values.clear();
+  providers.clear();
+  datasets.clear();
   vi.restoreAllMocks();
 });
 

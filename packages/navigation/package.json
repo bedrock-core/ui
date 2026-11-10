@@ -42,18 +42,22 @@
 	},
 	"files": [
 		"src",
+		"dist/core/api.ts",
 		"!src/**/__tests__/**",
 		"!src/**/*.test.ts",
 		"!src/**/*.test.tsx"
 	],
 	"sideEffects": false,
 	"scripts": {
-		"build": "tsc -p tsconfig.json",
-		"lint": "eslint .",
-		"test": "vitest run && yarn test:types",
-		"test:types": "tsc -p type-tests/tsconfig.json --noEmit"
+		"build:api": "node scripts/build-api.mjs",
+		"build": "yarn build:api && node ../../node_modules/typescript-native/bin/tsc -p tsconfig.json",
+		"prepack": "yarn build:api",
+		"lint": "yarn build:api && eslint .",
+		"test": "yarn build:api && vitest run && yarn test:types",
+		"test:types": "yarn build:api && tsc -p type-tests/tsconfig.json --noEmit"
 	},
 	"devDependencies": {
+		"@bedrock-core/builder-bundler": "^0.2.0",
 		"@minecraft/common": "*",
 		"@minecraft/server": "*",
 		"eslint": "*",
@@ -75,6 +79,7 @@
 		}
 	},
 	"dependencies": {
+		"@bedrock-core/observable": "^1.0.0",
 		"@bedrock-core/ui-runtime": "workspace:*"
 	}
 }

@@ -1,52 +1,50 @@
 import type { Runtime } from '@bedrock-core/server-runtime';
-import { isScreenMetadata as isScreenDescriptor, screenMetadata as screenDescriptors, type ScreenMetadata as ScreenDescriptor } from '@bedrock-core/ui-runtime';
+import { defineRegistry, type RegistryAccessor, type RegistryDefinition } from '@bedrock-core/server-runtime/library';
+import { isScreenMetadata, screenMetadata, type ScreenMetadata } from '@bedrock-core/ui-runtime';
 import { screenReferences, isScreenReference, type ScreenReference } from '../runtime/reference';
-
-const FEED = 'core-navigation/screens';
+import type { ScreenAnnouncement } from './api';
 
 /** A screen together with the realm that published it. Ownership is not parsed from its key. */
-export interface OwnedScreen extends ScreenDescriptor {
+export interface OwnedScreen extends ScreenMetadata {
   readonly owner: string;
-}
-
-interface ScreenAnnouncement {
-  readonly v: 1;
-  readonly screens: readonly ScreenDescriptor[];
-  readonly references: Readonly<Record<string, ScreenReference>>;
 }
 
 function isAnnouncement(value: unknown): value is ScreenAnnouncement {
   return typeof value === 'object' && value !== null && 'v' in value && value.v === 1
-    && 'screens' in value && Array.isArray(value.screens) && value.screens.every(isScreenDescriptor)
+    && 'screens' in value && Array.isArray(value.screens) && value.screens.every(isScreenMetadata)
     && 'references' in value && typeof value.references === 'object' && value.references !== null
     && !Array.isArray(value.references) && Object.values(value.references).every(isScreenReference);
 }
 
-function copyDescriptor(screen: ScreenDescriptor): ScreenDescriptor {
+const SCREENS: RegistryDefinition<ScreenAnnouncement> = { id: 'core:screens', contract: 1, accepts: isAnnouncement };
+
+function copyMetadata(screen: ScreenMetadata): ScreenMetadata {
   const copy: unknown = JSON.parse(JSON.stringify(screen));
 
-  if (!isScreenDescriptor(copy)) { throw new Error('Invalid screen descriptor.'); }
+  if (!isScreenMetadata(copy)) { throw new Error('Invalid screen metadata.'); }
 
   return copy;
 }
 
-/** Owner-written screen metadata and static references, read from Core's local mirror. */
+/** Owner-written screen metadata and static references, acquired through the library's registry interest. */
 export class ScreensRegistry {
   private readonly _core: Runtime;
-  private readonly _registered = new Map<string, ScreenDescriptor>();
+  private readonly _registry: RegistryAccessor<ScreenAnnouncement>;
+  private readonly _registered = new Map<string, ScreenMetadata>();
 
   constructor(core: Runtime) {
     this._core = core;
+    this._registry = core.install(defineRegistry(SCREENS, { revision: 1 }));
   }
 
   /** Every registered screen, or only the screens published by one realm. */
   all(owner?: string): readonly OwnedScreen[] {
-    const owners = owner === undefined ? new Set([this._core.id, ...this._core.node.state.namespaces()]) : new Set([owner]);
+    const owners = owner === undefined ? new Set([this._core.id, ...this._core.registry.all().map(addon => addon.id)]) : new Set([owner]);
 
     return [...owners].flatMap((id) => {
       const feed = this.read(id);
 
-      return feed?.screens.map(screen => ({ ...copyDescriptor(screen), owner: id })) ?? [];
+      return feed?.screens.map(screen => ({ ...copyMetadata(screen), owner: id })) ?? [];
     });
   }
 
@@ -76,14 +74,20 @@ export class ScreensRegistry {
 
   /** Publishes the current build's metadata and registered host entry points. */
   publish(): void {
-    this._core.node.state.set(this._core.id, FEED, this.local());
+    this._registry.set(this._core.id, this.local());
+  }
+
+  /** Clear local entries and withdraw the registry when their owning runtime stops. */
+  clear(): void {
+    this._registered.clear();
+    this._registry.stop();
   }
 
   /** Registers a local host entry point; the navigation service owns its opener. */
-  add(screen: ScreenDescriptor): void {
-    if (!isScreenDescriptor(screen)) { throw new Error('Invalid screen descriptor.'); }
+  add(screen: ScreenMetadata): void {
+    if (!isScreenMetadata(screen)) { throw new Error('Invalid screen metadata.'); }
 
-    this._registered.set(screen.key, copyDescriptor(screen));
+    this._registered.set(screen.key, copyMetadata(screen));
     this.publish();
   }
 
@@ -94,7 +98,7 @@ export class ScreensRegistry {
   }
 
   private local(): ScreenAnnouncement {
-    const screens = new Map(screenDescriptors().map(screen => [screen.key, screen]));
+    const screens = new Map(screenMetadata().map(screen => [screen.key, screen]));
 
     for (const [key, screen] of this._registered) { screens.set(key, screen); }
 
@@ -104,8 +108,6 @@ export class ScreensRegistry {
   private read(owner: string): ScreenAnnouncement | undefined {
     if (owner === this._core.id) { return this.local(); }
 
-    const value = this._core.node.state.get(owner, FEED);
-
-    return isAnnouncement(value) ? value : undefined;
+    return this._registry.of(owner)?.[owner];
   }
 }

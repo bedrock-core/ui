@@ -5,10 +5,14 @@ import {
   createNavigationContainerRef, createScreenReference, createStackNavigator, createStackScreen, createStaticNavigation,
   useLinkProps, useNavigation, useNavigationState, useRoute, type TopTabBarProps, type HeaderProps, type StaticParamList, type StaticScreenProps,
 } from '@bedrock-core/navigation';
-import { createCoreNavigationAdapter } from '@bedrock-core/navigation/core';
+import { createCoreNavigationAdapter, registerNavigation, type ServerNavigation } from '@bedrock-core/navigation/core';
 import { createNavigatorFactory } from '@bedrock-core/navigation/runtime';
 import type { Runtime } from '@bedrock-core/server-runtime';
 import type { Player } from '@minecraft/server';
+
+export function declarationExample(core: Runtime, manifest: Runtime['manifest']): ServerNavigation {
+  return core.register({ manifest, navigation: registerNavigation() }).navigation;
+}
 
 function ProductScreen({ route }: StaticScreenProps<{ productId: string }>): JSX.Element {
   const navigation = useNavigation('Product');

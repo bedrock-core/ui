@@ -1,7 +1,7 @@
 import type { Player } from '@minecraft/server';
 import {
-  endRender, render, screenForKey, staticScreen, screenMetadataFor as screenDescriptor,
-  screenParametersError as screenParameterError, type FunctionComponent, type JSX, type RenderOptions,
+  endRender, render, screenForKey, staticScreen, screenMetadataFor,
+  screenParametersError, type FunctionComponent, type JSX, type RenderOptions,
 } from '@bedrock-core/ui-runtime';
 import {
   clearHistory, currentLocation, navigationSnapshot, noteLocation, popLocation, pushHistory, restoreNavigation,
@@ -82,11 +82,11 @@ export function renderDestination(
  */
 export function openScreen(key: string, player: Player, options: NavigateOptions = {}): boolean {
   ensureNavigationLifecycle();
-  const descriptor = screenDescriptor(key);
+  const descriptor = screenMetadataFor(key);
 
   key = descriptor?.key ?? key;
 
-  const error = screenParameterError(descriptor?.parameters, options.params);
+  const error = screenParametersError(descriptor?.parameters, options.params);
 
   if (error !== undefined) {
     console.warn(`[ui] cannot open "${key}": ${error}`);
@@ -215,11 +215,11 @@ function perform(key: string, player: Player, options: NavigateOptions, previous
   settlePending(player);
 
   const before = previous ?? navigationSnapshot(player);
-  const descriptor = screenDescriptor(key);
+  const descriptor = screenMetadataFor(key);
 
   key = descriptor?.key ?? key;
 
-  const error = screenParameterError(descriptor?.parameters, options.params);
+  const error = screenParametersError(descriptor?.parameters, options.params);
 
   if (error !== undefined) {
     console.warn(`[ui] cannot navigate to "${key}": ${error}`);
