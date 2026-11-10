@@ -1,0 +1,19 @@
+coverage:
+  status:
+    project:
+      default: false
+      flexbox:
+        flags: [flexbox]
+        paths: [packages/flexbox/src/]
+        informational: true
+    patch:
+      default: false
+      flexbox:
+        flags: [flexbox]
+        paths: [packages/flexbox/src/]
+        informational: true
+
+flags:
+  flexbox:
+    paths: [packages/flexbox/src/]
+    carryforward: false

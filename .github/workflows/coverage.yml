@@ -1,0 +1,74 @@
+name: Coverage
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: coverage-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  coverage:
+    name: Flexbox coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+
+    defaults:
+      run:
+        working-directory: ui
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: ui
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26.13.0
+          package-manager-cache: false
+
+      - name: Install pinned Corepack before restoring the Yarn cache
+        run: |
+          npm install --global corepack@0.36.0
+          corepack enable yarn
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26.13.0
+          cache: yarn
+          cache-dependency-path: ui/yarn.lock
+
+      - name: Install Flexbox dependencies
+        run: yarn workspaces focus @bedrock-core/flexbox
+
+      - name: Measure Flexbox coverage
+        run: yarn workspace @bedrock-core/flexbox coverage
+
+      - name: Upload Flexbox coverage to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          working-directory: ui
+          files: packages/flexbox/coverage/lcov.info
+          flags: flexbox
+          name: flexbox
+          disable_search: true
+          fail_ci_if_error: true
+          use_oidc: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+
+      - name: Keep the coverage report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: flexbox-coverage
+          path: ui/packages/flexbox/coverage/
+          if-no-files-found: warn
+          retention-days: 14
