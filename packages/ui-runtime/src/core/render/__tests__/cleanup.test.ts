@@ -1,6 +1,6 @@
 import type { Player } from '@minecraft/server';
-import { afterEach, describe, expect, it } from 'vitest';
-import { createFiber, getFibersForOwner, playerOwner } from '../../fabric';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createFiber, deleteFiber, getFiber, getFibersForOwner, playerOwner } from '../../fabric';
 import type { Fiber } from '../../fabric/types';
 import { cleanupComponentTree } from '../tree';
 
@@ -12,6 +12,32 @@ const other = playerOwner({ id: 'cleanup-other' } as Player);
 afterEach(() => { cleanupComponentTree(owner); cleanupComponentTree(other); });
 
 describe('component tree cleanup', () => {
+  it('preserves a replacement registered under the same identity during cleanup', () => {
+    const id = `${owner.id}/Replacement:0`;
+    const previous = createFiber(id, owner);
+    let replacement: Fiber | undefined;
+
+    previous.hookStates.push({ tag: 'effect', value: undefined, cleanup: () => { replacement = createFiber(id, owner); } });
+    deleteFiber(id);
+    expect(replacement).toBeDefined();
+    expect(getFiber(id)).toBe(replacement);
+    expect(getFibersForOwner(owner)).toEqual([replacement]);
+  });
+
+  it('looks up only the requested owner and retains its registration order', () => {
+    const first = createFiber(`${owner.id}/First:0`, owner);
+    const foreign = createFiber(`${other.id}/Other:0`, other);
+    const last = createFiber(`${owner.id}/Last:0`, owner);
+    const readOwner = vi.fn(() => other);
+
+    Object.defineProperty(foreign, 'owner', { configurable: true, get: readOwner });
+    expect(getFibersForOwner(owner)).toEqual([first, last]);
+    expect(readOwner).not.toHaveBeenCalled();
+    cleanupComponentTree(owner);
+    expect(getFibersForOwner(owner)).toEqual([]);
+    expect(getFibersForOwner(other)).toEqual([foreign]);
+  });
+
   it('cleans descendants once before their parents with linear identity reads', () => {
     const records: { fiber: Fiber; id: string; parent?: string }[] = [];
     const cleaned: string[] = [];

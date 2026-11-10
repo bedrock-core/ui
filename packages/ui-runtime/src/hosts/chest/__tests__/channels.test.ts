@@ -125,6 +125,20 @@ describe('whole-value container text', () => {
     expect(setItem).not.toHaveBeenCalled();
   });
 
+  it('retries a look write that did not reach the container', () => {
+    const container = createContainer(4);
+    const written: Written = new Map();
+    const look: ChannelEntry = { element: { type: 'panel', props: {} }, slot: 3, carrier: 'enum', length: 1, look: 5 };
+    const setItem = vi.spyOn(container, 'setItem').mockImplementationOnce(() => { throw new Error('Write failed'); });
+
+    expect(() => writeChannels(container, [look], written, items)).toThrow('Write failed');
+    writeChannels(container, [look], written, items);
+    writeChannels(container, [look], written, items);
+
+    expect(setItem).toHaveBeenCalledTimes(2);
+    expect(items.valueOf(container.getItem(3)!)).toBe(5);
+  });
+
   it('removes the leading reset guard while preserving authored formatting', () => {
     expect(textOf(text('\u00a7r42.0').element)).toBe('42.0');
     expect(textOf(text('\u00a7aOK\u00a7r').element)).toBe('\u00a7aOK\u00a7r');

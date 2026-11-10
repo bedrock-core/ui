@@ -85,22 +85,46 @@ const interactions: Record<ScreenTestMetadata['host'], Partial<Record<IrNode['ki
   'chest': {},
 };
 
-function nameOf(node: IrNode): TestControlMetadata['name'] {
-  if (node.kind === 'text') {
-    return { kind: node.address !== undefined ? 'bound' : node.localize ? 'translated' : 'literal', value: node.text };
-  }
+function captionOf(nodes: IrNode[]): TestControlMetadata['name'] {
+  const captionNames = (child: IrNode): NonNullable<TestControlMetadata['name']>[] => {
+    if (child.kind === 'panel') { return childrenOf(child).flatMap(captionNames); }
 
-  if (node.kind !== 'button' || node.looks !== undefined) {
-    return undefined;
-  }
+    const name = child.kind === 'text' ? nameOf(child) : undefined;
 
-  const names = childrenOf(node).map(nameOf).filter(name => name !== undefined);
+    return name === undefined ? [] : [name];
+  };
+
+  const names = nodes.flatMap(captionNames);
 
   if (names.length === 0 || names.some(name => name.kind !== 'literal')) {
     return names.length === 1 ? names[0] : undefined;
   }
 
   return { kind: 'literal', value: names.map(name => name.value).join(' ').replace(/§[0-9a-z]/gi, '') };
+}
+
+function nameOf(node: IrNode): TestControlMetadata['name'] {
+  if (node.kind === 'text') {
+    return { kind: node.address !== undefined ? 'bound' : node.localize ? 'translated' : 'literal', value: node.text };
+  }
+
+  if (node.kind !== 'button') { return undefined; }
+
+  if (node.label !== undefined && node.label !== '') {
+    return { kind: node.labelLocalize === true ? 'translated' : 'literal', value: node.label.replace(/§[0-9a-z]/gi, '') };
+  }
+
+  const name = captionOf(node.children);
+
+  if (node.looks === undefined || name === undefined) { return name; }
+
+  const names = node.looks.faces.map(face => captionOf(face.children));
+
+  if (names.every(other => other?.kind === name.kind && other.value === name.value)) { return name; }
+
+  return name.kind === 'literal' && names.every(other => other?.kind === 'literal')
+    ? { kind: 'bound', value: name.value }
+    : undefined;
 }
 
 /** Maps source identities to concrete emitted instances without adding JSON UI properties. */

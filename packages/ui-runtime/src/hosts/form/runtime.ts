@@ -23,7 +23,7 @@ import { debugDiff } from './debug';
  */
 
 /**
- * What a live `<Text>` puts on the wire, capped at the width it reserved.
+ * What a live `<Text>` puts on the wire, capped to its literal UTF-16 allowance.
  *
  * Exported because both form hosts have to agree on it: an action form carries
  * the string in an entry, a modal in a row, and a compiled control reads
@@ -52,7 +52,17 @@ export const textValue = (element: JSX.Element, length: number): DisplayText => 
     return '';
   }
 
-  return isKey ? tail : tail.slice(0, length);
+  if (isKey) { return tail; }
+
+  if (length <= 0) { return ''; }
+
+  // The literal metrics precede safeLabelText's numeric guard. Authored reset
+  // codes remain part of the literal; only the inserted guard travels outside its limit.
+  const literal = typeof metrics === 'object' && metrics !== null ? Reflect.get(metrics, 'resolvedText') : undefined;
+  const guard = typeof literal === 'string' && /^[\d-]/.test(literal) && tail.startsWith('§r') ? 2 : 0;
+  const bounded = tail.slice(0, Math.max(0, Math.floor(length)) + guard);
+
+  return bounded.replace(/[\uD800-\uDBFF]$/, '');
 };
 
 /**

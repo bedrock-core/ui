@@ -74,9 +74,9 @@ export interface Probe {
    */
   readonly variants: readonly VariantTable[];
   /**
-   * Boxes the layout solved differently between two renders: a size or a
-   * place that follows state. Nothing carries one yet, and they usually follow
-   * a look that does, so they are kept apart from it.
+   * Boxes whose compiled placement is retained: text-only reflow and geometry
+   * owned by host mechanisms. Authored layout on plain elements is carried
+   * through appearance variants instead.
    */
   readonly geometry: readonly FrozenProp[];
   /**
@@ -128,11 +128,9 @@ const BAKED_PRIVATE = new Set(['__color', '__textAlign', '__background', '__opti
 /**
  * What the layout solved rather than what an author wrote.
  *
- * A box that moves is part of its element's look wherever that look is drawn
- * by copying: inside a face, where a caption that drops two pixels when its
- * segment is chosen drops in that face alone, and on any element drawn once
- * per look. Only an element the HOST places — a button's cell, a slot, a live
- * string — keeps the build's box, and its movement is reported apart.
+ * Authored layout or style changes can put a plain element's box in its look.
+ * Text-only reflow and boxes placed by the host keep their compiled geometry.
+ * Geometry inside a button belongs to that button's shared appearance.
  */
 const SOLVED = new Set(['jsonUIx', 'jsonUIy', 'jsonUIWidth', 'jsonUIHeight', 'jsonUIWideX', 'jsonUIWideY', 'jsonUIWideWidth', 'jsonUIWideHeight']);
 
@@ -248,13 +246,21 @@ export const walkWithOwners = (tree: JSX.Element): { elements: JSX.Element[]; ow
  * The same reading on both sides: the build writes the table off these props,
  * the runtime reads them again per present and says which row it landed on.
  */
-export const lookIndexOf = (table: VariantTable, tree: JSX.Element): number => {
-  const read = bakedProps(tree);
+function matchLook(table: VariantTable, read: ReturnType<typeof bakedProps>): number {
   const current = asText(table.props.map(({ position, prop }) => read[position]?.props[prop]));
   const index = table.combinations.findIndex(combination => asText(combination) === current);
 
   return index === -1 ? 0 : index;
-};
+}
+
+export const lookIndexOf = (table: VariantTable, tree: JSX.Element): number => matchLook(table, bakedProps(tree));
+
+/** Resolve every look in one allocation from a shared reading of the tree. */
+export function lookResolver(tree: JSX.Element): (table: VariantTable) => number {
+  let read: ReturnType<typeof bakedProps> | undefined;
+
+  return table => matchLook(table, read ??= bakedProps(tree));
+}
 
 /** The elements a recorded table's positions name, on this render's tree. */
 export const variantsAt = (
@@ -277,6 +283,16 @@ export const variantsAt = (
 
 /** What a prop is worth comparing as: stable for a value of any shape. */
 const asText = (value: unknown): string => (value === undefined ? 'undefined' : JSON.stringify(value) ?? 'undefined');
+
+/** Authored layout inputs, excluding the content of a carried text value. */
+const layoutInputsOf = (element: JSX.Element): string => {
+  const metrics = element.props.__textMetrics;
+  const textStyle = typeof metrics === 'object' && metrics !== null
+    ? ['font', 'fontSize', 'wordBreak', 'overflow', 'maxLines', 'hug', 'maxLength'].map(key => Reflect.get(metrics, key))
+    : undefined;
+
+  return asText([element.props.__layout, textStyle]);
+};
 
 /**
  * What the screen asked its host for, as one comparable line. Two renders of a
@@ -623,6 +639,7 @@ export function probeLiveness(build: () => JSX.Element): Probe {
   const referenceTexts = textValues(reference);
   const referenceProps = bakedProps(reference);
   const { elements: referenceElements, owners } = walkWithOwners(reference);
+  const referenceLayoutInputs = referenceElements.map(layoutInputsOf);
   const tried = candidatesIn(reference);
   const candidates = visibleCandidates(reference);
   const referenceVisibles = candidates.map(element => element.props.visible !== false);
@@ -633,6 +650,7 @@ export function probeLiveness(build: () => JSX.Element): Probe {
   const moved = new Map<string, FrozenProp>();
   const solved = new Map<string, FrozenProp>();
   const changedTextLayout = new Set<number>();
+  const authoredGeometry = new Set<string>();
   // Every render's props, per element, so a prop that moved can be read back
   // as the set of values it took rather than as the first change alone.
   const seen: Record<string, unknown>[][] = referenceProps.map(entry => [entry.props]);
@@ -656,18 +674,25 @@ export function probeLiveness(build: () => JSX.Element): Probe {
       return;
     }
 
-    bakedWalk(probed).forEach((element, position) => {
+    const probedElements = bakedWalk(probed);
+    const probedProps = bakedProps(probed);
+    let inputsChanged = probedElements.some((element, position) => layoutInputsOf(element) !== referenceLayoutInputs[position]);
+    const geometryChanges: string[] = [];
+
+    probedElements.forEach((element, position) => {
       if (isTextElementType(element.type) && asText(element.props.__layout) !== asText(referenceElements[position]?.props.__layout)) {
         changedTextLayout.add(position);
       }
     });
 
-    bakedProps(probed).forEach(({ type, props }, position) => {
+    probedProps.forEach(({ type, props }, position) => {
       const before = referenceProps[position];
 
       if (before === undefined) {
         return;
       }
+
+      if (type !== before.type) { inputsChanged = true; }
 
       seen[position]?.push(props);
 
@@ -679,11 +704,21 @@ export function probeLiveness(build: () => JSX.Element): Probe {
         const laidOut = SOLVED.has(prop) && (owners[position] ?? -1) === -1 && placed !== undefined
           && hasMechanism(placed);
 
+        if (was !== now) {
+          if (SOLVED.has(prop)) {
+            geometryChanges.push(key);
+          } else {
+            inputsChanged = true;
+          }
+        }
+
         if (was !== now && !moved.has(key)) {
           (laidOut ? solved : moved).set(key, { position, type, prop, before: was, after: now });
         }
       }
     });
+
+    if (inputsChanged) { geometryChanges.forEach(key => authoredGeometry.add(key)); }
 
     textValues(probed).forEach((value, position) => {
       if (value !== referenceTexts[position]) { texts.add(position); }
@@ -802,8 +837,11 @@ export function probeLiveness(build: () => JSX.Element): Probe {
     const ownStyleChanged = styledText.has(change.position);
     const reflowed = element !== undefined && isTextElementType(element.type)
       && !changedTextLayout.has(change.position) && !ownStyleChanged;
+    // Text-only reflow keeps the compiled boxes. Only geometry observed with
+    // changed authored inputs earns an enum; button faces own their subtree layout.
+    const staticLayout = (owners[change.position] ?? -1) === -1 && !authoredGeometry.has(key);
 
-    if (element !== undefined && (dynamic.has(element) || reflowed) && SOLVED.has(change.prop)) {
+    if (element !== undefined && (dynamic.has(element) || reflowed || staticLayout) && SOLVED.has(change.prop)) {
       moved.delete(key);
       solved.set(key, change);
     }

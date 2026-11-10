@@ -7,7 +7,7 @@ export { useContext } from './useContext';
 export { useMechanism } from './useMechanism';
 export { useReducer } from './useReducer';
 export { usePlayer } from './usePlayer';
-export { useEvent, EventSignal } from './useEvent';
+export { useEvent } from './useEvent';
 export { useExit } from './useExit';
 export { useComposed } from './useComposed';
 export type { Compose, Composed } from './useComposed';

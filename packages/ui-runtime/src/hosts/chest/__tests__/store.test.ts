@@ -94,6 +94,7 @@ const fiberWith = (path: string, tag: Fiber['hookStates'][number]['tag'], value:
   id: `${owner.id}:${path}`,
   hookStates: [{ tag, value }],
   hookIndex: 0,
+  stateVersion: 0,
   dispatcher: {} as Fiber['dispatcher'],
   owner,
   pendingEffects: [],

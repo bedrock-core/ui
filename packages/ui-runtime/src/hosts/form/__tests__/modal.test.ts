@@ -12,6 +12,7 @@ import { Option } from '../../../components';
 import { Panel } from '../../../components/Panel';
 import { Text } from '../../../components/Text';
 import { playerOwner } from '../../../core/fabric';
+import { textChannelsAt } from '../../../core/ir/text';
 import { findModalConfig } from '../../../core/render/present';
 import { buildTree } from '../../../core/render/tree';
 import type { JSX } from '../../../jsx';
@@ -65,6 +66,20 @@ describe('presenting a compiled modal', () => {
     // it names is already in the pack.
     expect(__lastModalForm()?.titleText).toBe(TITLE);
     expect(String(__lastModalForm()?.titleText).length).toBeLessThan(64);
+  });
+
+  it('carries numeric text without spending its literal limit on the inserted guard', async () => {
+    const tree = build(() => Form({ children: [
+      Text({ maxLength: 4, width: 80, children: '123456' }),
+      Form.Button({ type: 'submit', label: 'Save' }),
+    ] }));
+    textChannelsAt(tree, [0]);
+    const config = findModalConfig(tree);
+
+    expect(config).toBeDefined();
+    await presentCompiledModal(player, tree, config!, TITLE);
+
+    expect(__lastModalForm()?.rows).toEqual([{ kind: 'label', label: '§r1234' }]);
   });
 
   it('sends every field bare, since the pack already draws the label', async () => {

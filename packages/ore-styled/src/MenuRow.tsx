@@ -68,6 +68,9 @@ export function MenuRow({
   replace,
   titleMaxLength,
   subtitleMaxLength,
+  testId,
+  testRole,
+  testName,
   ...layout
 }: MenuRowProps): JSX.Element {
   const row = theme.components.menuRow;
@@ -153,6 +156,9 @@ export function MenuRow({
     backgroundPressed,
     backgroundLocked,
     enabled,
+    testId,
+    testRole,
+    testName,
   };
 
   return (

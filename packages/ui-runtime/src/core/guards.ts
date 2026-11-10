@@ -12,7 +12,7 @@ export function isElement(value: unknown): value is JSX.Element {
   return !!value && typeof value === 'object' && !Array.isArray(value) && 'type' in (value);
 }
 
-/** The element children of a node, in order; strings and holes are dropped. */
+/** Flatten element children in document order; strings, booleans and holes are dropped. */
 export function childElements(children: unknown): JSX.Element[] {
   if (Array.isArray(children)) {
     return childrenOf(children);
@@ -22,7 +22,27 @@ export function childElements(children: unknown): JSX.Element[] {
 }
 
 function childrenOf(children: unknown[]): JSX.Element[] {
-  return children.filter(isElement);
+  const elements: JSX.Element[] = [];
+  const pending = [{ children, index: 0 }];
+
+  while (pending.length > 0) {
+    const frame = pending[pending.length - 1];
+
+    if (frame.index >= frame.children.length) {
+      pending.pop();
+      continue;
+    }
+
+    const child: unknown = frame.children[frame.index++];
+
+    if (Array.isArray(child)) {
+      pending.push({ children: child, index: 0 });
+    } else if (isElement(child)) {
+      elements.push(child);
+    }
+  }
+
+  return elements;
 }
 
 /**
@@ -48,12 +68,12 @@ export function isNode(value: unknown): value is JSX.Node {
     return true;
   }
 
-  if (typeof value === 'string') {
+  if (typeof value === 'string' || typeof value === 'boolean') {
     return true;
   }
 
   if (Array.isArray(value)) {
-    return value.every(item => item === null || item === undefined || isElement(item));
+    return value.every(isNode);
   }
 
   return isElement(value);

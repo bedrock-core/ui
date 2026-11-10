@@ -1,4 +1,4 @@
-import { textChannelsAt } from '../text';
+import { hasTextChannel, textChannelsAt } from '../text';
 import { describe, expect, it } from 'vitest';
 import { Button } from '../../../components/Button';
 import { Container } from '../../../components/Container';
@@ -93,5 +93,20 @@ describe('carried visible', () => {
     });
 
     expect(result.liveVisibles).toEqual([]);
+  });
+
+  it('clears baked captions while keeping live text ordinals across shared nodes', () => {
+    const shared = Text({ children: 'shared' });
+    const caption = Text({ children: 'caption' });
+    const last = Text({ children: 'last' });
+    const tree = Panel({ children: [shared, Button({ children: [shared, caption] }), last] });
+
+    caption.props.__textChannel = true;
+    textChannelsAt(tree, [0, 1]);
+    expect(hasTextChannel(shared)).toBe(true);
+    expect(hasTextChannel(caption)).toBe(false);
+    expect(hasTextChannel(last)).toBe(true);
+    textChannelsAt(tree, []);
+    expect([shared, caption, last].some(hasTextChannel)).toBe(false);
   });
 });

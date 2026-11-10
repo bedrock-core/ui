@@ -205,6 +205,7 @@ export function compileFormScreen(Screen: FunctionComponent, spec: FormScreenSpe
   checkLiveness(probe, spec.name, {
     carriedVisible: true,
     carriedLooks: carriedPositions(looks.values()),
+    tree,
   });
   const embedded = embedPlacementOf(tree);
 

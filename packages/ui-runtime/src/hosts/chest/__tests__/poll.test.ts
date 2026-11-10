@@ -13,6 +13,7 @@ import { protocolItems, BUTTON_STACK } from '../runtime/items';
 import {
   createLedger, createWatch, poll, type PollHost, resync, retrieve, sameStack, sweep,
 } from '../runtime/poll';
+import { carriedBy } from '../runtime/players';
 import { buttonSlots, reconcile, writeButtons } from '../runtime/reconcile';
 import { screenContainer } from '../runtime/view';
 
@@ -571,6 +572,18 @@ describe('an ordinary slot', () => {
 });
 
 describe('a session’s housekeeping', () => {
+  it('reads inventory size once when tallying every slot', () => {
+    const viewer = createPlayer('p1', 36);
+    const size = vi.fn(() => 36);
+    Object.defineProperty(viewer.inventory, 'size', { get: size });
+    viewer.inventory.setItem(35, stone(3));
+    viewer.cursor.hold(stone(2));
+    size.mockClear();
+
+    expect(carriedBy(viewer.player).get('minecraft:stone')).toBe(5);
+    expect(size).toHaveBeenCalledTimes(1);
+  });
+
   it('sweeps every owned item off a player, and nothing else', () => {
     const viewer = createPlayer('p1');
 

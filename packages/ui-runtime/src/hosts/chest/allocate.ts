@@ -1,7 +1,8 @@
 import type { JSX } from '../../jsx';
 import { slotName } from '../../components/Slot';
 import { BUTTON_TYPE } from '../../components/Button';
-import { analyze, type Analysis, type CellRole, claim, lookIndexOf, variantsAt, type VariantTable } from '../../core/ir';
+import { analyze, type Analysis, type CellRole, claim, variantsAt, type VariantTable } from '../../core/ir';
+import { lookResolver } from '../../core/ir/probe';
 import { SENTINEL_SLOTS } from './contract';
 import { CONTAINER_TEXT_LIMIT } from './text';
 
@@ -87,6 +88,7 @@ export const allocate = (tree: JSX.Element, analysis?: Analysis, looks: readonly
   const tables = variantsAt(tree, looks);
   const apart = new Map([...tables].filter(([element]) => element.type !== BUTTON_TYPE));
   const { cells, channels } = claim(tree, analysis ?? analyze(tree, undefined, apart));
+  const resolveLook = lookResolver(tree);
   const slots: SlotEntry[] = cells.map(({ element, role }, index) => {
     const table = role === 'button' ? tables.get(element) : undefined;
 
@@ -95,7 +97,7 @@ export const allocate = (tree: JSX.Element, analysis?: Analysis, looks: readonly
       slot: SENTINEL_SLOTS.length + index,
       role,
       name: slotName(element),
-      ...table === undefined ? {} : { look: lookIndexOf(table, tree) },
+      ...table === undefined ? {} : { look: resolveLook(table) },
     };
   });
 
@@ -104,7 +106,7 @@ export const allocate = (tree: JSX.Element, analysis?: Analysis, looks: readonly
 
   const bank: ChannelEntry[] = channels.map(({ element, carrier, length, looks: table }) => {
     if (carrier === 'enum' && table !== undefined) {
-      const entry: ChannelEntry = { element, slot: next, carrier, length: 1, look: lookIndexOf(table, tree) };
+      const entry: ChannelEntry = { element, slot: next, carrier, length: 1, look: resolveLook(table) };
 
       next += 1;
 

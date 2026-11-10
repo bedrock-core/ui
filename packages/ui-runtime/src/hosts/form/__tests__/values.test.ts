@@ -99,4 +99,22 @@ describe('compiled value snapshot traversal', () => {
     expect(visibles).toHaveBeenCalledOnce();
     expect(variants).toHaveBeenCalledOnce();
   });
+
+  it('resolves multiple looks from the current tree on each allocation', () => {
+    const onPress = vi.fn();
+    const tree = buildScreenTree(() => Screen({ children: Panel({ children: [
+      Button({ testId: 'first', background: 'selected', onPress }),
+      Button({ testId: 'second', background: 'default', onPress }),
+    ] }) }));
+    const nodes = ir.bakedWalk(tree);
+    const positions = ['first', 'second'].map(testId => nodes.findIndex(element => element.props.testId === testId));
+    const snapshot: CompiledSnapshot = { ...empty, texts: [], looks: positions.map(position => ({
+      position, type: 'button', props: [{ position, prop: 'background' }], combinations: [['default'], ['selected']],
+    })) };
+
+    expect(positions.every(position => position >= 0)).toBe(true);
+    expect(compiledValuesOf(tree, snapshot).values).toEqual(['t', 't', LOOK_PREFIX + '1', LOOK_PREFIX + '0']);
+    nodes[positions[1]]!.props.background = 'selected';
+    expect(compiledValuesOf(tree, snapshot).values).toEqual(['t', 't', LOOK_PREFIX + '1', LOOK_PREFIX + '1']);
+  });
 });

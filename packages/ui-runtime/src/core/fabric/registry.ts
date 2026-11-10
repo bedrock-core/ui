@@ -1,7 +1,5 @@
 import { Dispatcher, Fiber } from './types';
 
-export const FiberRegistry = new Map<string, Fiber>();
-
 let currentFiber: Fiber | undefined = undefined;
 let currentDispatcher: Dispatcher | undefined = undefined;
 

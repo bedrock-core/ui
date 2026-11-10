@@ -73,6 +73,17 @@ describe('presenting a compiled form', () => {
     expect(__lastActionForm()?.buttons).toEqual(['far ']);
   });
 
+  it('carries numeric text without spending its literal limit on the inserted guard', async () => {
+    const tree = build((): JSX.Element => Panel({
+      children: [Text({ maxLength: 4, width: 80, children: '123456' })],
+    }));
+    textChannelsAt(tree, [0]);
+
+    await presentCompiledForm(player, tree, TITLE);
+
+    expect(__lastActionForm()?.buttons).toEqual(['§r1234']);
+  });
+
   it('says whether each press may happen, which is all a press entry carries', async () => {
     const tree = build((): JSX.Element => Panel({
       children: [

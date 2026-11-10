@@ -42,7 +42,9 @@ export const carriedBy = (player: Player): ReadonlyMap<string, number> => {
   const inventory = inventoryOf(player);
 
   if (inventory) {
-    for (let slot = 0; slot < inventory.size; slot += 1) {
+    const size = inventory.size;
+
+    for (let slot = 0; slot < size; slot += 1) {
       tally(totals, inventory.getItem(slot));
     }
   }
@@ -136,7 +138,9 @@ export const writeCursor = (player: Player, stack: ItemStack): boolean => {
     return false;
   }
 
-  return cursor.item?.typeId === stack.typeId && cursor.item.amount === stack.amount;
+  const held = cursor.item;
+
+  return held?.typeId === stack.typeId && held.amount === stack.amount;
 };
 
 /**
@@ -150,8 +154,9 @@ export const writeCursor = (player: Player, stack: ItemStack): boolean => {
 export const reclaimGuard = (viewers: readonly Player[], items: ProtocolItems): Player | undefined => {
   for (const viewer of viewers) {
     const cursor = cursorOf(viewer);
+    const item = cursor?.item;
 
-    if (cursor?.item && items.isGuard(cursor.item)) {
+    if (cursor && item && items.isGuard(item)) {
       cursor.clear();
 
       return viewer;
@@ -165,7 +170,9 @@ export const reclaimGuard = (viewers: readonly Player[], items: ProtocolItems): 
       continue;
     }
 
-    for (let slot = 0; slot < inventory.size; slot += 1) {
+    const size = inventory.size;
+
+    for (let slot = 0; slot < size; slot += 1) {
       const item = inventory.getItem(slot);
 
       if (item && items.isGuard(item)) {
@@ -184,7 +191,9 @@ export const sweep = (player: Player, items: ProtocolItems): void => {
   const inventory = inventoryOf(player);
 
   if (inventory) {
-    for (let slot = 0; slot < inventory.size; slot += 1) {
+    const size = inventory.size;
+
+    for (let slot = 0; slot < size; slot += 1) {
       const item = inventory.getItem(slot);
 
       if (item && items.isOwned(item)) {
@@ -194,8 +203,9 @@ export const sweep = (player: Player, items: ProtocolItems): void => {
   }
 
   const cursor = cursorOf(player);
+  const item = cursor?.item;
 
-  if (cursor?.item && items.isOwned(cursor.item)) {
+  if (cursor && item && items.isOwned(item)) {
     cursor.clear();
   }
 };
@@ -263,7 +273,9 @@ export const retrieve = (viewers: readonly Player[], stack: ItemStack): Player |
         continue;
       }
 
-      for (let slot = 0; slot < inventory.size; slot += 1) {
+      const size = inventory.size;
+
+      for (let slot = 0; slot < size; slot += 1) {
         const item = inventory.getItem(slot);
 
         if (item?.typeId !== stack.typeId) {

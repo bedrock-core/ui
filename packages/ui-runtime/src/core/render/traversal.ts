@@ -32,6 +32,7 @@ export interface TraversalContext {
   currentContext: Map<Context<unknown>, unknown>; // Fiber context snapshot being propagated (keyed by context object)
   parentFiber?: Fiber; // Current parent function-component fiber (used for building fiber relations)
   visited: Set<string>; // Fiber ids this pass reached — one shared Set; what is absent afterwards is an orphan
+  memoize?: boolean;
 }
 
 /**

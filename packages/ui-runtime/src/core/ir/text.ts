@@ -4,12 +4,15 @@ import { MODAL_FORM_BUTTON_SLOT_TYPE } from '../../components/Form/FormButton';
 import { childElements } from '../guards';
 import type { JSX } from '../../jsx';
 
+const hasBakedCaption = (element: JSX.Element): boolean =>
+  element.type === BUTTON_TYPE || element.type === MODAL_FORM_BUTTON_SLOT_TYPE;
+
 /** Text whose value is carried separately from a button's shared appearance. */
 export const textElements = (tree: JSX.Element): JSX.Element[] => {
   const found: JSX.Element[] = [];
 
   const visit = (element: JSX.Element): void => {
-    if (element.type === BUTTON_TYPE || element.type === MODAL_FORM_BUTTON_SLOT_TYPE) { return; }
+    if (hasBakedCaption(element)) { return; }
 
     if (isTextElementType(element.type)) { found.push(element); }
 
@@ -33,14 +36,24 @@ export const textValues = (tree: JSX.Element): string[] => textElements(tree).ma
 export const textChannelsAt = (tree: JSX.Element, positions: readonly number[]): void => {
   const channels = new Set(positions);
 
-  const clear = (node: JSX.Element): void => {
-    if (isTextElementType(node.type)) { node.props.__textChannel = false; }
+  const eligible: JSX.Element[] = [];
 
-    childElements(node.props.children).forEach(clear);
+  const visit = (node: JSX.Element, canCarry: boolean): void => {
+    const canCarryText = canCarry && !hasBakedCaption(node);
+
+    if (isTextElementType(node.type)) {
+      node.props.__textChannel = false;
+
+      if (canCarryText) { eligible.push(node); }
+    }
+
+    for (const child of childElements(node.props.children)) {
+      visit(child, canCarryText);
+    }
   };
 
-  clear(tree);
-  textElements(tree).forEach((element, position) => { element.props.__textChannel = channels.has(position); });
+  visit(tree, true);
+  eligible.forEach((element, position) => { element.props.__textChannel = channels.has(position); });
 };
 
 /** Whether the compiler assigned this text a runtime value channel. */

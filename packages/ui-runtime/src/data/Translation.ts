@@ -16,7 +16,7 @@ import { useContext, usePlayer } from '../hooks';
  * one mechanism and components need no fallback logic. Providing it yourself
  * shadows the injected value for a subtree: hosts that resolve beyond their
  * own bundle (`@bedrock-core/config` provides
- * `core.translations.forPlayer(player)`, which chains every addon's published
+ * `translations(core).forPlayer(player)`, which chains every addon's published
  * bundle) or subtrees pinned to custom data.
  *
  * A key nothing resolves measures as the literal key string — mirroring

@@ -1,7 +1,7 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { Button, Container, Disclosure, Form, Option, Panel, Screen, Select, Tabs, Text } from '@bedrock-core/ui-runtime';
+import { Button, Container, Disclosure, Form, List, Option, Panel, Screen, Select, Tabs, Text, useState } from '@bedrock-core/ui-runtime';
 import { Link } from '@bedrock-core/navigation';
 import { describe, expect, it } from 'vitest';
 import { jsx } from '@bedrock-core/ui-runtime/jsx-runtime';
@@ -9,8 +9,12 @@ import { Input } from '../../../ore-styled/src/Input';
 import { Slider } from '../../../ore-styled/src/Slider';
 import { Dropdown } from '../../../ore-styled/src/Dropdown';
 import { Checkbox } from '../../../ore-styled/src/Checkbox';
+import { MenuRow } from '../../../ore-styled/src/MenuRow';
 import { compileScreen } from '../compile';
 import { compileFormScreen } from '../hosts/form/compile';
+import { TestMetadataCollector } from '../testing';
+import { BUTTON_TYPE, SCREEN_TYPE } from '@bedrock-core/ui-runtime/compile';
+import type { Control, Document } from '../jsonui';
 
 const spec = { namespace: 'shop', name: 'home' };
 const sample = (): JSX.Element => Screen({ testId: 'home', children: Panel({
@@ -19,6 +23,125 @@ const sample = (): JSX.Element => Screen({ testId: 'home', children: Panel({
 }) });
 
 describe('opt-in compiler test metadata', () => {
+  for (const linked of [false, true]) {
+    it(`maps a ${linked ? 'linked' : 'callback'} MenuRow identity to its input surface without changing its output`, () => {
+      const source = (declared: boolean) => (): JSX.Element => Screen({ children: Panel({ width: 240, children: jsx(() => MenuRow({
+        title: 'Inventory', height: 40, ...linked ? { to: 'shop:inventory' } : { onPress: (): void => {} },
+        ...declared ? { testId: 'inventory', testRole: 'button', testName: 'Open inventory' } : {},
+      }), {}) }) });
+      const plain = compileFormScreen(source(false), spec);
+      const tested = compileFormScreen(source(true), { ...spec, testMetadata: true });
+      const controls = tested.testMetadata!.controls.filter(control => control.testId === 'inventory');
+
+      expect(controls).toHaveLength(1);
+      expect(controls[0]).toMatchObject({ role: 'button', name: { kind: 'declared', value: 'Open inventory' }, interaction: 'form-button', paths: [expect.any(Array)] });
+      expect(tested.document).toEqual(plain.document);
+      expect(tested.faces).toEqual(plain.faces);
+      expect(tested.snapshot).toEqual(plain.snapshot);
+    });
+  }
+
+  for (const label of ['Save settings', '1 setting', undefined]) {
+    it(`uses the ${label === undefined ? 'translated default' : 'explicit'} modal button label as its caption: ${String(label)}`, () => {
+      const source = (): JSX.Element => Form({ children: Panel({ children: jsx(() => Form.Button({ type: 'submit', testId: 'save', label }), {}) }) });
+      const tested = compileFormScreen(source, { ...spec, testMetadata: true });
+
+      expect(tested.testMetadata?.controls.find(control => control.testId === 'save'))
+        .toMatchObject({ name: label === undefined ? { kind: 'translated', value: 'gui.submit' } : { kind: 'literal', value: label }, interaction: 'modal-button' });
+      expect(tested.document).toEqual(compileFormScreen(source, spec).document);
+    });
+  }
+
+  for (const kind of ['grid', 'factory'] as const) {
+    it(`does not assign runtime instance paths beneath a ${kind}`, () => {
+      const collector = new TestMetadataCollector();
+
+      collector.onNode({ type: BUTTON_TYPE, props: { testId: 'row-action' } }, {
+        kind: 'button', name: 'probe', rect: { x: 0, y: 0, width: 40, height: 20 },
+        face: { texture: '', hover: '', pressed: '' }, children: [],
+      });
+      const wrapper: Control = {
+        type: kind === 'grid' ? 'grid' : 'panel',
+        ...kind === 'factory' ? { factory: { name: 'rows' } } : {},
+        controls: [{ probe: { type: 'button' } }],
+      };
+      const document: Document = { namespace: 'fixture', screen: { type: 'panel', controls: [{ rows: wrapper }] } };
+      const metadata = collector.finish({ type: SCREEN_TYPE, props: {} }, document, 'fixture:rows', 'form-action');
+
+      expect(metadata.controls.find(control => control.testId === 'row-action'))
+        .toMatchObject({ role: 'button', paths: [], interaction: 'unsupported' });
+    });
+  }
+
+  it('retains translated captions without combining them with unrelated literal text', () => {
+    const source = (): JSX.Element => Screen({ children: Panel({ children: [
+      Button({ testId: 'translated', children: Panel({ children: Text({ children: { translate: 'fixture.caption' } }) }) }),
+      Button({ testId: 'mixed', children: Panel({ children: [Text({ children: 'Prefix' }), Text({ children: { translate: 'fixture.caption' } })] }) }),
+    ] }) });
+    const tested = compileFormScreen(source, { ...spec, testMetadata: true });
+
+    expect(tested.testMetadata?.controls.find(control => control.testId === 'translated')?.name)
+      .toEqual({ kind: 'translated', value: 'fixture.caption' });
+    expect(tested.testMetadata?.controls.find(control => control.testId === 'mixed')?.name).toBeUndefined();
+    expect(tested.document).toEqual(compileFormScreen(source, spec).document);
+  });
+
+  it('collects a button caption through nested layout and component wrappers', () => {
+    const Caption = (): JSX.Element => Panel({ children: [Text({ children: '§aBuy' }), Panel({ children: Text({ children: 'diamonds' }) })] });
+    const source = (): JSX.Element => Screen({ children: Panel({ children: [
+      Button({ testId: 'purchase', children: jsx(Caption, {}) }),
+      Button({ testId: 'declared', testName: 'Purchase item', children: jsx(Caption, {}) }),
+    ] }) });
+    const plain = compileFormScreen(source, spec);
+    const tested = compileFormScreen(source, { ...spec, testMetadata: true });
+
+    expect(tested.testMetadata?.controls.find(control => control.testId === 'purchase'))
+      .toMatchObject({ name: { kind: 'literal', value: 'Buy diamonds' }, interaction: 'form-button' });
+    expect(tested.testMetadata?.controls.find(control => control.testId === 'declared')?.name)
+      .toEqual({ kind: 'declared', value: 'Purchase item' });
+    expect(tested.document).toEqual(plain.document);
+    expect(tested.faces).toEqual(plain.faces);
+    expect(tested.snapshot).toEqual(plain.snapshot);
+  });
+
+  it('retains bound captions and separate fixed row slots through dynamic wrappers', () => {
+    const Content = (): JSX.Element => {
+      const [enabled, setEnabled] = useState(false);
+
+      return Panel({ width: 240, children: [
+        Button({ testId: 'status', onPress: () => setEnabled(!enabled), children: Panel({ children: Text({ maxLength: 8, children: enabled ? 'Enabled' : 'Disabled' }) }) }),
+        jsx(() => List({ max: 3, items: ['One'], row: (_item: string | undefined, index: number) => Panel({
+          children: Button({ testId: `slot-${index}`, children: Panel({ children: Text({ children: `Row ${index + 1}` }) }) }),
+        }) }), {}),
+      ] });
+    };
+    const source = (): JSX.Element => Screen({ children: jsx(Content, {}) });
+    const plain = compileFormScreen(source, spec);
+    const tested = compileFormScreen(source, { ...spec, testMetadata: true });
+    const controls = tested.testMetadata!.controls;
+
+    expect(controls.find(control => control.testId === 'status')?.name).toEqual({ kind: 'bound', value: 'Disabled' });
+    const rows = controls.filter(control => control.testId?.startsWith('slot-'));
+
+    expect(rows.map(control => [control.testId, control.name?.value])).toEqual([
+      ['slot-0', 'Row 1'], ['slot-1', 'Row 2'], ['slot-2', 'Row 3'],
+    ]);
+    expect(rows.every(control => control.paths.length === 1 && control.interaction === 'form-button')).toBe(true);
+    expect(new Set(rows.map(control => JSON.stringify(control.paths[0]))).size).toBe(3);
+
+    for (const control of rows) {
+      let value: unknown = tested.document;
+
+      for (const key of control.paths[0]!) { value = Reflect.get(value as object, key); }
+
+      expect(value).toBeTypeOf('object');
+    }
+
+    expect(tested.document).toEqual(plain.document);
+    expect(tested.faces).toEqual(plain.faces);
+    expect(tested.snapshot).toEqual(plain.snapshot);
+  });
+
   for (const modal of [false, true]) {
     it(`maps local tab and disclosure toggles to unique qualified instances on an ${modal ? 'modal' : 'action'} form`, () => {
       const children = (): JSX.Element => Panel({ width: 240, children: [

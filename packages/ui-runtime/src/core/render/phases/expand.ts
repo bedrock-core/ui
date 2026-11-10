@@ -4,6 +4,7 @@ import type { Fiber } from '../../fabric/types';
 import { childElements } from '../../guards';
 import { generateComponentId, type TraversalContext } from '../traversal';
 import { TREE_BOUNDARY_TYPE } from '../../../components/TreeBoundary';
+import { cacheableProps, isCompiledPure } from '../compiler';
 
 /** Bound recursive component definitions without exhausting the game's JavaScript stack. */
 const MAX_COMPONENT_DEPTH = 1_024;
@@ -102,8 +103,29 @@ export function expandAndResolveContexts(element: JSX.Element, context: Traversa
       }
 
       fiber.contextSnapshot = scope.currentContext;
+      fiber.compilerCacheEnabled = scope.memoize === true;
 
-      const rendered = activateFiber(fiber, () => component(node.props));
+      const memoized = scope.memoize === true && isCompiledPure(component) && cacheableProps(node.props, component);
+      const cached = fiber.memoCache;
+      let rendered: JSX.Element;
+
+      if (memoized && cached?.component === component && cached.stateVersion === fiber.stateVersion
+        && sameProps(cached.props, node.props) && sameContext(fiber, scope)) {
+        rendered = cached.rendered;
+      } else {
+        fiber.memoCache = undefined;
+        rendered = activateFiber(fiber, () => {
+          const stateVersion = fiber.stateVersion;
+          const props = memoized ? { ...node.props } : undefined;
+          const output = component(node.props);
+
+          if (props && !fiber.memoUnsafe) {
+            fiber.memoCache = { component, props, rendered: output, stateVersion };
+          }
+
+          return output;
+        });
+      }
 
       pending.push({ ...task, element: rendered, context: {
         ...scope,
@@ -140,4 +162,18 @@ export function expandAndResolveContexts(element: JSX.Element, context: Traversa
   }
 
   return result[0];
+}
+
+/** Prop values use reference equality; copying the outer props also detects replaced fields. */
+function sameProps(previous: JSX.Props, next: JSX.Props): boolean {
+  const keys = Object.keys(previous);
+
+  return keys.length === Object.keys(next).length
+    && keys.every(key => Object.hasOwn(next, key) && Object.is(previous[key], next[key]));
+}
+
+/** Only contexts read by this component affect its cached output. */
+function sameContext(fiber: Fiber, scope: TraversalContext): boolean {
+  return fiber.hookStates.every(slot => slot.context === undefined
+    || Object.is(slot.value, scope.currentContext.get(slot.context) ?? slot.context.defaultValue));
 }

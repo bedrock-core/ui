@@ -1,14 +1,27 @@
 import { takeStateSeed } from '../render/session';
 import { MountDispatcher, UpdateDispatcher } from './dispatcher';
 import type { Owner } from './owner';
-import { FiberRegistry, getCurrentFiber, setCurrentFiber } from './registry';
+import { getCurrentFiber, setCurrentFiber } from './registry';
 import { Fiber, HookSlot } from './types';
+import { beginCallbacks, clearCallbacks, finishCallbacks } from '../render/callbacks';
+
+const fibersById = new Map<string, Fiber>();
+const fibersByOwner = new Map<string, Map<string, Fiber>>();
+
+function removeOwnerEntry(ownerId: string, id: string): void {
+  const group = fibersByOwner.get(ownerId);
+
+  if (group?.delete(id) && group.size === 0) {
+    fibersByOwner.delete(ownerId);
+  }
+}
 
 export function createFiber(id: string, owner: Owner): Fiber {
   const fiber: Fiber = {
     id,
     hookStates: [],
     hookIndex: 0,
+    stateVersion: 0,
     dispatcher: MountDispatcher,
     owner,
     seed: takeStateSeed(owner, id),
@@ -20,21 +33,38 @@ export function createFiber(id: string, owner: Owner): Fiber {
     index: -1,
   };
 
-  FiberRegistry.set(id, fiber);
+  const previousOwnerId = fibersById.get(id)?.owner.id;
+
+  if (previousOwnerId !== undefined && previousOwnerId !== owner.id) {
+    removeOwnerEntry(previousOwnerId, id);
+  }
+
+  let group = fibersByOwner.get(owner.id);
+
+  if (group === undefined) {
+    group = new Map();
+    fibersByOwner.set(owner.id, group);
+  }
+
+  group.set(id, fiber);
+  fibersById.set(id, fiber);
 
   return fiber;
 }
 
 export function getFiber(id: string): Fiber | undefined {
-  return FiberRegistry.get(id);
+  return fibersById.get(id);
 }
 
 export function deleteFiber(id: string): void {
-  const fiber: Fiber | undefined = FiberRegistry.get(id);
+  const fiber = fibersById.get(id);
 
   if (!fiber) {
     return;
   }
+
+  fibersById.delete(id);
+  removeOwnerEntry(fiber.owner.id, id);
 
   // Detach from parent/sibling chain defensively
   const parent = fiber.parent;
@@ -57,6 +87,8 @@ export function deleteFiber(id: string): void {
 
   fiber.parent = undefined;
   fiber.sibling = undefined;
+  fiber.memoCache = undefined;
+  clearCallbacks(fiber);
 
   // Run any remaining cleanups
   for (let i = 0; i < fiber.hookStates.length; i++) {
@@ -72,25 +104,17 @@ export function deleteFiber(id: string): void {
       slot.cleanup = undefined;
     }
   }
-
-  FiberRegistry.delete(id);
 }
 
 /**
  * Every fiber belonging to an owner.
  * @param owner - Whose fibers to collect
- * @returns The fibers keyed by this owner, in registry order
+ * @returns A snapshot of this owner's fibers in registration order.
  */
 export function getFibersForOwner(owner: Owner): Fiber[] {
-  const fibers: Fiber[] = [];
+  const group = fibersByOwner.get(owner.id);
 
-  FiberRegistry.forEach((fiber) => {
-    if (fiber.owner.id === owner.id) {
-      fibers.push(fiber);
-    }
-  });
-
-  return fibers;
+  return group === undefined ? [] : [...group.values()];
 }
 
 /**
@@ -104,7 +128,10 @@ export function activateFiber<T>(
   const [prevFiber, prevDispatcher] = getCurrentFiber();
 
   fiber.hookIndex = 0;
+  fiber.memoUnsafe = false;
   fiber.pendingEffects = [];
+  beginCallbacks(fiber);
+  let completed = false;
 
   setCurrentFiber(fiber, fiber.dispatcher);
 
@@ -120,8 +147,11 @@ export function activateFiber<T>(
       flushPendingEffects(fiber);
     }
 
+    completed = true;
+
     return result;
   } finally {
+    finishCallbacks(fiber, completed);
     setCurrentFiber(prevFiber, prevDispatcher);
   }
 }

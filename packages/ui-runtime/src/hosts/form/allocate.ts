@@ -4,7 +4,8 @@ import { liveTexture } from '../../components/Image';
 import { listCapacity } from '../../components/List';
 import { textLimit } from '../../components/Text';
 import { hasTextChannel } from '../../core/ir/text';
-import { type Analysis, type CellRole, claim, lookIndexOf, type VariantTable } from '../../core/ir';
+import { type Analysis, type CellRole, claim, type VariantTable } from '../../core/ir';
+import { lookResolver } from '../../core/ir/probe';
 import { childElements } from '../../core/guards';
 import type { JSX } from '../../jsx';
 import { MODAL_DROPDOWN_SLOT_TYPE, MODAL_INLINE_SELECT_SLOT_TYPE, MODAL_INPUT_SLOT_TYPE, MODAL_SLIDER_SLOT_TYPE, MODAL_TOGGLE_SLOT_TYPE } from '../../core/fields';
@@ -75,6 +76,7 @@ export const allocate = (tree: JSX.Element, analysis?: Analysis): Placement => {
   const { cells, channels } = claim(tree, analysis);
   // An embedded screen's entries start after the host's marker slot.
   const base = entryBaseOf(tree);
+  const resolveLook = lookResolver(tree);
   const entries: EntryEntry[] = [
     ...cells.map(({ element, role }, index) => ({ element, entry: base + index, role })),
     ...channels.map(({ element, carrier, length, looks }, index) => ({
@@ -83,7 +85,7 @@ export const allocate = (tree: JSX.Element, analysis?: Analysis): Placement => {
       carrier,
       // A bool needs no width; text and a count's digits reserve one.
       ...carrier === 'bool' ? {} : { length },
-      ...looks === undefined ? {} : { looks, look: lookIndexOf(looks, tree) },
+      ...looks === undefined ? {} : { looks, look: resolveLook(looks) },
     })),
   ];
 

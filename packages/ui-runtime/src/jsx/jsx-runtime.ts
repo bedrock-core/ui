@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 import { ControlProps } from '../components';
 import { Fragment as FragmentComponent } from '../components/Fragment';
+/** Generated compiler support; addon source does not call this directly. */
+export { cacheCallback as __cacheCallback } from '../core/render/callbacks';
+export { cacheValue as __cacheValue } from '../core/render/callbacks';
 
 export interface NativeNode<P extends JSX.Props = JSX.Props> {
   type: string | FunctionComponent<P>;
@@ -18,7 +21,7 @@ export namespace JSX {
   // Booleans are legal so `{cond && <X/>}` type-checks: the build rewrites the
   // idiom into a carried `visible` before compile and bundle alike, and the
   // walk drops any boolean that still reaches it.
-  export type Node = Element | string | boolean | null | undefined | (Element | boolean | null | undefined)[];
+  export type Node = Element | string | boolean | null | undefined | Node[];
   export type Props = ControlProps & { [key: string]: unknown } & { children?: Node };
 }
 

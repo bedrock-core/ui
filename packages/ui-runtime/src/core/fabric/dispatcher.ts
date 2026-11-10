@@ -4,7 +4,8 @@ import { isInInteractiveTransaction, scheduleLogicPass, triggerCleanup } from '.
 import { containerExit, markExit } from './exit';
 import { requirePlayer } from './owner';
 import { getCurrentFiber } from './registry';
-import type { Immutable, ReducerSlot, StateSlot, StateUpdate } from '../immutable';
+import { getFiber } from './fiber';
+import type { Immutable, ReducerSlot, StateSlot } from '../immutable';
 import { Context, Dispatcher, Fiber, HookSlot } from './types';
 import { invariant, nextHookSlot } from './utils';
 
@@ -27,17 +28,52 @@ function mountValueSlot(fiber: Fiber, tag: 'state' | 'reducer', initial: unknown
 
 /** Commits a new value into a slot and wakes the owner's session, unless nothing changed. */
 function commit(fiber: Fiber, slot: HookSlot, next: unknown): void {
-  if (Object.is(next, slot.value)) {
+  if (getFiber(fiber.id) !== fiber || Object.is(next, slot.value)) {
     return;
   }
 
   slot.value = next;
+  fiber.stateVersion++;
 
   if (!slot.resolved && !Object.is(next, slot.initial)) {
     slot.resolved = true;
   }
 
   scheduleLogicPass(fiber.owner);
+}
+
+/** State dispatch belongs to the slot, so its identity stays stable across component evaluations. */
+function stateSetter(fiber: Fiber, slot: HookSlot): (value: unknown) => void {
+  return slot.setState ??= (value: unknown): void => {
+    if (getFiber(fiber.id) !== fiber) { return; }
+
+    commit(fiber, slot, isFunction(value) ? value(slot.value) : value);
+  };
+}
+
+function reducerDispatch<S, A>(fiber: Fiber, slot: HookSlot, reducer: (state: Immutable<S>, action: A) => S): (action: A) => void {
+  const current = reducer as (state: unknown, action: unknown) => unknown;
+
+  if (slot.reducer) {
+    slot.reducer.current = current;
+
+    return slot.reducer.dispatch;
+  }
+
+  const binding: NonNullable<HookSlot['reducer']> = {
+    current,
+    dispatch(action) {
+      if (getFiber(fiber.id) !== fiber) { return; }
+
+      const reduce = binding.current;
+
+      commit(fiber, slot, reduce(slot.value, action));
+    },
+  };
+
+  slot.reducer = binding;
+
+  return binding.dispatch;
 }
 
 function currentPlayer(): ReturnType<Dispatcher['usePlayer']> {
@@ -82,9 +118,7 @@ export const MountDispatcher: Dispatcher = {
 
     const slot = mountValueSlot(fiber, 'state', isFunction(initial) ? initial() : initial);
 
-    const setter = (v: StateUpdate<T>): void => {
-      commit(fiber, slot, isFunction(v) ? v(slot.value) : v);
-    };
+    const setter = stateSetter(fiber, slot);
 
     return [slot.value as Immutable<T>, setter] as StateSlot<T>;
   },
@@ -125,6 +159,7 @@ export const MountDispatcher: Dispatcher = {
     const value = (fiber.contextSnapshot?.get(ctx as Context<unknown>)) ?? ctx.defaultValue;
 
     slot.value = value;
+    slot.context = ctx as Context<unknown>;
 
     return value as T;
   },
@@ -136,9 +171,7 @@ export const MountDispatcher: Dispatcher = {
 
     const slot = mountValueSlot(fiber, 'reducer', initial);
 
-    const dispatch = (action: A): void => {
-      commit(fiber, slot, reducer(slot.value as Immutable<S>, action));
-    };
+    const dispatch = reducerDispatch(fiber, slot, reducer);
 
     return [slot.value as Immutable<S>, dispatch] as ReducerSlot<S, A>;
   },
@@ -151,22 +184,6 @@ export const MountDispatcher: Dispatcher = {
     return exitHandle();
   },
 
-  useEvent<T, O>(
-    signal: { subscribe(cb: (e: T) => void, options?: O): (e: T) => void; unsubscribe(cb: (e: T) => void): void },
-    callback: (event: T) => void,
-    options?: O,
-    deps?: readonly unknown[],
-  ) {
-    const allDeps = deps ? [...deps, signal, callback, options] : [signal, callback, options];
-
-    return this.useEffect(() => {
-      signal.subscribe(callback, options);
-
-      return () => {
-        signal.unsubscribe(callback);
-      };
-    }, allDeps);
-  },
 };
 
 export const UpdateDispatcher: Dispatcher = {
@@ -188,9 +205,7 @@ export const UpdateDispatcher: Dispatcher = {
       }
     }
 
-    const setter = (v: StateUpdate<T>): void => {
-      commit(fiber, slot, isFunction(v) ? v(slot.value) : v);
-    };
+    const setter = stateSetter(fiber, slot);
 
     return [slot.value as Immutable<T>, setter] as StateSlot<T>;
   },
@@ -261,6 +276,7 @@ export const UpdateDispatcher: Dispatcher = {
     const value = (fiber.contextSnapshot?.get(ctx as Context<unknown>)) ?? ctx.defaultValue;
 
     slot.value = value;
+    slot.context = ctx as Context<unknown>;
 
     return value as T;
   },
@@ -281,9 +297,7 @@ export const UpdateDispatcher: Dispatcher = {
       }
     }
 
-    const dispatch = (action: A): void => {
-      commit(fiber, slot, reducer(slot.value as Immutable<S>, action));
-    };
+    const dispatch = reducerDispatch(fiber, slot, reducer);
 
     return [slot.value as Immutable<S>, dispatch] as ReducerSlot<S, A>;
   },
@@ -296,20 +310,4 @@ export const UpdateDispatcher: Dispatcher = {
     return exitHandle();
   },
 
-  useEvent<T, O>(
-    signal: { subscribe(cb: (e: T) => void, options?: O): (e: T) => void; unsubscribe(cb: (e: T) => void): void },
-    callback: (event: T) => void,
-    options?: O,
-    deps?: readonly unknown[],
-  ) {
-    const allDeps = deps ? [...deps, signal, callback, options] : [signal, callback, options];
-
-    return this.useEffect(() => {
-      signal.subscribe(callback, options);
-
-      return () => {
-        signal.unsubscribe(callback);
-      };
-    }, allDeps);
-  },
 };

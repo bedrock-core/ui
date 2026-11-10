@@ -30,8 +30,8 @@ export const writeChannels = (
     // A look is one slot whose current durability names it, as a button's does.
     if (channel.carrier === 'enum') {
       if (written.get(channel.slot) !== channel.look) {
-        written.set(channel.slot, channel.look);
         writeLook(container, items, channel.slot, channel.look);
+        written.set(channel.slot, channel.look);
       }
 
       continue;

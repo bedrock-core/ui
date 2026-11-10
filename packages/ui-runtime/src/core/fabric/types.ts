@@ -1,5 +1,4 @@
 import type { FunctionComponent, JSX } from '../../jsx/jsx-runtime';
-import { EventSignal } from '../../hooks';
 import { Player } from '@minecraft/server';
 import type { Owner } from './owner';
 import type { Immutable, ReducerSlot, StateSlot } from '../immutable';
@@ -11,6 +10,12 @@ export interface HookSlot<T = unknown> {
   cleanup?: (() => void) | undefined;
   tag: 'state' | 'effect' | 'ref' | 'reducer' | 'context';
   resolved?: boolean;
+  context?: Context<unknown>;
+  setState?: (value: unknown) => void;
+  reducer?: {
+    current: (state: unknown, action: unknown) => unknown;
+    dispatch: (action: unknown) => void;
+  };
 }
 
 export interface ContextProps<T> {
@@ -31,18 +36,22 @@ export interface Dispatcher {
 
   usePlayer(): Player;
   useExit(): () => void;
-  useEvent<T, O>(
-    signal: EventSignal<T, O>,
-    callback: (event: T) => void,
-    options?: O,
-    deps?: readonly unknown[],
-  ): void;
 }
 
 export interface Fiber {
   id: string;
   hookStates: HookSlot[];
   hookIndex: number;
+  stateVersion: number;
+  compilerCacheEnabled?: boolean;
+  /** Render-order composition slots cannot be reused across passes. */
+  memoUnsafe?: boolean;
+  memoCache?: {
+    component: FunctionComponent;
+    props: JSX.Props;
+    rendered: JSX.Element;
+    stateVersion: number;
+  };
   dispatcher: Dispatcher; // phase-specific
   // Snapshot of context values visible during last evaluation
   contextSnapshot?: ContextSnapshot;

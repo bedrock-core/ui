@@ -1,3 +1,5 @@
+import { getCurrentFiber } from '../fabric/registry';
+
 /**
  * What a build render knows that a player's render does not.
  *
@@ -81,6 +83,9 @@ export function takeWidthSlot(): { slot: number; width: number | undefined; reco
   }
 
   const slot = round.next;
+  const [fiber] = getCurrentFiber();
+
+  if (fiber) { fiber.memoUnsafe = true; }
 
   round.next += 1;
 

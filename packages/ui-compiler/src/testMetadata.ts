@@ -4,7 +4,7 @@ export type { TestRole } from '@bedrock-core/ui-runtime';
 
 /** Current JSON contract version for both screen metadata and the pack manifest. */
 export const TEST_METADATA_VERSION = 1;
-/** Resource-pack-relative location written by the ui-compiler Regolith filter. */
+/** Resource-pack-relative location written by Builder's UI stage. */
 export const TEST_METADATA_PATH = 'bedrock-core/test-metadata.json';
 
 /** How the compiler obtained a name; none of these establish client-rendered text. */

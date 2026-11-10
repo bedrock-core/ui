@@ -29,6 +29,8 @@ function prepareTree(element: JSX.Element, owner: Owner, compiled?: boolean, run
   // Initialize traversal context
   const context: TraversalContext = createInitialContext();
 
+  context.memoize = owner.kind !== 'build' && !getSessionCompiled(owner).debug;
+
   // Reset tree relations for this owner's existing fibers before rebuilding
   const existing = getFibersForOwner(owner);
 

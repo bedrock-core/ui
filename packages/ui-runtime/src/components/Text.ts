@@ -78,7 +78,8 @@ export interface TextProps extends ControlProps {
 
   /**
    * Truncates literal text to this many UTF-16 code units without splitting a
-   * surrogate pair. The compiler detects runtime text dependencies automatically; each
+   * surrogate pair. Compiled forms exclude the automatically inserted numeric guard from this limit.
+   * The compiler detects runtime text dependencies automatically; each
    * detected container value carries at most 128 code units. Translation keys and client-resolved messages stay whole.
    */
   maxLength?: number;

@@ -22,6 +22,7 @@ import { langOf, type ScreenLang } from './lang';
 import { checkTrans } from './trans';
 import { carriedPositions, drawnPerLook } from './looks';
 import { TestMetadataCollector, type ScreenTestMetadata } from './testing';
+import { liveTextWidthHints } from './diagnostics';
 
 /** Container-screen identity and optional test metadata for build integrations. */
 export interface ScreenSpec {
@@ -107,7 +108,7 @@ const checkSpec = (spec: ScreenSpec): void => {
 export const checkLiveness = (
   probe: Probe,
   name: string,
-  options: { carriedVisible?: boolean; carriedLooks?: ReadonlySet<number> } = {},
+  options: { carriedVisible?: boolean; carriedLooks?: ReadonlySet<number>; tree?: JSX.Element } = {},
 ): void => {
   if (probe.shape !== undefined) {
     throw new ContainerScreenError(
@@ -136,10 +137,12 @@ export const checkLiveness = (
   if (probe.geometry.length > 0) {
     const boxes = probe.geometry.slice(0, 3)
       .map(prop => `<${prop.type}> #${String(prop.position)} ${prop.prop} ${prop.before} to ${prop.after}`);
+    const hints = options.tree === undefined ? [] : liveTextWidthHints(probe, options.tree);
 
     console.warn(
       `"${name}" lays ${probe.geometry.length} box(es) out differently when its state changes; the build's placement is kept.\n`
-      + `    ${boxes.join(', ')}${probe.geometry.length > boxes.length ? ', and more' : ''}`,
+      + `    ${boxes.join(', ')}${probe.geometry.length > boxes.length ? ', and more' : ''}`
+      + (hints.length > 0 ? '\n' + hints.join('\n') : ''),
     );
   }
 
@@ -235,7 +238,7 @@ export function compileScreen(
     .filter(([element]) => element.type !== BUTTON_TYPE || pressed.has(element)));
 
   checkLooks(looks, spec.name);
-  checkLiveness(probe, spec.name, { carriedLooks: carriedPositions(looks.values()) });
+  checkLiveness(probe, spec.name, { carriedLooks: carriedPositions(looks.values()), tree });
 
   const allocation = allocate(tree, undefined, [...looks.values()]);
 

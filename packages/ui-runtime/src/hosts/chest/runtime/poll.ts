@@ -115,9 +115,10 @@ export const poll = (host: PollHost): void => {
   // tooltip and a click that places nothing, so it is taken off, and said.
   for (const viewer of viewers) {
     const cursor = cursorOf(viewer);
+    const item = cursor?.item;
 
-    if (cursor?.item !== undefined && host.items.isOwned(cursor.item)) {
-      console.warn(`[core.ui] took a ${host.items.roleOf(cursor.item) ?? 'protocol item'} off ${viewer.name}'s cursor`);
+    if (cursor && item && host.items.isOwned(item)) {
+      console.warn(`[core.ui] took a ${host.items.roleOf(item) ?? 'protocol item'} off ${viewer.name}'s cursor`);
       cursor.clear();
     }
   }
