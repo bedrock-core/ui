@@ -1,5 +1,26 @@
 # @bedrock-core/ui-compiler
 
+## 0.3.2
+
+### Patch Changes
+
+- [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4) Thanks [@drav0011](https://github.com/drav0011)! - Identify live labels that outgrow their compiled width and suggest reserving space with width or minWidth. Include test identities or initial text in diagnostics while preserving generated UI.
+
+- [`e75c3a7`](https://github.com/bedrock-core/ui/commit/e75c3a70f155217191255ed51f61de1ed42f6416) Thanks [@drav0011](https://github.com/drav0011)! - Forward accepted Ore button actions through native left-button press, release and click events so the target client's input handling can provide press feedback. Keep readiness probes and automatic dismissal click-only.
+
+- [`7915d87`](https://github.com/bedrock-core/ui/commit/7915d875260e5db9b99f0df351e6a872a06a925b) Thanks [@drav0011](https://github.com/drav0011)! - Forward accepted field and local switch interactions through native press feedback, while keeping their existing value and action handling.
+
+- [`a75da6b`](https://github.com/bedrock-core/ui/commit/a75da6b69ab820340c40c04800b80fa9990e5c60) Thanks [@drav0011](https://github.com/drav0011)! - Limit UI packages to their public files, preserving public test mocks. Declare Flexbox directly for the compiler and Vitest as an optional peer for Runtime test mocks.
+
+- [`77f33a5`](https://github.com/bedrock-core/ui/commit/77f33a5840a2c4baf271ed35da2f4c3de6c1983a) Thanks [@drav0011](https://github.com/drav0011)! - Require the matching registry releases of i18n, Observable and Server Runtime. Navigation's API build uses the released Builder compiler.
+
+- [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4) Thanks [@drav0011](https://github.com/drav0011)! - Infer literal, translated and changing button captions through layout wrappers while retaining separate metadata paths for fixed list slots. Keep production UI documents and compiled payloads unchanged.
+
+- [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4) Thanks [@drav0011](https://github.com/drav0011)! - Keep geometry derived only from live text in the compiled layout instead of allocating appearance channels. Preserve authored layout and style variants, and allow static panels beside live text on compiled modal forms.
+- Updated dependencies [[`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`7915d87`](https://github.com/bedrock-core/ui/commit/7915d875260e5db9b99f0df351e6a872a06a925b), [`094fc8a`](https://github.com/bedrock-core/ui/commit/094fc8ae4752ef96381a9cafc71df3a346ae8742), [`cad3d82`](https://github.com/bedrock-core/ui/commit/cad3d82f902d45f5538c6a85ce6bec92361b3f06), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`a75da6b`](https://github.com/bedrock-core/ui/commit/a75da6b69ab820340c40c04800b80fa9990e5c60), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`77f33a5`](https://github.com/bedrock-core/ui/commit/77f33a5840a2c4baf271ed35da2f4c3de6c1983a), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4)]:
+  - @bedrock-core/ui-runtime@0.15.0
+  - @bedrock-core/flexbox@1.0.3
+
 ## 0.3.1
 
 ### Patch Changes

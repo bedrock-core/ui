@@ -1,5 +1,45 @@
 # @bedrock-core/ui-runtime
 
+## 0.15.0
+
+### Minor Changes
+
+- [`094fc8a`](https://github.com/bedrock-core/ui/commit/094fc8ae4752ef96381a9cafc71df3a346ae8742) Thanks [@drav0011](https://github.com/drav0011)! - Expose typed Core hook lint tooling through `@bedrock-core/ui/eslint` and export the navigation scope hook as `useCurrentScope`.
+  
+  Publish shared resource packs for minor releases and changed patch assets, retaining the existing artifact for unchanged patches.
+  
+  Connect cross-addon navigation through peer modules with observable screen metadata and runtime-owned cleanup. Use Observable's `Signal`, `NativeSignal`, and `toSignal` in `useEvent` to forward native filters and release each registration.
+
+### Patch Changes
+
+- [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4) Thanks [@drav0011](https://github.com/drav0011)! - Read inventory size once per scan and reuse the current cursor item during chest UI housekeeping. Retry a chest appearance update after a failed slot write.
+
+- [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4) Thanks [@drav0011](https://github.com/drav0011)! - Reuse compiler-verified pure component output when scalar props remain equal. Preserve descendant updates, context/state invalidation and cleanup; evaluate object props, ordinary function props, accessors, inherited or hidden props, build probes, debug renders and render-order text composition normally.
+
+- [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4) Thanks [@drav0011](https://github.com/drav0011)! - Index fibers by render owner, read baked props once per form or chest allocation, and assign text channels in one tree traversal. Preserve the order of handlers and carried values.
+
+- [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4) Thanks [@drav0011](https://github.com/drav0011)! - Support compiler-generated callback caches with capture invalidation, stable state setters and reducer dispatch functions, and lifecycle cleanup. Dispatch applies the latest reducer. Keep build/debug evaluation and repeated callback sites uncached.
+
+- [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4) Thanks [@drav0011](https://github.com/drav0011)! - Reuse compiler-owned formatting results when scalar inputs remain equal. Recompute mutable object inputs and release cached values on inactive sites, failed renders and component cleanup.
+
+- [`7915d87`](https://github.com/bedrock-core/ui/commit/7915d875260e5db9b99f0df351e6a872a06a925b) Thanks [@drav0011](https://github.com/drav0011)! - Preserve fitted, localized captions produced by `useComposed` when compiling dynamic text.
+
+- [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4) Thanks [@drav0011](https://github.com/drav0011)! - Preserve numeric live-text limits without counting the automatic formatting guard, and keep surrogate pairs whole in compiled form values.
+
+- [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4) Thanks [@drav0011](https://github.com/drav0011)! - Support mapped and nested JSX child arrays alongside sibling elements, preserving render order and component state.
+
+- [`a75da6b`](https://github.com/bedrock-core/ui/commit/a75da6b69ab820340c40c04800b80fa9990e5c60) Thanks [@drav0011](https://github.com/drav0011)! - Limit UI packages to their public files, preserving public test mocks. Declare Flexbox directly for the compiler and Vitest as an optional peer for Runtime test mocks.
+
+- [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4) Thanks [@drav0011](https://github.com/drav0011)! - Reuse pure child output with stable compiler-owned callbacks only for verified handler-forwarding props. Changed callback captures refresh child output, while arbitrary functions, object props and accessors remain live.
+
+- [`77f33a5`](https://github.com/bedrock-core/ui/commit/77f33a5840a2c4baf271ed35da2f4c3de6c1983a) Thanks [@drav0011](https://github.com/drav0011)! - Require the matching registry releases of i18n, Observable and Server Runtime. Navigation's API build uses the released Builder compiler.
+
+- [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4) Thanks [@drav0011](https://github.com/drav0011)! - Ignore updates from retired component hooks and preserve replacement fibers created during cleanup.
+
+- [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4) Thanks [@drav0011](https://github.com/drav0011)! - Keep geometry derived only from live text in the compiled layout instead of allocating appearance channels. Preserve authored layout and style variants, and allow static panels beside live text on compiled modal forms.
+- Updated dependencies [[`cad3d82`](https://github.com/bedrock-core/ui/commit/cad3d82f902d45f5538c6a85ce6bec92361b3f06)]:
+  - @bedrock-core/flexbox@1.0.3
+
 ## 0.14.1
 
 ### Patch Changes
