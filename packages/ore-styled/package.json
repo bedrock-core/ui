@@ -45,7 +45,7 @@
 		"test": "vitest run"
 	},
 	"devDependencies": {
-		"@bedrock-core/i18n": "*",
+		"@bedrock-core/i18n": "^0.3.0",
 		"@bedrock-core/navigation": "workspace:*",
 		"@bedrock-core/ui-runtime": "workspace:*",
 		"eslint": "*",
@@ -53,8 +53,8 @@
 		"vitest": "*"
 	},
 	"peerDependencies": {
-		"@bedrock-core/i18n": "*",
-		"@bedrock-core/navigation": "*",
-		"@bedrock-core/ui-runtime": "*"
+		"@bedrock-core/i18n": "^0.3.0",
+		"@bedrock-core/navigation": "workspace:^",
+		"@bedrock-core/ui-runtime": "workspace:^"
 	}
 }

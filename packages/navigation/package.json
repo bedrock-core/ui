@@ -65,8 +65,8 @@
 		"vitest": "*"
 	},
 	"peerDependencies": {
-		"@bedrock-core/i18n": "*",
-		"@bedrock-core/server-runtime": "*",
+		"@bedrock-core/i18n": "^0.3.0",
+		"@bedrock-core/server-runtime": "^0.3.0",
 		"@minecraft/server": ">=2.9.0 || >=2.10.0-0",
 		"@minecraft/server-ui": "*"
 	},
@@ -79,7 +79,7 @@
 		}
 	},
 	"dependencies": {
-		"@bedrock-core/observable": "^1.0.0",
+		"@bedrock-core/observable": "^1.1.0",
 		"@bedrock-core/ui-runtime": "workspace:*"
 	}
 }

@@ -59,7 +59,7 @@
 		"@bedrock-core/ui-runtime": "workspace:*"
 	},
 	"devDependencies": {
-		"@bedrock-core/i18n": "*",
+		"@bedrock-core/i18n": "^0.3.0",
 		"@bedrock-core/navigation": "workspace:*",
 		"@minecraft/common": "*",
 		"@minecraft/server": "*",
@@ -69,7 +69,7 @@
 		"vitest": "*"
 	},
 	"peerDependencies": {
-		"@bedrock-core/i18n": "*",
+		"@bedrock-core/i18n": "^0.3.0",
 		"@minecraft/server": ">=2.9.0 || >=2.10.0-0",
 		"@minecraft/server-ui": "*"
 	},

@@ -100,7 +100,7 @@
 		"preflight": "node scripts/preflight.mjs",
 		"gamelog": "node scripts/gamelog.mjs",
 		"changeset": "changeset",
-		"version-packages": "changeset version && node scripts/sync-pack-version.mjs",
+		"version-packages": "changeset version && node scripts/sync-pack-version.mjs && yarn install --mode=update-lockfile",
 		"release": "yarn release:libraries",
 		"release:libraries": "yarn test:release && yarn lint:libs && yarn build:libs && yarn test:libs && node scripts/publish-tarballs.mjs && changeset git-tag",
 		"clean": "node scripts/clean.mjs"
@@ -113,8 +113,8 @@
 		"@bedrock-core/ui-runtime": "workspace:*"
 	},
 	"devDependencies": {
-		"@bedrock-core/server-runtime": "*",
-		"@bedrock-core/sync": "*",
+		"@bedrock-core/server-runtime": "^0.3.0",
+		"@bedrock-core/sync": "^2.0.0",
 		"@changesets/changelog-github": "^0.7.0",
 		"@changesets/cli": "3.0.3",
 		"@eslint/css": "^1.2.0",
@@ -136,7 +136,7 @@
 		"vitest": "^4.1.5"
 	},
 	"peerDependencies": {
-		"@bedrock-core/i18n": "*",
+		"@bedrock-core/i18n": "^0.3.0",
 		"@minecraft/server": ">=2.9.0 || >=2.10.0-0",
 		"@minecraft/server-ui": "*",
 		"eslint": "^10.3.0",
@@ -154,11 +154,11 @@
 		}
 	},
 	"resolutions": {
-		"@bedrock-core/db": "file:../server/packages/db",
-		"@bedrock-core/i18n": "file:../server/packages/i18n",
-		"@bedrock-core/observable": "file:../server/packages/observable",
-		"@bedrock-core/server-runtime": "file:../server/packages/server-runtime",
-		"@bedrock-core/sync": "file:../server/packages/sync",
+		"@bedrock-core/db": "0.2.0",
+		"@bedrock-core/i18n": "0.3.0",
+		"@bedrock-core/observable": "1.1.0",
+		"@bedrock-core/server-runtime": "0.3.0",
+		"@bedrock-core/sync": "2.0.0",
 		"@minecraft/common": "1.2.0",
 		"@minecraft/server": "2.10.0",
 		"@minecraft/server-ui": "2.2.0",
