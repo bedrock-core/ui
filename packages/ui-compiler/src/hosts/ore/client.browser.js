@@ -26,7 +26,8 @@ export function runOreClient(desktopWidth, desktopHeight) {
   var visibilityStamp = '',
     visibility = {};
   var currentLayout = null,
-    keyboardFocus = false;
+    keyboardFocus = false,
+    nativeFeedback = false;
   var regions = {},
     scrollMemory = {},
     scrollDrag = null;
@@ -320,6 +321,26 @@ export function runOreClient(desktopWidth, desktopHeight) {
       );
 
       return event;
+    }
+  }
+
+  function pressFeedback(control) {
+    if (!active || !ready || lostAt !== null || presentedSession !== active.session
+      || failedSession === active.session || !available(control)
+      || (pending && pending.kind !== 'field')) return;
+
+    var native = target('ready');
+
+    if (!native) return;
+
+    try {
+      nativeFeedback = true;
+      native.dispatchEvent(mouseEvent('mousedown'));
+      native.dispatchEvent(mouseEvent('mouseup'));
+    } catch (error) {
+      debug.feedbackError = String(error);
+    } finally {
+      nativeFeedback = false;
     }
   }
 
@@ -810,6 +831,7 @@ export function runOreClient(desktopWidth, desktopHeight) {
         if (event.button !== undefined && event.button !== 0) return;
         event.preventDefault();
         event.stopPropagation();
+        pressFeedback(control);
         editField(control, index);
         closePopup();
         focusControl(control.id);
@@ -898,6 +920,7 @@ export function runOreClient(desktopWidth, desktopHeight) {
     });
     node.addEventListener('mouseleave', function () {
       control.hovered = false;
+      renderField(control);
       styleControl(control);
     });
     node.addEventListener('keydown', onKey);
@@ -914,7 +937,10 @@ export function runOreClient(desktopWidth, desktopHeight) {
 
       if (field.kind !== 'input') event.preventDefault();
       keyboardFocus = false;
+      pressFeedback(control);
       focusControl(spec.id);
+      control.pressed = true;
+      styleControl(control);
       if (field.kind === 'toggle') editField(control, !localValues[spec.id]);
       if (field.kind === 'dropdown') openDropdown(control);
 
@@ -1416,6 +1442,7 @@ export function runOreClient(desktopWidth, desktopHeight) {
       if (!ready || presentedSession !== active.session || pending || lostAt !== null) return;
       var choice = control.spec.switch;
 
+      pressFeedback(control);
       selections[choice.group] = choice.exclusive ? choice.index : !selections[choice.group];
       repaintSwitches();
 
@@ -1425,6 +1452,7 @@ export function runOreClient(desktopWidth, desktopHeight) {
     if (control.spec && control.spec.field) {
       var field = control.spec.field;
 
+      if (field.kind === 'toggle' || field.kind === 'dropdown') pressFeedback(control);
       if (field.kind === 'toggle') editField(control, !localValues[control.id]);
       else if (field.kind === 'dropdown') openDropdown(control);
 
@@ -1570,6 +1598,8 @@ export function runOreClient(desktopWidth, desktopHeight) {
       stopKey(event);
       keyboardFocus = true;
       var direction = name === 'arrowleft' || name === 'ArrowDown' ? -1 : 1;
+
+      pressFeedback(editing);
 
       if (field.kind === 'slider')
         editField(
@@ -2693,6 +2723,7 @@ export function runOreClient(desktopWidth, desktopHeight) {
   document.addEventListener(
     'mouseup',
     function () {
+      if (nativeFeedback) return;
       scrollDrag = null;
       var released = fieldDrag;
 
@@ -2713,6 +2744,8 @@ export function runOreClient(desktopWidth, desktopHeight) {
   document.addEventListener(
     'mousedown',
     function (event) {
+      if (nativeFeedback) return;
+
       if (popup && !popup.contains(event.target)) {
         var dropdown = fieldControls[focused];
 

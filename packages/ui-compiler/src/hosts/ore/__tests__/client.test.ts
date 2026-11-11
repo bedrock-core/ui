@@ -228,6 +228,7 @@ describe('standalone Ore client protocol', () => {
     node('n_2').dispatchEvent(new Event('mousedown'));h.flush();
     expect(node('n_3').style.display).toBe('');expect(node('n_4').style.display).toBe('');expect(node('n_5').style.display).toBe('none');
     h.publish();h.flush();expect(node('n_3').style.display).toBe('');expect(h.calls()).toBe(0);expect(h.packets).toEqual([]);
+    expect(h.mouseEvents.filter(event => event.target === 'ready').map(event => event.type)).toEqual(['click', 'mousedown', 'mouseup']);
   });
   it('assembles a split frame atomically and preserves spaces at part boundaries', () => {
     const h=harness();h.flush();const state=JSON.parse(h.carrier.textContent.slice('CORE_ORE_STATE:'.length));
@@ -365,7 +366,40 @@ describe('standalone Ore client protocol', () => {
     const h=harness(true,'div',false,false,false,liveFields);h.flush();
     field(h,'n_1').dispatchEvent(new Event('mousedown'));
     expect(field(h,'n_1').attrs['aria-checked']).toBe('false');h.flush();
-    expect(h.packets).toMatchObject([{session:1,sequence:1,id:'n_1',value:false}]);expect(h.calls()).toBe(0);expect(h.presses()).toBe(0);
+    expect(h.packets).toMatchObject([{session:1,sequence:1,id:'n_1',value:false}]);expect(h.calls()).toBe(0);expect(h.presses()).toBe(1);
+  });
+  it('provides field feedback without invoking the native action or interrupting the dropdown', () => {
+    const h = harness(true, 'div', true, false, false, liveFields); h.flush();
+    const initialFocus = h.nativeFocusCalls();
+    field(h, 'n_3').dispatchEvent(new Event('mousedown', { button: 0 }));
+    const popup = h.body.querySelectorAll('').find(node => node.attrs.role === 'listbox')!;
+    expect(popup).toBeDefined();
+    popup.querySelectorAll('').filter(node => node.attrs.role === 'option')[1].dispatchEvent(new Event('mousedown', { button: 0 }));
+    h.flush();
+    expect(h.packets).toMatchObject([{ id: 'n_3', value: 1 }]);
+    expect(h.mouseEvents.filter(event => event.target === 'ready').map(event => event.type)).toEqual(['click', 'mousedown', 'mouseup', 'mousedown', 'mouseup']);
+    expect(h.calls()).toBe(0); expect(h.nativeFocusCalls()).toBe(initialFocus);
+  });
+  it('provides keyboard feedback only for available local switches and fields', () => {
+    const h = harness(true, 'div', true, false, false, layout => {
+      liveFields(layout);
+      layout.nodes.push({ id: 'n_5', kind: 'switch', rect: [0, 0, 40, 20], switch: { group: 'tabs', exclusive: true, index: 1, on: false, passive: false } });
+    }); h.flush();
+    const toggle = field(h, 'n_1'), local = field(h, 'n_5');
+    toggle.focus(); h.key(' '); h.key(' ', 'keyup'); h.flush();
+    local.focus(); h.key('Enter'); h.key('Enter', 'keyup'); h.flush();
+    expect(h.presses()).toBe(2); expect(h.releases()).toBe(2); expect(h.calls()).toBe(0);
+    h.values({ n_5: { enabled: false }, n_1: { enabled: false } }); h.flush();
+    local.dispatchEvent(new Event('mousedown', { button: 0 })); toggle.dispatchEvent(new Event('mousedown', { button: 0 }));
+    expect(h.presses()).toBe(2); expect(h.packets).toHaveLength(1);
+  });
+  it('keeps field editing available if feedback events cannot be created', () => {
+    const h = harness(true, 'div', true, false, false, liveFields); h.flush();
+    Object.assign(h.eventSupport, { mouseConstructor: false, legacyMouse: false });
+    field(h, 'n_1').dispatchEvent(new Event('mousedown', { button: 0 })); h.flush();
+    expect(h.packets).toMatchObject([{ id: 'n_1', value: false }]);
+    expect(h.debug.feedbackError).toContain('Native mouse event unavailable');
+    expect(h.debug.status).toBe('active'); expect(h.calls()).toBe(0);
   });
   it.each([
     ['modern Event', true, true, true, true],

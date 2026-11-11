@@ -1,5 +1,5 @@
 import type { JSX } from '@bedrock-core/ui-runtime';
-import { measureText, Screen } from '@bedrock-core/ui-runtime';
+import { measureText, Panel, Screen, Text, useComposed } from '@bedrock-core/ui-runtime';
 import { setBuildLocales } from '@bedrock-core/ui-runtime/compile';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Header } from '../../../ore-styled/src/Header';
@@ -25,6 +25,29 @@ describe('styled captions in their granted layout space', () => {
     expect(long).toMatch(/^§0A very long.*\.\.\.$/);
     expect(measureText({ text: long, font: 'minecraftTen', fontSize: 1.2 }).width).toBeLessThanOrEqual(154);
     expect(Object.values(compiled.lang.es_ES ?? {})).toEqual(['§0Corto']);
+  });
+
+  it('keeps a source-marked composed caption in the pack instead of carrying an unfitted runtime value', () => {
+    const Caption = (): JSX.Element => {
+      const composed = useComposed((resolve, width) => width === undefined
+        ? (resolve('caption.title') ?? '')
+        : `${resolve('caption.title')?.slice(0, 8) ?? ''}...`);
+
+      return Panel({ width: 154, ...composed.box, children: Text({ font: 'minecraftTen', ...composed.text, ...{ __textDynamic: true } }) });
+    };
+    const Subject = (): JSX.Element => Screen({ children: { type: Caption, props: {} } });
+    const compiled = compileFormScreen(Subject, { namespace: 'a', name: 'composed_caption' });
+    const captions: unknown[] = [];
+
+    eachControl(compiled.document, (_name, control) => {
+      if (control.type === 'label') { captions.push(control.text); }
+    });
+
+    expect(compiled.snapshot.texts).toEqual([]);
+    expect(compiled.entries.some(entry => entry.carrier === 'text')).toBe(false);
+    expect(captions.some(text => typeof text === 'string' && text.startsWith('core.text.'))).toBe(true);
+    expect(Object.values(compiled.lang.en_US ?? {})).toEqual(['A very l...']);
+    expect(Object.values(compiled.lang.es_ES ?? {})).toEqual(['Corto...']);
   });
 
   it('fits translated Tab captions inside the padded header and centers them in both looks', () => {

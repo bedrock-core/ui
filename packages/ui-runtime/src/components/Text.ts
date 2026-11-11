@@ -300,7 +300,9 @@ export const Text: FunctionComponent<TextProps> = ({
       // and a plain prop would be offered to every other reader of the element.
       ...color === undefined ? {} : { __color: color },
       ...textAlign === undefined ? {} : { __textAlign: textAlign },
-      ...__textDynamic === true ? { __textDynamic: true } : {},
+      // Composed translations are already baked for each language; carrying the
+      // runtime render would replace them with a string composed without layout.
+      ...__textDynamic === true && composed === undefined ? { __textDynamic: true } : {},
       value: { tail },
       __textMetrics: {
         font,
