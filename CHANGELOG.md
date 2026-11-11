@@ -1,0 +1,13 @@
+# @bedrock-core/ui
+
+## 0.15.0
+
+### Patch Changes
+
+- [`77f33a5`](https://github.com/bedrock-core/ui/commit/77f33a5840a2c4baf271ed35da2f4c3de6c1983a) Thanks [@drav0011](https://github.com/drav0011)! - Require the matching registry releases of i18n, Observable and Server Runtime. Navigation's API build uses the released Builder compiler.
+- Updated dependencies [[`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`7915d87`](https://github.com/bedrock-core/ui/commit/7915d875260e5db9b99f0df351e6a872a06a925b), [`094fc8a`](https://github.com/bedrock-core/ui/commit/094fc8ae4752ef96381a9cafc71df3a346ae8742), [`cad3d82`](https://github.com/bedrock-core/ui/commit/cad3d82f902d45f5538c6a85ce6bec92361b3f06), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`3f44a2d`](https://github.com/bedrock-core/ui/commit/3f44a2dffc352ddfa57d251b2652d454c69648e3), [`3f44a2d`](https://github.com/bedrock-core/ui/commit/3f44a2dffc352ddfa57d251b2652d454c69648e3), [`3f44a2d`](https://github.com/bedrock-core/ui/commit/3f44a2dffc352ddfa57d251b2652d454c69648e3), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`e75c3a7`](https://github.com/bedrock-core/ui/commit/e75c3a70f155217191255ed51f61de1ed42f6416), [`7915d87`](https://github.com/bedrock-core/ui/commit/7915d875260e5db9b99f0df351e6a872a06a925b), [`a75da6b`](https://github.com/bedrock-core/ui/commit/a75da6b69ab820340c40c04800b80fa9990e5c60), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`77f33a5`](https://github.com/bedrock-core/ui/commit/77f33a5840a2c4baf271ed35da2f4c3de6c1983a), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4)]:
+  - @bedrock-core/ui-runtime@0.15.0
+  - @bedrock-core/navigation@0.14.0
+  - @bedrock-core/ore-styled@0.11.3
+  - @bedrock-core/flexbox@1.0.3
+  - @bedrock-core/ui-compiler@0.3.2

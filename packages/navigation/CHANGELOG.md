@@ -1,5 +1,27 @@
 # @bedrock-core/navigation
 
+## 0.14.0
+
+### Minor Changes
+
+- [`094fc8a`](https://github.com/bedrock-core/ui/commit/094fc8ae4752ef96381a9cafc71df3a346ae8742) Thanks [@drav0011](https://github.com/drav0011)! - Expose typed Core hook lint tooling through `@bedrock-core/ui/eslint` and export the navigation scope hook as `useCurrentScope`.
+  
+  Publish shared resource packs for minor releases and changed patch assets, retaining the existing artifact for unchanged patches.
+  
+  Connect cross-addon navigation through peer modules with observable screen metadata and runtime-owned cleanup. Use Observable's `Signal`, `NativeSignal`, and `toSignal` in `useEvent` to forward native filters and release each registration.
+
+- [`3f44a2d`](https://github.com/bedrock-core/ui/commit/3f44a2dffc352ddfa57d251b2652d454c69648e3) Thanks [@drav0011](https://github.com/drav0011)! - Publish per-Runtime navigation API declarations through a checked contract generated during build and packaging, and expose registerNavigation for explicit Core installation. Include the prepared runtime wrapper in the package while keeping generation receipts out of the archive.
+
+- [`3f44a2d`](https://github.com/bedrock-core/ui/commit/3f44a2dffc352ddfa57d251b2652d454c69648e3) Thanks [@drav0011](https://github.com/drav0011)! - Publish screen metadata and read compatible provider datasets through one installed registry accessor. Use the shared ScreenMetadata type throughout Navigation. Keep the public navigation API focused on opening screens and cancel deferred publication during cleanup.
+
+### Patch Changes
+
+- [`3f44a2d`](https://github.com/bedrock-core/ui/commit/3f44a2dffc352ddfa57d251b2652d454c69648e3) Thanks [@drav0011](https://github.com/drav0011)! - Install and retrieve the typed Runtime navigation service, with cleanup owned by its installation. Reusing an existing service leaves cleanup with its original owner.
+
+- [`77f33a5`](https://github.com/bedrock-core/ui/commit/77f33a5840a2c4baf271ed35da2f4c3de6c1983a) Thanks [@drav0011](https://github.com/drav0011)! - Require the matching registry releases of i18n, Observable and Server Runtime. Navigation's API build uses the released Builder compiler.
+- Updated dependencies [[`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`7915d87`](https://github.com/bedrock-core/ui/commit/7915d875260e5db9b99f0df351e6a872a06a925b), [`094fc8a`](https://github.com/bedrock-core/ui/commit/094fc8ae4752ef96381a9cafc71df3a346ae8742), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`a75da6b`](https://github.com/bedrock-core/ui/commit/a75da6b69ab820340c40c04800b80fa9990e5c60), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`77f33a5`](https://github.com/bedrock-core/ui/commit/77f33a5840a2c4baf271ed35da2f4c3de6c1983a), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4), [`a703247`](https://github.com/bedrock-core/ui/commit/a7032473cafb405e31219eeaba9ece7830b6eac4)]:
+  - @bedrock-core/ui-runtime@0.15.0
+
 ## 0.13.2
 
 ### Patch Changes

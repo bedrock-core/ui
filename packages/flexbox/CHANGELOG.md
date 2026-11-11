@@ -1,5 +1,11 @@
 # @bedrock-core/flexbox
 
+## 1.0.3
+
+### Patch Changes
+
+- [`cad3d82`](https://github.com/bedrock-core/ui/commit/cad3d82f902d45f5538c6a85ce6bec92361b3f06) Thanks [@drav0011](https://github.com/drav0011)! - Treat hidden roots as zero-size layouts and skip measuring their contents.
+
 ## 1.0.2
 
 ### Patch Changes
