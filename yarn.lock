@@ -230,6 +230,7 @@ __metadata:
     "@bedrock-core/builder-plugin": "npm:0.2.0"
     esbuild: "npm:0.25.12"
     typescript-native: "npm:typescript@7.1.0-beta"
+  checksum: 10c0/61814f7b859c5691a6fba0f1b43e7c82e155863c2ceb5ca06589329dc01e2eb7c8915a2f46f1995ecbdeac0ab575f38208901d3a8cea23ea5d57284d8e3ea676
   languageName: node
   linkType: hard
 
@@ -238,6 +239,7 @@ __metadata:
   resolution: "@bedrock-core/builder-manifest@npm:0.2.0"
   dependencies:
     "@bedrock-core/builder-plugin": "npm:0.2.0"
+  checksum: 10c0/10623a402c453a8d788ce953f27be0a03b1742f7b8f057876c7e2546a061dda5486ed81b495cd587368744c168a304e0ab4f23afcbbb6aec8eb7ec237aecf00d
   languageName: node
   linkType: hard
 
@@ -246,6 +248,7 @@ __metadata:
   resolution: "@bedrock-core/builder-plugin@npm:0.2.0"
   dependencies:
     esbuild: "npm:0.25.12"
+  checksum: 10c0/86bb6f8bb84fbe8501f1d739bf063484a48fe20904180209a61e84359949dcbe74fc1e846673188b242c797488738864e5dfe7f54e203acb01c067a963b50e2f
   languageName: node
   linkType: hard
 
@@ -265,6 +268,7 @@ __metadata:
   resolution: "@bedrock-core/i18n@npm:0.3.0"
   peerDependencies:
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
+  checksum: 10c0/c026ab308bec5452234ad2feecadad18b9ee6d9b7896e87a7e837f8245266888574a4e60cd092f6d23230a57e46caf613862424f77c2bc05bd8070b13539a122
   languageName: node
   linkType: hard
 
@@ -304,6 +308,7 @@ __metadata:
       optional: true
     "@minecraft/server-ui":
       optional: true
+  checksum: 10c0/d848686b371282c48c77bfece18471a7f195e454e7982d22e261eff6d3870f1651e3f9e51fe76147489e7b6c880026cce6d723090f8cf440eaa499a6651be831
   languageName: node
   linkType: hard
 
@@ -333,6 +338,7 @@ __metadata:
     "@bedrock-core/sync": "npm:^2.0.0"
   peerDependencies:
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
+  checksum: 10c0/58777c6a3bcb2b62e7f545fa76ab4c3751b5051810dd787e7ec4309365436791e6ba46985741754dce1748a3d73e88d93a67d2e7397050a01ce9ec0ec7cb1470
   languageName: node
   linkType: hard
 
@@ -343,6 +349,7 @@ __metadata:
     "@bedrock-core/observable": "npm:^1.1.0"
   peerDependencies:
     "@minecraft/server": ">=2.9.0 || >=2.10.0-0"
+  checksum: 10c0/1d959e4fc63abfe4653d136fc301e13cee20f32eaa1ae6accd32ff402b4ffe19d50329a4895fae10a355813ce769e7af5d26a3d17bb21b2713f474606c70846f
   languageName: node
   linkType: hard
 
